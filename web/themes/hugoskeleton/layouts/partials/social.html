@@ -1,0 +1,27 @@
+<aside
+  id="sect-social"
+  class="hero hero-bg-img"
+  style="background-image: url('/assets/img/band/hugoskeleton-concert.jpg')"
+>
+  <div class="hero-bg-img-mask bg-mask">
+    <div class="container h-100">
+      <div class="row h-100 align-items-center">
+        <div class="col-12 text-center">
+          <h2 class="mb-4">Síguenos en redes</h2>
+          <ul class="list-inline mt-3 mt-lg-0">
+            {{ range .Site.Data.social }}
+            <li class="list-inline-item">
+              <a
+                target="_blank"
+                href="{{ .url }}"
+              >
+                <img class="social-icon" src="/assets/img/social/{{ .icon }}.svg" target="_blank" />
+              </a>
+            </li>
+            {{ end }}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>

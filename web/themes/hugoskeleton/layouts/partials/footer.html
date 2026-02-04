@@ -1,0 +1,17 @@
+<footer class="black">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 text-lg-left">
+        <a href="/"
+          ><img src="/assets/img/logo/hugoskeleton-logo.png" height="48px" alt="HugoSkeleton"
+        /></a>
+        <p>
+          <a href="/legal/legal-notice/">{{ i18n "linklegal" }}</a> |
+          <a href="/legal/cookie-policy/">{{ i18n "linkcookiepolicy" }}</a> |
+          <a href="/legal/privacy-policy/">{{ i18n "linkprivacypolicy" }}</a>
+        </p>
+        {{- block "footer-links" . }}{{- end }}
+      </div>
+    </div>
+  </div>
+</footer>

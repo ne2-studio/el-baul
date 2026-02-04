@@ -1,0 +1,33 @@
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+  integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+  integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+  crossorigin="anonymous"
+></script>
+<script src="/assets/js/scroll.js"></script>
+<script src="/assets/js/redirect.js"></script>
+
+<!-- Metricool -->
+{{ if eq (getenv "HUGO_ENV") "production" }}
+<script>
+  function loadScript(a) {
+    var b = document.getElementsByTagName("head")[0],
+      c = document.createElement("script");
+    (c.type = "text/javascript"),
+      (c.src = "https://tracker.metricool.com/resources/be.js"),
+      (c.onreadystatechange = a),
+      (c.onload = a),
+      b.appendChild(c);
+  }
+  loadScript(function () {
+    beTracker.t({ hash: "45d30dfb71957d625ad900e4772a2d6a" });
+  });
+</script>
+{{ end }}

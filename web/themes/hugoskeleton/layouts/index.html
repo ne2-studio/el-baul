@@ -1,0 +1,18 @@
+{{ define "nav-items" }}
+  {{- partial "navbar.html" . -}}
+{{ end }}
+
+{{ define "main" }}
+<header class="video-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-12 text-center">
+        <h1 class="super-big">HugoSkeleton</h1>
+        <h2>Sitio web oficial</h2>
+      </div>
+    </div>
+  </div>
+</header>
+
+{{- partial "social.html" . -}}
+{{ end }}

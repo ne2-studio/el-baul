@@ -1,0 +1,13 @@
+title: HugoSkeleton
+theme: hugoskeleton
+baseURL: https://www.hugoskeleton.com
+languageCode: es-es
+defaultContentLanguage: es
+languages:
+  es:
+    weight: 1
+  en:
+    weight: 2
+metaDataFormat: yaml
+params:
+  gtm_id: GTM-WK82NHDN
