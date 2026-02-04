@@ -1,6 +1,6 @@
-# HugoSkeleton Website
+# El Baúl Website
 
-[![CircleCI](https://circleci.com/gh/hugoskeleton/hugoskeleton-web/tree/main.svg?style=svg)](https://circleci.com/gh/hugoskeleton/hugoskeleton-web/tree/main)
+[![CircleCI](https://circleci.com/gh/el-baul/el-baul-web/tree/main.svg?style=svg)](https://circleci.com/gh/el-baul/el-baul-web/tree/main)
 
 ## :pick: Requirements
 

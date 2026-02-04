@@ -1,6 +1,6 @@
-title: HugoSkeleton
-theme: hugoskeleton
-baseURL: https://www.hugoskeleton.com
+title: El Baúl
+theme: el-baul
+baseURL: https://el-baul-web.netlify.app/
 languageCode: es-es
 defaultContentLanguage: es
 languages:

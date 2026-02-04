@@ -1,0 +1,7 @@
+[build]
+command = "make publish"
+publish = "public"
+
+[build.environment]
+HUGO_VERSION = "0.147.8"
+HUGO_ENV = "production"
