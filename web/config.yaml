@@ -1,13 +1,10 @@
 title: El Baúl
-theme: el-baul
 baseURL: https://el-baul-web.netlify.app/
 languageCode: es-es
 defaultContentLanguage: es
 languages:
   es:
     weight: 1
-  en:
-    weight: 2
 metaDataFormat: yaml
 params:
   gtm_id: GTM-WK82NHDN
