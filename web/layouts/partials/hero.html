@@ -5,51 +5,68 @@
         <span class="w-2 h-2 rounded-full bg-[#4A3B32]"></span>
         Beta Privada
       </div>
-      
+
       <h1 class="font-serif text-5xl md:text-6xl lg:text-7xl font-bold text-[#4A3B32] leading-[1.1]">
         El baúl de los recuerdos, <span class="italic text-[#8C7B70]">compartido</span> con quien tú decidas.
       </h1>
-      
+
       <p class="text-lg text-[#4A3B32]/80 max-w-lg leading-relaxed">
-        Un lugar para guardar recuerdos entre personas. Sin algoritmos, sin ruido, sin likes. Solo cuidado, contexto y legado.
+        Un lugar para guardar recuerdos entre personas. Sin algoritmos, sin ruido, sin likes. Solo cuidado,
+        contexto y legado.
       </p>
 
       <div id="hero-form-container">
-          <form id="hero-form" class="flex flex-col sm:flex-row gap-3 max-w-md">
-            <input
-              id="hero-email"
-              type="email"
-              placeholder="Tu correo electrónico"
-              class="flex-1 px-4 py-3 rounded-lg border border-[#4A3B32]/20 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4A3B32]/20 transition-all text-[#4A3B32] placeholder:text-[#4A3B32]/40"
-              required
-            />
-            <button 
-              type="submit" 
-              id="hero-submit"
-              class="px-6 py-3 bg-[#4A3B32] text-[#F5F2EF] rounded-lg font-medium hover:bg-[#3E3A38] transition-colors disabled:opacity-70 flex items-center justify-center gap-2 min-w-[140px]"
-            >
-              <span id="hero-submit-text">Me interesa</span>
-              <i data-lucide="arrow-right" size="18" id="hero-submit-icon"></i>
-            </button>
-          </form>
-          <p id="hero-status-success" class="hidden text-sm text-green-700 font-medium mt-3">
-            ¡Gracias! Te avisaremos cuando abramos el baúl.
-          </p>
-          <p id="hero-status-error" class="hidden text-sm text-red-600 mt-3">
-            Algo salió mal. Por favor intenta de nuevo.
-          </p>
+        <form
+          id="hero-form"
+          class="flex flex-col sm:flex-row gap-3 max-w-md"
+          action="https://assets.mailerlite.com/jsonp/2091865/forms/178585697373914705/subscribe"
+          method="post"
+        >
+          <input
+            id="hero-email"
+            name="fields[email]"
+            type="email"
+            placeholder="Tu correo electrónico"
+            class="flex-1 px-4 py-3 rounded-lg border border-[#4A3B32]/20 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4A3B32]/20 transition-all text-[#4A3B32] placeholder:text-[#4A3B32]/40"
+            autocomplete="email"
+            required
+          />
+
+          <!-- Hidden fields que MailerLite espera -->
+          <input type="hidden" name="ml-submit" value="1"/>
+          <input type="hidden" name="anticsrf" value="true"/>
+
+          <button
+            type="submit"
+            id="hero-submit"
+            class="px-6 py-3 bg-[#4A3B32] text-[#F5F2EF] rounded-lg font-medium hover:bg-[#3E3A38] transition-colors disabled:opacity-70 flex items-center justify-center gap-2 min-w-[140px]"
+          >
+            <span id="hero-submit-text">Me interesa</span>
+            <i data-lucide="arrow-right" size="18" id="hero-submit-icon"></i>
+          </button>
+        </form>
+
+        <p id="hero-status-success" class="hidden text-sm text-green-700 font-medium mt-3">
+          ¡Gracias! Te avisaremos cuando abramos el baúl.
+        </p>
+        <p id="hero-status-error" class="hidden text-sm text-red-600 mt-3">
+          Algo salió mal. Por favor intenta de nuevo.
+        </p>
       </div>
 
       <div class="flex items-center gap-4 text-sm text-[#4A3B32]/60 pt-4">
         <div class="flex -space-x-2">
           <div class="w-8 h-8 rounded-full border-2 border-[#F5F2EF] bg-gray-200 overflow-hidden">
-             <img src="https://randomuser.me/api/portraits/thumb/women/21.jpg" alt="" class="w-full h-full object-cover" />
+            <img src="https://randomuser.me/api/portraits/thumb/women/21.jpg" alt=""
+                 class="w-full h-full object-cover"/>
           </div>
           <div class="w-8 h-8 rounded-full border-2 border-[#F5F2EF] bg-gray-200 overflow-hidden">
-             <img src="https://randomuser.me/api/portraits/thumb/women/22.jpg" alt="" class="w-full h-full object-cover" />
+            <img src="https://randomuser.me/api/portraits/thumb/women/22.jpg" alt=""
+                 class="w-full h-full object-cover"/>
           </div>
           <div class="w-8 h-8 rounded-full border-2 border-[#F5F2EF] bg-gray-200 overflow-hidden">
-             <img src="https://randomuser.me/api/portraits/thumb/women/23.jpg" alt="" class="w-full h-full object-cover" />
+            <img src="https://randomuser.me/api/portraits/thumb/women/23.jpg" alt=""
+                 class="w-full h-full object-cover"/>
           </div>
         </div>
         <p>Únete a las primeras familias.</p>
@@ -58,70 +75,111 @@
 
     <div class="relative">
       <div class="absolute -inset-4 bg-[#E8E4E0] rounded-full blur-3xl opacity-60 z-0"></div>
-      
+
       <div class="relative z-10 grid grid-cols-2 gap-4">
-         <div class="space-y-4 mt-12">
-            <div class="rounded-2xl overflow-hidden shadow-xl rotate-[-2deg] transition-transform hover:rotate-0 duration-500">
-              <img src="https://images.unsplash.com/photo-1722173205783-d602329f0743?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600" alt="Family" class="w-full h-auto object-cover" />
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-lg shadow-[#4A3B32]/5 border border-[#4A3B32]/5">
-               <p class="font-serif italic text-[#4A3B32] text-sm">"Por fin un sitio donde mis fotos no se pierden en el chat familiar."</p>
-            </div>
-         </div>
-         <div class="space-y-4">
-            <div class="rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-              <img src="/images/product-ui.png" alt="App Interface" class="w-full h-auto object-cover bg-[#F5F2EF]" />
-            </div>
-            <div class="rounded-2xl overflow-hidden shadow-lg rotate-[3deg] transition-transform hover:rotate-0 duration-500">
-               <img src="https://images.unsplash.com/photo-1588420635201-3a9e2a2a0a07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600" alt="Hands holding photo" class="w-full h-auto object-cover" />
-            </div>
-         </div>
+        <div class="space-y-4 mt-12">
+          <div class="rounded-2xl overflow-hidden shadow-xl rotate-[-2deg] transition-transform hover:rotate-0 duration-500">
+            <img src="https://images.unsplash.com/photo-1722173205783-d602329f0743?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
+                 alt="Family" class="w-full h-auto object-cover"/>
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow-lg shadow-[#4A3B32]/5 border border-[#4A3B32]/5">
+            <p class="font-serif italic text-[#4A3B32] text-sm">"Por fin un sitio donde mis fotos no se
+              pierden en el chat familiar."</p>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+            <img src="/images/product-ui.png" alt="App Interface"
+                 class="w-full h-auto object-cover bg-[#F5F2EF]"/>
+          </div>
+          <div class="rounded-2xl overflow-hidden shadow-lg rotate-[3deg] transition-transform hover:rotate-0 duration-500">
+            <img src="https://images.unsplash.com/photo-1588420635201-3a9e2a2a0a07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
+                 alt="Hands holding photo" class="w-full h-auto object-cover"/>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('hero-form');
-  const emailInput = document.getElementById('hero-email');
-  const submitBtn = document.getElementById('hero-submit');
-  const submitText = document.getElementById('hero-submit-text');
-  const submitIcon = document.getElementById('hero-submit-icon');
-  const successMsg = document.getElementById('hero-status-success');
-  const errorMsg = document.getElementById('hero-status-error');
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("hero-form");
+    const emailInput = document.getElementById("hero-email");
+    const submitBtn = document.getElementById("hero-submit");
+    const submitText = document.getElementById("hero-submit-text");
+    const successMsg = document.getElementById("hero-status-success");
+    const errorMsg = document.getElementById("hero-status-error");
 
-  form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const email = emailInput.value;
-    if (!email) return;
+    const originalBtnHtml = submitBtn.innerHTML;
 
-    // Loading state
-    submitBtn.disabled = true;
-    submitText.textContent = 'Guardando...';
-    successMsg.classList.add('hidden');
-    errorMsg.classList.add('hidden');
-
-    try {
-      // TODO: integrate with backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      let res = { ok: true };
-
-      if (res.ok) {
-        submitText.innerHTML = 'Apuntado';
-        submitBtn.innerHTML = '<i data-lucide="check" size="18"></i> Apuntado';
-        lucide.createIcons();
-        successMsg.classList.remove('hidden');
-        emailInput.value = '';
-      } else {
-        throw new Error('Error');
+    function setLoading(isLoading) {
+      submitBtn.disabled = isLoading;
+      if (isLoading) {
+        // Mantengo tu estilo pero cambio el copy
+        if (submitText) submitText.textContent = "Guardando...";
+        successMsg.classList.add("hidden");
+        errorMsg.classList.add("hidden");
       }
-    } catch (error) {
-      console.error(error);
-      errorMsg.classList.remove('hidden');
-      submitBtn.disabled = false;
-      submitText.textContent = 'Me interesa';
     }
+
+    function setSuccess() {
+      // Conserva tu estética + icono
+      submitBtn.innerHTML = '<i data-lucide="check" size="18"></i> Apuntado';
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+      successMsg.classList.remove("hidden");
+      emailInput.value = "";
+    }
+
+    function setError() {
+      errorMsg.classList.remove("hidden");
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = (emailInput.value || "").trim();
+      if (!email) return;
+
+      setLoading(true);
+
+      try {
+        // Construye payload idéntico al form de MailerLite
+        const payload = new FormData(form);
+
+        // POST al endpoint de ML (sin su script)
+        // OJO: puede devolver response "opaque" por CORS, así que no intentes leer body.
+        const res = await fetch(form.action, {
+          method: "POST",
+          body: payload,
+          mode: "cors", // si el navegador lo permite
+          credentials: "omit",
+        });
+
+        // En algunos casos res.type será "opaque" y res.ok será false aunque se haya enviado.
+        // Heurística: si no ha lanzado error de red, consideramos OK.
+        if (res.type === "opaque" || res.ok) {
+          setSuccess();
+        } else {
+          throw new Error("MailerLite subscribe failed: " + res.status);
+        }
+      } catch (err) {
+        console.error(err);
+        setError();
+        return;
+      } finally {
+        // Si fue success, dejamos botón en "Apuntado" y disabled; si error, ya lo reactivamos.
+        if (!successMsg.classList.contains("hidden")) {
+          submitBtn.disabled = true;
+        }
+      }
+    });
   });
-});
 </script>
