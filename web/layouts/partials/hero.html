@@ -7,13 +7,19 @@
       </div>
 
       <h1 class="font-serif text-5xl md:text-6xl lg:text-7xl font-bold text-[#4A3B32] leading-[1.1]">
-        El baúl de los recuerdos, <span class="italic text-[#8C7B70]">compartido</span> con quien tú decidas.
+        Las fotos importantes de tu vida están perdidas.
       </h1>
 
       <p class="text-lg text-[#4A3B32]/80 max-w-lg leading-relaxed">
-        Un lugar para guardar recuerdos entre personas. Sin algoritmos, sin ruido, sin likes. Solo cuidado,
-        contexto y legado.
+        Entre WhatsApp, Google Photos y carpetas que no vuelves a abrir.<br>
+        No porque hagas pocas fotos.<br>
+        Sino porque no tienes un lugar para guardarlas de verdad.
       </p>
+
+      <div class="space-y-4">
+        <p class="text-[#4A3B32] font-medium">Estamos construyendo El Baúl.</p>
+        <p class="text-[#4A3B32]/70">Un espacio privado para guardar recuerdos con las personas que importan.</p>
+      </div>
 
       <div id="hero-form-container">
         <form
@@ -41,13 +47,17 @@
             id="hero-submit"
             class="px-6 py-3 bg-[#4A3B32] text-[#F5F2EF] rounded-lg font-medium hover:bg-[#3E3A38] transition-colors disabled:opacity-70 flex items-center justify-center gap-2 min-w-[140px]"
           >
-            <span id="hero-submit-text">Me interesa</span>
+            <span id="hero-submit-text">Unirme a la espera</span>
             <i data-lucide="arrow-right" size="18" id="hero-submit-icon"></i>
           </button>
         </form>
 
+        <p class="text-xs text-[#4A3B32]/60 mt-3">
+          Te avisamos cuando abramos. Sin spam.
+        </p>
+
         <p id="hero-status-success" class="hidden text-sm text-green-700 font-medium mt-3">
-          ¡Gracias! Te avisaremos cuando abramos el baúl.
+          ¡Gracias! Te avisamos cuando abramos el baúl.
         </p>
         <p id="hero-status-error" class="hidden text-sm text-red-600 mt-3">
           Algo salió mal. Por favor intenta de nuevo.
@@ -69,7 +79,7 @@
                  class="w-full h-full object-cover"/>
           </div>
         </div>
-        <p>Únete a las primeras familias.</p>
+        <p>Pásaselo a tu familia. Esto es para ellos.</p>
       </div>
     </div>
 
@@ -78,13 +88,21 @@
 
       <div class="relative z-10 grid grid-cols-2 gap-4">
         <div class="space-y-4 mt-12">
-          <div class="rounded-2xl overflow-hidden shadow-xl rotate-[-2deg] transition-transform hover:rotate-0 duration-500">
+          <div class="bg-white p-8 rounded-2xl shadow-2xl border-2 border-[#4A3B32]/10 rotate-[-1deg] transition-transform hover:rotate-0 duration-500 relative z-20">
+            <div class="flex gap-1 mb-4">
+              <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+              <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+              <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+              <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+              <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+            </div>
+            <p class="font-serif text-xl md:text-2xl italic text-[#4A3B32] leading-relaxed">
+              "Por fin un sitio donde mis fotos no se pierden en el chat familiar."
+            </p>
+          </div>
+          <div class="rounded-2xl overflow-hidden shadow-xl rotate-[2deg] transition-transform hover:rotate-0 duration-500 opacity-80">
             <img src="https://images.unsplash.com/photo-1722173205783-d602329f0743?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
                  alt="Family" class="w-full h-auto object-cover"/>
-          </div>
-          <div class="bg-white p-4 rounded-xl shadow-lg shadow-[#4A3B32]/5 border border-[#4A3B32]/5">
-            <p class="font-serif italic text-[#4A3B32] text-sm">"Por fin un sitio donde mis fotos no se
-              pierden en el chat familiar."</p>
           </div>
         </div>
         <div class="space-y-4">
