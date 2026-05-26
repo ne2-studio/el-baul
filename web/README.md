@@ -1,6 +1,6 @@
 # El Baúl Website
 
-[![CircleCI](https://circleci.com/gh/el-baul/el-baul-web/tree/main.svg?style=svg)](https://circleci.com/gh/el-baul/el-baul-web/tree/main)
+[![CI](https://github.com/ppardalj/el-baul-web/actions/workflows/deploy.yml/badge.svg)](https://github.com/ppardalj/el-baul-web/actions)
 
 ## :pick: Requirements
 
