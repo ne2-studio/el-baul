@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ActivityCenter } from '@/app/components/ActivityCenter';
-import { useDataStore } from '@/store/dataStore';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAuth } from 'react-oidc-context';
 
 export const ActivityCenterRoute: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { activities, baules, loadAlbums: storeLoadAlbums } = useDataStore();
-  const { accessToken } = useAuthStore();
+  const { activities, baules, loadAlbums: storeLoadAlbums } = useAppStore();
+  const auth = useAuth();
   const { showToastMessage } = useUIStore();
 
   const handleViewBaul = async (baulId: string) => {
-    if (!accessToken) return;
+    if (!auth.isAuthenticated) return;
     const baul = baules.find(b => b.id === baulId);
     if (!baul) return;
 
     try {
       setIsLoading(true);
-      await storeLoadAlbums(accessToken, baul.id);
+      await storeLoadAlbums(baul.id);
       navigate(`/baules/${baul.id}`);
     } catch (error) {
       console.error('Error loading baul from activity:', error);

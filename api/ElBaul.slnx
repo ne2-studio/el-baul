@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ElBaul.Api/ElBaul.Api.csproj" />
+  <Project Path="ElBaul.Infra.Tests/ElBaul.Infra.Tests.csproj" />
+  <Project Path="ElBaul.Infra/ElBaul.Infra.csproj" />
+  <Project Path="ElBaul.Tests/ElBaul.Tests.csproj" />
+  <Project Path="ElBaul/ElBaul.csproj" />
+</Solution>

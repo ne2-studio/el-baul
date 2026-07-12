@@ -1,25 +1,25 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CreateBaulForm } from '@/app/components/CreateBaulForm';
-import { useDataStore } from '@/store/dataStore';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
+import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 
 export const CreateBaulRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { accessToken, setSubscription } = useAuthStore();
-  const { baules, createBaul: storeCreateBaul } = useDataStore();
+  const auth = useAuth();
+  const { setSubscription, baules, createBaul: storeCreateBaul } = useAppStore();
   const { showToastMessage } = useUIStore();
-  
+
   const isOnboarding = new URLSearchParams(location.search).get('onboarding') === 'true';
 
   const handleCreateBaul = async (name: string, description: string) => {
-    if (!accessToken) return;
-    
+    if (!auth.isAuthenticated) return;
+
     try {
       const isFirstBaul = baules.length === 0;
-      await storeCreateBaul(accessToken, name, description);
+      await storeCreateBaul(name, description);
       
       // Update subscription usage
       setSubscription(prev => ({

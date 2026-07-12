@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvitacionScreen } from '@/app/components/InvitacionScreen';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
-import { getBaulPreview } from '@/services/baules.service';
+import { api } from '@/api';
 import { BaulPreview } from '@/types';
 
 export const BaulInvitacionRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams<{ baulId: string }>();
-  const accessToken = useAuthStore(state => state.accessToken);
+  const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
-  
+
   const [preview, setPreview] = useState<BaulPreview | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       if (!baulId) return;
-      
+
       try {
         setLoading(true);
-        // Obtener el preview del baúl en una sola llamada dedicada
-        const previewData = await getBaulPreview(accessToken || '', baulId);
+        // Obtener el preview del baúl en una sola llamada dedicada (endpoint público)
+        const previewData = await api.baules.getPreview(baulId);
         setPreview(previewData);
       } catch (error) {
         console.error('Error loading invitation data:', error);
@@ -31,9 +31,9 @@ export const BaulInvitacionRoute: React.FC = () => {
         setLoading(false);
       }
     }
-    
+
     loadData();
-  }, [baulId, accessToken, showToastMessage]);
+  }, [baulId, showToastMessage]);
 
   if (loading) {
     return (
@@ -48,7 +48,7 @@ export const BaulInvitacionRoute: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-2xl font-bold mb-4">Invitación no encontrada</h1>
         <p className="text-muted-foreground mb-8">No hemos podido encontrar el baúl al que has sido invitado.</p>
-        <button 
+        <button
           onClick={() => navigate('/baules')}
           className="text-primary hover:underline"
         >
@@ -59,7 +59,7 @@ export const BaulInvitacionRoute: React.FC = () => {
   }
 
   const handleUnirme = () => {
-    if (!accessToken) {
+    if (!auth.isAuthenticated) {
       // Si no hay sesión, redirigir al login con redirectTo al proceso de aceptar invitación
       navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/${baulId}/aceptar`)}`);
       return;
@@ -73,9 +73,9 @@ export const BaulInvitacionRoute: React.FC = () => {
       params.set('baulNombre', preview.name);
       params.set('baulId', preview.id);
     }
-    
+
     const onboardingUrl = `/onboarding?${params.toString()}`;
-    
+
     // El onboarding ahora es público, no hace falta forzar login aquí.
     // Al final del onboarding ya se pedirá login si es necesario.
     navigate(onboardingUrl);

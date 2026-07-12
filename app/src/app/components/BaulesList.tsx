@@ -136,35 +136,6 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
             <Plus className="w-5 h-5" />
             Nuevo baúl
           </Button>
-          
-          {/* Plan limit indicator */}
-          {false && baulesUsed !== undefined && baulesLimit !== undefined && (
-            <div className="mt-3 px-4">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Baúles como custodio</span>
-                <span className="font-medium text-foreground">
-                  {baulesUsed} / {baulesLimit}
-                </span>
-              </div>
-              
-              {/* Progress bar */}
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all ${
-                    baulesUsed >= baulesLimit ? 'bg-primary' : 'bg-primary'
-                  }`}
-                  style={{ width: `${Math.min((baulesUsed / baulesLimit) * 100, 100)}%` }}
-                />
-              </div>
-              
-              {/* Helper text */}
-              {baulesUsed >= baulesLimit && (
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Has alcanzado el límite de tu plan
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -6,18 +6,18 @@ on:
       - main
     paths:
       - '.github/workflows/backend-deploy.yml'
-      - 'backend/**'
+      - 'api/**'
 
 permissions:
   contents: read
   packages: write
 
 env:
-  IMAGE_NAME: ghcr.io/ne2-studio/servicetemplate-backend
+  IMAGE_NAME: ghcr.io/${{ github.repository }}-api
 
 defaults:
   run:
-    working-directory: backend
+    working-directory: api
 
 jobs:
   build-and-deploy:

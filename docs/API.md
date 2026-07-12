@@ -1,49 +1,139 @@
-# API Contract — Tasks
+# API Contract — El Baúl
 
 Base URL: `VITE_API_URL` on the frontend (dev default `http://localhost:5050`).
 
-All `/api/*` endpoints require a valid OIDC access token: `Authorization: Bearer <token>`.
-Unauthenticated requests get `401 Unauthorized`.
+All `/api/*` endpoints require a valid OIDC access token: `Authorization: Bearer <token>`,
+except `GET /api/baules/{baulId}/preview` (public, rate-limited — used for invitation
+links before the recipient has signed in). Unauthenticated requests to protected
+endpoints get `401 Unauthorized`. Endpoints scoped to a baúl the caller has no access to
+return `403 Forbidden`; missing resources return `404 Not Found`; validation failures
+return `400 Bad Request`. All three shapes are `{ "error": "..." }`.
 
-## `POST /api/tasks`
+Roles within a baúl: `custodio` (owner, full control), `colaborador` (can add
+albums/photos), `miembro` (read-only).
 
-Create a task.
+## Baúles
 
-Request body:
+### `GET /api/baules`
 
-```json
-{ "title": "Buy milk" }
-```
-
-Response `200 OK`:
+List baúles the caller owns or has been shared. Response `200 OK`: array of
 
 ```json
 {
-  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "title": "Buy milk",
-  "createdAt": "2026-07-07T12:00:00Z"
+  "id": "uuid", "name": "string", "description": "string|null",
+  "albumCount": 0, "createdAt": "iso", "updatedAt": "iso",
+  "isCustodio": true, "role": "custodio|colaborador|miembro"
 }
 ```
 
-`400 Bad Request` — `{ "error": "..." }` on validation failure.
+### `POST /api/baules`
 
-## `GET /api/tasks?skip=0&take=10`
+Body: `{ "name": "string", "description": "string|null" }`. Response `200 OK`: the baúl
+(same shape as above), caller becomes custodio.
 
-List tasks, newest first. `skip` defaults to `0`, `take` defaults to `10` (max `100`).
+### `GET /api/baules/{baulId}`
 
-Response `200 OK`: array of task objects (same shape as above).
+Response `200 OK`: the baúl. `403` if the caller has no access.
 
-`400 Bad Request` — `{ "error": "..." }` if `skip`/`take` are out of range.
+### `GET /api/baules/{baulId}/preview` (public)
 
-## `DELETE /api/tasks/{id}`
+Response `200 OK`: `{ "id", "name", "description", "previewPhotos": ["signed-url", ...] }`
+(up to 4 photos).
 
-Delete a task by id.
+### `POST /api/baules/{baulId}/accept-invite`
 
-Response `204 No Content` on success.
+Joins the caller as `miembro` if not already a member/custodian. Response `200 OK`:
+`{ "success": true }`.
 
-`400 Bad Request` — `{ "error": "..." }` if `id` isn't a valid GUID.
-`404 Not Found` — `{ "error": "..." }` if no task exists with that id.
+## Sharing
 
-## `GET /health`
+### `GET /api/baules/{baulId}/shared-users`
+
+Custodio-scoped view of everyone with access (custodian included). Response `200 OK`:
+array of `{ "id", "userId": "string|null", "email", "name": "string|null", "role", "status": "active|pending", "invitedDate": "iso", "baulId" }`.
+
+### `POST /api/baules/{baulId}/share`
+
+Custodio only. Body: `{ "email", "role": "colaborador|miembro" }`. If the email belongs
+to an existing user, status is `active` immediately; otherwise `pending` until they sign
+up and share the same email. Response `200 OK`: the `SharedUser`.
+
+### `PUT /api/baules/{baulId}/shared-users/{sharedUserId}/role`
+
+Custodio only. Body: `{ "role" }`. Response `200 OK`: the updated `SharedUser`.
+
+### `DELETE /api/baules/{baulId}/shared-users/{email}`
+
+Custodio only. Revokes access for that email. Response `200 OK`: `{ "success": true }`.
+
+## Access requests
+
+A non-member can request access to a baúl they know the id of; the custodian
+approves/rejects.
+
+- `GET /api/baules/{baulId}/access-requests` — custodio only.
+- `POST /api/baules/{baulId}/access-requests` — body `{ "message": "string|null" }`.
+- `POST /api/baules/{baulId}/access-requests/{requestId}/approve` — custodio only, body
+  `{ "role": "colaborador|miembro" }` (defaults `miembro`). Grants access, returns the new
+  `SharedUser`.
+- `POST /api/baules/{baulId}/access-requests/{requestId}/reject` — custodio only.
+
+## Removal requests
+
+Anyone with access can request a photo be removed; the custodian approves (deletes the
+photo, decrements the album's photo count) or rejects (keeps it).
+
+- `GET /api/baules/{baulId}/removal-requests` — custodio only.
+- `POST /api/baules/{baulId}/removal-requests` — body `{ "photoId", "reason": "string|null" }`.
+- `POST /api/baules/{baulId}/removal-requests/{requestId}/approve` — custodio only.
+- `POST /api/baules/{baulId}/removal-requests/{requestId}/reject` — custodio only.
+
+## Albums
+
+### `GET /api/baules/{baulId}/albums`
+
+Response `200 OK`: array of `{ "id", "baulId", "name", "description", "photoCount", "coverPhotoUrl": "signed-url|null", "createdAt", "updatedAt" }`.
+
+### `POST /api/baules/{baulId}/albums`
+
+`colaborador` or `custodio` only. Body: `{ "name", "description": "string|null" }`.
+Response `200 OK`: the album; increments the baúl's `albumCount`.
+
+## Photos
+
+### `GET /api/albums/{albumId}/photos`
+
+Response `200 OK`: array of `{ "id", "albumId", "baulId", "url": "signed-url", "caption", "date", "uploadedBy", "createdAt" }`.
+
+### `POST /api/albums/{albumId}/photos`
+
+`colaborador` or `custodio` only. `multipart/form-data`: `file` (required), `caption`
+(optional), `date` (optional, ISO). Response `200 OK`: the photo; increments the album's
+`photoCount`, sets it as the album's cover if it's the first photo, and records a
+`new-photos` activity.
+
+## Recuerdos (comments on a photo)
+
+- `GET /api/photos/{photoId}/recuerdos` — response `200 OK`: array of `{ "id", "photoId", "userId", "text", "userName", "createdAt", "isOwn" }`.
+- `POST /api/photos/{photoId}/recuerdos` — body `{ "text" }`. Response `200 OK`: the recuerdo.
+
+## Activity
+
+### `GET /api/activities`
+
+Feed of events across every baúl the caller owns or is shared into, newest first.
+Response `200 OK`: array of
+`{ "id", "type": "new-photos|role-changed|access-request|access-granted|photo-removal-request", "baulId", "baulName", "timestamp", "isActionable", "photoCount": "int|null", "requesterEmail": "string|null", "accessRequestId": "string|null", "removalRequestId": "string|null" }`.
+
+## Users
+
+### `GET /api/users/me`
+
+Response `200 OK`: `{ "id", "email", "name": "string|null", "createdAt" }` — the caller's
+profile, JIT-synced from OIDC claims on each authenticated request.
+
+## Health
+
+### `GET /health`
 
 Public, unauthenticated, rate-limited liveness check. Response `200 OK`: `{ "status": "healthy" }`.

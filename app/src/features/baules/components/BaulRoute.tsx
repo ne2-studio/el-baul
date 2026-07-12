@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AlbumsView } from '@/app/components/AlbumsView';
-import { useDataStore } from '@/store/dataStore';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
+import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
-  const accessToken = useAuthStore(state => state.accessToken);
+  const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
-  
+
   const {
     baules,
     albums,
@@ -19,8 +19,8 @@ export const BaulRoute: React.FC = () => {
     activities,
     loadAlbumPhotos,
     loadAlbums,
-    loadUserData
-  } = useDataStore();
+    fetchData
+  } = useAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
   
@@ -28,13 +28,13 @@ export const BaulRoute: React.FC = () => {
 
   useEffect(() => {
     async function initBaul() {
-      if (!baulId || !accessToken) return;
-      
+      if (!baulId || !auth.isAuthenticated) return;
+
       // Si el baúl no está en la lista de baúles, intentamos recargar los datos del usuario
       if (!baul) {
         try {
           setIsLoading(true);
-          await loadUserData(accessToken);
+          await fetchData();
         } catch (error) {
           console.error('Error refreshing user data:', error);
         } finally {
@@ -47,7 +47,7 @@ export const BaulRoute: React.FC = () => {
       if (!albums[baulId]) {
         try {
           setIsLoading(true);
-          await loadAlbums(accessToken, baulId);
+          await loadAlbums(baulId);
         } catch (error) {
           console.error('Error loading albums on route enter:', error);
           showToastMessage('Error al cargar los álbumes del baúl');
@@ -58,15 +58,15 @@ export const BaulRoute: React.FC = () => {
     }
 
     initBaul();
-  }, [baulId, accessToken, baul, albums, loadAlbums, loadUserData, showToastMessage]);
+  }, [baulId, auth.isAuthenticated, baul, albums, loadAlbums, fetchData, showToastMessage]);
   
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
   if (!baul) return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
   
   const handleSelectAlbum = async (album: any) => {
-    if (!accessToken) return;
+    if (!auth.isAuthenticated) return;
     try {
-      await loadAlbumPhotos(accessToken, album.id);
+      await loadAlbumPhotos(album.id);
       navigate(`/baules/${baul.id}/albumes/${album.id}`);
     } catch (error) {
       console.error('Error loading photos:', error);

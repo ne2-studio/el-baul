@@ -1,17 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MiPerfilScreen } from '@/app/components/MiPerfilScreen';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from 'react-oidc-context';
+import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 
 export const ProfileRoute: React.FC = () => {
   const navigate = useNavigate();
-  const { userProfile, signOut: storeSignOut } = useAuthStore();
+  const auth = useAuth();
+  const { userProfile, reset } = useAppStore();
   const { setShowProfileMenu, showToastMessage } = useUIStore();
 
   const handleSignOut = async () => {
     try {
-      await storeSignOut();
+      reset();
+      await auth.removeUser();
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);

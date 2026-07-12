@@ -1,37 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BaulesList } from '@/app/components/BaulesList';
-import { useDataStore } from '@/store/dataStore';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
+import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { Baul } from '@/types';
 
 export const BaulesListRoute: React.FC = () => {
   const navigate = useNavigate();
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
-  
-  const { 
-    baules, 
-    activities, 
-    loadAlbums: storeLoadAlbums 
-  } = useDataStore();
-  
-  const { 
-    accessToken, 
-    subscription 
-  } = useAuthStore();
-  
-  const { 
-    showToastMessage, 
-    setShowPlanLimitModal 
+  const auth = useAuth();
+
+  const {
+    baules,
+    activities,
+    loadAlbums: storeLoadAlbums,
+    subscription
+  } = useAppStore();
+
+  const {
+    showToastMessage,
+    setShowPlanLimitModal
   } = useUIStore();
 
   const handleSelectBaul = async (baul: Baul) => {
-    if (!accessToken) return;
-    
+    if (!auth.isAuthenticated) return;
+
     try {
       setIsLoadingAlbums(true);
-      await storeLoadAlbums(accessToken, baul.id);
+      await storeLoadAlbums(baul.id);
       navigate(`/baules/${baul.id}`);
     } catch (error) {
       console.error('Error loading albums:', error);

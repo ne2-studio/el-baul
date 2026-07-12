@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlanSelectionScreen } from '@/app/components/PlanSelectionScreen';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export const PlanSelectionRoute: React.FC = () => {
   const navigate = useNavigate();
-  const { subscription } = useAuthStore();
+  const { subscription } = useAppStore();
 
   return (
     <PlanSelectionScreen

@@ -3,13 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PaymentPlaceholderScreen } from '@/app/components/PaymentPlaceholderScreen';
 import { PlanType } from '@/types';
 import { useUIStore } from '@/store/uiStore';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export const PaymentRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const showToastMessage = useUIStore(state => state.showToastMessage);
-  const setSubscription = useAuthStore(state => state.setSubscription);
+  const setSubscription = useAppStore(state => state.setSubscription);
   const selectedPlan = new URLSearchParams(location.search).get('plan') as PlanType;
   
   return (

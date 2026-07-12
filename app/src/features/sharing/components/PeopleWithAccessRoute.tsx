@@ -1,54 +1,58 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PeopleWithAccessScreen } from '@/app/components/PeopleWithAccessScreen';
-import { useDataStore } from '@/store/dataStore';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 import { BaulRole } from '@/types';
+import { useAuth } from 'react-oidc-context';
 
 export const PeopleWithAccessRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
-  const accessToken = useAuthStore(state => state.accessToken);
+  const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
-  
-  const { 
-    baules, 
-    sharedUsers, 
-    revokeAccess, 
-    updateUserRole 
-  } = useDataStore();
-  
+
+  const {
+    baules,
+    sharedUsers,
+    revokeAccess,
+    updateUserRole
+  } = useAppStore();
+
   const baul = baules.find(b => b.id === baulId);
-  
+
   if (!baul) return <div className="p-8 text-center">Cargando...</div>;
-  
+
   const handleRevoke = async (userId: string) => {
-    if (!accessToken) return;
+    if (!auth.isAuthenticated) return;
     try {
-      await revokeAccess(accessToken, baul.id, userId);
+      const sharedUser = (sharedUsers[baul.id] || []).find(u => u.id === userId);
+      if (!sharedUser) return;
+      await revokeAccess(baul.id, sharedUser.email);
       showToastMessage('Acceso revocado');
     } catch (error) {
       console.error('Error revoking access:', error);
       showToastMessage('Error al revocar el acceso');
     }
   };
-  
+
   const handleCancelInvitation = async (userId: string) => {
-    if (!accessToken) return;
+    if (!auth.isAuthenticated) return;
     try {
-      await revokeAccess(accessToken, baul.id, userId);
+      const sharedUser = (sharedUsers[baul.id] || []).find(u => u.id === userId);
+      if (!sharedUser) return;
+      await revokeAccess(baul.id, sharedUser.email);
       showToastMessage('Invitación cancelada');
     } catch (error) {
       console.error('Error canceling invitation:', error);
       showToastMessage('Error al cancelar la invitación');
     }
   };
-  
+
   const handleChangeRole = async (userId: string, newRole: BaulRole) => {
-    if (!accessToken) return;
+    if (!auth.isAuthenticated) return;
     try {
-      await updateUserRole(accessToken, baul.id, userId, newRole);
+      await updateUserRole(baul.id, userId, newRole);
       showToastMessage('El acceso se ha actualizado');
     } catch (error) {
       console.error('Error updating role:', error);

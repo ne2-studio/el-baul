@@ -1,25 +1,24 @@
 import React from 'react';
 import { WelcomeScreen } from '@/app/components/WelcomeScreen';
-import { signInWithGoogle } from '@/services/auth.service';
+import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 export const WelcomeRoute: React.FC = () => {
-  const navigate = useNavigate();
+  const auth = useAuth();
   const [searchParams] = useSearchParams();
   const showToastMessage = useUIStore(state => state.showToastMessage);
-  
+
   const redirectTo = searchParams.get('redirectTo');
 
-  const handleGoogleSignIn = async () => {
+  const handleSignIn = async () => {
     try {
-      await signInWithGoogle(redirectTo || undefined);
+      await auth.signinRedirect({ state: { redirectTo: redirectTo || undefined } });
     } catch (error) {
       console.error('Error signing in:', error);
       showToastMessage('Error al iniciar sesión');
-      navigate('/');
     }
   };
 
-  return <WelcomeScreen onGoogleSignIn={handleGoogleSignIn} />;
+  return <WelcomeScreen onGoogleSignIn={handleSignIn} />;
 };

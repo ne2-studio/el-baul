@@ -1,17 +1,17 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { OnboardingCarousel } from '@/app/components/OnboardingCarousel';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from 'react-oidc-context';
 
 export const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const accessToken = useAuthStore(state => state.accessToken);
+  const auth = useAuth();
   const baulNombre = searchParams.get('baulNombre') || 'Tu Primer Baúl';
   const baulId = searchParams.get('baulId');
 
   const handleComplete = () => {
-    if (!accessToken) {
+    if (!auth.isAuthenticated) {
       const nextTarget = baulId 
         ? `/invitacion/${baulId}/aceptar` 
         : '/baules/nuevo?onboarding=true';
@@ -27,7 +27,7 @@ export const OnboardingRoute: React.FC = () => {
   };
 
   const handleSkip = () => {
-    if (!accessToken) {
+    if (!auth.isAuthenticated) {
       const nextTarget = baulId 
         ? `/invitacion/${baulId}/aceptar` 
         : '/baules/nuevo?onboarding=true';

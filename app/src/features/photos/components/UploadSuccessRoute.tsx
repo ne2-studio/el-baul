@@ -3,7 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { UploadSuccessScreen } from '@/app/components/UploadSuccessScreen';
 import { Baul, Album } from '@/types';
 
-import { useDataStore } from '@/store/dataStore';
+import { useAppStore } from '@/store/useAppStore';
 
 interface UploadSuccessRouteProps {
   navigate: (path: string) => void;
@@ -14,7 +14,7 @@ export const UploadSuccessRoute: React.FC<UploadSuccessRouteProps> = ({
 }) => {
   const { baulId, albumId } = useParams();
   const location = useLocation();
-  const { baules, albums } = useDataStore();
+  const { baules, albums } = useAppStore();
   const baul = baules.find(b => b.id === baulId);
   const album = albums[baulId!]?.find(a => a.id === albumId);
   const photoCount = parseInt(new URLSearchParams(location.search).get('count') || '0');

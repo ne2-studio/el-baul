@@ -1,42 +1,42 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AccessRequestsScreen } from '@/app/components/AccessRequestsScreen';
-import { useDataStore } from '@/store/dataStore';
-import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAuth } from 'react-oidc-context';
 
 export const AccessRequestsRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
-  const accessToken = useAuthStore(state => state.accessToken);
+  const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
-  
-  const { 
-    baules, 
-    accessRequests, 
-    approveAccessRequest, 
-    rejectAccessRequest 
-  } = useDataStore();
-  
+
+  const {
+    baules,
+    accessRequests,
+    approveAccessRequest,
+    rejectAccessRequest
+  } = useAppStore();
+
   const baul = baules.find(b => b.id === baulId);
-  
+
   if (!baul) return <div className="p-8 text-center">Cargando...</div>;
-  
+
   const handleApprove = async (requestId: string) => {
-    if (!accessToken) return;
+    if (!auth.isAuthenticated) return;
     try {
-      await approveAccessRequest(accessToken, baul.id, requestId);
+      await approveAccessRequest(baul.id, requestId);
       showToastMessage('Acceso concedido');
     } catch (error) {
       console.error('Error approving request:', error);
       showToastMessage('Error al aprobar la petición');
     }
   };
-  
+
   const handleReject = async (requestId: string) => {
-    if (!accessToken) return;
+    if (!auth.isAuthenticated) return;
     try {
-      await rejectAccessRequest(accessToken, baul.id, requestId);
+      await rejectAccessRequest(baul.id, requestId);
       showToastMessage('Petición rechazada');
     } catch (error) {
       console.error('Error rejecting request:', error);

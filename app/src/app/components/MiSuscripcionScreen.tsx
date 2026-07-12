@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronLeft, Crown, Archive, HardDrive } from 'lucide-react';
 import { Button } from './Button';
 
-export type PlanType = 'gratuito' | 'premium';
+export type PlanType = 'gratuito' | 'familiar' | 'premium';
 
 interface SubscriptionInfo {
   currentPlan: PlanType;

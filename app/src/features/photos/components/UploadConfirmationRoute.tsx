@@ -1,13 +1,13 @@
 import React from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadConfirmationScreen } from '@/app/components/UploadConfirmationScreen';
-import { useDataStore } from '@/store/dataStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export const UploadConfirmationRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId, albumId } = useParams();
   const location = useLocation();
-  const { baules, albums } = useDataStore();
+  const { baules, albums } = useAppStore();
   const baul = baules.find(b => b.id === baulId);
   const album = albums[baulId!]?.find(a => a.id === albumId);
   const { selectedPhotos } = location.state || { selectedPhotos: [] };

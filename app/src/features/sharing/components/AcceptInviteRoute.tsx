@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
-import { acceptInvite } from '@/services/baules.service';
+import { api } from '@/api';
 
 export const AcceptInviteRoute: React.FC = () => {
   const { baulId } = useParams<{ baulId: string }>();
   const navigate = useNavigate();
-  const { accessToken } = useAuthStore();
+  const auth = useAuth();
   const { showToastMessage } = useUIStore();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const performAcceptInvite = async () => {
-      if (!baulId || !accessToken) {
-        if (!accessToken) {
-          navigate(`/login?redirectTo=/invitacion/${baulId}/aceptar`);
+      if (!baulId || !auth.isAuthenticated) {
+        if (!auth.isAuthenticated) {
+          navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/${baulId}/aceptar`)}`);
         } else {
           navigate('/baules');
         }
@@ -23,7 +23,7 @@ export const AcceptInviteRoute: React.FC = () => {
       }
 
       try {
-        await acceptInvite(accessToken, baulId);
+        await api.baules.acceptInvite(baulId);
         // Pequeño delay para que se vea el estado de carga y sea más natural
         setTimeout(() => {
           navigate(`/baules/${baulId}`);
@@ -36,7 +36,7 @@ export const AcceptInviteRoute: React.FC = () => {
     };
 
     performAcceptInvite();
-  }, [baulId, accessToken, navigate, showToastMessage]);
+  }, [baulId, auth.isAuthenticated, navigate, showToastMessage]);
 
   if (error) {
     return (
@@ -50,7 +50,7 @@ export const AcceptInviteRoute: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold text-foreground">Ups! Algo ha ido mal</h1>
             <p className="text-muted-foreground">{error}</p>
-            <button 
+            <button
               onClick={() => navigate('/baules')}
               className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-full font-medium hover:opacity-90 transition-opacity"
             >

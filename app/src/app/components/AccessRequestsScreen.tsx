@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, UserPlus, Check, X } from 'lucide-react';
 import { Baul } from './BaulesList';
-import { AccessRequest } from '../App';
+import { AccessRequest } from '@/types';
 
 interface AccessRequestsScreenProps {
   baul: Baul;

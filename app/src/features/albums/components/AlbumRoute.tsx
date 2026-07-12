@@ -1,12 +1,12 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PhotosView } from '@/app/components/PhotosView';
-import { useDataStore } from '@/store/dataStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export const AlbumRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId, albumId } = useParams();
-  const { baules, albums, photos } = useDataStore();
+  const { baules, albums, photos } = useAppStore();
   
   const baul = baules.find(b => b.id === baulId);
   const album = albums[baulId!]?.find(a => a.id === albumId);

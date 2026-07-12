@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from 'react-oidc-context';
 import { ProfileMenuModal } from './components/ProfileMenuModal';
 import { PlanLimitModal } from './components/PlanLimitModal';
 import { Toast } from './components/Toast';
-import { supabase } from '../services/base';
-import { getSession } from '../services/auth.service';
+import { setAccessToken } from '@/api';
 import { Baul } from '@/types';
 
 // Auth and Route Guards
@@ -12,7 +12,7 @@ import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
 
 // Route Components
 import { WelcomeRoute } from '../features/auth/components/WelcomeRoute';
-import { AuthLoadingRoute } from '../features/auth/components/AuthLoadingRoute';
+import { CallbackRoute } from '../features/auth/components/CallbackRoute';
 import { OnboardingRoute } from '../features/auth/components/OnboardingRoute';
 import { EmptyBaulesRoute } from '../features/baules/components/EmptyBaulesRoute';
 import { BaulesListRoute } from '../features/baules/components/BaulesListRoute';
@@ -39,15 +39,15 @@ import { PlanSelectionRoute } from '../features/profile/components/PlanSelection
 import { PaymentRoute } from '../features/profile/components/PaymentRoute';
 
 import { useUIStore } from '../store/uiStore';
-import { useDataStore } from '../store/dataStore';
-import { useAuthStore } from '../store/authStore';
+import { useAppStore } from '../store/useAppStore';
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { 
-    showToast, 
-    toastMessage, 
+  const auth = useAuth();
+  const {
+    showToast,
+    toastMessage,
     hideToast,
     showProfileMenu,
     setShowProfileMenu,
@@ -56,99 +56,48 @@ function App() {
   } = useUIStore();
 
   const {
-    loadUserData: storeLoadUserData,
-    setBaules: storeSetBaules,
-  } = useDataStore();
-
-  const {
-    setAccessToken,
     userProfile,
     subscription,
     setSubscription,
-    loadUserProfile,
-    signOut: storeSignOut
-  } = useAuthStore();
-  
-  // Check for existing session on mount
+    setAuthenticated,
+    fetchData,
+    reset
+  } = useAppStore();
+
+  // Redirect to sign-in whenever the user isn't authenticated and isn't on a public route.
   useEffect(() => {
-    checkSession();
-  }, []);
+    if (auth.isLoading || auth.isAuthenticated || location.pathname === '/callback') return;
 
-  // Auth listener
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
-      
-      if (event === 'SIGNED_IN' && session) {
-        setAccessToken(session.access_token);
-        await loadUserData(session.access_token, session.user);
-        
-        // Si hay un redirectTo en la URL de auth-loading, AuthLoadingRoute se encargará.
-        // Pero si estamos en '/' o en un flujo donde no hay AuthLoadingRoute intermedio:
-        if (location.pathname === '/') {
-          const params = new URLSearchParams(location.search);
-          const redirectTo = params.get('redirectTo');
-          if (redirectTo) {
-            navigate(redirectTo);
-          } else {
-            navigate('/baules');
-          }
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setAccessToken(null);
-        storeSetBaules([]);
-        navigate('/');
-      }
-    });
+    const isPublicPath =
+      location.pathname === '/' ||
+      location.pathname.startsWith('/solicitar-acceso') ||
+      location.pathname.startsWith('/invitacion') ||
+      location.pathname.startsWith('/onboarding');
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const checkSession = async () => {
-    try {
-      const session = await getSession();
-      
-      if (session) {
-        setAccessToken(session.access_token);
-        await loadUserData(session.access_token, session.user);
-        if (location.pathname === '/') {
-          const params = new URLSearchParams(location.search);
-          const redirectTo = params.get('redirectTo');
-          if (redirectTo) {
-            navigate(redirectTo);
-          } else {
-            navigate('/baules');
-          }
-        }
-      } else {
-        // Only navigate to home if not already on a public route or onboarding
-        if (
-          location.pathname !== '/' && 
-          !location.pathname.startsWith('/solicitar-acceso') &&
-          !location.pathname.startsWith('/invitacion') &&
-          !location.pathname.startsWith('/onboarding')
-        ) {
-          navigate('/');
-        }
-      }
-    } catch (error) {
-      console.error('Error checking session:', error);
+    if (!isPublicPath) {
       navigate('/');
     }
-  };
+  }, [auth.isLoading, auth.isAuthenticated, location.pathname, navigate]);
 
-  const loadUserData = async (token: string, supabaseUser?: any) => {
+  // Push the token into api.ts and (re)load domain data whenever the OIDC user changes.
+  useEffect(() => {
+    setAccessToken(auth.user?.access_token ?? null);
+    setAuthenticated(auth.isAuthenticated);
+
+    if (auth.isAuthenticated) {
+      loadUserData();
+    } else {
+      reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.isAuthenticated, auth.user]);
+
+  const loadUserData = async () => {
     try {
-      // Load user profile and data via stores
-      await Promise.all([
-        loadUserProfile(token, supabaseUser),
-        storeLoadUserData(token)
-      ]);
-      
-      const currentBaules = useDataStore.getState().baules;
-      
+      await fetchData();
+
+      const currentBaules = useAppStore.getState().baules;
+
       // Update subscription usage
       const custodianBaules = currentBaules.filter((b: Baul) => b.isCustodio);
       setSubscription(prev => ({
@@ -165,26 +114,26 @@ function App() {
         // Solo redirigir automáticamente si no hay un redirectTo pendiente
         const params = new URLSearchParams(location.search);
         const hasRedirectTo = params.has('redirectTo');
-        
-        if (!hasRedirectTo && (location.pathname === '/' || location.pathname === '/empty' || location.pathname === '/auth-loading')) {
+
+        if (!hasRedirectTo && (location.pathname === '/' || location.pathname === '/empty' || location.pathname === '/callback')) {
           navigate('/baules', { replace: true });
         }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
-      navigate('/');
     }
   };
 
   const handleSignOut = async () => {
     try {
-      await storeSignOut();
+      reset();
+      await auth.removeUser();
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
-  
+
   return (
     <div className="h-screen w-full bg-[var(--bg-primary)]">
       <Routes>
@@ -194,10 +143,10 @@ function App() {
             <WelcomeRoute />
           </PublicRoute>
         } />
-        <Route path="/auth-loading" element={<AuthLoadingRoute />} />
+        <Route path="/callback" element={<CallbackRoute />} />
         <Route path="/solicitar-acceso/:baulId" element={<RequestAccessRoute />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
-        
+
         {/* Protected Routes */}
         <Route path="/empty" element={
           <ProtectedRoute>
@@ -214,7 +163,7 @@ function App() {
             <CreateBaulRoute />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/baules/:baulId" element={
           <ProtectedRoute>
             <BaulRoute />
@@ -283,7 +232,7 @@ function App() {
             <RemovalRequestsRoute />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/actividad" element={
           <ProtectedRoute>
             <ActivityCenterRoute />
@@ -310,7 +259,7 @@ function App() {
           </ProtectedRoute>
         } />
       </Routes>
-      
+
       {/* Profile Menu Modal */}
       {showProfileMenu && (
         <ProfileMenuModal
@@ -330,7 +279,7 @@ function App() {
           }}
         />
       )}
-      
+
       {/* Plan Limit Modal */}
       {showPlanLimitModal && (
         <PlanLimitModal
@@ -343,7 +292,7 @@ function App() {
           }}
         />
       )}
-      
+
       {/* Toast */}
       {showToast && (
         <Toast

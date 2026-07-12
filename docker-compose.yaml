@@ -1,10 +1,13 @@
-# Local development environment: Postgres + both services, each built from its own Dockerfile.
+# Local development environment: Postgres + MinIO + fake-oidc + both services, each
+# built from its own Dockerfile.
 #
-# The frontend's Dockerfile only copies a pre-built `dist/` into nginx (it doesn't run `npm build`
-# itself — that happens in CI). Before `docker compose up --build`, run:
-#   cd frontend && cp .env.example .env && npm install && npm run build
-# VITE_API_URL is baked into the build at build time, so make sure frontend/.env points at
-# http://localhost:5050 (the backend port mapped below) before building.
+# The frontend's Dockerfile only copies a pre-built `dist/` into nginx (it doesn't run
+# `npm build` itself — that happens in CI). Before `docker compose up --build`, run:
+#   cd app && cp .env.example .env && npm install && npm run build
+#
+# fake-oidc (https://github.com/ne2-studio/fake-oidc) is a throwaway OIDC provider for
+# local/E2E use — no real login UI, users are selected via `login_hint`. Sign in with
+# `login_hint=admin` or `login_hint=user` against http://localhost:5000/authorize.
 
 services:
   postgres:
@@ -12,38 +15,80 @@ services:
     environment:
       POSTGRES_USER: devuser
       POSTGRES_PASSWORD: devpass
-      POSTGRES_DB: servicetemplate
+      POSTGRES_DB: elbaul
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U devuser -d servicetemplate"]
+      test: ["CMD-SHELL", "pg_isready -U devuser -d elbaul"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  backend:
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  fake-oidc:
+    image: ghcr.io/ne2-studio/fake-oidc:latest
+    environment:
+      OIDC_ISSUER: "http://localhost:5000"
+      OIDC_CLIENTS: '[{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback"]}]'
+      OIDC_USERS: >-
+        [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]},
+        {"key":"user","sub":"normal-user","email":"user@test.local","name":"Normal User","roles":["user"]}]
+      OIDC_DEFAULT_USER: "admin"
+    ports:
+      - "5000:5000"
+
+  api:
     build:
-      context: ./backend
+      context: ./api
       dockerfile: Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=servicetemplate;Username=devuser;Password=devpass"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=elbaul;Username=devuser;Password=devpass"
+      Auth__JwksUri: "http://fake-oidc:5000/.well-known/jwks.json"
+      Auth__ValidIssuer: "http://localhost:5000"
+      Auth__Audience: "el-baul-app"
+      Storage__Endpoint: "http://minio:9000"
+      Storage__PublicEndpoint: "http://localhost:9000"
+      Storage__AccessKey: "minioadmin"
+      Storage__SecretKey: "minioadmin"
+      Storage__BucketName: "el-baul-photos"
     ports:
       - "5050:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_healthy
+      fake-oidc:
+        condition: service_started
 
-  frontend:
+  app:
     build:
-      context: ./frontend
+      context: ./app
       dockerfile: Dockerfile
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      - api
 
 volumes:
   pgdata:
+  miniodata:

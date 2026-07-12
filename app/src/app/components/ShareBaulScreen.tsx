@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Send } from 'lucide-react';
 import { Baul } from './BaulesList';
-import { BaulRole, getRoleDisplayName, getRoleDescription } from '../App';
+import { BaulRole } from '@/types';
+import { getRoleDisplayName, getRoleDescription } from '@/utils/roleUtils';
 
 interface ShareBaulScreenProps {
   baul: Baul;
