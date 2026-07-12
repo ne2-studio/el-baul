@@ -1,0 +1,23 @@
+# Deno
+.deno/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment variables
+supabase/.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Supabase
+.branches/
+.temp/

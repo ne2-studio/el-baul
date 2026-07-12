@@ -1,0 +1,32 @@
+import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '@/store/authStore';
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const accessToken = useAuthStore(state => state.accessToken);
+  const location = useLocation();
+
+  if (!accessToken) {
+    // Redirect them to the / login page, but save the current location they were
+    // trying to go to when they were redirected. This allows us to send them
+    // along to that page after they login, which is a nicer user experience
+    // than dropping them off on the home page.
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+export const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const accessToken = useAuthStore(state => state.accessToken);
+
+  if (accessToken) {
+    return <Navigate to="/baules" replace />;
+  }
+
+  return <>{children}</>;
+};

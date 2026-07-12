@@ -1,0 +1,49 @@
+# Local development environment: Postgres + both services, each built from its own Dockerfile.
+#
+# The frontend's Dockerfile only copies a pre-built `dist/` into nginx (it doesn't run `npm build`
+# itself — that happens in CI). Before `docker compose up --build`, run:
+#   cd frontend && cp .env.example .env && npm install && npm run build
+# VITE_API_URL is baked into the build at build time, so make sure frontend/.env points at
+# http://localhost:5050 (the backend port mapped below) before building.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: servicetemplate
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d servicetemplate"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=servicetemplate;Username=devuser;Password=devpass"
+    ports:
+      - "5050:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

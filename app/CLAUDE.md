@@ -1,0 +1,1 @@
+- all console commands used by the agent must be linux commands

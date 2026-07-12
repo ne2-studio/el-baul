@@ -1,0 +1,126 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { AlbumsView } from '@/app/components/AlbumsView';
+import { useDataStore } from '@/store/dataStore';
+import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
+
+export const BaulRoute: React.FC = () => {
+  const navigate = useNavigate();
+  const { baulId } = useParams();
+  const accessToken = useAuthStore(state => state.accessToken);
+  const showToastMessage = useUIStore(state => state.showToastMessage);
+  
+  const {
+    baules,
+    albums,
+    accessRequests,
+    removalRequests,
+    activities,
+    loadAlbumPhotos,
+    loadAlbums,
+    loadUserData
+  } = useDataStore();
+
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const baul = baules.find(b => b.id === baulId);
+
+  useEffect(() => {
+    async function initBaul() {
+      if (!baulId || !accessToken) return;
+      
+      // Si el baúl no está en la lista de baúles, intentamos recargar los datos del usuario
+      if (!baul) {
+        try {
+          setIsLoading(true);
+          await loadUserData(accessToken);
+        } catch (error) {
+          console.error('Error refreshing user data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+        return; // El siguiente renderizado tendrá el baúl (si existe) y se ejecutará el siguiente if
+      }
+
+      // Si el baúl no tiene álbumes cargados en el store, los cargamos
+      if (!albums[baulId]) {
+        try {
+          setIsLoading(true);
+          await loadAlbums(accessToken, baulId);
+        } catch (error) {
+          console.error('Error loading albums on route enter:', error);
+          showToastMessage('Error al cargar los álbumes del baúl');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    initBaul();
+  }, [baulId, accessToken, baul, albums, loadAlbums, loadUserData, showToastMessage]);
+  
+  if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
+  if (!baul) return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
+  
+  const handleSelectAlbum = async (album: any) => {
+    if (!accessToken) return;
+    try {
+      await loadAlbumPhotos(accessToken, album.id);
+      navigate(`/baules/${baul.id}/albumes/${album.id}`);
+    } catch (error) {
+      console.error('Error loading photos:', error);
+      showToastMessage('Error al cargar las fotos');
+    }
+  };
+  
+  const handleShareBaul = async () => {
+    if (!baul) return;
+    
+    const inviteUrl = `${window.location.origin}/invitacion/${baul.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Invitación a ${baul.name}`,
+          text: `Te invito a unirte a mi baúl de recuerdos "${baul.name}" en El Baúl.`,
+          url: inviteUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error sharing:', error);
+          copyToClipboard(inviteUrl);
+        }
+      }
+    } else {
+      copyToClipboard(inviteUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      showToastMessage('Enlace de invitación copiado al portapapeles');
+    }).catch(err => {
+      console.error('Error copying to clipboard:', err);
+      showToastMessage('Error al copiar el enlace');
+    });
+  };
+
+  return (
+    <AlbumsView
+      baul={baul}
+      albums={albums[baul.id] || []}
+      onBack={() => navigate('/baules')}
+      onSelectAlbum={handleSelectAlbum}
+      onCreateAlbum={() => navigate(`/baules/${baul.id}/nuevo-album`)}
+      onShareBaul={handleShareBaul}
+      onManagePeople={() => navigate(`/personas/${baul.id}`)}
+      onAccessRequests={() => navigate(`/solicitudes/${baul.id}`)}
+      pendingRequestsCount={(accessRequests[baul.id] || []).length}
+      onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
+      pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
+      onOpenActivity={() => navigate('/actividad')}
+      actionableActivityCount={activities.filter(a => a.isActionable).length}
+    />
+  );
+};

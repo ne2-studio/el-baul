@@ -1,0 +1,2 @@
+-- Seed data for testing
+-- Seeds for relational tables can be added here

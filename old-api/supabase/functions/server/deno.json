@@ -1,0 +1,14 @@
+{
+  "lock": false,
+  "tasks": {
+    "test": "deno test --allow-env --env tests/",
+    "lint": "deno lint"
+  },
+  "imports": {
+    "hono": "npm:hono@4",
+    "hono/cors": "npm:hono@4/cors",
+    "hono/logger": "npm:hono@4/logger",
+    "supabase": "npm:@supabase/supabase-js@2",
+    "@std/assert": "jsr:@std/assert@^1.0.0"
+  }
+}

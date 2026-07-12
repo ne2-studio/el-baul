@@ -1,0 +1,2 @@
+- all console commands used by the agent must be linux commands
+- after every change run `deno lint` and fix warnings
