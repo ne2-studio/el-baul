@@ -65,6 +65,7 @@ services:
       Auth__JwksUri: "http://fake-oidc:5000/.well-known/jwks.json"
       Auth__ValidIssuer: "http://localhost:5000"
       Auth__Audience: "el-baul-app"
+      Auth__UserInfoEndpoint: "http://fake-oidc:5000/oidc/v1/userinfo"
       Storage__Endpoint: "http://minio:9000"
       Storage__PublicEndpoint: "http://localhost:9000"
       Storage__AccessKey: "minioadmin"

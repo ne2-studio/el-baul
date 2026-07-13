@@ -25,6 +25,8 @@ public static class ServiceRegistration
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
 
+        services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
+
         // Singleton: wraps a single AmazonS3Client, which the AWS SDK documents as
         // thread-safe and designed for reuse/connection pooling across requests —
         // a deliberate exception to the default Scoped lifetime, not request state.
