@@ -42,6 +42,7 @@ jobs:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_OIDC_AUTHORITY: ${{ vars.VITE_OIDC_AUTHORITY }}
           VITE_OIDC_CLIENT_ID: ${{ vars.VITE_OIDC_CLIENT_ID }}
+          VITE_ZITADEL_ORGANIZATION_ID: ${{ vars.VITE_ZITADEL_ORGANIZATION_ID }}
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

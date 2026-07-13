@@ -50,7 +50,7 @@ configuration, tests, and Docker.
 ```bash
 cd app
 cp .env.example .env
-# VITE_API_URL, VITE_OIDC_AUTHORITY, VITE_OIDC_CLIENT_ID are read from .env
+# VITE_API_URL, VITE_OIDC_AUTHORITY, VITE_OIDC_CLIENT_ID, VITE_ZITADEL_ORGANIZATION_ID are read from .env
 
 npm install
 npm run dev

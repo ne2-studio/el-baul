@@ -8,11 +8,12 @@
 
   registerSW({ immediate: true })
 
+  const organizationId = import.meta.env.VITE_ZITADEL_ORGANIZATION_ID as string;
   const oidcConfig = {
     authority: import.meta.env.VITE_OIDC_AUTHORITY as string,
     client_id: import.meta.env.VITE_OIDC_CLIENT_ID as string,
     redirect_uri: `${window.location.origin}/callback`,
-    scope: "openid profile email",
+    scope: `$openid profile email urn:zitadel:iam:org:id:${organizationId}`,
     onSigninCallback: () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     },

@@ -47,9 +47,10 @@ de forma segura y organizada. Este directorio contiene el frontend, construido s
    ```bash
    cp .env.example .env
    ```
-   `.env` needs `VITE_API_URL` (the backend's base URL), `VITE_OIDC_AUTHORITY`, and
-   `VITE_OIDC_CLIENT_ID`. The committed defaults point at the backend/fake-oidc from the
-   root `docker-compose.yaml` running on localhost.
+   `.env` needs `VITE_API_URL` (the backend's base URL), `VITE_OIDC_AUTHORITY`,
+   `VITE_OIDC_CLIENT_ID`, and `VITE_ZITADEL_ORGANIZATION_ID` (scopes the login screen to
+   the right Zitadel organization). The committed defaults point at the backend/fake-oidc
+   from the root `docker-compose.yaml` running on localhost.
 
 3. **Ejecutar en desarrollo:**
    ```bash
