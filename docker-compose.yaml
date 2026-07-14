@@ -50,7 +50,9 @@ services:
       retries: 10
 
   imgproxy:
-    image: ghcr.io/imgproxy/imgproxy:latest
+    build:
+      context: ./imgproxy
+      dockerfile: Dockerfile
     environment:
       IMGPROXY_USE_S3: "true"
       IMGPROXY_S3_ENDPOINT: "http://minio:9000"
@@ -60,11 +62,6 @@ services:
       AWS_SECRET_ACCESS_KEY: "minioadmin"
       IMGPROXY_KEY: "de60801120d03c14c8f17cfc7f8e77c4ee21712606163c1ef4c8ea45a80173a4"
       IMGPROXY_SALT: "bbf343c1d3a7def2db1faa30c446fe815e2b87add292ab65c30ce8e774bcc96c"
-      IMGPROXY_ONLY_PRESETS: "true"
-      IMGPROXY_PRESETS_PATH: "/etc/imgproxy/presets.conf"
-      IMGPROXY_AUTO_WEBP: "true"
-    volumes:
-      - ./imgproxy/presets.conf:/etc/imgproxy/presets.conf:ro
     ports:
       - "8081:8080"
     depends_on:
