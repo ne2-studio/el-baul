@@ -70,8 +70,8 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
                   onClick={() => onSelectPhoto(photo)}
                   className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
                 >
-                  <img 
-                    src={photo.url} 
+                  <img
+                    src={photo.thumbnailUrl}
                     alt={photo.caption || 'Foto'}
                     className="w-full h-full object-cover"
                   />

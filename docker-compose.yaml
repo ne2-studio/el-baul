@@ -1,5 +1,11 @@
-# Local development environment: Postgres + MinIO + fake-oidc + both services, each
-# built from its own Dockerfile.
+# Local development environment: Postgres + MinIO + imgproxy + fake-oidc + both
+# services, each built from its own Dockerfile.
+#
+# imgproxy is the only thing that ever reads from MinIO — it holds its own S3
+# credentials and fetches originals directly (s3://bucket/key). The API never hands
+# out a MinIO URL; it only builds signed imgproxy URLs (see
+# api/ElBaul.Infra/ImgproxyUrlBuilder.cs and imgproxy/presets.conf for the allowed
+# resize presets).
 #
 # The frontend's Dockerfile only copies a pre-built `dist/` into nginx (it doesn't run
 # `npm build` itself — that happens in CI). Before `docker compose up --build`, run:
@@ -43,6 +49,28 @@ services:
       timeout: 5s
       retries: 10
 
+  imgproxy:
+    image: ghcr.io/imgproxy/imgproxy:latest
+    environment:
+      IMGPROXY_USE_S3: "true"
+      IMGPROXY_S3_ENDPOINT: "http://minio:9000"
+      IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE: "true"
+      IMGPROXY_S3_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "minioadmin"
+      AWS_SECRET_ACCESS_KEY: "minioadmin"
+      IMGPROXY_KEY: "de60801120d03c14c8f17cfc7f8e77c4ee21712606163c1ef4c8ea45a80173a4"
+      IMGPROXY_SALT: "bbf343c1d3a7def2db1faa30c446fe815e2b87add292ab65c30ce8e774bcc96c"
+      IMGPROXY_ONLY_PRESETS: "true"
+      IMGPROXY_PRESETS_PATH: "/etc/imgproxy/presets.conf"
+      IMGPROXY_AUTO_WEBP: "true"
+    volumes:
+      - ./imgproxy/presets.conf:/etc/imgproxy/presets.conf:ro
+    ports:
+      - "8081:8080"
+    depends_on:
+      minio:
+        condition: service_healthy
+
   fake-oidc:
     image: ghcr.io/ne2-studio/fake-oidc:latest
     environment:
@@ -67,10 +95,12 @@ services:
       Auth__Audience: "el-baul-app"
       Auth__UserInfoEndpoint: "http://fake-oidc:5000/oidc/v1/userinfo"
       Storage__Endpoint: "http://minio:9000"
-      Storage__PublicEndpoint: "http://localhost:9000"
       Storage__AccessKey: "minioadmin"
       Storage__SecretKey: "minioadmin"
       Storage__BucketName: "el-baul-photos"
+      Imgproxy__BaseUrl: "http://localhost:8081"
+      Imgproxy__Key: "de60801120d03c14c8f17cfc7f8e77c4ee21712606163c1ef4c8ea45a80173a4"
+      Imgproxy__Salt: "bbf343c1d3a7def2db1faa30c446fe815e2b87add292ab65c30ce8e774bcc96c"
     ports:
       - "5050:8080"
     depends_on:
@@ -78,6 +108,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      imgproxy:
+        condition: service_started
       fake-oidc:
         condition: service_started
 

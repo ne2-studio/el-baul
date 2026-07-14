@@ -31,6 +31,7 @@ public static class ServiceRegistration
         // thread-safe and designed for reuse/connection pooling across requests —
         // a deliberate exception to the default Scoped lifetime, not request state.
         services.Configure<StorageOptions>(configuration.GetSection("Storage"));
+        services.Configure<ImgproxyOptions>(configuration.GetSection("Imgproxy"));
         services.AddSingleton<IPhotoStorage, MinioPhotoStorage>();
 
         return services;

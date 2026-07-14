@@ -212,9 +212,9 @@ export function PhotoViewer({
             )}
             
             {/* Photo */}
-            <img 
-              src={photo.url} 
-              alt={photo.caption || 'Foto'} 
+            <img
+              src={photo.fullUrl}
+              alt={photo.caption || 'Foto'}
               className="max-w-full max-h-[80vh] object-contain select-none"
               draggable={false}
             />

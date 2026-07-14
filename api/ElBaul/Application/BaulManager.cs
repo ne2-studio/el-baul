@@ -17,8 +17,6 @@ public class BaulManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider) : IBaulManager
 {
-    private static readonly TimeSpan SignedUrlLifetime = TimeSpan.FromHours(1);
-
     public async Task<Result<IEnumerable<BaulDto>>> GetAllForCurrentUserAsync()
     {
         var userId = currentUserProvider.GetUserId();
@@ -68,7 +66,7 @@ public class BaulManager(
         var urls = new List<string>();
         foreach (var photo in photos)
         {
-            urls.Add(await photoStorage.GetSignedUrlAsync(photo.StorageKey, SignedUrlLifetime));
+            urls.Add(await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.InvitationPreview));
         }
 
         return new BaulPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, urls);
@@ -275,7 +273,7 @@ public class BaulManager(
         var dtos = new List<RemovalRequestDto>();
         foreach (var request in requests)
         {
-            var url = await photoStorage.GetSignedUrlAsync(request.PhotoStorageKey, SignedUrlLifetime);
+            var url = await photoStorage.GetImageUrl(request.PhotoStorageKey, ImagePlacement.RemovalRequestThumbnail);
             dtos.Add(ToDto(request, url));
         }
 
@@ -303,7 +301,7 @@ public class BaulManager(
             idGenerator.NewId(), ActivityType.PhotoRemovalRequest, baulId, baul.Name, now,
             true, null, null, null, request.Id));
 
-        var url = await photoStorage.GetSignedUrlAsync(photo.StorageKey, SignedUrlLifetime);
+        var url = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.RemovalRequestThumbnail);
         return ToDto(request, url);
     }
 
@@ -329,6 +327,12 @@ public class BaulManager(
 
         await photoRepository.DeleteAsync(request.PhotoId);
         await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+
+        if (photo is not null)
+        {
+            await photoStorage.DeleteAsync(photo.StorageKey);
+        }
+
         return Result.Success();
     }
 

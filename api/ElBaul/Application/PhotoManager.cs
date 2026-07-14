@@ -16,8 +16,6 @@ public class PhotoManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider) : IPhotoManager
 {
-    private static readonly TimeSpan SignedUrlLifetime = TimeSpan.FromHours(1);
-
     public async Task<Result<IEnumerable<PhotoDto>>> GetByAlbumIdAsync(Guid albumId)
     {
         var userId = currentUserProvider.GetUserId();
@@ -35,8 +33,9 @@ public class PhotoManager(
         var dtos = new List<PhotoDto>();
         foreach (var photo in photos)
         {
-            var url = await photoStorage.GetSignedUrlAsync(photo.StorageKey, SignedUrlLifetime);
-            dtos.Add(ToDto(photo, url));
+            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
+            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl));
         }
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
@@ -82,8 +81,9 @@ public class PhotoManager(
             idGenerator.NewId(), ActivityType.NewPhotos, album.BaulId, baul.Name, now,
             false, 1, null, null, null));
 
-        var url = await photoStorage.GetSignedUrlAsync(storageKey, SignedUrlLifetime);
-        return ToDto(photo, url);
+        var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
+        var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
+        return ToDto(photo, thumbnailUrl, fullUrl);
     }
 
     public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId)
@@ -130,9 +130,9 @@ public class PhotoManager(
         return ToDto(recuerdo, user?.Name ?? "Usuario", isOwn: true);
     }
 
-    private static PhotoDto ToDto(Photo photo, string url) =>
-        new(photo.Id.ToString(), photo.AlbumId.ToString(), photo.BaulId.ToString(), url, photo.Caption,
-            photo.Date, photo.UploadedBy, photo.CreatedAt);
+    private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl) =>
+        new(photo.Id.ToString(), photo.AlbumId.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
+            photo.Caption, photo.Date, photo.UploadedBy, photo.CreatedAt);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, bool isOwn) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId.ToString(), recuerdo.UserId, recuerdo.Text, userName,

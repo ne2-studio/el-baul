@@ -12,8 +12,6 @@ public class AlbumManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider) : IAlbumManager
 {
-    private static readonly TimeSpan SignedUrlLifetime = TimeSpan.FromHours(1);
-
     public async Task<Result<IEnumerable<AlbumDto>>> GetByBaulIdAsync(Guid baulId)
     {
         var userId = currentUserProvider.GetUserId();
@@ -29,7 +27,7 @@ public class AlbumManager(
         foreach (var album in albums)
         {
             var coverUrl = album.CoverPhotoKey is { Length: > 0 }
-                ? await photoStorage.GetSignedUrlAsync(album.CoverPhotoKey, SignedUrlLifetime)
+                ? await photoStorage.GetImageUrl(album.CoverPhotoKey, ImagePlacement.AlbumCover)
                 : null;
             dtos.Add(ToDto(album, coverUrl));
         }

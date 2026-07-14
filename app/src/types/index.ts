@@ -76,13 +76,15 @@ export class Album {
 
 export class Photo {
   id: string;
-  url: string;
+  thumbnailUrl: string;
+  fullUrl: string;
   caption?: string;
   date?: string;
 
   constructor(data: any) {
     this.id = data.id;
-    this.url = data.url;
+    this.thumbnailUrl = data.thumbnailUrl;
+    this.fullUrl = data.fullUrl;
     this.caption = data.caption;
     this.date = data.date;
   }

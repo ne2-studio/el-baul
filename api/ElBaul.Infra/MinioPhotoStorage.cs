@@ -8,19 +8,21 @@ using Microsoft.Extensions.Options;
 namespace ElBaul.Infra;
 
 /// <summary>
-/// Stores photos in MinIO (S3-compatible). Presigned GET URLs are generated against
-/// the internal Docker-network endpoint (reachable from this container) then rewritten
-/// to the public endpoint (reachable from the browser) via SignedUrlRewriter — the same
-/// internal/public split the old Supabase-backed storage adapter used.
+/// Stores photos in MinIO (S3-compatible), reachable only over the internal docker
+/// network. Reads never touch MinIO directly or expose a MinIO URL — GetImageUrl
+/// returns a signed imgproxy URL (see ImgproxyUrlBuilder); imgproxy itself has its own
+/// S3 credentials and reads MinIO on this process's behalf.
 /// </summary>
 public class MinioPhotoStorage : IPhotoStorage
 {
     private readonly IAmazonS3 _client;
     private readonly StorageOptions _options;
+    private readonly ImgproxyOptions _imgproxyOptions;
 
-    public MinioPhotoStorage(IOptions<StorageOptions> options)
+    public MinioPhotoStorage(IOptions<StorageOptions> options, IOptions<ImgproxyOptions> imgproxyOptions)
     {
         _options = options.Value;
+        _imgproxyOptions = imgproxyOptions.Value;
         _client = new AmazonS3Client(
             new BasicAWSCredentials(_options.AccessKey, _options.SecretKey),
             new AmazonS3Config
@@ -41,17 +43,16 @@ public class MinioPhotoStorage : IPhotoStorage
         });
     }
 
-    public async Task<string> GetSignedUrlAsync(string key, TimeSpan expiresIn)
+    public Task<string> GetImageUrl(string key, ImagePlacement placement) =>
+        Task.FromResult(ImgproxyUrlBuilder.Build(_options.BucketName, key, placement, _imgproxyOptions));
+
+    public async Task DeleteAsync(string key)
     {
-        var internalUrl = await _client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
+        await _client.DeleteObjectAsync(new DeleteObjectRequest
         {
             BucketName = _options.BucketName,
-            Key = key,
-            Expires = DateTime.UtcNow.Add(expiresIn),
-            Verb = HttpVerb.GET
+            Key = key
         });
-
-        return SignedUrlRewriter.Rewrite(internalUrl, _options.PublicEndpoint);
     }
 
     public async Task EnsureBucketExistsAsync()

@@ -37,7 +37,7 @@ Response `200 OK`: the baúl. `403` if the caller has no access.
 
 ### `GET /api/baules/{baulId}/preview` (public)
 
-Response `200 OK`: `{ "id", "name", "description", "previewPhotos": ["signed-url", ...] }`
+Response `200 OK`: `{ "id", "name", "description", "previewPhotos": ["imgproxy-url", ...] }`
 (up to 4 photos).
 
 ### `POST /api/baules/{baulId}/accept-invite`
@@ -92,7 +92,7 @@ photo, decrements the album's photo count) or rejects (keeps it).
 
 ### `GET /api/baules/{baulId}/albums`
 
-Response `200 OK`: array of `{ "id", "baulId", "name", "description", "photoCount", "coverPhotoUrl": "signed-url|null", "createdAt", "updatedAt" }`.
+Response `200 OK`: array of `{ "id", "baulId", "name", "description", "photoCount", "coverPhotoUrl": "imgproxy-url|null", "createdAt", "updatedAt" }`.
 
 ### `POST /api/baules/{baulId}/albums`
 
@@ -103,7 +103,9 @@ Response `200 OK`: the album; increments the baúl's `albumCount`.
 
 ### `GET /api/albums/{albumId}/photos`
 
-Response `200 OK`: array of `{ "id", "albumId", "baulId", "url": "signed-url", "caption", "date", "uploadedBy", "createdAt" }`.
+Response `200 OK`: array of `{ "id", "albumId", "baulId", "thumbnailUrl": "imgproxy-url", "fullUrl": "imgproxy-url", "caption", "date", "uploadedBy", "createdAt" }`.
+`thumbnailUrl` is sized for grid display, `fullUrl` for a full-screen viewer — both point
+at imgproxy, never at storage directly.
 
 ### `POST /api/albums/{albumId}/photos`
 
