@@ -21,7 +21,6 @@ import { BaulRoute } from '../features/baules/components/BaulRoute';
 import { CreateAlbumFormRoute } from '../features/albums/components/CreateAlbumFormRoute';
 import { AlbumRoute } from '../features/albums/components/AlbumRoute';
 import { PhotoViewerRoute } from '../features/photos/components/PhotoViewerRoute';
-import { FilePickerRoute } from '../features/photos/components/FilePickerRoute';
 import { UploadConfirmationRoute } from '../features/photos/components/UploadConfirmationRoute';
 import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadSuccessRoute } from '../features/photos/components/UploadSuccessRoute';
@@ -182,11 +181,6 @@ function App() {
         <Route path="/baules/:baulId/albumes/:albumId/foto/:photoId" element={
           <ProtectedRoute>
             <PhotoViewerRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/baules/:baulId/albumes/:albumId/subir" element={
-          <ProtectedRoute>
-            <FilePickerRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/albumes/:albumId/confirmar" element={

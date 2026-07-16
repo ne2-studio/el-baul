@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle } from 'lucide-react';
 import { Album } from './AlbumsView';
+import { SelectedPhoto } from './UploadConfirmationScreen';
 
 export interface Photo {
   id: string;
@@ -17,11 +18,26 @@ interface PhotosViewProps {
   photos: Photo[];
   onBack: () => void;
   onSelectPhoto: (photo: Photo) => void;
-  onAddPhotos: () => void;
+  onAddPhotos: (selectedPhotos: SelectedPhoto[]) => void;
 }
 
 export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }: PhotosViewProps) {
   const totalRecuerdos = photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const selectedPhotos: SelectedPhoto[] = Array.from(files).map((file, index) => ({
+      id: `temp-${Date.now()}-${index}`,
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+
+    e.target.value = '';
+    onAddPhotos(selectedPhotos);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,6 +66,15 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
         </div>
       </div>
       
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-6">
         {photos.length === 0 ? (
@@ -64,7 +89,7 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
               <Button 
                 variant="primary" 
                 fullWidth 
-                onClick={onAddPhotos}
+                onClick={() => fileInputRef.current?.click()}
                 className="flex items-center justify-center gap-2"
               >
                 <Plus className="w-5 h-5" />
@@ -100,7 +125,7 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
               <Button 
                 variant="primary" 
                 fullWidth 
-                onClick={onAddPhotos}
+                onClick={() => fileInputRef.current?.click()}
                 className="flex items-center justify-center gap-2"
               >
                 <Plus className="w-5 h-5" />

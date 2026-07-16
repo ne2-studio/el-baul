@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PhotosView } from '@/app/components/PhotosView';
 import { useAppStore } from '@/store/useAppStore';
+import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 
 export const AlbumRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +20,9 @@ export const AlbumRoute: React.FC = () => {
       photos={photos[album.id] || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${photo.id}`)}
-      onAddPhotos={() => navigate(`/baules/${baul.id}/albumes/${album.id}/subir`)}
+      onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>
+        navigate(`/baules/${baul.id}/albumes/${album.id}/confirmar`, { state: { selectedPhotos } })
+      }
     />
   );
 };
