@@ -184,7 +184,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       albums: {
         ...state.albums,
         [baulId]: (state.albums[baulId] || []).map((a) =>
-          a.id === albumId ? { ...a, photoCount: a.photoCount + uploaded.length } : a
+          a.id === albumId
+            ? {
+                ...a,
+                photoCount: a.photoCount + uploaded.length,
+                coverPhotoUrl: a.coverPhotoUrl || uploaded[0]?.thumbnailUrl,
+              }
+            : a
         ),
       },
     }));
