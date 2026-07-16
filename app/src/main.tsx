@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "react-oidc-context";
+import { WebStorageStateStore } from "oidc-client-ts";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 
@@ -60,6 +61,7 @@ async function bootstrap() {
     client_id: import.meta.env.VITE_OIDC_CLIENT_ID as string,
     redirect_uri: import.meta.env.VITE_OIDC_CALLBACK_URI as string,
     scope: `openid profile email urn:zitadel:iam:org:id:${organizationId}`,
+    userStore: new WebStorageStateStore({ store: window.localStorage }),
 
     onSigninCallback: () => {
       window.history.replaceState({}, document.title, "/");
