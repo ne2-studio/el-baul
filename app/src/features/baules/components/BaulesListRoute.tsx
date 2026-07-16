@@ -5,12 +5,14 @@ import { BaulesLoadingScreen } from '@/app/components/BaulesLoadingScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { Baul } from '@/types';
 
 export const BaulesListRoute: React.FC = () => {
   const navigate = useNavigate();
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
   const auth = useAuth();
+  const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
 
   const {
     baules,
@@ -41,10 +43,12 @@ export const BaulesListRoute: React.FC = () => {
   };
 
   const handleCreateBaulClick = () => {
-    const custodianBaules = baules.filter(b => b.isCustodio !== false);
-    if (custodianBaules.length >= subscription.baulesLimit) {
-      setShowPlanLimitModal(true);
-      return;
+    if (monetizationEnabled) {
+      const custodianBaules = baules.filter(b => b.isCustodio !== false);
+      if (custodianBaules.length >= subscription.baulesLimit) {
+        setShowPlanLimitModal(true);
+        return;
+      }
     }
     navigate('/baules/nuevo');
   };

@@ -4,6 +4,7 @@ import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { Archive, Plus, ChevronRight, Crown, Users2, User, UserCircle, Bell } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 export interface Baul {
   id: string;
@@ -27,7 +28,8 @@ interface BaulesListProps {
 
 export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, baulesLimit, onOpenActivity, actionableActivityCount }: BaulesListProps) {
   const setShowProfileMenu = useUIStore(state => state.setShowProfileMenu);
-  
+  const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -136,6 +138,33 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
             <Plus className="w-5 h-5" />
             Nuevo baúl
           </Button>
+
+          {/* Plan limit indicator */}
+          {monetizationEnabled && baulesUsed !== undefined && baulesLimit !== undefined && (
+            <div className="mt-3 px-4">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-muted-foreground">Baúles como custodio</span>
+                <span className="font-medium text-foreground">
+                  {baulesUsed} / {baulesLimit}
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${Math.min((baulesUsed / baulesLimit) * 100, 100)}%` }}
+                />
+              </div>
+
+              {/* Helper text */}
+              {baulesUsed >= baulesLimit && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Has alcanzado el límite de tu plan
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

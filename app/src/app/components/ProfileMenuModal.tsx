@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, User, CreditCard, LogOut } from 'lucide-react';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
@@ -16,6 +17,8 @@ export function ProfileMenuModal({
   onSignOut,
   userEmail
 }: ProfileMenuModalProps) {
+  const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
+
   return (
     <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end md:items-center md:justify-center">
       {/* Mobile: Bottom sheet, Desktop: Centered modal */}
@@ -70,18 +73,20 @@ export function ProfileMenuModal({
             </div>
           </button>
 
-          <button
-            onClick={onNavigateToSubscription}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <div className="font-medium text-foreground">Mi suscripción</div>
-              <div className="text-sm text-muted-foreground">Plan y espacio disponible</div>
-            </div>
-          </button>
+          {monetizationEnabled && (
+            <button
+              onClick={onNavigateToSubscription}
+              className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <CreditCard className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-medium text-foreground">Mi suscripción</div>
+                <div className="text-sm text-muted-foreground">Plan y espacio disponible</div>
+              </div>
+            </button>
+          )}
         </div>
 
         {/* Sign out */}

@@ -131,4 +131,8 @@ export const api = {
   users: {
     getProfile: async () => new UserProfile(await get<any>('/api/users/me')),
   },
+
+  appConfig: {
+    get: () => get<{ features: { monetization: boolean } }>('/api/app-config'),
+  },
 };

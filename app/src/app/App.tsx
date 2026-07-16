@@ -39,6 +39,7 @@ import { PaymentRoute } from '../features/profile/components/PaymentRoute';
 
 import { useUIStore } from '../store/uiStore';
 import { useAppStore } from '../store/useAppStore';
+import { useAppConfigStore } from '../store/useAppConfigStore';
 
 function App() {
   const navigate = useNavigate();
@@ -62,6 +63,11 @@ function App() {
     fetchData,
     reset
   } = useAppStore();
+
+  // Loaded once per session; features gated by it stay off until the fetch resolves.
+  useEffect(() => {
+    useAppConfigStore.getState().fetchAppConfig();
+  }, []);
 
   // Redirect to sign-in whenever the user isn't authenticated and isn't on a public route.
   useEffect(() => {
