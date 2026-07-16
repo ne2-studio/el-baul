@@ -29,13 +29,16 @@ public class PhotoManager(
             || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
         if (!hasAccess) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
 
-        var photos = await photoRepository.GetByAlbumIdAsync(albumId);
+        var photos = (await photoRepository.GetByAlbumIdAsync(albumId)).ToList();
+        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
+        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId).ToDictionary(g => g.Key, g => g.Count());
+
         var dtos = new List<PhotoDto>();
         foreach (var photo in photos)
         {
             var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
             var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
-            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl));
+            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
         }
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
@@ -130,9 +133,9 @@ public class PhotoManager(
         return ToDto(recuerdo, user?.Name ?? "Usuario", isOwn: true);
     }
 
-    private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl) =>
+    private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
         new(photo.Id.ToString(), photo.AlbumId.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
-            photo.Caption, photo.Date, photo.UploadedBy, photo.CreatedAt);
+            photo.Caption, photo.Date, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, bool isOwn) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId.ToString(), recuerdo.UserId, recuerdo.Text, userName,

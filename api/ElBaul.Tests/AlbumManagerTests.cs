@@ -11,11 +11,14 @@ public class AlbumManagerTests
 
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemoryAlbumRepository _albumRepository = new();
+    private readonly InMemoryPhotoRepository _photoRepository = new();
+    private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
+    private readonly InMemoryUserRepository _userRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
     private AlbumManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(_albumRepository, _baulRepository, _photoStorage,
+        new(_albumRepository, _baulRepository, _photoRepository, _recuerdoRepository, _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
 
     [Fact]

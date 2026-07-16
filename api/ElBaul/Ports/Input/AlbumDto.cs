@@ -8,6 +8,10 @@ public record AlbumDto
     string? Description,
     int PhotoCount,
     string? CoverPhotoUrl,
+    string? FeaturedCoverPhotoUrl,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    int RecuerdoCount,
+    string? LatestRecuerdoText,
+    string? LatestRecuerdoAuthor
 );

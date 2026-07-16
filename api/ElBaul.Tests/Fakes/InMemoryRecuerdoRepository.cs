@@ -9,6 +9,12 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
     public Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(Guid photoId) =>
         Task.FromResult(_recuerdos.Where(r => r.PhotoId == photoId).OrderBy(r => r.CreatedAt).AsEnumerable());
 
+    public Task<IEnumerable<Recuerdo>> GetByPhotoIdsAsync(IEnumerable<Guid> photoIds)
+    {
+        var ids = photoIds.ToHashSet();
+        return Task.FromResult(_recuerdos.Where(r => ids.Contains(r.PhotoId)).OrderBy(r => r.CreatedAt).AsEnumerable());
+    }
+
     public Task CreateAsync(Recuerdo recuerdo)
     {
         _recuerdos.Add(recuerdo);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
-import { ChevronLeft, Plus, ImageIcon } from 'lucide-react';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle } from 'lucide-react';
 import { Album } from './AlbumsView';
 
 export interface Photo {
@@ -9,6 +9,7 @@ export interface Photo {
   url: string;
   caption?: string;
   date?: string;
+  recuerdoCount?: number;
 }
 
 interface PhotosViewProps {
@@ -20,6 +21,8 @@ interface PhotosViewProps {
 }
 
 export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }: PhotosViewProps) {
+  const totalRecuerdos = photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -35,6 +38,14 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
           <h1 className="text-3xl text-foreground">{album.name}</h1>
           {album.description && (
             <p className="text-sm text-muted-foreground mt-1">{album.description}</p>
+          )}
+          {totalRecuerdos > 0 && (
+            <div className="flex items-center gap-1.5 mt-2">
+              <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
+              <span className="text-xs text-muted-foreground/75">
+                {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este álbum
+              </span>
+            </div>
           )}
         </div>
       </div>
@@ -68,13 +79,18 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
                 <button
                   key={photo.id}
                   onClick={() => onSelectPhoto(photo)}
-                  className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+                  className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 transition-opacity relative group"
                 >
                   <img
                     src={photo.thumbnailUrl}
                     alt={photo.caption || 'Foto'}
                     className="w-full h-full object-cover"
                   />
+                  {(photo.recuerdoCount || 0) > 0 && (
+                    <div className="absolute bottom-1.5 right-1.5 w-6 h-6 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-75 group-hover:opacity-90 transition-opacity">
+                      <MessageCircle className="w-3.5 h-3.5 text-foreground/70" strokeWidth={1.5} />
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

@@ -17,6 +17,11 @@ export interface Album {
   description?: string;
   photoCount: number;
   coverPhotoUrl?: string;
+  featuredCoverPhotoUrl?: string;
+  lastUpdated?: string;
+  recuerdoCount?: number;
+  latestRecuerdoText?: string;
+  latestRecuerdoAuthor?: string;
 }
 
 interface AlbumsViewProps {
@@ -132,31 +137,78 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
             subtitle="Crea tu primer álbum para empezar a guardar recuerdos"
           />
         ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {albums.map((album) => (
-              <Card key={album.id} onClick={() => onSelectAlbum(album)} className="p-0 overflow-hidden">
-                {/* Album cover */}
-                <div className="aspect-square bg-secondary flex items-center justify-center">
-                  {album.coverPhotoUrl ? (
-                    <img 
-                      src={album.coverPhotoUrl} 
-                      alt={album.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <ImageIcon className="w-12 h-12 text-muted-foreground opacity-40" strokeWidth={1.5} />
-                  )}
-                </div>
-                
-                {/* Album info */}
-                <div className="p-4">
-                  <h3 className="font-medium mb-1 text-foreground">{album.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {album.photoCount} {album.photoCount === 1 ? 'foto' : 'fotos'}
-                  </p>
-                </div>
-              </Card>
-            ))}
+          <div className="space-y-6">
+            {/* Álbum destacado, a ancho completo */}
+            {(() => {
+              const album = albums[0];
+              const recuerdoCount = album.recuerdoCount || 0;
+              const metadata = recuerdoCount > 0
+                ? `${album.photoCount} ${album.photoCount === 1 ? 'foto' : 'fotos'} · ${recuerdoCount} ${recuerdoCount === 1 ? 'recuerdo' : 'recuerdos'}`
+                : `${album.photoCount} ${album.photoCount === 1 ? 'foto' : 'fotos'}`;
+
+              return (
+                <Card key={album.id} onClick={() => onSelectAlbum(album)} className="!p-0 overflow-hidden">
+                  {/* Album cover */}
+                  <div className="aspect-[16/10] bg-secondary flex items-center justify-center">
+                    {album.featuredCoverPhotoUrl ? (
+                      <img
+                        src={album.featuredCoverPhotoUrl}
+                        alt={album.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon className="w-16 h-16 text-muted-foreground opacity-40" strokeWidth={1.5} />
+                    )}
+                  </div>
+
+                  {/* Album info */}
+                  <div className="p-4">
+                    <h3 className="font-medium text-lg text-foreground">{album.name}</h3>
+                    {album.latestRecuerdoText && album.latestRecuerdoAuthor && (
+                      <p className="text-sm text-foreground/70 italic mt-2 line-clamp-1">
+                        "{album.latestRecuerdoText.slice(0, 60)}…" — {album.latestRecuerdoAuthor}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">{metadata}</p>
+                    {album.lastUpdated && (
+                      <p className="text-xs text-muted-foreground/60 mt-1.5">
+                        Actualizado {album.lastUpdated}
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              );
+            })()}
+
+            {/* Resto de álbumes en grid de 2 columnas */}
+            {albums.length > 1 && (
+              <div className="grid grid-cols-2 gap-4">
+                {albums.slice(1).map((album) => (
+                  <Card key={album.id} onClick={() => onSelectAlbum(album)} className="!p-0 overflow-hidden">
+                    {/* Album cover */}
+                    <div className="aspect-square bg-secondary flex items-center justify-center">
+                      {album.coverPhotoUrl ? (
+                        <img
+                          src={album.coverPhotoUrl}
+                          alt={album.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="w-12 h-12 text-muted-foreground opacity-40" strokeWidth={1.5} />
+                      )}
+                    </div>
+
+                    {/* Album info */}
+                    <div className="p-4">
+                      <h3 className="font-medium mb-1 text-foreground">{album.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {album.photoCount} {album.photoCount === 1 ? 'foto' : 'fotos'}
+                      </p>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
         

@@ -33,6 +33,14 @@ public class ImgproxyUrlBuilderTests
     }
 
     [Fact]
+    public void Build_ShouldSelectTheFeaturedAlbumCoverPreset_ForAlbumCoverFeatured()
+    {
+        var result = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.AlbumCoverFeatured, Options);
+
+        Assert.Contains("/album-cover-featured/", result);
+    }
+
+    [Fact]
     public void Build_ShouldChangeTheSignature_WhenTheKeyDiffers()
     {
         var options2 = new ImgproxyOptions { BaseUrl = Options.BaseUrl, Key = "7766554433221100", Salt = Options.Salt };

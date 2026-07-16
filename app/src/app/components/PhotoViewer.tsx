@@ -231,7 +231,7 @@ export function PhotoViewer({
           </div>
           
           {/* Info & Recuerdos section */}
-          <div className="px-6 py-8 max-w-2xl mx-auto space-y-8">
+          <div className="px-6 py-8 space-y-8">
             {/* Recuerdos List & Input */}
             <div className="space-y-6">
               {!hasRecuerdos ? (

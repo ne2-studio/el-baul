@@ -10,6 +10,7 @@ public enum ImagePlacement
     PhotoGridThumbnail,
     PhotoFull,
     AlbumCover,
+    AlbumCoverFeatured,
     RemovalRequestThumbnail,
     InvitationPreview
 }

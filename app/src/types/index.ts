@@ -64,6 +64,11 @@ export class Album {
   description?: string;
   photoCount: number;
   coverPhotoUrl?: string;
+  featuredCoverPhotoUrl?: string;
+  lastUpdated: string;
+  recuerdoCount: number;
+  latestRecuerdoText?: string;
+  latestRecuerdoAuthor?: string;
 
   constructor(data: any) {
     this.id = data.id;
@@ -71,6 +76,11 @@ export class Album {
     this.description = data.description;
     this.photoCount = data.photoCount;
     this.coverPhotoUrl = data.coverPhotoUrl;
+    this.featuredCoverPhotoUrl = data.featuredCoverPhotoUrl;
+    this.lastUpdated = formatRelativeTime(data.updatedAt);
+    this.recuerdoCount = data.recuerdoCount ?? 0;
+    this.latestRecuerdoText = data.latestRecuerdoText;
+    this.latestRecuerdoAuthor = data.latestRecuerdoAuthor;
   }
 }
 
@@ -80,6 +90,7 @@ export class Photo {
   fullUrl: string;
   caption?: string;
   date?: string;
+  recuerdoCount: number;
 
   constructor(data: any) {
     this.id = data.id;
@@ -87,6 +98,7 @@ export class Photo {
     this.fullUrl = data.fullUrl;
     this.caption = data.caption;
     this.date = data.date;
+    this.recuerdoCount = data.recuerdoCount ?? 0;
   }
 }
 

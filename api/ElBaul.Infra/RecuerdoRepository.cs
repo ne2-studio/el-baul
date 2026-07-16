@@ -11,6 +11,12 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
             .OrderBy(r => r.CreatedAt)
             .ToListAsync();
 
+    public async Task<IEnumerable<Recuerdo>> GetByPhotoIdsAsync(IEnumerable<Guid> photoIds) =>
+        await dbContext.Recuerdos.AsNoTracking()
+            .Where(r => photoIds.Contains(r.PhotoId))
+            .OrderBy(r => r.CreatedAt)
+            .ToListAsync();
+
     public async Task CreateAsync(Recuerdo recuerdo)
     {
         dbContext.Recuerdos.Add(recuerdo);

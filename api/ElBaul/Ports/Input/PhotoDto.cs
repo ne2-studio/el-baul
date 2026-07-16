@@ -10,5 +10,6 @@ public record PhotoDto
     string? Caption,
     DateTime Date,
     string UploadedBy,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    int RecuerdoCount
 );
