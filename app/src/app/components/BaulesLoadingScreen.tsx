@@ -1,7 +1,6 @@
-import React from 'react';
 import { Archive } from 'lucide-react';
 
-export function AuthLoadingScreen() {
+export function BaulesLoadingScreen() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="max-w-md w-full text-center">
@@ -11,10 +10,10 @@ export function AuthLoadingScreen() {
             <Archive className="w-12 h-12 text-primary-foreground" strokeWidth={1.5} />
           </div>
         </div>
-        
+
         {/* Loading text */}
         <p className="text-lg text-muted-foreground">
-          Preparando tu baúl…
+          Preparando tus baúles…
         </p>
       </div>
     </div>

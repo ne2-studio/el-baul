@@ -26,7 +26,7 @@ export const CallbackRoute: React.FC = () => {
 
         {/* Loading text */}
         <p className="text-lg text-muted-foreground">
-          Preparando tu baúl…
+          Preparando tus baúles…
         </p>
       </div>
     </div>

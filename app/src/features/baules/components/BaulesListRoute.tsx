@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BaulesList } from '@/app/components/BaulesList';
+import { BaulesLoadingScreen } from '@/app/components/BaulesLoadingScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
@@ -15,7 +16,8 @@ export const BaulesListRoute: React.FC = () => {
     baules,
     activities,
     loadAlbums: storeLoadAlbums,
-    subscription
+    subscription,
+    isLoading
   } = useAppStore();
 
   const {
@@ -46,6 +48,10 @@ export const BaulesListRoute: React.FC = () => {
     }
     navigate('/baules/nuevo');
   };
+
+  if (isLoading) {
+    return <BaulesLoadingScreen />;
+  }
 
   return (
     <>

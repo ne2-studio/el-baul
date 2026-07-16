@@ -66,7 +66,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   removalRequests: {},
   recuerdos: {},
   activities: [],
-  isLoading: false,
+  isLoading: true,
   error: null,
 
   setAuthenticated: (value) => set({ isAuthenticated: value }),
