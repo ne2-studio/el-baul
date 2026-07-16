@@ -16,6 +16,7 @@ public interface IBaulRepository
 
     // Sharing
     Task<IEnumerable<SharedUser>> GetSharedUsersAsync(Guid baulId);
+    Task<IReadOnlyDictionary<Guid, int>> GetSharedUserCountsAsync(IEnumerable<Guid> baulIds);
     Task<SharedUser?> GetSharedUserByIdAsync(Guid sharedUserId);
     Task<SharedUser?> GetSharedUserByUserIdAsync(Guid baulId, string userId);
     Task<SharedUser?> GetSharedUserByEmailAsync(Guid baulId, string email);

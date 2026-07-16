@@ -23,8 +23,9 @@ public class BaulManager(
 
         var owned = await baulRepository.GetOwnedByUserIdAsync(userId);
         var shared = await baulRepository.GetSharedByUserIdAsync(userId);
+        var sharedCounts = await baulRepository.GetSharedUserCountsAsync(owned.Select(b => b.Id));
 
-        var dtos = owned.Select(b => ToDto(b, isCustodio: true, BaulRole.Custodio))
+        var dtos = owned.Select(b => ToDto(b, isCustodio: true, BaulRole.Custodio, sharedCounts.GetValueOrDefault(b.Id)))
             .Concat(shared.Select(a => ToDto(a.Baul, isCustodio: false, a.Role)));
 
         return Result.Success(dtos);
@@ -54,7 +55,8 @@ public class BaulManager(
         if (!isCustodio && sharedAccess is null) return Result.Failure<BaulDto>("Access denied");
 
         var role = isCustodio ? BaulRole.Custodio : sharedAccess?.Role ?? BaulRole.Miembro;
-        return ToDto(baul, isCustodio, role);
+        var sharedCount = isCustodio ? (await baulRepository.GetSharedUsersAsync(baulId)).Count() : 0;
+        return ToDto(baul, isCustodio, role, sharedCount);
     }
 
     public async Task<Result<BaulPreviewDto>> GetPreviewAsync(Guid baulId)
@@ -347,9 +349,9 @@ public class BaulManager(
         return Result.Success();
     }
 
-    private static BaulDto ToDto(Baul baul, bool isCustodio, BaulRole role) =>
+    private static BaulDto ToDto(Baul baul, bool isCustodio, BaulRole role, int sharedCount = 0) =>
         new(baul.Id.ToString(), baul.Name, baul.Description, baul.AlbumCount, baul.CreatedAt, baul.UpdatedAt,
-            isCustodio, role.ToApiString());
+            isCustodio, role.ToApiString(), sharedCount);
 
     private static SharedUserDto ToDto(SharedUser sharedUser, string? name) =>
         new(sharedUser.Id.ToString(), sharedUser.UserId, sharedUser.Email, name,

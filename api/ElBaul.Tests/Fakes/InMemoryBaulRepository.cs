@@ -38,6 +38,17 @@ public class InMemoryBaulRepository : IBaulRepository
     public Task<IEnumerable<SharedUser>> GetSharedUsersAsync(Guid baulId) =>
         Task.FromResult(_sharedUsers.Values.Where(s => s.BaulId == baulId));
 
+    public Task<IReadOnlyDictionary<Guid, int>> GetSharedUserCountsAsync(IEnumerable<Guid> baulIds)
+    {
+        var ids = baulIds.ToHashSet();
+        var counts = _sharedUsers.Values
+            .Where(s => ids.Contains(s.BaulId))
+            .GroupBy(s => s.BaulId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        return Task.FromResult<IReadOnlyDictionary<Guid, int>>(counts);
+    }
+
     public Task<SharedUser?> GetSharedUserByIdAsync(Guid sharedUserId) =>
         Task.FromResult(_sharedUsers.GetValueOrDefault(sharedUserId));
 

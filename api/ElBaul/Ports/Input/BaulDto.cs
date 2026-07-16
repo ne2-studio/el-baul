@@ -9,5 +9,6 @@ public record BaulDto
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsCustodio,
-    string Role
+    string Role,
+    int SharedCount
 );

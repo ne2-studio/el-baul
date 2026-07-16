@@ -36,6 +36,18 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     public async Task<IEnumerable<SharedUser>> GetSharedUsersAsync(Guid baulId) =>
         await dbContext.SharedUsers.AsNoTracking().Where(s => s.BaulId == baulId).ToListAsync();
 
+    public async Task<IReadOnlyDictionary<Guid, int>> GetSharedUserCountsAsync(IEnumerable<Guid> baulIds)
+    {
+        var ids = baulIds.ToList();
+        var counts = await dbContext.SharedUsers.AsNoTracking()
+            .Where(s => ids.Contains(s.BaulId))
+            .GroupBy(s => s.BaulId)
+            .Select(g => new { BaulId = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return counts.ToDictionary(c => c.BaulId, c => c.Count);
+    }
+
     public Task<SharedUser?> GetSharedUserByIdAsync(Guid sharedUserId) =>
         dbContext.SharedUsers.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sharedUserId);
 
