@@ -42,7 +42,7 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
                 aria-label="Ver actividad"
               >
                 <Bell className="w-5 h-5 text-muted-foreground" />
-                {actionableActivityCount && actionableActivityCount > 0 && (
+                {(actionableActivityCount ?? 0) > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
                 )}
               </button>

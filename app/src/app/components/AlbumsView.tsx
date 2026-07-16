@@ -59,14 +59,14 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
                   aria-label="Ver actividad"
                 >
                   <Bell className="w-5 h-5" />
-                  {actionableActivityCount && actionableActivityCount > 0 && (
+                  {(actionableActivityCount ?? 0) > 0 && (
                     <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
                   )}
                 </button>
               )}
               
               {/* Three dots menu */}
-              {(onShareBaul || onManagePeople || (onAccessRequests && pendingRequestsCount && pendingRequestsCount > 0) || (onRemovalRequests && pendingRemovalRequestsCount && pendingRemovalRequestsCount > 0)) && (
+              {(onShareBaul || onManagePeople || (onAccessRequests && (pendingRequestsCount ?? 0) > 0) || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button 
@@ -75,7 +75,7 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
                     >
                       <MoreVertical className="w-5 h-5" />
                       {/* Badge indicator if there are pending requests */}
-                      {((pendingRequestsCount && pendingRequestsCount > 0) || (pendingRemovalRequestsCount && pendingRemovalRequestsCount > 0)) && (
+                      {((pendingRequestsCount ?? 0) > 0 || (pendingRemovalRequestsCount ?? 0) > 0) && (
                         <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
                       )}
                     </button>
@@ -93,7 +93,7 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
                         Ver personas con acceso
                       </DropdownMenuItem>
                     )}
-                    {onAccessRequests && pendingRequestsCount && pendingRequestsCount > 0 && (
+                    {onAccessRequests && (pendingRequestsCount ?? 0) > 0 && (
                       <DropdownMenuItem onClick={onAccessRequests}>
                         <Bell className="w-4 h-4 mr-2" />
                         <span>Solicitudes de acceso</span>
@@ -102,7 +102,7 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
                         </span>
                       </DropdownMenuItem>
                     )}
-                    {onRemovalRequests && pendingRemovalRequestsCount && pendingRemovalRequestsCount > 0 && (
+                    {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
                       <DropdownMenuItem onClick={onRemovalRequests}>
                         <Bell className="w-4 h-4 mr-2" />
                         <span>Solicitudes de eliminación</span>
