@@ -1,21 +1,68 @@
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "react-oidc-context";
+import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
 
-  import { createRoot } from "react-dom/client";
-  import { BrowserRouter } from "react-router-dom";
-  import { AuthProvider } from "react-oidc-context";
-  import App from "./app/App.tsx";
-  import "./styles/index.css";
-  import { registerSW } from 'virtual:pwa-register'
+import App from "./app/App.tsx";
+import "./styles/index.css";
+import { registerSW } from "virtual:pwa-register";
 
-  registerSW({ immediate: true })
+const isNative = Capacitor.isNativePlatform();
 
-  const organizationId = import.meta.env.VITE_ZITADEL_ORGANIZATION_ID as string;
+function handleNativeCallback(url: string) {
+  if (!url.startsWith('studio.ne2.elbaul')) {
+    return;
+  }
+
+  const callbackUrl = new URL(url);
+
+  // react-oidc-context espera encontrar code/state en la URL
+  // cargada dentro de la WebView.
+  const webViewCallbackUrl =
+    `${window.location.origin}/callback` +
+    callbackUrl.search +
+    callbackUrl.hash;
+
+  window.location.replace(webViewCallbackUrl);
+}
+
+async function configureNativeDeepLinks() {
+  if (!isNative) {
+    return;
+  }
+
+  // App abierta mientras ya estaba ejecutándose.
+  await CapacitorApp.addListener("appUrlOpen", ({ url }) => {
+    handleNativeCallback(url);
+  });
+
+  // App arrancada desde cero mediante el callback.
+  const launchUrl = await CapacitorApp.getLaunchUrl();
+
+  if (launchUrl?.url) {
+    handleNativeCallback(launchUrl.url);
+  }
+}
+
+async function bootstrap() {
+  if (!isNative) {
+    registerSW({ immediate: true });
+  }
+
+  await configureNativeDeepLinks();
+
+  const organizationId =
+    import.meta.env.VITE_ZITADEL_ORGANIZATION_ID as string;
+
   const oidcConfig = {
     authority: import.meta.env.VITE_OIDC_AUTHORITY as string,
     client_id: import.meta.env.VITE_OIDC_CLIENT_ID as string,
-    redirect_uri: `${window.location.origin}/callback`,
+    redirect_uri: import.meta.env.VITE_OIDC_CALLBACK_URI as string,
     scope: `openid profile email urn:zitadel:iam:org:id:${organizationId}`,
+
     onSigninCallback: () => {
-      window.history.replaceState({}, document.title, window.location.pathname);
+      window.history.replaceState({}, document.title, "/");
     },
   };
 
@@ -24,5 +71,8 @@
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </AuthProvider>
+    </AuthProvider>,
   );
+}
+
+void bootstrap();
