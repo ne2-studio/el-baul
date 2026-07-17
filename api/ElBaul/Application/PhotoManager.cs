@@ -82,7 +82,7 @@ public class PhotoManager(
 
         await activityRepository.CreateAsync(new Activity(
             idGenerator.NewId(), ActivityType.NewPhotos, album.BaulId, baul.Name, now,
-            false, 1, null, null, null));
+            false, 1, null, null));
 
         var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);

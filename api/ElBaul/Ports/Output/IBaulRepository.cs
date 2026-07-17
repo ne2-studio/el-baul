@@ -2,7 +2,7 @@ namespace ElBaul.Ports.Output;
 
 /// <summary>
 /// Owns the Baul aggregate and its baul-scoped child collections (sharing,
-/// access requests, removal requests) — they never make sense outside the
+/// removal requests) — they never make sense outside the
 /// context of a baul, so they're grouped here rather than split into their
 /// own repositories.
 /// </summary>
@@ -23,12 +23,6 @@ public interface IBaulRepository
     Task AddSharedUserAsync(SharedUser sharedUser);
     Task UpdateSharedUserAsync(SharedUser sharedUser);
     Task RemoveSharedUserAsync(Guid baulId, string email);
-
-    // Access requests
-    Task<IEnumerable<AccessRequest>> GetAccessRequestsAsync(Guid baulId);
-    Task<AccessRequest?> GetAccessRequestAsync(Guid baulId, Guid requestId);
-    Task CreateAccessRequestAsync(AccessRequest request);
-    Task DeleteAccessRequestAsync(Guid baulId, Guid requestId);
 
     // Removal requests
     Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId);

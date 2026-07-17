@@ -26,5 +26,5 @@ public class ActivityManager(
     private static ActivityDto ToDto(Activity activity) =>
         new(activity.Id.ToString(), activity.Type.ToApiString(), activity.BaulId.ToString(), activity.BaulName,
             activity.Timestamp, activity.IsActionable, activity.PhotoCount, activity.RequesterEmail,
-            activity.AccessRequestId?.ToString(), activity.RemovalRequestId?.ToString());
+            activity.RemovalRequestId?.ToString());
 }

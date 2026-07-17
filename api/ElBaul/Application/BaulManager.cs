@@ -175,7 +175,7 @@ public class BaulManager(
 
         await activityRepository.CreateAsync(new Activity(
             idGenerator.NewId(), ActivityType.RoleChanged, baulId, baul.Name, clock.UtcNow(),
-            false, null, null, null, null));
+            false, null, null, null));
 
         var name = updated.UserId is not null ? (await userRepository.GetByIdAsync(updated.UserId))?.Name : null;
         return ToDto(updated, name);
@@ -189,78 +189,6 @@ public class BaulManager(
         if (baul.CustodioId != userId) return Result.Failure("Access denied");
 
         await baulRepository.RemoveSharedUserAsync(baulId, email);
-        return Result.Success();
-    }
-
-    public async Task<Result<IEnumerable<AccessRequestDto>>> GetAccessRequestsAsync(Guid baulId)
-    {
-        var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<IEnumerable<AccessRequestDto>>("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure<IEnumerable<AccessRequestDto>>("Access denied");
-
-        var requests = await baulRepository.GetAccessRequestsAsync(baulId);
-        return Result.Success(requests.Select(ToDto));
-    }
-
-    public async Task<Result<AccessRequestDto>> CreateAccessRequestAsync(Guid baulId, string? message)
-    {
-        var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<AccessRequestDto>("Baul not found");
-
-        var userProfile = await userRepository.GetByIdAsync(userId);
-        var now = clock.UtcNow();
-        var request = new AccessRequest(
-            idGenerator.NewId(), baulId, userProfile?.Email ?? "", userProfile?.Name, message, now, RequestStatus.Pending);
-
-        await baulRepository.CreateAccessRequestAsync(request);
-
-        await activityRepository.CreateAsync(new Activity(
-            idGenerator.NewId(), ActivityType.AccessRequest, baulId, baul.Name, now,
-            true, null, request.Email, request.Id, null));
-
-        return ToDto(request);
-    }
-
-    public async Task<Result<SharedUserDto>> ApproveAccessRequestAsync(Guid baulId, Guid requestId, string role)
-    {
-        var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<SharedUserDto>("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure<SharedUserDto>("Access denied");
-
-        if (!DtoMapping.TryParseBaulRole(role, out var parsedRole))
-            return Result.Failure<SharedUserDto>("Invalid role");
-
-        var request = await baulRepository.GetAccessRequestAsync(baulId, requestId);
-        if (request is null) return Result.Failure<SharedUserDto>("Request not found");
-
-        var invitedUser = await userRepository.GetByEmailAsync(request.Email);
-        if (invitedUser is null) return Result.Failure<SharedUserDto>("User not found");
-
-        var now = clock.UtcNow();
-        var sharedUser = new SharedUser(
-            idGenerator.NewId(), baulId, invitedUser.Id, invitedUser.Email, parsedRole, SharedUserStatus.Active, now);
-
-        await baulRepository.AddSharedUserAsync(sharedUser);
-        await baulRepository.DeleteAccessRequestAsync(baulId, requestId);
-
-        await activityRepository.CreateAsync(new Activity(
-            idGenerator.NewId(), ActivityType.AccessGranted, baulId, baul.Name, now,
-            false, null, request.Email, null, null));
-
-        return ToDto(sharedUser, invitedUser.Name);
-    }
-
-    public async Task<Result> RejectAccessRequestAsync(Guid baulId, Guid requestId)
-    {
-        var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure("Access denied");
-
-        await baulRepository.DeleteAccessRequestAsync(baulId, requestId);
         return Result.Success();
     }
 
@@ -301,7 +229,7 @@ public class BaulManager(
 
         await activityRepository.CreateAsync(new Activity(
             idGenerator.NewId(), ActivityType.PhotoRemovalRequest, baulId, baul.Name, now,
-            true, null, null, null, request.Id));
+            true, null, null, request.Id));
 
         var url = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.RemovalRequestThumbnail);
         return ToDto(request, url);
@@ -357,10 +285,6 @@ public class BaulManager(
         new(sharedUser.Id.ToString(), sharedUser.UserId, sharedUser.Email, name,
             sharedUser.Role.ToApiString(), sharedUser.Status.ToApiString(), sharedUser.InvitedDate,
             sharedUser.BaulId.ToString());
-
-    private static AccessRequestDto ToDto(AccessRequest request) =>
-        new(request.Id.ToString(), request.Email, request.Name, request.Message, request.RequestDate,
-            request.Status.ToApiString(), request.BaulId.ToString());
 
     private static RemovalRequestDto ToDto(RemovalRequest request, string photoUrl) =>
         new(request.Id.ToString(), request.PhotoId.ToString(), photoUrl, request.PhotoCaption,

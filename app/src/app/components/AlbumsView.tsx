@@ -32,15 +32,13 @@ interface AlbumsViewProps {
   onCreateAlbum: () => void;
   onShareBaul?: () => void;
   onManagePeople?: () => void;
-  onAccessRequests?: () => void;
-  pendingRequestsCount?: number;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onOpenActivity?: () => void;
   actionableActivityCount?: number;
 }
 
-export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum, onShareBaul, onManagePeople, onAccessRequests, pendingRequestsCount, onRemovalRequests, pendingRemovalRequestsCount, onOpenActivity, actionableActivityCount }: AlbumsViewProps) {
+export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount, onOpenActivity, actionableActivityCount }: AlbumsViewProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -71,7 +69,7 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
               )}
               
               {/* Three dots menu */}
-              {(onShareBaul || onManagePeople || (onAccessRequests && (pendingRequestsCount ?? 0) > 0) || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
+              {(onShareBaul || onManagePeople || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button 
@@ -80,7 +78,7 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
                     >
                       <MoreVertical className="w-5 h-5" />
                       {/* Badge indicator if there are pending requests */}
-                      {((pendingRequestsCount ?? 0) > 0 || (pendingRemovalRequestsCount ?? 0) > 0) && (
+                      {(pendingRemovalRequestsCount ?? 0) > 0 && (
                         <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
                       )}
                     </button>
@@ -96,15 +94,6 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
                       <DropdownMenuItem onClick={onManagePeople}>
                         <Users className="w-4 h-4 mr-2" />
                         Ver personas con acceso
-                      </DropdownMenuItem>
-                    )}
-                    {onAccessRequests && (pendingRequestsCount ?? 0) > 0 && (
-                      <DropdownMenuItem onClick={onAccessRequests}>
-                        <Bell className="w-4 h-4 mr-2" />
-                        <span>Solicitudes de acceso</span>
-                        <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                          {pendingRequestsCount}
-                        </span>
                       </DropdownMenuItem>
                     )}
                     {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (

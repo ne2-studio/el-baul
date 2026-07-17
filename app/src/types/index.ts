@@ -20,24 +20,6 @@ export class SharedUser {
   }
 }
 
-export class AccessRequest {
-  id: string;
-  email: string;
-  name?: string;
-  message?: string;
-  requestDate: string;
-  status: 'pending' | 'approved' | 'rejected';
-
-  constructor(data: any) {
-    this.id = data.id;
-    this.email = data.email;
-    this.name = data.name;
-    this.message = data.message;
-    this.requestDate = formatRelativeTime(data.requestDate);
-    this.status = data.status;
-  }
-}
-
 export class Baul {
   id: string;
   name: string;
@@ -179,14 +161,13 @@ export class UserProfile {
 // backend's ActivityType enum, kebab-cased).
 export class Activity {
   id: string;
-  type: 'photo-removal-request' | 'access-request' | 'new-photos' | 'access-granted' | 'role-changed';
+  type: 'photo-removal-request' | 'new-photos' | 'access-granted' | 'role-changed';
   baulId: string;
   baulName: string;
   timestamp: string;
   isActionable: boolean;
   requesterEmail?: string;
   photoCount?: number;
-  accessRequestId?: string;
   removalRequestId?: string;
 
   constructor(data: any) {
@@ -198,7 +179,6 @@ export class Activity {
     this.isActionable = data.isActionable;
     this.requesterEmail = data.requesterEmail;
     this.photoCount = data.photoCount;
-    this.accessRequestId = data.accessRequestId;
     this.removalRequestId = data.removalRequestId;
   }
 }

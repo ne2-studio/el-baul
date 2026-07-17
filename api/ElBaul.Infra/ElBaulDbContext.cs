@@ -12,7 +12,6 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<Recuerdo> Recuerdos => Set<Recuerdo>();
     public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<SharedUser> SharedUsers => Set<SharedUser>();
-    public DbSet<AccessRequest> AccessRequests => Set<AccessRequest>();
     public DbSet<RemovalRequest> RemovalRequests => Set<RemovalRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -10,6 +10,5 @@ public record ActivityDto
     bool IsActionable,
     int? PhotoCount,
     string? RequesterEmail,
-    string? AccessRequestId,
     string? RemovalRequestId
 );

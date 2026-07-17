@@ -26,8 +26,6 @@ import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadSuccessRoute } from '../features/photos/components/UploadSuccessRoute';
 import { UploadErrorRoute } from '../features/photos/components/UploadErrorRoute';
 import { PeopleWithAccessRoute } from '../features/sharing/components/PeopleWithAccessRoute';
-import { AccessRequestsRoute } from '../features/sharing/components/AccessRequestsRoute';
-import { RequestAccessRoute } from '../features/sharing/components/RequestAccessRoute';
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
 import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
@@ -75,7 +73,6 @@ function App() {
 
     const isPublicPath =
       location.pathname === '/' ||
-      location.pathname.startsWith('/solicitar-acceso') ||
       location.pathname.startsWith('/invitacion') ||
       location.pathname.startsWith('/onboarding');
 
@@ -149,7 +146,6 @@ function App() {
           </PublicRoute>
         } />
         <Route path="/callback" element={<CallbackRoute />} />
-        <Route path="/solicitar-acceso/:baulId" element={<RequestAccessRoute />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
 
         {/* Protected Routes */}
@@ -212,11 +208,6 @@ function App() {
         <Route path="/personas/:baulId" element={
           <ProtectedRoute>
             <PeopleWithAccessRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/solicitudes/:baulId" element={
-          <ProtectedRoute>
-            <AccessRequestsRoute />
           </ProtectedRoute>
         } />
         <Route path="/invitacion/:baulId" element={

@@ -1,4 +1,4 @@
-import { Baul, Album, Photo, Recuerdo, Activity, SharedUser, AccessRequest, RemovalRequest, BaulPreview, UserProfile } from './types';
+import { Baul, Album, Photo, Recuerdo, Activity, SharedUser, RemovalRequest, BaulPreview, UserProfile } from './types';
 
 export const API_BASE = import.meta.env.VITE_API_URL as string;
 
@@ -73,15 +73,6 @@ export const api = {
       put<void>(`/api/baules/${baulId}/shared-users/${sharedUserId}/role`, { role }),
     revokeAccess: (baulId: string, email: string) =>
       del<{ success: boolean }>(`/api/baules/${baulId}/shared-users/${encodeURIComponent(email)}`),
-
-    getAccessRequests: async (baulId: string) =>
-      (await get<any[]>(`/api/baules/${baulId}/access-requests`)).map((r) => new AccessRequest(r)),
-    submitAccessRequest: async (baulId: string, message?: string) =>
-      new AccessRequest(await post<any>(`/api/baules/${baulId}/access-requests`, { message })),
-    approveAccessRequest: (baulId: string, requestId: string, role: string = 'miembro') =>
-      post<any>(`/api/baules/${baulId}/access-requests/${requestId}/approve`, { role }),
-    rejectAccessRequest: (baulId: string, requestId: string) =>
-      post<{ success: boolean }>(`/api/baules/${baulId}/access-requests/${requestId}/reject`),
 
     getRemovalRequests: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/removal-requests`)).map((r) => new RemovalRequest(r)),

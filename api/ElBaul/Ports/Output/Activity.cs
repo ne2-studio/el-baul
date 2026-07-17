@@ -10,6 +10,5 @@ public record Activity
     bool IsActionable,
     int? PhotoCount,
     string? RequesterEmail,
-    Guid? AccessRequestId,
     Guid? RemovalRequestId
 );

@@ -29,11 +29,11 @@ public class ActivityManagerTests
             Guid.NewGuid(), sharedBaulId, CustodioId, "c@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
 
         await _activityRepository.CreateAsync(new Activity(
-            Guid.NewGuid(), ActivityType.NewPhotos, ownedBaulId, "Mio", _clock.UtcNow(), false, 1, null, null, null));
+            Guid.NewGuid(), ActivityType.NewPhotos, ownedBaulId, "Mio", _clock.UtcNow(), false, 1, null, null));
         await _activityRepository.CreateAsync(new Activity(
-            Guid.NewGuid(), ActivityType.NewPhotos, sharedBaulId, "Compartido", _clock.UtcNow(), false, 1, null, null, null));
+            Guid.NewGuid(), ActivityType.NewPhotos, sharedBaulId, "Compartido", _clock.UtcNow(), false, 1, null, null));
         await _activityRepository.CreateAsync(new Activity(
-            Guid.NewGuid(), ActivityType.NewPhotos, unrelatedBaulId, "Ajeno", _clock.UtcNow(), false, 1, null, null, null));
+            Guid.NewGuid(), ActivityType.NewPhotos, unrelatedBaulId, "Ajeno", _clock.UtcNow(), false, 1, null, null));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetForCurrentUserAsync();
@@ -55,9 +55,9 @@ public class ActivityManagerTests
         var newer = _clock.UtcNow();
 
         await _activityRepository.CreateAsync(new Activity(
-            Guid.NewGuid(), ActivityType.NewPhotos, baulId, "Familia", older, false, 1, null, null, null));
+            Guid.NewGuid(), ActivityType.NewPhotos, baulId, "Familia", older, false, 1, null, null));
         await _activityRepository.CreateAsync(new Activity(
-            Guid.NewGuid(), ActivityType.RoleChanged, baulId, "Familia", newer, false, null, null, null, null));
+            Guid.NewGuid(), ActivityType.RoleChanged, baulId, "Familia", newer, false, null, null, null));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetForCurrentUserAsync();

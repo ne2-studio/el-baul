@@ -4,7 +4,5 @@ public enum ActivityType
 {
     NewPhotos,
     RoleChanged,
-    AccessRequest,
-    AccessGranted,
     PhotoRemovalRequest
 }

@@ -36,7 +36,6 @@ export const ActivityCenterRoute: React.FC = () => {
         onBack={() => navigate('/baules')}
         onViewBaul={handleViewBaul}
         onReviewRemovalRequest={(baulId) => navigate(`/eliminar-solicitudes/${baulId}`)}
-        onManageAccessRequest={(baulId) => navigate(`/solicitudes/${baulId}`)}
       />
       
       {isLoading && (

@@ -6,7 +6,6 @@ public class InMemoryBaulRepository : IBaulRepository
 {
     private readonly Dictionary<Guid, Baul> _baules = new();
     private readonly Dictionary<Guid, SharedUser> _sharedUsers = new();
-    private readonly Dictionary<Guid, AccessRequest> _accessRequests = new();
     private readonly Dictionary<Guid, RemovalRequest> _removalRequests = new();
 
     public Task<Baul?> GetByIdAsync(Guid id) => Task.FromResult(_baules.GetValueOrDefault(id));
@@ -74,24 +73,6 @@ public class InMemoryBaulRepository : IBaulRepository
     {
         var match = _sharedUsers.Values.Where(s => s.BaulId == baulId && s.Email == email).ToList();
         foreach (var s in match) _sharedUsers.Remove(s.Id);
-        return Task.CompletedTask;
-    }
-
-    public Task<IEnumerable<AccessRequest>> GetAccessRequestsAsync(Guid baulId) =>
-        Task.FromResult(_accessRequests.Values.Where(r => r.BaulId == baulId));
-
-    public Task<AccessRequest?> GetAccessRequestAsync(Guid baulId, Guid requestId) =>
-        Task.FromResult(_accessRequests.Values.FirstOrDefault(r => r.BaulId == baulId && r.Id == requestId));
-
-    public Task CreateAccessRequestAsync(AccessRequest request)
-    {
-        _accessRequests[request.Id] = request;
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteAccessRequestAsync(Guid baulId, Guid requestId)
-    {
-        _accessRequests.Remove(requestId);
         return Task.CompletedTask;
     }
 

@@ -47,8 +47,6 @@ internal static class DtoMapping
     {
         ActivityType.NewPhotos => "new-photos",
         ActivityType.RoleChanged => "role-changed",
-        ActivityType.AccessRequest => "access-request",
-        ActivityType.AccessGranted => "access-granted",
         ActivityType.PhotoRemovalRequest => "photo-removal-request",
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };

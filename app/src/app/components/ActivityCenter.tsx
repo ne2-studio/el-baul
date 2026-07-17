@@ -4,7 +4,7 @@ import { EmptyState } from './EmptyState';
 
 export interface ActivityItem {
   id: string;
-  type: 'photo-removal-request' | 'access-request' | 'new-photos' | 'access-granted' | 'invitation' | 'role-changed';
+  type: 'photo-removal-request' | 'new-photos' | 'access-granted' | 'invitation' | 'role-changed';
   baulId: string;
   baulName: string;
   timestamp: string | Date;
@@ -16,7 +16,6 @@ export interface ActivityItem {
   oldRole?: string;
   newRole?: string;
   removalRequestId?: string;
-  accessRequestId?: string;
 }
 
 interface ActivityCenterProps {
@@ -24,7 +23,6 @@ interface ActivityCenterProps {
   onBack: () => void;
   onViewBaul?: (baulId: string) => void;
   onReviewRemovalRequest?: (baulId: string, requestId: string) => void;
-  onManageAccessRequest?: (baulId: string, requestId: string) => void;
 }
 
 export function ActivityCenter({
@@ -32,7 +30,6 @@ export function ActivityCenter({
   onBack,
   onViewBaul,
   onReviewRemovalRequest,
-  onManageAccessRequest,
 }: ActivityCenterProps) {
   // Sort activities: actionable first, then by timestamp
   const sortedActivities = [...activities].sort((a, b) => {
@@ -69,14 +66,6 @@ export function ActivityCenter({
         cta = 'Revisar solicitud';
         onCtaClick = activity.removalRequestId && onReviewRemovalRequest
           ? () => onReviewRemovalRequest(activity.baulId, activity.removalRequestId!)
-          : undefined;
-        break;
-
-      case 'access-request':
-        title = `${activity.requesterEmail || 'Alguien'} ha solicitado acceso a tu baúl «${activity.baulName}».`;
-        cta = 'Gestionar acceso';
-        onCtaClick = activity.accessRequestId && onManageAccessRequest
-          ? () => onManageAccessRequest(activity.baulId, activity.accessRequestId!)
           : undefined;
         break;
 

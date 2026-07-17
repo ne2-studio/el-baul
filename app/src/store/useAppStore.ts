@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Baul, Album, Photo, SharedUser, AccessRequest, RemovalRequest, Activity, BaulRole, Recuerdo, Subscription, UserProfile } from '@/types';
+import { Baul, Album, Photo, SharedUser, RemovalRequest, Activity, BaulRole, Recuerdo, Subscription, UserProfile } from '@/types';
 import { api } from '@/api';
 
 const defaultSubscription: Subscription = {
@@ -20,7 +20,6 @@ interface AppState {
   albums: Record<string, Album[]>;
   photos: Record<string, Photo[]>;
   sharedUsers: Record<string, SharedUser[]>;
-  accessRequests: Record<string, AccessRequest[]>;
   removalRequests: Record<string, RemovalRequest[]>;
   recuerdos: Record<string, Recuerdo[]>;
   activities: Activity[];
@@ -44,12 +43,9 @@ interface AppState {
   sendInvitation: (baulId: string, email: string, role: BaulRole) => Promise<void>;
   updateUserRole: (baulId: string, sharedUserId: string, role: BaulRole) => Promise<void>;
   revokeAccess: (baulId: string, email: string) => Promise<void>;
-  approveAccessRequest: (baulId: string, requestId: string) => Promise<void>;
-  rejectAccessRequest: (baulId: string, requestId: string) => Promise<void>;
 
   removePhoto: (baulId: string, requestId: string, photoId: string) => Promise<void>;
   keepPhoto: (baulId: string, requestId: string) => Promise<void>;
-  submitAccessRequest: (baulId: string, message: string) => Promise<void>;
   submitRemovalRequest: (baulId: string, photo: Photo, reason: string) => Promise<void>;
 }
 
@@ -62,7 +58,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   albums: {},
   photos: {},
   sharedUsers: {},
-  accessRequests: {},
   removalRequests: {},
   recuerdos: {},
   activities: [],
@@ -83,7 +78,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     albums: {},
     photos: {},
     sharedUsers: {},
-    accessRequests: {},
     removalRequests: {},
     recuerdos: {},
     activities: [],
@@ -125,13 +119,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const baul = get().baules.find((b) => b.id === baulId);
     if (baul?.isCustodio) {
-      try {
-        const accessRequests = await api.baules.getAccessRequests(baulId);
-        set((state) => ({ accessRequests: { ...state.accessRequests, [baulId]: accessRequests } }));
-      } catch (err) {
-        console.log('No access requests or error loading:', err);
-      }
-
       try {
         const removalRequests = await api.baules.getRemovalRequests(baulId);
         set((state) => ({ removalRequests: { ...state.removalRequests, [baulId]: removalRequests } }));
@@ -223,29 +210,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  approveAccessRequest: async (baulId, requestId) => {
-    await api.baules.approveAccessRequest(baulId, requestId);
-    const sharedUsers = await api.baules.getSharedUsers(baulId);
-
-    set((state) => ({
-      accessRequests: {
-        ...state.accessRequests,
-        [baulId]: (state.accessRequests[baulId] || []).filter((r) => r.id !== requestId),
-      },
-      sharedUsers: { ...state.sharedUsers, [baulId]: sharedUsers },
-    }));
-  },
-
-  rejectAccessRequest: async (baulId, requestId) => {
-    await api.baules.rejectAccessRequest(baulId, requestId);
-    set((state) => ({
-      accessRequests: {
-        ...state.accessRequests,
-        [baulId]: (state.accessRequests[baulId] || []).filter((r) => r.id !== requestId),
-      },
-    }));
-  },
-
   removePhoto: async (baulId, requestId, photoId) => {
     await api.baules.approveRemovalRequest(baulId, requestId);
     set((state) => {
@@ -272,10 +236,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         [baulId]: (state.removalRequests[baulId] || []).filter((r) => r.id !== requestId),
       },
     }));
-  },
-
-  submitAccessRequest: async (baulId, message) => {
-    await api.baules.submitAccessRequest(baulId, message);
   },
 
   submitRemovalRequest: async (baulId, photo, reason) => {

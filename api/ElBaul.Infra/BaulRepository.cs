@@ -74,23 +74,6 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SharedUsers.Where(s => s.BaulId == baulId && s.Email == email).ExecuteDeleteAsync();
     }
 
-    public async Task<IEnumerable<AccessRequest>> GetAccessRequestsAsync(Guid baulId) =>
-        await dbContext.AccessRequests.AsNoTracking().Where(r => r.BaulId == baulId).ToListAsync();
-
-    public Task<AccessRequest?> GetAccessRequestAsync(Guid baulId, Guid requestId) =>
-        dbContext.AccessRequests.AsNoTracking().FirstOrDefaultAsync(r => r.BaulId == baulId && r.Id == requestId);
-
-    public async Task CreateAccessRequestAsync(AccessRequest request)
-    {
-        dbContext.AccessRequests.Add(request);
-        await dbContext.SaveChangesAsync();
-    }
-
-    public async Task DeleteAccessRequestAsync(Guid baulId, Guid requestId)
-    {
-        await dbContext.AccessRequests.Where(r => r.BaulId == baulId && r.Id == requestId).ExecuteDeleteAsync();
-    }
-
     public async Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId) =>
         await dbContext.RemovalRequests.AsNoTracking().Where(r => r.BaulId == baulId).ToListAsync();
 

@@ -79,34 +79,6 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpGet("{baulId:guid}/access-requests")]
-    public async Task<IActionResult> GetAccessRequests(Guid baulId)
-    {
-        var result = await baulManager.GetAccessRequestsAsync(baulId);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
-    }
-
-    [HttpPost("{baulId:guid}/access-requests")]
-    public async Task<IActionResult> CreateAccessRequest(Guid baulId, [FromBody] CreateAccessRequestRequest request)
-    {
-        var result = await baulManager.CreateAccessRequestAsync(baulId, request.Message);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
-    }
-
-    [HttpPost("{baulId:guid}/access-requests/{requestId:guid}/approve")]
-    public async Task<IActionResult> ApproveAccessRequest(Guid baulId, Guid requestId, [FromBody] ApproveAccessRequestRequest? request)
-    {
-        var result = await baulManager.ApproveAccessRequestAsync(baulId, requestId, request?.Role ?? "miembro");
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
-    }
-
-    [HttpPost("{baulId:guid}/access-requests/{requestId:guid}/reject")]
-    public async Task<IActionResult> RejectAccessRequest(Guid baulId, Guid requestId)
-    {
-        var result = await baulManager.RejectAccessRequestAsync(baulId, requestId);
-        return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
-    }
-
     [HttpGet("{baulId:guid}/removal-requests")]
     public async Task<IActionResult> GetRemovalRequests(Guid baulId)
     {

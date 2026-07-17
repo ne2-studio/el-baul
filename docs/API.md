@@ -66,18 +66,6 @@ Custodio only. Body: `{ "role" }`. Response `200 OK`: the updated `SharedUser`.
 
 Custodio only. Revokes access for that email. Response `200 OK`: `{ "success": true }`.
 
-## Access requests
-
-A non-member can request access to a baúl they know the id of; the custodian
-approves/rejects.
-
-- `GET /api/baules/{baulId}/access-requests` — custodio only.
-- `POST /api/baules/{baulId}/access-requests` — body `{ "message": "string|null" }`.
-- `POST /api/baules/{baulId}/access-requests/{requestId}/approve` — custodio only, body
-  `{ "role": "colaborador|miembro" }` (defaults `miembro`). Grants access, returns the new
-  `SharedUser`.
-- `POST /api/baules/{baulId}/access-requests/{requestId}/reject` — custodio only.
-
 ## Removal requests
 
 Anyone with access can request a photo be removed; the custodian approves (deletes the
@@ -125,7 +113,7 @@ at imgproxy, never at storage directly.
 
 Feed of events across every baúl the caller owns or is shared into, newest first.
 Response `200 OK`: array of
-`{ "id", "type": "new-photos|role-changed|access-request|access-granted|photo-removal-request", "baulId", "baulName", "timestamp", "isActionable", "photoCount": "int|null", "requesterEmail": "string|null", "accessRequestId": "string|null", "removalRequestId": "string|null" }`.
+`{ "id", "type": "new-photos|role-changed|photo-removal-request", "baulId", "baulName", "timestamp", "isActionable", "photoCount": "int|null", "requesterEmail": "string|null", "removalRequestId": "string|null" }`.
 
 ## Users
 

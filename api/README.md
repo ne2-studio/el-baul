@@ -16,9 +16,9 @@ ElBaul          — domain core (Application/ use cases, Ports/Input, Ports/Outp
 Domain: a **Baúl** (trunk) is owned by a custodian, holds **Albums** of **Photos**
 (each photo can carry **Recuerdos** — comments — from anyone with access), and can be
 shared with other users as *colaborador* (can add albums/photos) or *miembro*
-(read-only) via **SharedUser** invitations, **AccessRequest**s, and **RemovalRequest**s
+(read-only) via **SharedUser** invitations, and **RemovalRequest**s
 (a non-custodian asking to have a photo removed). An **Activity** feed records
-baúl-scoped events (new photos, role changes, access requests/grants, removal requests).
+baúl-scoped events (new photos, role changes, removal requests).
 
 ## API endpoints
 
@@ -32,8 +32,6 @@ Full request/response shapes are documented in [`docs/API.md`](../docs/API.md).
 | `POST` | `/api/baules/{id}/accept-invite` | Required | Join a baúl as *miembro* |
 | `GET`/`POST` | `/api/baules/{id}/shared-users` \| `/share` | Required | Sharing |
 | `PUT`/`DELETE` | `/api/baules/{id}/shared-users/{..}` | Required | Update role / revoke access |
-| `GET`/`POST` | `/api/baules/{id}/access-requests` | Required | Access requests |
-| `POST` | `/api/baules/{id}/access-requests/{id}/approve\|reject` | Required | Resolve an access request |
 | `GET`/`POST` | `/api/baules/{id}/removal-requests` | Required | Photo removal requests |
 | `POST` | `/api/baules/{id}/removal-requests/{id}/approve\|reject` | Required | Resolve a removal request |
 | `GET`/`POST` | `/api/baules/{baulId}/albums` | Required | Albums |

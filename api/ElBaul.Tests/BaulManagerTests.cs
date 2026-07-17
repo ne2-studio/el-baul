@@ -137,23 +137,6 @@ public class BaulManagerTests
     }
 
     [Fact]
-    public async Task ApproveAccessRequestAsync_ShouldGrantAccess_AndRemoveTheRequest()
-    {
-        var baulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        var requestId = Guid.NewGuid();
-        await _baulRepository.CreateAccessRequestAsync(new AccessRequest(
-            requestId, baulId, "other@test.com", "Other", null, _clock.UtcNow(), RequestStatus.Pending));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.ApproveAccessRequestAsync(baulId, requestId, "colaborador");
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal("colaborador", result.Value.Role);
-        Assert.Null(await _baulRepository.GetAccessRequestAsync(baulId, requestId));
-    }
-
-    [Fact]
     public async Task ApproveRemovalRequestAsync_ShouldDeletePhoto_AndDecrementAlbumPhotoCount()
     {
         var baulId = Guid.NewGuid();
