@@ -41,7 +41,7 @@ interface AppState {
   createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
   uploadPhotos: (baulId: string, albumId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
   uploadLoosePhotos: (baulId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
-  movePhotos: (baulId: string, sourceAlbumId: string, photoIds: string[], targetAlbumId: string) => Promise<void>;
+  movePhotos: (baulId: string, sourceAlbumId: string | null, photoIds: string[], targetAlbumId: string) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
   setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
 
@@ -225,19 +225,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     const targetPhotos = await api.photos.getAll(targetAlbumId);
 
     set((state) => {
-      const sourcePhotos = state.photos[sourceAlbumId] || [];
+      // sourceAlbumId is null when moving out of the "Fotos sueltas" virtual album.
+      const sourcePhotos = sourceAlbumId ? (state.photos[sourceAlbumId] || []) : (state.loosePhotos[baulId] || []);
       const movedCount = sourcePhotos.filter((p) => photoIds.includes(p.id)).length;
+      const remainingSourcePhotos = sourcePhotos.filter((p) => !photoIds.includes(p.id));
 
       return {
         photos: {
           ...state.photos,
-          [sourceAlbumId]: sourcePhotos.filter((p) => !photoIds.includes(p.id)),
+          ...(sourceAlbumId ? { [sourceAlbumId]: remainingSourcePhotos } : {}),
           [targetAlbumId]: targetPhotos,
         },
+        loosePhotos: sourceAlbumId
+          ? state.loosePhotos
+          : { ...state.loosePhotos, [baulId]: remainingSourcePhotos },
         albums: {
           ...state.albums,
           [baulId]: (state.albums[baulId] || []).map((a) => {
-            if (a.id === sourceAlbumId) return { ...a, photoCount: Math.max(0, a.photoCount - movedCount) };
+            if (sourceAlbumId && a.id === sourceAlbumId) return { ...a, photoCount: Math.max(0, a.photoCount - movedCount) };
             if (a.id === targetAlbumId) {
               return {
                 ...a,

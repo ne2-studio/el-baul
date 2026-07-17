@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PhotoViewer } from '@/app/components/PhotoViewer';
+import { Photo } from '@/app/components/PhotosView';
+import { Album } from '@/app/components/AlbumsView';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
@@ -11,11 +13,12 @@ export const LoosePhotoViewerRoute: React.FC = () => {
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
-  const { baules, loosePhotos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover } = useAppStore();
+  const { baules, albums, loosePhotos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, movePhotos } = useAppStore();
 
   const baul = baules.find(b => b.id === baulId);
   const photos = loosePhotos[baulId!] || [];
   const photo = photos.find(p => p.id === photoId);
+  const looseAlbum: Album = { id: 'sueltas', name: 'Fotos sueltas', photoCount: photos.length };
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -59,6 +62,18 @@ export const LoosePhotoViewerRoute: React.FC = () => {
     }
   };
 
+  const handleMovePhoto = (photoToMove: Photo, targetAlbumId: string) => {
+    movePhotos(baul.id, null, [photoToMove.id], targetAlbumId)
+      .then(() => {
+        showToastMessage('Foto movida');
+        navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
+      })
+      .catch((error) => {
+        console.error('Error moving photo:', error);
+        showToastMessage('Error al mover la foto');
+      });
+  };
+
   return (
     <PhotoViewer
       photo={photo}
@@ -68,6 +83,9 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       onRequestRemoval={handleRequestRemoval}
       isCustodio={baul.isCustodio}
       onSetBaulCover={handleSetBaulCover}
+      onMovePhoto={handleMovePhoto}
+      allAlbums={albums[baul.id] || []}
+      currentAlbum={looseAlbum}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
     />
