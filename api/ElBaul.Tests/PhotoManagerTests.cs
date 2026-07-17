@@ -12,13 +12,12 @@ public class PhotoManagerTests
     private readonly InMemoryAlbumRepository _albumRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
-    private readonly InMemoryActivityRepository _activityRepository = new();
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(_photoRepository, _albumRepository, _baulRepository, _activityRepository, _photoStorage,
+        new(_photoRepository, _albumRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, _userRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId));
 

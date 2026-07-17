@@ -29,7 +29,6 @@ import { PeopleWithAccessRoute } from '../features/sharing/components/PeopleWith
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
 import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
-import { ActivityCenterRoute } from '../features/activity/components/ActivityCenterRoute';
 import { ProfileRoute } from '../features/profile/components/ProfileRoute';
 import { SubscriptionRoute } from '../features/profile/components/SubscriptionRoute';
 import { PlanSelectionRoute } from '../features/profile/components/PlanSelectionRoute';
@@ -224,11 +223,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="/actividad" element={
-          <ProtectedRoute>
-            <ActivityCenterRoute />
-          </ProtectedRoute>
-        } />
         <Route path="/perfil" element={
           <ProtectedRoute>
             <ProfileRoute />

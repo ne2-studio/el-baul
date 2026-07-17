@@ -11,7 +11,6 @@ public class BaulManager(
     IAlbumRepository albumRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
-    IActivityRepository activityRepository,
     IPhotoStorage photoStorage,
     IIdGenerator idGenerator,
     IClock clock,
@@ -173,10 +172,6 @@ public class BaulManager(
         var updated = sharedUser with { Role = parsedRole };
         await baulRepository.UpdateSharedUserAsync(updated);
 
-        await activityRepository.CreateAsync(new Activity(
-            idGenerator.NewId(), ActivityType.RoleChanged, baulId, baul.Name, clock.UtcNow(),
-            false, null, null, null));
-
         var name = updated.UserId is not null ? (await userRepository.GetByIdAsync(updated.UserId))?.Name : null;
         return ToDto(updated, name);
     }
@@ -226,10 +221,6 @@ public class BaulManager(
             userProfile?.Name ?? "Usuario", userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
         await baulRepository.CreateRemovalRequestAsync(request);
-
-        await activityRepository.CreateAsync(new Activity(
-            idGenerator.NewId(), ActivityType.PhotoRemovalRequest, baulId, baul.Name, now,
-            true, null, null, request.Id));
 
         var url = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.RemovalRequestThumbnail);
         return ToDto(request, url);

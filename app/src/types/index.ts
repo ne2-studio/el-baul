@@ -156,33 +156,6 @@ export class UserProfile {
   }
 }
 
-// Kept structurally compatible with the local ActivityItem type ActivityCenter.tsx
-// declares for itself (the real, backend-accurate one — the type strings match the
-// backend's ActivityType enum, kebab-cased).
-export class Activity {
-  id: string;
-  type: 'photo-removal-request' | 'new-photos' | 'access-granted' | 'role-changed';
-  baulId: string;
-  baulName: string;
-  timestamp: string;
-  isActionable: boolean;
-  requesterEmail?: string;
-  photoCount?: number;
-  removalRequestId?: string;
-
-  constructor(data: any) {
-    this.id = data.id;
-    this.type = data.type;
-    this.baulId = data.baulId;
-    this.baulName = data.baulName;
-    this.timestamp = data.timestamp;
-    this.isActionable = data.isActionable;
-    this.requesterEmail = data.requesterEmail;
-    this.photoCount = data.photoCount;
-    this.removalRequestId = data.removalRequestId;
-  }
-}
-
 export type PlanType = 'gratuito' | 'familiar' | 'premium';
 
 export interface Subscription {

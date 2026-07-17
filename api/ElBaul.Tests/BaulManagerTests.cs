@@ -14,7 +14,6 @@ public class BaulManagerTests
     private readonly InMemoryAlbumRepository _albumRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryUserRepository _userRepository = new();
-    private readonly InMemoryActivityRepository _activityRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
@@ -26,7 +25,7 @@ public class BaulManagerTests
 
     private BaulManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<BaulManager>.Instance, _baulRepository, _albumRepository, _photoRepository,
-            _userRepository, _activityRepository, _photoStorage,
+            _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
 
     [Fact]

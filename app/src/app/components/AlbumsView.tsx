@@ -34,11 +34,9 @@ interface AlbumsViewProps {
   onManagePeople?: () => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
-  onOpenActivity?: () => void;
-  actionableActivityCount?: number;
 }
 
-export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount, onOpenActivity, actionableActivityCount }: AlbumsViewProps) {
+export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount }: AlbumsViewProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -54,20 +52,6 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
             </button>
             
             <div className="flex items-center gap-2">
-              {/* Activity icon */}
-              {onOpenActivity && (
-                <button
-                  onClick={onOpenActivity}
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
-                  aria-label="Ver actividad"
-                >
-                  <Bell className="w-5 h-5" />
-                  {(actionableActivityCount ?? 0) > 0 && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-                  )}
-                </button>
-              )}
-              
               {/* Three dots menu */}
               {(onShareBaul || onManagePeople || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
                 <DropdownMenu>

@@ -4,8 +4,8 @@ namespace ElBaul.Tests.Fakes;
 
 /// <summary>
 /// Returns the given id on the first call (for assertions to key off), then falls
-/// back to random ids so operations that generate several ids in one call (e.g. a
-/// shared user plus an activity) don't collide with each other or with seeded data.
+/// back to random ids so operations that generate several ids in one call don't
+/// collide with each other or with seeded data.
 /// </summary>
 public class StaticIdGenerator(Guid id) : IIdGenerator
 {

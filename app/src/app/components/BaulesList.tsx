@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
-import { Archive, Plus, ChevronRight, Crown, Users2, User, UserCircle, Bell } from 'lucide-react';
+import { Archive, Plus, ChevronRight, Crown, Users2, User, UserCircle } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 
@@ -22,11 +22,9 @@ interface BaulesListProps {
   onCreateBaul: () => void;
   baulesUsed?: number;
   baulesLimit?: number;
-  onOpenActivity?: () => void;
-  actionableActivityCount?: number;
 }
 
-export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, baulesLimit, onOpenActivity, actionableActivityCount }: BaulesListProps) {
+export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, baulesLimit }: BaulesListProps) {
   const setShowProfileMenu = useUIStore(state => state.setShowProfileMenu);
   const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
 
@@ -37,18 +35,6 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
         <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
           <h1 className="text-3xl text-foreground">Mis baúles</h1>
           <div className="flex items-center gap-2">
-            {onOpenActivity && (
-              <button
-                onClick={onOpenActivity}
-                className="w-10 h-10 rounded-full hover:bg-secondary flex items-center justify-center transition-colors relative"
-                aria-label="Ver actividad"
-              >
-                <Bell className="w-5 h-5 text-muted-foreground" />
-                {(actionableActivityCount ?? 0) > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-                )}
-              </button>
-            )}
             <button
               onClick={() => setShowProfileMenu(true)}
               className="w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors"

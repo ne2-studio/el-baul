@@ -17,8 +17,7 @@ Domain: a **Baúl** (trunk) is owned by a custodian, holds **Albums** of **Photo
 (each photo can carry **Recuerdos** — comments — from anyone with access), and can be
 shared with other users as *colaborador* (can add albums/photos) or *miembro*
 (read-only) via **SharedUser** invitations, and **RemovalRequest**s
-(a non-custodian asking to have a photo removed). An **Activity** feed records
-baúl-scoped events (new photos, role changes, removal requests).
+(a non-custodian asking to have a photo removed).
 
 ## API endpoints
 
@@ -37,7 +36,6 @@ Full request/response shapes are documented in [`docs/API.md`](../docs/API.md).
 | `GET`/`POST` | `/api/baules/{baulId}/albums` | Required | Albums |
 | `GET`/`POST` | `/api/albums/{albumId}/photos` | Required | Photos (POST is multipart upload) |
 | `GET`/`POST` | `/api/photos/{photoId}/recuerdos` | Required | Comments on a photo |
-| `GET` | `/api/activities` | Required | Activity feed across the caller's baúles |
 | `GET` | `/api/users/me` | Required | Current user's profile |
 | `GET` | `/health` | Public (rate-limited) | Liveness check |
 

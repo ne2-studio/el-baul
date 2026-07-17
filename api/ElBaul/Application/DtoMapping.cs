@@ -4,8 +4,8 @@ namespace ElBaul.Application;
 
 /// <summary>
 /// Enum <-> wire-string conversions. The strings match the frontend's existing
-/// TypeScript union types exactly (lowercase role/status, kebab-case activity type)
-/// so the DTOs are drop-in compatible with the old Supabase-backed API's JSON shape.
+/// TypeScript union types exactly (lowercase role/status) so the DTOs are drop-in
+/// compatible with the old Supabase-backed API's JSON shape.
 /// </summary>
 internal static class DtoMapping
 {
@@ -41,13 +41,5 @@ internal static class DtoMapping
         RequestStatus.Approved => "approved",
         RequestStatus.Rejected => "rejected",
         _ => throw new ArgumentOutOfRangeException(nameof(status))
-    };
-
-    public static string ToApiString(this ActivityType type) => type switch
-    {
-        ActivityType.NewPhotos => "new-photos",
-        ActivityType.RoleChanged => "role-changed",
-        ActivityType.PhotoRemovalRequest => "photo-removal-request",
-        _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 }

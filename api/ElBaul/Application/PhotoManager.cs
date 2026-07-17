@@ -8,7 +8,6 @@ public class PhotoManager(
     IPhotoRepository photoRepository,
     IAlbumRepository albumRepository,
     IBaulRepository baulRepository,
-    IActivityRepository activityRepository,
     IPhotoStorage photoStorage,
     IRecuerdoRepository recuerdoRepository,
     IUserRepository userRepository,
@@ -79,10 +78,6 @@ public class PhotoManager(
         };
         await albumRepository.UpdateAsync(updatedAlbum);
         await baulRepository.UpdateAsync(baul with { UpdatedAt = now });
-
-        await activityRepository.CreateAsync(new Activity(
-            idGenerator.NewId(), ActivityType.NewPhotos, album.BaulId, baul.Name, now,
-            false, 1, null, null));
 
         var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);

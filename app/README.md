@@ -11,7 +11,6 @@ de forma segura y organizada. Este directorio contiene el frontend, construido s
 - **🗄️ Gestión de baúles:** crea contenedores temáticos (baúles) para organizar tus álbumes.
 - **📸 Álbumes fotográficos:** organiza tus fotos en álbumes dentro de cada baúl.
 - **🤝 Colaboración:** invita a otros usuarios a tus baúles, gestiona roles (custodio, colaborador, miembro).
-- **🔔 Centro de actividad:** mantente al día con las últimas fotos subidas y cambios en tus baúles.
 - **🛡️ Solicitudes de borrado:** gobernanza para mantener la privacidad y el control del contenido compartido.
 - **📱 Diseño responsivo:** optimizado tanto para escritorio como para móvil.
 
@@ -86,7 +85,7 @@ src/
 ├── api.ts         # Single fetch client for the backend (namespaced per resource)
 ├── types/         # Domain entity classes, hydrated from api.ts responses
 ├── app/           # Componentes base, rutas y layout principal
-├── features/      # Módulos por dominio (auth, baules, albums, photos, sharing, activity, profile)
+├── features/      # Módulos por dominio (auth, baules, albums, photos, sharing, profile)
 ├── store/         # Zustand: useAppStore (domain data) + uiStore (toasts/modals)
 └── utils/         # Funciones de utilidad y helpers
 ```

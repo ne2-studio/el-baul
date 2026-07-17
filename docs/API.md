@@ -99,21 +99,12 @@ at imgproxy, never at storage directly.
 
 `colaborador` or `custodio` only. `multipart/form-data`: `file` (required), `caption`
 (optional), `date` (optional, ISO). Response `200 OK`: the photo; increments the album's
-`photoCount`, sets it as the album's cover if it's the first photo, and records a
-`new-photos` activity.
+`photoCount`, and sets it as the album's cover if it's the first photo.
 
 ## Recuerdos (comments on a photo)
 
 - `GET /api/photos/{photoId}/recuerdos` — response `200 OK`: array of `{ "id", "photoId", "userId", "text", "userName", "createdAt", "isOwn" }`.
 - `POST /api/photos/{photoId}/recuerdos` — body `{ "text" }`. Response `200 OK`: the recuerdo.
-
-## Activity
-
-### `GET /api/activities`
-
-Feed of events across every baúl the caller owns or is shared into, newest first.
-Response `200 OK`: array of
-`{ "id", "type": "new-photos|role-changed|photo-removal-request", "baulId", "baulName", "timestamp", "isActionable", "photoCount": "int|null", "requesterEmail": "string|null", "removalRequestId": "string|null" }`.
 
 ## Users
 

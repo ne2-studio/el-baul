@@ -16,7 +16,6 @@ export const BaulesListRoute: React.FC = () => {
 
   const {
     baules,
-    activities,
     loadAlbums: storeLoadAlbums,
     subscription,
     isLoading
@@ -65,8 +64,6 @@ export const BaulesListRoute: React.FC = () => {
         onCreateBaul={handleCreateBaulClick}
         baulesUsed={subscription.baulesUsed}
         baulesLimit={subscription.baulesLimit}
-        onOpenActivity={() => navigate('/actividad')}
-        actionableActivityCount={activities.filter(a => a.isActionable).length}
       />
       
       {isLoadingAlbums && (

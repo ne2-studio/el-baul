@@ -111,7 +111,6 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<IBaulManager, BaulManager>();
 builder.Services.AddScoped<IAlbumManager, AlbumManager>();
 builder.Services.AddScoped<IPhotoManager, PhotoManager>();
-builder.Services.AddScoped<IActivityManager, ActivityManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
 
 // Register infrastructure services

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Baul, Album, Photo, SharedUser, RemovalRequest, Activity, BaulRole, Recuerdo, Subscription, UserProfile } from '@/types';
+import { Baul, Album, Photo, SharedUser, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile } from '@/types';
 import { api } from '@/api';
 
 const defaultSubscription: Subscription = {
@@ -22,7 +22,6 @@ interface AppState {
   sharedUsers: Record<string, SharedUser[]>;
   removalRequests: Record<string, RemovalRequest[]>;
   recuerdos: Record<string, Recuerdo[]>;
-  activities: Activity[];
   isLoading: boolean;
   error: string | null;
 
@@ -60,7 +59,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   sharedUsers: {},
   removalRequests: {},
   recuerdos: {},
-  activities: [],
   isLoading: true,
   error: null,
 
@@ -80,21 +78,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     sharedUsers: {},
     removalRequests: {},
     recuerdos: {},
-    activities: [],
   }),
 
   fetchData: async () => {
     set({ isLoading: true, error: null });
     try {
-      const [baules, activities, profile] = await Promise.all([
+      const [baules, profile] = await Promise.all([
         api.baules.getAll(),
-        api.activities.getAll(),
         loadProfile(),
       ]);
 
       set({
         baules,
-        activities,
         userProfile: profile
           ? { photoUrl: '', name: profile.name || profile.email, email: profile.email }
           : get().userProfile,

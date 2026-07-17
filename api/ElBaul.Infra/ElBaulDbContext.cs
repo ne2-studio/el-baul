@@ -10,7 +10,6 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<Album> Albums => Set<Album>();
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<Recuerdo> Recuerdos => Set<Recuerdo>();
-    public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<SharedUser> SharedUsers => Set<SharedUser>();
     public DbSet<RemovalRequest> RemovalRequests => Set<RemovalRequest>();
 

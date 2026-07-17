@@ -15,7 +15,6 @@ export const BaulRoute: React.FC = () => {
     baules,
     albums,
     removalRequests,
-    activities,
     loadAlbumPhotos,
     loadAlbums,
     fetchData
@@ -116,8 +115,6 @@ export const BaulRoute: React.FC = () => {
       onManagePeople={() => navigate(`/personas/${baul.id}`)}
       onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
       pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
-      onOpenActivity={() => navigate('/actividad')}
-      actionableActivityCount={activities.filter(a => a.isActionable).length}
     />
   );
 };

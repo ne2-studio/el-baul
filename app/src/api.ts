@@ -1,4 +1,4 @@
-import { Baul, Album, Photo, Recuerdo, Activity, SharedUser, RemovalRequest, BaulPreview, UserProfile } from './types';
+import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile } from './types';
 
 export const API_BASE = import.meta.env.VITE_API_URL as string;
 
@@ -113,10 +113,6 @@ export const api = {
       (await get<any[]>(`/api/photos/${photoId}/recuerdos`)).map((r) => new Recuerdo(r)),
     create: async (photoId: string, text: string) =>
       new Recuerdo(await post<any>(`/api/photos/${photoId}/recuerdos`, { text })),
-  },
-
-  activities: {
-    getAll: async () => (await get<any[]>('/api/activities')).map((a) => new Activity(a)),
   },
 
   users: {
