@@ -4,6 +4,7 @@ import { useAuth } from 'react-oidc-context';
 import { ProfileMenuModal } from './components/ProfileMenuModal';
 import { PlanLimitModal } from './components/PlanLimitModal';
 import { Toast } from './components/Toast';
+import { NativeShareHandler } from './components/NativeShareHandler';
 import { setAccessToken } from '@/api';
 import { Baul } from '@/types';
 
@@ -35,6 +36,7 @@ import { PeopleWithAccessRoute } from '../features/sharing/components/PeopleWith
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
 import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
+import { SelectBaulForShareRoute } from '../features/sharing/components/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/components/ProfileRoute';
 import { SubscriptionRoute } from '../features/profile/components/SubscriptionRoute';
 import { PlanSelectionRoute } from '../features/profile/components/PlanSelectionRoute';
@@ -143,6 +145,8 @@ function App() {
 
   return (
     <div className="h-screen w-full bg-[var(--bg-primary)]">
+      <NativeShareHandler />
+
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={
@@ -256,6 +260,11 @@ function App() {
         <Route path="/eliminar-solicitudes/:baulId" element={
           <ProtectedRoute>
             <RemovalRequestsRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/compartir" element={
+          <ProtectedRoute>
+            <SelectBaulForShareRoute />
           </ProtectedRoute>
         } />
 
