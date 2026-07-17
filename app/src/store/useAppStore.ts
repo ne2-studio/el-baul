@@ -41,6 +41,7 @@ interface AppState {
   createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
   uploadPhotos: (baulId: string, albumId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
   uploadLoosePhotos: (baulId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
+  movePhotos: (baulId: string, sourceAlbumId: string, photoIds: string[], targetAlbumId: string) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
   setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
 
@@ -209,6 +210,46 @@ export const useAppStore = create<AppState>((set, get) => ({
           : b
       ),
     }));
+  },
+
+  movePhotos: async (baulId, sourceAlbumId, photoIds, targetAlbumId) => {
+    for (const photoId of photoIds) {
+      await api.photos.move(photoId, targetAlbumId);
+    }
+
+    // Re-fetch the target album's photos from the server rather than merging
+    // client-side — the target may not have been loaded into the store yet
+    // (e.g. moving into an album the user hasn't opened this session), and a
+    // client-side merge against an empty/stale slice would silently drop its
+    // existing photos.
+    const targetPhotos = await api.photos.getAll(targetAlbumId);
+
+    set((state) => {
+      const sourcePhotos = state.photos[sourceAlbumId] || [];
+      const movedCount = sourcePhotos.filter((p) => photoIds.includes(p.id)).length;
+
+      return {
+        photos: {
+          ...state.photos,
+          [sourceAlbumId]: sourcePhotos.filter((p) => !photoIds.includes(p.id)),
+          [targetAlbumId]: targetPhotos,
+        },
+        albums: {
+          ...state.albums,
+          [baulId]: (state.albums[baulId] || []).map((a) => {
+            if (a.id === sourceAlbumId) return { ...a, photoCount: Math.max(0, a.photoCount - movedCount) };
+            if (a.id === targetAlbumId) {
+              return {
+                ...a,
+                photoCount: targetPhotos.length,
+                coverPhotoUrl: a.coverPhotoUrl || targetPhotos[0]?.thumbnailUrl,
+              };
+            }
+            return a;
+          }),
+        },
+      };
+    });
   },
 
   setBaulCover: async (baulId, photoId) => {

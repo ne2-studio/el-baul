@@ -31,6 +31,16 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("photos/{photoId:guid}/album")]
+    public async Task<IActionResult> Move(Guid photoId, [FromBody] MovePhotoRequest request)
+    {
+        if (!Guid.TryParse(request.AlbumId, out var albumId))
+            return BadRequest(new { error = $"'{request.AlbumId}' is not a valid album id." });
+
+        var result = await photoManager.MoveAsync(photoId, albumId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpGet("baules/{baulId:guid}/photos/sueltas")]
     public async Task<IActionResult> GetLoose(Guid baulId)
     {

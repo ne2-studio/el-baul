@@ -127,6 +127,8 @@ export const api = {
 
       return new Photo(await handleResponse<any>(response));
     },
+    move: async (photoId: string, albumId: string) =>
+      new Photo(await put<any>(`/api/photos/${photoId}/album`, { albumId })),
   },
 
   recuerdos: {

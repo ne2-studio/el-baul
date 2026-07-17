@@ -148,6 +148,58 @@ public class PhotoManager(
         return ToDto(photo, thumbnailUrl, fullUrl);
     }
 
+    public async Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetAlbumId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null) return Result.Failure<PhotoDto>("Photo not found");
+
+        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
+        if (baul is null) return Result.Failure<PhotoDto>("Baul not found");
+
+        var isCustodio = baul.CustodioId == userId;
+        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId);
+        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
+        if (!canEdit) return Result.Failure<PhotoDto>("Access denied");
+
+        var targetAlbum = await albumRepository.GetByIdAsync(targetAlbumId);
+        if (targetAlbum is null || targetAlbum.BaulId != photo.BaulId)
+            return Result.Failure<PhotoDto>("Target album not found");
+
+        if (photo.AlbumId == targetAlbumId)
+            return Result.Failure<PhotoDto>("Photo is already in that album");
+
+        var now = clock.UtcNow();
+
+        if (photo.AlbumId is { } sourceAlbumId)
+        {
+            var sourceAlbum = await albumRepository.GetByIdAsync(sourceAlbumId);
+            if (sourceAlbum is not null)
+            {
+                await albumRepository.UpdateAsync(sourceAlbum with
+                {
+                    PhotoCount = Math.Max(0, sourceAlbum.PhotoCount - 1),
+                    CoverPhotoKey = sourceAlbum.CoverPhotoKey == photo.StorageKey ? null : sourceAlbum.CoverPhotoKey,
+                    UpdatedAt = now
+                });
+            }
+        }
+
+        var updatedPhoto = photo with { AlbumId = targetAlbumId };
+        await photoRepository.UpdateAsync(updatedPhoto);
+
+        await albumRepository.UpdateAsync(targetAlbum with
+        {
+            PhotoCount = targetAlbum.PhotoCount + 1,
+            CoverPhotoKey = string.IsNullOrEmpty(targetAlbum.CoverPhotoKey) ? photo.StorageKey : targetAlbum.CoverPhotoKey,
+            UpdatedAt = now
+        });
+
+        var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+        var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
+        return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
+    }
+
     public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId)
     {
         var userId = currentUserProvider.GetUserId();

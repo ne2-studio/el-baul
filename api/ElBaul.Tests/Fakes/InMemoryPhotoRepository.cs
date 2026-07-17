@@ -23,6 +23,12 @@ public class InMemoryPhotoRepository : IPhotoRepository
         return Task.CompletedTask;
     }
 
+    public Task UpdateAsync(Photo photo)
+    {
+        _photos[photo.Id] = photo;
+        return Task.CompletedTask;
+    }
+
     public Task DeleteAsync(Guid id)
     {
         _photos.Remove(id);

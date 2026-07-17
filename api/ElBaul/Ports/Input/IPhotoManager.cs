@@ -23,6 +23,8 @@ public interface IPhotoManager
         string? caption,
         DateTime? date);
 
+    Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetAlbumId);
+
     Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId);
     Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid photoId, string text);
 }

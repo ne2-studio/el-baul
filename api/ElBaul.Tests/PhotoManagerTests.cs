@@ -30,6 +30,14 @@ public class PhotoManagerTests
         return (baulId, albumId);
     }
 
+    private async Task<(Guid baulId, Guid sourceAlbumId, Guid targetAlbumId)> SeedBaulWithTwoAlbumsAsync()
+    {
+        var (baulId, sourceAlbumId) = await SeedBaulWithAlbumAsync();
+        var targetAlbumId = Guid.NewGuid();
+        await _albumRepository.CreateAsync(new Album(targetAlbumId, baulId, "Destino", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        return (baulId, sourceAlbumId, targetAlbumId);
+    }
+
     [Fact]
     public async Task UploadAsync_ShouldSaveFile_AndIncrementAlbumPhotoCount()
     {
@@ -145,6 +153,89 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Album not found", result.Error);
+    }
+
+    [Fact]
+    public async Task MoveAsync_ShouldReassignAlbumId_AndUpdatePhotoCounts()
+    {
+        var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        var sourceAlbum = await _albumRepository.GetByIdAsync(sourceAlbumId);
+        await _albumRepository.UpdateAsync(sourceAlbum! with { PhotoCount = 1 });
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.MoveAsync(photoId, targetAlbumId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(targetAlbumId.ToString(), result.Value.AlbumId);
+
+        var updatedSource = await _albumRepository.GetByIdAsync(sourceAlbumId);
+        var updatedTarget = await _albumRepository.GetByIdAsync(targetAlbumId);
+        Assert.Equal(0, updatedSource!.PhotoCount);
+        Assert.Equal(1, updatedTarget!.PhotoCount);
+    }
+
+    [Fact]
+    public async Task MoveAsync_ShouldClearSourceCover_WhenMovedPhotoWasTheCover()
+    {
+        var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "cover-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        var sourceAlbum = await _albumRepository.GetByIdAsync(sourceAlbumId);
+        await _albumRepository.UpdateAsync(sourceAlbum! with { PhotoCount = 1, CoverPhotoKey = "cover-key" });
+
+        var manager = CreateManager(CustodioId);
+        await manager.MoveAsync(photoId, targetAlbumId);
+
+        var updatedSource = await _albumRepository.GetByIdAsync(sourceAlbumId);
+        Assert.Null(updatedSource!.CoverPhotoKey);
+    }
+
+    [Fact]
+    public async Task MoveAsync_ShouldSetTargetCover_WhenTargetHasNoCoverYet()
+    {
+        var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        await manager.MoveAsync(photoId, targetAlbumId);
+
+        var updatedTarget = await _albumRepository.GetByIdAsync(targetAlbumId);
+        Assert.Equal("key", updatedTarget!.CoverPhotoKey);
+    }
+
+    [Fact]
+    public async Task MoveAsync_ShouldFail_WhenTargetAlbumInDifferentBaul()
+    {
+        var (baulId, sourceAlbumId, _) = await SeedBaulWithTwoAlbumsAsync();
+        var (_, otherBaulAlbumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.MoveAsync(photoId, otherBaulAlbumId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Target album not found", result.Error);
+    }
+
+    [Fact]
+    public async Task MoveAsync_ShouldDenyAccess_ForMiembroRole()
+    {
+        var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        const string miembroId = "miembro-1";
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(miembroId);
+        var result = await manager.MoveAsync(photoId, targetAlbumId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]

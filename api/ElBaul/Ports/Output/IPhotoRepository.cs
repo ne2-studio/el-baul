@@ -7,5 +7,6 @@ public interface IPhotoRepository
     Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(Guid baulId);
     Task<IEnumerable<Photo>> GetPreviewPhotosAsync(Guid baulId, int limit);
     Task CreateAsync(Photo photo);
+    Task UpdateAsync(Photo photo);
     Task DeleteAsync(Guid id);
 }

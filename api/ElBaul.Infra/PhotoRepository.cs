@@ -27,6 +27,12 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task UpdateAsync(Photo photo)
+    {
+        dbContext.Photos.Update(photo);
+        await dbContext.SaveChangesAsync();
+    }
+
     public async Task DeleteAsync(Guid id)
     {
         await dbContext.Photos.Where(p => p.Id == id).ExecuteDeleteAsync();

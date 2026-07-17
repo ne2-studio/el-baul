@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { Photo } from './PhotosView';
+import { Photo, MoveModal } from './PhotosView';
+import { Album } from './AlbumsView';
 import { getRelativeTime, getFormattedDate, parsePhotoDate } from '../utils/timeUtils';
 import { Button } from './Button';
 import { RecuerdoInput } from './RecuerdoInput';
@@ -17,6 +18,9 @@ interface PhotoViewerProps {
   canEditAlbum?: boolean;
   onSetBaulCover?: (photo: Photo) => void;
   onSetAlbumCover?: (photo: Photo) => void;
+  onMovePhoto?: (photo: Photo, targetAlbumId: string) => void;
+  allAlbums?: Album[];
+  currentAlbum?: Album;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (photoId: string, text: string) => void;
 }
@@ -31,6 +35,9 @@ export function PhotoViewer({
   canEditAlbum,
   onSetBaulCover,
   onSetAlbumCover,
+  onMovePhoto,
+  allAlbums = [],
+  currentAlbum,
   recuerdos = [],
   onAddRecuerdo
 }: PhotoViewerProps) {
@@ -40,7 +47,11 @@ export function PhotoViewer({
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [removalReason, setRemovalReason] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
-  
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [moveTargetId, setMoveTargetId] = useState('');
+
+  const moveableAlbums = allAlbums.filter(a => a.id !== currentAlbum?.id);
+
   const currentIndex = photos.findIndex(p => p.id === photo.id);
   const hasRecuerdos = recuerdos.length > 0;
   const hasPrevious = currentIndex > 0;
@@ -110,9 +121,19 @@ export function PhotoViewer({
   if (isCustodio && onSetBaulCover) {
     menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', onSelect: () => onSetBaulCover(photo) });
   }
+  if (onMovePhoto && moveableAlbums.length > 0) {
+    menuItems.push({ key: 'move', label: 'Mover a otro álbum', onSelect: () => setShowMoveModal(true) });
+  }
   if (onRequestRemoval) {
     menuItems.push({ key: 'removal', label: 'Solicitar retirada', onSelect: () => setShowRemovalModal(true) });
   }
+
+  const handleMoveSubmit = () => {
+    if (!moveTargetId) return;
+    onMovePhoto?.(photo, moveTargetId);
+    setShowMoveModal(false);
+    setMoveTargetId('');
+  };
 
   const handleAddRecuerdo = (text: string) => {
     if (onAddRecuerdo) {
@@ -342,6 +363,18 @@ export function PhotoViewer({
             </p>
           </div>
         </div>
+      )}
+
+      {/* Mover a otro álbum modal */}
+      {showMoveModal && (
+        <MoveModal
+          title="Mover a otro álbum"
+          albums={moveableAlbums}
+          selectedId={moveTargetId}
+          onSelect={setMoveTargetId}
+          onCancel={() => setShowMoveModal(false)}
+          onConfirm={handleMoveSubmit}
+        />
       )}
     </>
   );
