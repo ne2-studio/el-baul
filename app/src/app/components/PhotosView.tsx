@@ -7,7 +7,8 @@ import { SelectedPhoto } from './UploadConfirmationScreen';
 
 export interface Photo {
   id: string;
-  url: string;
+  thumbnailUrl: string;
+  fullUrl: string;
   caption?: string;
   date?: string;
   recuerdoCount?: number;
