@@ -77,7 +77,11 @@ public class PhotoManager(
             UpdatedAt = now
         };
         await albumRepository.UpdateAsync(updatedAlbum);
-        await baulRepository.UpdateAsync(baul with { UpdatedAt = now });
+        await baulRepository.UpdateAsync(baul with
+        {
+            CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
+            UpdatedAt = now
+        });
 
         var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);

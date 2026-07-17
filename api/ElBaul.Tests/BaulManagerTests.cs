@@ -179,6 +179,72 @@ public class BaulManagerTests
     }
 
     [Fact]
+    public async Task SetCoverAsync_ShouldSetCoverPhotoKey_ForCustodio()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetCoverAsync(baulId, photoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value.CoverPhotoUrl);
+
+        var baul = await _baulRepository.GetByIdAsync(baulId);
+        Assert.Equal("photo-key", baul!.CoverPhotoKey);
+    }
+
+    [Fact]
+    public async Task SetCoverAsync_ShouldDenyAccess_WhenCallerIsNotCustodio()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.SetCoverAsync(baulId, photoId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task SetCoverAsync_ShouldFail_WhenPhotoDoesNotExist()
+    {
+        var baulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetCoverAsync(baulId, Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error);
+    }
+
+    [Fact]
+    public async Task SetCoverAsync_ShouldFail_WhenPhotoBelongsToDifferentBaul()
+    {
+        var baulId = Guid.NewGuid();
+        var otherBaulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(otherBaulId, "Otro", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, otherBaulId, "photo-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetCoverAsync(baulId, photoId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error);
+    }
+
+    [Fact]
     public async Task AcceptInviteAsync_ShouldAddCallerAsMiembro_WhenNotAlreadyShared()
     {
         var baulId = Guid.NewGuid();

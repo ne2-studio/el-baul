@@ -60,6 +60,34 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task UploadAsync_ShouldSetBaulCover_WhenBaulHasNoCoverYet()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null);
+
+        var baul = await _baulRepository.GetByIdAsync(baulId);
+        Assert.False(string.IsNullOrEmpty(baul!.CoverPhotoKey));
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldNotOverwriteExistingBaulCover()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var existingBaul = await _baulRepository.GetByIdAsync(baulId);
+        await _baulRepository.UpdateAsync(existingBaul! with { CoverPhotoKey = "existing-key" });
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([1, 2, 3]);
+        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null);
+
+        var baul = await _baulRepository.GetByIdAsync(baulId);
+        Assert.Equal("existing-key", baul!.CoverPhotoKey);
+    }
+
+    [Fact]
     public async Task UploadAsync_ShouldDenyAccess_ForMiembroRole()
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();

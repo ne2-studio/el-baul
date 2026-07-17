@@ -24,10 +24,13 @@ public class BaulManager(
         var shared = await baulRepository.GetSharedByUserIdAsync(userId);
         var sharedCounts = await baulRepository.GetSharedUserCountsAsync(owned.Select(b => b.Id));
 
-        var dtos = owned.Select(b => ToDto(b, isCustodio: true, BaulRole.Custodio, sharedCounts.GetValueOrDefault(b.Id)))
-            .Concat(shared.Select(a => ToDto(a.Baul, isCustodio: false, a.Role)));
+        var dtos = new List<BaulDto>();
+        foreach (var b in owned)
+            dtos.Add(await ToDtoAsync(b, isCustodio: true, BaulRole.Custodio, sharedCounts.GetValueOrDefault(b.Id)));
+        foreach (var a in shared)
+            dtos.Add(await ToDtoAsync(a.Baul, isCustodio: false, a.Role));
 
-        return Result.Success(dtos);
+        return Result.Success<IEnumerable<BaulDto>>(dtos);
     }
 
     public async Task<Result<BaulDto>> CreateAsync(string name, string? description)
@@ -39,7 +42,7 @@ public class BaulManager(
         await baulRepository.CreateAsync(baul);
 
         logger.LogInformation("CreateAsync - Baul {Id} created by {UserId}", baul.Id, userId);
-        return ToDto(baul, isCustodio: true, BaulRole.Custodio);
+        return await ToDtoAsync(baul, isCustodio: true, BaulRole.Custodio);
     }
 
     public async Task<Result<BaulDto>> GetByIdAsync(Guid baulId)
@@ -55,7 +58,24 @@ public class BaulManager(
 
         var role = isCustodio ? BaulRole.Custodio : sharedAccess?.Role ?? BaulRole.Miembro;
         var sharedCount = isCustodio ? (await baulRepository.GetSharedUsersAsync(baulId)).Count() : 0;
-        return ToDto(baul, isCustodio, role, sharedCount);
+        return await ToDtoAsync(baul, isCustodio, role, sharedCount);
+    }
+
+    public async Task<Result<BaulDto>> SetCoverAsync(Guid baulId, Guid photoId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var baul = await baulRepository.GetByIdAsync(baulId);
+        if (baul is null) return Result.Failure<BaulDto>("Baul not found");
+        if (baul.CustodioId != userId) return Result.Failure<BaulDto>("Access denied");
+
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null || photo.BaulId != baulId) return Result.Failure<BaulDto>("Photo not found");
+
+        var updated = baul with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
+        await baulRepository.UpdateAsync(updated);
+
+        var sharedCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count();
+        return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, sharedCount);
     }
 
     public async Task<Result<BaulPreviewDto>> GetPreviewAsync(Guid baulId)
@@ -268,9 +288,15 @@ public class BaulManager(
         return Result.Success();
     }
 
-    private static BaulDto ToDto(Baul baul, bool isCustodio, BaulRole role, int sharedCount = 0) =>
-        new(baul.Id.ToString(), baul.Name, baul.Description, baul.AlbumCount, baul.CreatedAt, baul.UpdatedAt,
-            isCustodio, role.ToApiString(), sharedCount);
+    private async Task<BaulDto> ToDtoAsync(Baul baul, bool isCustodio, BaulRole role, int sharedCount = 0)
+    {
+        var coverUrl = baul.CoverPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(baul.CoverPhotoKey, ImagePlacement.BaulCover)
+            : null;
+
+        return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.AlbumCount, coverUrl,
+            baul.CreatedAt, baul.UpdatedAt, isCustodio, role.ToApiString(), sharedCount);
+    }
 
     private static SharedUserDto ToDto(SharedUser sharedUser, string? name) =>
         new(sharedUser.Id.ToString(), sharedUser.UserId, sharedUser.Email, name,

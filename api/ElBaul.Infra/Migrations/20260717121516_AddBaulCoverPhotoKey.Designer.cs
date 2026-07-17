@@ -3,6 +3,7 @@ using System;
 using ElBaul.Infra;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElBaul.Infra.Migrations
 {
     [DbContext(typeof(ElBaulDbContext))]
-    partial class ElBaulDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717121516_AddBaulCoverPhotoKey")]
+    partial class AddBaulCoverPhotoKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

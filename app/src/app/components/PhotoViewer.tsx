@@ -14,6 +14,7 @@ interface PhotoViewerProps {
   onPhotoChange: (photo: Photo) => void;
   onRequestRemoval?: (photo: Photo, reason: string) => void;
   isCustodio?: boolean;
+  onSetBaulCover?: (photo: Photo) => void;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (photoId: string, text: string) => void;
 }
@@ -25,6 +26,7 @@ export function PhotoViewer({
   onPhotoChange,
   onRequestRemoval,
   isCustodio,
+  onSetBaulCover,
   recuerdos = [],
   onAddRecuerdo
 }: PhotoViewerProps) {
@@ -142,8 +144,8 @@ export function PhotoViewer({
             {currentIndex + 1} / {photos.length}
           </div>
           
-          {/* Menu button (only show if onRequestRemoval is provided) */}
-          {onRequestRemoval ? (
+          {/* Menu button (only show if there's at least one menu action available) */}
+          {onRequestRemoval || (isCustodio && onSetBaulCover) ? (
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
@@ -151,26 +153,42 @@ export function PhotoViewer({
               >
                 <MoreVertical className="w-6 h-6 text-background" />
               </button>
-              
+
               {/* Dropdown menu */}
               {showMenu && (
                 <>
                   {/* Backdrop to close menu */}
-                  <div 
+                  <div
                     className="fixed inset-0 z-10"
                     onClick={() => setShowMenu(false)}
                   />
-                  
+
                   <div className="absolute top-12 right-0 bg-background rounded-lg shadow-lg py-1 min-w-[200px] z-20">
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowRemovalModal(true);
-                      }}
-                      className="w-full px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors"
-                    >
-                      Solicitar retirada
-                    </button>
+                    {isCustodio && onSetBaulCover && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          onSetBaulCover(photo);
+                        }}
+                        className="w-full px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors text-sm"
+                      >
+                        Establecer como portada del baúl
+                      </button>
+                    )}
+                    {isCustodio && onSetBaulCover && onRequestRemoval && (
+                      <div className="my-1 border-t border-border/50" />
+                    )}
+                    {onRequestRemoval && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          setShowRemovalModal(true);
+                        }}
+                        className="w-full px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors"
+                      >
+                        Solicitar retirada
+                      </button>
+                    )}
                   </div>
                 </>
               )}

@@ -1,8 +1,7 @@
 import React from 'react';
-import { Card } from './Card';
-import { Button } from './Button';
+import { FAB } from './FAB';
 import { EmptyState } from './EmptyState';
-import { Archive, Plus, ChevronRight, Crown, Users2, User, UserCircle } from 'lucide-react';
+import { Archive, Crown, User, Users, Clock, UserCircle } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 
@@ -11,6 +10,7 @@ export interface Baul {
   name: string;
   description?: string;
   albumCount: number;
+  coverPhotoUrl?: string;
   lastUpdated: string;
   isCustodio?: boolean;
   sharedCount?: number;
@@ -33,7 +33,7 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
       {/* Header */}
       <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
         <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
-          <h1 className="text-3xl text-foreground">Mis baúles</h1>
+          <h1 className="text-3xl font-serif text-foreground">El Baúl</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowProfileMenu(true)}
@@ -45,89 +45,31 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
           </div>
         </div>
       </div>
-      
+
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-6">
-        {baules.length === 0 ? (
-          <EmptyState
-            icon={<Archive className="w-20 h-20" strokeWidth={1.5} />}
-            title="Aún no tienes baúles"
-            subtitle="Crea tu primer baúl para empezar a guardar tus recuerdos más preciados"
-          />
-        ) : (
-          <div className="space-y-4">
-            {baules.map((baul) => (
-              <Card key={baul.id} onClick={() => onSelectBaul(baul)}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-xl mb-1 text-foreground">{baul.name}</h3>
-                    {baul.description && (
-                      <p className="text-sm text-muted-foreground mb-3">{baul.description}</p>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{baul.albumCount} {baul.albumCount === 1 ? 'álbum' : 'álbumes'}</span>
-                      <span>·</span>
-                      <span>Actualizado {baul.lastUpdated}</span>
-                    </div>
-                    
-                    {/* Role and sharing indicators - subtle */}
-                    <div className="flex items-center gap-3 mt-3">
-                      {/* Ownership indicator */}
-                      {baul.isCustodio !== undefined && (
-                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10">
-                          {baul.isCustodio ? (
-                            <>
-                              <Crown className="w-3.5 h-3.5 text-primary" />
-                              <span className="text-xs text-primary font-medium">Custodio</span>
-                            </>
-                          ) : (
-                            <>
-                              <User className="w-3.5 h-3.5 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">Compartido contigo</span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Sharing count indicator - only for custodian */}
-                      {baul.isCustodio && baul.sharedCount !== undefined && baul.sharedCount > 0 && (
-                        <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Users2 className="w-3.5 h-3.5" />
-                          <span>Compartido con {baul.sharedCount} {baul.sharedCount === 1 ? 'persona' : 'personas'}</span>
-                        </div>
-                      )}
-                      
-                      {/* Private indicator */}
-                      {baul.isCustodio && (baul.sharedCount === undefined || baul.sharedCount === 0) && (
-                        <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/50">
-                          <User className="w-3.5 h-3.5" />
-                          <span>Solo tú</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground mt-1" />
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-        
-        {/* Create button */}
-        <div className="mt-6">
-          <Button 
-            variant="primary" 
-            fullWidth 
-            onClick={onCreateBaul}
-            className="flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Nuevo baúl
-          </Button>
+      <div className="max-w-2xl mx-auto px-6 py-6 pb-24">
+        <section>
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
+            Mis baúles
+          </h2>
+
+          {baules.length === 0 ? (
+            <EmptyState
+              icon={<Archive className="w-20 h-20" strokeWidth={1.5} />}
+              title="Aún no tienes baúles"
+              subtitle="Crea tu primer baúl para empezar a guardar tus recuerdos más preciados"
+            />
+          ) : (
+            <div className="space-y-4">
+              {baules.map((baul) => (
+                <BaulCard key={baul.id} baul={baul} onClick={() => onSelectBaul(baul)} />
+              ))}
+            </div>
+          )}
 
           {/* Plan limit indicator */}
           {monetizationEnabled && baulesUsed !== undefined && baulesLimit !== undefined && (
-            <div className="mt-3 px-4">
+            <div className="mt-4 px-1">
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-muted-foreground">Baúles como custodio</span>
                 <span className="font-medium text-foreground">
@@ -151,8 +93,79 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
               )}
             </div>
           )}
-        </div>
+        </section>
       </div>
+
+      <FAB label="Nuevo baúl" onClick={onCreateBaul} />
     </div>
+  );
+}
+
+// ─── Baul Card (full-bleed photo) ────────────────────────────────────────────
+
+function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="relative w-full h-52 rounded-2xl overflow-hidden text-left shadow-sm active:scale-[0.98] transition-transform"
+    >
+      {/* Background photo */}
+      <div className="absolute inset-0 bg-secondary">
+        {baul.coverPhotoUrl ? (
+          <img src={baul.coverPhotoUrl} alt={baul.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Archive className="w-16 h-16 text-muted-foreground opacity-40" strokeWidth={1.5} />
+          </div>
+        )}
+      </div>
+
+      {/* Gradient overlay — solid enough for legibility */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/20 to-black/75" />
+
+      {/* Top-left: title + description + album count */}
+      <div className="absolute top-4 left-4 right-16">
+        <h3 className="font-serif text-white text-xl leading-tight mb-0.5 drop-shadow">
+          {baul.name}
+        </h3>
+        {baul.description && (
+          <p className="text-white/90 text-xs leading-snug line-clamp-1 drop-shadow-sm">{baul.description}</p>
+        )}
+        <p className="text-white/80 text-xs mt-1">
+          {baul.albumCount} {baul.albumCount === 1 ? 'álbum' : 'álbumes'}
+        </p>
+      </div>
+
+      {/* Bottom-left: role badge */}
+      <div className="absolute bottom-4 left-4">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-sm text-white text-xs font-medium">
+          {baul.isCustodio !== false ? (
+            <>
+              <Crown className="w-3 h-3" />
+              Custodio
+            </>
+          ) : (
+            <>
+              <User className="w-3 h-3" />
+              Miembro
+            </>
+          )}
+        </span>
+      </div>
+
+      {/* Bottom-right: temporal + sharing metadata */}
+      <div className="absolute bottom-4 right-4 flex flex-col items-end gap-1.5">
+        <div className="flex items-center gap-1 text-white/90 text-xs drop-shadow-sm">
+          <Clock className="w-3 h-3" />
+          <span>Actualizado {baul.lastUpdated}</span>
+        </div>
+        {baul.sharedCount !== undefined && baul.sharedCount > 0 && (
+          <div className="flex items-center gap-1 text-white/90 text-xs drop-shadow-sm">
+            <Users className="w-3 h-3" />
+            <span>{baul.sharedCount} {baul.sharedCount === 1 ? 'persona' : 'personas'}</span>
+          </div>
+        )}
+      </div>
+    </button>
   );
 }

@@ -21,7 +21,8 @@ List baúles the caller owns or has been shared. Response `200 OK`: array of
 ```json
 {
   "id": "uuid", "name": "string", "description": "string|null",
-  "albumCount": 0, "createdAt": "iso", "updatedAt": "iso",
+  "albumCount": 0, "coverPhotoUrl": "imgproxy-url|null",
+  "createdAt": "iso", "updatedAt": "iso",
   "isCustodio": true, "role": "custodio|colaborador|miembro"
 }
 ```
@@ -44,6 +45,11 @@ Response `200 OK`: `{ "id", "name", "description", "previewPhotos": ["imgproxy-u
 
 Joins the caller as `miembro` if not already a member/custodian. Response `200 OK`:
 `{ "success": true }`.
+
+### `PUT /api/baules/{baulId}/cover`
+
+Custodio only. Body: `{ "photoId" }` — must be a photo belonging to this baúl, otherwise
+`404 Not Found`. Response `200 OK`: the updated baúl (same shape as above).
 
 ## Sharing
 
@@ -99,7 +105,8 @@ at imgproxy, never at storage directly.
 
 `colaborador` or `custodio` only. `multipart/form-data`: `file` (required), `caption`
 (optional), `date` (optional, ISO). Response `200 OK`: the photo; increments the album's
-`photoCount`, and sets it as the album's cover if it's the first photo.
+`photoCount`, and sets it as the album's cover if it's the first photo (and as the baúl's
+cover if the baúl has none yet).
 
 ## Recuerdos (comments on a photo)
 

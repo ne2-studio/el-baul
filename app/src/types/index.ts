@@ -25,6 +25,7 @@ export class Baul {
   name: string;
   description?: string;
   albumCount: number;
+  coverPhotoUrl?: string;
   lastUpdated: string;
   isCustodio?: boolean;
   sharedCount?: number;
@@ -34,6 +35,7 @@ export class Baul {
     this.name = data.name;
     this.description = data.description;
     this.albumCount = data.albumCount;
+    this.coverPhotoUrl = data.coverPhotoUrl;
     this.lastUpdated = formatRelativeTime(data.updatedAt);
     this.isCustodio = data.isCustodio;
     this.sharedCount = data.sharedCount ?? 0;

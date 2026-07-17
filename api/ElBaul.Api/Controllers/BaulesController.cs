@@ -32,6 +32,16 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("{baulId:guid}/cover")]
+    public async Task<IActionResult> SetCover(Guid baulId, [FromBody] SetBaulCoverRequest request)
+    {
+        if (!Guid.TryParse(request.PhotoId, out var photoId))
+            return BadRequest(new { error = $"'{request.PhotoId}' is not a valid photo id." });
+
+        var result = await baulManager.SetCoverAsync(baulId, photoId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [AllowAnonymous]
     [EnableRateLimiting("PublicLimiter")]
     [HttpGet("{baulId:guid}/preview")]

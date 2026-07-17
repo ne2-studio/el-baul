@@ -64,6 +64,8 @@ export const api = {
     getById: async (id: string) => new Baul(await get<any>(`/api/baules/${id}`)),
     getPreview: async (id: string) => new BaulPreview(await get<any>(`/api/baules/${id}/preview`)),
     acceptInvite: (id: string) => post<{ success: boolean }>(`/api/baules/${id}/accept-invite`),
+    setCover: async (baulId: string, photoId: string) =>
+      new Baul(await put<any>(`/api/baules/${baulId}/cover`, { photoId })),
 
     getSharedUsers: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/shared-users`)).map((u) => new SharedUser(u)),

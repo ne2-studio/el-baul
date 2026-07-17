@@ -6,6 +6,7 @@ public record BaulDto
     string Name,
     string? Description,
     int AlbumCount,
+    string? CoverPhotoUrl,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsCustodio,

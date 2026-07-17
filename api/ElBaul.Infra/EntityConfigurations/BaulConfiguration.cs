@@ -13,6 +13,7 @@ public class BaulConfiguration : IEntityTypeConfiguration<Baul>
         builder.Property(b => b.Name).IsRequired().HasMaxLength(200);
         builder.Property(b => b.Description).HasMaxLength(2000);
         builder.Property(b => b.CustodioId).IsRequired().HasMaxLength(255);
+        builder.Property(b => b.CoverPhotoKey).HasMaxLength(1000);
         builder.Property(b => b.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(b => b.UpdatedAt).HasColumnType("timestamp with time zone");
 

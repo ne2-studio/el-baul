@@ -8,5 +8,6 @@ public record Baul
     string CustodioId,
     int AlbumCount,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    string? CoverPhotoKey = null
 );
