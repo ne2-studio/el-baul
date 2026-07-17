@@ -39,6 +39,7 @@ interface AppState {
   createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
   uploadPhotos: (baulId: string, albumId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
+  setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
 
   sendInvitation: (baulId: string, email: string, role: BaulRole) => Promise<void>;
   updateUserRole: (baulId: string, sharedUserId: string, role: BaulRole) => Promise<void>;
@@ -188,6 +189,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     const updated = await api.baules.setCover(baulId, photoId);
     set((state) => ({
       baules: state.baules.map((b) => (b.id === baulId ? updated : b)),
+    }));
+  },
+
+  setAlbumCover: async (baulId, albumId, photoId) => {
+    const updated = await api.albums.setCover(baulId, albumId, photoId);
+    set((state) => ({
+      albums: {
+        ...state.albums,
+        [baulId]: (state.albums[baulId] || []).map((a) => (a.id === albumId ? updated : a)),
+      },
     }));
   },
 

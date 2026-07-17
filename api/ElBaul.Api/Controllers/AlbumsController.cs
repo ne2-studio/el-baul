@@ -23,4 +23,14 @@ public class AlbumsController(IAlbumManager albumManager) : ControllerBase
         var result = await albumManager.CreateAsync(baulId, request.Name, request.Description);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
+
+    [HttpPut("{albumId:guid}/cover")]
+    public async Task<IActionResult> SetCover(Guid baulId, Guid albumId, [FromBody] SetAlbumCoverRequest request)
+    {
+        if (!Guid.TryParse(request.PhotoId, out var photoId))
+            return BadRequest(new { error = $"'{request.PhotoId}' is not a valid photo id." });
+
+        var result = await albumManager.SetCoverAsync(albumId, photoId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
 }

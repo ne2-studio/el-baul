@@ -28,23 +28,7 @@ public class AlbumManager(
         var albums = await albumRepository.GetByBaulIdAsync(baulId);
         var dtos = new List<AlbumDto>();
         foreach (var album in albums)
-        {
-            var coverUrl = album.CoverPhotoKey is { Length: > 0 }
-                ? await photoStorage.GetImageUrl(album.CoverPhotoKey, ImagePlacement.AlbumCover)
-                : null;
-            var featuredCoverUrl = album.CoverPhotoKey is { Length: > 0 }
-                ? await photoStorage.GetImageUrl(album.CoverPhotoKey, ImagePlacement.AlbumCoverFeatured)
-                : null;
-
-            var photoIds = (await photoRepository.GetByAlbumIdAsync(album.Id)).Select(p => p.Id).ToList();
-            var recuerdos = (await recuerdoRepository.GetByPhotoIdsAsync(photoIds)).ToList();
-            var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
-            var latestAuthor = latestRecuerdo is null
-                ? null
-                : (await userRepository.GetByIdAsync(latestRecuerdo.UserId))?.Name;
-
-            dtos.Add(ToDto(album, coverUrl, featuredCoverUrl, recuerdos.Count, latestRecuerdo?.Text, latestAuthor));
-        }
+            dtos.Add(await ToDtoAsync(album));
 
         return Result.Success<IEnumerable<AlbumDto>>(dtos);
     }
@@ -67,6 +51,48 @@ public class AlbumManager(
         await baulRepository.UpdateAsync(baul with { AlbumCount = baul.AlbumCount + 1, UpdatedAt = now });
 
         return ToDto(album, null, null, 0, null, null);
+    }
+
+    public async Task<Result<AlbumDto>> SetCoverAsync(Guid albumId, Guid photoId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var album = await albumRepository.GetByIdAsync(albumId);
+        if (album is null) return Result.Failure<AlbumDto>("Album not found");
+
+        var baul = await baulRepository.GetByIdAsync(album.BaulId);
+        if (baul is null) return Result.Failure<AlbumDto>("Baul not found");
+
+        var isCustodio = baul.CustodioId == userId;
+        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
+        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
+        if (!canEdit) return Result.Failure<AlbumDto>("Access denied");
+
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null || photo.AlbumId != albumId) return Result.Failure<AlbumDto>("Photo not found");
+
+        var updated = album with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
+        await albumRepository.UpdateAsync(updated);
+
+        return await ToDtoAsync(updated);
+    }
+
+    private async Task<AlbumDto> ToDtoAsync(Album album)
+    {
+        var coverUrl = album.CoverPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(album.CoverPhotoKey, ImagePlacement.AlbumCover)
+            : null;
+        var featuredCoverUrl = album.CoverPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(album.CoverPhotoKey, ImagePlacement.AlbumCoverFeatured)
+            : null;
+
+        var photoIds = (await photoRepository.GetByAlbumIdAsync(album.Id)).Select(p => p.Id).ToList();
+        var recuerdos = (await recuerdoRepository.GetByPhotoIdsAsync(photoIds)).ToList();
+        var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+        var latestAuthor = latestRecuerdo is null
+            ? null
+            : (await userRepository.GetByIdAsync(latestRecuerdo.UserId))?.Name;
+
+        return ToDto(album, coverUrl, featuredCoverUrl, recuerdos.Count, latestRecuerdo?.Text, latestAuthor);
     }
 
     private static AlbumDto ToDto(

@@ -90,6 +90,8 @@ export const api = {
     getAll: async (baulId: string) => (await get<any[]>(`/api/baules/${baulId}/albums`)).map((a) => new Album(a)),
     create: async (baulId: string, name: string, description?: string) =>
       new Album(await post<any>(`/api/baules/${baulId}/albums`, { name, description })),
+    setCover: async (baulId: string, albumId: string, photoId: string) =>
+      new Album(await put<any>(`/api/baules/${baulId}/albums/${albumId}/cover`, { photoId })),
   },
 
   photos: {

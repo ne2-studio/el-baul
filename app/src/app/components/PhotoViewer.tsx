@@ -14,7 +14,9 @@ interface PhotoViewerProps {
   onPhotoChange: (photo: Photo) => void;
   onRequestRemoval?: (photo: Photo, reason: string) => void;
   isCustodio?: boolean;
+  canEditAlbum?: boolean;
   onSetBaulCover?: (photo: Photo) => void;
+  onSetAlbumCover?: (photo: Photo) => void;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (photoId: string, text: string) => void;
 }
@@ -26,7 +28,9 @@ export function PhotoViewer({
   onPhotoChange,
   onRequestRemoval,
   isCustodio,
+  canEditAlbum,
   onSetBaulCover,
+  onSetAlbumCover,
   recuerdos = [],
   onAddRecuerdo
 }: PhotoViewerProps) {
@@ -99,6 +103,17 @@ export function PhotoViewer({
     }
   };
 
+  const menuItems: { key: string; label: string; onSelect: () => void }[] = [];
+  if (canEditAlbum && onSetAlbumCover) {
+    menuItems.push({ key: 'album-cover', label: 'Establecer como portada del álbum', onSelect: () => onSetAlbumCover(photo) });
+  }
+  if (isCustodio && onSetBaulCover) {
+    menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', onSelect: () => onSetBaulCover(photo) });
+  }
+  if (onRequestRemoval) {
+    menuItems.push({ key: 'removal', label: 'Solicitar retirada', onSelect: () => setShowRemovalModal(true) });
+  }
+
   const handleAddRecuerdo = (text: string) => {
     if (onAddRecuerdo) {
       onAddRecuerdo(photo.id, text);
@@ -145,7 +160,7 @@ export function PhotoViewer({
           </div>
           
           {/* Menu button (only show if there's at least one menu action available) */}
-          {onRequestRemoval || (isCustodio && onSetBaulCover) ? (
+          {menuItems.length > 0 ? (
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
@@ -164,31 +179,22 @@ export function PhotoViewer({
                   />
 
                   <div className="absolute top-12 right-0 bg-background rounded-lg shadow-lg py-1 min-w-[200px] z-20">
-                    {isCustodio && onSetBaulCover && (
-                      <button
-                        onClick={() => {
-                          setShowMenu(false);
-                          onSetBaulCover(photo);
-                        }}
-                        className="w-full px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors text-sm"
-                      >
-                        Establecer como portada del baúl
-                      </button>
-                    )}
-                    {isCustodio && onSetBaulCover && onRequestRemoval && (
-                      <div className="my-1 border-t border-border/50" />
-                    )}
-                    {onRequestRemoval && (
-                      <button
-                        onClick={() => {
-                          setShowMenu(false);
-                          setShowRemovalModal(true);
-                        }}
-                        className="w-full px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors"
-                      >
-                        Solicitar retirada
-                      </button>
-                    )}
+                    {menuItems.map((item, index) => (
+                      <React.Fragment key={item.key}>
+                        <button
+                          onClick={() => {
+                            setShowMenu(false);
+                            item.onSelect();
+                          }}
+                          className="w-full px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors text-sm"
+                        >
+                          {item.label}
+                        </button>
+                        {index < menuItems.length - 1 && (
+                          <div className="my-1 border-t border-border/50" />
+                        )}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </>
               )}

@@ -28,6 +28,7 @@ export class Baul {
   coverPhotoUrl?: string;
   lastUpdated: string;
   isCustodio?: boolean;
+  role?: BaulRole;
   sharedCount?: number;
 
   constructor(data: any) {
@@ -38,6 +39,7 @@ export class Baul {
     this.coverPhotoUrl = data.coverPhotoUrl;
     this.lastUpdated = formatRelativeTime(data.updatedAt);
     this.isCustodio = data.isCustodio;
+    this.role = data.role;
     this.sharedCount = data.sharedCount ?? 0;
   }
 }

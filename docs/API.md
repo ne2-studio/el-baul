@@ -93,6 +93,12 @@ Response `200 OK`: array of `{ "id", "baulId", "name", "description", "photoCoun
 `colaborador` or `custodio` only. Body: `{ "name", "description": "string|null" }`.
 Response `200 OK`: the album; increments the baúl's `albumCount`.
 
+### `PUT /api/baules/{baulId}/albums/{albumId}/cover`
+
+`colaborador` or `custodio` only. Body: `{ "photoId" }` — must be a photo belonging to
+this album, otherwise `404 Not Found`. Response `200 OK`: the updated album (same shape
+as above).
+
 ## Photos
 
 ### `GET /api/albums/{albumId}/photos`

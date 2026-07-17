@@ -11,11 +11,12 @@ export const PhotoViewerRoute: React.FC = () => {
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
-  const { baules, albums, photos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover } = useAppStore();
+  const { baules, albums, photos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, setAlbumCover } = useAppStore();
 
   const baul = baules.find(b => b.id === baulId);
   const album = albums[baulId!]?.find(a => a.id === albumId);
   const photo = photos[albumId!]?.find(p => p.id === photoId);
+  const canEditAlbum = baul ? baul.isCustodio || baul.role === 'colaborador' : false;
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -49,6 +50,18 @@ export const PhotoViewerRoute: React.FC = () => {
     }
   };
 
+  const handleSetAlbumCover = async (photo: any) => {
+    if (!auth.isAuthenticated) return;
+
+    try {
+      await setAlbumCover(baul.id, album.id, photo.id);
+      showToastMessage('Portada del álbum actualizada');
+    } catch (error) {
+      console.error('Error setting album cover:', error);
+      showToastMessage('Error al establecer la portada');
+    }
+  };
+
   const handleAddRecuerdo = async (photoId: string, text: string) => {
     if (!auth.isAuthenticated) return;
     try {
@@ -67,7 +80,9 @@ export const PhotoViewerRoute: React.FC = () => {
       onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${newPhoto.id}`)}
       onRequestRemoval={handleRequestRemoval}
       isCustodio={baul.isCustodio}
+      canEditAlbum={canEditAlbum}
       onSetBaulCover={handleSetBaulCover}
+      onSetAlbumCover={handleSetAlbumCover}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
     />
