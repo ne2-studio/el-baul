@@ -1,5 +1,5 @@
 import React from 'react';
-import { FAB } from './FAB';
+import { SimpleFAB } from './FAB';
 import { EmptyState } from './EmptyState';
 import { Archive, Crown, User, Users, Clock, UserCircle } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
@@ -96,7 +96,7 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
         </section>
       </div>
 
-      <FAB label="Nuevo baúl" onClick={onCreateBaul} />
+      <SimpleFAB label="Nuevo baúl" onClick={onCreateBaul} />
     </div>
   );
 }

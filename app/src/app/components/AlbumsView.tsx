@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from './Card';
-import { Button } from './Button';
 import { EmptyState } from './EmptyState';
+import { ExpandableFAB } from './FAB';
 import { ChevronLeft, Plus, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical } from 'lucide-react';
 import { Baul } from './BaulesList';
 import {
@@ -102,7 +102,7 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
       </div>
       
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-6">
+      <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
         {albums.length === 0 ? (
           <EmptyState
             icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
@@ -184,20 +184,17 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
             )}
           </div>
         )}
-        
-        {/* Create button */}
-        <div className="mt-6">
-          <Button 
-            variant="primary" 
-            fullWidth 
-            onClick={onCreateAlbum}
-            className="flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Nuevo álbum
-          </Button>
-        </div>
       </div>
+
+      <ExpandableFAB
+        actions={[
+          {
+            label: 'Nuevo álbum',
+            icon: <Plus className="w-4 h-4" />,
+            onClick: onCreateAlbum,
+          },
+        ]}
+      />
     </div>
   );
 }

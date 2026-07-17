@@ -27,6 +27,15 @@
   animation: slide-up 0.3s ease-out;
 }
 
+@keyframes fab-item-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.animate-fab-item {
+  animation: fab-item-in 0.2s ease-out both;
+}
+
 .animate-progress {
   animation: progress 1.5s ease-in-out infinite;
 }

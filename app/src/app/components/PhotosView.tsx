@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
+import { SimpleFAB } from './FAB';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle } from 'lucide-react';
 import { Album } from './AlbumsView';
 import { SelectedPhoto } from './UploadConfirmationScreen';
@@ -77,7 +78,7 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
       />
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-6">
+      <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
         {photos.length === 0 ? (
           <div>
             <EmptyState
@@ -87,9 +88,9 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
             />
             {/* Primary CTA for empty state */}
             <div className="mt-8 max-w-sm mx-auto">
-              <Button 
-                variant="primary" 
-                fullWidth 
+              <Button
+                variant="secondary"
+                fullWidth
                 onClick={() => fileInputRef.current?.click()}
                 className="flex items-center justify-center gap-2"
               >
@@ -99,43 +100,34 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos }
             </div>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-3 gap-2">
-              {photos.map((photo) => (
-                <button
-                  key={photo.id}
-                  onClick={() => onSelectPhoto(photo)}
-                  className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 transition-opacity relative group"
-                >
-                  <img
-                    src={photo.thumbnailUrl}
-                    alt={photo.caption || 'Foto'}
-                    className="w-full h-full object-cover"
-                  />
-                  {(photo.recuerdoCount || 0) > 0 && (
-                    <div className="absolute bottom-1.5 right-1.5 w-6 h-6 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-75 group-hover:opacity-90 transition-opacity">
-                      <MessageCircle className="w-3.5 h-3.5 text-foreground/70" strokeWidth={1.5} />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-            
-            {/* Add more photos button */}
-            <div className="mt-6">
-              <Button 
-                variant="primary" 
-                fullWidth 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center gap-2"
+          <div className="grid grid-cols-3 gap-2">
+            {photos.map((photo) => (
+              <button
+                key={photo.id}
+                onClick={() => onSelectPhoto(photo)}
+                className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 transition-opacity relative group"
               >
-                <Plus className="w-5 h-5" />
-                Añadir fotos
-              </Button>
-            </div>
-          </>
+                <img
+                  src={photo.thumbnailUrl}
+                  alt={photo.caption || 'Foto'}
+                  className="w-full h-full object-cover"
+                />
+                {(photo.recuerdoCount || 0) > 0 && (
+                  <div className="absolute bottom-1.5 right-1.5 w-6 h-6 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-75 group-hover:opacity-90 transition-opacity">
+                    <MessageCircle className="w-3.5 h-3.5 text-foreground/70" strokeWidth={1.5} />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
         )}
       </div>
+
+      <SimpleFAB
+        label="Subir fotos"
+        icon={<Plus className="w-5 h-5" />}
+        onClick={() => fileInputRef.current?.click()}
+      />
     </div>
   );
 }
