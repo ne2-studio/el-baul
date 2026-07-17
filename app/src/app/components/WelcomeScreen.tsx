@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from './Button';
-import { Archive } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onGoogleSignIn: () => void;
@@ -11,11 +10,13 @@ export function WelcomeScreen({ onGoogleSignIn }: WelcomeScreenProps) {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="max-w-md w-full text-center">
         
-        {/* App Icon/Illustration */}
+        {/* App Icon */}
         <div className="mb-8 flex justify-center">
-          <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center shadow-lg">
-            <Archive className="w-12 h-12 text-primary-foreground" strokeWidth={1.5} />
-          </div>
+          <img
+            src="/pwa-512x512.png"
+            alt="El Baúl"
+            className="w-24 h-24 rounded-3xl shadow-lg"
+          />
         </div>
         
         {/* App Name */}
