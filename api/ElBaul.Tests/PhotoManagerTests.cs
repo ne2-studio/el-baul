@@ -146,4 +146,62 @@ public class PhotoManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Album not found", result.Error);
     }
+
+    [Fact]
+    public async Task UploadToBaulAsync_ShouldSaveFile_WithNullAlbumId()
+    {
+        var (baulId, _) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", "Caption", null);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.AlbumId);
+        Assert.Single(_photoStorage.SavedKeys);
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_ShouldSetBaulCover_WhenBaulHasNoCoverYet()
+    {
+        var (baulId, _) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null);
+
+        var baul = await _baulRepository.GetByIdAsync(baulId);
+        Assert.False(string.IsNullOrEmpty(baul!.CoverPhotoKey));
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_ShouldDenyAccess_ForMiembroRole()
+    {
+        var (baulId, _) = await SeedBaulWithAlbumAsync();
+        const string miembroId = "miembro-1";
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(miembroId);
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task GetLooseByBaulIdAsync_ShouldReturnOnlyAlbumlessPhotos()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "in-album-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), null, baulId, "loose-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetLooseByBaulIdAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        var photo = Assert.Single(result.Value);
+        Assert.Null(photo.AlbumId);
+    }
 }

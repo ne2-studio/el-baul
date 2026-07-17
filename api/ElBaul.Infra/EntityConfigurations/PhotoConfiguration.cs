@@ -22,6 +22,7 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.HasOne<Album>()
             .WithMany()
             .HasForeignKey(p => p.AlbumId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
         // BaulId is redundant with AlbumId->Baul for cheap baul-scoped queries (preview photos);

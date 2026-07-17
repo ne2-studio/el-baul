@@ -11,6 +11,9 @@ public class InMemoryPhotoRepository : IPhotoRepository
     public Task<IEnumerable<Photo>> GetByAlbumIdAsync(Guid albumId) =>
         Task.FromResult(_photos.Values.Where(p => p.AlbumId == albumId));
 
+    public Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(Guid baulId) =>
+        Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.AlbumId == null));
+
     public Task<IEnumerable<Photo>> GetPreviewPhotosAsync(Guid baulId, int limit) =>
         Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId).OrderByDescending(p => p.CreatedAt).Take(limit));
 

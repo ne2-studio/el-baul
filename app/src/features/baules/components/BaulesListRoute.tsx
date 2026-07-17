@@ -17,6 +17,7 @@ export const BaulesListRoute: React.FC = () => {
   const {
     baules,
     loadAlbums: storeLoadAlbums,
+    loadLoosePhotos,
     subscription,
     isLoading
   } = useAppStore();
@@ -31,7 +32,7 @@ export const BaulesListRoute: React.FC = () => {
 
     try {
       setIsLoadingAlbums(true);
-      await storeLoadAlbums(baul.id);
+      await Promise.all([storeLoadAlbums(baul.id), loadLoosePhotos(baul.id)]);
       navigate(`/baules/${baul.id}`);
     } catch (error) {
       console.error('Error loading albums:', error);

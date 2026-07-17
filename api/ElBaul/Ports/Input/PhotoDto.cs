@@ -3,7 +3,7 @@ namespace ElBaul.Ports.Input;
 public record PhotoDto
 (
     string Id,
-    string AlbumId,
+    string? AlbumId,
     string BaulId,
     string ThumbnailUrl,
     string FullUrl,

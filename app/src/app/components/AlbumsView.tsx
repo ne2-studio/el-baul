@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
 import { ExpandableFAB } from './FAB';
-import { ChevronLeft, Plus, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical } from 'lucide-react';
+import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical } from 'lucide-react';
 import { Baul } from './BaulesList';
+import { SelectedPhoto } from './UploadConfirmationScreen';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,19 +25,43 @@ export interface Album {
   latestRecuerdoAuthor?: string;
 }
 
+interface LoosePhoto {
+  id: string;
+  thumbnailUrl: string;
+}
+
 interface AlbumsViewProps {
   baul: Baul;
   albums: Album[];
+  loosePhotos?: LoosePhoto[];
   onBack: () => void;
   onSelectAlbum: (album: Album) => void;
   onCreateAlbum: () => void;
+  onOpenLoosePhotos?: () => void;
+  onUploadPhotos?: (selectedPhotos: SelectedPhoto[]) => void;
   onShareBaul?: () => void;
   onManagePeople?: () => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
 }
 
-export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount }: AlbumsViewProps) {
+export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlbum, onCreateAlbum, onOpenLoosePhotos, onUploadPhotos, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount }: AlbumsViewProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const selectedPhotos: SelectedPhoto[] = Array.from(files).map((file, index) => ({
+      id: `temp-${Date.now()}-${index}`,
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+
+    e.target.value = '';
+    onUploadPhotos?.(selectedPhotos);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -101,9 +126,18 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
         </div>
       </div>
       
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
-        {albums.length === 0 ? (
+        {albums.length === 0 && loosePhotos.length === 0 ? (
           <EmptyState
             icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
             title="Este baúl está vacío"
@@ -112,7 +146,7 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
         ) : (
           <div className="space-y-6">
             {/* Álbum destacado, a ancho completo */}
-            {(() => {
+            {albums.length > 0 && (() => {
               const album = albums[0];
               const recuerdoCount = album.recuerdoCount || 0;
               const metadata = recuerdoCount > 0
@@ -182,6 +216,30 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
                 ))}
               </div>
             )}
+
+            {/* Fotos sueltas — álbum virtual */}
+            {loosePhotos.length > 0 && (
+              <div>
+                <p
+                  className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
+                  style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+                >
+                  Otras
+                </p>
+                <Card onClick={onOpenLoosePhotos} className="!p-0 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
+                  {/* Collage cover */}
+                  <div className="aspect-[16/10] bg-secondary relative rounded-t-2xl overflow-hidden">
+                    <FotosSueltasCollage coverPhotos={loosePhotos.slice(0, 9).map((p) => p.thumbnailUrl)} />
+                  </div>
+                  <div className="p-4 bg-card">
+                    <h3 className="font-medium text-lg text-foreground">Fotos sueltas</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {loosePhotos.length} {loosePhotos.length === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún álbum
+                    </p>
+                  </div>
+                </Card>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -193,8 +251,31 @@ export function AlbumsView({ baul, albums, onBack, onSelectAlbum, onCreateAlbum,
             icon: <Plus className="w-4 h-4" />,
             onClick: onCreateAlbum,
           },
+          ...(onUploadPhotos ? [{
+            label: 'Subir fotos',
+            icon: <Upload className="w-4 h-4" />,
+            onClick: () => fileInputRef.current?.click(),
+          }] : []),
         ]}
       />
+    </div>
+  );
+}
+
+// Collage for the "Fotos sueltas" virtual album cover
+const COLLAGE_COLORS = [
+  '#D4B89A', '#C4A882', '#B89870', '#E8D5C0', '#C8B090', '#D8C0A0', '#BCA878', '#E0CCAA', '#CAB088',
+];
+
+function FotosSueltasCollage({ coverPhotos }: { coverPhotos: string[] }) {
+  const cells = Array.from({ length: 9 }, (_, i) => coverPhotos[i] ?? null);
+  return (
+    <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-px">
+      {cells.map((url, i) => (
+        <div key={i} className="relative overflow-hidden" style={{ backgroundColor: COLLAGE_COLORS[i % COLLAGE_COLORS.length] }}>
+          {url && <img src={url} alt="" className="w-full h-full object-cover opacity-90" />}
+        </div>
+      ))}
     </div>
   );
 }

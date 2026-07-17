@@ -14,9 +14,11 @@ export const BaulRoute: React.FC = () => {
   const {
     baules,
     albums,
+    loosePhotos,
     removalRequests,
     loadAlbumPhotos,
     loadAlbums,
+    loadLoosePhotos,
     fetchData
   } = useAppStore();
 
@@ -45,7 +47,7 @@ export const BaulRoute: React.FC = () => {
       if (!albums[baulId]) {
         try {
           setIsLoading(true);
-          await loadAlbums(baulId);
+          await Promise.all([loadAlbums(baulId), loadLoosePhotos(baulId)]);
         } catch (error) {
           console.error('Error loading albums on route enter:', error);
           showToastMessage('Error al cargar los álbumes del baúl');
@@ -56,7 +58,7 @@ export const BaulRoute: React.FC = () => {
     }
 
     initBaul();
-  }, [baulId, auth.isAuthenticated, baul, albums, loadAlbums, fetchData, showToastMessage]);
+  }, [baulId, auth.isAuthenticated, baul, albums, loadAlbums, loadLoosePhotos, fetchData, showToastMessage]);
   
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
   if (!baul) return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
@@ -108,9 +110,14 @@ export const BaulRoute: React.FC = () => {
     <AlbumsView
       baul={baul}
       albums={albums[baul.id] || []}
+      loosePhotos={loosePhotos[baul.id] || []}
       onBack={() => navigate('/baules')}
       onSelectAlbum={handleSelectAlbum}
       onCreateAlbum={() => navigate(`/baules/${baul.id}/nuevo-album`)}
+      onOpenLoosePhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
+      onUploadPhotos={(selectedPhotos) =>
+        navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
+      }
       onShareBaul={handleShareBaul}
       onManagePeople={() => navigate(`/personas/${baul.id}`)}
       onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}

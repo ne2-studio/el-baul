@@ -257,9 +257,9 @@ public class BaulManager(
         if (request is null) return Result.Failure("Request not found");
 
         var photo = await photoRepository.GetByIdAsync(request.PhotoId);
-        if (photo is not null)
+        if (photo?.AlbumId is { } photoAlbumId)
         {
-            var album = await albumRepository.GetByIdAsync(photo.AlbumId);
+            var album = await albumRepository.GetByIdAsync(photoAlbumId);
             if (album is not null)
             {
                 await albumRepository.UpdateAsync(album with { PhotoCount = Math.Max(0, album.PhotoCount - 1) });

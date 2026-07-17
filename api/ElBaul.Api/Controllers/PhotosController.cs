@@ -31,6 +31,27 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpGet("baules/{baulId:guid}/photos/sueltas")]
+    public async Task<IActionResult> GetLoose(Guid baulId)
+    {
+        var result = await photoManager.GetLooseByBaulIdAsync(baulId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("baules/{baulId:guid}/photos/sueltas")]
+    [RequestSizeLimit(20_000_000)]
+    public async Task<IActionResult> UploadLoose(Guid baulId, [FromForm] UploadPhotoRequest request)
+    {
+        if (request.File is null || request.File.Length == 0)
+            return BadRequest(new { error = "No file provided" });
+
+        await using var stream = request.File.OpenReadStream();
+        var result = await photoManager.UploadToBaulAsync(
+            baulId, stream, request.File.FileName, request.File.ContentType, request.Caption, request.Date);
+
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpGet("photos/{photoId:guid}/recuerdos")]
     public async Task<IActionResult> GetRecuerdos(Guid photoId)
     {

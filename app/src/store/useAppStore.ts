@@ -19,6 +19,7 @@ interface AppState {
   baules: Baul[];
   albums: Record<string, Album[]>;
   photos: Record<string, Photo[]>;
+  loosePhotos: Record<string, Photo[]>;
   sharedUsers: Record<string, SharedUser[]>;
   removalRequests: Record<string, RemovalRequest[]>;
   recuerdos: Record<string, Recuerdo[]>;
@@ -32,12 +33,14 @@ interface AppState {
   fetchData: () => Promise<void>;
   loadAlbums: (baulId: string) => Promise<void>;
   loadAlbumPhotos: (albumId: string) => Promise<void>;
+  loadLoosePhotos: (baulId: string) => Promise<void>;
   loadRecuerdos: (photoId: string) => Promise<void>;
   addRecuerdo: (photoId: string, text: string) => Promise<void>;
 
   createBaul: (name: string, description: string) => Promise<Baul>;
   createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
   uploadPhotos: (baulId: string, albumId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
+  uploadLoosePhotos: (baulId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
   setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
 
@@ -58,6 +61,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   baules: [],
   albums: {},
   photos: {},
+  loosePhotos: {},
   sharedUsers: {},
   removalRequests: {},
   recuerdos: {},
@@ -77,6 +81,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     baules: [],
     albums: {},
     photos: {},
+    loosePhotos: {},
     sharedUsers: {},
     removalRequests: {},
     recuerdos: {},
@@ -130,6 +135,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({ photos: { ...state.photos, [albumId]: photos } }));
   },
 
+  loadLoosePhotos: async (baulId) => {
+    const photos = await api.baules.getLoosePhotos(baulId);
+    set((state) => ({ loosePhotos: { ...state.loosePhotos, [baulId]: photos } }));
+  },
+
   loadRecuerdos: async (photoId) => {
     const recuerdos = await api.recuerdos.getAll(photoId);
     set((state) => ({ recuerdos: { ...state.recuerdos, [photoId]: recuerdos } }));
@@ -177,6 +187,22 @@ export const useAppStore = create<AppState>((set, get) => ({
             : a
         ),
       },
+      baules: state.baules.map((b) =>
+        b.id === baulId
+          ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
+          : b
+      ),
+    }));
+  },
+
+  uploadLoosePhotos: async (baulId, selectedPhotos) => {
+    const uploaded: Photo[] = [];
+    for (const selected of selectedPhotos) {
+      uploaded.push(await api.baules.uploadPhoto(baulId, selected.file, selected.caption, selected.date));
+    }
+
+    set((state) => ({
+      loosePhotos: { ...state.loosePhotos, [baulId]: [...(state.loosePhotos[baulId] || []), ...uploaded] },
       baules: state.baules.map((b) =>
         b.id === baulId
           ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
@@ -237,8 +263,14 @@ export const useAppStore = create<AppState>((set, get) => ({
         photos[albumId] = photos[albumId].filter((p) => p.id !== photoId);
       }
 
+      const loosePhotos = { ...state.loosePhotos };
+      for (const id of Object.keys(loosePhotos)) {
+        loosePhotos[id] = loosePhotos[id].filter((p) => p.id !== photoId);
+      }
+
       return {
         photos,
+        loosePhotos,
         removalRequests: {
           ...state.removalRequests,
           [baulId]: (state.removalRequests[baulId] || []).filter((r) => r.id !== requestId),

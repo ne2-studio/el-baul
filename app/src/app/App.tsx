@@ -25,6 +25,12 @@ import { UploadConfirmationRoute } from '../features/photos/components/UploadCon
 import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadSuccessRoute } from '../features/photos/components/UploadSuccessRoute';
 import { UploadErrorRoute } from '../features/photos/components/UploadErrorRoute';
+import { LoosePhotosRoute } from '../features/photos/components/LoosePhotosRoute';
+import { LoosePhotoViewerRoute } from '../features/photos/components/LoosePhotoViewerRoute';
+import { LooseUploadConfirmationRoute } from '../features/photos/components/LooseUploadConfirmationRoute';
+import { LooseUploadingRoute } from '../features/photos/components/LooseUploadingRoute';
+import { LooseUploadSuccessRoute } from '../features/photos/components/LooseUploadSuccessRoute';
+import { LooseUploadErrorRoute } from '../features/photos/components/LooseUploadErrorRoute';
 import { PeopleWithAccessRoute } from '../features/sharing/components/PeopleWithAccessRoute';
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
@@ -202,6 +208,36 @@ function App() {
         <Route path="/baules/:baulId/albumes/:albumId/error" element={
           <ProtectedRoute>
             <UploadErrorRoute navigate={navigate} />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/fotos-sueltas" element={
+          <ProtectedRoute>
+            <LoosePhotosRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
+          <ProtectedRoute>
+            <LoosePhotoViewerRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/fotos-sueltas/confirmar" element={
+          <ProtectedRoute>
+            <LooseUploadConfirmationRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/fotos-sueltas/subiendo" element={
+          <ProtectedRoute>
+            <LooseUploadingRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/fotos-sueltas/exito" element={
+          <ProtectedRoute>
+            <LooseUploadSuccessRoute navigate={navigate} />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/fotos-sueltas/error" element={
+          <ProtectedRoute>
+            <LooseUploadErrorRoute navigate={navigate} />
           </ProtectedRoute>
         } />
         <Route path="/personas/:baulId" element={

@@ -43,6 +43,31 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
+    public async Task<Result<IEnumerable<PhotoDto>>> GetLooseByBaulIdAsync(Guid baulId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var baul = await baulRepository.GetByIdAsync(baulId);
+        if (baul is null) return Result.Failure<IEnumerable<PhotoDto>>("Baul not found");
+
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(baulId, userId) is not null;
+        if (!hasAccess) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
+
+        var photos = (await photoRepository.GetLooseByBaulIdAsync(baulId)).ToList();
+        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
+        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId).ToDictionary(g => g.Key, g => g.Count());
+
+        var dtos = new List<PhotoDto>();
+        foreach (var photo in photos)
+        {
+            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
+            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
+        }
+
+        return Result.Success<IEnumerable<PhotoDto>>(dtos);
+    }
+
     public async Task<Result<PhotoDto>> UploadAsync(
         Guid albumId,
         Stream content,
@@ -77,6 +102,41 @@ public class PhotoManager(
             UpdatedAt = now
         };
         await albumRepository.UpdateAsync(updatedAlbum);
+        await baulRepository.UpdateAsync(baul with
+        {
+            CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
+            UpdatedAt = now
+        });
+
+        var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
+        var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
+        return ToDto(photo, thumbnailUrl, fullUrl);
+    }
+
+    public async Task<Result<PhotoDto>> UploadToBaulAsync(
+        Guid baulId,
+        Stream content,
+        string fileName,
+        string contentType,
+        string? caption,
+        DateTime? date)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var baul = await baulRepository.GetByIdAsync(baulId);
+        if (baul is null) return Result.Failure<PhotoDto>("Baul not found");
+
+        var isCustodio = baul.CustodioId == userId;
+        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(baulId, userId);
+        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
+        if (!canEdit) return Result.Failure<PhotoDto>("Access denied");
+
+        var now = clock.UtcNow();
+        var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
+        await photoStorage.SaveAsync(storageKey, content, contentType);
+
+        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, caption, date ?? now, userId, now);
+        await photoRepository.CreateAsync(photo);
+
         await baulRepository.UpdateAsync(baul with
         {
             CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
@@ -133,7 +193,7 @@ public class PhotoManager(
     }
 
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
-        new(photo.Id.ToString(), photo.AlbumId.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
+        new(photo.Id.ToString(), photo.AlbumId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
             photo.Caption, photo.Date, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, bool isOwn) =>

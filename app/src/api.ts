@@ -76,6 +76,23 @@ export const api = {
     revokeAccess: (baulId: string, email: string) =>
       del<{ success: boolean }>(`/api/baules/${baulId}/shared-users/${encodeURIComponent(email)}`),
 
+    getLoosePhotos: async (baulId: string) =>
+      (await get<any[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
+    uploadPhoto: async (baulId: string, file: File, caption?: string, date?: string) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (caption) formData.append('caption', caption);
+      if (date) formData.append('date', date);
+
+      const response = await fetch(`${API_BASE}/api/baules/${baulId}/photos/sueltas`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: formData,
+      });
+
+      return new Photo(await handleResponse<any>(response));
+    },
+
     getRemovalRequests: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/removal-requests`)).map((r) => new RemovalRequest(r)),
     submitRemovalRequest: async (baulId: string, photoId: string, reason?: string) =>
