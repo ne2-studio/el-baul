@@ -268,94 +268,91 @@ export function PhotoViewer({
           )}
         </div>
         
-        {/* Content area: Photo + Info/Recuerdos */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {/* Photo with navigation */}
-          <div className="min-h-[60vh] flex items-center justify-center px-4 relative">
-            {/* Mobile swipe areas */}
-            {hasPrevious && (
-              <div
-                onClick={handlePrevious}
-                className="absolute left-0 top-0 bottom-0 w-1/4 z-10 md:hidden cursor-pointer"
-                aria-label="Foto anterior"
-              />
-            )}
-            
-            {hasNext && (
-              <div
-                onClick={handleNext}
-                className="absolute right-0 top-0 bottom-0 w-1/4 z-10 md:hidden cursor-pointer"
-                aria-label="Foto siguiente"
-              />
-            )}
-            
-            {/* Previous button - Desktop */}
-            {hasPrevious && (
-              <button
-                onClick={handlePrevious}
-                className="absolute left-4 w-12 h-12 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors z-10 hidden md:flex"
-              >
-                <ChevronLeft className="w-6 h-6 text-background" />
-              </button>
-            )}
-            
-            {/* Photo */}
-            <img
-              src={photo.fullUrl}
-              alt={photo.caption || 'Foto'}
-              className="max-w-full max-h-[80vh] object-contain select-none"
-              draggable={false}
+        {/* Photo with navigation */}
+        <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+          {/* Mobile swipe areas */}
+          {hasPrevious && (
+            <div
+              onClick={handlePrevious}
+              className="absolute left-0 top-0 bottom-0 w-1/4 z-10 md:hidden cursor-pointer"
+              aria-label="Foto anterior"
             />
-            
-            {/* Next button - Desktop */}
-            {hasNext && (
-              <button
-                onClick={handleNext}
-                className="absolute right-4 w-12 h-12 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors z-10 hidden md:flex"
-              >
-                <ChevronRight className="w-6 h-6 text-background" />
-              </button>
-            )}
-          </div>
-          
-          {/* Info & Recuerdos section */}
-          <div className="px-6 py-8 space-y-8">
-            {/* Date */}
-            {(photo.date || onChangeDate) && (
-              <button
-                onClick={() => onChangeDate && setShowDateModal(true)}
-                disabled={!onChangeDate}
-                className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
-              >
-                {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
-              </button>
+          )}
+
+          {hasNext && (
+            <div
+              onClick={handleNext}
+              className="absolute right-0 top-0 bottom-0 w-1/4 z-10 md:hidden cursor-pointer"
+              aria-label="Foto siguiente"
+            />
+          )}
+
+          {/* Previous button - Desktop */}
+          {hasPrevious && (
+            <button
+              onClick={handlePrevious}
+              className="absolute left-4 w-12 h-12 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors z-10 hidden md:flex"
+            >
+              <ChevronLeft className="w-6 h-6 text-background" />
+            </button>
+          )}
+
+          {/* Photo */}
+          <img
+            src={photo.fullUrl}
+            alt={photo.caption || 'Foto'}
+            className="w-full h-full object-contain select-none"
+            draggable={false}
+          />
+
+          {/* Next button - Desktop */}
+          {hasNext && (
+            <button
+              onClick={handleNext}
+              className="absolute right-4 w-12 h-12 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors z-10 hidden md:flex"
+            >
+              <ChevronRight className="w-6 h-6 text-background" />
+            </button>
+          )}
+        </div>
+
+        {/* Info & Recuerdos section */}
+        <div className="px-6 py-8 space-y-8 max-h-[50vh] overflow-y-auto">
+          {/* Date */}
+          {(photo.date || onChangeDate) && (
+            <button
+              onClick={() => onChangeDate && setShowDateModal(true)}
+              disabled={!onChangeDate}
+              className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
+            >
+              {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
+            </button>
+          )}
+
+          {/* Recuerdos List & Input */}
+          <div className="space-y-6">
+            {!hasRecuerdos ? (
+              <div className="text-center">
+                <p className="text-background/50 text-sm mb-2">
+                  Sé el primero en añadir un recuerdo
+                </p>
+              </div>
+            ) : (
+              <RecuerdosList recuerdos={recuerdos} />
             )}
 
-            {/* Recuerdos List & Input */}
-            <div className="space-y-6">
-              {!hasRecuerdos ? (
-                <div className="text-center">
-                  <p className="text-background/50 text-sm mb-2">
-                    Sé el primero en añadir un recuerdo
-                  </p>
-                </div>
-              ) : (
-                <RecuerdosList recuerdos={recuerdos} />
-              )}
-
-              {onAddRecuerdo && (
-                <div className="pt-2">
-                  <RecuerdoInput
-                    photoId={photo.id}
-                    onSubmit={handleAddRecuerdo}
-                  />
-                </div>
-              )}
-            </div>
+            {onAddRecuerdo && (
+              <div className="pt-2">
+                <RecuerdoInput
+                  photoId={photo.id}
+                  onSubmit={handleAddRecuerdo}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
-      
+
       {/* Removal request modal */}
       {showRemovalModal && (
         <div className="fixed inset-0 bg-foreground/50 z-[60] flex items-end md:items-center justify-center p-4">
