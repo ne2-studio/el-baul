@@ -233,8 +233,7 @@ public class AlbumManager(
             : null;
 
         var photos = (await photoRepository.GetByAlbumIdAsync(album.Id)).ToList();
-        var photoIds = photos.Select(p => p.Id).ToList();
-        var recuerdos = (await recuerdoRepository.GetByPhotoIdsAsync(photoIds)).ToList();
+        var recuerdos = (await recuerdoRepository.GetByAlbumIdAsync(album.Id)).ToList();
         var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
         var latestAuthor = latestRecuerdo is null
             ? null

@@ -252,6 +252,29 @@ public class AlbumManagerTests
     }
 
     [Fact]
+    public async Task GetByBaulIdAsync_ShouldCountRecuerdos_RegardlessOfPhotoAssociation()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "k1", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        // Photo-attached recuerdo, plus a chapter-level one with no photo at all — both
+        // must count (this used to only count recuerdos joined through the album's
+        // currently-active photos, silently dropping photo-less ones).
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, CustodioId, "con foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, CustodioId, "sin foto", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetByBaulIdAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.Single().RecuerdoCount);
+    }
+
+    [Fact]
     public async Task GetByBaulIdAsync_ShouldComputeDateRangeAndUndatedCount()
     {
         var baulId = Guid.NewGuid();

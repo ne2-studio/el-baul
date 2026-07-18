@@ -223,6 +223,9 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
                               )}
                               <p className="text-sm text-muted-foreground">
                                 {album.photoCount} {album.photoCount === 1 ? 'foto' : 'fotos'}
+                                {(album.recuerdoCount ?? 0) > 0 && (
+                                  <> · {album.recuerdoCount} {album.recuerdoCount === 1 ? 'recuerdo' : 'recuerdos'}</>
+                                )}
                               </p>
                             </div>
                           </Card>

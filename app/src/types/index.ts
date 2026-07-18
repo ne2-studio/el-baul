@@ -40,7 +40,7 @@ export class Baul {
   lastUpdated: string;
   isCustodio?: boolean;
   role?: BaulRole;
-  sharedCount?: number;
+  memberCount?: number;
 
   constructor(data: any) {
     this.id = data.id;
@@ -51,7 +51,7 @@ export class Baul {
     this.lastUpdated = formatRelativeTime(data.updatedAt);
     this.isCustodio = data.isCustodio;
     this.role = data.role;
-    this.sharedCount = data.sharedCount ?? 0;
+    this.memberCount = data.memberCount ?? 0;
   }
 }
 

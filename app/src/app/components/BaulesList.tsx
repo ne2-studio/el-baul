@@ -17,7 +17,7 @@ export interface Baul {
   lastUpdated: string;
   isCustodio?: boolean;
   role?: BaulRole;
-  sharedCount?: number;
+  memberCount?: number;
 }
 
 interface BaulesListProps {
@@ -163,10 +163,10 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
           <Clock className="w-3 h-3" />
           <span>Actualizado {baul.lastUpdated}</span>
         </div>
-        {baul.sharedCount !== undefined && baul.sharedCount > 0 && (
+        {baul.memberCount !== undefined && baul.memberCount > 1 && (
           <div className="flex items-center gap-1 text-white/90 text-xs drop-shadow-sm">
             <Users className="w-3 h-3" />
-            <span>{baul.sharedCount} {baul.sharedCount === 1 ? 'persona' : 'personas'}</span>
+            <span>{baul.memberCount} miembros</span>
           </div>
         )}
       </div>

@@ -314,4 +314,69 @@ public class BaulManagerTests
         Assert.True(result.IsSuccess);
         Assert.Null(await _baulRepository.GetSharedUserByUserIdAsync(baulId, CustodioId));
     }
+
+    [Fact]
+    public async Task GetAllForCurrentUserAsync_ShouldIncludeCustodio_InMemberCount_ForOwnedBaul()
+    {
+        var baulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, OtherUserId, "other@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetAllForCurrentUserAsync();
+
+        Assert.True(result.IsSuccess);
+        var dto = result.Value.Single();
+        Assert.Equal(2, dto.MemberCount); // custodio + 1 shared user
+    }
+
+    [Fact]
+    public async Task GetAllForCurrentUserAsync_ShouldReturnCorrectMemberCount_ForBaulSharedWithCaller()
+    {
+        var baulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, OtherUserId, "other@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.GetAllForCurrentUserAsync();
+
+        Assert.True(result.IsSuccess);
+        var dto = result.Value.Single();
+        Assert.Equal(2, dto.MemberCount); // custodio + the caller themself
+    }
+
+    [Fact]
+    public async Task GetAllForCurrentUserAsync_ShouldSortByUpdatedAt_MostRecentFirst()
+    {
+        var olderBaulId = Guid.NewGuid();
+        var newerBaulId = Guid.NewGuid();
+        var older = _clock.UtcNow().AddDays(-2);
+        var newer = _clock.UtcNow();
+        await _baulRepository.CreateAsync(new Baul(olderBaulId, "Antiguo", null, CustodioId, 0, older, older));
+        await _baulRepository.CreateAsync(new Baul(newerBaulId, "Reciente", null, CustodioId, 0, newer, newer));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetAllForCurrentUserAsync();
+
+        Assert.True(result.IsSuccess);
+        var ids = result.Value.Select(d => d.Id).ToList();
+        Assert.Equal([newerBaulId.ToString(), olderBaulId.ToString()], ids);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ShouldIncludeCustodio_InMemberCount_ForNonCustodioCaller()
+    {
+        var baulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, OtherUserId, "other@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.GetByIdAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.MemberCount);
+    }
 }

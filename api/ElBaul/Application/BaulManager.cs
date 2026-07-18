@@ -22,15 +22,19 @@ public class BaulManager(
 
         var owned = await baulRepository.GetOwnedByUserIdAsync(userId);
         var shared = await baulRepository.GetSharedByUserIdAsync(userId);
-        var sharedCounts = await baulRepository.GetSharedUserCountsAsync(owned.Select(b => b.Id));
+        var ownedList = owned.ToList();
+        var sharedList = shared.ToList();
+
+        var allBaulIds = ownedList.Select(b => b.Id).Concat(sharedList.Select(a => a.Baul.Id));
+        var sharedCounts = await baulRepository.GetSharedUserCountsAsync(allBaulIds);
 
         var dtos = new List<BaulDto>();
-        foreach (var b in owned)
-            dtos.Add(await ToDtoAsync(b, isCustodio: true, BaulRole.Custodio, sharedCounts.GetValueOrDefault(b.Id)));
-        foreach (var a in shared)
-            dtos.Add(await ToDtoAsync(a.Baul, isCustodio: false, a.Role));
+        foreach (var b in ownedList)
+            dtos.Add(await ToDtoAsync(b, isCustodio: true, BaulRole.Custodio, sharedCounts.GetValueOrDefault(b.Id) + 1));
+        foreach (var a in sharedList)
+            dtos.Add(await ToDtoAsync(a.Baul, isCustodio: false, a.Role, sharedCounts.GetValueOrDefault(a.Baul.Id) + 1));
 
-        return Result.Success<IEnumerable<BaulDto>>(dtos);
+        return Result.Success<IEnumerable<BaulDto>>(dtos.OrderByDescending(d => d.UpdatedAt).ToList());
     }
 
     public async Task<Result<BaulDto>> CreateAsync(string name, string? description)
@@ -57,8 +61,8 @@ public class BaulManager(
         if (!isCustodio && sharedAccess is null) return Result.Failure<BaulDto>("Access denied");
 
         var role = isCustodio ? BaulRole.Custodio : sharedAccess?.Role ?? BaulRole.Miembro;
-        var sharedCount = isCustodio ? (await baulRepository.GetSharedUsersAsync(baulId)).Count() : 0;
-        return await ToDtoAsync(baul, isCustodio, role, sharedCount);
+        var memberCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count() + 1;
+        return await ToDtoAsync(baul, isCustodio, role, memberCount);
     }
 
     public async Task<Result<BaulDto>> SetCoverAsync(Guid baulId, Guid photoId)
@@ -88,8 +92,8 @@ public class BaulManager(
 
         logger.LogInformation("Baul cover updated {BaulId} {PhotoId}", baulId, photoId);
 
-        var sharedCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count();
-        return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, sharedCount);
+        var memberCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count() + 1;
+        return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, memberCount);
     }
 
     public async Task<Result<BaulDto>> UpdateAsync(Guid baulId, string name, string? description)
@@ -112,8 +116,8 @@ public class BaulManager(
 
         logger.LogInformation("Baul updated {BaulId} {Name}", baulId, name);
 
-        var sharedCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count();
-        return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, sharedCount);
+        var memberCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count() + 1;
+        return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, memberCount);
     }
 
     public async Task<Result<BaulPreviewDto>> GetPreviewAsync(Guid baulId)
@@ -409,14 +413,14 @@ public class BaulManager(
         return Result.Success();
     }
 
-    private async Task<BaulDto> ToDtoAsync(Baul baul, bool isCustodio, BaulRole role, int sharedCount = 0)
+    private async Task<BaulDto> ToDtoAsync(Baul baul, bool isCustodio, BaulRole role, int memberCount = 1)
     {
         var coverUrl = baul.CoverPhotoKey is { Length: > 0 }
             ? await photoStorage.GetImageUrl(baul.CoverPhotoKey, ImagePlacement.BaulCover)
             : null;
 
         return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.AlbumCount, coverUrl,
-            baul.CreatedAt, baul.UpdatedAt, isCustodio, role.ToApiString(), sharedCount);
+            baul.CreatedAt, baul.UpdatedAt, isCustodio, role.ToApiString(), memberCount);
     }
 
     private static SharedUserDto ToDto(SharedUser sharedUser, string? name) =>

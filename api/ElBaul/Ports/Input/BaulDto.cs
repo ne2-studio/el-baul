@@ -11,5 +11,5 @@ public record BaulDto
     DateTime UpdatedAt,
     bool IsCustodio,
     string Role,
-    int SharedCount
+    int MemberCount
 );

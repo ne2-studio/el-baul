@@ -16,16 +16,21 @@ albums/photos), `miembro` (read-only).
 
 ### `GET /api/baules`
 
-List baúles the caller owns or has been shared. Response `200 OK`: array of
+List baúles the caller owns or has been shared, sorted by `updatedAt` descending (most
+recently active first). Response `200 OK`: array of
 
 ```json
 {
   "id": "uuid", "name": "string", "description": "string|null",
   "albumCount": 0, "coverPhotoUrl": "imgproxy-url|null",
   "createdAt": "iso", "updatedAt": "iso",
-  "isCustodio": true, "role": "custodio|colaborador|miembro"
+  "isCustodio": true, "role": "custodio|colaborador|miembro",
+  "memberCount": 1
 }
 ```
+
+`memberCount` is the total number of people with access, custodio included (so it's
+never less than 1) — not just invited/shared users.
 
 ### `POST /api/baules`
 
