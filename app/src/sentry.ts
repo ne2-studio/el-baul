@@ -18,7 +18,7 @@ export function initSentry() {
       integrations: [Sentry.browserTracingIntegration()],
 
       // Errors: siempre. Traces: muestreo bajo, solo para tener contexto de rendimiento.
-      tracesSampleRate: 0.05,
+      tracesSampleRate: 1.0,
       tracePropagationTargets: [import.meta.env.VITE_API_URL as string],
 
       sendDefaultPii: false,
