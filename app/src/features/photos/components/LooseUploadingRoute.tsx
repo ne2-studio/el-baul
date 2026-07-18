@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadingScreen } from '@/app/components/UploadingScreen';
 import { Album } from '@/app/components/AlbumsView';
@@ -33,6 +34,7 @@ export const LooseUploadingRoute: React.FC = () => {
       navigate(`/baules/${baul.id}/fotos-sueltas/exito?count=${selectedPhotos.length}`);
     } catch (error) {
       console.error('Error uploading photos:', error);
+      Sentry.captureException(error);
       navigate(`/baules/${baul.id}/fotos-sueltas/error`);
     }
   };
