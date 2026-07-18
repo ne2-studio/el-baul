@@ -107,21 +107,12 @@ export const BaulRoute: React.FC = () => {
     });
   };
 
-  const handleRenameBaul = (name: string) => {
-    renameBaul(baul.id, name, baul.description)
-      .then(() => showToastMessage('Nombre del baúl actualizado'))
+  const handleUpdateBaulInfo = (name: string, description: string) => {
+    renameBaul(baul.id, name, description)
+      .then(() => showToastMessage('Información del baúl actualizada'))
       .catch((error) => {
-        console.error('Error renaming baul:', error);
-        showToastMessage('Error al renombrar el baúl');
-      });
-  };
-
-  const handleUpdateBaulDescription = (description: string) => {
-    renameBaul(baul.id, baul.name, description)
-      .then(() => showToastMessage('Descripción del baúl actualizada'))
-      .catch((error) => {
-        console.error('Error updating baul description:', error);
-        showToastMessage('Error al actualizar la descripción');
+        console.error('Error updating baul info:', error);
+        showToastMessage('Error al actualizar la información del baúl');
       });
   };
 
@@ -141,8 +132,7 @@ export const BaulRoute: React.FC = () => {
       onManagePeople={() => navigate(`/personas/${baul.id}`)}
       onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
       pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
-      onRenameBaul={baul.isCustodio ? handleRenameBaul : undefined}
-      onUpdateBaulDescription={baul.isCustodio ? handleUpdateBaulDescription : undefined}
+      onUpdateBaulInfo={baul.isCustodio ? handleUpdateBaulInfo : undefined}
     />
   );
 };

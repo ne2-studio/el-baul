@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
 import { ExpandableFAB } from './FAB';
-import { InlineEdit } from './InlineEdit';
-import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical } from 'lucide-react';
+import { EditInfoModal } from './EditInfoModal';
+import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical, Pencil } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
@@ -12,6 +12,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
@@ -49,12 +50,12 @@ interface AlbumsViewProps {
   onManagePeople?: () => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
-  onRenameBaul?: (name: string) => void;
-  onUpdateBaulDescription?: (description: string) => void;
+  onUpdateBaulInfo?: (name: string, description: string) => void;
 }
 
-export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlbum, onCreateAlbum, onOpenLoosePhotos, onUploadPhotos, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount, onRenameBaul, onUpdateBaulDescription }: AlbumsViewProps) {
+export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlbum, onCreateAlbum, onOpenLoosePhotos, onUploadPhotos, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount, onUpdateBaulInfo }: AlbumsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -72,79 +73,92 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Sticky header — back + actions only */}
       <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5">
-          <div className="flex items-start justify-between mb-3">
-            <button 
+        <div className="max-w-2xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button
               onClick={onBack}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm">Volver</span>
             </button>
-            
-            <div className="flex items-center gap-2">
-              {/* Three dots menu */}
-              {(onShareBaul || onManagePeople || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button 
-                      className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
-                      aria-label="Opciones del baúl"
-                    >
-                      <MoreVertical className="w-5 h-5" />
-                      {/* Badge indicator if there are pending requests */}
-                      {(pendingRemovalRequestsCount ?? 0) > 0 && (
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-                      )}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    {onShareBaul && (
-                      <DropdownMenuItem onClick={onShareBaul}>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Compartir baúl
-                      </DropdownMenuItem>
-                    )}
-                    {onManagePeople && (
-                      <DropdownMenuItem onClick={onManagePeople}>
-                        <Users className="w-4 h-4 mr-2" />
-                        Ver personas con acceso
-                      </DropdownMenuItem>
-                    )}
-                    {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
-                      <DropdownMenuItem onClick={onRemovalRequests}>
-                        <Bell className="w-4 h-4 mr-2" />
-                        <span>Solicitudes de eliminación</span>
-                        <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                          {pendingRemovalRequestsCount}
-                        </span>
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
+                  aria-label="Opciones del baúl"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                  {(pendingRemovalRequestsCount ?? 0) > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {onUpdateBaulInfo && (
+                  <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editar información del baúl
+                  </DropdownMenuItem>
+                )}
+
+                {onUpdateBaulInfo && (onShareBaul || onManagePeople || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
+                  <DropdownMenuSeparator />
+                )}
+
+                {onShareBaul && (
+                  <DropdownMenuItem onClick={onShareBaul}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Compartir baúl
+                  </DropdownMenuItem>
+                )}
+                {onManagePeople && (
+                  <DropdownMenuItem onClick={onManagePeople}>
+                    <Users className="w-4 h-4 mr-2" />
+                    Ver personas con acceso
+                  </DropdownMenuItem>
+                )}
+                {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
+                  <DropdownMenuItem onClick={onRemovalRequests}>
+                    <Bell className="w-4 h-4 mr-2" />
+                    <span>Solicitudes de eliminación</span>
+                    <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                      {pendingRemovalRequestsCount}
+                    </span>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <InlineEdit
-            value={baul.name}
-            onSave={name => onRenameBaul?.(name)}
-            placeholder="Nombre del baúl"
-            className="text-3xl text-foreground leading-tight"
-            disabled={!onRenameBaul}
-          />
-          <InlineEdit
-            value={baul.description ?? ''}
-            onSave={description => onUpdateBaulDescription?.(description)}
-            placeholder="Añadir descripción…"
-            className="text-sm text-muted-foreground"
-            multiline
-            disabled={!onUpdateBaulDescription}
-          />
         </div>
       </div>
-      
+
+      {/* Hero */}
+      <div className="relative overflow-hidden" style={{ height: '260px' }}>
+        {baul.coverPhotoUrl ? (
+          <img src={baul.coverPhotoUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 pb-6">
+          <div className="max-w-2xl mx-auto px-6">
+            <h1 className="text-4xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
+              {baul.name}
+            </h1>
+            {baul.description && (
+              <p className="text-sm text-white/80 mt-1.5 leading-snug max-w-sm">{baul.description}</p>
+            )}
+            {!baul.description && onUpdateBaulInfo && (
+              <p className="text-sm text-white/40 mt-1.5 italic">Sin descripción · edita desde el menú ···</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       <input
         ref={fileInputRef}
         type="file"
@@ -164,66 +178,12 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
           />
         ) : (
           <div className="space-y-6">
-            {/* Álbum destacado, a ancho completo */}
-            {albums.length > 0 && (() => {
-              const album = albums[0];
-              const recuerdoCount = album.recuerdoCount || 0;
-              const metadata = recuerdoCount > 0
-                ? `${album.photoCount} ${album.photoCount === 1 ? 'foto' : 'fotos'} · ${recuerdoCount} ${recuerdoCount === 1 ? 'recuerdo' : 'recuerdos'}`
-                : `${album.photoCount} ${album.photoCount === 1 ? 'foto' : 'fotos'}`;
-
-              return (
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
-                    style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}>
-                    Álbum destacado
-                  </p>
-                  <Card key={album.id} onClick={() => onSelectAlbum(album)} className="!p-0 overflow-hidden">
-                    {/* Album cover */}
-                    <div className="aspect-[16/10] bg-secondary flex items-center justify-center">
-                      {album.featuredCoverPhotoUrl ? (
-                        <img
-                          src={album.featuredCoverPhotoUrl}
-                          alt={album.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <ImageIcon className="w-16 h-16 text-muted-foreground opacity-40" strokeWidth={1.5} />
-                      )}
-                    </div>
-
-                    {/* Album info */}
-                    <div className="p-4">
-                      <h3 className="font-medium text-lg text-foreground">{album.name}</h3>
-                      {album.minDate && album.maxDate && (
-                        <p className="text-xs text-primary/80 font-medium mt-1">
-                          {formatDateRange(album.minDate, album.maxDate)}
-                        </p>
-                      )}
-                      {album.latestRecuerdoText && album.latestRecuerdoAuthor && (
-                        <p className="text-sm text-foreground/70 italic mt-2 line-clamp-1">
-                          "{album.latestRecuerdoText.slice(0, 60)}…" — {album.latestRecuerdoAuthor}
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-2">{metadata}</p>
-                      {album.lastUpdated && (
-                        <p className="text-xs text-muted-foreground/60 mt-1.5">
-                          Actualizado {album.lastUpdated}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                </div>
-              );
-            })()}
-
-            {/* Resto de álbumes, agrupados por año de la fecha mínima (ya vienen
+            {/* Todos los álbumes, agrupados por año de la fecha mínima (ya vienen
                 ordenados del backend por fecha mínima descendente, así que agrupar
                 consecutivamente preserva ese orden dentro y entre swimlanes) */}
-            {albums.length > 1 && (() => {
-              const rest = albums.slice(1);
+            {albums.length > 0 && (() => {
               const groups = new Map<string, Album[]>();
-              for (const album of rest) {
+              for (const album of albums) {
                 const year = album.minDate ? String(album.minDate.year) : 'Sin año';
                 if (!groups.has(year)) groups.set(year, []);
                 groups.get(year)!.push(album);
@@ -315,6 +275,20 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
           }] : []),
         ]}
       />
+
+      {showEditModal && (
+        <EditInfoModal
+          title="Editar información del baúl"
+          initialName={baul.name}
+          initialDescription={baul.description ?? ''}
+          namePlaceholder="Nombre del baúl"
+          onCancel={() => setShowEditModal(false)}
+          onSave={(name, description) => {
+            onUpdateBaulInfo?.(name, description);
+            setShowEditModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }

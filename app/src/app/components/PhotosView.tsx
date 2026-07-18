@@ -2,11 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar } from 'lucide-react';
+import { EditInfoModal } from './EditInfoModal';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil } from 'lucide-react';
 import { Album } from './AlbumsView';
-import { InlineEdit } from './InlineEdit';
 import { SelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
+import { formatDateRange } from '../utils/timeUtils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
 export interface Photo {
   id: string;
@@ -26,8 +33,7 @@ interface PhotosViewProps {
   allAlbums?: Album[];
   onBatchMove?: (photoIds: string[], targetAlbumId: string) => void;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => void;
-  onRenameAlbum?: (name: string) => void;
-  onUpdateAlbumDescription?: (description: string) => void;
+  onUpdateAlbumInfo?: (name: string, description: string) => void;
 }
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
@@ -67,9 +73,10 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
   return result;
 }
 
-export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate, onRenameAlbum, onUpdateAlbumDescription }: PhotosViewProps) {
+export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate, onUpdateAlbumInfo }: PhotosViewProps) {
   const totalRecuerdos = photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Multi-selection state
   const [selectionMode, setSelectionMode] = useState(false);
@@ -146,10 +153,10 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Sticky header — back + actions */}
       <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between mb-3">
+        <div className="max-w-2xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
             <button
               onClick={selectionMode ? exitSelection : onBack}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -157,45 +164,66 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm">{selectionMode ? 'Cancelar' : 'Volver'}</span>
             </button>
-            {selectionMode && (
-              <button onClick={exitSelection} className="text-sm text-primary font-medium">
-                Cancelar
-              </button>
+
+            {selectionMode ? (
+              <span className="text-sm font-medium text-foreground">
+                {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
+              </span>
+            ) : onUpdateAlbumInfo && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+                    aria-label="Opciones del álbum"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editar información del álbum
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
-          {selectionMode ? (
-            <h1 className="text-3xl text-foreground">
-              {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
-            </h1>
-          ) : (
-            <>
-              <InlineEdit
-                value={album.name}
-                onSave={name => onRenameAlbum?.(name)}
-                placeholder="Nombre del álbum"
-                className="text-3xl text-foreground leading-tight"
-                disabled={!onRenameAlbum}
-              />
-              <InlineEdit
-                value={album.description ?? ''}
-                onSave={description => onUpdateAlbumDescription?.(description)}
-                placeholder="Añadir descripción…"
-                className="text-sm text-muted-foreground"
-                multiline
-                disabled={!onUpdateAlbumDescription}
-              />
-            </>
-          )}
-          {!selectionMode && totalRecuerdos > 0 && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
-              <span className="text-xs text-muted-foreground/75">
-                {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este álbum
-              </span>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Hero — shown when not in selection mode */}
+      {!selectionMode && (
+        <div className="relative overflow-hidden" style={{ height: '210px' }}>
+          {(album.featuredCoverPhotoUrl ?? album.coverPhotoUrl) ? (
+            <img
+              src={album.featuredCoverPhotoUrl ?? album.coverPhotoUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 pb-5">
+            <div className="max-w-2xl mx-auto px-6">
+              <h1 className="text-3xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
+                {album.name}
+              </h1>
+              {album.description && (
+                <p className="text-sm text-white/80 mt-1 leading-snug">{album.description}</p>
+              )}
+              {!album.description && onUpdateAlbumInfo && (
+                <p className="text-sm text-white/40 mt-1 italic">Sin descripción · edita desde el menú ···</p>
+              )}
+              {album.minDate && album.maxDate && (
+                <p className="text-xs text-white/65 mt-1 font-medium tracking-wide">
+                  {formatDateRange(album.minDate, album.maxDate)}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileInputRef}
@@ -208,6 +236,15 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
+        {!selectionMode && totalRecuerdos > 0 && (
+          <div className="flex items-center gap-1.5 mb-5 -mt-1">
+            <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
+            <span className="text-xs text-muted-foreground/75">
+              {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este álbum
+            </span>
+          </div>
+        )}
+
         {photos.length === 0 ? (
           <div>
             <EmptyState
@@ -303,6 +340,20 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
           onSelect={setBatchMoveTargetId}
           onCancel={() => setShowBatchMoveModal(false)}
           onConfirm={handleBatchMoveSubmit}
+        />
+      )}
+
+      {showEditModal && (
+        <EditInfoModal
+          title="Editar información del álbum"
+          initialName={album.name}
+          initialDescription={album.description ?? ''}
+          namePlaceholder="Nombre del álbum"
+          onCancel={() => setShowEditModal(false)}
+          onSave={(name, description) => {
+            onUpdateAlbumInfo?.(name, description);
+            setShowEditModal(false);
+          }}
         />
       )}
     </div>

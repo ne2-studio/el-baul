@@ -19,21 +19,12 @@ export const AlbumRoute: React.FC = () => {
 
   const canEditAlbum = baul.isCustodio || baul.role === 'colaborador';
 
-  const handleRenameAlbum = (name: string) => {
-    renameAlbum(baul.id, album.id, name, album.description)
-      .then(() => showToastMessage('Nombre del álbum actualizado'))
+  const handleUpdateAlbumInfo = (name: string, description: string) => {
+    renameAlbum(baul.id, album.id, name, description)
+      .then(() => showToastMessage('Información del álbum actualizada'))
       .catch((error) => {
-        console.error('Error renaming album:', error);
-        showToastMessage('Error al renombrar el álbum');
-      });
-  };
-
-  const handleUpdateAlbumDescription = (description: string) => {
-    renameAlbum(baul.id, album.id, album.name, description)
-      .then(() => showToastMessage('Descripción del álbum actualizada'))
-      .catch((error) => {
-        console.error('Error updating album description:', error);
-        showToastMessage('Error al actualizar la descripción');
+        console.error('Error updating album info:', error);
+        showToastMessage('Error al actualizar la información del álbum');
       });
   };
 
@@ -70,8 +61,7 @@ export const AlbumRoute: React.FC = () => {
       }
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
-      onRenameAlbum={canEditAlbum ? handleRenameAlbum : undefined}
-      onUpdateAlbumDescription={canEditAlbum ? handleUpdateAlbumDescription : undefined}
+      onUpdateAlbumInfo={canEditAlbum ? handleUpdateAlbumInfo : undefined}
     />
   );
 };
