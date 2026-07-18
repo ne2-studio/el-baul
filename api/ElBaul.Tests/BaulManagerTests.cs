@@ -245,6 +245,49 @@ public class BaulManagerTests
     }
 
     [Fact]
+    public async Task UpdateAsync_ShouldUpdateNameAndDescription_ForCustodio()
+    {
+        var baulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", "desc vieja", CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdateAsync(baulId, "Familia 2024", "desc nueva");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Familia 2024", result.Value.Name);
+        Assert.Equal("desc nueva", result.Value.Description);
+
+        var baul = await _baulRepository.GetByIdAsync(baulId);
+        Assert.Equal("Familia 2024", baul!.Name);
+        Assert.Equal("desc nueva", baul.Description);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldDenyAccess_WhenCallerIsNotCustodio()
+    {
+        var baulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, OtherUserId, "other@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdateAsync(baulId, "Familia 2024", null);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldFail_WhenBaulDoesNotExist()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdateAsync(Guid.NewGuid(), "Familia 2024", null);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Baul not found", result.Error);
+    }
+
+    [Fact]
     public async Task AcceptInviteAsync_ShouldAddCallerAsMiembro_WhenNotAlreadyShared()
     {
         var baulId = Guid.NewGuid();

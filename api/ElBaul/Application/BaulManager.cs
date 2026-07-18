@@ -92,6 +92,30 @@ public class BaulManager(
         return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, sharedCount);
     }
 
+    public async Task<Result<BaulDto>> UpdateAsync(Guid baulId, string name, string? description)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var baul = await baulRepository.GetByIdAsync(baulId);
+        if (baul is null)
+        {
+            logger.LogWarning("Baul update rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<BaulDto>("Baul not found");
+        }
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Baul update rejected: access denied {BaulId}", baulId);
+            return Result.Failure<BaulDto>("Access denied");
+        }
+
+        var updated = baul with { Name = name, Description = description, UpdatedAt = clock.UtcNow() };
+        await baulRepository.UpdateAsync(updated);
+
+        logger.LogInformation("Baul updated {BaulId} {Name}", baulId, name);
+
+        var sharedCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count();
+        return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, sharedCount);
+    }
+
     public async Task<Result<BaulPreviewDto>> GetPreviewAsync(Guid baulId)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);

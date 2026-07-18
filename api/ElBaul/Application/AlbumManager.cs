@@ -117,6 +117,39 @@ public class AlbumManager(
         return await ToDtoAsync(updated);
     }
 
+    public async Task<Result<AlbumDto>> UpdateAsync(Guid albumId, string name, string? description)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var album = await albumRepository.GetByIdAsync(albumId);
+        if (album is null)
+        {
+            logger.LogWarning("Album update rejected: album not found {AlbumId}", albumId);
+            return Result.Failure<AlbumDto>("Album not found");
+        }
+
+        var baul = await baulRepository.GetByIdAsync(album.BaulId);
+        if (baul is null)
+        {
+            logger.LogWarning("Album update rejected: baul not found {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<AlbumDto>("Baul not found");
+        }
+
+        var isCustodio = baul.CustodioId == userId;
+        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
+        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
+        if (!canEdit)
+        {
+            logger.LogWarning("Album update rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<AlbumDto>("Access denied");
+        }
+
+        var updated = album with { Name = name, Description = description, UpdatedAt = clock.UtcNow() };
+        await albumRepository.UpdateAsync(updated);
+
+        logger.LogInformation("Album updated {BaulId} {AlbumId} {Name}", album.BaulId, albumId, name);
+        return await ToDtoAsync(updated);
+    }
+
     private async Task<AlbumDto> ToDtoAsync(Album album)
     {
         var coverUrl = album.CoverPhotoKey is { Length: > 0 }

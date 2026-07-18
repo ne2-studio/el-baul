@@ -24,6 +24,13 @@ public class AlbumsController(IAlbumManager albumManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("{albumId:guid}")]
+    public async Task<IActionResult> Update(Guid baulId, Guid albumId, [FromBody] UpdateAlbumRequest request)
+    {
+        var result = await albumManager.UpdateAsync(albumId, request.Name, request.Description);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPut("{albumId:guid}/cover")]
     public async Task<IActionResult> SetCover(Guid baulId, Guid albumId, [FromBody] SetAlbumCoverRequest request)
     {

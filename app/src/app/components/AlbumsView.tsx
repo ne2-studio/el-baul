@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
 import { ExpandableFAB } from './FAB';
+import { InlineEdit } from './InlineEdit';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto } from './UploadConfirmationScreen';
@@ -48,9 +49,11 @@ interface AlbumsViewProps {
   onManagePeople?: () => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
+  onRenameBaul?: (name: string) => void;
+  onUpdateBaulDescription?: (description: string) => void;
 }
 
-export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlbum, onCreateAlbum, onOpenLoosePhotos, onUploadPhotos, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount }: AlbumsViewProps) {
+export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlbum, onCreateAlbum, onOpenLoosePhotos, onUploadPhotos, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount, onRenameBaul, onUpdateBaulDescription }: AlbumsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,10 +127,21 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
               )}
             </div>
           </div>
-          <h1 className="text-3xl text-foreground">{baul.name}</h1>
-          {baul.description && (
-            <p className="text-sm text-muted-foreground mt-1">{baul.description}</p>
-          )}
+          <InlineEdit
+            value={baul.name}
+            onSave={name => onRenameBaul?.(name)}
+            placeholder="Nombre del baúl"
+            className="text-3xl text-foreground leading-tight"
+            disabled={!onRenameBaul}
+          />
+          <InlineEdit
+            value={baul.description ?? ''}
+            onSave={description => onUpdateBaulDescription?.(description)}
+            placeholder="Añadir descripción…"
+            className="text-sm text-muted-foreground"
+            multiline
+            disabled={!onUpdateBaulDescription}
+          />
         </div>
       </div>
       

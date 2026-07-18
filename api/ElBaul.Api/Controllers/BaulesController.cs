@@ -42,6 +42,13 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("{baulId:guid}")]
+    public async Task<IActionResult> Update(Guid baulId, [FromBody] UpdateBaulRequest request)
+    {
+        var result = await baulManager.UpdateAsync(baulId, request.Name, request.Description);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [AllowAnonymous]
     [EnableRateLimiting("PublicLimiter")]
     [HttpGet("{baulId:guid}/preview")]

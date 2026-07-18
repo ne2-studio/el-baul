@@ -4,6 +4,7 @@ import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar } from 'lucide-react';
 import { Album } from './AlbumsView';
+import { InlineEdit } from './InlineEdit';
 import { SelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
 
@@ -25,6 +26,8 @@ interface PhotosViewProps {
   allAlbums?: Album[];
   onBatchMove?: (photoIds: string[], targetAlbumId: string) => void;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => void;
+  onRenameAlbum?: (name: string) => void;
+  onUpdateAlbumDescription?: (description: string) => void;
 }
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
@@ -64,7 +67,7 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
   return result;
 }
 
-export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate }: PhotosViewProps) {
+export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate, onRenameAlbum, onUpdateAlbumDescription }: PhotosViewProps) {
   const totalRecuerdos = photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -160,11 +163,28 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
               </button>
             )}
           </div>
-          <h1 className="text-3xl text-foreground">
-            {selectionMode ? `${selectedIds.size} ${selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}` : album.name}
-          </h1>
-          {!selectionMode && album.description && (
-            <p className="text-sm text-muted-foreground mt-1">{album.description}</p>
+          {selectionMode ? (
+            <h1 className="text-3xl text-foreground">
+              {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
+            </h1>
+          ) : (
+            <>
+              <InlineEdit
+                value={album.name}
+                onSave={name => onRenameAlbum?.(name)}
+                placeholder="Nombre del álbum"
+                className="text-3xl text-foreground leading-tight"
+                disabled={!onRenameAlbum}
+              />
+              <InlineEdit
+                value={album.description ?? ''}
+                onSave={description => onUpdateAlbumDescription?.(description)}
+                placeholder="Añadir descripción…"
+                className="text-sm text-muted-foreground"
+                multiline
+                disabled={!onUpdateAlbumDescription}
+              />
+            </>
           )}
           {!selectionMode && totalRecuerdos > 0 && (
             <div className="flex items-center gap-1.5 mt-2">

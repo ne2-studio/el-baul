@@ -69,6 +69,8 @@ interface AppState {
   changePhotoDateBatch: (baulId: string, albumId: string | null, photoIds: string[], date: PhotoDate) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
   setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
+  renameBaul: (baulId: string, name: string, description?: string) => Promise<void>;
+  renameAlbum: (baulId: string, albumId: string, name: string, description?: string) => Promise<void>;
 
   sendInvitation: (baulId: string, email: string, role: BaulRole) => Promise<void>;
   updateUserRole: (baulId: string, sharedUserId: string, role: BaulRole) => Promise<void>;
@@ -340,6 +342,23 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setAlbumCover: async (baulId, albumId, photoId) => {
     const updated = await api.albums.setCover(baulId, albumId, photoId);
+    set((state) => ({
+      albums: {
+        ...state.albums,
+        [baulId]: (state.albums[baulId] || []).map((a) => (a.id === albumId ? updated : a)),
+      },
+    }));
+  },
+
+  renameBaul: async (baulId, name, description) => {
+    const updated = await api.baules.update(baulId, name, description);
+    set((state) => ({
+      baules: state.baules.map((b) => (b.id === baulId ? updated : b)),
+    }));
+  },
+
+  renameAlbum: async (baulId, albumId, name, description) => {
+    const updated = await api.albums.update(baulId, albumId, name, description);
     set((state) => ({
       albums: {
         ...state.albums,

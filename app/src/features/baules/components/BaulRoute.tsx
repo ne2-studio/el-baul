@@ -19,7 +19,8 @@ export const BaulRoute: React.FC = () => {
     loadAlbumPhotos,
     loadAlbums,
     loadLoosePhotos,
-    fetchData
+    fetchData,
+    renameBaul
   } = useAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -106,6 +107,24 @@ export const BaulRoute: React.FC = () => {
     });
   };
 
+  const handleRenameBaul = (name: string) => {
+    renameBaul(baul.id, name, baul.description)
+      .then(() => showToastMessage('Nombre del baúl actualizado'))
+      .catch((error) => {
+        console.error('Error renaming baul:', error);
+        showToastMessage('Error al renombrar el baúl');
+      });
+  };
+
+  const handleUpdateBaulDescription = (description: string) => {
+    renameBaul(baul.id, baul.name, description)
+      .then(() => showToastMessage('Descripción del baúl actualizada'))
+      .catch((error) => {
+        console.error('Error updating baul description:', error);
+        showToastMessage('Error al actualizar la descripción');
+      });
+  };
+
   return (
     <AlbumsView
       baul={baul}
@@ -122,6 +141,8 @@ export const BaulRoute: React.FC = () => {
       onManagePeople={() => navigate(`/personas/${baul.id}`)}
       onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
       pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
+      onRenameBaul={baul.isCustodio ? handleRenameBaul : undefined}
+      onUpdateBaulDescription={baul.isCustodio ? handleUpdateBaulDescription : undefined}
     />
   );
 };

@@ -10,6 +10,7 @@ public interface IBaulManager
     Task<Result<BaulPreviewDto>> GetPreviewAsync(Guid baulId);
     Task<Result> AcceptInviteAsync(Guid baulId);
     Task<Result<BaulDto>> SetCoverAsync(Guid baulId, Guid photoId);
+    Task<Result<BaulDto>> UpdateAsync(Guid baulId, string name, string? description);
 
     Task<Result<IEnumerable<SharedUserDto>>> GetSharedUsersAsync(Guid baulId);
     Task<Result<SharedUserDto>> ShareAsync(Guid baulId, string email, string role);

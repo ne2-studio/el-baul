@@ -66,6 +66,8 @@ export const api = {
     acceptInvite: (id: string) => post<{ success: boolean }>(`/api/baules/${id}/accept-invite`),
     setCover: async (baulId: string, photoId: string) =>
       new Baul(await put<any>(`/api/baules/${baulId}/cover`, { photoId })),
+    update: async (baulId: string, name: string, description?: string) =>
+      new Baul(await put<any>(`/api/baules/${baulId}`, { name, description })),
 
     getSharedUsers: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/shared-users`)).map((u) => new SharedUser(u)),
@@ -110,6 +112,8 @@ export const api = {
       new Album(await post<any>(`/api/baules/${baulId}/albums`, { name, description })),
     setCover: async (baulId: string, albumId: string, photoId: string) =>
       new Album(await put<any>(`/api/baules/${baulId}/albums/${albumId}/cover`, { photoId })),
+    update: async (baulId: string, albumId: string, name: string, description?: string) =>
+      new Album(await put<any>(`/api/baules/${baulId}/albums/${albumId}`, { name, description })),
   },
 
   photos: {
