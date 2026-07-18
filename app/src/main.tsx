@@ -5,9 +5,15 @@ import { WebStorageStateStore } from "oidc-client-ts";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 
+import * as Sentry from "@sentry/react";
+
 import App from "./app/App.tsx";
+import { CrashFallback } from "./app/components/CrashFallback";
 import "./styles/index.css";
 import { registerSW } from "virtual:pwa-register";
+import { initSentry } from "./sentry";
+
+initSentry();
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -69,11 +75,13 @@ async function bootstrap() {
   };
 
   createRoot(document.getElementById("root")!).render(
-    <AuthProvider {...oidcConfig}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </AuthProvider>,
+    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+      <AuthProvider {...oidcConfig}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AuthProvider>
+    </Sentry.ErrorBoundary>,
   );
 }
 
