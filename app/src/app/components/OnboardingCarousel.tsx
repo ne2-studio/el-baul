@@ -129,15 +129,15 @@ export function OnboardingCarousel({
             </div>
           </div>
 
-          {/* Miembro */}
+          {/* Administrador */}
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm">👀</span>
+                <span className="text-sm">👑</span>
               </div>
               <div className="flex-1">
-                <div className="font-medium text-foreground mb-1">Visitante</div>
-                <div className="text-sm text-muted-foreground">Mira y revive</div>
+                <div className="font-medium text-foreground mb-1">Administrador</div>
+                <div className="text-sm text-muted-foreground">Gestiona el Baúl, igual que el Custodio</div>
               </div>
             </div>
           </div>

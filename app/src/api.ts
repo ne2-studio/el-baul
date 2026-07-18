@@ -66,8 +66,6 @@ export const api = {
     create: async (name: string, description?: string) =>
       new Baul(await post<any>('/api/baules', { name, description })),
     getById: async (id: string) => new Baul(await get<any>(`/api/baules/${id}`)),
-    getPreview: async (id: string) => new BaulPreview(await get<any>(`/api/baules/${id}/preview`)),
-    acceptInvite: (id: string) => post<{ success: boolean }>(`/api/baules/${id}/accept-invite`),
     setCover: async (baulId: string, photoId: string) =>
       new Baul(await put<any>(`/api/baules/${baulId}/cover`, { photoId })),
     update: async (baulId: string, name: string, description?: string) =>
@@ -75,12 +73,12 @@ export const api = {
 
     getSharedUsers: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/shared-users`)).map((u) => new SharedUser(u)),
-    share: async (baulId: string, email: string, role: string) =>
-      new SharedUser(await post<any>(`/api/baules/${baulId}/share`, { email, role })),
+    createPersona: async (baulId: string, nickname: string) =>
+      new SharedUser(await post<any>(`/api/baules/${baulId}/personas`, { nickname })),
     updateSharedUserRole: (baulId: string, sharedUserId: string, role: string) =>
       put<void>(`/api/baules/${baulId}/shared-users/${sharedUserId}/role`, { role }),
-    revokeAccess: (baulId: string, email: string) =>
-      del<{ success: boolean }>(`/api/baules/${baulId}/shared-users/${encodeURIComponent(email)}`),
+    revokeAccess: (baulId: string, sharedUserId: string) =>
+      del<{ success: boolean }>(`/api/baules/${baulId}/shared-users/${sharedUserId}`),
 
     getLoosePhotos: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
@@ -156,6 +154,13 @@ export const api = {
       (await get<any[]>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`)).map((r) => new Recuerdo(r)),
     createForAlbum: async (baulId: string, albumId: string, text: string) =>
       new Recuerdo(await post<any>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`, { text })),
+  },
+
+  sharedUsers: {
+    getInvitePreview: async (sharedUserId: string) =>
+      new BaulPreview(await get<any>(`/api/shared-users/${sharedUserId}/invite-preview`)),
+    acceptPersonalInvite: async (sharedUserId: string) =>
+      new SharedUser(await post<any>(`/api/shared-users/${sharedUserId}/accept-invite`)),
   },
 
   users: {

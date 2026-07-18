@@ -5,7 +5,7 @@ import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 
 export const AcceptInviteRoute: React.FC = () => {
-  const { baulId } = useParams<{ baulId: string }>();
+  const { sharedUserId } = useParams<{ sharedUserId: string }>();
   const navigate = useNavigate();
   const auth = useAuth();
   const { showToastMessage } = useUIStore();
@@ -13,9 +13,9 @@ export const AcceptInviteRoute: React.FC = () => {
 
   useEffect(() => {
     const performAcceptInvite = async () => {
-      if (!baulId || !auth.isAuthenticated) {
+      if (!sharedUserId || !auth.isAuthenticated) {
         if (!auth.isAuthenticated) {
-          navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/${baulId}/aceptar`)}`);
+          navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/persona/${sharedUserId}/aceptar`)}`);
         } else {
           navigate('/baules');
         }
@@ -23,10 +23,10 @@ export const AcceptInviteRoute: React.FC = () => {
       }
 
       try {
-        await api.baules.acceptInvite(baulId);
+        const persona = await api.sharedUsers.acceptPersonalInvite(sharedUserId);
         // Pequeño delay para que se vea el estado de carga y sea más natural
         setTimeout(() => {
-          navigate(`/baules/${baulId}`);
+          navigate(`/baules/${persona.baulId}`);
         }, 1500);
       } catch (err: any) {
         const message = err.message || 'Error al unirse al baúl';
@@ -36,7 +36,7 @@ export const AcceptInviteRoute: React.FC = () => {
     };
 
     performAcceptInvite();
-  }, [baulId, auth.isAuthenticated, navigate, showToastMessage]);
+  }, [sharedUserId, auth.isAuthenticated, navigate, showToastMessage]);
 
   if (error) {
     return (

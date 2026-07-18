@@ -151,7 +151,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
           ) : (
             <>
               <User className="w-3 h-3" />
-              {getRoleDisplayName(baul.role ?? 'miembro')}
+              {getRoleDisplayName(baul.role ?? 'colaborador')}
             </>
           )}
         </span>

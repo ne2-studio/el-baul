@@ -1,6 +1,6 @@
 import { formatRelativeTime } from '@/utils/timeUtils';
 
-export type BaulRole = 'custodio' | 'colaborador' | 'miembro';
+export type BaulRole = 'custodio' | 'administrador' | 'colaborador';
 
 export interface PhotoDate {
   year: number;
@@ -15,16 +15,20 @@ function photoDateFrom(year?: number, month?: number, day?: number): PhotoDate |
 
 export class SharedUser {
   id: string;
-  email: string;
+  baulId: string;
+  email?: string;
   name?: string;
+  nickname: string;
   status: 'active' | 'pending';
   role: BaulRole;
   invitedDate: string;
 
   constructor(data: any) {
     this.id = data.id;
+    this.baulId = data.baulId;
     this.email = data.email;
     this.name = data.name;
+    this.nickname = data.nickname;
     this.status = data.status;
     this.role = data.role;
     this.invitedDate = formatRelativeTime(data.invitedDate);
@@ -157,12 +161,14 @@ export class BaulPreview {
   id: string;
   name: string;
   description?: string;
+  personaNickname: string;
   previewPhotos: string[];
 
   constructor(data: any) {
     this.id = data.id;
     this.name = data.name;
     this.description = data.description;
+    this.personaNickname = data.personaNickname;
     this.previewPhotos = data.previewPhotos ?? [];
   }
 }

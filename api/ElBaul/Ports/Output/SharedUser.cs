@@ -5,8 +5,7 @@ public record SharedUser
     Guid Id,
     Guid BaulId,
     string? UserId,
-    string Email,
+    string Nickname,
     BaulRole Role,
-    SharedUserStatus Status,
     DateTime InvitedDate
 );

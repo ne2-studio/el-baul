@@ -11,14 +11,13 @@ public class SharedUserConfiguration : IEntityTypeConfiguration<SharedUser>
         builder.ToTable("SharedUsers");
         builder.HasKey(s => s.Id);
         builder.Property(s => s.UserId).HasMaxLength(255);
-        builder.Property(s => s.Email).IsRequired().HasMaxLength(320);
+        builder.Property(s => s.Nickname).IsRequired().HasMaxLength(100);
         builder.Property(s => s.Role).HasConversion<string>().HasMaxLength(20);
-        builder.Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(s => s.InvitedDate).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(s => s.BaulId);
         builder.HasIndex(s => s.UserId);
-        builder.HasIndex(s => new { s.BaulId, s.Email }).IsUnique();
+        builder.HasIndex(s => new { s.BaulId, s.UserId }).IsUnique().HasFilter("\"UserId\" IS NOT NULL");
 
         builder.HasOne<Baul>()
             .WithMany()

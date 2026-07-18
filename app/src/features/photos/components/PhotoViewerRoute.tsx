@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { PhotoDate } from '@/types';
+import { isAdminRole } from '@/utils/roleUtils';
 
 export const PhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +19,6 @@ export const PhotoViewerRoute: React.FC = () => {
   const baul = baules.find(b => b.id === baulId);
   const album = albums[baulId!]?.find(a => a.id === albumId);
   const photo = photos[albumId!]?.find(p => p.id === photoId);
-  const canEditAlbum = baul ? baul.isCustodio || baul.role === 'colaborador' : false;
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -114,8 +114,7 @@ export const PhotoViewerRoute: React.FC = () => {
       onClose={() => navigate(`/baules/${baul.id}/albumes/${album.id}`)}
       onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${newPhoto.id}`)}
       onRequestRemoval={handleRequestRemoval}
-      isCustodio={baul.isCustodio}
-      canEditAlbum={canEditAlbum}
+      isAdmin={isAdminRole(baul.role)}
       onSetBaulCover={handleSetBaulCover}
       onSetAlbumCover={handleSetAlbumCover}
       onMovePhoto={handleMovePhoto}

@@ -33,7 +33,6 @@ import { LooseUploadConfirmationRoute } from '../features/photos/components/Loos
 import { LooseUploadingRoute } from '../features/photos/components/LooseUploadingRoute';
 import { LooseUploadSuccessRoute } from '../features/photos/components/LooseUploadSuccessRoute';
 import { LooseUploadErrorRoute } from '../features/photos/components/LooseUploadErrorRoute';
-import { PeopleWithAccessRoute } from '../features/sharing/components/PeopleWithAccessRoute';
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
 import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
@@ -246,15 +245,10 @@ function App() {
             <LooseUploadErrorRoute navigate={navigate} />
           </ProtectedRoute>
         } />
-        <Route path="/personas/:baulId" element={
-          <ProtectedRoute>
-            <PeopleWithAccessRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/invitacion/:baulId" element={
+        <Route path="/invitacion/persona/:sharedUserId" element={
           <BaulInvitacionRoute />
         } />
-        <Route path="/invitacion/:baulId/aceptar" element={
+        <Route path="/invitacion/persona/:sharedUserId/aceptar" element={
           <ProtectedRoute>
             <AcceptInviteRoute />
           </ProtectedRoute>

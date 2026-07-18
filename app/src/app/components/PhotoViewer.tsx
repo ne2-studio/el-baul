@@ -15,8 +15,7 @@ interface PhotoViewerProps {
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
   onRequestRemoval?: (photo: Photo, reason: string) => void;
-  isCustodio?: boolean;
-  canEditAlbum?: boolean;
+  isAdmin?: boolean;
   onSetBaulCover?: (photo: Photo) => void;
   onSetAlbumCover?: (photo: Photo) => void;
   onMovePhoto?: (photo: Photo, targetAlbumId: string) => void;
@@ -34,8 +33,7 @@ export function PhotoViewer({
   onClose,
   onPhotoChange,
   onRequestRemoval,
-  isCustodio,
-  canEditAlbum,
+  isAdmin,
   onSetBaulCover,
   onSetAlbumCover,
   onMovePhoto,
@@ -126,10 +124,10 @@ export function PhotoViewer({
   };
 
   const menuItems: { key: string; label: string; onSelect: () => void }[] = [];
-  if (canEditAlbum && onSetAlbumCover) {
+  if (onSetAlbumCover) {
     menuItems.push({ key: 'album-cover', label: 'Establecer como portada del capítulo', onSelect: () => onSetAlbumCover(photo) });
   }
-  if (isCustodio && onSetBaulCover) {
+  if (isAdmin && onSetBaulCover) {
     menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', onSelect: () => onSetBaulCover(photo) });
   }
   if (onMovePhoto && moveableAlbums.length > 0) {
@@ -207,7 +205,7 @@ export function PhotoViewer({
           </div>
           
           {/* Menu button (only show if there's at least one menu action available) */}
-          {menuItems.length > 0 || (isCustodio && onDeletePhoto) ? (
+          {menuItems.length > 0 || (isAdmin && onDeletePhoto) ? (
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
@@ -242,7 +240,7 @@ export function PhotoViewer({
                         )}
                       </React.Fragment>
                     ))}
-                    {isCustodio && onDeletePhoto && (
+                    {isAdmin && onDeletePhoto && (
                       <>
                         {menuItems.length > 0 && (
                           <div className="my-1 border-t border-border/50" />

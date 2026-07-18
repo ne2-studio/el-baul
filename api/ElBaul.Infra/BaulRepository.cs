@@ -13,8 +13,11 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
 
     public async Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(string userId)
     {
+        // Role == Custodio is excluded here: the custodian's own baules are already
+        // surfaced via GetOwnedByUserIdAsync, and now that custodians also have a
+        // real SharedUsers row, without this filter their own baul would be listed twice.
         var rows = await dbContext.SharedUsers.AsNoTracking()
-            .Where(s => s.UserId == userId)
+            .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio)
             .Join(dbContext.Baules.AsNoTracking(), s => s.BaulId, b => b.Id, (s, b) => new { Baul = b, s.Role })
             .ToListAsync();
 
@@ -54,9 +57,6 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     public Task<SharedUser?> GetSharedUserByUserIdAsync(Guid baulId, string userId) =>
         dbContext.SharedUsers.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.UserId == userId);
 
-    public Task<SharedUser?> GetSharedUserByEmailAsync(Guid baulId, string email) =>
-        dbContext.SharedUsers.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.Email == email);
-
     public async Task AddSharedUserAsync(SharedUser sharedUser)
     {
         dbContext.SharedUsers.Add(sharedUser);
@@ -69,9 +69,9 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task RemoveSharedUserAsync(Guid baulId, string email)
+    public async Task RemoveSharedUserAsync(Guid baulId, Guid sharedUserId)
     {
-        await dbContext.SharedUsers.Where(s => s.BaulId == baulId && s.Email == email).ExecuteDeleteAsync();
+        await dbContext.SharedUsers.Where(s => s.BaulId == baulId && s.Id == sharedUserId).ExecuteDeleteAsync();
     }
 
     public async Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId) =>

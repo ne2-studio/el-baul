@@ -3,8 +3,8 @@ import { BaulRole } from '../types';
 export function getRoleDisplayName(role: BaulRole): string {
   const roleNames: Record<BaulRole, string> = {
     custodio: 'Custodio',
-    colaborador: 'Colaborador',
-    miembro: 'Miembro'
+    administrador: 'Administrador',
+    colaborador: 'Colaborador'
   };
   return roleNames[role];
 }
@@ -12,8 +12,12 @@ export function getRoleDisplayName(role: BaulRole): string {
 export function getRoleDescription(role: BaulRole): string {
   const descriptions: Record<BaulRole, string> = {
     custodio: 'Gestiona el baúl',
-    colaborador: 'Puede añadir fotos',
-    miembro: 'Solo ver'
+    administrador: 'Gestiona el baúl, igual que el custodio',
+    colaborador: 'Puede añadir fotos'
   };
   return descriptions[role];
+}
+
+export function isAdminRole(role?: BaulRole): boolean {
+  return role === 'custodio' || role === 'administrador';
 }

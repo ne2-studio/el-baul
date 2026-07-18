@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import * as Sentry from '@sentry/react';
 import { Baul, Album, Photo, SharedUser, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile, PhotoDate } from '@/types';
 import { api } from '@/api';
+import { isAdminRole } from '@/utils/roleUtils';
 
 const defaultSubscription: Subscription = {
   currentPlan: 'gratuito',
@@ -76,9 +77,9 @@ interface AppState {
   renameBaul: (baulId: string, name: string, description?: string) => Promise<void>;
   renameAlbum: (baulId: string, albumId: string, name: string, description?: string) => Promise<void>;
 
-  sendInvitation: (baulId: string, email: string, role: BaulRole) => Promise<void>;
+  createPersona: (baulId: string, nickname: string) => Promise<void>;
   updateUserRole: (baulId: string, sharedUserId: string, role: BaulRole) => Promise<void>;
-  revokeAccess: (baulId: string, email: string) => Promise<void>;
+  revokeAccess: (baulId: string, sharedUserId: string) => Promise<void>;
 
   removePhoto: (baulId: string, requestId: string, photoId: string) => Promise<void>;
   keepPhoto: (baulId: string, requestId: string) => Promise<void>;
@@ -154,7 +155,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     const baul = get().baules.find((b) => b.id === baulId);
-    if (baul?.isCustodio) {
+    if (isAdminRole(baul?.role)) {
       try {
         const removalRequests = await api.baules.getRemovalRequests(baulId);
         set((state) => ({ removalRequests: { ...state.removalRequests, [baulId]: removalRequests } }));
@@ -399,10 +400,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  sendInvitation: async (baulId, email, role) => {
-    const invitation = await api.baules.share(baulId, email, role);
+  createPersona: async (baulId, nickname) => {
+    const persona = await api.baules.createPersona(baulId, nickname);
     set((state) => ({
-      sharedUsers: { ...state.sharedUsers, [baulId]: [...(state.sharedUsers[baulId] || []), invitation] },
+      sharedUsers: { ...state.sharedUsers, [baulId]: [...(state.sharedUsers[baulId] || []), persona] },
     }));
   },
 
@@ -416,12 +417,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  revokeAccess: async (baulId, email) => {
-    await api.baules.revokeAccess(baulId, email);
+  revokeAccess: async (baulId, sharedUserId) => {
+    await api.baules.revokeAccess(baulId, sharedUserId);
     set((state) => ({
       sharedUsers: {
         ...state.sharedUsers,
-        [baulId]: (state.sharedUsers[baulId] || []).filter((u) => u.email !== email),
+        [baulId]: (state.sharedUsers[baulId] || []).filter((u) => u.id !== sharedUserId),
       },
     }));
   },

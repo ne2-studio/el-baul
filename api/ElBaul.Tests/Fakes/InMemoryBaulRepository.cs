@@ -16,7 +16,7 @@ public class InMemoryBaulRepository : IBaulRepository
     public Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(string userId)
     {
         var result = _sharedUsers.Values
-            .Where(s => s.UserId == userId)
+            .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio)
             .Select(s => new BaulAccess(_baules[s.BaulId], s.Role));
 
         return Task.FromResult(result);
@@ -54,9 +54,6 @@ public class InMemoryBaulRepository : IBaulRepository
     public Task<SharedUser?> GetSharedUserByUserIdAsync(Guid baulId, string userId) =>
         Task.FromResult(_sharedUsers.Values.FirstOrDefault(s => s.BaulId == baulId && s.UserId == userId));
 
-    public Task<SharedUser?> GetSharedUserByEmailAsync(Guid baulId, string email) =>
-        Task.FromResult(_sharedUsers.Values.FirstOrDefault(s => s.BaulId == baulId && s.Email == email));
-
     public Task AddSharedUserAsync(SharedUser sharedUser)
     {
         _sharedUsers[sharedUser.Id] = sharedUser;
@@ -69,9 +66,9 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.CompletedTask;
     }
 
-    public Task RemoveSharedUserAsync(Guid baulId, string email)
+    public Task RemoveSharedUserAsync(Guid baulId, Guid sharedUserId)
     {
-        var match = _sharedUsers.Values.Where(s => s.BaulId == baulId && s.Email == email).ToList();
+        var match = _sharedUsers.Values.Where(s => s.BaulId == baulId && s.Id == sharedUserId).ToList();
         foreach (var s in match) _sharedUsers.Remove(s.Id);
         return Task.CompletedTask;
     }

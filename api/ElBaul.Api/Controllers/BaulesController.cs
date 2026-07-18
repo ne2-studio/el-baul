@@ -51,18 +51,18 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
 
     [AllowAnonymous]
     [EnableRateLimiting("PublicLimiter")]
-    [HttpGet("{baulId:guid}/preview")]
-    public async Task<IActionResult> GetPreview(Guid baulId)
+    [HttpGet("/api/shared-users/{sharedUserId:guid}/invite-preview")]
+    public async Task<IActionResult> GetInvitePreview(Guid sharedUserId)
     {
-        var result = await baulManager.GetPreviewAsync(baulId);
+        var result = await baulManager.GetInvitePreviewAsync(sharedUserId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPost("{baulId:guid}/accept-invite")]
-    public async Task<IActionResult> AcceptInvite(Guid baulId)
+    [HttpPost("/api/shared-users/{sharedUserId:guid}/accept-invite")]
+    public async Task<IActionResult> AcceptPersonalInvite(Guid sharedUserId)
     {
-        var result = await baulManager.AcceptInviteAsync(baulId);
-        return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
+        var result = await baulManager.AcceptPersonalInviteAsync(sharedUserId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpGet("{baulId:guid}/shared-users")]
@@ -72,27 +72,24 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPost("{baulId:guid}/share")]
-    public async Task<IActionResult> Share(Guid baulId, [FromBody] ShareBaulRequest request)
+    [HttpPost("{baulId:guid}/personas")]
+    public async Task<IActionResult> CreatePersona(Guid baulId, [FromBody] CreatePersonaRequest request)
     {
-        var result = await baulManager.ShareAsync(baulId, request.Email, request.Role);
+        var result = await baulManager.CreatePersonaAsync(baulId, request.Nickname);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPut("{baulId:guid}/shared-users/{sharedUserId}/role")]
-    public async Task<IActionResult> UpdateSharedUserRole(Guid baulId, string sharedUserId, [FromBody] UpdateRoleRequest request)
+    [HttpPut("{baulId:guid}/shared-users/{sharedUserId:guid}/role")]
+    public async Task<IActionResult> UpdateSharedUserRole(Guid baulId, Guid sharedUserId, [FromBody] UpdateRoleRequest request)
     {
-        if (!Guid.TryParse(sharedUserId, out var parsedId))
-            return BadRequest(new { error = $"'{sharedUserId}' is not a valid shared user id." });
-
-        var result = await baulManager.UpdateSharedUserRoleAsync(baulId, parsedId, request.Role);
+        var result = await baulManager.UpdateSharedUserRoleAsync(baulId, sharedUserId, request.Role);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpDelete("{baulId:guid}/shared-users/{email}")]
-    public async Task<IActionResult> RemoveSharedUser(Guid baulId, string email)
+    [HttpDelete("{baulId:guid}/shared-users/{sharedUserId:guid}")]
+    public async Task<IActionResult> RemoveSharedUser(Guid baulId, Guid sharedUserId)
     {
-        var result = await baulManager.RemoveSharedUserAsync(baulId, email);
+        var result = await baulManager.RemoveSharedUserAsync(baulId, sharedUserId);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 

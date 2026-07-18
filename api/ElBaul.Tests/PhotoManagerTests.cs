@@ -29,6 +29,8 @@ public class PhotoManagerTests
         var baulId = Guid.NewGuid();
         var albumId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, albumId);
     }
@@ -99,14 +101,11 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task UploadAsync_ShouldDenyAccess_ForMiembroRole()
+    public async Task UploadAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
-        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
-        const string miembroId = "miembro-1";
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
 
-        var manager = CreateManager(miembroId);
+        var manager = CreateManager("stranger");
         using var content = new MemoryStream([1, 2, 3]);
         var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
@@ -359,16 +358,13 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task MoveAsync_ShouldDenyAccess_ForMiembroRole()
+    public async Task MoveAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
-        const string miembroId = "miembro-1";
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
 
-        var manager = CreateManager(miembroId);
+        var manager = CreateManager("stranger");
         var result = await manager.MoveAsync(photoId, targetAlbumId);
 
         Assert.True(result.IsFailure);
@@ -436,7 +432,7 @@ public class PhotoManagerTests
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
         const string colaboradorId = "colaborador-1";
         await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, colaboradorId, "c@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
+            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.DeleteAsync(photoId, "reason");
@@ -486,14 +482,11 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task UploadToBaulAsync_ShouldDenyAccess_ForMiembroRole()
+    public async Task UploadToBaulAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var (baulId, _) = await SeedBaulWithAlbumAsync();
-        const string miembroId = "miembro-1";
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
 
-        var manager = CreateManager(miembroId);
+        var manager = CreateManager("stranger");
         using var content = new MemoryStream([1, 2, 3]);
         var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
@@ -581,16 +574,13 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task ChangeDateAsync_ShouldDenyAccess_ForMiembroRole()
+    public async Task ChangeDateAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
-        const string miembroId = "miembro-1";
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
 
-        var manager = CreateManager(miembroId);
+        var manager = CreateManager("stranger");
         var result = await manager.ChangeDateAsync(photoId, 2020, null, null);
 
         Assert.True(result.IsFailure);

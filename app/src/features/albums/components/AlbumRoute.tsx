@@ -28,8 +28,6 @@ export const AlbumRoute: React.FC = () => {
 
   if (!baul || !album) return <div className="p-8 text-center">Cargando capítulo...</div>;
 
-  const canEditAlbum = baul.isCustodio || baul.role === 'colaborador';
-
   const handleAddRecuerdo = (text: string) => {
     addAlbumRecuerdo(baul.id, album.id, text).catch((error) => {
       console.error('Error adding recuerdo:', error);
@@ -80,7 +78,7 @@ export const AlbumRoute: React.FC = () => {
       }
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
-      onUpdateAlbumInfo={canEditAlbum ? handleUpdateAlbumInfo : undefined}
+      onUpdateAlbumInfo={handleUpdateAlbumInfo}
       onAddRecuerdo={handleAddRecuerdo}
     />
   );

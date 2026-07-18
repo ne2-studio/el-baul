@@ -8,7 +8,7 @@ namespace ElBaul.Tests;
 public class AlbumManagerTests
 {
     private const string CustodioId = "custodio-1";
-    private const string MiembroId = "miembro-1";
+    private const string StrangerId = "stranger";
 
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemoryAlbumRepository _albumRepository = new();
@@ -38,14 +38,12 @@ public class AlbumManagerTests
     }
 
     [Fact]
-    public async Task CreateAsync_ShouldDenyAccess_ForMiembroRole()
+    public async Task CreateAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, MiembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
 
-        var manager = CreateManager(MiembroId);
+        var manager = CreateManager(StrangerId);
         var result = await manager.CreateAsync(baulId, "Vacaciones", null);
 
         Assert.True(result.IsFailure);
@@ -59,7 +57,7 @@ public class AlbumManagerTests
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, colaboradorId, "c@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
+            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.CreateAsync(baulId, "Vacaciones", null);
@@ -73,7 +71,7 @@ public class AlbumManagerTests
         var baulId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
 
-        var manager = CreateManager("stranger");
+        var manager = CreateManager(StrangerId);
         var result = await manager.GetByBaulIdAsync(baulId);
 
         Assert.True(result.IsFailure);
@@ -124,7 +122,7 @@ public class AlbumManagerTests
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, colaboradorId, "c@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
+            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, colaboradorId, _clock.UtcNow()));
 
@@ -135,18 +133,16 @@ public class AlbumManagerTests
     }
 
     [Fact]
-    public async Task SetCoverAsync_ShouldDenyAccess_ForMiembroRole()
+    public async Task SetCoverAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
         var albumId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, MiembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
 
-        var manager = CreateManager(MiembroId);
+        var manager = CreateManager(StrangerId);
         var result = await manager.SetCoverAsync(albumId, photoId);
 
         Assert.True(result.IsFailure);
@@ -215,7 +211,7 @@ public class AlbumManagerTests
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, colaboradorId, "c@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
+            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
@@ -225,16 +221,14 @@ public class AlbumManagerTests
     }
 
     [Fact]
-    public async Task UpdateAsync_ShouldDenyAccess_ForMiembroRole()
+    public async Task UpdateAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
         var albumId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, MiembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
-        var manager = CreateManager(MiembroId);
+        var manager = CreateManager(StrangerId);
         var result = await manager.UpdateAsync(albumId, "Vacaciones 2024", null);
 
         Assert.True(result.IsFailure);
@@ -342,17 +336,18 @@ public class AlbumManagerTests
     }
 
     [Fact]
-    public async Task CreateRecuerdoAsync_ShouldAllow_ForMiembroRole()
+    public async Task CreateRecuerdoAsync_ShouldAllow_ForColaboradorRole()
     {
         var baulId = Guid.NewGuid();
         var albumId = Guid.NewGuid();
+        const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
-            Guid.NewGuid(), baulId, MiembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
-        var manager = CreateManager(MiembroId);
-        var result = await manager.CreateRecuerdoAsync(albumId, "Recuerdo de un miembro");
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.CreateRecuerdoAsync(albumId, "Recuerdo de un colaborador");
 
         Assert.True(result.IsSuccess);
     }
@@ -365,7 +360,7 @@ public class AlbumManagerTests
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
-        var manager = CreateManager("stranger");
+        var manager = CreateManager(StrangerId);
         var result = await manager.CreateRecuerdoAsync(albumId, "No debería poder");
 
         Assert.True(result.IsFailure);
@@ -421,7 +416,7 @@ public class AlbumManagerTests
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
-        var manager = CreateManager("stranger");
+        var manager = CreateManager(StrangerId);
         var result = await manager.GetRecuerdosAsync(albumId);
 
         Assert.True(result.IsFailure);

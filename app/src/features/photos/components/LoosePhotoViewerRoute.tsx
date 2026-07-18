@@ -7,6 +7,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { PhotoDate } from '@/types';
+import { isAdminRole } from '@/utils/roleUtils';
 
 export const LoosePhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -103,7 +104,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       onClose={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
       onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/fotos-sueltas/foto/${newPhoto.id}`)}
       onRequestRemoval={handleRequestRemoval}
-      isCustodio={baul.isCustodio}
+      isAdmin={isAdminRole(baul.role)}
       onSetBaulCover={handleSetBaulCover}
       onMovePhoto={handleMovePhoto}
       onChangeDate={handleChangeDate}

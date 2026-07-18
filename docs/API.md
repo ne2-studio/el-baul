@@ -3,14 +3,17 @@
 Base URL: `VITE_API_URL` on the frontend (dev default `http://localhost:5050`).
 
 All `/api/*` endpoints require a valid OIDC access token: `Authorization: Bearer <token>`,
-except `GET /api/baules/{baulId}/preview` (public, rate-limited — used for invitation
-links before the recipient has signed in). Unauthenticated requests to protected
-endpoints get `401 Unauthorized`. Endpoints scoped to a baúl the caller has no access to
-return `403 Forbidden`; missing resources return `404 Not Found`; validation failures
-return `400 Bad Request`. All three shapes are `{ "error": "..." }`.
+except `GET /api/shared-users/{sharedUserId}/invite-preview` (public, rate-limited — used
+for personal invitation links before the recipient has signed in). Unauthenticated
+requests to protected endpoints get `401 Unauthorized`. Endpoints scoped to a baúl the
+caller has no access to return `403 Forbidden`; missing resources return
+`404 Not Found`; validation failures return `400 Bad Request`. All three shapes are
+`{ "error": "..." }`.
 
-Roles within a baúl: `custodio` (owner, full control), `colaborador` (can add
-albums/photos), `miembro` (read-only).
+Roles within a baúl: `custodio` (created the baúl, full control), `administrador` (same
+permissions as custodio — a custodio is just an administrador marked as the baúl's
+original creator), `colaborador` (can add albums/photos, but not manage people or the
+baúl itself). There is no read-only role — everyone with access can add chapters/photos.
 
 ## Baúles
 
@@ -24,7 +27,7 @@ recently active first). Response `200 OK`: array of
   "id": "uuid", "name": "string", "description": "string|null",
   "albumCount": 0, "coverPhotoUrl": "imgproxy-url|null",
   "createdAt": "iso", "updatedAt": "iso",
-  "isCustodio": true, "role": "custodio|colaborador|miembro",
+  "isCustodio": true, "role": "custodio|administrador|colaborador",
   "memberCount": 1
 }
 ```
@@ -41,51 +44,69 @@ Body: `{ "name": "string", "description": "string|null" }`. Response `200 OK`: t
 
 Response `200 OK`: the baúl. `403` if the caller has no access.
 
-### `GET /api/baules/{baulId}/preview` (public)
-
-Response `200 OK`: `{ "id", "name", "description", "previewPhotos": ["imgproxy-url", ...] }`
-(up to 4 photos).
-
-### `POST /api/baules/{baulId}/accept-invite`
-
-Joins the caller as `miembro` if not already a member/custodian. Response `200 OK`:
-`{ "success": true }`.
-
 ### `PUT /api/baules/{baulId}/cover`
 
-Custodio only. Body: `{ "photoId" }` — must be a photo belonging to this baúl, otherwise
-`404 Not Found`. Response `200 OK`: the updated baúl (same shape as above).
+Custodio/administrador only. Body: `{ "photoId" }` — must be a photo belonging to this
+baúl, otherwise `404 Not Found`. Response `200 OK`: the updated baúl (same shape as
+above).
 
-## Sharing
+## Personas & invitations
+
+Growth is strictly person-to-person: the custodio/administrador adds a "Persona" for
+each family member up front — with just a nickname, no account required — and shares
+that Persona's own invitation link (e.g. over WhatsApp). There is no public "join this
+baúl" link and no self-serve join flow; a `SharedUser` row (a Persona) always exists
+before its invitation is ever sent, and starts with `userId: null`.
 
 ### `GET /api/baules/{baulId}/shared-users`
 
-Custodio-scoped view of everyone with access (custodian included). Response `200 OK`:
-array of `{ "id", "userId": "string|null", "email", "name": "string|null", "role", "status": "active|pending", "invitedDate": "iso", "baulId" }`.
+Everyone with access can view the baúl's Personas (custodian included). Response
+`200 OK`: array of
+`{ "id", "userId": "string|null", "email": "string|null", "name": "string|null", "nickname", "role", "status": "active|pending", "invitedDate": "iso", "baulId" }`.
+`email`/`name` are the linked `User`'s (`null` while `userId` is `null`); `status` is
+just derived from whether `userId` is set — `"pending"` means no one has claimed the
+invitation yet, `"active"` means they have.
 
-### `POST /api/baules/{baulId}/share`
+### `POST /api/baules/{baulId}/personas`
 
-Custodio only. Body: `{ "email", "role": "colaborador|miembro" }`. If the email belongs
-to an existing user, status is `active` immediately; otherwise `pending` until they sign
-up and share the same email. Response `200 OK`: the `SharedUser`.
+Custodio/administrador only. Body: `{ "nickname" }`. Creates a Persona with no linked
+user (`role` always starts as `colaborador`) — the response's `id` doubles as the
+invitation token: the invite link is `/invitacion/persona/{id}` on the frontend.
+Response `200 OK`: the `SharedUser`.
+
+### `GET /api/shared-users/{sharedUserId}/invite-preview` (public)
+
+Response `200 OK`: `{ "id", "name", "description", "personaNickname", "previewPhotos": ["imgproxy-url", ...] }`
+(up to 4 photos) — the baúl's preview plus the Persona's nickname, so the invite screen
+can greet the recipient by name before they sign in. `404 Not Found` if the invitation
+doesn't exist or has already been claimed (`userId` already set).
+
+### `POST /api/shared-users/{sharedUserId}/accept-invite`
+
+Links the caller's account to that Persona (`userId` = caller) if it's still
+unclaimed. Idempotent if the caller already claimed it; `400 Bad Request` if someone
+else did. Response `200 OK`: the `SharedUser` (its `baulId` is what the frontend
+redirects to next).
 
 ### `PUT /api/baules/{baulId}/shared-users/{sharedUserId}/role`
 
-Custodio only. Body: `{ "role" }`. Response `200 OK`: the updated `SharedUser`.
+Custodio/administrador only. Body: `{ "role": "colaborador|administrador" }`. Response
+`200 OK`: the updated `SharedUser`.
 
-### `DELETE /api/baules/{baulId}/shared-users/{email}`
+### `DELETE /api/baules/{baulId}/shared-users/{sharedUserId}`
 
-Custodio only. Revokes access for that email. Response `200 OK`: `{ "success": true }`.
+Custodio/administrador only. Removes that Persona (revokes access if already claimed,
+cancels the invitation otherwise). Response `200 OK`: `{ "success": true }`.
 
 ## Removal requests
 
-Anyone with access can request a photo be removed; the custodian approves (deletes the
-photo, decrements the album's photo count) or rejects (keeps it).
+Anyone with access can request a photo be removed; a custodio/administrador approves
+(deletes the photo, decrements the album's photo count) or rejects (keeps it).
 
-- `GET /api/baules/{baulId}/removal-requests` — custodio only.
+- `GET /api/baules/{baulId}/removal-requests` — custodio/administrador only.
 - `POST /api/baules/{baulId}/removal-requests` — body `{ "photoId", "reason": "string|null" }`.
-- `POST /api/baules/{baulId}/removal-requests/{requestId}/approve` — custodio only.
-- `POST /api/baules/{baulId}/removal-requests/{requestId}/reject` — custodio only.
+- `POST /api/baules/{baulId}/removal-requests/{requestId}/approve` — custodio/administrador only.
+- `POST /api/baules/{baulId}/removal-requests/{requestId}/reject` — custodio/administrador only.
 
 ## Albums
 
@@ -95,12 +116,12 @@ Response `200 OK`: array of `{ "id", "baulId", "name", "description", "photoCoun
 
 ### `POST /api/baules/{baulId}/albums`
 
-`colaborador` or `custodio` only. Body: `{ "name", "description": "string|null" }`.
+Any member with access (no read-only role exists). Body: `{ "name", "description": "string|null" }`.
 Response `200 OK`: the album; increments the baúl's `albumCount`.
 
 ### `PUT /api/baules/{baulId}/albums/{albumId}/cover`
 
-`colaborador` or `custodio` only. Body: `{ "photoId" }` — must be a photo belonging to
+Any member with access. Body: `{ "photoId" }` — must be a photo belonging to
 this album, otherwise `404 Not Found`. Response `200 OK`: the updated album (same shape
 as above).
 
@@ -114,23 +135,24 @@ at imgproxy, never at storage directly.
 
 ### `POST /api/albums/{albumId}/photos`
 
-`colaborador` or `custodio` only. `multipart/form-data`: `file` (required), `caption`
+Any member with access. `multipart/form-data`: `file` (required), `caption`
 (optional), `date` (optional, ISO). Response `200 OK`: the photo; increments the album's
 `photoCount`, and sets it as the album's cover if it's the first photo (and as the baúl's
 cover if the baúl has none yet).
 
 ### `DELETE /api/photos/{photoId}`
 
-`custodio` only — the only way to delete a photo directly (as opposed to a removal
-request, which any member can raise for the custodio to approve/reject). Body:
-`{ "reason": "string|null" }`. Soft delete: the photo is marked `Deleted` (with the
-reason and a `deletedAt` timestamp) rather than removed from storage, and is excluded
-from every listing/preview endpoint from then on. Decrements the album's `photoCount` if
-the photo belonged to one. Response `200 OK`: `{ "success": true }`.
+Custodio/administrador only — the only way to delete a photo directly (as opposed to a
+removal request, which any member can raise for a custodio/administrador to
+approve/reject). Body: `{ "reason": "string|null" }`. Soft delete: the photo is marked
+`Deleted` (with the reason and a `deletedAt` timestamp) rather than removed from
+storage, and is excluded from every listing/preview endpoint from then on. Decrements
+the album's `photoCount` if the photo belonged to one. Response `200 OK`:
+`{ "success": true }`.
 
 ## Recuerdos (memories, attached to a photo or directly to an album)
 
-Any member (not just `colaborador`/`custodio`) can read and create recuerdos.
+Any member with access can read and create recuerdos.
 
 - `GET /api/photos/{photoId}/recuerdos` — response `200 OK`: array of `{ "id", "photoId", "userId", "text", "userName", "createdAt", "isOwn" }`.
 - `POST /api/photos/{photoId}/recuerdos` — body `{ "text" }`. Response `200 OK`: the recuerdo.

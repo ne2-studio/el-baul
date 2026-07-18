@@ -4,6 +4,8 @@ import { AlbumsView } from '@/app/components/AlbumsView';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
+import { isAdminRole } from '@/utils/roleUtils';
+import { SharedUser, BaulRole } from '@/types';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -15,12 +17,17 @@ export const BaulRoute: React.FC = () => {
     baules,
     albums,
     loosePhotos,
+    sharedUsers,
     removalRequests,
+    userProfile,
     loadAlbumPhotos,
     loadAlbums,
     loadLoosePhotos,
     fetchData,
-    renameBaul
+    renameBaul,
+    createPersona,
+    revokeAccess,
+    updateUserRole,
   } = useAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -75,16 +82,25 @@ export const BaulRoute: React.FC = () => {
     }
   };
   
-  const handleShareBaul = async () => {
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      showToastMessage('Enlace de invitación copiado al portapapeles');
+    }).catch(err => {
+      console.error('Error copying to clipboard:', err);
+      showToastMessage('Error al copiar el enlace');
+    });
+  };
+
+  const handleShareInvite = async (persona: SharedUser) => {
     if (!baul) return;
-    
-    const inviteUrl = `${window.location.origin}/invitacion/${baul.id}`;
-    
+
+    const inviteUrl = `${window.location.origin}/invitacion/persona/${persona.id}`;
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Invitación a ${baul.name}`,
-          text: `Te invito a unirte a mi baúl de recuerdos "${baul.name}" en El Baúl.`,
+          text: `${persona.nickname}, te invito a unirte a mi baúl de recuerdos "${baul.name}" en El Baúl.`,
           url: inviteUrl,
         });
       } catch (error) {
@@ -98,12 +114,24 @@ export const BaulRoute: React.FC = () => {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      showToastMessage('Enlace de invitación copiado al portapapeles');
-    }).catch(err => {
-      console.error('Error copying to clipboard:', err);
-      showToastMessage('Error al copiar el enlace');
+  const handleCreatePersona = (nickname: string) => {
+    createPersona(baul.id, nickname).catch((error) => {
+      console.error('Error creating persona:', error);
+      showToastMessage('Error al añadir la persona');
+    });
+  };
+
+  const handleChangeRole = (sharedUserId: string, role: BaulRole) => {
+    updateUserRole(baul.id, sharedUserId, role).catch((error) => {
+      console.error('Error updating role:', error);
+      showToastMessage('Error al actualizar el rol');
+    });
+  };
+
+  const handleRevokeAccess = (sharedUserId: string) => {
+    revokeAccess(baul.id, sharedUserId).catch((error) => {
+      console.error('Error revoking access:', error);
+      showToastMessage('Error al quitar el acceso');
     });
   };
 
@@ -121,6 +149,9 @@ export const BaulRoute: React.FC = () => {
       baul={baul}
       albums={albums[baul.id] || []}
       loosePhotos={loosePhotos[baul.id] || []}
+      sharedUsers={sharedUsers[baul.id] || []}
+      isAdmin={isAdminRole(baul.role)}
+      currentUserEmail={userProfile.email}
       onBack={() => navigate('/baules')}
       onSelectAlbum={handleSelectAlbum}
       onCreateAlbum={() => navigate(`/baules/${baul.id}/nuevo-album`)}
@@ -128,11 +159,13 @@ export const BaulRoute: React.FC = () => {
       onUploadPhotos={(selectedPhotos) =>
         navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
       }
-      onShareBaul={handleShareBaul}
-      onManagePeople={() => navigate(`/personas/${baul.id}`)}
+      onCreatePersona={handleCreatePersona}
+      onShareInvite={handleShareInvite}
+      onChangeRole={handleChangeRole}
+      onRevokeAccess={handleRevokeAccess}
       onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
       pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
-      onUpdateBaulInfo={baul.isCustodio ? handleUpdateBaulInfo : undefined}
+      onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}
     />
   );
 };

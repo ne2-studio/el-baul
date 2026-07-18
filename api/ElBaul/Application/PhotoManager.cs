@@ -95,10 +95,9 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
-        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit)
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
+        if (!hasAccess)
         {
             logger.LogWarning("Photo upload rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
             return Result.Failure<PhotoDto>("Access denied");
@@ -198,10 +197,9 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(baulId, userId);
-        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit)
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(baulId, userId) is not null;
+        if (!hasAccess)
         {
             logger.LogWarning("Loose photo upload rejected: access denied {BaulId}", baulId);
             return Result.Failure<PhotoDto>("Access denied");
@@ -294,10 +292,9 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId);
-        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit)
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+        if (!hasAccess)
         {
             logger.LogWarning("Photo move rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
             return Result.Failure<PhotoDto>("Access denied");
@@ -372,7 +369,8 @@ public class PhotoManager(
             return Result.Failure("Baul not found");
         }
 
-        if (baul.CustodioId != userId)
+        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId);
+        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
         {
             logger.LogWarning("Photo delete rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
             return Result.Failure("Access denied");
@@ -421,10 +419,9 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId);
-        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit)
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+        if (!hasAccess)
         {
             logger.LogWarning("Photo date change rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
             return Result.Failure<PhotoDto>("Access denied");

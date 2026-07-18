@@ -2,7 +2,7 @@ namespace ElBaul.Ports.Output;
 
 public enum BaulRole
 {
-    Miembro,
     Colaborador,
+    Administrador,
     Custodio
 }

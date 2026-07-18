@@ -19,10 +19,9 @@ public interface IBaulRepository
     Task<IReadOnlyDictionary<Guid, int>> GetSharedUserCountsAsync(IEnumerable<Guid> baulIds);
     Task<SharedUser?> GetSharedUserByIdAsync(Guid sharedUserId);
     Task<SharedUser?> GetSharedUserByUserIdAsync(Guid baulId, string userId);
-    Task<SharedUser?> GetSharedUserByEmailAsync(Guid baulId, string email);
     Task AddSharedUserAsync(SharedUser sharedUser);
     Task UpdateSharedUserAsync(SharedUser sharedUser);
-    Task RemoveSharedUserAsync(Guid baulId, string email);
+    Task RemoveSharedUserAsync(Guid baulId, Guid sharedUserId);
 
     // Removal requests
     Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId);

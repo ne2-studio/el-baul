@@ -11,8 +11,8 @@ internal static class DtoMapping
 {
     public static string ToApiString(this BaulRole role) => role switch
     {
-        BaulRole.Miembro => "miembro",
         BaulRole.Colaborador => "colaborador",
+        BaulRole.Administrador => "administrador",
         BaulRole.Custodio => "custodio",
         _ => throw new ArgumentOutOfRangeException(nameof(role))
     };
@@ -21,19 +21,14 @@ internal static class DtoMapping
     {
         switch (value.ToLowerInvariant())
         {
-            case "miembro": role = BaulRole.Miembro; return true;
             case "colaborador": role = BaulRole.Colaborador; return true;
+            case "administrador": role = BaulRole.Administrador; return true;
             case "custodio": role = BaulRole.Custodio; return true;
             default: role = default; return false;
         }
     }
 
-    public static string ToApiString(this SharedUserStatus status) => status switch
-    {
-        SharedUserStatus.Pending => "pending",
-        SharedUserStatus.Active => "active",
-        _ => throw new ArgumentOutOfRangeException(nameof(status))
-    };
+    public static bool IsAdmin(this BaulRole role) => role is BaulRole.Custodio or BaulRole.Administrador;
 
     public static string ToApiString(this RequestStatus status) => status switch
     {

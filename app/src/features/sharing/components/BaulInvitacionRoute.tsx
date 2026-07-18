@@ -8,7 +8,7 @@ import { BaulPreview } from '@/types';
 
 export const BaulInvitacionRoute: React.FC = () => {
   const navigate = useNavigate();
-  const { baulId } = useParams<{ baulId: string }>();
+  const { sharedUserId } = useParams<{ sharedUserId: string }>();
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
@@ -17,12 +17,12 @@ export const BaulInvitacionRoute: React.FC = () => {
 
   useEffect(() => {
     async function loadData() {
-      if (!baulId) return;
+      if (!sharedUserId) return;
 
       try {
         setLoading(true);
-        // Obtener el preview del baúl en una sola llamada dedicada (endpoint público)
-        const previewData = await api.baules.getPreview(baulId);
+        // Obtener el preview de la invitación personal en una sola llamada dedicada (endpoint público)
+        const previewData = await api.sharedUsers.getInvitePreview(sharedUserId);
         setPreview(previewData);
       } catch (error) {
         console.error('Error loading invitation data:', error);
@@ -33,7 +33,7 @@ export const BaulInvitacionRoute: React.FC = () => {
     }
 
     loadData();
-  }, [baulId, showToastMessage]);
+  }, [sharedUserId, showToastMessage]);
 
   if (loading) {
     return (
@@ -47,7 +47,7 @@ export const BaulInvitacionRoute: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-2xl font-bold mb-4">Invitación no encontrada</h1>
-        <p className="text-muted-foreground mb-8">No hemos podido encontrar el baúl al que has sido invitado.</p>
+        <p className="text-muted-foreground mb-8">Este enlace de invitación no es válido o ya ha sido usado.</p>
         <button
           onClick={() => navigate('/baules')}
           className="text-primary hover:underline"
@@ -61,10 +61,10 @@ export const BaulInvitacionRoute: React.FC = () => {
   const handleUnirme = () => {
     if (!auth.isAuthenticated) {
       // Si no hay sesión, redirigir al login con redirectTo al proceso de aceptar invitación
-      navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/${baulId}/aceptar`)}`);
+      navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/persona/${sharedUserId}/aceptar`)}`);
       return;
     }
-    navigate(`/invitacion/${baulId}/aceptar`);
+    navigate(`/invitacion/persona/${sharedUserId}/aceptar`);
   };
 
   const handleVerMas = () => {
@@ -84,6 +84,7 @@ export const BaulInvitacionRoute: React.FC = () => {
   return (
     <InvitacionScreen
       baulNombre={preview.name}
+      personaNickname={preview.personaNickname}
       previewPhotos={preview.previewPhotos}
       onUnirme={handleUnirme}
       onVerMas={handleVerMas}

@@ -1,12 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
-import { ExpandableFAB } from './FAB';
+import { ExpandableFAB, SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
-import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical, Pencil } from 'lucide-react';
+import { NuevaPersonaModal } from './NuevaPersonaModal';
+import { PersonasTab } from './PersonasTab';
+import { TabButton } from './TabButton';
+import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Bell, MoreVertical, Pencil } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto } from './UploadConfirmationScreen';
-import { PhotoDate } from '@/types';
+import { PhotoDate, SharedUser, BaulRole } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
   DropdownMenu,
@@ -41,21 +44,47 @@ interface AlbumsViewProps {
   baul: Baul;
   albums: Album[];
   loosePhotos?: LoosePhoto[];
+  sharedUsers?: SharedUser[];
+  isAdmin?: boolean;
+  currentUserEmail?: string;
   onBack: () => void;
   onSelectAlbum: (album: Album) => void;
   onCreateAlbum: () => void;
   onOpenLoosePhotos?: () => void;
   onUploadPhotos?: (selectedPhotos: SelectedPhoto[]) => void;
-  onShareBaul?: () => void;
-  onManagePeople?: () => void;
+  onCreatePersona?: (nickname: string) => void;
+  onShareInvite?: (persona: SharedUser) => void;
+  onChangeRole?: (sharedUserId: string, role: BaulRole) => void;
+  onRevokeAccess?: (sharedUserId: string) => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => void;
 }
 
-export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlbum, onCreateAlbum, onOpenLoosePhotos, onUploadPhotos, onShareBaul, onManagePeople, onRemovalRequests, pendingRemovalRequestsCount, onUpdateBaulInfo }: AlbumsViewProps) {
+export function AlbumsView({
+  baul,
+  albums,
+  loosePhotos = [],
+  sharedUsers = [],
+  isAdmin = false,
+  currentUserEmail,
+  onBack,
+  onSelectAlbum,
+  onCreateAlbum,
+  onOpenLoosePhotos,
+  onUploadPhotos,
+  onCreatePersona,
+  onShareInvite,
+  onChangeRole,
+  onRevokeAccess,
+  onRemovalRequests,
+  pendingRemovalRequestsCount,
+  onUpdateBaulInfo,
+}: AlbumsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'capitulos' | 'personas'>('capitulos');
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -105,22 +134,10 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
                   </DropdownMenuItem>
                 )}
 
-                {onUpdateBaulInfo && (onShareBaul || onManagePeople || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
+                {onUpdateBaulInfo && onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
                   <DropdownMenuSeparator />
                 )}
 
-                {onShareBaul && (
-                  <DropdownMenuItem onClick={onShareBaul}>
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Compartir baúl
-                  </DropdownMenuItem>
-                )}
-                {onManagePeople && (
-                  <DropdownMenuItem onClick={onManagePeople}>
-                    <Users className="w-4 h-4 mr-2" />
-                    Ver personas con acceso
-                  </DropdownMenuItem>
-                )}
                 {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
                   <DropdownMenuItem onClick={onRemovalRequests}>
                     <Bell className="w-4 h-4 mr-2" />
@@ -168,9 +185,30 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
         className="hidden"
       />
 
+      {/* Tabs — same sticky underline pattern as the Álbum/Capítulo screen (PhotosView.tsx) */}
+      <div className="sticky top-[61px] bg-background/90 backdrop-blur-sm z-[9] border-b border-border">
+        <div className="max-w-2xl mx-auto px-6">
+          <div className="flex">
+            <TabButton
+              label="Capítulos"
+              count={albums.length}
+              active={activeTab === 'capitulos'}
+              onClick={() => setActiveTab('capitulos')}
+            />
+            <TabButton
+              label="Personas"
+              count={sharedUsers.length}
+              active={activeTab === 'personas'}
+              onClick={() => setActiveTab('personas')}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
-        {albums.length === 0 && loosePhotos.length === 0 ? (
+        {activeTab === 'capitulos' && (
+        albums.length === 0 && loosePhotos.length === 0 ? (
           <EmptyState
             icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
             title="Este baúl está vacío"
@@ -261,23 +299,54 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
               </div>
             )}
           </div>
+        )
+        )}
+
+        {activeTab === 'personas' && (
+          <PersonasTab
+            sharedUsers={sharedUsers}
+            isAdmin={isAdmin}
+            currentUserEmail={currentUserEmail}
+            onShareInvite={(persona) => onShareInvite?.(persona)}
+            onChangeRole={(sharedUserId, role) => onChangeRole?.(sharedUserId, role)}
+            onRevokeAccess={(sharedUserId) => onRevokeAccess?.(sharedUserId)}
+          />
         )}
       </div>
 
-      <ExpandableFAB
-        actions={[
-          {
-            label: 'Nuevo capítulo',
-            icon: <Plus className="w-4 h-4" />,
-            onClick: onCreateAlbum,
-          },
-          ...(onUploadPhotos ? [{
-            label: 'Subir fotos',
-            icon: <Upload className="w-4 h-4" />,
-            onClick: () => fileInputRef.current?.click(),
-          }] : []),
-        ]}
-      />
+      {activeTab === 'capitulos' ? (
+        <ExpandableFAB
+          actions={[
+            {
+              label: 'Nuevo capítulo',
+              icon: <Plus className="w-4 h-4" />,
+              onClick: onCreateAlbum,
+            },
+            ...(onUploadPhotos ? [{
+              label: 'Subir fotos',
+              icon: <Upload className="w-4 h-4" />,
+              onClick: () => fileInputRef.current?.click(),
+            }] : []),
+          ]}
+        />
+      ) : (
+        <SimpleFAB
+          label="Nueva persona"
+          icon={<UserPlus className="w-5 h-5" />}
+          onClick={() => setShowNuevaPersonaModal(true)}
+          hidden={!isAdmin || !onCreatePersona}
+        />
+      )}
+
+      {showNuevaPersonaModal && (
+        <NuevaPersonaModal
+          onCancel={() => setShowNuevaPersonaModal(false)}
+          onSave={(nickname) => {
+            onCreatePersona?.(nickname);
+            setShowNuevaPersonaModal(false);
+          }}
+        />
+      )}
 
       {showEditModal && (
         <EditInfoModal

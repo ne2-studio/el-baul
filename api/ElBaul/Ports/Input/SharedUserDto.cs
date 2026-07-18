@@ -4,8 +4,9 @@ public record SharedUserDto
 (
     string Id,
     string? UserId,
-    string Email,
+    string? Email,
     string? Name,
+    string Nickname,
     string Role,
     string Status,
     DateTime InvitedDate,

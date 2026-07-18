@@ -56,10 +56,9 @@ public class AlbumManager(
             return Result.Failure<AlbumDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(baulId, userId);
-        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit)
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(baulId, userId) is not null;
+        if (!hasAccess)
         {
             logger.LogWarning("Album creation rejected: access denied {BaulId}", baulId);
             return Result.Failure<AlbumDto>("Access denied");
@@ -92,10 +91,9 @@ public class AlbumManager(
             return Result.Failure<AlbumDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
-        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit)
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
+        if (!hasAccess)
         {
             logger.LogWarning("Album cover update rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
             return Result.Failure<AlbumDto>("Access denied");
@@ -134,10 +132,9 @@ public class AlbumManager(
             return Result.Failure<AlbumDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
-        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit)
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
+        if (!hasAccess)
         {
             logger.LogWarning("Album update rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
             return Result.Failure<AlbumDto>("Access denied");
