@@ -46,9 +46,6 @@ export const LooseUploadingRoute: React.FC = () => {
       photoCount={selectedPhotos.length}
       onBack={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
       onSuccess={handleUpload}
-      onError={() => {
-        navigate(`/baules/${baul.id}/fotos-sueltas/error`);
-      }}
     />
   );
 };

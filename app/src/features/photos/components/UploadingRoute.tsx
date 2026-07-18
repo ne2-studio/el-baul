@@ -37,9 +37,6 @@ export const UploadingRoute: React.FC = () => {
       photoCount={selectedPhotos.length}
       onBack={() => navigate(`/baules/${baul.id}/albumes/${album.id}`)}
       onSuccess={handleUpload}
-      onError={() => {
-        navigate(`/baules/${baul.id}/albumes/${album.id}/error`);
-      }}
     />
   );
 };

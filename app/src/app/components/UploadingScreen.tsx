@@ -9,23 +9,14 @@ interface UploadingScreenProps {
   photoCount: number;
   onBack: () => void;
   onSuccess: () => void;
-  onError: () => void;
 }
 
-export function UploadingScreen({ baul, album, photoCount, onBack, onSuccess, onError }: UploadingScreenProps) {
+export function UploadingScreen({ baul, album, photoCount, onBack, onSuccess }: UploadingScreenProps) {
   useEffect(() => {
-    // Simulate upload process
-    const timer = setTimeout(() => {
-      // 90% success rate for demo
-      if (Math.random() > 0.1) {
-        onSuccess();
-      } else {
-        onError();
-      }
-    }, 2500);
-    
-    return () => clearTimeout(timer);
-  }, [onSuccess, onError]);
+    onSuccess();
+    // Runs once per mount to kick off the real upload, regardless of onSuccess identity changes afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   return (
     <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center px-6">
