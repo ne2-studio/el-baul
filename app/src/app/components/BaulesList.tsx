@@ -1,7 +1,8 @@
 import React from 'react';
 import { SimpleFAB } from './FAB';
 import { EmptyState } from './EmptyState';
-import { Archive, Crown, User, Users, Clock, UserCircle } from 'lucide-react';
+import { Crown, User, Users, Clock, UserCircle } from 'lucide-react';
+import { BaulIcon } from './BaulIcon';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 
@@ -55,7 +56,7 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
 
           {baules.length === 0 ? (
             <EmptyState
-              icon={<Archive className="w-20 h-20" strokeWidth={1.5} />}
+              icon={<BaulIcon className="w-20 h-20" />}
               title="Aún no tienes baúles"
               subtitle="Crea tu primer baúl para empezar a guardar tus recuerdos más preciados"
             />
@@ -115,7 +116,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
           <img src={baul.coverPhotoUrl} alt={baul.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Archive className="w-16 h-16 text-muted-foreground opacity-40" strokeWidth={1.5} />
+            <BaulIcon className="w-16 h-16 text-muted-foreground opacity-40" />
           </div>
         )}
       </div>

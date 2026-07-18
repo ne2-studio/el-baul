@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { Archive, BookImage, Users } from 'lucide-react';
+import { BookImage, Users } from 'lucide-react';
+import { BaulIcon } from './BaulIcon';
 
 interface OnboardingSlide {
   title: string;
@@ -19,7 +20,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     {
       title: "Tus recuerdos, a salvo",
       text: "Un espacio privado para guardar fotos que no quieres perder.",
-      icon: <Archive className="w-16 h-16 text-primary" strokeWidth={1.5} />
+      icon: <BaulIcon className="w-16 h-16 text-primary" />
     },
     {
       title: "Organizados por historias",

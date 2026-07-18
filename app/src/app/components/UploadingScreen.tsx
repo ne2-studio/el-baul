@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Archive } from 'lucide-react';
+import { BaulIcon } from './BaulIcon';
 import { Baul } from './BaulesList';
 import { Album } from './AlbumsView';
 
@@ -33,7 +33,7 @@ export function UploadingScreen({ baul, album, photoCount, onBack, onSuccess, on
         {/* Animated icon */}
         <div className="mb-8 flex justify-center">
           <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center relative">
-            <Archive className="w-10 h-10 text-primary animate-pulse" strokeWidth={1.5} />
+            <BaulIcon className="w-10 h-10 text-primary animate-pulse" />
             {/* Soft glow effect */}
             <div className="absolute inset-0 rounded-3xl bg-primary/20 animate-ping" />
           </div>

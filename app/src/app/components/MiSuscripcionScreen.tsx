@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChevronLeft, Crown, Archive, HardDrive } from 'lucide-react';
+import { ChevronLeft, Crown, HardDrive } from 'lucide-react';
 import { Button } from './Button';
+import { BaulIcon } from './BaulIcon';
 
 export type PlanType = 'gratuito' | 'familiar' | 'premium';
 
@@ -67,7 +68,7 @@ export function MiSuscripcionScreen({ onBack, subscription, onChangePlan }: MiSu
           {/* Plan features */}
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <Archive className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <BaulIcon className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-foreground">
                   {subscription.baulesUsed} / {subscription.baulesLimit} baúles como custodio

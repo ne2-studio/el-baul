@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
-import { Archive } from 'lucide-react';
+import { BaulIcon } from './BaulIcon';
 
 interface InvitacionScreenProps {
   baulNombre: string;
@@ -21,7 +21,7 @@ export function InvitacionScreen({
         {/* Header con icono */}
         <div className="flex justify-center mb-8">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-            <Archive className="w-8 h-8 text-primary" strokeWidth={1.5} />
+            <BaulIcon className="w-8 h-8 text-primary" />
           </div>
         </div>
 

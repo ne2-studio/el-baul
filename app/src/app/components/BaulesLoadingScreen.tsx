@@ -1,4 +1,4 @@
-import { Archive } from 'lucide-react';
+import { BaulIcon } from './BaulIcon';
 
 export function BaulesLoadingScreen() {
   return (
@@ -7,7 +7,7 @@ export function BaulesLoadingScreen() {
         {/* App Icon with animation */}
         <div className="mb-8 flex justify-center">
           <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center shadow-lg animate-pulse">
-            <Archive className="w-12 h-12 text-primary-foreground" strokeWidth={1.5} />
+            <BaulIcon className="w-12 h-12 text-primary-foreground" />
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { Archive, Folder, Users, ChevronRight } from 'lucide-react';
+import { Folder, Users, ChevronRight } from 'lucide-react';
+import { BaulIcon } from './BaulIcon';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface OnboardingCarouselProps {
@@ -20,7 +21,7 @@ export function OnboardingCarousel({
     {
       title: 'Un lugar para lo que de verdad importa',
       description: 'En lugar de perder fotos en chats o carpetas, aquí las guardas en un espacio compartido con tu gente.',
-      icon: Archive,
+      icon: BaulIcon,
       visual: (
         <div className="flex gap-4 items-center justify-center">
           {/* Lado A - Caos */}
@@ -50,7 +51,7 @@ export function OnboardingCarousel({
             <div className="text-xs text-primary mb-2 text-center">Ahora</div>
             <div className="bg-primary/10 rounded-xl p-3 border border-primary/20">
               <div className="flex items-center gap-2 mb-2">
-                <Archive className="w-4 h-4 text-primary" />
+                <BaulIcon className="w-4 h-4 text-primary" />
                 <div className="h-2 bg-primary/40 rounded w-20" />
               </div>
               <div className="grid grid-cols-3 gap-1">
@@ -72,7 +73,7 @@ export function OnboardingCarousel({
           {/* Baúl contenedor */}
           <div className="bg-card border-2 border-primary/30 rounded-xl p-4 mb-3">
             <div className="flex items-center gap-2 mb-4">
-              <Archive className="w-5 h-5 text-primary" />
+              <BaulIcon className="w-5 h-5 text-primary" />
               <span className="text-sm font-medium text-foreground">Familia García</span>
             </div>
 
@@ -150,11 +151,11 @@ export function OnboardingCarousel({
     {
       title: 'Este Baúl ya es tuyo',
       description: `Has sido invitado a formar parte de "${baulNombre}". Empieza a añadir y revivir recuerdos.`,
-      icon: Archive,
+      icon: BaulIcon,
       visual: (
         <div className="flex justify-center">
           <div className="w-32 h-32 bg-primary/10 rounded-3xl flex items-center justify-center">
-            <Archive className="w-16 h-16 text-primary" strokeWidth={1.5} />
+            <BaulIcon className="w-16 h-16 text-primary" />
           </div>
         </div>
       )

@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, Archive, Heart } from 'lucide-react';
+import { X, Heart } from 'lucide-react';
 import { Button } from './Button';
+import { BaulIcon } from './BaulIcon';
 
 interface PlanLimitModalProps {
   onClose: () => void;
@@ -39,7 +40,7 @@ export function PlanLimitModal({ onClose, onUpgradePlan, baulesUsed, baulesLimit
           {/* Icon and message */}
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Archive className="w-8 h-8 text-primary" />
+              <BaulIcon className="w-8 h-8 text-primary" />
             </div>
             
             <p className="text-foreground leading-relaxed mb-3">

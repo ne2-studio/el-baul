@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Check, Crown, Archive, HardDrive, Users } from 'lucide-react';
+import { ChevronLeft, Check, Crown, HardDrive, Users } from 'lucide-react';
 import { Button } from './Button';
+import { BaulIcon } from './BaulIcon';
 import { PlanType } from './MiSuscripcionScreen';
 
 interface PlanSelectionScreenProps {
@@ -78,7 +79,7 @@ export function PlanSelectionScreen({ onBack, currentPlan, onUpdatePlan }: PlanS
             {/* Features */}
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <Archive className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <BaulIcon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <p className="text-foreground text-sm">
                   Hasta <strong>2 baúles</strong> como custodio
                 </p>
@@ -143,7 +144,7 @@ export function PlanSelectionScreen({ onBack, currentPlan, onUpdatePlan }: PlanS
             {/* Features */}
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <Archive className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <BaulIcon className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <p className="text-foreground text-sm">
                   Hasta <strong>10 baúles</strong> como custodio
                 </p>

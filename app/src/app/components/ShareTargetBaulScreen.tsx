@@ -1,7 +1,8 @@
 import React from 'react';
-import { ChevronLeft, Archive } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
+import { BaulIcon } from './BaulIcon';
 import { Baul } from '@/types';
 
 interface ShareTargetBaulScreenProps {
@@ -40,7 +41,7 @@ export function ShareTargetBaulScreen({
       <div className="max-w-2xl mx-auto px-6 py-6 pb-24">
         {baules.length === 0 ? (
           <EmptyState
-            icon={<Archive className="w-20 h-20" strokeWidth={1.5} />}
+            icon={<BaulIcon className="w-20 h-20" />}
             title="Aún no tienes baúles"
             subtitle="Crea un baúl desde El Baúl antes de compartir fotos"
           />
@@ -57,7 +58,7 @@ export function ShareTargetBaulScreen({
                     <img src={baul.coverPhotoUrl} alt={baul.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Archive className="w-6 h-6 text-muted-foreground opacity-40" strokeWidth={1.5} />
+                      <BaulIcon className="w-6 h-6 text-muted-foreground opacity-40" />
                     </div>
                   )}
                 </div>
