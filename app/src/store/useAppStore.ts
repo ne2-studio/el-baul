@@ -65,6 +65,7 @@ interface AppState {
     onItemSettled?: (result: UploadItemResult) => void
   ) => Promise<UploadItemResult[]>;
   movePhotos: (baulId: string, sourceAlbumId: string | null, photoIds: string[], targetAlbumId: string) => Promise<void>;
+  deletePhoto: (baulId: string, albumId: string | null, photoId: string, reason?: string) => Promise<void>;
   changePhotoDate: (baulId: string, albumId: string | null, photoId: string, date: PhotoDate) => Promise<void>;
   changePhotoDateBatch: (baulId: string, albumId: string | null, photoIds: string[], date: PhotoDate) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
@@ -308,6 +309,20 @@ export const useAppStore = create<AppState>((set, get) => ({
         },
       };
     });
+  },
+
+  deletePhoto: async (baulId, albumId, photoId, reason) => {
+    await api.photos.delete(photoId, reason);
+
+    set((state) => (albumId
+      ? { photos: { ...state.photos, [albumId]: (state.photos[albumId] || []).filter((p) => p.id !== photoId) } }
+      : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).filter((p) => p.id !== photoId) } }
+    ));
+
+    if (albumId) {
+      const albums = await api.albums.getAll(baulId);
+      set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
+    }
   },
 
   changePhotoDate: async (baulId, albumId, photoId, date) => {

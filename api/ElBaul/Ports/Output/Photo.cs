@@ -12,5 +12,8 @@ public record Photo
     int? DateDay,
     string UploadedBy,
     DateTime CreatedAt,
-    Guid? ClientUploadId = null
+    Guid? ClientUploadId = null,
+    PhotoStatus Status = PhotoStatus.Active,
+    DateTime? DeletedAt = null,
+    string? DeletionReason = null
 );

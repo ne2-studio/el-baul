@@ -51,8 +51,12 @@ async function put<T>(path: string, body?: unknown): Promise<T> {
   return handleResponse<T>(response);
 }
 
-async function del<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { method: 'DELETE', headers: authHeaders() });
+async function del<T>(path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: body !== undefined ? jsonHeaders() : authHeaders(),
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
   return handleResponse<T>(response);
 }
 
@@ -135,6 +139,8 @@ export const api = {
     },
     move: async (photoId: string, albumId: string) =>
       new Photo(await put<any>(`/api/photos/${photoId}/album`, { albumId })),
+    delete: (photoId: string, reason?: string) =>
+      del<{ success: boolean }>(`/api/photos/${photoId}`, { reason }),
     changeDate: async (photoId: string, date: PhotoDate) =>
       new Photo(await put<any>(`/api/photos/${photoId}/date`, date)),
     changeDateBatch: async (photoIds: string[], date: PhotoDate) =>

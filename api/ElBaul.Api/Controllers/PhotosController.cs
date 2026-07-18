@@ -45,6 +45,13 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpDelete("photos/{photoId:guid}")]
+    public async Task<IActionResult> Delete(Guid photoId, [FromBody] DeletePhotoRequest request)
+    {
+        var result = await photoManager.DeleteAsync(photoId, request.Reason);
+        return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPut("photos/{photoId:guid}/date")]
     public async Task<IActionResult> ChangeDate(Guid photoId, [FromBody] ChangePhotoDateRequest request)
     {

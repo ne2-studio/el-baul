@@ -35,6 +35,7 @@ Full request/response shapes are documented in [`docs/API.md`](../docs/API.md).
 | `POST` | `/api/baules/{id}/removal-requests/{id}/approve\|reject` | Required | Resolve a removal request |
 | `GET`/`POST` | `/api/baules/{baulId}/albums` | Required | Albums |
 | `GET`/`POST` | `/api/albums/{albumId}/photos` | Required | Photos (POST is multipart upload) |
+| `DELETE` | `/api/photos/{photoId}` | Required (custodio only) | Soft-delete a photo, with a reason |
 | `GET`/`POST` | `/api/photos/{photoId}/recuerdos` | Required | Comments on a photo |
 | `GET` | `/api/users/me` | Required | Current user's profile |
 | `GET` | `/health` | Public (rate-limited) | Liveness check |

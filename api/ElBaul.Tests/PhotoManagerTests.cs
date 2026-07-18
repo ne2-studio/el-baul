@@ -343,6 +343,89 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task DeleteAsync_ShouldSoftDeletePhoto_AndDecrementAlbumPhotoCount_ForCustodio()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        var album = await _albumRepository.GetByIdAsync(albumId);
+        await _albumRepository.UpdateAsync(album! with { PhotoCount = 1 });
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(photoId, "Foto duplicada");
+
+        Assert.True(result.IsSuccess);
+
+        var deletedPhoto = await _photoRepository.GetByIdAsync(photoId);
+        Assert.Equal(PhotoStatus.Deleted, deletedPhoto!.Status);
+        Assert.Equal("Foto duplicada", deletedPhoto.DeletionReason);
+        Assert.Equal(_clock.UtcNow(), deletedPhoto.DeletedAt);
+
+        var updatedAlbum = await _albumRepository.GetByIdAsync(albumId);
+        Assert.Equal(0, updatedAlbum!.PhotoCount);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldHidePhotoFromAlbumListing()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        await manager.DeleteAsync(photoId, "Ya no aplica");
+
+        var result = await manager.GetByAlbumIdAsync(albumId);
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldNotRequireAlbum_ForLoosePhoto()
+    {
+        var (baulId, _) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, null, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(photoId, null);
+
+        Assert.True(result.IsSuccess);
+        var deletedPhoto = await _photoRepository.GetByIdAsync(photoId);
+        Assert.Equal(PhotoStatus.Deleted, deletedPhoto!.Status);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDenyAccess_ForColaboradorRole()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, colaboradorId, "c@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.DeleteAsync(photoId, "reason");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+
+        var photo = await _photoRepository.GetByIdAsync(photoId);
+        Assert.Equal(PhotoStatus.Active, photo!.Status);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldFail_WhenPhotoNotFound()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(Guid.NewGuid(), "reason");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error);
+    }
+
+    [Fact]
     public async Task UploadToBaulAsync_ShouldSaveFile_WithNullAlbumId()
     {
         var (baulId, _) = await SeedBaulWithAlbumAsync();

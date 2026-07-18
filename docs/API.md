@@ -114,6 +114,15 @@ at imgproxy, never at storage directly.
 `photoCount`, and sets it as the album's cover if it's the first photo (and as the baúl's
 cover if the baúl has none yet).
 
+### `DELETE /api/photos/{photoId}`
+
+`custodio` only — the only way to delete a photo directly (as opposed to a removal
+request, which any member can raise for the custodio to approve/reject). Body:
+`{ "reason": "string|null" }`. Soft delete: the photo is marked `Deleted` (with the
+reason and a `deletedAt` timestamp) rather than removed from storage, and is excluded
+from every listing/preview endpoint from then on. Decrements the album's `photoCount` if
+the photo belonged to one. Response `200 OK`: `{ "success": true }`.
+
 ## Recuerdos (comments on a photo)
 
 - `GET /api/photos/{photoId}/recuerdos` — response `200 OK`: array of `{ "id", "photoId", "userId", "text", "userName", "createdAt", "isOwn" }`.

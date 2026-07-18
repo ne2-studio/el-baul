@@ -14,7 +14,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
-  const { baules, albums, loosePhotos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, movePhotos, changePhotoDate } = useAppStore();
+  const { baules, albums, loosePhotos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
 
   const baul = baules.find(b => b.id === baulId);
   const photos = loosePhotos[baulId!] || [];
@@ -75,6 +75,18 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       });
   };
 
+  const handleDeletePhoto = (photoToDelete: Photo, reason: string) => {
+    deletePhoto(baul.id, null, photoToDelete.id, reason)
+      .then(() => {
+        showToastMessage('La foto ha sido retirada');
+        navigate(`/baules/${baul.id}/fotos-sueltas`);
+      })
+      .catch((error) => {
+        console.error('Error deleting photo:', error);
+        showToastMessage('Error al retirar la foto');
+      });
+  };
+
   const handleChangeDate = (photoToUpdate: Photo, date: PhotoDate) => {
     changePhotoDate(baul.id, null, photoToUpdate.id, date)
       .then(() => showToastMessage('Fecha actualizada'))
@@ -95,6 +107,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       onSetBaulCover={handleSetBaulCover}
       onMovePhoto={handleMovePhoto}
       onChangeDate={handleChangeDate}
+      onDeletePhoto={handleDeletePhoto}
       allAlbums={albums[baul.id] || []}
       currentAlbum={looseAlbum}
       recuerdos={recuerdos[photo.id] || []}

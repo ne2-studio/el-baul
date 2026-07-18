@@ -12,16 +12,16 @@ public class InMemoryPhotoRepository : IPhotoRepository
         Task.FromResult(_photos.Values.FirstOrDefault(p => p.ClientUploadId == clientUploadId));
 
     public Task<IEnumerable<Photo>> GetByAlbumIdAsync(Guid albumId) =>
-        Task.FromResult(_photos.Values.Where(p => p.AlbumId == albumId));
+        Task.FromResult(_photos.Values.Where(p => p.AlbumId == albumId && p.Status == PhotoStatus.Active));
 
     public Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(Guid baulId) =>
-        Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.AlbumId == null));
+        Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.AlbumId == null && p.Status == PhotoStatus.Active));
 
     public Task<IEnumerable<Photo>> GetPreviewPhotosAsync(Guid baulId, int limit) =>
-        Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId).OrderByDescending(p => p.CreatedAt).Take(limit));
+        Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active).OrderByDescending(p => p.CreatedAt).Take(limit));
 
     public Task<IEnumerable<Photo>> GetUndatedAsync() =>
-        Task.FromResult(_photos.Values.Where(p => p.DateYear == null));
+        Task.FromResult(_photos.Values.Where(p => p.DateYear == null && p.Status == PhotoStatus.Active));
 
     public Task CreateAsync(Photo photo)
     {

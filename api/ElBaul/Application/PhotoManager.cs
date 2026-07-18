@@ -355,6 +355,52 @@ public class PhotoManager(
         return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
     }
 
+    public async Task<Result> DeleteAsync(Guid photoId, string? reason)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null)
+        {
+            logger.LogWarning("Photo delete rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure("Photo not found");
+        }
+
+        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
+        if (baul is null)
+        {
+            logger.LogWarning("Photo delete rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure("Baul not found");
+        }
+
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Photo delete rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure("Access denied");
+        }
+
+        if (photo.Status == PhotoStatus.Deleted) return Result.Success();
+
+        var updatedPhoto = photo with
+        {
+            Status = PhotoStatus.Deleted,
+            DeletedAt = clock.UtcNow(),
+            DeletionReason = reason
+        };
+        await photoRepository.UpdateAsync(updatedPhoto);
+
+        if (photo.AlbumId is { } albumId)
+        {
+            var album = await albumRepository.GetByIdAsync(albumId);
+            if (album is not null)
+            {
+                await albumRepository.UpdateAsync(album with { PhotoCount = Math.Max(0, album.PhotoCount - 1) });
+            }
+        }
+
+        logger.LogInformation("Photo deleted {BaulId} {PhotoId}", photo.BaulId, photoId);
+        return Result.Success();
+    }
+
     public async Task<Result<PhotoDto>> ChangeDateAsync(Guid photoId, int year, int? month, int? day)
     {
         var validationError = ValidateDate(year, month, day);

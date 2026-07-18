@@ -21,6 +21,7 @@ interface PhotoViewerProps {
   onSetAlbumCover?: (photo: Photo) => void;
   onMovePhoto?: (photo: Photo, targetAlbumId: string) => void;
   onChangeDate?: (photo: Photo, date: PhotoDate) => void;
+  onDeletePhoto?: (photo: Photo, reason: string) => void;
   allAlbums?: Album[];
   currentAlbum?: Album;
   recuerdos?: Recuerdo[];
@@ -39,6 +40,7 @@ export function PhotoViewer({
   onSetAlbumCover,
   onMovePhoto,
   onChangeDate,
+  onDeletePhoto,
   allAlbums = [],
   currentAlbum,
   recuerdos = [],
@@ -56,6 +58,8 @@ export function PhotoViewer({
   const [dateYear, setDateYear] = useState('');
   const [dateMonth, setDateMonth] = useState('');
   const [dateDay, setDateDay] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
 
   const moveableAlbums = allAlbums.filter(a => a.id !== currentAlbum?.id);
 
@@ -203,7 +207,7 @@ export function PhotoViewer({
           </div>
           
           {/* Menu button (only show if there's at least one menu action available) */}
-          {menuItems.length > 0 ? (
+          {menuItems.length > 0 || (isCustodio && onDeletePhoto) ? (
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
@@ -238,6 +242,23 @@ export function PhotoViewer({
                         )}
                       </React.Fragment>
                     ))}
+                    {isCustodio && onDeletePhoto && (
+                      <>
+                        {menuItems.length > 0 && (
+                          <div className="my-1 border-t border-border/50" />
+                        )}
+                        <button
+                          onClick={() => {
+                            setShowMenu(false);
+                            setDeleteReason('');
+                            setShowDeleteModal(true);
+                          }}
+                          className="w-full px-4 py-3 text-left text-destructive hover:bg-destructive/5 transition-colors text-sm font-medium"
+                        >
+                          Retirar foto
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -419,6 +440,57 @@ export function PhotoViewer({
           onCancel={() => setShowDateModal(false)}
           onConfirm={handleDateSubmit}
         />
+      )}
+
+      {/* Retirar foto modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-foreground/60 z-[60] flex items-end md:items-center justify-center p-4">
+          <div className="absolute inset-0" onClick={() => setShowDeleteModal(false)} />
+          <div className="bg-background rounded-t-2xl md:rounded-2xl max-w-md w-full p-6 relative z-10 animate-slide-up">
+            <h2 className="font-serif text-xl text-foreground mb-1">
+              Retirar esta foto
+            </h2>
+
+            <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-4 mt-3">
+              <p className="text-xs text-destructive/80 leading-relaxed">
+                <span className="font-semibold">Atención:</span> Esta foto dejará de estar disponible para todos los miembros del baúl. Todos los recuerdos asociados a ella se perderán de forma permanente.
+              </p>
+            </div>
+
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Motivo de la retirada
+            </label>
+            <textarea
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+              placeholder="¿Por qué se retira esta foto?"
+              rows={3}
+              className="w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40 placeholder:text-muted-foreground mb-5"
+              autoFocus
+            />
+
+            <div className="flex flex-col-reverse md:flex-row gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancelar
+              </Button>
+              <button
+                onClick={() => {
+                  if (!deleteReason.trim()) return;
+                  setShowDeleteModal(false);
+                  onDeletePhoto?.(photo, deleteReason.trim());
+                }}
+                disabled={!deleteReason.trim()}
+                className="flex-1 py-3 rounded-xl bg-destructive text-white text-sm font-medium disabled:opacity-40 hover:bg-destructive/90 transition-colors"
+              >
+                Sí, retirar foto
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
