@@ -1,6 +1,7 @@
 using ElBaul.Application;
 using ElBaul.Ports.Output;
 using ElBaul.Tests.Fakes;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ElBaul.Tests;
 
@@ -18,7 +19,8 @@ public class AlbumManagerTests
     private readonly StaticClock _clock = new();
 
     private AlbumManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(_albumRepository, _baulRepository, _photoRepository, _recuerdoRepository, _userRepository, _photoStorage,
+        new(NullLogger<AlbumManager>.Instance, _albumRepository, _baulRepository, _photoRepository,
+            _recuerdoRepository, _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
 
     [Fact]

@@ -1,6 +1,8 @@
 using ElBaul.Application;
 using ElBaul.Ports.Output;
 using ElBaul.Tests.Fakes;
+using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 
 namespace ElBaul.Tests;
 
@@ -17,7 +19,7 @@ public class PhotoManagerTests
     private readonly StaticClock _clock = new();
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(_photoRepository, _albumRepository, _baulRepository, _photoStorage,
+        new(NullLogger<PhotoManager>.Instance, _photoRepository, _albumRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, _userRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId));
 
@@ -109,6 +111,47 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldPropagateException_WhenStorageSaveFails()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        var failingStorage = Substitute.For<IPhotoStorage>();
+        failingStorage.SaveAsync(Arg.Any<string>(), Arg.Any<Stream>(), Arg.Any<string>())
+            .Returns<Task>(_ => throw new InvalidOperationException("storage unavailable"));
+
+        var manager = new PhotoManager(
+            NullLogger<PhotoManager>.Instance, _photoRepository, _albumRepository, _baulRepository, failingStorage,
+            _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
+            new StaticCurrentUserProvider(CustodioId));
+
+        using var content = new MemoryStream([1, 2, 3]);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null));
+
+        Assert.Empty(await _photoRepository.GetByAlbumIdAsync(albumId));
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldPropagateException_WhenPersistingMetadataFails()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        var failingRepository = Substitute.For<IPhotoRepository>();
+        failingRepository.CreateAsync(Arg.Any<Photo>())
+            .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
+
+        var manager = new PhotoManager(
+            NullLogger<PhotoManager>.Instance, failingRepository, _albumRepository, _baulRepository, _photoStorage,
+            _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
+            new StaticCurrentUserProvider(CustodioId));
+
+        using var content = new MemoryStream([1, 2, 3]);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null));
+
+        // The file was already saved to storage before the DB write failed.
+        Assert.Single(_photoStorage.SavedKeys);
     }
 
     [Fact]

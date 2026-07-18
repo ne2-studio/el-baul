@@ -1,10 +1,12 @@
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application;
 
 public class PhotoManager(
+    ILogger<PhotoManager> logger,
     IPhotoRepository photoRepository,
     IAlbumRepository albumRepository,
     IBaulRepository baulRepository,
@@ -78,35 +80,71 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
         var album = await albumRepository.GetByIdAsync(albumId);
-        if (album is null) return Result.Failure<PhotoDto>("Album not found");
+        if (album is null)
+        {
+            logger.LogWarning("Photo upload rejected: album not found {AlbumId}", albumId);
+            return Result.Failure<PhotoDto>("Album not found");
+        }
 
         var baul = await baulRepository.GetByIdAsync(album.BaulId);
-        if (baul is null) return Result.Failure<PhotoDto>("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Photo upload rejected: baul not found {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<PhotoDto>("Baul not found");
+        }
 
         var isCustodio = baul.CustodioId == userId;
         var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
         var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit) return Result.Failure<PhotoDto>("Access denied");
+        if (!canEdit)
+        {
+            logger.LogWarning("Photo upload rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<PhotoDto>("Access denied");
+        }
 
         var now = clock.UtcNow();
         var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
-        await photoStorage.SaveAsync(storageKey, content, contentType);
+
+        try
+        {
+            await photoStorage.SaveAsync(storageKey, content, contentType);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Photo upload failed while saving to storage {BaulId} {AlbumId} {FileName} {ContentType} {StorageKey}",
+                album.BaulId, albumId, fileName, contentType, storageKey);
+            throw;
+        }
 
         var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, caption, date ?? now, userId, now);
-        await photoRepository.CreateAsync(photo);
 
-        var updatedAlbum = album with
+        try
         {
-            PhotoCount = album.PhotoCount + 1,
-            CoverPhotoKey = string.IsNullOrEmpty(album.CoverPhotoKey) ? storageKey : album.CoverPhotoKey,
-            UpdatedAt = now
-        };
-        await albumRepository.UpdateAsync(updatedAlbum);
-        await baulRepository.UpdateAsync(baul with
+            await photoRepository.CreateAsync(photo);
+
+            var updatedAlbum = album with
+            {
+                PhotoCount = album.PhotoCount + 1,
+                CoverPhotoKey = string.IsNullOrEmpty(album.CoverPhotoKey) ? storageKey : album.CoverPhotoKey,
+                UpdatedAt = now
+            };
+            await albumRepository.UpdateAsync(updatedAlbum);
+            await baulRepository.UpdateAsync(baul with
+            {
+                CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
+                UpdatedAt = now
+            });
+        }
+        catch (Exception ex)
         {
-            CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
-            UpdatedAt = now
-        });
+            logger.LogError(ex,
+                "Photo upload failed while persisting metadata {BaulId} {AlbumId} {PhotoId} {StorageKey}",
+                album.BaulId, albumId, photo.Id, storageKey);
+            throw;
+        }
+
+        logger.LogInformation("Photo uploaded {BaulId} {AlbumId} {PhotoId}", album.BaulId, albumId, photo.Id);
 
         var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
@@ -123,25 +161,57 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<PhotoDto>("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Loose photo upload rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<PhotoDto>("Baul not found");
+        }
 
         var isCustodio = baul.CustodioId == userId;
         var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(baulId, userId);
         var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit) return Result.Failure<PhotoDto>("Access denied");
+        if (!canEdit)
+        {
+            logger.LogWarning("Loose photo upload rejected: access denied {BaulId}", baulId);
+            return Result.Failure<PhotoDto>("Access denied");
+        }
 
         var now = clock.UtcNow();
         var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
-        await photoStorage.SaveAsync(storageKey, content, contentType);
+
+        try
+        {
+            await photoStorage.SaveAsync(storageKey, content, contentType);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Loose photo upload failed while saving to storage {BaulId} {FileName} {ContentType} {StorageKey}",
+                baulId, fileName, contentType, storageKey);
+            throw;
+        }
 
         var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, caption, date ?? now, userId, now);
-        await photoRepository.CreateAsync(photo);
 
-        await baulRepository.UpdateAsync(baul with
+        try
         {
-            CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
-            UpdatedAt = now
-        });
+            await photoRepository.CreateAsync(photo);
+
+            await baulRepository.UpdateAsync(baul with
+            {
+                CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
+                UpdatedAt = now
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Loose photo upload failed while persisting metadata {BaulId} {PhotoId} {StorageKey}",
+                baulId, photo.Id, storageKey);
+            throw;
+        }
+
+        logger.LogInformation("Photo uploaded (loose) {BaulId} {PhotoId}", baulId, photo.Id);
 
         var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
@@ -152,22 +222,44 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null) return Result.Failure<PhotoDto>("Photo not found");
+        if (photo is null)
+        {
+            logger.LogWarning("Photo move rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<PhotoDto>("Photo not found");
+        }
 
         var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null) return Result.Failure<PhotoDto>("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Photo move rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<PhotoDto>("Baul not found");
+        }
 
         var isCustodio = baul.CustodioId == userId;
         var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId);
         var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit) return Result.Failure<PhotoDto>("Access denied");
+        if (!canEdit)
+        {
+            logger.LogWarning("Photo move rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<PhotoDto>("Access denied");
+        }
 
         var targetAlbum = await albumRepository.GetByIdAsync(targetAlbumId);
         if (targetAlbum is null || targetAlbum.BaulId != photo.BaulId)
+        {
+            logger.LogWarning(
+                "Photo move rejected: target album not found {BaulId} {PhotoId} {TargetAlbumId}",
+                photo.BaulId, photoId, targetAlbumId);
             return Result.Failure<PhotoDto>("Target album not found");
+        }
 
         if (photo.AlbumId == targetAlbumId)
+        {
+            logger.LogWarning(
+                "Photo move rejected: photo already in target album {BaulId} {PhotoId} {TargetAlbumId}",
+                photo.BaulId, photoId, targetAlbumId);
             return Result.Failure<PhotoDto>("Photo is already in that album");
+        }
 
         var now = clock.UtcNow();
 
@@ -194,6 +286,10 @@ public class PhotoManager(
             CoverPhotoKey = string.IsNullOrEmpty(targetAlbum.CoverPhotoKey) ? photo.StorageKey : targetAlbum.CoverPhotoKey,
             UpdatedAt = now
         });
+
+        logger.LogInformation(
+            "Photo moved {BaulId} {PhotoId} {SourceAlbumId} {TargetAlbumId}",
+            photo.BaulId, photoId, photo.AlbumId, targetAlbumId);
 
         var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
@@ -228,18 +324,33 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null) return Result.Failure<RecuerdoDto>("Photo not found");
+        if (photo is null)
+        {
+            logger.LogWarning("Recuerdo creation rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<RecuerdoDto>("Photo not found");
+        }
 
         var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null) return Result.Failure<RecuerdoDto>("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Recuerdo creation rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<RecuerdoDto>("Baul not found");
+        }
 
         var hasAccess = baul.CustodioId == userId
             || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
-        if (!hasAccess) return Result.Failure<RecuerdoDto>("Access denied");
+        if (!hasAccess)
+        {
+            logger.LogWarning("Recuerdo creation rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<RecuerdoDto>("Access denied");
+        }
 
         var user = await userRepository.GetByIdAsync(userId);
         var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
+
+        logger.LogInformation(
+            "Recuerdo created {BaulId} {PhotoId} {RecuerdoId}", photo.BaulId, photoId, recuerdo.Id);
 
         return ToDto(recuerdo, user?.Name ?? "Usuario", isOwn: true);
     }

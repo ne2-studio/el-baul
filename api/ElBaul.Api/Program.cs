@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using ElBaul.Api.Logging;
 using ElBaul.Application;
 using ElBaul.Infra;
 using ElBaul.Ports.Input;
@@ -150,6 +151,7 @@ app.UseCors(policy => policy
 
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<UserLogContextMiddleware>();
 app.UseMiddleware<UserSyncMiddleware>();
 app.UseAuthorization();
 

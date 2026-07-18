@@ -41,7 +41,7 @@ public class BaulManager(
         var baul = new Baul(idGenerator.NewId(), name, description, userId, 0, now, now);
         await baulRepository.CreateAsync(baul);
 
-        logger.LogInformation("CreateAsync - Baul {Id} created by {UserId}", baul.Id, userId);
+        logger.LogInformation("Baul created {BaulId} {Name}", baul.Id, name);
         return await ToDtoAsync(baul, isCustodio: true, BaulRole.Custodio);
     }
 
@@ -65,14 +65,28 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<BaulDto>("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure<BaulDto>("Access denied");
+        if (baul is null)
+        {
+            logger.LogWarning("Baul cover update rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<BaulDto>("Baul not found");
+        }
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Baul cover update rejected: access denied {BaulId}", baulId);
+            return Result.Failure<BaulDto>("Access denied");
+        }
 
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null || photo.BaulId != baulId) return Result.Failure<BaulDto>("Photo not found");
+        if (photo is null || photo.BaulId != baulId)
+        {
+            logger.LogWarning("Baul cover update rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);
+            return Result.Failure<BaulDto>("Photo not found");
+        }
 
         var updated = baul with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
         await baulRepository.UpdateAsync(updated);
+
+        logger.LogInformation("Baul cover updated {BaulId} {PhotoId}", baulId, photoId);
 
         var sharedCount = (await baulRepository.GetSharedUsersAsync(baulId)).Count();
         return await ToDtoAsync(updated, isCustodio: true, BaulRole.Custodio, sharedCount);
@@ -97,7 +111,11 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Baul invitation acceptance rejected: baul not found {BaulId}", baulId);
+            return Result.Failure("Baul not found");
+        }
 
         if (baul.CustodioId == userId) return Result.Success();
 
@@ -110,6 +128,7 @@ public class BaulManager(
             BaulRole.Miembro, SharedUserStatus.Active, clock.UtcNow());
 
         await baulRepository.AddSharedUserAsync(sharedUser);
+        logger.LogInformation("Baul invitation accepted {BaulId}", baulId);
         return Result.Success();
     }
 
@@ -147,11 +166,22 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<SharedUserDto>("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure<SharedUserDto>("Access denied");
+        if (baul is null)
+        {
+            logger.LogWarning("Baul share rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<SharedUserDto>("Baul not found");
+        }
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Baul share rejected: access denied {BaulId}", baulId);
+            return Result.Failure<SharedUserDto>("Access denied");
+        }
 
         if (!DtoMapping.TryParseBaulRole(role, out var parsedRole))
+        {
+            logger.LogWarning("Baul share rejected: invalid role {BaulId} {Role}", baulId, role);
             return Result.Failure<SharedUserDto>("Invalid role");
+        }
 
         var existingUser = await userRepository.GetByEmailAsync(email);
         var existingInvitation = await baulRepository.GetSharedUserByEmailAsync(baulId, email);
@@ -165,6 +195,7 @@ public class BaulManager(
                 UserId = existingUser?.Id
             };
             await baulRepository.UpdateSharedUserAsync(updated);
+            logger.LogInformation("Baul share invitation updated {BaulId} {Email} {Role}", baulId, email, parsedRole);
             return ToDto(updated, existingUser?.Name);
         }
 
@@ -173,6 +204,7 @@ public class BaulManager(
             existingUser is not null ? SharedUserStatus.Active : SharedUserStatus.Pending, clock.UtcNow());
 
         await baulRepository.AddSharedUserAsync(invitation);
+        logger.LogInformation("Baul share invitation created {BaulId} {Email} {Role}", baulId, email, parsedRole);
         return ToDto(invitation, existingUser?.Name);
     }
 
@@ -180,17 +212,35 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<SharedUserDto>("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure<SharedUserDto>("Access denied");
+        if (baul is null)
+        {
+            logger.LogWarning("Shared user role update rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<SharedUserDto>("Baul not found");
+        }
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Shared user role update rejected: access denied {BaulId}", baulId);
+            return Result.Failure<SharedUserDto>("Access denied");
+        }
 
         if (!DtoMapping.TryParseBaulRole(role, out var parsedRole))
+        {
+            logger.LogWarning("Shared user role update rejected: invalid role {BaulId} {Role}", baulId, role);
             return Result.Failure<SharedUserDto>("Invalid role");
+        }
 
         var sharedUser = await baulRepository.GetSharedUserByIdAsync(sharedUserId);
-        if (sharedUser is null) return Result.Failure<SharedUserDto>("Shared user not found");
+        if (sharedUser is null)
+        {
+            logger.LogWarning(
+                "Shared user role update rejected: shared user not found {BaulId} {SharedUserId}",
+                baulId, sharedUserId);
+            return Result.Failure<SharedUserDto>("Shared user not found");
+        }
 
         var updated = sharedUser with { Role = parsedRole };
         await baulRepository.UpdateSharedUserAsync(updated);
+        logger.LogInformation("Shared user role updated {BaulId} {SharedUserId} {Role}", baulId, sharedUserId, parsedRole);
 
         var name = updated.UserId is not null ? (await userRepository.GetByIdAsync(updated.UserId))?.Name : null;
         return ToDto(updated, name);
@@ -200,10 +250,19 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure("Access denied");
+        if (baul is null)
+        {
+            logger.LogWarning("Shared user removal rejected: baul not found {BaulId}", baulId);
+            return Result.Failure("Baul not found");
+        }
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Shared user removal rejected: access denied {BaulId}", baulId);
+            return Result.Failure("Access denied");
+        }
 
         await baulRepository.RemoveSharedUserAsync(baulId, email);
+        logger.LogInformation("Shared user removed {BaulId} {Email}", baulId, email);
         return Result.Success();
     }
 
@@ -228,10 +287,19 @@ public class BaulManager(
     public async Task<Result<RemovalRequestDto>> CreateRemovalRequestAsync(Guid baulId, Guid photoId, string? reason)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<RemovalRequestDto>("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Removal request creation rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<RemovalRequestDto>("Baul not found");
+        }
 
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null) return Result.Failure<RemovalRequestDto>("Photo not found");
+        if (photo is null)
+        {
+            logger.LogWarning(
+                "Removal request creation rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);
+            return Result.Failure<RemovalRequestDto>("Photo not found");
+        }
 
         var userId = currentUserProvider.GetUserId();
         var userProfile = await userRepository.GetByIdAsync(userId);
@@ -241,6 +309,8 @@ public class BaulManager(
             userProfile?.Name ?? "Usuario", userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
         await baulRepository.CreateRemovalRequestAsync(request);
+        logger.LogInformation(
+            "Removal request created {BaulId} {PhotoId} {RemovalRequestId}", baulId, photoId, request.Id);
 
         var url = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.RemovalRequestThumbnail);
         return ToDto(request, url);
@@ -250,11 +320,25 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure("Access denied");
+        if (baul is null)
+        {
+            logger.LogWarning("Removal request approval rejected: baul not found {BaulId}", baulId);
+            return Result.Failure("Baul not found");
+        }
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Removal request approval rejected: access denied {BaulId}", baulId);
+            return Result.Failure("Access denied");
+        }
 
         var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
-        if (request is null) return Result.Failure("Request not found");
+        if (request is null)
+        {
+            logger.LogWarning(
+                "Removal request approval rejected: request not found {BaulId} {RemovalRequestId}",
+                baulId, requestId);
+            return Result.Failure("Request not found");
+        }
 
         var photo = await photoRepository.GetByIdAsync(request.PhotoId);
         if (photo?.AlbumId is { } photoAlbumId)
@@ -274,6 +358,10 @@ public class BaulManager(
             await photoStorage.DeleteAsync(photo.StorageKey);
         }
 
+        logger.LogInformation(
+            "Removal request approved, photo deleted {BaulId} {PhotoId} {RemovalRequestId} {AlbumId}",
+            baulId, request.PhotoId, requestId, photo?.AlbumId);
+
         return Result.Success();
     }
 
@@ -281,10 +369,19 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure("Baul not found");
-        if (baul.CustodioId != userId) return Result.Failure("Access denied");
+        if (baul is null)
+        {
+            logger.LogWarning("Reject removal request failed: baul not found {BaulId}", baulId);
+            return Result.Failure("Baul not found");
+        }
+        if (baul.CustodioId != userId)
+        {
+            logger.LogWarning("Reject removal request failed: access denied {BaulId}", baulId);
+            return Result.Failure("Access denied");
+        }
 
         await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+        logger.LogInformation("Removal request rejected {BaulId} {RemovalRequestId}", baulId, requestId);
         return Result.Success();
     }
 

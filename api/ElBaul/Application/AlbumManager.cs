@@ -1,10 +1,12 @@
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application;
 
 public class AlbumManager(
+    ILogger<AlbumManager> logger,
     IAlbumRepository albumRepository,
     IBaulRepository baulRepository,
     IPhotoRepository photoRepository,
@@ -37,12 +39,20 @@ public class AlbumManager(
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<AlbumDto>("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Album creation rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<AlbumDto>("Baul not found");
+        }
 
         var isCustodio = baul.CustodioId == userId;
         var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(baulId, userId);
         var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit) return Result.Failure<AlbumDto>("Access denied");
+        if (!canEdit)
+        {
+            logger.LogWarning("Album creation rejected: access denied {BaulId}", baulId);
+            return Result.Failure<AlbumDto>("Access denied");
+        }
 
         var now = clock.UtcNow();
         var album = new Album(idGenerator.NewId(), baulId, name, description, 0, null, now, now);
@@ -50,6 +60,7 @@ public class AlbumManager(
 
         await baulRepository.UpdateAsync(baul with { AlbumCount = baul.AlbumCount + 1, UpdatedAt = now });
 
+        logger.LogInformation("Album created {BaulId} {AlbumId} {Name}", baulId, album.Id, name);
         return ToDto(album, null, null, 0, null, null);
     }
 
@@ -57,22 +68,41 @@ public class AlbumManager(
     {
         var userId = currentUserProvider.GetUserId();
         var album = await albumRepository.GetByIdAsync(albumId);
-        if (album is null) return Result.Failure<AlbumDto>("Album not found");
+        if (album is null)
+        {
+            logger.LogWarning("Album cover update rejected: album not found {AlbumId}", albumId);
+            return Result.Failure<AlbumDto>("Album not found");
+        }
 
         var baul = await baulRepository.GetByIdAsync(album.BaulId);
-        if (baul is null) return Result.Failure<AlbumDto>("Baul not found");
+        if (baul is null)
+        {
+            logger.LogWarning("Album cover update rejected: baul not found {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<AlbumDto>("Baul not found");
+        }
 
         var isCustodio = baul.CustodioId == userId;
         var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
         var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
-        if (!canEdit) return Result.Failure<AlbumDto>("Access denied");
+        if (!canEdit)
+        {
+            logger.LogWarning("Album cover update rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<AlbumDto>("Access denied");
+        }
 
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null || photo.AlbumId != albumId) return Result.Failure<AlbumDto>("Photo not found");
+        if (photo is null || photo.AlbumId != albumId)
+        {
+            logger.LogWarning(
+                "Album cover update rejected: photo not found {BaulId} {AlbumId} {PhotoId}",
+                album.BaulId, albumId, photoId);
+            return Result.Failure<AlbumDto>("Photo not found");
+        }
 
         var updated = album with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
         await albumRepository.UpdateAsync(updated);
 
+        logger.LogInformation("Album cover updated {BaulId} {AlbumId} {PhotoId}", album.BaulId, albumId, photoId);
         return await ToDtoAsync(updated);
     }
 
