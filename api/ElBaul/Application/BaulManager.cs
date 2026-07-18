@@ -327,11 +327,12 @@ public class BaulManager(
         }
 
         var userId = currentUserProvider.GetUserId();
+        var nickname = (await baulRepository.GetSharedUserByUserIdAsync(baulId, userId))?.Nickname ?? "Usuario";
         var userProfile = await userRepository.GetByIdAsync(userId);
         var now = clock.UtcNow();
         var request = new RemovalRequest(
             idGenerator.NewId(), baulId, photoId, photo.StorageKey, photo.Caption,
-            userProfile?.Name ?? "Usuario", userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
+            nickname, userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
         await baulRepository.CreateRemovalRequestAsync(request);
         logger.LogInformation(

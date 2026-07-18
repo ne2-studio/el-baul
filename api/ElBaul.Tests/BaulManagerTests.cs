@@ -143,6 +143,25 @@ public class BaulManagerTests
     }
 
     [Fact]
+    public async Task CreateRemovalRequestAsync_ShouldUsePersonaNickname_ForTheRequesterName()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, "key", _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, OtherUserId, "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.CreateRemovalRequestAsync(baulId, photoId, "no me gusta");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Tita Solicitudes", result.Value.RequesterName);
+    }
+
+    [Fact]
     public async Task ApproveRemovalRequestAsync_ShouldDeletePhoto_AndDecrementAlbumPhotoCount()
     {
         var baulId = Guid.NewGuid();

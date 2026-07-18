@@ -152,7 +152,12 @@ the album's `photoCount` if the photo belonged to one. Response `200 OK`:
 
 ## Recuerdos (memories, attached to a photo or directly to an album)
 
-Any member with access can read and create recuerdos.
+Any member with access can read and create recuerdos. `userName` (here and in
+`removal-requests`' `requesterName`, and `albums`' `latestRecuerdoAuthor`) is always the
+author's Persona nickname (`SharedUsers.Nickname` for that baúl), never the underlying
+account's OIDC-synced name — falls back to `"Usuario"` if the author has no
+`SharedUsers` row in this baúl (shouldn't normally happen, since that's what access is
+gated on).
 
 - `GET /api/photos/{photoId}/recuerdos` — response `200 OK`: array of `{ "id", "photoId", "userId", "text", "userName", "createdAt", "isOwn" }`.
 - `POST /api/photos/{photoId}/recuerdos` — body `{ "text" }`. Response `200 OK`: the recuerdo.

@@ -12,12 +12,16 @@ public class PhotoManager(
     IBaulRepository baulRepository,
     IPhotoStorage photoStorage,
     IRecuerdoRepository recuerdoRepository,
-    IUserRepository userRepository,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     IPhotoDateExtractor photoDateExtractor) : IPhotoManager
 {
+    // Recuerdo author names are always the Persona's apodo for this baúl, never the
+    // underlying account's OIDC-synced name.
+    private async Task<string> GetNicknameAsync(Guid baulId, string userId) =>
+        (await baulRepository.GetSharedUserByUserIdAsync(baulId, userId))?.Nickname ?? "Usuario";
+
     public async Task<Result<IEnumerable<PhotoDto>>> GetByAlbumIdAsync(Guid albumId)
     {
         var userId = currentUserProvider.GetUserId();
@@ -476,8 +480,8 @@ public class PhotoManager(
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var user = await userRepository.GetByIdAsync(recuerdo.UserId);
-            dtos.Add(ToDto(recuerdo, user?.Name ?? "Usuario desconocido", recuerdo.UserId == userId));
+            var nickname = await GetNicknameAsync(photo.BaulId, recuerdo.UserId);
+            dtos.Add(ToDto(recuerdo, nickname, recuerdo.UserId == userId));
         }
 
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
@@ -508,14 +512,14 @@ public class PhotoManager(
             return Result.Failure<RecuerdoDto>("Access denied");
         }
 
-        var user = await userRepository.GetByIdAsync(userId);
+        var nickname = await GetNicknameAsync(photo.BaulId, userId);
         var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.AlbumId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation(
             "Recuerdo created {BaulId} {PhotoId} {RecuerdoId}", photo.BaulId, photoId, recuerdo.Id);
 
-        return ToDto(recuerdo, user?.Name ?? "Usuario", isOwn: true);
+        return ToDto(recuerdo, nickname, isOwn: true);
     }
 
     private (int? Year, int? Month, int? Day) ResolvePhotoDate(DateTime? explicitDate, Stream content)

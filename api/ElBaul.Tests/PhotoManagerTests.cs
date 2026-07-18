@@ -14,14 +14,13 @@ public class PhotoManagerTests
     private readonly InMemoryAlbumRepository _albumRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
-    private readonly InMemoryUserRepository _userRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
     private readonly FakePhotoDateExtractor _photoDateExtractor = new();
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PhotoManager>.Instance, _photoRepository, _albumRepository, _baulRepository, _photoStorage,
-            _recuerdoRepository, _userRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
+            _recuerdoRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), _photoDateExtractor);
 
     private async Task<(Guid baulId, Guid albumId)> SeedBaulWithAlbumAsync()
@@ -123,7 +122,7 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _photoRepository, _albumRepository, _baulRepository, failingStorage,
-            _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
+            _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), _photoDateExtractor);
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -143,7 +142,7 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _albumRepository, _baulRepository, _photoStorage,
-            _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
+            _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), _photoDateExtractor);
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -166,7 +165,7 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _albumRepository, _baulRepository, _photoStorage,
-            _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
+            _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), _photoDateExtractor);
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -220,7 +219,6 @@ public class PhotoManagerTests
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
-        _userRepository.Seed(new User(CustodioId, "custodio@test.com", "Custodio", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
@@ -231,12 +229,28 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task CreateRecuerdoAsync_ShouldUsePersonaNickname_ForTheAuthorName()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Tito Recuerdos", result.Value.UserName);
+    }
+
+    [Fact]
     public async Task CreateRecuerdoAsync_ShouldSetAlbumId_FromThePhotosAlbum()
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
-        _userRepository.Seed(new User(CustodioId, "custodio@test.com", "Custodio", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
@@ -253,7 +267,6 @@ public class PhotoManagerTests
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, null, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
-        _userRepository.Seed(new User(CustodioId, "custodio@test.com", "Custodio", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.CreateRecuerdoAsync(photoId, "Foto suelta");
