@@ -114,41 +114,43 @@ export function AlbumsView({
               <span className="text-sm">Volver</span>
             </button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
-                  aria-label="Opciones del baúl"
-                >
-                  <MoreVertical className="w-5 h-5" />
-                  {(pendingRemovalRequestsCount ?? 0) > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
+            {(onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
+                    aria-label="Opciones del baúl"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                    {(pendingRemovalRequestsCount ?? 0) > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {onUpdateBaulInfo && (
+                    <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar información del baúl
+                    </DropdownMenuItem>
                   )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {onUpdateBaulInfo && (
-                  <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Editar información del baúl
-                  </DropdownMenuItem>
-                )}
 
-                {onUpdateBaulInfo && onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
-                  <DropdownMenuSeparator />
-                )}
+                  {onUpdateBaulInfo && onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
+                    <DropdownMenuSeparator />
+                  )}
 
-                {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
-                  <DropdownMenuItem onClick={onRemovalRequests}>
-                    <Bell className="w-4 h-4 mr-2" />
-                    <span>Solicitudes de eliminación</span>
-                    <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                      {pendingRemovalRequestsCount}
-                    </span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
+                    <DropdownMenuItem onClick={onRemovalRequests}>
+                      <Bell className="w-4 h-4 mr-2" />
+                      <span>Solicitudes de eliminación</span>
+                      <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                        {pendingRemovalRequestsCount}
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>
