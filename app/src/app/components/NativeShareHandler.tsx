@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { Capacitor } from '@capacitor/core';
+import * as Sentry from '@sentry/react';
 import { ShareReceiver, type IncomingShare } from '@/native/shareReceiver';
 import { useIncomingShareStore } from '@/store/useIncomingShareStore';
+import { useUIStore } from '@/store/uiStore';
 
 // Mounted once inside <BrowserRouter> (needs useNavigate). While the user isn't
 // authenticated it deliberately does nothing — the native plugin keeps the pending
@@ -12,6 +14,7 @@ export function NativeShareHandler() {
   const navigate = useNavigate();
   const auth = useAuth();
   const loadShare = useIncomingShareStore((state) => state.loadShare);
+  const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -20,7 +23,13 @@ export function NativeShareHandler() {
 
     const openShare = async (share: IncomingShare) => {
       if (disposed || share.files.length === 0) return;
-      await loadShare(share);
+      try {
+        await loadShare(share);
+      } catch (error) {
+        Sentry.captureException(error);
+        if (!disposed) showToastMessage('No se pudo cargar la foto compartida');
+        return;
+      }
       if (!disposed) navigate('/compartir');
     };
 
