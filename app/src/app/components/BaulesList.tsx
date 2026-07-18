@@ -5,6 +5,8 @@ import { Crown, User, Users, Clock, UserCircle } from 'lucide-react';
 import { BaulIcon } from './BaulIcon';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { BaulRole } from '@/types';
+import { getRoleDisplayName } from '@/utils/roleUtils';
 
 export interface Baul {
   id: string;
@@ -14,6 +16,7 @@ export interface Baul {
   coverPhotoUrl?: string;
   lastUpdated: string;
   isCustodio?: boolean;
+  role?: BaulRole;
   sharedCount?: number;
 }
 
@@ -148,7 +151,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
           ) : (
             <>
               <User className="w-3 h-3" />
-              Miembro
+              {getRoleDisplayName(baul.role ?? 'miembro')}
             </>
           )}
         </span>
