@@ -122,7 +122,18 @@ public class PhotoManager(
         try
         {
             await photoRepository.CreateAsync(photo);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Photo upload failed while persisting metadata {BaulId} {AlbumId} {PhotoId} {StorageKey}",
+                album.BaulId, albumId, photo.Id, storageKey);
+            await TryDeleteOrphanedStorageObjectAsync(storageKey);
+            throw;
+        }
 
+        try
+        {
             var updatedAlbum = album with
             {
                 PhotoCount = album.PhotoCount + 1,
@@ -139,7 +150,7 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Photo upload failed while persisting metadata {BaulId} {AlbumId} {PhotoId} {StorageKey}",
+                "Photo upload failed while updating album/baul cover {BaulId} {AlbumId} {PhotoId} {StorageKey}",
                 album.BaulId, albumId, photo.Id, storageKey);
             throw;
         }
@@ -196,7 +207,18 @@ public class PhotoManager(
         try
         {
             await photoRepository.CreateAsync(photo);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Loose photo upload failed while persisting metadata {BaulId} {PhotoId} {StorageKey}",
+                baulId, photo.Id, storageKey);
+            await TryDeleteOrphanedStorageObjectAsync(storageKey);
+            throw;
+        }
 
+        try
+        {
             await baulRepository.UpdateAsync(baul with
             {
                 CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
@@ -206,7 +228,7 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Loose photo upload failed while persisting metadata {BaulId} {PhotoId} {StorageKey}",
+                "Loose photo upload failed while updating baul cover {BaulId} {PhotoId} {StorageKey}",
                 baulId, photo.Id, storageKey);
             throw;
         }
@@ -353,6 +375,20 @@ public class PhotoManager(
             "Recuerdo created {BaulId} {PhotoId} {RecuerdoId}", photo.BaulId, photoId, recuerdo.Id);
 
         return ToDto(recuerdo, user?.Name ?? "Usuario", isOwn: true);
+    }
+
+    private async Task TryDeleteOrphanedStorageObjectAsync(string storageKey)
+    {
+        try
+        {
+            await photoStorage.DeleteAsync(storageKey);
+        }
+        catch (Exception cleanupEx)
+        {
+            logger.LogError(cleanupEx,
+                "Failed to clean up orphaned storage object {StorageKey} after failed photo insert",
+                storageKey);
+        }
     }
 
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>

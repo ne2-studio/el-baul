@@ -134,7 +134,7 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task UploadAsync_ShouldPropagateException_WhenPersistingMetadataFails()
+    public async Task UploadAsync_ShouldDeleteOrphanedStorageObject_WhenPersistingMetadataFails()
     {
         var (_, albumId) = await SeedBaulWithAlbumAsync();
         var failingRepository = Substitute.For<IPhotoRepository>();
@@ -150,8 +150,31 @@ public class PhotoManagerTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null));
 
-        // The file was already saved to storage before the DB write failed.
+        // The file was saved to storage before the DB write failed, so the manager
+        // must compensate by deleting it to avoid leaving an orphaned blob.
         Assert.Single(_photoStorage.SavedKeys);
+        Assert.Equal(_photoStorage.SavedKeys, _photoStorage.DeletedKeys);
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_ShouldDeleteOrphanedStorageObject_WhenPersistingMetadataFails()
+    {
+        var (baulId, _) = await SeedBaulWithAlbumAsync();
+        var failingRepository = Substitute.For<IPhotoRepository>();
+        failingRepository.CreateAsync(Arg.Any<Photo>())
+            .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
+
+        var manager = new PhotoManager(
+            NullLogger<PhotoManager>.Instance, failingRepository, _albumRepository, _baulRepository, _photoStorage,
+            _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
+            new StaticCurrentUserProvider(CustodioId));
+
+        using var content = new MemoryStream([1, 2, 3]);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null));
+
+        Assert.Single(_photoStorage.SavedKeys);
+        Assert.Equal(_photoStorage.SavedKeys, _photoStorage.DeletedKeys);
     }
 
     [Fact]
