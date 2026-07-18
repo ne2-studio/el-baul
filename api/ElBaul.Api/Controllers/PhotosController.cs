@@ -24,9 +24,13 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         if (request.File is null || request.File.Length == 0)
             return BadRequest(new { error = "No file provided" });
 
+        if (request.ClientUploadId is null)
+            return BadRequest(new { error = "ClientUploadId is required" });
+
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(
-            albumId, stream, request.File.FileName, request.File.ContentType, request.Caption, request.Date);
+            albumId, stream, request.File.FileName, request.File.ContentType, request.Caption, request.Date,
+            request.ClientUploadId.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
@@ -55,9 +59,13 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         if (request.File is null || request.File.Length == 0)
             return BadRequest(new { error = "No file provided" });
 
+        if (request.ClientUploadId is null)
+            return BadRequest(new { error = "ClientUploadId is required" });
+
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadToBaulAsync(
-            baulId, stream, request.File.FileName, request.File.ContentType, request.Caption, request.Date);
+            baulId, stream, request.File.FileName, request.File.ContentType, request.Caption, request.Date,
+            request.ClientUploadId.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }

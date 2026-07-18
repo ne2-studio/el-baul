@@ -52,8 +52,8 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const selectedPhotos: SelectedPhoto[] = Array.from(files).map((file, index) => ({
-      id: `temp-${Date.now()}-${index}`,
+    const selectedPhotos: SelectedPhoto[] = Array.from(files).map((file) => ({
+      id: crypto.randomUUID(),
       file,
       preview: URL.createObjectURL(file)
     }));

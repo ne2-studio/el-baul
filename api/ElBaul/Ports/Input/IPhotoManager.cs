@@ -13,7 +13,8 @@ public interface IPhotoManager
         string fileName,
         string contentType,
         string? caption,
-        DateTime? date);
+        DateTime? date,
+        Guid clientUploadId);
 
     Task<Result<PhotoDto>> UploadToBaulAsync(
         Guid baulId,
@@ -21,7 +22,8 @@ public interface IPhotoManager
         string fileName,
         string contentType,
         string? caption,
-        DateTime? date);
+        DateTime? date,
+        Guid clientUploadId);
 
     Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetAlbumId);
 

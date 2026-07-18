@@ -20,8 +20,9 @@ export const UploadConfirmationRoute: React.FC = () => {
       album={album}
       selectedPhotos={selectedPhotos}
       onBack={() => navigate(`/baules/${baul.id}/albumes/${album.id}`)}
-      onUpload={() => {
-        navigate(`/baules/${baul.id}/albumes/${album.id}/subiendo`, { state: { selectedPhotos } });
+      onUpload={(photos, caption) => {
+        const finalPhotos = photos.map((p) => ({ ...p, caption: p.caption ?? caption }));
+        navigate(`/baules/${baul.id}/albumes/${album.id}/subiendo`, { state: { selectedPhotos: finalPhotos } });
       }}
     />
   );

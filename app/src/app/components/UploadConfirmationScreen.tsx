@@ -20,25 +20,25 @@ interface UploadConfirmationScreenProps {
   album: Album;
   selectedPhotos: SelectedPhoto[];
   onBack: () => void;
-  onUpload: (caption?: string) => void;
+  onUpload: (photos: SelectedPhoto[], caption?: string) => void;
 }
 
-export function UploadConfirmationScreen({ 
+export function UploadConfirmationScreen({
   baul,
-  album, 
-  selectedPhotos, 
-  onBack, 
-  onUpload 
+  album,
+  selectedPhotos,
+  onBack,
+  onUpload
 }: UploadConfirmationScreenProps) {
   const [caption, setCaption] = useState('');
   const [photos, setPhotos] = useState(selectedPhotos);
-  
+
   const handleRemovePhoto = (id: string) => {
     setPhotos(photos.filter(p => p.id !== id));
   };
-  
+
   const handleConfirm = () => {
-    onUpload(caption || undefined);
+    onUpload(photos, caption || undefined);
   };
   
   return (

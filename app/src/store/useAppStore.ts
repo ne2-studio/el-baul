@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import * as Sentry from '@sentry/react';
 import { Baul, Album, Photo, SharedUser, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile } from '@/types';
 import { api } from '@/api';
 
@@ -8,6 +9,19 @@ const defaultSubscription: Subscription = {
   baulesLimit: 2,
   storagePerBaulGB: 10,
 };
+
+export interface UploadItem {
+  clientUploadId: string;
+  file: File;
+  caption?: string;
+  date?: string;
+}
+
+export interface UploadItemResult {
+  clientUploadId: string;
+  photo?: Photo;
+  error?: string;
+}
 
 interface AppState {
   // Auth-derived state. The raw access token itself lives only in api.ts.
@@ -39,8 +53,17 @@ interface AppState {
 
   createBaul: (name: string, description: string) => Promise<Baul>;
   createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
-  uploadPhotos: (baulId: string, albumId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
-  uploadLoosePhotos: (baulId: string, selectedPhotos: { file: File; caption?: string; date?: string }[]) => Promise<void>;
+  uploadPhotos: (
+    baulId: string,
+    albumId: string,
+    selectedPhotos: UploadItem[],
+    onItemSettled?: (result: UploadItemResult) => void
+  ) => Promise<UploadItemResult[]>;
+  uploadLoosePhotos: (
+    baulId: string,
+    selectedPhotos: UploadItem[],
+    onItemSettled?: (result: UploadItemResult) => void
+  ) => Promise<UploadItemResult[]>;
   movePhotos: (baulId: string, sourceAlbumId: string | null, photoIds: string[], targetAlbumId: string) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
   setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
@@ -168,13 +191,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     return album;
   },
 
-  uploadPhotos: async (baulId, albumId, selectedPhotos) => {
+  uploadPhotos: async (baulId, albumId, selectedPhotos, onItemSettled) => {
     const uploaded: Photo[] = [];
+    const results: UploadItemResult[] = [];
     for (const selected of selectedPhotos) {
-      uploaded.push(await api.photos.upload(albumId, selected.file, selected.caption, selected.date));
+      let result: UploadItemResult;
+      try {
+        const photo = await api.photos.upload(albumId, selected.file, selected.clientUploadId, selected.caption, selected.date);
+        uploaded.push(photo);
+        result = { clientUploadId: selected.clientUploadId, photo };
+      } catch (error) {
+        Sentry.captureException(error);
+        result = { clientUploadId: selected.clientUploadId, error: error instanceof Error ? error.message : 'Upload failed' };
+      }
+      results.push(result);
+      onItemSettled?.(result);
     }
 
-    set((state) => ({
+    if (uploaded.length > 0) set((state) => ({
       photos: { ...state.photos, [albumId]: [...(state.photos[albumId] || []), ...uploaded] },
       albums: {
         ...state.albums,
@@ -194,15 +228,28 @@ export const useAppStore = create<AppState>((set, get) => ({
           : b
       ),
     }));
+
+    return results;
   },
 
-  uploadLoosePhotos: async (baulId, selectedPhotos) => {
+  uploadLoosePhotos: async (baulId, selectedPhotos, onItemSettled) => {
     const uploaded: Photo[] = [];
+    const results: UploadItemResult[] = [];
     for (const selected of selectedPhotos) {
-      uploaded.push(await api.baules.uploadPhoto(baulId, selected.file, selected.caption, selected.date));
+      let result: UploadItemResult;
+      try {
+        const photo = await api.baules.uploadPhoto(baulId, selected.file, selected.clientUploadId, selected.caption, selected.date);
+        uploaded.push(photo);
+        result = { clientUploadId: selected.clientUploadId, photo };
+      } catch (error) {
+        Sentry.captureException(error);
+        result = { clientUploadId: selected.clientUploadId, error: error instanceof Error ? error.message : 'Upload failed' };
+      }
+      results.push(result);
+      onItemSettled?.(result);
     }
 
-    set((state) => ({
+    if (uploaded.length > 0) set((state) => ({
       loosePhotos: { ...state.loosePhotos, [baulId]: [...(state.loosePhotos[baulId] || []), ...uploaded] },
       baules: state.baules.map((b) =>
         b.id === baulId
@@ -210,6 +257,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           : b
       ),
     }));
+
+    return results;
   },
 
   movePhotos: async (baulId, sourceAlbumId, photoIds, targetAlbumId) => {

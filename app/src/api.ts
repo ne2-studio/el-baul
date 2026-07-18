@@ -78,9 +78,10 @@ export const api = {
 
     getLoosePhotos: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
-    uploadPhoto: async (baulId: string, file: File, caption?: string, date?: string) => {
+    uploadPhoto: async (baulId: string, file: File, clientUploadId: string, caption?: string, date?: string) => {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('clientUploadId', clientUploadId);
       if (caption) formData.append('caption', caption);
       if (date) formData.append('date', date);
 
@@ -113,9 +114,10 @@ export const api = {
 
   photos: {
     getAll: async (albumId: string) => (await get<any[]>(`/api/albums/${albumId}/photos`)).map((p) => new Photo(p)),
-    upload: async (albumId: string, file: File, caption?: string, date?: string) => {
+    upload: async (albumId: string, file: File, clientUploadId: string, caption?: string, date?: string) => {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('clientUploadId', clientUploadId);
       if (caption) formData.append('caption', caption);
       if (date) formData.append('date', date);
 

@@ -18,6 +18,7 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
 
         builder.HasIndex(p => p.AlbumId);
         builder.HasIndex(p => p.BaulId);
+        builder.HasIndex(p => p.ClientUploadId).IsUnique();
 
         builder.HasOne<Album>()
             .WithMany()

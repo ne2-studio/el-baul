@@ -1,51 +1,50 @@
 import React from 'react';
-import * as Sentry from '@sentry/react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadingScreen } from '@/app/components/UploadingScreen';
-import { Album } from '@/app/components/AlbumsView';
-import { useAppStore } from '@/store/useAppStore';
+import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
+import { useAppStore, UploadItemResult } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
+
+interface LocationState {
+  selectedPhotos: SelectedPhoto[];
+  succeededCount?: number;
+}
 
 export const LooseUploadingRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
   const location = useLocation();
   const auth = useAuth();
-  const { baules, loosePhotos, uploadLoosePhotos } = useAppStore();
+  const { baules, uploadLoosePhotos } = useAppStore();
 
   const baul = baules.find(b => b.id === baulId);
-  const { selectedPhotos } = location.state || { selectedPhotos: [] };
+  const { selectedPhotos, succeededCount: succeededSoFar = 0 } = (location.state as LocationState) || { selectedPhotos: [] };
 
   if (!baul) return <div className="p-8 text-center">Cargando...</div>;
 
-  const photos = loosePhotos[baul.id] || [];
-  const looseAlbum: Album = {
-    id: 'sueltas',
-    name: 'Fotos sueltas',
-    description: 'Fotos que aún no pertenecen a ningún álbum',
-    photoCount: photos.length,
-    coverPhotoUrl: photos[0]?.thumbnailUrl,
+  const handleUpload = (photos: SelectedPhoto[], onItemSettled: (result: UploadItemResult) => void) => {
+    if (!auth.isAuthenticated) return Promise.resolve([]);
+    return uploadLoosePhotos(
+      baul.id,
+      photos.map((p) => ({ clientUploadId: p.id, file: p.file, caption: p.caption, date: p.date })),
+      onItemSettled
+    );
   };
 
-  const handleUpload = async () => {
-    if (!auth.isAuthenticated) return;
-    try {
-      await uploadLoosePhotos(baul.id, selectedPhotos);
-      navigate(`/baules/${baul.id}/fotos-sueltas/exito?count=${selectedPhotos.length}`);
-    } catch (error) {
-      console.error('Error uploading photos:', error);
-      Sentry.captureException(error);
-      navigate(`/baules/${baul.id}/fotos-sueltas/error`);
+  const handleSettled = (results: UploadItemResult[]) => {
+    const failed = results.filter((r) => r.error);
+    const succeededCount = succeededSoFar + (results.length - failed.length);
+
+    if (failed.length === 0) {
+      navigate(`/baules/${baul.id}/fotos-sueltas/exito?count=${succeededCount}`);
+      return;
     }
+
+    const failedPhotos = selectedPhotos.filter((p) => failed.some((f) => f.clientUploadId === p.id));
+    navigate(`/baules/${baul.id}/fotos-sueltas/error`, { state: { failedPhotos, succeededCount } });
   };
 
   return (
-    <UploadingScreen
-      baul={baul}
-      album={looseAlbum}
-      photoCount={selectedPhotos.length}
-      onBack={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
-      onSuccess={handleUpload}
-    />
+    <UploadingScreen photos={selectedPhotos} onUpload={handleUpload} onSettled={handleSettled} />
   );
 };

@@ -76,7 +76,8 @@ public class PhotoManager(
         string fileName,
         string contentType,
         string? caption,
-        DateTime? date)
+        DateTime? date,
+        Guid clientUploadId)
     {
         var userId = currentUserProvider.GetUserId();
         var album = await albumRepository.GetByIdAsync(albumId);
@@ -102,6 +103,17 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Access denied");
         }
 
+        var existingPhoto = await photoRepository.GetByClientUploadIdAsync(clientUploadId);
+        if (existingPhoto is not null)
+        {
+            logger.LogInformation(
+                "Duplicate photo upload ignored {BaulId} {AlbumId} {ClientUploadId} {PhotoId}",
+                album.BaulId, albumId, clientUploadId, existingPhoto.Id);
+            var existingThumbnailUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoGridThumbnail);
+            var existingFullUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoFull);
+            return Result.Success(ToDto(existingPhoto, existingThumbnailUrl, existingFullUrl));
+        }
+
         var now = clock.UtcNow();
         var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
 
@@ -117,7 +129,7 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, caption, date ?? now, userId, now);
+        var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, caption, date ?? now, userId, now, clientUploadId);
 
         try
         {
@@ -168,7 +180,8 @@ public class PhotoManager(
         string fileName,
         string contentType,
         string? caption,
-        DateTime? date)
+        DateTime? date,
+        Guid clientUploadId)
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
@@ -187,6 +200,17 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Access denied");
         }
 
+        var existingPhoto = await photoRepository.GetByClientUploadIdAsync(clientUploadId);
+        if (existingPhoto is not null)
+        {
+            logger.LogInformation(
+                "Duplicate loose photo upload ignored {BaulId} {ClientUploadId} {PhotoId}",
+                baulId, clientUploadId, existingPhoto.Id);
+            var existingThumbnailUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoGridThumbnail);
+            var existingFullUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoFull);
+            return Result.Success(ToDto(existingPhoto, existingThumbnailUrl, existingFullUrl));
+        }
+
         var now = clock.UtcNow();
         var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
 
@@ -202,7 +226,7 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, caption, date ?? now, userId, now);
+        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, caption, date ?? now, userId, now, clientUploadId);
 
         try
         {

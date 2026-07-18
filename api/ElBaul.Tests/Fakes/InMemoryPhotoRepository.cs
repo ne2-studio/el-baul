@@ -8,6 +8,9 @@ public class InMemoryPhotoRepository : IPhotoRepository
 
     public Task<Photo?> GetByIdAsync(Guid id) => Task.FromResult(_photos.GetValueOrDefault(id));
 
+    public Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId) =>
+        Task.FromResult(_photos.Values.FirstOrDefault(p => p.ClientUploadId == clientUploadId));
+
     public Task<IEnumerable<Photo>> GetByAlbumIdAsync(Guid albumId) =>
         Task.FromResult(_photos.Values.Where(p => p.AlbumId == albumId));
 

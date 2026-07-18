@@ -9,5 +9,6 @@ public record Photo
     string? Caption,
     DateTime Date,
     string UploadedBy,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    Guid? ClientUploadId = null
 );

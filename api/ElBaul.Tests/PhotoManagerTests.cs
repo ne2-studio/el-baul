@@ -47,7 +47,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", "Caption", null);
+        var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", "Caption", null, Guid.NewGuid());
 
         Assert.True(result.IsSuccess);
         Assert.Single(_photoStorage.SavedKeys);
@@ -63,7 +63,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null);
+        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
         var album = await _albumRepository.GetByIdAsync(albumId);
         Assert.False(string.IsNullOrEmpty(album!.CoverPhotoKey));
@@ -76,7 +76,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null);
+        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
         var baul = await _baulRepository.GetByIdAsync(baulId);
         Assert.False(string.IsNullOrEmpty(baul!.CoverPhotoKey));
@@ -91,7 +91,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null);
+        await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
         var baul = await _baulRepository.GetByIdAsync(baulId);
         Assert.Equal("existing-key", baul!.CoverPhotoKey);
@@ -107,7 +107,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(miembroId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null);
+        var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -128,7 +128,7 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null));
+            () => manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid()));
 
         Assert.Empty(await _photoRepository.GetByAlbumIdAsync(albumId));
     }
@@ -148,7 +148,7 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null));
+            () => manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid()));
 
         // The file was saved to storage before the DB write failed, so the manager
         // must compensate by deleting it to avoid leaving an orphaned blob.
@@ -171,10 +171,47 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null));
+            () => manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid()));
 
         Assert.Single(_photoStorage.SavedKeys);
         Assert.Equal(_photoStorage.SavedKeys, _photoStorage.DeletedKeys);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldReturnExistingPhoto_WhenClientUploadIdAlreadyExists()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var clientUploadId = Guid.NewGuid();
+        var existingPhoto = new Photo(Guid.NewGuid(), albumId, baulId, "already-uploaded-key", null,
+            _clock.UtcNow(), CustodioId, _clock.UtcNow(), clientUploadId);
+        await _photoRepository.CreateAsync(existingPhoto);
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, clientUploadId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(existingPhoto.Id.ToString(), result.Value.Id);
+        // No new upload should have happened: retrying with a known clientUploadId is a no-op.
+        Assert.Empty(_photoStorage.SavedKeys);
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_ShouldReturnExistingPhoto_WhenClientUploadIdAlreadyExists()
+    {
+        var (baulId, _) = await SeedBaulWithAlbumAsync();
+        var clientUploadId = Guid.NewGuid();
+        var existingPhoto = new Photo(Guid.NewGuid(), null, baulId, "already-uploaded-key", null,
+            _clock.UtcNow(), CustodioId, _clock.UtcNow(), clientUploadId);
+        await _photoRepository.CreateAsync(existingPhoto);
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null, clientUploadId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(existingPhoto.Id.ToString(), result.Value.Id);
+        Assert.Empty(_photoStorage.SavedKeys);
     }
 
     [Fact]
@@ -311,7 +348,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", "Caption", null);
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", "Caption", null, Guid.NewGuid());
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.AlbumId);
@@ -325,7 +362,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null);
+        await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
         var baul = await _baulRepository.GetByIdAsync(baulId);
         Assert.False(string.IsNullOrEmpty(baul!.CoverPhotoKey));
@@ -341,7 +378,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(miembroId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null);
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
