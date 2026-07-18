@@ -159,78 +159,106 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
                 : `${album.photoCount} ${album.photoCount === 1 ? 'foto' : 'fotos'}`;
 
               return (
-                <Card key={album.id} onClick={() => onSelectAlbum(album)} className="!p-0 overflow-hidden">
-                  {/* Album cover */}
-                  <div className="aspect-[16/10] bg-secondary flex items-center justify-center">
-                    {album.featuredCoverPhotoUrl ? (
-                      <img
-                        src={album.featuredCoverPhotoUrl}
-                        alt={album.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <ImageIcon className="w-16 h-16 text-muted-foreground opacity-40" strokeWidth={1.5} />
-                    )}
-                  </div>
-
-                  {/* Album info */}
-                  <div className="p-4">
-                    <h3 className="font-medium text-lg text-foreground">{album.name}</h3>
-                    {album.minDate && album.maxDate && (
-                      <p className="text-xs text-primary/80 font-medium mt-1">
-                        {formatDateRange(album.minDate, album.maxDate)}
-                      </p>
-                    )}
-                    {album.latestRecuerdoText && album.latestRecuerdoAuthor && (
-                      <p className="text-sm text-foreground/70 italic mt-2 line-clamp-1">
-                        "{album.latestRecuerdoText.slice(0, 60)}…" — {album.latestRecuerdoAuthor}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">{metadata}</p>
-                    {album.lastUpdated && (
-                      <p className="text-xs text-muted-foreground/60 mt-1.5">
-                        Actualizado {album.lastUpdated}
-                      </p>
-                    )}
-                  </div>
-                </Card>
-              );
-            })()}
-
-            {/* Resto de álbumes en grid de 2 columnas */}
-            {albums.length > 1 && (
-              <div className="grid grid-cols-2 gap-4">
-                {albums.slice(1).map((album) => (
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
+                    style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}>
+                    Álbum destacado
+                  </p>
                   <Card key={album.id} onClick={() => onSelectAlbum(album)} className="!p-0 overflow-hidden">
                     {/* Album cover */}
-                    <div className="aspect-square bg-secondary flex items-center justify-center">
-                      {album.coverPhotoUrl ? (
+                    <div className="aspect-[16/10] bg-secondary flex items-center justify-center">
+                      {album.featuredCoverPhotoUrl ? (
                         <img
-                          src={album.coverPhotoUrl}
+                          src={album.featuredCoverPhotoUrl}
                           alt={album.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <ImageIcon className="w-12 h-12 text-muted-foreground opacity-40" strokeWidth={1.5} />
+                        <ImageIcon className="w-16 h-16 text-muted-foreground opacity-40" strokeWidth={1.5} />
                       )}
                     </div>
 
                     {/* Album info */}
                     <div className="p-4">
-                      <h3 className="font-medium mb-1 text-foreground">{album.name}</h3>
+                      <h3 className="font-medium text-lg text-foreground">{album.name}</h3>
                       {album.minDate && album.maxDate && (
-                        <p className="text-[11px] text-primary/80 font-medium mb-0.5">
+                        <p className="text-xs text-primary/80 font-medium mt-1">
                           {formatDateRange(album.minDate, album.maxDate)}
                         </p>
                       )}
-                      <p className="text-sm text-muted-foreground">
-                        {album.photoCount} {album.photoCount === 1 ? 'foto' : 'fotos'}
-                      </p>
+                      {album.latestRecuerdoText && album.latestRecuerdoAuthor && (
+                        <p className="text-sm text-foreground/70 italic mt-2 line-clamp-1">
+                          "{album.latestRecuerdoText.slice(0, 60)}…" — {album.latestRecuerdoAuthor}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-2">{metadata}</p>
+                      {album.lastUpdated && (
+                        <p className="text-xs text-muted-foreground/60 mt-1.5">
+                          Actualizado {album.lastUpdated}
+                        </p>
+                      )}
                     </div>
                   </Card>
-                ))}
-              </div>
-            )}
+                </div>
+              );
+            })()}
+
+            {/* Resto de álbumes, agrupados por año de la fecha mínima (ya vienen
+                ordenados del backend por fecha mínima descendente, así que agrupar
+                consecutivamente preserva ese orden dentro y entre swimlanes) */}
+            {albums.length > 1 && (() => {
+              const rest = albums.slice(1);
+              const groups = new Map<string, Album[]>();
+              for (const album of rest) {
+                const year = album.minDate ? String(album.minDate.year) : 'Sin año';
+                if (!groups.has(year)) groups.set(year, []);
+                groups.get(year)!.push(album);
+              }
+
+              return (
+                <div className="space-y-6">
+                  {Array.from(groups.entries()).map(([year, yearAlbums]) => (
+                    <div key={year}>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
+                        style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}>
+                        {year}
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        {yearAlbums.map((album) => (
+                          <Card key={album.id} onClick={() => onSelectAlbum(album)} className="!p-0 overflow-hidden">
+                            {/* Album cover */}
+                            <div className="aspect-square bg-secondary flex items-center justify-center">
+                              {album.coverPhotoUrl ? (
+                                <img
+                                  src={album.coverPhotoUrl}
+                                  alt={album.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ImageIcon className="w-12 h-12 text-muted-foreground opacity-40" strokeWidth={1.5} />
+                              )}
+                            </div>
+
+                            {/* Album info */}
+                            <div className="p-4">
+                              <h3 className="font-medium mb-1 text-foreground">{album.name}</h3>
+                              {album.minDate && album.maxDate && (
+                                <p className="text-[11px] text-primary/80 font-medium mb-0.5">
+                                  {formatDateRange(album.minDate, album.maxDate)}
+                                </p>
+                              )}
+                              <p className="text-sm text-muted-foreground">
+                                {album.photoCount} {album.photoCount === 1 ? 'foto' : 'fotos'}
+                              </p>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* Fotos sueltas — álbum virtual */}
             {loosePhotos.length > 0 && (
