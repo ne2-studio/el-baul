@@ -43,6 +43,23 @@ public class MinioPhotoStorage : IPhotoStorage
         });
     }
 
+    public async Task<Stream> OpenReadAsync(string key)
+    {
+        using var response = await _client.GetObjectAsync(new GetObjectRequest
+        {
+            BucketName = _options.BucketName,
+            Key = key
+        });
+
+        // Buffer fully rather than handing back response.ResponseStream directly — that
+        // stream's lifetime is tied to the GetObjectResponse we're disposing here, and
+        // photos are capped at 20MB on upload, so buffering is cheap.
+        var buffer = new MemoryStream();
+        await response.ResponseStream.CopyToAsync(buffer);
+        buffer.Position = 0;
+        return buffer;
+    }
+
     public Task<string> GetImageUrl(string key, ImagePlacement placement) =>
         Task.FromResult(ImgproxyUrlBuilder.Build(_options.BucketName, key, placement, _imgproxyOptions));
 

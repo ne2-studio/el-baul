@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { Photo, MoveModal } from './PhotosView';
+import { Photo, MoveModal, DateModal } from './PhotosView';
 import { Album } from './AlbumsView';
-import { getRelativeTime, getFormattedDate, parsePhotoDate } from '../utils/timeUtils';
+import { formatPartialDate } from '../utils/timeUtils';
 import { Button } from './Button';
 import { RecuerdoInput } from './RecuerdoInput';
 import { RecuerdosList } from './RecuerdosList';
 import { Recuerdo } from './RecuerdoCard';
+import { PhotoDate } from '@/types';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -19,6 +20,7 @@ interface PhotoViewerProps {
   onSetBaulCover?: (photo: Photo) => void;
   onSetAlbumCover?: (photo: Photo) => void;
   onMovePhoto?: (photo: Photo, targetAlbumId: string) => void;
+  onChangeDate?: (photo: Photo, date: PhotoDate) => void;
   allAlbums?: Album[];
   currentAlbum?: Album;
   recuerdos?: Recuerdo[];
@@ -36,6 +38,7 @@ export function PhotoViewer({
   onSetBaulCover,
   onSetAlbumCover,
   onMovePhoto,
+  onChangeDate,
   allAlbums = [],
   currentAlbum,
   recuerdos = [],
@@ -49,6 +52,10 @@ export function PhotoViewer({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [dateYear, setDateYear] = useState('');
+  const [dateMonth, setDateMonth] = useState('');
+  const [dateDay, setDateDay] = useState('');
 
   const moveableAlbums = allAlbums.filter(a => a.id !== currentAlbum?.id);
 
@@ -124,6 +131,9 @@ export function PhotoViewer({
   if (onMovePhoto && moveableAlbums.length > 0) {
     menuItems.push({ key: 'move', label: 'Mover a otro álbum', onSelect: () => setShowMoveModal(true) });
   }
+  if (onChangeDate) {
+    menuItems.push({ key: 'date', label: 'Cambiar fecha', onSelect: () => setShowDateModal(true) });
+  }
   if (onRequestRemoval) {
     menuItems.push({ key: 'removal', label: 'Solicitar retirada', onSelect: () => setShowRemovalModal(true) });
   }
@@ -133,6 +143,18 @@ export function PhotoViewer({
     onMovePhoto?.(photo, moveTargetId);
     setShowMoveModal(false);
     setMoveTargetId('');
+  };
+
+  const handleDateSubmit = () => {
+    const year = parseInt(dateYear);
+    if (!year) return;
+    onChangeDate?.(photo, {
+      year,
+      month: dateMonth ? parseInt(dateMonth) : undefined,
+      day: dateDay ? parseInt(dateDay) : undefined,
+    });
+    setShowDateModal(false);
+    setDateYear(''); setDateMonth(''); setDateDay('');
   };
 
   const handleAddRecuerdo = (text: string) => {
@@ -277,6 +299,17 @@ export function PhotoViewer({
           
           {/* Info & Recuerdos section */}
           <div className="px-6 py-8 space-y-8">
+            {/* Date */}
+            {(photo.date || onChangeDate) && (
+              <button
+                onClick={() => onChangeDate && setShowDateModal(true)}
+                disabled={!onChangeDate}
+                className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
+              >
+                {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
+              </button>
+            )}
+
             {/* Recuerdos List & Input */}
             <div className="space-y-6">
               {!hasRecuerdos ? (
@@ -374,6 +407,17 @@ export function PhotoViewer({
           onSelect={setMoveTargetId}
           onCancel={() => setShowMoveModal(false)}
           onConfirm={handleMoveSubmit}
+        />
+      )}
+
+      {/* Cambiar fecha modal */}
+      {showDateModal && (
+        <DateModal
+          title="Cambiar fecha de la foto"
+          year={dateYear} month={dateMonth} day={dateDay}
+          onYearChange={setDateYear} onMonthChange={setDateMonth} onDayChange={setDateDay}
+          onCancel={() => setShowDateModal(false)}
+          onConfirm={handleDateSubmit}
         />
       )}
     </>

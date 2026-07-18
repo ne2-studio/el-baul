@@ -17,11 +17,12 @@ public class PhotoManagerTests
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
+    private readonly FakePhotoDateExtractor _photoDateExtractor = new();
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PhotoManager>.Instance, _photoRepository, _albumRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, _userRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(currentUserId));
+            new StaticCurrentUserProvider(currentUserId), _photoDateExtractor);
 
     private async Task<(Guid baulId, Guid albumId)> SeedBaulWithAlbumAsync()
     {
@@ -124,7 +125,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _photoRepository, _albumRepository, _baulRepository, failingStorage,
             _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor);
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -144,7 +145,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _albumRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor);
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -167,7 +168,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _albumRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, _userRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor);
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -183,7 +184,7 @@ public class PhotoManagerTests
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var clientUploadId = Guid.NewGuid();
         var existingPhoto = new Photo(Guid.NewGuid(), albumId, baulId, "already-uploaded-key", null,
-            _clock.UtcNow(), CustodioId, _clock.UtcNow(), clientUploadId);
+            null, null, null, CustodioId, _clock.UtcNow(), clientUploadId);
         await _photoRepository.CreateAsync(existingPhoto);
 
         var manager = CreateManager(CustodioId);
@@ -202,7 +203,7 @@ public class PhotoManagerTests
         var (baulId, _) = await SeedBaulWithAlbumAsync();
         var clientUploadId = Guid.NewGuid();
         var existingPhoto = new Photo(Guid.NewGuid(), null, baulId, "already-uploaded-key", null,
-            _clock.UtcNow(), CustodioId, _clock.UtcNow(), clientUploadId);
+            null, null, null, CustodioId, _clock.UtcNow(), clientUploadId);
         await _photoRepository.CreateAsync(existingPhoto);
 
         var manager = CreateManager(CustodioId);
@@ -219,7 +220,7 @@ public class PhotoManagerTests
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
         _userRepository.Seed(new User(CustodioId, "custodio@test.com", "Custodio", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
@@ -235,7 +236,7 @@ public class PhotoManagerTests
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, CustodioId, "mine", _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, "other-user", "not mine", _clock.UtcNow()));
 
@@ -263,7 +264,7 @@ public class PhotoManagerTests
     {
         var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
         var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
         var sourceAlbum = await _albumRepository.GetByIdAsync(sourceAlbumId);
         await _albumRepository.UpdateAsync(sourceAlbum! with { PhotoCount = 1 });
 
@@ -284,7 +285,7 @@ public class PhotoManagerTests
     {
         var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
         var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "cover-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "cover-key", null, null, null, null, CustodioId, _clock.UtcNow()));
         var sourceAlbum = await _albumRepository.GetByIdAsync(sourceAlbumId);
         await _albumRepository.UpdateAsync(sourceAlbum! with { PhotoCount = 1, CoverPhotoKey = "cover-key" });
 
@@ -300,7 +301,7 @@ public class PhotoManagerTests
     {
         var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
         var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         await manager.MoveAsync(photoId, targetAlbumId);
@@ -315,7 +316,7 @@ public class PhotoManagerTests
         var (baulId, sourceAlbumId, _) = await SeedBaulWithTwoAlbumsAsync();
         var (_, otherBaulAlbumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.MoveAsync(photoId, otherBaulAlbumId);
@@ -329,7 +330,7 @@ public class PhotoManagerTests
     {
         var (baulId, sourceAlbumId, targetAlbumId) = await SeedBaulWithTwoAlbumsAsync();
         var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, sourceAlbumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
         const string miembroId = "miembro-1";
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
@@ -388,8 +389,8 @@ public class PhotoManagerTests
     public async Task GetLooseByBaulIdAsync_ShouldReturnOnlyAlbumlessPhotos()
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "in-album-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), null, baulId, "loose-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "in-album-key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), null, baulId, "loose-key", null, null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetLooseByBaulIdAsync(baulId);
@@ -397,5 +398,120 @@ public class PhotoManagerTests
         Assert.True(result.IsSuccess);
         var photo = Assert.Single(result.Value);
         Assert.Null(photo.AlbumId);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldLeavePhotoUndated_WhenNoDateGivenAndNoExifFound()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.DateYear);
+        Assert.Null(result.Value.DateMonth);
+        Assert.Null(result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldUseExifDate_WhenNoExplicitDateGiven()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        _photoDateExtractor.NextResult = (2019, 8, 3);
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(albumId, content, "photo.jpg", "image/jpeg", null, null, Guid.NewGuid());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2019, result.Value.DateYear);
+        Assert.Equal(8, result.Value.DateMonth);
+        Assert.Equal(3, result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldPreferExplicitDate_OverExif()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        _photoDateExtractor.NextResult = (2019, 8, 3);
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(
+            albumId, content, "photo.jpg", "image/jpeg", null, new DateTime(2021, 1, 2), Guid.NewGuid());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2021, result.Value.DateYear);
+        Assert.Equal(1, result.Value.DateMonth);
+        Assert.Equal(2, result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task ChangeDateAsync_ShouldUpdatePhotoDate()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.ChangeDateAsync(photoId, 2020, 5, null);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2020, result.Value.DateYear);
+        Assert.Equal(5, result.Value.DateMonth);
+        Assert.Null(result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task ChangeDateAsync_ShouldDenyAccess_ForMiembroRole()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        const string miembroId = "miembro-1";
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, miembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+
+        var manager = CreateManager(miembroId);
+        var result = await manager.ChangeDateAsync(photoId, 2020, null, null);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task ChangeDateAsync_ShouldReject_WhenDayGivenWithoutMonth()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.ChangeDateAsync(photoId, 2020, null, 15);
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task ChangeDateBatchAsync_ShouldUpdateAllValidPhotos_AndSkipInaccessibleOnes()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var ownPhotoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(ownPhotoId, albumId, baulId, "key-1", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var otherBaulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(otherBaulId, "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
+        var foreignPhotoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(foreignPhotoId, null, otherBaulId, "key-2", null, null, null, null, "someone-else", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.ChangeDateBatchAsync([ownPhotoId, foreignPhotoId], 2018, null, null);
+
+        Assert.True(result.IsSuccess);
+        var updated = Assert.Single(result.Value);
+        Assert.Equal(ownPhotoId.ToString(), updated.Id);
+        Assert.Equal(2018, updated.DateYear);
     }
 }

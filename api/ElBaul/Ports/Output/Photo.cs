@@ -7,7 +7,9 @@ public record Photo
     Guid BaulId,
     string StorageKey,
     string? Caption,
-    DateTime Date,
+    int? DateYear,
+    int? DateMonth,
+    int? DateDay,
     string UploadedBy,
     DateTime CreatedAt,
     Guid? ClientUploadId = null

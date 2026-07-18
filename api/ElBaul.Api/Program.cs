@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using ElBaul.Api.Logging;
+using ElBaul.Api.Tools;
 using ElBaul.Application;
 using ElBaul.Infra;
 using ElBaul.Ports.Input;
@@ -8,6 +9,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+
+// One-off maintenance commands take over the whole process instead of starting the web
+// server — run via `docker exec <container> dotnet ElBaul.Api.dll <command>` against an
+// already-running deployment (see api/README.md), never by the web process itself.
+if (args.Length > 0 && args[0] == "backfill-exif-dates")
+{
+    return await BackfillExifDatesCommand.RunAsync(args);
+}
 
 // Bootstrap logger: catches startup failures before configuration is available.
 Log.Logger = new LoggerConfiguration()
@@ -162,3 +171,4 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .RequireRateLimiting("PublicLimiter");
 
 app.Run();
+return 0;

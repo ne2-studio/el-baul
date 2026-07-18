@@ -1,4 +1,4 @@
-import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile } from './types';
+import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile, PhotoDate } from './types';
 
 export const API_BASE = import.meta.env.VITE_API_URL as string;
 
@@ -131,6 +131,10 @@ export const api = {
     },
     move: async (photoId: string, albumId: string) =>
       new Photo(await put<any>(`/api/photos/${photoId}/album`, { albumId })),
+    changeDate: async (photoId: string, date: PhotoDate) =>
+      new Photo(await put<any>(`/api/photos/${photoId}/date`, date)),
+    changeDateBatch: async (photoIds: string[], date: PhotoDate) =>
+      (await put<any[]>('/api/photos/date-batch', { photoIds, ...date })).map((p) => new Photo(p)),
   },
 
   recuerdos: {

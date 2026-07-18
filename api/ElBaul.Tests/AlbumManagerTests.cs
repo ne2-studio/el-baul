@@ -103,7 +103,7 @@ public class AlbumManagerTests
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(albumId, photoId);
@@ -126,7 +126,7 @@ public class AlbumManagerTests
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, colaboradorId, "c@test.com", BaulRole.Colaborador, SharedUserStatus.Active, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, _clock.UtcNow(), colaboradorId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, colaboradorId, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.SetCoverAsync(albumId, photoId);
@@ -144,7 +144,7 @@ public class AlbumManagerTests
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, MiembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(MiembroId);
         var result = await manager.SetCoverAsync(albumId, photoId);
@@ -178,12 +178,58 @@ public class AlbumManagerTests
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
         await _albumRepository.CreateAsync(new Album(otherAlbumId, baulId, "Otro album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, otherAlbumId, baulId, "photo-key", null, _clock.UtcNow(), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, otherAlbumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(albumId, photoId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
+    }
+
+    [Fact]
+    public async Task GetByBaulIdAsync_ShouldComputeDateRangeAndUndatedCount()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 3, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "k1", null, 2020, 5, 10, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "k2", null, 2018, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "k3", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetByBaulIdAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        var dto = result.Value.Single();
+        Assert.Equal(2018, dto.MinDateYear);
+        Assert.Null(dto.MinDateMonth);
+        Assert.Equal(2020, dto.MaxDateYear);
+        Assert.Equal(5, dto.MaxDateMonth);
+        Assert.Equal(10, dto.MaxDateDay);
+        Assert.Equal(1, dto.UndatedPhotoCount);
+    }
+
+    [Fact]
+    public async Task GetByBaulIdAsync_ShouldSortAlbumsChronologically_MostRecentFirst_UndatedLast()
+    {
+        var baulId = Guid.NewGuid();
+        var olderAlbumId = Guid.NewGuid();
+        var recentAlbumId = Guid.NewGuid();
+        var undatedAlbumId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(olderAlbumId, baulId, "Antiguo", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(recentAlbumId, baulId, "Reciente", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(undatedAlbumId, baulId, "Sin fecha", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), olderAlbumId, baulId, "k1", null, 2015, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), recentAlbumId, baulId, "k2", null, 2022, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetByBaulIdAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        var ids = result.Value.Select(a => a.Id).ToList();
+        Assert.Equal([recentAlbumId.ToString(), olderAlbumId.ToString(), undatedAlbumId.ToString()], ids);
     }
 }

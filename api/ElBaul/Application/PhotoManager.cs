@@ -15,7 +15,8 @@ public class PhotoManager(
     IUserRepository userRepository,
     IIdGenerator idGenerator,
     IClock clock,
-    ICurrentUserProvider currentUserProvider) : IPhotoManager
+    ICurrentUserProvider currentUserProvider,
+    IPhotoDateExtractor photoDateExtractor) : IPhotoManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByAlbumIdAsync(Guid albumId)
     {
@@ -117,9 +118,15 @@ public class PhotoManager(
         var now = clock.UtcNow();
         var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
 
+        using var buffered = new MemoryStream();
+        await content.CopyToAsync(buffered);
+        buffered.Position = 0;
+        var (dateYear, dateMonth, dateDay) = ResolvePhotoDate(date, buffered);
+        buffered.Position = 0;
+
         try
         {
-            await photoStorage.SaveAsync(storageKey, content, contentType);
+            await photoStorage.SaveAsync(storageKey, buffered, contentType);
         }
         catch (Exception ex)
         {
@@ -129,7 +136,7 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, caption, date ?? now, userId, now, clientUploadId);
+        var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, caption, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
 
         try
         {
@@ -214,9 +221,15 @@ public class PhotoManager(
         var now = clock.UtcNow();
         var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
 
+        using var buffered = new MemoryStream();
+        await content.CopyToAsync(buffered);
+        buffered.Position = 0;
+        var (dateYear, dateMonth, dateDay) = ResolvePhotoDate(date, buffered);
+        buffered.Position = 0;
+
         try
         {
-            await photoStorage.SaveAsync(storageKey, content, contentType);
+            await photoStorage.SaveAsync(storageKey, buffered, contentType);
         }
         catch (Exception ex)
         {
@@ -226,7 +239,7 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, caption, date ?? now, userId, now, clientUploadId);
+        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, caption, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
 
         try
         {
@@ -342,6 +355,67 @@ public class PhotoManager(
         return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
     }
 
+    public async Task<Result<PhotoDto>> ChangeDateAsync(Guid photoId, int year, int? month, int? day)
+    {
+        var validationError = ValidateDate(year, month, day);
+        if (validationError is not null) return Result.Failure<PhotoDto>(validationError);
+
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null)
+        {
+            logger.LogWarning("Photo date change rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<PhotoDto>("Photo not found");
+        }
+
+        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
+        if (baul is null)
+        {
+            logger.LogWarning("Photo date change rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<PhotoDto>("Baul not found");
+        }
+
+        var isCustodio = baul.CustodioId == userId;
+        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId);
+        var canEdit = isCustodio || sharedAccess?.Role == BaulRole.Colaborador;
+        if (!canEdit)
+        {
+            logger.LogWarning("Photo date change rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<PhotoDto>("Access denied");
+        }
+
+        var updatedPhoto = photo with { DateYear = year, DateMonth = month, DateDay = day };
+        await photoRepository.UpdateAsync(updatedPhoto);
+
+        logger.LogInformation("Photo date changed {BaulId} {PhotoId}", photo.BaulId, photoId);
+
+        var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+        var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
+        return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
+    }
+
+    public async Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<Guid> photoIds, int year, int? month, int? day)
+    {
+        var validationError = ValidateDate(year, month, day);
+        if (validationError is not null) return Result.Failure<IEnumerable<PhotoDto>>(validationError);
+
+        var updated = new List<PhotoDto>();
+        foreach (var photoId in photoIds)
+        {
+            var result = await ChangeDateAsync(photoId, year, month, day);
+            if (result.IsSuccess)
+            {
+                updated.Add(result.Value);
+            }
+            else
+            {
+                logger.LogWarning("Skipping photo in batch date change {PhotoId}: {Error}", photoId, result.Error);
+            }
+        }
+
+        return Result.Success<IEnumerable<PhotoDto>>(updated);
+    }
+
     public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId)
     {
         var userId = currentUserProvider.GetUserId();
@@ -401,6 +475,23 @@ public class PhotoManager(
         return ToDto(recuerdo, user?.Name ?? "Usuario", isOwn: true);
     }
 
+    private (int? Year, int? Month, int? Day) ResolvePhotoDate(DateTime? explicitDate, Stream content)
+    {
+        if (explicitDate is { } d) return (d.Year, d.Month, d.Day);
+
+        var extracted = photoDateExtractor.TryExtractDate(content);
+        return extracted is { } e ? (e.Year, e.Month, e.Day) : (null, null, null);
+    }
+
+    private static string? ValidateDate(int year, int? month, int? day)
+    {
+        if (year < 1800 || year > DateTime.UtcNow.Year + 1) return "Year is out of range";
+        if (month is < 1 or > 12) return "Month is out of range";
+        if (day is not null && month is null) return "Day requires a month";
+        if (day is < 1 or > 31) return "Day is out of range";
+        return null;
+    }
+
     private async Task TryDeleteOrphanedStorageObjectAsync(string storageKey)
     {
         try
@@ -417,7 +508,7 @@ public class PhotoManager(
 
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
         new(photo.Id.ToString(), photo.AlbumId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
-            photo.Caption, photo.Date, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
+            photo.Caption, photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, bool isOwn) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId.ToString(), recuerdo.UserId, recuerdo.Text, userName,

@@ -9,6 +9,14 @@ namespace ElBaul.Ports.Output;
 public interface IPhotoStorage
 {
     Task SaveAsync(string key, Stream content, string contentType);
+
+    /// <summary>
+    /// Reads a stored photo's raw bytes back out. Server-side/tooling use only (e.g. the
+    /// EXIF backfill command) — never exposed through the API, which always hands out a
+    /// signed imgproxy URL instead (see GetImageUrl).
+    /// </summary>
+    Task<Stream> OpenReadAsync(string key);
+
     Task<string> GetImageUrl(string key, ImagePlacement placement);
     Task DeleteAsync(string key);
     Task EnsureBucketExistsAsync();

@@ -27,6 +27,9 @@ public interface IPhotoManager
 
     Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetAlbumId);
 
+    Task<Result<PhotoDto>> ChangeDateAsync(Guid photoId, int year, int? month, int? day);
+    Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<Guid> photoIds, int year, int? month, int? day);
+
     Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId);
     Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid photoId, string text);
 }

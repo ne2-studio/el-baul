@@ -45,6 +45,28 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("photos/{photoId:guid}/date")]
+    public async Task<IActionResult> ChangeDate(Guid photoId, [FromBody] ChangePhotoDateRequest request)
+    {
+        var result = await photoManager.ChangeDateAsync(photoId, request.Year, request.Month, request.Day);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPut("photos/date-batch")]
+    public async Task<IActionResult> ChangeDateBatch([FromBody] ChangePhotoDateBatchRequest request)
+    {
+        var photoIds = new List<Guid>();
+        foreach (var id in request.PhotoIds)
+        {
+            if (!Guid.TryParse(id, out var photoId))
+                return BadRequest(new { error = $"'{id}' is not a valid photo id." });
+            photoIds.Add(photoId);
+        }
+
+        var result = await photoManager.ChangeDateBatchAsync(photoIds, request.Year, request.Month, request.Day);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpGet("baules/{baulId:guid}/photos/sueltas")]
     public async Task<IActionResult> GetLoose(Guid baulId)
     {

@@ -8,7 +8,9 @@ public record PhotoDto
     string ThumbnailUrl,
     string FullUrl,
     string? Caption,
-    DateTime Date,
+    int? DateYear,
+    int? DateMonth,
+    int? DateDay,
     string UploadedBy,
     DateTime CreatedAt,
     int RecuerdoCount

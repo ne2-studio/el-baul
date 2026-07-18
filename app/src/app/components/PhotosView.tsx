@@ -2,16 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput } from 'lucide-react';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar } from 'lucide-react';
 import { Album } from './AlbumsView';
 import { SelectedPhoto } from './UploadConfirmationScreen';
+import { PhotoDate } from '@/types';
 
 export interface Photo {
   id: string;
   thumbnailUrl: string;
   fullUrl: string;
   caption?: string;
-  date?: string;
+  date?: PhotoDate;
   recuerdoCount?: number;
 }
 
@@ -23,9 +24,47 @@ interface PhotosViewProps {
   onAddPhotos: (selectedPhotos: SelectedPhoto[]) => void;
   allAlbums?: Album[];
   onBatchMove?: (photoIds: string[], targetAlbumId: string) => void;
+  onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => void;
 }
 
-export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove }: PhotosViewProps) {
+// Groups photos by year+month (or by year alone, when only a year is known — never
+// assume a month for display, that defaulting only applies to sorting) descending,
+// with a trailing "Sin fecha" group for anything undated.
+function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
+  const MONTH_NAMES = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  const groups = new Map<string, { year: number; month?: number; photos: Photo[] }>();
+  const undated: Photo[] = [];
+
+  for (const photo of photos) {
+    if (!photo.date) {
+      undated.push(photo);
+      continue;
+    }
+    const { year, month } = photo.date;
+    const key = month ? `${year}-${month}` : `${year}`;
+    if (!groups.has(key)) groups.set(key, { year, month, photos: [] });
+    groups.get(key)!.photos.push(photo);
+  }
+
+  const sorted = Array.from(groups.values()).sort((a, b) =>
+    a.year !== b.year ? b.year - a.year : (b.month ?? 0) - (a.month ?? 0)
+  );
+
+  const result = sorted.map((g) => ({
+    label: g.month ? `${MONTH_NAMES[g.month - 1]} ${g.year}` : `${g.year}`,
+    photos: [...g.photos].sort((a, b) => (a.date?.day ?? 1) - (b.date?.day ?? 1)),
+  }));
+
+  if (undated.length > 0) result.push({ label: 'Sin fecha', photos: undated });
+
+  return result;
+}
+
+export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate }: PhotosViewProps) {
   const totalRecuerdos = photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +81,10 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
 
   const [showBatchMoveModal, setShowBatchMoveModal] = useState(false);
   const [batchMoveTargetId, setBatchMoveTargetId] = useState('');
+  const [showBatchDateModal, setShowBatchDateModal] = useState(false);
+  const [batchDateYear, setBatchDateYear] = useState('');
+  const [batchDateMonth, setBatchDateMonth] = useState('');
+  const [batchDateDay, setBatchDateDay] = useState('');
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -66,6 +109,19 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
     onBatchMove?.(Array.from(selectedIds), batchMoveTargetId);
     setShowBatchMoveModal(false);
     setBatchMoveTargetId('');
+    exitSelection();
+  };
+
+  const handleBatchDateSubmit = () => {
+    const year = parseInt(batchDateYear);
+    if (!year) return;
+    onBatchChangeDate?.(Array.from(selectedIds), {
+      year,
+      month: batchDateMonth ? parseInt(batchDateMonth) : undefined,
+      day: batchDateDay ? parseInt(batchDateDay) : undefined,
+    });
+    setShowBatchDateModal(false);
+    setBatchDateYear(''); setBatchDateMonth(''); setBatchDateDay('');
     exitSelection();
   };
 
@@ -153,14 +209,24 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
             </div>
           </div>
         ) : (
-          <PhotoGrid
-            photos={photos}
-            selectionMode={selectionMode}
-            selectedIds={selectedIds}
-            onSelectPhoto={onSelectPhoto}
-            onToggleSelect={toggleSelect}
-            onLongPress={handleLongPress}
-          />
+          <div className="space-y-6">
+            {groupPhotos(photos).map((group) => (
+              <div key={group.label}>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2"
+                  style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
+                  {group.label}
+                </p>
+                <PhotoGrid
+                  photos={group.photos}
+                  selectionMode={selectionMode}
+                  selectedIds={selectedIds}
+                  onSelectPhoto={onSelectPhoto}
+                  onToggleSelect={toggleSelect}
+                  onLongPress={handleLongPress}
+                />
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
@@ -172,18 +238,40 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
       />
 
       {/* Batch action bar */}
-      {selectionMode && selectedIds.size > 0 && moveableAlbums.length > 0 && (
+      {selectionMode && selectedIds.size > 0 && (onBatchChangeDate || moveableAlbums.length > 0) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
           <div className="max-w-2xl mx-auto px-6 py-4 flex gap-3">
-            <button
-              onClick={() => setShowBatchMoveModal(true)}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-            >
-              <FolderInput className="w-4 h-4 text-muted-foreground" />
-              Mover
-            </button>
+            {onBatchChangeDate && (
+              <button
+                onClick={() => setShowBatchDateModal(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                Cambiar fecha
+              </button>
+            )}
+            {moveableAlbums.length > 0 && (
+              <button
+                onClick={() => setShowBatchMoveModal(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <FolderInput className="w-4 h-4 text-muted-foreground" />
+                Mover
+              </button>
+            )}
           </div>
         </div>
+      )}
+
+      {/* Batch date modal */}
+      {showBatchDateModal && (
+        <DateModal
+          title={`Cambiar fecha · ${selectedIds.size} ${selectedIds.size === 1 ? 'foto' : 'fotos'}`}
+          year={batchDateYear} month={batchDateMonth} day={batchDateDay}
+          onYearChange={setBatchDateYear} onMonthChange={setBatchDateMonth} onDayChange={setBatchDateDay}
+          onCancel={() => setShowBatchDateModal(false)}
+          onConfirm={handleBatchDateSubmit}
+        />
       )}
 
       {/* Batch move modal */}
@@ -321,6 +409,66 @@ function PhotoCell({
         </div>
       )}
     </button>
+  );
+}
+
+// ─── Shared date-edit modal ─────────────────────────────────────────────────────
+export function DateModal({
+  title,
+  year, month, day,
+  onYearChange, onMonthChange, onDayChange,
+  onCancel, onConfirm,
+}: {
+  title: string;
+  year: string; month: string; day: string;
+  onYearChange: (v: string) => void;
+  onMonthChange: (v: string) => void;
+  onDayChange: (v: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-foreground/40 z-[60] flex items-end justify-center">
+      <div className="absolute inset-0" onClick={onCancel} />
+      <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
+        <h2 className="text-lg font-medium text-foreground mb-1">{title}</h2>
+        <p className="text-xs text-muted-foreground mb-5">El año es obligatorio. El mes y el día son opcionales.</p>
+        <div className="flex gap-3 mb-6">
+          <div className="flex-[2]">
+            <label className="text-xs text-muted-foreground mb-1 block">Año *</label>
+            <input
+              type="number" placeholder="2022" value={year} onChange={e => onYearChange(e.target.value)}
+              className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-card"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="text-xs text-muted-foreground mb-1 block">Mes</label>
+            <select value={month} onChange={e => onMonthChange(e.target.value)}
+              className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="">—</option>
+              {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((m, i) => (
+                <option key={i} value={i + 1}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="text-xs text-muted-foreground mb-1 block">Día</label>
+            <input
+              type="number" placeholder="—" min={1} max={31} value={day} onChange={e => onDayChange(e.target.value)}
+              className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-card"
+            />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors">
+            Cancelar
+          </button>
+          <button onClick={onConfirm} disabled={!year} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

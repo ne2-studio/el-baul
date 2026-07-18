@@ -100,6 +100,39 @@ docker run --name el-baul-api \
   el-baul-api
 ```
 
+## Maintenance commands
+
+The published image doubles as a one-off command runner: passing a recognized command
+name as the first argument makes `ElBaul.Api.dll` run that command and exit instead of
+starting the web server. This is safe to run against an **already-running** deployment
+(Coolify, docker-compose, etc.) via `docker exec` — it's a separate process inside the
+same container, so it can't crash or interrupt the running server, and each command is
+written to keep going past per-item failures rather than aborting the whole run.
+
+### `backfill-exif-dates`
+
+Finds every photo with no date, re-reads it from object storage, and retries EXIF
+extraction — the same `IPhotoDateExtractor` the upload path uses. Safe to re-run anytime
+(only ever looks at photos still missing a date, so photos it already dated are skipped
+on the next run) and safe to run while the app is serving traffic.
+
+```bash
+# Coolify / any docker deployment: find the running API container, then:
+docker exec <api-container> dotnet ElBaul.Api.dll backfill-exif-dates --dry-run
+docker exec <api-container> dotnet ElBaul.Api.dll backfill-exif-dates
+
+# Local dev (docker-compose service name is "api"):
+docker compose exec api dotnet ElBaul.Api.dll backfill-exif-dates --dry-run
+docker compose exec api dotnet ElBaul.Api.dll backfill-exif-dates
+
+# Running the API outside Docker (dotnet run/dotnet ElBaul.Api.dll directly):
+dotnet ElBaul.Api.dll backfill-exif-dates --dry-run
+```
+
+`--dry-run` logs what it would change without writing anything — run that first. Without
+it, it updates the DB as it goes. Progress and a final summary (updated / no EXIF found /
+failed counts) are logged to stdout; exit code is `0` if nothing failed, `1` otherwise.
+
 ### A note on `Auth:JwksUri` vs `Auth:ValidIssuer`
 
 The backend fetches JWKS (signing keys) from `Auth:JwksUri` directly rather than

@@ -6,6 +6,7 @@ import { Album } from '@/app/components/AlbumsView';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
+import { PhotoDate } from '@/types';
 
 export const LoosePhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
-  const { baules, albums, loosePhotos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, movePhotos } = useAppStore();
+  const { baules, albums, loosePhotos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, movePhotos, changePhotoDate } = useAppStore();
 
   const baul = baules.find(b => b.id === baulId);
   const photos = loosePhotos[baulId!] || [];
@@ -74,6 +75,15 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       });
   };
 
+  const handleChangeDate = (photoToUpdate: Photo, date: PhotoDate) => {
+    changePhotoDate(baul.id, null, photoToUpdate.id, date)
+      .then(() => showToastMessage('Fecha actualizada'))
+      .catch((error) => {
+        console.error('Error changing photo date:', error);
+        showToastMessage('Error al cambiar la fecha');
+      });
+  };
+
   return (
     <PhotoViewer
       photo={photo}
@@ -84,6 +94,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       isCustodio={baul.isCustodio}
       onSetBaulCover={handleSetBaulCover}
       onMovePhoto={handleMovePhoto}
+      onChangeDate={handleChangeDate}
       allAlbums={albums[baul.id] || []}
       currentAlbum={looseAlbum}
       recuerdos={recuerdos[photo.id] || []}

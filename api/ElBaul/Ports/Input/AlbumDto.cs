@@ -13,5 +13,12 @@ public record AlbumDto
     DateTime UpdatedAt,
     int RecuerdoCount,
     string? LatestRecuerdoText,
-    string? LatestRecuerdoAuthor
+    string? LatestRecuerdoAuthor,
+    int? MinDateYear,
+    int? MinDateMonth,
+    int? MinDateDay,
+    int? MaxDateYear,
+    int? MaxDateMonth,
+    int? MaxDateDay,
+    int UndatedPhotoCount
 );

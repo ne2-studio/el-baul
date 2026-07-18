@@ -24,6 +24,9 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Take(limit)
             .ToListAsync();
 
+    public async Task<IEnumerable<Photo>> GetUndatedAsync() =>
+        await dbContext.Photos.AsNoTracking().Where(p => p.DateYear == null).ToListAsync();
+
     public async Task CreateAsync(Photo photo)
     {
         dbContext.Photos.Add(photo);

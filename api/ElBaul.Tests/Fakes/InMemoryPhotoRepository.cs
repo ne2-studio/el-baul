@@ -20,6 +20,9 @@ public class InMemoryPhotoRepository : IPhotoRepository
     public Task<IEnumerable<Photo>> GetPreviewPhotosAsync(Guid baulId, int limit) =>
         Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId).OrderByDescending(p => p.CreatedAt).Take(limit));
 
+    public Task<IEnumerable<Photo>> GetUndatedAsync() =>
+        Task.FromResult(_photos.Values.Where(p => p.DateYear == null));
+
     public Task CreateAsync(Photo photo)
     {
         _photos[photo.Id] = photo;

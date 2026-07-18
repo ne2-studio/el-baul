@@ -5,11 +5,12 @@ import { Album } from '@/app/components/AlbumsView';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
+import { PhotoDate } from '@/types';
 
 export const LoosePhotosRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
-  const { baules, albums, loosePhotos, movePhotos } = useAppStore();
+  const { baules, albums, loosePhotos, movePhotos, changePhotoDateBatch } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);
@@ -37,6 +38,15 @@ export const LoosePhotosRoute: React.FC = () => {
       });
   };
 
+  const handleBatchChangeDate = (photoIds: string[], date: PhotoDate) => {
+    changePhotoDateBatch(baul.id, null, photoIds, date)
+      .then(() => showToastMessage(`Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`))
+      .catch((error) => {
+        console.error('Error changing photo dates:', error);
+        showToastMessage('Error al cambiar la fecha');
+      });
+  };
+
   return (
     <PhotosView
       album={looseAlbum}
@@ -48,6 +58,7 @@ export const LoosePhotosRoute: React.FC = () => {
         navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
       }
       onBatchMove={handleBatchMove}
+      onBatchChangeDate={handleBatchChangeDate}
     />
   );
 };

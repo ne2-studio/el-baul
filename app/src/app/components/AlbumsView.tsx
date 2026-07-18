@@ -5,6 +5,8 @@ import { ExpandableFAB } from './FAB';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, Share2, Users, Bell, MoreVertical } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto } from './UploadConfirmationScreen';
+import { PhotoDate } from '@/types';
+import { formatDateRange } from '../utils/timeUtils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,9 @@ export interface Album {
   recuerdoCount?: number;
   latestRecuerdoText?: string;
   latestRecuerdoAuthor?: string;
+  minDate?: PhotoDate;
+  maxDate?: PhotoDate;
+  undatedPhotoCount?: number;
 }
 
 interface LoosePhoto {
@@ -171,6 +176,11 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
                   {/* Album info */}
                   <div className="p-4">
                     <h3 className="font-medium text-lg text-foreground">{album.name}</h3>
+                    {album.minDate && album.maxDate && (
+                      <p className="text-xs text-primary/80 font-medium mt-1">
+                        {formatDateRange(album.minDate, album.maxDate)}
+                      </p>
+                    )}
                     {album.latestRecuerdoText && album.latestRecuerdoAuthor && (
                       <p className="text-sm text-foreground/70 italic mt-2 line-clamp-1">
                         "{album.latestRecuerdoText.slice(0, 60)}…" — {album.latestRecuerdoAuthor}
@@ -208,6 +218,11 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
                     {/* Album info */}
                     <div className="p-4">
                       <h3 className="font-medium mb-1 text-foreground">{album.name}</h3>
+                      {album.minDate && album.maxDate && (
+                        <p className="text-[11px] text-primary/80 font-medium mb-0.5">
+                          {formatDateRange(album.minDate, album.maxDate)}
+                        </p>
+                      )}
                       <p className="text-sm text-muted-foreground">
                         {album.photoCount} {album.photoCount === 1 ? 'foto' : 'fotos'}
                       </p>

@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application;
 
+using DateRange = (int? MinY, int? MinM, int? MinD, int? MaxY, int? MaxM, int? MaxD, int Undated);
+
 public class AlbumManager(
     ILogger<AlbumManager> logger,
     IAlbumRepository albumRepository,
@@ -32,7 +34,16 @@ public class AlbumManager(
         foreach (var album in albums)
             dtos.Add(await ToDtoAsync(album));
 
-        return Result.Success<IEnumerable<AlbumDto>>(dtos);
+        // Chronological: dated albums first (most recent min date first), undated-only albums last.
+        var sorted = dtos
+            .OrderByDescending(d => d.MinDateYear.HasValue)
+            .ThenByDescending(d => d.MinDateYear ?? int.MinValue)
+            .ThenByDescending(d => d.MinDateMonth ?? 1)
+            .ThenByDescending(d => d.MinDateDay ?? 1)
+            .ThenByDescending(d => d.UpdatedAt)
+            .ToList();
+
+        return Result.Success<IEnumerable<AlbumDto>>(sorted);
     }
 
     public async Task<Result<AlbumDto>> CreateAsync(Guid baulId, string name, string? description)
@@ -61,7 +72,7 @@ public class AlbumManager(
         await baulRepository.UpdateAsync(baul with { AlbumCount = baul.AlbumCount + 1, UpdatedAt = now });
 
         logger.LogInformation("Album created {BaulId} {AlbumId} {Name}", baulId, album.Id, name);
-        return ToDto(album, null, null, 0, null, null);
+        return ToDto(album, null, null, 0, null, null, EmptyDateRange);
     }
 
     public async Task<Result<AlbumDto>> SetCoverAsync(Guid albumId, Guid photoId)
@@ -115,20 +126,38 @@ public class AlbumManager(
             ? await photoStorage.GetImageUrl(album.CoverPhotoKey, ImagePlacement.AlbumCoverFeatured)
             : null;
 
-        var photoIds = (await photoRepository.GetByAlbumIdAsync(album.Id)).Select(p => p.Id).ToList();
+        var photos = (await photoRepository.GetByAlbumIdAsync(album.Id)).ToList();
+        var photoIds = photos.Select(p => p.Id).ToList();
         var recuerdos = (await recuerdoRepository.GetByPhotoIdsAsync(photoIds)).ToList();
         var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
         var latestAuthor = latestRecuerdo is null
             ? null
             : (await userRepository.GetByIdAsync(latestRecuerdo.UserId))?.Name;
 
-        return ToDto(album, coverUrl, featuredCoverUrl, recuerdos.Count, latestRecuerdo?.Text, latestAuthor);
+        var dateRange = ComputeDateRange(photos);
+
+        return ToDto(album, coverUrl, featuredCoverUrl, recuerdos.Count, latestRecuerdo?.Text, latestAuthor, dateRange);
+    }
+
+    private static readonly DateRange EmptyDateRange = (null, null, null, null, null, null, 0);
+
+    private static DateRange ComputeDateRange(IReadOnlyCollection<Photo> photos)
+    {
+        var dated = photos.Where(p => p.DateYear.HasValue).ToList();
+        var undatedCount = photos.Count - dated.Count;
+        if (dated.Count == 0) return (null, null, null, null, null, null, undatedCount);
+
+        var min = dated.OrderBy(p => p.DateYear).ThenBy(p => p.DateMonth ?? 1).ThenBy(p => p.DateDay ?? 1).First();
+        var max = dated.OrderByDescending(p => p.DateYear).ThenByDescending(p => p.DateMonth ?? 1).ThenByDescending(p => p.DateDay ?? 1).First();
+
+        return (min.DateYear, min.DateMonth, min.DateDay, max.DateYear, max.DateMonth, max.DateDay, undatedCount);
     }
 
     private static AlbumDto ToDto(
         Album album, string? coverUrl, string? featuredCoverUrl, int recuerdoCount,
-        string? latestRecuerdoText, string? latestRecuerdoAuthor) =>
+        string? latestRecuerdoText, string? latestRecuerdoAuthor, DateRange dateRange) =>
         new(album.Id.ToString(), album.BaulId.ToString(), album.Name, album.Description,
             album.PhotoCount, coverUrl, featuredCoverUrl, album.CreatedAt, album.UpdatedAt,
-            recuerdoCount, latestRecuerdoText, latestRecuerdoAuthor);
+            recuerdoCount, latestRecuerdoText, latestRecuerdoAuthor,
+            dateRange.MinY, dateRange.MinM, dateRange.MinD, dateRange.MaxY, dateRange.MaxM, dateRange.MaxD, dateRange.Undated);
 }

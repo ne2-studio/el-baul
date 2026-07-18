@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Sentry from '@sentry/react';
-import { Baul, Album, Photo, SharedUser, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile } from '@/types';
+import { Baul, Album, Photo, SharedUser, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile, PhotoDate } from '@/types';
 import { api } from '@/api';
 
 const defaultSubscription: Subscription = {
@@ -65,6 +65,8 @@ interface AppState {
     onItemSettled?: (result: UploadItemResult) => void
   ) => Promise<UploadItemResult[]>;
   movePhotos: (baulId: string, sourceAlbumId: string | null, photoIds: string[], targetAlbumId: string) => Promise<void>;
+  changePhotoDate: (baulId: string, albumId: string | null, photoId: string, date: PhotoDate) => Promise<void>;
+  changePhotoDateBatch: (baulId: string, albumId: string | null, photoIds: string[], date: PhotoDate) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string) => Promise<void>;
   setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
 
@@ -304,6 +306,29 @@ export const useAppStore = create<AppState>((set, get) => ({
         },
       };
     });
+  },
+
+  changePhotoDate: async (baulId, albumId, photoId, date) => {
+    const updated = await api.photos.changeDate(photoId, date);
+    set((state) => (albumId
+      ? { photos: { ...state.photos, [albumId]: (state.photos[albumId] || []).map((p) => (p.id === photoId ? updated : p)) } }
+      : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).map((p) => (p.id === photoId ? updated : p)) } }
+    ));
+
+    const albums = await api.albums.getAll(baulId);
+    set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
+  },
+
+  changePhotoDateBatch: async (baulId, albumId, photoIds, date) => {
+    const updated = await api.photos.changeDateBatch(photoIds, date);
+    const updatedById = new Map(updated.map((p) => [p.id, p]));
+    set((state) => (albumId
+      ? { photos: { ...state.photos, [albumId]: (state.photos[albumId] || []).map((p) => updatedById.get(p.id) || p) } }
+      : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).map((p) => updatedById.get(p.id) || p) } }
+    ));
+
+    const albums = await api.albums.getAll(baulId);
+    set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
   },
 
   setBaulCover: async (baulId, photoId) => {

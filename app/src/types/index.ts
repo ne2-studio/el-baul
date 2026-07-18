@@ -2,6 +2,17 @@ import { formatRelativeTime } from '@/utils/timeUtils';
 
 export type BaulRole = 'custodio' | 'colaborador' | 'miembro';
 
+export interface PhotoDate {
+  year: number;
+  month?: number;
+  day?: number;
+}
+
+function photoDateFrom(year?: number, month?: number, day?: number): PhotoDate | undefined {
+  if (!year) return undefined;
+  return { year, month: month ?? undefined, day: day ?? undefined };
+}
+
 export class SharedUser {
   id: string;
   email: string;
@@ -55,6 +66,9 @@ export class Album {
   recuerdoCount: number;
   latestRecuerdoText?: string;
   latestRecuerdoAuthor?: string;
+  minDate?: PhotoDate;
+  maxDate?: PhotoDate;
+  undatedPhotoCount: number;
 
   constructor(data: any) {
     this.id = data.id;
@@ -67,6 +81,9 @@ export class Album {
     this.recuerdoCount = data.recuerdoCount ?? 0;
     this.latestRecuerdoText = data.latestRecuerdoText;
     this.latestRecuerdoAuthor = data.latestRecuerdoAuthor;
+    this.minDate = photoDateFrom(data.minDateYear, data.minDateMonth, data.minDateDay);
+    this.maxDate = photoDateFrom(data.maxDateYear, data.maxDateMonth, data.maxDateDay);
+    this.undatedPhotoCount = data.undatedPhotoCount ?? 0;
   }
 }
 
@@ -75,7 +92,7 @@ export class Photo {
   thumbnailUrl: string;
   fullUrl: string;
   caption?: string;
-  date?: string;
+  date?: PhotoDate;
   recuerdoCount: number;
 
   constructor(data: any) {
@@ -83,7 +100,7 @@ export class Photo {
     this.thumbnailUrl = data.thumbnailUrl;
     this.fullUrl = data.fullUrl;
     this.caption = data.caption;
-    this.date = data.date;
+    this.date = photoDateFrom(data.dateYear, data.dateMonth, data.dateDay);
     this.recuerdoCount = data.recuerdoCount ?? 0;
   }
 }
