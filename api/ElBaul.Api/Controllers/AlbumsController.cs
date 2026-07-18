@@ -40,4 +40,21 @@ public class AlbumsController(IAlbumManager albumManager) : ControllerBase
         var result = await albumManager.SetCoverAsync(albumId, photoId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
+
+    [HttpGet("{albumId:guid}/recuerdos")]
+    public async Task<IActionResult> GetRecuerdos(Guid baulId, Guid albumId)
+    {
+        var result = await albumManager.GetRecuerdosAsync(albumId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("{albumId:guid}/recuerdos")]
+    public async Task<IActionResult> CreateRecuerdo(Guid baulId, Guid albumId, [FromBody] CreateRecuerdoRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Text))
+            return BadRequest(new { error = "Text is required" });
+
+        var result = await albumManager.CreateRecuerdoAsync(albumId, request.Text);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
 }

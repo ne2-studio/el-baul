@@ -296,4 +296,112 @@ public class AlbumManagerTests
         var ids = result.Value.Select(a => a.Id).ToList();
         Assert.Equal([recentAlbumId.ToString(), olderAlbumId.ToString(), undatedAlbumId.ToString()], ids);
     }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldCreateRecuerdoWithNoPhoto()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(albumId, "Que buen viaje");
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.PhotoId);
+        Assert.True(result.Value.IsOwn);
+        Assert.Equal("Que buen viaje", result.Value.Text);
+
+        var stored = (await _recuerdoRepository.GetByAlbumIdAsync(albumId)).Single();
+        Assert.Null(stored.PhotoId);
+        Assert.Equal(albumId, stored.AlbumId);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldAllow_ForMiembroRole()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, MiembroId, "m@test.com", BaulRole.Miembro, SharedUserStatus.Active, _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(MiembroId);
+        var result = await manager.CreateRecuerdoAsync(albumId, "Recuerdo de un miembro");
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager("stranger");
+        var result = await manager.CreateRecuerdoAsync(albumId, "No debería poder");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldFail_WhenAlbumDoesNotExist()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(Guid.NewGuid(), "texto");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Album not found", result.Error);
+    }
+
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldReturnFeedNewestFirst_WithPhotoThumbnailWhenPresent()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var older = _clock.UtcNow().AddDays(-1);
+        var newer = _clock.UtcNow();
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, CustodioId, "sin foto, más antiguo", older));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, CustodioId, "con foto, más reciente", newer));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetRecuerdosAsync(albumId);
+
+        Assert.True(result.IsSuccess);
+        var list = result.Value.ToList();
+        Assert.Equal(["con foto, más reciente", "sin foto, más antiguo"], list.Select(r => r.Text));
+
+        var withPhoto = list.Single(r => r.Text == "con foto, más reciente");
+        Assert.Equal(photoId.ToString(), withPhoto.PhotoId);
+        Assert.Contains("photo-key", withPhoto.PhotoThumbnailUrl);
+
+        var withoutPhoto = list.Single(r => r.Text == "sin foto, más antiguo");
+        Assert.Null(withoutPhoto.PhotoId);
+        Assert.Null(withoutPhoto.PhotoThumbnailUrl);
+    }
+
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager("stranger");
+        var result = await manager.GetRecuerdosAsync(albumId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
 }

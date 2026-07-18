@@ -134,6 +134,33 @@ dotnet ElBaul.Api.dll backfill-exif-dates --dry-run
 it, it updates the DB as it goes. Progress and a final summary (updated / no EXIF found /
 failed counts) are logged to stdout; exit code is `0` if nothing failed, `1` otherwise.
 
+### `backfill-recuerdo-album-id`
+
+Recuerdo now carries its own `AlbumId` (denormalized from the associated photo's `AlbumId`)
+so the Recuerdos feed can query by chapter without joining through Photo. New recuerdos set
+it themselves; this backfills it for every recuerdo created before that change (has a
+`PhotoId` but no `AlbumId` yet). Safe to re-run anytime (only looks at recuerdos still
+missing an `AlbumId`) and safe to run while the app is serving traffic.
+
+```bash
+# Coolify / any docker deployment: find the running API container, then:
+docker exec <api-container> dotnet ElBaul.Api.dll backfill-recuerdo-album-id --dry-run
+docker exec <api-container> dotnet ElBaul.Api.dll backfill-recuerdo-album-id
+
+# Local dev (docker-compose service name is "api"):
+docker compose exec api dotnet ElBaul.Api.dll backfill-recuerdo-album-id --dry-run
+docker compose exec api dotnet ElBaul.Api.dll backfill-recuerdo-album-id
+
+# Running the API outside Docker (dotnet run/dotnet ElBaul.Api.dll directly):
+dotnet ElBaul.Api.dll backfill-recuerdo-album-id --dry-run
+```
+
+`--dry-run` logs what it would change without writing anything — run that first. Without
+it, it updates the DB as it goes. A recuerdo whose photo is loose (no album) is left with a
+null `AlbumId` and counted separately, not as a failure. Progress and a final summary
+(updated / left null / failed counts) are logged to stdout; exit code is `0` if nothing
+failed, `1` otherwise.
+
 ### A note on `Auth:JwksUri` vs `Auth:ValidIssuer`
 
 The backend fetches JWKS (signing keys) from `Auth:JwksUri` directly rather than

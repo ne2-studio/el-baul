@@ -232,13 +232,46 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task CreateRecuerdoAsync_ShouldSetAlbumId_FromThePhotosAlbum()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        _userRepository.Seed(new User(CustodioId, "custodio@test.com", "Custodio", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+
+        Assert.True(result.IsSuccess);
+        var stored = (await _recuerdoRepository.GetByPhotoIdAsync(photoId)).Single();
+        Assert.Equal(albumId, stored.AlbumId);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldLeaveAlbumIdNull_ForLoosePhoto()
+    {
+        var baulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, null, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        _userRepository.Seed(new User(CustodioId, "custodio@test.com", "Custodio", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(photoId, "Foto suelta");
+
+        Assert.True(result.IsSuccess);
+        var stored = (await _recuerdoRepository.GetByPhotoIdAsync(photoId)).Single();
+        Assert.Null(stored.AlbumId);
+    }
+
+    [Fact]
     public async Task GetRecuerdosAsync_ShouldMarkIsOwn_OnlyForCurrentUsersEntries()
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, CustodioId, "mine", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, "other-user", "not mine", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, CustodioId, "mine", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, "other-user", "not mine", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetRecuerdosAsync(photoId);

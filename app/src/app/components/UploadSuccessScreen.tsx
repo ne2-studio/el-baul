@@ -39,7 +39,7 @@ export function UploadSuccessScreen({ baul, album, photoCount, onBack }: UploadS
         
         {/* CTA */}
         <Button variant="primary" fullWidth onClick={onBack}>
-          Ver álbum
+          Ver capítulo
         </Button>
       </div>
     </div>

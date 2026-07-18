@@ -36,7 +36,7 @@ export const BaulesListRoute: React.FC = () => {
       navigate(`/baules/${baul.id}`);
     } catch (error) {
       console.error('Error loading albums:', error);
-      showToastMessage('Error al cargar los álbumes');
+      showToastMessage('Error al cargar los capítulos');
     } finally {
       setIsLoadingAlbums(false);
     }

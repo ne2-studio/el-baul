@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from 'react-oidc-context';
 import { PhotosView } from '@/app/components/PhotosView';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
@@ -9,22 +10,39 @@ import { PhotoDate } from '@/types';
 export const AlbumRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId, albumId } = useParams();
-  const { baules, albums, photos, movePhotos, changePhotoDateBatch, renameAlbum } = useAppStore();
+  const auth = useAuth();
+  const {
+    baules, albums, photos, albumRecuerdos,
+    movePhotos, changePhotoDateBatch, renameAlbum, loadAlbumRecuerdos, addAlbumRecuerdo,
+  } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);
   const album = albums[baulId!]?.find(a => a.id === albumId);
 
-  if (!baul || !album) return <div className="p-8 text-center">Cargando álbum...</div>;
+  useEffect(() => {
+    if (auth.isAuthenticated && baulId && albumId) {
+      loadAlbumRecuerdos(baulId, albumId);
+    }
+  }, [auth.isAuthenticated, baulId, albumId, loadAlbumRecuerdos]);
+
+  if (!baul || !album) return <div className="p-8 text-center">Cargando capítulo...</div>;
 
   const canEditAlbum = baul.isCustodio || baul.role === 'colaborador';
 
+  const handleAddRecuerdo = (text: string) => {
+    addAlbumRecuerdo(baul.id, album.id, text).catch((error) => {
+      console.error('Error adding recuerdo:', error);
+      showToastMessage('Error al guardar el recuerdo');
+    });
+  };
+
   const handleUpdateAlbumInfo = (name: string, description: string) => {
     renameAlbum(baul.id, album.id, name, description)
-      .then(() => showToastMessage('Información del álbum actualizada'))
+      .then(() => showToastMessage('Información del capítulo actualizada'))
       .catch((error) => {
         console.error('Error updating album info:', error);
-        showToastMessage('Error al actualizar la información del álbum');
+        showToastMessage('Error al actualizar la información del capítulo');
       });
   };
 
@@ -53,6 +71,7 @@ export const AlbumRoute: React.FC = () => {
     <PhotosView
       album={album}
       photos={photos[album.id] || []}
+      recuerdos={albumRecuerdos[album.id] || []}
       allAlbums={albums[baul.id] || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${photo.id}`)}
@@ -62,6 +81,7 @@ export const AlbumRoute: React.FC = () => {
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
       onUpdateAlbumInfo={canEditAlbum ? handleUpdateAlbumInfo : undefined}
+      onAddRecuerdo={handleAddRecuerdo}
     />
   );
 };

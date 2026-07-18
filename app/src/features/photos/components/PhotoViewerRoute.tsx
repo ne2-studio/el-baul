@@ -57,7 +57,7 @@ export const PhotoViewerRoute: React.FC = () => {
 
     try {
       await setAlbumCover(baul.id, album.id, photo.id);
-      showToastMessage('Portada del álbum actualizada');
+      showToastMessage('Portada del capítulo actualizada');
     } catch (error) {
       console.error('Error setting album cover:', error);
       showToastMessage('Error al establecer la portada');

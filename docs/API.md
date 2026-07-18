@@ -123,10 +123,22 @@ reason and a `deletedAt` timestamp) rather than removed from storage, and is exc
 from every listing/preview endpoint from then on. Decrements the album's `photoCount` if
 the photo belonged to one. Response `200 OK`: `{ "success": true }`.
 
-## Recuerdos (comments on a photo)
+## Recuerdos (memories, attached to a photo or directly to an album)
+
+Any member (not just `colaborador`/`custodio`) can read and create recuerdos.
 
 - `GET /api/photos/{photoId}/recuerdos` — response `200 OK`: array of `{ "id", "photoId", "userId", "text", "userName", "createdAt", "isOwn" }`.
 - `POST /api/photos/{photoId}/recuerdos` — body `{ "text" }`. Response `200 OK`: the recuerdo.
+  Always ends up with a `photoId`; `albumId` is set internally from the photo's album (null for
+  a loose photo) but not returned by this endpoint.
+- `GET /api/baules/{baulId}/albums/{albumId}/recuerdos` — the album's Recuerdos feed, newest
+  first. Includes recuerdos created directly on the album (no photo) and ones created via one of
+  its photos. Response `200 OK`: array of `{ "id", "photoId": "string|null", "userId", "text",
+  "userName", "createdAt", "isOwn", "photoThumbnailUrl": "imgproxy-url|null" }` — `photoId`/
+  `photoThumbnailUrl` are only present when the recuerdo has an associated photo.
+- `POST /api/baules/{baulId}/albums/{albumId}/recuerdos` — body `{ "text" }`. Creates a recuerdo
+  directly on the album with no photo (`photoId: null` in the response). Response `200 OK`: the
+  recuerdo.
 
 ## Users
 

@@ -66,7 +66,7 @@ export function OnboardingCarousel({
     },
     {
       title: 'Todo vive dentro de un Baúl',
-      description: 'Un Baúl es tu espacio compartido. Dentro organizas momentos en Álbumes.',
+      description: 'Un Baúl es tu espacio compartido. Dentro organizas momentos en Capítulos.',
       icon: Folder,
       visual: (
         <div className="bg-muted/30 rounded-2xl p-6">
@@ -77,7 +77,7 @@ export function OnboardingCarousel({
               <span className="text-sm font-medium text-foreground">Familia García</span>
             </div>
 
-            {/* Álbumes dentro */}
+            {/* Capítulos dentro */}
             <div className="space-y-2">
               <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2">
                 <Folder className="w-4 h-4 text-muted-foreground" />
@@ -92,7 +92,7 @@ export function OnboardingCarousel({
 
           {/* Microcopy explicativo */}
           <p className="text-xs text-center text-muted-foreground">
-            El Baúl dura años. Los Álbumes organizan momentos.
+            El Baúl dura años. Los Capítulos organizan momentos.
           </p>
         </div>
       )

@@ -33,7 +33,7 @@ public class PhotoManager(
 
         var photos = (await photoRepository.GetByAlbumIdAsync(albumId)).ToList();
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
-        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId).ToDictionary(g => g.Key, g => g.Count());
+        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
 
         var dtos = new List<PhotoDto>();
         foreach (var photo in photos)
@@ -58,7 +58,7 @@ public class PhotoManager(
 
         var photos = (await photoRepository.GetLooseByBaulIdAsync(baulId)).ToList();
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
-        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId).ToDictionary(g => g.Key, g => g.Count());
+        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
 
         var dtos = new List<PhotoDto>();
         foreach (var photo in photos)
@@ -512,7 +512,7 @@ public class PhotoManager(
         }
 
         var user = await userRepository.GetByIdAsync(userId);
-        var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, userId, text, clock.UtcNow());
+        var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.AlbumId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation(
@@ -557,6 +557,6 @@ public class PhotoManager(
             photo.Caption, photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, bool isOwn) =>
-        new(recuerdo.Id.ToString(), recuerdo.PhotoId.ToString(), recuerdo.UserId, recuerdo.Text, userName,
+        new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
             recuerdo.CreatedAt, isOwn);
 }

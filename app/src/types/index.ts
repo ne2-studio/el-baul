@@ -112,6 +112,8 @@ export class Recuerdo {
   userAvatar?: string;
   createdAt: string;
   isOwn?: boolean;
+  photoId?: string;
+  photoThumbnailUrl?: string;
 
   constructor(data: any) {
     this.id = data.id;
@@ -120,6 +122,8 @@ export class Recuerdo {
     this.userAvatar = data.userAvatar;
     this.createdAt = data.createdAt;
     this.isOwn = data.isOwn;
+    this.photoId = data.photoId ?? undefined;
+    this.photoThumbnailUrl = data.photoThumbnailUrl ?? undefined;
   }
 }
 

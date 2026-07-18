@@ -24,12 +24,12 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     },
     {
       title: "Organizados por historias",
-      text: "Crea álbumes para viajes, celebraciones o etapas de tu vida.",
+      text: "Crea capítulos para viajes, celebraciones o etapas de tu vida.",
       icon: <BookImage className="w-16 h-16 text-primary" strokeWidth={1.5} />
     },
     {
       title: "Solo para quien tú decidas",
-      text: "Comparte tu baúl o álbumes con personas concretas.",
+      text: "Comparte tu baúl o capítulos con personas concretas.",
       icon: <Users className="w-16 h-16 text-primary" strokeWidth={1.5} />
     }
   ];

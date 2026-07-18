@@ -152,6 +152,10 @@ export const api = {
       (await get<any[]>(`/api/photos/${photoId}/recuerdos`)).map((r) => new Recuerdo(r)),
     create: async (photoId: string, text: string) =>
       new Recuerdo(await post<any>(`/api/photos/${photoId}/recuerdos`, { text })),
+    getAllByAlbum: async (baulId: string, albumId: string) =>
+      (await get<any[]>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`)).map((r) => new Recuerdo(r)),
+    createForAlbum: async (baulId: string, albumId: string, text: string) =>
+      new Recuerdo(await post<any>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`, { text })),
   },
 
   users: {

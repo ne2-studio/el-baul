@@ -5,7 +5,7 @@ import { ChevronLeft, Share2 } from 'lucide-react';
 
 interface ShareScreenProps {
   itemName: string;
-  itemType: 'baúl' | 'álbum';
+  itemType: 'baúl' | 'capítulo';
   onBack: () => void;
   onShare: (email: string) => void;
 }

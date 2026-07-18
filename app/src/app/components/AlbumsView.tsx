@@ -174,11 +174,11 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
           <EmptyState
             icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
             title="Este baúl está vacío"
-            subtitle="Crea tu primer álbum para empezar a guardar recuerdos"
+            subtitle="Crea tu primer capítulo para empezar a guardar recuerdos"
           />
         ) : (
           <div className="space-y-6">
-            {/* Todos los álbumes, agrupados por año de la fecha mínima (ya vienen
+            {/* Todos los capítulos, agrupados por año de la fecha mínima (ya vienen
                 ordenados del backend por fecha mínima descendente, así que agrupar
                 consecutivamente preserva ese orden dentro y entre swimlanes) */}
             {albums.length > 0 && (() => {
@@ -234,7 +234,7 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
               );
             })()}
 
-            {/* Fotos sueltas — álbum virtual */}
+            {/* Fotos sueltas — capítulo virtual */}
             {loosePhotos.length > 0 && (
               <div>
                 <p
@@ -251,7 +251,7 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
                   <div className="p-4 bg-card">
                     <h3 className="font-medium text-lg text-foreground">Fotos sueltas</h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {loosePhotos.length} {loosePhotos.length === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún álbum
+                      {loosePhotos.length} {loosePhotos.length === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún capítulo
                     </p>
                   </div>
                 </Card>
@@ -264,7 +264,7 @@ export function AlbumsView({ baul, albums, loosePhotos = [], onBack, onSelectAlb
       <ExpandableFAB
         actions={[
           {
-            label: 'Nuevo álbum',
+            label: 'Nuevo capítulo',
             icon: <Plus className="w-4 h-4" />,
             onClick: onCreateAlbum,
           },

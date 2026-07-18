@@ -3,7 +3,7 @@ import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil } from 'lucide-react';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil, BookOpen, X } from 'lucide-react';
 import { Album } from './AlbumsView';
 import { SelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
@@ -24,6 +24,16 @@ export interface Photo {
   recuerdoCount?: number;
 }
 
+export interface Recuerdo {
+  id: string;
+  text: string;
+  userName: string;
+  createdAt: string;
+  isOwn?: boolean;
+  photoId?: string;
+  photoThumbnailUrl?: string;
+}
+
 interface PhotosViewProps {
   album: Album;
   photos: Photo[];
@@ -34,6 +44,8 @@ interface PhotosViewProps {
   onBatchMove?: (photoIds: string[], targetAlbumId: string) => void;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => void;
   onUpdateAlbumInfo?: (name: string, description: string) => void;
+  recuerdos?: Recuerdo[];
+  onAddRecuerdo?: (text: string) => void;
 }
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
@@ -73,8 +85,16 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
   return result;
 }
 
-export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate, onUpdateAlbumInfo }: PhotosViewProps) {
-  const totalRecuerdos = photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
+export function PhotosView({
+  album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate,
+  onUpdateAlbumInfo, recuerdos = [], onAddRecuerdo,
+}: PhotosViewProps) {
+  const hasRecuerdosTab = !!onAddRecuerdo;
+  const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
+  const sortedRecuerdos = [...recuerdos].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos'>('fotos');
+  const [showWriteRecuerdoModal, setShowWriteRecuerdoModal] = useState(false);
+  const [writeRecuerdoText, setWriteRecuerdoText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -151,6 +171,14 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
     onAddPhotos(selectedPhotos);
   };
 
+  const handleSaveRecuerdo = () => {
+    const text = writeRecuerdoText.trim();
+    if (!text) return;
+    onAddRecuerdo?.(text);
+    setShowWriteRecuerdoModal(false);
+    setWriteRecuerdoText('');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky header — back + actions */}
@@ -174,7 +202,7 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
                 <DropdownMenuTrigger asChild>
                   <button
                     className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-                    aria-label="Opciones del álbum"
+                    aria-label="Opciones del capítulo"
                   >
                     <MoreVertical className="w-5 h-5" />
                   </button>
@@ -182,7 +210,7 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => setShowEditModal(true)}>
                     <Pencil className="w-4 h-4 mr-2" />
-                    Editar información del álbum
+                    Editar información del capítulo
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -234,63 +262,114 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
         className="hidden"
       />
 
+      {/* Tabs — only when the caller supports a Recuerdos feed (real chapters, not the loose-photos virtual one) */}
+      {!selectionMode && hasRecuerdosTab && (
+        <div className="sticky top-[61px] bg-background/90 backdrop-blur-sm z-[9] border-b border-border">
+          <div className="max-w-2xl mx-auto px-6">
+            <div className="flex">
+              <TabButton label="Fotos" count={photos.length} active={activeTab === 'fotos'} onClick={() => setActiveTab('fotos')} />
+              <TabButton label="Recuerdos" count={recuerdos.length} active={activeTab === 'recuerdos'} onClick={() => setActiveTab('recuerdos')} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
-        {!selectionMode && totalRecuerdos > 0 && (
+        {!selectionMode && !hasRecuerdosTab && totalRecuerdos > 0 && (
           <div className="flex items-center gap-1.5 mb-5 -mt-1">
             <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
             <span className="text-xs text-muted-foreground/75">
-              {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este álbum
+              {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este capítulo
             </span>
           </div>
         )}
 
-        {photos.length === 0 ? (
-          <div>
-            <EmptyState
-              icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
-              title="Todavía no hay fotos aquí"
-              subtitle="Añade fotos para empezar este recuerdo"
-            />
-            {/* Primary CTA for empty state */}
-            <div className="mt-8 max-w-sm mx-auto">
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                Añadir tus primeras fotos
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {groupPhotos(photos).map((group) => (
-              <div key={group.label}>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2"
-                  style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
-                  {group.label}
-                </p>
-                <PhotoGrid
-                  photos={group.photos}
-                  selectionMode={selectionMode}
-                  selectedIds={selectedIds}
-                  onSelectPhoto={onSelectPhoto}
-                  onToggleSelect={toggleSelect}
-                  onLongPress={handleLongPress}
-                />
+        {activeTab === 'fotos' && (
+          photos.length === 0 ? (
+            <div>
+              <EmptyState
+                icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
+                title="Todavía no hay fotos aquí"
+                subtitle="Añade fotos para empezar este recuerdo"
+              />
+              {/* Primary CTA for empty state */}
+              <div className="mt-8 max-w-sm mx-auto">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Añadir tus primeras fotos
+                </Button>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {groupPhotos(photos).map((group) => (
+                <div key={group.label}>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2"
+                    style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
+                    {group.label}
+                  </p>
+                  <PhotoGrid
+                    photos={group.photos}
+                    selectionMode={selectionMode}
+                    selectedIds={selectedIds}
+                    onSelectPhoto={onSelectPhoto}
+                    onToggleSelect={toggleSelect}
+                    onLongPress={handleLongPress}
+                  />
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {activeTab === 'recuerdos' && hasRecuerdosTab && (
+          sortedRecuerdos.length === 0 ? (
+            <div className="py-12 text-center max-w-xs mx-auto">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-primary/60" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-lg font-serif text-foreground mb-2">Aún no hay recuerdos escritos</h3>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                Los recuerdos escritos por la familia harán que este capítulo cobre vida.
+              </p>
+              <button
+                onClick={() => setShowWriteRecuerdoModal(true)}
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Escribe el primer recuerdo
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedRecuerdos.map((recuerdo) => (
+                <RecuerdoFeedCard
+                  key={recuerdo.id}
+                  recuerdo={recuerdo}
+                  onPhotoClick={
+                    recuerdo.photoId
+                      ? () => {
+                          const photo = photos.find((p) => p.id === recuerdo.photoId);
+                          if (photo) onSelectPhoto(photo);
+                        }
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
 
       <SimpleFAB
-        label="Subir fotos"
-        icon={<Plus className="w-5 h-5" />}
-        onClick={() => fileInputRef.current?.click()}
+        label={activeTab === 'recuerdos' ? 'Escribe lo que recuerdas' : 'Subir fotos'}
+        icon={activeTab === 'recuerdos' ? <BookOpen className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+        onClick={() => activeTab === 'recuerdos' ? setShowWriteRecuerdoModal(true) : fileInputRef.current?.click()}
         hidden={selectionMode}
       />
 
@@ -345,10 +424,10 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
 
       {showEditModal && (
         <EditInfoModal
-          title="Editar información del álbum"
+          title="Editar información del capítulo"
           initialName={album.name}
           initialDescription={album.description ?? ''}
-          namePlaceholder="Nombre del álbum"
+          namePlaceholder="Nombre del capítulo"
           onCancel={() => setShowEditModal(false)}
           onSave={(name, description) => {
             onUpdateAlbumInfo?.(name, description);
@@ -356,6 +435,121 @@ export function PhotosView({ album, photos, onBack, onSelectPhoto, onAddPhotos, 
           }}
         />
       )}
+
+      {showWriteRecuerdoModal && (
+        <WriteRecuerdoModal
+          text={writeRecuerdoText}
+          onTextChange={setWriteRecuerdoText}
+          onCancel={() => setShowWriteRecuerdoModal(false)}
+          onSave={handleSaveRecuerdo}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Tab button ─────────────────────────────────────────────────────────────────
+function TabButton({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex items-center gap-1.5 py-3.5 px-1 mr-7 text-sm font-medium transition-colors ${
+        active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'
+      }`}
+    >
+      {label}
+      {count > 0 && (
+        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium transition-colors ${
+          active ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+        }`}>
+          {count}
+        </span>
+      )}
+      {active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+    </button>
+  );
+}
+
+// ─── Recuerdo feed card ───────────────────────────────────────────────────────
+function getInitials(name: string): string {
+  if (!name) return '??';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function RecuerdoFeedCard({ recuerdo, onPhotoClick }: { recuerdo: Recuerdo; onPhotoClick?: () => void }) {
+  const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
+
+  return (
+    <div className="bg-card border border-border/60 rounded-2xl p-5">
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5">
+          {getInitials(userName)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-sm font-medium text-foreground">{userName}</p>
+            <p className="text-xs text-muted-foreground shrink-0">{new Date(recuerdo.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+          </div>
+          <p className="text-sm text-foreground/90 leading-relaxed font-serif">{recuerdo.text}</p>
+          {recuerdo.photoThumbnailUrl && (
+            <button
+              onClick={onPhotoClick}
+              className="mt-3 block rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
+            >
+              <img src={recuerdo.photoThumbnailUrl} alt="" className="w-full max-h-36 object-cover rounded-xl" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Write recuerdo modal ───────────────────────────────────────────────────────
+function WriteRecuerdoModal({
+  text,
+  onTextChange,
+  onCancel,
+  onSave,
+}: {
+  text: string;
+  onTextChange: (v: string) => void;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-foreground/40 z-[60] flex items-end justify-center">
+      <div className="absolute inset-0" onClick={onCancel} />
+      <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-medium text-foreground">Escribe lo que recuerdas</h2>
+          <button onClick={onCancel} className="p-1.5 rounded-full hover:bg-secondary transition-colors text-muted-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <textarea
+          autoFocus
+          value={text}
+          onChange={(e) => onTextChange(e.target.value)}
+          rows={5}
+          placeholder="¿Qué recuerdas de este momento? Escríbelo para que la familia lo guarde…"
+          className="w-full border border-border rounded-2xl px-4 py-3 text-sm text-foreground bg-card outline-none focus:ring-2 focus:ring-ring resize-none placeholder:text-muted-foreground/60 leading-relaxed"
+        />
+        <div className="flex gap-3 mt-5">
+          <button onClick={onCancel} className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={onSave}
+            disabled={!text.trim()}
+            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
+          >
+            Guardar recuerdo
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

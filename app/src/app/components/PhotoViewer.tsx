@@ -127,13 +127,13 @@ export function PhotoViewer({
 
   const menuItems: { key: string; label: string; onSelect: () => void }[] = [];
   if (canEditAlbum && onSetAlbumCover) {
-    menuItems.push({ key: 'album-cover', label: 'Establecer como portada del álbum', onSelect: () => onSetAlbumCover(photo) });
+    menuItems.push({ key: 'album-cover', label: 'Establecer como portada del capítulo', onSelect: () => onSetAlbumCover(photo) });
   }
   if (isCustodio && onSetBaulCover) {
     menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', onSelect: () => onSetBaulCover(photo) });
   }
   if (onMovePhoto && moveableAlbums.length > 0) {
-    menuItems.push({ key: 'move', label: 'Mover a otro álbum', onSelect: () => setShowMoveModal(true) });
+    menuItems.push({ key: 'move', label: 'Mover a otro capítulo', onSelect: () => setShowMoveModal(true) });
   }
   if (onChangeDate) {
     menuItems.push({ key: 'date', label: 'Cambiar fecha', onSelect: () => setShowDateModal(true) });
@@ -416,10 +416,10 @@ export function PhotoViewer({
         </div>
       )}
 
-      {/* Mover a otro álbum modal */}
+      {/* Mover a otro capítulo modal */}
       {showMoveModal && (
         <MoveModal
-          title="Mover a otro álbum"
+          title="Mover a otro capítulo"
           albums={moveableAlbums}
           selectedId={moveTargetId}
           onSelect={setMoveTargetId}

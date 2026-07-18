@@ -53,7 +53,7 @@ export function UploadConfirmationScreen({
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Volver</span>
           </button>
-          <h1 className="text-3xl text-foreground mb-1">Añadir fotos al álbum</h1>
+          <h1 className="text-3xl text-foreground mb-1">Añadir fotos al capítulo</h1>
           <p className="text-sm text-muted-foreground">{album.name}</p>
         </div>
       </div>

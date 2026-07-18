@@ -65,7 +65,7 @@ export function ShareTargetBaulScreen({
                 <div className="min-w-0">
                   <h3 className="font-serif text-foreground text-lg leading-tight truncate">{baul.name}</h3>
                   <p className="text-muted-foreground text-xs mt-0.5">
-                    {baul.albumCount} {baul.albumCount === 1 ? 'álbum' : 'álbumes'}
+                    {baul.albumCount} {baul.albumCount === 1 ? 'capítulo' : 'capítulos'}
                   </p>
                 </div>
               </Card>

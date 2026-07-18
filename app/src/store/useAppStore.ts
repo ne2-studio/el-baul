@@ -37,6 +37,7 @@ interface AppState {
   sharedUsers: Record<string, SharedUser[]>;
   removalRequests: Record<string, RemovalRequest[]>;
   recuerdos: Record<string, Recuerdo[]>;
+  albumRecuerdos: Record<string, Recuerdo[]>;
   isLoading: boolean;
   error: string | null;
 
@@ -50,6 +51,8 @@ interface AppState {
   loadLoosePhotos: (baulId: string) => Promise<void>;
   loadRecuerdos: (photoId: string) => Promise<void>;
   addRecuerdo: (photoId: string, text: string) => Promise<void>;
+  loadAlbumRecuerdos: (baulId: string, albumId: string) => Promise<void>;
+  addAlbumRecuerdo: (baulId: string, albumId: string, text: string) => Promise<void>;
 
   createBaul: (name: string, description: string) => Promise<Baul>;
   createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
@@ -94,6 +97,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   sharedUsers: {},
   removalRequests: {},
   recuerdos: {},
+  albumRecuerdos: {},
   isLoading: true,
   error: null,
 
@@ -114,6 +118,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     sharedUsers: {},
     removalRequests: {},
     recuerdos: {},
+    albumRecuerdos: {},
   }),
 
   fetchData: async () => {
@@ -178,6 +183,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     const recuerdo = await api.recuerdos.create(photoId, text);
     set((state) => ({
       recuerdos: { ...state.recuerdos, [photoId]: [...(state.recuerdos[photoId] || []), recuerdo] },
+    }));
+  },
+
+  loadAlbumRecuerdos: async (baulId, albumId) => {
+    const recuerdos = await api.recuerdos.getAllByAlbum(baulId, albumId);
+    set((state) => ({ albumRecuerdos: { ...state.albumRecuerdos, [albumId]: recuerdos } }));
+  },
+
+  addAlbumRecuerdo: async (baulId, albumId, text) => {
+    const recuerdo = await api.recuerdos.createForAlbum(baulId, albumId, text);
+    set((state) => ({
+      albumRecuerdos: { ...state.albumRecuerdos, [albumId]: [recuerdo, ...(state.albumRecuerdos[albumId] || [])] },
     }));
   },
 

@@ -24,7 +24,7 @@ export const CreateAlbumFormRoute: React.FC = () => {
       navigate(`/baules/${baul.id}`);
     } catch (error) {
       console.error('Error creating album:', error);
-      showToastMessage('Error al crear el álbum');
+      showToastMessage('Error al crear el capítulo');
     }
   };
   

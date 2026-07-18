@@ -150,6 +150,79 @@ public class AlbumManager(
         return await ToDtoAsync(updated);
     }
 
+    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid albumId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var album = await albumRepository.GetByIdAsync(albumId);
+        if (album is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Album not found");
+
+        var baul = await baulRepository.GetByIdAsync(album.BaulId);
+        if (baul is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Baul not found");
+
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
+        if (!hasAccess) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
+
+        var recuerdos = (await recuerdoRepository.GetByAlbumIdAsync(albumId)).ToList();
+
+        var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
+        var thumbnailUrls = new Dictionary<Guid, string>();
+        foreach (var photoId in photoIds)
+        {
+            var photo = await photoRepository.GetByIdAsync(photoId);
+            if (photo is not null)
+                thumbnailUrls[photoId] = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+        }
+
+        var dtos = new List<RecuerdoDto>();
+        foreach (var recuerdo in recuerdos)
+        {
+            var user = await userRepository.GetByIdAsync(recuerdo.UserId);
+            var thumbnailUrl = recuerdo.PhotoId is { } photoId ? thumbnailUrls.GetValueOrDefault(photoId) : null;
+            dtos.Add(ToRecuerdoDto(recuerdo, user?.Name ?? "Usuario desconocido", recuerdo.UserId == userId, thumbnailUrl));
+        }
+
+        return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
+    }
+
+    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid albumId, string text)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var album = await albumRepository.GetByIdAsync(albumId);
+        if (album is null)
+        {
+            logger.LogWarning("Recuerdo creation rejected: album not found {AlbumId}", albumId);
+            return Result.Failure<RecuerdoDto>("Album not found");
+        }
+
+        var baul = await baulRepository.GetByIdAsync(album.BaulId);
+        if (baul is null)
+        {
+            logger.LogWarning("Recuerdo creation rejected: baul not found {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<RecuerdoDto>("Baul not found");
+        }
+
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
+        if (!hasAccess)
+        {
+            logger.LogWarning("Recuerdo creation rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure<RecuerdoDto>("Access denied");
+        }
+
+        var user = await userRepository.GetByIdAsync(userId);
+        var recuerdo = new Recuerdo(idGenerator.NewId(), null, albumId, userId, text, clock.UtcNow());
+        await recuerdoRepository.CreateAsync(recuerdo);
+
+        logger.LogInformation("Recuerdo created {BaulId} {AlbumId} {RecuerdoId}", album.BaulId, albumId, recuerdo.Id);
+
+        return ToRecuerdoDto(recuerdo, user?.Name ?? "Usuario", isOwn: true, photoThumbnailUrl: null);
+    }
+
+    private static RecuerdoDto ToRecuerdoDto(Recuerdo recuerdo, string userName, bool isOwn, string? photoThumbnailUrl) =>
+        new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
+            recuerdo.CreatedAt, isOwn, photoThumbnailUrl);
+
     private async Task<AlbumDto> ToDtoAsync(Album album)
     {
         var coverUrl = album.CoverPhotoKey is { Length: > 0 }

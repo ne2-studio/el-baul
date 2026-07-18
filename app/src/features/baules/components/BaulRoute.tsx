@@ -44,14 +44,14 @@ export const BaulRoute: React.FC = () => {
         return; // El siguiente renderizado tendrá el baúl (si existe) y se ejecutará el siguiente if
       }
 
-      // Si el baúl no tiene álbumes cargados en el store, los cargamos
+      // Si el baúl no tiene capítulos cargados en el store, los cargamos
       if (!albums[baulId]) {
         try {
           setIsLoading(true);
           await Promise.all([loadAlbums(baulId), loadLoosePhotos(baulId)]);
         } catch (error) {
           console.error('Error loading albums on route enter:', error);
-          showToastMessage('Error al cargar los álbumes del baúl');
+          showToastMessage('Error al cargar los capítulos del baúl');
         } finally {
           setIsLoading(false);
         }

@@ -18,7 +18,7 @@ export const LooseUploadConfirmationRoute: React.FC = () => {
   const looseAlbum: Album = {
     id: 'sueltas',
     name: 'Fotos sueltas',
-    description: 'Fotos que aún no pertenecen a ningún álbum',
+    description: 'Fotos que aún no pertenecen a ningún capítulo',
     photoCount: photos.length,
     coverPhotoUrl: photos[0]?.thumbnailUrl,
   };

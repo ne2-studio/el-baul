@@ -8,4 +8,7 @@ public interface IAlbumManager
     Task<Result<AlbumDto>> CreateAsync(Guid baulId, string name, string? description);
     Task<Result<AlbumDto>> SetCoverAsync(Guid albumId, Guid photoId);
     Task<Result<AlbumDto>> UpdateAsync(Guid albumId, string name, string? description);
+
+    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid albumId);
+    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid albumId, string text);
 }

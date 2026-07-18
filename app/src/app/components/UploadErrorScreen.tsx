@@ -55,7 +55,7 @@ export function UploadErrorScreen({ failedPhotos, succeededCount, onRetry, onBac
             Reintentar
           </Button>
           <Button variant="ghost" fullWidth onClick={onBack}>
-            Volver al álbum
+            Volver al capítulo
           </Button>
         </div>
       </div>

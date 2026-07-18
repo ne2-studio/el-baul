@@ -127,7 +127,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
       {/* Gradient overlay — solid enough for legibility */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/20 to-black/75" />
 
-      {/* Top-left: title + description + album count */}
+      {/* Top-left: title + description + chapter count */}
       <div className="absolute top-4 left-4 right-16">
         <h3 className="font-serif text-white text-xl leading-tight mb-0.5 drop-shadow">
           {baul.name}
@@ -136,7 +136,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
           <p className="text-white/90 text-xs leading-snug line-clamp-1 drop-shadow-sm">{baul.description}</p>
         )}
         <p className="text-white/80 text-xs mt-1">
-          {baul.albumCount} {baul.albumCount === 1 ? 'álbum' : 'álbumes'}
+          {baul.albumCount} {baul.albumCount === 1 ? 'capítulo' : 'capítulos'}
         </p>
       </div>
 

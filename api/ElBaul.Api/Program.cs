@@ -18,6 +18,11 @@ if (args.Length > 0 && args[0] == "backfill-exif-dates")
     return await BackfillExifDatesCommand.RunAsync(args);
 }
 
+if (args.Length > 0 && args[0] == "backfill-recuerdo-album-id")
+{
+    return await BackfillRecuerdoAlbumIdCommand.RunAsync(args);
+}
+
 // Bootstrap logger: catches startup failures before configuration is available.
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
