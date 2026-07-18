@@ -5,6 +5,7 @@ import { ProfileMenuModal } from './components/ProfileMenuModal';
 import { PlanLimitModal } from './components/PlanLimitModal';
 import { Toast } from './components/Toast';
 import { NativeShareHandler } from './components/NativeShareHandler';
+import { ScrollToTop } from './components/ScrollToTop';
 import { setAccessToken } from '@/api';
 import { Baul } from '@/types';
 
@@ -145,6 +146,7 @@ function App() {
 
   return (
     <div className="h-screen w-full bg-[var(--bg-primary)]">
+      <ScrollToTop />
       <NativeShareHandler />
 
       <Routes>
