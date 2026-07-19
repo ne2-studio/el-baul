@@ -204,7 +204,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   createBaul: async (name, description) => {
     const baul = await api.baules.create(name, description);
-    set((state) => ({ baules: [...state.baules, baul] }));
+    set((state) => ({ baules: [baul, ...state.baules] }));
     return baul;
   },
 

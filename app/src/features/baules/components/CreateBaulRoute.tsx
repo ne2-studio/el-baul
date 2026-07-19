@@ -19,15 +19,15 @@ export const CreateBaulRoute: React.FC = () => {
 
     try {
       const isFirstBaul = baules.length === 0;
-      await storeCreateBaul(name, description);
-      
+      const baul = await storeCreateBaul(name, description);
+
       // Update subscription usage
       setSubscription(prev => ({
         ...prev,
         baulesUsed: prev.baulesUsed + 1
       }));
-      
-      navigate('/baules');
+
+      navigate(`/baules/${baul.id}`);
       
       if (isFirstBaul) {
         setTimeout(() => {
