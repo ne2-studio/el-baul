@@ -9,6 +9,7 @@ Monorepo with two independently deployable services, no shared code between them
 | Directory | Contents |
 |-----------|----------|
 | `docs/ARCHITECTURE.md` | The architecture standard both services follow |
+| `docs/DESIGN.md` | The design system (colors, typography, spacing) the frontend implements |
 | `docs/API.md` | The API contract for the backend |
 | `api/` | ASP.NET Core (.NET 10) ports & adapters backend — see [`api/README.md`](api/README.md) |
 | `app/` | React 19 + Vite + Zustand frontend — see [`app/README.md`](app/README.md) |

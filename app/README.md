@@ -2,7 +2,8 @@
 
 **El Baúl** es una plataforma para preservar y compartir recuerdos familiares y de amigos
 de forma segura y organizada. Este directorio contiene el frontend, construido siguiendo
-[`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
+[`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) y el sistema de diseño definido en
+[`docs/DESIGN.md`](../docs/DESIGN.md).
 
 ---
 
@@ -95,6 +96,9 @@ src/
 ## 🎨 Diseño original
 
 Este proyecto nació a partir del prototipo diseñado en Figma: [El Baúl App Prototype](https://www.figma.com/design/2TWXsOsRjSdpphDCRWzgf6/El-Ba%C3%BAl-App-Prototype).
+Los tokens de diseño (colores, tipografía, espaciado, radios) derivados de ese prototipo
+están documentados en [`docs/DESIGN.md`](../docs/DESIGN.md) y son la fuente de verdad
+para el tema de Tailwind (`@theme` en `index.css`).
 
 ---
 Desarrollado con ❤️ para preservar los mejores recuerdos.

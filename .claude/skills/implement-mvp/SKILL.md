@@ -97,8 +97,9 @@ For each primary port:
 ## Phase 6 — Frontend (only if the PRD implies end-user UI)
 
 If — and only if — `docs/PRD.md` describes screens/interactions a human uses (not a
-pure API/service), implement the frontend per `ARCHITECTURE.md`'s Frontend section,
-using the existing `types.ts`/`api.ts`/`store/`/`App.tsx`/`components/` as the pattern:
+pure API/service), implement the frontend per `ARCHITECTURE.md`'s Frontend section and
+`docs/DESIGN.md`'s tokens (colors, typography, spacing, radii — wired into Tailwind's
+`@theme`), using the existing `types.ts`/`api.ts`/`store/`/`App.tsx`/`components/` as the pattern:
 one entity class per DTO shape, one `api.<resource>` namespace per backend resource,
 one Zustand store action per mutation (calling the API, then updating state from the
 response — never optimistically), flat `components/`. Retire any demo Task UI the same
