@@ -138,6 +138,15 @@ services:
     depends_on:
       - api
 
+  # Static Storybook site for app/'s component library. Unlike the other services,
+  # its build context is the repo root - see storybook/Dockerfile for why.
+  storybook:
+    build:
+      context: .
+      dockerfile: storybook/Dockerfile
+    ports:
+      - "6006:80"
+
 volumes:
   pgdata:
   miniodata:

@@ -1,0 +1,12 @@
+# Only applies to builds using the repo root as context (currently just
+# storybook/Dockerfile) - api/, app/, imgproxy/ each build with their own
+# directory as context and their own .dockerignore.
+**/node_modules
+app/dist
+app/android
+app/prototype
+.git
+**/.idea
+**/.claude
+**/.env*
+**/*.log
