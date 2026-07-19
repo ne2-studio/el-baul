@@ -8,6 +8,7 @@ import { NativeShareHandler } from './components/NativeShareHandler';
 import { ScrollToTop } from './components/ScrollToTop';
 import { setAccessToken } from '@/api';
 import { Baul } from '@/types';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 // Auth and Route Guards
 import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
@@ -71,6 +72,8 @@ function App() {
     reset
   } = useAppStore();
 
+  const { run, isPending } = useAsyncAction();
+
   // Loaded once per session; features gated by it stay off until the fetch resolves.
   useEffect(() => {
     useAppConfigStore.getState().fetchAppConfig();
@@ -104,45 +107,50 @@ function App() {
   }, [auth.isAuthenticated, auth.user]);
 
   const loadUserData = async () => {
-    try {
-      await fetchData();
+    const result = await run(() => fetchData(), {
+      key: 'loadUserData',
+      errorMessage: 'No se pudieron cargar tus baúles. Comprueba tu conexión e inténtalo de nuevo.',
+    });
+    if (!result.ok) return;
 
-      const currentBaules = useAppStore.getState().baules;
+    const currentBaules = useAppStore.getState().baules;
 
-      // Update subscription usage
-      const custodianBaules = currentBaules.filter((b: Baul) => b.isCustodio);
-      setSubscription(prev => ({
-        ...prev,
-        baulesUsed: custodianBaules.length
-      }));
+    // Update subscription usage
+    const custodianBaules = currentBaules.filter((b: Baul) => b.isCustodio);
+    setSubscription(prev => ({
+      ...prev,
+      baulesUsed: custodianBaules.length
+    }));
 
-      // Navigate to appropriate screen
-      if (currentBaules.length === 0) {
-        if (location.pathname === '/baules') {
-          navigate('/empty');
-        }
-      } else {
-        // Solo redirigir automáticamente si no hay un redirectTo pendiente
-        const params = new URLSearchParams(location.search);
-        const hasRedirectTo = params.has('redirectTo');
-
-        if (!hasRedirectTo && (location.pathname === '/' || location.pathname === '/empty' || location.pathname === '/callback')) {
-          navigate('/baules', { replace: true });
-        }
+    // Navigate to appropriate screen
+    if (currentBaules.length === 0) {
+      if (location.pathname === '/baules') {
+        navigate('/empty');
       }
-    } catch (error) {
-      console.error('Error loading user data:', error);
+    } else {
+      // Solo redirigir automáticamente si no hay un redirectTo pendiente
+      const params = new URLSearchParams(location.search);
+      const hasRedirectTo = params.has('redirectTo');
+
+      if (!hasRedirectTo && (location.pathname === '/' || location.pathname === '/empty' || location.pathname === '/callback')) {
+        navigate('/baules', { replace: true });
+      }
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      reset();
-      await auth.removeUser();
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  const handleSignOut = async (): Promise<boolean> => {
+    // auth.removeUser() se espera ANTES de limpiar el estado local: si falla, el usuario
+    // se queda con la sesión (y los datos) tal cual estaban, en vez de ver un estado ya
+    // vacío sin haber cerrado sesión de verdad en el proveedor OIDC.
+    const result = await run(() => auth.removeUser(), {
+      key: 'signOut',
+      errorMessage: 'Error al cerrar sesión',
+    });
+    if (!result.ok) return false;
+
+    reset();
+    navigate('/');
+    return true;
   };
 
   return (
@@ -307,10 +315,11 @@ function App() {
             setShowProfileMenu(false);
             navigate('/suscripcion');
           }}
-          onSignOut={() => {
-            setShowProfileMenu(false);
-            handleSignOut();
+          onSignOut={async () => {
+            const signedOut = await handleSignOut();
+            if (signedOut) setShowProfileMenu(false);
           }}
+          isSigningOut={isPending('signOut')}
         />
       )}
 

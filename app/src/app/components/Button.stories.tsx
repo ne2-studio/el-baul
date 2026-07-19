@@ -8,7 +8,7 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'ghost'],
+      options: ['primary', 'secondary', 'ghost', 'danger'],
     },
   },
 } satisfies Meta<typeof Button>;
@@ -34,6 +34,13 @@ export const Ghost: Story = {
   args: {
     children: 'Omitir',
     variant: 'ghost',
+  },
+};
+
+export const Danger: Story = {
+  args: {
+    children: 'Quitar acceso',
+    variant: 'danger',
   },
 };
 

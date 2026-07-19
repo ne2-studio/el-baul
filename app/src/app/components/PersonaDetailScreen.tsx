@@ -11,7 +11,9 @@ interface PersonaDetailScreenProps {
   onEdit: () => void;
   onShareInvite: () => void;
   onChangeRole: (role: BaulRole) => void;
-  onRevokeAccess: () => void;
+  /** Devuelve si la revocación tuvo éxito — el modal se queda abierto (con spinner)
+   * hasta saberlo, y solo se cierra por sí solo si el resultado fue true. */
+  onRevokeAccess: () => Promise<boolean>;
 }
 
 export function PersonaDetailScreen({
@@ -24,9 +26,17 @@ export function PersonaDetailScreen({
   onRevokeAccess,
 }: PersonaDetailScreenProps) {
   const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
   const displayName = persona.name || persona.nickname;
   const isPending = persona.status === 'pending';
   const canManage = isAdmin && persona.role !== 'custodio';
+
+  const handleConfirmRevoke = async () => {
+    setIsRevoking(true);
+    const ok = await onRevokeAccess();
+    setIsRevoking(false);
+    if (ok) setShowRevokeModal(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -148,10 +158,8 @@ export function PersonaDetailScreen({
       {showRevokeModal && (
         <RevokeAccessModal
           userName={displayName}
-          onConfirm={() => {
-            setShowRevokeModal(false);
-            onRevokeAccess();
-          }}
+          isSubmitting={isRevoking}
+          onConfirm={handleConfirmRevoke}
           onCancel={() => setShowRevokeModal(false)}
         />
       )}

@@ -4,6 +4,7 @@ import { PersonaDetailScreen } from '@/app/components/PersonaDetailScreen';
 import { EditPersonaModal } from '@/app/components/EditPersonaModal';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { isAdminRole } from '@/utils/roleUtils';
 import { BaulRole } from '@/types';
 
@@ -20,6 +21,7 @@ export const PersonaDetailRoute: React.FC = () => {
     updateUserRole,
     revokeAccess,
   } = useAppStore();
+  const { run, isPending } = useAsyncAction();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -31,33 +33,28 @@ export const PersonaDetailRoute: React.FC = () => {
     if (!baulId || persona) return;
 
     setIsLoading(true);
-    loadSharedUsers(baulId)
-      .catch((error) => {
-        console.error('Error loading persona:', error);
-        showToastMessage('Error al cargar la ficha');
-      })
-      .finally(() => setIsLoading(false));
-  }, [baulId, persona, loadSharedUsers, showToastMessage]);
+    run(() => loadSharedUsers(baulId), { errorMessage: 'Error al cargar la ficha' }).finally(() =>
+      setIsLoading(false)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baulId, persona, loadSharedUsers]);
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
   if (!baulId || !sharedUserId || !persona) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
 
-  const handleSave = (name: string, nickname: string) => {
-    updatePersona(baulId, sharedUserId, name, nickname)
-      .then(() => {
-        setIsEditing(false);
-        showToastMessage('Ficha actualizada');
-      })
-      .catch((error) => {
-        console.error('Error updating persona:', error);
-        showToastMessage('Error al actualizar la ficha');
-      });
+  const handleSave = async (name: string, nickname: string) => {
+    const result = await run(() => updatePersona(baulId, sharedUserId, name, nickname), {
+      key: 'save',
+      successMessage: 'Ficha actualizada',
+      errorMessage: 'Error al actualizar la ficha',
+    });
+    if (result.ok) setIsEditing(false);
   };
 
   const handleUploadAvatar = (file: File) => {
-    uploadPersonaAvatar(baulId, sharedUserId, file).catch((error) => {
-      console.error('Error uploading avatar:', error);
-      showToastMessage('Error al subir la foto');
+    run(() => uploadPersonaAvatar(baulId, sharedUserId, file), {
+      key: 'avatar',
+      errorMessage: 'Error al subir la foto',
     });
   };
 
@@ -92,19 +89,19 @@ export const PersonaDetailRoute: React.FC = () => {
   };
 
   const handleChangeRole = (role: BaulRole) => {
-    updateUserRole(baulId, sharedUserId, role).catch((error) => {
-      console.error('Error updating role:', error);
-      showToastMessage('Error al actualizar el rol');
+    run(() => updateUserRole(baulId, sharedUserId, role), {
+      key: 'role',
+      errorMessage: 'Error al actualizar el rol',
     });
   };
 
-  const handleRevokeAccess = () => {
-    revokeAccess(baulId, sharedUserId)
-      .then(() => navigate(`/baules/${baulId}`))
-      .catch((error) => {
-        console.error('Error revoking access:', error);
-        showToastMessage('Error al quitar el acceso');
-      });
+  const handleRevokeAccess = async (): Promise<boolean> => {
+    const result = await run(() => revokeAccess(baulId, sharedUserId), {
+      key: 'revoke',
+      errorMessage: 'Error al quitar el acceso',
+    });
+    if (result.ok) navigate(`/baules/${baulId}`);
+    return result.ok;
   };
 
   return (
@@ -124,6 +121,8 @@ export const PersonaDetailRoute: React.FC = () => {
           onCancel={() => setIsEditing(false)}
           onSave={handleSave}
           onUploadAvatar={handleUploadAvatar}
+          isSubmitting={isPending('save')}
+          isUploadingAvatar={isPending('avatar')}
         />
       )}
     </>

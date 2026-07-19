@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from './Button';
 
 interface EditInfoModalProps {
   title: string;
@@ -7,6 +8,7 @@ interface EditInfoModalProps {
   namePlaceholder: string;
   onCancel: () => void;
   onSave: (name: string, description: string) => void;
+  isSubmitting?: boolean;
 }
 
 export function EditInfoModal({
@@ -16,13 +18,14 @@ export function EditInfoModal({
   namePlaceholder,
   onCancel,
   onSave,
+  isSubmitting = false,
 }: EditInfoModalProps) {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
 
   const handleSave = () => {
     const trimmedName = name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName || isSubmitting) return;
     onSave(trimmedName, description.trim());
   };
 
@@ -67,17 +70,19 @@ export function EditInfoModal({
         <div className="flex gap-3 pt-1">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+            disabled={isSubmitting}
+            className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
-          <button
+          <Button
             onClick={handleSave}
-            disabled={!name.trim()}
-            className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            disabled={!name.trim() || isSubmitting}
+            isLoading={isSubmitting}
+            className="flex-1 text-sm"
           >
             Guardar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

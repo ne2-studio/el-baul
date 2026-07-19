@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
@@ -27,7 +27,8 @@ export function Button({
   const variantStyles = {
     primary: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
     secondary: "bg-secondary text-secondary-foreground hover:bg-muted",
-    ghost: "text-foreground hover:bg-secondary"
+    ghost: "text-foreground hover:bg-secondary",
+    danger: "bg-destructive text-destructive-foreground hover:opacity-90 shadow-sm"
   };
   
   const widthStyles = fullWidth ? "w-full" : "";

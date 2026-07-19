@@ -4,6 +4,7 @@ import { useAuth } from 'react-oidc-context';
 import { PhotosView } from '@/app/components/PhotosView';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
 
@@ -16,6 +17,7 @@ export const AlbumRoute: React.FC = () => {
     movePhotos, changePhotoDateBatch, renameAlbum, loadAlbumRecuerdos, addAlbumRecuerdo,
   } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
+  const { run } = useAsyncAction();
 
   const baul = baules.find(b => b.id === baulId);
   const album = albums[baulId!]?.find(a => a.id === albumId);
@@ -35,34 +37,32 @@ export const AlbumRoute: React.FC = () => {
     });
   };
 
-  const handleUpdateAlbumInfo = (name: string, description: string) => {
-    renameAlbum(baul.id, album.id, name, description)
-      .then(() => showToastMessage('Información del capítulo actualizada'))
-      .catch((error) => {
-        console.error('Error updating album info:', error);
-        showToastMessage('Error al actualizar la información del capítulo');
-      });
+  const handleUpdateAlbumInfo = async (name: string, description: string): Promise<boolean> => {
+    const result = await run(() => renameAlbum(baul.id, album.id, name, description), {
+      successMessage: 'Información del capítulo actualizada',
+      errorMessage: 'Error al actualizar la información del capítulo',
+    });
+    return result.ok;
   };
 
-  const handleBatchMove = (photoIds: string[], targetAlbumId: string) => {
-    movePhotos(baul.id, album.id, photoIds, targetAlbumId)
-      .then(() => {
-        showToastMessage(`${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`);
-        navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
-      })
-      .catch((error) => {
-        console.error('Error moving photos:', error);
-        showToastMessage('Error al mover las fotos');
-      });
+  const handleBatchMove = async (
+    photoIds: string[],
+    targetAlbumId: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => {
+    const result = await run(() => movePhotos(baul.id, album.id, photoIds, targetAlbumId, onItemSettled), {
+      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
+      errorMessage: 'Algunas fotos no se pudieron mover',
+    });
+    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
   };
 
-  const handleBatchChangeDate = (photoIds: string[], date: PhotoDate) => {
-    changePhotoDateBatch(baul.id, album.id, photoIds, date)
-      .then(() => showToastMessage(`Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`))
-      .catch((error) => {
-        console.error('Error changing photo dates:', error);
-        showToastMessage('Error al cambiar la fecha');
-      });
+  const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
+    const result = await run(() => changePhotoDateBatch(baul.id, album.id, photoIds, date), {
+      successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
+      errorMessage: 'Error al cambiar la fecha',
+    });
+    return result.ok;
   };
 
   return (
@@ -75,6 +75,9 @@ export const AlbumRoute: React.FC = () => {
       onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${photo.id}`)}
       onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>
         navigate(`/baules/${baul.id}/albumes/${album.id}/confirmar`, { state: { selectedPhotos } })
+      }
+      onPhotosDropped={(count) =>
+        showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`)
       }
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}

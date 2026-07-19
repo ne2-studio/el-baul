@@ -52,7 +52,6 @@ interface AppState {
   recuerdos: Record<string, Recuerdo[]>;
   albumRecuerdos: Record<string, Recuerdo[]>;
   isLoading: boolean;
-  error: string | null;
 
   setAuthenticated: (value: boolean) => void;
   setSubscription: (subscription: Subscription | ((prev: Subscription) => Subscription)) => void;
@@ -86,12 +85,18 @@ interface AppState {
     selectedPhotos: UploadItem[],
     onItemSettled?: (result: UploadItemResult) => void
   ) => Promise<{ results: UploadItemResult[]; albumId: string | null }>;
-  movePhotos: (baulId: string, sourceAlbumId: string | null, photoIds: string[], targetAlbumId: string) => Promise<void>;
+  movePhotos: (
+    baulId: string,
+    sourceAlbumId: string | null,
+    photoIds: string[],
+    targetAlbumId: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => Promise<void>;
   deletePhoto: (baulId: string, albumId: string | null, photoId: string, reason?: string) => Promise<void>;
   changePhotoDate: (baulId: string, albumId: string | null, photoId: string, date: PhotoDate) => Promise<void>;
   changePhotoDateBatch: (baulId: string, albumId: string | null, photoIds: string[], date: PhotoDate) => Promise<void>;
-  setBaulCover: (baulId: string, photoId: string) => Promise<void>;
-  setAlbumCover: (baulId: string, albumId: string, photoId: string) => Promise<void>;
+  setBaulCover: (baulId: string, photoId: string, optimisticThumbnailUrl?: string) => Promise<void>;
+  setAlbumCover: (baulId: string, albumId: string, photoId: string, optimisticThumbnailUrl?: string) => Promise<void>;
   renameBaul: (baulId: string, name: string, description?: string) => Promise<void>;
   renameAlbum: (baulId: string, albumId: string, name: string, description?: string) => Promise<void>;
 
@@ -104,7 +109,9 @@ interface AppState {
 
   removePhoto: (baulId: string, requestId: string, photoId: string) => Promise<void>;
   keepPhoto: (baulId: string, requestId: string) => Promise<void>;
-  submitRemovalRequest: (baulId: string, photo: Photo, reason: string) => Promise<void>;
+  // Solo se usa photo.id — se acepta cualquier objeto con id para no acoplar esta acción
+  // al tipo Photo concreto de cada pantalla (PhotoViewer usa su propia interfaz local).
+  submitRemovalRequest: (baulId: string, photo: { id: string }, reason: string) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -121,7 +128,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   recuerdos: {},
   albumRecuerdos: {},
   isLoading: true,
-  error: null,
 
   setAuthenticated: (value) => set({ isAuthenticated: value }),
 
@@ -144,7 +150,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   }),
 
   fetchData: async () => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true });
     try {
       const [baules, profile] = await Promise.all([
         api.baules.getAll(),
@@ -159,7 +165,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
+      set({ isLoading: false });
       throw error;
     }
   },
@@ -355,9 +361,28 @@ export const useAppStore = create<AppState>((set, get) => ({
     return { results, albumId: targetAlbumId };
   },
 
-  movePhotos: async (baulId, sourceAlbumId, photoIds, targetAlbumId) => {
+  // Cada foto se mueve con su propia petición y su propio try/catch — igual que
+  // uploadPhotos — para que un fallo a mitad de lote no aborte el resto ni deje el
+  // store desincronizado con lo que sí se movió server-side (bug real: la versión
+  // anterior lanzaba en el primer fallo sin haber reconciliado nada). Si hay algún
+  // fallo se lanza al final, tras reconciliar los que sí tuvieron éxito, para que el
+  // toast de error del caller siga disparándose.
+  movePhotos: async (baulId, sourceAlbumId, photoIds, targetAlbumId, onItemSettled) => {
+    const succeededIds: string[] = [];
+    let failedCount = 0;
     for (const photoId of photoIds) {
-      await api.photos.move(photoId, targetAlbumId);
+      try {
+        await api.photos.move(photoId, targetAlbumId);
+        succeededIds.push(photoId);
+        onItemSettled?.({ photoId });
+      } catch (error) {
+        failedCount += 1;
+        onItemSettled?.({ photoId, error: error instanceof Error ? error.message : 'No se pudo mover la foto' });
+      }
+    }
+
+    if (succeededIds.length === 0) {
+      throw new Error(`No se pudo mover ninguna de las ${photoIds.length} fotos`);
     }
 
     // Re-fetch the target album's photos from the server rather than merging
@@ -370,8 +395,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => {
       // sourceAlbumId is null when moving out of the "Fotos sueltas" virtual album.
       const sourcePhotos = sourceAlbumId ? (state.photos[sourceAlbumId] || []) : (state.loosePhotos[baulId] || []);
-      const movedCount = sourcePhotos.filter((p) => photoIds.includes(p.id)).length;
-      const remainingSourcePhotos = sourcePhotos.filter((p) => !photoIds.includes(p.id));
+      const movedCount = sourcePhotos.filter((p) => succeededIds.includes(p.id)).length;
+      const remainingSourcePhotos = sourcePhotos.filter((p) => !succeededIds.includes(p.id));
 
       return {
         photos: {
@@ -398,6 +423,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         },
       };
     });
+
+    if (failedCount > 0) {
+      throw new Error(`${failedCount} de ${photoIds.length} fotos no se pudieron mover`);
+    }
   },
 
   deletePhoto: async (baulId, albumId, photoId, reason) => {
@@ -437,21 +466,48 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
   },
 
-  setBaulCover: async (baulId, photoId) => {
-    const updated = await api.baules.setCover(baulId, photoId);
-    set((state) => ({
-      baules: state.baules.map((b) => (b.id === baulId ? updated : b)),
-    }));
+  // Optimista: si se conoce ya la miniatura de la foto elegida, se aplica de inmediato
+  // (mismo criterio que ya usa uploadPhotos al rellenar coverPhotoUrl con thumbnailUrl)
+  // para que el menú de "establecer portada" dé feedback instantáneo en vez de quedarse
+  // mudo hasta que responda el servidor. Si la petición falla, se revierte al snapshot previo.
+  setBaulCover: async (baulId, photoId, optimisticThumbnailUrl) => {
+    const previous = get().baules;
+    if (optimisticThumbnailUrl) {
+      set((state) => ({
+        baules: state.baules.map((b) => (b.id === baulId ? { ...b, coverPhotoUrl: optimisticThumbnailUrl } : b)),
+      }));
+    }
+    try {
+      const updated = await api.baules.setCover(baulId, photoId);
+      set((state) => ({ baules: state.baules.map((b) => (b.id === baulId ? updated : b)) }));
+    } catch (error) {
+      set({ baules: previous });
+      throw error;
+    }
   },
 
-  setAlbumCover: async (baulId, albumId, photoId) => {
-    const updated = await api.albums.setCover(baulId, albumId, photoId);
-    set((state) => ({
-      albums: {
-        ...state.albums,
-        [baulId]: (state.albums[baulId] || []).map((a) => (a.id === albumId ? updated : a)),
-      },
-    }));
+  setAlbumCover: async (baulId, albumId, photoId, optimisticThumbnailUrl) => {
+    const previous = get().albums[baulId] || [];
+    if (optimisticThumbnailUrl) {
+      set((state) => ({
+        albums: {
+          ...state.albums,
+          [baulId]: previous.map((a) => (a.id === albumId ? { ...a, coverPhotoUrl: optimisticThumbnailUrl } : a)),
+        },
+      }));
+    }
+    try {
+      const updated = await api.albums.setCover(baulId, albumId, photoId);
+      set((state) => ({
+        albums: {
+          ...state.albums,
+          [baulId]: (state.albums[baulId] || []).map((a) => (a.id === albumId ? updated : a)),
+        },
+      }));
+    } catch (error) {
+      set((state) => ({ albums: { ...state.albums, [baulId]: previous } }));
+      throw error;
+    }
   },
 
   renameBaul: async (baulId, name, description) => {
@@ -503,14 +559,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
+  // Optimista: el <select> de rol está controlado por este valor, así que sin aplicar
+  // el cambio antes del await se ve "rebotar" al valor anterior mientras se espera al
+  // servidor. Si la petición falla, se revierte al snapshot previo.
   updateUserRole: async (baulId, sharedUserId, role) => {
-    await api.baules.updateSharedUserRole(baulId, sharedUserId, role);
+    const previous = get().sharedUsers[baulId] || [];
     set((state) => ({
       sharedUsers: {
         ...state.sharedUsers,
-        [baulId]: (state.sharedUsers[baulId] || []).map((u) => (u.id === sharedUserId ? { ...u, role } : u)),
+        [baulId]: previous.map((u) => (u.id === sharedUserId ? { ...u, role } : u)),
       },
     }));
+    try {
+      await api.baules.updateSharedUserRole(baulId, sharedUserId, role);
+    } catch (error) {
+      set((state) => ({ sharedUsers: { ...state.sharedUsers, [baulId]: previous } }));
+      throw error;
+    }
   },
 
   revokeAccess: async (baulId, sharedUserId) => {

@@ -40,14 +40,19 @@ export function NativeShareHandler() {
     });
 
     if (auth.isAuthenticated) {
-      void ShareReceiver.getPendingShare().then(({ share }) => {
-        if (share) void openShare(share);
-      });
+      void ShareReceiver.getPendingShare()
+        .then(({ share }) => {
+          if (share) void openShare(share);
+        })
+        .catch((error) => {
+          Sentry.captureException(error);
+          if (!disposed) showToastMessage('No se pudo comprobar si había una foto compartida pendiente');
+        });
     }
 
     return () => {
       disposed = true;
-      void listenerPromise.then((handle) => handle.remove());
+      void listenerPromise.then((handle) => handle.remove()).catch((error) => Sentry.captureException(error));
     };
   }, [auth.isAuthenticated, navigate, loadShare]);
 

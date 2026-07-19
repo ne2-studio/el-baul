@@ -1,15 +1,25 @@
 import React, { useRef, useState } from 'react';
-import { User as UserIcon } from 'lucide-react';
+import { User as UserIcon, Loader2 } from 'lucide-react';
 import { SharedUser } from '@/types';
+import { Button } from './Button';
 
 interface EditPersonaModalProps {
   persona: SharedUser;
   onCancel: () => void;
   onSave: (name: string, nickname: string) => void;
   onUploadAvatar: (file: File) => void;
+  isSubmitting?: boolean;
+  isUploadingAvatar?: boolean;
 }
 
-export function EditPersonaModal({ persona, onCancel, onSave, onUploadAvatar }: EditPersonaModalProps) {
+export function EditPersonaModal({
+  persona,
+  onCancel,
+  onSave,
+  onUploadAvatar,
+  isSubmitting = false,
+  isUploadingAvatar = false,
+}: EditPersonaModalProps) {
   const [name, setName] = useState(persona.name || '');
   const [nickname, setNickname] = useState(persona.nickname);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -17,7 +27,7 @@ export function EditPersonaModal({ persona, onCancel, onSave, onUploadAvatar }: 
   const handleSave = () => {
     const trimmedName = name.trim();
     const trimmedNickname = nickname.trim();
-    if (!trimmedName || !trimmedNickname) return;
+    if (!trimmedName || !trimmedNickname || isSubmitting) return;
     onSave(trimmedName, trimmedNickname);
   };
 
@@ -38,6 +48,7 @@ export function EditPersonaModal({ persona, onCancel, onSave, onUploadAvatar }: 
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
+            disabled={isUploadingAvatar}
             className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-border"
           >
             {persona.avatarUrl ? (
@@ -47,8 +58,16 @@ export function EditPersonaModal({ persona, onCancel, onSave, onUploadAvatar }: 
                 <UserIcon className="w-8 h-8 text-primary" />
               </div>
             )}
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-              <span className="text-white text-xs font-medium">Cambiar foto</span>
+            <div
+              className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${
+                isUploadingAvatar ? 'opacity-100' : 'opacity-0 hover:opacity-100'
+              }`}
+            >
+              {isUploadingAvatar ? (
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              ) : (
+                <span className="text-white text-xs font-medium">Cambiar foto</span>
+              )}
             </div>
           </button>
           <input
@@ -57,6 +76,7 @@ export function EditPersonaModal({ persona, onCancel, onSave, onUploadAvatar }: 
             accept="image/*"
             className="hidden"
             onChange={handleFileChange}
+            disabled={isUploadingAvatar}
           />
         </div>
 
@@ -97,17 +117,19 @@ export function EditPersonaModal({ persona, onCancel, onSave, onUploadAvatar }: 
         <div className="flex gap-3 pt-1">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+            disabled={isSubmitting}
+            className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
-          <button
+          <Button
             onClick={handleSave}
-            disabled={!name.trim() || !nickname.trim()}
-            className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            disabled={!name.trim() || !nickname.trim() || isSubmitting}
+            isLoading={isSubmitting}
+            className="flex-1 text-sm"
           >
             Guardar cambios
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
+import { Button } from './Button';
 
 interface NuevaPersonaModalProps {
   onCancel: () => void;
   onSave: (nickname: string) => void;
+  isSubmitting?: boolean;
 }
 
-export function NuevaPersonaModal({ onCancel, onSave }: NuevaPersonaModalProps) {
+export function NuevaPersonaModal({ onCancel, onSave, isSubmitting = false }: NuevaPersonaModalProps) {
   const [nickname, setNickname] = useState('');
 
   const handleSave = () => {
     const trimmed = nickname.trim();
-    if (!trimmed) return;
+    if (!trimmed || isSubmitting) return;
     onSave(trimmed);
   };
 
@@ -40,17 +42,19 @@ export function NuevaPersonaModal({ onCancel, onSave }: NuevaPersonaModalProps) 
         <div className="flex gap-3 pt-1">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+            disabled={isSubmitting}
+            className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
-          <button
+          <Button
             onClick={handleSave}
-            disabled={!nickname.trim()}
-            className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            disabled={!nickname.trim() || isSubmitting}
+            isLoading={isSubmitting}
+            className="flex-1 text-sm"
           >
             Añadir
-          </button>
+          </Button>
         </div>
       </div>
     </div>

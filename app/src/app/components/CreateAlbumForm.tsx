@@ -6,15 +6,16 @@ import { ChevronLeft } from 'lucide-react';
 interface CreateAlbumFormProps {
   onBack: () => void;
   onSubmit: (name: string, description: string) => void;
+  isSubmitting?: boolean;
 }
 
-export function CreateAlbumForm({ onBack, onSubmit }: CreateAlbumFormProps) {
+export function CreateAlbumForm({ onBack, onSubmit, isSubmitting = false }: CreateAlbumFormProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
+    if (name.trim() && !isSubmitting) {
       onSubmit(name, description);
     }
   };
@@ -54,11 +55,13 @@ export function CreateAlbumForm({ onBack, onSubmit }: CreateAlbumFormProps) {
             rows={3}
           />
           
-          <Button 
-            type="submit" 
-            variant="primary" 
+          <Button
+            type="submit"
+            variant="primary"
             fullWidth
             className="mt-8"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
           >
             Crear capítulo
           </Button>

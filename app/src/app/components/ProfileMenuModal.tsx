@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, CreditCard, LogOut } from 'lucide-react';
+import { X, User, CreditCard, LogOut, Loader2 } from 'lucide-react';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
@@ -8,6 +8,7 @@ interface ProfileMenuModalProps {
   onSignOut: () => void;
   userEmail?: string;
   monetizationEnabled?: boolean;
+  isSigningOut?: boolean;
 }
 
 export function ProfileMenuModal({
@@ -16,7 +17,8 @@ export function ProfileMenuModal({
   onNavigateToSubscription,
   onSignOut,
   userEmail,
-  monetizationEnabled
+  monetizationEnabled,
+  isSigningOut = false,
 }: ProfileMenuModalProps) {
   return (
     <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end md:items-center md:justify-center">
@@ -32,7 +34,8 @@ export function ProfileMenuModal({
             <h2 className="font-serif text-xl text-foreground">Cuenta</h2>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+              disabled={isSigningOut}
+              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-50"
             >
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
@@ -92,12 +95,19 @@ export function ProfileMenuModal({
         <div className="p-4 border-t border-border">
           <button
             onClick={onSignOut}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-destructive/10 transition-colors text-left"
+            disabled={isSigningOut}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-destructive/10 transition-colors text-left disabled:opacity-50"
           >
             <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
-              <LogOut className="w-5 h-5 text-destructive" />
+              {isSigningOut ? (
+                <Loader2 className="w-5 h-5 text-destructive animate-spin" />
+              ) : (
+                <LogOut className="w-5 h-5 text-destructive" />
+              )}
             </div>
-            <div className="font-medium text-destructive">Cerrar sesión</div>
+            <div className="font-medium text-destructive">
+              {isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+            </div>
           </button>
         </div>
 

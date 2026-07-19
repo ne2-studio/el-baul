@@ -17,35 +17,34 @@ export interface RemovalRequest {
 interface RemovalRequestsListProps {
   requests: RemovalRequest[];
   onBack: () => void;
-  onRemovePhoto: (requestId: string, photoId: string) => void;
-  onKeepPhoto: (requestId: string) => void;
+  /** Devuelven si la operación tuvo éxito — la tarjeta solo desaparece de la lista
+   * cuando el store la quita tras confirmarse en el servidor (ver useAppStore.removePhoto/keepPhoto). */
+  onRemovePhoto: (requestId: string, photoId: string) => Promise<boolean>;
+  onKeepPhoto: (requestId: string) => Promise<boolean>;
 }
 
-export function RemovalRequestsList({ 
-  requests, 
-  onBack, 
-  onRemovePhoto, 
-  onKeepPhoto 
+export function RemovalRequestsList({
+  requests,
+  onBack,
+  onRemovePhoto,
+  onKeepPhoto,
 }: RemovalRequestsListProps) {
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
-  
+  const [busy, setBusy] = useState<{ requestId: string; action: 'remove' | 'keep' } | null>(null);
+
   const pendingRequests = requests.filter(r => r.status === 'pending');
-  
-  const handleRemovePhoto = (request: RemovalRequest) => {
-    onRemovePhoto(request.id, request.photoId);
-    setFeedbackMessage('La solicitud ha sido resuelta.');
-    setShowFeedback(true);
-    setTimeout(() => setShowFeedback(false), 3000);
+
+  const handleRemovePhoto = async (request: RemovalRequest) => {
+    setBusy({ requestId: request.id, action: 'remove' });
+    await onRemovePhoto(request.id, request.photoId);
+    setBusy(null);
   };
-  
-  const handleKeepPhoto = (request: RemovalRequest) => {
-    onKeepPhoto(request.id);
-    setFeedbackMessage('La solicitud ha sido resuelta.');
-    setShowFeedback(true);
-    setTimeout(() => setShowFeedback(false), 3000);
+
+  const handleKeepPhoto = async (request: RemovalRequest) => {
+    setBusy({ requestId: request.id, action: 'keep' });
+    await onKeepPhoto(request.id);
+    setBusy(null);
   };
-  
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -69,7 +68,7 @@ export function RemovalRequestsList({
           </div>
         </div>
       </div>
-      
+
       {/* Content */}
       <div className="p-4">
         {pendingRequests.length === 0 ? (
@@ -80,74 +79,70 @@ export function RemovalRequestsList({
           </div>
         ) : (
           <div className="space-y-4">
-            {pendingRequests.map(request => (
-              <div 
-                key={request.id}
-                className="bg-card border border-border rounded-2xl overflow-hidden"
-              >
-                {/* Photo */}
-                <div className="aspect-[4/3] bg-muted">
-                  <img
-                    src={request.photoUrl}
-                    alt={request.photoCaption || 'Foto'}
-                    className="w-full h-full object-cover"
-                  />
+            {pendingRequests.map(request => {
+              const isBusy = busy?.requestId === request.id;
+              return (
+                <div
+                  key={request.id}
+                  className="bg-card border border-border rounded-2xl overflow-hidden"
+                >
+                  {/* Photo */}
+                  <div className="aspect-[4/3] bg-muted">
+                    <img
+                      src={request.photoUrl}
+                      alt={request.photoCaption || 'Foto'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Request details */}
+                  <div className="p-4">
+                    {/* Requester info */}
+                    <div className="mb-3">
+                      <p className="text-sm font-medium text-foreground">
+                        {request.requesterName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {request.requestDate}
+                      </p>
+                    </div>
+
+                    {/* Reason */}
+                    <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-border/50">
+                      <p className="text-sm text-foreground/80 leading-relaxed">
+                        "{request.reason}"
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <Button
+                        variant="secondary"
+                        fullWidth
+                        onClick={() => handleKeepPhoto(request)}
+                        disabled={isBusy}
+                        isLoading={isBusy && busy?.action === 'keep'}
+                      >
+                        Mantener foto
+                      </Button>
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        onClick={() => handleRemovePhoto(request)}
+                        disabled={isBusy}
+                        isLoading={isBusy && busy?.action === 'remove'}
+                        className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+                      >
+                        Retirar foto
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Request details */}
-                <div className="p-4">
-                  {/* Requester info */}
-                  <div className="mb-3">
-                    <p className="text-sm font-medium text-foreground">
-                      {request.requesterName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {request.requestDate}
-                    </p>
-                  </div>
-                  
-                  {/* Reason */}
-                  <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-border/50">
-                    <p className="text-sm text-foreground/80 leading-relaxed">
-                      "{request.reason}"
-                    </p>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex flex-col md:flex-row gap-3">
-                    <Button
-                      variant="secondary"
-                      fullWidth
-                      onClick={() => handleKeepPhoto(request)}
-                    >
-                      Mantener foto
-                    </Button>
-                    <Button
-                      variant="primary"
-                      fullWidth
-                      onClick={() => handleRemovePhoto(request)}
-                      className="bg-red-600 hover:bg-red-700 text-white border-red-600"
-                    >
-                      Retirar foto
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
-      
-      {/* Feedback toast */}
-      {showFeedback && (
-        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-slide-down">
-          <div className="bg-background border border-border rounded-lg shadow-lg p-4">
-            <p className="text-foreground text-sm">
-              {feedbackMessage}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

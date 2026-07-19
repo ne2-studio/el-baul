@@ -7,15 +7,16 @@ interface CreateBaulFormProps {
   onBack: () => void;
   onSubmit: (name: string, description: string) => void;
   isOnboarding?: boolean;
+  isSubmitting?: boolean;
 }
 
-export function CreateBaulForm({ onBack, onSubmit, isOnboarding = false }: CreateBaulFormProps) {
+export function CreateBaulForm({ onBack, onSubmit, isOnboarding = false, isSubmitting = false }: CreateBaulFormProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
+    if (name.trim() && !isSubmitting) {
       onSubmit(name, description);
     }
   };
@@ -64,11 +65,13 @@ export function CreateBaulForm({ onBack, onSubmit, isOnboarding = false }: Creat
             }
           </p>
           
-          <Button 
-            type="submit" 
-            variant="primary" 
+          <Button
+            type="submit"
+            variant="primary"
             fullWidth
             className="mt-8"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
           >
             Crear baúl
           </Button>

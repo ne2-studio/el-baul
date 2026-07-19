@@ -3,12 +3,14 @@ import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
+import { MoveModal } from './MoveModal';
+import { DateModal } from './DateModal';
+import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil, BookOpen, X } from 'lucide-react';
 import { Album } from './AlbumsView';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
-import { PartialDatePicker } from './PartialDatePicker';
 import { formatDateRange } from '../utils/timeUtils';
 import {
   DropdownMenu,
@@ -44,11 +46,18 @@ interface PhotosViewProps {
   onBack: () => void;
   onSelectPhoto: (photo: Photo) => void;
   onAddPhotos: (selectedPhotos: SelectedPhoto[]) => void;
+  /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
+   * Android caducó) y por tanto se ha excluido en silencio de la selección. */
+  onPhotosDropped?: (count: number) => void;
   allAlbums?: Album[];
-  onBatchMove?: (photoIds: string[], targetAlbumId: string) => void;
-  onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => void;
-  onBatchCreateChapter?: (photoIds: string[], name: string, description: string) => void;
-  onUpdateAlbumInfo?: (name: string, description: string) => void;
+  onBatchMove?: (
+    photoIds: string[],
+    targetAlbumId: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => Promise<void>;
+  onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
+  onBatchCreateChapter?: (photoIds: string[], name: string, description: string) => Promise<boolean>;
+  onUpdateAlbumInfo?: (name: string, description: string) => Promise<boolean>;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
   onUserClick?: (sharedUserId: string) => void;
@@ -92,7 +101,7 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
 }
 
 export function PhotosView({
-  album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate,
+  album, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allAlbums = [], onBatchMove, onBatchChangeDate,
   onBatchCreateChapter, onUpdateAlbumInfo, recuerdos = [], onAddRecuerdo, onUserClick,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
@@ -103,6 +112,14 @@ export function PhotosView({
   const [writeRecuerdoText, setWriteRecuerdoText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isSavingAlbumInfo, setIsSavingAlbumInfo] = useState(false);
+
+  const handleSaveAlbumInfo = async (name: string, description: string) => {
+    setIsSavingAlbumInfo(true);
+    const ok = (await onUpdateAlbumInfo?.(name, description)) ?? false;
+    setIsSavingAlbumInfo(false);
+    if (ok) setShowEditModal(false);
+  };
 
   // Multi-selection state
   const [selectionMode, setSelectionMode] = useState(false);
@@ -117,8 +134,11 @@ export function PhotosView({
 
   const [showBatchMoveModal, setShowBatchMoveModal] = useState(false);
   const [batchMoveTargetId, setBatchMoveTargetId] = useState('');
+  const [batchMoveItems, setBatchMoveItems] = useState<BatchOperationItem[] | null>(null);
   const [showBatchDateModal, setShowBatchDateModal] = useState(false);
+  const [isBatchDateSubmitting, setIsBatchDateSubmitting] = useState(false);
   const [showBatchCreateChapterModal, setShowBatchCreateChapterModal] = useState(false);
+  const [isBatchCreatingChapter, setIsBatchCreatingChapter] = useState(false);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -138,18 +158,52 @@ export function PhotosView({
     setSelectedIds(new Set());
   };
 
-  const handleBatchMoveSubmit = () => {
-    if (!batchMoveTargetId) return;
-    onBatchMove?.(Array.from(selectedIds), batchMoveTargetId);
+  const handleBatchMoveSubmit = async () => {
+    if (!batchMoveTargetId || !onBatchMove) return;
+    const targetAlbumId = batchMoveTargetId;
+    const ids = Array.from(selectedIds);
     setShowBatchMoveModal(false);
     setBatchMoveTargetId('');
+    setBatchMoveItems(
+      ids.map((id) => ({
+        id,
+        thumbnailUrl: photos.find((p) => p.id === id)?.thumbnailUrl ?? '',
+        status: 'pending' as const,
+      }))
+    );
+
+    await onBatchMove(ids, targetAlbumId, (result) => {
+      setBatchMoveItems((prev) =>
+        prev?.map((item) =>
+          item.id === result.photoId ? { ...item, status: result.error ? ('error' as const) : ('success' as const) } : item
+        ) ?? prev
+      );
+    });
+
+    setBatchMoveItems(null);
     exitSelection();
   };
 
-  const handleBatchDateSubmit = (date: PhotoDate) => {
-    onBatchChangeDate?.(Array.from(selectedIds), date);
-    setShowBatchDateModal(false);
-    exitSelection();
+  const handleBatchDateSubmit = async (date: PhotoDate) => {
+    if (!onBatchChangeDate) return;
+    setIsBatchDateSubmitting(true);
+    const ok = await onBatchChangeDate(Array.from(selectedIds), date);
+    setIsBatchDateSubmitting(false);
+    if (ok) {
+      setShowBatchDateModal(false);
+      exitSelection();
+    }
+  };
+
+  const handleBatchCreateChapterSave = async (name: string, description: string) => {
+    if (!onBatchCreateChapter) return;
+    setIsBatchCreatingChapter(true);
+    const ok = await onBatchCreateChapter(Array.from(selectedIds), name, description);
+    setIsBatchCreatingChapter(false);
+    if (ok) {
+      setShowBatchCreateChapterModal(false);
+      exitSelection();
+    }
   };
 
   const moveableAlbums = allAlbums.filter(a => a.id !== album.id);
@@ -162,6 +216,9 @@ export function PhotosView({
 
     const materialized = await Promise.all(fileArray.map(materializeSelectedPhoto));
     const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
+    if (materialized.length > selectedPhotos.length) {
+      onPhotosDropped?.(materialized.length - selectedPhotos.length);
+    }
     if (selectedPhotos.length === 0) return;
 
     onAddPhotos(selectedPhotos);
@@ -411,6 +468,7 @@ export function PhotosView({
           title={`Cambiar fecha · ${selectedIds.size} ${selectedIds.size === 1 ? 'foto' : 'fotos'}`}
           onCancel={() => setShowBatchDateModal(false)}
           onConfirm={handleBatchDateSubmit}
+          isSubmitting={isBatchDateSubmitting}
         />
       )}
 
@@ -426,6 +484,11 @@ export function PhotosView({
         />
       )}
 
+      {/* Progreso ítem a ítem mientras se mueve el lote (una petición por foto) */}
+      {batchMoveItems && (
+        <BatchOperationProgress title="Moviendo fotos..." items={batchMoveItems} />
+      )}
+
       {/* Batch create-chapter modal */}
       {showBatchCreateChapterModal && (
         <EditInfoModal
@@ -434,11 +497,8 @@ export function PhotosView({
           initialDescription=""
           namePlaceholder="Nombre del capítulo"
           onCancel={() => setShowBatchCreateChapterModal(false)}
-          onSave={(name, description) => {
-            onBatchCreateChapter?.(Array.from(selectedIds), name, description);
-            setShowBatchCreateChapterModal(false);
-            exitSelection();
-          }}
+          onSave={handleBatchCreateChapterSave}
+          isSubmitting={isBatchCreatingChapter}
         />
       )}
 
@@ -449,10 +509,8 @@ export function PhotosView({
           initialDescription={album.description ?? ''}
           namePlaceholder="Nombre del capítulo"
           onCancel={() => setShowEditModal(false)}
-          onSave={(name, description) => {
-            onUpdateAlbumInfo?.(name, description);
-            setShowEditModal(false);
-          }}
+          onSave={handleSaveAlbumInfo}
+          isSubmitting={isSavingAlbumInfo}
         />
       )}
 
@@ -687,87 +745,3 @@ function PhotoCell({
   );
 }
 
-// ─── Shared date-edit modal ─────────────────────────────────────────────────────
-export function DateModal({
-  title,
-  onCancel, onConfirm,
-}: {
-  title: string;
-  onCancel: () => void;
-  onConfirm: (date: PhotoDate) => void;
-}) {
-  const [pending, setPending] = useState<PhotoDate | null>(null);
-
-  return (
-    <div className="fixed inset-0 bg-foreground/40 z-[60] flex items-end justify-center">
-      <div className="absolute inset-0" onClick={onCancel} />
-      <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
-        <h2 className="text-lg font-medium text-foreground mb-5">{title}</h2>
-        <div className="mb-6">
-          <PartialDatePicker onChange={(v) => setPending(v)} />
-        </div>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors">
-            Cancelar
-          </button>
-          <button
-            onClick={() => pending && onConfirm(pending)}
-            disabled={!pending?.year}
-            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
-          >
-            Confirmar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Shared move-to-album modal ────────────────────────────────────────────────
-export function MoveModal({
-  title,
-  albums,
-  selectedId,
-  onSelect,
-  onCancel,
-  onConfirm,
-}: {
-  title: string;
-  albums: Album[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 bg-foreground/40 z-[60] flex items-end justify-center">
-      <div className="absolute inset-0" onClick={onCancel} />
-      <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
-        <h2 className="text-lg font-medium text-foreground mb-4">{title}</h2>
-        <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
-          {albums.map(a => (
-            <button key={a.id} onClick={() => onSelect(a.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
-                selectedId === a.id ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-secondary/30'
-              }`}>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                selectedId === a.id ? 'bg-primary border-primary' : 'border-border'
-              }`}>
-                {selectedId === a.id && <Check className="w-3 h-3 text-white" />}
-              </div>
-              <span className="text-sm text-foreground">{a.name}</span>
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors">
-            Cancelar
-          </button>
-          <button onClick={onConfirm} disabled={!selectedId} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40">
-            Mover aquí
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -4,8 +4,8 @@ import { PhotoViewer } from '@/app/components/PhotoViewer';
 import { Photo } from '@/app/components/PhotosView';
 import { Album } from '@/app/components/AlbumsView';
 import { useAppStore } from '@/store/useAppStore';
-import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
 
@@ -13,7 +13,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId, photoId } = useParams();
   const auth = useAuth();
-  const showToastMessage = useUIStore(state => state.showToastMessage);
+  const { run } = useAsyncAction();
 
   const { baules, albums, loosePhotos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
 
@@ -24,77 +24,59 @@ export const LoosePhotoViewerRoute: React.FC = () => {
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
-      loadRecuerdos(photoId);
+      run(() => loadRecuerdos(photoId), { errorMessage: 'No se pudieron cargar los recuerdos' });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, photoId, loadRecuerdos]);
 
   if (!baul || !photo) return <div className="p-8 text-center">Cargando foto...</div>;
 
-  const handleRequestRemoval = async (photo: any, reason: string) => {
-    if (!auth.isAuthenticated) return;
-
-    try {
-      await submitRemovalRequest(baul.id, photo, reason);
-      showToastMessage('Tu solicitud ha sido enviada');
-    } catch (error) {
-      console.error('Error submitting removal request:', error);
-      showToastMessage('Error al enviar la solicitud');
-    }
+  const handleRequestRemoval = async (photo: Photo, reason: string): Promise<boolean> => {
+    if (!auth.isAuthenticated) return false;
+    const result = await run(() => submitRemovalRequest(baul.id, photo, reason), {
+      successMessage: 'Tu solicitud ha sido enviada',
+      errorMessage: 'Error al enviar la solicitud',
+    });
+    return result.ok;
   };
 
-  const handleSetBaulCover = async (photo: any) => {
+  const handleSetBaulCover = async (photo: Photo) => {
     if (!auth.isAuthenticated) return;
-
-    try {
-      await setBaulCover(baul.id, photo.id);
-      showToastMessage('Portada del baúl actualizada');
-    } catch (error) {
-      console.error('Error setting baul cover:', error);
-      showToastMessage('Error al establecer la portada');
-    }
+    await run(() => setBaulCover(baul.id, photo.id, photo.thumbnailUrl), {
+      successMessage: 'Portada del baúl actualizada',
+      errorMessage: 'Error al establecer la portada',
+    });
   };
 
   const handleAddRecuerdo = async (photoId: string, text: string) => {
     if (!auth.isAuthenticated) return;
-    try {
-      await addRecuerdo(photoId, text);
-    } catch (error) {
-      console.error('Error adding recuerdo:', error);
-      showToastMessage('Error al añadir el recuerdo');
-    }
+    await run(() => addRecuerdo(photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
   };
 
-  const handleMovePhoto = (photoToMove: Photo, targetAlbumId: string) => {
-    movePhotos(baul.id, null, [photoToMove.id], targetAlbumId)
-      .then(() => {
-        showToastMessage('Foto movida');
-        navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
-      })
-      .catch((error) => {
-        console.error('Error moving photo:', error);
-        showToastMessage('Error al mover la foto');
-      });
+  const handleMovePhoto = async (photoToMove: Photo, targetAlbumId: string): Promise<boolean> => {
+    const result = await run(() => movePhotos(baul.id, null, [photoToMove.id], targetAlbumId), {
+      successMessage: 'Foto movida',
+      errorMessage: 'Error al mover la foto',
+    });
+    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
+    return result.ok;
   };
 
-  const handleDeletePhoto = (photoToDelete: Photo, reason: string) => {
-    deletePhoto(baul.id, null, photoToDelete.id, reason)
-      .then(() => {
-        showToastMessage('La foto ha sido retirada');
-        navigate(`/baules/${baul.id}/fotos-sueltas`);
-      })
-      .catch((error) => {
-        console.error('Error deleting photo:', error);
-        showToastMessage('Error al retirar la foto');
-      });
+  const handleDeletePhoto = async (photoToDelete: Photo, reason: string): Promise<boolean> => {
+    const result = await run(() => deletePhoto(baul.id, null, photoToDelete.id, reason), {
+      successMessage: 'La foto ha sido retirada',
+      errorMessage: 'Error al retirar la foto',
+    });
+    if (result.ok) navigate(`/baules/${baul.id}/fotos-sueltas`);
+    return result.ok;
   };
 
-  const handleChangeDate = (photoToUpdate: Photo, date: PhotoDate) => {
-    changePhotoDate(baul.id, null, photoToUpdate.id, date)
-      .then(() => showToastMessage('Fecha actualizada'))
-      .catch((error) => {
-        console.error('Error changing photo date:', error);
-        showToastMessage('Error al cambiar la fecha');
-      });
+  const handleChangeDate = async (photoToUpdate: Photo, date: PhotoDate): Promise<boolean> => {
+    const result = await run(() => changePhotoDate(baul.id, null, photoToUpdate.id, date), {
+      successMessage: 'Fecha actualizada',
+      errorMessage: 'Error al cambiar la fecha',
+    });
+    return result.ok;
   };
 
   return (

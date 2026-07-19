@@ -64,7 +64,11 @@ async function extractSharedExifDate(files: File[]): Promise<PhotoDate | null> {
       const tags = await exifr.parse(file, ['DateTimeOriginal', 'CreateDate']);
       const date: Date | undefined = tags?.DateTimeOriginal ?? tags?.CreateDate;
       return date ? { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() } : null;
-    } catch {
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { phase: 'exif-parse-on-select' },
+        extra: { name: file.name, size: file.size, type: file.type },
+      });
       return null;
     }
   }));

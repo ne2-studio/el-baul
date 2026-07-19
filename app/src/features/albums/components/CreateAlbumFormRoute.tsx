@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { CreateAlbumForm } from '@/app/components/CreateAlbumForm';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
-import { useUIStore } from '@/store/uiStore';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 export const CreateAlbumFormRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
   const auth = useAuth();
-  const showToastMessage = useUIStore(state => state.showToastMessage);
+  const { run, isPending } = useAsyncAction();
 
   const { baules, createAlbum } = useAppStore();
   const baul = baules.find(b => b.id === baulId);
@@ -19,19 +19,17 @@ export const CreateAlbumFormRoute: React.FC = () => {
   const handleSubmit = async (name: string, description: string) => {
     if (!auth.isAuthenticated) return;
 
-    try {
-      await createAlbum(baul.id, name, description);
-      navigate(`/baules/${baul.id}`);
-    } catch (error) {
-      console.error('Error creating album:', error);
-      showToastMessage('Error al crear el capítulo');
-    }
+    const result = await run(() => createAlbum(baul.id, name, description), {
+      errorMessage: 'Error al crear el capítulo',
+    });
+    if (result.ok) navigate(`/baules/${baul.id}`);
   };
-  
+
   return (
     <CreateAlbumForm
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSubmit={handleSubmit}
+      isSubmitting={isPending()}
     />
   );
 };

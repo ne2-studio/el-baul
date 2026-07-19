@@ -52,11 +52,14 @@ interface AlbumsViewProps {
   onCreateAlbum: () => void;
   onOpenLoosePhotos?: () => void;
   onUploadPhotos?: (selectedPhotos: SelectedPhoto[]) => void;
-  onCreatePersona?: (nickname: string) => void;
+  /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
+   * Android caducó) y por tanto se ha excluido en silencio de la selección. */
+  onPhotosDropped?: (count: number) => void;
+  onCreatePersona?: (nickname: string) => Promise<boolean>;
   onSelectPersona?: (persona: SharedUser) => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
-  onUpdateBaulInfo?: (name: string, description: string) => void;
+  onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
 }
 
 export function AlbumsView({
@@ -71,6 +74,7 @@ export function AlbumsView({
   onCreateAlbum,
   onOpenLoosePhotos,
   onUploadPhotos,
+  onPhotosDropped,
   onCreatePersona,
   onSelectPersona,
   onRemovalRequests,
@@ -81,6 +85,22 @@ export function AlbumsView({
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas'>('capitulos');
+  const [isCreatingPersona, setIsCreatingPersona] = useState(false);
+  const [isSavingBaulInfo, setIsSavingBaulInfo] = useState(false);
+
+  const handleSaveNuevaPersona = async (nickname: string) => {
+    setIsCreatingPersona(true);
+    const ok = (await onCreatePersona?.(nickname)) ?? false;
+    setIsCreatingPersona(false);
+    if (ok) setShowNuevaPersonaModal(false);
+  };
+
+  const handleSaveBaulInfo = async (name: string, description: string) => {
+    setIsSavingBaulInfo(true);
+    const ok = (await onUpdateBaulInfo?.(name, description)) ?? false;
+    setIsSavingBaulInfo(false);
+    if (ok) setShowEditModal(false);
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -90,6 +110,9 @@ export function AlbumsView({
 
     const materialized = await Promise.all(fileArray.map(materializeSelectedPhoto));
     const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
+    if (materialized.length > selectedPhotos.length) {
+      onPhotosDropped?.(materialized.length - selectedPhotos.length);
+    }
     if (selectedPhotos.length === 0) return;
 
     onUploadPhotos?.(selectedPhotos);
@@ -335,10 +358,8 @@ export function AlbumsView({
       {showNuevaPersonaModal && (
         <NuevaPersonaModal
           onCancel={() => setShowNuevaPersonaModal(false)}
-          onSave={(nickname) => {
-            onCreatePersona?.(nickname);
-            setShowNuevaPersonaModal(false);
-          }}
+          onSave={handleSaveNuevaPersona}
+          isSubmitting={isCreatingPersona}
         />
       )}
 
@@ -349,10 +370,8 @@ export function AlbumsView({
           initialDescription={baul.description ?? ''}
           namePlaceholder="Nombre del baúl"
           onCancel={() => setShowEditModal(false)}
-          onSave={(name, description) => {
-            onUpdateBaulInfo?.(name, description);
-            setShowEditModal(false);
-          }}
+          onSave={handleSaveBaulInfo}
+          isSubmitting={isSavingBaulInfo}
         />
       )}
     </div>

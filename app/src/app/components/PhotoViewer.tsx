@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { Photo, MoveModal, DateModal } from './PhotosView';
+import { Photo } from './PhotosView';
+import { MoveModal } from './MoveModal';
+import { DateModal } from './DateModal';
+import { DeletePhotoModal } from './DeletePhotoModal';
 import { Album } from './AlbumsView';
 import { formatPartialDate } from '../utils/timeUtils';
 import { Button } from './Button';
@@ -14,13 +17,15 @@ interface PhotoViewerProps {
   photos: Photo[];
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
-  onRequestRemoval?: (photo: Photo, reason: string) => void;
+  /** Devuelven si la operación tuvo éxito — el modal correspondiente se queda abierto
+   * (con spinner) hasta saberlo, y solo se cierra por sí solo si el resultado fue true. */
+  onRequestRemoval?: (photo: Photo, reason: string) => Promise<boolean>;
   isAdmin?: boolean;
   onSetBaulCover?: (photo: Photo) => void;
   onSetAlbumCover?: (photo: Photo) => void;
-  onMovePhoto?: (photo: Photo, targetAlbumId: string) => void;
-  onChangeDate?: (photo: Photo, date: PhotoDate) => void;
-  onDeletePhoto?: (photo: Photo, reason: string) => void;
+  onMovePhoto?: (photo: Photo, targetAlbumId: string) => Promise<boolean>;
+  onChangeDate?: (photo: Photo, date: PhotoDate) => Promise<boolean>;
+  onDeletePhoto?: (photo: Photo, reason: string) => Promise<boolean>;
   allAlbums?: Album[];
   currentAlbum?: Album;
   recuerdos?: Recuerdo[];
@@ -56,7 +61,10 @@ export function PhotoViewer({
   const [moveTargetId, setMoveTargetId] = useState('');
   const [showDateModal, setShowDateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteReason, setDeleteReason] = useState('');
+  const [isSubmittingRemoval, setIsSubmittingRemoval] = useState(false);
+  const [isSubmittingMove, setIsSubmittingMove] = useState(false);
+  const [isSubmittingDate, setIsSubmittingDate] = useState(false);
+  const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
 
   const moveableAlbums = allAlbums.filter(a => a.id !== currentAlbum?.id);
 
@@ -108,18 +116,21 @@ export function PhotoViewer({
     }
   };
   
-  const handleSubmitRequest = () => {
-    if (onRequestRemoval && removalReason.trim()) {
-      onRequestRemoval(photo, removalReason);
-      setShowRemovalModal(false);
-      setRemovalReason('');
-      setShowConfirmation(true);
-      
-      // Auto-close confirmation after 3 seconds
-      setTimeout(() => {
-        setShowConfirmation(false);
-      }, 3000);
-    }
+  const handleSubmitRequest = async () => {
+    if (!onRequestRemoval || !removalReason.trim()) return;
+    setIsSubmittingRemoval(true);
+    const ok = await onRequestRemoval(photo, removalReason);
+    setIsSubmittingRemoval(false);
+    if (!ok) return;
+
+    setShowRemovalModal(false);
+    setRemovalReason('');
+    setShowConfirmation(true);
+
+    // Auto-close confirmation after 3 seconds
+    setTimeout(() => {
+      setShowConfirmation(false);
+    }, 3000);
   };
 
   const menuItems: { key: string; label: string; onSelect: () => void }[] = [];
@@ -139,16 +150,31 @@ export function PhotoViewer({
     menuItems.push({ key: 'removal', label: 'Solicitar retirada', onSelect: () => setShowRemovalModal(true) });
   }
 
-  const handleMoveSubmit = () => {
-    if (!moveTargetId) return;
-    onMovePhoto?.(photo, moveTargetId);
-    setShowMoveModal(false);
-    setMoveTargetId('');
+  const handleMoveSubmit = async () => {
+    if (!moveTargetId || !onMovePhoto) return;
+    setIsSubmittingMove(true);
+    const ok = await onMovePhoto(photo, moveTargetId);
+    setIsSubmittingMove(false);
+    if (ok) {
+      setShowMoveModal(false);
+      setMoveTargetId('');
+    }
   };
 
-  const handleDateSubmit = (date: PhotoDate) => {
-    onChangeDate?.(photo, date);
-    setShowDateModal(false);
+  const handleDateSubmit = async (date: PhotoDate) => {
+    if (!onChangeDate) return;
+    setIsSubmittingDate(true);
+    const ok = await onChangeDate(photo, date);
+    setIsSubmittingDate(false);
+    if (ok) setShowDateModal(false);
+  };
+
+  const handleDeleteSubmit = async (reason: string) => {
+    if (!onDeletePhoto) return;
+    setIsDeletingPhoto(true);
+    const ok = await onDeletePhoto(photo, reason);
+    setIsDeletingPhoto(false);
+    if (ok) setShowDeleteModal(false);
   };
 
   const handleAddRecuerdo = (text: string) => {
@@ -240,7 +266,6 @@ export function PhotoViewer({
                         <button
                           onClick={() => {
                             setShowMenu(false);
-                            setDeleteReason('');
                             setShowDeleteModal(true);
                           }}
                           className="w-full px-4 py-3 text-left text-destructive hover:bg-destructive/5 transition-colors text-sm font-medium"
@@ -379,6 +404,7 @@ export function PhotoViewer({
                   setShowRemovalModal(false);
                   setRemovalReason('');
                 }}
+                disabled={isSubmittingRemoval}
               >
                 Cancelar
               </Button>
@@ -386,7 +412,8 @@ export function PhotoViewer({
                 variant="primary"
                 fullWidth
                 onClick={handleSubmitRequest}
-                disabled={!removalReason.trim()}
+                disabled={!removalReason.trim() || isSubmittingRemoval}
+                isLoading={isSubmittingRemoval}
               >
                 Enviar solicitud
               </Button>
@@ -415,6 +442,7 @@ export function PhotoViewer({
           onSelect={setMoveTargetId}
           onCancel={() => setShowMoveModal(false)}
           onConfirm={handleMoveSubmit}
+          isSubmitting={isSubmittingMove}
         />
       )}
 
@@ -424,58 +452,17 @@ export function PhotoViewer({
           title="Cambiar fecha de la foto"
           onCancel={() => setShowDateModal(false)}
           onConfirm={handleDateSubmit}
+          isSubmitting={isSubmittingDate}
         />
       )}
 
       {/* Retirar foto modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-foreground/60 z-[60] flex items-end md:items-center justify-center p-4">
-          <div className="absolute inset-0" onClick={() => setShowDeleteModal(false)} />
-          <div className="bg-background rounded-t-2xl md:rounded-2xl max-w-md w-full p-6 relative z-10 animate-slide-up">
-            <h2 className="font-serif text-xl text-foreground mb-1">
-              Retirar esta foto
-            </h2>
-
-            <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-4 mt-3">
-              <p className="text-xs text-destructive/80 leading-relaxed">
-                <span className="font-semibold">Atención:</span> Esta foto dejará de estar disponible para todos los miembros del baúl. Todos los recuerdos asociados a ella se perderán de forma permanente.
-              </p>
-            </div>
-
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Motivo de la retirada
-            </label>
-            <textarea
-              value={deleteReason}
-              onChange={(e) => setDeleteReason(e.target.value)}
-              placeholder="¿Por qué se retira esta foto?"
-              rows={3}
-              className="w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40 placeholder:text-muted-foreground mb-5"
-              autoFocus
-            />
-
-            <div className="flex flex-col-reverse md:flex-row gap-3">
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancelar
-              </Button>
-              <button
-                onClick={() => {
-                  if (!deleteReason.trim()) return;
-                  setShowDeleteModal(false);
-                  onDeletePhoto?.(photo, deleteReason.trim());
-                }}
-                disabled={!deleteReason.trim()}
-                className="flex-1 py-3 rounded-xl bg-destructive text-white text-sm font-medium disabled:opacity-40 hover:bg-destructive/90 transition-colors"
-              >
-                Sí, retirar foto
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeletePhotoModal
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteSubmit}
+          isSubmitting={isDeletingPhoto}
+        />
       )}
     </>
   );

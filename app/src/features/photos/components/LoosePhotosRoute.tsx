@@ -4,6 +4,7 @@ import { PhotosView } from '@/app/components/PhotosView';
 import { Album } from '@/app/components/AlbumsView';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
 
@@ -12,6 +13,7 @@ export const LoosePhotosRoute: React.FC = () => {
   const { baulId } = useParams();
   const { baules, albums, loosePhotos, movePhotos, changePhotoDateBatch, createAlbum } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
+  const { run } = useAsyncAction();
 
   const baul = baules.find(b => b.id === baulId);
 
@@ -26,38 +28,40 @@ export const LoosePhotosRoute: React.FC = () => {
     coverPhotoUrl: photos[0]?.thumbnailUrl,
   };
 
-  const handleBatchMove = (photoIds: string[], targetAlbumId: string) => {
-    movePhotos(baul.id, null, photoIds, targetAlbumId)
-      .then(() => {
-        showToastMessage(`${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`);
-        navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
-      })
-      .catch((error) => {
-        console.error('Error moving photos:', error);
-        showToastMessage('Error al mover las fotos');
-      });
+  const handleBatchMove = async (
+    photoIds: string[],
+    targetAlbumId: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => {
+    const result = await run(() => movePhotos(baul.id, null, photoIds, targetAlbumId, onItemSettled), {
+      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
+      errorMessage: 'Algunas fotos no se pudieron mover',
+    });
+    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
   };
 
-  const handleBatchChangeDate = (photoIds: string[], date: PhotoDate) => {
-    changePhotoDateBatch(baul.id, null, photoIds, date)
-      .then(() => showToastMessage(`Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`))
-      .catch((error) => {
-        console.error('Error changing photo dates:', error);
-        showToastMessage('Error al cambiar la fecha');
-      });
+  const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
+    const result = await run(() => changePhotoDateBatch(baul.id, null, photoIds, date), {
+      successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
+      errorMessage: 'Error al cambiar la fecha',
+    });
+    return result.ok;
   };
 
-  const handleBatchCreateChapter = (photoIds: string[], name: string, description: string) => {
-    createAlbum(baul.id, name, description)
-      .then((album) => movePhotos(baul.id, null, photoIds, album.id).then(() => album))
-      .then((album) => {
-        showToastMessage(`Capítulo "${album.name}" creado`);
-        navigate(`/baules/${baul.id}/albumes/${album.id}`);
-      })
-      .catch((error) => {
-        console.error('Error creating chapter from selected photos:', error);
-        showToastMessage('Error al crear el capítulo');
-      });
+  const handleBatchCreateChapter = async (photoIds: string[], name: string, description: string): Promise<boolean> => {
+    const result = await run(
+      async () => {
+        const album = await createAlbum(baul.id, name, description);
+        await movePhotos(baul.id, null, photoIds, album.id);
+        return album;
+      },
+      {
+        successMessage: `Capítulo "${name}" creado`,
+        errorMessage: 'Error al crear el capítulo',
+      }
+    );
+    if (result.ok) navigate(`/baules/${baul.id}/albumes/${result.value.id}`);
+    return result.ok;
   };
 
   return (
@@ -69,6 +73,9 @@ export const LoosePhotosRoute: React.FC = () => {
       onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photo.id}`)}
       onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>
         navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
+      }
+      onPhotosDropped={(count) =>
+        showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`)
       }
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
