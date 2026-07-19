@@ -10,5 +10,7 @@ public record SharedUserDto
     string Role,
     string Status,
     DateTime InvitedDate,
-    string BaulId
+    string BaulId,
+    string? AvatarUrl,
+    bool CanEdit
 );

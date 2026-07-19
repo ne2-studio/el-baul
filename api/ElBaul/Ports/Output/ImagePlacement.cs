@@ -13,5 +13,6 @@ public enum ImagePlacement
     AlbumCoverFeatured,
     RemovalRequestThumbnail,
     InvitationPreview,
-    BaulCover
+    BaulCover,
+    PersonaAvatar
 }

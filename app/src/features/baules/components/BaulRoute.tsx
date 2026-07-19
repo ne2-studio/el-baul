@@ -5,7 +5,6 @@ import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { isAdminRole } from '@/utils/roleUtils';
-import { SharedUser, BaulRole } from '@/types';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -26,8 +25,6 @@ export const BaulRoute: React.FC = () => {
     fetchData,
     renameBaul,
     createPersona,
-    revokeAccess,
-    updateUserRole,
   } = useAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -82,56 +79,10 @@ export const BaulRoute: React.FC = () => {
     }
   };
   
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      showToastMessage('Enlace de invitación copiado al portapapeles');
-    }).catch(err => {
-      console.error('Error copying to clipboard:', err);
-      showToastMessage('Error al copiar el enlace');
-    });
-  };
-
-  const handleShareInvite = async (persona: SharedUser) => {
-    if (!baul) return;
-
-    const inviteUrl = `${window.location.origin}/invitacion/persona/${persona.id}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Invitación a ${baul.name}`,
-          text: `${persona.nickname}, te invito a unirte a mi baúl de recuerdos "${baul.name}" en El Baúl.`,
-          url: inviteUrl,
-        });
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Error sharing:', error);
-          copyToClipboard(inviteUrl);
-        }
-      }
-    } else {
-      copyToClipboard(inviteUrl);
-    }
-  };
-
   const handleCreatePersona = (nickname: string) => {
     createPersona(baul.id, nickname).catch((error) => {
       console.error('Error creating persona:', error);
       showToastMessage('Error al añadir la persona');
-    });
-  };
-
-  const handleChangeRole = (sharedUserId: string, role: BaulRole) => {
-    updateUserRole(baul.id, sharedUserId, role).catch((error) => {
-      console.error('Error updating role:', error);
-      showToastMessage('Error al actualizar el rol');
-    });
-  };
-
-  const handleRevokeAccess = (sharedUserId: string) => {
-    revokeAccess(baul.id, sharedUserId).catch((error) => {
-      console.error('Error revoking access:', error);
-      showToastMessage('Error al quitar el acceso');
     });
   };
 
@@ -160,9 +111,7 @@ export const BaulRoute: React.FC = () => {
         navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
       }
       onCreatePersona={handleCreatePersona}
-      onShareInvite={handleShareInvite}
-      onChangeRole={handleChangeRole}
-      onRevokeAccess={handleRevokeAccess}
+      onSelectPersona={(persona) => navigate(`/baules/${baul.id}/personas/${persona.id}`)}
       onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
       pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
       onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}

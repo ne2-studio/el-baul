@@ -34,6 +34,7 @@ import { LooseUploadingRoute } from '../features/photos/components/LooseUploadin
 import { LooseUploadSuccessRoute } from '../features/photos/components/LooseUploadSuccessRoute';
 import { LooseUploadErrorRoute } from '../features/photos/components/LooseUploadErrorRoute';
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
+import { PersonaDetailRoute } from '../features/sharing/components/PersonaDetailRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
 import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
 import { SelectBaulForShareRoute } from '../features/sharing/components/SelectBaulForShareRoute';
@@ -178,6 +179,11 @@ function App() {
         <Route path="/baules/:baulId" element={
           <ProtectedRoute>
             <BaulRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/personas/:sharedUserId" element={
+          <ProtectedRoute>
+            <PersonaDetailRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/nuevo-album" element={

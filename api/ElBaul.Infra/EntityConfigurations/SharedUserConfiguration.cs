@@ -12,6 +12,8 @@ public class SharedUserConfiguration : IEntityTypeConfiguration<SharedUser>
         builder.HasKey(s => s.Id);
         builder.Property(s => s.UserId).HasMaxLength(255);
         builder.Property(s => s.Nickname).IsRequired().HasMaxLength(100);
+        builder.Property(s => s.Name).HasMaxLength(100);
+        builder.Property(s => s.AvatarPhotoKey).HasMaxLength(1000);
         builder.Property(s => s.Role).HasConversion<string>().HasMaxLength(20);
         builder.Property(s => s.InvitedDate).HasColumnType("timestamp with time zone");
 

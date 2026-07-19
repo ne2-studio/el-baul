@@ -42,6 +42,7 @@ public static class ImgproxyUrlBuilder
         ImagePlacement.RemovalRequestThumbnail => "removal-request-thumbnail",
         ImagePlacement.InvitationPreview => "invitation-preview",
         ImagePlacement.BaulCover => "baul-cover",
+        ImagePlacement.PersonaAvatar => "persona-avatar",
         _ => throw new ArgumentOutOfRangeException(nameof(placement), placement, "Unknown image placement")
     };
 

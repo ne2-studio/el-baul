@@ -143,6 +143,109 @@ public class BaulManagerTests
     }
 
     [Fact]
+    public async Task GetPersonaAsync_ShouldDenyAccess_ForNonMemberOfTheBaul()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.GetPersonaAsync(baulId, personaId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task GetPersonaAsync_ShouldAllowAnyMember_ToViewAnothersFicha()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.GetPersonaAsync(baulId, personaId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Abuela", result.Value.Nickname);
+        Assert.False(result.Value.CanEdit);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaAsync_ShouldDenyAccess_WhenColaboradorEditsSomeoneElsesFicha()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaAsync_ShouldAllow_ForTheLinkedUserEditingTheirOwnFicha()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Otro Nombre", "Otro");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Otro Nombre", result.Value.Name);
+        Assert.Equal("Otro", result.Value.Nickname);
+        Assert.True(result.Value.CanEdit);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaAsync_ShouldAllow_ForAdminEditingAPersonaWithNoLinkedUser()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Abuela María", result.Value.Name);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaAvatarAsync_ShouldSwapStorageKey_AndDeleteThePreviousOne()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow(), AvatarPhotoKey: "personas/old-key"));
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UpdatePersonaAvatarAsync(baulId, personaId, content, "avatar.jpg", "image/jpeg");
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value.AvatarUrl);
+        Assert.Contains("personas/old-key", _photoStorage.DeletedKeys);
+
+        var persona = await _baulRepository.GetSharedUserByIdAsync(personaId);
+        Assert.NotEqual("personas/old-key", persona!.AvatarPhotoKey);
+    }
+
+    [Fact]
     public async Task CreateRemovalRequestAsync_ShouldUsePersonaNickname_ForTheRequesterName()
     {
         var baulId = Guid.NewGuid();

@@ -7,5 +7,7 @@ public record SharedUser
     string? UserId,
     string Nickname,
     BaulRole Role,
-    DateTime InvitedDate
+    DateTime InvitedDate,
+    string? Name = null,
+    string? AvatarPhotoKey = null
 );

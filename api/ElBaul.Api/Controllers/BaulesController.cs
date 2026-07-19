@@ -79,6 +79,35 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpGet("{baulId:guid}/shared-users/{sharedUserId:guid}")]
+    public async Task<IActionResult> GetPersona(Guid baulId, Guid sharedUserId)
+    {
+        var result = await baulManager.GetPersonaAsync(baulId, sharedUserId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPut("{baulId:guid}/shared-users/{sharedUserId:guid}")]
+    public async Task<IActionResult> UpdatePersona(Guid baulId, Guid sharedUserId, [FromBody] UpdatePersonaRequest request)
+    {
+        var result = await baulManager.UpdatePersonaAsync(baulId, sharedUserId, request.Name, request.Nickname);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("{baulId:guid}/shared-users/{sharedUserId:guid}/avatar")]
+    [RequestSizeLimit(5_000_000)]
+    public async Task<IActionResult> UploadPersonaAvatar(
+        Guid baulId, Guid sharedUserId, [FromForm] UploadPersonaAvatarRequest request)
+    {
+        if (request.File is null || request.File.Length == 0)
+            return BadRequest(new { error = "No file provided" });
+
+        await using var stream = request.File.OpenReadStream();
+        var result = await baulManager.UpdatePersonaAvatarAsync(
+            baulId, sharedUserId, stream, request.File.FileName, request.File.ContentType);
+
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPut("{baulId:guid}/shared-users/{sharedUserId:guid}/role")]
     public async Task<IActionResult> UpdateSharedUserRole(Guid baulId, Guid sharedUserId, [FromBody] UpdateRoleRequest request)
     {

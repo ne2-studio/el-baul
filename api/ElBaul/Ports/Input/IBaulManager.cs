@@ -13,7 +13,11 @@ public interface IBaulManager
     Task<Result<BaulDto>> UpdateAsync(Guid baulId, string name, string? description);
 
     Task<Result<IEnumerable<SharedUserDto>>> GetSharedUsersAsync(Guid baulId);
+    Task<Result<SharedUserDto>> GetPersonaAsync(Guid baulId, Guid sharedUserId);
     Task<Result<SharedUserDto>> CreatePersonaAsync(Guid baulId, string nickname);
+    Task<Result<SharedUserDto>> UpdatePersonaAsync(Guid baulId, Guid sharedUserId, string? name, string nickname);
+    Task<Result<SharedUserDto>> UpdatePersonaAvatarAsync(
+        Guid baulId, Guid sharedUserId, Stream content, string fileName, string contentType);
     Task<Result<SharedUserDto>> UpdateSharedUserRoleAsync(Guid baulId, Guid sharedUserId, string role);
     Task<Result> RemoveSharedUserAsync(Guid baulId, Guid sharedUserId);
 

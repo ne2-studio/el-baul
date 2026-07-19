@@ -75,6 +75,22 @@ export const api = {
       (await get<any[]>(`/api/baules/${baulId}/shared-users`)).map((u) => new SharedUser(u)),
     createPersona: async (baulId: string, nickname: string) =>
       new SharedUser(await post<any>(`/api/baules/${baulId}/personas`, { nickname })),
+    getPersona: async (baulId: string, sharedUserId: string) =>
+      new SharedUser(await get<any>(`/api/baules/${baulId}/shared-users/${sharedUserId}`)),
+    updatePersona: async (baulId: string, sharedUserId: string, name: string, nickname: string) =>
+      new SharedUser(await put<any>(`/api/baules/${baulId}/shared-users/${sharedUserId}`, { name, nickname })),
+    uploadPersonaAvatar: async (baulId: string, sharedUserId: string, file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API_BASE}/api/baules/${baulId}/shared-users/${sharedUserId}/avatar`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: formData,
+      });
+
+      return new SharedUser(await handleResponse<any>(response));
+    },
     updateSharedUserRole: (baulId: string, sharedUserId: string, role: string) =>
       put<void>(`/api/baules/${baulId}/shared-users/${sharedUserId}/role`, { role }),
     revokeAccess: (baulId: string, sharedUserId: string) =>

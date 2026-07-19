@@ -22,6 +22,8 @@ export class SharedUser {
   status: 'active' | 'pending';
   role: BaulRole;
   invitedDate: string;
+  avatarUrl?: string;
+  canEdit?: boolean;
 
   constructor(data: any) {
     this.id = data.id;
@@ -32,6 +34,8 @@ export class SharedUser {
     this.status = data.status;
     this.role = data.role;
     this.invitedDate = formatRelativeTime(data.invitedDate);
+    this.avatarUrl = data.avatarUrl;
+    this.canEdit = data.canEdit;
   }
 }
 

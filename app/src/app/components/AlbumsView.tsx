@@ -9,7 +9,7 @@ import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Bell, MoreVertical, Pencil } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto } from './UploadConfirmationScreen';
-import { PhotoDate, SharedUser, BaulRole } from '@/types';
+import { PhotoDate, SharedUser } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
   DropdownMenu,
@@ -53,9 +53,7 @@ interface AlbumsViewProps {
   onOpenLoosePhotos?: () => void;
   onUploadPhotos?: (selectedPhotos: SelectedPhoto[]) => void;
   onCreatePersona?: (nickname: string) => void;
-  onShareInvite?: (persona: SharedUser) => void;
-  onChangeRole?: (sharedUserId: string, role: BaulRole) => void;
-  onRevokeAccess?: (sharedUserId: string) => void;
+  onSelectPersona?: (persona: SharedUser) => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => void;
@@ -74,9 +72,7 @@ export function AlbumsView({
   onOpenLoosePhotos,
   onUploadPhotos,
   onCreatePersona,
-  onShareInvite,
-  onChangeRole,
-  onRevokeAccess,
+  onSelectPersona,
   onRemovalRequests,
   pendingRemovalRequestsCount,
   onUpdateBaulInfo,
@@ -307,11 +303,8 @@ export function AlbumsView({
         {activeTab === 'personas' && (
           <PersonasTab
             sharedUsers={sharedUsers}
-            isAdmin={isAdmin}
             currentUserEmail={currentUserEmail}
-            onShareInvite={(persona) => onShareInvite?.(persona)}
-            onChangeRole={(sharedUserId, role) => onChangeRole?.(sharedUserId, role)}
-            onRevokeAccess={(sharedUserId) => onRevokeAccess?.(sharedUserId)}
+            onSelectPersona={(persona) => onSelectPersona?.(persona)}
           />
         )}
       </div>

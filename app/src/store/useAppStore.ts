@@ -78,6 +78,9 @@ interface AppState {
   renameAlbum: (baulId: string, albumId: string, name: string, description?: string) => Promise<void>;
 
   createPersona: (baulId: string, nickname: string) => Promise<void>;
+  loadSharedUsers: (baulId: string) => Promise<void>;
+  updatePersona: (baulId: string, sharedUserId: string, name: string, nickname: string) => Promise<void>;
+  uploadPersonaAvatar: (baulId: string, sharedUserId: string, file: File) => Promise<void>;
   updateUserRole: (baulId: string, sharedUserId: string, role: BaulRole) => Promise<void>;
   revokeAccess: (baulId: string, sharedUserId: string) => Promise<void>;
 
@@ -404,6 +407,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     const persona = await api.baules.createPersona(baulId, nickname);
     set((state) => ({
       sharedUsers: { ...state.sharedUsers, [baulId]: [...(state.sharedUsers[baulId] || []), persona] },
+    }));
+  },
+
+  loadSharedUsers: async (baulId) => {
+    const sharedUsers = await api.baules.getSharedUsers(baulId);
+    set((state) => ({ sharedUsers: { ...state.sharedUsers, [baulId]: sharedUsers } }));
+  },
+
+  updatePersona: async (baulId, sharedUserId, name, nickname) => {
+    const updated = await api.baules.updatePersona(baulId, sharedUserId, name, nickname);
+    set((state) => ({
+      sharedUsers: {
+        ...state.sharedUsers,
+        [baulId]: (state.sharedUsers[baulId] || []).map((u) => (u.id === sharedUserId ? updated : u)),
+      },
+    }));
+  },
+
+  uploadPersonaAvatar: async (baulId, sharedUserId, file) => {
+    const updated = await api.baules.uploadPersonaAvatar(baulId, sharedUserId, file);
+    set((state) => ({
+      sharedUsers: {
+        ...state.sharedUsers,
+        [baulId]: (state.sharedUsers[baulId] || []).map((u) => (u.id === sharedUserId ? updated : u)),
+      },
     }));
   },
 
