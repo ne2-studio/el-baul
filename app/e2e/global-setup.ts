@@ -42,4 +42,13 @@ export default async function globalSetup() {
 
   await waitForOk('http://localhost:5050/health', 120_000);
   await waitForOk('http://localhost:3000', 120_000);
+  // fake-oidc has no docker-compose healthcheck, so `api`'s `depends_on: service_started`
+  // only guarantees its container process started, not that its HTTP server is actually
+  // accepting connections yet. Best hypothesis for a 500 seen on the first authenticated
+  // request in CI (never reproduced locally): either the JWT bearer handler's own JWKS
+  // fetch or UserSyncMiddleware's userinfo call (api/ElBaul.Infra/OidcUserInfoClient.cs)
+  // races that gap. Not confirmed via a stack trace — that run predates
+  // global-teardown.ts dumping `docker compose logs` on CI failure. If this still 500s
+  // with this wait in place, check those logs before assuming this fixed it.
+  await waitForOk('http://localhost:5000/.well-known/jwks.json', 120_000);
 }

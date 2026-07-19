@@ -84,6 +84,15 @@ services:
       OIDC_DEFAULT_USER: "admin"
     ports:
       - "5000:5000"
+    healthcheck:
+      # No curl/wget in this image (minimal Ubuntu + .NET runtime) — bash's /dev/tcp is a
+      # TCP-connect-only check, but confirmed sufficient: the gap between "container
+      # started" and "Kestrel accepting connections" is real (~0.5s, observed directly)
+      # but is specifically a connection-refused window, not a slower app-level delay.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
 
   api:
     build:
@@ -113,7 +122,7 @@ services:
       imgproxy:
         condition: service_started
       fake-oidc:
-        condition: service_started
+        condition: service_healthy
 
   app:
     build:
