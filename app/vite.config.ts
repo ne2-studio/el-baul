@@ -1,4 +1,3 @@
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { defineConfig } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
@@ -36,9 +35,6 @@ export default defineConfig({
         }
       ]
     }
-  }), sentryVitePlugin({
-    org: "pedro-pardal",
-    project: "el-baul"
   })],
 
   resolve: {

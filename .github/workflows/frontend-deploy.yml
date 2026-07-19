@@ -47,3 +47,24 @@ jobs:
         run: |
           curl -X GET "${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+
+      - name: Extract dist from the built image
+        run: |
+          docker create --name extract $IMAGE_NAME:latest
+          docker cp extract:/usr/share/nginx/html ./dist
+          docker rm extract
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Upload sourcemaps to Sentry
+        run: npm run sentry:upload-sourcemaps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

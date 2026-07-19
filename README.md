@@ -85,6 +85,12 @@ Both services are containerized and deploy independently. CI/CD runs on push to 
 and triggers a Coolify deploy webhook — see `.github/workflows/backend-deploy.yml` and
 `frontend-deploy.yml`.
 
+The frontend's `npm run build` never talks to Sentry — it only stamps deterministic debug
+ids into `dist/` locally (`sentry-cli sourcemaps inject`). Uploading those sourcemaps is a
+separate, explicit script (`npm run sentry:upload-sourcemaps`, needs `SENTRY_AUTH_TOKEN`)
+that only CI runs, against the exact `dist/` copied out of the already-built image
+(`docker create` + `docker cp .../usr/share/nginx/html`) — see `frontend-deploy.yml`.
+
 ## License
 
 MIT © [Exeal](https://www.exeal.com)

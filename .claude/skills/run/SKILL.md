@@ -161,17 +161,22 @@ lsof -ti:3000 -sTCP:LISTEN | xargs -r kill    # kill the vite dev server if you 
 - **Stale `app` container serving old code on :3000.** The single most expensive
   failure mode found in this repo — see the "verify" skill's write-up. Always confirm
   what's actually bound to 3000 (`docker ps`) before trusting what you see there.
-- **Sentry source-map upload as a build side effect.** `app/vite.config.ts` wires
-  `sentryVitePlugin` unconditionally; it reads `SENTRY_AUTH_TOKEN` straight from
-  `app/.env.sentry-build-plugin` (unsetting the shell env var does *not* disable it).
-  It only fires on `vite build` (i.e. `npm run build`), never on `vite`/`npm run dev`
-  — so prefer the dev-server flow above for iteration, and only run `npm run build`
-  when you actually need the production bundle (it uploads a real release to Sentry
-  every time — benign, but not free, and not yours to trigger casually). Running
-  `npm run build` **directly on the host** picks up `.env.sentry-build-plugin` and
-  uploads; building via **the Docker image** (`docker compose up --build app`, or CI)
-  does not — `app/.dockerignore` excludes all `.env*` files from the build context, so
-  `SENTRY_AUTH_TOKEN` is simply absent there, same as it already was in CI.
+- **Sentry sourcemap upload is a separate, explicit step — not a build side effect.**
+  `npm run build` (`vite build && sentry-cli sourcemaps inject dist`) never talks to
+  Sentry: `sourcemaps inject` only stamps deterministic debug ids into the already-built
+  `dist/` files/maps, purely locally, no `SENTRY_AUTH_TOKEN` needed. The actual upload
+  lives in its own script, `npm run sentry:upload-sourcemaps`, which is **not** run by
+  `npm run build` or `npm run dev` and needs `SENTRY_AUTH_TOKEN` in the environment (see
+  `app/.env.sentry-build-plugin`, gitignored) — don't run it casually, it's meant to be
+  triggered by CI (`frontend-deploy.yml`) against the `dist/` actually shipped in the
+  image, not a local rebuild. **Injected debug ids are not portable across
+  environments** — the same source, rebuilt independently on the host vs. inside the
+  `node:22-alpine` Docker image, produces *different* debug ids (observed directly:
+  same output filename/content-hash, different `debugId=` comment). That's why the CI
+  step extracts `dist/` straight out of the already-built, already-tagged image
+  (`docker create` + `docker cp <container>:/usr/share/nginx/html ./dist`) instead of
+  re-running `npm run build` on the runner — a second independent build would upload
+  sourcemaps that don't match what's actually deployed.
 - **`dotnet-ef` not on `PATH`.** It's installed as a global tool but lives at
   `~/.dotnet/tools/dotnet-ef`, which isn't on `PATH` by default in this environment.
   Before `dotnet ef migrations add ...`: `export PATH="$HOME/.dotnet/tools:$PATH"`.
