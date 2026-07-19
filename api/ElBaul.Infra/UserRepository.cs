@@ -29,7 +29,12 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
                 // requests in parallel — for a brand-new user, more than one can land
                 // here between our SELECT and INSERT. The row exists now (by whichever
                 // request won), which is all this method promises, so there's nothing
-                // left to do.
+                // left to do — except detach: dbContext is request-scoped, and a failed
+                // insert stays tracked as Added, so anything else that calls
+                // SaveChangesAsync later in the same request (e.g. BaulRepository.
+                // CreateAsync, sharing this context) would otherwise try to re-insert
+                // this same row and hit the identical 500 again.
+                dbContext.Entry(user).State = EntityState.Detached;
             }
         }
         else
