@@ -193,7 +193,7 @@ jobs:
 
   deploy-backend:
     needs: [e2e, detect-changes]
-    if: needs.detect-changes.outputs.api == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: success() && needs.detect-changes.outputs.api == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository }}-api
@@ -220,7 +220,7 @@ jobs:
 
   deploy-imgproxy:
     needs: [e2e, detect-changes]
-    if: needs.detect-changes.outputs.imgproxy == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: success() && needs.detect-changes.outputs.imgproxy == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository }}-imgproxy
@@ -250,7 +250,7 @@ jobs:
   # from repo vars. Vite bakes these into the JS bundle at build time, so it must rebuild.
   deploy-frontend:
     needs: [e2e, detect-changes]
-    if: needs.detect-changes.outputs.app == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: success() && needs.detect-changes.outputs.app == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
       run:
