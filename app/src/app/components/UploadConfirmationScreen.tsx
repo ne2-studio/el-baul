@@ -1,52 +1,101 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import exifr from 'exifr';
 import { Button } from './Button';
 import { Input } from './Input';
 import { ChevronLeft, X } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { Album } from './AlbumsView';
-import { getRelativeTime } from '../utils/timeUtils';
+import { ChapterSelector, ChapterSelection } from './ChapterSelector';
+import { PartialDatePicker } from './PartialDatePicker';
+import { PhotoDate } from '@/types';
 
 export interface SelectedPhoto {
   id: string;
   file: File;
   preview: string;
-  captureDate?: Date;
   caption?: string;
-  date?: string;
 }
 
 interface UploadConfirmationScreenProps {
   baul: Baul;
   album: Album;
+  existingAlbums: Album[];
+  /** Set only when entered from an already-open chapter — shown first in the list, never pre-selected. */
+  currentAlbumId?: string;
   selectedPhotos: SelectedPhoto[];
   onBack: () => void;
-  onUpload: (photos: SelectedPhoto[], caption?: string) => void;
+  onUpload: (photos: SelectedPhoto[], caption: string | undefined, chapter: ChapterSelection, date: PhotoDate | null) => void;
+}
+
+// If every photo in the batch has EXIF DateTimeOriginal/CreateDate and they all agree
+// on year/month/day, returns that date to pre-fill the picker — otherwise null. Mirrors
+// the field priority the backend's ExifPhotoDateExtractor uses (DateTimeOriginal, then
+// CreateDate/DateTimeDigitized), so the client pre-fill matches what the server would
+// have extracted anyway had no explicit date been sent.
+async function extractSharedExifDate(files: File[]): Promise<PhotoDate | null> {
+  const dates = await Promise.all(files.map(async (file) => {
+    try {
+      const tags = await exifr.parse(file, ['DateTimeOriginal', 'CreateDate']);
+      const date: Date | undefined = tags?.DateTimeOriginal ?? tags?.CreateDate;
+      return date ? { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() } : null;
+    } catch {
+      return null;
+    }
+  }));
+
+  const found = dates.filter((d) => d !== null) as PhotoDate[];
+  if (found.length === 0) return null;
+
+  const first = found[0];
+  const allAgree = found.every((d) => d.year === first.year && d.month === first.month && d.day === first.day);
+  return allAgree ? first : null;
 }
 
 export function UploadConfirmationScreen({
   baul,
   album,
+  existingAlbums,
+  currentAlbumId,
   selectedPhotos,
   onBack,
   onUpload
 }: UploadConfirmationScreenProps) {
   const [caption, setCaption] = useState('');
   const [photos, setPhotos] = useState(selectedPhotos);
+  const [chapter, setChapter] = useState<ChapterSelection | null>(null);
+  const [date, setDate] = useState<PhotoDate | null>(null);
+  const [dontRemember, setDontRemember] = useState(false);
+  const dateTouchedRef = useRef(false);
+  const [exifPrefill, setExifPrefill] = useState<PhotoDate | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    extractSharedExifDate(selectedPhotos.map((p) => p.file)).then((found) => {
+      if (!cancelled && found && !dateTouchedRef.current) setExifPrefill(found);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleRemovePhoto = (id: string) => {
     setPhotos(photos.filter(p => p.id !== id));
   };
 
+  const chapterValid = chapter !== null && (chapter.type !== 'new' || chapter.name.trim().length > 0);
+  const dateValid = dontRemember || !!date?.year;
+  const canConfirm = chapterValid && dateValid;
+
   const handleConfirm = () => {
-    onUpload(photos, caption || undefined);
+    if (!canConfirm || !chapter) return;
+    onUpload(photos, caption || undefined, chapter, dontRemember ? null : date);
   };
-  
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
         <div className="max-w-2xl mx-auto px-6 py-5">
-          <button 
+          <button
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
@@ -57,7 +106,7 @@ export function UploadConfirmationScreen({
           <p className="text-sm text-muted-foreground">{album.name}</p>
         </div>
       </div>
-      
+
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-6">
         {/* Photo count */}
@@ -66,9 +115,9 @@ export function UploadConfirmationScreen({
             {photos.length} {photos.length === 1 ? 'foto seleccionada' : 'fotos seleccionadas'}
           </p>
         </div>
-        
+
         {/* Photo grid with remove option */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-8">
           {photos.map((photo) => (
             <div key={photo.id} className="relative aspect-square group">
               <img
@@ -86,7 +135,33 @@ export function UploadConfirmationScreen({
             </div>
           ))}
         </div>
-        
+
+        {/* Capítulo */}
+        <div className="mb-8">
+          <h2 className="text-sm font-medium text-foreground mb-3">Capítulo</h2>
+          <ChapterSelector
+            albums={existingAlbums}
+            currentAlbumId={currentAlbumId}
+            value={chapter}
+            onChange={setChapter}
+          />
+        </div>
+
+        {/* Fecha */}
+        <div className="mb-8">
+          <h2 className="text-sm font-medium text-foreground mb-3">Fecha</h2>
+          <PartialDatePicker
+            key={exifPrefill ? 'exif' : 'initial'}
+            initialValue={exifPrefill ?? undefined}
+            allowUnknown
+            onChange={(v, unknown) => {
+              dateTouchedRef.current = true;
+              setDate(v);
+              setDontRemember(unknown);
+            }}
+          />
+        </div>
+
         {/* Optional caption */}
         <div className="mb-8">
           <Input
@@ -98,13 +173,14 @@ export function UploadConfirmationScreen({
             rows={2}
           />
         </div>
-        
+
         {/* Actions */}
         <div className="space-y-3">
-          <Button 
-            variant="primary" 
-            fullWidth 
+          <Button
+            variant="primary"
+            fullWidth
             onClick={handleConfirm}
+            disabled={!canConfirm}
           >
             Guardar recuerdos
           </Button>

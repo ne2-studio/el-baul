@@ -8,7 +8,7 @@ export const LooseUploadConfirmationRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
   const location = useLocation();
-  const { baules, loosePhotos } = useAppStore();
+  const { baules, albums, loosePhotos } = useAppStore();
   const baul = baules.find(b => b.id === baulId);
   const { selectedPhotos } = location.state || { selectedPhotos: [] };
 
@@ -27,11 +27,12 @@ export const LooseUploadConfirmationRoute: React.FC = () => {
     <UploadConfirmationScreen
       baul={baul}
       album={looseAlbum}
+      existingAlbums={albums[baul.id] || []}
       selectedPhotos={selectedPhotos}
       onBack={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
-      onUpload={(photos, caption) => {
+      onUpload={(photos, caption, chapter, date) => {
         const finalPhotos = photos.map((p) => ({ ...p, caption: p.caption ?? caption }));
-        navigate(`/baules/${baul.id}/fotos-sueltas/subiendo`, { state: { selectedPhotos: finalPhotos } });
+        navigate(`/baules/${baul.id}/fotos-sueltas/subiendo`, { state: { selectedPhotos: finalPhotos, chapter, date } });
       }}
     />
   );

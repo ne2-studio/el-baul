@@ -87,9 +87,20 @@ public class PhotoManager(
         string fileName,
         string contentType,
         string? caption,
-        DateTime? date,
+        (int Year, int? Month, int? Day)? date,
         Guid clientUploadId)
     {
+        if (date is { } explicitDate)
+        {
+            var dateValidationError = ValidateDate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
+            if (dateValidationError is not null)
+            {
+                logger.LogWarning("Photo upload rejected: invalid date {Year}/{Month}/{Day}",
+                    explicitDate.Year, explicitDate.Month, explicitDate.Day);
+                return Result.Failure<PhotoDto>(dateValidationError);
+            }
+        }
+
         var userId = currentUserProvider.GetUserId();
         var album = await albumRepository.GetByIdAsync(albumId);
         if (album is null)
@@ -196,9 +207,20 @@ public class PhotoManager(
         string fileName,
         string contentType,
         string? caption,
-        DateTime? date,
+        (int Year, int? Month, int? Day)? date,
         Guid clientUploadId)
     {
+        if (date is { } explicitDate)
+        {
+            var dateValidationError = ValidateDate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
+            if (dateValidationError is not null)
+            {
+                logger.LogWarning("Loose photo upload rejected: invalid date {Year}/{Month}/{Day}",
+                    explicitDate.Year, explicitDate.Month, explicitDate.Day);
+                return Result.Failure<PhotoDto>(dateValidationError);
+            }
+        }
+
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null)
@@ -528,7 +550,7 @@ public class PhotoManager(
         return ToDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true);
     }
 
-    private (int? Year, int? Month, int? Day) ResolvePhotoDate(DateTime? explicitDate, Stream content)
+    private (int? Year, int? Month, int? Day) ResolvePhotoDate((int Year, int? Month, int? Day)? explicitDate, Stream content)
     {
         if (explicitDate is { } d) return (d.Year, d.Month, d.Day);
 

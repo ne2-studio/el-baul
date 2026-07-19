@@ -29,7 +29,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
 
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(
-            albumId, stream, request.File.FileName, request.File.ContentType, request.Caption, request.Date,
+            albumId, stream, request.File.FileName, request.File.ContentType, request.Caption, ToDateTuple(request),
             request.ClientUploadId.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
@@ -93,7 +93,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
 
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadToBaulAsync(
-            baulId, stream, request.File.FileName, request.File.ContentType, request.Caption, request.Date,
+            baulId, stream, request.File.FileName, request.File.ContentType, request.Caption, ToDateTuple(request),
             request.ClientUploadId.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
@@ -115,4 +115,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         var result = await photoManager.CreateRecuerdoAsync(photoId, request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
+
+    private static (int Year, int? Month, int? Day)? ToDateTuple(UploadPhotoRequest request) =>
+        request.DateYear is { } year ? (year, request.DateMonth, request.DateDay) : null;
 }

@@ -594,12 +594,86 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         var result = await manager.UploadAsync(
-            albumId, content, "photo.jpg", "image/jpeg", null, new DateTime(2021, 1, 2), Guid.NewGuid());
+            albumId, content, "photo.jpg", "image/jpeg", null, (2021, 1, 2), Guid.NewGuid());
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2021, result.Value.DateYear);
         Assert.Equal(1, result.Value.DateMonth);
         Assert.Equal(2, result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldAcceptPartialExplicitDate_YearOnly()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(
+            albumId, content, "photo.jpg", "image/jpeg", null, (2020, null, null), Guid.NewGuid());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2020, result.Value.DateYear);
+        Assert.Null(result.Value.DateMonth);
+        Assert.Null(result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldAcceptPartialExplicitDate_YearAndMonth()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(
+            albumId, content, "photo.jpg", "image/jpeg", null, (2020, 6, null), Guid.NewGuid());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2020, result.Value.DateYear);
+        Assert.Equal(6, result.Value.DateMonth);
+        Assert.Null(result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldRejectUpload_WhenExplicitDateYearOutOfRange()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(
+            albumId, content, "photo.jpg", "image/jpeg", null, (1500, null, null), Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(_photoStorage.SavedKeys);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ShouldRejectUpload_WhenDayGivenWithoutMonth()
+    {
+        var (_, albumId) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(
+            albumId, content, "photo.jpg", "image/jpeg", null, (2020, null, 15), Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(_photoStorage.SavedKeys);
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_ShouldRejectUpload_WhenExplicitDateInvalid()
+    {
+        var (baulId, _) = await SeedBaulWithAlbumAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadToBaulAsync(
+            baulId, content, "photo.jpg", "image/jpeg", null, (1500, null, null), Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(_photoStorage.SavedKeys);
     }
 
     [Fact]

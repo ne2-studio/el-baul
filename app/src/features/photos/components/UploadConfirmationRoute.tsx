@@ -13,16 +13,18 @@ export const UploadConfirmationRoute: React.FC = () => {
   const { selectedPhotos } = location.state || { selectedPhotos: [] };
   
   if (!baul || !album) return <div className="p-8 text-center">Cargando...</div>;
-  
+
   return (
     <UploadConfirmationScreen
       baul={baul}
       album={album}
+      existingAlbums={albums[baulId!] || []}
+      currentAlbumId={album.id}
       selectedPhotos={selectedPhotos}
       onBack={() => navigate(`/baules/${baul.id}/albumes/${album.id}`)}
-      onUpload={(photos, caption) => {
+      onUpload={(photos, caption, chapter, date) => {
         const finalPhotos = photos.map((p) => ({ ...p, caption: p.caption ?? caption }));
-        navigate(`/baules/${baul.id}/albumes/${album.id}/subiendo`, { state: { selectedPhotos: finalPhotos } });
+        navigate(`/baules/${baul.id}/albumes/${album.id}/subiendo`, { state: { selectedPhotos: finalPhotos, chapter, date } });
       }}
     />
   );

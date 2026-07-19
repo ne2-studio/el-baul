@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import { Baul, Album, Photo, SharedUser, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile, PhotoDate } from '@/types';
 import { api } from '@/api';
 import { isAdminRole } from '@/utils/roleUtils';
+import { ChapterSelection } from '@/app/components/ChapterSelector';
 
 const defaultSubscription: Subscription = {
   currentPlan: 'gratuito',
@@ -15,7 +16,7 @@ export interface UploadItem {
   clientUploadId: string;
   file: File;
   caption?: string;
-  date?: string;
+  date?: PhotoDate;
 }
 
 export interface UploadItemResult {
@@ -68,6 +69,12 @@ interface AppState {
     selectedPhotos: UploadItem[],
     onItemSettled?: (result: UploadItemResult) => void
   ) => Promise<UploadItemResult[]>;
+  uploadPhotosWithChapter: (
+    baulId: string,
+    chapter: ChapterSelection,
+    selectedPhotos: UploadItem[],
+    onItemSettled?: (result: UploadItemResult) => void
+  ) => Promise<{ results: UploadItemResult[]; albumId: string | null }>;
   movePhotos: (baulId: string, sourceAlbumId: string | null, photoIds: string[], targetAlbumId: string) => Promise<void>;
   deletePhoto: (baulId: string, albumId: string | null, photoId: string, reason?: string) => Promise<void>;
   changePhotoDate: (baulId: string, albumId: string | null, photoId: string, date: PhotoDate) => Promise<void>;
@@ -285,6 +292,32 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
 
     return results;
+  },
+
+  uploadPhotosWithChapter: async (baulId, chapter, selectedPhotos, onItemSettled) => {
+    let targetAlbumId: string | null = chapter.type === 'existing' ? chapter.albumId : null;
+
+    if (chapter.type === 'new') {
+      try {
+        const album = await get().createAlbum(baulId, chapter.name, '');
+        targetAlbumId = album.id;
+      } catch (error) {
+        Sentry.captureException(error);
+        const message = error instanceof Error ? error.message : 'No se pudo crear el capítulo';
+        const results = selectedPhotos.map((p) => {
+          const result: UploadItemResult = { clientUploadId: p.clientUploadId, error: message };
+          onItemSettled?.(result);
+          return result;
+        });
+        return { results, albumId: null };
+      }
+    }
+
+    const results = targetAlbumId
+      ? await get().uploadPhotos(baulId, targetAlbumId, selectedPhotos, onItemSettled)
+      : await get().uploadLoosePhotos(baulId, selectedPhotos, onItemSettled);
+
+    return { results, albumId: targetAlbumId };
   },
 
   movePhotos: async (baulId, sourceAlbumId, photoIds, targetAlbumId) => {

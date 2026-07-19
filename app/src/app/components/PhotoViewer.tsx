@@ -55,9 +55,6 @@ export function PhotoViewer({
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
   const [showDateModal, setShowDateModal] = useState(false);
-  const [dateYear, setDateYear] = useState('');
-  const [dateMonth, setDateMonth] = useState('');
-  const [dateDay, setDateDay] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
 
@@ -149,16 +146,9 @@ export function PhotoViewer({
     setMoveTargetId('');
   };
 
-  const handleDateSubmit = () => {
-    const year = parseInt(dateYear);
-    if (!year) return;
-    onChangeDate?.(photo, {
-      year,
-      month: dateMonth ? parseInt(dateMonth) : undefined,
-      day: dateDay ? parseInt(dateDay) : undefined,
-    });
+  const handleDateSubmit = (date: PhotoDate) => {
+    onChangeDate?.(photo, date);
     setShowDateModal(false);
-    setDateYear(''); setDateMonth(''); setDateDay('');
   };
 
   const handleAddRecuerdo = (text: string) => {
@@ -432,8 +422,6 @@ export function PhotoViewer({
       {showDateModal && (
         <DateModal
           title="Cambiar fecha de la foto"
-          year={dateYear} month={dateMonth} day={dateDay}
-          onYearChange={setDateYear} onMonthChange={setDateMonth} onDayChange={setDateDay}
           onCancel={() => setShowDateModal(false)}
           onConfirm={handleDateSubmit}
         />

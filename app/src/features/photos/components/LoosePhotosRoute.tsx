@@ -10,7 +10,7 @@ import { PhotoDate } from '@/types';
 export const LoosePhotosRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
-  const { baules, albums, loosePhotos, movePhotos, changePhotoDateBatch } = useAppStore();
+  const { baules, albums, loosePhotos, movePhotos, changePhotoDateBatch, createAlbum } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);
@@ -47,6 +47,19 @@ export const LoosePhotosRoute: React.FC = () => {
       });
   };
 
+  const handleBatchCreateChapter = (photoIds: string[], name: string, description: string) => {
+    createAlbum(baul.id, name, description)
+      .then((album) => movePhotos(baul.id, null, photoIds, album.id).then(() => album))
+      .then((album) => {
+        showToastMessage(`Capítulo "${album.name}" creado`);
+        navigate(`/baules/${baul.id}/albumes/${album.id}`);
+      })
+      .catch((error) => {
+        console.error('Error creating chapter from selected photos:', error);
+        showToastMessage('Error al crear el capítulo');
+      });
+  };
+
   return (
     <PhotosView
       album={looseAlbum}
@@ -59,6 +72,7 @@ export const LoosePhotosRoute: React.FC = () => {
       }
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
+      onBatchCreateChapter={handleBatchCreateChapter}
     />
   );
 };
