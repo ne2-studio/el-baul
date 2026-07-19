@@ -1,0 +1,304 @@
+name: CI/CD
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'api/**'
+      - 'imgproxy/**'
+      - 'docker-compose.yaml'
+      - '.github/workflows/ci-cd.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'api/**'
+      - 'imgproxy/**'
+      - 'docker-compose.yaml'
+      - '.github/workflows/ci-cd.yml'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # Which services actually changed — only gates the deploy-* jobs at the bottom.
+  # backend-tests/frontend-checks/build-images/e2e always run in full regardless (an
+  # integration smoke test inherently needs the whole stack up either way).
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      app: ${{ steps.filter.outputs.app }}
+      imgproxy: ${{ steps.filter.outputs.imgproxy }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'api/**'
+            app:
+              - 'app/**'
+            imgproxy:
+              - 'imgproxy/**'
+
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Run tests
+        run: dotnet test --no-build -c Release
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  # Builds api/app/imgproxy from docker-compose.yaml (the single source of truth for
+  # build context/args) and hands them to e2e as artifacts — no image is built twice.
+  # The api/imgproxy images are also reused by deploy-backend/deploy-imgproxy below; the
+  # app image is NOT (see deploy-frontend for why it must rebuild with prod VITE_* args).
+  build-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images
+        run: docker compose build api app imgproxy
+
+      - name: Save images
+        run: |
+          docker save el-baul-api:latest | gzip > api.tar.gz
+          docker save el-baul-app:latest | gzip > app.tar.gz
+          docker save el-baul-imgproxy:latest | gzip > imgproxy.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-api
+          path: api.tar.gz
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-app
+          path: app.tar.gz
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-imgproxy
+          path: imgproxy.tar.gz
+          retention-days: 1
+
+  # Fail-fast gate: this job (and its ~15min cost) never starts unless the unit-test
+  # jobs and the image build already succeeded.
+  e2e:
+    needs: [backend-tests, frontend-checks, build-images]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-api
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-app
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-imgproxy
+
+      # Explicit, visible step: these are the exact images that just passed
+      # backend-tests/frontend-checks, not a fresh rebuild — see app/e2e/global-setup.ts.
+      - name: Load pre-built images
+        run: |
+          docker load < api.tar.gz
+          docker load < app.tar.gz
+          docker load < imgproxy.tar.gz
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('app/package-lock.json') }}
+
+      - name: Install Playwright browsers (+ OS deps)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: app
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps only (browsers already cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: app
+        run: npx playwright install-deps chromium
+
+      - name: Run smoke tests
+        working-directory: app
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: app/playwright-report/
+          retention-days: 7
+
+  deploy-backend:
+    needs: [e2e, detect-changes]
+    if: needs.detect-changes.outputs.api == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}-api
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-api
+
+      - name: Load image
+        run: docker load < api.tar.gz
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Tag and push image
+        run: |
+          docker tag el-baul-api:latest $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:latest
+
+      - name: Trigger Coolify deploy
+        run: |
+          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_BACKEND }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+
+  deploy-imgproxy:
+    needs: [e2e, detect-changes]
+    if: needs.detect-changes.outputs.imgproxy == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}-imgproxy
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-imgproxy
+
+      - name: Load image
+        run: docker load < imgproxy.tar.gz
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Tag and push image
+        run: |
+          docker tag el-baul-imgproxy:latest $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:latest
+
+      - name: Trigger Coolify deploy
+        run: |
+          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_IMGPROXY }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+
+  # Cannot reuse build-images' app artifact — that one is baked with docker-compose.yaml's
+  # localhost VITE_* args (needed for e2e), while this needs the real prod VITE_* values
+  # from repo vars. Vite bakes these into the JS bundle at build time, so it must rebuild.
+  deploy-frontend:
+    needs: [e2e, detect-changes]
+    if: needs.detect-changes.outputs.app == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg VITE_API_URL="${{ vars.VITE_API_URL }}" \
+            --build-arg VITE_OIDC_AUTHORITY="${{ vars.VITE_OIDC_AUTHORITY }}" \
+            --build-arg VITE_OIDC_CLIENT_ID="${{ vars.VITE_OIDC_CLIENT_ID }}" \
+            --build-arg VITE_OIDC_CALLBACK_URI="${{ vars.VITE_OIDC_CALLBACK_URI }}" \
+            --build-arg VITE_ZITADEL_ORGANIZATION_ID="${{ vars.VITE_ZITADEL_ORGANIZATION_ID }}" \
+            --build-arg VITE_SENTRY_DSN="${{ vars.VITE_SENTRY_DSN }}" \
+            -t $IMAGE_NAME:latest .
+
+      - name: Push image
+        run: docker push $IMAGE_NAME:latest
+
+      - name: Trigger Coolify deploy
+        run: |
+          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+
+      - name: Extract dist from the built image
+        run: |
+          docker create --name extract $IMAGE_NAME:latest
+          docker cp extract:/usr/share/nginx/html ./dist
+          docker rm extract
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Upload sourcemaps to Sentry
+        run: npm run sentry:upload-sourcemaps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

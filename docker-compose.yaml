@@ -15,6 +15,11 @@
 # local/E2E use — no real login UI, users are selected via `login_hint`. Sign in with
 # `login_hint=admin` or `login_hint=user` against http://localhost:5000/authorize.
 
+# Pinned explicitly (rather than left to default to the checkout directory's basename)
+# so image tags stay predictable — CI builds these images in one job and loads them by
+# name (el-baul-api, el-baul-app, el-baul-imgproxy) in later jobs.
+name: el-baul
+
 services:
   postgres:
     image: postgres:16

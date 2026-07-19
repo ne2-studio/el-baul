@@ -119,21 +119,30 @@ await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/
 
 `app/e2e/smoke.spec.ts` is a minimal Playwright Test smoke suite that boots the whole
 docker-compose stack itself — no need to run steps 1-3 above first. `app/e2e/global-setup.ts`
-does the clean-slate check, `docker compose up --build -d`, and polls `/health` and
-`:3000` until ready; `app/e2e/global-teardown.ts` runs `docker compose down` (no `-v`)
-afterwards. The test logs in as Admin User through fake-oidc, seeds one baúl via a
-direct `POST /api/baules` call (a fresh Admin User has zero baúles, which routes to a
-completely different empty-state screen — see `loadUserData` in `app/src/app/App.tsx`),
-and asserts it lands on the real home screen (`app/src/app/components/BaulesList.tsx`).
+does the clean-slate check, then `docker compose up -d` (`--build` locally so it always
+rebuilds from current source and never trusts a stale image, per the gotcha below; in CI
+`--build` is skipped since `ci-cd.yml` already `docker load`s the exact images that just
+passed `backend-tests`/`frontend-checks`), and polls `/health` and `:3000` until ready;
+`app/e2e/global-teardown.ts` runs `docker compose down` (no `-v`) afterwards. The test
+logs in as Admin User through fake-oidc, seeds one baúl with a `Date.now()`-suffixed
+unique name via a direct `POST /api/baules` call (a fresh Admin User has zero baúles,
+which routes to a completely different empty-state screen — see `loadUserData` in
+`app/src/app/App.tsx` — and a fixed name would eventually collide with a leftover from a
+prior local run and break Playwright's strict-mode locator with a "resolved to 2
+elements" error), and asserts it lands on the real home screen
+(`app/src/app/components/BaulesList.tsx`).
 
 ```bash
 cd app && npm run test:e2e
 ```
 
-Because teardown keeps the volumes, repeated local runs accumulate duplicate "Smoke
-test baúl" entries — expected and harmless. Also wired into CI
-(`.github/workflows/e2e-tests.yml`) on changes to `app/**`, `api/**`, `imgproxy/**`, or
-`docker-compose.yaml`.
+Because teardown keeps the volumes, repeated local runs accumulate one seeded baúl each
+— harmless since each has a unique name. Also wired into CI (`.github/workflows/ci-cd.yml`)
+on changes to `app/**`, `api/**`, `imgproxy/**`, or `docker-compose.yaml`: a
+`backend-tests`/`frontend-checks`/`build-images` job graph feeds this `e2e` job (which
+only starts once all three pass), which in turn gates the `deploy-*` jobs that push
+images and trigger the Coolify webhooks — nothing deploys to production without a green
+e2e run on that commit.
 
 ## 5. Extracting the access token (for raw API probing)
 

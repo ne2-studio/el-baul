@@ -36,9 +36,13 @@ test('user can log in with Google (fake-oidc) and reach the El Baúl home screen
   });
   expect(accessToken, 'expected an access token in localStorage after login').toBeTruthy();
 
+  // Unique per run: repeated local runs don't wipe volumes (see global-teardown.ts), so
+  // a fixed name would eventually collide with a leftover from a prior run and break
+  // Playwright's strict-mode locator below ("resolved to 2 elements").
+  const baulName = `Smoke test baúl ${Date.now()}`;
   const createResponse = await page.request.post(`${API_BASE_URL}/api/baules`, {
     headers: { Authorization: `Bearer ${accessToken}` },
-    data: { name: 'Smoke test baúl', description: null },
+    data: { name: baulName, description: null },
   });
   expect(createResponse.ok(), `failed to seed a baúl: ${createResponse.status()}`).toBeTruthy();
 
@@ -46,7 +50,7 @@ test('user can log in with Google (fake-oidc) and reach the El Baúl home screen
 
   await expect(page.getByRole('heading', { name: 'El Baúl' })).toBeVisible();
   await expect(page.getByText('Mis baúles')).toBeVisible();
-  await expect(page.getByText('Smoke test baúl')).toBeVisible();
+  await expect(page.getByText(baulName)).toBeVisible();
 
   expect(pageErrors, pageErrors.map(String).join('\n')).toEqual([]);
   expect(failedRequests, failedRequests.join('\n')).toEqual([]);

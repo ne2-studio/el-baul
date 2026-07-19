@@ -29,7 +29,12 @@ export default async function globalSetup() {
     execSync('docker compose down', { cwd: REPO_ROOT, stdio: 'inherit' });
   }
 
-  execSync('docker compose up --build -d', {
+  // In CI, ci-cd.yml already `docker load`s the exact images that passed backend-tests/
+  // frontend-checks as an explicit prior step — rebuilding here would silently test a
+  // different (fresh) build than the one deploy-* jobs will push later in the same run.
+  // Locally, always rebuild fresh — see the clean-slate comment above.
+  const buildFlag = process.env.CI ? '' : '--build';
+  execSync(`docker compose up ${buildFlag} -d`.trim(), {
     cwd: REPO_ROOT,
     stdio: 'inherit',
     timeout: 10 * 60 * 1000,
