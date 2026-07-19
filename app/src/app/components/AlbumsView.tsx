@@ -8,7 +8,7 @@ import { PersonasTab } from './PersonasTab';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Bell, MoreVertical, Pencil } from 'lucide-react';
 import { Baul } from './BaulesList';
-import { SelectedPhoto } from './UploadConfirmationScreen';
+import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate, SharedUser } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
@@ -82,17 +82,16 @@ export function AlbumsView({
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas'>('capitulos');
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    e.target.value = ''; // must run after snapshotting — files is a live FileList tied to the input
 
-    const selectedPhotos: SelectedPhoto[] = Array.from(files).map((file) => ({
-      id: crypto.randomUUID(),
-      file,
-      preview: URL.createObjectURL(file)
-    }));
+    const materialized = await Promise.all(fileArray.map(materializeSelectedPhoto));
+    const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
+    if (selectedPhotos.length === 0) return;
 
-    e.target.value = '';
     onUploadPhotos?.(selectedPhotos);
   };
 

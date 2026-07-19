@@ -6,7 +6,7 @@ import { EditInfoModal } from './EditInfoModal';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil, BookOpen, X } from 'lucide-react';
 import { Album } from './AlbumsView';
-import { SelectedPhoto } from './UploadConfirmationScreen';
+import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
 import { PartialDatePicker } from './PartialDatePicker';
 import { formatDateRange } from '../utils/timeUtils';
@@ -154,17 +154,16 @@ export function PhotosView({
 
   const moveableAlbums = allAlbums.filter(a => a.id !== album.id);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    e.target.value = ''; // must run after snapshotting — files is a live FileList tied to the input
 
-    const selectedPhotos: SelectedPhoto[] = Array.from(files).map((file) => ({
-      id: crypto.randomUUID(),
-      file,
-      preview: URL.createObjectURL(file)
-    }));
+    const materialized = await Promise.all(fileArray.map(materializeSelectedPhoto));
+    const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
+    if (selectedPhotos.length === 0) return;
 
-    e.target.value = '';
     onAddPhotos(selectedPhotos);
   };
 
