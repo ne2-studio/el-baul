@@ -45,7 +45,8 @@ interface UploadConfirmationScreenProps {
   baul: Baul;
   album: Album;
   existingAlbums: Album[];
-  /** Set only when entered from an already-open chapter — shown first in the list, never pre-selected. */
+  /** Set only when entered from an already-open chapter — the chapter step is skipped
+   * entirely and photos go straight into it, since the destination is already obvious. */
   currentAlbumId?: string;
   selectedPhotos: SelectedPhoto[];
   onBack: () => void;
@@ -87,7 +88,9 @@ export function UploadConfirmationScreen({
 }: UploadConfirmationScreenProps) {
   const [caption, setCaption] = useState('');
   const [photos, setPhotos] = useState(selectedPhotos);
-  const [chapter, setChapter] = useState<ChapterSelection | null>(null);
+  const [chapter, setChapter] = useState<ChapterSelection | null>(
+    currentAlbumId ? { type: 'existing', albumId: currentAlbumId } : null
+  );
   const [date, setDate] = useState<PhotoDate | null>(null);
   const [dontRemember, setDontRemember] = useState(false);
   const dateTouchedRef = useRef(false);
@@ -161,24 +164,27 @@ export function UploadConfirmationScreen({
           ))}
         </div>
 
-        {/* Capítulo */}
-        <div className="mb-8">
-          <h2 className="text-sm font-medium text-foreground mb-3">Capítulo</h2>
-          <ChapterSelector
-            albums={existingAlbums}
-            currentAlbumId={currentAlbumId}
-            value={chapter}
-            onChange={setChapter}
-          />
-        </div>
+        {/* Capítulo — skipped when uploading straight into an already-open chapter */}
+        {!currentAlbumId && (
+          <div className="mb-8">
+            <h2 className="text-sm font-medium text-foreground mb-3">Capítulo</h2>
+            <ChapterSelector
+              albums={existingAlbums}
+              currentAlbumId={currentAlbumId}
+              value={chapter}
+              onChange={setChapter}
+            />
+          </div>
+        )}
 
-        {/* Fecha */}
+        {/* Fecha — "No me acuerdo" only makes sense when we don't already have a
+            confident answer from EXIF */}
         <div className="mb-8">
           <h2 className="text-sm font-medium text-foreground mb-3">Fecha</h2>
           <PartialDatePicker
             key={exifPrefill ? 'exif' : 'initial'}
             initialValue={exifPrefill ?? undefined}
-            allowUnknown
+            allowUnknown={!exifPrefill}
             onChange={(v, unknown) => {
               dateTouchedRef.current = true;
               setDate(v);
