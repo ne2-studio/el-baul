@@ -246,6 +246,38 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task CreateRecuerdoAsync_ShouldIncludeAuthorsAvatarUrl_WhenPersonaHasOne()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow(),
+            AvatarPhotoKey: "avatar-key"));
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldLeaveAvatarNull_WhenPersonaHasNone()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.UserAvatar);
+    }
+
+    [Fact]
     public async Task CreateRecuerdoAsync_ShouldSetAlbumId_FromThePhotosAlbum()
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();

@@ -352,6 +352,25 @@ public class AlbumManagerTests
     }
 
     [Fact]
+    public async Task CreateRecuerdoAsync_ShouldIncludeAuthorsAvatarUrl_WhenPersonaHasOne()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow(),
+            AvatarPhotoKey: "avatar-key"));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.CreateRecuerdoAsync(albumId, "Recuerdo de un colaborador");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
+    }
+
+    [Fact]
     public async Task CreateRecuerdoAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();

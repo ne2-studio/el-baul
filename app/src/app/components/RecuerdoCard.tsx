@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export interface Recuerdo {
   id: string;
   text: string;
+  sharedUserId?: string;
   userName: string;
   userAvatar?: string;
   createdAt: string;
@@ -13,6 +14,7 @@ export interface Recuerdo {
 interface RecuerdoCardProps {
   recuerdo: Recuerdo;
   isCompact?: boolean;
+  onUserClick?: (sharedUserId: string) => void;
 }
 
 // Helper para generar color basado en nombre
@@ -41,12 +43,13 @@ function getInitials(name: string): string {
 }
 
 export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
-  ({ recuerdo }, ref) => {
+  ({ recuerdo, onUserClick }, ref) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
     const initials = getInitials(userName);
     const colorClass = getAvatarColor(userName);
+    const canOpenPersona = !!(recuerdo.sharedUserId && onUserClick);
 
     // Determinar si el texto es largo (aproximadamente más de 3 líneas)
     // Asumiendo ~40 caracteres por línea = 120 caracteres para 3 líneas
@@ -62,7 +65,12 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
       >
         <div className="flex gap-3 items-start">
           {/* Avatar - siempre visible */}
-          <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium ${colorClass}`}>
+          <button
+            type="button"
+            onClick={canOpenPersona ? () => onUserClick!(recuerdo.sharedUserId!) : undefined}
+            disabled={!canOpenPersona}
+            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium overflow-hidden ${colorClass} ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
+          >
             {recuerdo.userAvatar ? (
               <img
                 src={recuerdo.userAvatar}
@@ -72,7 +80,7 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
             ) : (
               initials
             )}
-          </div>
+          </button>
 
           <div className="flex-1 min-w-0">
             {/* Texto del recuerdo con truncado y fade */}

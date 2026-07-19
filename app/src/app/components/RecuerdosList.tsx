@@ -5,11 +5,13 @@ import { RecuerdoCard, Recuerdo } from './RecuerdoCard';
 interface RecuerdosListProps {
   recuerdos: Recuerdo[];
   maxVisibleWhenCollapsed?: number;
+  onUserClick?: (sharedUserId: string) => void;
 }
 
 export function RecuerdosList({
   recuerdos,
-  maxVisibleWhenCollapsed = 2
+  maxVisibleWhenCollapsed = 2,
+  onUserClick
 }: RecuerdosListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -33,6 +35,7 @@ export function RecuerdosList({
             <RecuerdoCard
               key={recuerdo.id}
               recuerdo={recuerdo}
+              onUserClick={onUserClick}
             />
           ))}
         </AnimatePresence>

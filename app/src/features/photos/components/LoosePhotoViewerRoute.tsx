@@ -113,6 +113,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       currentAlbum={looseAlbum}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
+      onUserClick={(sharedUserId) => navigate(`/baules/${baul.id}/personas/${sharedUserId}`)}
     />
   );
 };

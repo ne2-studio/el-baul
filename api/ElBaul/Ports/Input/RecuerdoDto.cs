@@ -9,5 +9,7 @@ public record RecuerdoDto
     string UserName,
     DateTime CreatedAt,
     bool IsOwn,
-    string? PhotoThumbnailUrl = null
+    string? PhotoThumbnailUrl = null,
+    string? UserAvatar = null,
+    string? SharedUserId = null
 );

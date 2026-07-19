@@ -80,6 +80,7 @@ export const AlbumRoute: React.FC = () => {
       onBatchChangeDate={handleBatchChangeDate}
       onUpdateAlbumInfo={handleUpdateAlbumInfo}
       onAddRecuerdo={handleAddRecuerdo}
+      onUserClick={(sharedUserId) => navigate(`/baules/${baul.id}/personas/${sharedUserId}`)}
     />
   );
 };

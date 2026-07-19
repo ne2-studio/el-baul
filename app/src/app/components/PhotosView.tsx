@@ -28,7 +28,9 @@ export interface Photo {
 export interface Recuerdo {
   id: string;
   text: string;
+  sharedUserId?: string;
   userName: string;
+  userAvatar?: string;
   createdAt: string;
   isOwn?: boolean;
   photoId?: string;
@@ -47,6 +49,7 @@ interface PhotosViewProps {
   onUpdateAlbumInfo?: (name: string, description: string) => void;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
+  onUserClick?: (sharedUserId: string) => void;
 }
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
@@ -88,7 +91,7 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
 
 export function PhotosView({
   album, photos, onBack, onSelectPhoto, onAddPhotos, allAlbums = [], onBatchMove, onBatchChangeDate,
-  onUpdateAlbumInfo, recuerdos = [], onAddRecuerdo,
+  onUpdateAlbumInfo, recuerdos = [], onAddRecuerdo, onUserClick,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
@@ -360,6 +363,7 @@ export function PhotosView({
                         }
                       : undefined
                   }
+                  onUserClick={onUserClick}
                 />
               ))}
             </div>
@@ -457,15 +461,27 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function RecuerdoFeedCard({ recuerdo, onPhotoClick }: { recuerdo: Recuerdo; onPhotoClick?: () => void }) {
+function RecuerdoFeedCard({
+  recuerdo, onPhotoClick, onUserClick,
+}: { recuerdo: Recuerdo; onPhotoClick?: () => void; onUserClick?: (sharedUserId: string) => void }) {
   const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
+  const canOpenPersona = !!(recuerdo.sharedUserId && onUserClick);
 
   return (
     <div className="bg-card border border-border/60 rounded-2xl p-5">
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5">
-          {getInitials(userName)}
-        </div>
+        <button
+          type="button"
+          onClick={canOpenPersona ? () => onUserClick!(recuerdo.sharedUserId!) : undefined}
+          disabled={!canOpenPersona}
+          className={`w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5 overflow-hidden ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
+        >
+          {recuerdo.userAvatar ? (
+            <img src={recuerdo.userAvatar} alt={userName} className="w-full h-full object-cover rounded-full" />
+          ) : (
+            getInitials(userName)
+          )}
+        </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-2">
             <p className="text-sm font-medium text-foreground">{userName}</p>

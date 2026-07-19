@@ -21,8 +21,14 @@ public class AlbumManager(
     // Recuerdo/album author names are always the Persona's apodo for this baúl, never
     // the underlying account's OIDC-synced name — a nickname is what the family chose,
     // and the account name may be unrelated or unset.
-    private async Task<string> GetNicknameAsync(Guid baulId, string userId) =>
-        (await baulRepository.GetSharedUserByUserIdAsync(baulId, userId))?.Nickname ?? "Usuario";
+    private async Task<(string Nickname, string? AvatarUrl, string? SharedUserId)> GetAuthorInfoAsync(Guid baulId, string userId)
+    {
+        var sharedUser = await baulRepository.GetSharedUserByUserIdAsync(baulId, userId);
+        var avatarUrl = sharedUser?.AvatarPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(sharedUser.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
+            : null;
+        return (sharedUser?.Nickname ?? "Usuario", avatarUrl, sharedUser?.Id.ToString());
+    }
 
     public async Task<Result<IEnumerable<AlbumDto>>> GetByBaulIdAsync(Guid baulId)
     {
@@ -179,9 +185,9 @@ public class AlbumManager(
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var nickname = await GetNicknameAsync(album.BaulId, recuerdo.UserId);
+            var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(album.BaulId, recuerdo.UserId);
             var thumbnailUrl = recuerdo.PhotoId is { } photoId ? thumbnailUrls.GetValueOrDefault(photoId) : null;
-            dtos.Add(ToRecuerdoDto(recuerdo, nickname, recuerdo.UserId == userId, thumbnailUrl));
+            dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, recuerdo.UserId == userId, thumbnailUrl));
         }
 
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
@@ -212,18 +218,19 @@ public class AlbumManager(
             return Result.Failure<RecuerdoDto>("Access denied");
         }
 
-        var nickname = await GetNicknameAsync(album.BaulId, userId);
+        var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(album.BaulId, userId);
         var recuerdo = new Recuerdo(idGenerator.NewId(), null, albumId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation("Recuerdo created {BaulId} {AlbumId} {RecuerdoId}", album.BaulId, albumId, recuerdo.Id);
 
-        return ToRecuerdoDto(recuerdo, nickname, isOwn: true, photoThumbnailUrl: null);
+        return ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true, photoThumbnailUrl: null);
     }
 
-    private static RecuerdoDto ToRecuerdoDto(Recuerdo recuerdo, string userName, bool isOwn, string? photoThumbnailUrl) =>
+    private static RecuerdoDto ToRecuerdoDto(
+        Recuerdo recuerdo, string userName, string? userAvatar, string? sharedUserId, bool isOwn, string? photoThumbnailUrl) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
-            recuerdo.CreatedAt, isOwn, photoThumbnailUrl);
+            recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, sharedUserId);
 
     private async Task<AlbumDto> ToDtoAsync(Album album)
     {
@@ -239,7 +246,7 @@ public class AlbumManager(
         var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
         var latestAuthor = latestRecuerdo is null
             ? null
-            : await GetNicknameAsync(album.BaulId, latestRecuerdo.UserId);
+            : (await GetAuthorInfoAsync(album.BaulId, latestRecuerdo.UserId)).Nickname;
 
         var dateRange = ComputeDateRange(photos);
 

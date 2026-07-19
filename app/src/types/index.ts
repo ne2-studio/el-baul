@@ -116,6 +116,7 @@ export class Photo {
 export class Recuerdo {
   id: string;
   text: string;
+  sharedUserId?: string;
   userName: string;
   userAvatar?: string;
   createdAt: string;
@@ -126,6 +127,7 @@ export class Recuerdo {
   constructor(data: any) {
     this.id = data.id;
     this.text = data.text;
+    this.sharedUserId = data.sharedUserId ?? undefined;
     this.userName = data.userName;
     this.userAvatar = data.userAvatar;
     this.createdAt = data.createdAt;

@@ -25,6 +25,7 @@ interface PhotoViewerProps {
   currentAlbum?: Album;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (photoId: string, text: string) => void;
+  onUserClick?: (sharedUserId: string) => void;
 }
 
 export function PhotoViewer({
@@ -42,7 +43,8 @@ export function PhotoViewer({
   allAlbums = [],
   currentAlbum,
   recuerdos = [],
-  onAddRecuerdo
+  onAddRecuerdo,
+  onUserClick
 }: PhotoViewerProps) {
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
@@ -336,7 +338,7 @@ export function PhotoViewer({
                 </p>
               </div>
             ) : (
-              <RecuerdosList recuerdos={recuerdos} />
+              <RecuerdosList recuerdos={recuerdos} onUserClick={onUserClick} />
             )}
 
             {onAddRecuerdo && (

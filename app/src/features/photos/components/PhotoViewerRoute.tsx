@@ -124,6 +124,7 @@ export const PhotoViewerRoute: React.FC = () => {
       currentAlbum={album}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
+      onUserClick={(sharedUserId) => navigate(`/baules/${baul.id}/personas/${sharedUserId}`)}
     />
   );
 };
