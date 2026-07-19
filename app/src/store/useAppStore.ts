@@ -25,6 +25,17 @@ export interface UploadItemResult {
   error?: string;
 }
 
+// Confirms the File/Blob still has readable bytes before we try to upload it. Files
+// picked a while ago (the chapter/date step can add a real delay before the user hits
+// confirm) have occasionally failed to upload in production with a bare
+// `TypeError: Failed to fetch` and zero backend logs — consistent with the browser
+// failing to read the file while building the multipart body, before any request ever
+// reaches the network. Tagging this phase separately in Sentry tells that case apart
+// from an actual network/proxy failure on the next occurrence.
+async function verifyFileReadable(file: File): Promise<void> {
+  await file.slice(0, 16).arrayBuffer();
+}
+
 interface AppState {
   // Auth-derived state. The raw access token itself lives only in api.ts.
   isAuthenticated: boolean;
@@ -230,11 +241,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     for (const selected of selectedPhotos) {
       let result: UploadItemResult;
       try {
+        await verifyFileReadable(selected.file);
+      } catch (readError) {
+        Sentry.captureException(readError, {
+          tags: { phase: 'read-file-before-upload' },
+          extra: { name: selected.file.name, size: selected.file.size, type: selected.file.type },
+        });
+        result = { clientUploadId: selected.clientUploadId, error: 'No se pudo leer la foto (puede que ya no esté disponible)' };
+        results.push(result);
+        onItemSettled?.(result);
+        continue;
+      }
+      try {
         const photo = await api.photos.upload(albumId, selected.file, selected.clientUploadId, selected.caption, selected.date);
         uploaded.push(photo);
         result = { clientUploadId: selected.clientUploadId, photo };
       } catch (error) {
-        Sentry.captureException(error);
+        Sentry.captureException(error, { tags: { phase: 'upload-request' } });
         result = { clientUploadId: selected.clientUploadId, error: error instanceof Error ? error.message : 'Upload failed' };
       }
       results.push(result);
@@ -271,11 +294,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     for (const selected of selectedPhotos) {
       let result: UploadItemResult;
       try {
+        await verifyFileReadable(selected.file);
+      } catch (readError) {
+        Sentry.captureException(readError, {
+          tags: { phase: 'read-file-before-upload' },
+          extra: { name: selected.file.name, size: selected.file.size, type: selected.file.type },
+        });
+        result = { clientUploadId: selected.clientUploadId, error: 'No se pudo leer la foto (puede que ya no esté disponible)' };
+        results.push(result);
+        onItemSettled?.(result);
+        continue;
+      }
+      try {
         const photo = await api.baules.uploadPhoto(baulId, selected.file, selected.clientUploadId, selected.caption, selected.date);
         uploaded.push(photo);
         result = { clientUploadId: selected.clientUploadId, photo };
       } catch (error) {
-        Sentry.captureException(error);
+        Sentry.captureException(error, { tags: { phase: 'upload-request' } });
         result = { clientUploadId: selected.clientUploadId, error: error instanceof Error ? error.message : 'Upload failed' };
       }
       results.push(result);
