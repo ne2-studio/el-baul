@@ -7,9 +7,9 @@
 # api/ElBaul.Infra/ImgproxyUrlBuilder.cs and imgproxy/presets.conf for the allowed
 # resize presets).
 #
-# The frontend's Dockerfile only copies a pre-built `dist/` into nginx (it doesn't run
-# `npm build` itself — that happens in CI). Before `docker compose up --build`, run:
-#   cd app && cp .env.example .env && npm install && npm run build
+# The frontend's Dockerfile runs `npm run build` itself, in a build stage, baking in
+# the VITE_* build args below — nginx then just serves the resulting `dist/`. No
+# manual `npm run build` needed before `docker compose up --build` anymore.
 #
 # fake-oidc (https://github.com/ne2-studio/fake-oidc) is a throwaway OIDC provider for
 # local/E2E use — no real login UI, users are selected via `login_hint`. Sign in with
@@ -114,6 +114,11 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:5050"
+        VITE_OIDC_AUTHORITY: "http://localhost:5000"
+        VITE_OIDC_CLIENT_ID: "el-baul-app"
+        VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
     ports:
       - "3000:80"
     depends_on:

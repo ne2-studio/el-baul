@@ -47,10 +47,11 @@ docker compose logs api --tail=20
 
 ## 2. Frontend — run Vite directly, not the `app` container
 
-The `app` compose service only serves a **pre-built `dist/`** baked in at image-build
-time (see the root `README.md` / `docker-compose.yaml` comment) — it will silently
-keep showing old code after you edit `app/src`. For iterative work, don't start it;
-run the dev server instead:
+The `app` compose service builds `dist/` **at image-build time** (a multi-stage
+`app/Dockerfile` runs `npm run build` itself, see the root `README.md` /
+`docker-compose.yaml` comment) — it will silently keep showing old code after you edit
+`app/src` until you rebuild the image. For iterative work, don't start it; run the dev
+server instead:
 
 ```bash
 cd app
@@ -68,9 +69,10 @@ Port **3000**, not the 5173 the frontend `README.md` mentions for plain `npm run
 port's taken — always read the actual startup log line before trusting anything you
 see in the browser (see the stale-container gotcha).
 
-Only rebuild the real `dist/`+image (`cd app && npm run build && cd .. && docker
-compose up -d --build app`) when you specifically need to validate the production
-Docker build itself, not for routine iteration — and see the Sentry gotcha first.
+Only rebuild the real image (`docker compose up -d --build app` from the repo root,
+which runs `npm run build` inside the container using the `VITE_*` build args set in
+`docker-compose.yaml`) when you specifically need to validate the production Docker
+build itself, not for routine iteration — and see the Sentry gotcha first.
 
 ## 3. Log in
 
@@ -165,7 +167,11 @@ lsof -ti:3000 -sTCP:LISTEN | xargs -r kill    # kill the vite dev server if you 
   It only fires on `vite build` (i.e. `npm run build`), never on `vite`/`npm run dev`
   — so prefer the dev-server flow above for iteration, and only run `npm run build`
   when you actually need the production bundle (it uploads a real release to Sentry
-  every time — benign, but not free, and not yours to trigger casually).
+  every time — benign, but not free, and not yours to trigger casually). Running
+  `npm run build` **directly on the host** picks up `.env.sentry-build-plugin` and
+  uploads; building via **the Docker image** (`docker compose up --build app`, or CI)
+  does not — `app/.dockerignore` excludes all `.env*` files from the build context, so
+  `SENTRY_AUTH_TOKEN` is simply absent there, same as it already was in CI.
 - **`dotnet-ef` not on `PATH`.** It's installed as a global tool but lives at
   `~/.dotnet/tools/dotnet-ef`, which isn't on `PATH` by default in this environment.
   Before `dotnet ef migrations add ...`: `export PATH="$HOME/.dotnet/tools:$PATH"`.

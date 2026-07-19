@@ -60,11 +60,11 @@ npm run dev
 
 `docker-compose.yaml` at the repo root spins up Postgres, MinIO, a [fake-oidc](https://github.com/ne2-studio/fake-oidc)
 identity provider, the backend, and the frontend together, each service built from its
-own Dockerfile. The frontend image only copies a pre-built `dist/` (it doesn't run
-`npm run build` itself), so build the frontend once first:
+own Dockerfile. The frontend's Dockerfile runs `npm run build` itself in a build stage
+(the `VITE_*` build args are set in `docker-compose.yaml` to point at the other local
+services), so no separate frontend build step is needed:
 
 ```bash
-cd app && cp .env.example .env && npm install && npm run build && cd ..
 docker compose up --build
 ```
 

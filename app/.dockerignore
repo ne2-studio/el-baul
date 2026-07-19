@@ -1,0 +1,9 @@
+node_modules
+dist
+android
+prototype
+.git
+.idea
+.claude
+.env*
+*.log
