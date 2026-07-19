@@ -49,3 +49,6 @@ pnpm-debug.log*
 prototype/
 # Sentry Config File
 .env.sentry-build-plugin
+
+*storybook.log
+storybook-static
