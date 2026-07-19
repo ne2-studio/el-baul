@@ -24,6 +24,6 @@
     "resolvePackageJsonExports": true,
     "moduleDetection": "force"
   },
-  "include": ["src", "vite.config.ts", "utils"],
+  "include": ["src", "vite.config.ts", "utils", "e2e", "playwright.config.ts"],
   "exclude": ["node_modules"]
 }

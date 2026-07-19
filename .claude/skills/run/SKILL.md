@@ -87,37 +87,53 @@ local/E2E) picks the user via a button click:
 
 ## 4. Driving it with Playwright
 
-Neither `chromium-cli` nor `playwright` is installed as a project dependency here.
-Find a cached copy before trying to install one (avoids a network fetch):
+`@playwright/test` is a real devDependency of `app/` (pinned to `1.61.1`, matching the
+Chromium build already cached at `~/.cache/ms-playwright` on this machine — `cd app &&
+npx playwright install --dry-run chromium` confirms this without downloading anything).
+No more hunting for a cached `npx` copy or exporting `NODE_PATH` — just run from `app/`:
 
 ```bash
-find ~/.npm/_npx -maxdepth 3 -type d -name playwright 2>/dev/null
+cd app
+npx playwright test        # the smoke suite in app/e2e/ — see 4a below
 ```
 
-If that finds e.g. `~/.npm/_npx/<hash>/node_modules/playwright`, use its parent as
-`NODE_PATH`:
-
-```bash
-export NODE_PATH="$HOME/.npm/_npx/<hash>/node_modules"
-node -e "const {chromium}=require('playwright'); console.log(chromium.executablePath())"
-```
-
-If that binary path doesn't exist on disk, or nothing was found at all, fall back to
-`npx --yes playwright@latest ...` (needs network) and `npx playwright install
-chromium` for the browser binary.
-
-Launch headless in this sandboxed container with `--no-sandbox`:
+For ad hoc one-off scripting (not the smoke suite), `require('playwright')` resolves
+straight from `app/node_modules` as long as your cwd is `app/`:
 
 ```js
 const { chromium } = require('playwright');
 const browser = await chromium.launch({ args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 420, height: 900 } });
 await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
-await page.locator('button:has-text("Continuar con Google")').first().click();
+await page.getByRole('button', { name: 'Continuar con Google' }).click();
 await page.waitForURL('**/authorize**', { timeout: 15000 });
-await page.locator('button:has-text("Admin User")').click();
-await page.waitForURL('http://localhost:3000/**', { timeout: 15000 });
+await page.getByRole('button', { name: 'Admin User' }).click();
+// Don't wait for 'http://localhost:3000/**' here — that glob also matches the
+// transient /callback screen ("Preparando tus baúles…") the SPA shows while it's still
+// exchanging the code for a token, and resolves before the token actually lands in
+// localStorage. Wait for the settled route instead:
+await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/empty', { timeout: 15000 });
 ```
+
+## 4a. The `app/e2e/` smoke suite
+
+`app/e2e/smoke.spec.ts` is a minimal Playwright Test smoke suite that boots the whole
+docker-compose stack itself — no need to run steps 1-3 above first. `app/e2e/global-setup.ts`
+does the clean-slate check, `docker compose up --build -d`, and polls `/health` and
+`:3000` until ready; `app/e2e/global-teardown.ts` runs `docker compose down` (no `-v`)
+afterwards. The test logs in as Admin User through fake-oidc, seeds one baúl via a
+direct `POST /api/baules` call (a fresh Admin User has zero baúles, which routes to a
+completely different empty-state screen — see `loadUserData` in `app/src/app/App.tsx`),
+and asserts it lands on the real home screen (`app/src/app/components/BaulesList.tsx`).
+
+```bash
+cd app && npm run test:e2e
+```
+
+Because teardown keeps the volumes, repeated local runs accumulate duplicate "Smoke
+test baúl" entries — expected and harmless. Also wired into CI
+(`.github/workflows/e2e-tests.yml`) on changes to `app/**`, `api/**`, `imgproxy/**`, or
+`docker-compose.yaml`.
 
 ## 5. Extracting the access token (for raw API probing)
 

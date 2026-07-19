@@ -40,12 +40,16 @@ production, which is the whole point of these commands.
 
 ```bash
 cd app && npm run typecheck   # tsc --noEmit — fast, catches type errors
+cd app && npm run test:e2e    # login + reach the real home screen, against a fresh stack
 ```
 
-This is necessary but nowhere near sufficient — it does not tell you the component
-renders what you think it renders. For anything UI-facing, load the `run` skill, get a
-logged-in browser, and actually drive to the changed screen. Prefer the Vite dev
-server flow in that skill over the docker `app` container for this — see below.
+`test:e2e` (`app/e2e/smoke.spec.ts`, see the `run` skill's section 4a) boots
+docker-compose itself and confirms the login → home path still works end to end — it's
+real coverage for that one path, not a rubber stamp. It does **not** cover the specific
+screen/component you just changed unless that's the home screen itself. For anything
+UI-facing beyond that path, load the `run` skill, get a logged-in browser, and actually
+drive to the changed screen. Prefer the Vite dev server flow in that skill over the
+docker `app` container for this — see below.
 
 ## The stale-container trap
 
