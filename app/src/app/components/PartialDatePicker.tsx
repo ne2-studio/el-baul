@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { PhotoDate } from '@/types';
 
@@ -37,6 +37,14 @@ export function PartialDatePicker({
       false
     );
   };
+
+  // Report a real seed once on mount — callers gating on onChange (e.g. a confirm
+  // button) would otherwise never learn about a valid initialValue/initialUnknown until
+  // the user touches a field. Skipped when there's no seed: emitting `(null, false)` on
+  // every blank mount would look identical to a genuine user edit to a caller like the
+  // EXIF pre-fill flow, which needs to tell "untouched" apart from "user already chose".
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (initialValue || initialUnknown) emit(year, month, day, unknown); }, []);
 
   const handleYearChange = (v: string) => { setYear(v); emit(v, month, day, unknown); };
   const handleMonthChange = (v: string) => { setMonth(v); emit(year, v, day, unknown); };
