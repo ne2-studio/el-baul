@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { ShareTargetBaulScreen } from '@/app/components/ShareTargetBaulScreen';
@@ -14,8 +14,13 @@ export const SelectBaulForShareRoute: React.FC = () => {
   const { baules, loadLoosePhotos } = useAppStore();
   const { share, selectedPhotos, clear } = useIncomingShareStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
+  // clear() vacía este store en cuanto se elige baúl, lo que re-renderiza este mismo
+  // componente (sigue montado hasta que el router aplique el navigate) — sin este flag,
+  // ese re-render vuelve a evaluar el guard de abajo con el store ya vacío y redirige a
+  // "/baules", secuestrando la navegación a la pantalla de confirmación que ya se pidió.
+  const hasNavigatedRef = useRef(false);
 
-  if (!share || selectedPhotos.length === 0) {
+  if (!hasNavigatedRef.current && (!share || selectedPhotos.length === 0)) {
     return <Navigate to="/baules" replace />;
   }
 
@@ -23,6 +28,7 @@ export const SelectBaulForShareRoute: React.FC = () => {
     try {
       setIsLoading(true);
       await loadLoosePhotos(baul.id);
+      hasNavigatedRef.current = true;
       navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } });
       clear();
     } catch (error) {
