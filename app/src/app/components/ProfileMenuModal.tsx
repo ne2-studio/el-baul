@@ -1,6 +1,5 @@
 import React from 'react';
 import { X, User, CreditCard, LogOut } from 'lucide-react';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
@@ -8,17 +7,17 @@ interface ProfileMenuModalProps {
   onNavigateToSubscription: () => void;
   onSignOut: () => void;
   userEmail?: string;
+  monetizationEnabled?: boolean;
 }
 
-export function ProfileMenuModal({ 
-  onClose, 
-  onNavigateToProfile, 
+export function ProfileMenuModal({
+  onClose,
+  onNavigateToProfile,
   onNavigateToSubscription,
   onSignOut,
-  userEmail
+  userEmail,
+  monetizationEnabled
 }: ProfileMenuModalProps) {
-  const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
-
   return (
     <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end md:items-center md:justify-center">
       {/* Mobile: Bottom sheet, Desktop: Centered modal */}

@@ -51,6 +51,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
+  const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
   const {
     showToast,
     toastMessage,
@@ -296,6 +297,7 @@ function App() {
       {showProfileMenu && (
         <ProfileMenuModal
           userEmail={userProfile.email}
+          monetizationEnabled={monetizationEnabled}
           onClose={() => setShowProfileMenu(false)}
           onNavigateToProfile={() => {
             setShowProfileMenu(false);

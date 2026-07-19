@@ -24,7 +24,8 @@ export const BaulesListRoute: React.FC = () => {
 
   const {
     showToastMessage,
-    setShowPlanLimitModal
+    setShowPlanLimitModal,
+    setShowProfileMenu
   } = useUIStore();
 
   const handleSelectBaul = async (baul: Baul) => {
@@ -63,8 +64,10 @@ export const BaulesListRoute: React.FC = () => {
         baules={baules}
         onSelectBaul={handleSelectBaul}
         onCreateBaul={handleCreateBaulClick}
+        onOpenProfileMenu={() => setShowProfileMenu(true)}
         baulesUsed={subscription.baulesUsed}
         baulesLimit={subscription.baulesLimit}
+        monetizationEnabled={monetizationEnabled}
       />
       
       {isLoadingAlbums && (

@@ -3,8 +3,6 @@ import { SimpleFAB } from './FAB';
 import { EmptyState } from './EmptyState';
 import { Crown, User, Users, Clock, UserCircle } from 'lucide-react';
 import { BaulIcon } from './BaulIcon';
-import { useUIStore } from '@/store/uiStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { BaulRole } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 
@@ -24,14 +22,21 @@ interface BaulesListProps {
   baules: Baul[];
   onSelectBaul: (baul: Baul) => void;
   onCreateBaul: () => void;
+  onOpenProfileMenu: () => void;
   baulesUsed?: number;
   baulesLimit?: number;
+  monetizationEnabled?: boolean;
 }
 
-export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, baulesLimit }: BaulesListProps) {
-  const setShowProfileMenu = useUIStore(state => state.setShowProfileMenu);
-  const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
-
+export function BaulesList({
+  baules,
+  onSelectBaul,
+  onCreateBaul,
+  onOpenProfileMenu,
+  baulesUsed,
+  baulesLimit,
+  monetizationEnabled
+}: BaulesListProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -40,7 +45,7 @@ export function BaulesList({ baules, onSelectBaul, onCreateBaul, baulesUsed, bau
           <h1 className="text-3xl font-serif text-foreground">El Baúl</h1>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowProfileMenu(true)}
+              onClick={onOpenProfileMenu}
               className="w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors"
               aria-label="Abrir menú de cuenta"
             >
