@@ -127,6 +127,7 @@ builder.Services.AddScoped<IBaulManager, BaulManager>();
 builder.Services.AddScoped<IAlbumManager, AlbumManager>();
 builder.Services.AddScoped<IPhotoManager, PhotoManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
+builder.Services.AddScoped<ISupportManager, SupportManager>();
 
 // Register infrastructure services
 builder.Services.AddInfrastructure(builder.Configuration);

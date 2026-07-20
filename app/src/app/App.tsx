@@ -43,6 +43,8 @@ import { ProfileRoute } from '../features/profile/components/ProfileRoute';
 import { SubscriptionRoute } from '../features/profile/components/SubscriptionRoute';
 import { PlanSelectionRoute } from '../features/profile/components/PlanSelectionRoute';
 import { PaymentRoute } from '../features/profile/components/PaymentRoute';
+import { HelpSupportRoute } from '../features/support/components/HelpSupportRoute';
+import { SupportFormRoute } from '../features/support/components/SupportFormRoute';
 
 import { useUIStore } from '../store/uiStore';
 import { useAppStore } from '../store/useAppStore';
@@ -299,6 +301,26 @@ function App() {
             <PaymentRoute />
           </ProtectedRoute>
         } />
+        <Route path="/ayuda" element={
+          <ProtectedRoute>
+            <HelpSupportRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/ayuda/problema" element={
+          <ProtectedRoute>
+            <SupportFormRoute category="Bug" title="Informar de un problema" />
+          </ProtectedRoute>
+        } />
+        <Route path="/ayuda/sugerencia" element={
+          <ProtectedRoute>
+            <SupportFormRoute category="Suggestion" title="Enviar una sugerencia" />
+          </ProtectedRoute>
+        } />
+        <Route path="/ayuda/soporte" element={
+          <ProtectedRoute>
+            <SupportFormRoute category="Support" title="Hablar con soporte" />
+          </ProtectedRoute>
+        } />
       </Routes>
 
       {/* Profile Menu Modal */}
@@ -314,6 +336,10 @@ function App() {
           onNavigateToSubscription={() => {
             setShowProfileMenu(false);
             navigate('/suscripcion');
+          }}
+          onNavigateToHelp={() => {
+            setShowProfileMenu(false);
+            navigate('/ayuda');
           }}
           onSignOut={async () => {
             const signedOut = await handleSignOut();

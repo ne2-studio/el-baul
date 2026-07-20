@@ -1,10 +1,11 @@
 import React from 'react';
-import { X, User, CreditCard, LogOut, Loader2 } from 'lucide-react';
+import { X, User, CreditCard, LogOut, Loader2, HelpCircle } from 'lucide-react';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
   onNavigateToProfile: () => void;
   onNavigateToSubscription: () => void;
+  onNavigateToHelp: () => void;
   onSignOut: () => void;
   userEmail?: string;
   monetizationEnabled?: boolean;
@@ -15,6 +16,7 @@ export function ProfileMenuModal({
   onClose,
   onNavigateToProfile,
   onNavigateToSubscription,
+  onNavigateToHelp,
   onSignOut,
   userEmail,
   monetizationEnabled,
@@ -89,6 +91,19 @@ export function ProfileMenuModal({
               </div>
             </button>
           )}
+
+          <button
+            onClick={onNavigateToHelp}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <HelpCircle className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <div className="font-medium text-foreground">Ayuda y soporte</div>
+              <div className="text-sm text-muted-foreground">Preguntas, problemas y sugerencias</div>
+            </div>
+          </button>
         </div>
 
         {/* Sign out */}

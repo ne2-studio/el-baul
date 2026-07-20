@@ -14,13 +14,15 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
     public IActionResult Get()
     {
         var monetizationEnabled = configuration.GetValue<bool>("Features:MonetizationEnabled");
+        var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
 
         return Ok(new
         {
             features = new
             {
                 monetization = monetizationEnabled
-            }
+            },
+            helpCenterUrl
         });
     }
 }

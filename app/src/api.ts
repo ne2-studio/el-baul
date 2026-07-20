@@ -1,4 +1,4 @@
-import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile, PhotoDate } from './types';
+import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory } from './types';
 
 export const API_BASE = import.meta.env.VITE_API_URL as string;
 
@@ -192,6 +192,23 @@ export const api = {
   },
 
   appConfig: {
-    get: () => get<{ features: { monetization: boolean } }>('/api/app-config'),
+    get: () => get<{ features: { monetization: boolean }; helpCenterUrl: string }>('/api/app-config'),
+  },
+
+  support: {
+    submit: async (category: SupportCategory, message: string, screenshot?: File) => {
+      const formData = new FormData();
+      formData.append('category', category);
+      formData.append('message', message);
+      if (screenshot) formData.append('screenshot', screenshot);
+
+      const response = await fetch(`${API_BASE}/api/support`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: formData,
+      });
+
+      await handleResponse<{ success: boolean }>(response);
+    },
   },
 };

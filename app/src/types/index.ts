@@ -2,6 +2,8 @@ import { formatRelativeTime } from '@/utils/timeUtils';
 
 export type BaulRole = 'custodio' | 'administrador' | 'colaborador';
 
+export type SupportCategory = 'Support' | 'Bug' | 'Suggestion';
+
 export interface PhotoDate {
   year: number;
   month?: number;
