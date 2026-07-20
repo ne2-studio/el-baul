@@ -192,7 +192,7 @@ export const api = {
   },
 
   appConfig: {
-    get: () => get<{ features: { monetization: boolean }; helpCenterUrl: string }>('/api/app-config'),
+    get: () => get<{ features: { monetization: boolean }; helpCenterUrl: string; appUrl: string }>('/api/app-config'),
   },
 
   support: {

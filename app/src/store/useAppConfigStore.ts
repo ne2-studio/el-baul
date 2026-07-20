@@ -5,17 +5,25 @@ interface AppConfigState {
   // Defaults to false so paywall hints never flash before the config loads.
   monetizationEnabled: boolean;
   helpCenterUrl: string;
+  // Falls back to the current origin until the backend-configured value loads, so
+  // sharing still produces a usable (if not canonical) link rather than a broken one.
+  appUrl: string;
   fetchAppConfig: () => Promise<void>;
 }
 
 export const useAppConfigStore = create<AppConfigState>((set) => ({
   monetizationEnabled: false,
   helpCenterUrl: '',
+  appUrl: window.location.origin,
 
   fetchAppConfig: async () => {
     try {
       const config = await api.appConfig.get();
-      set({ monetizationEnabled: config.features.monetization, helpCenterUrl: config.helpCenterUrl });
+      set({
+        monetizationEnabled: config.features.monetization,
+        helpCenterUrl: config.helpCenterUrl,
+        appUrl: config.appUrl,
+      });
     } catch (error) {
       console.error('Error loading app config:', error);
     }

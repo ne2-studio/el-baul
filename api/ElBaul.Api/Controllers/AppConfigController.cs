@@ -15,6 +15,7 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
     {
         var monetizationEnabled = configuration.GetValue<bool>("Features:MonetizationEnabled");
         var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
+        var appUrl = configuration.GetValue<string>("App:PublicUrl");
 
         return Ok(new
         {
@@ -22,7 +23,8 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
             {
                 monetization = monetizationEnabled
             },
-            helpCenterUrl
+            helpCenterUrl,
+            appUrl
         });
     }
 }

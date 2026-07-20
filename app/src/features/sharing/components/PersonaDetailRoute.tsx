@@ -4,6 +4,7 @@ import { PersonaDetailScreen } from '@/app/components/PersonaDetailScreen';
 import { EditPersonaModal } from '@/app/components/EditPersonaModal';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { isAdminRole } from '@/utils/roleUtils';
 import { BaulRole } from '@/types';
@@ -12,6 +13,7 @@ export const PersonaDetailRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId, sharedUserId } = useParams();
   const showToastMessage = useUIStore(state => state.showToastMessage);
+  const appUrl = useAppConfigStore(state => state.appUrl);
   const {
     baules,
     sharedUsers,
@@ -68,7 +70,7 @@ export const PersonaDetailRoute: React.FC = () => {
   };
 
   const handleShareInvite = async () => {
-    const inviteUrl = `${window.location.origin}/invitacion/persona/${persona.id}`;
+    const inviteUrl = `${appUrl}/invitacion/persona/${persona.id}`;
 
     if (navigator.share) {
       try {
