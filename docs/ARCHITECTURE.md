@@ -304,13 +304,26 @@ isolated rather than spread through the app:
 
 ## Cross-cutting / deployment
 
-- **CI/CD**: three independent, path-filtered GitHub Actions workflows —
+- **CI/CD**: four independent, path-filtered GitHub Actions workflows —
   `backend-deploy.yml` (`api/**`), `frontend-deploy.yml` (`app/**`), `imgproxy-deploy.yml`
-  (`imgproxy/**`) — each triggered only by pushes to `main` that touch its own directory. All
-  three: build → (backend also runs `dotnet test`) → build a Docker image → push to GHCR
-  (`ghcr.io/<repo>-api`, `-app`, `-imgproxy`) → trigger a Coolify deploy webhook. The frontend
-  workflow additionally extracts `dist/` from the just-built image afterward and uploads its
+  (`imgproxy/**`), `storybook-deploy.yml` (`app/**`, `storybook/**`) — each triggered only by
+  pushes to `main` that touch its own paths. All four: build → (backend also runs
+  `dotnet test`) → build a Docker image → push to GHCR (`ghcr.io/<repo>-api`, `-app`,
+  `-imgproxy`, `-storybook`) → trigger a Coolify deploy webhook. The frontend workflow
+  additionally extracts `dist/` from the just-built image afterward and uploads its
   sourcemaps to Sentry (see above) — a step that needs Node/npm, not the Docker image.
+  Deliberately simple and fast: no unit-test or e2e gate sits in front of these, so a deploy
+  is only ever as slow as its own build.
+- **E2E smoke tests**: `e2e-nightly.yml` runs the Playwright suite (see
+  `.claude/skills/run/SKILL.md`) on a nightly cron (plus manual `workflow_dispatch`),
+  always rebuilding api/app/imgproxy from scratch regardless of what changed. It's fully
+  decoupled from the deploy workflows above — a slow or flaky e2e run never blocks a
+  deploy, it just gives a daily signal.
+- **Android CI**: `android-ci.yml` runs on PRs/pushes touching `app/**`. It builds the web
+  bundle against `app/.env.android`'s prod values (`npm run android:build`, which also runs
+  `cap sync android`), then `./gradlew assembleDebug` and uploads the resulting APK as a
+  build artifact. No signing config yet, so this stops at a debug artifact — no store
+  publish or release build.
 - **Containers**: backend is a multi-stage .NET SDK→ASP.NET runtime image exposing port 8080.
   Frontend is built by Vite inside its own Dockerfile build stage (VITE_* build args baked in),
   then the static `dist/` is served by `nginx:alpine` (port 80) with SPA-fallback

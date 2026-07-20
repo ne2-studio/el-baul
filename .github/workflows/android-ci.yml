@@ -1,0 +1,63 @@
+name: Android CI
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - '.github/workflows/android-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - '.github/workflows/android-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Builds the web assets against app/.env.android's prod values and syncs them into
+      # the native android/ project - see the android:build script in package.json.
+      - name: Build web assets + sync Capacitor
+        run: npm run android:build
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # No signing config yet, so this is a debug build for now — just enough to get an
+      # installable artifact out of CI. Release signing is a follow-up.
+      - name: Build debug APK
+        working-directory: app/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: el-baul-android-debug
+          path: app/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
