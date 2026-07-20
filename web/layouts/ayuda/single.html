@@ -1,0 +1,43 @@
+{{ define "main" }}
+<div class="bg-[#F5F1ED] min-h-screen">
+  <article class="max-w-2xl mx-auto px-6 pt-32 pb-20">
+    <nav class="font-sans text-sm text-[#8B7E79] mb-8 flex items-center gap-2 flex-wrap">
+      <a href="/ayuda/" class="hover:text-[#3A3230] transition-colors">Centro de ayuda</a>
+      <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+      <a href="{{ .Parent.RelPermalink }}" class="hover:text-[#3A3230] transition-colors">{{ .Parent.Title }}</a>
+    </nav>
+
+    <h1 class="font-lora text-3xl md:text-4xl font-medium text-[#3A3230] leading-tight mb-6">
+      {{ .Title }}
+    </h1>
+
+    <div class="prose-ayuda font-sans text-[#3A3230] leading-relaxed">
+      {{ .Content }}
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-[rgba(58,50,48,0.12)]">
+      <a href="{{ .Parent.RelPermalink }}" class="inline-flex items-center gap-2 text-sm font-medium text-[#C67B5C] hover:opacity-70 transition-opacity">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        Ver más artículos de {{ .Parent.Title }}
+      </a>
+    </div>
+  </article>
+
+  {{ partial "ayuda_contact.html" . }}
+</div>
+
+<style>
+  .prose-ayuda h2 { font-family: 'Lora', serif; font-size: 1.375rem; font-weight: 500; color: #3A3230; margin-top: 2rem; margin-bottom: 0.75rem; }
+  .prose-ayuda h3 { font-family: 'Lora', serif; font-size: 1.125rem; font-weight: 500; color: #3A3230; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  .prose-ayuda p { margin-bottom: 1.1rem; font-size: 1rem; }
+  .prose-ayuda ul, .prose-ayuda ol { margin: 0 0 1.1rem 1.25rem; }
+  .prose-ayuda ul { list-style: disc; }
+  .prose-ayuda ol { list-style: decimal; }
+  .prose-ayuda li { margin-bottom: 0.4rem; }
+  .prose-ayuda a { color: #C67B5C; text-decoration: underline; text-underline-offset: 2px; }
+  .prose-ayuda strong { font-weight: 600; }
+  .prose-ayuda blockquote { border-left: 3px solid #C67B5C; padding-left: 1rem; color: #8B7E79; font-style: italic; margin: 1.5rem 0; }
+  .prose-ayuda code { background: #E8DED7; padding: 0.15rem 0.4rem; border-radius: 6px; font-size: 0.875em; }
+  .prose-ayuda img { border-radius: 16px; margin: 1.5rem 0; }
+</style>
+{{ end }}

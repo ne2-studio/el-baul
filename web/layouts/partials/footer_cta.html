@@ -1,122 +1,18 @@
 <section class="py-24 bg-[#F5F2EF] border-t border-[#4A3B32]/10">
   <div class="max-w-4xl mx-auto px-6 text-center">
     <h2 class="font-serif text-4xl md:text-5xl font-bold text-[#4A3B32] mb-6 leading-tight">
-      Dentro de unos años, estas fotos importarán más que hoy.
+      La historia de tu familia merece un lugar donde no se pierda.
     </h2>
     <p class="text-xl text-[#4A3B32]/70 mb-12">
-      Empieza a cuidarlas ahora.
+      Guarda fotos, recuerdos e historias junto a las personas que las vivieron.
     </p>
 
-    <div class="max-w-md mx-auto">
-      <form
-        id="footer-cta-form"
-        class="flex flex-col sm:flex-row gap-3"
-        action="https://assets.mailerlite.com/jsonp/2091865/forms/178585697373914705/subscribe"
-        method="post"
-      >
-        <input
-          id="footer-cta-email"
-          name="fields[email]"
-          type="email"
-          placeholder="Tu correo electrónico"
-          class="flex-1 px-4 py-3 rounded-lg border border-[#4A3B32]/20 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A3B32]/20 transition-all text-[#4A3B32] placeholder:text-[#4A3B32]/40"
-          autocomplete="email"
-          required
-        />
-
-        <!-- Hidden fields que MailerLite espera -->
-        <input type="hidden" name="ml-submit" value="1"/>
-        <input type="hidden" name="anticsrf" value="true"/>
-
-        <button
-          type="submit"
-          id="footer-cta-submit"
-          class="px-6 py-3 bg-[#4A3B32] text-[#F5F2EF] rounded-lg font-medium hover:bg-[#3E3A38] transition-colors disabled:opacity-70 flex items-center justify-center gap-2 min-w-[140px]"
-        >
-          <span id="footer-cta-submit-text">Unirme a la espera</span>
-          <i data-lucide="arrow-right" size="18"></i>
-        </button>
-      </form>
-
-      <p class="text-xs text-[#4A3B32]/60 mt-4">
-        Déjanos tu email y te avisamos cuando puedas crear tu Baúl.<br>
-        Sin spam. Solo cuando esté listo.
-      </p>
-
-      <p id="footer-cta-status-success" class="hidden text-sm text-green-700 font-medium mt-3">
-        ¡Gracias! Te avisamos cuando abramos el baúl.
-      </p>
-      <p id="footer-cta-status-error" class="hidden text-sm text-red-600 mt-3">
-        Algo salió mal. Por favor intenta de nuevo.
-      </p>
-    </div>
+    <a
+      href="https://app-prod.el-baul.ne2.studio"
+      class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#4A3B32] text-[#F5F2EF] rounded-lg font-medium hover:bg-[#3E3A38] transition-colors"
+    >
+      Crea tu primer baúl
+      <i data-lucide="arrow-right" size="18"></i>
+    </a>
   </div>
 </section>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("footer-cta-form");
-    const emailInput = document.getElementById("footer-cta-email");
-    const submitBtn = document.getElementById("footer-cta-submit");
-    const submitText = document.getElementById("footer-cta-submit-text");
-    const successMsg = document.getElementById("footer-cta-status-success");
-    const errorMsg = document.getElementById("footer-cta-status-error");
-
-    const originalBtnHtml = submitBtn.innerHTML;
-
-    function setLoading(isLoading) {
-      submitBtn.disabled = isLoading;
-      if (isLoading) {
-        if (submitText) submitText.textContent = "Guardando...";
-        successMsg.classList.add("hidden");
-        errorMsg.classList.add("hidden");
-      }
-    }
-
-    function setSuccess() {
-      submitBtn.innerHTML = '<i data-lucide="check" size="18"></i> Apuntado';
-      if (window.lucide && typeof window.lucide.createIcons === "function") {
-        window.lucide.createIcons();
-      }
-      successMsg.classList.remove("hidden");
-      emailInput.value = "";
-    }
-
-    function setError() {
-      errorMsg.classList.remove("hidden");
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = originalBtnHtml;
-      if (window.lucide && typeof window.lucide.createIcons === "function") {
-        window.lucide.createIcons();
-      }
-    }
-
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const email = (emailInput.value || "").trim();
-      if (!email) return;
-      setLoading(true);
-      try {
-        const payload = new FormData(form);
-        const res = await fetch(form.action, {
-          method: "POST",
-          body: payload,
-          mode: "cors",
-          credentials: "omit",
-        });
-        if (res.type === "opaque" || res.ok) {
-          setSuccess();
-        } else {
-          throw new Error("MailerLite subscribe failed");
-        }
-      } catch (err) {
-        console.error(err);
-        setError();
-      } finally {
-        if (!successMsg.classList.contains("hidden")) {
-          submitBtn.disabled = true;
-        }
-      }
-    });
-  });
-</script>
