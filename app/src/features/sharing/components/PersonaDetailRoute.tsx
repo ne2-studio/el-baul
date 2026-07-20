@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Share } from '@capacitor/share';
 import { PersonaDetailScreen } from '@/app/components/PersonaDetailScreen';
 import { EditPersonaModal } from '@/app/components/EditPersonaModal';
 import { useAppStore } from '@/store/useAppStore';
@@ -72,20 +73,18 @@ export const PersonaDetailRoute: React.FC = () => {
   const handleShareInvite = async () => {
     const inviteUrl = `${appUrl}/invitacion/persona/${persona.id}`;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Invitación a ${baul?.name ?? 'El Baúl'}`,
-          text: `${persona.nickname}, te invito a unirte a mi baúl de recuerdos "${baul?.name ?? ''}" en El Baúl.`,
-          url: inviteUrl,
-        });
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Error sharing:', error);
-          copyToClipboard(inviteUrl);
-        }
-      }
-    } else {
+    try {
+      // @capacitor/share opens the real native share sheet on Android/iOS and the Web
+      // Share API in a browser — one call, no more branching on navigator.share, whose
+      // support inside the Capacitor WebView isn't reliable across Android versions.
+      await Share.share({
+        title: `Invitación a ${baul?.name ?? 'El Baúl'}`,
+        text: `${persona.nickname}, te invito a unirte a mi baúl de recuerdos "${baul?.name ?? ''}" en El Baúl.`,
+        url: inviteUrl,
+      });
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') return;
+      console.error('Error sharing invite:', error);
       copyToClipboard(inviteUrl);
     }
   };
