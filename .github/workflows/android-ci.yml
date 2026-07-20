@@ -40,11 +40,12 @@ jobs:
       - name: Build web assets + sync Capacitor
         run: npm run android:build
 
+      # Must match capacitor.build.gradle's sourceCompatibility/targetCompatibility (21).
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
