@@ -27,6 +27,11 @@ public static class ServiceRegistration
 
         services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
 
+        // LeadHub responds to a successful submission with a redirect to a "thanks"
+        // page we have no use for — don't waste a round trip following it.
+        services.AddHttpClient<ISupportBackend, LeadHubSupportBackend>()
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+
         // Singleton: wraps a single AmazonS3Client, which the AWS SDK documents as
         // thread-safe and designed for reuse/connection pooling across requests —
         // a deliberate exception to the default Scoped lifetime, not request state.

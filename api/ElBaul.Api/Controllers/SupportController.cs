@@ -11,15 +11,11 @@ namespace ElBaul.Api.Controllers;
 public class SupportController(ISupportManager supportManager) : ControllerBase
 {
     [HttpPost]
-    [RequestSizeLimit(5_000_000)]
-    public async Task<IActionResult> Submit([FromForm] SubmitSupportRequest request)
+    public async Task<IActionResult> Submit([FromBody] SubmitSupportRequest request)
     {
-        await using var stream = request.Screenshot?.OpenReadStream();
         var technicalInfo = Request.Headers.UserAgent.ToString();
 
-        var result = await supportManager.SubmitAsync(
-            request.Category, request.Message, technicalInfo,
-            stream, request.Screenshot?.FileName, request.Screenshot?.ContentType);
+        var result = await supportManager.SubmitAsync(request.Category, request.Message, technicalInfo);
 
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }

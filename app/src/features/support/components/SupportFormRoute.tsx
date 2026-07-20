@@ -16,7 +16,7 @@ export const SupportFormRoute: React.FC<SupportFormRouteProps> = ({ category, ti
     <SupportFormScreen
       title={title}
       onBack={() => navigate('/ayuda')}
-      onSubmit={(message, screenshot) => api.support.submit(category, message, screenshot)}
+      onSubmit={(message) => api.support.submit(category, message)}
     />
   );
 };

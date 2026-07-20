@@ -1,40 +1,25 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Camera, X, CheckCircle, Info } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Info } from 'lucide-react';
 import { Button } from './Button';
 
 interface SupportFormScreenProps {
   title: string;
   onBack: () => void;
-  onSubmit: (message: string, screenshot?: File) => Promise<void>;
+  onSubmit: (message: string) => Promise<void>;
 }
 
 export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreenProps) {
   const [message, setMessage] = useState('');
-  const [screenshot, setScreenshot] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
-
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    setScreenshot(file);
-    setScreenshotPreview(URL.createObjectURL(file));
-  };
-
-  const handleRemoveScreenshot = () => {
-    setScreenshot(null);
-    setScreenshotPreview(null);
-  };
 
   const handleSubmit = async () => {
     if (!message.trim() || isSubmitting) return;
     setIsSubmitting(true);
     setHasError(false);
     try {
-      await onSubmit(message.trim(), screenshot ?? undefined);
+      await onSubmit(message.trim());
       setSucceeded(true);
     } catch {
       setHasError(true);
@@ -90,36 +75,6 @@ export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreen
           className="w-full min-h-[160px] p-4 bg-card border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground placeholder:text-muted-foreground mb-4"
           autoFocus
         />
-
-        {/* Screenshot */}
-        {screenshotPreview ? (
-          <div className="relative inline-block mb-6">
-            <img
-              src={screenshotPreview}
-              alt="Captura de pantalla"
-              className="w-24 h-24 object-cover rounded-xl border border-border"
-            />
-            <button
-              onClick={handleRemoveScreenshot}
-              disabled={isSubmitting}
-              className="absolute -top-2 -right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg disabled:opacity-50"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <label className="inline-flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors cursor-pointer">
-            <Camera className="w-4 h-4 text-muted-foreground" />
-            Adjuntar una captura de pantalla
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleScreenshotChange}
-              disabled={isSubmitting}
-            />
-          </label>
-        )}
 
         {/* Technical info notice */}
         <div className="flex items-start gap-3 bg-muted/50 rounded-xl p-4 mb-6">

@@ -196,19 +196,8 @@ export const api = {
   },
 
   support: {
-    submit: async (category: SupportCategory, message: string, screenshot?: File) => {
-      const formData = new FormData();
-      formData.append('category', category);
-      formData.append('message', message);
-      if (screenshot) formData.append('screenshot', screenshot);
-
-      const response = await fetch(`${API_BASE}/api/support`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: formData,
-      });
-
-      await handleResponse<{ success: boolean }>(response);
+    submit: async (category: SupportCategory, message: string) => {
+      await post<{ success: boolean }>('/api/support', { category, message });
     },
   },
 };
