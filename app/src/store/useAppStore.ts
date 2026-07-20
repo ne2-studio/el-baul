@@ -270,26 +270,34 @@ export const useAppStore = create<AppState>((set, get) => ({
       onItemSettled?.(result);
     }
 
-    if (uploaded.length > 0) set((state) => ({
-      photos: { ...state.photos, [albumId]: [...(state.photos[albumId] || []), ...uploaded] },
-      albums: {
-        ...state.albums,
-        [baulId]: (state.albums[baulId] || []).map((a) =>
-          a.id === albumId
-            ? {
-                ...a,
-                photoCount: a.photoCount + uploaded.length,
-                coverPhotoUrl: a.coverPhotoUrl || uploaded[0]?.thumbnailUrl,
-              }
-            : a
+    if (uploaded.length > 0) {
+      // Re-fetch the album's full photo list from the server rather than appending
+      // client-side — the album may not have been loaded into the store yet (e.g.
+      // uploading via the native share flow into a chapter never opened this session),
+      // and an append onto an empty/stale slice would silently drop its existing photos.
+      // Mirrors the same fix already applied in movePhotos.
+      const photosForAlbum = await api.photos.getAll(albumId);
+      set((state) => ({
+        photos: { ...state.photos, [albumId]: photosForAlbum },
+        albums: {
+          ...state.albums,
+          [baulId]: (state.albums[baulId] || []).map((a) =>
+            a.id === albumId
+              ? {
+                  ...a,
+                  photoCount: a.photoCount + uploaded.length,
+                  coverPhotoUrl: a.coverPhotoUrl || uploaded[0]?.thumbnailUrl,
+                }
+              : a
+          ),
+        },
+        baules: state.baules.map((b) =>
+          b.id === baulId
+            ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
+            : b
         ),
-      },
-      baules: state.baules.map((b) =>
-        b.id === baulId
-          ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
-          : b
-      ),
-    }));
+      }));
+    }
 
     return results;
   },

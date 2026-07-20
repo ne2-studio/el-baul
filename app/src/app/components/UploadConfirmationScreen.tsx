@@ -53,6 +53,28 @@ interface UploadConfirmationScreenProps {
   onUpload: (photos: SelectedPhoto[], caption: string | undefined, chapter: ChapterSelection, date: PhotoDate | null) => void;
 }
 
+// Known-bogus camera/EXIF dates — clock resets, epoch defaults, digitization-time
+// placeholders — that show up as DateTimeOriginal often enough to not be a coincidence.
+// A match is treated as if no EXIF date had been found at all. Add more entries here as
+// new bad patterns turn up in the wild.
+const SUSPICIOUS_DATES: Partial<PhotoDate>[] = [
+  { year: 1899 },
+  { year: 1904, month: 1, day: 1 },
+  { year: 1970, month: 1, day: 1 },
+  { year: 1980, month: 1, day: 1 },
+  { year: 1990, month: 1, day: 1 },
+  { year: 2000, month: 1, day: 1 },
+  { year: 2001, month: 1, day: 1 },
+];
+
+function isSuspiciousDate(date: PhotoDate): boolean {
+  return SUSPICIOUS_DATES.some((entry) =>
+    entry.year === date.year &&
+    (entry.month === undefined || entry.month === date.month) &&
+    (entry.day === undefined || entry.day === date.day)
+  );
+}
+
 // If every photo in the batch has EXIF DateTimeOriginal/CreateDate and they all agree
 // on year/month/day, returns that date to pre-fill the picker — otherwise null. Mirrors
 // the field priority the backend's ExifPhotoDateExtractor uses (DateTimeOriginal, then
@@ -78,7 +100,7 @@ async function extractSharedExifDate(files: File[]): Promise<PhotoDate | null> {
 
   const first = found[0];
   const allAgree = found.every((d) => d.year === first.year && d.month === first.month && d.day === first.day);
-  return allAgree ? first : null;
+  return allAgree && !isSuspiciousDate(first) ? first : null;
 }
 
 export function UploadConfirmationScreen({
@@ -181,14 +203,14 @@ export function UploadConfirmationScreen({
           </div>
         )}
 
-        {/* Fecha — "No me acuerdo" only makes sense when we don't already have a
-            confident answer from EXIF */}
+        {/* Fecha — "No me acuerdo" stays available even with an EXIF pre-fill, since the
+            EXIF date can be confidently wrong; it just isn't selected by default. */}
         <div className="mb-8">
           <h2 className="text-sm font-medium text-foreground mb-3">Fecha</h2>
           <PartialDatePicker
             key={exifPrefill ? 'exif' : 'initial'}
             initialValue={exifPrefill ?? undefined}
-            allowUnknown={!exifPrefill}
+            allowUnknown
             onChange={(v, unknown) => {
               dateTouchedRef.current = true;
               setDate(v);

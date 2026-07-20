@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { ShareTargetBaulScreen } from '@/app/components/ShareTargetBaulScreen';
+import { BaulesLoadingScreen } from '@/app/components/BaulesLoadingScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useIncomingShareStore } from '@/store/useIncomingShareStore';
 import { useUIStore } from '@/store/uiStore';
@@ -10,8 +11,8 @@ import { Baul } from '@/types';
 
 export const SelectBaulForShareRoute: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const { baules, loadLoosePhotos } = useAppStore();
+  const [isOpeningBaul, setIsOpeningBaul] = useState(false);
+  const { baules, isLoading: isLoadingBaules, loadAlbums, loadLoosePhotos } = useAppStore();
   const { share, selectedPhotos, clear } = useIncomingShareStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   // clear() vacía este store en cuanto se elige baúl, lo que re-renderiza este mismo
@@ -24,10 +25,17 @@ export const SelectBaulForShareRoute: React.FC = () => {
     return <Navigate to="/baules" replace />;
   }
 
+  // Los baúles se cargan una vez al autenticarse, en paralelo con el arranque de esta
+  // pantalla — sin este guard, un intent de compartir en frío ve un parpadeo del estado
+  // vacío ("Aún no tienes baúles") antes de que la lista real llegue.
+  if (isLoadingBaules) {
+    return <BaulesLoadingScreen />;
+  }
+
   const handleSelectBaul = async (baul: Baul) => {
     try {
-      setIsLoading(true);
-      await loadLoosePhotos(baul.id);
+      setIsOpeningBaul(true);
+      await Promise.all([loadAlbums(baul.id), loadLoosePhotos(baul.id)]);
       hasNavigatedRef.current = true;
       navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } });
       clear();
@@ -35,7 +43,7 @@ export const SelectBaulForShareRoute: React.FC = () => {
       console.error('Error preparing shared photos:', error);
       showToastMessage('Error al preparar las fotos compartidas');
     } finally {
-      setIsLoading(false);
+      setIsOpeningBaul(false);
     }
 
     // Housekeeping del plugin nativo — no debe bloquear ni fallar visiblemente la
@@ -50,12 +58,25 @@ export const SelectBaulForShareRoute: React.FC = () => {
   };
 
   return (
-    <ShareTargetBaulScreen
-      baules={baules}
-      photoCount={selectedPhotos.length}
-      onSelectBaul={handleSelectBaul}
-      onCancel={handleCancel}
-      isLoading={isLoading}
-    />
+    <>
+      <ShareTargetBaulScreen
+        baules={baules}
+        photoCount={selectedPhotos.length}
+        onSelectBaul={handleSelectBaul}
+        onCancel={handleCancel}
+        isLoading={isOpeningBaul}
+      />
+
+      {isOpeningBaul && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card rounded-2xl p-8 shadow-2xl border border-border">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-foreground font-medium">Abriendo baúl...</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
