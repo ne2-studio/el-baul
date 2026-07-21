@@ -25,6 +25,12 @@ public class WeeklyDigestManager(
 
     public async Task ScheduleWeeklyDigestsAsync()
     {
+        if (!appConfiguration.WeeklyDigestEmailsEnabled)
+        {
+            logger.LogInformation("WeeklyDigestEmailsDisabled skipping schedule");
+            return;
+        }
+
         var candidates = await userRepository.GetUsersWithDigestEnabledAsync();
         var lastSentByUser = await sentEmailRepository.GetLatestSentAtByTypeAsync(EmailType.WeeklyDigest);
         var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
@@ -47,6 +53,12 @@ public class WeeklyDigestManager(
 
     public async Task SendWeeklyDigestAsync(string userId, DateTime since)
     {
+        if (!appConfiguration.WeeklyDigestEmailsEnabled)
+        {
+            logger.LogInformation("WeeklyDigestSkipped {UserId} feature disabled", userId);
+            return;
+        }
+
         var user = await userRepository.GetByIdAsync(userId);
         if (user is null)
         {

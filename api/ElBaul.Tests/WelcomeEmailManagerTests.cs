@@ -24,10 +24,12 @@ public class WelcomeEmailManagerTests
         _sentEmailRepository, _emailLinkClickRepository, _emailSender, _appConfiguration, _clock,
         new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance);
 
-    private WelcomeEmailManager CreateManager() => new(
+    private WelcomeEmailManager CreateManager() => CreateManager(_appConfiguration);
+
+    private WelcomeEmailManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WelcomeEmailManager>.Instance,
         _userRepository, _baulRepository, _sentEmailRepository,
-        _templateRenderer, CreateCoordinator(), _jobScheduler, _appConfiguration, _clock);
+        _templateRenderer, CreateCoordinator(), _jobScheduler, appConfiguration, _clock);
 
     private User SeedUser(string id, DateTime createdAt, string email = "user@example.com")
     {
@@ -286,15 +288,51 @@ public class WelcomeEmailManagerTests
     public async Task SendTestWelcomeEmailAsync_ShouldFail_WhenNoAdminRecipientIsConfigured()
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
-        var manager = new WelcomeEmailManager(
-            NullLogger<WelcomeEmailManager>.Instance, _userRepository, _baulRepository, _sentEmailRepository,
-            _templateRenderer, CreateCoordinator(), _jobScheduler,
-            new StaticAppConfiguration(adminTestEmailRecipient: ""), _clock);
+        var manager = CreateManager(new StaticAppConfiguration(adminTestEmailRecipient: ""));
 
         var result = await manager.SendTestWelcomeEmailAsync(UserId);
 
         Assert.True(result.IsFailure);
         Assert.Empty(_emailSender.SentMessages);
+    }
+
+    // --- Feature toggle ------------------------------------------------------------------
+
+    [Fact]
+    public async Task SchedulePendingWelcomeEmailsAsync_ShouldNotEnqueueAnyone_WhenFeatureDisabled()
+    {
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager(new StaticAppConfiguration(welcomeEmailsEnabled: false));
+
+        await manager.SchedulePendingWelcomeEmailsAsync();
+
+        Assert.Empty(_jobScheduler.EnqueuedWelcomeEmailUserIds);
+    }
+
+    [Fact]
+    public async Task SendWelcomeEmailAsync_ShouldNotSend_WhenFeatureDisabled()
+    {
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager(new StaticAppConfiguration(welcomeEmailsEnabled: false));
+
+        await manager.SendWelcomeEmailAsync(UserId);
+
+        Assert.Empty(_emailSender.SentMessages);
+    }
+
+    [Fact]
+    public async Task SendTestWelcomeEmailAsync_ShouldStillSend_WhenFeatureDisabled()
+    {
+        // Test-sends are an explicit admin action, not the automatic pipeline — the kill
+        // switch must not block them, or there'd be no way to preview the email while rollout
+        // is off.
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager(new StaticAppConfiguration(welcomeEmailsEnabled: false));
+
+        var result = await manager.SendTestWelcomeEmailAsync(UserId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(_emailSender.SentMessages);
     }
 
     // --- Click tracking ----------------------------------------------------------------

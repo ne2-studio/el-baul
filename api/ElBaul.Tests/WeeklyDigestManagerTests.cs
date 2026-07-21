@@ -23,14 +23,16 @@ public class WeeklyDigestManagerTests
     private readonly StaticAppConfiguration _appConfiguration = new();
     private readonly StaticClock _clock = new();
 
-    private WeeklyDigestManager CreateManager() => new(
+    private WeeklyDigestManager CreateManager() => CreateManager(_appConfiguration);
+
+    private WeeklyDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WeeklyDigestManager>.Instance,
         _userRepository, _baulRepository, _albumRepository, _photoRepository, _recuerdoRepository, _sentEmailRepository,
         _templateRenderer,
         new EmailDeliveryCoordinator(
-            _sentEmailRepository, _emailLinkClickRepository, _emailSender, _appConfiguration, _clock,
+            _sentEmailRepository, _emailLinkClickRepository, _emailSender, appConfiguration, _clock,
             new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance),
-        _jobScheduler, _appConfiguration, _clock);
+        _jobScheduler, appConfiguration, _clock);
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
     {
@@ -330,5 +332,45 @@ public class WeeklyDigestManagerTests
 
         // primary-cta + notification-settings + one block for the new chapter
         Assert.Equal(3, _emailLinkClickRepository.All.Count);
+    }
+
+    // --- Feature toggle ---
+
+    [Fact]
+    public async Task ScheduleWeeklyDigestsAsync_ShouldNotEnqueueAnyone_WhenFeatureDisabled()
+    {
+        SeedUser(UserId);
+        var manager = CreateManager(new StaticAppConfiguration(weeklyDigestEmailsEnabled: false));
+
+        await manager.ScheduleWeeklyDigestsAsync();
+
+        Assert.Empty(_jobScheduler.EnqueuedWeeklyDigests);
+    }
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldNotSend_WhenFeatureDisabled()
+    {
+        SeedUser(UserId);
+        var since = _clock.UtcNow().AddDays(-7);
+        var manager = CreateManager(new StaticAppConfiguration(weeklyDigestEmailsEnabled: false));
+
+        await manager.SendWeeklyDigestAsync(UserId, since);
+
+        Assert.Empty(_emailSender.SentMessages);
+    }
+
+    [Fact]
+    public async Task SendTestWeeklyDigestAsync_ShouldStillSend_WhenFeatureDisabled()
+    {
+        // Test-sends are an explicit admin action, not the automatic pipeline — the kill
+        // switch must not block them, or there'd be no way to preview the email while rollout
+        // is off.
+        SeedUser(UserId);
+        var manager = CreateManager(new StaticAppConfiguration(weeklyDigestEmailsEnabled: false));
+
+        var result = await manager.SendTestWeeklyDigestAsync(UserId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(_emailSender.SentMessages);
     }
 }

@@ -21,6 +21,12 @@ public class WelcomeEmailManager(
 
     public async Task SchedulePendingWelcomeEmailsAsync()
     {
+        if (!appConfiguration.WelcomeEmailsEnabled)
+        {
+            logger.LogInformation("WelcomeEmailsDisabled skipping schedule");
+            return;
+        }
+
         var cutoff = clock.UtcNow() - EligibilityDelay;
         var candidates = await userRepository.GetUsersRegisteredBeforeAsync(cutoff);
         var alreadySent = await sentEmailRepository.GetUserIdsWithSentEmailAsync(EmailType.Welcome);
@@ -38,6 +44,12 @@ public class WelcomeEmailManager(
 
     public async Task SendWelcomeEmailAsync(string userId)
     {
+        if (!appConfiguration.WelcomeEmailsEnabled)
+        {
+            logger.LogInformation("WelcomeEmailSkipped {UserId} feature disabled", userId);
+            return;
+        }
+
         var user = await userRepository.GetByIdAsync(userId);
         if (user is null)
         {
