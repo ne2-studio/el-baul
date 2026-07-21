@@ -7,6 +7,8 @@ import type { AdminSentEmail } from '@/types';
 const TYPE_LABELS: Record<string, string> = {
   Welcome: 'Bienvenida',
   TestWelcome: 'Bienvenida (prueba)',
+  WeeklyDigest: 'Resumen semanal',
+  TestWeeklyDigest: 'Resumen semanal (prueba)',
 };
 
 const STATUS_LABELS: Record<string, string> = {

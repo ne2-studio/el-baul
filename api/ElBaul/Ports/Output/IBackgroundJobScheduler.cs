@@ -8,4 +8,5 @@ namespace ElBaul.Ports.Output;
 public interface IBackgroundJobScheduler
 {
     void EnqueueWelcomeEmail(string userId);
+    void EnqueueWeeklyDigest(string userId, DateTime since);
 }

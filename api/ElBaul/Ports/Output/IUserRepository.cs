@@ -11,6 +11,9 @@ public interface IUserRepository
     /// </summary>
     Task<IEnumerable<User>> GetUsersRegisteredBeforeAsync(DateTime cutoff);
 
+    /// <summary>The candidate pool for the weekly-digest scheduler.</summary>
+    Task<IEnumerable<User>> GetUsersWithDigestEnabledAsync();
+
     /// <summary>
     /// Updates just the LastAccessAt column. Called from UserSyncMiddleware on every
     /// authenticated request (throttled), so this is a targeted column write, not a

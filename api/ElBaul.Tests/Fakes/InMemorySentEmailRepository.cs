@@ -38,5 +38,18 @@ public class InMemorySentEmailRepository : ISentEmailRepository
     public Task<IEnumerable<SentEmail>> GetRecentAsync(int limit) =>
         Task.FromResult(_emails.Values.OrderByDescending(e => e.CreatedAt).Take(limit));
 
+    public Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type) =>
+        Task.FromResult(_emails.Values
+            .Where(e => e.UserId == userId && e.Type == type && e.Status == EmailStatus.Sent)
+            .OrderByDescending(e => e.SentAt)
+            .Select(e => e.SentAt)
+            .FirstOrDefault());
+
+    public Task<Dictionary<string, DateTime>> GetLatestSentAtByTypeAsync(EmailType type) =>
+        Task.FromResult(_emails.Values
+            .Where(e => e.Type == type && e.Status == EmailStatus.Sent && e.SentAt != null)
+            .GroupBy(e => e.UserId)
+            .ToDictionary(g => g.Key, g => g.Max(e => e.SentAt!.Value)));
+
     public IReadOnlyCollection<SentEmail> All => _emails.Values;
 }

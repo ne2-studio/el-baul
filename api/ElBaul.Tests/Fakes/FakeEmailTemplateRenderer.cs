@@ -10,6 +10,7 @@ namespace ElBaul.Tests.Fakes;
 public class FakeEmailTemplateRenderer : IEmailTemplateRenderer
 {
     public WelcomeEmailModel? LastModel { get; private set; }
+    public WeeklyDigestEmailModel? LastDigestModel { get; private set; }
 
     public RenderedEmail RenderWelcome(WelcomeEmailModel model)
     {
@@ -19,6 +20,17 @@ public class FakeEmailTemplateRenderer : IEmailTemplateRenderer
             $"<html>{model.PrimaryCtaLabel}:{model.PrimaryCtaUrl}</html>",
             $"{model.PrimaryCtaLabel}: {model.PrimaryCtaUrl}",
             "welcome-v1",
+            "es-ES");
+    }
+
+    public RenderedEmail RenderWeeklyDigest(WeeklyDigestEmailModel model)
+    {
+        LastDigestModel = model;
+        return new RenderedEmail(
+            "Resumen semanal de tus baúles",
+            $"<html>{model.HasActivity}:{model.Sections.Count}</html>",
+            $"{model.HasActivity}:{model.Sections.Count}",
+            "weekly-digest-v1",
             "es-ES");
     }
 }

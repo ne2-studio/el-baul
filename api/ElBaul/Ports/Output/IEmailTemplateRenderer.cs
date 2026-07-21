@@ -18,4 +18,5 @@ public record WelcomeEmailModel(
 public interface IEmailTemplateRenderer
 {
     RenderedEmail RenderWelcome(WelcomeEmailModel model);
+    RenderedEmail RenderWeeklyDigest(WeeklyDigestEmailModel model);
 }

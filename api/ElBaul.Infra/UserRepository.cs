@@ -15,6 +15,9 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
     public async Task<IEnumerable<User>> GetUsersRegisteredBeforeAsync(DateTime cutoff) =>
         await dbContext.Users.AsNoTracking().Where(u => u.CreatedAt <= cutoff).ToListAsync();
 
+    public async Task<IEnumerable<User>> GetUsersWithDigestEnabledAsync() =>
+        await dbContext.Users.AsNoTracking().Where(u => u.WeeklyDigestEnabled).ToListAsync();
+
     public Task UpdateLastAccessAsync(string id, DateTime at) =>
         dbContext.Users
             .Where(u => u.Id == id)

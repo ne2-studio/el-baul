@@ -12,11 +12,10 @@ public class WelcomeEmailManager(
     IBaulRepository baulRepository,
     ISentEmailRepository sentEmailRepository,
     IEmailTemplateRenderer templateRenderer,
-    IEmailSender emailSender,
+    EmailDeliveryCoordinator deliveryCoordinator,
     IBackgroundJobScheduler backgroundJobScheduler,
     IAppConfiguration appConfiguration,
-    IClock clock,
-    IIdGenerator idGenerator) : IWelcomeEmailManager
+    IClock clock) : IWelcomeEmailManager
 {
     private static readonly TimeSpan EligibilityDelay = TimeSpan.FromHours(2);
 
@@ -66,11 +65,15 @@ public class WelcomeEmailManager(
             return;
         }
 
-        var result = await SendAsync(user, EmailType.Welcome, user.Email, $"welcome:{userId}");
+        var result = await deliveryCoordinator.SendAsync(
+            userId, user.Email, $"welcome:{userId}", EmailType.Welcome,
+            activitySince: null, activityUntil: null,
+            renderAsync: async () => templateRenderer.RenderWelcome(await BuildModelAsync(user)));
+
         if (result.IsFailure)
         {
             // Throwing lets Hangfire's automatic retry pick this back up; the next attempt
-            // re-uses the same reserved SentEmail row (see SendAsync) instead of double-sending.
+            // re-uses the same reserved SentEmail row instead of double-sending.
             throw new InvalidOperationException(result.Error);
         }
     }
@@ -84,59 +87,15 @@ public class WelcomeEmailManager(
         if (string.IsNullOrWhiteSpace(testRecipient))
             return Result.Failure("Resend:AdminTestRecipient is not configured");
 
-        var deduplicationKey = $"test-welcome:{sourceUserId}:{idGenerator.NewId()}";
-        return await SendAsync(user, EmailType.TestWelcome, testRecipient, deduplicationKey);
-    }
-
-    private async Task<Result> SendAsync(User user, EmailType type, string recipientEmail, string deduplicationKey)
-    {
-        var existing = await sentEmailRepository.GetByDeduplicationKeyAsync(deduplicationKey);
-        if (existing is { Status: EmailStatus.Sent })
-        {
-            logger.LogInformation("WelcomeEmailSkipped {UserId} {Type} already sent", user.Id, type);
-            return Result.Success();
-        }
-
-        var model = await BuildModelAsync(user);
-        var rendered = templateRenderer.RenderWelcome(model);
-        var subject = type == EmailType.TestWelcome ? $"[TEST] {rendered.Subject}" : rendered.Subject;
-
-        if (existing is null)
-        {
-            var pending = new SentEmail(
-                idGenerator.NewId(), user.Id, type, subject, recipientEmail,
-                rendered.TemplateVersion, rendered.Locale, EmailStatus.Pending, deduplicationKey, clock.UtcNow());
-
-            if (!await sentEmailRepository.TryReserveAsync(pending))
+        var deduplicationKey = $"test-welcome:{sourceUserId}:{Guid.NewGuid()}";
+        return await deliveryCoordinator.SendAsync(
+            sourceUserId, testRecipient, deduplicationKey, EmailType.TestWelcome,
+            activitySince: null, activityUntil: null,
+            renderAsync: async () =>
             {
-                logger.LogInformation("WelcomeEmailSkipped {UserId} {Type} raced by another worker", user.Id, type);
-                return Result.Success();
-            }
-
-            existing = pending;
-        }
-
-        existing = existing with { Status = EmailStatus.Sending, SendAttemptedAt = clock.UtcNow() };
-        await sentEmailRepository.UpdateAsync(existing);
-
-        var sendResult = await emailSender.SendAsync(new EmailMessage(recipientEmail, subject, rendered.Html, rendered.PlainText));
-
-        if (sendResult.IsFailure)
-        {
-            await sentEmailRepository.UpdateAsync(existing with { Status = EmailStatus.Failed, ErrorMessage = sendResult.Error });
-            logger.LogError("WelcomeEmailFailed {UserId} {Type} {SentEmailId} {Error}", user.Id, type, existing.Id, sendResult.Error);
-            return Result.Failure(sendResult.Error);
-        }
-
-        await sentEmailRepository.UpdateAsync(existing with
-        {
-            Status = EmailStatus.Sent,
-            Provider = "Resend",
-            ProviderMessageId = sendResult.Value.ProviderMessageId,
-            SentAt = clock.UtcNow()
-        });
-        logger.LogInformation("WelcomeEmailSent {UserId} {Type} {SentEmailId}", user.Id, type, existing.Id);
-        return Result.Success();
+                var rendered = templateRenderer.RenderWelcome(await BuildModelAsync(user));
+                return rendered with { Subject = $"[TEST] {rendered.Subject}" };
+            });
     }
 
     private async Task<WelcomeEmailModel> BuildModelAsync(User user)

@@ -11,6 +11,9 @@ public class InMemoryAlbumRepository : IAlbumRepository
     public Task<IEnumerable<Album>> GetByBaulIdAsync(Guid baulId) =>
         Task.FromResult(_albums.Values.Where(a => a.BaulId == baulId));
 
+    public Task<IEnumerable<Album>> GetCreatedSinceAsync(Guid baulId, DateTime since) =>
+        Task.FromResult(_albums.Values.Where(a => a.BaulId == baulId && a.CreatedAt >= since));
+
     public Task CreateAsync(Album album)
     {
         _albums[album.Id] = album;

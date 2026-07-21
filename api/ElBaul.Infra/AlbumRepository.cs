@@ -11,6 +11,11 @@ public class AlbumRepository(ElBaulDbContext dbContext) : IAlbumRepository
     public async Task<IEnumerable<Album>> GetByBaulIdAsync(Guid baulId) =>
         await dbContext.Albums.AsNoTracking().Where(a => a.BaulId == baulId).ToListAsync();
 
+    public async Task<IEnumerable<Album>> GetCreatedSinceAsync(Guid baulId, DateTime since) =>
+        await dbContext.Albums.AsNoTracking()
+            .Where(a => a.BaulId == baulId && a.CreatedAt >= since)
+            .ToListAsync();
+
     public async Task CreateAsync(Album album)
     {
         dbContext.Albums.Add(album);

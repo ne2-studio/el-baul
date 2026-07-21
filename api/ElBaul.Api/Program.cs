@@ -145,6 +145,8 @@ builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<ISupportManager, SupportManager>();
 builder.Services.AddScoped<IAdminManager, AdminManager>();
 builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
+builder.Services.AddScoped<IWeeklyDigestManager, WeeklyDigestManager>();
+builder.Services.AddScoped<EmailDeliveryCoordinator>();
 
 // Register infrastructure services
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -174,6 +176,10 @@ using (var scope = app.Services.CreateScope())
         "schedule-pending-welcome-emails",
         m => m.SchedulePendingWelcomeEmailsAsync(),
         Cron.Hourly);
+    recurringJobManager.AddOrUpdate<IWeeklyDigestManager>(
+        "schedule-weekly-digests",
+        m => m.ScheduleWeeklyDigestsAsync(),
+        Cron.Daily(4)); // 4am UTC — once a day is enough per PRD, off-peak hour
 }
 
 // Configure the HTTP request pipeline

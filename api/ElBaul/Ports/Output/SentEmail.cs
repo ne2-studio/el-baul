@@ -3,7 +3,9 @@ namespace ElBaul.Ports.Output;
 public enum EmailType
 {
     Welcome,
-    TestWelcome
+    TestWelcome,
+    WeeklyDigest,
+    TestWeeklyDigest
 }
 
 public enum EmailStatus
@@ -32,4 +34,6 @@ public record SentEmail(
     string? ProviderMessageId = null,
     DateTime? SendAttemptedAt = null,
     DateTime? SentAt = null,
-    string? ErrorMessage = null);
+    string? ErrorMessage = null,
+    DateTime? ActivitySince = null,
+    DateTime? ActivityUntil = null);

@@ -62,4 +62,18 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
             .OrderByDescending(e => e.CreatedAt)
             .Take(limit)
             .ToListAsync();
+
+    public async Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type) =>
+        await dbContext.SentEmails.AsNoTracking()
+            .Where(e => e.UserId == userId && e.Type == type && e.Status == EmailStatus.Sent)
+            .OrderByDescending(e => e.SentAt)
+            .Select(e => e.SentAt)
+            .FirstOrDefaultAsync();
+
+    public async Task<Dictionary<string, DateTime>> GetLatestSentAtByTypeAsync(EmailType type) =>
+        await dbContext.SentEmails.AsNoTracking()
+            .Where(e => e.Type == type && e.Status == EmailStatus.Sent && e.SentAt != null)
+            .GroupBy(e => e.UserId)
+            .Select(g => new { UserId = g.Key, SentAt = g.Max(e => e.SentAt!.Value) })
+            .ToDictionaryAsync(x => x.UserId, x => x.SentAt);
 }

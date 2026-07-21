@@ -44,7 +44,7 @@ public static class ServiceRegistration
         services.AddSingleton<IPhotoStorage, MinioPhotoStorage>();
 
         services.Configure<ResendOptions>(configuration.GetSection("Resend"));
-        services.AddScoped<IEmailTemplateRenderer, WelcomeEmailTemplateRenderer>();
+        services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 
         // No Resend account configured yet in local/dev — log the composed email instead of
         // calling out, so the send/persist pipeline is still exercisable end-to-end.

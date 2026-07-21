@@ -8,4 +8,7 @@ public class HangfireBackgroundJobScheduler(IBackgroundJobClient backgroundJobCl
 {
     public void EnqueueWelcomeEmail(string userId) =>
         backgroundJobClient.Enqueue<IWelcomeEmailManager>(m => m.SendWelcomeEmailAsync(userId));
+
+    public void EnqueueWeeklyDigest(string userId, DateTime since) =>
+        backgroundJobClient.Enqueue<IWeeklyDigestManager>(m => m.SendWeeklyDigestAsync(userId, since));
 }

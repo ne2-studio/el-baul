@@ -19,11 +19,14 @@ public class WelcomeEmailManagerTests
     private readonly StaticAppConfiguration _appConfiguration = new();
     private readonly StaticClock _clock = new();
 
+    private EmailDeliveryCoordinator CreateCoordinator() => new(
+        _sentEmailRepository, _emailSender, _clock, new StaticIdGenerator(Guid.NewGuid()),
+        NullLogger<EmailDeliveryCoordinator>.Instance);
+
     private WelcomeEmailManager CreateManager() => new(
         NullLogger<WelcomeEmailManager>.Instance,
         _userRepository, _baulRepository, _sentEmailRepository,
-        _templateRenderer, _emailSender, _jobScheduler, _appConfiguration,
-        _clock, new StaticIdGenerator(Guid.NewGuid()));
+        _templateRenderer, CreateCoordinator(), _jobScheduler, _appConfiguration, _clock);
 
     private User SeedUser(string id, DateTime createdAt, string email = "user@example.com")
     {
@@ -265,8 +268,8 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = new WelcomeEmailManager(
             NullLogger<WelcomeEmailManager>.Instance, _userRepository, _baulRepository, _sentEmailRepository,
-            _templateRenderer, _emailSender, _jobScheduler, new StaticAppConfiguration(adminTestEmailRecipient: ""),
-            _clock, new StaticIdGenerator(Guid.NewGuid()));
+            _templateRenderer, CreateCoordinator(), _jobScheduler,
+            new StaticAppConfiguration(adminTestEmailRecipient: ""), _clock);
 
         var result = await manager.SendTestWelcomeEmailAsync(UserId);
 

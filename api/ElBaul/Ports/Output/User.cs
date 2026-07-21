@@ -6,5 +6,6 @@ public record User
     string Email,
     string? Name,
     DateTime CreatedAt,
-    DateTime? LastAccessAt = null
+    DateTime? LastAccessAt = null,
+    bool WeeklyDigestEnabled = true
 );

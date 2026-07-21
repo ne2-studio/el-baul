@@ -7,7 +7,11 @@ namespace ElBaul.Api.Controllers;
 [Authorize(Policy = "AdminOnly")]
 [ApiController]
 [Route("api/admin")]
-public class AdminController(IAdminManager adminManager, IWelcomeEmailManager welcomeEmailManager, IConfiguration configuration) : ControllerBase
+public class AdminController(
+    IAdminManager adminManager,
+    IWelcomeEmailManager welcomeEmailManager,
+    IWeeklyDigestManager weeklyDigestManager,
+    IConfiguration configuration) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard()
@@ -65,6 +69,13 @@ public class AdminController(IAdminManager adminManager, IWelcomeEmailManager we
     public async Task<IActionResult> SendWelcomeTestEmail(string userId)
     {
         var result = await welcomeEmailManager.SendTestWelcomeEmailAsync(userId);
+        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("emails/digest-test/{userId}")]
+    public async Task<IActionResult> SendDigestTestEmail(string userId)
+    {
+        var result = await weeklyDigestManager.SendTestWeeklyDigestAsync(userId);
         return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
     }
 

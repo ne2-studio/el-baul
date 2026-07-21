@@ -23,4 +23,10 @@ public interface ISentEmailRepository
     Task<HashSet<string>> GetUserIdsWithBlockedStatusAsync();
 
     Task<IEnumerable<SentEmail>> GetRecentAsync(int limit);
+
+    /// <summary>SentAt of the most recent successfully-Sent email of the given type for one user (null if none).</summary>
+    Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type);
+
+    /// <summary>Bulk version of GetLatestSentAtAsync, for the digest scheduler's candidate pool.</summary>
+    Task<Dictionary<string, DateTime>> GetLatestSentAtByTypeAsync(EmailType type);
 }

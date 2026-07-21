@@ -14,24 +14,25 @@ export function UserDetailRoute() {
   const { selectedUser, isLoading, error, fetchUser } = useUsersStore();
   const navigate = useNavigate();
 
-  const [isSendingWelcomeTest, setIsSendingWelcomeTest] = useState(false);
-  const [welcomeTestResult, setWelcomeTestResult] = useState<'success' | 'error' | null>(null);
+  type TestSendKey = 'welcome' | 'digest';
+  const [sending, setSending] = useState<Record<TestSendKey, boolean>>({ welcome: false, digest: false });
+  const [results, setResults] = useState<Record<TestSendKey, 'success' | 'error' | null>>({ welcome: null, digest: null });
 
   useEffect(() => {
     if (userId) fetchUser(userId);
   }, [userId]);
 
-  const handleSendWelcomeTest = async () => {
+  const handleSendTest = async (key: TestSendKey, send: (userId: string) => Promise<void>) => {
     if (!userId) return;
-    setIsSendingWelcomeTest(true);
-    setWelcomeTestResult(null);
+    setSending((s) => ({ ...s, [key]: true }));
+    setResults((r) => ({ ...r, [key]: null }));
     try {
-      await api.emails.sendWelcomeTest(userId);
-      setWelcomeTestResult('success');
+      await send(userId);
+      setResults((r) => ({ ...r, [key]: 'success' }));
     } catch {
-      setWelcomeTestResult('error');
+      setResults((r) => ({ ...r, [key]: 'error' }));
     } finally {
-      setIsSendingWelcomeTest(false);
+      setSending((s) => ({ ...s, [key]: false }));
     }
   };
 
@@ -57,15 +58,27 @@ export function UserDetailRoute() {
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex flex-col items-end gap-1">
             <button
-              onClick={handleSendWelcomeTest}
-              disabled={isSendingWelcomeTest}
+              onClick={() => handleSendTest('welcome', api.emails.sendWelcomeTest)}
+              disabled={sending.welcome}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
-              {isSendingWelcomeTest ? 'Enviando…' : 'Enviar bienvenida de prueba'}
+              {sending.welcome ? 'Enviando…' : 'Enviar bienvenida de prueba'}
             </button>
-            {welcomeTestResult === 'success' && <p className="text-xs text-muted-foreground">Enviado a la dirección de prueba.</p>}
-            {welcomeTestResult === 'error' && <p className="text-xs text-destructive">No se pudo enviar.</p>}
+            {results.welcome === 'success' && <p className="text-xs text-muted-foreground">Enviado a la dirección de prueba.</p>}
+            {results.welcome === 'error' && <p className="text-xs text-destructive">No se pudo enviar.</p>}
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <button
+              onClick={() => handleSendTest('digest', api.emails.sendDigestTest)}
+              disabled={sending.digest}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {sending.digest ? 'Enviando…' : 'Enviar digest de prueba'}
+            </button>
+            {results.digest === 'success' && <p className="text-xs text-muted-foreground">Enviado a la dirección de prueba.</p>}
+            {results.digest === 'error' && <p className="text-xs text-destructive">No se pudo enviar.</p>}
           </div>
           <a
             href={`https://auth.ne2.studio/users/${selectedUser.id}`}

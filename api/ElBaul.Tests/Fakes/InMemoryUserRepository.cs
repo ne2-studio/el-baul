@@ -15,6 +15,9 @@ public class InMemoryUserRepository : IUserRepository
     public Task<IEnumerable<User>> GetUsersRegisteredBeforeAsync(DateTime cutoff) =>
         Task.FromResult(_users.Values.Where(u => u.CreatedAt <= cutoff));
 
+    public Task<IEnumerable<User>> GetUsersWithDigestEnabledAsync() =>
+        Task.FromResult(_users.Values.Where(u => u.WeeklyDigestEnabled));
+
     public Task UpsertAsync(User user)
     {
         _users[user.Id] = user;

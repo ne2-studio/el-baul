@@ -5,7 +5,7 @@ namespace ElBaul.Infra.Tests;
 
 public class WelcomeEmailTemplateRendererTests
 {
-    private readonly WelcomeEmailTemplateRenderer _renderer = new();
+    private readonly EmailTemplateRenderer _renderer = new();
 
     [Fact]
     public void RenderWelcome_ShouldEscapeHtmlInUserControlledContent()

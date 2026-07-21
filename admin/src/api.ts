@@ -57,5 +57,8 @@ export const api = {
     sendWelcomeTest: async (userId: string): Promise<void> =>
       fetch(`${API_BASE_URL}/api/admin/emails/welcome-test/${userId}`, { method: 'POST', headers: getHeaders() })
         .then(handleResponse),
+    sendDigestTest: async (userId: string): Promise<void> =>
+      fetch(`${API_BASE_URL}/api/admin/emails/digest-test/${userId}`, { method: 'POST', headers: getHeaders() })
+        .then(handleResponse),
   },
 };
