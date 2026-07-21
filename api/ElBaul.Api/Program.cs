@@ -200,7 +200,11 @@ app.UseRouting();
 app.UseCors(policy => policy
     .AllowAnyOrigin()
     .AllowAnyMethod()
-    .AllowAnyHeader());
+    .AllowAnyHeader()
+    // Content-Disposition isn't in the browser's default CORS-safelisted response
+    // headers, so without this the photo download endpoint's filename is invisible to
+    // fetch() and silently falls back to a generic name.
+    .WithExposedHeaders("Content-Disposition"));
 
 app.UseRateLimiter();
 app.UseAuthentication();

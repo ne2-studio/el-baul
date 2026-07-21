@@ -8,7 +8,8 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
 import { api } from '@/api';
-import { downloadBlob } from '@/utils/downloadFile';
+import { saveDownloadedPhoto } from '@/utils/downloadFile';
+import { Capacitor } from '@capacitor/core';
 
 export const PhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -90,8 +91,11 @@ export const PhotoViewerRoute: React.FC = () => {
   const handleDownloadPhoto = async (photoToDownload: Photo) => {
     await run(async () => {
       const { blob, fileName } = await api.photos.download(photoToDownload.id);
-      downloadBlob(blob, fileName);
-    }, { errorMessage: 'Error al descargar la foto' });
+      await saveDownloadedPhoto(blob, fileName);
+    }, {
+      successMessage: Capacitor.isNativePlatform() ? 'Foto guardada en la galería' : undefined,
+      errorMessage: 'Error al descargar la foto',
+    });
   };
 
   return (
