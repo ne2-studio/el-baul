@@ -43,7 +43,15 @@ public class MinioPhotoStorage : IPhotoStorage
         });
     }
 
-    public async Task<Stream> OpenReadAsync(string key)
+    public async Task<Stream> OpenReadAsync(string key) => (await ReadObjectAsync(key)).Content;
+
+    public async Task<PhotoContent> OpenReadForDownloadAsync(string key)
+    {
+        var (content, contentType) = await ReadObjectAsync(key);
+        return new PhotoContent(content, contentType);
+    }
+
+    private async Task<(Stream Content, string ContentType)> ReadObjectAsync(string key)
     {
         using var response = await _client.GetObjectAsync(new GetObjectRequest
         {
@@ -57,7 +65,7 @@ public class MinioPhotoStorage : IPhotoStorage
         var buffer = new MemoryStream();
         await response.ResponseStream.CopyToAsync(buffer);
         buffer.Position = 0;
-        return buffer;
+        return (buffer, response.Headers.ContentType);
     }
 
     public Task<string> GetImageUrl(string key, ImagePlacement placement) =>

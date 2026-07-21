@@ -15,3 +15,5 @@ public record PhotoDto
     DateTime CreatedAt,
     int RecuerdoCount
 );
+
+public record PhotoDownloadResult(Stream Content, string ContentType, string FileName);

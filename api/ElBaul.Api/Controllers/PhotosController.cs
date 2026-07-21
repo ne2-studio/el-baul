@@ -106,6 +106,16 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpGet("photos/{photoId:guid}/download")]
+    public async Task<IActionResult> Download(Guid photoId)
+    {
+        var result = await photoManager.DownloadAsync(photoId);
+        if (result.IsFailure) return ErrorMapping.ToActionResult(result.Error);
+
+        var download = result.Value;
+        return File(download.Content, download.ContentType, download.FileName);
+    }
+
     [HttpPost("photos/{photoId:guid}/recuerdos")]
     public async Task<IActionResult> CreateRecuerdo(Guid photoId, [FromBody] CreateRecuerdoRequest request)
     {

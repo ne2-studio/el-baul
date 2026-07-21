@@ -43,6 +43,7 @@ const sharedDefaults = {
   onDeletePhoto: async () => true,
   onAddRecuerdo: () => {},
   onUserClick: () => {},
+  onDownloadPhoto: () => {},
 };
 
 export const Default: Story = {

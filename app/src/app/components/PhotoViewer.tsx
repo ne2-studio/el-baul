@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Photo } from './PhotosView';
 import { MoveModal } from './MoveModal';
 import { DateModal } from './DateModal';
@@ -33,6 +33,7 @@ interface PhotoViewerProps {
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (photoId: string, text: string) => void;
   onUserClick?: (sharedUserId: string) => void;
+  onDownloadPhoto?: (photo: Photo) => void;
 }
 
 export function PhotoViewer({
@@ -51,10 +52,9 @@ export function PhotoViewer({
   currentAlbum,
   recuerdos = [],
   onAddRecuerdo,
-  onUserClick
+  onUserClick,
+  onDownloadPhoto
 }: PhotoViewerProps) {
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
@@ -85,36 +85,25 @@ export function PhotoViewer({
     }
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
-    });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
-    });
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const deltaX = touchStart.x - touchEnd.x;
-    const deltaY = touchStart.y - touchEnd.y;
-    const minSwipeDistance = 50;
-
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-      if (deltaX > 0) {
-        handleNext();
-      } else {
-        handlePrevious();
-      }
+  // Dirección del carrusel: +1 al avanzar, -1 al retroceder — recalculada cada vez que
+  // cambia la foto mostrada, sin importar cómo se llegó a ella (swipe, flechas, teclado).
+  const previousIndexRef = useRef(currentIndex);
+  const [direction, setDirection] = useState(0);
+  useEffect(() => {
+    if (currentIndex !== previousIndexRef.current) {
+      setDirection(currentIndex > previousIndexRef.current ? 1 : -1);
+      previousIndexRef.current = currentIndex;
     }
-  };
+  }, [currentIndex]);
+
+  // Precarga la foto anterior y siguiente para que el swipe se sienta instantáneo.
+  useEffect(() => {
+    [photos[currentIndex - 1], photos[currentIndex + 1]].forEach((neighbor) => {
+      if (!neighbor) return;
+      const img = new Image();
+      img.src = neighbor.fullUrl;
+    });
+  }, [currentIndex, photos]);
 
   const handleSubmitRequest = async (reason: string) => {
     if (!onRequestRemoval) return;
@@ -133,6 +122,9 @@ export function PhotoViewer({
   };
 
   const menuItems: PhotoViewerMenuItem[] = [];
+  if (onDownloadPhoto) {
+    menuItems.push({ key: 'download', label: 'Descargar foto original', onSelect: () => onDownloadPhoto(photo) });
+  }
   if (onSetAlbumCover) {
     menuItems.push({ key: 'album-cover', label: 'Establecer como portada del capítulo', onSelect: () => onSetAlbumCover(photo) });
   }
@@ -204,12 +196,7 @@ export function PhotoViewer({
 
   return (
     <>
-      <div
-        className="fixed inset-0 bg-foreground/95 z-50 flex flex-col"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      <div className="fixed inset-0 bg-foreground/95 z-50 flex flex-col">
         <PhotoViewerHeader
           currentIndex={currentIndex}
           totalCount={photos.length}
@@ -218,8 +205,10 @@ export function PhotoViewer({
         />
 
         <PhotoStage
+          photoKey={photo.id}
           src={photo.fullUrl}
           alt={photo.caption || 'Foto'}
+          direction={direction}
           hasPrevious={hasPrevious}
           hasNext={hasNext}
           onPrevious={handlePrevious}
@@ -228,6 +217,11 @@ export function PhotoViewer({
 
         {/* Info & Recuerdos section */}
         <div className="px-6 py-8 space-y-8 max-h-[50vh] overflow-y-auto">
+          {/* Caption */}
+          {photo.caption && (
+            <p className="text-background/90 text-sm leading-relaxed">{photo.caption}</p>
+          )}
+
           {/* Date */}
           {(photo.date || onChangeDate) && (
             <button

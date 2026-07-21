@@ -167,6 +167,19 @@ export const api = {
       new Photo(await put<any>(`/api/photos/${photoId}/date`, date)),
     changeDateBatch: async (photoIds: string[], date: PhotoDate) =>
       (await put<any[]>('/api/photos/date-batch', { photoIds, ...date })).map((p) => new Photo(p)),
+    download: async (photoId: string): Promise<{ blob: Blob; fileName: string }> => {
+      const response = await fetch(`${API_BASE}/api/photos/${photoId}/download`, { headers: authHeaders() });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(body.error || 'Request failed');
+      }
+
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const fileNameMatch = disposition.match(/filename="?([^";]+)"?/);
+      const fileName = fileNameMatch ? decodeURIComponent(fileNameMatch[1]) : 'foto.jpg';
+
+      return { blob: await response.blob(), fileName };
+    },
   },
 
   recuerdos: {

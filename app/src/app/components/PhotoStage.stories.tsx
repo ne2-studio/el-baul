@@ -15,8 +15,10 @@ const src = 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=1200
 
 export const Default: Story = {
   args: {
+    photoKey: 'photo-1',
     src,
     alt: 'Foto de ejemplo',
+    direction: 1,
     hasPrevious: true,
     hasNext: true,
     onPrevious: () => {},

@@ -8,6 +8,8 @@ import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
+import { api } from '@/api';
+import { downloadBlob } from '@/utils/downloadFile';
 
 export const LoosePhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -79,6 +81,13 @@ export const LoosePhotoViewerRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleDownloadPhoto = async (photoToDownload: Photo) => {
+    await run(async () => {
+      const { blob, fileName } = await api.photos.download(photoToDownload.id);
+      downloadBlob(blob, fileName);
+    }, { errorMessage: 'Error al descargar la foto' });
+  };
+
   return (
     <PhotoViewer
       photo={photo}
@@ -96,6 +105,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(sharedUserId) => navigate(`/baules/${baul.id}/personas/${sharedUserId}`)}
+      onDownloadPhoto={handleDownloadPhoto}
     />
   );
 };

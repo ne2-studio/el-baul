@@ -550,6 +550,45 @@ public class PhotoManager(
         return ToDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true);
     }
 
+    public async Task<Result<PhotoDownloadResult>> DownloadAsync(Guid photoId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null)
+        {
+            logger.LogWarning("Photo download rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<PhotoDownloadResult>("Photo not found");
+        }
+
+        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
+        if (baul is null)
+        {
+            logger.LogWarning("Photo download rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<PhotoDownloadResult>("Baul not found");
+        }
+
+        var hasAccess = baul.CustodioId == userId
+            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+        if (!hasAccess)
+        {
+            logger.LogWarning("Photo download rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
+            return Result.Failure<PhotoDownloadResult>("Access denied");
+        }
+
+        var content = await photoStorage.OpenReadForDownloadAsync(photo.StorageKey);
+        return new PhotoDownloadResult(content.Content, content.ContentType, ExtractOriginalFileName(photo.StorageKey));
+    }
+
+    // storageKey is always "{userId}/{36-char guid}-{originalFileName}" (see UploadAsync/
+    // UploadToBaulAsync below) — strip the guid prefix back off to recover a friendly
+    // download filename instead of exposing the storage key's internals to the user.
+    private static string ExtractOriginalFileName(string storageKey)
+    {
+        var lastSegment = storageKey[(storageKey.LastIndexOf('/') + 1)..];
+        const int guidAndDashLength = 37;
+        return lastSegment.Length > guidAndDashLength ? lastSegment[guidAndDashLength..] : lastSegment;
+    }
+
     private (int? Year, int? Month, int? Day) ResolvePhotoDate((int Year, int? Month, int? Day)? explicitDate, Stream content)
     {
         if (explicitDate is { } d) return (d.Year, d.Month, d.Day);

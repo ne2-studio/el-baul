@@ -7,6 +7,7 @@ public class FakePhotoStorage : IPhotoStorage
     public List<string> SavedKeys { get; } = [];
     public List<string> DeletedKeys { get; } = [];
     private readonly Dictionary<string, byte[]> _content = new();
+    private readonly Dictionary<string, string> _contentTypes = new();
 
     public async Task SaveAsync(string key, Stream content, string contentType)
     {
@@ -14,10 +15,16 @@ public class FakePhotoStorage : IPhotoStorage
         using var buffer = new MemoryStream();
         await content.CopyToAsync(buffer);
         _content[key] = buffer.ToArray();
+        _contentTypes[key] = contentType;
     }
 
     public Task<Stream> OpenReadAsync(string key) =>
         Task.FromResult<Stream>(new MemoryStream(_content.GetValueOrDefault(key, [])));
+
+    public Task<PhotoContent> OpenReadForDownloadAsync(string key) =>
+        Task.FromResult(new PhotoContent(
+            new MemoryStream(_content.GetValueOrDefault(key, [])),
+            _contentTypes.GetValueOrDefault(key, "application/octet-stream")));
 
     public Task<string> GetImageUrl(string key, ImagePlacement placement) =>
         Task.FromResult($"https://imgproxy.test/{placement}/{key}");

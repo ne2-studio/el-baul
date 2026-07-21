@@ -720,6 +720,52 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task DownloadAsync_ShouldReturnOriginalContentAndFileName()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        var storageKey = $"{CustodioId}/{Guid.NewGuid()}-vacaciones.jpg";
+        await _photoStorage.SaveAsync(storageKey, new MemoryStream([1, 2, 3]), "image/jpeg");
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, storageKey, null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DownloadAsync(photoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("image/jpeg", result.Value.ContentType);
+        Assert.Equal("vacaciones.jpg", result.Value.FileName);
+        using var buffer = new MemoryStream();
+        await result.Value.Content.CopyToAsync(buffer);
+        Assert.Equal(new byte[] { 1, 2, 3 }, buffer.ToArray());
+    }
+
+    [Fact]
+    public async Task DownloadAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
+    {
+        var (baulId, albumId) = await SeedBaulWithAlbumAsync();
+        var photoId = Guid.NewGuid();
+        var storageKey = $"{CustodioId}/{Guid.NewGuid()}-vacaciones.jpg";
+        await _photoStorage.SaveAsync(storageKey, new MemoryStream([1, 2, 3]), "image/jpeg");
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, storageKey, null, null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager("stranger");
+        var result = await manager.DownloadAsync(photoId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task DownloadAsync_ShouldFail_WhenPhotoNotFound()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DownloadAsync(Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error);
+    }
+
+    [Fact]
     public async Task ChangeDateBatchAsync_ShouldUpdateAllValidPhotos_AndSkipInaccessibleOnes()
     {
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();

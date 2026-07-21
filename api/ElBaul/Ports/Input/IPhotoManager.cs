@@ -34,4 +34,6 @@ public interface IPhotoManager
 
     Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId);
     Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid photoId, string text);
+
+    Task<Result<PhotoDownloadResult>> DownloadAsync(Guid photoId);
 }
