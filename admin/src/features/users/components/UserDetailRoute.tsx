@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, ArrowLeft } from 'lucide-react';
+import { ExternalLink, ArrowLeft, Send } from 'lucide-react';
 import { useUsersStore } from '@/store/useUsersStore';
 import { DataTable } from '@/app/components/DataTable';
 import { formatDate } from '@/utils/format';
+import { api } from '@/api';
 import type { AdminUserBaulMembership } from '@/types';
 
 const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:3000';
@@ -13,9 +14,26 @@ export function UserDetailRoute() {
   const { selectedUser, isLoading, error, fetchUser } = useUsersStore();
   const navigate = useNavigate();
 
+  const [isSendingWelcomeTest, setIsSendingWelcomeTest] = useState(false);
+  const [welcomeTestResult, setWelcomeTestResult] = useState<'success' | 'error' | null>(null);
+
   useEffect(() => {
     if (userId) fetchUser(userId);
   }, [userId]);
+
+  const handleSendWelcomeTest = async () => {
+    if (!userId) return;
+    setIsSendingWelcomeTest(true);
+    setWelcomeTestResult(null);
+    try {
+      await api.emails.sendWelcomeTest(userId);
+      setWelcomeTestResult('success');
+    } catch {
+      setWelcomeTestResult('error');
+    } finally {
+      setIsSendingWelcomeTest(false);
+    }
+  };
 
   if (isLoading && !selectedUser) return <p className="text-muted-foreground">Cargando…</p>;
   if (error) return <p className="text-destructive">{error}</p>;
@@ -36,15 +54,29 @@ export function UserDetailRoute() {
           <h2>{selectedUser.name || selectedUser.email}</h2>
           <p className="text-muted-foreground text-sm mt-1">{selectedUser.email}</p>
         </div>
-        <a
-          href={`https://auth.ne2.studio/users/${selectedUser.id}`}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm shrink-0"
-        >
-          Abrir en Zitadel
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-col items-end gap-1">
+            <button
+              onClick={handleSendWelcomeTest}
+              disabled={isSendingWelcomeTest}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {isSendingWelcomeTest ? 'Enviando…' : 'Enviar bienvenida de prueba'}
+            </button>
+            {welcomeTestResult === 'success' && <p className="text-xs text-muted-foreground">Enviado a la dirección de prueba.</p>}
+            {welcomeTestResult === 'error' && <p className="text-xs text-destructive">No se pudo enviar.</p>}
+          </div>
+          <a
+            href={`https://auth.ne2.studio/users/${selectedUser.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm shrink-0"
+          >
+            Abrir en Zitadel
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 max-w-md">

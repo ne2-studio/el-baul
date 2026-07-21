@@ -12,6 +12,9 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
     public Task<User?> GetByEmailAsync(string email) =>
         dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
 
+    public async Task<IEnumerable<User>> GetUsersRegisteredBeforeAsync(DateTime cutoff) =>
+        await dbContext.Users.AsNoTracking().Where(u => u.CreatedAt <= cutoff).ToListAsync();
+
     public Task UpdateLastAccessAsync(string id, DateTime at) =>
         dbContext.Users
             .Where(u => u.Id == id)

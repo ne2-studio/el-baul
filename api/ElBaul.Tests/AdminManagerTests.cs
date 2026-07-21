@@ -7,9 +7,10 @@ namespace ElBaul.Tests;
 public class AdminManagerTests
 {
     private readonly InMemoryAdminRepository _adminRepository = new();
+    private readonly InMemorySentEmailRepository _sentEmailRepository = new();
     private readonly StaticClock _clock = new();
 
-    private AdminManager CreateManager() => new(_adminRepository, _clock);
+    private AdminManager CreateManager() => new(_adminRepository, _sentEmailRepository, _clock);
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()

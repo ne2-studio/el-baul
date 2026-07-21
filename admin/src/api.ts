@@ -1,4 +1,4 @@
-import { AdminBaul, AdminBaulDetail, AdminUser, AdminUserDetail, DashboardKpis } from './types';
+import { AdminBaul, AdminBaulDetail, AdminSentEmail, AdminUser, AdminUserDetail, DashboardKpis } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
 
@@ -48,5 +48,14 @@ export const api = {
       fetch(`${API_BASE_URL}/api/admin/baules/${id}`, { headers: getHeaders() })
         .then(handleResponse)
         .then((data) => new AdminBaulDetail(data)),
+  },
+  emails: {
+    getAll: async (): Promise<AdminSentEmail[]> =>
+      fetch(`${API_BASE_URL}/api/admin/emails`, { headers: getHeaders() })
+        .then(handleResponse)
+        .then((data) => data.map((e: any) => new AdminSentEmail(e))),
+    sendWelcomeTest: async (userId: string): Promise<void> =>
+      fetch(`${API_BASE_URL}/api/admin/emails/welcome-test/${userId}`, { method: 'POST', headers: getHeaders() })
+        .then(handleResponse),
   },
 };

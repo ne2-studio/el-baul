@@ -6,6 +6,12 @@ public interface IUserRepository
     Task<User?> GetByEmailAsync(string email);
 
     /// <summary>
+    /// Users registered before the given cutoff — the candidate pool for the welcome-email
+    /// scheduler, which filters further by welcome-history and blocked status.
+    /// </summary>
+    Task<IEnumerable<User>> GetUsersRegisteredBeforeAsync(DateTime cutoff);
+
+    /// <summary>
     /// Updates just the LastAccessAt column. Called from UserSyncMiddleware on every
     /// authenticated request (throttled), so this is a targeted column write, not a
     /// full-entity load/save.

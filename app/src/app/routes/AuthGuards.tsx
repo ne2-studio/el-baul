@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 
 interface ProtectedRouteProps {
@@ -23,9 +23,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
 export const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const auth = useAuth();
+  const [searchParams] = useSearchParams();
 
   if (auth.isAuthenticated) {
-    return <Navigate to="/baules" replace />;
+    // A user who's already signed in (e.g. clicking an email CTA from their phone with the
+    // app already open) still needs to land on the intended destination, not just /baules —
+    // otherwise every deep link that carries a redirectTo is silently dropped for anyone
+    // with an active session.
+    return <Navigate to={searchParams.get('redirectTo') || '/baules'} replace />;
   }
 
   return <>{children}</>;

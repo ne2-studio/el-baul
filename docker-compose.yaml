@@ -121,10 +121,20 @@ services:
       # Backoffice dashboard quick-links — blank locally, filled in on the real deployment.
       ExternalTools__Metabase: ""
       ExternalTools__Sentry: ""
-      ExternalTools__Hangfire: ""
+      ExternalTools__Hangfire: "http://localhost:5050/hangfire"
       ExternalTools__Seq: ""
       ExternalTools__Beszel: ""
       ExternalTools__MinioConsole: "http://localhost:9001"
+      # No Resend account locally — ApiKey blank makes the API log emails instead of
+      # sending them (see LoggingEmailSender). AdminTestRecipient lets the admin's
+      # "enviar bienvenida de prueba" action be exercised end-to-end.
+      Resend__ApiKey: ""
+      Resend__FromAddress: "hola@el-baul.ne2.studio"
+      Resend__AdminTestRecipient: "pedro.pardal@exeal.com"
+      # Blank credentials leave /hangfire open in Development only — see
+      # HangfireDashboardAuthorizationFilter.
+      Hangfire__DashboardUsername: ""
+      Hangfire__DashboardPassword: ""
     ports:
       - "5050:8080"
     depends_on:

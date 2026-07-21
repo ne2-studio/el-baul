@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Users, Archive } from 'lucide-react';
+import { LayoutDashboard, LogOut, Users, Archive, Mail } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +11,7 @@ const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Usuarios', icon: Users, path: '/usuarios' },
   { label: 'Baúles', icon: Archive, path: '/baules' },
+  { label: 'Emails', icon: Mail, path: '/emails' },
 ];
 
 export function Layout({ children, onLogout }: LayoutProps) {

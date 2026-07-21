@@ -13,7 +13,7 @@ namespace ElBaul.Application;
 /// docs/ARCHITECTURE.md's "access control is checked explicitly inside each use-case
 /// method" convention, not an oversight.
 /// </summary>
-public class AdminManager(IAdminRepository adminRepository, IClock clock) : IAdminManager
+public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository sentEmailRepository, IClock clock) : IAdminManager
 {
     public async Task<Result<AdminDashboardCountsDto>> GetDashboardCountsAsync()
     {
@@ -64,6 +64,16 @@ public class AdminManager(IAdminRepository adminRepository, IClock clock) : IAdm
 
         return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, capitulos, stats);
     }
+
+    public async Task<Result<IEnumerable<AdminSentEmailDto>>> GetSentEmailsAsync()
+    {
+        var emails = await sentEmailRepository.GetRecentAsync(200);
+        return Result.Success(emails.Select(ToDto));
+    }
+
+    private static AdminSentEmailDto ToDto(SentEmail email) =>
+        new(email.Id.ToString(), email.UserId, email.Type.ToString(), email.Subject, email.RecipientEmail,
+            email.Status.ToString(), email.CreatedAt, email.SentAt);
 
     private static AdminUserListItemDto ToDto(AdminUserRow row) =>
         new(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);

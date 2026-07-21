@@ -74,6 +74,28 @@ export class AdminUserDetail {
   }
 }
 
+export class AdminSentEmail {
+  id: string;
+  userId: string;
+  type: string;
+  subject: string;
+  recipientEmail: string;
+  status: string;
+  createdAt: string;
+  sentAt?: string;
+
+  constructor(data: any) {
+    this.id = data.id;
+    this.userId = data.userId;
+    this.type = data.type;
+    this.subject = data.subject;
+    this.recipientEmail = data.recipientEmail;
+    this.status = data.status;
+    this.createdAt = data.createdAt;
+    this.sentAt = data.sentAt;
+  }
+}
+
 export class AdminBaul {
   id: string;
   name: string;

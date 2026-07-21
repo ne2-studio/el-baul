@@ -18,6 +18,9 @@ public static class ServiceRegistration
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IRecuerdoRepository, RecuerdoRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<ISentEmailRepository, SentEmailRepository>();
+        services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
+        services.AddScoped<IAppConfiguration, AppConfiguration>();
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();
 
         services.AddScoped<IIdGenerator, GuidIdGenerator>();
@@ -39,6 +42,20 @@ public static class ServiceRegistration
         services.Configure<StorageOptions>(configuration.GetSection("Storage"));
         services.Configure<ImgproxyOptions>(configuration.GetSection("Imgproxy"));
         services.AddSingleton<IPhotoStorage, MinioPhotoStorage>();
+
+        services.Configure<ResendOptions>(configuration.GetSection("Resend"));
+        services.AddScoped<IEmailTemplateRenderer, WelcomeEmailTemplateRenderer>();
+
+        // No Resend account configured yet in local/dev — log the composed email instead of
+        // calling out, so the send/persist pipeline is still exercisable end-to-end.
+        if (string.IsNullOrEmpty(configuration["Resend:ApiKey"]))
+        {
+            services.AddScoped<IEmailSender, LoggingEmailSender>();
+        }
+        else
+        {
+            services.AddHttpClient<IEmailSender, ResendEmailSender>();
+        }
 
         return services;
     }

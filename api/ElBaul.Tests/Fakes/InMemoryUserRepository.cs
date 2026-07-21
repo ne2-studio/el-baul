@@ -12,6 +12,9 @@ public class InMemoryUserRepository : IUserRepository
     public Task<User?> GetByEmailAsync(string email) =>
         Task.FromResult(_users.Values.FirstOrDefault(u => u.Email == email));
 
+    public Task<IEnumerable<User>> GetUsersRegisteredBeforeAsync(DateTime cutoff) =>
+        Task.FromResult(_users.Values.Where(u => u.CreatedAt <= cutoff));
+
     public Task UpsertAsync(User user)
     {
         _users[user.Id] = user;

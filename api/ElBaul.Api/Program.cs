@@ -5,6 +5,9 @@ using ElBaul.Api.Tools;
 using ElBaul.Application;
 using ElBaul.Infra;
 using ElBaul.Ports.Input;
+using Hangfire;
+using Hangfire.Dashboard;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -141,9 +144,17 @@ builder.Services.AddScoped<IPhotoManager, PhotoManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<ISupportManager, SupportManager>();
 builder.Services.AddScoped<IAdminManager, AdminManager>();
+builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
 
 // Register infrastructure services
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Background jobs (welcome-email scheduling) — storage sits on the same Postgres instance as
+// the rest of the app, no separate infra to run.
+builder.Services.AddHangfire(config => config
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(o => o.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"))));
+builder.Services.AddHangfireServer();
 
 var app = builder.Build();
 
@@ -155,6 +166,14 @@ using (var scope = app.Services.CreateScope())
 
     var photoStorage = scope.ServiceProvider.GetRequiredService<ElBaul.Ports.Output.IPhotoStorage>();
     await photoStorage.EnsureBucketExistsAsync();
+
+    // Service-based API (not the static RecurringJob.AddOrUpdate) — the static one relies on
+    // JobStorage.Current, which Hangfire's own ASP.NET Core integration warns against.
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<IWelcomeEmailManager>(
+        "schedule-pending-welcome-emails",
+        m => m.SchedulePendingWelcomeEmailsAsync(),
+        Cron.Hourly);
 }
 
 // Configure the HTTP request pipeline
@@ -184,6 +203,11 @@ app.UseMiddleware<UserSyncMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new HangfireDashboardAuthorizationFilter(app.Configuration, app.Environment)]
+});
 
 // Public, unauthenticated endpoint — rate-limited per the architecture convention.
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))

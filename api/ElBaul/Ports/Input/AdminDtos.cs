@@ -22,3 +22,6 @@ public record AdminBaulDetailDto(
     IEnumerable<AdminBaulAlbumDto> Capitulos,
     AdminBaulStatsDto Stats
 );
+
+public record AdminSentEmailDto(
+    string Id, string UserId, string Type, string Subject, string RecipientEmail, string Status, DateTime CreatedAt, DateTime? SentAt);

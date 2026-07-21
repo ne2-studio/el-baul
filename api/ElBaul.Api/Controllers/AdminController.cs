@@ -7,7 +7,7 @@ namespace ElBaul.Api.Controllers;
 [Authorize(Policy = "AdminOnly")]
 [ApiController]
 [Route("api/admin")]
-public class AdminController(IAdminManager adminManager, IConfiguration configuration) : ControllerBase
+public class AdminController(IAdminManager adminManager, IWelcomeEmailManager welcomeEmailManager, IConfiguration configuration) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard()
@@ -52,6 +52,20 @@ public class AdminController(IAdminManager adminManager, IConfiguration configur
     {
         var result = await adminManager.GetBaulDetailAsync(baulId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpGet("emails")]
+    public async Task<IActionResult> GetEmails()
+    {
+        var result = await adminManager.GetSentEmailsAsync();
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("emails/welcome-test/{userId}")]
+    public async Task<IActionResult> SendWelcomeTestEmail(string userId)
+    {
+        var result = await welcomeEmailManager.SendTestWelcomeEmailAsync(userId);
+        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
     }
 
     private IEnumerable<object> GetExternalLinks()

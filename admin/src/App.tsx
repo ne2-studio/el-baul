@@ -9,6 +9,7 @@ import { UsersListRoute } from './features/users/components/UsersListRoute';
 import { UserDetailRoute } from './features/users/components/UserDetailRoute';
 import { BaulesListRoute } from './features/baules/components/BaulesListRoute';
 import { BaulDetailRoute } from './features/baules/components/BaulDetailRoute';
+import { EmailsListRoute } from './features/emails/components/EmailsListRoute';
 
 function LoadingScreen() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/usuarios/:userId" element={<AdminRoute><UserDetailRoute /></AdminRoute>} />
         <Route path="/baules" element={<AdminRoute><BaulesListRoute /></AdminRoute>} />
         <Route path="/baules/:baulId" element={<AdminRoute><BaulDetailRoute /></AdminRoute>} />
+        <Route path="/emails" element={<AdminRoute><EmailsListRoute /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Layout>
