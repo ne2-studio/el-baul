@@ -9,12 +9,15 @@ namespace ElBaul.Infra;
 public class ResendEmailSender(HttpClient httpClient, IOptions<ResendOptions> options, ILogger<ResendEmailSender> logger)
     : IEmailSender
 {
+    private const string FromName = "El Baúl";
+
     private record ResendRequest(string From, string[] To, string Subject, string Html, string Text);
     private record ResendResponse(string Id);
 
     public async Task<Result<EmailSendResult>> SendAsync(EmailMessage message)
     {
-        var request = new ResendRequest(options.Value.FromAddress, [message.To], message.Subject, message.Html, message.PlainText);
+        var from = $"{FromName} <{options.Value.FromAddress}>";
+        var request = new ResendRequest(from, [message.To], message.Subject, message.Html, message.PlainText);
 
         try
         {

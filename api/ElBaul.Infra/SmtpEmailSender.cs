@@ -13,11 +13,13 @@ namespace ElBaul.Infra;
 // ResendEmailSender takes over.
 public class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpEmailSender> logger) : IEmailSender
 {
+    private const string FromName = "El Baúl";
+
     public async Task<Result<EmailSendResult>> SendAsync(EmailMessage message)
     {
         using var mail = new MailMessage
         {
-            From = new MailAddress(options.Value.FromAddress),
+            From = new MailAddress(options.Value.FromAddress, FromName),
             Subject = message.Subject,
             Body = message.PlainText,
             IsBodyHtml = false
