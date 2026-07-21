@@ -88,7 +88,8 @@ public class AdminController(
             ("Hangfire", "ExternalTools:Hangfire"),
             ("Seq", "ExternalTools:Seq"),
             ("Beszel", "ExternalTools:Beszel"),
-            ("MinIO Console", "ExternalTools:MinioConsole")
+            ("MinIO Console", "ExternalTools:MinioConsole"),
+            ("Mailpit", "ExternalTools:Mailpit")
         };
 
         foreach (var (label, key) in tools)

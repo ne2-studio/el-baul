@@ -45,17 +45,24 @@ public static class ServiceRegistration
         services.AddSingleton<IPhotoStorage, MinioPhotoStorage>();
 
         services.Configure<ResendOptions>(configuration.GetSection("Resend"));
+        services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
         services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 
-        // No Resend account configured yet in local/dev — log the composed email instead of
-        // calling out, so the send/persist pipeline is still exercisable end-to-end.
-        if (string.IsNullOrEmpty(configuration["Resend:ApiKey"]))
+        // Three-way fallback: Smtp:Host set (docker-compose's local Mailpit) wins first so
+        // emails can be inspected in a real inbox during dev; otherwise Resend:ApiKey set
+        // (staging/prod) sends for real; otherwise just log the composed email so the
+        // send/persist pipeline is still exercisable with nothing configured at all.
+        if (!string.IsNullOrEmpty(configuration["Smtp:Host"]))
         {
-            services.AddScoped<IEmailSender, LoggingEmailSender>();
+            services.AddScoped<IEmailSender, SmtpEmailSender>();
+        }
+        else if (!string.IsNullOrEmpty(configuration["Resend:ApiKey"]))
+        {
+            services.AddHttpClient<IEmailSender, ResendEmailSender>();
         }
         else
         {
-            services.AddHttpClient<IEmailSender, ResendEmailSender>();
+            services.AddScoped<IEmailSender, LoggingEmailSender>();
         }
 
         return services;

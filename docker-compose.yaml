@@ -14,6 +14,10 @@
 # fake-oidc (https://github.com/ne2-studio/fake-oidc) is a throwaway OIDC provider for
 # local/E2E use — no real login UI, users are selected via `login_hint`. Sign in with
 # `login_hint=admin` or `login_hint=user` against http://localhost:5000/authorize.
+#
+# mailpit (https://github.com/axllent/mailpit) is a throwaway SMTP server for local/E2E use —
+# the API relays every email to it instead of a real provider; read them at
+# http://localhost:8025 instead of a real inbox.
 
 # Pinned explicitly (rather than left to default to the checkout directory's basename)
 # so image tags stay predictable — CI builds these images in one job and loads them by
@@ -96,6 +100,18 @@ services:
       timeout: 2s
       retries: 15
 
+  # SMTP test server for local dev — the API relays real emails to it instead of just logging
+  # them (see ElBaul.Infra/SmtpEmailSender.cs), so welcome/digest/test emails can be read in a
+  # real inbox-like UI at http://localhost:8025 instead of grepping container logs for HTML.
+  # No image-internal healthcheck (scratch-based image, no shell/curl inside) — api's
+  # depends_on only waits for the container to start, not for the SMTP port to accept
+  # connections; a send attempted in that gap just fails and logs, same as any transient error.
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
   api:
     build:
       context: ./api
@@ -128,12 +144,19 @@ services:
       ExternalTools__Seq: ""
       ExternalTools__Beszel: ""
       ExternalTools__MinioConsole: "http://localhost:9001"
+      ExternalTools__Mailpit: "http://localhost:8025"
       # No Resend account locally — ApiKey blank makes the API log emails instead of
       # sending them (see LoggingEmailSender). AdminTestRecipient lets the admin's
-      # "enviar bienvenida de prueba" action be exercised end-to-end.
+      # "enviar bienvenida de prueba" action be exercised end-to-end. Smtp__Host below
+      # takes priority over both when set (see ServiceRegistration.cs) — real emails go
+      # to Mailpit instead, so this AdminTestRecipient address doesn't actually matter
+      # locally, only the destination mailbox inside Mailpit does.
       Resend__ApiKey: ""
       Resend__FromAddress: "hola@el-baul.ne2.studio"
       Resend__AdminTestRecipient: "pedro.pardal@exeal.com"
+      Smtp__Host: "mailpit"
+      Smtp__Port: "1025"
+      Smtp__FromAddress: "hola@el-baul.ne2.studio"
       # Blank credentials leave /hangfire open in Development only — see
       # HangfireDashboardAuthorizationFilter.
       Hangfire__DashboardUsername: ""
@@ -149,6 +172,8 @@ services:
         condition: service_started
       fake-oidc:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   app:
     build:
