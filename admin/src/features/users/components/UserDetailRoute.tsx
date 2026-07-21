@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, ArrowLeft, Send } from 'lucide-react';
+import { ExternalLink, ArrowLeft, Send, Check } from 'lucide-react';
 import { useUsersStore } from '@/store/useUsersStore';
 import { DataTable } from '@/app/components/DataTable';
 import { formatDate } from '@/utils/format';
+import { EMAIL_TYPE_LABELS, EMAIL_STATUS_LABELS } from '@/utils/emailLabels';
 import { api } from '@/api';
-import type { AdminUserBaulMembership } from '@/types';
+import type { AdminSentEmail, AdminUserBaulMembership } from '@/types';
 
 const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:3000';
 
 export function UserDetailRoute() {
   const { userId } = useParams<{ userId: string }>();
-  const { selectedUser, isLoading, error, fetchUser } = useUsersStore();
+  const { selectedUser, selectedUserEmails, isLoading, isLoadingEmails, error, fetchUser, fetchUserEmails } = useUsersStore();
   const navigate = useNavigate();
 
   type TestSendKey = 'welcome' | 'digest';
@@ -19,7 +20,10 @@ export function UserDetailRoute() {
   const [results, setResults] = useState<Record<TestSendKey, 'success' | 'error' | null>>({ welcome: null, digest: null });
 
   useEffect(() => {
-    if (userId) fetchUser(userId);
+    if (userId) {
+      fetchUser(userId);
+      fetchUserEmails(userId);
+    }
   }, [userId]);
 
   const handleSendTest = async (key: TestSendKey, send: (userId: string) => Promise<void>) => {
@@ -29,6 +33,7 @@ export function UserDetailRoute() {
     try {
       await send(userId);
       setResults((r) => ({ ...r, [key]: 'success' }));
+      fetchUserEmails(userId); // refresh so the just-sent test email shows up below
     } catch {
       setResults((r) => ({ ...r, [key]: 'error' }));
     } finally {
@@ -136,6 +141,30 @@ export function UserDetailRoute() {
             },
           ]}
         />
+      </div>
+
+      <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
+        <h3 className="mb-4">Emails enviados</h3>
+        {isLoadingEmails && selectedUserEmails.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Cargando…</p>
+        ) : (
+          <DataTable<AdminSentEmail>
+            rows={selectedUserEmails}
+            keyFor={(e) => e.id}
+            emptyMessage="Todavía no se ha enviado ningún email a este usuario."
+            columns={[
+              { header: 'Fecha', render: (e) => formatDate(e.sentAt ?? e.createdAt) },
+              { header: 'Destinatario', render: (e) => e.recipientEmail },
+              { header: 'Tipo', render: (e) => EMAIL_TYPE_LABELS[e.type] ?? e.type },
+              { header: 'Asunto', render: (e) => e.subject },
+              { header: 'Estado', render: (e) => EMAIL_STATUS_LABELS[e.status] ?? e.status },
+              {
+                header: 'Clic',
+                render: (e) => (e.firstClickedAt ? <Check className="w-4 h-4 text-primary" /> : null),
+              },
+            ]}
+          />
+        )}
       </div>
     </div>
   );

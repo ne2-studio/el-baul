@@ -43,7 +43,7 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
 
     public async Task<HashSet<string>> GetUserIdsWithSentEmailAsync(EmailType type) =>
         (await dbContext.SentEmails.AsNoTracking()
-            .Where(e => e.Type == type)
+            .Where(e => e.Type == type && (e.Status == EmailStatus.Sent || e.Status == EmailStatus.Delivered))
             .Select(e => e.UserId)
             .Distinct()
             .ToListAsync())
@@ -61,6 +61,12 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
         await dbContext.SentEmails.AsNoTracking()
             .OrderByDescending(e => e.CreatedAt)
             .Take(limit)
+            .ToListAsync();
+
+    public async Task<IEnumerable<SentEmail>> GetByUserIdAsync(string userId) =>
+        await dbContext.SentEmails.AsNoTracking()
+            .Where(e => e.UserId == userId)
+            .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
 
     public async Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type) =>

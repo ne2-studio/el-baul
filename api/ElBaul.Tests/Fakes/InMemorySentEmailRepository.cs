@@ -27,7 +27,10 @@ public class InMemorySentEmailRepository : ISentEmailRepository
     }
 
     public Task<HashSet<string>> GetUserIdsWithSentEmailAsync(EmailType type) =>
-        Task.FromResult(_emails.Values.Where(e => e.Type == type).Select(e => e.UserId).ToHashSet());
+        Task.FromResult(_emails.Values
+            .Where(e => e.Type == type && (e.Status == EmailStatus.Sent || e.Status == EmailStatus.Delivered))
+            .Select(e => e.UserId)
+            .ToHashSet());
 
     public Task<HashSet<string>> GetUserIdsWithBlockedStatusAsync() =>
         Task.FromResult(_emails.Values
@@ -37,6 +40,9 @@ public class InMemorySentEmailRepository : ISentEmailRepository
 
     public Task<IEnumerable<SentEmail>> GetRecentAsync(int limit) =>
         Task.FromResult(_emails.Values.OrderByDescending(e => e.CreatedAt).Take(limit));
+
+    public Task<IEnumerable<SentEmail>> GetByUserIdAsync(string userId) =>
+        Task.FromResult(_emails.Values.Where(e => e.UserId == userId).OrderByDescending(e => e.CreatedAt).AsEnumerable());
 
     public Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type) =>
         Task.FromResult(_emails.Values

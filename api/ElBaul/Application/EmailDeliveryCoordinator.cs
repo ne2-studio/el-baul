@@ -84,7 +84,8 @@ public class EmailDeliveryCoordinator(
             Status = EmailStatus.Sent,
             Provider = "Resend",
             ProviderMessageId = sendResult.Value.ProviderMessageId,
-            SentAt = clock.UtcNow()
+            SentAt = clock.UtcNow(),
+            ErrorMessage = null // clear a stale error from an earlier failed attempt on this same row
         });
         logger.LogInformation("EmailSent {Type} {UserId} {SentEmailId}", type, userId, existing.Id);
         return Result.Success();

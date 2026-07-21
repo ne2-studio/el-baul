@@ -71,6 +71,12 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
         return Result.Success(emails.Select(ToDto));
     }
 
+    public async Task<Result<IEnumerable<AdminSentEmailDto>>> GetUserSentEmailsAsync(string userId)
+    {
+        var emails = await sentEmailRepository.GetByUserIdAsync(userId);
+        return Result.Success(emails.Select(ToDto));
+    }
+
     private static AdminSentEmailDto ToDto(SentEmail email) =>
         new(email.Id.ToString(), email.UserId, email.Type.ToString(), email.Subject, email.RecipientEmail,
             email.Status.ToString(), email.CreatedAt, email.SentAt, email.FirstClickedAt);

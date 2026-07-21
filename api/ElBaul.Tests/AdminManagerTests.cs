@@ -84,6 +84,25 @@ public class AdminManagerTests
     }
 
     [Fact]
+    public async Task GetUserSentEmailsAsync_ShouldReturnOnlyThatUsersEmails_MostRecentFirst()
+    {
+        var older = new SentEmail(Guid.NewGuid(), "user-1", EmailType.Welcome, "s", "user@example.com",
+            "welcome-v1", "es-ES", EmailStatus.Sent, "welcome:user-1", _clock.UtcNow().AddDays(-1));
+        var newer = new SentEmail(Guid.NewGuid(), "user-1", EmailType.WeeklyDigest, "s", "user@example.com",
+            "weekly-digest-v1", "es-ES", EmailStatus.Sent, "weekly-digest:user-1:x", _clock.UtcNow());
+        var otherUser = new SentEmail(Guid.NewGuid(), "user-2", EmailType.Welcome, "s", "other@example.com",
+            "welcome-v1", "es-ES", EmailStatus.Sent, "welcome:user-2", _clock.UtcNow());
+        await _sentEmailRepository.TryReserveAsync(older);
+        await _sentEmailRepository.TryReserveAsync(newer);
+        await _sentEmailRepository.TryReserveAsync(otherUser);
+
+        var result = await CreateManager().GetUserSentEmailsAsync("user-1");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["WeeklyDigest", "Welcome"], result.Value.Select(e => e.Type));
+    }
+
+    [Fact]
     public async Task GetBaulDetailAsync_ShouldReturnFailure_WhenBaulNotFound()
     {
         var result = await CreateManager().GetBaulDetailAsync(Guid.NewGuid());

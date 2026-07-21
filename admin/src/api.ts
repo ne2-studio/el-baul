@@ -38,6 +38,10 @@ export const api = {
       fetch(`${API_BASE_URL}/api/admin/users/${id}`, { headers: getHeaders() })
         .then(handleResponse)
         .then((data) => new AdminUserDetail(data)),
+    getEmails: async (id: string): Promise<AdminSentEmail[]> =>
+      fetch(`${API_BASE_URL}/api/admin/users/${id}/emails`, { headers: getHeaders() })
+        .then(handleResponse)
+        .then((data) => data.map((e: any) => new AdminSentEmail(e))),
   },
   baules: {
     getAll: async (): Promise<AdminBaul[]> =>

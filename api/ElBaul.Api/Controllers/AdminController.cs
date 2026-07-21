@@ -65,6 +65,13 @@ public class AdminController(
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpGet("users/{userId}/emails")]
+    public async Task<IActionResult> GetUserEmails(string userId)
+    {
+        var result = await adminManager.GetUserSentEmailsAsync(userId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPost("emails/welcome-test/{userId}")]
     public async Task<IActionResult> SendWelcomeTestEmail(string userId)
     {

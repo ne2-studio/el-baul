@@ -75,6 +75,24 @@ public class WelcomeEmailManagerTests
     }
 
     [Fact]
+    public async Task SchedulePendingWelcomeEmailsAsync_ShouldRetry_UsersWhoseOnlyPreviousAttemptFailed()
+    {
+        // Regression test: a Failed row (e.g. a Resend 429 rate-limit response) must not look
+        // like "already sent" to the scheduler, or that user would never be retried again once
+        // Hangfire's own bounded automatic-retry attempts run out.
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        await _sentEmailRepository.TryReserveAsync(new SentEmail(
+            Guid.NewGuid(), UserId, EmailType.Welcome, "Bienvenido a El Baúl", "user@example.com",
+            "welcome-v1", "es-ES", EmailStatus.Failed, $"welcome:{UserId}", _clock.UtcNow(),
+            ErrorMessage: "Resend returned TooManyRequests"));
+        var manager = CreateManager();
+
+        await manager.SchedulePendingWelcomeEmailsAsync();
+
+        Assert.Contains(UserId, _jobScheduler.EnqueuedWelcomeEmailUserIds);
+    }
+
+    [Fact]
     public async Task SchedulePendingWelcomeEmailsAsync_ShouldNotEnqueue_UsersWithInvalidEmail()
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3), email: "not-an-email");

@@ -13,6 +13,14 @@ public interface ISentEmailRepository
 
     Task UpdateAsync(SentEmail email);
 
+    /// <summary>
+    /// Users with a *successfully* Sent (or later, Delivered) email of the given type — used
+    /// as the welcome-email scheduler's "already handled, don't retry" filter. Must not count
+    /// Pending/Sending/Failed rows, or a user whose only attempt failed (e.g. a transient
+    /// Resend rate-limit error) would look "already sent" and never get retried by the
+    /// scheduler again — Hangfire's own automatic retry is the only thing that would still
+    /// pick them up, and only for a bounded number of attempts.
+    /// </summary>
     Task<HashSet<string>> GetUserIdsWithSentEmailAsync(EmailType type);
 
     /// <summary>
@@ -23,6 +31,9 @@ public interface ISentEmailRepository
     Task<HashSet<string>> GetUserIdsWithBlockedStatusAsync();
 
     Task<IEnumerable<SentEmail>> GetRecentAsync(int limit);
+
+    /// <summary>Every email ever sent/attempted for one user, most recent first — the admin's per-user history.</summary>
+    Task<IEnumerable<SentEmail>> GetByUserIdAsync(string userId);
 
     /// <summary>SentAt of the most recent successfully-Sent email of the given type for one user (null if none).</summary>
     Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type);
