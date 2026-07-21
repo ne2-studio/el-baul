@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using ElBaul.Api;
 using ElBaul.Api.Logging;
 using ElBaul.Api.Tools;
 using ElBaul.Application;
@@ -71,10 +72,17 @@ builder.Services.AddAuthentication(options =>
     JsonWebKeySet? cachedJwks = null;
     var jwksLock = new object();
 
+    // The admin backoffice (admin/) is registered as a separate Zitadel client id from the
+    // consumer app (el-baul-app), so its tokens carry a different "aud" — Auth:ValidAudiences
+    // lists every client id this API accepts, falling back to the single Auth:Audience if
+    // it isn't configured (local dev, and any deployment that hasn't set it yet).
+    var validAudiences = builder.Configuration.GetSection("Auth:ValidAudiences").Get<string[]>()
+        ?? [builder.Configuration["Auth:Audience"] ?? throw new InvalidOperationException("Missing required configuration: Auth:Audience")];
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidIssuer = builder.Configuration["Auth:ValidIssuer"],
-        ValidAudience = builder.Configuration["Auth:Audience"],
+        ValidAudiences = validAudiences,
         IssuerSigningKeyResolver = (_, _, _, _) =>
         {
             lock (jwksLock)
@@ -95,7 +103,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAssertion(ctx => AdminRoleAuthorization.HasAdminRole(ctx.User)));
+});
 
 // Public, unauthenticated endpoints must still be rate-limited (keyed by client IP).
 builder.Services.AddRateLimiter(options =>
@@ -128,6 +140,7 @@ builder.Services.AddScoped<IAlbumManager, AlbumManager>();
 builder.Services.AddScoped<IPhotoManager, PhotoManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<ISupportManager, SupportManager>();
+builder.Services.AddScoped<IAdminManager, AdminManager>();
 
 // Register infrastructure services
 builder.Services.AddInfrastructure(builder.Configuration);

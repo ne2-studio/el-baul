@@ -14,6 +14,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Email).IsRequired().HasMaxLength(320);
         builder.Property(u => u.Name).HasMaxLength(200);
         builder.Property(u => u.CreatedAt).HasColumnType("timestamp with time zone");
+        builder.Property(u => u.LastAccessAt).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(u => u.Email).IsUnique();
     }

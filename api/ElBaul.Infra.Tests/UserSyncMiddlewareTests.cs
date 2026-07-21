@@ -102,6 +102,41 @@ public class UserSyncMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_ShouldUpdateLastAccessAt_WhenNeverSetBefore()
+    {
+        var context = BuildContext("user-5", bearerToken: "the-access-token");
+        _userRepository.GetByIdAsync("user-5").Returns(new User("user-5", "already@test.local", "Already Synced", DateTime.UtcNow, LastAccessAt: null));
+
+        await InvokeAsync(context);
+
+        await _userRepository.Received(1).UpdateLastAccessAsync("user-5", _clock.UtcNow());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldSkipLastAccessUpdate_WhenWithinThrottleWindow()
+    {
+        var context = BuildContext("user-6", bearerToken: "the-access-token");
+        var recentAccess = _clock.UtcNow().AddMinutes(-5);
+        _userRepository.GetByIdAsync("user-6").Returns(new User("user-6", "already@test.local", "Already Synced", DateTime.UtcNow, recentAccess));
+
+        await InvokeAsync(context);
+
+        await _userRepository.DidNotReceive().UpdateLastAccessAsync(Arg.Any<string>(), Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldUpdateLastAccessAt_WhenThrottleWindowElapsed()
+    {
+        var context = BuildContext("user-7", bearerToken: "the-access-token");
+        var staleAccess = _clock.UtcNow().AddMinutes(-20);
+        _userRepository.GetByIdAsync("user-7").Returns(new User("user-7", "already@test.local", "Already Synced", DateTime.UtcNow, staleAccess));
+
+        await InvokeAsync(context);
+
+        await _userRepository.Received(1).UpdateLastAccessAsync("user-7", _clock.UtcNow());
+    }
+
+    [Fact]
     public async Task InvokeAsync_ShouldDoNothing_WhenUserIsNotAuthenticated()
     {
         var context = new DefaultHttpContext();

@@ -18,5 +18,14 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
+    public Task UpdateLastAccessAsync(string id, DateTime at)
+    {
+        if (_users.TryGetValue(id, out var user))
+        {
+            _users[id] = user with { LastAccessAt = at };
+        }
+        return Task.CompletedTask;
+    }
+
     public void Seed(User user) => _users[user.Id] = user;
 }

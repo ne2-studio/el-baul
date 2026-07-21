@@ -17,6 +17,7 @@ public static class ServiceRegistration
         services.AddScoped<IAlbumRepository, AlbumRepository>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IRecuerdoRepository, RecuerdoRepository>();
+        services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();
 
         services.AddScoped<IIdGenerator, GuidIdGenerator>();

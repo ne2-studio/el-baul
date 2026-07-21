@@ -77,7 +77,9 @@ services:
     image: ghcr.io/ne2-studio/fake-oidc:latest
     environment:
       OIDC_ISSUER: "http://localhost:5000"
-      OIDC_CLIENTS: '[{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback"]}]'
+      OIDC_CLIENTS: >-
+        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback"]},
+        {"clientId":"el-baul-admin","redirectUris":["http://localhost:3001/callback"]}]
       OIDC_USERS: >-
         [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]},
         {"key":"user","sub":"normal-user","email":"user@test.local","name":"Normal User","roles":["user"]}]
@@ -104,6 +106,10 @@ services:
       Auth__JwksUri: "http://fake-oidc:5000/.well-known/jwks.json"
       Auth__ValidIssuer: "http://localhost:5000"
       Auth__Audience: "el-baul-app"
+      # el-baul-admin (the backoffice SPA) is a separate Zitadel client id, so its tokens
+      # carry a different "aud" than the consumer app's — both need to validate.
+      Auth__ValidAudiences__0: "el-baul-app"
+      Auth__ValidAudiences__1: "el-baul-admin"
       Auth__UserInfoEndpoint: "http://fake-oidc:5000/oidc/v1/userinfo"
       Storage__Endpoint: "http://minio:9000"
       Storage__AccessKey: "minioadmin"
@@ -112,6 +118,13 @@ services:
       Imgproxy__BaseUrl: "http://localhost:8081"
       Imgproxy__Key: "de60801120d03c14c8f17cfc7f8e77c4ee21712606163c1ef4c8ea45a80173a4"
       Imgproxy__Salt: "bbf343c1d3a7def2db1faa30c446fe815e2b87add292ab65c30ce8e774bcc96c"
+      # Backoffice dashboard quick-links — blank locally, filled in on the real deployment.
+      ExternalTools__Metabase: ""
+      ExternalTools__Sentry: ""
+      ExternalTools__Hangfire: ""
+      ExternalTools__Seq: ""
+      ExternalTools__Beszel: ""
+      ExternalTools__MinioConsole: "http://localhost:9001"
     ports:
       - "5050:8080"
     depends_on:
@@ -135,6 +148,21 @@ services:
         VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
     ports:
       - "3000:80"
+    depends_on:
+      - api
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:5050"
+        VITE_OIDC_AUTHORITY: "http://localhost:5000"
+        VITE_OIDC_CLIENT_ID: "el-baul-admin"
+        VITE_OIDC_CALLBACK_URI: "http://localhost:3001/callback"
+        VITE_APP_URL: "http://localhost:3000"
+    ports:
+      - "3001:80"
     depends_on:
       - api
 

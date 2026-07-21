@@ -3,7 +3,7 @@
 A private, shared photo archive for families — "baúles" (trunks) hold albums of photos
 that a custodian can share with collaborators and members.
 
-Monorepo with two independently deployable services, no shared code between them, following
+Monorepo with independently deployable services, no shared code between them, following
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md):
 
 | Directory | Contents |
@@ -12,7 +12,8 @@ Monorepo with two independently deployable services, no shared code between them
 | `docs/DESIGN.md` | The design system (colors, typography, spacing) the frontend implements |
 | `docs/API.md` | The API contract for the backend |
 | `api/` | ASP.NET Core (.NET 10) ports & adapters backend — see [`api/README.md`](api/README.md) |
-| `app/` | React 19 + Vite + Zustand frontend — see [`app/README.md`](app/README.md) |
+| `app/` | React 19 + Vite + Zustand consumer frontend — see [`app/README.md`](app/README.md) |
+| `admin/` | React 19 + Vite + Zustand ops backoffice (Dashboard/Usuarios/Baúles), same `api/`, gated by a Zitadel "admin" role |
 | `.github/workflows/` | Path-filtered CI/CD for each service (build → test → Docker image → registry → deploy webhook) |
 
 ## Architecture
@@ -20,6 +21,7 @@ Monorepo with two independently deployable services, no shared code between them
 | Directory | Stack |
 |-----------|-------|
 | `app/` | React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, react-oidc-context |
+| `admin/` | React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, react-oidc-context |
 | `api/` | ASP.NET Core (.NET 10), PostgreSQL (EF Core), MinIO (S3-compatible photo storage), Serilog |
 
 Auth is OIDC/JWT Bearer end-to-end: the frontend authenticates against an external OIDC
@@ -60,30 +62,33 @@ npm run dev
 ### Everything via Docker Compose
 
 `docker-compose.yaml` at the repo root spins up Postgres, MinIO, a [fake-oidc](https://github.com/ne2-studio/fake-oidc)
-identity provider, the backend, and the frontend together, each service built from its
-own Dockerfile. The frontend's Dockerfile runs `npm run build` itself in a build stage
-(the `VITE_*` build args are set in `docker-compose.yaml` to point at the other local
-services), so no separate frontend build step is needed:
+identity provider, the backend, the frontend, and the admin backoffice together, each
+service built from its own Dockerfile. Both frontends' Dockerfiles run `npm run build`
+themselves in a build stage (the `VITE_*` build args are set in `docker-compose.yaml` to
+point at the other local services), so no separate frontend build step is needed:
 
 ```bash
 docker compose up --build
 ```
 
-Frontend: http://localhost:3000 · Backend: http://localhost:5050 · Postgres: localhost:5432
-· MinIO console: http://localhost:9001 · fake-oidc: http://localhost:5000.
+Frontend: http://localhost:3000 · Admin backoffice: http://localhost:3001 · Backend:
+http://localhost:5050 · Postgres: localhost:5432 · MinIO console: http://localhost:9001 ·
+fake-oidc: http://localhost:5000.
 
 fake-oidc is a throwaway OIDC provider for local/E2E use — there's no login UI, users are
 selected via `login_hint`. The compose file preconfigures two test users (`admin`, `user`)
-and one client (`el-baul-app`); sign in from the app as you normally would and fake-oidc
-will issue a token for whichever user was selected. See the
-[fake-oidc README](https://github.com/ne2-studio/fake-oidc) for the full flow.
+and two clients (`el-baul-app`, `el-baul-admin`); sign in from the app as you normally would
+and fake-oidc will issue a token for whichever user was selected. The `admin` test user
+carries the `admin` role, so it's the one to sign into the backoffice with — `user` will hit
+`AccessDenied`. See the [fake-oidc README](https://github.com/ne2-studio/fake-oidc) for the
+full flow.
 
 ## Deployment
 
-Both services are containerized and deploy independently. CI/CD runs on push to `main`
+All services are containerized and deploy independently. CI/CD runs on push to `main`
 (path-filtered per service), builds a Docker image, pushes it to GitHub Container Registry,
-and triggers a Coolify deploy webhook — see `.github/workflows/backend-deploy.yml` and
-`frontend-deploy.yml`.
+and triggers a Coolify deploy webhook — see `.github/workflows/backend-deploy.yml`,
+`frontend-deploy.yml`, and `admin-deploy.yml`.
 
 The frontend's `npm run build` never talks to Sentry — it only stamps deterministic debug
 ids into `dist/` locally (`sentry-cli sourcemaps inject`). Uploading those sourcemaps is a
