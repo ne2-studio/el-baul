@@ -15,6 +15,7 @@ export const Default: Story = {
     onClose: () => {},
     onNavigateToProfile: () => {},
     onNavigateToSubscription: () => {},
+    onNavigateToNotifications: () => {},
     onNavigateToHelp: () => {},
     onSignOut: () => {},
     userEmail: 'pedro@example.com',

@@ -83,6 +83,7 @@ export class AdminSentEmail {
   status: string;
   createdAt: string;
   sentAt?: string;
+  firstClickedAt?: string;
 
   constructor(data: any) {
     this.id = data.id;
@@ -93,6 +94,7 @@ export class AdminSentEmail {
     this.status = data.status;
     this.createdAt = data.createdAt;
     this.sentAt = data.sentAt;
+    this.firstClickedAt = data.firstClickedAt;
   }
 }
 

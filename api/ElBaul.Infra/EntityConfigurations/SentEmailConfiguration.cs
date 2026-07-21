@@ -25,6 +25,7 @@ public class SentEmailConfiguration : IEntityTypeConfiguration<SentEmail>
         builder.Property(e => e.SentAt).HasColumnType("timestamp with time zone");
         builder.Property(e => e.ActivitySince).HasColumnType("timestamp with time zone");
         builder.Property(e => e.ActivityUntil).HasColumnType("timestamp with time zone");
+        builder.Property(e => e.FirstClickedAt).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(e => e.DeduplicationKey).IsUnique();
         builder.HasIndex(e => e.UserId);

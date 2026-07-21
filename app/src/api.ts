@@ -189,6 +189,8 @@ export const api = {
 
   users: {
     getProfile: async () => new UserProfile(await get<any>('/api/users/me')),
+    updateNotificationPreferences: async (weeklyDigestEnabled: boolean) =>
+      new UserProfile(await put<any>('/api/users/me/notification-preferences', { weeklyDigestEnabled })),
   },
 
   appConfig: {

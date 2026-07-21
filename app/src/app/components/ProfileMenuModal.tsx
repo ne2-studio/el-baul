@@ -1,10 +1,11 @@
 import React from 'react';
-import { X, User, CreditCard, LogOut, Loader2, HelpCircle } from 'lucide-react';
+import { X, User, CreditCard, LogOut, Loader2, HelpCircle, Bell } from 'lucide-react';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
   onNavigateToProfile: () => void;
   onNavigateToSubscription: () => void;
+  onNavigateToNotifications: () => void;
   onNavigateToHelp: () => void;
   onSignOut: () => void;
   userEmail?: string;
@@ -16,6 +17,7 @@ export function ProfileMenuModal({
   onClose,
   onNavigateToProfile,
   onNavigateToSubscription,
+  onNavigateToNotifications,
   onNavigateToHelp,
   onSignOut,
   userEmail,
@@ -91,6 +93,19 @@ export function ProfileMenuModal({
               </div>
             </button>
           )}
+
+          <button
+            onClick={onNavigateToNotifications}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Bell className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <div className="font-medium text-foreground">Notificaciones</div>
+              <div className="text-sm text-muted-foreground">Resumen semanal por email</div>
+            </div>
+          </button>
 
           <button
             onClick={onNavigateToHelp}

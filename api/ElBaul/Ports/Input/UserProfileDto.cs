@@ -5,5 +5,6 @@ public record UserProfileDto
     string Id,
     string Email,
     string? Name,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    bool WeeklyDigestEnabled
 );

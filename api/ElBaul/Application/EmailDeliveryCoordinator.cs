@@ -13,7 +13,9 @@ namespace ElBaul.Application;
 /// </summary>
 public class EmailDeliveryCoordinator(
     ISentEmailRepository sentEmailRepository,
+    IEmailLinkClickRepository emailLinkClickRepository,
     IEmailSender emailSender,
+    IAppConfiguration appConfiguration,
     IClock clock,
     IIdGenerator idGenerator,
     ILogger<EmailDeliveryCoordinator> logger)
@@ -25,7 +27,7 @@ public class EmailDeliveryCoordinator(
         EmailType type,
         DateTime? activitySince,
         DateTime? activityUntil,
-        Func<Task<RenderedEmail>> renderAsync)
+        Func<TrackedLinkBuilder, Task<RenderedEmail>> renderAsync)
     {
         var existing = await sentEmailRepository.GetByDeduplicationKeyAsync(deduplicationKey);
         if (existing is { Status: EmailStatus.Sent })
@@ -34,13 +36,15 @@ public class EmailDeliveryCoordinator(
             return Result.Success();
         }
 
-        var rendered = await renderAsync();
+        var linkBuilder = new TrackedLinkBuilder(appConfiguration.ApiPublicUrl);
+        var rendered = await renderAsync(linkBuilder);
 
         if (existing is null)
         {
+            var now = clock.UtcNow();
             var pending = new SentEmail(
                 idGenerator.NewId(), userId, type, rendered.Subject, recipientEmail,
-                rendered.TemplateVersion, rendered.Locale, EmailStatus.Pending, deduplicationKey, clock.UtcNow(),
+                rendered.TemplateVersion, rendered.Locale, EmailStatus.Pending, deduplicationKey, now,
                 ActivitySince: activitySince, ActivityUntil: activityUntil);
 
             if (!await sentEmailRepository.TryReserveAsync(pending))
@@ -50,6 +54,16 @@ public class EmailDeliveryCoordinator(
             }
 
             existing = pending;
+
+            // Only register tracked links the first time this SentEmail is reserved — a
+            // Hangfire retry re-enters this method with `existing` already non-null (found
+            // above by DeduplicationKey), so it skips straight past this block instead of
+            // inserting a second, orphaned set of links.
+            if (linkBuilder.PendingLinks.Count > 0)
+            {
+                var links = linkBuilder.PendingLinks.Select(l => l with { SentEmailId = existing.Id, CreatedAt = now });
+                await emailLinkClickRepository.CreateManyAsync(links);
+            }
         }
 
         existing = existing with { Status = EmailStatus.Sending, SendAttemptedAt = clock.UtcNow() };

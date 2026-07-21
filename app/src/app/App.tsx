@@ -40,6 +40,7 @@ import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitaci
 import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
 import { SelectBaulForShareRoute } from '../features/sharing/components/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/components/ProfileRoute';
+import { NotificationPreferencesRoute } from '../features/profile/components/NotificationPreferencesRoute';
 import { SubscriptionRoute } from '../features/profile/components/SubscriptionRoute';
 import { PlanSelectionRoute } from '../features/profile/components/PlanSelectionRoute';
 import { PaymentRoute } from '../features/profile/components/PaymentRoute';
@@ -286,6 +287,11 @@ function App() {
             <ProfileRoute />
           </ProtectedRoute>
         } />
+        <Route path="/configuracion/notificaciones" element={
+          <ProtectedRoute>
+            <NotificationPreferencesRoute />
+          </ProtectedRoute>
+        } />
         <Route path="/suscripcion" element={
           <ProtectedRoute>
             <SubscriptionRoute />
@@ -336,6 +342,10 @@ function App() {
           onNavigateToSubscription={() => {
             setShowProfileMenu(false);
             navigate('/suscripcion');
+          }}
+          onNavigateToNotifications={() => {
+            setShowProfileMenu(false);
+            navigate('/configuracion/notificaciones');
           }}
           onNavigateToHelp={() => {
             setShowProfileMenu(false);

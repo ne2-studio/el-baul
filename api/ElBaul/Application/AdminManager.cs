@@ -73,7 +73,7 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
 
     private static AdminSentEmailDto ToDto(SentEmail email) =>
         new(email.Id.ToString(), email.UserId, email.Type.ToString(), email.Subject, email.RecipientEmail,
-            email.Status.ToString(), email.CreatedAt, email.SentAt);
+            email.Status.ToString(), email.CreatedAt, email.SentAt, email.FirstClickedAt);
 
     private static AdminUserListItemDto ToDto(AdminUserRow row) =>
         new(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);

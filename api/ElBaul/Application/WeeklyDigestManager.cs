@@ -79,11 +79,11 @@ public class WeeklyDigestManager(
         var result = await deliveryCoordinator.SendAsync(
             userId, user.Email, deduplicationKey, EmailType.WeeklyDigest,
             activitySince: since, activityUntil: until,
-            renderAsync: async () =>
+            renderAsync: async linkBuilder =>
             {
                 var model = await BuildModelAsync(user, since);
                 LogGenerated(userId, model);
-                return templateRenderer.RenderWeeklyDigest(model);
+                return templateRenderer.RenderWeeklyDigest(ApplyTracking(model, linkBuilder));
             });
 
         if (result.IsFailure)
@@ -111,10 +111,10 @@ public class WeeklyDigestManager(
         return await deliveryCoordinator.SendAsync(
             sourceUserId, testRecipient, deduplicationKey, EmailType.TestWeeklyDigest,
             activitySince: since, activityUntil: until,
-            renderAsync: async () =>
+            renderAsync: async linkBuilder =>
             {
                 var model = await BuildModelAsync(user, since);
-                var rendered = templateRenderer.RenderWeeklyDigest(model);
+                var rendered = templateRenderer.RenderWeeklyDigest(ApplyTracking(model, linkBuilder));
                 return rendered with { Subject = $"[TEST] {rendered.Subject}" };
             });
     }
@@ -152,9 +152,7 @@ public class WeeklyDigestManager(
         var ctaUrl = BuildUrl(publicUrl, targetPath);
         var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
 
-        // /perfil is the nearest existing screen — a dedicated /configuracion/notificaciones
-        // screen with the actual toggle is Fase 5 work; update this once it exists.
-        var notificationSettingsUrl = BuildUrl(publicUrl, "/perfil");
+        var notificationSettingsUrl = BuildUrl(publicUrl, "/configuracion/notificaciones");
 
         return new WeeklyDigestEmailModel(
             user.Name ?? user.Email, hasBaules, hasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl);
@@ -233,6 +231,24 @@ public class WeeklyDigestManager(
 
     private static string BuildUrl(string publicUrl, string path) =>
         $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
+
+    private static WeeklyDigestEmailModel ApplyTracking(WeeklyDigestEmailModel model, TrackedLinkBuilder linkBuilder)
+    {
+        var trackedSections = model.Sections.Select(section =>
+        {
+            var trackedBlocks = section.Blocks
+                .Select(block => block with { DeepLinkUrl = linkBuilder.Track(block.Kind.ToString(), block.DeepLinkUrl) })
+                .ToList();
+            return section with { Blocks = trackedBlocks };
+        }).ToList();
+
+        return model with
+        {
+            PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl),
+            NotificationSettingsUrl = linkBuilder.Track("notification-settings", model.NotificationSettingsUrl),
+            Sections = trackedSections
+        };
+    }
 
     private static bool IsValidEmail(string email) =>
         !string.IsNullOrWhiteSpace(email) && MailAddress.TryCreate(email, out _);

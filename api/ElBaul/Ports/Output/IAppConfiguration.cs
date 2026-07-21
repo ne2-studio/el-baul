@@ -8,5 +8,6 @@ namespace ElBaul.Ports.Output;
 public interface IAppConfiguration
 {
     string PublicUrl { get; }
+    string ApiPublicUrl { get; }
     string AdminTestEmailRecipient { get; }
 }

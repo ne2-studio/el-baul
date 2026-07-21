@@ -21,6 +21,8 @@ public interface IUserRepository
     /// </summary>
     Task UpdateLastAccessAsync(string id, DateTime at);
 
+    Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled);
+
     /// <summary>
     /// Inserts the user if new, or updates email/name if already present.
     /// Called by the JIT sync middleware the first time a given "sub" is seen, since

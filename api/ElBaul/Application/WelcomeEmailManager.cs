@@ -68,7 +68,8 @@ public class WelcomeEmailManager(
         var result = await deliveryCoordinator.SendAsync(
             userId, user.Email, $"welcome:{userId}", EmailType.Welcome,
             activitySince: null, activityUntil: null,
-            renderAsync: async () => templateRenderer.RenderWelcome(await BuildModelAsync(user)));
+            renderAsync: async linkBuilder =>
+                templateRenderer.RenderWelcome(ApplyTracking(await BuildModelAsync(user), linkBuilder)));
 
         if (result.IsFailure)
         {
@@ -91,9 +92,10 @@ public class WelcomeEmailManager(
         return await deliveryCoordinator.SendAsync(
             sourceUserId, testRecipient, deduplicationKey, EmailType.TestWelcome,
             activitySince: null, activityUntil: null,
-            renderAsync: async () =>
+            renderAsync: async linkBuilder =>
             {
-                var rendered = templateRenderer.RenderWelcome(await BuildModelAsync(user));
+                var model = ApplyTracking(await BuildModelAsync(user), linkBuilder);
+                var rendered = templateRenderer.RenderWelcome(model);
                 return rendered with { Subject = $"[TEST] {rendered.Subject}" };
             });
     }
@@ -121,6 +123,9 @@ public class WelcomeEmailManager(
             ctaUrl,
             ctaLabel);
     }
+
+    private static WelcomeEmailModel ApplyTracking(WelcomeEmailModel model, TrackedLinkBuilder linkBuilder) =>
+        model with { PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl) };
 
     private static bool IsValidEmail(string email) =>
         !string.IsNullOrWhiteSpace(email) && MailAddress.TryCreate(email, out _);

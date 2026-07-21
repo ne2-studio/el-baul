@@ -16,6 +16,7 @@ public class WeeklyDigestManagerTests
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
+    private readonly InMemoryEmailLinkClickRepository _emailLinkClickRepository = new();
     private readonly FakeEmailTemplateRenderer _templateRenderer = new();
     private readonly FakeEmailSender _emailSender = new();
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
@@ -26,7 +27,9 @@ public class WeeklyDigestManagerTests
         NullLogger<WeeklyDigestManager>.Instance,
         _userRepository, _baulRepository, _albumRepository, _photoRepository, _recuerdoRepository, _sentEmailRepository,
         _templateRenderer,
-        new EmailDeliveryCoordinator(_sentEmailRepository, _emailSender, _clock, new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance),
+        new EmailDeliveryCoordinator(
+            _sentEmailRepository, _emailLinkClickRepository, _emailSender, _appConfiguration, _clock,
+            new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance),
         _jobScheduler, _appConfiguration, _clock);
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
@@ -303,5 +306,29 @@ public class WeeklyDigestManagerTests
         // propagation) is exercised indirectly via BuildModelAsync's baúl activity queries,
         // covered by the aggregation tests above.
         Assert.Single(_emailSender.SentMessages);
+    }
+
+    // --- Click tracking ----------------------------------------------------------------
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldRouteEveryLinkThroughTheTrackingEndpoint()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        var since = _clock.UtcNow().AddDays(-7);
+        await _albumRepository.CreateAsync(new Album(Guid.NewGuid(), baul.Id, "Capítulo", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        var manager = CreateManager();
+
+        await manager.SendWeeklyDigestAsync(UserId, since);
+
+        var model = _templateRenderer.LastDigestModel!;
+        var trackedPrefix = $"{_appConfiguration.ApiPublicUrl}/email/click/";
+        Assert.StartsWith(trackedPrefix, model.PrimaryCtaUrl);
+        Assert.StartsWith(trackedPrefix, model.NotificationSettingsUrl);
+        var section = Assert.Single(model.Sections);
+        Assert.All(section.Blocks, b => Assert.StartsWith(trackedPrefix, b.DeepLinkUrl));
+
+        // primary-cta + notification-settings + one block for the new chapter
+        Assert.Equal(3, _emailLinkClickRepository.All.Count);
     }
 }

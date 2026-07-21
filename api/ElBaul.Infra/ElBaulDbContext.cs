@@ -13,6 +13,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<SharedUser> SharedUsers => Set<SharedUser>();
     public DbSet<RemovalRequest> RemovalRequests => Set<RemovalRequest>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
+    public DbSet<EmailLinkClick> EmailLinkClicks => Set<EmailLinkClick>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -36,4 +36,5 @@ public record SentEmail(
     DateTime? SentAt = null,
     string? ErrorMessage = null,
     DateTime? ActivitySince = null,
-    DateTime? ActivityUntil = null);
+    DateTime? ActivityUntil = null,
+    DateTime? FirstClickedAt = null);

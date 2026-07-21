@@ -33,5 +33,14 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
+    public Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled)
+    {
+        if (_users.TryGetValue(id, out var user))
+        {
+            _users[id] = user with { WeeklyDigestEnabled = enabled };
+        }
+        return Task.CompletedTask;
+    }
+
     public void Seed(User user) => _users[user.Id] = user;
 }

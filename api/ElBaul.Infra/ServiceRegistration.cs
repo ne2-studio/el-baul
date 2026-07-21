@@ -19,6 +19,7 @@ public static class ServiceRegistration
         services.AddScoped<IRecuerdoRepository, RecuerdoRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<ISentEmailRepository, SentEmailRepository>();
+        services.AddScoped<IEmailLinkClickRepository, EmailLinkClickRepository>();
         services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
         services.AddScoped<IAppConfiguration, AppConfiguration>();
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();

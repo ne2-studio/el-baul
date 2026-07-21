@@ -186,12 +186,14 @@ export class UserProfile {
   email: string;
   name?: string;
   photoUrl: string;
+  weeklyDigestEnabled: boolean;
 
   constructor(data: any) {
     this.id = data.id;
     this.email = data.email;
     this.name = data.name;
     this.photoUrl = '';
+    this.weeklyDigestEnabled = data.weeklyDigestEnabled ?? true;
   }
 }
 

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Check } from 'lucide-react';
 import { useEmailsStore } from '@/store/useEmailsStore';
 import { DataTable } from '@/app/components/DataTable';
 import { formatDate } from '@/utils/format';
@@ -45,6 +46,10 @@ export function EmailsListRoute() {
               { header: 'Tipo', render: (e) => TYPE_LABELS[e.type] ?? e.type },
               { header: 'Asunto', render: (e) => e.subject },
               { header: 'Estado', render: (e) => STATUS_LABELS[e.status] ?? e.status },
+              {
+                header: 'Clic',
+                render: (e) => (e.firstClickedAt ? <Check className="w-4 h-4 text-primary" /> : null),
+              },
             ]}
           />
         </div>

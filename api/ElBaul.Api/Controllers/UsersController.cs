@@ -1,3 +1,4 @@
+using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,13 @@ public class UsersController(IUserManager userManager) : ControllerBase
     public async Task<IActionResult> GetMe()
     {
         var result = await userManager.GetCurrentProfileAsync();
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPut("me/notification-preferences")]
+    public async Task<IActionResult> UpdateNotificationPreferences([FromBody] UpdateNotificationPreferencesRequest request)
+    {
+        var result = await userManager.UpdateNotificationPreferencesAsync(request.WeeklyDigestEnabled);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 }

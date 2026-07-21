@@ -13,6 +13,7 @@ public class WelcomeEmailManagerTests
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
+    private readonly InMemoryEmailLinkClickRepository _emailLinkClickRepository = new();
     private readonly FakeEmailTemplateRenderer _templateRenderer = new();
     private readonly FakeEmailSender _emailSender = new();
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
@@ -20,8 +21,8 @@ public class WelcomeEmailManagerTests
     private readonly StaticClock _clock = new();
 
     private EmailDeliveryCoordinator CreateCoordinator() => new(
-        _sentEmailRepository, _emailSender, _clock, new StaticIdGenerator(Guid.NewGuid()),
-        NullLogger<EmailDeliveryCoordinator>.Instance);
+        _sentEmailRepository, _emailLinkClickRepository, _emailSender, _appConfiguration, _clock,
+        new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance);
 
     private WelcomeEmailManager CreateManager() => new(
         NullLogger<WelcomeEmailManager>.Instance,
@@ -127,7 +128,7 @@ public class WelcomeEmailManagerTests
         Assert.NotNull(_templateRenderer.LastModel);
         Assert.True(_templateRenderer.LastModel!.HasBaules);
         Assert.Equal("Añadir un recuerdo", _templateRenderer.LastModel.PrimaryCtaLabel);
-        Assert.Contains(baul.Id.ToString(), _templateRenderer.LastModel.PrimaryCtaUrl);
+        Assert.Contains(baul.Id.ToString(), ResolveTrackedDestination(_templateRenderer.LastModel.PrimaryCtaUrl));
         Assert.Contains("Familia Pardal", _templateRenderer.LastModel.BaulNames);
     }
 
@@ -157,7 +158,7 @@ public class WelcomeEmailManagerTests
 
         Assert.False(_templateRenderer.LastModel!.HasBaules);
         Assert.Equal("Crear mi primer baúl", _templateRenderer.LastModel.PrimaryCtaLabel);
-        Assert.Contains("/baules/nuevo", Uri.UnescapeDataString(_templateRenderer.LastModel.PrimaryCtaUrl));
+        Assert.Contains("/baules/nuevo", Uri.UnescapeDataString(ResolveTrackedDestination(_templateRenderer.LastModel.PrimaryCtaUrl)));
     }
 
     // --- Idempotency / concurrency ---------------------------------------------------
@@ -206,6 +207,7 @@ public class WelcomeEmailManagerTests
         var sentEmail = Assert.Single(_sentEmailRepository.All); // still one row, not a duplicate
         Assert.Equal(EmailStatus.Sent, sentEmail.Status);
         Assert.Equal("retry-message-id", sentEmail.ProviderMessageId);
+        Assert.Single(_emailLinkClickRepository.All); // tracked links not duplicated on retry
     }
 
     [Fact]
@@ -275,5 +277,27 @@ public class WelcomeEmailManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Empty(_emailSender.SentMessages);
+    }
+
+    // --- Click tracking ----------------------------------------------------------------
+
+    [Fact]
+    public async Task SendWelcomeEmailAsync_ShouldRouteTheCtaThroughTheTrackingEndpoint()
+    {
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager();
+
+        await manager.SendWelcomeEmailAsync(UserId);
+
+        Assert.Contains($"{_appConfiguration.ApiPublicUrl}/email/click/", _templateRenderer.LastModel!.PrimaryCtaUrl);
+        var link = Assert.Single(_emailLinkClickRepository.All);
+        Assert.Equal("primary-cta", link.LinkKey);
+        Assert.Contains("/baules/nuevo", Uri.UnescapeDataString(link.DestinationUrl));
+    }
+
+    private string ResolveTrackedDestination(string trackedUrl)
+    {
+        var token = trackedUrl.Split('/').Last();
+        return _emailLinkClickRepository.All.Single(l => l.Token == token).DestinationUrl;
     }
 }
