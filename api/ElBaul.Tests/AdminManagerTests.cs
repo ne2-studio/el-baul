@@ -72,7 +72,7 @@ public class AdminManagerTests
     public async Task GetAllBaulesAsync_ShouldMapEachRow()
     {
         var baul = new Baul(Guid.NewGuid(), "Familia Pérez", null, "custodio-1", AlbumCount: 1, _clock.UtcNow(), _clock.UtcNow());
-        _adminRepository.Baules.Add(new AdminBaulRow(baul, "Custodio Uno", MemberCount: 3, PhotoCount: 10, AlbumCount: 1));
+        _adminRepository.Baules.Add(new AdminBaulRow(baul, "Custodio Uno", MemberCount: 3, LinkedUserCount: 2, PhotoCount: 10, AlbumCount: 1));
 
         var result = await CreateManager().GetAllBaulesAsync();
 
@@ -80,6 +80,7 @@ public class AdminManagerTests
         Assert.Equal(baul.Id.ToString(), dto.Id);
         Assert.Equal("Custodio Uno", dto.CustodioName);
         Assert.Equal(3, dto.MemberCount);
+        Assert.Equal(2, dto.LinkedUserCount);
         Assert.Equal(10, dto.PhotoCount);
     }
 

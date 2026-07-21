@@ -57,6 +57,12 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
 
+        var linkedUserCounts = await dbContext.SharedUsers
+            .Where(su => su.UserId != null)
+            .GroupBy(su => su.BaulId)
+            .Select(g => new { BaulId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.BaulId, x => x.Count);
+
         var photoCounts = await dbContext.Photos
             .GroupBy(p => p.BaulId)
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
@@ -77,6 +83,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             b,
             custodioNames.GetValueOrDefault(b.CustodioId, b.CustodioId),
             memberCounts.GetValueOrDefault(b.Id),
+            linkedUserCounts.GetValueOrDefault(b.Id),
             photoCounts.GetValueOrDefault(b.Id),
             albumCounts.GetValueOrDefault(b.Id)));
     }

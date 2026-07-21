@@ -30,6 +30,7 @@ export function BaulesListRoute() {
               { header: 'Nombre', render: (b) => b.name },
               { header: 'Custodio', render: (b) => b.custodioName },
               { header: 'Miembros', render: (b) => b.memberCount },
+              { header: 'Usuarios unidos', render: (b) => b.linkedUserCount },
               { header: 'Fotos', render: (b) => b.photoCount },
               { header: 'Capítulos', render: (b) => b.albumCount },
               { header: 'Fecha de creación', render: (b) => formatDate(b.createdAt) },

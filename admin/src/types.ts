@@ -103,6 +103,7 @@ export class AdminBaul {
   name: string;
   custodioName: string;
   memberCount: number;
+  linkedUserCount: number;
   photoCount: number;
   albumCount: number;
   createdAt: string;
@@ -112,6 +113,7 @@ export class AdminBaul {
     this.name = data.name;
     this.custodioName = data.custodioName;
     this.memberCount = data.memberCount;
+    this.linkedUserCount = data.linkedUserCount;
     this.photoCount = data.photoCount;
     this.albumCount = data.albumCount;
     this.createdAt = data.createdAt;

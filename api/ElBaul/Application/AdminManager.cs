@@ -85,5 +85,5 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
         new(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);
 
     private static AdminBaulListItemDto ToDto(AdminBaulRow row) =>
-        new(row.Baul.Id.ToString(), row.Baul.Name, row.CustodioName, row.MemberCount, row.PhotoCount, row.AlbumCount, row.Baul.CreatedAt);
+        new(row.Baul.Id.ToString(), row.Baul.Name, row.CustodioName, row.MemberCount, row.LinkedUserCount, row.PhotoCount, row.AlbumCount, row.Baul.CreatedAt);
 }
