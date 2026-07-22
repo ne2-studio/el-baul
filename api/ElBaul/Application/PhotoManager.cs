@@ -541,7 +541,7 @@ public class PhotoManager(
         }
 
         var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(photo.BaulId, userId);
-        var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.AlbumId, userId, text, clock.UtcNow());
+        var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.AlbumId, photo.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation(

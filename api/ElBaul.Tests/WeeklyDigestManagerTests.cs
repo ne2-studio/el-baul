@@ -195,8 +195,8 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(Guid.NewGuid(), null, null, UserId, "Un recuerdo bonito", _clock.UtcNow()));
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(Guid.NewGuid(), null, null, UserId, "Otro más", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(Guid.NewGuid(), null, null, baul.Id, UserId, "Un recuerdo bonito", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(Guid.NewGuid(), null, null, baul.Id, UserId, "Otro más", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(UserId, since);

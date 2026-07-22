@@ -152,4 +152,21 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         var result = await baulManager.RejectRemovalRequestAsync(baulId, requestId);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
+
+    [HttpGet("{baulId:guid}/recuerdos")]
+    public async Task<IActionResult> GetRecuerdos(Guid baulId)
+    {
+        var result = await baulManager.GetRecuerdosAsync(baulId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("{baulId:guid}/recuerdos")]
+    public async Task<IActionResult> CreateRecuerdo(Guid baulId, [FromBody] CreateRecuerdoRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Text))
+            return BadRequest(new { error = "Text is required" });
+
+        var result = await baulManager.CreateRecuerdoAsync(baulId, request.Text);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
 }

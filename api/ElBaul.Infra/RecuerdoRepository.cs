@@ -23,19 +23,16 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-    public async Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since)
-    {
-        var photoIdsInBaul = dbContext.Photos
-            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
-            .Select(p => p.Id);
-        var albumIdsInBaul = dbContext.Albums.Where(a => a.BaulId == baulId).Select(a => a.Id);
-
-        return await dbContext.Recuerdos.AsNoTracking()
-            .Where(r => r.CreatedAt >= since &&
-                ((r.PhotoId != null && photoIdsInBaul.Contains(r.PhotoId.Value)) ||
-                 (r.PhotoId == null && r.AlbumId != null && albumIdsInBaul.Contains(r.AlbumId.Value))))
+    public async Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(Guid baulId) =>
+        await dbContext.Recuerdos.AsNoTracking()
+            .Where(r => r.BaulId == baulId)
+            .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
-    }
+
+    public async Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since) =>
+        await dbContext.Recuerdos.AsNoTracking()
+            .Where(r => r.BaulId == baulId && r.CreatedAt >= since)
+            .ToListAsync();
 
     public async Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync() =>
         await dbContext.Recuerdos.AsNoTracking()

@@ -188,7 +188,7 @@ public class AlbumManager(
         {
             var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(album.BaulId, recuerdo.UserId);
             var thumbnailUrl = recuerdo.PhotoId is { } photoId ? thumbnailUrls.GetValueOrDefault(photoId) : null;
-            dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, recuerdo.UserId == userId, thumbnailUrl));
+            dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, recuerdo.UserId == userId, thumbnailUrl, album.Name));
         }
 
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
@@ -220,18 +220,19 @@ public class AlbumManager(
         }
 
         var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(album.BaulId, userId);
-        var recuerdo = new Recuerdo(idGenerator.NewId(), null, albumId, userId, text, clock.UtcNow());
+        var recuerdo = new Recuerdo(idGenerator.NewId(), null, albumId, album.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation("Recuerdo created {BaulId} {AlbumId} {RecuerdoId}", album.BaulId, albumId, recuerdo.Id);
 
-        return ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true, photoThumbnailUrl: null);
+        return ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true, photoThumbnailUrl: null, albumName: album.Name);
     }
 
     private static RecuerdoDto ToRecuerdoDto(
-        Recuerdo recuerdo, string userName, string? userAvatar, string? sharedUserId, bool isOwn, string? photoThumbnailUrl) =>
+        Recuerdo recuerdo, string userName, string? userAvatar, string? sharedUserId, bool isOwn, string? photoThumbnailUrl,
+        string? albumName = null) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
-            recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, sharedUserId);
+            recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, sharedUserId, recuerdo.AlbumId?.ToString(), albumName);
 
     private async Task<AlbumDto> ToDtoAsync(Album album)
     {

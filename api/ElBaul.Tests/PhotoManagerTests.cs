@@ -314,8 +314,8 @@ public class PhotoManagerTests
         var (baulId, albumId) = await SeedBaulWithAlbumAsync();
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, CustodioId, "mine", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, "other-user", "not mine", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, CustodioId, "mine", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, "other-user", "not mine", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetRecuerdosAsync(photoId);

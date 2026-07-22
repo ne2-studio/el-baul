@@ -104,14 +104,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
         var photoCount = await dbContext.Photos.CountAsync(p => p.BaulId == baulId);
 
-        // A Recuerdo has no BaulId of its own — it hangs off a Photo and/or an Album, both
-        // of which do. Count via whichever is set (PhotoId takes precedence to avoid double
-        // counting a recuerdo that has both).
-        var photoIdsInBaul = dbContext.Photos.Where(p => p.BaulId == baulId).Select(p => p.Id);
-        var albumIdsInBaul = dbContext.Albums.Where(a => a.BaulId == baulId).Select(a => a.Id);
-        var recuerdoCount = await dbContext.Recuerdos.CountAsync(r =>
-            (r.PhotoId != null && photoIdsInBaul.Contains(r.PhotoId.Value)) ||
-            (r.PhotoId == null && r.AlbumId != null && albumIdsInBaul.Contains(r.AlbumId.Value)));
+        var recuerdoCount = await dbContext.Recuerdos.CountAsync(r => r.BaulId == baulId);
 
         return new AdminBaulDetailRow(baul, sharedUsers, linkedUserNames, albums, photoCount, recuerdoCount);
     }

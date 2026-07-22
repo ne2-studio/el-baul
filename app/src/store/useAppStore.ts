@@ -51,6 +51,7 @@ interface AppState {
   removalRequests: Record<string, RemovalRequest[]>;
   recuerdos: Record<string, Recuerdo[]>;
   albumRecuerdos: Record<string, Recuerdo[]>;
+  baulRecuerdos: Record<string, Recuerdo[]>;
   isLoading: boolean;
 
   setAuthenticated: (value: boolean) => void;
@@ -65,6 +66,8 @@ interface AppState {
   addRecuerdo: (photoId: string, text: string) => Promise<void>;
   loadAlbumRecuerdos: (baulId: string, albumId: string) => Promise<void>;
   addAlbumRecuerdo: (baulId: string, albumId: string, text: string) => Promise<void>;
+  loadBaulRecuerdos: (baulId: string) => Promise<void>;
+  addBaulRecuerdo: (baulId: string, text: string) => Promise<void>;
 
   createBaul: (name: string, description: string) => Promise<Baul>;
   createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
@@ -127,6 +130,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   removalRequests: {},
   recuerdos: {},
   albumRecuerdos: {},
+  baulRecuerdos: {},
   isLoading: true,
 
   setAuthenticated: (value) => set({ isAuthenticated: value }),
@@ -147,6 +151,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     removalRequests: {},
     recuerdos: {},
     albumRecuerdos: {},
+    baulRecuerdos: {},
   }),
 
   fetchData: async () => {
@@ -223,6 +228,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     const recuerdo = await api.recuerdos.createForAlbum(baulId, albumId, text);
     set((state) => ({
       albumRecuerdos: { ...state.albumRecuerdos, [albumId]: [recuerdo, ...(state.albumRecuerdos[albumId] || [])] },
+    }));
+  },
+
+  loadBaulRecuerdos: async (baulId) => {
+    const recuerdos = await api.recuerdos.getAllByBaul(baulId);
+    set((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [baulId]: recuerdos } }));
+  },
+
+  addBaulRecuerdo: async (baulId, text) => {
+    const recuerdo = await api.recuerdos.createStandalone(baulId, text);
+    set((state) => ({
+      baulRecuerdos: { ...state.baulRecuerdos, [baulId]: [recuerdo, ...(state.baulRecuerdos[baulId] || [])] },
     }));
   },
 

@@ -3,6 +3,7 @@ using System;
 using ElBaul.Infra;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElBaul.Infra.Migrations
 {
     [DbContext(typeof(ElBaulDbContext))]
-    partial class ElBaulDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260722214039_AddBaulIdToRecuerdo")]
+    partial class AddBaulIdToRecuerdo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -214,7 +217,7 @@ namespace ElBaul.Infra.Migrations
                     b.Property<Guid?>("AlbumId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("BaulId")
+                    b.Property<Guid?>("BaulId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -513,8 +516,7 @@ namespace ElBaul.Infra.Migrations
                     b.HasOne("ElBaul.Ports.Output.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ElBaul.Ports.Output.Photo", null)
                         .WithMany()

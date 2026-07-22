@@ -161,6 +161,41 @@ null `AlbumId` and counted separately, not as a failure. Progress and a final su
 (updated / left null / failed counts) are logged to stdout; exit code is `0` if nothing
 failed, `1` otherwise.
 
+### `backfill-recuerdo-baul-id`
+
+Recuerdo now carries its own `BaulId` (denormalized from `Photo.BaulId`/`Album.BaulId`, or
+set directly for standalone recuerdos with no photo or chapter) so the Recuerdos tab can
+query a whole baúl without joining through Photo/Album. New recuerdos set it themselves;
+this backfills it for every recuerdo created before that change, resolving it from the
+recuerdo's `PhotoId` (photo's `BaulId`) or `AlbumId` (album's `BaulId`). Safe to re-run
+anytime (only looks at recuerdos still missing a `BaulId`) and safe to run while the app is
+serving traffic.
+
+Unlike the other maintenance commands above, this one gates a follow-up migration: do not
+deploy the build that makes `BaulId` `NOT NULL` until this command reports zero remaining
+candidates — re-run with `--dry-run` after backfilling and confirm it logs
+`0 recuerdo(s) to check` (and that the prior real run's `failed` count was `0`) before
+deploying that migration. Applying it while nulls remain fails the migration outright and
+the app won't start, since migrations run at startup.
+
+```bash
+# Coolify / any docker deployment: find the running API container, then:
+docker exec <api-container> dotnet ElBaul.Api.dll backfill-recuerdo-baul-id --dry-run
+docker exec <api-container> dotnet ElBaul.Api.dll backfill-recuerdo-baul-id
+
+# Local dev (docker-compose service name is "api"):
+docker compose exec api dotnet ElBaul.Api.dll backfill-recuerdo-baul-id --dry-run
+docker compose exec api dotnet ElBaul.Api.dll backfill-recuerdo-baul-id
+
+# Running the API outside Docker (dotnet run/dotnet ElBaul.Api.dll directly):
+dotnet ElBaul.Api.dll backfill-recuerdo-baul-id --dry-run
+```
+
+`--dry-run` logs what it would change without writing anything — run that first. Without
+it, it updates the DB as it goes. Progress and a final summary (updated / left null
+(unresolvable) / failed counts) are logged to stdout; exit code is `0` if nothing failed,
+`1` otherwise.
+
 ### A note on `Auth:JwksUri` vs `Auth:ValidIssuer`
 
 The backend fetches JWKS (signing keys) from `Auth:JwksUri` directly rather than

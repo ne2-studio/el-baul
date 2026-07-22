@@ -125,6 +125,8 @@ export class Recuerdo {
   isOwn?: boolean;
   photoId?: string;
   photoThumbnailUrl?: string;
+  albumId?: string;
+  albumName?: string;
 
   constructor(data: any) {
     this.id = data.id;
@@ -136,6 +138,8 @@ export class Recuerdo {
     this.isOwn = data.isOwn;
     this.photoId = data.photoId ?? undefined;
     this.photoThumbnailUrl = data.photoThumbnailUrl ?? undefined;
+    this.albumId = data.albumId ?? undefined;
+    this.albumName = data.albumName ?? undefined;
   }
 }
 

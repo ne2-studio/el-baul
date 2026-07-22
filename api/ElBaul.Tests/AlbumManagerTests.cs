@@ -257,8 +257,8 @@ public class AlbumManagerTests
         // Photo-attached recuerdo, plus a chapter-level one with no photo at all — both
         // must count (this used to only count recuerdos joined through the album's
         // currently-active photos, silently dropping photo-less ones).
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, CustodioId, "con foto", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, CustodioId, "sin foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, CustodioId, "con foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -407,8 +407,8 @@ public class AlbumManagerTests
 
         var older = _clock.UtcNow().AddDays(-1);
         var newer = _clock.UtcNow();
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, CustodioId, "sin foto, más antiguo", older));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, CustodioId, "con foto, más reciente", newer));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, baulId, CustodioId, "sin foto, más antiguo", older));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, CustodioId, "con foto, más reciente", newer));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetRecuerdosAsync(albumId);

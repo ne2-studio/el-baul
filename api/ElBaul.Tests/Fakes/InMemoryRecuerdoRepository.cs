@@ -6,16 +6,7 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
 {
     private readonly List<Recuerdo> _recuerdos = [];
 
-    // The real repository resolves a Recuerdo's baúl by joining through Photo/Album (it has
-    // no BaulId of its own) — replicating that join here would mean wiring this fake to the
-    // Photo/Album fakes too, so tests instead declare the association directly.
-    private readonly Dictionary<Guid, Guid> _baulIdByRecuerdoId = new();
-
-    public void SeedForBaul(Guid baulId, Recuerdo recuerdo)
-    {
-        _recuerdos.Add(recuerdo);
-        _baulIdByRecuerdoId[recuerdo.Id] = baulId;
-    }
+    public void SeedForBaul(Guid baulId, Recuerdo recuerdo) => _recuerdos.Add(recuerdo with { BaulId = baulId });
 
     public Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(Guid photoId) =>
         Task.FromResult(_recuerdos.Where(r => r.PhotoId == photoId).OrderBy(r => r.CreatedAt).AsEnumerable());
@@ -29,9 +20,11 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
     public Task<IEnumerable<Recuerdo>> GetByAlbumIdAsync(Guid albumId) =>
         Task.FromResult(_recuerdos.Where(r => r.AlbumId == albumId).OrderByDescending(r => r.CreatedAt).AsEnumerable());
 
+    public Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(Guid baulId) =>
+        Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId).OrderByDescending(r => r.CreatedAt).AsEnumerable());
+
     public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since) =>
-        Task.FromResult(_recuerdos.Where(r =>
-            _baulIdByRecuerdoId.GetValueOrDefault(r.Id) == baulId && r.CreatedAt >= since).AsEnumerable());
+        Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId && r.CreatedAt >= since).AsEnumerable());
 
     public Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync() =>
         Task.FromResult(_recuerdos.Where(r => r.PhotoId != null && r.AlbumId == null).AsEnumerable());

@@ -21,11 +21,14 @@ export const BaulRoute: React.FC = () => {
     albums,
     loosePhotos,
     sharedUsers,
+    baulRecuerdos,
     removalRequests,
     userProfile,
     loadAlbumPhotos,
     loadAlbums,
     loadLoosePhotos,
+    loadBaulRecuerdos,
+    addBaulRecuerdo,
     fetchData,
     renameBaul,
     createPersona,
@@ -57,10 +60,19 @@ export const BaulRoute: React.FC = () => {
         return; // El siguiente renderizado tendrá el baúl (si existe) y se ejecutará el siguiente if
       }
 
-      // Si el baúl no tiene capítulos cargados en el store, los cargamos
-      if (!albums[baulId]) {
+      // Capítulos y fotos sueltas puede que ya estén cargados: BaulesListRoute los carga él
+      // mismo antes de navegar aquí (para no mostrar la pantalla vacía un instante). Los
+      // recuerdos del baúl no se prefetchan en ningún otro sitio, así que se comprueban con
+      // su propia guarda independiente en vez de colgarse de la de capítulos.
+      const needsAlbums = !albums[baulId];
+      const needsRecuerdos = !baulRecuerdos[baulId];
+
+      if (needsAlbums || needsRecuerdos) {
         setIsLoading(true);
-        await run(() => Promise.all([loadAlbums(baulId), loadLoosePhotos(baulId)]), {
+        await run(() => Promise.all([
+          ...(needsAlbums ? [loadAlbums(baulId), loadLoosePhotos(baulId)] : []),
+          ...(needsRecuerdos ? [loadBaulRecuerdos(baulId)] : []),
+        ]), {
           errorMessage: 'Error al cargar los capítulos del baúl',
         });
         setIsLoading(false);
@@ -69,7 +81,7 @@ export const BaulRoute: React.FC = () => {
 
     initBaul();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baulId, auth.isAuthenticated, baul, albums, loadAlbums, loadLoosePhotos, fetchData]);
+  }, [baulId, auth.isAuthenticated, baul, albums, baulRecuerdos, loadAlbums, loadLoosePhotos, loadBaulRecuerdos, fetchData]);
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
 
@@ -110,6 +122,13 @@ export const BaulRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleCreateRecuerdo = async (text: string): Promise<boolean> => {
+    const result = await run(() => addBaulRecuerdo(baul.id, text), {
+      errorMessage: 'Error al añadir el recuerdo',
+    });
+    return result.ok;
+  };
+
   return (
     <>
       <AlbumsView
@@ -117,6 +136,7 @@ export const BaulRoute: React.FC = () => {
         albums={albums[baul.id] || []}
         loosePhotos={loosePhotos[baul.id] || []}
         sharedUsers={sharedUsers[baul.id] || []}
+        recuerdos={baulRecuerdos[baul.id] || []}
         isAdmin={isAdminRole(baul.role)}
         currentUserEmail={userProfile.email}
         onBack={() => navigate('/baules')}
@@ -131,6 +151,8 @@ export const BaulRoute: React.FC = () => {
         }
         onCreatePersona={handleCreatePersona}
         onSelectPersona={(persona) => navigate(`/baules/${baul.id}/personas/${persona.id}`)}
+        onCreateRecuerdo={handleCreateRecuerdo}
+        onOpenAlbumFromRecuerdo={(albumId) => handleSelectAlbum({ id: albumId })}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}

@@ -191,6 +191,10 @@ export const api = {
       (await get<any[]>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`)).map((r) => new Recuerdo(r)),
     createForAlbum: async (baulId: string, albumId: string, text: string) =>
       new Recuerdo(await post<any>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`, { text })),
+    getAllByBaul: async (baulId: string) =>
+      (await get<any[]>(`/api/baules/${baulId}/recuerdos`)).map((r) => new Recuerdo(r)),
+    createStandalone: async (baulId: string, text: string) =>
+      new Recuerdo(await post<any>(`/api/baules/${baulId}/recuerdos`, { text })),
   },
 
   sharedUsers: {

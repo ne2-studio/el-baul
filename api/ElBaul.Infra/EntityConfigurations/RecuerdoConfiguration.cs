@@ -16,6 +16,7 @@ public class RecuerdoConfiguration : IEntityTypeConfiguration<Recuerdo>
 
         builder.HasIndex(r => r.PhotoId);
         builder.HasIndex(r => r.AlbumId);
+        builder.HasIndex(r => r.BaulId);
 
         builder.HasOne<Photo>()
             .WithMany()
@@ -32,6 +33,16 @@ public class RecuerdoConfiguration : IEntityTypeConfiguration<Recuerdo>
             .WithMany()
             .HasForeignKey(r => r.AlbumId)
             .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // BaulId is denormalized from Photo.BaulId / Album.BaulId (or set directly for
+        // standalone, photo-less and album-less recuerdos) so the Recuerdos feed can query by
+        // baúl without joining through Photo/Album. Restrict, not Cascade: Baul->Album->Photo->
+        // Recuerdo and Baul->Photo->Recuerdo are already cascade paths, so a third direct
+        // Baul->Recuerdo cascade path would make the migration invalid.
+        builder.HasOne<Baul>()
+            .WithMany()
+            .HasForeignKey(r => r.BaulId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<User>()

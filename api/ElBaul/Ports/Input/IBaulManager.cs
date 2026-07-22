@@ -25,4 +25,7 @@ public interface IBaulManager
     Task<Result<RemovalRequestDto>> CreateRemovalRequestAsync(Guid baulId, Guid photoId, string? reason);
     Task<Result> ApproveRemovalRequestAsync(Guid baulId, Guid requestId);
     Task<Result> RejectRemovalRequestAsync(Guid baulId, Guid requestId);
+
+    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid baulId);
+    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid baulId, string text);
 }
