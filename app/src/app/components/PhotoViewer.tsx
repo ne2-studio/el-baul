@@ -137,7 +137,7 @@ export function PhotoViewer({
   if (onChangeDate) {
     menuItems.push({ key: 'date', label: 'Cambiar fecha', onSelect: () => setShowDateModal(true) });
   }
-  if (onRequestRemoval) {
+  if (!isAdmin && onRequestRemoval) {
     menuItems.push({ key: 'removal', label: 'Solicitar retirada', onSelect: () => setShowRemovalModal(true) });
   }
   if (isAdmin && onDeletePhoto) {
