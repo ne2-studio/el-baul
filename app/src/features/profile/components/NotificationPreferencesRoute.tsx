@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationPreferencesScreen } from '@/app/components/NotificationPreferencesScreen';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 
 export const NotificationPreferencesRoute: React.FC = () => {
   const navigate = useNavigate();
+  const { setShowProfileMenu } = useUIStore();
   const { run, isPending } = useAsyncAction();
   const [weeklyDigestEnabled, setWeeklyDigestEnabled] = useState<boolean | null>(null);
 
@@ -30,7 +32,10 @@ export const NotificationPreferencesRoute: React.FC = () => {
 
   return (
     <NotificationPreferencesScreen
-      onBack={() => navigate('/perfil')}
+      onBack={() => {
+        setShowProfileMenu(false);
+        navigate('/baules');
+      }}
       weeklyDigestEnabled={weeklyDigestEnabled}
       onToggle={handleToggle}
       isSaving={isPending()}

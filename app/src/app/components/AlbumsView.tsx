@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useElementHeight } from '@/hooks/useElementHeight';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
 import { ExpandableFAB, SimpleFAB } from './FAB';
@@ -82,6 +83,7 @@ export function AlbumsView({
   onUpdateBaulInfo,
 }: AlbumsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas'>('capitulos');
@@ -121,7 +123,7 @@ export function AlbumsView({
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky header — back + actions only */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
+      <div ref={headerRef} className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
         <div className="max-w-2xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <button
@@ -205,8 +207,13 @@ export function AlbumsView({
         className="hidden"
       />
 
-      {/* Tabs — same sticky underline pattern as the Álbum/Capítulo screen (PhotosView.tsx) */}
-      <div className="sticky top-[61px] bg-background/90 backdrop-blur-sm z-[9] border-b border-border">
+      {/* Tabs — same sticky underline pattern as the Álbum/Capítulo screen (PhotosView.tsx).
+          top is the header's measured height, not a hardcoded value — iOS/WKWebView and
+          Android/Chrome WebView render the same header markup at slightly different heights. */}
+      <div
+        className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
+        style={{ top: headerHeight }}
+      >
         <div className="max-w-2xl mx-auto px-6">
           <div className="flex">
             <TabButton

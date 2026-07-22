@@ -131,11 +131,12 @@ function App() {
         navigate('/empty');
       }
     } else {
-      // Solo redirigir automáticamente si no hay un redirectTo pendiente
+      // /callback is excluded here: CallbackRoute owns navigation away from it, reading
+      // redirectTo from the OIDC state (not a query param, unlike this check).
       const params = new URLSearchParams(location.search);
       const hasRedirectTo = params.has('redirectTo');
 
-      if (!hasRedirectTo && (location.pathname === '/' || location.pathname === '/empty' || location.pathname === '/callback')) {
+      if (!hasRedirectTo && (location.pathname === '/' || location.pathname === '/empty')) {
         navigate('/baules', { replace: true });
       }
     }

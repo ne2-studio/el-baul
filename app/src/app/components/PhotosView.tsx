@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useElementHeight } from '@/hooks/useElementHeight';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
@@ -111,6 +112,7 @@ export function PhotosView({
   const [showWriteRecuerdoModal, setShowWriteRecuerdoModal] = useState(false);
   const [writeRecuerdoText, setWriteRecuerdoText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSavingAlbumInfo, setIsSavingAlbumInfo] = useState(false);
 
@@ -235,7 +237,7 @@ export function PhotosView({
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky header — back + actions */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
+      <div ref={headerRef} className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
         <div className="max-w-2xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <button
@@ -317,7 +319,10 @@ export function PhotosView({
 
       {/* Tabs — only when the caller supports a Recuerdos feed (real chapters, not the loose-photos virtual one) */}
       {!selectionMode && hasRecuerdosTab && (
-        <div className="sticky top-[61px] bg-background/90 backdrop-blur-sm z-[9] border-b border-border">
+        <div
+          className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
+          style={{ top: headerHeight }}
+        >
           <div className="max-w-2xl mx-auto px-6">
             <div className="flex">
               <TabButton label="Fotos" count={photos.length} active={activeTab === 'fotos'} onClick={() => setActiveTab('fotos')} />
