@@ -244,7 +244,7 @@ export function AlbumsView({
         ) : (
           <div className="space-y-6">
             {/* Todos los capítulos, agrupados por año de la fecha mínima (ya vienen
-                ordenados del backend por fecha mínima descendente, así que agrupar
+                ordenados del backend por fecha mínima ascendente, así que agrupar
                 consecutivamente preserva ese orden dentro y entre swimlanes) */}
             {albums.length > 0 && (() => {
               const groups = new Map<string, Album[]>();

@@ -292,7 +292,7 @@ public class AlbumManagerTests
     }
 
     [Fact]
-    public async Task GetByBaulIdAsync_ShouldSortAlbumsChronologically_MostRecentFirst_UndatedLast()
+    public async Task GetByBaulIdAsync_ShouldSortAlbumsChronologically_OldestFirst_UndatedLast()
     {
         var baulId = Guid.NewGuid();
         var olderAlbumId = Guid.NewGuid();
@@ -310,7 +310,7 @@ public class AlbumManagerTests
 
         Assert.True(result.IsSuccess);
         var ids = result.Value.Select(a => a.Id).ToList();
-        Assert.Equal([recentAlbumId.ToString(), olderAlbumId.ToString(), undatedAlbumId.ToString()], ids);
+        Assert.Equal([olderAlbumId.ToString(), recentAlbumId.ToString(), undatedAlbumId.ToString()], ids);
     }
 
     [Fact]

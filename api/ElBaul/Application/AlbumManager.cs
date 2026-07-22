@@ -45,13 +45,14 @@ public class AlbumManager(
         foreach (var album in albums)
             dtos.Add(await ToDtoAsync(album));
 
-        // Chronological: dated albums first (most recent min date first), undated-only albums last.
+        // Chronological: dated albums first (oldest min date first, so the baúl reads like a
+        // story), undated-only albums last.
         var sorted = dtos
             .OrderByDescending(d => d.MinDateYear.HasValue)
-            .ThenByDescending(d => d.MinDateYear ?? int.MinValue)
-            .ThenByDescending(d => d.MinDateMonth ?? 1)
-            .ThenByDescending(d => d.MinDateDay ?? 1)
-            .ThenByDescending(d => d.UpdatedAt)
+            .ThenBy(d => d.MinDateYear ?? int.MinValue)
+            .ThenBy(d => d.MinDateMonth ?? 1)
+            .ThenBy(d => d.MinDateDay ?? 1)
+            .ThenBy(d => d.UpdatedAt)
             .ToList();
 
         return Result.Success<IEnumerable<AlbumDto>>(sorted);

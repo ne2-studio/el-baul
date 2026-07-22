@@ -65,8 +65,8 @@ interface PhotosViewProps {
 }
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
-// assume a month for display, that defaulting only applies to sorting) descending,
-// with a trailing "Sin fecha" group for anything undated.
+// assume a month for display, that defaulting only applies to sorting), oldest first so
+// the baúl reads like a story, with a trailing "Sin fecha" group for anything undated.
 function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
   const MONTH_NAMES = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -88,7 +88,7 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
   }
 
   const sorted = Array.from(groups.values()).sort((a, b) =>
-    a.year !== b.year ? b.year - a.year : (b.month ?? 0) - (a.month ?? 0)
+    a.year !== b.year ? a.year - b.year : (a.month ?? 0) - (b.month ?? 0)
   );
 
   const result = sorted.map((g) => ({
