@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import exifr from 'exifr';
+import React, { useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button } from './Button';
 import { Input } from './Input';
@@ -7,7 +6,6 @@ import { ChevronLeft, X } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { Album } from './AlbumsView';
 import { ChapterSelector, ChapterSelection } from './ChapterSelector';
-import { PartialDatePicker } from './PartialDatePicker';
 import { PhotoDate } from '@/types';
 
 export interface SelectedPhoto {
@@ -20,7 +18,7 @@ export interface SelectedPhoto {
 // Reads a just-picked file into memory right away and wraps it in a fresh, Blob-backed
 // File. On Android, `<input type=file>` grants Chrome only a transient content:// URI
 // permission for the picked files — if the user takes a while getting through the
-// chapter/date step before confirming, that grant can expire and later reads throw
+// chapter step before confirming, that grant can expire and later reads throw
 // NotReadableError with zero server logs (seen in production). Reading the bytes now,
 // while the grant is still fresh, avoids ever touching the OS file handle again.
 export async function materializeSelectedPhoto(file: File): Promise<SelectedPhoto | null> {
@@ -53,56 +51,6 @@ interface UploadConfirmationScreenProps {
   onUpload: (photos: SelectedPhoto[], caption: string | undefined, chapter: ChapterSelection, date: PhotoDate | null) => void;
 }
 
-// Known-bogus camera/EXIF dates — clock resets, epoch defaults, digitization-time
-// placeholders — that show up as DateTimeOriginal often enough to not be a coincidence.
-// A match is treated as if no EXIF date had been found at all. Add more entries here as
-// new bad patterns turn up in the wild.
-const SUSPICIOUS_DATES: Partial<PhotoDate>[] = [
-  { year: 1899 },
-  { year: 1904, month: 1, day: 1 },
-  { year: 1970, month: 1, day: 1 },
-  { year: 1980, month: 1, day: 1 },
-  { year: 1990, month: 1, day: 1 },
-  { year: 2000, month: 1, day: 1 },
-  { year: 2001, month: 1, day: 1 },
-];
-
-function isSuspiciousDate(date: PhotoDate): boolean {
-  return SUSPICIOUS_DATES.some((entry) =>
-    entry.year === date.year &&
-    (entry.month === undefined || entry.month === date.month) &&
-    (entry.day === undefined || entry.day === date.day)
-  );
-}
-
-// If every photo in the batch has EXIF DateTimeOriginal/CreateDate and they all agree
-// on year/month/day, returns that date to pre-fill the picker — otherwise null. Mirrors
-// the field priority the backend's ExifPhotoDateExtractor uses (DateTimeOriginal, then
-// CreateDate/DateTimeDigitized), so the client pre-fill matches what the server would
-// have extracted anyway had no explicit date been sent.
-async function extractSharedExifDate(files: File[]): Promise<PhotoDate | null> {
-  const dates = await Promise.all(files.map(async (file) => {
-    try {
-      const tags = await exifr.parse(file, ['DateTimeOriginal', 'CreateDate']);
-      const date: Date | undefined = tags?.DateTimeOriginal ?? tags?.CreateDate;
-      return date ? { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() } : null;
-    } catch (error) {
-      Sentry.captureException(error, {
-        tags: { phase: 'exif-parse-on-select' },
-        extra: { name: file.name, size: file.size, type: file.type },
-      });
-      return null;
-    }
-  }));
-
-  const found = dates.filter((d) => d !== null) as PhotoDate[];
-  if (found.length === 0) return null;
-
-  const first = found[0];
-  const allAgree = found.every((d) => d.year === first.year && d.month === first.month && d.day === first.day);
-  return allAgree && !isSuspiciousDate(first) ? first : null;
-}
-
 export function UploadConfirmationScreen({
   baul,
   album,
@@ -117,31 +65,18 @@ export function UploadConfirmationScreen({
   const [chapter, setChapter] = useState<ChapterSelection | null>(
     currentAlbumId ? { type: 'existing', albumId: currentAlbumId } : null
   );
-  const [date, setDate] = useState<PhotoDate | null>(null);
-  const [dontRemember, setDontRemember] = useState(false);
-  const dateTouchedRef = useRef(false);
-  const [exifPrefill, setExifPrefill] = useState<PhotoDate | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    extractSharedExifDate(selectedPhotos.map((p) => p.file)).then((found) => {
-      if (!cancelled && found && !dateTouchedRef.current) setExifPrefill(found);
-    });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleRemovePhoto = (id: string) => {
     setPhotos(photos.filter(p => p.id !== id));
   };
 
-  const chapterValid = chapter !== null && (chapter.type !== 'new' || chapter.name.trim().length > 0);
-  const dateValid = dontRemember || !!date?.year;
-  const canConfirm = chapterValid && dateValid;
+  // Cada foto se sube con su propia fecha EXIF (extraída en el servidor); no se pide
+  // fecha aquí para no añadir un paso manual — las que no tengan EXIF quedan sin fecha.
+  const canConfirm = chapter !== null && (chapter.type !== 'new' || chapter.name.trim().length > 0);
 
   const handleConfirm = () => {
     if (!canConfirm || !chapter) return;
-    onUpload(photos, caption || undefined, chapter, dontRemember ? null : date);
+    onUpload(photos, caption || undefined, chapter, null);
   };
 
   return (
@@ -202,22 +137,6 @@ export function UploadConfirmationScreen({
             />
           </div>
         )}
-
-        {/* Fecha — "No me acuerdo" stays available even with an EXIF pre-fill, since the
-            EXIF date can be confidently wrong; it just isn't selected by default. */}
-        <div className="mb-8">
-          <h2 className="text-sm font-medium text-foreground mb-3">Fecha</h2>
-          <PartialDatePicker
-            key={exifPrefill ? 'exif' : 'initial'}
-            initialValue={exifPrefill ?? undefined}
-            allowUnknown
-            onChange={(v, unknown) => {
-              dateTouchedRef.current = true;
-              setDate(v);
-              setDontRemember(unknown);
-            }}
-          />
-        </div>
 
         {/* Optional caption */}
         <div className="mb-8">
