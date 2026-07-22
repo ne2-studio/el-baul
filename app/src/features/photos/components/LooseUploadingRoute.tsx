@@ -4,6 +4,7 @@ import { UploadingScreen } from '@/app/components/UploadingScreen';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { ChapterSelection } from '@/app/components/ChapterSelector';
 import { useAppStore, UploadItemResult } from '@/store/useAppStore';
+import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { PhotoDate } from '@/types';
 
@@ -20,6 +21,7 @@ export const LooseUploadingRoute: React.FC = () => {
   const location = useLocation();
   const auth = useAuth();
   const { baules, uploadPhotosWithChapter } = useAppStore();
+  const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);
   const { selectedPhotos, chapter, date, succeededCount: succeededSoFar = 0 } =
@@ -46,15 +48,20 @@ export const LooseUploadingRoute: React.FC = () => {
     const failed = results.filter((r) => r.error);
     const succeededCount = succeededSoFar + (results.length - failed.length);
     const resolvedAlbumId = resolvedAlbumIdRef.current;
-    const successPath = resolvedAlbumId
-      ? `/baules/${baul.id}/albumes/${resolvedAlbumId}/exito?count=${succeededCount}`
-      : `/baules/${baul.id}/fotos-sueltas/exito?count=${succeededCount}`;
+    const albumPath = resolvedAlbumId
+      ? `/baules/${baul.id}/albumes/${resolvedAlbumId}`
+      : `/baules/${baul.id}/fotos-sueltas`;
     const errorPath = resolvedAlbumId
       ? `/baules/${baul.id}/albumes/${resolvedAlbumId}/error`
       : `/baules/${baul.id}/fotos-sueltas/error`;
 
     if (failed.length === 0) {
-      navigate(successPath);
+      navigate(albumPath);
+      showToastMessage(
+        succeededCount === 1
+          ? 'Tu recuerdo ya está a salvo'
+          : `Tus ${succeededCount} recuerdos ya están a salvo`
+      );
       return;
     }
 
