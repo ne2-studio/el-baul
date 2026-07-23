@@ -8,7 +8,6 @@ interface ProfileMenuModalProps {
   onNavigateToNotifications: () => void;
   onNavigateToHelp: () => void;
   onSignOut: () => void;
-  userEmail?: string;
   monetizationEnabled?: boolean;
   isSigningOut?: boolean;
 }
@@ -20,7 +19,6 @@ export function ProfileMenuModal({
   onNavigateToNotifications,
   onNavigateToHelp,
   onSignOut,
-  userEmail,
   monetizationEnabled,
   isSigningOut = false,
 }: ProfileMenuModalProps) {
@@ -56,13 +54,6 @@ export function ProfileMenuModal({
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
-
-        {/* User info */}
-        {userEmail && (
-          <div className="px-6 py-4 border-b border-border">
-            <p className="text-sm text-muted-foreground">{userEmail}</p>
-          </div>
-        )}
 
         {/* Menu items */}
         <div className="p-4">

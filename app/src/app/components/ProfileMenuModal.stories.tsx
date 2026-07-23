@@ -18,7 +18,6 @@ export const Default: Story = {
     onNavigateToNotifications: () => alert('onNavigateToNotifications clicked'),
     onNavigateToHelp: () => alert('onNavigateToHelp clicked'),
     onSignOut: () => alert('onSignOut clicked'),
-    userEmail: 'pedro@example.com',
     monetizationEnabled: true,
   },
 };

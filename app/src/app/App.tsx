@@ -66,7 +66,6 @@ function App() {
   } = useUIStore();
 
   const {
-    userProfile,
     subscription,
     setSubscription,
     setAuthenticated,
@@ -327,7 +326,6 @@ function App() {
       {/* Profile Menu Modal */}
       {showProfileMenu && (
         <ProfileMenuModal
-          userEmail={userProfile.email}
           monetizationEnabled={monetizationEnabled}
           onClose={() => setShowProfileMenu(false)}
           onNavigateToProfile={() => {
