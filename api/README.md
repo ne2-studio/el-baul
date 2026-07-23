@@ -14,6 +14,11 @@ ElBaul.Infra        — adapters (EF Core repositories, MinIO photo storage, JIT
 ElBaul              — domain core (Application/ use cases, Ports/Input, Ports/Output)
 ```
 
+[`docker-image-tests/`](docker-image-tests/README.md) is a deliberately separate solution —
+black-box acceptance tests for the *built Docker image*, not this source tree. See its own
+README for the full rule set; it runs in CI right after `docker build`, before the image is
+pushed.
+
 Domain: a **Baúl** (trunk) is owned by a custodian, holds **Albums** of **Photos**
 (each photo can carry **Recuerdos** — comments — from anyone with access), and can be
 shared with other users as *colaborador* (can add albums/photos) or *miembro*

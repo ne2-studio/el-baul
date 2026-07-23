@@ -46,6 +46,11 @@ jobs:
       - name: Build image
         run: docker build -t $IMAGE_NAME:latest .
 
+      - name: Run Docker image acceptance tests
+        env:
+          BACKEND_IMAGE: ${{ env.IMAGE_NAME }}:latest
+        run: dotnet test docker-image-tests/ElBaul.ImageTests.slnx
+
       - name: Push image
         run: docker push $IMAGE_NAME:latest
 

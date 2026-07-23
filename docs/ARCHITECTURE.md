@@ -242,6 +242,12 @@ deployment (see `api/README.md`) — the web process itself never runs them.
   substring tests wouldn't. A mismatch writes a `*.received.txt` next to it (gitignored) for
   diffing; re-approve an intentional change by reviewing that file and overwriting the
   `.verified.txt` with it.
+- **`docker-image-tests/ElBaul.ImageTests`** — a separate solution, not part of the above.
+  Black-box acceptance tests for the *built Docker image*, run via Testcontainers against a
+  real Postgres + MinIO + fake-oidc stack it stands up itself: no `ProjectReference` to
+  anything above, no shared fixtures/DTOs, HTTP and container state only. Runs in CI right
+  after `docker build`, before the image is pushed (`.github/workflows/backend-deploy.yml`).
+  See its own `README.md` for the full rule set and what it does/doesn't cover.
 
 ---
 
