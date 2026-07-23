@@ -23,7 +23,6 @@ export const LoosePhotosRoute: React.FC = () => {
   const looseAlbum: Album = {
     id: 'sueltas',
     name: 'Fotos sueltas',
-    description: 'Fotos que aún no pertenecen a ningún capítulo',
     photoCount: photos.length,
     coverPhotoUrl: photos[0]?.thumbnailUrl,
   };
@@ -48,10 +47,10 @@ export const LoosePhotosRoute: React.FC = () => {
     return result.ok;
   };
 
-  const handleBatchCreateChapter = async (photoIds: string[], name: string, description: string): Promise<boolean> => {
+  const handleBatchCreateChapter = async (photoIds: string[], name: string): Promise<boolean> => {
     const result = await run(
       async () => {
-        const album = await createAlbum(baul.id, name, description);
+        const album = await createAlbum(baul.id, name);
         await movePhotos(baul.id, null, photoIds, album.id);
         return album;
       },

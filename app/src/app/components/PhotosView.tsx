@@ -57,8 +57,8 @@ interface PhotosViewProps {
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => Promise<void>;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
-  onBatchCreateChapter?: (photoIds: string[], name: string, description: string) => Promise<boolean>;
-  onUpdateAlbumInfo?: (name: string, description: string) => Promise<boolean>;
+  onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
+  onUpdateAlbumInfo?: (name: string) => Promise<boolean>;
   onDeleteAlbum?: () => Promise<boolean>;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
@@ -119,9 +119,9 @@ export function PhotosView({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeletingAlbum, setIsDeletingAlbum] = useState(false);
 
-  const handleSaveAlbumInfo = async (name: string, description: string) => {
+  const handleSaveAlbumInfo = async (name: string) => {
     setIsSavingAlbumInfo(true);
-    const ok = (await onUpdateAlbumInfo?.(name, description)) ?? false;
+    const ok = (await onUpdateAlbumInfo?.(name)) ?? false;
     setIsSavingAlbumInfo(false);
     if (ok) setShowEditModal(false);
   };
@@ -207,10 +207,10 @@ export function PhotosView({
     }
   };
 
-  const handleBatchCreateChapterSave = async (name: string, description: string) => {
+  const handleBatchCreateChapterSave = async (name: string) => {
     if (!onBatchCreateChapter) return;
     setIsBatchCreatingChapter(true);
-    const ok = await onBatchCreateChapter(Array.from(selectedIds), name, description);
+    const ok = await onBatchCreateChapter(Array.from(selectedIds), name);
     setIsBatchCreatingChapter(false);
     if (ok) {
       setShowBatchCreateChapterModal(false);
@@ -308,12 +308,6 @@ export function PhotosView({
               <h1 className="text-3xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
                 {album.name}
               </h1>
-              {album.description && (
-                <p className="text-sm text-white/80 mt-1 leading-snug">{album.description}</p>
-              )}
-              {!album.description && onUpdateAlbumInfo && (
-                <p className="text-sm text-white/40 mt-1 italic">Sin descripción · edita desde el menú ···</p>
-              )}
               {album.minDate && album.maxDate && (
                 <p className="text-xs text-white/65 mt-1 font-medium tracking-wide">
                   {formatDateRange(album.minDate, album.maxDate)}
@@ -515,7 +509,6 @@ export function PhotosView({
         <EditInfoModal
           title="Nuevo capítulo"
           initialName=""
-          initialDescription=""
           namePlaceholder="Nombre del capítulo"
           onCancel={() => setShowBatchCreateChapterModal(false)}
           onSave={handleBatchCreateChapterSave}
@@ -527,7 +520,6 @@ export function PhotosView({
         <EditInfoModal
           title="Editar información del capítulo"
           initialName={album.name}
-          initialDescription={album.description ?? ''}
           namePlaceholder="Nombre del capítulo"
           onCancel={() => setShowEditModal(false)}
           onSave={handleSaveAlbumInfo}

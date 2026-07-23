@@ -38,8 +38,8 @@ export const AlbumRoute: React.FC = () => {
     });
   };
 
-  const handleUpdateAlbumInfo = async (name: string, description: string): Promise<boolean> => {
-    const result = await run(() => renameAlbum(baul.id, album.id, name, description), {
+  const handleUpdateAlbumInfo = async (name: string): Promise<boolean> => {
+    const result = await run(() => renameAlbum(baul.id, album.id, name), {
       successMessage: 'Información del capítulo actualizada',
       errorMessage: 'Error al actualizar la información del capítulo',
     });

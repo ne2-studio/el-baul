@@ -253,7 +253,7 @@ public class BaulManagerTests
         var albumId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, "key", _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, "key", _clock.UtcNow(), _clock.UtcNow()));
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, OtherUserId, "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
@@ -273,7 +273,7 @@ public class BaulManagerTests
         var photoId = Guid.NewGuid();
 
         await SeedBaulAsync(baulId, "Familia");
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, "key", _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, "key", _clock.UtcNow(), _clock.UtcNow()));
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var requestId = Guid.NewGuid();
@@ -621,7 +621,7 @@ public class BaulManagerTests
         var albumId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Vacaciones", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Vacaciones", 1, null, _clock.UtcNow(), _clock.UtcNow()));
         await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var oldest = _clock.UtcNow().AddDays(-2);

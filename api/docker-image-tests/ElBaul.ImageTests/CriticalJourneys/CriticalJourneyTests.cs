@@ -45,8 +45,7 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
         // 2. Create a chapter (album) inside it.
         var createAlbumResponse = await client.PostAsJsonAsync($"/api/baules/{baulId}/albums", new
         {
-            name = "Capítulo de prueba",
-            description = (string?)null
+            name = "Capítulo de prueba"
         });
         createAlbumResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createAlbumResponse.Content.ReadAsStringAsync());
         var albumId = (await ParseJsonAsync(createAlbumResponse)).GetProperty("id").GetString();

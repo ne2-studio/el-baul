@@ -69,7 +69,7 @@ interface AppState {
   addBaulRecuerdo: (baulId: string, text: string) => Promise<void>;
 
   createBaul: (name: string, description: string) => Promise<Baul>;
-  createAlbum: (baulId: string, name: string, description: string) => Promise<Album>;
+  createAlbum: (baulId: string, name: string) => Promise<Album>;
   uploadPhotos: (
     baulId: string,
     albumId: string,
@@ -100,7 +100,7 @@ interface AppState {
   setBaulCover: (baulId: string, photoId: string, optimisticThumbnailUrl?: string) => Promise<void>;
   setAlbumCover: (baulId: string, albumId: string, photoId: string, optimisticThumbnailUrl?: string) => Promise<void>;
   renameBaul: (baulId: string, name: string, description?: string) => Promise<void>;
-  renameAlbum: (baulId: string, albumId: string, name: string, description?: string) => Promise<void>;
+  renameAlbum: (baulId: string, albumId: string, name: string) => Promise<void>;
   deleteAlbum: (baulId: string, albumId: string) => Promise<void>;
 
   createPersona: (baulId: string, nickname: string) => Promise<void>;
@@ -260,8 +260,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     return baul;
   },
 
-  createAlbum: async (baulId, name, description) => {
-    const album = await api.albums.create(baulId, name, description);
+  createAlbum: async (baulId, name) => {
+    const album = await api.albums.create(baulId, name);
     set((state) => ({
       albums: { ...state.albums, [baulId]: [...(state.albums[baulId] || []), album] },
       baules: state.baules.map((b) => (b.id === baulId ? { ...b, albumCount: b.albumCount + 1 } : b)),
@@ -376,7 +376,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     if (chapter.type === 'new') {
       try {
-        const album = await get().createAlbum(baulId, chapter.name, '');
+        const album = await get().createAlbum(baulId, chapter.name);
         targetAlbumId = album.id;
       } catch (error) {
         Sentry.captureException(error);
@@ -553,8 +553,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  renameAlbum: async (baulId, albumId, name, description) => {
-    const updated = await api.albums.update(baulId, albumId, name, description);
+  renameAlbum: async (baulId, albumId, name) => {
+    const updated = await api.albums.update(baulId, albumId, name);
     set((state) => ({
       albums: {
         ...state.albums,

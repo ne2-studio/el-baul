@@ -30,7 +30,7 @@ public class PhotoManagerTests
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, albumId);
     }
 
@@ -38,7 +38,7 @@ public class PhotoManagerTests
     {
         var (baulId, sourceAlbumId) = await SeedBaulWithAlbumAsync();
         var targetAlbumId = Guid.NewGuid();
-        await _albumRepository.CreateAsync(new Album(targetAlbumId, baulId, "Destino", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(targetAlbumId, baulId, "Destino", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, sourceAlbumId, targetAlbumId);
     }
 

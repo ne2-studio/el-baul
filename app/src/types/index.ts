@@ -68,7 +68,6 @@ export class Baul {
 export class Album {
   id: string;
   name: string;
-  description?: string;
   photoCount: number;
   coverPhotoUrl?: string;
   featuredCoverPhotoUrl?: string;
@@ -83,7 +82,6 @@ export class Album {
   constructor(data: any) {
     this.id = data.id;
     this.name = data.name;
-    this.description = data.description;
     this.photoCount = data.photoCount;
     this.coverPhotoUrl = data.coverPhotoUrl;
     this.featuredCoverPhotoUrl = data.featuredCoverPhotoUrl;

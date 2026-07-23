@@ -119,7 +119,7 @@ public class AdminManagerTests
         var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", AlbumCount: 1, _clock.UtcNow(), _clock.UtcNow());
         var linkedSharedUser = new SharedUser(Guid.NewGuid(), baulId, "user-1", "Abuela", BaulRole.Custodio, _clock.UtcNow());
         var unlinkedSharedUser = new SharedUser(Guid.NewGuid(), baulId, null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
-        var album = new Album(Guid.NewGuid(), baulId, "Verano 2020", null, 5, null, _clock.UtcNow(), _clock.UtcNow());
+        var album = new Album(Guid.NewGuid(), baulId, "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
 
         _adminRepository.BaulDetails[baulId] = new AdminBaulDetailRow(
             baul,

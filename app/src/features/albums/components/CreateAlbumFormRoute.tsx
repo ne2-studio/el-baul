@@ -16,10 +16,10 @@ export const CreateAlbumFormRoute: React.FC = () => {
 
   if (!baul) return <div className="p-8 text-center">Cargando baúl...</div>;
 
-  const handleSubmit = async (name: string, description: string) => {
+  const handleSubmit = async (name: string) => {
     if (!auth.isAuthenticated) return;
 
-    const result = await run(() => createAlbum(baul.id, name, description), {
+    const result = await run(() => createAlbum(baul.id, name), {
       errorMessage: 'Error al crear el capítulo',
     });
     if (result.ok) navigate(`/baules/${baul.id}`);

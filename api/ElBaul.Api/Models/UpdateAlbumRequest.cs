@@ -1,3 +1,3 @@
 namespace ElBaul.Api.Models;
 
-public record UpdateAlbumRequest(string Name, string? Description);
+public record UpdateAlbumRequest(string Name);

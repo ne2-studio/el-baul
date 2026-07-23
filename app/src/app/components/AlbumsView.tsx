@@ -25,7 +25,6 @@ import {
 export interface Album {
   id: string;
   name: string;
-  description?: string;
   photoCount: number;
   coverPhotoUrl?: string;
   featuredCoverPhotoUrl?: string;

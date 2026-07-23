@@ -58,7 +58,7 @@ public class AlbumManager(
         return Result.Success<IEnumerable<AlbumDto>>(sorted);
     }
 
-    public async Task<Result<AlbumDto>> CreateAsync(Guid baulId, string name, string? description)
+    public async Task<Result<AlbumDto>> CreateAsync(Guid baulId, string name)
     {
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
@@ -77,7 +77,7 @@ public class AlbumManager(
         }
 
         var now = clock.UtcNow();
-        var album = new Album(idGenerator.NewId(), baulId, name, description, 0, null, now, now);
+        var album = new Album(idGenerator.NewId(), baulId, name, 0, null, now, now);
         await albumRepository.CreateAsync(album);
 
         await baulRepository.UpdateAsync(baul with { AlbumCount = baul.AlbumCount + 1, UpdatedAt = now });
@@ -127,7 +127,7 @@ public class AlbumManager(
         return await ToDtoAsync(updated);
     }
 
-    public async Task<Result<AlbumDto>> UpdateAsync(Guid albumId, string name, string? description)
+    public async Task<Result<AlbumDto>> UpdateAsync(Guid albumId, string name)
     {
         var userId = currentUserProvider.GetUserId();
         var album = await albumRepository.GetByIdAsync(albumId);
@@ -152,7 +152,7 @@ public class AlbumManager(
             return Result.Failure<AlbumDto>("Access denied");
         }
 
-        var updated = album with { Name = name, Description = description, UpdatedAt = clock.UtcNow() };
+        var updated = album with { Name = name, UpdatedAt = clock.UtcNow() };
         await albumRepository.UpdateAsync(updated);
 
         logger.LogInformation("Album updated {BaulId} {AlbumId} {Name}", album.BaulId, albumId, name);
@@ -311,7 +311,7 @@ public class AlbumManager(
     private static AlbumDto ToDto(
         Album album, string? coverUrl, string? featuredCoverUrl, int recuerdoCount,
         string? latestRecuerdoText, string? latestRecuerdoAuthor, DateRange dateRange) =>
-        new(album.Id.ToString(), album.BaulId.ToString(), album.Name, album.Description,
+        new(album.Id.ToString(), album.BaulId.ToString(), album.Name,
             album.PhotoCount, coverUrl, featuredCoverUrl, album.CreatedAt, album.UpdatedAt,
             recuerdoCount, latestRecuerdoText, latestRecuerdoAuthor,
             dateRange.MinY, dateRange.MinM, dateRange.MinD, dateRange.MaxY, dateRange.MaxM, dateRange.MaxD, dateRange.Undated);

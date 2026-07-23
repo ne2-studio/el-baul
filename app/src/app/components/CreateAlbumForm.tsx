@@ -5,18 +5,17 @@ import { ChevronLeft } from 'lucide-react';
 
 interface CreateAlbumFormProps {
   onBack: () => void;
-  onSubmit: (name: string, description: string) => void;
+  onSubmit: (name: string) => void;
   isSubmitting?: boolean;
 }
 
 export function CreateAlbumForm({ onBack, onSubmit, isSubmitting = false }: CreateAlbumFormProps) {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && !isSubmitting) {
-      onSubmit(name, description);
+      onSubmit(name);
     }
   };
   
@@ -45,16 +44,7 @@ export function CreateAlbumForm({ onBack, onSubmit, isSubmitting = false }: Crea
             value={name}
             onChange={setName}
           />
-          
-          <Input
-            label="Descripción (opcional)"
-            placeholder="Vacaciones en la playa..."
-            value={description}
-            onChange={setDescription}
-            multiline
-            rows={3}
-          />
-          
+
           <Button
             type="submit"
             variant="primary"
