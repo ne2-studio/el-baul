@@ -87,14 +87,17 @@ export function PhotoViewer({
 
   // Dirección del carrusel: +1 al avanzar, -1 al retroceder — recalculada cada vez que
   // cambia la foto mostrada, sin importar cómo se llegó a ella (swipe, flechas, teclado).
+  // Se calcula en el propio render (no en un useEffect) porque PhotoStage necesita el
+  // valor ya actualizado en el mismo render en que cambia photoKey: si se calculara en un
+  // efecto, llegaría un render tarde y el primer cambio de sentido tras invertir la
+  // dirección de navegación animaría hacia el lado equivocado.
   const previousIndexRef = useRef(currentIndex);
-  const [direction, setDirection] = useState(0);
-  useEffect(() => {
-    if (currentIndex !== previousIndexRef.current) {
-      setDirection(currentIndex > previousIndexRef.current ? 1 : -1);
-      previousIndexRef.current = currentIndex;
-    }
-  }, [currentIndex]);
+  const directionRef = useRef(0);
+  if (currentIndex !== previousIndexRef.current) {
+    directionRef.current = currentIndex > previousIndexRef.current ? 1 : -1;
+    previousIndexRef.current = currentIndex;
+  }
+  const direction = directionRef.current;
 
   // Precarga la foto anterior y siguiente para que el swipe se sienta instantáneo.
   useEffect(() => {
