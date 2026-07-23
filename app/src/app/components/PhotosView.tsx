@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useElementHeight } from '@/hooks/useElementHeight';
-import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
@@ -355,25 +354,11 @@ export function PhotosView({
 
         {activeTab === 'fotos' && (
           photos.length === 0 ? (
-            <div>
-              <EmptyState
-                icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
-                title="Todavía no hay fotos aquí"
-                subtitle="Añade fotos para empezar este recuerdo"
-              />
-              {/* Primary CTA for empty state */}
-              <div className="mt-8 max-w-sm mx-auto">
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  Añadir tus primeras fotos
-                </Button>
-              </div>
-            </div>
+            <EmptyState
+              icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
+              title="Todavía no hay fotos aquí"
+              subtitle="Añade fotos para empezar este recuerdo"
+            />
           ) : (
             <div className="space-y-6">
               {groupPhotos(photos).map((group) => (
@@ -403,15 +388,9 @@ export function PhotosView({
                 <BookOpen className="w-8 h-8 text-primary/60" strokeWidth={1.5} />
               </div>
               <h3 className="text-lg font-serif text-foreground mb-2">Aún no hay recuerdos escritos</h3>
-              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Los recuerdos escritos por la familia harán que este capítulo cobre vida.
               </p>
-              <button
-                onClick={() => setShowWriteRecuerdoModal(true)}
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                Escribe el primer recuerdo
-              </button>
             </div>
           ) : (
             <div className="space-y-4">
