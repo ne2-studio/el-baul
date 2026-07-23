@@ -53,7 +53,7 @@ export const LoosePhotoViewerRoute: React.FC = () => {
 
   const handleAddRecuerdo = async (photoId: string, text: string) => {
     if (!auth.isAuthenticated) return;
-    await run(() => addRecuerdo(photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
+    await run(() => addRecuerdo(baul.id, photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
   };
 
   const handleMovePhoto = async (photoToMove: Photo, targetAlbumId: string): Promise<boolean> => {

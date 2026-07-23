@@ -63,7 +63,7 @@ interface AppState {
   loadAlbumPhotos: (albumId: string) => Promise<void>;
   loadLoosePhotos: (baulId: string) => Promise<void>;
   loadRecuerdos: (photoId: string) => Promise<void>;
-  addRecuerdo: (photoId: string, text: string) => Promise<void>;
+  addRecuerdo: (baulId: string, photoId: string, text: string) => Promise<void>;
   loadAlbumRecuerdos: (baulId: string, albumId: string) => Promise<void>;
   addAlbumRecuerdo: (baulId: string, albumId: string, text: string) => Promise<void>;
   loadBaulRecuerdos: (baulId: string) => Promise<void>;
@@ -213,10 +213,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({ recuerdos: { ...state.recuerdos, [photoId]: recuerdos } }));
   },
 
-  addRecuerdo: async (photoId, text) => {
+  addRecuerdo: async (baulId, photoId, text) => {
     const recuerdo = await api.recuerdos.create(photoId, text);
     set((state) => ({
       recuerdos: { ...state.recuerdos, [photoId]: [...(state.recuerdos[photoId] || []), recuerdo] },
+      // Keeps the baúl-wide "Recuerdos" tab in sync — otherwise it stays stale until
+      // BaulRoute is remounted, since its own load is guarded by "already have a cached
+      // value for this baulId" (see BaulRoute.tsx). Only patches it when already loaded:
+      // creating a one-item stub here would make that guard think it's fully loaded.
+      baulRecuerdos: state.baulRecuerdos[baulId]
+        ? { ...state.baulRecuerdos, [baulId]: [recuerdo, ...state.baulRecuerdos[baulId]] }
+        : state.baulRecuerdos,
     }));
   },
 
@@ -229,6 +236,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     const recuerdo = await api.recuerdos.createForAlbum(baulId, albumId, text);
     set((state) => ({
       albumRecuerdos: { ...state.albumRecuerdos, [albumId]: [recuerdo, ...(state.albumRecuerdos[albumId] || [])] },
+      // Same reasoning as addRecuerdo above — keep the baúl-wide tab's cache in sync too.
+      baulRecuerdos: state.baulRecuerdos[baulId]
+        ? { ...state.baulRecuerdos, [baulId]: [recuerdo, ...state.baulRecuerdos[baulId]] }
+        : state.baulRecuerdos,
     }));
   },
 
