@@ -64,6 +64,13 @@ export const BaulRoute: React.FC = () => {
       // mismo antes de navegar aquí (para no mostrar la pantalla vacía un instante). Los
       // recuerdos del baúl no se prefetchan en ningún otro sitio, así que se comprueban con
       // su propia guarda independiente en vez de colgarse de la de capítulos.
+      //
+      // Leídos vía getState() (no reactivos) a propósito: si dependiéramos de los valores
+      // de albums/baulRecuerdos del hook de arriba, en cuanto una de las cargas de abajo
+      // resolviera (mientras las otras seguían en vuelo) este mismo efecto se volvería a
+      // disparar a medias — duplicando peticiones y parpadeando entre el loader y el
+      // contenido la primera vez que se abre un baúl (visto en producción).
+      const { albums, baulRecuerdos } = useAppStore.getState();
       const needsAlbums = !albums[baulId];
       const needsRecuerdos = !baulRecuerdos[baulId];
 
@@ -81,7 +88,7 @@ export const BaulRoute: React.FC = () => {
 
     initBaul();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baulId, auth.isAuthenticated, baul, albums, baulRecuerdos, loadAlbums, loadLoosePhotos, loadBaulRecuerdos, fetchData]);
+  }, [baulId, auth.isAuthenticated, baul, loadAlbums, loadLoosePhotos, loadBaulRecuerdos, fetchData]);
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
 

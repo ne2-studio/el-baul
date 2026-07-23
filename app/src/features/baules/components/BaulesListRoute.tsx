@@ -18,6 +18,7 @@ export const BaulesListRoute: React.FC = () => {
     baules,
     loadAlbums: storeLoadAlbums,
     loadLoosePhotos,
+    loadBaulRecuerdos,
     subscription,
     isLoading
   } = useAppStore();
@@ -33,7 +34,14 @@ export const BaulesListRoute: React.FC = () => {
 
     try {
       setIsLoadingAlbums(true);
-      await Promise.all([storeLoadAlbums(baul.id), loadLoosePhotos(baul.id)]);
+      // Prefetches everything BaulRoute's own init effect would otherwise need to load on
+      // mount (see its comment) — keeping this in sync with that list matters: if this ever
+      // fetches less than BaulRoute checks for, opening a baúl shows this "Cargando baúl..."
+      // overlay and then, right after, BaulRoute's own "Cargando..." screen for whatever
+      // wasn't prefetched here — two different loading treatments back to back that read as
+      // a flicker/glitch (missed when the recuerdos tab was added: this call still only
+      // prefetched albums/loosePhotos, not baulRecuerdos).
+      await Promise.all([storeLoadAlbums(baul.id), loadLoosePhotos(baul.id), loadBaulRecuerdos(baul.id)]);
       navigate(`/baules/${baul.id}`);
     } catch (error) {
       console.error('Error loading albums:', error);
