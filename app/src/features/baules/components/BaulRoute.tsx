@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AlbumsView } from '@/app/components/AlbumsView';
 import { BlockingLoadingOverlay } from '@/app/components/BlockingLoadingOverlay';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
@@ -7,17 +7,18 @@ import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useBaulScope } from '@/hooks/useBaulScope';
 import { isAdminRole } from '@/utils/roleUtils';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { baulId } = useParams();
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
 
   const {
-    baules,
     albums,
     loosePhotos,
     sharedUsers,
@@ -25,70 +26,14 @@ export const BaulRoute: React.FC = () => {
     removalRequests,
     userProfile,
     loadAlbumPhotos,
-    loadAlbums,
-    loadLoosePhotos,
-    loadBaulRecuerdos,
     addBaulRecuerdo,
-    fetchData,
     renameBaul,
     createPersona,
   } = useAppStore();
 
-  const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAlbumPhotos, setIsLoadingAlbumPhotos] = useState(false);
-  const [refreshFailed, setRefreshFailed] = useState(false);
 
-  const baul = baules.find(b => b.id === baulId);
-
-  const attemptRefresh = async () => {
-    setIsLoading(true);
-    const result = await run(() => fetchData(), {
-      key: 'refresh-baul',
-      errorMessage: 'No se pudo cargar el baúl. Comprueba tu conexión e inténtalo de nuevo.',
-    });
-    setRefreshFailed(!result.ok);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    async function initBaul() {
-      if (!baulId || !auth.isAuthenticated) return;
-
-      // Si el baúl no está en la lista de baúles, intentamos recargar los datos del usuario
-      if (!baul) {
-        await attemptRefresh();
-        return; // El siguiente renderizado tendrá el baúl (si existe) y se ejecutará el siguiente if
-      }
-
-      // Capítulos y fotos sueltas puede que ya estén cargados: BaulesListRoute los carga él
-      // mismo antes de navegar aquí (para no mostrar la pantalla vacía un instante). Los
-      // recuerdos del baúl no se prefetchan en ningún otro sitio, así que se comprueban con
-      // su propia guarda independiente en vez de colgarse de la de capítulos.
-      //
-      // Leídos vía getState() (no reactivos) a propósito: si dependiéramos de los valores
-      // de albums/baulRecuerdos del hook de arriba, en cuanto una de las cargas de abajo
-      // resolviera (mientras las otras seguían en vuelo) este mismo efecto se volvería a
-      // disparar a medias — duplicando peticiones y parpadeando entre el loader y el
-      // contenido la primera vez que se abre un baúl (visto en producción).
-      const { albums, baulRecuerdos } = useAppStore.getState();
-      const needsAlbums = !albums[baulId];
-      const needsRecuerdos = !baulRecuerdos[baulId];
-
-      if (needsAlbums || needsRecuerdos) {
-        setIsLoading(true);
-        await run(() => Promise.all([
-          ...(needsAlbums ? [loadAlbums(baulId), loadLoosePhotos(baulId)] : []),
-          ...(needsRecuerdos ? [loadBaulRecuerdos(baulId)] : []),
-        ]), {
-          errorMessage: 'Error al cargar los capítulos del baúl',
-        });
-        setIsLoading(false);
-      }
-    }
-
-    initBaul();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baulId, auth.isAuthenticated, baul, loadAlbums, loadLoosePhotos, loadBaulRecuerdos, fetchData]);
+  const { baul, isLoading, refreshFailed, retry } = useBaulScope(baulId);
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
 
@@ -99,7 +44,7 @@ export const BaulRoute: React.FC = () => {
           title="No se ha podido cargar el baúl"
           message="Comprueba tu conexión e inténtalo de nuevo."
           actionLabel="Reintentar"
-          onAction={attemptRefresh}
+          onAction={retry}
         />
       );
     }
@@ -120,14 +65,14 @@ export const BaulRoute: React.FC = () => {
     // Una foto suelta no tiene albumId: sus fotos ya están cargadas por el efecto de
     // inicialización (loadLoosePhotos), así que no hace falta cargar nada antes de navegar.
     if (!albumId) {
-      navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photoId}`);
+      navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photoId}`, { state: { backgroundLocation: location } });
       return;
     }
 
     setIsLoadingAlbumPhotos(true);
     const result = await run(() => loadAlbumPhotos(albumId), { errorMessage: 'Error al cargar las fotos' });
     setIsLoadingAlbumPhotos(false);
-    if (result.ok) navigate(`/baules/${baul.id}/albumes/${albumId}/foto/${photoId}`);
+    if (result.ok) navigate(`/baules/${baul.id}/albumes/${albumId}/foto/${photoId}`, { state: { backgroundLocation: location } });
   };
 
   const handleCreatePersona = async (nickname: string): Promise<boolean> => {

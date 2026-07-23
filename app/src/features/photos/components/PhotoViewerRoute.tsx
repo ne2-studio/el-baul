@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/app/components/PhotoViewer';
 import { Photo } from '@/app/components/PhotosView';
+import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useBaulScope } from '@/hooks/useBaulScope';
 import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
 import { api } from '@/api';
@@ -13,15 +15,32 @@ import { Capacitor } from '@capacitor/core';
 
 export const PhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { baulId, albumId, photoId } = useParams();
   const auth = useAuth();
   const { run } = useAsyncAction();
 
-  const { baules, albums, photos, recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, setAlbumCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
+  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
-  const baul = baules.find(b => b.id === baulId);
-  const album = albums[baulId!]?.find(a => a.id === albumId);
-  const photo = photos[albumId!]?.find(p => p.id === photoId);
+  const { photos, recuerdos, loadRecuerdos, loadAlbumPhotos, addRecuerdo, submitRemovalRequest, setBaulCover, setAlbumCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
+
+  const { baul, albums, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
+  const album = albums?.find(a => a.id === albumId);
+
+  const [photosFailed, setPhotosFailed] = useState(false);
+
+  const fetchAlbumPhotos = async () => {
+    if (!albumId) return;
+    const result = await run(() => loadAlbumPhotos(albumId), { errorMessage: 'Error al cargar las fotos' });
+    setPhotosFailed(!result.ok);
+  };
+
+  useEffect(() => {
+    if (auth.isAuthenticated && albumId && !photos[albumId]) {
+      fetchAlbumPhotos();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.isAuthenticated, albumId, photos, loadAlbumPhotos]);
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -30,7 +49,48 @@ export const PhotoViewerRoute: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, photoId, loadRecuerdos]);
 
-  if (!baul || !album || !photo) return <div className="p-8 text-center">Cargando foto...</div>;
+  if (isLoadingBaul) return <div className="p-8 text-center">Cargando foto...</div>;
+
+  if (!baul) {
+    if (refreshFailed) {
+      return (
+        <ErrorScreen
+          title="No se ha podido cargar el baúl"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          actionLabel="Reintentar"
+          onAction={retry}
+        />
+      );
+    }
+    return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
+  }
+
+  if (!album) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
+
+  if (!photos[albumId!]) {
+    if (photosFailed) {
+      return (
+        <ErrorScreen
+          title="No se han podido cargar las fotos"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          actionLabel="Reintentar"
+          onAction={fetchAlbumPhotos}
+        />
+      );
+    }
+    return <div className="p-8 text-center">Cargando foto...</div>;
+  }
+
+  const photo = photos[albumId!]?.find(p => p.id === photoId);
+  if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
+
+  // Si el visor se abrió desde dentro de la app (backgroundLocation presente), un back de
+  // navegador vuelve exactamente a esa pantalla en su mismo scroll; si se accedió por enlace
+  // directo no hay nada a lo que volver, así que se navega explícitamente al álbum.
+  const closeViewer = () => {
+    if (backgroundLocation) navigate(-1);
+    else navigate(`/baules/${baul.id}/albumes/${album.id}`, { replace: true });
+  };
 
   const handleRequestRemoval = async (photo: Photo, reason: string): Promise<boolean> => {
     if (!auth.isAuthenticated) return false;
@@ -67,7 +127,7 @@ export const PhotoViewerRoute: React.FC = () => {
       successMessage: 'Foto movida',
       errorMessage: 'Error al mover la foto',
     });
-    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
+    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`, { replace: true });
     return result.ok;
   };
 
@@ -76,7 +136,7 @@ export const PhotoViewerRoute: React.FC = () => {
       successMessage: 'La foto ha sido retirada',
       errorMessage: 'Error al retirar la foto',
     });
-    if (result.ok) navigate(`/baules/${baul.id}/albumes/${album.id}`);
+    if (result.ok) closeViewer();
     return result.ok;
   };
 
@@ -102,8 +162,11 @@ export const PhotoViewerRoute: React.FC = () => {
     <PhotoViewer
       photo={photo}
       photos={photos[album.id] || []}
-      onClose={() => navigate(`/baules/${baul.id}/albumes/${album.id}`)}
-      onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${newPhoto.id}`)}
+      onClose={closeViewer}
+      onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${newPhoto.id}`, {
+        replace: true,
+        state: backgroundLocation ? { backgroundLocation } : undefined,
+      })}
       onRequestRemoval={handleRequestRemoval}
       isAdmin={isAdminRole(baul.role)}
       onSetBaulCover={handleSetBaulCover}
@@ -111,7 +174,7 @@ export const PhotoViewerRoute: React.FC = () => {
       onMovePhoto={handleMovePhoto}
       onChangeDate={handleChangeDate}
       onDeletePhoto={handleDeletePhoto}
-      allAlbums={albums[baul.id] || []}
+      allAlbums={albums || []}
       currentAlbum={album}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}

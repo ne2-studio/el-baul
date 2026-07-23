@@ -75,28 +75,28 @@ function App() {
 
   const { run, isPending } = useAsyncAction();
 
+  // Cuando el visor de foto se abre desde dentro de la app (álbum, fotos sueltas, recuerdos),
+  // el origen viaja como location.state.backgroundLocation: el árbol de rutas principal sigue
+  // renderizando esa pantalla de fondo (nunca se desmonta, así que conserva scroll y estado
+  // local) y un segundo <Routes> pinta el visor encima. Sin backgroundLocation (deep link,
+  // refresco, enlace compartido) el visor se renderiza a pantalla completa como cualquier otra ruta.
+  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
+
   // Loaded once per session; features gated by it stay off until the fetch resolves.
   useEffect(() => {
     useAppConfigStore.getState().fetchAppConfig();
   }, []);
 
-  // Redirect to sign-in whenever the user isn't authenticated and isn't on a public route.
+  // Mirrored into api.ts synchronously during render, not in an effect: on a hard refresh,
+  // ProtectedRoute can let a deep child route mount in the very same commit where
+  // auth.isAuthenticated first flips to true, and passive effects fire child-first — a
+  // child's data-loading effect (e.g. useBaulScope) would then run before this component's
+  // own effect got a chance to push the token, calling the API with none attached and
+  // getting a 401. A plain synchronous assignment has no such ordering risk.
+  setAccessToken(auth.user?.access_token ?? null);
+
+  // (Re)load domain data whenever the OIDC user changes.
   useEffect(() => {
-    if (auth.isLoading || auth.isAuthenticated || location.pathname === '/callback') return;
-
-    const isPublicPath =
-      location.pathname === '/' ||
-      location.pathname.startsWith('/invitacion') ||
-      location.pathname.startsWith('/onboarding');
-
-    if (!isPublicPath) {
-      navigate('/');
-    }
-  }, [auth.isLoading, auth.isAuthenticated, location.pathname, navigate]);
-
-  // Push the token into api.ts and (re)load domain data whenever the OIDC user changes.
-  useEffect(() => {
-    setAccessToken(auth.user?.access_token ?? null);
     setAuthenticated(auth.isAuthenticated);
 
     if (auth.isAuthenticated) {
@@ -160,7 +160,7 @@ function App() {
       <ScrollToTop />
       <NativeShareHandler />
 
-      <Routes>
+      <Routes location={backgroundLocation || location}>
         {/* Public Routes */}
         <Route path="/" element={
           <PublicRoute>
@@ -322,6 +322,24 @@ function App() {
           </ProtectedRoute>
         } />
       </Routes>
+
+      {/* Visor de foto como overlay: solo se pinta cuando hay una pantalla de fondo que
+          preservar (ver backgroundLocation arriba). Coincide con la ubicación real (no con
+          backgroundLocation), así que se muestra encima de la pantalla de fondo sin desmontarla. */}
+      {backgroundLocation && (
+        <Routes>
+          <Route path="/baules/:baulId/albumes/:albumId/foto/:photoId" element={
+            <ProtectedRoute>
+              <PhotoViewerRoute />
+            </ProtectedRoute>
+          } />
+          <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
+            <ProtectedRoute>
+              <LoosePhotoViewerRoute />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      )}
 
       {/* Profile Menu Modal */}
       {showProfileMenu && (

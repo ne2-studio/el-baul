@@ -1,25 +1,42 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotosView } from '@/app/components/PhotosView';
 import { Album } from '@/app/components/AlbumsView';
+import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useBaulScope } from '@/hooks/useBaulScope';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
 
 export const LoosePhotosRoute: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { baulId } = useParams();
-  const { baules, albums, loosePhotos, movePhotos, changePhotoDateBatch, createAlbum } = useAppStore();
+  const { movePhotos, changePhotoDateBatch, createAlbum } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
 
-  const baul = baules.find(b => b.id === baulId);
+  const { baul, albums, loosePhotos, isLoading, refreshFailed, retry } = useBaulScope(baulId);
 
-  if (!baul) return <div className="p-8 text-center">Cargando...</div>;
+  if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
 
-  const photos = loosePhotos[baul.id] || [];
+  if (!baul) {
+    if (refreshFailed) {
+      return (
+        <ErrorScreen
+          title="No se ha podido cargar el baúl"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          actionLabel="Reintentar"
+          onAction={retry}
+        />
+      );
+    }
+    return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
+  }
+
+  const photos = loosePhotos || [];
   const looseAlbum: Album = {
     id: 'sueltas',
     name: 'Fotos sueltas',
@@ -67,9 +84,9 @@ export const LoosePhotosRoute: React.FC = () => {
     <PhotosView
       album={looseAlbum}
       photos={photos}
-      allAlbums={albums[baul.id] || []}
+      allAlbums={albums || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
-      onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photo.id}`)}
+      onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photo.id}`, { state: { backgroundLocation: location } })}
       onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>
         navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
       }
