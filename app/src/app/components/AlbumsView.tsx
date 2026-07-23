@@ -63,6 +63,7 @@ interface AlbumsViewProps {
   onSelectPersona?: (persona: SharedUser) => void;
   onCreateRecuerdo?: (text: string) => Promise<boolean>;
   onOpenAlbumFromRecuerdo?: (albumId: string) => void;
+  onOpenPhotoFromRecuerdo?: (photoId: string, albumId?: string) => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
@@ -87,6 +88,7 @@ export function AlbumsView({
   onSelectPersona,
   onCreateRecuerdo,
   onOpenAlbumFromRecuerdo,
+  onOpenPhotoFromRecuerdo,
   onRemovalRequests,
   pendingRemovalRequestsCount,
   onUpdateBaulInfo,
@@ -372,7 +374,7 @@ export function AlbumsView({
         )}
 
         {activeTab === 'recuerdos' && (
-          <RecuerdosTab recuerdos={recuerdos} onOpenAlbum={onOpenAlbumFromRecuerdo} />
+          <RecuerdosTab recuerdos={recuerdos} onOpenAlbum={onOpenAlbumFromRecuerdo} onOpenPhoto={onOpenPhotoFromRecuerdo} />
         )}
       </div>
 

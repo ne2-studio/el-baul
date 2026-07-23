@@ -7,6 +7,7 @@ import { getRelativeTime } from '../utils/timeUtils';
 interface RecuerdosTabProps {
   recuerdos: Recuerdo[];
   onOpenAlbum?: (albumId: string) => void;
+  onOpenPhoto?: (photoId: string, albumId?: string) => void;
 }
 
 const AVATAR_COLORS = [
@@ -32,7 +33,7 @@ function getAvatarColor(name: string): string {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
 }
 
-export function RecuerdosTab({ recuerdos, onOpenAlbum }: RecuerdosTabProps) {
+export function RecuerdosTab({ recuerdos, onOpenAlbum, onOpenPhoto }: RecuerdosTabProps) {
   if (recuerdos.length === 0) {
     return (
       <EmptyState
@@ -63,31 +64,34 @@ export function RecuerdosTab({ recuerdos, onOpenAlbum }: RecuerdosTabProps) {
             <div className="flex-1 min-w-0">
               <p className="text-foreground text-base leading-relaxed">{recuerdo.text}</p>
 
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <p className="text-muted-foreground text-xs">
-                  {userName} · {getRelativeTime(new Date(recuerdo.createdAt))}
-                </p>
+              <p className="text-muted-foreground text-xs mt-2">
+                {userName} · {getRelativeTime(new Date(recuerdo.createdAt))}
+              </p>
 
-                {recuerdo.photoId && (
-                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-secondary rounded-full px-2 py-0.5">
-                    {recuerdo.photoThumbnailUrl ? (
-                      <img src={recuerdo.photoThumbnailUrl} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                    ) : (
-                      <ImageIcon className="w-3 h-3" strokeWidth={1.5} />
-                    )}
-                    en una foto
-                  </span>
-                )}
+              {recuerdo.photoId && (
+                <button
+                  onClick={() => onOpenPhoto?.(recuerdo.photoId!, recuerdo.albumId)}
+                  className="mt-3 block w-full rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
+                >
+                  {recuerdo.photoThumbnailUrl ? (
+                    <img src={recuerdo.photoThumbnailUrl} alt="" className="w-full max-h-36 object-cover rounded-xl" />
+                  ) : (
+                    <span className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-secondary rounded-xl px-3 py-3">
+                      <ImageIcon className="w-4 h-4" strokeWidth={1.5} />
+                      Ver foto
+                    </span>
+                  )}
+                </button>
+              )}
 
-                {!recuerdo.photoId && recuerdo.albumId && (
-                  <button
-                    onClick={() => onOpenAlbum?.(recuerdo.albumId!)}
-                    className="text-xs text-primary bg-primary/10 hover:bg-primary/15 transition-colors rounded-full px-2 py-0.5"
-                  >
-                    en «{recuerdo.albumName ?? 'un capítulo'}»
-                  </button>
-                )}
-              </div>
+              {!recuerdo.photoId && recuerdo.albumId && (
+                <button
+                  onClick={() => onOpenAlbum?.(recuerdo.albumId!)}
+                  className="mt-2 inline-flex text-xs text-primary bg-primary/10 hover:bg-primary/15 transition-colors rounded-full px-2 py-0.5"
+                >
+                  en «{recuerdo.albumName ?? 'un capítulo'}»
+                </button>
+              )}
             </div>
           </div>
         );

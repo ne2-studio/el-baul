@@ -107,6 +107,22 @@ export const BaulRoute: React.FC = () => {
     if (result.ok) navigate(`/baules/${baul.id}/albumes/${album.id}`);
   };
 
+  const handleOpenPhotoFromRecuerdo = async (photoId: string, albumId?: string) => {
+    if (!auth.isAuthenticated) return;
+
+    // Una foto suelta no tiene albumId: sus fotos ya están cargadas por el efecto de
+    // inicialización (loadLoosePhotos), así que no hace falta cargar nada antes de navegar.
+    if (!albumId) {
+      navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photoId}`);
+      return;
+    }
+
+    setIsLoadingAlbumPhotos(true);
+    const result = await run(() => loadAlbumPhotos(albumId), { errorMessage: 'Error al cargar las fotos' });
+    setIsLoadingAlbumPhotos(false);
+    if (result.ok) navigate(`/baules/${baul.id}/albumes/${albumId}/foto/${photoId}`);
+  };
+
   const handleCreatePersona = async (nickname: string): Promise<boolean> => {
     const result = await run(() => createPersona(baul.id, nickname), {
       errorMessage: 'Error al añadir la persona',
@@ -153,6 +169,7 @@ export const BaulRoute: React.FC = () => {
         onSelectPersona={(persona) => navigate(`/baules/${baul.id}/personas/${persona.id}`)}
         onCreateRecuerdo={handleCreateRecuerdo}
         onOpenAlbumFromRecuerdo={(albumId) => handleSelectAlbum({ id: albumId })}
+        onOpenPhotoFromRecuerdo={handleOpenPhotoFromRecuerdo}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}
