@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
@@ -7,7 +7,7 @@ import { MoveModal } from './MoveModal';
 import { DateModal } from './DateModal';
 import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 import { TabButton } from './TabButton';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil, Trash2, BookOpen, X } from 'lucide-react';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, CheckSquare, FolderInput, Calendar, MoreVertical, Pencil, Trash2, BookOpen, X } from 'lucide-react';
 import { Album } from './AlbumsView';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
 import { DeleteAlbumModal } from './DeleteAlbumModal';
@@ -17,6 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
@@ -136,13 +137,6 @@ export function PhotosView({
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Auto-exit selection when nothing is selected
-  useEffect(() => {
-    if (selectionMode && selectedIds.size === 0) {
-      setSelectionMode(false);
-    }
-  }, [selectedIds.size, selectionMode]);
-
   const [showBatchMoveModal, setShowBatchMoveModal] = useState(false);
   const [batchMoveTargetId, setBatchMoveTargetId] = useState('');
   const [batchMoveItems, setBatchMoveItems] = useState<BatchOperationItem[] | null>(null);
@@ -155,6 +149,7 @@ export function PhotosView({
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
+      setSelectionMode(next.size > 0);
       return next;
     });
   };
@@ -162,6 +157,19 @@ export function PhotosView({
   const handleLongPress = (photoId: string) => {
     setSelectionMode(true);
     setSelectedIds(new Set([photoId]));
+  };
+
+  // Toggles an entire month-group at once (swimlane click): selects it fully unless
+  // every photo in it is already selected, in which case it deselects the group.
+  const handleToggleGroup = (groupPhotos: Photo[]) => {
+    const groupIds = groupPhotos.map(p => p.id);
+    const allSelected = groupIds.length > 0 && groupIds.every(id => selectedIds.has(id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      groupIds.forEach(id => allSelected ? next.delete(id) : next.add(id));
+      setSelectionMode(next.size > 0);
+      return next;
+    });
   };
 
   const exitSelection = () => {
@@ -272,6 +280,11 @@ export function PhotosView({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => setSelectionMode(true)}>
+                    <CheckSquare className="w-4 h-4 mr-2" />
+                    Seleccionar fotos
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setShowEditModal(true)}>
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar información del capítulo
@@ -361,12 +374,27 @@ export function PhotosView({
             />
           ) : (
             <div className="space-y-6">
-              {groupPhotos(photos).map((group) => (
+              {groupPhotos(photos).map((group) => {
+                const groupAllSelected = group.photos.every((p) => selectedIds.has(p.id));
+                return (
                 <div key={group.label}>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2"
-                    style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
-                    {group.label}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleGroup(group.photos)}
+                    className="group/swimlane flex items-center gap-1.5 mb-2 -ml-0.5 px-0.5 py-0.5 rounded"
+                  >
+                    {selectionMode && (
+                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        groupAllSelected ? 'bg-primary border-primary' : 'bg-background/60 border-muted-foreground/40'
+                      }`}>
+                        {groupAllSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                      </span>
+                    )}
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide group-hover/swimlane:text-foreground transition-colors"
+                      style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
+                      {group.label}
+                    </p>
+                  </button>
                   <PhotoGrid
                     photos={group.photos}
                     selectionMode={selectionMode}
@@ -376,7 +404,8 @@ export function PhotosView({
                     onLongPress={handleLongPress}
                   />
                 </div>
-              ))}
+                );
+              })}
             </div>
           )
         )}
@@ -736,13 +765,30 @@ function PhotoCell({
           <MessageCircle className="w-3.5 h-3.5 text-foreground/70" strokeWidth={1.5} />
         </div>
       )}
-      {selectionMode && (
-        <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-          isSelected ? 'bg-primary border-primary' : 'bg-background/60 border-white'
-        }`}>
-          {isSelected && <Check className="w-3 h-3 text-white" />}
-        </div>
-      )}
+      {/* Selection circle — top-left, like Google Photos: hidden until the photo is hovered,
+          filled on hover (preview) or when actually selected. Always visible once selection
+          mode is active. A click here selects this photo without opening it. */}
+      <div
+        role="checkbox"
+        aria-checked={isSelected}
+        aria-label={isSelected ? 'Quitar de la selección' : 'Seleccionar foto'}
+        tabIndex={-1}
+        onClick={(e) => {
+          e.stopPropagation();
+          selectionMode ? onToggleSelect(photo.id) : onLongPress(photo.id);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+        className={`group/checkbox absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
+          selectionMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        } ${
+          isSelected ? 'bg-primary border-primary' : 'bg-background/60 border-white hover:bg-primary hover:border-primary'
+        }`}
+      >
+        <Check className={`w-3 h-3 text-white transition-opacity ${
+          isSelected ? 'opacity-100' : 'opacity-0 group-hover/checkbox:opacity-100'
+        }`} />
+      </div>
     </button>
   );
 }
