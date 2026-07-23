@@ -39,6 +39,17 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
             .Where(r => r.PhotoId != null && r.AlbumId == null)
             .ToListAsync();
 
+    public async Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync() =>
+        await dbContext.Database
+            .SqlQueryRaw<RecuerdoBaulIdCandidate>(
+                "SELECT \"Id\", \"PhotoId\", \"AlbumId\" FROM \"Recuerdos\" WHERE \"BaulId\" IS NULL")
+            .ToListAsync();
+
+    public async Task SetBaulIdAsync(Guid recuerdoId, Guid baulId) =>
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "UPDATE \"Recuerdos\" SET \"BaulId\" = {0} WHERE \"Id\" = {1}",
+            baulId, recuerdoId);
+
     public async Task CreateAsync(Recuerdo recuerdo)
     {
         dbContext.Recuerdos.Add(recuerdo);

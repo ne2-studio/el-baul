@@ -29,6 +29,22 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
     public Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync() =>
         Task.FromResult(_recuerdos.Where(r => r.PhotoId != null && r.AlbumId == null).AsEnumerable());
 
+    // Recuerdo.BaulId is a non-nullable Guid, so this fake uses Guid.Empty as the "missing"
+    // sentinel — SeedForBaul is what normally assigns a real BaulId, so a recuerdo added
+    // straight via CreateAsync without one stays Guid.Empty, mirroring a null BaulId column.
+    public Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync() =>
+        Task.FromResult(_recuerdos
+            .Where(r => r.BaulId == Guid.Empty)
+            .Select(r => new RecuerdoBaulIdCandidate(r.Id, r.PhotoId, r.AlbumId))
+            .AsEnumerable());
+
+    public Task SetBaulIdAsync(Guid recuerdoId, Guid baulId)
+    {
+        var index = _recuerdos.FindIndex(r => r.Id == recuerdoId);
+        if (index >= 0) _recuerdos[index] = _recuerdos[index] with { BaulId = baulId };
+        return Task.CompletedTask;
+    }
+
     public Task CreateAsync(Recuerdo recuerdo)
     {
         _recuerdos.Add(recuerdo);
