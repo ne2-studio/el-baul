@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Share2, UserX } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Share2, UserX } from 'lucide-react';
 import { SharedUser, BaulRole } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 import { RevokeAccessModal } from './RevokeAccessModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
 interface PersonaDetailScreenProps {
   persona: SharedUser;
@@ -42,13 +49,43 @@ export function PersonaDetailScreen({
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
         <div className="max-w-2xl mx-auto px-6 py-4">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm">Volver</span>
-          </button>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm">Volver</span>
+            </button>
+
+            {canManage && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+                    aria-label="Opciones de la persona"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {isPending && (
+                    <DropdownMenuItem onClick={onShareInvite}>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Compartir invitación
+                    </DropdownMenuItem>
+                  )}
+
+                  {isPending && <DropdownMenuSeparator />}
+
+                  <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
+                    <UserX className="w-4 h-4 mr-2" />
+                    Quitar acceso
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </div>
 
@@ -111,7 +148,7 @@ export function PersonaDetailScreen({
           )}
         </div>
 
-        {canManage && (
+        {canManage && !isPending && (
           <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
             <p
               className="text-xs text-muted-foreground uppercase tracking-wide"
@@ -120,37 +157,17 @@ export function PersonaDetailScreen({
               Gestión
             </p>
 
-            {isPending && (
-              <button
-                onClick={onShareInvite}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm text-primary font-medium hover:bg-secondary transition-colors"
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">Rol</label>
+              <select
+                value={persona.role}
+                onChange={(e) => onChangeRole(e.target.value as BaulRole)}
+                className="w-full text-sm px-3 py-2.5 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <Share2 className="w-4 h-4" />
-                Compartir invitación
-              </button>
-            )}
-
-            {!isPending && (
-              <div>
-                <label className="text-xs text-muted-foreground mb-1.5 block">Rol</label>
-                <select
-                  value={persona.role}
-                  onChange={(e) => onChangeRole(e.target.value as BaulRole)}
-                  className="w-full text-sm px-3 py-2.5 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="colaborador">Colaborador</option>
-                  <option value="administrador">Administrador</option>
-                </select>
-              </div>
-            )}
-
-            <button
-              onClick={() => setShowRevokeModal(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm text-destructive hover:opacity-80 font-medium transition-colors"
-            >
-              <UserX className="w-4 h-4" />
-              Quitar acceso
-            </button>
+                <option value="colaborador">Colaborador</option>
+                <option value="administrador">Administrador</option>
+              </select>
+            </div>
           </div>
         )}
       </div>
