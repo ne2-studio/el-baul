@@ -15,6 +15,19 @@ interface PhotoStageProps {
 
 const SWIPE_THRESHOLD = 80;
 
+// Variantes como funciones de `custom` (en vez de objetos fijos) para que la foto que sale
+// también recoja la dirección actual: una vez desmontada del árbol de React, AnimatePresence
+// sigue reevaluando su variante "exit" con el último `custom` que le pasemos (ver `custom` en
+// <AnimatePresence> más abajo). Con un objeto fijo, la foto saliente quedaría con la dirección
+// que tenía en el momento en que ELLA ENTRÓ — coincide en swipes consecutivos del mismo sentido,
+// pero en la primera inversión de sentido esa foto saliente animaría hacia el lado equivocado
+// mientras la entrante (creada en el mismo render, con la dirección ya correcta) sí acierta.
+const variants = {
+  enter: (dir: number) => ({ x: dir >= 0 ? '100%' : '-100%', opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir >= 0 ? '-100%' : '100%', opacity: 0 }),
+};
+
 // Área central del visor: la foto a pantalla completa, con navegación por gestos de swipe
 // (móvil y ratón, vía drag) y botones (escritorio), animada como un carrusel.
 export function PhotoStage({ photoKey, src, alt, direction, hasPrevious, hasNext, onPrevious, onNext }: PhotoStageProps) {
@@ -43,9 +56,10 @@ export function PhotoStage({ photoKey, src, alt, direction, hasPrevious, hasNext
           src={src}
           alt={alt}
           custom={direction}
-          initial={{ x: direction >= 0 ? '100%' : '-100%', opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: direction >= 0 ? '-100%' : '100%', opacity: 0 }}
+          variants={variants}
+          initial="enter"
+          animate="center"
+          exit="exit"
           transition={{ duration: 0.25, ease: 'easeOut' }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
