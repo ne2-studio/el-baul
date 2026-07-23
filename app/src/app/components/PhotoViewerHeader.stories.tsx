@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { BookImage, Calendar, FolderInput, Trash2 } from 'lucide-react';
 import { PhotoViewerHeader } from './PhotoViewerHeader';
 
 const meta = {
@@ -26,9 +27,9 @@ export const WithActions: Story = {
     totalCount: 12,
     onClose: () => alert('onClose clicked'),
     menuItems: [
-      { key: 'album-cover', label: 'Establecer como portada del capítulo', onSelect: () => alert('Establecer como portada del capítulo clicked') },
-      { key: 'move', label: 'Mover a otro capítulo', onSelect: () => alert('Mover a otro capítulo clicked') },
-      { key: 'date', label: 'Cambiar fecha', onSelect: () => alert('Cambiar fecha clicked') },
+      { key: 'album-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => alert('Establecer como portada del capítulo clicked') },
+      { key: 'move', label: 'Mover a otro capítulo', icon: FolderInput, onSelect: () => alert('Mover a otro capítulo clicked') },
+      { key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => alert('Cambiar fecha clicked') },
     ],
   },
 };
@@ -39,8 +40,8 @@ export const WithDestructiveAction: Story = {
     totalCount: 12,
     onClose: () => alert('onClose clicked'),
     menuItems: [
-      { key: 'date', label: 'Cambiar fecha', onSelect: () => alert('Cambiar fecha clicked') },
-      { key: 'delete', label: 'Retirar foto', onSelect: () => alert('Retirar foto clicked'), variant: 'destructive' },
+      { key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => alert('Cambiar fecha clicked') },
+      { key: 'delete', label: 'Retirar foto', icon: Trash2, onSelect: () => alert('Retirar foto clicked'), variant: 'destructive' },
     ],
   },
 };

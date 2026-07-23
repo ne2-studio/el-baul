@@ -4,6 +4,7 @@ import { X, MoreVertical } from 'lucide-react';
 export interface PhotoViewerMenuItem {
   key: string;
   label: string;
+  icon: React.ComponentType<{ className?: string }>;
   onSelect: () => void;
   variant?: 'default' | 'destructive';
 }
@@ -60,10 +61,11 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
                       }}
                       className={
                         item.variant === 'destructive'
-                          ? 'w-full px-4 py-3 text-left text-destructive hover:bg-destructive/5 transition-colors text-sm font-medium'
-                          : 'w-full px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors text-sm'
+                          ? 'w-full flex items-center gap-2 px-4 py-3 text-left text-destructive hover:bg-destructive/5 transition-colors text-sm font-medium'
+                          : 'w-full flex items-center gap-2 px-4 py-3 text-left text-foreground/80 hover:bg-muted transition-colors text-sm'
                       }
                     >
+                      <item.icon className="w-4 h-4 shrink-0" />
                       {item.label}
                     </button>
                     {index < menuItems.length - 1 && (

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Download, BookImage, FolderInput, Calendar, Flag, Trash2 } from 'lucide-react';
 import { Photo } from './PhotosView';
+import { BaulIcon } from './BaulIcon';
 import { MoveModal } from './MoveModal';
 import { DateModal } from './DateModal';
 import { DeletePhotoModal } from './DeletePhotoModal';
@@ -126,25 +128,25 @@ export function PhotoViewer({
 
   const menuItems: PhotoViewerMenuItem[] = [];
   if (onDownloadPhoto) {
-    menuItems.push({ key: 'download', label: 'Descargar foto original', onSelect: () => onDownloadPhoto(photo) });
+    menuItems.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: () => onDownloadPhoto(photo) });
   }
   if (onSetAlbumCover) {
-    menuItems.push({ key: 'album-cover', label: 'Establecer como portada del capítulo', onSelect: () => onSetAlbumCover(photo) });
+    menuItems.push({ key: 'album-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => onSetAlbumCover(photo) });
   }
   if (isAdmin && onSetBaulCover) {
-    menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', onSelect: () => onSetBaulCover(photo) });
+    menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', icon: BaulIcon, onSelect: () => onSetBaulCover(photo) });
   }
   if (onMovePhoto && moveableAlbums.length > 0) {
-    menuItems.push({ key: 'move', label: 'Mover a otro capítulo', onSelect: () => setShowMoveModal(true) });
+    menuItems.push({ key: 'move', label: 'Mover a otro capítulo', icon: FolderInput, onSelect: () => setShowMoveModal(true) });
   }
   if (onChangeDate) {
-    menuItems.push({ key: 'date', label: 'Cambiar fecha', onSelect: () => setShowDateModal(true) });
+    menuItems.push({ key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => setShowDateModal(true) });
   }
   if (!isAdmin && onRequestRemoval) {
-    menuItems.push({ key: 'removal', label: 'Solicitar retirada', onSelect: () => setShowRemovalModal(true) });
+    menuItems.push({ key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => setShowRemovalModal(true) });
   }
   if (isAdmin && onDeletePhoto) {
-    menuItems.push({ key: 'delete', label: 'Retirar foto', onSelect: () => setShowDeleteModal(true), variant: 'destructive' });
+    menuItems.push({ key: 'delete', label: 'Retirar foto', icon: Trash2, onSelect: () => setShowDeleteModal(true), variant: 'destructive' });
   }
 
   const handleMoveSubmit = async () => {
