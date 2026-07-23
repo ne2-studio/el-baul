@@ -12,12 +12,12 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onClose: () => {},
-    onNavigateToProfile: () => {},
-    onNavigateToSubscription: () => {},
-    onNavigateToNotifications: () => {},
-    onNavigateToHelp: () => {},
-    onSignOut: () => {},
+    onClose: () => alert('onClose clicked'),
+    onNavigateToProfile: () => alert('onNavigateToProfile clicked'),
+    onNavigateToSubscription: () => alert('onNavigateToSubscription clicked'),
+    onNavigateToNotifications: () => alert('onNavigateToNotifications clicked'),
+    onNavigateToHelp: () => alert('onNavigateToHelp clicked'),
+    onSignOut: () => alert('onSignOut clicked'),
     userEmail: 'pedro@example.com',
     monetizationEnabled: true,
   },

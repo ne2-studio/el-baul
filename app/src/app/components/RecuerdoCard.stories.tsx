@@ -22,21 +22,21 @@ const recuerdo: Recuerdo = {
 export const Default: Story = {
   args: {
     recuerdo,
-    onUserClick: () => {},
+    onUserClick: () => alert('onUserClick clicked'),
   },
 };
 
 export const Own: Story = {
   args: {
     recuerdo: { ...recuerdo, isOwn: true },
-    onUserClick: () => {},
+    onUserClick: () => alert('onUserClick clicked'),
   },
 };
 
 export const WithAvatar: Story = {
   args: {
     recuerdo: { ...recuerdo, userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' },
-    onUserClick: () => {},
+    onUserClick: () => alert('onUserClick clicked'),
   },
 };
 
@@ -46,7 +46,7 @@ export const LongText: Story = {
       ...recuerdo,
       text: 'Este fue uno de esos días que se quedan grabados para siempre. Habíamos planeado la excursión durante semanas y, cuando por fin llegó el día, ni una sola nube en el cielo. Comimos en la orilla del río, contamos historias de la abuela y nos bañamos hasta que se puso el sol. No hace falta ni cerrar los ojos para volver a sentir ese calor en la piel.',
     },
-    onUserClick: () => {},
+    onUserClick: () => alert('onUserClick clicked'),
   },
 };
 

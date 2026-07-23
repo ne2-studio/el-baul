@@ -15,7 +15,7 @@ export const Default: Story = {
     title: 'Ups! Algo ha ido mal',
     message: 'No se ha podido cargar este baúl. Comprueba tu conexión e inténtalo de nuevo.',
     actionLabel: 'Reintentar',
-    onAction: () => {},
+    onAction: () => alert('onAction clicked'),
   },
 };
 
@@ -24,6 +24,6 @@ export const InvitationNotFound: Story = {
     title: 'Invitación no encontrada',
     message: 'Este enlace de invitación no es válido o ya ha sido usado.',
     actionLabel: 'Ir a mis baúles',
-    onAction: () => {},
+    onAction: () => alert('onAction clicked'),
   },
 };

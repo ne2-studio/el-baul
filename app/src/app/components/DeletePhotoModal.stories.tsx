@@ -12,8 +12,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onCancel: () => {},
-    onConfirm: () => {},
+    onCancel: () => alert('onCancel clicked'),
+    onConfirm: () => alert('onConfirm clicked'),
   },
 };
 

@@ -14,6 +14,6 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     photoId: 'photo-1',
-    onSubmit: (text) => console.log('recuerdo:', text),
+    onSubmit: (text) => alert(`onSubmit clicked: ${text}`),
   },
 };

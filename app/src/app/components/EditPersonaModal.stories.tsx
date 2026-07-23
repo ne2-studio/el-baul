@@ -24,9 +24,9 @@ const persona: SharedUser = {
 export const Default: Story = {
   args: {
     persona,
-    onCancel: () => {},
-    onSave: () => {},
-    onUploadAvatar: () => {},
+    onCancel: () => alert('onCancel clicked'),
+    onSave: () => alert('onSave clicked'),
+    onUploadAvatar: () => alert('onUploadAvatar clicked'),
   },
 };
 

@@ -22,7 +22,7 @@ export const Default: Story = {
   args: {
     albums,
     value: null,
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
@@ -31,7 +31,7 @@ export const WithCurrentAlbum: Story = {
     albums,
     currentAlbumId: '2',
     value: { type: 'existing', albumId: '2' },
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
@@ -39,7 +39,7 @@ export const CreatingNew: Story = {
   args: {
     albums,
     value: { type: 'new', name: 'Viaje a la playa' },
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
@@ -47,7 +47,7 @@ export const Interactive: Story = {
   args: {
     albums,
     value: null,
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
   render: function Render() {
     const [value, setValue] = useState<ChapterSelection | null>(null);

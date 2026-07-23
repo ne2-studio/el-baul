@@ -46,13 +46,13 @@ export const Default: Story = {
   args: {
     sharedUsers,
     currentUserEmail: 'yo@example.com',
-    onSelectPersona: () => {},
+    onSelectPersona: () => alert('onSelectPersona clicked'),
   },
 };
 
 export const Empty: Story = {
   args: {
     sharedUsers: [],
-    onSelectPersona: () => {},
+    onSelectPersona: () => alert('onSelectPersona clicked'),
   },
 };

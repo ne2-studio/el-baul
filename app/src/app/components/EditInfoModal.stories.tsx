@@ -16,8 +16,8 @@ export const Default: Story = {
     initialName: 'Familia Jimena',
     initialDescription: 'Nuestros momentos en familia',
     namePlaceholder: 'Nombre del baúl',
-    onCancel: () => {},
-    onSave: () => {},
+    onCancel: () => alert('onCancel clicked'),
+    onSave: () => alert('onSave clicked'),
   },
 };
 

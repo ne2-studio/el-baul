@@ -36,7 +36,7 @@ const requests: RemovalRequest[] = [
 export const Default: Story = {
   args: {
     requests,
-    onBack: () => {},
+    onBack: () => alert('onBack clicked'),
     onRemovePhoto: async () => true,
     onKeepPhoto: async () => true,
   },
@@ -45,7 +45,7 @@ export const Default: Story = {
 export const Empty: Story = {
   args: {
     requests: [],
-    onBack: () => {},
+    onBack: () => alert('onBack clicked'),
     onRemovePhoto: async () => true,
     onKeepPhoto: async () => true,
   },

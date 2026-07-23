@@ -16,7 +16,7 @@ export const Active: Story = {
     label: 'Fotos',
     count: 12,
     active: true,
-    onClick: () => {},
+    onClick: () => alert('onClick clicked'),
   },
 };
 
@@ -25,7 +25,7 @@ export const Inactive: Story = {
     label: 'Recuerdos',
     count: 3,
     active: false,
-    onClick: () => {},
+    onClick: () => alert('onClick clicked'),
   },
 };
 
@@ -34,7 +34,7 @@ export const WithoutCount: Story = {
     label: 'Personas',
     count: 0,
     active: false,
-    onClick: () => {},
+    onClick: () => alert('onClick clicked'),
   },
 };
 
@@ -43,7 +43,7 @@ export const InteractiveGroup: Story = {
     label: 'Fotos',
     count: 12,
     active: true,
-    onClick: () => {},
+    onClick: () => alert('onClick clicked'),
   },
   render: function Render() {
     const [active, setActive] = useState<'fotos' | 'recuerdos'>('fotos');

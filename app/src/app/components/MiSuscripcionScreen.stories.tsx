@@ -12,8 +12,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Gratuito: Story = {
   args: {
-    onBack: () => {},
-    onChangePlan: () => {},
+    onBack: () => alert('onBack clicked'),
+    onChangePlan: () => alert('onChangePlan clicked'),
     subscription: {
       currentPlan: 'gratuito',
       baulesUsed: 1,
@@ -25,8 +25,8 @@ export const Gratuito: Story = {
 
 export const Premium: Story = {
   args: {
-    onBack: () => {},
-    onChangePlan: () => {},
+    onBack: () => alert('onBack clicked'),
+    onChangePlan: () => alert('onChangePlan clicked'),
     subscription: {
       currentPlan: 'premium',
       baulesUsed: 2,

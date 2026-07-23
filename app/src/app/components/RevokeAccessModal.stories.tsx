@@ -13,8 +13,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     userName: 'Tío Juan',
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: () => alert('onConfirm clicked'),
+    onCancel: () => alert('onCancel clicked'),
   },
 };
 

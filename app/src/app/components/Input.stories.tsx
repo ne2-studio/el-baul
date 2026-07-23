@@ -16,7 +16,7 @@ export const Default: Story = {
     label: 'Nombre del baúl',
     placeholder: 'Ej. Vacaciones en familia',
     value: '',
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
@@ -26,7 +26,7 @@ export const WithHelperText: Story = {
     placeholder: 'Ej. Vacaciones en familia',
     value: '',
     helperText: 'Podés cambiarlo más adelante.',
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
@@ -37,7 +37,7 @@ export const Multiline: Story = {
     value: '',
     multiline: true,
     rows: 4,
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
@@ -45,7 +45,7 @@ export const Interactive: Story = {
   args: {
     label: 'Nombre del baúl',
     value: '',
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
   render: function Render() {
     const [value, setValue] = useState('');

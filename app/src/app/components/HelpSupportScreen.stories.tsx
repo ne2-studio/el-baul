@@ -12,10 +12,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onBack: () => {},
-    onOpenHelpCenter: () => {},
-    onReportBug: () => {},
-    onSendSuggestion: () => {},
-    onContactSupport: () => {},
+    onBack: () => alert('onBack clicked'),
+    onOpenHelpCenter: () => alert('onOpenHelpCenter clicked'),
+    onReportBug: () => alert('onReportBug clicked'),
+    onSendSuggestion: () => alert('onSendSuggestion clicked'),
+    onContactSupport: () => alert('onContactSupport clicked'),
   },
 };

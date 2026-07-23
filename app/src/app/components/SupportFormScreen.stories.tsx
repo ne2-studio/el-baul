@@ -13,23 +13,23 @@ type Story = StoryObj<typeof meta>;
 export const ReportBug: Story = {
   args: {
     title: 'Informar de un problema',
-    onBack: () => {},
-    onSubmit: async () => {},
+    onBack: () => alert('onBack clicked'),
+    onSubmit: async () => alert('onSubmit clicked'),
   },
 };
 
 export const Suggestion: Story = {
   args: {
     title: 'Enviar una sugerencia',
-    onBack: () => {},
-    onSubmit: async () => {},
+    onBack: () => alert('onBack clicked'),
+    onSubmit: async () => alert('onSubmit clicked'),
   },
 };
 
 export const Failing: Story = {
   args: {
     title: 'Hablar con soporte',
-    onBack: () => {},
+    onBack: () => alert('onBack clicked'),
     onSubmit: async () => {
       throw new Error('Request failed');
     },

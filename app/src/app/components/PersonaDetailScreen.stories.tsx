@@ -29,10 +29,10 @@ const pendingPersona: SharedUser = {
 };
 
 const sharedDefaults = {
-  onBack: () => {},
-  onEdit: () => {},
-  onShareInvite: () => {},
-  onChangeRole: () => {},
+  onBack: () => alert('onBack clicked'),
+  onEdit: () => alert('onEdit clicked'),
+  onShareInvite: () => alert('onShareInvite clicked'),
+  onChangeRole: () => alert('onChangeRole clicked'),
   onRevokeAccess: async () => true,
 };
 

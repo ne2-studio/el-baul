@@ -13,8 +13,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     title: 'Cambiar fecha de la foto',
-    onCancel: () => {},
-    onConfirm: () => {},
+    onCancel: () => alert('onCancel clicked'),
+    onConfirm: () => alert('onConfirm clicked'),
   },
 };
 

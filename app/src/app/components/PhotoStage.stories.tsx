@@ -21,8 +21,8 @@ export const Default: Story = {
     direction: 1,
     hasPrevious: true,
     hasNext: true,
-    onPrevious: () => {},
-    onNext: () => {},
+    onPrevious: () => alert('onPrevious clicked'),
+    onNext: () => alert('onNext clicked'),
   },
 };
 

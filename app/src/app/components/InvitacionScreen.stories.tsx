@@ -22,8 +22,8 @@ export const Default: Story = {
     baulNombre: 'Familia García',
     personaNickname: 'Marta',
     previewPhotos,
-    onUnirme: () => {},
-    onVerMas: () => {},
+    onUnirme: () => alert('onUnirme clicked'),
+    onVerMas: () => alert('onVerMas clicked'),
   },
 };
 
@@ -32,7 +32,7 @@ export const SinPreview: Story = {
     baulNombre: 'Familia García',
     personaNickname: 'Marta',
     previewPhotos: [],
-    onUnirme: () => {},
-    onVerMas: () => {},
+    onUnirme: () => alert('onUnirme clicked'),
+    onVerMas: () => alert('onVerMas clicked'),
   },
 };

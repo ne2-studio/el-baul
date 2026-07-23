@@ -33,17 +33,17 @@ const recuerdos: Recuerdo[] = [
 ];
 
 const sharedDefaults = {
-  onClose: () => {},
-  onPhotoChange: () => {},
+  onClose: () => alert('onClose clicked'),
+  onPhotoChange: () => alert('onPhotoChange clicked'),
   onRequestRemoval: async () => true,
-  onSetBaulCover: () => {},
-  onSetAlbumCover: () => {},
+  onSetBaulCover: () => alert('onSetBaulCover clicked'),
+  onSetAlbumCover: () => alert('onSetAlbumCover clicked'),
   onMovePhoto: async () => true,
   onChangeDate: async () => true,
   onDeletePhoto: async () => true,
-  onAddRecuerdo: () => {},
-  onUserClick: () => {},
-  onDownloadPhoto: () => {},
+  onAddRecuerdo: () => alert('onAddRecuerdo clicked'),
+  onUserClick: () => alert('onUserClick clicked'),
+  onDownloadPhoto: () => alert('onDownloadPhoto clicked'),
 };
 
 export const Default: Story = {

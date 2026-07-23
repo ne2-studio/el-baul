@@ -14,27 +14,27 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
 export const WithUnknownToggle: Story = {
   args: {
     allowUnknown: true,
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
 export const Prefilled: Story = {
   args: {
     initialValue: { year: 2021, month: 8, day: 3 },
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
 };
 
 export const Interactive: Story = {
   args: {
-    onChange: () => {},
+    onChange: () => alert('onChange clicked'),
   },
   render: function Render() {
     const [value, setValue] = useState<PhotoDate | null>(null);

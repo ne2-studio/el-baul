@@ -23,9 +23,9 @@ export const Default: Story = {
     title: 'Mover a otro capítulo',
     albums,
     selectedId: '',
-    onSelect: () => {},
-    onCancel: () => {},
-    onConfirm: () => {},
+    onSelect: () => alert('onSelect clicked'),
+    onCancel: () => alert('onCancel clicked'),
+    onConfirm: () => alert('onConfirm clicked'),
   },
 };
 
@@ -47,8 +47,8 @@ export const Interactive: Story = {
         albums={albums}
         selectedId={selectedId}
         onSelect={setSelectedId}
-        onCancel={() => {}}
-        onConfirm={() => {}}
+        onCancel={() => alert('onCancel clicked')}
+        onConfirm={() => alert('onConfirm clicked')}
       />
     );
   },

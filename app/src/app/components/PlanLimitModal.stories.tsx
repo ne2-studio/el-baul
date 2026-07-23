@@ -12,8 +12,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onClose: () => {},
-    onUpgradePlan: () => {},
+    onClose: () => alert('onClose clicked'),
+    onUpgradePlan: () => alert('onUpgradePlan clicked'),
     baulesUsed: 1,
     baulesLimit: 1,
   },
@@ -21,8 +21,8 @@ export const Default: Story = {
 
 export const HigherPlanLimit: Story = {
   args: {
-    onClose: () => {},
-    onUpgradePlan: () => {},
+    onClose: () => alert('onClose clicked'),
+    onUpgradePlan: () => alert('onUpgradePlan clicked'),
     baulesUsed: 5,
     baulesLimit: 5,
   },

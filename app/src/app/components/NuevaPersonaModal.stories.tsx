@@ -12,15 +12,15 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onCancel: () => {},
-    onSave: () => {},
+    onCancel: () => alert('onCancel clicked'),
+    onSave: () => alert('onSave clicked'),
   },
 };
 
 export const Submitting: Story = {
   args: {
-    onCancel: () => {},
-    onSave: () => {},
+    onCancel: () => alert('onCancel clicked'),
+    onSave: () => alert('onSave clicked'),
     isSubmitting: true,
   },
 };

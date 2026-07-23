@@ -12,23 +12,23 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onBack: () => {},
-    onSubmit: () => {},
+    onBack: () => alert('onBack clicked'),
+    onSubmit: () => alert('onSubmit clicked'),
   },
 };
 
 export const Onboarding: Story = {
   args: {
-    onBack: () => {},
-    onSubmit: () => {},
+    onBack: () => alert('onBack clicked'),
+    onSubmit: () => alert('onSubmit clicked'),
     isOnboarding: true,
   },
 };
 
 export const Submitting: Story = {
   args: {
-    onBack: () => {},
-    onSubmit: () => {},
+    onBack: () => alert('onBack clicked'),
+    onSubmit: () => alert('onSubmit clicked'),
     isSubmitting: true,
   },
 };

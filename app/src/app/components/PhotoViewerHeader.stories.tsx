@@ -15,7 +15,7 @@ export const NoActions: Story = {
   args: {
     currentIndex: 0,
     totalCount: 12,
-    onClose: () => {},
+    onClose: () => alert('onClose clicked'),
     menuItems: [],
   },
 };
@@ -24,11 +24,11 @@ export const WithActions: Story = {
   args: {
     currentIndex: 3,
     totalCount: 12,
-    onClose: () => {},
+    onClose: () => alert('onClose clicked'),
     menuItems: [
-      { key: 'album-cover', label: 'Establecer como portada del capítulo', onSelect: () => {} },
-      { key: 'move', label: 'Mover a otro capítulo', onSelect: () => {} },
-      { key: 'date', label: 'Cambiar fecha', onSelect: () => {} },
+      { key: 'album-cover', label: 'Establecer como portada del capítulo', onSelect: () => alert('Establecer como portada del capítulo clicked') },
+      { key: 'move', label: 'Mover a otro capítulo', onSelect: () => alert('Mover a otro capítulo clicked') },
+      { key: 'date', label: 'Cambiar fecha', onSelect: () => alert('Cambiar fecha clicked') },
     ],
   },
 };
@@ -37,10 +37,10 @@ export const WithDestructiveAction: Story = {
   args: {
     currentIndex: 3,
     totalCount: 12,
-    onClose: () => {},
+    onClose: () => alert('onClose clicked'),
     menuItems: [
-      { key: 'date', label: 'Cambiar fecha', onSelect: () => {} },
-      { key: 'delete', label: 'Retirar foto', onSelect: () => {}, variant: 'destructive' },
+      { key: 'date', label: 'Cambiar fecha', onSelect: () => alert('Cambiar fecha clicked') },
+      { key: 'delete', label: 'Retirar foto', onSelect: () => alert('Retirar foto clicked'), variant: 'destructive' },
     ],
   },
 };

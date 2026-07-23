@@ -22,14 +22,14 @@ const recuerdos: Recuerdo[] = [
 export const FewRecuerdos: Story = {
   args: {
     recuerdos: recuerdos.slice(0, 2),
-    onUserClick: () => {},
+    onUserClick: () => alert('onUserClick clicked'),
   },
 };
 
 export const ManyRecuerdos: Story = {
   args: {
     recuerdos,
-    onUserClick: () => {},
+    onUserClick: () => alert('onUserClick clicked'),
   },
 };
 
