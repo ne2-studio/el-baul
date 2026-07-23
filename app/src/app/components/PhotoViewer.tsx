@@ -220,21 +220,23 @@ export function PhotoViewer({
           onNext={handleNext}
         />
 
-        {/* Info & Recuerdos section */}
-        <div className="px-6 py-8 space-y-8 max-h-[50vh] overflow-y-auto">
-          {/* Date */}
-          {(photo.date || onChangeDate) && (
-            <button
-              onClick={() => onChangeDate && setShowDateModal(true)}
-              disabled={!onChangeDate}
-              className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
-            >
-              {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
-            </button>
-          )}
+        {/* Info & Recuerdos section: el conjunto no supera el 50% de la pantalla; dentro,
+            solo la fecha y la lista hacen scroll propio, mientras el input se queda fijo
+            abajo sin encogerse. */}
+        <div className="flex flex-col max-h-[50vh]">
+          <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
+            {/* Date */}
+            {(photo.date || onChangeDate) && (
+              <button
+                onClick={() => onChangeDate && setShowDateModal(true)}
+                disabled={!onChangeDate}
+                className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
+              >
+                {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
+              </button>
+            )}
 
-          {/* Recuerdos List & Input */}
-          <div className="space-y-6">
+            {/* Recuerdos List */}
             {!hasRecuerdos ? (
               <div className="text-center">
                 <p className="text-background/50 text-sm mb-2">
@@ -244,16 +246,16 @@ export function PhotoViewer({
             ) : (
               <RecuerdosList recuerdos={recuerdos} onUserClick={onUserClick} />
             )}
-
-            {onAddRecuerdo && (
-              <div className="pt-2">
-                <RecuerdoInput
-                  photoId={photo.id}
-                  onSubmit={handleAddRecuerdo}
-                />
-              </div>
-            )}
           </div>
+
+          {onAddRecuerdo && (
+            <div className="px-6 pb-6 pt-2 flex-shrink-0">
+              <RecuerdoInput
+                photoId={photo.id}
+                onSubmit={handleAddRecuerdo}
+              />
+            </div>
+          )}
         </div>
       </div>
 
