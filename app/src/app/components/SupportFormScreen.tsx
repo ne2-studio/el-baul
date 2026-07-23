@@ -80,7 +80,7 @@ export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreen
         <div className="flex items-start gap-3 bg-muted/50 rounded-xl p-4 mb-6">
           <Info className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Incluiremos algunos datos técnicos para poder ayudarte más rápido.
+            Recopilaremos algunos datos técnicos para poder ayudarte más rápido.
           </p>
         </div>
 
