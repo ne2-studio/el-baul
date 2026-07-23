@@ -38,6 +38,11 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Where(p => p.DateYear == null && p.Status == PhotoStatus.Active)
             .ToListAsync();
 
+    public async Task<IEnumerable<Photo>> GetWithCaptionAsync() =>
+        await dbContext.Photos.AsNoTracking()
+            .Where(p => p.Caption != null && p.Caption != "" && p.Status == PhotoStatus.Active)
+            .ToListAsync();
+
     public async Task CreateAsync(Photo photo)
     {
         dbContext.Photos.Add(photo);

@@ -9,6 +9,12 @@ public interface IPhotoRepository
     Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since);
     Task<IEnumerable<Photo>> GetPreviewPhotosAsync(Guid baulId, int limit);
     Task<IEnumerable<Photo>> GetUndatedAsync();
+
+    /// <summary>Active photos with a non-empty caption — used only by the one-off
+    /// migrate-photo-captions-to-recuerdos command (see
+    /// Tools/MigratePhotoCaptionsToRecuerdosCommand.cs).</summary>
+    Task<IEnumerable<Photo>> GetWithCaptionAsync();
+
     Task CreateAsync(Photo photo);
     Task UpdateAsync(Photo photo);
     Task DeleteAsync(Guid id);

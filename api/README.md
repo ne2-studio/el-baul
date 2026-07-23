@@ -196,6 +196,32 @@ it, it updates the DB as it goes. Progress and a final summary (updated / left n
 (unresolvable) / failed counts) are logged to stdout; exit code is `0` if nothing failed,
 `1` otherwise.
 
+### `migrate-photo-captions-to-recuerdos`
+
+Captions used to be the only way to add text to a photo; recuerdos replaced that. This
+finds every active photo with a non-empty caption, creates a recuerdo from it (authored by
+the photo's uploader, dated at the time the command runs — the original caption carries no
+timestamp of its own to preserve), and clears the photo's caption. Safe to re-run anytime
+(only looks at photos that still have a caption, so already-migrated photos are skipped on
+the next run) and safe to run while the app is serving traffic.
+
+```bash
+# Coolify / any docker deployment: find the running API container, then:
+docker exec <api-container> dotnet ElBaul.Api.dll migrate-photo-captions-to-recuerdos --dry-run
+docker exec <api-container> dotnet ElBaul.Api.dll migrate-photo-captions-to-recuerdos
+
+# Local dev (docker-compose service name is "api"):
+docker compose exec api dotnet ElBaul.Api.dll migrate-photo-captions-to-recuerdos --dry-run
+docker compose exec api dotnet ElBaul.Api.dll migrate-photo-captions-to-recuerdos
+
+# Running the API outside Docker (dotnet run/dotnet ElBaul.Api.dll directly):
+dotnet ElBaul.Api.dll migrate-photo-captions-to-recuerdos --dry-run
+```
+
+`--dry-run` logs what it would change without writing anything — run that first. Without
+it, it updates the DB as it goes. Progress and a final summary (migrated / failed counts)
+are logged to stdout; exit code is `0` if nothing failed, `1` otherwise.
+
 ### A note on `Auth:JwksUri` vs `Auth:ValidIssuer`
 
 The backend fetches JWKS (signing keys) from `Auth:JwksUri` directly rather than
