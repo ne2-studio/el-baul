@@ -207,7 +207,7 @@ export function AlbumsView({
       {/* Hero */}
       <div className="relative overflow-hidden" style={{ height: '260px' }}>
         {baul.coverPhotoUrl ? (
-          <img src={baul.coverPhotoUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={baul.coverPhotoUrl} alt="" className="hero-cover-image absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />
         )}

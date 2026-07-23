@@ -297,7 +297,7 @@ export function PhotosView({
             <img
               src={album.featuredCoverPhotoUrl ?? album.coverPhotoUrl}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover"
+              className="hero-cover-image absolute inset-0 w-full h-full object-cover"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />

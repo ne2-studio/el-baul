@@ -39,3 +39,12 @@
 .animate-progress {
   animation: progress 1.5s ease-in-out infinite;
 }
+
+/* Hero cover photos are full-bleed but the source is thumbnail-resolution, so on wide
+   desktop viewports they get upscaled and pixelate. Blur increases with viewport width
+   (0 on mobile, capping at 6px past ~1900px) to mask it; scale(1.08) keeps the blur from
+   revealing transparent edges once object-cover has no more image to overflow with. */
+.hero-cover-image {
+  filter: blur(clamp(0px, (100vw - 768px) / 200, 6px));
+  transform: scale(1.08);
+}
