@@ -74,15 +74,35 @@ export function formatPartialDate(date: { year: number; month?: number; day?: nu
 /**
  * Formats an album's date range from its min/max photo dates. Empty string when
  * there are no dated photos at all.
+ *
+ * Elides the parts min/max share instead of repeating them in full on both ends:
+ * - same year+month+day precision on both ends, same year and month ->
+ *   "23-26 de septiembre de 2027"
+ * - same year, both day-precision, different month -> "23 agosto - 21 septiembre de 2026"
+ * - anything else (different year, or mismatched precision between min/max) falls back
+ *   to the full "<from> – <to>" form, each side formatted independently.
  */
 export function formatDateRange(
   min?: { year: number; month?: number; day?: number },
   max?: { year: number; month?: number; day?: number }
 ): string {
   if (!min || !max) return '';
+
   const from = formatPartialDate(min);
   const to = formatPartialDate(max);
-  return from === to ? from : `${from} – ${to}`;
+  if (from === to) return from;
+
+  const sameYear = min.year === max.year;
+
+  if (sameYear && min.month != null && min.month === max.month && min.day != null && max.day != null) {
+    return `${min.day}-${max.day} de ${MONTHS[min.month - 1].toLowerCase()} de ${min.year}`;
+  }
+
+  if (sameYear && min.month != null && max.month != null && min.day != null && max.day != null) {
+    return `${min.day} ${MONTHS[min.month - 1].toLowerCase()} - ${max.day} ${MONTHS[max.month - 1].toLowerCase()} de ${min.year}`;
+  }
+
+  return `${from} – ${to}`;
 }
 
 /**
