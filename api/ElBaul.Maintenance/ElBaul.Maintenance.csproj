@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ElBaul\ElBaul.csproj" />
+    <ProjectReference Include="..\ElBaul.Infra\ElBaul.Infra.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Runner bootstraps config via WebApplication.CreateBuilder (see
+         MaintenanceCommandRunner.cs) purely for its appsettings/ASPNETCORE_ENVIRONMENT/env
+         var resolution — same reason ElBaul.Infra declares this despite being otherwise a
+         plain class library. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Mirrors ElBaul.Api's Serilog packages: commands must log to the same sinks
+         (console + Seq) via the same appsettings-driven config the web app uses. -->
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Seq" Version="9.1.0" />
+  </ItemGroup>
+
+</Project>

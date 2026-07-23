@@ -12,7 +12,7 @@ public interface IPhotoRepository
 
     /// <summary>Active photos with a non-empty caption — used only by the one-off
     /// migrate-photo-captions-to-recuerdos command (see
-    /// Tools/MigratePhotoCaptionsToRecuerdosCommand.cs).</summary>
+    /// ElBaul.Maintenance/Commands/MigratePhotoCaptionsToRecuerdosCommand.cs).</summary>
     Task<IEnumerable<Photo>> GetWithCaptionAsync();
 
     Task CreateAsync(Photo photo);

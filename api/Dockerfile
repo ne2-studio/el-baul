@@ -5,6 +5,7 @@ WORKDIR /src
 COPY ["ElBaul.Api/ElBaul.Api.csproj", "ElBaul.Api/"]
 COPY ["ElBaul/ElBaul.csproj", "ElBaul/"]
 COPY ["ElBaul.Infra/ElBaul.Infra.csproj", "ElBaul.Infra/"]
+COPY ["ElBaul.Maintenance/ElBaul.Maintenance.csproj", "ElBaul.Maintenance/"]
 RUN dotnet restore "ElBaul.Api/ElBaul.Api.csproj"
 
 # Copy the rest of the code

@@ -36,13 +36,19 @@ authenticated independently and scoped to the caller's identity.
 
 ### Architecture: ports & adapters
 
-The backend is split across three projects, with dependencies pointing inward toward the core:
+The backend is split across four projects, with dependencies pointing inward toward the core:
 
 ```
-ElBaul.Api    ──┐
-                ├──→  ElBaul  (core: Application + Ports)
-ElBaul.Infra  ──┘
+ElBaul.Api ──┐
+             ├──→  ElBaul.Infra  ──→  ElBaul  (core: Application + Ports)
+             │                          ↑
+             └──→  ElBaul.Maintenance ──┘
 ```
+
+`ElBaul.Api` references both `ElBaul.Infra` (controllers, web startup) and `ElBaul.Maintenance`
+(one line in `Program.cs` to dispatch a recognized command-line arg — see below). It never
+contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBaul.Infra` and
+`ElBaul`, never `ElBaul.Api`.
 
 - **`ElBaul` (core)** — the domain/use-case project. Contains:
   - `Application/` — one class per aggregate root (`BaulManager`, `AlbumManager`,
@@ -69,8 +75,26 @@ ElBaul.Infra  ──┘
   `<FrameworkReference Include="Microsoft.AspNetCore.App" />` despite being otherwise a plain
   class library.
 - **`ElBaul.Api`** — thin ASP.NET Core host: controllers, `Program.cs`, auth/rate-limiting/
-  Swagger setup, and one-off maintenance CLI commands (`Tools/`). Controllers depend only on
-  `Ports/Input` interfaces, never on `Infra` or `Application` concrete types directly.
+  Swagger setup. Controllers depend only on `Ports/Input` interfaces, never on `Infra` or
+  `Application` concrete types directly. Contains no maintenance-command code — `Program.cs`
+  delegates to `ElBaul.Maintenance` for that (see below).
+- **`ElBaul.Maintenance`** — a small framework plus every one-off maintenance CLI command
+  (`Commands/`). A command is a class implementing `IMaintenanceCommand` (one method,
+  `RunAsync(bool dryRun)`, containing only business logic — dependencies come via constructor
+  injection off the same `AddInfrastructure()` container the web app uses) tagged with
+  `[MaintenanceCommand("name")]`. `MaintenanceCommandRunner.TryRunAsync(args)` — the single
+  thing `Program.cs` calls — reflects over the assembly to find every attributed command,
+  and if `args[0]` names one, bootstraps a minimal host (same `WebApplication.CreateBuilder`
+  + `AddInfrastructure()` + Serilog config the web app uses, so appsettings/
+  `ASPNETCORE_ENVIRONMENT`/env vars all resolve identically), resolves the command via a
+  keyed DI registration (keyed by its attribute name), and runs it inside a canonical
+  start/finish log pair carrying elapsed time and exit code — so every command's execution is
+  traceable in Seq the same way regardless of what it does. Returns `null` (not a command)
+  so `Program.cs` falls through to normal web startup otherwise. Needs
+  `<FrameworkReference Include="Microsoft.AspNetCore.App" />` for the same reason
+  `ElBaul.Infra` does, and opts out of `WebApplicationBuilder`'s Development-mode
+  eager service-provider validation (`ValidateOnBuild`) since it deliberately registers a
+  narrower service graph than the full web app's `Program.cs` does.
 
 ### Controller conventions
 
@@ -172,16 +196,24 @@ photo bytes back out over HTTP itself:
 
 ### Maintenance commands
 
-`Program.cs` intercepts `args[0]` before starting the web server for one-off maintenance work
-(`backfill-exif-dates`, `backfill-recuerdo-album-id`, implemented in `ElBaul.Api/Tools/`). These
-run via `docker exec <container> dotnet ElBaul.Api.dll <command>` against an already-running
+`Program.cs` intercepts `args[0]` before starting the web server for one-off maintenance work,
+delegating to `ElBaul.Maintenance` (`backfill-exif-dates`, `backfill-recuerdo-album-id`,
+`backfill-recuerdo-baul-id`, `migrate-photo-captions-to-recuerdos`, implemented in
+`ElBaul.Maintenance/Commands/` — see the `ElBaul.Maintenance` bullet above for how the
+framework wires a command up). These run via
+`docker exec <container> dotnet ElBaul.Api.dll <command>` against an already-running
 deployment (see `api/README.md`) — the web process itself never runs them.
 
 ### Other conventions
 
 - **Logging**: Serilog, bootstrap console logger before `WebApplication.CreateBuilder`, then
   reconfigured via `ReadFrom.Configuration` + `UseSerilog`. `Serilog.Sinks.Seq` ships alongside
-  the console sink; request logging via `UseSerilogRequestLogging()`.
+  the console sink; request logging via `UseSerilogRequestLogging()`. Maintenance commands
+  (`ElBaul.Maintenance`) configure Serilog the same way (`ReadFrom.Configuration` off the same
+  appsettings, so Seq is active there too whenever it's active for the web app) but skip the
+  bootstrap-logger phase — there's no early Kestrel-startup window to protect against in a
+  one-shot CLI run, and `Log.CloseAndFlushAsync()` runs before the process exits so a short
+  command's last log line isn't lost to Seq's send-batching.
 - **API docs**: Swagger/Swashbuckle, enabled only in `Development`.
 - **CORS**: `AllowAnyOrigin`/`AllowAnyMethod`/`AllowAnyHeader` — acceptable since auth is bearer
   token, not cookies/origin-based.

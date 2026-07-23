@@ -1,37 +1,22 @@
-using ElBaul.Infra;
 using ElBaul.Ports.Output;
+using Microsoft.Extensions.Logging;
 
-namespace ElBaul.Api.Tools;
+namespace ElBaul.Maintenance.Commands;
 
 /// <summary>
-/// One-off maintenance command: finds photos with no date (DateYear is null — either
-/// uploaded before EXIF extraction existed, or genuinely EXIF-less) and retries EXIF
-/// extraction against the copy already sitting in object storage, using the exact same
-/// IPhotoDateExtractor the upload path uses. Run via `dotnet ElBaul.Api.dll
-/// backfill-exif-dates` (see api/README.md) — never invoked by the web process itself,
-/// so it can't affect the running server.
+/// Finds photos with no date (DateYear is null — either uploaded before EXIF extraction
+/// existed, or genuinely EXIF-less) and retries EXIF extraction against the copy already
+/// sitting in object storage, using the exact same IPhotoDateExtractor the upload path uses.
 /// </summary>
-public static class BackfillExifDatesCommand
+[MaintenanceCommand("backfill-exif-dates")]
+public class BackfillExifDatesCommand(
+    IPhotoRepository photoRepository,
+    IPhotoStorage photoStorage,
+    IPhotoDateExtractor dateExtractor,
+    ILogger<BackfillExifDatesCommand> logger) : IMaintenanceCommand
 {
-    public static async Task<int> RunAsync(string[] args)
+    public async Task<int> RunAsync(bool dryRun)
     {
-        var dryRun = args.Contains("--dry-run");
-
-        // Reuses WebApplication.CreateBuilder purely for its config loading (same
-        // appsettings.json/appsettings.{ASPNETCORE_ENVIRONMENT}.json/env var resolution
-        // the real app uses) — Build() never binds a port unless Run()/Start() is called,
-        // and this path calls neither, so no Kestrel, no controllers, no auth pipeline.
-        var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddInfrastructure(builder.Configuration);
-        await using var app = builder.Build();
-
-        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(BackfillExifDatesCommand));
-
-        using var scope = app.Services.CreateScope();
-        var photoRepository = scope.ServiceProvider.GetRequiredService<IPhotoRepository>();
-        var photoStorage = scope.ServiceProvider.GetRequiredService<IPhotoStorage>();
-        var dateExtractor = scope.ServiceProvider.GetRequiredService<IPhotoDateExtractor>();
-
         var undatedPhotos = (await photoRepository.GetUndatedAsync()).ToList();
         logger.LogInformation(
             "backfill-exif-dates: {Count} undated photo(s) to check{DryRunSuffix}",

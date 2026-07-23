@@ -3,6 +3,7 @@
   <Project Path="ElBaul.Api.Tests/ElBaul.Api.Tests.csproj" />
   <Project Path="ElBaul.Infra.Tests/ElBaul.Infra.Tests.csproj" />
   <Project Path="ElBaul.Infra/ElBaul.Infra.csproj" />
+  <Project Path="ElBaul.Maintenance/ElBaul.Maintenance.csproj" />
   <Project Path="ElBaul.Tests/ElBaul.Tests.csproj" />
   <Project Path="ElBaul/ElBaul.csproj" />
 </Solution>

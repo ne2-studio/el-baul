@@ -1,7 +1,7 @@
 namespace ElBaul.Ports.Output;
 
 /// <summary>Minimal shape of a recuerdo still missing BaulId — used only by the one-off
-/// backfill command (see Tools/BackfillRecuerdoBaulIdCommand.cs). Recuerdo.BaulId is a
+/// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoBaulIdCommand.cs). Recuerdo.BaulId is a
 /// non-nullable Guid in the domain model (the target state once the follow-up migration
 /// lands), but the DB column is still nullable for legacy rows until that command finishes —
 /// reading affected rows through the normal Recuerdo entity would throw when materializing a
@@ -21,11 +21,11 @@ public interface IRecuerdoRepository
     Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since);
 
     /// <summary>Recuerdos that have a Photo but no AlbumId yet — used only by the one-off
-    /// backfill command (see Tools/BackfillRecuerdoAlbumIdCommand.cs).</summary>
+    /// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoAlbumIdCommand.cs).</summary>
     Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync();
 
     /// <summary>Recuerdos still missing BaulId — used only by the one-off backfill command
-    /// (see Tools/BackfillRecuerdoBaulIdCommand.cs).</summary>
+    /// (see ElBaul.Maintenance/Commands/BackfillRecuerdoBaulIdCommand.cs).</summary>
     Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync();
 
     /// <summary>Sets BaulId directly via SQL, bypassing the normal entity load/save path —

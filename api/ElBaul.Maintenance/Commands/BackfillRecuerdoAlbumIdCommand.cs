@@ -1,36 +1,22 @@
-using ElBaul.Infra;
 using ElBaul.Ports.Output;
+using Microsoft.Extensions.Logging;
 
-namespace ElBaul.Api.Tools;
+namespace ElBaul.Maintenance.Commands;
 
 /// <summary>
-/// One-off maintenance command: Recuerdo now carries its own AlbumId (denormalized from
-/// Photo.AlbumId) so the Recuerdos feed can query by chapter without joining through Photo.
-/// This backfills that AlbumId for every existing recuerdo that already has a PhotoId but
-/// no AlbumId yet — newly created recuerdos set it themselves. Run via `dotnet
-/// ElBaul.Api.dll backfill-recuerdo-album-id` (see api/README.md) — never invoked by the
-/// web process itself, so it can't affect the running server.
+/// Recuerdo now carries its own AlbumId (denormalized from Photo.AlbumId) so the Recuerdos
+/// feed can query by chapter without joining through Photo. This backfills that AlbumId for
+/// every existing recuerdo that already has a PhotoId but no AlbumId yet — newly created
+/// recuerdos set it themselves.
 /// </summary>
-public static class BackfillRecuerdoAlbumIdCommand
+[MaintenanceCommand("backfill-recuerdo-album-id")]
+public class BackfillRecuerdoAlbumIdCommand(
+    IRecuerdoRepository recuerdoRepository,
+    IPhotoRepository photoRepository,
+    ILogger<BackfillRecuerdoAlbumIdCommand> logger) : IMaintenanceCommand
 {
-    public static async Task<int> RunAsync(string[] args)
+    public async Task<int> RunAsync(bool dryRun)
     {
-        var dryRun = args.Contains("--dry-run");
-
-        // Reuses WebApplication.CreateBuilder purely for its config loading (same
-        // appsettings.json/appsettings.{ASPNETCORE_ENVIRONMENT}.json/env var resolution
-        // the real app uses) — Build() never binds a port unless Run()/Start() is called,
-        // and this path calls neither, so no Kestrel, no controllers, no auth pipeline.
-        var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddInfrastructure(builder.Configuration);
-        await using var app = builder.Build();
-
-        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(BackfillRecuerdoAlbumIdCommand));
-
-        using var scope = app.Services.CreateScope();
-        var recuerdoRepository = scope.ServiceProvider.GetRequiredService<IRecuerdoRepository>();
-        var photoRepository = scope.ServiceProvider.GetRequiredService<IPhotoRepository>();
-
         var candidates = (await recuerdoRepository.GetWithPhotoAndNoAlbumAsync()).ToList();
         logger.LogInformation(
             "backfill-recuerdo-album-id: {Count} recuerdo(s) to check{DryRunSuffix}",

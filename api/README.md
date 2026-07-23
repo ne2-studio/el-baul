@@ -8,9 +8,10 @@ photo storage, and Serilog.
 ## Architecture
 
 ```
-ElBaul.Api      — HTTP entry point (controllers, JWT validation, composition root)
-ElBaul.Infra    — adapters (EF Core repositories, MinIO photo storage, JIT user sync)
-ElBaul          — domain core (Application/ use cases, Ports/Input, Ports/Output)
+ElBaul.Api          — HTTP entry point (controllers, JWT validation, composition root)
+ElBaul.Maintenance  — one-off maintenance CLI commands + the framework that runs them
+ElBaul.Infra        — adapters (EF Core repositories, MinIO photo storage, JIT user sync)
+ElBaul              — domain core (Application/ use cases, Ports/Input, Ports/Output)
 ```
 
 Domain: a **Baúl** (trunk) is owned by a custodian, holds **Albums** of **Photos**
@@ -109,6 +110,15 @@ starting the web server. This is safe to run against an **already-running** depl
 (Coolify, docker-compose, etc.) via `docker exec` — it's a separate process inside the
 same container, so it can't crash or interrupt the running server, and each command is
 written to keep going past per-item failures rather than aborting the whole run.
+
+Commands themselves live in `ElBaul.Maintenance` (`Commands/`), not `ElBaul.Api` — a
+command is a small class holding only business logic, registered by name via a
+`[MaintenanceCommand("...")]` attribute. `Program.cs` just dispatches `args[0]` to that
+project's `MaintenanceCommandRunner`, which bootstraps config/DI/logging the same way the
+web app does (so `ASPNETCORE_ENVIRONMENT` and everything it drives — including which
+appsettings file's Serilog section applies — resolves identically), runs the command
+inside a canonical start/finish log pair (elapsed time, exit code), and flushes logs to
+both stdout and Seq (when configured) before exiting.
 
 ### `backfill-exif-dates`
 
