@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { User as UserIcon, Loader2 } from 'lucide-react';
 import { SharedUser } from '@/types';
 import { Button } from './Button';
+import { BottomSheetModal } from './BottomSheetModal';
 
 interface EditPersonaModalProps {
   persona: SharedUser;
@@ -38,100 +39,96 @@ export function EditPersonaModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-      <div className="relative bg-card w-full max-w-2xl rounded-t-3xl px-6 pt-6 pb-10 space-y-5 animate-slide-up">
-        <div className="w-10 h-1 bg-border rounded-full mx-auto mb-2" />
-        <h2 className="text-xl font-serif text-foreground">Editar persona</h2>
+    <BottomSheetModal onCancel={onCancel} size="lg">
+      <h2 className="text-xl font-serif text-foreground">Editar persona</h2>
 
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploadingAvatar}
-            className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-border"
-          >
-            {persona.avatarUrl ? (
-              <img src={persona.avatarUrl} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                <UserIcon className="w-8 h-8 text-primary" />
-              </div>
-            )}
-            <div
-              className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${
-                isUploadingAvatar ? 'opacity-100' : 'opacity-0 hover:opacity-100'
-              }`}
-            >
-              {isUploadingAvatar ? (
-                <Loader2 className="w-6 h-6 text-white animate-spin" />
-              ) : (
-                <span className="text-white text-xs font-medium">Cambiar foto</span>
-              )}
+      <div className="flex justify-center">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploadingAvatar}
+          className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-border"
+        >
+          {persona.avatarUrl ? (
+            <img src={persona.avatarUrl} alt={name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+              <UserIcon className="w-8 h-8 text-primary" />
             </div>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isUploadingAvatar}
-          />
-        </div>
-
-        <div>
-          <label
-            className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-            style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+          )}
+          <div
+            className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${
+              isUploadingAvatar ? 'opacity-100' : 'opacity-0 hover:opacity-100'
+            }`}
           >
-            Nombre *
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nombre completo"
-            className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
-            autoFocus
-          />
-        </div>
-
-        <div>
-          <label
-            className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-            style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-          >
-            Apodo
-          </label>
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            placeholder="Ej. Abuela, Tío Juan…"
-            className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
-
-        <div className="flex gap-3 pt-1">
-          <button
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <Button
-            onClick={handleSave}
-            disabled={!name.trim() || !nickname.trim() || isSubmitting}
-            isLoading={isSubmitting}
-            className="flex-1 text-sm"
-          >
-            Guardar cambios
-          </Button>
-        </div>
+            {isUploadingAvatar ? (
+              <Loader2 className="w-6 h-6 text-white animate-spin" />
+            ) : (
+              <span className="text-white text-xs font-medium">Cambiar foto</span>
+            )}
+          </div>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+          disabled={isUploadingAvatar}
+        />
       </div>
-    </div>
+
+      <div>
+        <label
+          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
+          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+        >
+          Nombre *
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre completo"
+          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
+          autoFocus
+        />
+      </div>
+
+      <div>
+        <label
+          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
+          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+        >
+          Apodo
+        </label>
+        <input
+          type="text"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          placeholder="Ej. Abuela, Tío Juan…"
+          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
+        />
+      </div>
+
+      <div className="flex gap-3 pt-1">
+        <button
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+        <Button
+          onClick={handleSave}
+          disabled={!name.trim() || !nickname.trim() || isSubmitting}
+          isLoading={isSubmitting}
+          className="flex-1 text-sm"
+        >
+          Guardar cambios
+        </Button>
+      </div>
+    </BottomSheetModal>
   );
 }

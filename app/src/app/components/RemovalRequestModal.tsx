@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from './Button';
+import { BottomSheetModal } from './BottomSheetModal';
 
 interface RemovalRequestModalProps {
   onCancel: () => void;
@@ -12,47 +13,43 @@ export function RemovalRequestModal({ onCancel, onConfirm, isSubmitting = false 
   const [reason, setReason] = useState('');
 
   return (
-    <div className="fixed inset-0 bg-foreground/50 z-[60] flex items-end md:items-center justify-center p-4">
-      <div className="absolute inset-0" onClick={onCancel} />
+    <BottomSheetModal onCancel={onCancel} desktopCentered>
+      <h2 className="font-serif text-xl text-foreground mb-2">
+        Solicitar retirada de esta foto
+      </h2>
 
-      <div className="bg-background rounded-t-2xl md:rounded-2xl max-w-md w-full p-6 relative z-10 animate-slide-up">
-        <h2 className="font-serif text-xl text-foreground mb-2">
-          Solicitar retirada de esta foto
-        </h2>
+      <p className="text-muted-foreground text-sm mb-4">
+        El custodio del baúl revisará tu solicitud.
+      </p>
 
-        <p className="text-muted-foreground text-sm mb-4">
-          El custodio del baúl revisará tu solicitud.
-        </p>
+      <textarea
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Cuéntanos por qué no quieres que esta foto aparezca en este baúl"
+        className="w-full min-h-[120px] p-3 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground mb-6"
+        disabled={isSubmitting}
+        autoFocus
+      />
 
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Cuéntanos por qué no quieres que esta foto aparezca en este baúl"
-          className="w-full min-h-[120px] p-3 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground mb-6"
+      <div className="flex flex-col-reverse md:flex-row gap-3">
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={onCancel}
           disabled={isSubmitting}
-          autoFocus
-        />
-
-        <div className="flex flex-col-reverse md:flex-row gap-3">
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={() => reason.trim() && onConfirm(reason.trim())}
-            disabled={!reason.trim() || isSubmitting}
-            isLoading={isSubmitting}
-          >
-            Enviar solicitud
-          </Button>
-        </div>
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={() => reason.trim() && onConfirm(reason.trim())}
+          disabled={!reason.trim() || isSubmitting}
+          isLoading={isSubmitting}
+        >
+          Enviar solicitud
+        </Button>
       </div>
-    </div>
+    </BottomSheetModal>
   );
 }

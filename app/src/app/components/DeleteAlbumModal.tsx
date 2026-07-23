@@ -1,4 +1,5 @@
 import { Button } from './Button';
+import { BottomSheetModal } from './BottomSheetModal';
 
 interface DeleteAlbumModalProps {
   photoCount: number;
@@ -16,41 +17,38 @@ function pluralize(count: number, singular: string, plural: string): string {
 // del capítulo no se pierden — quedan sueltos en el baúl.
 export function DeleteAlbumModal({ photoCount, recuerdoCount, onCancel, onConfirm, isSubmitting = false }: DeleteAlbumModalProps) {
   return (
-    <div className="fixed inset-0 bg-foreground/60 z-[60] flex items-end md:items-center justify-center p-4">
-      <div className="absolute inset-0" onClick={onCancel} />
-      <div className="bg-background rounded-t-2xl md:rounded-2xl max-w-md w-full p-6 relative z-10 animate-slide-up">
-        <h2 className="font-serif text-xl text-foreground mb-1">
-          Eliminar capítulo
-        </h2>
+    <BottomSheetModal onCancel={onCancel} desktopCentered backdropOpacity={60}>
+      <h2 className="font-serif text-xl text-foreground mb-1">
+        Eliminar capítulo
+      </h2>
 
-        <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-5 mt-3">
-          <p className="text-xs text-destructive/80 leading-relaxed">
-            <span className="font-semibold">Atención:</span>{' '}
-            {pluralize(photoCount, 'foto', 'fotos')} y {pluralize(recuerdoCount, 'recuerdo', 'recuerdos')} quedarán
-            sueltos en el baúl. ¿Estás seguro?
-          </p>
-        </div>
-
-        <div className="flex flex-col-reverse md:flex-row gap-3">
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            fullWidth
-            onClick={onConfirm}
-            disabled={isSubmitting}
-            isLoading={isSubmitting}
-          >
-            Sí, eliminar capítulo
-          </Button>
-        </div>
+      <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-5 mt-3">
+        <p className="text-xs text-destructive/80 leading-relaxed">
+          <span className="font-semibold">Atención:</span>{' '}
+          {pluralize(photoCount, 'foto', 'fotos')} y {pluralize(recuerdoCount, 'recuerdo', 'recuerdos')} quedarán
+          sueltos en el baúl. ¿Estás seguro?
+        </p>
       </div>
-    </div>
+
+      <div className="flex flex-col-reverse md:flex-row gap-3">
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="danger"
+          fullWidth
+          onClick={onConfirm}
+          disabled={isSubmitting}
+          isLoading={isSubmitting}
+        >
+          Sí, eliminar capítulo
+        </Button>
+      </div>
+    </BottomSheetModal>
   );
 }
