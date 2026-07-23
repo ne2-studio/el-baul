@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button } from './Button';
-import { Input } from './Input';
 import { ChevronLeft, X } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { Album } from './AlbumsView';
@@ -12,7 +11,6 @@ export interface SelectedPhoto {
   id: string;
   file: File;
   preview: string;
-  caption?: string;
 }
 
 // Reads a just-picked file into memory right away and wraps it in a fresh, Blob-backed
@@ -48,7 +46,7 @@ interface UploadConfirmationScreenProps {
   currentAlbumId?: string;
   selectedPhotos: SelectedPhoto[];
   onBack: () => void;
-  onUpload: (photos: SelectedPhoto[], caption: string | undefined, chapter: ChapterSelection, date: PhotoDate | null) => void;
+  onUpload: (photos: SelectedPhoto[], chapter: ChapterSelection, date: PhotoDate | null) => void;
 }
 
 export function UploadConfirmationScreen({
@@ -60,7 +58,6 @@ export function UploadConfirmationScreen({
   onBack,
   onUpload
 }: UploadConfirmationScreenProps) {
-  const [caption, setCaption] = useState('');
   const [photos, setPhotos] = useState(selectedPhotos);
   const [chapter, setChapter] = useState<ChapterSelection | null>(
     currentAlbumId ? { type: 'existing', albumId: currentAlbumId } : null
@@ -76,7 +73,7 @@ export function UploadConfirmationScreen({
 
   const handleConfirm = () => {
     if (!canConfirm || !chapter) return;
-    onUpload(photos, caption || undefined, chapter, null);
+    onUpload(photos, chapter, null);
   };
 
   return (
@@ -137,18 +134,6 @@ export function UploadConfirmationScreen({
             />
           </div>
         )}
-
-        {/* Optional caption */}
-        <div className="mb-8">
-          <Input
-            label="Nota para estas fotos (opcional)"
-            placeholder="Ej: Verano en la playa..."
-            value={caption}
-            onChange={setCaption}
-            multiline
-            rows={2}
-          />
-        </div>
 
         {/* Actions */}
         <div className="space-y-3">

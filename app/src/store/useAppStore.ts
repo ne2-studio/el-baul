@@ -15,7 +15,6 @@ const defaultSubscription: Subscription = {
 export interface UploadItem {
   clientUploadId: string;
   file: File;
-  caption?: string;
   date?: PhotoDate;
 }
 
@@ -288,7 +287,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         continue;
       }
       try {
-        const photo = await api.photos.upload(albumId, selected.file, selected.clientUploadId, selected.caption, selected.date);
+        const photo = await api.photos.upload(albumId, selected.file, selected.clientUploadId, selected.date);
         uploaded.push(photo);
         result = { clientUploadId: selected.clientUploadId, photo };
       } catch (error) {
@@ -349,7 +348,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         continue;
       }
       try {
-        const photo = await api.baules.uploadPhoto(baulId, selected.file, selected.clientUploadId, selected.caption, selected.date);
+        const photo = await api.baules.uploadPhoto(baulId, selected.file, selected.clientUploadId, selected.date);
         uploaded.push(photo);
         result = { clientUploadId: selected.clientUploadId, photo };
       } catch (error) {

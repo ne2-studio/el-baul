@@ -162,8 +162,8 @@ public class WeeklyDigestManagerTests
         await _albumRepository.CreateAsync(album);
 
         for (var i = 0; i < 3; i++)
-            await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), album.Id, baul.Id, $"key-{i}", null, null, null, null, UserId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), null, baul.Id, "loose-1", null, null, null, null, UserId, _clock.UtcNow()));
+            await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), album.Id, baul.Id, $"key-{i}", null, null, null, UserId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), null, baul.Id, "loose-1", null, null, null, UserId, _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(UserId, since);
@@ -180,7 +180,7 @@ public class WeeklyDigestManagerTests
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
         await _photoRepository.CreateAsync(new Photo(
-            Guid.NewGuid(), null, baul.Id, "deleted-1", null, null, null, null, UserId, _clock.UtcNow(),
+            Guid.NewGuid(), null, baul.Id, "deleted-1", null, null, null, UserId, _clock.UtcNow(),
             Status: PhotoStatus.Deleted, DeletedAt: _clock.UtcNow(), DeletionReason: "test"));
 
         var manager = CreateManager();
@@ -217,7 +217,7 @@ public class WeeklyDigestManagerTests
         {
             var album = new Album(Guid.NewGuid(), baul.Id, $"Capítulo {i}", null, 0, null, since.AddDays(-1), since.AddDays(-1));
             await _albumRepository.CreateAsync(album);
-            await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), album.Id, baul.Id, $"key-{i}", null, null, null, null, UserId, _clock.UtcNow()));
+            await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), album.Id, baul.Id, $"key-{i}", null, null, null, UserId, _clock.UtcNow()));
         }
 
         var manager = CreateManager();

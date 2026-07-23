@@ -29,7 +29,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
 
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(
-            albumId, stream, request.File.FileName, request.File.ContentType, request.Caption, ToDateTuple(request),
+            albumId, stream, request.File.FileName, request.File.ContentType, ToDateTuple(request),
             request.ClientUploadId.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
@@ -93,7 +93,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
 
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadToBaulAsync(
-            baulId, stream, request.File.FileName, request.File.ContentType, request.Caption, ToDateTuple(request),
+            baulId, stream, request.File.FileName, request.File.ContentType, ToDateTuple(request),
             request.ClientUploadId.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);

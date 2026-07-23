@@ -6,7 +6,6 @@ export interface RemovalRequest {
   id: string;
   photoId: string;
   photoUrl: string;
-  photoCaption?: string;
   requesterName: string;
   requesterEmail: string;
   reason: string;
@@ -90,7 +89,7 @@ export function RemovalRequestsList({
                   <div className="aspect-[4/3] bg-muted">
                     <img
                       src={request.photoUrl}
-                      alt={request.photoCaption || 'Foto'}
+                      alt="Foto"
                       className="w-full h-full object-cover"
                     />
                   </div>

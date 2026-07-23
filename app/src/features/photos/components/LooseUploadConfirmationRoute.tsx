@@ -30,9 +30,8 @@ export const LooseUploadConfirmationRoute: React.FC = () => {
       existingAlbums={albums[baul.id] || []}
       selectedPhotos={selectedPhotos}
       onBack={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
-      onUpload={(photos, caption, chapter, date) => {
-        const finalPhotos = photos.map((p) => ({ ...p, caption: p.caption ?? caption }));
-        navigate(`/baules/${baul.id}/fotos-sueltas/subiendo`, { state: { selectedPhotos: finalPhotos, chapter, date } });
+      onUpload={(photos, chapter, date) => {
+        navigate(`/baules/${baul.id}/fotos-sueltas/subiendo`, { state: { selectedPhotos: photos, chapter, date } });
       }}
     />
   );

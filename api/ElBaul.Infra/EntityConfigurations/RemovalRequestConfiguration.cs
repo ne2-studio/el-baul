@@ -11,7 +11,6 @@ public class RemovalRequestConfiguration : IEntityTypeConfiguration<RemovalReque
         builder.ToTable("RemovalRequests");
         builder.HasKey(r => r.Id);
         builder.Property(r => r.PhotoStorageKey).IsRequired().HasMaxLength(1000);
-        builder.Property(r => r.PhotoCaption).HasMaxLength(2000);
         builder.Property(r => r.RequesterName).IsRequired().HasMaxLength(200);
         builder.Property(r => r.RequesterEmail).IsRequired().HasMaxLength(320);
         builder.Property(r => r.Reason).HasMaxLength(2000);

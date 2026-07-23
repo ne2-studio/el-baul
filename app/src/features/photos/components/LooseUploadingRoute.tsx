@@ -36,7 +36,7 @@ export const LooseUploadingRoute: React.FC = () => {
     return uploadPhotosWithChapter(
       baul.id,
       chapter,
-      photos.map((p) => ({ clientUploadId: p.id, file: p.file, caption: p.caption, date: date ?? undefined })),
+      photos.map((p) => ({ clientUploadId: p.id, file: p.file, date: date ?? undefined })),
       onItemSettled
     ).then(({ results, albumId }) => {
       resolvedAlbumIdRef.current = albumId;

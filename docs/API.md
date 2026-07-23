@@ -129,14 +129,14 @@ as above).
 
 ### `GET /api/albums/{albumId}/photos`
 
-Response `200 OK`: array of `{ "id", "albumId", "baulId", "thumbnailUrl": "imgproxy-url", "fullUrl": "imgproxy-url", "caption", "date", "uploadedBy", "createdAt" }`.
+Response `200 OK`: array of `{ "id", "albumId", "baulId", "thumbnailUrl": "imgproxy-url", "fullUrl": "imgproxy-url", "date", "uploadedBy", "createdAt" }`.
 `thumbnailUrl` is sized for grid display, `fullUrl` for a full-screen viewer — both point
 at imgproxy, never at storage directly.
 
 ### `POST /api/albums/{albumId}/photos`
 
-Any member with access. `multipart/form-data`: `file` (required), `caption`
-(optional), `date` (optional, ISO). Response `200 OK`: the photo; increments the album's
+Any member with access. `multipart/form-data`: `file` (required), `date` (optional, ISO).
+Response `200 OK`: the photo; increments the album's
 `photoCount`, and sets it as the album's cover if it's the first photo (and as the baúl's
 cover if the baúl has none yet).
 

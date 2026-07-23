@@ -467,7 +467,7 @@ public class BaulManager(
         var userProfile = await userRepository.GetByIdAsync(userId);
         var now = clock.UtcNow();
         var request = new RemovalRequest(
-            idGenerator.NewId(), baulId, photoId, photo.StorageKey, photo.Caption,
+            idGenerator.NewId(), baulId, photoId, photo.StorageKey,
             nickname, userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
         await baulRepository.CreateRemovalRequestAsync(request);
@@ -577,7 +577,7 @@ public class BaulManager(
     }
 
     private static RemovalRequestDto ToDto(RemovalRequest request, string photoUrl) =>
-        new(request.Id.ToString(), request.PhotoId.ToString(), photoUrl, request.PhotoCaption,
+        new(request.Id.ToString(), request.PhotoId.ToString(), photoUrl,
             request.RequesterName, request.RequesterEmail, request.Reason, request.RequestDate,
             request.Status.ToApiString(), request.BaulId.ToString());
 

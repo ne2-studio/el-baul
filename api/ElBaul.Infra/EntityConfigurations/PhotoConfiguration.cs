@@ -11,7 +11,6 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.ToTable("Photos");
         builder.HasKey(p => p.Id);
         builder.Property(p => p.StorageKey).IsRequired().HasMaxLength(1000);
-        builder.Property(p => p.Caption).HasMaxLength(2000);
         builder.Property(p => p.UploadedBy).IsRequired().HasMaxLength(255);
         builder.Property(p => p.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(p => p.Status).HasConversion<string>().HasMaxLength(20).HasDefaultValue(PhotoStatus.Active);

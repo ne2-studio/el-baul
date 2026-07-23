@@ -198,9 +198,8 @@ photo bytes back out over HTTP itself:
 
 `Program.cs` intercepts `args[0]` before starting the web server for one-off maintenance work,
 delegating to `ElBaul.Maintenance` (`backfill-exif-dates`, `backfill-recuerdo-album-id`,
-`backfill-recuerdo-baul-id`, `migrate-photo-captions-to-recuerdos`, implemented in
-`ElBaul.Maintenance/Commands/` — see the `ElBaul.Maintenance` bullet above for how the
-framework wires a command up). These run via
+`backfill-recuerdo-baul-id`, implemented in `ElBaul.Maintenance/Commands/` — see the
+`ElBaul.Maintenance` bullet above for how the framework wires a command up). These run via
 `docker exec <container> dotnet ElBaul.Api.dll <command>` against an already-running
 deployment (see `api/README.md`) — the web process itself never runs them.
 

@@ -25,7 +25,6 @@ export interface Photo {
   id: string;
   thumbnailUrl: string;
   fullUrl: string;
-  caption?: string;
   date?: PhotoDate;
   recuerdoCount?: number;
 }
@@ -757,7 +756,7 @@ function PhotoCell({
     >
       <img
         src={photo.thumbnailUrl}
-        alt={photo.caption || 'Foto'}
+        alt="Foto"
         className="w-full h-full object-cover pointer-events-none"
         draggable={false}
       />

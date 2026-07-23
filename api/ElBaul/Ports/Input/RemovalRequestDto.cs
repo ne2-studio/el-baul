@@ -5,7 +5,6 @@ public record RemovalRequestDto
     string Id,
     string PhotoId,
     string PhotoUrl,
-    string? PhotoCaption,
     string RequesterName,
     string RequesterEmail,
     string? Reason,

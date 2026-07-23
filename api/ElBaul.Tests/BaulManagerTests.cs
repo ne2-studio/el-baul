@@ -254,7 +254,7 @@ public class BaulManagerTests
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, "key", _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, OtherUserId, "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
 
@@ -274,11 +274,11 @@ public class BaulManagerTests
 
         await SeedBaulAsync(baulId, "Familia");
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, "key", _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var requestId = Guid.NewGuid();
         await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(
-            requestId, baulId, photoId, "key", null, "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
+            requestId, baulId, photoId, "key", "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.ApproveRemovalRequestAsync(baulId, requestId);
@@ -299,7 +299,7 @@ public class BaulManagerTests
 
         var requestId = Guid.NewGuid();
         await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(
-            requestId, baulId, photoId, "key", null, "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
+            requestId, baulId, photoId, "key", "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.RejectRemovalRequestAsync(baulId, requestId);
@@ -315,7 +315,7 @@ public class BaulManagerTests
         var albumId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(baulId, photoId);
@@ -334,7 +334,7 @@ public class BaulManagerTests
         var albumId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.SetCoverAsync(baulId, photoId);
@@ -365,7 +365,7 @@ public class BaulManagerTests
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         await _baulRepository.CreateAsync(new Baul(otherBaulId, "Otro", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, otherBaulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, otherBaulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(baulId, photoId);
@@ -622,7 +622,7 @@ public class BaulManagerTests
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         await _albumRepository.CreateAsync(new Album(albumId, baulId, "Vacaciones", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var oldest = _clock.UtcNow().AddDays(-2);
         var middle = _clock.UtcNow().AddDays(-1);

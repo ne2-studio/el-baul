@@ -207,7 +207,7 @@ export function PhotoViewer({
         <PhotoStage
           photoKey={photo.id}
           src={photo.fullUrl}
-          alt={photo.caption || 'Foto'}
+          alt="Foto"
           direction={direction}
           hasPrevious={hasPrevious}
           hasNext={hasNext}
@@ -217,11 +217,6 @@ export function PhotoViewer({
 
         {/* Info & Recuerdos section */}
         <div className="px-6 py-8 space-y-8 max-h-[50vh] overflow-y-auto">
-          {/* Caption */}
-          {photo.caption && (
-            <p className="text-background/90 text-sm leading-relaxed">{photo.caption}</p>
-          )}
-
           {/* Date */}
           {(photo.date || onChangeDate) && (
             <button

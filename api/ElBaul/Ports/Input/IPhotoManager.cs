@@ -12,7 +12,6 @@ public interface IPhotoManager
         Stream content,
         string fileName,
         string contentType,
-        string? caption,
         (int Year, int? Month, int? Day)? date,
         Guid clientUploadId);
 
@@ -21,7 +20,6 @@ public interface IPhotoManager
         Stream content,
         string fileName,
         string contentType,
-        string? caption,
         (int Year, int? Month, int? Day)? date,
         Guid clientUploadId);
 

@@ -6,7 +6,6 @@ public record Photo
     Guid? AlbumId,
     Guid BaulId,
     string StorageKey,
-    string? Caption,
     int? DateYear,
     int? DateMonth,
     int? DateDay,

@@ -6,7 +6,6 @@ public record RemovalRequest
     Guid BaulId,
     Guid PhotoId,
     string PhotoStorageKey,
-    string? PhotoCaption,
     string RequesterName,
     string RequesterEmail,
     string? Reason,

@@ -101,7 +101,6 @@ export class Photo {
   id: string;
   thumbnailUrl: string;
   fullUrl: string;
-  caption?: string;
   date?: PhotoDate;
   recuerdoCount: number;
 
@@ -109,7 +108,6 @@ export class Photo {
     this.id = data.id;
     this.thumbnailUrl = data.thumbnailUrl;
     this.fullUrl = data.fullUrl;
-    this.caption = data.caption;
     this.date = photoDateFrom(data.dateYear, data.dateMonth, data.dateDay);
     this.recuerdoCount = data.recuerdoCount ?? 0;
   }
@@ -148,7 +146,6 @@ export class RemovalRequest {
   baulId: string;
   photoId: string;
   photoUrl: string;
-  photoCaption?: string;
   requesterName: string;
   requesterEmail: string;
   reason: string;
@@ -160,7 +157,6 @@ export class RemovalRequest {
     this.baulId = data.baulId;
     this.photoId = data.photoId;
     this.photoUrl = data.photoUrl;
-    this.photoCaption = data.photoCaption;
     this.requesterName = data.requesterName;
     this.requesterEmail = data.requesterEmail;
     this.reason = data.reason ?? '';

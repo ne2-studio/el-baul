@@ -26,9 +26,6 @@ public class InMemoryPhotoRepository : IPhotoRepository
     public Task<IEnumerable<Photo>> GetUndatedAsync() =>
         Task.FromResult(_photos.Values.Where(p => p.DateYear == null && p.Status == PhotoStatus.Active));
 
-    public Task<IEnumerable<Photo>> GetWithCaptionAsync() =>
-        Task.FromResult(_photos.Values.Where(p => !string.IsNullOrEmpty(p.Caption) && p.Status == PhotoStatus.Active));
-
     public Task CreateAsync(Photo photo)
     {
         _photos[photo.Id] = photo;

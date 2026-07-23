@@ -17,9 +17,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const photos: Photo[] = [
-  { id: '1', thumbnailUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300', fullUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=1600', caption: 'Excursión al río' },
-  { id: '2', thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300', fullUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=1600', caption: 'Cumpleaños de la abuela', date: { year: 2024, month: 7, day: 15 } },
-  { id: '3', thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300', fullUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1600', caption: 'Navidad en familia' },
+  { id: '1', thumbnailUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300', fullUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=1600' },
+  { id: '2', thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300', fullUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=1600', date: { year: 2024, month: 7, day: 15 } },
+  { id: '3', thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300', fullUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1600' },
 ];
 
 const albums: Album[] = [

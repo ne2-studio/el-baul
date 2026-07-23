@@ -7,7 +7,6 @@ public record PhotoDto
     string BaulId,
     string ThumbnailUrl,
     string FullUrl,
-    string? Caption,
     int? DateYear,
     int? DateMonth,
     int? DateDay,

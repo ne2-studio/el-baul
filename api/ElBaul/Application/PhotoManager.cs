@@ -86,7 +86,6 @@ public class PhotoManager(
         Stream content,
         string fileName,
         string contentType,
-        string? caption,
         (int Year, int? Month, int? Day)? date,
         Guid clientUploadId)
     {
@@ -156,7 +155,7 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, caption, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
+        var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
 
         try
         {
@@ -206,7 +205,6 @@ public class PhotoManager(
         Stream content,
         string fileName,
         string contentType,
-        string? caption,
         (int Year, int? Month, int? Day)? date,
         Guid clientUploadId)
     {
@@ -269,7 +267,7 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, caption, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
+        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
 
         try
         {
@@ -622,7 +620,7 @@ public class PhotoManager(
 
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
         new(photo.Id.ToString(), photo.AlbumId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
-            photo.Caption, photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
+            photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, string? userAvatar, string? sharedUserId, bool isOwn) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
