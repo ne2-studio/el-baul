@@ -10,7 +10,8 @@ public class StaticAppConfiguration(
     // that aren't specifically about this flag don't all need to opt in explicitly — the
     // gating behavior itself is covered by its own dedicated tests, constructed with false.
     bool welcomeEmailsEnabled = true,
-    bool weeklyDigestEmailsEnabled = true)
+    bool weeklyDigestEmailsEnabled = true,
+    bool chatEnabled = true)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -18,4 +19,5 @@ public class StaticAppConfiguration(
     public string AdminTestEmailRecipient { get; } = adminTestEmailRecipient;
     public bool WelcomeEmailsEnabled { get; } = welcomeEmailsEnabled;
     public bool WeeklyDigestEmailsEnabled { get; } = weeklyDigestEmailsEnabled;
+    public bool ChatEnabled { get; } = chatEnabled;
 }

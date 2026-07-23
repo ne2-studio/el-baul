@@ -12,4 +12,5 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     // GetValue<bool> defaults to false when the key is absent, matching the required default.
     public bool WelcomeEmailsEnabled => configuration.GetValue<bool>("Features:WelcomeEmailsEnabled");
     public bool WeeklyDigestEmailsEnabled => configuration.GetValue<bool>("Features:WeeklyDigestEmailsEnabled");
+    public bool ChatEnabled => configuration.GetValue<bool>("Features:ChatEnabled");
 }

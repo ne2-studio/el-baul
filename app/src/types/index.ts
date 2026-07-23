@@ -139,6 +139,20 @@ export class Recuerdo {
   }
 }
 
+export class ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+
+  constructor(data: any) {
+    this.id = data.id;
+    this.role = data.role;
+    this.content = data.content;
+    this.createdAt = data.createdAt;
+  }
+}
+
 export class RemovalRequest {
   id: string;
   baulId: string;

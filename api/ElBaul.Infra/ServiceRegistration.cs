@@ -17,6 +17,8 @@ public static class ServiceRegistration
         services.AddScoped<IAlbumRepository, AlbumRepository>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IRecuerdoRepository, RecuerdoRepository>();
+        services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+        services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<ISentEmailRepository, SentEmailRepository>();
         services.AddScoped<IEmailLinkClickRepository, EmailLinkClickRepository>();
@@ -37,6 +39,10 @@ public static class ServiceRegistration
         // page we have no use for — don't waste a round trip following it.
         services.AddHttpClient<ISupportBackend, LeadHubSupportBackend>()
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+
+        services.Configure<OpenAiOptions>(configuration.GetSection("OpenAi"));
+        services.AddHttpClient<IAiChatBackend, OpenAiChatBackend>();
+        services.AddHttpClient<IEmbeddingBackend, OpenAiEmbeddingBackend>();
 
         // Singleton: wraps a single AmazonS3Client, which the AWS SDK documents as
         // thread-safe and designed for reuse/connection pooling across requests —

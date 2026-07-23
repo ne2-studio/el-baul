@@ -5,11 +5,10 @@ import { EmptyState } from './EmptyState';
 import { ExpandableFAB, SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
 import { NuevaPersonaModal } from './NuevaPersonaModal';
-import { NuevoRecuerdoModal } from './NuevoRecuerdoModal';
 import { PersonasTab } from './PersonasTab';
 import { RecuerdosTab } from './RecuerdosTab';
 import { TabButton } from './TabButton';
-import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, MessageCirclePlus, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate, Recuerdo, SharedUser } from '@/types';
@@ -61,6 +60,7 @@ interface AlbumsViewProps {
   onCreatePersona?: (nickname: string) => Promise<boolean>;
   onSelectPersona?: (persona: SharedUser) => void;
   onCreateRecuerdo?: (text: string) => Promise<boolean>;
+  onOpenChat?: () => void;
   onOpenAlbumFromRecuerdo?: (albumId: string) => void;
   onOpenPhotoFromRecuerdo?: (photoId: string, albumId?: string) => void;
   onRemovalRequests?: () => void;
@@ -86,6 +86,7 @@ export function AlbumsView({
   onCreatePersona,
   onSelectPersona,
   onCreateRecuerdo,
+  onOpenChat,
   onOpenAlbumFromRecuerdo,
   onOpenPhotoFromRecuerdo,
   onRemovalRequests,
@@ -97,10 +98,8 @@ export function AlbumsView({
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
-  const [showNuevoRecuerdoModal, setShowNuevoRecuerdoModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>('capitulos');
   const [isCreatingPersona, setIsCreatingPersona] = useState(false);
-  const [isCreatingRecuerdo, setIsCreatingRecuerdo] = useState(false);
   const [isSavingBaulInfo, setIsSavingBaulInfo] = useState(false);
 
   const handleSaveNuevaPersona = async (nickname: string) => {
@@ -108,13 +107,6 @@ export function AlbumsView({
     const ok = (await onCreatePersona?.(nickname)) ?? false;
     setIsCreatingPersona(false);
     if (ok) setShowNuevaPersonaModal(false);
-  };
-
-  const handleSaveNuevoRecuerdo = async (text: string) => {
-    setIsCreatingRecuerdo(true);
-    const ok = (await onCreateRecuerdo?.(text)) ?? false;
-    setIsCreatingRecuerdo(false);
-    if (ok) setShowNuevoRecuerdoModal(false);
   };
 
   const handleSaveBaulInfo = async (name: string, description: string) => {
@@ -403,10 +395,10 @@ export function AlbumsView({
       )}
       {activeTab === 'recuerdos' && (
         <SimpleFAB
-          label="Nuevo recuerdo"
-          icon={<MessageCirclePlus className="w-5 h-5" />}
-          onClick={() => setShowNuevoRecuerdoModal(true)}
-          hidden={!onCreateRecuerdo}
+          label="Ayúdame a recordar"
+          icon={<Sparkles className="w-5 h-5" />}
+          onClick={() => onOpenChat?.()}
+          hidden={!onOpenChat}
         />
       )}
 
@@ -415,14 +407,6 @@ export function AlbumsView({
           onCancel={() => setShowNuevaPersonaModal(false)}
           onSave={handleSaveNuevaPersona}
           isSubmitting={isCreatingPersona}
-        />
-      )}
-
-      {showNuevoRecuerdoModal && (
-        <NuevoRecuerdoModal
-          onCancel={() => setShowNuevoRecuerdoModal(false)}
-          onSave={handleSaveNuevoRecuerdo}
-          isSubmitting={isCreatingRecuerdo}
         />
       )}
 

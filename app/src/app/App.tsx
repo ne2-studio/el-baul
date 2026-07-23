@@ -21,6 +21,7 @@ import { EmptyBaulesRoute } from '../features/baules/components/EmptyBaulesRoute
 import { BaulesListRoute } from '../features/baules/components/BaulesListRoute';
 import { CreateBaulRoute } from '../features/baules/components/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/components/BaulRoute';
+import { AiChatRoute } from '../features/chat/components/AiChatRoute';
 import { RequestBaulDeletionRoute } from '../features/baules/components/RequestBaulDeletionRoute';
 import { CreateAlbumFormRoute } from '../features/albums/components/CreateAlbumFormRoute';
 import { AlbumRoute } from '../features/albums/components/AlbumRoute';
@@ -190,6 +191,11 @@ function App() {
         <Route path="/baules/:baulId" element={
           <ProtectedRoute>
             <BaulRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/recordar" element={
+          <ProtectedRoute>
+            <AiChatRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/personas/:sharedUserId" element={

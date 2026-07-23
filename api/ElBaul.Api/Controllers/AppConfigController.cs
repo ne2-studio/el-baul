@@ -14,6 +14,7 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
     public IActionResult Get()
     {
         var monetizationEnabled = configuration.GetValue<bool>("Features:MonetizationEnabled");
+        var chatEnabled = configuration.GetValue<bool>("Features:ChatEnabled");
         var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
         var appUrl = configuration.GetValue<string>("App:PublicUrl");
 
@@ -21,7 +22,8 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
         {
             features = new
             {
-                monetization = monetizationEnabled
+                monetization = monetizationEnabled,
+                chatEnabled
             },
             helpCenterUrl,
             appUrl

@@ -19,4 +19,12 @@ public interface IAppConfiguration
     /// </summary>
     bool WelcomeEmailsEnabled { get; }
     bool WeeklyDigestEmailsEnabled { get; }
+
+    /// <summary>
+    /// Global on/off switch for the AI chat feature. Checked by ChatManager on every request
+    /// (not just hidden client-side) so a direct API call still fails cleanly while the
+    /// feature is off, defaults to false — the walking skeleton's rollout is all-or-nothing,
+    /// not per-family.
+    /// </summary>
+    bool ChatEnabled { get; }
 }

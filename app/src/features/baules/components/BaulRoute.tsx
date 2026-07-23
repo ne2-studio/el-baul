@@ -6,6 +6,7 @@ import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { isAdminRole } from '@/utils/roleUtils';
@@ -16,6 +17,7 @@ export const BaulRoute: React.FC = () => {
   const { baulId } = useParams();
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
+  const chatEnabled = useAppConfigStore(state => state.chatEnabled);
   const { run } = useAsyncAction();
 
   const {
@@ -120,6 +122,7 @@ export const BaulRoute: React.FC = () => {
         onCreatePersona={handleCreatePersona}
         onSelectPersona={(persona) => navigate(`/baules/${baul.id}/personas/${persona.id}`)}
         onCreateRecuerdo={handleCreateRecuerdo}
+        onOpenChat={chatEnabled ? () => navigate(`/baules/${baul.id}/recordar`) : undefined}
         onOpenAlbumFromRecuerdo={(albumId) => handleSelectAlbum({ id: albumId })}
         onOpenPhotoFromRecuerdo={handleOpenPhotoFromRecuerdo}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}

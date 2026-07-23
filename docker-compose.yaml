@@ -145,6 +145,10 @@ services:
       ExternalTools__Beszel: ""
       ExternalTools__MinioConsole: "http://localhost:9001"
       ExternalTools__Mailpit: "http://localhost:8025"
+      # Blank locally — set the real key here when testing the AI chat feature end-to-end.
+      OpenAi__ApiKey: ""
+      OpenAi__Model: "gpt-4o-mini"
+      OpenAi__EmbeddingModel: "text-embedding-3-small"
       # No Resend account locally — ApiKey blank makes the API log emails instead of
       # sending them (see LoggingEmailSender). AdminTestRecipient lets the admin's
       # "enviar bienvenida de prueba" action be exercised end-to-end. Smtp__Host below

@@ -1,4 +1,4 @@
-import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory } from './types';
+import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage } from './types';
 
 export const API_BASE = import.meta.env.VITE_API_URL as string;
 
@@ -211,12 +211,22 @@ export const api = {
   },
 
   appConfig: {
-    get: () => get<{ features: { monetization: boolean }; helpCenterUrl: string; appUrl: string }>('/api/app-config'),
+    get: () =>
+      get<{ features: { monetization: boolean; chatEnabled: boolean }; helpCenterUrl: string; appUrl: string }>(
+        '/api/app-config'
+      ),
   },
 
   support: {
     submit: async (category: SupportCategory, message: string) => {
       await post<{ success: boolean }>('/api/support', { category, message });
     },
+  },
+
+  chat: {
+    getMessages: async (baulId: string) =>
+      (await get<any[]>(`/api/baules/${baulId}/chat`)).map((m) => new ChatMessage(m)),
+    sendMessage: async (baulId: string, text: string) =>
+      new ChatMessage(await post<any>(`/api/baules/${baulId}/chat`, { text })),
   },
 };

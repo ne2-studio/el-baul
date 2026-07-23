@@ -24,6 +24,10 @@ public interface IRecuerdoRepository
     /// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoAlbumIdCommand.cs).</summary>
     Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync();
 
+    /// <summary>Every recuerdo in the system, unscoped — used only by the one-off backfill
+    /// command (see ElBaul.Maintenance/Commands/BackfillRecuerdoEmbeddingsCommand.cs).</summary>
+    Task<IEnumerable<Recuerdo>> GetAllAsync();
+
     /// <summary>Recuerdos still missing BaulId — used only by the one-off backfill command
     /// (see ElBaul.Maintenance/Commands/BackfillRecuerdoBaulIdCommand.cs).</summary>
     Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync();

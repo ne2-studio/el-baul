@@ -37,4 +37,11 @@ internal static class DtoMapping
         RequestStatus.Rejected => "rejected",
         _ => throw new ArgumentOutOfRangeException(nameof(status))
     };
+
+    public static string ToApiString(this ChatMessageRole role) => role switch
+    {
+        ChatMessageRole.User => "user",
+        ChatMessageRole.Assistant => "assistant",
+        _ => throw new ArgumentOutOfRangeException(nameof(role))
+    };
 }

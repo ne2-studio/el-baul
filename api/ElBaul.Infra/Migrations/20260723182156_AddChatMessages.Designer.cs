@@ -3,6 +3,7 @@ using System;
 using ElBaul.Infra;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElBaul.Infra.Migrations
 {
     [DbContext(typeof(ElBaulDbContext))]
-    partial class ElBaulDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260723182156_AddChatMessages")]
+    partial class AddChatMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,7 +110,8 @@ namespace ElBaul.Infra.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -271,33 +275,6 @@ namespace ElBaul.Infra.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Recuerdos", (string)null);
-                });
-
-            modelBuilder.Entity("ElBaul.Ports.Output.RecuerdoEmbedding", b =>
-                {
-                    b.Property<Guid>("RecuerdoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BaulId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.PrimitiveCollection<float[]>("Vector")
-                        .IsRequired()
-                        .HasColumnType("real[]");
-
-                    b.HasKey("RecuerdoId");
-
-                    b.HasIndex("BaulId");
-
-                    b.ToTable("RecuerdoEmbeddings", (string)null);
                 });
 
             modelBuilder.Entity("ElBaul.Ports.Output.RemovalRequest", b =>
@@ -590,15 +567,6 @@ namespace ElBaul.Infra.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ElBaul.Ports.Output.RecuerdoEmbedding", b =>
-                {
-                    b.HasOne("ElBaul.Ports.Output.Recuerdo", null)
-                        .WithOne()
-                        .HasForeignKey("ElBaul.Ports.Output.RecuerdoEmbedding", "RecuerdoId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

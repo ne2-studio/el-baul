@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using ElBaul.Api;
 using ElBaul.Api.Logging;
@@ -123,6 +124,24 @@ builder.Services.AddRateLimiter(options =>
         });
     });
 
+    // Each chat message costs real money against a real OpenAI key, so it's keyed by user
+    // (not IP, like PublicLimiter) — this policy only ever applies to authenticated requests.
+    // AddRateLimiter policies run outside the normal per-request DI scope, so the claim is
+    // read directly here instead of via ICurrentUserProvider (see HttpContextCurrentUserProvider
+    // for the equivalent DI-resolvable lookup used everywhere else).
+    options.AddPolicy("ChatLimiter", context =>
+    {
+        var userId = context.User.FindFirstValue("sub")
+            ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? "anonymous";
+        return RateLimitPartition.GetFixedWindowLimiter(userId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue<int>("RateLimiter:ChatLimiter:PermitLimit"),
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+
     options.OnRejected = async (context, token) =>
     {
         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
@@ -140,6 +159,7 @@ builder.Services.AddScoped<IAlbumManager, AlbumManager>();
 builder.Services.AddScoped<IPhotoManager, PhotoManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<ISupportManager, SupportManager>();
+builder.Services.AddScoped<IChatManager, ChatManager>();
 builder.Services.AddScoped<IAdminManager, AdminManager>();
 builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
 builder.Services.AddScoped<IWeeklyDigestManager, WeeklyDigestManager>();
