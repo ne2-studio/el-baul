@@ -2,7 +2,7 @@ import { formatRelativeTime } from '@/utils/timeUtils';
 
 export type BaulRole = 'custodio' | 'administrador' | 'colaborador';
 
-export type SupportCategory = 'Support' | 'Bug' | 'Suggestion';
+export type SupportCategory = 'Support' | 'Bug' | 'Suggestion' | 'BaulDeletion';
 
 export interface PhotoDate {
   year: number;

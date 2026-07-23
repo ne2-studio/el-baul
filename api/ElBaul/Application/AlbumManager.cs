@@ -159,6 +159,45 @@ public class AlbumManager(
         return await ToDtoAsync(updated);
     }
 
+    public async Task<Result> DeleteAsync(Guid albumId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var album = await albumRepository.GetByIdAsync(albumId);
+        if (album is null)
+        {
+            logger.LogWarning("Album delete rejected: album not found {AlbumId}", albumId);
+            return Result.Failure("Album not found");
+        }
+
+        var baul = await baulRepository.GetByIdAsync(album.BaulId);
+        if (baul is null)
+        {
+            logger.LogWarning("Album delete rejected: baul not found {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure("Baul not found");
+        }
+
+        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId);
+        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        {
+            logger.LogWarning("Album delete rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
+            return Result.Failure("Access denied");
+        }
+
+        var photos = await photoRepository.GetByAlbumIdAsync(albumId);
+        foreach (var photo in photos)
+            await photoRepository.UpdateAsync(photo with { AlbumId = null });
+
+        var recuerdos = await recuerdoRepository.GetByAlbumIdAsync(albumId);
+        foreach (var recuerdo in recuerdos)
+            await recuerdoRepository.UpdateAsync(recuerdo with { AlbumId = null });
+
+        await albumRepository.DeleteAsync(albumId);
+        await baulRepository.UpdateAsync(baul with { AlbumCount = baul.AlbumCount - 1, UpdatedAt = clock.UtcNow() });
+
+        logger.LogInformation("Album deleted {BaulId} {AlbumId}", album.BaulId, albumId);
+        return Result.Success();
+    }
+
     public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid albumId)
     {
         var userId = currentUserProvider.GetUserId();

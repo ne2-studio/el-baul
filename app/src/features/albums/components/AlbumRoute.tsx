@@ -7,6 +7,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
+import { isAdminRole } from '@/utils/roleUtils';
 
 export const AlbumRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export const AlbumRoute: React.FC = () => {
   const auth = useAuth();
   const {
     baules, albums, photos, albumRecuerdos,
-    movePhotos, changePhotoDateBatch, renameAlbum, loadAlbumRecuerdos, addAlbumRecuerdo,
+    movePhotos, changePhotoDateBatch, renameAlbum, deleteAlbum, loadAlbumRecuerdos, addAlbumRecuerdo,
   } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
@@ -42,6 +43,15 @@ export const AlbumRoute: React.FC = () => {
       successMessage: 'Información del capítulo actualizada',
       errorMessage: 'Error al actualizar la información del capítulo',
     });
+    return result.ok;
+  };
+
+  const handleDeleteAlbum = async (): Promise<boolean> => {
+    const result = await run(() => deleteAlbum(baul.id, album.id), {
+      successMessage: 'Capítulo eliminado',
+      errorMessage: 'Error al eliminar el capítulo',
+    });
+    if (result.ok) navigate(`/baules/${baul.id}`);
     return result.ok;
   };
 
@@ -82,6 +92,7 @@ export const AlbumRoute: React.FC = () => {
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
       onUpdateAlbumInfo={handleUpdateAlbumInfo}
+      onDeleteAlbum={isAdminRole(baul.role) ? handleDeleteAlbum : undefined}
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(sharedUserId) => navigate(`/baules/${baul.id}/personas/${sharedUserId}`)}
     />

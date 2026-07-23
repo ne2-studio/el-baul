@@ -34,6 +34,7 @@ public class SupportManagerTests
     [InlineData("Support")]
     [InlineData("Bug")]
     [InlineData("Suggestion")]
+    [InlineData("BaulDeletion")]
     public async Task SubmitAsync_ShouldAcceptAllKnownCategories(string category)
     {
         SeedUser();

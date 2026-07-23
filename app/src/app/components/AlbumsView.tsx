@@ -9,7 +9,7 @@ import { NuevoRecuerdoModal } from './NuevoRecuerdoModal';
 import { PersonasTab } from './PersonasTab';
 import { RecuerdosTab } from './RecuerdosTab';
 import { TabButton } from './TabButton';
-import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, MessageCirclePlus, Bell, MoreVertical, Pencil } from 'lucide-react';
+import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, MessageCirclePlus, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate, Recuerdo, SharedUser } from '@/types';
@@ -66,6 +66,7 @@ interface AlbumsViewProps {
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
+  onRequestBaulDeletion?: () => void;
 }
 
 export function AlbumsView({
@@ -89,6 +90,7 @@ export function AlbumsView({
   onRemovalRequests,
   pendingRemovalRequestsCount,
   onUpdateBaulInfo,
+  onRequestBaulDeletion,
 }: AlbumsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
@@ -151,7 +153,7 @@ export function AlbumsView({
               <span className="text-sm">Volver</span>
             </button>
 
-            {(onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0)) && (
+            {(onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baul.isCustodio) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -183,6 +185,15 @@ export function AlbumsView({
                       <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
                         {pendingRemovalRequestsCount}
                       </span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {baul.isCustodio && (onUpdateBaulInfo || onRemovalRequests) && <DropdownMenuSeparator />}
+
+                  {baul.isCustodio && (
+                    <DropdownMenuItem variant="destructive" onClick={onRequestBaulDeletion}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar baúl
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>

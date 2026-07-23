@@ -440,4 +440,80 @@ public class AlbumManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
     }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldRemoveAlbum_AndLoosenItsPhotosAndRecuerdos_ForCustodio()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, null, CustodioId, _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, CustodioId, "con foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(albumId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(await _albumRepository.GetByIdAsync(albumId));
+
+        var photo = await _photoRepository.GetByIdAsync(photoId);
+        Assert.Null(photo!.AlbumId);
+        Assert.Equal(baulId, photo.BaulId);
+
+        var recuerdos = (await _recuerdoRepository.GetByBaulIdAsync(baulId)).ToList();
+        Assert.Equal(2, recuerdos.Count);
+        Assert.All(recuerdos, r => Assert.Null(r.AlbumId));
+
+        var baul = await _baulRepository.GetByIdAsync(baulId);
+        Assert.Equal(0, baul!.AlbumCount);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDenyAccess_ForColaboradorRole()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddSharedUserAsync(new SharedUser(
+            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.DeleteAsync(albumId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+        Assert.NotNull(await _albumRepository.GetByIdAsync(albumId));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
+    {
+        var baulId = Guid.NewGuid();
+        var albumId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
+        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", null, 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(StrangerId);
+        var result = await manager.DeleteAsync(albumId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldFail_WhenAlbumDoesNotExist()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Album not found", result.Error);
+    }
 }

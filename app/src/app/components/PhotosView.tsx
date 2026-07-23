@@ -8,9 +8,10 @@ import { MoveModal } from './MoveModal';
 import { DateModal } from './DateModal';
 import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 import { TabButton } from './TabButton';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil, BookOpen, X } from 'lucide-react';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, FolderInput, Calendar, MoreVertical, Pencil, Trash2, BookOpen, X } from 'lucide-react';
 import { Album } from './AlbumsView';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
+import { DeleteAlbumModal } from './DeleteAlbumModal';
 import { PhotoDate } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
@@ -59,6 +60,7 @@ interface PhotosViewProps {
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string, description: string) => Promise<boolean>;
   onUpdateAlbumInfo?: (name: string, description: string) => Promise<boolean>;
+  onDeleteAlbum?: () => Promise<boolean>;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
   onUserClick?: (sharedUserId: string) => void;
@@ -103,7 +105,7 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
 
 export function PhotosView({
   album, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allAlbums = [], onBatchMove, onBatchChangeDate,
-  onBatchCreateChapter, onUpdateAlbumInfo, recuerdos = [], onAddRecuerdo, onUserClick,
+  onBatchCreateChapter, onUpdateAlbumInfo, onDeleteAlbum, recuerdos = [], onAddRecuerdo, onUserClick,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
@@ -115,12 +117,21 @@ export function PhotosView({
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSavingAlbumInfo, setIsSavingAlbumInfo] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingAlbum, setIsDeletingAlbum] = useState(false);
 
   const handleSaveAlbumInfo = async (name: string, description: string) => {
     setIsSavingAlbumInfo(true);
     const ok = (await onUpdateAlbumInfo?.(name, description)) ?? false;
     setIsSavingAlbumInfo(false);
     if (ok) setShowEditModal(false);
+  };
+
+  const handleDeleteAlbum = async () => {
+    setIsDeletingAlbum(true);
+    const ok = (await onDeleteAlbum?.()) ?? false;
+    setIsDeletingAlbum(false);
+    if (ok) setShowDeleteModal(false);
   };
 
   // Multi-selection state
@@ -267,6 +278,12 @@ export function PhotosView({
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar información del capítulo
                   </DropdownMenuItem>
+                  {onDeleteAlbum && (
+                    <DropdownMenuItem variant="destructive" onClick={() => setShowDeleteModal(true)}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar capítulo
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -516,6 +533,16 @@ export function PhotosView({
           onCancel={() => setShowEditModal(false)}
           onSave={handleSaveAlbumInfo}
           isSubmitting={isSavingAlbumInfo}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteAlbumModal
+          photoCount={photos.length}
+          recuerdoCount={recuerdos.length}
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteAlbum}
+          isSubmitting={isDeletingAlbum}
         />
       )}
 

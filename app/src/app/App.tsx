@@ -21,6 +21,7 @@ import { EmptyBaulesRoute } from '../features/baules/components/EmptyBaulesRoute
 import { BaulesListRoute } from '../features/baules/components/BaulesListRoute';
 import { CreateBaulRoute } from '../features/baules/components/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/components/BaulRoute';
+import { RequestBaulDeletionRoute } from '../features/baules/components/RequestBaulDeletionRoute';
 import { CreateAlbumFormRoute } from '../features/albums/components/CreateAlbumFormRoute';
 import { AlbumRoute } from '../features/albums/components/AlbumRoute';
 import { PhotoViewerRoute } from '../features/photos/components/PhotoViewerRoute';
@@ -195,6 +196,11 @@ function App() {
         <Route path="/baules/:baulId/personas/:sharedUserId" element={
           <ProtectedRoute>
             <PersonaDetailRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/solicitar-borrado" element={
+          <ProtectedRoute>
+            <RequestBaulDeletionRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/nuevo-album" element={

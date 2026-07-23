@@ -31,6 +31,13 @@ public class AlbumsController(IAlbumManager albumManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpDelete("{albumId:guid}")]
+    public async Task<IActionResult> Delete(Guid baulId, Guid albumId)
+    {
+        var result = await albumManager.DeleteAsync(albumId);
+        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPut("{albumId:guid}/cover")]
     public async Task<IActionResult> SetCover(Guid baulId, Guid albumId, [FromBody] SetAlbumCoverRequest request)
     {

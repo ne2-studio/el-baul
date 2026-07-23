@@ -136,6 +136,8 @@ export const api = {
       new Album(await put<any>(`/api/baules/${baulId}/albums/${albumId}/cover`, { photoId })),
     update: async (baulId: string, albumId: string, name: string, description?: string) =>
       new Album(await put<any>(`/api/baules/${baulId}/albums/${albumId}`, { name, description })),
+    delete: (baulId: string, albumId: string) =>
+      del<void>(`/api/baules/${baulId}/albums/${albumId}`),
   },
 
   photos: {

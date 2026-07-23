@@ -11,7 +11,7 @@ public class SupportManager(
     ISupportBackend supportBackend,
     ICurrentUserProvider currentUserProvider) : ISupportManager
 {
-    private static readonly string[] ValidCategories = ["Support", "Bug", "Suggestion"];
+    private static readonly string[] ValidCategories = ["Support", "Bug", "Suggestion", "BaulDeletion"];
 
     public async Task<Result> SubmitAsync(string category, string message, string? technicalInfo)
     {

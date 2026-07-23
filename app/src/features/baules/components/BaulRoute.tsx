@@ -156,6 +156,7 @@ export const BaulRoute: React.FC = () => {
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}
+        onRequestBaulDeletion={() => navigate(`/baules/${baul.id}/solicitar-borrado`)}
       />
       {isLoadingAlbumPhotos && <BlockingLoadingOverlay message="Cargando fotos..." />}
     </>
