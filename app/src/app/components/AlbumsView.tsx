@@ -253,16 +253,16 @@ export function AlbumsView({
               onClick={() => setActiveTab('capitulos')}
             />
             <TabButton
-              label="Personas"
-              count={sharedUsers.length}
-              active={activeTab === 'personas'}
-              onClick={() => setActiveTab('personas')}
-            />
-            <TabButton
               label="Recuerdos"
               count={recuerdos.length}
               active={activeTab === 'recuerdos'}
               onClick={() => setActiveTab('recuerdos')}
+            />
+            <TabButton
+              label="Personas"
+              count={sharedUsers.length}
+              active={activeTab === 'personas'}
+              onClick={() => setActiveTab('personas')}
             />
           </div>
         </div>
