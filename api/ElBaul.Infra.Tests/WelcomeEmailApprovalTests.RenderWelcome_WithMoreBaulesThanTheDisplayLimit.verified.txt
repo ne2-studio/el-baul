@@ -1,0 +1,60 @@
+﻿{
+  Subject: Bienvenido a El Baúl,
+  Html:
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bienvenido a El Ba&#250;l</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#3a2f28;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ec;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:32px 32px 16px 32px;">
+              <h1 style="margin:0 0 16px 0;font-size:22px;color:#6b3f2a;">El Baúl</h1>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola Pedro,</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Ya formas parte de la historia de tus familias en El Ba&#250;l.</p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Cada foto y cada recuerdo que a&#241;ad&#225;is se queda a salvo y disponible para siempre. El siguiente paso es sencillo: a&#241;ade un recuerdo.</p>          <ul style="margin:0 0 24px 0;padding-left:20px;font-size:15px;line-height:1.6;">                <li>Ba&#250;l 1</li>
+                <li>Ba&#250;l 2</li>
+                <li>Ba&#250;l 3</li>
+                <li>Ba&#250;l 4</li>
+                <li>Ba&#250;l 5</li>
+                <li>Y 3 baúles más</li>
+                          </ul>
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-radius:8px;background-color:#6b3f2a;">
+                    <a href="https://el-baul.test/baules/abc" style="display:inline-block;padding:12px 24px;font-size:15px;color:#ffffff;text-decoration:none;">A&#241;adir un recuerdo</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>,
+  PlainText:
+Hola Pedro,
+
+Ya formas parte de la historia de tus familias en El Baúl.
+Cada foto y cada recuerdo que añadáis se queda a salvo y disponible para siempre. El siguiente paso es sencillo: añade un recuerdo.
+
+- Baúl 1
+- Baúl 2
+- Baúl 3
+- Baúl 4
+- Baúl 5
+Y 3 baúles más
+
+Añadir un recuerdo: https://el-baul.test/baules/abc
+,
+  TemplateVersion: welcome-v1,
+  Locale: es-ES
+}

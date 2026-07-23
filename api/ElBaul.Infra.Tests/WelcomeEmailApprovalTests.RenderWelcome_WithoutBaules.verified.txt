@@ -1,0 +1,46 @@
+﻿{
+  Subject: Bienvenido a El Baúl,
+  Html:
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bienvenido a El Ba&#250;l</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#3a2f28;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ec;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:32px 32px 16px 32px;">
+              <h1 style="margin:0 0 16px 0;font-size:22px;color:#6b3f2a;">El Baúl</h1>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola Pedro,</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">A&#250;n no perteneces a ning&#250;n ba&#250;l, pero eso tiene f&#225;cil arreglo.</p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Un ba&#250;l es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar.</p>              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-radius:8px;background-color:#6b3f2a;">
+                    <a href="https://el-baul.test/baules/nuevo" style="display:inline-block;padding:12px 24px;font-size:15px;color:#ffffff;text-decoration:none;">Crear mi primer ba&#250;l</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>,
+  PlainText:
+Hola Pedro,
+
+Aún no perteneces a ningún baúl, pero eso tiene fácil arreglo.
+Un baúl es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar.
+
+Crear mi primer baúl: https://el-baul.test/baules/nuevo
+,
+  TemplateVersion: welcome-v1,
+  Locale: es-ES
+}

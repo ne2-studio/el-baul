@@ -232,7 +232,16 @@ deployment (see `api/README.md`) — the web process itself never runs them.
   `StaticClock`, `StaticIdGenerator`, `StaticCurrentUserProvider`, `FakePhotoStorage`,
   `FakePhotoDateExtractor`) — no mocking framework, fast, behavior-focused.
 - **`ElBaul.Infra.Tests`** — infra-layer units that are cheap to isolate without a real
-  MinIO/DB (`ImgproxyUrlBuilderTests`, `UserSyncMiddlewareTests`).
+  MinIO/DB (`ImgproxyUrlBuilderTests`, `UserSyncMiddlewareTests`). Also where
+  `EmailTemplateRenderer` is tested: `WelcomeEmailTemplateRendererTests`/
+  `WeeklyDigestTemplateRendererTests` assert specific behaviors (escaping, truncation, CTA
+  wiring) via targeted substrings, while `WelcomeEmailApprovalTests`/
+  `WeeklyDigestApprovalTests` are **approval tests** (`Verify.Xunit`) that snapshot each
+  scenario's full `RenderedEmail` (subject/HTML/plain-text together) against a committed
+  `*.verified.txt` baseline next to the test — catching incidental template changes the
+  substring tests wouldn't. A mismatch writes a `*.received.txt` next to it (gitignored) for
+  diffing; re-approve an intentional change by reviewing that file and overwriting the
+  `.verified.txt` with it.
 
 ---
 

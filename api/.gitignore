@@ -1,5 +1,10 @@
 bin/
 obj/
+
+# Verify approval-test scratch output: written on every mismatch (or first run before a
+# baseline exists) next to the test source; only the *.verified.* baseline it's diffed
+# against is meant to be committed.
+*.received.*
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
