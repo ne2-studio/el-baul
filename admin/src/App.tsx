@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { Layout } from './app/components/Layout';
-import { AdminRoute } from './routes/AuthGuards';
+import { AdminRoute, CallbackRoute } from './routes/AuthGuards';
 import { setAccessToken } from './api';
 import { DashboardRoute } from './features/dashboard/components/DashboardRoute';
 import { UsersListRoute } from './features/users/components/UsersListRoute';
@@ -22,9 +22,14 @@ function LoadingScreen() {
 export default function App() {
   const auth = useAuth();
 
-  useEffect(() => {
-    setAccessToken(auth.user?.access_token);
-  }, [auth.user]);
+  // Mirrored into api.ts synchronously during render, not in an effect: on a hard refresh,
+  // AdminRoute can let a deep child route mount in the very same commit where
+  // auth.isAuthenticated first flips to true, and passive effects fire child-first — a
+  // child route's data-fetching effect (e.g. BaulDetailRoute's fetchBaul) would then run
+  // before this component's own effect got a chance to push the token, calling the API with
+  // none attached and getting a 401. A plain synchronous assignment has no such ordering
+  // risk. Same fix as app/'s App.tsx.
+  setAccessToken(auth.user?.access_token);
 
   // Unlike app/, the admin backoffice has no public routes to fall back to — an
   // unauthenticated visitor goes straight to Zitadel.
@@ -46,7 +51,7 @@ export default function App() {
   return (
     <Layout onLogout={handleLogout}>
       <Routes>
-        <Route path="/callback" element={null} />
+        <Route path="/callback" element={<CallbackRoute />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<AdminRoute><DashboardRoute /></AdminRoute>} />
         <Route path="/usuarios" element={<AdminRoute><UsersListRoute /></AdminRoute>} />
