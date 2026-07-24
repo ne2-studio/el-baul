@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { DataTable } from '@/app/components/DataTable';
+import { AsyncState } from '@/app/components/AsyncState';
 import { formatDate } from '@/utils/format';
 import type { AdminBaul } from '@/types';
 
@@ -17,10 +18,7 @@ export function BaulesListRoute() {
     <div className="space-y-6">
       <h2>Baúles</h2>
 
-      {isLoading && baules.length === 0 && <p className="text-muted-foreground">Cargando…</p>}
-      {error && <p className="text-destructive">{error}</p>}
-
-      {!isLoading || baules.length > 0 ? (
+      <AsyncState isLoading={isLoading} error={error} hasData={baules.length > 0} renderWhenEmpty>
         <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
           <DataTable<AdminBaul>
             rows={baules}
@@ -37,7 +35,7 @@ export function BaulesListRoute() {
             ]}
           />
         </div>
-      ) : null}
+      </AsyncState>
     </div>
   );
 }

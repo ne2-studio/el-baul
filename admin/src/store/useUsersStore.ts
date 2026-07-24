@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AdminSentEmail, AdminUser, AdminUserDetail } from '../types';
 import { api } from '../api';
+import { runFetch } from './asyncFetch';
 
 interface UsersStore {
   users: AdminUser[];
@@ -24,33 +25,24 @@ export const useUsersStore = create<UsersStore>((set) => ({
   error: null,
 
   fetchUsers: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const users = await api.users.getAll();
-      set({ users, isLoading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-    }
+    await runFetch(set, { loading: 'isLoading', error: 'error' }, async () => ({
+      users: await api.users.getAll(),
+    }));
   },
 
   fetchUser: async (id) => {
-    set({ isLoading: true, error: null, selectedUser: null, selectedUserEmails: [] });
-    try {
-      const selectedUser = await api.users.getById(id);
-      set({ selectedUser, isLoading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-    }
+    await runFetch(
+      set,
+      { loading: 'isLoading', error: 'error' },
+      async () => ({ selectedUser: await api.users.getById(id) }),
+      { selectedUser: null, selectedUserEmails: [] },
+    );
   },
 
   fetchUserEmails: async (id) => {
-    set({ isLoadingEmails: true });
-    try {
-      const selectedUserEmails = await api.users.getEmails(id);
-      set({ selectedUserEmails, isLoadingEmails: false });
-    } catch {
-      // Non-fatal: the rest of the user detail page still works without this section.
-      set({ isLoadingEmails: false });
-    }
+    // Non-fatal: the rest of the user detail page still works without this section, so no error key.
+    await runFetch(set, { loading: 'isLoadingEmails' }, async () => ({
+      selectedUserEmails: await api.users.getEmails(id),
+    }));
   },
 }));

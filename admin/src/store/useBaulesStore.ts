@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AdminBaul, AdminBaulDetail } from '../types';
 import { api } from '../api';
+import { runFetch } from './asyncFetch';
 
 interface BaulesStore {
   baules: AdminBaul[];
@@ -20,23 +21,18 @@ export const useBaulesStore = create<BaulesStore>((set) => ({
   error: null,
 
   fetchBaules: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const baules = await api.baules.getAll();
-      set({ baules, isLoading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-    }
+    await runFetch(set, { loading: 'isLoading', error: 'error' }, async () => ({
+      baules: await api.baules.getAll(),
+    }));
   },
 
   fetchBaul: async (id) => {
-    set({ isLoading: true, error: null, selectedBaul: null });
-    try {
-      const selectedBaul = await api.baules.getById(id);
-      set({ selectedBaul, isLoading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-    }
+    await runFetch(
+      set,
+      { loading: 'isLoading', error: 'error' },
+      async () => ({ selectedBaul: await api.baules.getById(id) }),
+      { selectedBaul: null },
+    );
   },
 
   deleteBaul: async (id) => {

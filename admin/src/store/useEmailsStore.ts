@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AdminSentEmail } from '../types';
 import { api } from '../api';
+import { runFetch } from './asyncFetch';
 
 interface EmailsStore {
   emails: AdminSentEmail[];
@@ -16,12 +17,8 @@ export const useEmailsStore = create<EmailsStore>((set) => ({
   error: null,
 
   fetchEmails: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const emails = await api.emails.getAll();
-      set({ emails, isLoading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-    }
+    await runFetch(set, { loading: 'isLoading', error: 'error' }, async () => ({
+      emails: await api.emails.getAll(),
+    }));
   },
 }));

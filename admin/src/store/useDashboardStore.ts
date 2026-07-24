@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { DashboardKpis } from '../types';
 import { api } from '../api';
+import { runFetch } from './asyncFetch';
 
 interface DashboardStore {
   kpis: DashboardKpis | null;
@@ -16,12 +17,8 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   error: null,
 
   fetchDashboard: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const kpis = await api.dashboard.get();
-      set({ kpis, isLoading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-    }
+    await runFetch(set, { loading: 'isLoading', error: 'error' }, async () => ({
+      kpis: await api.dashboard.get(),
+    }));
   },
 }));

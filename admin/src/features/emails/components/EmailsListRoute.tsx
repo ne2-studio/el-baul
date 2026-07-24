@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { useEmailsStore } from '@/store/useEmailsStore';
 import { DataTable } from '@/app/components/DataTable';
+import { AsyncState } from '@/app/components/AsyncState';
 import { formatDate } from '@/utils/format';
 import { EMAIL_TYPE_LABELS, EMAIL_STATUS_LABELS } from '@/utils/emailLabels';
 import type { AdminSentEmail } from '@/types';
@@ -16,9 +17,7 @@ export function EmailsListRoute() {
   return (
     <div className="space-y-6">
       <h2>Emails</h2>
-      {isLoading && emails.length === 0 && <p className="text-muted-foreground">Cargando…</p>}
-      {error && <p className="text-destructive">{error}</p>}
-      {!isLoading || emails.length > 0 ? (
+      <AsyncState isLoading={isLoading} error={error} hasData={emails.length > 0} renderWhenEmpty>
         <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
           <DataTable<AdminSentEmail>
             rows={emails}
@@ -37,7 +36,7 @@ export function EmailsListRoute() {
             ]}
           />
         </div>
-      ) : null}
+      </AsyncState>
     </div>
   );
 }

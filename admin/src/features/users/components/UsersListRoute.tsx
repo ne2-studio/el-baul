@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUsersStore } from '@/store/useUsersStore';
 import { DataTable } from '@/app/components/DataTable';
 import { InitialsAvatar } from '@/app/components/InitialsAvatar';
+import { AsyncState } from '@/app/components/AsyncState';
 import { formatDate } from '@/utils/format';
 import type { AdminUser } from '@/types';
 
@@ -18,10 +19,7 @@ export function UsersListRoute() {
     <div className="space-y-6">
       <h2>Usuarios</h2>
 
-      {isLoading && users.length === 0 && <p className="text-muted-foreground">Cargando…</p>}
-      {error && <p className="text-destructive">{error}</p>}
-
-      {!isLoading || users.length > 0 ? (
+      <AsyncState isLoading={isLoading} error={error} hasData={users.length > 0} renderWhenEmpty>
         <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
           <DataTable<AdminUser>
             rows={users}
@@ -37,7 +35,7 @@ export function UsersListRoute() {
             ]}
           />
         </div>
-      ) : null}
+      </AsyncState>
     </div>
   );
 }
