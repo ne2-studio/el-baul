@@ -183,11 +183,15 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: "http://localhost:5050"
-        VITE_OIDC_AUTHORITY: "http://localhost:5000"
-        VITE_OIDC_CLIENT_ID: "el-baul-app"
-        VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
+    # VITE_* is read at container start, not baked at build time — see
+    # app/src/runtimeConfig.ts + app/docker-entrypoint.d/. Unlike admin below (which has no
+    # runtime-config mechanism and still needs build args), this is the same config app/'s
+    # image reads in Coolify too, just with local values.
+    environment:
+      VITE_API_URL: "http://localhost:5050"
+      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_OIDC_CLIENT_ID: "el-baul-app"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
     ports:
       - "3000:80"
     depends_on:

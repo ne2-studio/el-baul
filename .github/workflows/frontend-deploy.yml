@@ -42,16 +42,13 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      # No --build-arg VITE_* here on purpose: this image reads its VITE_* config at container
+      # start instead (see app/src/runtimeConfig.ts + app/docker-entrypoint.d/), configured as
+      # Coolify's runtime Environment Variables on the frontend service — not build args, not
+      # GitHub Actions repo/environment vars. docker-compose.yaml's `app` service configures
+      # the same thing the same way for local dev.
       - name: Build image
-        run: |
-          docker build \
-            --build-arg VITE_API_URL="${{ vars.VITE_API_URL }}" \
-            --build-arg VITE_OIDC_AUTHORITY="${{ vars.VITE_OIDC_AUTHORITY }}" \
-            --build-arg VITE_OIDC_CLIENT_ID="${{ vars.VITE_OIDC_CLIENT_ID }}" \
-            --build-arg VITE_OIDC_CALLBACK_URI="${{ vars.VITE_OIDC_CALLBACK_URI }}" \
-            --build-arg VITE_ZITADEL_ORGANIZATION_ID="${{ vars.VITE_ZITADEL_ORGANIZATION_ID }}" \
-            --build-arg VITE_SENTRY_DSN="${{ vars.VITE_SENTRY_DSN }}" \
-            -t $IMAGE_NAME:latest .
+        run: docker build -t $IMAGE_NAME:latest .
 
       # Everything below, up to Push image, verifies the image just built above — same
       # artifact, redirected at a throwaway backend via the runtime env-config mechanism
