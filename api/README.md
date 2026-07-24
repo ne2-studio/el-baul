@@ -79,9 +79,28 @@ compose setup above.
 dotnet test
 ```
 
-Two-tier: `ElBaul.Tests` uses hand-written fakes for `Application/` business logic (no
-mocking framework); `ElBaul.Infra.Tests` uses targeted unit tests for infra-layer logic
-(e.g. the MinIO signed-URL host rewrite).
+Runs everything in `ElBaul.slnx`: `ElBaul.Tests` uses hand-written fakes for
+`Application/` business logic (no mocking framework); `ElBaul.Infra.Tests` uses targeted
+unit tests for infra-layer logic (e.g. the MinIO signed-URL host rewrite); `ElBaul.Api.Tests`
+covers controller-level concerns (authorization policies, the email-tracking endpoint).
+
+**This does not include `docker-image-tests/`** — it's a deliberately separate solution
+(`ElBaul.ImageTests.slnx`, not part of `ElBaul.slnx`) that black-box-tests the *built
+Docker image* itself via Testcontainers, not this source tree. Anything that changes the
+domain model, persistence (entities, EF configuration, migrations), or the public API
+contract should be verified against it too, not just `dotnet test` — the unit suites above
+run against hand-written fakes and can't catch a wire-format regression or an EF model that
+fails to build against a real Postgres:
+
+```bash
+docker build -t el-baul-api:local .
+BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
+```
+
+See [`docker-image-tests/README.md`](docker-image-tests/README.md) for what it covers
+(Smoke / InfrastructureCompatibility / CriticalJourneys) and the rules it enforces on
+itself. It also runs in CI right after `docker build`, before the image is pushed
+(`.github/workflows/backend-deploy.yml`).
 
 ## Docker
 

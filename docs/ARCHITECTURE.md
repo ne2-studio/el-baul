@@ -242,12 +242,33 @@ deployment (see `api/README.md`) — the web process itself never runs them.
   substring tests wouldn't. A mismatch writes a `*.received.txt` next to it (gitignored) for
   diffing; re-approve an intentional change by reviewing that file and overwriting the
   `.verified.txt` with it.
-- **`docker-image-tests/ElBaul.ImageTests`** — a separate solution, not part of the above.
-  Black-box acceptance tests for the *built Docker image*, run via Testcontainers against a
-  real Postgres + MinIO + fake-oidc stack it stands up itself: no `ProjectReference` to
-  anything above, no shared fixtures/DTOs, HTTP and container state only. Runs in CI right
-  after `docker build`, before the image is pushed (`.github/workflows/backend-deploy.yml`).
-  See its own `README.md` for the full rule set and what it does/doesn't cover.
+- **`ElBaul.Api.Tests`** — controller-level concerns that need the ASP.NET pipeline itself
+  (authorization policies, the email-tracking endpoint), not just the `Application/` logic
+  behind it.
+- **`docker-image-tests/ElBaul.ImageTests`** — a separate solution, not part of the above
+  (`ElBaul.ImageTests.slnx`, excluded from `ElBaul.slnx` — plain `dotnet test` from `api/`
+  does not run it). Black-box acceptance tests for the *built Docker image*, run via
+  Testcontainers against a real Postgres + MinIO + fake-oidc stack it stands up itself: no
+  `ProjectReference` to anything above, no shared fixtures/DTOs, HTTP and container state
+  only. Runs in CI right after `docker build`, before the image is pushed
+  (`.github/workflows/backend-deploy.yml`). See its own `README.md` for the full rule set
+  and what it does/doesn't cover.
+
+  The unit suites above run against hand-written fakes, which is exactly what makes them
+  fast — and exactly why they can't catch a few classes of bug: an EF model that fails to
+  build or a query that fails to translate against a *real* Postgres (fakes have no query
+  translation step at all), a wire-format regression the backend's own DTOs wouldn't
+  reveal (a test recompiled against the same, now-broken, shared type can't catch a
+  regression in that type), or a raw-SQL/Testcontainers-only path. Run
+  `docker-image-tests` too — not just `dotnet test` — for any change to the domain model,
+  persistence (entities, EF configuration, migrations, value converters), or the public API
+  contract:
+
+  ```bash
+  cd api
+  docker build -t el-baul-api:local .
+  BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
+  ```
 
 ---
 

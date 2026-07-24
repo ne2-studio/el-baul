@@ -14,13 +14,38 @@ anything user-facing.
 
 ```bash
 cd api
-dotnet test ElBaul.Tests/ElBaul.Tests.csproj   # in-memory-fake unit suite, ~80 tests, <1s
-dotnet build                                    # whole solution, compile-only sanity
+dotnet test   # ElBaul.slnx: ElBaul.Tests, ElBaul.Infra.Tests, ElBaul.Api.Tests
+dotnet build  # whole solution, compile-only sanity
 ```
 
 That's real coverage for `Application/` logic (managers), not a rubber stamp — the
 fakes in `ElBaul.Tests/Fakes/` are proper in-memory implementations of the output
-ports, and this suite has caught real bugs (see "Known sharp edges" below).
+ports, and this suite has caught real bugs (see "Known sharp edges" below). But it's
+coverage against **fakes**, which structurally cannot catch: an EF model/mapping that
+fails against a real Postgres, a query that fails to translate to SQL, a wire-format
+regression the backend's own DTOs wouldn't reveal, or anything only reachable through a
+real container (raw SQL, migrations, the built image's env-var contract).
+
+**Any change to the domain model, persistence (entities, EF configuration, migrations,
+value converters), or the public API contract is not verified until `docker-image-tests`
+has also passed against the actual built image** — this is a separate solution
+(`docker-image-tests/ElBaul.ImageTests.slnx`, not part of `ElBaul.slnx`), so
+`dotnet test` above does **not** run it:
+
+```bash
+cd api
+docker build -t el-baul-api:local .
+BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
+```
+
+This spins up real Postgres + MinIO + fake-oidc via Testcontainers and drives the image
+through Smoke / InfrastructureCompatibility / CriticalJourneys checks (full
+create-baúl → chapter → upload-photo → download-same-bytes → recuerdo journey included).
+It's what actually caught, for example, an EF Core limitation where an optional/nullable
+complex property compiled fine and passed every fake-backed unit test but threw at
+startup against real Postgres — `dotnet test ElBaul.Tests` alone would have shipped it.
+See [`docker-image-tests/README.md`](../../api/docker-image-tests/README.md) for what
+each test group covers.
 
 For anything in `ElBaul.Api/Tools/` (one-off maintenance commands like
 `backfill-*`): these are **untested by convention** — `BackfillExifDatesCommand` has
@@ -101,6 +126,16 @@ times this actually bit.
   non-owning member always looked memberless. When a value depends on "am I the
   custodio," check every call site computes it the same way, not just the one you're
   looking at.
+- **EF Core model changes that only fail against a real database.** Introducing a
+  `PhotoDate` value object initially mapped it as an EF Core `ComplexProperty` on a
+  nullable `Photo.Date` — compiled clean, and all 194 `ElBaul.Tests` (fakes, no EF
+  involved) passed. The container crashed on startup: EF Core doesn't support optional/
+  nullable complex properties at all (dotnet/efcore#31376), and separately, a positional
+  record's primary constructor can't bind a complex-type parameter in the first place —
+  both are model-validation/materialization failures that only surface when
+  `OnModelCreating` actually runs against a real `DbContext`, which no fake-backed test
+  ever does. `docker-image-tests` (or just running the built image against real Postgres)
+  is what caught it; `dotnet test` alone would have looked green and shipped.
 
 ## Playwright verification pattern
 
