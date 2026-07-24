@@ -333,13 +333,19 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
   state (`_accessToken`) set via `setAccessToken()`, not read from a hook. Every response is
   mapped back into its `types/index.ts` class before being returned. Base URL from
   `VITE_API_URL`.
-- **`store/`** — not a single store; state is split by concern:
-  - `useAppStore.ts` — the main domain store (auth-derived profile/subscription, plus all
-    server data: `baules`, `chapters`, `photos`, `loosePhotos`, `personas`, `removalRequests`,
-    `recuerdos`, `chapterRecuerdos`). One `fetchData()` loads baúles on auth; per-screen `load*`
-    actions lazy-load the rest (chapters, photos, recuerdos) as routes need them, rather than one
-    eager `Promise.all` for everything. Every mutating action calls `api.*` first and updates
-    state from the response only after the await resolves.
+- **`store/`** — not a single store; state is split by domain (split apart from one combined
+  domain store in `c4102a2`):
+  - `useAuthStore.ts` — auth-derived state only (`userProfile`, `subscription`).
+  - `useBaulesStore.ts` — the largest domain store: `baules`, `chapters`, `photos`,
+    `loosePhotos`. Per-screen `load*` actions lazy-load chapters/photos as routes need them,
+    rather than one eager `Promise.all` for everything. Every mutating action calls `api.*`
+    first and updates state from the response only after the await resolves.
+  - `usePersonasStore.ts` — `personas`, `removalRequests`.
+  - `useRecuerdosStore.ts` — `recuerdos`, `chapterRecuerdos`, `baulRecuerdos`.
+  - `session.ts` — not a store itself; `loadUserData()` fires the baúles list + profile fetch
+    together on login/refresh (isLoading only reflects the baúles fetch), and
+    `resetAllStores()` is the one place that fans a sign-out reset out across all four domain
+    stores above.
   - `uiStore.ts` — cross-cutting UI state (toasts, profile menu, plan-limit modal) that isn't
     server data and doesn't belong to one screen.
   - `useAppConfigStore.ts` — remote feature flags (`api.appConfig.get()`), fetched once per
@@ -348,14 +354,15 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
     below), independent of server data.
 - **`features/<domain>/components/*Route.tsx`** — one container component per route, named
   `*Route` (`ChapterRoute`, `BaulesListRoute`, `CreateBaulRoute`, …), grouped into
-  `features/{chapters,auth,baules,photos,profile,sharing}/`. A Route component reads
+  `features/{chapters,auth,baules,photos,profile,sharing,chat,support}/`. A Route component reads
   `useParams`/store state, defines the handlers (calling store actions, navigating, showing
   toasts), and renders a presentational component from `app/components/` with everything passed
   as props — no business logic or store access inside `app/components/`.
 - **`app/components/`** — flat directory of presentational screens/modals (`PhotosView`,
   `ChaptersView`, `BaulesList`, `CreateChapterForm`, `RecuerdoCard`, …) plus small shared primitives
   (`Button`, `Card`, `Input`, `FAB`, `Toast`, `LoadingSpinner`). Props-in, callbacks-out; no
-  `useAppStore`/`api` imports.
+  `store/*`/`api` imports. Headless, store-driven wiring components (e.g. `NativeShareHandler.tsx`)
+  live in `native/` instead — see Capacitor section below.
 - **`App.tsx`** — owns routing (`react-router-dom` `<Routes>`, no shared `<Layout>` wrapper —
   each route renders its own screen directly), the auth redirect gate (`react-oidc-context`),
   pushing the access token into `api.ts`, and one-time domain data load
@@ -375,7 +382,8 @@ The frontend ships as three things from one codebase: a browser SPA, an installa
 isolated rather than spread through the app:
 
 - `native/shareReceiver.ts` + `useIncomingShareStore.ts` handle Android's native
-  "share photos into El Baúl" intent.
+  "share photos into El Baúl" intent; `native/NativeShareHandler.tsx` is the component that
+  wires the two together (mounted once in `App.tsx`, inside `<BrowserRouter>`).
 - `main.tsx` special-cases the OIDC redirect on native: `AppUrlOpen`/launch-URL deep links
   (`studio.ne2.elbaul://…`) are rewritten to the in-app `/callback` route, because
   `react-oidc-context` expects `code`/`state` on the page URL, not an OS-level deep link.
@@ -427,7 +435,7 @@ Three levels, matched to what's under test — see
 the full rationale.
 
 - **Unit** (Vitest, `environment: 'node'`, the config default, `npm test`) — narrow,
-  in-process, no DOM: store logic (`useAppStore.recuerdos.test.ts`) and
+  in-process, no DOM: store logic (`useRecuerdosStore.test.ts`) and
   `utils/timeUtils.test.ts`.
 - **Component** (Vitest + jsdom + React Testing Library, opted in per-file via a
   `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM, e.g.
