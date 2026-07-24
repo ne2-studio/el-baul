@@ -23,11 +23,12 @@ public class ChatContextBuilderApprovalTests
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
+    private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly StaticClock _clock = new();
 
     private ChatContextBuilder CreateBuilder(IEmbeddingBackend? embeddingBackend = null) =>
         new(NullLogger<ChatContextBuilder>.Instance, _baulRepository, _chapterRepository, _recuerdoRepository,
-            _recuerdoEmbeddingRepository, embeddingBackend ?? new FakeEmbeddingBackend([]), _clock);
+            _recuerdoEmbeddingRepository, _photoRepository, embeddingBackend ?? new FakeEmbeddingBackend([]), _clock);
 
     [Fact]
     public async Task BuildAsync_WithChaptersPersonasAndRecuerdos()

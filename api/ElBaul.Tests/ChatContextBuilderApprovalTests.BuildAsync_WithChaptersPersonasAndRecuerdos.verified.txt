@@ -1,4 +1,4 @@
-﻿Nombre del baúl: Viajes de la familia
+Nombre del baúl: Viajes de la familia
 Descripción del baúl: Los viajes que hicimos juntos
 
 Personas de la familia en este baúl:
@@ -9,5 +9,5 @@ Capítulos:
 - Boda de Ana (5 fotos)
 
 Recuerdos (ordenados del más antiguo al más reciente):
-- [2024-03-05] Papá: "Fuimos a Asturias en verano", capítulo: Boda de Ana
-- [2024-03-10] Mamá: "El abuelo cantaba en las bodas"
+- Papá: "Fuimos a Asturias en verano", capítulo: Boda de Ana
+- Mamá: "El abuelo cantaba en las bodas"

@@ -17,11 +17,12 @@ public class ChatContextBuilderTests
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
+    private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly StaticClock _clock = new();
 
     private ChatContextBuilder CreateBuilder(IEmbeddingBackend? embeddingBackend = null) =>
         new(NullLogger<ChatContextBuilder>.Instance, _baulRepository, _chapterRepository, _recuerdoRepository,
-            _recuerdoEmbeddingRepository, embeddingBackend ?? new FakeEmbeddingBackend([]), _clock);
+            _recuerdoEmbeddingRepository, _photoRepository, embeddingBackend ?? new FakeEmbeddingBackend([]), _clock);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name)
     {
@@ -90,5 +91,57 @@ public class ChatContextBuilderTests
         var context = await builder.BuildAsync(baul, "¿Qué sabemos de la familia?");
 
         Assert.Contains("El más reciente", context);
+    }
+
+    [Fact]
+    public async Task BuildAsync_ShouldTagARecuerdo_WithItsPhotosDate_NotItsWriteDate()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+
+        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "key", PhotoDates.Of(1998, 6, 15), CustodioId, _clock.UtcNow());
+        await _photoRepository.CreateAsync(photo);
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, null, new BaulId(baulId), CustodioId, "Aquí sopló el abuelo las velas", _clock.UtcNow());
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), recuerdo);
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Cuándo fue el cumpleaños del abuelo?");
+
+        Assert.Contains("[1998-06-15]", context);
+        Assert.DoesNotContain(_clock.UtcNow().ToString("yyyy-MM-dd"), context);
+    }
+
+    [Fact]
+    public async Task BuildAsync_ShouldTagARecuerdo_WithItsChaptersEarliestPhotoDate_WhenNotDirectlyLinkedToADatedPhoto()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(chapter);
+
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 5), CustodioId, _clock.UtcNow()));
+
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, chapter.Id, new BaulId(baulId), CustodioId, "Qué boda tan bonita", _clock.UtcNow());
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), recuerdo);
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Cuándo fue la boda de Ana?");
+
+        Assert.Contains("[2010-05]", context);
+    }
+
+    [Fact]
+    public async Task BuildAsync_ShouldOmitTheDateTag_WhenNeitherThePhotoNorTheChapterHasADate()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Un recuerdo suelto sin fecha", _clock.UtcNow());
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), recuerdo);
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Qué recuerdos hay?");
+
+        Assert.Contains("- Custodio: \"Un recuerdo suelto sin fecha\"", context);
     }
 }

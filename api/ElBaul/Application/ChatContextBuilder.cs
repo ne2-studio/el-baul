@@ -17,6 +17,7 @@ public class ChatContextBuilder(
     IChapterRepository chapterRepository,
     IRecuerdoRepository recuerdoRepository,
     IRecuerdoEmbeddingRepository recuerdoEmbeddingRepository,
+    IPhotoRepository photoRepository,
     IEmbeddingBackend embeddingBackend,
     IClock clock) : IChatContextBuilder
 {
@@ -38,6 +39,18 @@ public class ChatContextBuilder(
             .ToDictionary(s => s.UserId!, s => s.Nickname);
         var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(baul.Id)).ToList();
         var relevantRecuerdos = await FindRelevantRecuerdosAsync(baul.Id, recuerdos, query);
+
+        // A recuerdo's CreatedAt is when it was *written*, not when the moment it describes
+        // happened — using it as the recuerdo's date confused the model into treating write
+        // order as chronology and inventing timelines. The photo/chapter it's attached to (if
+        // any) is what actually anchors it in time; with neither, or neither dated, it has no
+        // date at all rather than a fabricated one.
+        var photosByChapter = new Dictionary<ChapterId, List<Photo>>();
+        foreach (var chapter in chapters)
+            photosByChapter[chapter.Id] = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
+        var loosePhotos = (await photoRepository.GetLooseByBaulIdAsync(baul.Id)).ToList();
+        var photoById = photosByChapter.Values.SelectMany(p => p).Concat(loosePhotos).ToDictionary(p => p.Id);
+        var chapterDates = photosByChapter.ToDictionary(kv => kv.Key, kv => EarliestDate(kv.Value));
 
         var sb = new StringBuilder();
         sb.AppendLine($"Nombre del baúl: {baul.Name}");
@@ -69,16 +82,52 @@ public class ChatContextBuilder(
             sb.AppendLine("Recuerdos (ordenados del más antiguo al más reciente):");
         }
 
-        foreach (var recuerdo in relevantRecuerdos.OrderBy(r => r.CreatedAt))
+        var ordered = relevantRecuerdos
+            .Select(r => (Recuerdo: r, Date: EffectiveDate(r, photoById, chapterDates)))
+            .OrderByDescending(x => x.Date is not null)
+            .ThenBy(x => x.Date?.Year ?? 0)
+            .ThenBy(x => x.Date?.Month ?? 1)
+            .ThenBy(x => x.Date?.Day ?? 1)
+            .ThenBy(x => x.Recuerdo.CreatedAt);
+
+        foreach (var (recuerdo, date) in ordered)
         {
             var author = nicknamesByUserId.GetValueOrDefault(recuerdo.UserId, "Usuario");
             var chapterName = recuerdo.ChapterId is { } chapterId ? chapterNames.GetValueOrDefault(chapterId) : null;
             var location = chapterName is not null ? $", capítulo: {chapterName}" : "";
-            sb.AppendLine($"- [{recuerdo.CreatedAt:yyyy-MM-dd}] {author}: \"{recuerdo.Text}\"{location}");
+            var dateTag = date is not null ? $"[{FormatDate(date)}] " : "";
+            sb.AppendLine($"- {dateTag}{author}: \"{recuerdo.Text}\"{location}");
         }
 
         return sb.ToString();
     }
+
+    // The recuerdo's own photo wins when it has a date; failing that, the chapter it (or its
+    // photo) belongs to — via its earliest dated photo — is the next best anchor. No fallback
+    // to CreatedAt: an unresolvable date must render as no date, not a fabricated one.
+    private static PhotoDate? EffectiveDate(
+        Recuerdo recuerdo, IReadOnlyDictionary<PhotoId, Photo> photoById, IReadOnlyDictionary<ChapterId, PhotoDate?> chapterDates)
+    {
+        if (recuerdo.PhotoId is { } photoId && photoById.TryGetValue(photoId, out var photo) && photo.Date is { } photoDate)
+            return photoDate;
+        if (recuerdo.ChapterId is { } chapterId && chapterDates.TryGetValue(chapterId, out var chapterDate))
+            return chapterDate;
+        return null;
+    }
+
+    private static PhotoDate? EarliestDate(IReadOnlyCollection<Photo> photos) =>
+        photos
+            .Where(p => p.Date is not null)
+            .OrderBy(p => p.Date!.Year).ThenBy(p => p.Date!.Month ?? 1).ThenBy(p => p.Date!.Day ?? 1)
+            .Select(p => p.Date)
+            .FirstOrDefault();
+
+    private static string FormatDate(PhotoDate date) => (date.Month, date.Day) switch
+    {
+        ({ } month, { } day) => $"{date.Year:D4}-{month:D2}-{day:D2}",
+        ({ } month, null) => $"{date.Year:D4}-{month:D2}",
+        _ => $"{date.Year:D4}"
+    };
 
     // Real RAG, no vector database: embeddings are computed lazily (the first time a recuerdo
     // is needed for ranking) and cached in RecuerdoEmbeddings; similarity is brute-force cosine
