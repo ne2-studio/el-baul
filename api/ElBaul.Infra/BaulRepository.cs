@@ -15,8 +15,8 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     {
         // Role == Custodio is excluded here: the custodian's own baules are already
         // surfaced via GetOwnedByUserIdAsync, and now that custodians also have a
-        // real SharedUsers row, without this filter their own baul would be listed twice.
-        var rows = await dbContext.SharedUsers.AsNoTracking()
+        // real Personas row, without this filter their own baul would be listed twice.
+        var rows = await dbContext.Personas.AsNoTracking()
             .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio)
             .Join(dbContext.Baules.AsNoTracking(), s => s.BaulId, b => b.Id, (s, b) => new { Baul = b, s.Role })
             .ToListAsync();
@@ -36,13 +36,13 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<SharedUser>> GetSharedUsersAsync(Guid baulId) =>
-        await dbContext.SharedUsers.AsNoTracking().Where(s => s.BaulId == baulId).ToListAsync();
+    public async Task<IEnumerable<Persona>> GetPersonasAsync(Guid baulId) =>
+        await dbContext.Personas.AsNoTracking().Where(s => s.BaulId == baulId).ToListAsync();
 
-    public async Task<IReadOnlyDictionary<Guid, int>> GetSharedUserCountsAsync(IEnumerable<Guid> baulIds)
+    public async Task<IReadOnlyDictionary<Guid, int>> GetPersonaCountsAsync(IEnumerable<Guid> baulIds)
     {
         var ids = baulIds.ToList();
-        var counts = await dbContext.SharedUsers.AsNoTracking()
+        var counts = await dbContext.Personas.AsNoTracking()
             .Where(s => ids.Contains(s.BaulId))
             .GroupBy(s => s.BaulId)
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
@@ -51,27 +51,27 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         return counts.ToDictionary(c => c.BaulId, c => c.Count);
     }
 
-    public Task<SharedUser?> GetSharedUserByIdAsync(Guid sharedUserId) =>
-        dbContext.SharedUsers.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sharedUserId);
+    public Task<Persona?> GetPersonaByIdAsync(Guid personaId) =>
+        dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.Id == personaId);
 
-    public Task<SharedUser?> GetSharedUserByUserIdAsync(Guid baulId, string userId) =>
-        dbContext.SharedUsers.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.UserId == userId);
+    public Task<Persona?> GetPersonaByUserIdAsync(Guid baulId, string userId) =>
+        dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.UserId == userId);
 
-    public async Task AddSharedUserAsync(SharedUser sharedUser)
+    public async Task AddPersonaAsync(Persona persona)
     {
-        dbContext.SharedUsers.Add(sharedUser);
+        dbContext.Personas.Add(persona);
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task UpdateSharedUserAsync(SharedUser sharedUser)
+    public async Task UpdatePersonaAsync(Persona persona)
     {
-        dbContext.SharedUsers.Update(sharedUser);
+        dbContext.Personas.Update(persona);
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task RemoveSharedUserAsync(Guid baulId, Guid sharedUserId)
+    public async Task RemovePersonaAsync(Guid baulId, Guid personaId)
     {
-        await dbContext.SharedUsers.Where(s => s.BaulId == baulId && s.Id == sharedUserId).ExecuteDeleteAsync();
+        await dbContext.Personas.Where(s => s.BaulId == baulId && s.Id == personaId).ExecuteDeleteAsync();
     }
 
     public async Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId) =>

@@ -1,6 +1,6 @@
 namespace ElBaul.Ports.Output;
 
-public record SharedUser
+public record Persona
 (
     Guid Id,
     Guid BaulId,

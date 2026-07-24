@@ -51,24 +51,24 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
 
     [AllowAnonymous]
     [EnableRateLimiting("PublicLimiter")]
-    [HttpGet("/api/shared-users/{sharedUserId:guid}/invite-preview")]
-    public async Task<IActionResult> GetInvitePreview(Guid sharedUserId)
+    [HttpGet("/api/personas/{personaId:guid}/invite-preview")]
+    public async Task<IActionResult> GetInvitePreview(Guid personaId)
     {
-        var result = await baulManager.GetInvitePreviewAsync(sharedUserId);
+        var result = await baulManager.GetInvitePreviewAsync(personaId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPost("/api/shared-users/{sharedUserId:guid}/accept-invite")]
-    public async Task<IActionResult> AcceptPersonalInvite(Guid sharedUserId)
+    [HttpPost("/api/personas/{personaId:guid}/accept-invite")]
+    public async Task<IActionResult> AcceptPersonalInvite(Guid personaId)
     {
-        var result = await baulManager.AcceptPersonalInviteAsync(sharedUserId);
+        var result = await baulManager.AcceptPersonalInviteAsync(personaId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpGet("{baulId:guid}/shared-users")]
-    public async Task<IActionResult> GetSharedUsers(Guid baulId)
+    [HttpGet("{baulId:guid}/personas")]
+    public async Task<IActionResult> GetPersonas(Guid baulId)
     {
-        var result = await baulManager.GetSharedUsersAsync(baulId);
+        var result = await baulManager.GetPersonasAsync(baulId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -79,46 +79,46 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpGet("{baulId:guid}/shared-users/{sharedUserId:guid}")]
-    public async Task<IActionResult> GetPersona(Guid baulId, Guid sharedUserId)
+    [HttpGet("{baulId:guid}/personas/{personaId:guid}")]
+    public async Task<IActionResult> GetPersona(Guid baulId, Guid personaId)
     {
-        var result = await baulManager.GetPersonaAsync(baulId, sharedUserId);
+        var result = await baulManager.GetPersonaAsync(baulId, personaId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPut("{baulId:guid}/shared-users/{sharedUserId:guid}")]
-    public async Task<IActionResult> UpdatePersona(Guid baulId, Guid sharedUserId, [FromBody] UpdatePersonaRequest request)
+    [HttpPut("{baulId:guid}/personas/{personaId:guid}")]
+    public async Task<IActionResult> UpdatePersona(Guid baulId, Guid personaId, [FromBody] UpdatePersonaRequest request)
     {
-        var result = await baulManager.UpdatePersonaAsync(baulId, sharedUserId, request.Name, request.Nickname);
+        var result = await baulManager.UpdatePersonaAsync(baulId, personaId, request.Name, request.Nickname);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPost("{baulId:guid}/shared-users/{sharedUserId:guid}/avatar")]
+    [HttpPost("{baulId:guid}/personas/{personaId:guid}/avatar")]
     [RequestSizeLimit(5_000_000)]
     public async Task<IActionResult> UploadPersonaAvatar(
-        Guid baulId, Guid sharedUserId, [FromForm] UploadPersonaAvatarRequest request)
+        Guid baulId, Guid personaId, [FromForm] UploadPersonaAvatarRequest request)
     {
         if (request.File is null || request.File.Length == 0)
             return BadRequest(new { error = "No file provided" });
 
         await using var stream = request.File.OpenReadStream();
         var result = await baulManager.UpdatePersonaAvatarAsync(
-            baulId, sharedUserId, stream, request.File.FileName, request.File.ContentType);
+            baulId, personaId, stream, request.File.FileName, request.File.ContentType);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPut("{baulId:guid}/shared-users/{sharedUserId:guid}/role")]
-    public async Task<IActionResult> UpdateSharedUserRole(Guid baulId, Guid sharedUserId, [FromBody] UpdateRoleRequest request)
+    [HttpPut("{baulId:guid}/personas/{personaId:guid}/role")]
+    public async Task<IActionResult> UpdatePersonaRole(Guid baulId, Guid personaId, [FromBody] UpdateRoleRequest request)
     {
-        var result = await baulManager.UpdateSharedUserRoleAsync(baulId, sharedUserId, request.Role);
+        var result = await baulManager.UpdatePersonaRoleAsync(baulId, personaId, request.Role);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpDelete("{baulId:guid}/shared-users/{sharedUserId:guid}")]
-    public async Task<IActionResult> RemoveSharedUser(Guid baulId, Guid sharedUserId)
+    [HttpDelete("{baulId:guid}/personas/{personaId:guid}")]
+    public async Task<IActionResult> RemovePersona(Guid baulId, Guid personaId)
     {
-        var result = await baulManager.RemoveSharedUserAsync(baulId, sharedUserId);
+        var result = await baulManager.RemovePersonaAsync(baulId, personaId);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 

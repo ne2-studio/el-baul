@@ -117,13 +117,13 @@ public class AdminManagerTests
     {
         var baulId = Guid.NewGuid();
         var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
-        var linkedSharedUser = new SharedUser(Guid.NewGuid(), baulId, "user-1", "Abuela", BaulRole.Custodio, _clock.UtcNow());
-        var unlinkedSharedUser = new SharedUser(Guid.NewGuid(), baulId, null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
+        var linkedPersona = new Persona(Guid.NewGuid(), baulId, "user-1", "Abuela", BaulRole.Custodio, _clock.UtcNow());
+        var unlinkedPersona = new Persona(Guid.NewGuid(), baulId, null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
         var chapter = new Chapter(Guid.NewGuid(), baulId, "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
 
         _adminRepository.BaulDetails[baulId] = new AdminBaulDetailRow(
             baul,
-            [linkedSharedUser, unlinkedSharedUser],
+            [linkedPersona, unlinkedPersona],
             new Dictionary<string, string> { ["user-1"] = "Abuela Real Name" },
             [chapter],
             PhotoCount: 5,
@@ -133,8 +133,8 @@ public class AdminManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Personas.Count());
-        Assert.Contains(result.Value.Personas, p => p.PersonId == linkedSharedUser.Id.ToString() && p.LinkedUserName == "Abuela Real Name");
-        Assert.Contains(result.Value.Personas, p => p.PersonId == unlinkedSharedUser.Id.ToString() && p.LinkedUserName == null);
+        Assert.Contains(result.Value.Personas, p => p.PersonId == linkedPersona.Id.ToString() && p.LinkedUserName == "Abuela Real Name");
+        Assert.Contains(result.Value.Personas, p => p.PersonId == unlinkedPersona.Id.ToString() && p.LinkedUserName == null);
         var capitulo = Assert.Single(result.Value.Chapters);
         Assert.Equal("Verano 2020", capitulo.Name);
         Assert.Equal(5, result.Value.Stats.Photos);

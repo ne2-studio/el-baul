@@ -4,7 +4,7 @@ namespace ElBaul.Ports.Output;
 public record AdminUserRow(User User, int BaulCount);
 
 /// <summary>One baúl a user belongs to, for the backoffice user detail screen. PersonId is
-/// the SharedUser's own id — the model the invitation flow already keys off of.</summary>
+/// the Persona's own id — the model the invitation flow already keys off of.</summary>
 public record AdminUserBaulRow(Guid BaulId, string BaulName, BaulRole Role, Guid PersonId);
 
 public record AdminUserDetailRow(User User, IEnumerable<AdminUserBaulRow> Baules);

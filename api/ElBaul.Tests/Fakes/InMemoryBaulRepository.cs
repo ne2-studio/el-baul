@@ -5,7 +5,7 @@ namespace ElBaul.Tests.Fakes;
 public class InMemoryBaulRepository : IBaulRepository
 {
     private readonly Dictionary<Guid, Baul> _baules = new();
-    private readonly Dictionary<Guid, SharedUser> _sharedUsers = new();
+    private readonly Dictionary<Guid, Persona> _personas = new();
     private readonly Dictionary<Guid, RemovalRequest> _removalRequests = new();
 
     public Task<Baul?> GetByIdAsync(Guid id) => Task.FromResult(_baules.GetValueOrDefault(id));
@@ -15,7 +15,7 @@ public class InMemoryBaulRepository : IBaulRepository
 
     public Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(string userId)
     {
-        var result = _sharedUsers.Values
+        var result = _personas.Values
             .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio)
             .Select(s => new BaulAccess(_baules[s.BaulId], s.Role));
 
@@ -34,13 +34,13 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.CompletedTask;
     }
 
-    public Task<IEnumerable<SharedUser>> GetSharedUsersAsync(Guid baulId) =>
-        Task.FromResult(_sharedUsers.Values.Where(s => s.BaulId == baulId));
+    public Task<IEnumerable<Persona>> GetPersonasAsync(Guid baulId) =>
+        Task.FromResult(_personas.Values.Where(s => s.BaulId == baulId));
 
-    public Task<IReadOnlyDictionary<Guid, int>> GetSharedUserCountsAsync(IEnumerable<Guid> baulIds)
+    public Task<IReadOnlyDictionary<Guid, int>> GetPersonaCountsAsync(IEnumerable<Guid> baulIds)
     {
         var ids = baulIds.ToHashSet();
-        var counts = _sharedUsers.Values
+        var counts = _personas.Values
             .Where(s => ids.Contains(s.BaulId))
             .GroupBy(s => s.BaulId)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -48,28 +48,28 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.FromResult<IReadOnlyDictionary<Guid, int>>(counts);
     }
 
-    public Task<SharedUser?> GetSharedUserByIdAsync(Guid sharedUserId) =>
-        Task.FromResult(_sharedUsers.GetValueOrDefault(sharedUserId));
+    public Task<Persona?> GetPersonaByIdAsync(Guid personaId) =>
+        Task.FromResult(_personas.GetValueOrDefault(personaId));
 
-    public Task<SharedUser?> GetSharedUserByUserIdAsync(Guid baulId, string userId) =>
-        Task.FromResult(_sharedUsers.Values.FirstOrDefault(s => s.BaulId == baulId && s.UserId == userId));
+    public Task<Persona?> GetPersonaByUserIdAsync(Guid baulId, string userId) =>
+        Task.FromResult(_personas.Values.FirstOrDefault(s => s.BaulId == baulId && s.UserId == userId));
 
-    public Task AddSharedUserAsync(SharedUser sharedUser)
+    public Task AddPersonaAsync(Persona persona)
     {
-        _sharedUsers[sharedUser.Id] = sharedUser;
+        _personas[persona.Id] = persona;
         return Task.CompletedTask;
     }
 
-    public Task UpdateSharedUserAsync(SharedUser sharedUser)
+    public Task UpdatePersonaAsync(Persona persona)
     {
-        _sharedUsers[sharedUser.Id] = sharedUser;
+        _personas[persona.Id] = persona;
         return Task.CompletedTask;
     }
 
-    public Task RemoveSharedUserAsync(Guid baulId, Guid sharedUserId)
+    public Task RemovePersonaAsync(Guid baulId, Guid personaId)
     {
-        var match = _sharedUsers.Values.Where(s => s.BaulId == baulId && s.Id == sharedUserId).ToList();
-        foreach (var s in match) _sharedUsers.Remove(s.Id);
+        var match = _personas.Values.Where(s => s.BaulId == baulId && s.Id == personaId).ToList();
+        foreach (var s in match) _personas.Remove(s.Id);
         return Task.CompletedTask;
     }
 

@@ -28,7 +28,7 @@ public class PhotoManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
         await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, chapterId);
@@ -235,7 +235,7 @@ public class PhotoManagerTests
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
@@ -252,7 +252,7 @@ public class PhotoManagerTests
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow(),
             AvatarPhotoKey: "avatar-key"));
 
@@ -476,7 +476,7 @@ public class PhotoManagerTests
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);

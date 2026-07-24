@@ -1,6 +1,6 @@
 namespace ElBaul.Ports.Input;
 
-public record SharedUserDto
+public record PersonaDto
 (
     string Id,
     string? UserId,

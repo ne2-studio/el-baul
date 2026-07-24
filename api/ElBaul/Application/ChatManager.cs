@@ -42,7 +42,7 @@ public class ChatManager(
         if (baul is null) return Result.Failure<IEnumerable<ChatMessageDto>>("Baul not found");
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(baulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
         if (!hasAccess) return Result.Failure<IEnumerable<ChatMessageDto>>("Access denied");
 
         var messages = await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId);
@@ -66,7 +66,7 @@ public class ChatManager(
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(baulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
         if (!hasAccess)
         {
             logger.LogWarning("Chat message rejected: access denied {BaulId}", baulId);
@@ -104,8 +104,8 @@ public class ChatManager(
         var baul = await baulRepository.GetByIdAsync(baulId);
         var chapters = (await chapterRepository.GetByBaulIdAsync(baulId)).ToList();
         var chapterNames = chapters.ToDictionary(a => a.Id, a => a.Name);
-        var sharedUsers = (await baulRepository.GetSharedUsersAsync(baulId)).ToList();
-        var nicknamesByUserId = sharedUsers
+        var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
+        var nicknamesByUserId = personas
             .Where(s => s.UserId is not null)
             .ToDictionary(s => s.UserId!, s => s.Nickname);
         var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(baulId)).ToList();
@@ -118,8 +118,8 @@ public class ChatManager(
 
         sb.AppendLine();
         sb.AppendLine("Personas de la familia en este baúl:");
-        foreach (var sharedUser in sharedUsers)
-            sb.AppendLine($"- {sharedUser.Nickname}" + (sharedUser.Name is { Length: > 0 } ? $" ({sharedUser.Name})" : ""));
+        foreach (var persona in personas)
+            sb.AppendLine($"- {persona.Nickname}" + (persona.Name is { Length: > 0 } ? $" ({persona.Name})" : ""));
 
         sb.AppendLine();
         sb.AppendLine("Capítulos:");

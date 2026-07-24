@@ -7,7 +7,7 @@ namespace ElBaul.Infra;
 /// Backs the backoffice's cross-aggregate, unscoped reads directly against
 /// ElBaulDbContext — the one deliberate exception to the "repositories own a single
 /// aggregate" convention, alongside MinioPhotoStorage's singleton exception. Admin queries
-/// join across Users/Baules/SharedUsers/Photos/Chapters/Recuerdos with no per-user ownership
+/// join across Users/Baules/Personas/Photos/Chapters/Recuerdos with no per-user ownership
 /// check, which doesn't fit any single existing repository's contract.
 /// </summary>
 public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
@@ -24,7 +24,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
     public async Task<IEnumerable<AdminUserRow>> GetAllUsersAsync()
     {
-        var baulCounts = await dbContext.SharedUsers
+        var baulCounts = await dbContext.Personas
             .Where(su => su.UserId != null)
             .GroupBy(su => su.UserId!)
             .Select(g => new { UserId = g.Key, Count = g.Select(su => su.BaulId).Distinct().Count() })
@@ -40,7 +40,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         var user = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return null;
 
-        var baules = await dbContext.SharedUsers
+        var baules = await dbContext.Personas
             .AsNoTracking()
             .Where(su => su.UserId == userId)
             .Join(dbContext.Baules.AsNoTracking(), su => su.BaulId, b => b.Id,
@@ -52,12 +52,12 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
     public async Task<IEnumerable<AdminBaulRow>> GetAllBaulesAsync()
     {
-        var memberCounts = await dbContext.SharedUsers
+        var memberCounts = await dbContext.Personas
             .GroupBy(su => su.BaulId)
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
 
-        var linkedUserCounts = await dbContext.SharedUsers
+        var linkedUserCounts = await dbContext.Personas
             .Where(su => su.UserId != null)
             .GroupBy(su => su.BaulId)
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
@@ -93,9 +93,9 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         var baul = await dbContext.Baules.AsNoTracking().FirstOrDefaultAsync(b => b.Id == baulId);
         if (baul is null) return null;
 
-        var sharedUsers = await dbContext.SharedUsers.AsNoTracking().Where(su => su.BaulId == baulId).ToListAsync();
+        var personas = await dbContext.Personas.AsNoTracking().Where(su => su.BaulId == baulId).ToListAsync();
 
-        var linkedUserIds = sharedUsers.Where(su => su.UserId != null).Select(su => su.UserId!).Distinct().ToList();
+        var linkedUserIds = personas.Where(su => su.UserId != null).Select(su => su.UserId!).Distinct().ToList();
         var linkedUserNames = await dbContext.Users.AsNoTracking()
             .Where(u => linkedUserIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.Name ?? u.Email);
@@ -106,6 +106,6 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
         var recuerdoCount = await dbContext.Recuerdos.CountAsync(r => r.BaulId == baulId);
 
-        return new AdminBaulDetailRow(baul, sharedUsers, linkedUserNames, chapters, photoCount, recuerdoCount);
+        return new AdminBaulDetailRow(baul, personas, linkedUserNames, chapters, photoCount, recuerdoCount);
     }
 }

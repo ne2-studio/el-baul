@@ -19,13 +19,13 @@ public class PhotoManager(
 {
     // Recuerdo author names are always the Persona's apodo for this baúl, never the
     // underlying account's OIDC-synced name.
-    private async Task<(string Nickname, string? AvatarUrl, string? SharedUserId)> GetAuthorInfoAsync(Guid baulId, string userId)
+    private async Task<(string Nickname, string? AvatarUrl, string? PersonaId)> GetAuthorInfoAsync(Guid baulId, string userId)
     {
-        var sharedUser = await baulRepository.GetSharedUserByUserIdAsync(baulId, userId);
-        var avatarUrl = sharedUser?.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(sharedUser.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
+        var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
+        var avatarUrl = persona?.AvatarPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
             : null;
-        return (sharedUser?.Nickname ?? "Usuario", avatarUrl, sharedUser?.Id.ToString());
+        return (persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
     }
 
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId)
@@ -38,7 +38,7 @@ public class PhotoManager(
         if (baul is null) return Result.Failure<IEnumerable<PhotoDto>>("Baul not found");
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(chapter.BaulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(chapter.BaulId, userId) is not null;
         if (!hasAccess) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
 
         var photos = (await photoRepository.GetByChapterIdAsync(chapterId)).ToList();
@@ -63,7 +63,7 @@ public class PhotoManager(
         if (baul is null) return Result.Failure<IEnumerable<PhotoDto>>("Baul not found");
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(baulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
         if (!hasAccess) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
 
         var photos = (await photoRepository.GetLooseByBaulIdAsync(baulId)).ToList();
@@ -116,7 +116,7 @@ public class PhotoManager(
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(chapter.BaulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(chapter.BaulId, userId) is not null;
         if (!hasAccess)
         {
             logger.LogWarning("Photo upload rejected: access denied {BaulId} {ChapterId}", chapter.BaulId, chapterId);
@@ -228,7 +228,7 @@ public class PhotoManager(
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(baulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
         if (!hasAccess)
         {
             logger.LogWarning("Loose photo upload rejected: access denied {BaulId}", baulId);
@@ -323,7 +323,7 @@ public class PhotoManager(
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(photo.BaulId, userId) is not null;
         if (!hasAccess)
         {
             logger.LogWarning("Photo move rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
@@ -399,7 +399,7 @@ public class PhotoManager(
             return Result.Failure("Baul not found");
         }
 
-        var sharedAccess = await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId);
+        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(photo.BaulId, userId);
         if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
         {
             logger.LogWarning("Photo delete rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
@@ -450,7 +450,7 @@ public class PhotoManager(
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(photo.BaulId, userId) is not null;
         if (!hasAccess)
         {
             logger.LogWarning("Photo date change rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
@@ -499,15 +499,15 @@ public class PhotoManager(
         if (baul is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Baul not found");
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(photo.BaulId, userId) is not null;
         if (!hasAccess) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
 
         var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(photoId);
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(photo.BaulId, recuerdo.UserId);
-            dtos.Add(ToDto(recuerdo, nickname, avatarUrl, sharedUserId, recuerdo.UserId == userId));
+            var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(photo.BaulId, recuerdo.UserId);
+            dtos.Add(ToDto(recuerdo, nickname, avatarUrl, personaId, recuerdo.UserId == userId));
         }
 
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
@@ -531,21 +531,21 @@ public class PhotoManager(
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(photo.BaulId, userId) is not null;
         if (!hasAccess)
         {
             logger.LogWarning("Recuerdo creation rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
             return Result.Failure<RecuerdoDto>("Access denied");
         }
 
-        var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(photo.BaulId, userId);
+        var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(photo.BaulId, userId);
         var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation(
             "Recuerdo created {BaulId} {PhotoId} {RecuerdoId}", photo.BaulId, photoId, recuerdo.Id);
 
-        return ToDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true);
+        return ToDto(recuerdo, nickname, avatarUrl, personaId, isOwn: true);
     }
 
     public async Task<Result<PhotoDownloadResult>> DownloadAsync(Guid photoId)
@@ -566,7 +566,7 @@ public class PhotoManager(
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(photo.BaulId, userId) is not null;
+            || await baulRepository.GetPersonaByUserIdAsync(photo.BaulId, userId) is not null;
         if (!hasAccess)
         {
             logger.LogWarning("Photo download rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
@@ -622,7 +622,7 @@ public class PhotoManager(
         new(photo.Id.ToString(), photo.ChapterId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
             photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
-    private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, string? userAvatar, string? sharedUserId, bool isOwn) =>
+    private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, string? userAvatar, string? personaId, bool isOwn) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
-            recuerdo.CreatedAt, isOwn, UserAvatar: userAvatar, SharedUserId: sharedUserId);
+            recuerdo.CreatedAt, isOwn, UserAvatar: userAvatar, PersonaId: personaId);
 }

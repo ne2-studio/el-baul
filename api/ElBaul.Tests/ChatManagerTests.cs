@@ -30,7 +30,7 @@ public class ChatManagerTests
         var now = _clock.UtcNow();
         var baul = new Baul(baulId, name, null, custodioId, 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, custodioId, "Custodio", BaulRole.Custodio, now));
         return baul;
     }

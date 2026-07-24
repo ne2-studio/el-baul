@@ -11,7 +11,7 @@ public record RecuerdoDto
     bool IsOwn,
     string? PhotoThumbnailUrl = null,
     string? UserAvatar = null,
-    string? SharedUserId = null,
+    string? PersonaId = null,
     string? ChapterId = null,
     string? ChapterName = null
 );

@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ElBaul.Infra.EntityConfigurations;
 
-public class SharedUserConfiguration : IEntityTypeConfiguration<SharedUser>
+public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
 {
-    public void Configure(EntityTypeBuilder<SharedUser> builder)
+    public void Configure(EntityTypeBuilder<Persona> builder)
     {
-        builder.ToTable("SharedUsers");
+        builder.ToTable("Personas");
         builder.HasKey(s => s.Id);
         builder.Property(s => s.UserId).HasMaxLength(255);
         builder.Property(s => s.Nickname).IsRequired().HasMaxLength(100);

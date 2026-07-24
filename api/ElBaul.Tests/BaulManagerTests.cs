@@ -29,7 +29,7 @@ public class BaulManagerTests
             _recuerdoRepository, _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
 
-    // Custodians now have a real SharedUsers row (created by BaulManager.CreateAsync);
+    // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
     private async Task<Baul> SeedBaulAsync(
         Guid baulId, string name, string? description = null, string custodioId = CustodioId,
@@ -38,7 +38,7 @@ public class BaulManagerTests
         var created = createdAt ?? _clock.UtcNow();
         var baul = new Baul(baulId, name, description, custodioId, 0, created, updatedAt ?? created);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, custodioId, "Custodio", BaulRole.Custodio, created));
         return baul;
     }
@@ -81,11 +81,11 @@ public class BaulManagerTests
     }
 
     [Fact]
-    public async Task GetByIdAsync_ShouldSucceed_ForSharedUser_WithTheirRole()
+    public async Task GetByIdAsync_ShouldSucceed_ForPersona_WithTheirRole()
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -101,7 +101,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -134,7 +134,7 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         const string administradorId = "administrador-1";
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, administradorId, "Administrador", BaulRole.Administrador, _clock.UtcNow()));
 
         var manager = CreateManager(administradorId);
@@ -149,7 +149,7 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.GetPersonaAsync(baulId, personaId);
@@ -164,8 +164,8 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -182,8 +182,8 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -199,7 +199,7 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.UpdatePersonaAsync(baulId, personaId, "Otro Nombre", "Otro");
@@ -216,7 +216,7 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu");
@@ -231,7 +231,7 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow(), AvatarPhotoKey: "personas/old-key"));
 
         var manager = CreateManager(CustodioId);
@@ -242,7 +242,7 @@ public class BaulManagerTests
         Assert.NotNull(result.Value.AvatarUrl);
         Assert.Contains("personas/old-key", _photoStorage.DeletedKeys);
 
-        var persona = await _baulRepository.GetSharedUserByIdAsync(personaId);
+        var persona = await _baulRepository.GetPersonaByIdAsync(personaId);
         Assert.NotEqual("personas/old-key", persona!.AvatarPhotoKey);
     }
 
@@ -255,7 +255,7 @@ public class BaulManagerTests
         await SeedBaulAsync(baulId, "Familia");
         await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, "key", _clock.UtcNow(), _clock.UtcNow()));
         await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -397,7 +397,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -423,13 +423,13 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.AcceptPersonalInviteAsync(personaId);
 
         Assert.True(result.IsSuccess);
-        var persona = await _baulRepository.GetSharedUserByIdAsync(personaId);
+        var persona = await _baulRepository.GetPersonaByIdAsync(personaId);
         Assert.Equal(OtherUserId, persona!.UserId);
     }
 
@@ -439,7 +439,7 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, OtherUserId, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, OtherUserId, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.AcceptPersonalInviteAsync(personaId);
@@ -453,7 +453,7 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, OtherUserId, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, OtherUserId, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager("someone-else");
         var result = await manager.AcceptPersonalInviteAsync(personaId);
@@ -478,9 +478,9 @@ public class BaulManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia"); // seeds a Custodio row for CustodioId
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddSharedUserAsync(new SharedUser(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
-        // CustodioId already has a SharedUser row in this baul — accepting a second
+        // CustodioId already has a Persona row in this baul — accepting a second
         // invitation for the same baul must not attempt a conflicting (BaulId, UserId) update.
         var manager = CreateManager(CustodioId);
         var result = await manager.AcceptPersonalInviteAsync(personaId);
@@ -488,7 +488,7 @@ public class BaulManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("You already have access to this baúl with a different account link", result.Error);
 
-        var persona = await _baulRepository.GetSharedUserByIdAsync(personaId);
+        var persona = await _baulRepository.GetPersonaByIdAsync(personaId);
         Assert.Null(persona!.UserId);
     }
 
@@ -497,7 +497,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
@@ -505,7 +505,7 @@ public class BaulManagerTests
 
         Assert.True(result.IsSuccess);
         var dto = result.Value.Single();
-        Assert.Equal(2, dto.MemberCount); // custodio + 1 shared user
+        Assert.Equal(2, dto.MemberCount); // custodio + 1 persona
     }
 
     [Fact]
@@ -513,7 +513,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -547,7 +547,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -578,11 +578,11 @@ public class BaulManagerTests
     }
 
     [Fact]
-    public async Task CreateRecuerdoAsync_ShouldSucceed_ForSharedUserWithAccess()
+    public async Task CreateRecuerdoAsync_ShouldSucceed_ForPersonaWithAccess()
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddSharedUserAsync(new SharedUser(
+        await _baulRepository.AddPersonaAsync(new Persona(
             Guid.NewGuid(), baulId, OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);

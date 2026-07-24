@@ -253,7 +253,7 @@ public class WeeklyDigestManagerTests
         var baul = SeedOwnedBaul(owner.Id, "Baúl compartido");
         var since = _clock.UtcNow().AddDays(-7);
         await _chapterRepository.CreateAsync(new Chapter(Guid.NewGuid(), baul.Id, "Capítulo", 0, null, since.AddDays(1), since.AddDays(1)));
-        await _baulRepository.AddSharedUserAsync(new SharedUser(Guid.NewGuid(), baul.Id, UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(Guid.NewGuid(), baul.Id, UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(UserId, since);

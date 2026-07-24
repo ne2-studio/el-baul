@@ -7,7 +7,7 @@ namespace ElBaul.Application;
 /// <summary>
 /// Backs the backoffice's Dashboard/Usuarios/Baúles screens. Unlike every other manager in
 /// this codebase, methods here do NOT check per-call ownership (the "load the baúl, check
-/// CustodioId/SharedUser" pattern from BaulManager/PhotoManager/ChapterManager) — there is no
+/// CustodioId/Persona" pattern from BaulManager/PhotoManager/ChapterManager) — there is no
 /// ownership scope for an admin read, only the AdminOnly authorization policy at the
 /// controller boundary (see AdminController). This is a deliberate deviation from
 /// docs/ARCHITECTURE.md's "access control is checked explicitly inside each use-case
@@ -50,7 +50,7 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
         var row = await adminRepository.GetBaulDetailAsync(baulId);
         if (row is null) return Result.Failure<AdminBaulDetailDto>("Baul not found");
 
-        var personas = row.SharedUsers.Select(su => new AdminBaulPersonaDto(
+        var personas = row.Personas.Select(su => new AdminBaulPersonaDto(
             su.Id.ToString(),
             su.Nickname,
             su.Name,
@@ -60,7 +60,7 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
 
         var chapters = row.Chapters.Select(a => new AdminBaulChapterDto(a.Id.ToString(), a.Name, a.PhotoCount));
 
-        var stats = new AdminBaulStatsDto(row.PhotoCount, row.RecuerdoCount, row.SharedUsers.Count(), row.Chapters.Count());
+        var stats = new AdminBaulStatsDto(row.PhotoCount, row.RecuerdoCount, row.Personas.Count(), row.Chapters.Count());
 
         return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, chapters, stats);
     }
