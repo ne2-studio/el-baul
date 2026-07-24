@@ -19,14 +19,15 @@ public class RemovalRequestManager(
 {
     public async Task<Result<IEnumerable<RemovalRequestDto>>> GetRemovalRequestsAsync(Guid baulId)
     {
+        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
+        var baul = await baulRepository.GetByIdAsync(id);
         if (baul is null) return Result.Failure<IEnumerable<RemovalRequestDto>>("Baul not found");
         var access = await baulAccess.GetAsync(baul, userId);
         if (!access.IsAdmin)
             return Result.Failure<IEnumerable<RemovalRequestDto>>("Access denied");
 
-        var requests = await baulRepository.GetRemovalRequestsAsync(baulId);
+        var requests = await baulRepository.GetRemovalRequestsAsync(id);
         var dtos = new List<RemovalRequestDto>();
         foreach (var request in requests)
         {
@@ -39,7 +40,9 @@ public class RemovalRequestManager(
 
     public async Task<Result<RemovalRequestDto>> CreateRemovalRequestAsync(Guid baulId, Guid photoId, string? reason)
     {
-        var baul = await baulRepository.GetByIdAsync(baulId);
+        var bId = new BaulId(baulId);
+        var pId = new PhotoId(photoId);
+        var baul = await baulRepository.GetByIdAsync(bId);
         if (baul is null)
         {
             logger.LogWarning("Removal request creation rejected: baul not found {BaulId}", baulId);
@@ -54,7 +57,7 @@ public class RemovalRequestManager(
             return Result.Failure<RemovalRequestDto>("Access denied");
         }
 
-        var photo = await photoRepository.GetByIdAsync(photoId);
+        var photo = await photoRepository.GetByIdAsync(pId);
         if (photo is null)
         {
             logger.LogWarning(
@@ -66,7 +69,7 @@ public class RemovalRequestManager(
         var userProfile = await userRepository.GetByIdAsync(userId);
         var now = clock.UtcNow();
         var request = new RemovalRequest(
-            idGenerator.NewId(), baulId, photoId, photo.StorageKey,
+            new RemovalRequestId(idGenerator.NewId()), bId, pId, photo.StorageKey,
             nickname, userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
         await baulRepository.CreateRemovalRequestAsync(request);
@@ -79,8 +82,10 @@ public class RemovalRequestManager(
 
     public async Task<Result> ApproveRemovalRequestAsync(Guid baulId, Guid requestId)
     {
+        var bId = new BaulId(baulId);
+        var rId = new RemovalRequestId(requestId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
+        var baul = await baulRepository.GetByIdAsync(bId);
         if (baul is null)
         {
             logger.LogWarning("Removal request approval rejected: baul not found {BaulId}", baulId);
@@ -93,7 +98,7 @@ public class RemovalRequestManager(
             return Result.Failure("Access denied");
         }
 
-        var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
+        var request = await baulRepository.GetRemovalRequestAsync(bId, rId);
         if (request is null)
         {
             logger.LogWarning(
@@ -113,7 +118,7 @@ public class RemovalRequestManager(
         }
 
         await photoRepository.DeleteAsync(request.PhotoId);
-        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+        await baulRepository.DeleteRemovalRequestAsync(bId, rId);
 
         if (photo is not null)
         {
@@ -129,8 +134,10 @@ public class RemovalRequestManager(
 
     public async Task<Result> RejectRemovalRequestAsync(Guid baulId, Guid requestId)
     {
+        var bId = new BaulId(baulId);
+        var rId = new RemovalRequestId(requestId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
+        var baul = await baulRepository.GetByIdAsync(bId);
         if (baul is null)
         {
             logger.LogWarning("Reject removal request failed: baul not found {BaulId}", baulId);
@@ -143,7 +150,7 @@ public class RemovalRequestManager(
             return Result.Failure("Access denied");
         }
 
-        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+        await baulRepository.DeleteRemovalRequestAsync(bId, rId);
         logger.LogInformation("Removal request rejected {BaulId} {RemovalRequestId}", baulId, requestId);
         return Result.Success();
     }

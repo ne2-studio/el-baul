@@ -8,24 +8,24 @@ namespace ElBaul.Ports.Output;
 /// </summary>
 public interface IBaulRepository
 {
-    Task<Baul?> GetByIdAsync(Guid id);
+    Task<Baul?> GetByIdAsync(BaulId id);
     Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(string userId);
     Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(string userId);
     Task CreateAsync(Baul baul);
     Task UpdateAsync(Baul baul);
 
     // Sharing
-    Task<IEnumerable<Persona>> GetPersonasAsync(Guid baulId);
-    Task<IReadOnlyDictionary<Guid, int>> GetPersonaCountsAsync(IEnumerable<Guid> baulIds);
-    Task<Persona?> GetPersonaByIdAsync(Guid personaId);
-    Task<Persona?> GetPersonaByUserIdAsync(Guid baulId, string userId);
+    Task<IEnumerable<Persona>> GetPersonasAsync(BaulId baulId);
+    Task<IReadOnlyDictionary<BaulId, int>> GetPersonaCountsAsync(IEnumerable<BaulId> baulIds);
+    Task<Persona?> GetPersonaByIdAsync(PersonaId personaId);
+    Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId);
     Task AddPersonaAsync(Persona persona);
     Task UpdatePersonaAsync(Persona persona);
-    Task RemovePersonaAsync(Guid baulId, Guid personaId);
+    Task RemovePersonaAsync(BaulId baulId, PersonaId personaId);
 
     // Removal requests
-    Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId);
-    Task<RemovalRequest?> GetRemovalRequestAsync(Guid baulId, Guid requestId);
+    Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId);
+    Task<RemovalRequest?> GetRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId);
     Task CreateRemovalRequestAsync(RemovalRequest request);
-    Task DeleteRemovalRequestAsync(Guid baulId, Guid requestId);
+    Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId);
 }

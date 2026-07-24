@@ -20,7 +20,7 @@ public class PhotoManager(
 {
     // Recuerdo author names are always the Persona's apodo for this baúl, never the
     // underlying account's OIDC-synced name.
-    private async Task<(string Nickname, string? AvatarUrl, string? PersonaId)> GetAuthorInfoAsync(Guid baulId, string userId)
+    private async Task<(string Nickname, string? AvatarUrl, string? PersonaId)> GetAuthorInfoAsync(BaulId baulId, string userId)
     {
         var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
         var avatarUrl = persona?.AvatarPhotoKey is { Length: > 0 }
@@ -31,8 +31,9 @@ public class PhotoManager(
 
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId)
     {
+        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(chapterId);
+        var chapter = await chapterRepository.GetByIdAsync(id);
         if (chapter is null) return Result.Failure<IEnumerable<PhotoDto>>("Chapter not found");
 
         var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
@@ -41,7 +42,7 @@ public class PhotoManager(
         var access = await baulAccess.GetAsync(baul, userId);
         if (!access.IsMember) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
 
-        var photos = (await photoRepository.GetByChapterIdAsync(chapterId)).ToList();
+        var photos = (await photoRepository.GetByChapterIdAsync(id)).ToList();
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
         var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
 
@@ -58,14 +59,15 @@ public class PhotoManager(
 
     public async Task<Result<IEnumerable<PhotoDto>>> GetLooseByBaulIdAsync(Guid baulId)
     {
+        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
+        var baul = await baulRepository.GetByIdAsync(id);
         if (baul is null) return Result.Failure<IEnumerable<PhotoDto>>("Baul not found");
 
         var access = await baulAccess.GetAsync(baul, userId);
         if (!access.IsMember) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
 
-        var photos = (await photoRepository.GetLooseByBaulIdAsync(baulId)).ToList();
+        var photos = (await photoRepository.GetLooseByBaulIdAsync(id)).ToList();
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
         var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
 
@@ -90,7 +92,7 @@ public class PhotoManager(
     {
         if (date is { } explicitDate)
         {
-            var dateValidationError = ValidateDate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
+            var dateValidationError = PhotoDate.Validate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
             if (dateValidationError is not null)
             {
                 logger.LogWarning("Photo upload rejected: invalid date {Year}/{Month}/{Day}",
@@ -99,8 +101,9 @@ public class PhotoManager(
             }
         }
 
+        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(chapterId);
+        var chapter = await chapterRepository.GetByIdAsync(id);
         if (chapter is null)
         {
             logger.LogWarning("Photo upload rejected: chapter not found {ChapterId}", chapterId);
@@ -134,7 +137,7 @@ public class PhotoManager(
     {
         if (date is { } explicitDate)
         {
-            var dateValidationError = ValidateDate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
+            var dateValidationError = PhotoDate.Validate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
             if (dateValidationError is not null)
             {
                 logger.LogWarning("Loose photo upload rejected: invalid date {Year}/{Month}/{Day}",
@@ -143,8 +146,9 @@ public class PhotoManager(
             }
         }
 
+        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
+        var baul = await baulRepository.GetByIdAsync(id);
         if (baul is null)
         {
             logger.LogWarning("Loose photo upload rejected: baul not found {BaulId}", baulId);
@@ -185,12 +189,12 @@ public class PhotoManager(
         }
 
         var now = clock.UtcNow();
-        var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
+        var storageKey = StorageKey.ForPhoto(userId, idGenerator.NewId(), fileName);
 
         using var buffered = new MemoryStream();
         await content.CopyToAsync(buffered);
         buffered.Position = 0;
-        var (dateYear, dateMonth, dateDay) = ResolvePhotoDate(date, buffered);
+        var photoDate = ResolvePhotoDate(date, buffered);
         buffered.Position = 0;
 
         try
@@ -205,7 +209,7 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), chapterId, baul.Id, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
+        var photo = Photo.Create(new PhotoId(idGenerator.NewId()), chapterId, baul.Id, storageKey, photoDate, userId, now, clientUploadId);
 
         try
         {
@@ -255,8 +259,10 @@ public class PhotoManager(
 
     public async Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetChapterId)
     {
+        var pId = new PhotoId(photoId);
+        var targetId = new ChapterId(targetChapterId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
+        var photo = await photoRepository.GetByIdAsync(pId);
         if (photo is null)
         {
             logger.LogWarning("Photo move rejected: photo not found {PhotoId}", photoId);
@@ -277,7 +283,7 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Access denied");
         }
 
-        var targetChapter = await chapterRepository.GetByIdAsync(targetChapterId);
+        var targetChapter = await chapterRepository.GetByIdAsync(targetId);
         if (targetChapter is null || targetChapter.BaulId != photo.BaulId)
         {
             logger.LogWarning(
@@ -286,7 +292,7 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Target chapter not found");
         }
 
-        if (photo.ChapterId == targetChapterId)
+        if (photo.ChapterId == targetId)
         {
             logger.LogWarning(
                 "Photo move rejected: photo already in target chapter {BaulId} {PhotoId} {TargetChapterId}",
@@ -310,7 +316,7 @@ public class PhotoManager(
             }
         }
 
-        var updatedPhoto = photo with { ChapterId = targetChapterId };
+        var updatedPhoto = photo with { ChapterId = targetId };
         await photoRepository.UpdateAsync(updatedPhoto);
 
         await chapterRepository.UpdateAsync(targetChapter with
@@ -331,8 +337,9 @@ public class PhotoManager(
 
     public async Task<Result> DeleteAsync(Guid photoId, string? reason)
     {
+        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
+        var photo = await photoRepository.GetByIdAsync(id);
         if (photo is null)
         {
             logger.LogWarning("Photo delete rejected: photo not found {PhotoId}", photoId);
@@ -378,11 +385,12 @@ public class PhotoManager(
 
     public async Task<Result<PhotoDto>> ChangeDateAsync(Guid photoId, int year, int? month, int? day)
     {
-        var validationError = ValidateDate(year, month, day);
-        if (validationError is not null) return Result.Failure<PhotoDto>(validationError);
+        if (!PhotoDate.TryCreate(year, month, day, out var newDate, out var validationError))
+            return Result.Failure<PhotoDto>(validationError!);
 
+        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
+        var photo = await photoRepository.GetByIdAsync(id);
         if (photo is null)
         {
             logger.LogWarning("Photo date change rejected: photo not found {PhotoId}", photoId);
@@ -403,7 +411,7 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Access denied");
         }
 
-        var updatedPhoto = photo with { DateYear = year, DateMonth = month, DateDay = day };
+        var updatedPhoto = photo.WithDate(newDate);
         await photoRepository.UpdateAsync(updatedPhoto);
 
         logger.LogInformation("Photo date changed {BaulId} {PhotoId}", photo.BaulId, photoId);
@@ -415,7 +423,7 @@ public class PhotoManager(
 
     public async Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<Guid> photoIds, int year, int? month, int? day)
     {
-        var validationError = ValidateDate(year, month, day);
+        var validationError = PhotoDate.Validate(year, month, day);
         if (validationError is not null) return Result.Failure<IEnumerable<PhotoDto>>(validationError);
 
         var updated = new List<PhotoDto>();
@@ -437,8 +445,9 @@ public class PhotoManager(
 
     public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId)
     {
+        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
+        var photo = await photoRepository.GetByIdAsync(id);
         if (photo is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Photo not found");
 
         var baul = await baulRepository.GetByIdAsync(photo.BaulId);
@@ -447,7 +456,7 @@ public class PhotoManager(
         var access = await baulAccess.GetAsync(baul, userId);
         if (!access.IsMember) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
 
-        var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(photoId);
+        var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(id);
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
@@ -460,8 +469,9 @@ public class PhotoManager(
 
     public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid photoId, string text)
     {
+        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
+        var photo = await photoRepository.GetByIdAsync(id);
         if (photo is null)
         {
             logger.LogWarning("Recuerdo creation rejected: photo not found {PhotoId}", photoId);
@@ -483,7 +493,7 @@ public class PhotoManager(
         }
 
         var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(photo.BaulId, userId);
-        var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
+        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), id, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation(
@@ -494,8 +504,9 @@ public class PhotoManager(
 
     public async Task<Result<PhotoDownloadResult>> DownloadAsync(Guid photoId)
     {
+        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
+        var photo = await photoRepository.GetByIdAsync(id);
         if (photo is null)
         {
             logger.LogWarning("Photo download rejected: photo not found {PhotoId}", photoId);
@@ -517,34 +528,20 @@ public class PhotoManager(
         }
 
         var content = await photoStorage.OpenReadForDownloadAsync(photo.StorageKey);
-        return new PhotoDownloadResult(content.Content, content.ContentType, ExtractOriginalFileName(photo.StorageKey));
+        return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(photo.StorageKey).OriginalFileName);
     }
 
-    // storageKey is always "{userId}/{36-char guid}-{originalFileName}" (see UploadAsync/
-    // UploadToBaulAsync below) — strip the guid prefix back off to recover a friendly
-    // download filename instead of exposing the storage key's internals to the user.
-    private static string ExtractOriginalFileName(string storageKey)
+    private PhotoDate? ResolvePhotoDate((int Year, int? Month, int? Day)? explicitDate, Stream content)
     {
-        var lastSegment = storageKey[(storageKey.LastIndexOf('/') + 1)..];
-        const int guidAndDashLength = 37;
-        return lastSegment.Length > guidAndDashLength ? lastSegment[guidAndDashLength..] : lastSegment;
-    }
-
-    private (int? Year, int? Month, int? Day) ResolvePhotoDate((int Year, int? Month, int? Day)? explicitDate, Stream content)
-    {
-        if (explicitDate is { } d) return (d.Year, d.Month, d.Day);
+        // Both branches feed already-validated components (explicitDate was checked by the
+        // caller; EXIF always yields a full, in-range Y-M-D), so TryCreate can't fail here.
+        if (explicitDate is { } d)
+            return PhotoDate.TryCreate(d.Year, d.Month, d.Day, out var date, out _) ? date : null;
 
         var extracted = photoDateExtractor.TryExtractDate(content);
-        return extracted is { } e ? (e.Year, e.Month, e.Day) : (null, null, null);
-    }
-
-    private static string? ValidateDate(int year, int? month, int? day)
-    {
-        if (year < 1800 || year > DateTime.UtcNow.Year + 1) return "Year is out of range";
-        if (month is < 1 or > 12) return "Month is out of range";
-        if (day is not null && month is null) return "Day requires a month";
-        if (day is < 1 or > 31) return "Day is out of range";
-        return null;
+        return extracted is { } e && PhotoDate.TryCreate(e.Year, e.Month, e.Day, out var extractedDate, out _)
+            ? extractedDate
+            : null;
     }
 
     private async Task TryDeleteOrphanedStorageObjectAsync(string storageKey)
@@ -563,7 +560,7 @@ public class PhotoManager(
 
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
         new(photo.Id.ToString(), photo.ChapterId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
-            photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
+            photo.Date?.Year, photo.Date?.Month, photo.Date?.Day, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, string? userAvatar, string? personaId, bool isOwn) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,

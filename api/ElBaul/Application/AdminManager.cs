@@ -47,7 +47,7 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
 
     public async Task<Result<AdminBaulDetailDto>> GetBaulDetailAsync(Guid baulId)
     {
-        var row = await adminRepository.GetBaulDetailAsync(baulId);
+        var row = await adminRepository.GetBaulDetailAsync(new BaulId(baulId));
         if (row is null) return Result.Failure<AdminBaulDetailDto>("Baul not found");
 
         var personas = row.Personas.Select(su => new AdminBaulPersonaDto(

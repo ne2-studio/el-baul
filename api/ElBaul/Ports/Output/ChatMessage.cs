@@ -9,7 +9,7 @@ public enum ChatMessageRole
 public record ChatMessage
 (
     Guid Id,
-    Guid BaulId,
+    BaulId BaulId,
     string UserId,
     ChatMessageRole Role,
     string Content,

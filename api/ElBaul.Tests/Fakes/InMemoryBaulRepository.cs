@@ -4,11 +4,11 @@ namespace ElBaul.Tests.Fakes;
 
 public class InMemoryBaulRepository : IBaulRepository
 {
-    private readonly Dictionary<Guid, Baul> _baules = new();
-    private readonly Dictionary<Guid, Persona> _personas = new();
-    private readonly Dictionary<Guid, RemovalRequest> _removalRequests = new();
+    private readonly Dictionary<BaulId, Baul> _baules = new();
+    private readonly Dictionary<PersonaId, Persona> _personas = new();
+    private readonly Dictionary<RemovalRequestId, RemovalRequest> _removalRequests = new();
 
-    public Task<Baul?> GetByIdAsync(Guid id) => Task.FromResult(_baules.GetValueOrDefault(id));
+    public Task<Baul?> GetByIdAsync(BaulId id) => Task.FromResult(_baules.GetValueOrDefault(id));
 
     public Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(string userId) =>
         Task.FromResult(_baules.Values.Where(b => b.CustodioId == userId));
@@ -34,10 +34,10 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.CompletedTask;
     }
 
-    public Task<IEnumerable<Persona>> GetPersonasAsync(Guid baulId) =>
+    public Task<IEnumerable<Persona>> GetPersonasAsync(BaulId baulId) =>
         Task.FromResult(_personas.Values.Where(s => s.BaulId == baulId));
 
-    public Task<IReadOnlyDictionary<Guid, int>> GetPersonaCountsAsync(IEnumerable<Guid> baulIds)
+    public Task<IReadOnlyDictionary<BaulId, int>> GetPersonaCountsAsync(IEnumerable<BaulId> baulIds)
     {
         var ids = baulIds.ToHashSet();
         var counts = _personas.Values
@@ -45,13 +45,13 @@ public class InMemoryBaulRepository : IBaulRepository
             .GroupBy(s => s.BaulId)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        return Task.FromResult<IReadOnlyDictionary<Guid, int>>(counts);
+        return Task.FromResult<IReadOnlyDictionary<BaulId, int>>(counts);
     }
 
-    public Task<Persona?> GetPersonaByIdAsync(Guid personaId) =>
+    public Task<Persona?> GetPersonaByIdAsync(PersonaId personaId) =>
         Task.FromResult(_personas.GetValueOrDefault(personaId));
 
-    public Task<Persona?> GetPersonaByUserIdAsync(Guid baulId, string userId) =>
+    public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId) =>
         Task.FromResult(_personas.Values.FirstOrDefault(s => s.BaulId == baulId && s.UserId == userId));
 
     public Task AddPersonaAsync(Persona persona)
@@ -66,17 +66,17 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.CompletedTask;
     }
 
-    public Task RemovePersonaAsync(Guid baulId, Guid personaId)
+    public Task RemovePersonaAsync(BaulId baulId, PersonaId personaId)
     {
         var match = _personas.Values.Where(s => s.BaulId == baulId && s.Id == personaId).ToList();
         foreach (var s in match) _personas.Remove(s.Id);
         return Task.CompletedTask;
     }
 
-    public Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId) =>
+    public Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId) =>
         Task.FromResult(_removalRequests.Values.Where(r => r.BaulId == baulId));
 
-    public Task<RemovalRequest?> GetRemovalRequestAsync(Guid baulId, Guid requestId) =>
+    public Task<RemovalRequest?> GetRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId) =>
         Task.FromResult(_removalRequests.Values.FirstOrDefault(r => r.BaulId == baulId && r.Id == requestId));
 
     public Task CreateRemovalRequestAsync(RemovalRequest request)
@@ -85,7 +85,7 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.CompletedTask;
     }
 
-    public Task DeleteRemovalRequestAsync(Guid baulId, Guid requestId)
+    public Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
     {
         _removalRequests.Remove(requestId);
         return Task.CompletedTask;

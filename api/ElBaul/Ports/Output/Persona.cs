@@ -2,8 +2,8 @@ namespace ElBaul.Ports.Output;
 
 public record Persona
 (
-    Guid Id,
-    Guid BaulId,
+    PersonaId Id,
+    BaulId BaulId,
     string? UserId,
     string Nickname,
     BaulRole Role,

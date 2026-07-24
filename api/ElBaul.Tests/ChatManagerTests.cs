@@ -37,10 +37,9 @@ public class ChatManagerTests
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
     {
         var now = _clock.UtcNow();
-        var baul = new Baul(baulId, name, null, custodioId, 0, now, now);
+        var baul = new Baul(new BaulId(baulId), name, null, custodioId, 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, custodioId, "Custodio", BaulRole.Custodio, now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), custodioId, "Custodio", BaulRole.Custodio, now));
         return baul;
     }
 
@@ -110,7 +109,7 @@ public class ChatManagerTests
         Assert.Equal("assistant", result.Value.Role);
         Assert.Equal("El abuelo Antonio nació en Asturias.", result.Value.Content);
 
-        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(baulId, CustodioId)).ToList();
+        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(new BaulId(baulId), CustodioId)).ToList();
         Assert.Equal(2, history.Count);
         Assert.Equal(ChatMessageRole.User, history[0].Role);
         Assert.Equal("¿Qué sabemos del abuelo Antonio?", history[0].Content);
@@ -160,7 +159,7 @@ public class ChatManagerTests
         Assert.Equal("Chat is not configured.", result.Error);
 
         // The user's message is still saved even though the reply failed — nothing is lost.
-        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(baulId, CustodioId)).ToList();
+        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(new BaulId(baulId), CustodioId)).ToList();
         Assert.Single(history);
     }
 

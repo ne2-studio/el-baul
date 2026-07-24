@@ -36,16 +36,16 @@ public class BackfillRecuerdoBaulIdCommand(
         {
             try
             {
-                Guid? baulId = null;
+                BaulId? baulId = null;
 
                 if (candidate.PhotoId is { } photoId)
                 {
-                    var photo = await photoRepository.GetByIdAsync(photoId);
+                    var photo = await photoRepository.GetByIdAsync(new PhotoId(photoId));
                     baulId = photo?.BaulId;
                 }
                 else if (candidate.ChapterId is { } chapterId)
                 {
-                    var chapter = await chapterRepository.GetByIdAsync(chapterId);
+                    var chapter = await chapterRepository.GetByIdAsync(new ChapterId(chapterId));
                     baulId = chapter?.BaulId;
                 }
 
@@ -63,7 +63,7 @@ public class BackfillRecuerdoBaulIdCommand(
 
                 if (!dryRun)
                 {
-                    await recuerdoRepository.SetBaulIdAsync(candidate.Id, resolvedBaulId);
+                    await recuerdoRepository.SetBaulIdAsync(new RecuerdoId(candidate.Id), resolvedBaulId);
                 }
 
                 updated++;

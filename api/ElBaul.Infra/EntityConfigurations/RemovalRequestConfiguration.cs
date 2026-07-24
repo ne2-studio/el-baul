@@ -10,6 +10,9 @@ public class RemovalRequestConfiguration : IEntityTypeConfiguration<RemovalReque
     {
         builder.ToTable("RemovalRequests");
         builder.HasKey(r => r.Id);
+        builder.Property(r => r.Id).HasConversion(IdValueConverters.RemovalRequestId);
+        builder.Property(r => r.BaulId).HasConversion(IdValueConverters.BaulId);
+        builder.Property(r => r.PhotoId).HasConversion(IdValueConverters.PhotoId);
         builder.Property(r => r.PhotoStorageKey).IsRequired().HasMaxLength(1000);
         builder.Property(r => r.RequesterName).IsRequired().HasMaxLength(200);
         builder.Property(r => r.RequesterEmail).IsRequired().HasMaxLength(320);

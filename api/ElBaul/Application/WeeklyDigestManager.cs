@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
@@ -38,7 +37,7 @@ public class WeeklyDigestManager(
 
         foreach (var user in candidates)
         {
-            if (blocked.Contains(user.Id) || !IsValidEmail(user.Email))
+            if (blocked.Contains(user.Id) || !EmailAddress.TryCreate(user.Email, out _))
                 continue;
 
             var hasLastSent = lastSentByUser.TryGetValue(user.Id, out var lastSent);
@@ -72,7 +71,7 @@ public class WeeklyDigestManager(
             return;
         }
 
-        if (!IsValidEmail(user.Email))
+        if (!EmailAddress.TryCreate(user.Email, out _))
         {
             logger.LogWarning("WeeklyDigestSkipped {UserId} invalid email", userId);
             return;
@@ -261,7 +260,4 @@ public class WeeklyDigestManager(
             Sections = trackedSections
         };
     }
-
-    private static bool IsValidEmail(string email) =>
-        !string.IsNullOrWhiteSpace(email) && MailAddress.TryCreate(email, out _);
 }

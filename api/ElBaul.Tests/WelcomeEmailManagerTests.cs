@@ -139,7 +139,7 @@ public class WelcomeEmailManagerTests
     public async Task SendWelcomeEmailAsync_ShouldUseTheBaulesVariant_ForAUserWithBaules()
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
-        var baul = new Baul(Guid.NewGuid(), "Familia Pardal", null, UserId, 0, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Pardal", null, UserId, 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
         var manager = CreateManager();
 
@@ -157,10 +157,9 @@ public class WelcomeEmailManagerTests
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var custodio = SeedUser("custodio-1", _clock.UtcNow().AddHours(-10));
-        var baul = new Baul(Guid.NewGuid(), "Familia Jimena", null, custodio.Id, 0, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Jimena", null, custodio.Id, 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baul.Id, UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendWelcomeEmailAsync(UserId);

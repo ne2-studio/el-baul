@@ -10,6 +10,8 @@ public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
     {
         builder.ToTable("Chapters");
         builder.HasKey(a => a.Id);
+        builder.Property(a => a.Id).HasConversion(IdValueConverters.ChapterId);
+        builder.Property(a => a.BaulId).HasConversion(IdValueConverters.BaulId);
         builder.Property(a => a.Name).IsRequired().HasMaxLength(200);
         builder.Property(a => a.CoverPhotoKey).HasMaxLength(1000);
         builder.Property(a => a.CreatedAt).HasColumnType("timestamp with time zone");

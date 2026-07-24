@@ -2,9 +2,9 @@ namespace ElBaul.Ports.Output;
 
 public record RemovalRequest
 (
-    Guid Id,
-    Guid BaulId,
-    Guid PhotoId,
+    RemovalRequestId Id,
+    BaulId BaulId,
+    PhotoId PhotoId,
     string PhotoStorageKey,
     string RequesterName,
     string RequesterEmail,

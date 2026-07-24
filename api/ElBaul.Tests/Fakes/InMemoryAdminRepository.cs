@@ -11,7 +11,7 @@ public class InMemoryAdminRepository : IAdminRepository
     public Dictionary<string, AdminUserDetailRow> UserDetails { get; } = new();
 
     public List<AdminBaulRow> Baules { get; } = [];
-    public Dictionary<Guid, AdminBaulDetailRow> BaulDetails { get; } = new();
+    public Dictionary<BaulId, AdminBaulDetailRow> BaulDetails { get; } = new();
 
     public Task<AdminDashboardCounts> GetDashboardCountsAsync(DateTime todayUtcStart)
     {
@@ -28,6 +28,6 @@ public class InMemoryAdminRepository : IAdminRepository
     public Task<IEnumerable<AdminBaulRow>> GetAllBaulesAsync() =>
         Task.FromResult<IEnumerable<AdminBaulRow>>(Baules);
 
-    public Task<AdminBaulDetailRow?> GetBaulDetailAsync(Guid baulId) =>
+    public Task<AdminBaulDetailRow?> GetBaulDetailAsync(BaulId baulId) =>
         Task.FromResult(BaulDetails.GetValueOrDefault(baulId));
 }

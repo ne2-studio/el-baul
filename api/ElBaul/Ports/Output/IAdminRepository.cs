@@ -12,5 +12,5 @@ public interface IAdminRepository
     Task<IEnumerable<AdminUserRow>> GetAllUsersAsync();
     Task<AdminUserDetailRow?> GetUserDetailAsync(string userId);
     Task<IEnumerable<AdminBaulRow>> GetAllBaulesAsync();
-    Task<AdminBaulDetailRow?> GetBaulDetailAsync(Guid baulId);
+    Task<AdminBaulDetailRow?> GetBaulDetailAsync(BaulId baulId);
 }

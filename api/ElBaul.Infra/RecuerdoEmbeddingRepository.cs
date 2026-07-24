@@ -5,7 +5,7 @@ namespace ElBaul.Infra;
 
 public class RecuerdoEmbeddingRepository(ElBaulDbContext dbContext) : IRecuerdoEmbeddingRepository
 {
-    public async Task<IEnumerable<RecuerdoEmbedding>> GetByBaulIdAsync(Guid baulId) =>
+    public async Task<IEnumerable<RecuerdoEmbedding>> GetByBaulIdAsync(BaulId baulId) =>
         await dbContext.RecuerdoEmbeddings.AsNoTracking()
             .Where(e => e.BaulId == baulId)
             .ToListAsync();

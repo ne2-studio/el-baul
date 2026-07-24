@@ -2,7 +2,7 @@ namespace ElBaul.Ports.Output;
 
 public interface IRecuerdoEmbeddingRepository
 {
-    Task<IEnumerable<RecuerdoEmbedding>> GetByBaulIdAsync(Guid baulId);
+    Task<IEnumerable<RecuerdoEmbedding>> GetByBaulIdAsync(BaulId baulId);
 
     /// <summary>Every embedding in the system, unscoped — used only by the one-off backfill
     /// command (see ElBaul.Maintenance/Commands/BackfillRecuerdoEmbeddingsCommand.cs).</summary>

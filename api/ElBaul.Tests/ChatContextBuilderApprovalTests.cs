@@ -32,20 +32,16 @@ public class ChatContextBuilderApprovalTests
     public async Task BuildAsync_WithChaptersPersonasAndRecuerdos()
     {
         var baulId = Guid.NewGuid();
-        var baul = new Baul(baulId, "Viajes de la familia", "Los viajes que hicimos juntos", CustodioId, 1, BaseDate, BaseDate);
+        var baul = new Baul(new BaulId(baulId), "Viajes de la familia", "Los viajes que hicimos juntos", CustodioId, 1, BaseDate, BaseDate);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, CustodioId, "Papá", BaulRole.Custodio, BaseDate, Name: "Antonio"));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, "user-2", "Mamá", BaulRole.Colaborador, BaseDate));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), CustodioId, "Papá", BaulRole.Custodio, BaseDate, Name: "Antonio"));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), "user-2", "Mamá", BaulRole.Colaborador, BaseDate));
 
-        var chapter = new Chapter(Guid.NewGuid(), baulId, "Boda de Ana", 5, null, BaseDate, BaseDate);
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, BaseDate, BaseDate);
         await _chapterRepository.CreateAsync(chapter);
 
-        _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-            Guid.NewGuid(), null, chapter.Id, baulId, CustodioId, "Fuimos a Asturias en verano", BaseDate.AddDays(-10)));
-        _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-            Guid.NewGuid(), null, null, baulId, "user-2", "El abuelo cantaba en las bodas", BaseDate.AddDays(-5)));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapter.Id), new BaulId(baulId), CustodioId, "Fuimos a Asturias en verano", BaseDate.AddDays(-10)));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), "user-2", "El abuelo cantaba en las bodas", BaseDate.AddDays(-5)));
 
         var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, "¿Cuándo fue el viaje a Asturias?");
@@ -57,7 +53,7 @@ public class ChatContextBuilderApprovalTests
     public async Task BuildAsync_WithMinimalBaul_NoDescriptionChaptersPersonasOrRecuerdos()
     {
         var baulId = Guid.NewGuid();
-        var baul = new Baul(baulId, "Baúl vacío", null, CustodioId, 0, BaseDate, BaseDate);
+        var baul = new Baul(new BaulId(baulId), "Baúl vacío", null, CustodioId, 0, BaseDate, BaseDate);
         await _baulRepository.CreateAsync(baul);
 
         var builder = CreateBuilder();
@@ -70,17 +66,14 @@ public class ChatContextBuilderApprovalTests
     public async Task BuildAsync_WithMoreRecuerdosThanTheRelevanceLimit()
     {
         var baulId = Guid.NewGuid();
-        var baul = new Baul(baulId, "Familia", null, CustodioId, 0, BaseDate, BaseDate);
+        var baul = new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, BaseDate, BaseDate);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, BaseDate));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), CustodioId, "Custodio", BaulRole.Custodio, BaseDate));
 
-        _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-            Guid.NewGuid(), null, null, baulId, CustodioId, "Fuimos de viaje a Asturias en verano", BaseDate));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Fuimos de viaje a Asturias en verano", BaseDate));
         for (var i = 0; i < 25; i++)
         {
-            _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-                Guid.NewGuid(), null, null, baulId, CustodioId, $"Recuerdo de relleno numero {i}", BaseDate.AddDays(-i - 1)));
+            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, $"Recuerdo de relleno numero {i}", BaseDate.AddDays(-i - 1)));
         }
 
         var embeddingBackend = new FakeEmbeddingBackend(["asturias", "relleno"]);

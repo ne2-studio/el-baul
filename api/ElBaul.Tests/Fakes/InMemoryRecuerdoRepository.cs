@@ -6,38 +6,38 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
 {
     private readonly List<Recuerdo> _recuerdos = [];
 
-    public void SeedForBaul(Guid baulId, Recuerdo recuerdo) => _recuerdos.Add(recuerdo with { BaulId = baulId });
+    public void SeedForBaul(BaulId baulId, Recuerdo recuerdo) => _recuerdos.Add(recuerdo with { BaulId = baulId });
 
-    public Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(Guid photoId) =>
+    public Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(PhotoId photoId) =>
         Task.FromResult(_recuerdos.Where(r => r.PhotoId == photoId).OrderBy(r => r.CreatedAt).AsEnumerable());
 
-    public Task<IEnumerable<Recuerdo>> GetByPhotoIdsAsync(IEnumerable<Guid> photoIds)
+    public Task<IEnumerable<Recuerdo>> GetByPhotoIdsAsync(IEnumerable<PhotoId> photoIds)
     {
         var ids = photoIds.ToHashSet();
         return Task.FromResult(_recuerdos.Where(r => r.PhotoId is { } id && ids.Contains(id)).OrderBy(r => r.CreatedAt).AsEnumerable());
     }
 
-    public Task<IEnumerable<Recuerdo>> GetByChapterIdAsync(Guid chapterId) =>
+    public Task<IEnumerable<Recuerdo>> GetByChapterIdAsync(ChapterId chapterId) =>
         Task.FromResult(_recuerdos.Where(r => r.ChapterId == chapterId).OrderByDescending(r => r.CreatedAt).AsEnumerable());
 
-    public Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(Guid baulId) =>
+    public Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(BaulId baulId) =>
         Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId).OrderByDescending(r => r.CreatedAt).AsEnumerable());
 
-    public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since) =>
+    public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since) =>
         Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId && r.CreatedAt >= since).AsEnumerable());
 
     public Task<IEnumerable<Recuerdo>> GetAllAsync() => Task.FromResult(_recuerdos.AsEnumerable());
 
-    // Recuerdo.BaulId is a non-nullable Guid, so this fake uses Guid.Empty as the "missing"
+    // Recuerdo.BaulId is a non-nullable BaulId, so this fake uses Guid.Empty as the "missing"
     // sentinel — SeedForBaul is what normally assigns a real BaulId, so a recuerdo added
-    // straight via CreateAsync without one stays Guid.Empty, mirroring a null BaulId column.
+    // straight via CreateAsync without one stays default(BaulId), mirroring a null BaulId column.
     public Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync() =>
         Task.FromResult(_recuerdos
-            .Where(r => r.BaulId == Guid.Empty)
-            .Select(r => new RecuerdoBaulIdCandidate(r.Id, r.PhotoId, r.ChapterId))
+            .Where(r => r.BaulId.Value == Guid.Empty)
+            .Select(r => new RecuerdoBaulIdCandidate(r.Id.Value, r.PhotoId?.Value, r.ChapterId?.Value))
             .AsEnumerable());
 
-    public Task SetBaulIdAsync(Guid recuerdoId, Guid baulId)
+    public Task SetBaulIdAsync(RecuerdoId recuerdoId, BaulId baulId)
     {
         var index = _recuerdos.FindIndex(r => r.Id == recuerdoId);
         if (index >= 0) _recuerdos[index] = _recuerdos[index] with { BaulId = baulId };

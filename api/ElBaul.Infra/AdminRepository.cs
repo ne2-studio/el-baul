@@ -88,7 +88,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             chapterCounts.GetValueOrDefault(b.Id)));
     }
 
-    public async Task<AdminBaulDetailRow?> GetBaulDetailAsync(Guid baulId)
+    public async Task<AdminBaulDetailRow?> GetBaulDetailAsync(BaulId baulId)
     {
         var baul = await dbContext.Baules.AsNoTracking().FirstOrDefaultAsync(b => b.Id == baulId);
         if (baul is null) return null;

@@ -25,10 +25,9 @@ public class ChatContextBuilderTests
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name)
     {
         var now = _clock.UtcNow();
-        var baul = new Baul(baulId, name, null, CustodioId, 0, now, now);
+        var baul = new Baul(new BaulId(baulId), name, null, CustodioId, 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), CustodioId, "Custodio", BaulRole.Custodio, now));
         return baul;
     }
 
@@ -37,8 +36,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-            Guid.NewGuid(), null, null, baulId, CustodioId, "Fuimos a Asturias en verano", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Fuimos a Asturias en verano", _clock.UtcNow()));
 
         var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, "¿Cuándo fue el viaje a Asturias?");
@@ -54,12 +52,10 @@ public class ChatContextBuilderTests
         var baul = await SeedBaulAsync(baulId, "Familia");
         var embeddingBackend = new FakeEmbeddingBackend(["asturias", "relleno"]);
 
-        _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-            Guid.NewGuid(), null, null, baulId, CustodioId, "Fuimos de viaje a Asturias en verano", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Fuimos de viaje a Asturias en verano", _clock.UtcNow()));
         for (var i = 0; i < 25; i++)
         {
-            _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-                Guid.NewGuid(), null, null, baulId, CustodioId, $"Recuerdo de relleno numero {i}", _clock.UtcNow()));
+            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, $"Recuerdo de relleno numero {i}", _clock.UtcNow()));
         }
 
         var builder = CreateBuilder(embeddingBackend);
@@ -82,12 +78,11 @@ public class ChatContextBuilderTests
             NextEmbedResult = Result.Failure<float[]>("Embedding backend unavailable")
         };
 
-        var mostRecent = new Recuerdo(Guid.NewGuid(), null, null, baulId, CustodioId, "El más reciente", _clock.UtcNow());
-        _recuerdoRepository.SeedForBaul(baulId, mostRecent);
+        var mostRecent = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "El más reciente", _clock.UtcNow());
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), mostRecent);
         for (var i = 0; i < 25; i++)
         {
-            _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-                Guid.NewGuid(), null, null, baulId, CustodioId, $"Recuerdo antiguo {i}", _clock.UtcNow().AddDays(-i - 1)));
+            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, $"Recuerdo antiguo {i}", _clock.UtcNow().AddDays(-i - 1)));
         }
 
         var builder = CreateBuilder(embeddingBackend);

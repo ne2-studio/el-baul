@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
@@ -34,7 +33,7 @@ public class WelcomeEmailManager(
 
         foreach (var user in candidates)
         {
-            if (alreadySent.Contains(user.Id) || blocked.Contains(user.Id) || !IsValidEmail(user.Email))
+            if (alreadySent.Contains(user.Id) || blocked.Contains(user.Id) || !EmailAddress.TryCreate(user.Email, out _))
                 continue;
 
             backgroundJobScheduler.EnqueueWelcomeEmail(user.Id);
@@ -64,7 +63,7 @@ public class WelcomeEmailManager(
             return;
         }
 
-        if (!IsValidEmail(user.Email))
+        if (!EmailAddress.TryCreate(user.Email, out _))
         {
             logger.LogWarning("WelcomeEmailSkipped {UserId} invalid email", userId);
             return;
@@ -138,7 +137,4 @@ public class WelcomeEmailManager(
 
     private static WelcomeEmailModel ApplyTracking(WelcomeEmailModel model, TrackedLinkBuilder linkBuilder) =>
         model with { PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl) };
-
-    private static bool IsValidEmail(string email) =>
-        !string.IsNullOrWhiteSpace(email) && MailAddress.TryCreate(email, out _);
 }

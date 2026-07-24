@@ -57,7 +57,7 @@ public class AdminManagerTests
         var baulId = Guid.NewGuid();
         var personId = Guid.NewGuid();
         _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(
-            user, [new AdminUserBaulRow(baulId, "Familia Pérez", BaulRole.Custodio, personId)]);
+            user, [new AdminUserBaulRow(new BaulId(baulId), "Familia Pérez", BaulRole.Custodio, new PersonaId(personId))]);
 
         var result = await CreateManager().GetUserDetailAsync("user-1");
 
@@ -71,7 +71,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetAllBaulesAsync_ShouldMapEachRow()
     {
-        var baul = new Baul(Guid.NewGuid(), "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
         _adminRepository.Baules.Add(new AdminBaulRow(baul, "Custodio Uno", MemberCount: 3, LinkedUserCount: 2, PhotoCount: 10, ChapterCount: 1));
 
         var result = await CreateManager().GetAllBaulesAsync();
@@ -116,12 +116,12 @@ public class AdminManagerTests
     public async Task GetBaulDetailAsync_ShouldMergePersonasAndChaptersAndStats()
     {
         var baulId = Guid.NewGuid();
-        var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
-        var linkedPersona = new Persona(Guid.NewGuid(), baulId, "user-1", "Abuela", BaulRole.Custodio, _clock.UtcNow());
-        var unlinkedPersona = new Persona(Guid.NewGuid(), baulId, null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
-        var chapter = new Chapter(Guid.NewGuid(), baulId, "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(new BaulId(baulId), "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        var linkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), "user-1", "Abuela", BaulRole.Custodio, _clock.UtcNow());
+        var unlinkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
 
-        _adminRepository.BaulDetails[baulId] = new AdminBaulDetailRow(
+        _adminRepository.BaulDetails[new BaulId(baulId)] = new AdminBaulDetailRow(
             baul,
             [linkedPersona, unlinkedPersona],
             new Dictionary<string, string> { ["user-1"] = "Abuela Real Name" },

@@ -10,6 +10,8 @@ public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
     {
         builder.ToTable("Personas");
         builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id).HasConversion(IdValueConverters.PersonaId);
+        builder.Property(s => s.BaulId).HasConversion(IdValueConverters.BaulId);
         builder.Property(s => s.UserId).HasMaxLength(255);
         builder.Property(s => s.Nickname).IsRequired().HasMaxLength(100);
         builder.Property(s => s.Name).HasMaxLength(100);

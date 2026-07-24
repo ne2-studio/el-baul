@@ -12,6 +12,8 @@ public class RecuerdoEmbeddingConfiguration : IEntityTypeConfiguration<RecuerdoE
         // 1:1 with Recuerdo — RecuerdoId is the primary key, not a separate Id, since a
         // recuerdo has at most one embedding (of the current OpenAi:EmbeddingModel).
         builder.HasKey(e => e.RecuerdoId);
+        builder.Property(e => e.RecuerdoId).HasConversion(IdValueConverters.RecuerdoId);
+        builder.Property(e => e.BaulId).HasConversion(IdValueConverters.BaulId);
         builder.Property(e => e.Model).IsRequired().HasMaxLength(100);
         builder.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone");
 

@@ -27,13 +27,13 @@ public class ChapterManagerTests
     public async Task CreateAsync_ShouldIncrementBaulChapterCount()
     {
         var baulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.CreateAsync(baulId, "Vacaciones");
 
         Assert.True(result.IsSuccess);
-        var baul = await _baulRepository.GetByIdAsync(baulId);
+        var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
         Assert.Equal(1, baul!.ChapterCount);
     }
 
@@ -41,7 +41,7 @@ public class ChapterManagerTests
     public async Task CreateAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
         var result = await manager.CreateAsync(baulId, "Vacaciones");
@@ -55,9 +55,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.CreateAsync(baulId, "Vacaciones");
@@ -69,7 +68,7 @@ public class ChapterManagerTests
     public async Task GetByBaulIdAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -83,8 +82,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, "cover-key", _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, "cover-key", _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -99,9 +98,9 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(chapterId, photoId);
@@ -109,7 +108,7 @@ public class ChapterManagerTests
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
 
-        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
+        var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
         Assert.Equal("photo-key", chapter!.CoverPhotoKey);
     }
 
@@ -120,11 +119,10 @@ public class ChapterManagerTests
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, colaboradorId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, colaboradorId, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.SetCoverAsync(chapterId, photoId);
@@ -138,9 +136,9 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
         var result = await manager.SetCoverAsync(chapterId, photoId);
@@ -154,8 +152,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(chapterId, Guid.NewGuid());
@@ -171,10 +169,10 @@ public class ChapterManagerTests
         var chapterId = Guid.NewGuid();
         var otherChapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(otherChapterId, baulId, "Otro chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, otherChapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(otherChapterId), new BaulId(baulId), "Otro chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(otherChapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(chapterId, photoId);
@@ -188,8 +186,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
@@ -197,7 +195,7 @@ public class ChapterManagerTests
         Assert.True(result.IsSuccess);
         Assert.Equal("Vacaciones 2024", result.Value.Name);
 
-        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
+        var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
         Assert.Equal("Vacaciones 2024", chapter!.Name);
     }
 
@@ -207,10 +205,9 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
@@ -223,8 +220,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
         var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
@@ -249,15 +246,15 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "k1", null, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "k1", null, CustodioId, _clock.UtcNow()));
 
         // Photo-attached recuerdo, plus a chapter-level one with no photo at all — both
         // must count (this used to only count recuerdos joined through the chapter's
         // currently-active photos, silently dropping photo-less ones).
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, chapterId, baulId, CustodioId, "con foto", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, chapterId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "con foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "sin foto", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -271,11 +268,11 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 3, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), chapterId, baulId, "k1", 2020, 5, 10, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), chapterId, baulId, "k2", 2018, null, null, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), chapterId, baulId, "k3", null, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 3, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "k1", PhotoDates.Of(2020, 5, 10), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "k2", PhotoDates.Of(2018, null, null), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "k3", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -297,12 +294,12 @@ public class ChapterManagerTests
         var olderChapterId = Guid.NewGuid();
         var recentChapterId = Guid.NewGuid();
         var undatedChapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(olderChapterId, baulId, "Antiguo", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(recentChapterId, baulId, "Reciente", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(undatedChapterId, baulId, "Sin fecha", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), olderChapterId, baulId, "k1", 2015, null, null, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), recentChapterId, baulId, "k2", 2022, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(olderChapterId), new BaulId(baulId), "Antiguo", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(recentChapterId), new BaulId(baulId), "Reciente", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(undatedChapterId), new BaulId(baulId), "Sin fecha", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(olderChapterId), new BaulId(baulId), "k1", PhotoDates.Of(2015, null, null), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(recentChapterId), new BaulId(baulId), "k2", PhotoDates.Of(2022, null, null), CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -317,8 +314,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.CreateRecuerdoAsync(chapterId, "Que buen viaje");
@@ -328,9 +325,9 @@ public class ChapterManagerTests
         Assert.True(result.Value.IsOwn);
         Assert.Equal("Que buen viaje", result.Value.Text);
 
-        var stored = (await _recuerdoRepository.GetByChapterIdAsync(chapterId)).Single();
+        var stored = (await _recuerdoRepository.GetByChapterIdAsync(new ChapterId(chapterId))).Single();
         Assert.Null(stored.PhotoId);
-        Assert.Equal(chapterId, stored.ChapterId);
+        Assert.Equal(new ChapterId(chapterId), stored.ChapterId);
     }
 
     [Fact]
@@ -339,10 +336,9 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.CreateRecuerdoAsync(chapterId, "Recuerdo de un colaborador");
@@ -356,11 +352,10 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow(),
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow(),
             AvatarPhotoKey: "avatar-key"));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.CreateRecuerdoAsync(chapterId, "Recuerdo de un colaborador");
@@ -374,8 +369,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
         var result = await manager.CreateRecuerdoAsync(chapterId, "No debería poder");
@@ -400,14 +395,14 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var older = _clock.UtcNow().AddDays(-1);
         var newer = _clock.UtcNow();
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, chapterId, baulId, CustodioId, "sin foto, más antiguo", older));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, chapterId, baulId, CustodioId, "con foto, más reciente", newer));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "sin foto, más antiguo", older));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "con foto, más reciente", newer));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetRecuerdosAsync(chapterId);
@@ -430,8 +425,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
         var result = await manager.GetRecuerdosAsync(chapterId);
@@ -446,29 +441,28 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, chapterId, baulId, CustodioId, "con foto", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, chapterId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "con foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "sin foto", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.DeleteAsync(chapterId);
 
         Assert.True(result.IsSuccess);
-        Assert.Null(await _chapterRepository.GetByIdAsync(chapterId));
+        Assert.Null(await _chapterRepository.GetByIdAsync(new ChapterId(chapterId)));
 
-        var photo = await _photoRepository.GetByIdAsync(photoId);
+        var photo = await _photoRepository.GetByIdAsync(new PhotoId(photoId));
         Assert.Null(photo!.ChapterId);
         Assert.Equal(baulId, photo.BaulId);
 
-        var recuerdos = (await _recuerdoRepository.GetByBaulIdAsync(baulId)).ToList();
+        var recuerdos = (await _recuerdoRepository.GetByBaulIdAsync(new BaulId(baulId))).ToList();
         Assert.Equal(2, recuerdos.Count);
         Assert.All(recuerdos, r => Assert.Null(r.ChapterId));
 
-        var baul = await _baulRepository.GetByIdAsync(baulId);
+        var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
         Assert.Equal(0, baul!.ChapterCount);
     }
 
@@ -478,17 +472,16 @@ public class ChapterManagerTests
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(
-            Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.DeleteAsync(chapterId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
-        Assert.NotNull(await _chapterRepository.GetByIdAsync(chapterId));
+        Assert.NotNull(await _chapterRepository.GetByIdAsync(new ChapterId(chapterId)));
     }
 
     [Fact]
@@ -496,8 +489,8 @@ public class ChapterManagerTests
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
         var result = await manager.DeleteAsync(chapterId);

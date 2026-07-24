@@ -2,7 +2,7 @@ namespace ElBaul.Ports.Output;
 
 public record Baul
 (
-    Guid Id,
+    BaulId Id,
     string Name,
     string? Description,
     string CustodioId,

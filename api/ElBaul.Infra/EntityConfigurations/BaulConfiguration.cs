@@ -10,6 +10,7 @@ public class BaulConfiguration : IEntityTypeConfiguration<Baul>
     {
         builder.ToTable("Baules");
         builder.HasKey(b => b.Id);
+        builder.Property(b => b.Id).HasConversion(IdValueConverters.BaulId);
         builder.Property(b => b.Name).IsRequired().HasMaxLength(200);
         builder.Property(b => b.Description).HasMaxLength(2000);
         builder.Property(b => b.CustodioId).IsRequired().HasMaxLength(255);

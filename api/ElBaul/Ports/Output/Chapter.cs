@@ -2,8 +2,8 @@ namespace ElBaul.Ports.Output;
 
 public record Chapter
 (
-    Guid Id,
-    Guid BaulId,
+    ChapterId Id,
+    BaulId BaulId,
     string Name,
     int PhotoCount,
     string? CoverPhotoKey,

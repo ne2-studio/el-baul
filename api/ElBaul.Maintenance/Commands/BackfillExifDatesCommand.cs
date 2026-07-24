@@ -43,14 +43,9 @@ public class BackfillExifDatesCommand(
                     "Photo {PhotoId}: found EXIF date {Year:D4}-{Month:D2}-{Day:D2}",
                     photo.Id, date.Year, date.Month, date.Day);
 
-                if (!dryRun)
+                if (!dryRun && PhotoDate.TryCreate(date.Year, date.Month, date.Day, out var photoDate, out _))
                 {
-                    await photoRepository.UpdateAsync(photo with
-                    {
-                        DateYear = date.Year,
-                        DateMonth = date.Month,
-                        DateDay = date.Day
-                    });
+                    await photoRepository.UpdateAsync(photo.WithDate(photoDate));
                 }
 
                 updated++;

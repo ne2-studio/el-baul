@@ -5,7 +5,7 @@ namespace ElBaul.Infra;
 
 public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
 {
-    public Task<Baul?> GetByIdAsync(Guid id) =>
+    public Task<Baul?> GetByIdAsync(BaulId id) =>
         dbContext.Baules.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
 
     public async Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(string userId) =>
@@ -36,10 +36,10 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Persona>> GetPersonasAsync(Guid baulId) =>
+    public async Task<IEnumerable<Persona>> GetPersonasAsync(BaulId baulId) =>
         await dbContext.Personas.AsNoTracking().Where(s => s.BaulId == baulId).ToListAsync();
 
-    public async Task<IReadOnlyDictionary<Guid, int>> GetPersonaCountsAsync(IEnumerable<Guid> baulIds)
+    public async Task<IReadOnlyDictionary<BaulId, int>> GetPersonaCountsAsync(IEnumerable<BaulId> baulIds)
     {
         var ids = baulIds.ToList();
         var counts = await dbContext.Personas.AsNoTracking()
@@ -51,10 +51,10 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         return counts.ToDictionary(c => c.BaulId, c => c.Count);
     }
 
-    public Task<Persona?> GetPersonaByIdAsync(Guid personaId) =>
+    public Task<Persona?> GetPersonaByIdAsync(PersonaId personaId) =>
         dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.Id == personaId);
 
-    public Task<Persona?> GetPersonaByUserIdAsync(Guid baulId, string userId) =>
+    public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId) =>
         dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.UserId == userId);
 
     public async Task AddPersonaAsync(Persona persona)
@@ -69,15 +69,15 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task RemovePersonaAsync(Guid baulId, Guid personaId)
+    public async Task RemovePersonaAsync(BaulId baulId, PersonaId personaId)
     {
         await dbContext.Personas.Where(s => s.BaulId == baulId && s.Id == personaId).ExecuteDeleteAsync();
     }
 
-    public async Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(Guid baulId) =>
+    public async Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId) =>
         await dbContext.RemovalRequests.AsNoTracking().Where(r => r.BaulId == baulId).ToListAsync();
 
-    public Task<RemovalRequest?> GetRemovalRequestAsync(Guid baulId, Guid requestId) =>
+    public Task<RemovalRequest?> GetRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId) =>
         dbContext.RemovalRequests.AsNoTracking().FirstOrDefaultAsync(r => r.BaulId == baulId && r.Id == requestId);
 
     public async Task CreateRemovalRequestAsync(RemovalRequest request)
@@ -86,7 +86,7 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task DeleteRemovalRequestAsync(Guid baulId, Guid requestId)
+    public async Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
     {
         await dbContext.RemovalRequests.Where(r => r.BaulId == baulId && r.Id == requestId).ExecuteDeleteAsync();
     }

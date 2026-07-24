@@ -84,7 +84,7 @@ public class ChatContextBuilder(
     // is needed for ranking) and cached in RecuerdoEmbeddings; similarity is brute-force cosine
     // in memory, which is plenty fast at a single family's baúl scale. If a baúl ever grows
     // large enough for that to matter, that's the point to reach for pgvector/ANN — not before.
-    private async Task<List<Recuerdo>> FindRelevantRecuerdosAsync(Guid baulId, List<Recuerdo> recuerdos, string query)
+    private async Task<List<Recuerdo>> FindRelevantRecuerdosAsync(BaulId baulId, List<Recuerdo> recuerdos, string query)
     {
         if (recuerdos.Count <= MaxRelevantRecuerdos) return recuerdos;
 
