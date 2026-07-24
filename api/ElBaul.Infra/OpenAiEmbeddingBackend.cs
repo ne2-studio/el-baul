@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,7 @@ public class OpenAiEmbeddingBackend(HttpClient httpClient, IOptions<OpenAiOption
 
         try
         {
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/embeddings")
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{options.Value.BaseUrl}/v1/embeddings")
             {
                 Content = JsonContent.Create(request)
             };
@@ -64,6 +65,11 @@ public class OpenAiEmbeddingBackend(HttpClient httpClient, IOptions<OpenAiOption
         {
             logger.LogError(ex, "OpenAI embeddings request failed");
             return Result.Failure<IReadOnlyList<float[]>>("Failed to get embeddings from the AI.");
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(ex, "OpenAI embeddings response had a malformed body");
+            return Result.Failure<IReadOnlyList<float[]>>("OpenAI embeddings response had an unexpected shape");
         }
     }
 }

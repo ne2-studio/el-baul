@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -30,7 +31,7 @@ public class OpenAiChatBackend(HttpClient httpClient, IOptions<OpenAiOptions> op
 
         try
         {
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{options.Value.BaseUrl}/v1/chat/completions")
             {
                 Content = JsonContent.Create(request)
             };
@@ -58,6 +59,11 @@ public class OpenAiChatBackend(HttpClient httpClient, IOptions<OpenAiOptions> op
         {
             logger.LogError(ex, "OpenAI chat completion failed");
             return Result.Failure<string>("Failed to get a reply from the AI.");
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(ex, "OpenAI chat completion returned a malformed response body");
+            return Result.Failure<string>("OpenAI response contained no reply");
         }
     }
 }

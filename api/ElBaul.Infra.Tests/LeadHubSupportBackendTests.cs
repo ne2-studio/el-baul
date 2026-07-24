@@ -3,29 +3,39 @@ using ElBaul.Ports.Output;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using WireMock.RequestBuilders;
+using WireMock.ResponseBuilders;
+using WireMock.Server;
 
 namespace ElBaul.Infra.Tests;
 
 public class LeadHubSupportBackendTests
 {
+    private const string SubmitPath = "/api/forms/el-baul-ayuda/submit";
+
     private static readonly SupportSubmission Submission =
         new("Bug", "Se ha caído la app", "Mozilla/5.0", "user-1", "user@example.com", "Usuaria");
 
-    private static IConfiguration BuildConfiguration(string? submitUrl = "https://leadhub.test/api/forms/el-baul-ayuda/submit") =>
+    private static IConfiguration BuildConfiguration(string? submitUrl) =>
         new ConfigurationBuilder()
             .AddInMemoryCollection(submitUrl is null
                 ? []
                 : new Dictionary<string, string?> { ["Support:LeadHub:SubmitUrl"] = submitUrl })
             .Build();
 
-    private static LeadHubSupportBackend CreateBackend(HttpMessageHandler handler, IConfiguration? configuration = null) =>
-        new(new HttpClient(handler), configuration ?? BuildConfiguration(), Substitute.For<ILogger<LeadHubSupportBackend>>());
+    private static LeadHubSupportBackend CreateBackend(string? submitUrl) =>
+        new(
+            new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }),
+            BuildConfiguration(submitUrl),
+            Substitute.For<ILogger<LeadHubSupportBackend>>());
 
     [Fact]
     public async Task SubmitAsync_ShouldSucceed_WhenLeadHubRespondsWithSuccess()
     {
-        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
-        var backend = CreateBackend(handler);
+        using var server = WireMockServer.Start();
+        server.Given(Request.Create().WithPath(SubmitPath).UsingPost())
+            .RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK));
+        var backend = CreateBackend($"{server.Url}{SubmitPath}");
 
         var result = await backend.SubmitAsync(Submission);
 
@@ -38,8 +48,10 @@ public class LeadHubSupportBackendTests
         // LeadHub redirects to a "thanks" page on success; we don't follow it (no
         // Location header guaranteed, and we have no use for the page itself) —
         // the redirect status alone is treated as success.
-        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.MovedPermanently));
-        var backend = CreateBackend(handler);
+        using var server = WireMockServer.Start();
+        server.Given(Request.Create().WithPath(SubmitPath).UsingPost())
+            .RespondWith(Response.Create().WithStatusCode(HttpStatusCode.MovedPermanently));
+        var backend = CreateBackend($"{server.Url}{SubmitPath}");
 
         var result = await backend.SubmitAsync(Submission);
 
@@ -49,30 +61,30 @@ public class LeadHubSupportBackendTests
     [Fact]
     public async Task SubmitAsync_ShouldPostFieldsAsMultipartFormData()
     {
-        HttpRequestMessage? capturedRequest = null;
-        string? capturedBody = null;
-        var handler = new StubHttpMessageHandler(request =>
-        {
-            capturedRequest = request;
-            capturedBody = request.Content!.ReadAsStringAsync().Result;
-            return new HttpResponseMessage(HttpStatusCode.OK);
-        });
-        var backend = CreateBackend(handler);
+        using var server = WireMockServer.Start();
+        server.Given(Request.Create().WithPath(SubmitPath).UsingPost())
+            .RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK));
+        var backend = CreateBackend($"{server.Url}{SubmitPath}");
 
         await backend.SubmitAsync(Submission);
 
-        Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("https://leadhub.test/api/forms/el-baul-ayuda/submit", capturedRequest.RequestUri!.ToString());
-        Assert.StartsWith("multipart/form-data", capturedRequest.Content!.Headers.ContentType!.ToString());
-        Assert.Contains("Se ha caído la app", capturedBody);
-        Assert.Contains("user@example.com", capturedBody);
+        var logEntry = Assert.Single(server.LogEntries);
+        var request = logEntry.RequestMessage!;
+        Assert.Equal("POST", request.Method);
+        Assert.Equal(SubmitPath, request.Path);
+        Assert.StartsWith("multipart/form-data", request.Headers!["Content-Type"].ToString());
+        var body = request.Body!;
+        Assert.Contains("Se ha caído la app", body);
+        Assert.Contains("user@example.com", body);
     }
 
     [Fact]
     public async Task SubmitAsync_ShouldFail_WhenLeadHubRespondsWithAnErrorStatus()
     {
-        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
-        var backend = CreateBackend(handler);
+        using var server = WireMockServer.Start();
+        server.Given(Request.Create().WithPath(SubmitPath).UsingPost())
+            .RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
+        var backend = CreateBackend($"{server.Url}{SubmitPath}");
 
         var result = await backend.SubmitAsync(Submission);
 
@@ -82,8 +94,13 @@ public class LeadHubSupportBackendTests
     [Fact]
     public async Task SubmitAsync_ShouldFail_WhenTheHttpCallThrows()
     {
-        var handler = new StubHttpMessageHandler(_ => throw new HttpRequestException("boom"));
-        var backend = CreateBackend(handler);
+        // Start a real server to obtain a genuine loopback port, then stop it before
+        // calling — nothing listens there anymore, so the HttpClient gets a real
+        // connection-refused HttpRequestException, same as a network-level failure in production.
+        var server = WireMockServer.Start();
+        var submitUrl = $"{server.Url}{SubmitPath}";
+        server.Stop();
+        var backend = CreateBackend(submitUrl);
 
         var result = await backend.SubmitAsync(Submission);
 
@@ -93,17 +110,10 @@ public class LeadHubSupportBackendTests
     [Fact]
     public async Task SubmitAsync_ShouldFail_WhenSubmitUrlIsNotConfigured()
     {
-        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
-        var backend = CreateBackend(handler, BuildConfiguration(submitUrl: null));
+        var backend = CreateBackend(submitUrl: null);
 
         var result = await backend.SubmitAsync(Submission);
 
         Assert.True(result.IsFailure);
-    }
-
-    private class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(respond(request));
     }
 }
