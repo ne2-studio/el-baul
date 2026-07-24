@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useElementHeight } from '@/hooks/useElementHeight';
+import { useFileInputSelection } from '@/hooks/useFileInputSelection';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
 import { ExpandableFAB, SimpleFAB } from './FAB';
@@ -10,7 +11,7 @@ import { RecuerdosTab } from './RecuerdosTab';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Baul } from './BaulesList';
-import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
+import { SelectedPhoto } from './UploadConfirmationScreen';
 import { PhotoDate, Recuerdo, Persona } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
@@ -120,21 +121,7 @@ export function ChaptersView({
     if (ok) setShowEditModal(false);
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const fileArray = Array.from(files);
-    e.target.value = ''; // must run after snapshotting — files is a live FileList tied to the input
-
-    const materialized = await Promise.all(fileArray.map(materializeSelectedPhoto));
-    const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
-    if (materialized.length > selectedPhotos.length) {
-      onPhotosDropped?.(materialized.length - selectedPhotos.length);
-    }
-    if (selectedPhotos.length === 0) return;
-
-    onUploadPhotos?.(selectedPhotos);
-  };
+  const handleFileSelect = useFileInputSelection((photos) => onUploadPhotos?.(photos), onPhotosDropped);
 
   return (
     <div className="min-h-screen bg-background">
