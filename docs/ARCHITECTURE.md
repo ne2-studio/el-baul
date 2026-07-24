@@ -414,8 +414,17 @@ isolated rather than spread through the app:
 
 ### Testing
 
-- **Unit** (Vitest, `npm test`) — narrow, in-process, no network: store logic
-  (`useAppStore.recuerdos.test.ts`) and `utils/timeUtils.test.ts`.
+Three levels, matched to what's under test — see
+[`docs/adr/0001-frontend-testing-strategy.md`](adr/0001-frontend-testing-strategy.md) for
+the full rationale.
+
+- **Unit** (Vitest, `environment: 'node'`, the config default, `npm test`) — narrow,
+  in-process, no DOM: store logic (`useAppStore.recuerdos.test.ts`) and
+  `utils/timeUtils.test.ts`.
+- **Component** (Vitest + jsdom + React Testing Library, opted in per-file via a
+  `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM, e.g.
+  `RecuerdoFeedCard.test.tsx`. Query priority: role/label/placeholder/text before
+  `data-testid`.
 - **`app/e2e/`** (`npm run test:e2e`) — full-stack Playwright: `docker compose up --build`
   against the real `docker-compose.yaml` stack (Postgres, MinIO, imgproxy, fake-oidc), one
   spec (`smoke.spec.ts`), login → home only. The one suite that actually exercises real infra

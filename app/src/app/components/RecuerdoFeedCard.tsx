@@ -50,7 +50,7 @@ export function RecuerdoFeedCard({
       <div className="flex items-center gap-2 mt-3">
         <button
           type="button"
-          data-testid="recuerdo-avatar"
+          aria-label={`Ver perfil de ${userName}`}
           onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
           disabled={!canOpenPersona}
           className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium overflow-hidden ${getAvatarColor(userName)} ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
@@ -68,7 +68,7 @@ export function RecuerdoFeedCard({
       {recuerdo.photoId && (
         <button
           type="button"
-          data-testid="recuerdo-photo"
+          aria-label="Ver foto"
           onClick={onPhotoClick}
           className="mt-3 block w-full rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
         >
@@ -86,7 +86,6 @@ export function RecuerdoFeedCard({
       {showBadge && (
         <button
           type="button"
-          data-testid="recuerdo-chapter-badge"
           onClick={() => onChapterClick?.(recuerdo.chapterId!)}
           className="mt-2 inline-flex text-xs text-primary bg-primary/10 hover:bg-primary/15 transition-colors rounded-full px-2 py-0.5"
         >
