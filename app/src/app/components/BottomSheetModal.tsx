@@ -8,11 +8,13 @@ interface BottomSheetModalProps {
    * 'sm': hoja de confirmación/acción — rounded-t-2xl, max-w-md, p-6, fondo bg-background,
    * por encima de todo lo demás incluido el visor de fotos (z-[60]). Es el valor por defecto.
    * 'lg': hoja de formulario — rounded-t-3xl, max-w-2xl, más padding, fondo bg-card, con el
-   * "handle" (barrita) arriba, z-50.
+   * "handle" (barrita) arriba, z-50. En desktop (md+) pasa a un panel lateral fijo a la
+   * derecha, a toda altura y ~1/3 del ancho, en vez de quedarse pegada abajo.
    */
   size?: 'sm' | 'lg';
   /** Solo aplica con size='sm': en escritorio (md+) pasa a diálogo centrado en vez de
-   * quedarse pegada abajo. Ninguna hoja 'lg' lo hace hoy. */
+   * quedarse pegada abajo. 'lg' no lo usa — en desktop siempre es el panel lateral descrito
+   * arriba. */
   desktopCentered?: boolean;
   /** Opacidad del backdrop sobre bg-foreground — solo se usa con size='sm'; 'lg' usa
    * bg-black/50 fijo, igual que hasta ahora. */
@@ -44,14 +46,14 @@ export function BottomSheetModal({
   return (
     <div
       className={`fixed left-0 right-0 ${overlayBg} ${isLg ? 'z-50' : 'z-[60]'} flex items-end ${
-        desktopCentered ? 'md:items-center' : ''
+        isLg ? 'md:items-stretch md:justify-end' : desktopCentered ? 'md:items-center' : ''
       } justify-center`}
       style={{ top: viewportInset.top, height: viewportInset.height }}
     >
       <div className="absolute inset-0" onClick={onCancel} />
       {isLg ? (
-        <div className="relative bg-card w-full max-w-2xl max-h-[90%] overflow-y-auto rounded-t-3xl px-6 pt-6 pb-10 space-y-5 animate-slide-up">
-          <div className="w-10 h-1 bg-border rounded-full mx-auto mb-2" />
+        <div className="relative bg-card w-full max-w-2xl max-h-[90%] overflow-y-auto rounded-t-3xl px-6 pt-6 pb-10 space-y-5 animate-slide-up sheet-desktop-drawer md:w-1/3 md:max-w-none md:h-full md:max-h-full md:rounded-none md:rounded-l-3xl md:pb-6">
+          <div className="w-10 h-1 bg-border rounded-full mx-auto mb-2 md:hidden" />
           {children}
         </div>
       ) : (

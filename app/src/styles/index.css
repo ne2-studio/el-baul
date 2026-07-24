@@ -27,6 +27,26 @@
   animation: slide-up 0.3s ease-out;
 }
 
+/* En desktop, BottomSheetModal 'lg' es un panel lateral en vez de una hoja inferior — este
+   selector (con la especificidad de dos clases) gana sobre .animate-slide-up sin depender
+   del orden de las reglas en el archivo. */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .animate-slide-up.sheet-desktop-drawer {
+    animation: slide-in-right 0.3s ease-out;
+  }
+}
+
 @keyframes fab-item-in {
   from { transform: translateY(8px); opacity: 0; }
   to   { transform: translateY(0);   opacity: 1; }
