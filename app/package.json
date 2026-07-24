@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "vite build && sentry-cli sourcemaps inject dist",
+    "build": "vite build && sentry-cli sourcemaps inject --ignore 'env-config*.js' dist",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "android:build": "vite build --mode android && cap sync android",
@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:image-acceptance": "playwright test --config=playwright.image-acceptance.config.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

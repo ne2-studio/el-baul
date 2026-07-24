@@ -53,6 +53,44 @@ jobs:
             --build-arg VITE_SENTRY_DSN="${{ vars.VITE_SENTRY_DSN }}" \
             -t $IMAGE_NAME:latest .
 
+      # Everything below, up to Push image, verifies the image just built above — same
+      # artifact, redirected at a throwaway backend via the runtime env-config mechanism
+      # (see app/src/runtimeConfig.ts), never rebuilt. Mirrors backend-deploy.yml's own
+      # build → docker-image-tests → push ordering: a failure here blocks the push/deploy.
+
+      - name: Build backend lite image
+        working-directory: api
+        run: docker build -f ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:ci .
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('app/package-lock.json') }}
+
+      - name: Install Playwright browsers (+ OS deps)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps only (browsers already cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Run frontend image acceptance tests (against el-baul-api-lite)
+        env:
+          APP_IMAGE: ${{ env.IMAGE_NAME }}:latest
+          API_LITE_IMAGE: el-baul-api-lite:ci
+        run: npm run test:image-acceptance
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-image-acceptance
+          path: app/playwright-report-image-acceptance/
+          retention-days: 7
+
       - name: Push image
         run: docker push $IMAGE_NAME:latest
 

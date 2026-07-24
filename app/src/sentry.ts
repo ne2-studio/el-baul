@@ -3,9 +3,10 @@ import * as SentryReact from '@sentry/react';
 import type { ErrorEvent } from '@sentry/react';
 import { Capacitor } from '@capacitor/core';
 import { version } from '../package.json';
+import { getEnv } from './runtimeConfig';
 
 export function initSentry() {
-  const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+  const dsn = getEnv('VITE_SENTRY_DSN');
 
   if (!dsn) return;
 
@@ -19,7 +20,7 @@ export function initSentry() {
 
       // Errors: siempre. Traces: muestreo bajo, solo para tener contexto de rendimiento.
       tracesSampleRate: 1.0,
-      tracePropagationTargets: [import.meta.env.VITE_API_URL as string],
+      tracePropagationTargets: [getEnv('VITE_API_URL')],
 
       sendDefaultPii: false,
       beforeSend: sanitizeEvent,

@@ -1,6 +1,7 @@
 import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage } from './types';
+import { getEnv } from './runtimeConfig';
 
-export const API_BASE = import.meta.env.VITE_API_URL as string;
+export const API_BASE = getEnv('VITE_API_URL');
 
 // Module-level auth token, pushed in from App.tsx whenever the OIDC user changes —
 // api.ts never reads auth state itself.

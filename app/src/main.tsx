@@ -12,6 +12,7 @@ import { CrashFallback } from "./app/components/CrashFallback";
 import "./styles/index.css";
 import { registerSW } from "virtual:pwa-register";
 import { initSentry } from "./sentry";
+import { getEnv } from "./runtimeConfig";
 
 initSentry();
 
@@ -59,13 +60,12 @@ async function bootstrap() {
 
   await configureNativeDeepLinks();
 
-  const organizationId =
-    import.meta.env.VITE_ZITADEL_ORGANIZATION_ID as string;
+  const organizationId = getEnv('VITE_ZITADEL_ORGANIZATION_ID');
 
   const oidcConfig = {
-    authority: import.meta.env.VITE_OIDC_AUTHORITY as string,
-    client_id: import.meta.env.VITE_OIDC_CLIENT_ID as string,
-    redirect_uri: import.meta.env.VITE_OIDC_CALLBACK_URI as string,
+    authority: getEnv('VITE_OIDC_AUTHORITY'),
+    client_id: getEnv('VITE_OIDC_CLIENT_ID'),
+    redirect_uri: getEnv('VITE_OIDC_CALLBACK_URI'),
     scope: `openid profile email urn:zitadel:iam:org:id:${organizationId}`,
     userStore: new WebStorageStateStore({ store: window.localStorage }),
 

@@ -1,0 +1,69 @@
+# Minimal stack for the frontend image acceptance tests (app/e2e-image-acceptance/) —
+# el-baul-app + el-baul-api-lite + fake-oidc, nothing else. No Postgres/MinIO/imgproxy/Mailpit:
+# el-baul-api-lite keeps everything in memory (see api/README.md's "el-baul-api-lite" section).
+#
+# Both `app` and `api-lite` are images **supplied from outside** via env vars, never built by
+# this file — same principle api/docker-image-tests/README.md states for the backend's own
+# acceptance tests: the subject under test is the artifact, not a rebuild from source. Build
+# them yourself first for a local run:
+#
+#   docker build -t el-baul-app:local app/
+#   docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local api/
+#   APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local \
+#     docker compose -f docker-compose.lite.yml up -d
+#
+# fake-oidc (https://github.com/ne2-studio/fake-oidc) is the same throwaway OIDC provider
+# docker-compose.yaml uses for local dev — see that file's header comment for how to sign in.
+
+name: el-baul-lite
+
+services:
+  fake-oidc:
+    image: ghcr.io/ne2-studio/fake-oidc:latest
+    environment:
+      OIDC_ISSUER: "http://localhost:5000"
+      OIDC_CLIENTS: >-
+        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback"]}]
+      OIDC_USERS: >-
+        [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]}]
+      OIDC_DEFAULT_USER: "admin"
+    ports:
+      - "5000:5000"
+    healthcheck:
+      # No curl/wget in this image — see docker-compose.yaml's identical healthcheck comment.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  api-lite:
+    image: ${API_LITE_IMAGE:-el-baul-api-lite:local}
+    environment:
+      Auth__JwksUri: "http://fake-oidc:5000/.well-known/jwks.json"
+      Auth__ValidIssuer: "http://localhost:5000"
+      Auth__Audience: "el-baul-app"
+      Auth__UserInfoEndpoint: "http://fake-oidc:5000/oidc/v1/userinfo"
+      # The API's own public URL — LitePhotoStorage uses it to build /lite/photos/{key} URLs
+      # the browser can actually reach (see api/ElBaul.Infra.Lite/LitePhotoStorage.cs).
+      Api__PublicUrl: "http://localhost:5051"
+    ports:
+      - "5051:8080"
+    depends_on:
+      fake-oidc:
+        condition: service_healthy
+
+  app:
+    image: ${APP_IMAGE:-el-baul-app:local}
+    environment:
+      # Runtime overrides — see app/src/runtimeConfig.ts and
+      # app/docker-entrypoint.d/95-generate-runtime-env.sh. This is what lets the exact image
+      # built for real deployment be redirected at this local stack instead of production,
+      # without rebuilding it.
+      VITE_API_URL: "http://localhost:5051"
+      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_OIDC_CLIENT_ID: "el-baul-app"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-lite

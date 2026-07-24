@@ -9,6 +9,10 @@
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <link rel="mask-icon" href="/mask-icon.svg" color="#3A3230" />
       <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      <!-- Classic script: executes synchronously during parsing, before the deferred
+           type="module" bundle script below — window.__ENV__ is guaranteed to exist by the
+           time any app code runs. See src/runtimeConfig.ts. -->
+      <script src="/env-config.js"></script>
     </head>
 
     <body>
