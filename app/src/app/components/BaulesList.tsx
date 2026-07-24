@@ -10,7 +10,7 @@ export interface Baul {
   id: string;
   name: string;
   description?: string;
-  albumCount: number;
+  chapterCount: number;
   coverPhotoUrl?: string;
   lastUpdated: string;
   isCustodio?: boolean;
@@ -141,7 +141,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
           <p className="text-white/90 text-xs leading-snug line-clamp-1 drop-shadow-sm">{baul.description}</p>
         )}
         <p className="text-white/80 text-xs mt-1">
-          {baul.albumCount} {baul.albumCount === 1 ? 'capítulo' : 'capítulos'}
+          {baul.chapterCount} {baul.chapterCount === 1 ? 'capítulo' : 'capítulos'}
         </p>
       </div>
 

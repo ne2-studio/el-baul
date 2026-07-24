@@ -11,7 +11,7 @@ import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Baul } from './BaulesList';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
-import { PhotoDate, Recuerdo, SharedUser } from '@/types';
+import { PhotoDate, Recuerdo, Persona } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
-export interface Album {
+export interface Chapter {
   id: string;
   name: string;
   photoCount: number;
@@ -41,45 +41,45 @@ interface LoosePhoto {
   thumbnailUrl: string;
 }
 
-interface AlbumsViewProps {
+interface ChaptersViewProps {
   baul: Baul;
-  albums: Album[];
+  chapters: Chapter[];
   loosePhotos?: LoosePhoto[];
-  sharedUsers?: SharedUser[];
+  personas?: Persona[];
   recuerdos?: Recuerdo[];
   isAdmin?: boolean;
   currentUserEmail?: string;
   onBack: () => void;
-  onSelectAlbum: (album: Album) => void;
-  onCreateAlbum: () => void;
+  onSelectChapter: (chapter: Chapter) => void;
+  onCreateChapter: () => void;
   onOpenLoosePhotos?: () => void;
   onUploadPhotos?: (selectedPhotos: SelectedPhoto[]) => void;
   /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
    * Android caducó) y por tanto se ha excluido en silencio de la selección. */
   onPhotosDropped?: (count: number) => void;
   onCreatePersona?: (nickname: string) => Promise<boolean>;
-  onSelectPersona?: (persona: SharedUser) => void;
+  onSelectPersona?: (persona: Persona) => void;
   onCreateRecuerdo?: (text: string) => Promise<boolean>;
   onOpenChat?: () => void;
-  onOpenAlbumFromRecuerdo?: (albumId: string) => void;
-  onOpenPhotoFromRecuerdo?: (photoId: string, albumId?: string) => void;
+  onOpenChapterFromRecuerdo?: (chapterId: string) => void;
+  onOpenPhotoFromRecuerdo?: (photoId: string, chapterId?: string) => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
   onRequestBaulDeletion?: () => void;
 }
 
-export function AlbumsView({
+export function ChaptersView({
   baul,
-  albums,
+  chapters,
   loosePhotos = [],
-  sharedUsers = [],
+  personas = [],
   recuerdos = [],
   isAdmin = false,
   currentUserEmail,
   onBack,
-  onSelectAlbum,
-  onCreateAlbum,
+  onSelectChapter,
+  onCreateChapter,
   onOpenLoosePhotos,
   onUploadPhotos,
   onPhotosDropped,
@@ -87,13 +87,13 @@ export function AlbumsView({
   onSelectPersona,
   onCreateRecuerdo,
   onOpenChat,
-  onOpenAlbumFromRecuerdo,
+  onOpenChapterFromRecuerdo,
   onOpenPhotoFromRecuerdo,
   onRemovalRequests,
   pendingRemovalRequestsCount,
   onUpdateBaulInfo,
   onRequestBaulDeletion,
-}: AlbumsViewProps) {
+}: ChaptersViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
@@ -239,7 +239,7 @@ export function AlbumsView({
           <div className="flex">
             <TabButton
               label="Capítulos"
-              count={albums.length}
+              count={chapters.length}
               active={activeTab === 'capitulos'}
               onClick={() => setActiveTab('capitulos')}
             />
@@ -251,7 +251,7 @@ export function AlbumsView({
             />
             <TabButton
               label="Personas"
-              count={sharedUsers.length}
+              count={personas.length}
               active={activeTab === 'personas'}
               onClick={() => setActiveTab('personas')}
             />
@@ -262,7 +262,7 @@ export function AlbumsView({
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
         {activeTab === 'capitulos' && (
-        albums.length === 0 && loosePhotos.length === 0 ? (
+        chapters.length === 0 && loosePhotos.length === 0 ? (
           <EmptyState
             icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
             title="Este baúl está vacío"
@@ -273,31 +273,31 @@ export function AlbumsView({
             {/* Todos los capítulos, agrupados por año de la fecha mínima (ya vienen
                 ordenados del backend por fecha mínima ascendente, así que agrupar
                 consecutivamente preserva ese orden dentro y entre swimlanes) */}
-            {albums.length > 0 && (() => {
-              const groups = new Map<string, Album[]>();
-              for (const album of albums) {
-                const year = album.minDate ? String(album.minDate.year) : 'Sin año';
+            {chapters.length > 0 && (() => {
+              const groups = new Map<string, Chapter[]>();
+              for (const chapter of chapters) {
+                const year = chapter.minDate ? String(chapter.minDate.year) : 'Sin año';
                 if (!groups.has(year)) groups.set(year, []);
-                groups.get(year)!.push(album);
+                groups.get(year)!.push(chapter);
               }
 
               return (
                 <div className="space-y-6">
-                  {Array.from(groups.entries()).map(([year, yearAlbums]) => (
+                  {Array.from(groups.entries()).map(([year, yearChapters]) => (
                     <div key={year}>
                       <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
                         style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}>
                         {year}
                       </p>
                       <div className="grid grid-cols-2 gap-4">
-                        {yearAlbums.map((album) => (
-                          <Card key={album.id} onClick={() => onSelectAlbum(album)} className="!p-0 overflow-hidden">
-                            {/* Album cover */}
+                        {yearChapters.map((chapter) => (
+                          <Card key={chapter.id} onClick={() => onSelectChapter(chapter)} className="!p-0 overflow-hidden">
+                            {/* Chapter cover */}
                             <div className="aspect-square bg-secondary flex items-center justify-center">
-                              {album.coverPhotoUrl ? (
+                              {chapter.coverPhotoUrl ? (
                                 <img
-                                  src={album.coverPhotoUrl}
-                                  alt={album.name}
+                                  src={chapter.coverPhotoUrl}
+                                  alt={chapter.name}
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
@@ -305,18 +305,18 @@ export function AlbumsView({
                               )}
                             </div>
 
-                            {/* Album info */}
+                            {/* Chapter info */}
                             <div className="p-4">
-                              <h3 className="font-medium mb-1 text-foreground">{album.name}</h3>
-                              {album.minDate && album.maxDate && (
+                              <h3 className="font-medium mb-1 text-foreground">{chapter.name}</h3>
+                              {chapter.minDate && chapter.maxDate && (
                                 <p className="text-[11px] text-primary/80 font-medium mb-0.5">
-                                  {formatDateRange(album.minDate, album.maxDate)}
+                                  {formatDateRange(chapter.minDate, chapter.maxDate)}
                                 </p>
                               )}
                               <p className="text-sm text-muted-foreground">
-                                {album.photoCount} {album.photoCount === 1 ? 'foto' : 'fotos'}
-                                {(album.recuerdoCount ?? 0) > 0 && (
-                                  <> · {album.recuerdoCount} {album.recuerdoCount === 1 ? 'recuerdo' : 'recuerdos'}</>
+                                {chapter.photoCount} {chapter.photoCount === 1 ? 'foto' : 'fotos'}
+                                {(chapter.recuerdoCount ?? 0) > 0 && (
+                                  <> · {chapter.recuerdoCount} {chapter.recuerdoCount === 1 ? 'recuerdo' : 'recuerdos'}</>
                                 )}
                               </p>
                             </div>
@@ -358,14 +358,14 @@ export function AlbumsView({
 
         {activeTab === 'personas' && (
           <PersonasTab
-            sharedUsers={sharedUsers}
+            personas={personas}
             currentUserEmail={currentUserEmail}
             onSelectPersona={(persona) => onSelectPersona?.(persona)}
           />
         )}
 
         {activeTab === 'recuerdos' && (
-          <RecuerdosTab recuerdos={recuerdos} onOpenAlbum={onOpenAlbumFromRecuerdo} onOpenPhoto={onOpenPhotoFromRecuerdo} />
+          <RecuerdosTab recuerdos={recuerdos} onOpenChapter={onOpenChapterFromRecuerdo} onOpenPhoto={onOpenPhotoFromRecuerdo} />
         )}
       </div>
 
@@ -375,7 +375,7 @@ export function AlbumsView({
             {
               label: 'Nuevo capítulo',
               icon: <Plus className="w-4 h-4" />,
-              onClick: onCreateAlbum,
+              onClick: onCreateChapter,
             },
             ...(onUploadPhotos ? [{
               label: 'Subir fotos',
@@ -425,7 +425,7 @@ export function AlbumsView({
   );
 }
 
-// Collage for the "Fotos sueltas" virtual album cover
+// Collage for the "Fotos sueltas" virtual chapter cover
 const COLLAGE_COLORS = [
   '#D4B89A', '#C4A882', '#B89870', '#E8D5C0', '#C8B090', '#D8C0A0', '#BCA878', '#E0CCAA', '#CAB088',
 ];

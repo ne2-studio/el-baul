@@ -27,7 +27,7 @@ export const WithActions: Story = {
     totalCount: 12,
     onClose: () => alert('onClose clicked'),
     menuItems: [
-      { key: 'album-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => alert('Establecer como portada del capítulo clicked') },
+      { key: 'chapter-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => alert('Establecer como portada del capítulo clicked') },
       { key: 'move', label: 'Mover a otro capítulo', icon: FolderInput, onSelect: () => alert('Mover a otro capítulo clicked') },
       { key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => alert('Cambiar fecha clicked') },
     ],

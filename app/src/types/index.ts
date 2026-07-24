@@ -15,7 +15,7 @@ function photoDateFrom(year?: number, month?: number, day?: number): PhotoDate |
   return { year, month: month ?? undefined, day: day ?? undefined };
 }
 
-export class SharedUser {
+export class Persona {
   id: string;
   baulId: string;
   email?: string;
@@ -45,7 +45,7 @@ export class Baul {
   id: string;
   name: string;
   description?: string;
-  albumCount: number;
+  chapterCount: number;
   coverPhotoUrl?: string;
   lastUpdated: string;
   isCustodio?: boolean;
@@ -56,7 +56,7 @@ export class Baul {
     this.id = data.id;
     this.name = data.name;
     this.description = data.description;
-    this.albumCount = data.albumCount;
+    this.chapterCount = data.chapterCount;
     this.coverPhotoUrl = data.coverPhotoUrl;
     this.lastUpdated = formatRelativeTime(data.updatedAt);
     this.isCustodio = data.isCustodio;
@@ -65,7 +65,7 @@ export class Baul {
   }
 }
 
-export class Album {
+export class Chapter {
   id: string;
   name: string;
   photoCount: number;
@@ -114,28 +114,28 @@ export class Photo {
 export class Recuerdo {
   id: string;
   text: string;
-  sharedUserId?: string;
+  personaId?: string;
   userName: string;
   userAvatar?: string;
   createdAt: string;
   isOwn?: boolean;
   photoId?: string;
   photoThumbnailUrl?: string;
-  albumId?: string;
-  albumName?: string;
+  chapterId?: string;
+  chapterName?: string;
 
   constructor(data: any) {
     this.id = data.id;
     this.text = data.text;
-    this.sharedUserId = data.sharedUserId ?? undefined;
+    this.personaId = data.personaId ?? undefined;
     this.userName = data.userName;
     this.userAvatar = data.userAvatar;
     this.createdAt = data.createdAt;
     this.isOwn = data.isOwn;
     this.photoId = data.photoId ?? undefined;
     this.photoThumbnailUrl = data.photoThumbnailUrl ?? undefined;
-    this.albumId = data.albumId ?? undefined;
-    this.albumName = data.albumName ?? undefined;
+    this.chapterId = data.chapterId ?? undefined;
+    this.chapterName = data.chapterName ?? undefined;
   }
 }
 

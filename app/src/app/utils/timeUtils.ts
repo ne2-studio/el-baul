@@ -72,7 +72,7 @@ export function formatPartialDate(date: { year: number; month?: number; day?: nu
 }
 
 /**
- * Formats an album's date range from its min/max photo dates. Empty string when
+ * Formats a chapter's date range from its min/max photo dates. Empty string when
  * there are no dated photos at all.
  *
  * Elides the parts min/max share instead of repeating them in full on both ends:

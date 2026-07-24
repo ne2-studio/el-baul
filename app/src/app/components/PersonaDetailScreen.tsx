@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, MoreVertical, Share2, UserX } from 'lucide-react';
-import { SharedUser, BaulRole } from '@/types';
+import { Persona, BaulRole } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 import { RevokeAccessModal } from './RevokeAccessModal';
 import {
@@ -12,7 +12,7 @@ import {
 } from './ui/dropdown-menu';
 
 interface PersonaDetailScreenProps {
-  persona: SharedUser;
+  persona: Persona;
   isAdmin: boolean;
   onBack: () => void;
   onEdit: () => void;

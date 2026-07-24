@@ -8,7 +8,7 @@ import { BaulPreview } from '@/types';
 
 export const BaulInvitacionRoute: React.FC = () => {
   const navigate = useNavigate();
-  const { sharedUserId } = useParams<{ sharedUserId: string }>();
+  const { personaId } = useParams<{ personaId: string }>();
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
@@ -17,12 +17,12 @@ export const BaulInvitacionRoute: React.FC = () => {
 
   useEffect(() => {
     async function loadData() {
-      if (!sharedUserId) return;
+      if (!personaId) return;
 
       try {
         setLoading(true);
         // Obtener el preview de la invitación personal en una sola llamada dedicada (endpoint público)
-        const previewData = await api.sharedUsers.getInvitePreview(sharedUserId);
+        const previewData = await api.personas.getInvitePreview(personaId);
         setPreview(previewData);
       } catch (error) {
         console.error('Error loading invitation data:', error);
@@ -33,7 +33,7 @@ export const BaulInvitacionRoute: React.FC = () => {
     }
 
     loadData();
-  }, [sharedUserId, showToastMessage]);
+  }, [personaId, showToastMessage]);
 
   if (loading) {
     return (
@@ -61,10 +61,10 @@ export const BaulInvitacionRoute: React.FC = () => {
   const handleUnirme = () => {
     if (!auth.isAuthenticated) {
       // Si no hay sesión, redirigir al login con redirectTo al proceso de aceptar invitación
-      navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/persona/${sharedUserId}/aceptar`)}`);
+      navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/persona/${personaId}/aceptar`)}`);
       return;
     }
-    navigate(`/invitacion/persona/${sharedUserId}/aceptar`);
+    navigate(`/invitacion/persona/${personaId}/aceptar`);
   };
 
   const handleVerMas = () => {

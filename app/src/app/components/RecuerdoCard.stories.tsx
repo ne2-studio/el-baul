@@ -14,7 +14,7 @@ type Story = StoryObj<typeof meta>;
 const recuerdo: Recuerdo = {
   id: '1',
   text: '¡Qué día tan bonito! Recuerdo que hacía muchísimo calor y acabamos todos bañándonos en el río.',
-  sharedUserId: 'user-1',
+  personaId: 'user-1',
   userName: 'Ana García',
   createdAt: '2024-07-15T10:00:00Z',
 };

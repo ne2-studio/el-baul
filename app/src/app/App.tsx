@@ -23,8 +23,8 @@ import { CreateBaulRoute } from '../features/baules/components/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/components/BaulRoute';
 import { AiChatRoute } from '../features/chat/components/AiChatRoute';
 import { RequestBaulDeletionRoute } from '../features/baules/components/RequestBaulDeletionRoute';
-import { CreateAlbumFormRoute } from '../features/albums/components/CreateAlbumFormRoute';
-import { AlbumRoute } from '../features/albums/components/AlbumRoute';
+import { CreateChapterFormRoute } from '../features/chapters/components/CreateChapterFormRoute';
+import { ChapterRoute } from '../features/chapters/components/ChapterRoute';
 import { PhotoViewerRoute } from '../features/photos/components/PhotoViewerRoute';
 import { UploadConfirmationRoute } from '../features/photos/components/UploadConfirmationRoute';
 import { UploadingRoute } from '../features/photos/components/UploadingRoute';
@@ -198,7 +198,7 @@ function App() {
             <AiChatRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/personas/:sharedUserId" element={
+        <Route path="/baules/:baulId/personas/:personaId" element={
           <ProtectedRoute>
             <PersonaDetailRoute />
           </ProtectedRoute>
@@ -208,32 +208,32 @@ function App() {
             <RequestBaulDeletionRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/nuevo-album" element={
+        <Route path="/baules/:baulId/nuevo-capitulo" element={
           <ProtectedRoute>
-            <CreateAlbumFormRoute />
+            <CreateChapterFormRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/albumes/:albumId" element={
+        <Route path="/baules/:baulId/capitulos/:chapterId" element={
           <ProtectedRoute>
-            <AlbumRoute />
+            <ChapterRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/albumes/:albumId/foto/:photoId" element={
+        <Route path="/baules/:baulId/capitulos/:chapterId/foto/:photoId" element={
           <ProtectedRoute>
             <PhotoViewerRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/albumes/:albumId/confirmar" element={
+        <Route path="/baules/:baulId/capitulos/:chapterId/confirmar" element={
           <ProtectedRoute>
             <UploadConfirmationRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/albumes/:albumId/subiendo" element={
+        <Route path="/baules/:baulId/capitulos/:chapterId/subiendo" element={
           <ProtectedRoute>
             <UploadingRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/albumes/:albumId/error" element={
+        <Route path="/baules/:baulId/capitulos/:chapterId/error" element={
           <ProtectedRoute>
             <UploadErrorRoute navigate={navigate} />
           </ProtectedRoute>
@@ -263,10 +263,10 @@ function App() {
             <LooseUploadErrorRoute navigate={navigate} />
           </ProtectedRoute>
         } />
-        <Route path="/invitacion/persona/:sharedUserId" element={
+        <Route path="/invitacion/persona/:personaId" element={
           <BaulInvitacionRoute />
         } />
-        <Route path="/invitacion/persona/:sharedUserId/aceptar" element={
+        <Route path="/invitacion/persona/:personaId/aceptar" element={
           <ProtectedRoute>
             <AcceptInviteRoute />
           </ProtectedRoute>
@@ -334,7 +334,7 @@ function App() {
           backgroundLocation), así que se muestra encima de la pantalla de fondo sin desmontarla. */}
       {backgroundLocation && (
         <Routes>
-          <Route path="/baules/:baulId/albumes/:albumId/foto/:photoId" element={
+          <Route path="/baules/:baulId/capitulos/:chapterId/foto/:photoId" element={
             <ProtectedRoute>
               <PhotoViewerRoute />
             </ProtectedRoute>

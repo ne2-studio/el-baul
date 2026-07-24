@@ -1,7 +1,7 @@
 import { Button } from './Button';
 import { BottomSheetModal } from './BottomSheetModal';
 
-interface DeleteAlbumModalProps {
+interface DeleteChapterModalProps {
   photoCount: number;
   recuerdoCount: number;
   onCancel: () => void;
@@ -15,7 +15,7 @@ function pluralize(count: number, singular: string, plural: string): string {
 
 // Modal de confirmación para eliminar un capítulo (irreversible). Las fotos y recuerdos
 // del capítulo no se pierden — quedan sueltos en el baúl.
-export function DeleteAlbumModal({ photoCount, recuerdoCount, onCancel, onConfirm, isSubmitting = false }: DeleteAlbumModalProps) {
+export function DeleteChapterModal({ photoCount, recuerdoCount, onCancel, onConfirm, isSubmitting = false }: DeleteChapterModalProps) {
   return (
     <BottomSheetModal onCancel={onCancel} desktopCentered backdropOpacity={60}>
       <h2 className="font-serif text-xl text-foreground mb-1">

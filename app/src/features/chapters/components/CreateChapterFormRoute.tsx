@@ -1,17 +1,17 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CreateAlbumForm } from '@/app/components/CreateAlbumForm';
+import { CreateChapterForm } from '@/app/components/CreateChapterForm';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
-export const CreateAlbumFormRoute: React.FC = () => {
+export const CreateChapterFormRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
   const auth = useAuth();
   const { run, isPending } = useAsyncAction();
 
-  const { baules, createAlbum } = useAppStore();
+  const { baules, createChapter } = useAppStore();
   const baul = baules.find(b => b.id === baulId);
 
   if (!baul) return <div className="p-8 text-center">Cargando baúl...</div>;
@@ -19,14 +19,14 @@ export const CreateAlbumFormRoute: React.FC = () => {
   const handleSubmit = async (name: string) => {
     if (!auth.isAuthenticated) return;
 
-    const result = await run(() => createAlbum(baul.id, name), {
+    const result = await run(() => createChapter(baul.id, name), {
       errorMessage: 'Error al crear el capítulo',
     });
     if (result.ok) navigate(`/baules/${baul.id}`);
   };
 
   return (
-    <CreateAlbumForm
+    <CreateChapterForm
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSubmit={handleSubmit}
       isSubmitting={isPending()}

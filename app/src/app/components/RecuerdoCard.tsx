@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export interface Recuerdo {
   id: string;
   text: string;
-  sharedUserId?: string;
+  personaId?: string;
   userName: string;
   userAvatar?: string;
   createdAt: string;
@@ -14,7 +14,7 @@ export interface Recuerdo {
 interface RecuerdoCardProps {
   recuerdo: Recuerdo;
   isCompact?: boolean;
-  onUserClick?: (sharedUserId: string) => void;
+  onUserClick?: (personaId: string) => void;
 }
 
 // Helper para generar color basado en nombre
@@ -49,7 +49,7 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
     const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
     const initials = getInitials(userName);
     const colorClass = getAvatarColor(userName);
-    const canOpenPersona = !!(recuerdo.sharedUserId && onUserClick);
+    const canOpenPersona = !!(recuerdo.personaId && onUserClick);
 
     // Determinar si el texto es largo (aproximadamente más de 3 líneas)
     // Asumiendo ~40 caracteres por línea = 120 caracteres para 3 líneas
@@ -67,7 +67,7 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
           {/* Avatar - siempre visible */}
           <button
             type="button"
-            onClick={canOpenPersona ? () => onUserClick!(recuerdo.sharedUserId!) : undefined}
+            onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
             disabled={!canOpenPersona}
             className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium overflow-hidden ${colorClass} ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
           >

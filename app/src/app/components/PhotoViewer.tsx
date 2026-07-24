@@ -9,7 +9,7 @@ import { RemovalRequestModal } from './RemovalRequestModal';
 import { ConfirmationToast } from './ConfirmationToast';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from './PhotoViewerHeader';
 import { PhotoStage } from './PhotoStage';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 import { formatPartialDate } from '../utils/timeUtils';
 import { RecuerdoInput } from './RecuerdoInput';
 import { RecuerdosList } from './RecuerdosList';
@@ -26,15 +26,15 @@ interface PhotoViewerProps {
   onRequestRemoval?: (photo: Photo, reason: string) => Promise<boolean>;
   isAdmin?: boolean;
   onSetBaulCover?: (photo: Photo) => void;
-  onSetAlbumCover?: (photo: Photo) => void;
-  onMovePhoto?: (photo: Photo, targetAlbumId: string) => Promise<boolean>;
+  onSetChapterCover?: (photo: Photo) => void;
+  onMovePhoto?: (photo: Photo, targetChapterId: string) => Promise<boolean>;
   onChangeDate?: (photo: Photo, date: PhotoDate) => Promise<boolean>;
   onDeletePhoto?: (photo: Photo, reason: string) => Promise<boolean>;
-  allAlbums?: Album[];
-  currentAlbum?: Album;
+  allChapters?: Chapter[];
+  currentChapter?: Chapter;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (photoId: string, text: string) => void;
-  onUserClick?: (sharedUserId: string) => void;
+  onUserClick?: (personaId: string) => void;
   onDownloadPhoto?: (photo: Photo) => void;
 }
 
@@ -46,12 +46,12 @@ export function PhotoViewer({
   onRequestRemoval,
   isAdmin,
   onSetBaulCover,
-  onSetAlbumCover,
+  onSetChapterCover,
   onMovePhoto,
   onChangeDate,
   onDeletePhoto,
-  allAlbums = [],
-  currentAlbum,
+  allChapters = [],
+  currentChapter,
   recuerdos = [],
   onAddRecuerdo,
   onUserClick,
@@ -68,7 +68,7 @@ export function PhotoViewer({
   const [isSubmittingDate, setIsSubmittingDate] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
 
-  const moveableAlbums = allAlbums.filter(a => a.id !== currentAlbum?.id);
+  const moveableChapters = allChapters.filter(a => a.id !== currentChapter?.id);
 
   const currentIndex = photos.findIndex(p => p.id === photo.id);
   const hasRecuerdos = recuerdos.length > 0;
@@ -130,13 +130,13 @@ export function PhotoViewer({
   if (onDownloadPhoto) {
     menuItems.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: () => onDownloadPhoto(photo) });
   }
-  if (onSetAlbumCover) {
-    menuItems.push({ key: 'album-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => onSetAlbumCover(photo) });
+  if (onSetChapterCover) {
+    menuItems.push({ key: 'chapter-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => onSetChapterCover(photo) });
   }
   if (isAdmin && onSetBaulCover) {
     menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', icon: BaulIcon, onSelect: () => onSetBaulCover(photo) });
   }
-  if (onMovePhoto && moveableAlbums.length > 0) {
+  if (onMovePhoto && moveableChapters.length > 0) {
     menuItems.push({ key: 'move', label: 'Mover a otro capítulo', icon: FolderInput, onSelect: () => setShowMoveModal(true) });
   }
   if (onChangeDate) {
@@ -277,7 +277,7 @@ export function PhotoViewer({
       {showMoveModal && (
         <MoveModal
           title="Mover a otro capítulo"
-          albums={moveableAlbums}
+          chapters={moveableChapters}
           selectedId={moveTargetId}
           onSelect={setMoveTargetId}
           onCancel={() => setShowMoveModal(false)}

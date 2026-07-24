@@ -3,13 +3,13 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { ChevronLeft } from 'lucide-react';
 
-interface CreateAlbumFormProps {
+interface CreateChapterFormProps {
   onBack: () => void;
   onSubmit: (name: string) => void;
   isSubmitting?: boolean;
 }
 
-export function CreateAlbumForm({ onBack, onSubmit, isSubmitting = false }: CreateAlbumFormProps) {
+export function CreateChapterForm({ onBack, onSubmit, isSubmitting = false }: CreateChapterFormProps) {
   const [name, setName] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {

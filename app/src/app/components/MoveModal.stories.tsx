@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MoveModal } from './MoveModal';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 
 const meta = {
   title: 'Components/MoveModal',
@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const albums: Album[] = [
+const chapters: Chapter[] = [
   { id: '1', name: 'Verano 2023', photoCount: 42 },
   { id: '2', name: 'Cumpleaños de la abuela', photoCount: 18 },
   { id: '3', name: 'Navidad', photoCount: 30 },
@@ -21,7 +21,7 @@ const albums: Album[] = [
 export const Default: Story = {
   args: {
     title: 'Mover a otro capítulo',
-    albums,
+    chapters,
     selectedId: '',
     onSelect: () => alert('onSelect clicked'),
     onCancel: () => alert('onCancel clicked'),
@@ -44,7 +44,7 @@ export const Interactive: Story = {
     return (
       <MoveModal
         title="Mover a otro capítulo"
-        albums={albums}
+        chapters={chapters}
         selectedId={selectedId}
         onSelect={setSelectedId}
         onCancel={() => alert('onCancel clicked')}

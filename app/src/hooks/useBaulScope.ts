@@ -11,7 +11,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 export function useBaulScope(baulId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
-  const { baules, albums, loosePhotos, baulRecuerdos, fetchData, loadAlbums, loadLoosePhotos, loadBaulRecuerdos } = useAppStore();
+  const { baules, chapters, loosePhotos, baulRecuerdos, fetchData, loadChapters, loadLoosePhotos, loadBaulRecuerdos } = useAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -39,14 +39,14 @@ export function useBaulScope(baulId: string | undefined) {
       }
 
       // Leídos vía getState() (no reactivos) a propósito: ver BaulRoute para el porqué.
-      const { albums, baulRecuerdos } = useAppStore.getState();
-      const needsAlbums = !albums[baulId];
+      const { chapters, baulRecuerdos } = useAppStore.getState();
+      const needsChapters = !chapters[baulId];
       const needsRecuerdos = !baulRecuerdos[baulId];
 
-      if (needsAlbums || needsRecuerdos) {
+      if (needsChapters || needsRecuerdos) {
         setIsLoading(true);
         await run(() => Promise.all([
-          ...(needsAlbums ? [loadAlbums(baulId), loadLoosePhotos(baulId)] : []),
+          ...(needsChapters ? [loadChapters(baulId), loadLoosePhotos(baulId)] : []),
           ...(needsRecuerdos ? [loadBaulRecuerdos(baulId)] : []),
         ]), {
           errorMessage: 'Error al cargar los capítulos del baúl',
@@ -57,11 +57,11 @@ export function useBaulScope(baulId: string | undefined) {
 
     initBaul();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baulId, auth.isAuthenticated, baul, loadAlbums, loadLoosePhotos, loadBaulRecuerdos, fetchData]);
+  }, [baulId, auth.isAuthenticated, baul, loadChapters, loadLoosePhotos, loadBaulRecuerdos, fetchData]);
 
   return {
     baul,
-    albums: baulId ? albums[baulId] : undefined,
+    chapters: baulId ? chapters[baulId] : undefined,
     loosePhotos: baulId ? loosePhotos[baulId] : undefined,
     baulRecuerdos: baulId ? baulRecuerdos[baulId] : undefined,
     isLoading,

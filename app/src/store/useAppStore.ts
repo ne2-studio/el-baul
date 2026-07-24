@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Sentry from '@sentry/react';
-import { Baul, Album, Photo, SharedUser, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile, PhotoDate } from '@/types';
+import { Baul, Chapter, Photo, Persona, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile, PhotoDate } from '@/types';
 import { api } from '@/api';
 import { isAdminRole } from '@/utils/roleUtils';
 import { ChapterSelection } from '@/app/components/ChapterSelector';
@@ -43,13 +43,13 @@ interface AppState {
 
   // Domain data
   baules: Baul[];
-  albums: Record<string, Album[]>;
+  chapters: Record<string, Chapter[]>;
   photos: Record<string, Photo[]>;
   loosePhotos: Record<string, Photo[]>;
-  sharedUsers: Record<string, SharedUser[]>;
+  personas: Record<string, Persona[]>;
   removalRequests: Record<string, RemovalRequest[]>;
   recuerdos: Record<string, Recuerdo[]>;
-  albumRecuerdos: Record<string, Recuerdo[]>;
+  chapterRecuerdos: Record<string, Recuerdo[]>;
   baulRecuerdos: Record<string, Recuerdo[]>;
   isLoading: boolean;
 
@@ -58,21 +58,21 @@ interface AppState {
   reset: () => void;
 
   fetchData: () => Promise<void>;
-  loadAlbums: (baulId: string) => Promise<void>;
-  loadAlbumPhotos: (albumId: string) => Promise<void>;
+  loadChapters: (baulId: string) => Promise<void>;
+  loadChapterPhotos: (chapterId: string) => Promise<void>;
   loadLoosePhotos: (baulId: string) => Promise<void>;
   loadRecuerdos: (photoId: string) => Promise<void>;
   addRecuerdo: (baulId: string, photoId: string, text: string) => Promise<void>;
-  loadAlbumRecuerdos: (baulId: string, albumId: string) => Promise<void>;
-  addAlbumRecuerdo: (baulId: string, albumId: string, text: string) => Promise<void>;
+  loadChapterRecuerdos: (baulId: string, chapterId: string) => Promise<void>;
+  addChapterRecuerdo: (baulId: string, chapterId: string, text: string) => Promise<void>;
   loadBaulRecuerdos: (baulId: string) => Promise<void>;
   addBaulRecuerdo: (baulId: string, text: string) => Promise<void>;
 
   createBaul: (name: string, description: string) => Promise<Baul>;
-  createAlbum: (baulId: string, name: string) => Promise<Album>;
+  createChapter: (baulId: string, name: string) => Promise<Chapter>;
   uploadPhotos: (
     baulId: string,
-    albumId: string,
+    chapterId: string,
     selectedPhotos: UploadItem[],
     onItemSettled?: (result: UploadItemResult) => void
   ) => Promise<UploadItemResult[]>;
@@ -86,29 +86,29 @@ interface AppState {
     chapter: ChapterSelection,
     selectedPhotos: UploadItem[],
     onItemSettled?: (result: UploadItemResult) => void
-  ) => Promise<{ results: UploadItemResult[]; albumId: string | null }>;
+  ) => Promise<{ results: UploadItemResult[]; chapterId: string | null }>;
   movePhotos: (
     baulId: string,
-    sourceAlbumId: string | null,
+    sourceChapterId: string | null,
     photoIds: string[],
-    targetAlbumId: string,
+    targetChapterId: string,
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => Promise<void>;
-  deletePhoto: (baulId: string, albumId: string | null, photoId: string, reason?: string) => Promise<void>;
-  changePhotoDate: (baulId: string, albumId: string | null, photoId: string, date: PhotoDate) => Promise<void>;
-  changePhotoDateBatch: (baulId: string, albumId: string | null, photoIds: string[], date: PhotoDate) => Promise<void>;
+  deletePhoto: (baulId: string, chapterId: string | null, photoId: string, reason?: string) => Promise<void>;
+  changePhotoDate: (baulId: string, chapterId: string | null, photoId: string, date: PhotoDate) => Promise<void>;
+  changePhotoDateBatch: (baulId: string, chapterId: string | null, photoIds: string[], date: PhotoDate) => Promise<void>;
   setBaulCover: (baulId: string, photoId: string, optimisticThumbnailUrl?: string) => Promise<void>;
-  setAlbumCover: (baulId: string, albumId: string, photoId: string, optimisticThumbnailUrl?: string) => Promise<void>;
+  setChapterCover: (baulId: string, chapterId: string, photoId: string, optimisticThumbnailUrl?: string) => Promise<void>;
   renameBaul: (baulId: string, name: string, description?: string) => Promise<void>;
-  renameAlbum: (baulId: string, albumId: string, name: string) => Promise<void>;
-  deleteAlbum: (baulId: string, albumId: string) => Promise<void>;
+  renameChapter: (baulId: string, chapterId: string, name: string) => Promise<void>;
+  deleteChapter: (baulId: string, chapterId: string) => Promise<void>;
 
   createPersona: (baulId: string, nickname: string) => Promise<void>;
-  loadSharedUsers: (baulId: string) => Promise<void>;
-  updatePersona: (baulId: string, sharedUserId: string, name: string, nickname: string) => Promise<void>;
-  uploadPersonaAvatar: (baulId: string, sharedUserId: string, file: File) => Promise<void>;
-  updateUserRole: (baulId: string, sharedUserId: string, role: BaulRole) => Promise<void>;
-  revokeAccess: (baulId: string, sharedUserId: string) => Promise<void>;
+  loadPersonas: (baulId: string) => Promise<void>;
+  updatePersona: (baulId: string, personaId: string, name: string, nickname: string) => Promise<void>;
+  uploadPersonaAvatar: (baulId: string, personaId: string, file: File) => Promise<void>;
+  updateUserRole: (baulId: string, personaId: string, role: BaulRole) => Promise<void>;
+  revokeAccess: (baulId: string, personaId: string) => Promise<void>;
 
   removePhoto: (baulId: string, requestId: string, photoId: string) => Promise<void>;
   keepPhoto: (baulId: string, requestId: string) => Promise<void>;
@@ -123,13 +123,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   subscription: defaultSubscription,
 
   baules: [],
-  albums: {},
+  chapters: {},
   photos: {},
   loosePhotos: {},
-  sharedUsers: {},
+  personas: {},
   removalRequests: {},
   recuerdos: {},
-  albumRecuerdos: {},
+  chapterRecuerdos: {},
   baulRecuerdos: {},
   isLoading: true,
 
@@ -144,13 +144,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     userProfile: { photoUrl: '', name: '', email: '' },
     subscription: defaultSubscription,
     baules: [],
-    albums: {},
+    chapters: {},
     photos: {},
     loosePhotos: {},
-    sharedUsers: {},
+    personas: {},
     removalRequests: {},
     recuerdos: {},
-    albumRecuerdos: {},
+    chapterRecuerdos: {},
     baulRecuerdos: {},
   }),
 
@@ -175,13 +175,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  loadAlbums: async (baulId) => {
-    const albums = await api.albums.getAll(baulId);
-    set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
+  loadChapters: async (baulId) => {
+    const chapters = await api.chapters.getAll(baulId);
+    set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
 
     try {
-      const sharedUsers = await api.baules.getSharedUsers(baulId);
-      set((state) => ({ sharedUsers: { ...state.sharedUsers, [baulId]: sharedUsers } }));
+      const personas = await api.baules.getPersonas(baulId);
+      set((state) => ({ personas: { ...state.personas, [baulId]: personas } }));
     } catch (err) {
       console.log('No shared users or error loading:', err);
     }
@@ -197,9 +197,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  loadAlbumPhotos: async (albumId) => {
-    const photos = await api.photos.getAll(albumId);
-    set((state) => ({ photos: { ...state.photos, [albumId]: photos } }));
+  loadChapterPhotos: async (chapterId) => {
+    const photos = await api.photos.getAll(chapterId);
+    set((state) => ({ photos: { ...state.photos, [chapterId]: photos } }));
   },
 
   loadLoosePhotos: async (baulId) => {
@@ -226,15 +226,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  loadAlbumRecuerdos: async (baulId, albumId) => {
-    const recuerdos = await api.recuerdos.getAllByAlbum(baulId, albumId);
-    set((state) => ({ albumRecuerdos: { ...state.albumRecuerdos, [albumId]: recuerdos } }));
+  loadChapterRecuerdos: async (baulId, chapterId) => {
+    const recuerdos = await api.recuerdos.getAllByChapter(baulId, chapterId);
+    set((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: recuerdos } }));
   },
 
-  addAlbumRecuerdo: async (baulId, albumId, text) => {
-    const recuerdo = await api.recuerdos.createForAlbum(baulId, albumId, text);
+  addChapterRecuerdo: async (baulId, chapterId, text) => {
+    const recuerdo = await api.recuerdos.createForChapter(baulId, chapterId, text);
     set((state) => ({
-      albumRecuerdos: { ...state.albumRecuerdos, [albumId]: [recuerdo, ...(state.albumRecuerdos[albumId] || [])] },
+      chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: [recuerdo, ...(state.chapterRecuerdos[chapterId] || [])] },
       // Same reasoning as addRecuerdo above — keep the baúl-wide tab's cache in sync too.
       baulRecuerdos: state.baulRecuerdos[baulId]
         ? { ...state.baulRecuerdos, [baulId]: [recuerdo, ...state.baulRecuerdos[baulId]] }
@@ -260,16 +260,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     return baul;
   },
 
-  createAlbum: async (baulId, name) => {
-    const album = await api.albums.create(baulId, name);
+  createChapter: async (baulId, name) => {
+    const chapter = await api.chapters.create(baulId, name);
     set((state) => ({
-      albums: { ...state.albums, [baulId]: [...(state.albums[baulId] || []), album] },
-      baules: state.baules.map((b) => (b.id === baulId ? { ...b, albumCount: b.albumCount + 1 } : b)),
+      chapters: { ...state.chapters, [baulId]: [...(state.chapters[baulId] || []), chapter] },
+      baules: state.baules.map((b) => (b.id === baulId ? { ...b, chapterCount: b.chapterCount + 1 } : b)),
     }));
-    return album;
+    return chapter;
   },
 
-  uploadPhotos: async (baulId, albumId, selectedPhotos, onItemSettled) => {
+  uploadPhotos: async (baulId, chapterId, selectedPhotos, onItemSettled) => {
     const uploaded: Photo[] = [];
     const results: UploadItemResult[] = [];
     for (const selected of selectedPhotos) {
@@ -287,7 +287,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         continue;
       }
       try {
-        const photo = await api.photos.upload(albumId, selected.file, selected.clientUploadId, selected.date);
+        const photo = await api.photos.upload(chapterId, selected.file, selected.clientUploadId, selected.date);
         uploaded.push(photo);
         result = { clientUploadId: selected.clientUploadId, photo };
       } catch (error) {
@@ -299,18 +299,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     if (uploaded.length > 0) {
-      // Re-fetch the album's full photo list from the server rather than appending
-      // client-side — the album may not have been loaded into the store yet (e.g.
+      // Re-fetch the chapter's full photo list from the server rather than appending
+      // client-side — the chapter may not have been loaded into the store yet (e.g.
       // uploading via the native share flow into a chapter never opened this session),
       // and an append onto an empty/stale slice would silently drop its existing photos.
       // Mirrors the same fix already applied in movePhotos.
-      const photosForAlbum = await api.photos.getAll(albumId);
+      const photosForChapter = await api.photos.getAll(chapterId);
       set((state) => ({
-        photos: { ...state.photos, [albumId]: photosForAlbum },
-        albums: {
-          ...state.albums,
-          [baulId]: (state.albums[baulId] || []).map((a) =>
-            a.id === albumId
+        photos: { ...state.photos, [chapterId]: photosForChapter },
+        chapters: {
+          ...state.chapters,
+          [baulId]: (state.chapters[baulId] || []).map((a) =>
+            a.id === chapterId
               ? {
                   ...a,
                   photoCount: a.photoCount + uploaded.length,
@@ -372,12 +372,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   uploadPhotosWithChapter: async (baulId, chapter, selectedPhotos, onItemSettled) => {
-    let targetAlbumId: string | null = chapter.type === 'existing' ? chapter.albumId : null;
+    let targetChapterId: string | null = chapter.type === 'existing' ? chapter.chapterId : null;
 
     if (chapter.type === 'new') {
       try {
-        const album = await get().createAlbum(baulId, chapter.name);
-        targetAlbumId = album.id;
+        const newChapter = await get().createChapter(baulId, chapter.name);
+        targetChapterId = newChapter.id;
       } catch (error) {
         Sentry.captureException(error);
         const message = error instanceof Error ? error.message : 'No se pudo crear el capítulo';
@@ -386,15 +386,15 @@ export const useAppStore = create<AppState>((set, get) => ({
           onItemSettled?.(result);
           return result;
         });
-        return { results, albumId: null };
+        return { results, chapterId: null };
       }
     }
 
-    const results = targetAlbumId
-      ? await get().uploadPhotos(baulId, targetAlbumId, selectedPhotos, onItemSettled)
+    const results = targetChapterId
+      ? await get().uploadPhotos(baulId, targetChapterId, selectedPhotos, onItemSettled)
       : await get().uploadLoosePhotos(baulId, selectedPhotos, onItemSettled);
 
-    return { results, albumId: targetAlbumId };
+    return { results, chapterId: targetChapterId };
   },
 
   // Cada foto se mueve con su propia petición y su propio try/catch — igual que
@@ -403,12 +403,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   // anterior lanzaba en el primer fallo sin haber reconciliado nada). Si hay algún
   // fallo se lanza al final, tras reconciliar los que sí tuvieron éxito, para que el
   // toast de error del caller siga disparándose.
-  movePhotos: async (baulId, sourceAlbumId, photoIds, targetAlbumId, onItemSettled) => {
+  movePhotos: async (baulId, sourceChapterId, photoIds, targetChapterId, onItemSettled) => {
     const succeededIds: string[] = [];
     let failedCount = 0;
     for (const photoId of photoIds) {
       try {
-        await api.photos.move(photoId, targetAlbumId);
+        await api.photos.move(photoId, targetChapterId);
         succeededIds.push(photoId);
         onItemSettled?.({ photoId });
       } catch (error) {
@@ -421,33 +421,33 @@ export const useAppStore = create<AppState>((set, get) => ({
       throw new Error(`No se pudo mover ninguna de las ${photoIds.length} fotos`);
     }
 
-    // Re-fetch the target album's photos from the server rather than merging
+    // Re-fetch the target chapter's photos from the server rather than merging
     // client-side — the target may not have been loaded into the store yet
-    // (e.g. moving into an album the user hasn't opened this session), and a
+    // (e.g. moving into a chapter the user hasn't opened this session), and a
     // client-side merge against an empty/stale slice would silently drop its
     // existing photos.
-    const targetPhotos = await api.photos.getAll(targetAlbumId);
+    const targetPhotos = await api.photos.getAll(targetChapterId);
 
     set((state) => {
-      // sourceAlbumId is null when moving out of the "Fotos sueltas" virtual album.
-      const sourcePhotos = sourceAlbumId ? (state.photos[sourceAlbumId] || []) : (state.loosePhotos[baulId] || []);
+      // sourceChapterId is null when moving out of the "Fotos sueltas" virtual chapter.
+      const sourcePhotos = sourceChapterId ? (state.photos[sourceChapterId] || []) : (state.loosePhotos[baulId] || []);
       const movedCount = sourcePhotos.filter((p) => succeededIds.includes(p.id)).length;
       const remainingSourcePhotos = sourcePhotos.filter((p) => !succeededIds.includes(p.id));
 
       return {
         photos: {
           ...state.photos,
-          ...(sourceAlbumId ? { [sourceAlbumId]: remainingSourcePhotos } : {}),
-          [targetAlbumId]: targetPhotos,
+          ...(sourceChapterId ? { [sourceChapterId]: remainingSourcePhotos } : {}),
+          [targetChapterId]: targetPhotos,
         },
-        loosePhotos: sourceAlbumId
+        loosePhotos: sourceChapterId
           ? state.loosePhotos
           : { ...state.loosePhotos, [baulId]: remainingSourcePhotos },
-        albums: {
-          ...state.albums,
-          [baulId]: (state.albums[baulId] || []).map((a) => {
-            if (sourceAlbumId && a.id === sourceAlbumId) return { ...a, photoCount: Math.max(0, a.photoCount - movedCount) };
-            if (a.id === targetAlbumId) {
+        chapters: {
+          ...state.chapters,
+          [baulId]: (state.chapters[baulId] || []).map((a) => {
+            if (sourceChapterId && a.id === sourceChapterId) return { ...a, photoCount: Math.max(0, a.photoCount - movedCount) };
+            if (a.id === targetChapterId) {
               return {
                 ...a,
                 photoCount: targetPhotos.length,
@@ -465,41 +465,41 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  deletePhoto: async (baulId, albumId, photoId, reason) => {
+  deletePhoto: async (baulId, chapterId, photoId, reason) => {
     await api.photos.delete(photoId, reason);
 
-    set((state) => (albumId
-      ? { photos: { ...state.photos, [albumId]: (state.photos[albumId] || []).filter((p) => p.id !== photoId) } }
+    set((state) => (chapterId
+      ? { photos: { ...state.photos, [chapterId]: (state.photos[chapterId] || []).filter((p) => p.id !== photoId) } }
       : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).filter((p) => p.id !== photoId) } }
     ));
 
-    if (albumId) {
-      const albums = await api.albums.getAll(baulId);
-      set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
+    if (chapterId) {
+      const chapters = await api.chapters.getAll(baulId);
+      set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
     }
   },
 
-  changePhotoDate: async (baulId, albumId, photoId, date) => {
+  changePhotoDate: async (baulId, chapterId, photoId, date) => {
     const updated = await api.photos.changeDate(photoId, date);
-    set((state) => (albumId
-      ? { photos: { ...state.photos, [albumId]: (state.photos[albumId] || []).map((p) => (p.id === photoId ? updated : p)) } }
+    set((state) => (chapterId
+      ? { photos: { ...state.photos, [chapterId]: (state.photos[chapterId] || []).map((p) => (p.id === photoId ? updated : p)) } }
       : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).map((p) => (p.id === photoId ? updated : p)) } }
     ));
 
-    const albums = await api.albums.getAll(baulId);
-    set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
+    const chapters = await api.chapters.getAll(baulId);
+    set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
   },
 
-  changePhotoDateBatch: async (baulId, albumId, photoIds, date) => {
+  changePhotoDateBatch: async (baulId, chapterId, photoIds, date) => {
     const updated = await api.photos.changeDateBatch(photoIds, date);
     const updatedById = new Map(updated.map((p) => [p.id, p]));
-    set((state) => (albumId
-      ? { photos: { ...state.photos, [albumId]: (state.photos[albumId] || []).map((p) => updatedById.get(p.id) || p) } }
+    set((state) => (chapterId
+      ? { photos: { ...state.photos, [chapterId]: (state.photos[chapterId] || []).map((p) => updatedById.get(p.id) || p) } }
       : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).map((p) => updatedById.get(p.id) || p) } }
     ));
 
-    const albums = await api.albums.getAll(baulId);
-    set((state) => ({ albums: { ...state.albums, [baulId]: albums } }));
+    const chapters = await api.chapters.getAll(baulId);
+    set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
   },
 
   // Optimista: si se conoce ya la miniatura de la foto elegida, se aplica de inmediato
@@ -522,26 +522,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  setAlbumCover: async (baulId, albumId, photoId, optimisticThumbnailUrl) => {
-    const previous = get().albums[baulId] || [];
+  setChapterCover: async (baulId, chapterId, photoId, optimisticThumbnailUrl) => {
+    const previous = get().chapters[baulId] || [];
     if (optimisticThumbnailUrl) {
       set((state) => ({
-        albums: {
-          ...state.albums,
-          [baulId]: previous.map((a) => (a.id === albumId ? { ...a, coverPhotoUrl: optimisticThumbnailUrl } : a)),
+        chapters: {
+          ...state.chapters,
+          [baulId]: previous.map((a) => (a.id === chapterId ? { ...a, coverPhotoUrl: optimisticThumbnailUrl } : a)),
         },
       }));
     }
     try {
-      const updated = await api.albums.setCover(baulId, albumId, photoId);
+      const updated = await api.chapters.setCover(baulId, chapterId, photoId);
       set((state) => ({
-        albums: {
-          ...state.albums,
-          [baulId]: (state.albums[baulId] || []).map((a) => (a.id === albumId ? updated : a)),
+        chapters: {
+          ...state.chapters,
+          [baulId]: (state.chapters[baulId] || []).map((a) => (a.id === chapterId ? updated : a)),
         },
       }));
     } catch (error) {
-      set((state) => ({ albums: { ...state.albums, [baulId]: previous } }));
+      set((state) => ({ chapters: { ...state.chapters, [baulId]: previous } }));
       throw error;
     }
   },
@@ -553,26 +553,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  renameAlbum: async (baulId, albumId, name) => {
-    const updated = await api.albums.update(baulId, albumId, name);
+  renameChapter: async (baulId, chapterId, name) => {
+    const updated = await api.chapters.update(baulId, chapterId, name);
     set((state) => ({
-      albums: {
-        ...state.albums,
-        [baulId]: (state.albums[baulId] || []).map((a) => (a.id === albumId ? updated : a)),
+      chapters: {
+        ...state.chapters,
+        [baulId]: (state.chapters[baulId] || []).map((a) => (a.id === chapterId ? updated : a)),
       },
     }));
   },
 
-  deleteAlbum: async (baulId, albumId) => {
-    await api.albums.delete(baulId, albumId);
+  deleteChapter: async (baulId, chapterId) => {
+    await api.chapters.delete(baulId, chapterId);
 
     set((state) => {
-      const { [albumId]: _removedPhotos, ...restPhotos } = state.photos;
-      const { [albumId]: _removedRecuerdos, ...restAlbumRecuerdos } = state.albumRecuerdos;
+      const { [chapterId]: _removedPhotos, ...restPhotos } = state.photos;
+      const { [chapterId]: _removedRecuerdos, ...restChapterRecuerdos } = state.chapterRecuerdos;
       return {
-        albums: { ...state.albums, [baulId]: (state.albums[baulId] || []).filter((a) => a.id !== albumId) },
+        chapters: { ...state.chapters, [baulId]: (state.chapters[baulId] || []).filter((a) => a.id !== chapterId) },
         photos: restPhotos,
-        albumRecuerdos: restAlbumRecuerdos,
+        chapterRecuerdos: restChapterRecuerdos,
       };
     });
 
@@ -589,31 +589,31 @@ export const useAppStore = create<AppState>((set, get) => ({
   createPersona: async (baulId, nickname) => {
     const persona = await api.baules.createPersona(baulId, nickname);
     set((state) => ({
-      sharedUsers: { ...state.sharedUsers, [baulId]: [...(state.sharedUsers[baulId] || []), persona] },
+      personas: { ...state.personas, [baulId]: [...(state.personas[baulId] || []), persona] },
     }));
   },
 
-  loadSharedUsers: async (baulId) => {
-    const sharedUsers = await api.baules.getSharedUsers(baulId);
-    set((state) => ({ sharedUsers: { ...state.sharedUsers, [baulId]: sharedUsers } }));
+  loadPersonas: async (baulId) => {
+    const personas = await api.baules.getPersonas(baulId);
+    set((state) => ({ personas: { ...state.personas, [baulId]: personas } }));
   },
 
-  updatePersona: async (baulId, sharedUserId, name, nickname) => {
-    const updated = await api.baules.updatePersona(baulId, sharedUserId, name, nickname);
+  updatePersona: async (baulId, personaId, name, nickname) => {
+    const updated = await api.baules.updatePersona(baulId, personaId, name, nickname);
     set((state) => ({
-      sharedUsers: {
-        ...state.sharedUsers,
-        [baulId]: (state.sharedUsers[baulId] || []).map((u) => (u.id === sharedUserId ? updated : u)),
+      personas: {
+        ...state.personas,
+        [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? updated : u)),
       },
     }));
   },
 
-  uploadPersonaAvatar: async (baulId, sharedUserId, file) => {
-    const updated = await api.baules.uploadPersonaAvatar(baulId, sharedUserId, file);
+  uploadPersonaAvatar: async (baulId, personaId, file) => {
+    const updated = await api.baules.uploadPersonaAvatar(baulId, personaId, file);
     set((state) => ({
-      sharedUsers: {
-        ...state.sharedUsers,
-        [baulId]: (state.sharedUsers[baulId] || []).map((u) => (u.id === sharedUserId ? updated : u)),
+      personas: {
+        ...state.personas,
+        [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? updated : u)),
       },
     }));
   },
@@ -621,28 +621,28 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Optimista: el <select> de rol está controlado por este valor, así que sin aplicar
   // el cambio antes del await se ve "rebotar" al valor anterior mientras se espera al
   // servidor. Si la petición falla, se revierte al snapshot previo.
-  updateUserRole: async (baulId, sharedUserId, role) => {
-    const previous = get().sharedUsers[baulId] || [];
+  updateUserRole: async (baulId, personaId, role) => {
+    const previous = get().personas[baulId] || [];
     set((state) => ({
-      sharedUsers: {
-        ...state.sharedUsers,
-        [baulId]: previous.map((u) => (u.id === sharedUserId ? { ...u, role } : u)),
+      personas: {
+        ...state.personas,
+        [baulId]: previous.map((u) => (u.id === personaId ? { ...u, role } : u)),
       },
     }));
     try {
-      await api.baules.updateSharedUserRole(baulId, sharedUserId, role);
+      await api.baules.updatePersonaRole(baulId, personaId, role);
     } catch (error) {
-      set((state) => ({ sharedUsers: { ...state.sharedUsers, [baulId]: previous } }));
+      set((state) => ({ personas: { ...state.personas, [baulId]: previous } }));
       throw error;
     }
   },
 
-  revokeAccess: async (baulId, sharedUserId) => {
-    await api.baules.revokeAccess(baulId, sharedUserId);
+  revokeAccess: async (baulId, personaId) => {
+    await api.baules.revokeAccess(baulId, personaId);
     set((state) => ({
-      sharedUsers: {
-        ...state.sharedUsers,
-        [baulId]: (state.sharedUsers[baulId] || []).filter((u) => u.id !== sharedUserId),
+      personas: {
+        ...state.personas,
+        [baulId]: (state.personas[baulId] || []).filter((u) => u.id !== personaId),
       },
     }));
   },
@@ -651,8 +651,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     await api.baules.approveRemovalRequest(baulId, requestId);
     set((state) => {
       const photos = { ...state.photos };
-      for (const albumId of Object.keys(photos)) {
-        photos[albumId] = photos[albumId].filter((p) => p.id !== photoId);
+      for (const chapterId of Object.keys(photos)) {
+        photos[chapterId] = photos[chapterId].filter((p) => p.id !== photoId);
       }
 
       const loosePhotos = { ...state.loosePhotos };

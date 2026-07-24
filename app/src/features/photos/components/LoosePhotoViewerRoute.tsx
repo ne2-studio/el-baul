@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/app/components/PhotoViewer';
 import { Photo } from '@/app/components/PhotosView';
-import { Album } from '@/app/components/AlbumsView';
+import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
@@ -25,10 +25,10 @@ export const LoosePhotoViewerRoute: React.FC = () => {
 
   const { recuerdos, loadRecuerdos, addRecuerdo, submitRemovalRequest, setBaulCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
 
-  const { baul, albums, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
+  const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
   const photos = loosePhotos || [];
   const photo = photos.find(p => p.id === photoId);
-  const looseAlbum: Album = { id: 'sueltas', name: 'Fotos sueltas', photoCount: photos.length };
+  const looseChapter: Chapter = { id: 'sueltas', name: 'Fotos sueltas', photoCount: photos.length };
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -84,12 +84,12 @@ export const LoosePhotoViewerRoute: React.FC = () => {
     await run(() => addRecuerdo(baul.id, photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
   };
 
-  const handleMovePhoto = async (photoToMove: Photo, targetAlbumId: string): Promise<boolean> => {
-    const result = await run(() => movePhotos(baul.id, null, [photoToMove.id], targetAlbumId), {
+  const handleMovePhoto = async (photoToMove: Photo, targetChapterId: string): Promise<boolean> => {
+    const result = await run(() => movePhotos(baul.id, null, [photoToMove.id], targetChapterId), {
       successMessage: 'Foto movida',
       errorMessage: 'Error al mover la foto',
     });
-    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`, { replace: true });
+    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${targetChapterId}`, { replace: true });
     return result.ok;
   };
 
@@ -135,11 +135,11 @@ export const LoosePhotoViewerRoute: React.FC = () => {
       onMovePhoto={handleMovePhoto}
       onChangeDate={handleChangeDate}
       onDeletePhoto={handleDeletePhoto}
-      allAlbums={albums || []}
-      currentAlbum={looseAlbum}
+      allChapters={chapters || []}
+      currentChapter={looseChapter}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
-      onUserClick={(sharedUserId) => navigate(`/baules/${baul.id}/personas/${sharedUserId}`)}
+      onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
       onDownloadPhoto={handleDownloadPhoto}
     />
   );

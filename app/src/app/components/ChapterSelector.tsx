@@ -1,16 +1,16 @@
 import React from 'react';
 import { Check, Plus } from 'lucide-react';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 
 export type ChapterSelection =
-  | { type: 'existing'; albumId: string }
+  | { type: 'existing'; chapterId: string }
   | { type: 'new'; name: string }
   | { type: 'none' };
 
 interface ChapterSelectorProps {
-  albums: Album[];
-  /** The album this import was entered from, if any — shown first in the list, but never pre-selected. */
-  currentAlbumId?: string;
+  chapters: Chapter[];
+  /** The chapter this import was entered from, if any — shown first in the list, but never pre-selected. */
+  currentChapterId?: string;
   value: ChapterSelection | null;
   onChange: (value: ChapterSelection) => void;
 }
@@ -42,22 +42,22 @@ function Row({
   );
 }
 
-export function ChapterSelector({ albums, currentAlbumId, value, onChange }: ChapterSelectorProps) {
-  const orderedAlbums = currentAlbumId
-    ? [...albums].sort((a, b) => (a.id === currentAlbumId ? -1 : b.id === currentAlbumId ? 1 : 0))
-    : albums;
+export function ChapterSelector({ chapters, currentChapterId, value, onChange }: ChapterSelectorProps) {
+  const orderedChapters = currentChapterId
+    ? [...chapters].sort((a, b) => (a.id === currentChapterId ? -1 : b.id === currentChapterId ? 1 : 0))
+    : chapters;
 
   return (
     <div className="space-y-2">
-      {orderedAlbums.map((album) => (
+      {orderedChapters.map((chapter) => (
         <Row
-          key={album.id}
-          selected={value?.type === 'existing' && value.albumId === album.id}
-          onClick={() => onChange({ type: 'existing', albumId: album.id })}
+          key={chapter.id}
+          selected={value?.type === 'existing' && value.chapterId === chapter.id}
+          onClick={() => onChange({ type: 'existing', chapterId: chapter.id })}
         >
           <span className="text-sm text-foreground">
-            {album.name}
-            {album.id === currentAlbumId && (
+            {chapter.name}
+            {chapter.id === currentChapterId && (
               <span className="text-muted-foreground"> (este capítulo)</span>
             )}
           </span>

@@ -1,4 +1,4 @@
-import { Baul, Album, Photo, Recuerdo, SharedUser, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage } from './types';
+import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage } from './types';
 
 export const API_BASE = import.meta.env.VITE_API_URL as string;
 
@@ -71,30 +71,30 @@ export const api = {
     update: async (baulId: string, name: string, description?: string) =>
       new Baul(await put<any>(`/api/baules/${baulId}`, { name, description })),
 
-    getSharedUsers: async (baulId: string) =>
-      (await get<any[]>(`/api/baules/${baulId}/shared-users`)).map((u) => new SharedUser(u)),
+    getPersonas: async (baulId: string) =>
+      (await get<any[]>(`/api/baules/${baulId}/shared-users`)).map((u) => new Persona(u)),
     createPersona: async (baulId: string, nickname: string) =>
-      new SharedUser(await post<any>(`/api/baules/${baulId}/personas`, { nickname })),
-    getPersona: async (baulId: string, sharedUserId: string) =>
-      new SharedUser(await get<any>(`/api/baules/${baulId}/shared-users/${sharedUserId}`)),
-    updatePersona: async (baulId: string, sharedUserId: string, name: string, nickname: string) =>
-      new SharedUser(await put<any>(`/api/baules/${baulId}/shared-users/${sharedUserId}`, { name, nickname })),
-    uploadPersonaAvatar: async (baulId: string, sharedUserId: string, file: File) => {
+      new Persona(await post<any>(`/api/baules/${baulId}/personas`, { nickname })),
+    getPersona: async (baulId: string, personaId: string) =>
+      new Persona(await get<any>(`/api/baules/${baulId}/shared-users/${personaId}`)),
+    updatePersona: async (baulId: string, personaId: string, name: string, nickname: string) =>
+      new Persona(await put<any>(`/api/baules/${baulId}/shared-users/${personaId}`, { name, nickname })),
+    uploadPersonaAvatar: async (baulId: string, personaId: string, file: File) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE}/api/baules/${baulId}/shared-users/${sharedUserId}/avatar`, {
+      const response = await fetch(`${API_BASE}/api/baules/${baulId}/shared-users/${personaId}/avatar`, {
         method: 'POST',
         headers: authHeaders(),
         body: formData,
       });
 
-      return new SharedUser(await handleResponse<any>(response));
+      return new Persona(await handleResponse<any>(response));
     },
-    updateSharedUserRole: (baulId: string, sharedUserId: string, role: string) =>
-      put<void>(`/api/baules/${baulId}/shared-users/${sharedUserId}/role`, { role }),
-    revokeAccess: (baulId: string, sharedUserId: string) =>
-      del<{ success: boolean }>(`/api/baules/${baulId}/shared-users/${sharedUserId}`),
+    updatePersonaRole: (baulId: string, personaId: string, role: string) =>
+      put<void>(`/api/baules/${baulId}/shared-users/${personaId}/role`, { role }),
+    revokeAccess: (baulId: string, personaId: string) =>
+      del<{ success: boolean }>(`/api/baules/${baulId}/shared-users/${personaId}`),
 
     getLoosePhotos: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
@@ -127,21 +127,21 @@ export const api = {
       post<{ success: boolean }>(`/api/baules/${baulId}/removal-requests/${requestId}/reject`),
   },
 
-  albums: {
-    getAll: async (baulId: string) => (await get<any[]>(`/api/baules/${baulId}/albums`)).map((a) => new Album(a)),
+  chapters: {
+    getAll: async (baulId: string) => (await get<any[]>(`/api/baules/${baulId}/chapters`)).map((a) => new Chapter(a)),
     create: async (baulId: string, name: string) =>
-      new Album(await post<any>(`/api/baules/${baulId}/albums`, { name })),
-    setCover: async (baulId: string, albumId: string, photoId: string) =>
-      new Album(await put<any>(`/api/baules/${baulId}/albums/${albumId}/cover`, { photoId })),
-    update: async (baulId: string, albumId: string, name: string) =>
-      new Album(await put<any>(`/api/baules/${baulId}/albums/${albumId}`, { name })),
-    delete: (baulId: string, albumId: string) =>
-      del<void>(`/api/baules/${baulId}/albums/${albumId}`),
+      new Chapter(await post<any>(`/api/baules/${baulId}/chapters`, { name })),
+    setCover: async (baulId: string, chapterId: string, photoId: string) =>
+      new Chapter(await put<any>(`/api/baules/${baulId}/chapters/${chapterId}/cover`, { photoId })),
+    update: async (baulId: string, chapterId: string, name: string) =>
+      new Chapter(await put<any>(`/api/baules/${baulId}/chapters/${chapterId}`, { name })),
+    delete: (baulId: string, chapterId: string) =>
+      del<void>(`/api/baules/${baulId}/chapters/${chapterId}`),
   },
 
   photos: {
-    getAll: async (albumId: string) => (await get<any[]>(`/api/albums/${albumId}/photos`)).map((p) => new Photo(p)),
-    upload: async (albumId: string, file: File, clientUploadId: string, date?: PhotoDate) => {
+    getAll: async (chapterId: string) => (await get<any[]>(`/api/chapters/${chapterId}/photos`)).map((p) => new Photo(p)),
+    upload: async (chapterId: string, file: File, clientUploadId: string, date?: PhotoDate) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('clientUploadId', clientUploadId);
@@ -151,7 +151,7 @@ export const api = {
         if (date.day) formData.append('dateDay', String(date.day));
       }
 
-      const response = await fetch(`${API_BASE}/api/albums/${albumId}/photos`, {
+      const response = await fetch(`${API_BASE}/api/chapters/${chapterId}/photos`, {
         method: 'POST',
         headers: authHeaders(),
         body: formData,
@@ -159,8 +159,8 @@ export const api = {
 
       return new Photo(await handleResponse<any>(response));
     },
-    move: async (photoId: string, albumId: string) =>
-      new Photo(await put<any>(`/api/photos/${photoId}/album`, { albumId })),
+    move: async (photoId: string, chapterId: string) =>
+      new Photo(await put<any>(`/api/photos/${photoId}/chapter`, { chapterId })),
     delete: (photoId: string, reason?: string) =>
       del<{ success: boolean }>(`/api/photos/${photoId}`, { reason }),
     changeDate: async (photoId: string, date: PhotoDate) =>
@@ -187,21 +187,21 @@ export const api = {
       (await get<any[]>(`/api/photos/${photoId}/recuerdos`)).map((r) => new Recuerdo(r)),
     create: async (photoId: string, text: string) =>
       new Recuerdo(await post<any>(`/api/photos/${photoId}/recuerdos`, { text })),
-    getAllByAlbum: async (baulId: string, albumId: string) =>
-      (await get<any[]>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`)).map((r) => new Recuerdo(r)),
-    createForAlbum: async (baulId: string, albumId: string, text: string) =>
-      new Recuerdo(await post<any>(`/api/baules/${baulId}/albums/${albumId}/recuerdos`, { text })),
+    getAllByChapter: async (baulId: string, chapterId: string) =>
+      (await get<any[]>(`/api/baules/${baulId}/chapters/${chapterId}/recuerdos`)).map((r) => new Recuerdo(r)),
+    createForChapter: async (baulId: string, chapterId: string, text: string) =>
+      new Recuerdo(await post<any>(`/api/baules/${baulId}/chapters/${chapterId}/recuerdos`, { text })),
     getAllByBaul: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/recuerdos`)).map((r) => new Recuerdo(r)),
     createStandalone: async (baulId: string, text: string) =>
       new Recuerdo(await post<any>(`/api/baules/${baulId}/recuerdos`, { text })),
   },
 
-  sharedUsers: {
-    getInvitePreview: async (sharedUserId: string) =>
-      new BaulPreview(await get<any>(`/api/shared-users/${sharedUserId}/invite-preview`)),
-    acceptPersonalInvite: async (sharedUserId: string) =>
-      new SharedUser(await post<any>(`/api/shared-users/${sharedUserId}/accept-invite`)),
+  personas: {
+    getInvitePreview: async (personaId: string) =>
+      new BaulPreview(await get<any>(`/api/shared-users/${personaId}/invite-preview`)),
+    acceptPersonalInvite: async (personaId: string) =>
+      new Persona(await post<any>(`/api/shared-users/${personaId}/accept-invite`)),
   },
 
   users: {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotosView } from '@/app/components/PhotosView';
-import { Album } from '@/app/components/AlbumsView';
+import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/uiStore';
@@ -14,11 +14,11 @@ export const LoosePhotosRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { baulId } = useParams();
-  const { movePhotos, changePhotoDateBatch, createAlbum } = useAppStore();
+  const { movePhotos, changePhotoDateBatch, createChapter } = useAppStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
 
-  const { baul, albums, loosePhotos, isLoading, refreshFailed, retry } = useBaulScope(baulId);
+  const { baul, chapters, loosePhotos, isLoading, refreshFailed, retry } = useBaulScope(baulId);
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
 
@@ -37,7 +37,7 @@ export const LoosePhotosRoute: React.FC = () => {
   }
 
   const photos = loosePhotos || [];
-  const looseAlbum: Album = {
+  const looseChapter: Chapter = {
     id: 'sueltas',
     name: 'Fotos sueltas',
     photoCount: photos.length,
@@ -46,14 +46,14 @@ export const LoosePhotosRoute: React.FC = () => {
 
   const handleBatchMove = async (
     photoIds: string[],
-    targetAlbumId: string,
+    targetChapterId: string,
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => {
-    const result = await run(() => movePhotos(baul.id, null, photoIds, targetAlbumId, onItemSettled), {
+    const result = await run(() => movePhotos(baul.id, null, photoIds, targetChapterId, onItemSettled), {
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
       errorMessage: 'Algunas fotos no se pudieron mover',
     });
-    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`);
+    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${targetChapterId}`);
   };
 
   const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
@@ -67,24 +67,24 @@ export const LoosePhotosRoute: React.FC = () => {
   const handleBatchCreateChapter = async (photoIds: string[], name: string): Promise<boolean> => {
     const result = await run(
       async () => {
-        const album = await createAlbum(baul.id, name);
-        await movePhotos(baul.id, null, photoIds, album.id);
-        return album;
+        const chapter = await createChapter(baul.id, name);
+        await movePhotos(baul.id, null, photoIds, chapter.id);
+        return chapter;
       },
       {
         successMessage: `Capítulo "${name}" creado`,
         errorMessage: 'Error al crear el capítulo',
       }
     );
-    if (result.ok) navigate(`/baules/${baul.id}/albumes/${result.value.id}`);
+    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${result.value.id}`);
     return result.ok;
   };
 
   return (
     <PhotosView
-      album={looseAlbum}
+      chapter={looseChapter}
       photos={photos}
-      allAlbums={albums || []}
+      allChapters={chapters || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photo.id}`, { state: { backgroundLocation: location } })}
       onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>

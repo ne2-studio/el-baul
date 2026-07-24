@@ -8,9 +8,9 @@ import { DateModal } from './DateModal';
 import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, CheckSquare, FolderInput, Calendar, MoreVertical, Pencil, Trash2, BookOpen, X } from 'lucide-react';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
-import { DeleteAlbumModal } from './DeleteAlbumModal';
+import { DeleteChapterModal } from './DeleteChapterModal';
 import { PhotoDate } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
@@ -32,7 +32,7 @@ export interface Photo {
 export interface Recuerdo {
   id: string;
   text: string;
-  sharedUserId?: string;
+  personaId?: string;
   userName: string;
   userAvatar?: string;
   createdAt: string;
@@ -42,7 +42,7 @@ export interface Recuerdo {
 }
 
 interface PhotosViewProps {
-  album: Album;
+  chapter: Chapter;
   photos: Photo[];
   onBack: () => void;
   onSelectPhoto: (photo: Photo) => void;
@@ -50,19 +50,19 @@ interface PhotosViewProps {
   /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
    * Android caducó) y por tanto se ha excluido en silencio de la selección. */
   onPhotosDropped?: (count: number) => void;
-  allAlbums?: Album[];
+  allChapters?: Chapter[];
   onBatchMove?: (
     photoIds: string[],
-    targetAlbumId: string,
+    targetChapterId: string,
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => Promise<void>;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
-  onUpdateAlbumInfo?: (name: string) => Promise<boolean>;
-  onDeleteAlbum?: () => Promise<boolean>;
+  onUpdateChapterInfo?: (name: string) => Promise<boolean>;
+  onDeleteChapter?: () => Promise<boolean>;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
-  onUserClick?: (sharedUserId: string) => void;
+  onUserClick?: (personaId: string) => void;
 }
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
@@ -103,8 +103,8 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
 }
 
 export function PhotosView({
-  album, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allAlbums = [], onBatchMove, onBatchChangeDate,
-  onBatchCreateChapter, onUpdateAlbumInfo, onDeleteAlbum, recuerdos = [], onAddRecuerdo, onUserClick,
+  chapter, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allChapters = [], onBatchMove, onBatchChangeDate,
+  onBatchCreateChapter, onUpdateChapterInfo, onDeleteChapter, recuerdos = [], onAddRecuerdo, onUserClick,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
@@ -115,21 +115,21 @@ export function PhotosView({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [isSavingAlbumInfo, setIsSavingAlbumInfo] = useState(false);
+  const [isSavingChapterInfo, setIsSavingChapterInfo] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isDeletingAlbum, setIsDeletingAlbum] = useState(false);
+  const [isDeletingChapter, setIsDeletingChapter] = useState(false);
 
-  const handleSaveAlbumInfo = async (name: string) => {
-    setIsSavingAlbumInfo(true);
-    const ok = (await onUpdateAlbumInfo?.(name)) ?? false;
-    setIsSavingAlbumInfo(false);
+  const handleSaveChapterInfo = async (name: string) => {
+    setIsSavingChapterInfo(true);
+    const ok = (await onUpdateChapterInfo?.(name)) ?? false;
+    setIsSavingChapterInfo(false);
     if (ok) setShowEditModal(false);
   };
 
-  const handleDeleteAlbum = async () => {
-    setIsDeletingAlbum(true);
-    const ok = (await onDeleteAlbum?.()) ?? false;
-    setIsDeletingAlbum(false);
+  const handleDeleteChapter = async () => {
+    setIsDeletingChapter(true);
+    const ok = (await onDeleteChapter?.()) ?? false;
+    setIsDeletingChapter(false);
     if (ok) setShowDeleteModal(false);
   };
 
@@ -179,7 +179,7 @@ export function PhotosView({
 
   const handleBatchMoveSubmit = async () => {
     if (!batchMoveTargetId || !onBatchMove) return;
-    const targetAlbumId = batchMoveTargetId;
+    const targetChapterId = batchMoveTargetId;
     const ids = Array.from(selectedIds);
     setShowBatchMoveModal(false);
     setBatchMoveTargetId('');
@@ -191,7 +191,7 @@ export function PhotosView({
       }))
     );
 
-    await onBatchMove(ids, targetAlbumId, (result) => {
+    await onBatchMove(ids, targetChapterId, (result) => {
       setBatchMoveItems((prev) =>
         prev?.map((item) =>
           item.id === result.photoId ? { ...item, status: result.error ? ('error' as const) : ('success' as const) } : item
@@ -225,7 +225,7 @@ export function PhotosView({
     }
   };
 
-  const moveableAlbums = allAlbums.filter(a => a.id !== album.id);
+  const moveableChapters = allChapters.filter(a => a.id !== chapter.id);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -269,7 +269,7 @@ export function PhotosView({
               <span className="text-sm font-medium text-foreground">
                 {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
               </span>
-            ) : onUpdateAlbumInfo && (
+            ) : onUpdateChapterInfo && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -289,7 +289,7 @@ export function PhotosView({
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar información del capítulo
                   </DropdownMenuItem>
-                  {onDeleteAlbum && (
+                  {onDeleteChapter && (
                     <DropdownMenuItem variant="destructive" onClick={() => setShowDeleteModal(true)}>
                       <Trash2 className="w-4 h-4 mr-2" />
                       Eliminar capítulo
@@ -305,9 +305,9 @@ export function PhotosView({
       {/* Hero — shown when not in selection mode */}
       {!selectionMode && (
         <div className="relative overflow-hidden" style={{ height: '210px' }}>
-          {(album.featuredCoverPhotoUrl ?? album.coverPhotoUrl) ? (
+          {(chapter.featuredCoverPhotoUrl ?? chapter.coverPhotoUrl) ? (
             <img
-              src={album.featuredCoverPhotoUrl ?? album.coverPhotoUrl}
+              src={chapter.featuredCoverPhotoUrl ?? chapter.coverPhotoUrl}
               alt=""
               className="hero-cover-image absolute inset-0 w-full h-full object-cover"
             />
@@ -318,11 +318,11 @@ export function PhotosView({
           <div className="absolute bottom-0 left-0 right-0 pb-5">
             <div className="max-w-2xl mx-auto px-6">
               <h1 className="text-3xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
-                {album.name}
+                {chapter.name}
               </h1>
-              {album.minDate && album.maxDate && (
+              {chapter.minDate && chapter.maxDate && (
                 <p className="text-xs text-white/65 mt-1 font-medium tracking-wide">
-                  {formatDateRange(album.minDate, album.maxDate)}
+                  {formatDateRange(chapter.minDate, chapter.maxDate)}
                 </p>
               )}
             </div>
@@ -451,7 +451,7 @@ export function PhotosView({
       />
 
       {/* Batch action bar */}
-      {selectionMode && selectedIds.size > 0 && (onBatchChangeDate || moveableAlbums.length > 0 || onBatchCreateChapter) && (
+      {selectionMode && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
           <div className="max-w-2xl mx-auto px-6 py-4 flex gap-3">
             {onBatchChangeDate && (
@@ -463,7 +463,7 @@ export function PhotosView({
                 Cambiar fecha
               </button>
             )}
-            {moveableAlbums.length > 0 && (
+            {moveableChapters.length > 0 && (
               <button
                 onClick={() => setShowBatchMoveModal(true)}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
@@ -499,7 +499,7 @@ export function PhotosView({
       {showBatchMoveModal && (
         <MoveModal
           title={`Mover ${selectedIds.size} ${selectedIds.size === 1 ? 'foto' : 'fotos'}`}
-          albums={moveableAlbums}
+          chapters={moveableChapters}
           selectedId={batchMoveTargetId}
           onSelect={setBatchMoveTargetId}
           onCancel={() => setShowBatchMoveModal(false)}
@@ -527,21 +527,21 @@ export function PhotosView({
       {showEditModal && (
         <EditInfoModal
           title="Editar información del capítulo"
-          initialName={album.name}
+          initialName={chapter.name}
           namePlaceholder="Nombre del capítulo"
           onCancel={() => setShowEditModal(false)}
-          onSave={handleSaveAlbumInfo}
-          isSubmitting={isSavingAlbumInfo}
+          onSave={handleSaveChapterInfo}
+          isSubmitting={isSavingChapterInfo}
         />
       )}
 
       {showDeleteModal && (
-        <DeleteAlbumModal
+        <DeleteChapterModal
           photoCount={photos.length}
           recuerdoCount={recuerdos.length}
           onCancel={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteAlbum}
-          isSubmitting={isDeletingAlbum}
+          onConfirm={handleDeleteChapter}
+          isSubmitting={isDeletingChapter}
         />
       )}
 
@@ -567,16 +567,16 @@ function getInitials(name: string): string {
 
 function RecuerdoFeedCard({
   recuerdo, onPhotoClick, onUserClick,
-}: { recuerdo: Recuerdo; onPhotoClick?: () => void; onUserClick?: (sharedUserId: string) => void }) {
+}: { recuerdo: Recuerdo; onPhotoClick?: () => void; onUserClick?: (personaId: string) => void }) {
   const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
-  const canOpenPersona = !!(recuerdo.sharedUserId && onUserClick);
+  const canOpenPersona = !!(recuerdo.personaId && onUserClick);
 
   return (
     <div className="bg-card border border-border/60 rounded-2xl p-5">
       <div className="flex items-start gap-3">
         <button
           type="button"
-          onClick={canOpenPersona ? () => onUserClick!(recuerdo.sharedUserId!) : undefined}
+          onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
           disabled={!canOpenPersona}
           className={`w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5 overflow-hidden ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
         >

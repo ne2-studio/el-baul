@@ -17,7 +17,7 @@ interface LocationState {
 export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
   navigate,
 }) => {
-  const { baulId, albumId } = useParams();
+  const { baulId, chapterId } = useParams();
   const location = useLocation();
   const { failedPhotos, date, succeededCount } =
     (location.state as LocationState) || { failedPhotos: [], date: null, succeededCount: 0 };
@@ -27,13 +27,13 @@ export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
       failedPhotos={failedPhotos}
       succeededCount={succeededCount}
       onRetry={() =>
-        // The album (existing or freshly created) is already resolved by this point —
+        // The chapter (existing or freshly created) is already resolved by this point —
         // retry targets it directly rather than re-running the original chapter choice.
-        navigate(`/baules/${baulId}/albumes/${albumId}/subiendo`, {
-          state: { selectedPhotos: failedPhotos, chapter: { type: 'existing', albumId }, date, succeededCount },
+        navigate(`/baules/${baulId}/capitulos/${chapterId}/subiendo`, {
+          state: { selectedPhotos: failedPhotos, chapter: { type: 'existing', chapterId }, date, succeededCount },
         })
       }
-      onBack={() => navigate(`/baules/${baulId}/albumes/${albumId}`)}
+      onBack={() => navigate(`/baules/${baulId}/capitulos/${chapterId}`)}
     />
   );
 };

@@ -1,11 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { User as UserIcon, Loader2 } from 'lucide-react';
-import { SharedUser } from '@/types';
+import { Persona } from '@/types';
 import { Button } from './Button';
 import { BottomSheetModal } from './BottomSheetModal';
 
 interface EditPersonaModalProps {
-  persona: SharedUser;
+  persona: Persona;
   onCancel: () => void;
   onSave: (name: string, nickname: string) => void;
   onUploadAvatar: (file: File) => void;

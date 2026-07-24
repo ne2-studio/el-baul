@@ -5,7 +5,7 @@ import { RecuerdoCard, Recuerdo } from './RecuerdoCard';
 interface RecuerdosListProps {
   recuerdos: Recuerdo[];
   maxVisibleWhenCollapsed?: number;
-  onUserClick?: (sharedUserId: string) => void;
+  onUserClick?: (personaId: string) => void;
 }
 
 export function RecuerdosList({

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PersonaDetailScreen } from './PersonaDetailScreen';
-import { SharedUser } from '@/types';
+import { Persona } from '@/types';
 
 const meta = {
   title: 'Components/PersonaDetailScreen',
@@ -11,7 +11,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const activePersona: SharedUser = {
+const activePersona: Persona = {
   id: '1',
   baulId: 'baul-1',
   name: 'María López',
@@ -22,7 +22,7 @@ const activePersona: SharedUser = {
   canEdit: true,
 };
 
-const pendingPersona: SharedUser = {
+const pendingPersona: Persona = {
   ...activePersona,
   id: '2',
   status: 'pending',

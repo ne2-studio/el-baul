@@ -6,8 +6,8 @@ import { getRelativeTime } from '../utils/timeUtils';
 
 interface RecuerdosTabProps {
   recuerdos: Recuerdo[];
-  onOpenAlbum?: (albumId: string) => void;
-  onOpenPhoto?: (photoId: string, albumId?: string) => void;
+  onOpenChapter?: (chapterId: string) => void;
+  onOpenPhoto?: (photoId: string, chapterId?: string) => void;
 }
 
 const AVATAR_COLORS = [
@@ -33,7 +33,7 @@ function getAvatarColor(name: string): string {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
 }
 
-export function RecuerdosTab({ recuerdos, onOpenAlbum, onOpenPhoto }: RecuerdosTabProps) {
+export function RecuerdosTab({ recuerdos, onOpenChapter, onOpenPhoto }: RecuerdosTabProps) {
   if (recuerdos.length === 0) {
     return (
       <EmptyState
@@ -70,7 +70,7 @@ export function RecuerdosTab({ recuerdos, onOpenAlbum, onOpenPhoto }: RecuerdosT
 
               {recuerdo.photoId && (
                 <button
-                  onClick={() => onOpenPhoto?.(recuerdo.photoId!, recuerdo.albumId)}
+                  onClick={() => onOpenPhoto?.(recuerdo.photoId!, recuerdo.chapterId)}
                   className="mt-3 block w-full rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
                 >
                   {recuerdo.photoThumbnailUrl ? (
@@ -84,12 +84,12 @@ export function RecuerdosTab({ recuerdos, onOpenAlbum, onOpenPhoto }: RecuerdosT
                 </button>
               )}
 
-              {!recuerdo.photoId && recuerdo.albumId && (
+              {!recuerdo.photoId && recuerdo.chapterId && (
                 <button
-                  onClick={() => onOpenAlbum?.(recuerdo.albumId!)}
+                  onClick={() => onOpenChapter?.(recuerdo.chapterId!)}
                   className="mt-2 inline-flex text-xs text-primary bg-primary/10 hover:bg-primary/15 transition-colors rounded-full px-2 py-0.5"
                 >
-                  en «{recuerdo.albumName ?? 'un capítulo'}»
+                  en «{recuerdo.chapterName ?? 'un capítulo'}»
                 </button>
               )}
             </div>

@@ -5,7 +5,7 @@ import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 
 export const AcceptInviteRoute: React.FC = () => {
-  const { sharedUserId } = useParams<{ sharedUserId: string }>();
+  const { personaId } = useParams<{ personaId: string }>();
   const navigate = useNavigate();
   const auth = useAuth();
   const { showToastMessage } = useUIStore();
@@ -13,9 +13,9 @@ export const AcceptInviteRoute: React.FC = () => {
 
   useEffect(() => {
     const performAcceptInvite = async () => {
-      if (!sharedUserId || !auth.isAuthenticated) {
+      if (!personaId || !auth.isAuthenticated) {
         if (!auth.isAuthenticated) {
-          navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/persona/${sharedUserId}/aceptar`)}`);
+          navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/persona/${personaId}/aceptar`)}`);
         } else {
           navigate('/baules');
         }
@@ -23,7 +23,7 @@ export const AcceptInviteRoute: React.FC = () => {
       }
 
       try {
-        const persona = await api.sharedUsers.acceptPersonalInvite(sharedUserId);
+        const persona = await api.personas.acceptPersonalInvite(personaId);
         // Pequeño delay para que se vea el estado de carga y sea más natural
         setTimeout(() => {
           navigate(`/baules/${persona.baulId}`);
@@ -36,7 +36,7 @@ export const AcceptInviteRoute: React.FC = () => {
     };
 
     performAcceptInvite();
-  }, [sharedUserId, auth.isAuthenticated, navigate, showToastMessage]);
+  }, [personaId, auth.isAuthenticated, navigate, showToastMessage]);
 
   if (error) {
     return (

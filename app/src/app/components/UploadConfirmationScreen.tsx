@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react';
 import { Button } from './Button';
 import { ChevronLeft, X } from 'lucide-react';
 import { Baul } from './BaulesList';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 import { ChapterSelector, ChapterSelection } from './ChapterSelector';
 import { PhotoDate } from '@/types';
 
@@ -39,11 +39,11 @@ export async function materializeSelectedPhoto(file: File): Promise<SelectedPhot
 
 interface UploadConfirmationScreenProps {
   baul: Baul;
-  album: Album;
-  existingAlbums: Album[];
+  currentChapter: Chapter;
+  existingChapters: Chapter[];
   /** Set only when entered from an already-open chapter — the chapter step is skipped
    * entirely and photos go straight into it, since the destination is already obvious. */
-  currentAlbumId?: string;
+  currentChapterId?: string;
   selectedPhotos: SelectedPhoto[];
   onBack: () => void;
   onUpload: (photos: SelectedPhoto[], chapter: ChapterSelection, date: PhotoDate | null) => void;
@@ -51,16 +51,16 @@ interface UploadConfirmationScreenProps {
 
 export function UploadConfirmationScreen({
   baul,
-  album,
-  existingAlbums,
-  currentAlbumId,
+  currentChapter,
+  existingChapters,
+  currentChapterId,
   selectedPhotos,
   onBack,
   onUpload
 }: UploadConfirmationScreenProps) {
   const [photos, setPhotos] = useState(selectedPhotos);
   const [chapter, setChapter] = useState<ChapterSelection | null>(
-    currentAlbumId ? { type: 'existing', albumId: currentAlbumId } : null
+    currentChapterId ? { type: 'existing', chapterId: currentChapterId } : null
   );
 
   const handleRemovePhoto = (id: string) => {
@@ -89,7 +89,7 @@ export function UploadConfirmationScreen({
             <span className="text-sm">Volver</span>
           </button>
           <h1 className="text-3xl text-foreground mb-1">Añadir fotos al capítulo</h1>
-          <p className="text-sm text-muted-foreground">{album.name}</p>
+          <p className="text-sm text-muted-foreground">{currentChapter.name}</p>
         </div>
       </div>
 
@@ -123,12 +123,12 @@ export function UploadConfirmationScreen({
         </div>
 
         {/* Capítulo — skipped when uploading straight into an already-open chapter */}
-        {!currentAlbumId && (
+        {!currentChapterId && (
           <div className="mb-8">
             <h2 className="text-sm font-medium text-foreground mb-3">Capítulo</h2>
             <ChapterSelector
-              albums={existingAlbums}
-              currentAlbumId={currentAlbumId}
+              chapters={existingChapters}
+              currentChapterId={currentChapterId}
               value={chapter}
               onChange={setChapter}
             />

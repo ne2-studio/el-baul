@@ -1,11 +1,11 @@
 import { Check } from 'lucide-react';
 import { Button } from './Button';
 import { BottomSheetModal } from './BottomSheetModal';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 
 interface MoveModalProps {
   title: string;
-  albums: Album[];
+  chapters: Chapter[];
   selectedId: string;
   onSelect: (id: string) => void;
   onCancel: () => void;
@@ -14,12 +14,12 @@ interface MoveModalProps {
 }
 
 // Modal compartido para mover fotos a otro capítulo (individual o en lote).
-export function MoveModal({ title, albums, selectedId, onSelect, onCancel, onConfirm, isSubmitting = false }: MoveModalProps) {
+export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onConfirm, isSubmitting = false }: MoveModalProps) {
   return (
     <BottomSheetModal onCancel={onCancel} backdropOpacity={40}>
       <h2 className="text-lg font-medium text-foreground mb-4">{title}</h2>
       <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
-        {albums.map(a => (
+        {chapters.map(a => (
           <button
             key={a.id}
             onClick={() => onSelect(a.id)}

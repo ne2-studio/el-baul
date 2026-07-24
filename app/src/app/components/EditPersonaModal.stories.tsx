@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EditPersonaModal } from './EditPersonaModal';
-import { SharedUser } from '@/types';
+import { Persona } from '@/types';
 
 const meta = {
   title: 'Components/EditPersonaModal',
@@ -11,7 +11,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const persona: SharedUser = {
+const persona: Persona = {
   id: '1',
   baulId: 'baul-1',
   name: 'María López',

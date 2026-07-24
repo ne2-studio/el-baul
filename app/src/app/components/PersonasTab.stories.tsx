@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PersonasTab } from './PersonasTab';
-import { SharedUser } from '@/types';
+import { Persona } from '@/types';
 
 const meta = {
   title: 'Components/PersonasTab',
@@ -11,8 +11,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const sharedUsers = [
-  new SharedUser({
+const personas = [
+  new Persona({
     id: '1',
     baulId: 'b1',
     email: 'yo@example.com',
@@ -21,7 +21,7 @@ const sharedUsers = [
     role: 'custodio',
     invitedDate: new Date().toISOString(),
   }),
-  new SharedUser({
+  new Persona({
     id: '2',
     baulId: 'b1',
     email: 'abuela@example.com',
@@ -31,7 +31,7 @@ const sharedUsers = [
     avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
     invitedDate: new Date().toISOString(),
   }),
-  new SharedUser({
+  new Persona({
     id: '3',
     baulId: 'b1',
     email: 'tio@example.com',
@@ -44,7 +44,7 @@ const sharedUsers = [
 
 export const Default: Story = {
   args: {
-    sharedUsers,
+    personas,
     currentUserEmail: 'yo@example.com',
     onSelectPersona: () => alert('onSelectPersona clicked'),
   },
@@ -52,7 +52,7 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: {
-    sharedUsers: [],
+    personas: [],
     onSelectPersona: () => alert('onSelectPersona clicked'),
   },
 };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChapterSelector, ChapterSelection } from './ChapterSelector';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 
 const meta = {
   title: 'Components/ChapterSelector',
@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const albums: Album[] = [
+const chapters: Chapter[] = [
   { id: '1', name: 'Verano 2023', photoCount: 42 },
   { id: '2', name: 'Cumpleaños de la abuela', photoCount: 18 },
   { id: '3', name: 'Navidad', photoCount: 30 },
@@ -20,24 +20,24 @@ const albums: Album[] = [
 
 export const Default: Story = {
   args: {
-    albums,
+    chapters,
     value: null,
     onChange: () => alert('onChange clicked'),
   },
 };
 
-export const WithCurrentAlbum: Story = {
+export const WithCurrentChapter: Story = {
   args: {
-    albums,
-    currentAlbumId: '2',
-    value: { type: 'existing', albumId: '2' },
+    chapters,
+    currentChapterId: '2',
+    value: { type: 'existing', chapterId: '2' },
     onChange: () => alert('onChange clicked'),
   },
 };
 
 export const CreatingNew: Story = {
   args: {
-    albums,
+    chapters,
     value: { type: 'new', name: 'Viaje a la playa' },
     onChange: () => alert('onChange clicked'),
   },
@@ -45,12 +45,12 @@ export const CreatingNew: Story = {
 
 export const Interactive: Story = {
   args: {
-    albums,
+    chapters,
     value: null,
     onChange: () => alert('onChange clicked'),
   },
   render: function Render() {
     const [value, setValue] = useState<ChapterSelection | null>(null);
-    return <ChapterSelector albums={albums} value={value} onChange={setValue} />;
+    return <ChapterSelector chapters={chapters} value={value} onChange={setValue} />;
   },
 };

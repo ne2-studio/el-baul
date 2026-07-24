@@ -16,31 +16,31 @@ import { Capacitor } from '@capacitor/core';
 export const PhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { baulId, albumId, photoId } = useParams();
+  const { baulId, chapterId, photoId } = useParams();
   const auth = useAuth();
   const { run } = useAsyncAction();
 
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
-  const { photos, recuerdos, loadRecuerdos, loadAlbumPhotos, addRecuerdo, submitRemovalRequest, setBaulCover, setAlbumCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
+  const { photos, recuerdos, loadRecuerdos, loadChapterPhotos, addRecuerdo, submitRemovalRequest, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
 
-  const { baul, albums, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
-  const album = albums?.find(a => a.id === albumId);
+  const { baul, chapters, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
+  const chapter = chapters?.find(a => a.id === chapterId);
 
   const [photosFailed, setPhotosFailed] = useState(false);
 
-  const fetchAlbumPhotos = async () => {
-    if (!albumId) return;
-    const result = await run(() => loadAlbumPhotos(albumId), { errorMessage: 'Error al cargar las fotos' });
+  const fetchChapterPhotos = async () => {
+    if (!chapterId) return;
+    const result = await run(() => loadChapterPhotos(chapterId), { errorMessage: 'Error al cargar las fotos' });
     setPhotosFailed(!result.ok);
   };
 
   useEffect(() => {
-    if (auth.isAuthenticated && albumId && !photos[albumId]) {
-      fetchAlbumPhotos();
+    if (auth.isAuthenticated && chapterId && !photos[chapterId]) {
+      fetchChapterPhotos();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, albumId, photos, loadAlbumPhotos]);
+  }, [auth.isAuthenticated, chapterId, photos, loadChapterPhotos]);
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -65,23 +65,23 @@ export const PhotoViewerRoute: React.FC = () => {
     return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
   }
 
-  if (!album) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
+  if (!chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
-  if (!photos[albumId!]) {
+  if (!photos[chapterId!]) {
     if (photosFailed) {
       return (
         <ErrorScreen
           title="No se han podido cargar las fotos"
           message="Comprueba tu conexión e inténtalo de nuevo."
           actionLabel="Reintentar"
-          onAction={fetchAlbumPhotos}
+          onAction={fetchChapterPhotos}
         />
       );
     }
     return <div className="p-8 text-center">Cargando foto...</div>;
   }
 
-  const photo = photos[albumId!]?.find(p => p.id === photoId);
+  const photo = photos[chapterId!]?.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 
   // Si el visor se abrió desde dentro de la app (backgroundLocation presente), un back de
@@ -89,7 +89,7 @@ export const PhotoViewerRoute: React.FC = () => {
   // directo no hay nada a lo que volver, así que se navega explícitamente al álbum.
   const closeViewer = () => {
     if (backgroundLocation) navigate(-1);
-    else navigate(`/baules/${baul.id}/albumes/${album.id}`, { replace: true });
+    else navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { replace: true });
   };
 
   const handleRequestRemoval = async (photo: Photo, reason: string): Promise<boolean> => {
@@ -109,9 +109,9 @@ export const PhotoViewerRoute: React.FC = () => {
     });
   };
 
-  const handleSetAlbumCover = async (photo: Photo) => {
+  const handleSetChapterCover = async (photo: Photo) => {
     if (!auth.isAuthenticated) return;
-    await run(() => setAlbumCover(baul.id, album.id, photo.id, photo.thumbnailUrl), {
+    await run(() => setChapterCover(baul.id, chapter.id, photo.id, photo.thumbnailUrl), {
       successMessage: 'Portada del capítulo actualizada',
       errorMessage: 'Error al establecer la portada',
     });
@@ -122,17 +122,17 @@ export const PhotoViewerRoute: React.FC = () => {
     await run(() => addRecuerdo(baul.id, photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
   };
 
-  const handleMovePhoto = async (photoToMove: Photo, targetAlbumId: string): Promise<boolean> => {
-    const result = await run(() => movePhotos(baul.id, album.id, [photoToMove.id], targetAlbumId), {
+  const handleMovePhoto = async (photoToMove: Photo, targetChapterId: string): Promise<boolean> => {
+    const result = await run(() => movePhotos(baul.id, chapter.id, [photoToMove.id], targetChapterId), {
       successMessage: 'Foto movida',
       errorMessage: 'Error al mover la foto',
     });
-    if (result.ok) navigate(`/baules/${baul.id}/albumes/${targetAlbumId}`, { replace: true });
+    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${targetChapterId}`, { replace: true });
     return result.ok;
   };
 
   const handleDeletePhoto = async (photoToDelete: Photo, reason: string): Promise<boolean> => {
-    const result = await run(() => deletePhoto(baul.id, album.id, photoToDelete.id, reason), {
+    const result = await run(() => deletePhoto(baul.id, chapter.id, photoToDelete.id, reason), {
       successMessage: 'La foto ha sido retirada',
       errorMessage: 'Error al retirar la foto',
     });
@@ -141,7 +141,7 @@ export const PhotoViewerRoute: React.FC = () => {
   };
 
   const handleChangeDate = async (photoToUpdate: Photo, date: PhotoDate): Promise<boolean> => {
-    const result = await run(() => changePhotoDate(baul.id, album.id, photoToUpdate.id, date), {
+    const result = await run(() => changePhotoDate(baul.id, chapter.id, photoToUpdate.id, date), {
       successMessage: 'Fecha actualizada',
       errorMessage: 'Error al cambiar la fecha',
     });
@@ -161,24 +161,24 @@ export const PhotoViewerRoute: React.FC = () => {
   return (
     <PhotoViewer
       photo={photo}
-      photos={photos[album.id] || []}
+      photos={photos[chapter.id] || []}
       onClose={closeViewer}
-      onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/albumes/${album.id}/foto/${newPhoto.id}`, {
+      onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/capitulos/${chapter.id}/foto/${newPhoto.id}`, {
         replace: true,
         state: backgroundLocation ? { backgroundLocation } : undefined,
       })}
       onRequestRemoval={handleRequestRemoval}
       isAdmin={isAdminRole(baul.role)}
       onSetBaulCover={handleSetBaulCover}
-      onSetAlbumCover={handleSetAlbumCover}
+      onSetChapterCover={handleSetChapterCover}
       onMovePhoto={handleMovePhoto}
       onChangeDate={handleChangeDate}
       onDeletePhoto={handleDeletePhoto}
-      allAlbums={albums || []}
-      currentAlbum={album}
+      allChapters={chapters || []}
+      currentChapter={chapter}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
-      onUserClick={(sharedUserId) => navigate(`/baules/${baul.id}/personas/${sharedUserId}`)}
+      onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
       onDownloadPhoto={handleDownloadPhoto}
     />
   );

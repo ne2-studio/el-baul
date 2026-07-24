@@ -27,7 +27,7 @@ export const LooseUploadingRoute: React.FC = () => {
   const { selectedPhotos, chapter, date, succeededCount: succeededSoFar = 0 } =
     (location.state as LocationState) || { selectedPhotos: [], chapter: { type: 'none' }, date: null };
 
-  const resolvedAlbumIdRef = useRef<string | null>(null);
+  const resolvedChapterIdRef = useRef<string | null>(null);
 
   if (!baul) return <div className="p-8 text-center">Cargando...</div>;
 
@@ -38,8 +38,8 @@ export const LooseUploadingRoute: React.FC = () => {
       chapter,
       photos.map((p) => ({ clientUploadId: p.id, file: p.file, date: date ?? undefined })),
       onItemSettled
-    ).then(({ results, albumId }) => {
-      resolvedAlbumIdRef.current = albumId;
+    ).then(({ results, chapterId }) => {
+      resolvedChapterIdRef.current = chapterId;
       return results;
     });
   };
@@ -47,16 +47,16 @@ export const LooseUploadingRoute: React.FC = () => {
   const handleSettled = (results: UploadItemResult[]) => {
     const failed = results.filter((r) => r.error);
     const succeededCount = succeededSoFar + (results.length - failed.length);
-    const resolvedAlbumId = resolvedAlbumIdRef.current;
-    const albumPath = resolvedAlbumId
-      ? `/baules/${baul.id}/albumes/${resolvedAlbumId}`
+    const resolvedChapterId = resolvedChapterIdRef.current;
+    const chapterPath = resolvedChapterId
+      ? `/baules/${baul.id}/capitulos/${resolvedChapterId}`
       : `/baules/${baul.id}/fotos-sueltas`;
-    const errorPath = resolvedAlbumId
-      ? `/baules/${baul.id}/albumes/${resolvedAlbumId}/error`
+    const errorPath = resolvedChapterId
+      ? `/baules/${baul.id}/capitulos/${resolvedChapterId}/error`
       : `/baules/${baul.id}/fotos-sueltas/error`;
 
     if (failed.length === 0) {
-      navigate(albumPath);
+      navigate(chapterPath);
       showToastMessage(
         succeededCount === 1
           ? 'Tu recuerdo ya está a salvo'

@@ -10,13 +10,13 @@ import { Baul } from '@/types';
 
 export const BaulesListRoute: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
+  const [isLoadingChapters, setIsLoadingChapters] = useState(false);
   const auth = useAuth();
   const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
 
   const {
     baules,
-    loadAlbums: storeLoadAlbums,
+    loadChapters: storeLoadChapters,
     loadLoosePhotos,
     loadBaulRecuerdos,
     subscription,
@@ -33,21 +33,21 @@ export const BaulesListRoute: React.FC = () => {
     if (!auth.isAuthenticated) return;
 
     try {
-      setIsLoadingAlbums(true);
+      setIsLoadingChapters(true);
       // Prefetches everything BaulRoute's own init effect would otherwise need to load on
       // mount (see its comment) — keeping this in sync with that list matters: if this ever
       // fetches less than BaulRoute checks for, opening a baúl shows this "Abriendo baúl..."
       // overlay and then, right after, BaulRoute's own "Cargando..." screen for whatever
       // wasn't prefetched here — two different loading treatments back to back that read as
       // a flicker/glitch (missed when the recuerdos tab was added: this call still only
-      // prefetched albums/loosePhotos, not baulRecuerdos).
-      await Promise.all([storeLoadAlbums(baul.id), loadLoosePhotos(baul.id), loadBaulRecuerdos(baul.id)]);
+      // prefetched chapters/loosePhotos, not baulRecuerdos).
+      await Promise.all([storeLoadChapters(baul.id), loadLoosePhotos(baul.id), loadBaulRecuerdos(baul.id)]);
       navigate(`/baules/${baul.id}`);
     } catch (error) {
-      console.error('Error loading albums:', error);
+      console.error('Error loading chapters:', error);
       showToastMessage('Error al cargar los capítulos');
     } finally {
-      setIsLoadingAlbums(false);
+      setIsLoadingChapters(false);
     }
   };
 
@@ -78,7 +78,7 @@ export const BaulesListRoute: React.FC = () => {
         monetizationEnabled={monetizationEnabled}
       />
       
-      {isLoadingAlbums && (
+      {isLoadingChapters && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-card rounded-2xl p-8 shadow-2xl border border-border">
             <div className="flex flex-col items-center gap-4">

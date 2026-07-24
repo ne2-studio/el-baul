@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotoViewer } from './PhotoViewer';
 import { Photo } from './PhotosView';
-import { Album } from './AlbumsView';
+import { Chapter } from './ChaptersView';
 import { Recuerdo } from './RecuerdoCard';
 
 const meta = {
@@ -22,7 +22,7 @@ const photos: Photo[] = [
   { id: '3', thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300', fullUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1600' },
 ];
 
-const albums: Album[] = [
+const chapters: Chapter[] = [
   { id: 'a1', name: 'Verano 2024', photoCount: 3 },
   { id: 'a2', name: 'Navidad', photoCount: 12 },
 ];
@@ -37,7 +37,7 @@ const sharedDefaults = {
   onPhotoChange: () => alert('onPhotoChange clicked'),
   onRequestRemoval: async () => true,
   onSetBaulCover: () => alert('onSetBaulCover clicked'),
-  onSetAlbumCover: () => alert('onSetAlbumCover clicked'),
+  onSetChapterCover: () => alert('onSetChapterCover clicked'),
   onMovePhoto: async () => true,
   onChangeDate: async () => true,
   onDeletePhoto: async () => true,
@@ -52,8 +52,8 @@ export const Default: Story = {
     photo: photos[1],
     photos,
     isAdmin: true,
-    allAlbums: albums,
-    currentAlbum: albums[0],
+    allChapters: chapters,
+    currentChapter: chapters[0],
     recuerdos,
   },
 };
@@ -86,13 +86,13 @@ export const ReadOnlyCollaborator: Story = {
     photos,
     isAdmin: false,
     onSetBaulCover: undefined,
-    onSetAlbumCover: undefined,
+    onSetChapterCover: undefined,
     onMovePhoto: undefined,
     onChangeDate: undefined,
     onDeletePhoto: undefined,
     onRequestRemoval: undefined,
-    allAlbums: albums,
-    currentAlbum: albums[0],
+    allChapters: chapters,
+    currentChapter: chapters[0],
     recuerdos,
   },
 };

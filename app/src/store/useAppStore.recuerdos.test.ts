@@ -5,7 +5,7 @@ vi.mock('@/api', () => ({
   api: {
     recuerdos: {
       create: vi.fn(),
-      createForAlbum: vi.fn(),
+      createForChapter: vi.fn(),
     },
   },
 }));
@@ -15,16 +15,16 @@ import { useAppStore } from './useAppStore';
 
 // Regression coverage for a bug where adding a recuerdo from a photo or a chapter never
 // showed up in the baúl-wide "Recuerdos" tab until the baúl page was reloaded: addRecuerdo
-// and addAlbumRecuerdo only ever patched their own narrow cache (recuerdos[photoId] /
-// albumRecuerdos[albumId]), never baulRecuerdos[baulId] — the tab's own load is skipped
+// and addChapterRecuerdo only ever patched their own narrow cache (recuerdos[photoId] /
+// chapterRecuerdos[chapterId]), never baulRecuerdos[baulId] — the tab's own load is skipped
 // once that cache has *any* value, so it never noticed the addition happened elsewhere.
 describe('useAppStore recuerdo caches stay in sync', () => {
   const baulId = 'baul-1';
   const photoId = 'photo-1';
-  const albumId = 'album-1';
+  const chapterId = 'chapter-1';
 
   beforeEach(() => {
-    useAppStore.setState({ recuerdos: {}, albumRecuerdos: {}, baulRecuerdos: {} });
+    useAppStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {} });
     vi.clearAllMocks();
   });
 
@@ -61,26 +61,26 @@ describe('useAppStore recuerdo caches stay in sync', () => {
     expect(useAppStore.getState().baulRecuerdos[baulId]).toBeUndefined();
   });
 
-  it('addAlbumRecuerdo patches baulRecuerdos when the baúl-level tab was already loaded', async () => {
+  it('addChapterRecuerdo patches baulRecuerdos when the baúl-level tab was already loaded', async () => {
     const existing = newRecuerdo('existing');
     useAppStore.setState({ baulRecuerdos: { [baulId]: [existing] } });
 
-    const created = newRecuerdo('new', { albumId });
-    vi.mocked(api.recuerdos.createForAlbum).mockResolvedValue(created);
+    const created = newRecuerdo('new', { chapterId });
+    vi.mocked(api.recuerdos.createForChapter).mockResolvedValue(created);
 
-    await useAppStore.getState().addAlbumRecuerdo(baulId, albumId, 'hola');
+    await useAppStore.getState().addChapterRecuerdo(baulId, chapterId, 'hola');
 
-    expect(useAppStore.getState().albumRecuerdos[albumId]).toEqual([created]);
+    expect(useAppStore.getState().chapterRecuerdos[chapterId]).toEqual([created]);
     expect(useAppStore.getState().baulRecuerdos[baulId]).toEqual([created, existing]);
   });
 
-  it('addAlbumRecuerdo does not fabricate a partial baulRecuerdos entry when the tab was never loaded', async () => {
-    const created = newRecuerdo('new', { albumId });
-    vi.mocked(api.recuerdos.createForAlbum).mockResolvedValue(created);
+  it('addChapterRecuerdo does not fabricate a partial baulRecuerdos entry when the tab was never loaded', async () => {
+    const created = newRecuerdo('new', { chapterId });
+    vi.mocked(api.recuerdos.createForChapter).mockResolvedValue(created);
 
-    await useAppStore.getState().addAlbumRecuerdo(baulId, albumId, 'hola');
+    await useAppStore.getState().addChapterRecuerdo(baulId, chapterId, 'hola');
 
-    expect(useAppStore.getState().albumRecuerdos[albumId]).toEqual([created]);
+    expect(useAppStore.getState().chapterRecuerdos[chapterId]).toEqual([created]);
     expect(useAppStore.getState().baulRecuerdos[baulId]).toBeUndefined();
   });
 });

@@ -5,25 +5,25 @@ import { useAppStore } from '@/store/useAppStore';
 
 export const UploadConfirmationRoute: React.FC = () => {
   const navigate = useNavigate();
-  const { baulId, albumId } = useParams();
+  const { baulId, chapterId } = useParams();
   const location = useLocation();
-  const { baules, albums } = useAppStore();
+  const { baules, chapters } = useAppStore();
   const baul = baules.find(b => b.id === baulId);
-  const album = albums[baulId!]?.find(a => a.id === albumId);
+  const currentChapter = chapters[baulId!]?.find(a => a.id === chapterId);
   const { selectedPhotos } = location.state || { selectedPhotos: [] };
-  
-  if (!baul || !album) return <div className="p-8 text-center">Cargando...</div>;
+
+  if (!baul || !currentChapter) return <div className="p-8 text-center">Cargando...</div>;
 
   return (
     <UploadConfirmationScreen
       baul={baul}
-      album={album}
-      existingAlbums={albums[baulId!] || []}
-      currentAlbumId={album.id}
+      currentChapter={currentChapter}
+      existingChapters={chapters[baulId!] || []}
+      currentChapterId={currentChapter.id}
       selectedPhotos={selectedPhotos}
-      onBack={() => navigate(`/baules/${baul.id}/albumes/${album.id}`)}
+      onBack={() => navigate(`/baules/${baul.id}/capitulos/${currentChapter.id}`)}
       onUpload={(photos, chapter, date) => {
-        navigate(`/baules/${baul.id}/albumes/${album.id}/subiendo`, { state: { selectedPhotos: photos, chapter, date } });
+        navigate(`/baules/${baul.id}/capitulos/${currentChapter.id}/subiendo`, { state: { selectedPhotos: photos, chapter, date } });
       }}
     />
   );

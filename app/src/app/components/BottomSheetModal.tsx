@@ -23,7 +23,7 @@ interface BottomSheetModalProps {
 // ancho en móvil. Antes cada modal reimplementaba este shell por su cuenta, y bastaba con
 // que uno metiera un padding de más en el contenedor exterior (en vez de dejar que la hoja
 // ocupe el ancho completo) para que se viera con "bordes" en vez de a pantalla completa —
-// pasó con DeleteAlbumModal. Los modales concretos solo aportan su contenido.
+// pasó con DeleteChapterModal. Los modales concretos solo aportan su contenido.
 export function BottomSheetModal({
   onCancel,
   children,

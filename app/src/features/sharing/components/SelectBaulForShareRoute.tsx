@@ -12,7 +12,7 @@ import { Baul } from '@/types';
 export const SelectBaulForShareRoute: React.FC = () => {
   const navigate = useNavigate();
   const [isOpeningBaul, setIsOpeningBaul] = useState(false);
-  const { baules, isLoading: isLoadingBaules, loadAlbums, loadLoosePhotos } = useAppStore();
+  const { baules, isLoading: isLoadingBaules, loadChapters, loadLoosePhotos } = useAppStore();
   const { share, selectedPhotos, clear } = useIncomingShareStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   // clear() vacía este store en cuanto se elige baúl, lo que re-renderiza este mismo
@@ -35,7 +35,7 @@ export const SelectBaulForShareRoute: React.FC = () => {
   const handleSelectBaul = async (baul: Baul) => {
     try {
       setIsOpeningBaul(true);
-      await Promise.all([loadAlbums(baul.id), loadLoosePhotos(baul.id)]);
+      await Promise.all([loadChapters(baul.id), loadLoosePhotos(baul.id)]);
       hasNavigatedRef.current = true;
       navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } });
       clear();
