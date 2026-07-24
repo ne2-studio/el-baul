@@ -52,8 +52,16 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId) =>
+        await dbContext.Photos.AsNoTracking().Where(p => p.BaulId == baulId).ToListAsync();
+
     public async Task DeleteAsync(PhotoId id)
     {
         await dbContext.Photos.Where(p => p.Id == id).ExecuteDeleteAsync();
+    }
+
+    public async Task DeleteByBaulIdAsync(BaulId baulId)
+    {
+        await dbContext.Photos.Where(p => p.BaulId == baulId).ExecuteDeleteAsync();
     }
 }

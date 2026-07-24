@@ -41,4 +41,14 @@ public class InMemoryChapterRepository : IChapterRepository
         lock (_lock) _chapters.Remove(id);
         return Task.CompletedTask;
     }
+
+    public Task DeleteByBaulIdAsync(BaulId baulId)
+    {
+        lock (_lock)
+        {
+            var ids = _chapters.Values.Where(a => a.BaulId == baulId).Select(a => a.Id).ToList();
+            foreach (var id in ids) _chapters.Remove(id);
+        }
+        return Task.CompletedTask;
+    }
 }

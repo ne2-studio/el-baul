@@ -53,6 +53,8 @@ export const api = {
       fetch(`${API_BASE_URL}/api/admin/baules/${id}`, { headers: getHeaders() })
         .then(handleResponse)
         .then((data) => new AdminBaulDetail(data)),
+    delete: async (id: string): Promise<void> =>
+      fetch(`${API_BASE_URL}/api/admin/baules/${id}`, { method: 'DELETE', headers: getHeaders() }).then(handleResponse),
   },
   emails: {
     getAll: async (): Promise<AdminSentEmail[]> =>

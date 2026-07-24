@@ -59,6 +59,13 @@ public class AdminController(
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpDelete("baules/{baulId:guid}")]
+    public async Task<IActionResult> DeleteBaul(Guid baulId)
+    {
+        var result = await adminManager.DeleteBaulAsync(baulId);
+        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpGet("emails")]
     public async Task<IActionResult> GetEmails()
     {

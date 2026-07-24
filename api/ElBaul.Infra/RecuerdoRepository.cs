@@ -59,4 +59,9 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
         dbContext.Recuerdos.Update(recuerdo);
         await dbContext.SaveChangesAsync();
     }
+
+    public async Task DeleteByBaulIdAsync(BaulId baulId)
+    {
+        await dbContext.Recuerdos.Where(r => r.BaulId == baulId).ExecuteDeleteAsync();
+    }
 }

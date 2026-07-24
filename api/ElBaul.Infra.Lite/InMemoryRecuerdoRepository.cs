@@ -85,4 +85,10 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
         }
         return Task.CompletedTask;
     }
+
+    public Task DeleteByBaulIdAsync(BaulId baulId)
+    {
+        lock (_lock) _recuerdos.RemoveAll(r => r.BaulId == baulId);
+        return Task.CompletedTask;
+    }
 }

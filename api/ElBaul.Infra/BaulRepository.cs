@@ -36,6 +36,11 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task DeleteAsync(BaulId id)
+    {
+        await dbContext.Baules.Where(b => b.Id == id).ExecuteDeleteAsync();
+    }
+
     public async Task<IEnumerable<Persona>> GetPersonasAsync(BaulId baulId) =>
         await dbContext.Personas.AsNoTracking().Where(s => s.BaulId == baulId).ToListAsync();
 
@@ -74,6 +79,11 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.Personas.Where(s => s.BaulId == baulId && s.Id == personaId).ExecuteDeleteAsync();
     }
 
+    public async Task RemoveAllPersonasAsync(BaulId baulId)
+    {
+        await dbContext.Personas.Where(s => s.BaulId == baulId).ExecuteDeleteAsync();
+    }
+
     public async Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId) =>
         await dbContext.RemovalRequests.AsNoTracking().Where(r => r.BaulId == baulId).ToListAsync();
 
@@ -89,5 +99,10 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     public async Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
     {
         await dbContext.RemovalRequests.Where(r => r.BaulId == baulId && r.Id == requestId).ExecuteDeleteAsync();
+    }
+
+    public async Task DeleteAllRemovalRequestsAsync(BaulId baulId)
+    {
+        await dbContext.RemovalRequests.Where(r => r.BaulId == baulId).ExecuteDeleteAsync();
     }
 }

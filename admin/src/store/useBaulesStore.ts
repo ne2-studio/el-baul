@@ -10,6 +10,7 @@ interface BaulesStore {
 
   fetchBaules: () => Promise<void>;
   fetchBaul: (id: string) => Promise<void>;
+  deleteBaul: (id: string) => Promise<void>;
 }
 
 export const useBaulesStore = create<BaulesStore>((set) => ({
@@ -36,5 +37,10 @@ export const useBaulesStore = create<BaulesStore>((set) => ({
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
     }
+  },
+
+  deleteBaul: async (id) => {
+    await api.baules.delete(id);
+    set({ selectedBaul: null });
   },
 }));

@@ -47,6 +47,12 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.CompletedTask;
     }
 
+    public Task DeleteAsync(BaulId id)
+    {
+        lock (_lock) _baules.Remove(id);
+        return Task.CompletedTask;
+    }
+
     public Task<IEnumerable<Persona>> GetPersonasAsync(BaulId baulId)
     {
         lock (_lock) return Task.FromResult(_personas.Values.Where(s => s.BaulId == baulId).ToList().AsEnumerable());
@@ -98,6 +104,16 @@ public class InMemoryBaulRepository : IBaulRepository
         return Task.CompletedTask;
     }
 
+    public Task RemoveAllPersonasAsync(BaulId baulId)
+    {
+        lock (_lock)
+        {
+            var ids = _personas.Values.Where(s => s.BaulId == baulId).Select(s => s.Id).ToList();
+            foreach (var id in ids) _personas.Remove(id);
+        }
+        return Task.CompletedTask;
+    }
+
     public Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId)
     {
         lock (_lock) return Task.FromResult(_removalRequests.Values.Where(r => r.BaulId == baulId).ToList().AsEnumerable());
@@ -117,6 +133,16 @@ public class InMemoryBaulRepository : IBaulRepository
     public Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
     {
         lock (_lock) _removalRequests.Remove(requestId);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAllRemovalRequestsAsync(BaulId baulId)
+    {
+        lock (_lock)
+        {
+            var ids = _removalRequests.Values.Where(r => r.BaulId == baulId).Select(r => r.Id).ToList();
+            foreach (var id in ids) _removalRequests.Remove(id);
+        }
         return Task.CompletedTask;
     }
 }

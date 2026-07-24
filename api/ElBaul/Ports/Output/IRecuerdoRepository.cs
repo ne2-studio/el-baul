@@ -39,4 +39,9 @@ public interface IRecuerdoRepository
 
     Task CreateAsync(Recuerdo recuerdo);
     Task UpdateAsync(Recuerdo recuerdo);
+
+    /// <summary>Deletes every recuerdo in the baúl — photo-attached, chapter-attached, and
+    /// standalone. Used by the admin hard-delete flow: Recuerdo.BaulId/ChapterId are Restrict
+    /// FKs, so these rows must be gone before the Baul (or its Chapters) can be deleted.</summary>
+    Task DeleteByBaulIdAsync(BaulId baulId);
 }

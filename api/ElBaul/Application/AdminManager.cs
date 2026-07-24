@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application;
 
@@ -13,7 +14,16 @@ namespace ElBaul.Application;
 /// docs/ARCHITECTURE.md's "access control is checked explicitly inside each use-case
 /// method" convention, not an oversight.
 /// </summary>
-public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository sentEmailRepository, IClock clock) : IAdminManager
+public class AdminManager(
+    IAdminRepository adminRepository,
+    ISentEmailRepository sentEmailRepository,
+    IBaulRepository baulRepository,
+    IChapterRepository chapterRepository,
+    IPhotoRepository photoRepository,
+    IRecuerdoRepository recuerdoRepository,
+    IPhotoStorage photoStorage,
+    IClock clock,
+    ILogger<AdminManager> logger) : IAdminManager
 {
     public async Task<Result<AdminDashboardCountsDto>> GetDashboardCountsAsync()
     {
@@ -63,6 +73,52 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
         var stats = new AdminBaulStatsDto(row.PhotoCount, row.RecuerdoCount, row.Personas.Count(), row.Chapters.Count());
 
         return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, chapters, stats);
+    }
+
+    /// <summary>
+    /// Hard-deletes a baúl and everything in it: recuerdos, photos (incl. soft-deleted ones
+    /// and their storage blobs), chapters, personas, and pending removal requests. Deletion
+    /// order matters — Photo/Recuerdo have Restrict FKs to Baul (see PhotoConfiguration/
+    /// RecuerdoConfiguration) specifically to avoid multiple-cascade-path errors, so those
+    /// rows must be gone before the Baul row itself can go. Chapters/Personas/RemovalRequests
+    /// do cascade at the DB level, but are deleted explicitly anyway so behavior doesn't
+    /// depend on which backend (Postgres vs. the in-memory Lite repositories) is running.
+    /// </summary>
+    public async Task<Result> DeleteBaulAsync(Guid baulId)
+    {
+        var id = new BaulId(baulId);
+        var baul = await baulRepository.GetByIdAsync(id);
+        if (baul is null) return Result.Failure("Baul not found");
+
+        var photos = (await photoRepository.GetAllByBaulIdAsync(id)).ToList();
+        var personas = (await baulRepository.GetPersonasAsync(id)).ToList();
+
+        await recuerdoRepository.DeleteByBaulIdAsync(id);
+        await photoRepository.DeleteByBaulIdAsync(id);
+        await chapterRepository.DeleteByBaulIdAsync(id);
+        await baulRepository.RemoveAllPersonasAsync(id);
+        await baulRepository.DeleteAllRemovalRequestsAsync(id);
+        await baulRepository.DeleteAsync(id);
+
+        logger.LogWarning(
+            "Baul hard-deleted {BaulId} ({PhotoCount} photos, {PersonaCount} personas)", baulId, photos.Count, personas.Count);
+
+        var storageKeys = photos.Select(p => p.StorageKey)
+            .Concat(personas.Where(p => !string.IsNullOrEmpty(p.AvatarPhotoKey)).Select(p => p.AvatarPhotoKey!));
+
+        foreach (var key in storageKeys)
+        {
+            try
+            {
+                await photoStorage.DeleteAsync(key);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to clean up storage object after baul hard-delete {BaulId} {StorageKey}", baulId, key);
+            }
+        }
+
+        return Result.Success();
     }
 
     public async Task<Result<IEnumerable<AdminSentEmailDto>>> GetSentEmailsAsync()

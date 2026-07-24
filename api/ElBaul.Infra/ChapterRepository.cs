@@ -32,4 +32,9 @@ public class ChapterRepository(ElBaulDbContext dbContext) : IChapterRepository
     {
         await dbContext.Chapters.Where(a => a.Id == id).ExecuteDeleteAsync();
     }
+
+    public async Task DeleteByBaulIdAsync(BaulId baulId)
+    {
+        await dbContext.Chapters.Where(a => a.BaulId == baulId).ExecuteDeleteAsync();
+    }
 }

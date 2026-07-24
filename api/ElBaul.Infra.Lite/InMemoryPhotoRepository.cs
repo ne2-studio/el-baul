@@ -56,9 +56,24 @@ public class InMemoryPhotoRepository : IPhotoRepository
         return Task.CompletedTask;
     }
 
+    public Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId)
+    {
+        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId).ToList().AsEnumerable());
+    }
+
     public Task DeleteAsync(PhotoId id)
     {
         lock (_lock) _photos.Remove(id);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteByBaulIdAsync(BaulId baulId)
+    {
+        lock (_lock)
+        {
+            var ids = _photos.Values.Where(p => p.BaulId == baulId).Select(p => p.Id).ToList();
+            foreach (var id in ids) _photos.Remove(id);
+        }
         return Task.CompletedTask;
     }
 }

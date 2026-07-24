@@ -9,6 +9,7 @@ public interface IAdminManager
     Task<Result<AdminUserDetailDto>> GetUserDetailAsync(string userId);
     Task<Result<IEnumerable<AdminBaulListItemDto>>> GetAllBaulesAsync();
     Task<Result<AdminBaulDetailDto>> GetBaulDetailAsync(Guid baulId);
+    Task<Result> DeleteBaulAsync(Guid baulId);
     Task<Result<IEnumerable<AdminSentEmailDto>>> GetSentEmailsAsync();
     Task<Result<IEnumerable<AdminSentEmailDto>>> GetUserSentEmailsAsync(string userId);
 }

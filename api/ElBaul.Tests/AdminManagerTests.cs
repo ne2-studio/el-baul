@@ -2,6 +2,7 @@ using ElBaul.Application;
 using ElBaul.Ports.Output;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ElBaul.Tests;
 
@@ -9,9 +10,16 @@ public class AdminManagerTests
 {
     private readonly InMemoryAdminRepository _adminRepository = new();
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryChapterRepository _chapterRepository = new();
+    private readonly InMemoryPhotoRepository _photoRepository = new();
+    private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
+    private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
-    private AdminManager CreateManager() => new(_adminRepository, _sentEmailRepository, _clock);
+    private AdminManager CreateManager() => new(
+        _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
+        _recuerdoRepository, _photoStorage, _clock, NullLogger<AdminManager>.Instance);
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()
@@ -142,5 +150,47 @@ public class AdminManagerTests
         Assert.Equal(8, result.Value.Stats.Recuerdos);
         Assert.Equal(2, result.Value.Stats.Personas);
         Assert.Equal(1, result.Value.Stats.Chapters);
+    }
+
+    [Fact]
+    public async Task DeleteBaulAsync_ShouldReturnFailure_WhenBaulNotFound()
+    {
+        var result = await CreateManager().DeleteBaulAsync(Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Baul not found", result.Error);
+    }
+
+    [Fact]
+    public async Task DeleteBaulAsync_ShouldRemoveEverythingInTheBaulAndCleanUpStorage()
+    {
+        var baulId = new BaulId(Guid.NewGuid());
+        var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        await _baulRepository.CreateAsync(baul);
+
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baulId, "Verano 2020", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(chapter);
+
+        var photo = Photo.Create(
+            new PhotoId(Guid.NewGuid()), chapter.Id, baulId, "photos/one.jpg", null, "custodio-1", _clock.UtcNow());
+        await _photoRepository.CreateAsync(photo);
+
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baulId, "custodio-1", "Qué buen día", _clock.UtcNow());
+        await _recuerdoRepository.CreateAsync(recuerdo);
+
+        var persona = new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, "custodio-1", "Abuela", BaulRole.Custodio, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
+        await _baulRepository.AddPersonaAsync(persona);
+
+        var result = await CreateManager().DeleteBaulAsync(baulId.Value);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(await _baulRepository.GetByIdAsync(baulId));
+        Assert.Empty(await _chapterRepository.GetByBaulIdAsync(baulId));
+        Assert.Empty(await _photoRepository.GetAllByBaulIdAsync(baulId));
+        Assert.Empty(await _recuerdoRepository.GetByBaulIdAsync(baulId));
+        Assert.Empty(await _baulRepository.GetPersonasAsync(baulId));
+        Assert.Contains("photos/one.jpg", _photoStorage.DeletedKeys);
+        Assert.Contains("avatars/abuela.jpg", _photoStorage.DeletedKeys);
     }
 }
