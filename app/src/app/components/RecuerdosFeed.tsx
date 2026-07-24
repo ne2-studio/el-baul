@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SimpleFAB } from './FAB';
 import { BookOpen, X } from 'lucide-react';
 import { Photo, Recuerdo } from './PhotosView';
+import { RecuerdoFeedCard } from './RecuerdoFeedCard';
 
 interface RecuerdosFeedProps {
   active: boolean;
@@ -48,6 +49,7 @@ export function RecuerdosFeed({
               <RecuerdoFeedCard
                 key={recuerdo.id}
                 recuerdo={recuerdo}
+                showChapterBadge={false}
                 onPhotoClick={
                   recuerdo.photoId
                     ? () => {
@@ -77,55 +79,6 @@ export function RecuerdosFeed({
         />
       )}
     </>
-  );
-}
-
-// ─── Recuerdo feed card ───────────────────────────────────────────────────────
-function getInitials(name: string): string {
-  if (!name) return '??';
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
-
-function RecuerdoFeedCard({
-  recuerdo, onPhotoClick, onUserClick,
-}: { recuerdo: Recuerdo; onPhotoClick?: () => void; onUserClick?: (personaId: string) => void }) {
-  const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
-  const canOpenPersona = !!(recuerdo.personaId && onUserClick);
-
-  return (
-    <div className="bg-card border border-border/60 rounded-2xl p-5">
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
-          disabled={!canOpenPersona}
-          className={`w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5 overflow-hidden ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
-        >
-          {recuerdo.userAvatar ? (
-            <img src={recuerdo.userAvatar} alt={userName} className="w-full h-full object-cover rounded-full" />
-          ) : (
-            getInitials(userName)
-          )}
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-sm font-medium text-foreground">{userName}</p>
-            <p className="text-xs text-muted-foreground shrink-0">{new Date(recuerdo.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-          </div>
-          <p className="text-sm text-foreground/90 leading-relaxed font-serif">{recuerdo.text}</p>
-          {recuerdo.photoThumbnailUrl && (
-            <button
-              onClick={onPhotoClick}
-              className="mt-3 block rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
-            >
-              <img src={recuerdo.photoThumbnailUrl} alt="" className="w-full max-h-36 object-cover rounded-xl" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 

@@ -120,6 +120,7 @@ export const BaulRoute: React.FC = () => {
         onOpenChat={chatEnabled ? () => navigate(`/baules/${baul.id}/recordar`) : undefined}
         onOpenChapterFromRecuerdo={(chapterId) => handleSelectChapter({ id: chapterId })}
         onOpenPhotoFromRecuerdo={handleOpenPhotoFromRecuerdo}
+        onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}
