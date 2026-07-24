@@ -86,7 +86,7 @@ src/
 ├── api.ts         # Single fetch client for the backend (namespaced per resource)
 ├── types/         # Domain entity classes, hydrated from api.ts responses
 ├── app/           # Componentes base, rutas y layout principal
-├── features/      # Módulos por dominio (auth, baules, albums, photos, sharing, profile)
+├── features/      # Módulos por dominio (auth, baules, chapters, photos, sharing, profile)
 ├── store/         # Zustand: useAppStore (domain data) + uiStore (toasts/modals)
 └── utils/         # Funciones de utilidad y helpers
 ```

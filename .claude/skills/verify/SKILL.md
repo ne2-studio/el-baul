@@ -55,7 +55,7 @@ docker `app` container for this — see below.
 
 This is the one lesson worth internalizing before you verify anything visual here.
 
-**What happened**: a backend fix (`AlbumDto.RecuerdoCount`) was correct — confirmed via
+**What happened**: a backend fix (`ChapterDto.RecuerdoCount`) was correct — confirmed via
 `dotnet test` and a raw `curl` against the API. But the chapter card in the browser
 still showed no recuerdo count, twice in a row, across two "fix and re-verify" cycles.
 The actual cause: the docker-compose `app` container (serving a `dist/` built *before*
@@ -88,15 +88,15 @@ times this actually bit.
 
 ## Known sharp edges (things that have actually broken here)
 
-- **Denormalized counts drift from their source of truth.** `Recuerdo.AlbumId` exists
-  specifically so album-scoped queries don't need to join through `Photo` — but
-  `AlbumManager.ToDtoAsync`'s `RecuerdoCount` was still computed the old way (joining
-  through the album's *currently active* photos) after that field was added, so it
+- **Denormalized counts drift from their source of truth.** `Recuerdo.ChapterId` exists
+  specifically so chapter-scoped queries don't need to join through `Photo` — but
+  `ChapterManager.ToDtoAsync`'s `RecuerdoCount` was still computed the old way (joining
+  through the chapter's *currently active* photos) after that field was added, so it
   silently dropped photo-less recuerdos and any recuerdo whose photo had since been
   soft-deleted. If you're computing a count/aggregate that has a "cheap" denormalized
   field available, grep for other places computing the same logical value the old way
   before assuming a fix is complete.
-- **Access-level asymmetry.** `BaulManager` used to compute the shared-user count only
+- **Access-level asymmetry.** `BaulManager` used to compute the Persona count only
   when the caller was the custodio, defaulting to `0` otherwise — so a baúl shown to a
   non-owning member always looked memberless. When a value depends on "am I the
   custodio," check every call site computes it the same way, not just the one you're

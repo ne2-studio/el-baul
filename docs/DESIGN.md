@@ -124,7 +124,7 @@ components:
 ## Overview
 
 El Baúl ("the trunk") is a private, shared photo archive for families: a "baúl" holds
-albums of photos and "recuerdos" (memories/notes) that a custodian shares with
+chapters ("capítulos") of photos and "recuerdos" (memories/notes) that a custodian shares with
 collaborators and members. The product is Spanish-first and built for an intimate,
 non-technical audience — often several generations of the same family — so the UI
 favors warmth and reassurance over density or novelty.
@@ -189,7 +189,7 @@ Inter keeps body copy, labels, and UI chrome clean and legible.
 
 The app is a single-column, mobile-first flow (Capacitor-wrapped for Android) with
 generous horizontal padding (24px / `px-6`) and centered `max-w-md` content on wider
-viewports — there is no multi-column desktop grid. Photos and albums use a masonry/grid
+viewports — there is no multi-column desktop grid. Photos and chapters use a masonry/grid
 layout so images of varying aspect ratios can sit edge-to-edge within their card without
 letterboxing.
 
@@ -236,7 +236,7 @@ loading state that swaps in a spinner rather than disabling silently.
 
 ### Cards
 White surfaces on the beige background, large 24px rounded corners, soft resting shadow
-that deepens slightly on hover/tap when the card is clickable (album covers, baúl
+that deepens slightly on hover/tap when the card is clickable (chapter covers, baúl
 tiles, recuerdo cards).
 
 ### Inputs
@@ -251,7 +251,7 @@ transparent background with a hairline border for lower-emphasis tags.
 
 ### Empty States
 Centered icon (muted, low opacity) + `headline-xs` title + `body-md` muted subtitle,
-with generous vertical padding — used whenever a baúl, album, or list has no content
+with generous vertical padding — used whenever a baúl, chapter, or list has no content
 yet, keeping the tone reassuring rather than clinical ("nothing here" reads differently
 than an error).
 

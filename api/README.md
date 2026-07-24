@@ -19,10 +19,10 @@ black-box acceptance tests for the *built Docker image*, not this source tree. S
 README for the full rule set; it runs in CI right after `docker build`, before the image is
 pushed.
 
-Domain: a **Baúl** (trunk) is owned by a custodian, holds **Albums** of **Photos**
+Domain: a **Baúl** (trunk) is owned by a custodian, holds **Chapters** of **Photos**
 (each photo can carry **Recuerdos** — comments — from anyone with access), and can be
-shared with other users as *colaborador* (can add albums/photos) or *miembro*
-(read-only) via **SharedUser** invitations, and **RemovalRequest**s
+shared with other people as *colaborador* (can add chapters/photos) or *miembro*
+(read-only) via **Persona** invitations, and **RemovalRequest**s
 (a non-custodian asking to have a photo removed).
 
 ## API endpoints
@@ -33,14 +33,14 @@ Full request/response shapes are documented in [`docs/API.md`](../docs/API.md).
 |--------|------|------|-------------|
 | `GET`/`POST` | `/api/baules` | Required | List/create baúles |
 | `GET` | `/api/baules/{id}` | Required | Get a baúl (access-checked) |
-| `GET` | `/api/baules/{id}/preview` | Public (rate-limited) | Preview for an invitation link |
-| `POST` | `/api/baules/{id}/accept-invite` | Required | Join a baúl as *miembro* |
-| `GET`/`POST` | `/api/baules/{id}/shared-users` \| `/share` | Required | Sharing |
-| `PUT`/`DELETE` | `/api/baules/{id}/shared-users/{..}` | Required | Update role / revoke access |
+| `GET`/`POST` | `/api/baules/{id}/personas` | Required | List Personas / invite a new one |
+| `GET`/`PUT`/`DELETE` | `/api/baules/{id}/personas/{personaId}` | Required | Get/update/remove a Persona |
+| `GET` | `/api/personas/{personaId}/invite-preview` | Public (rate-limited) | Preview for a Persona's invitation link |
+| `POST` | `/api/personas/{personaId}/accept-invite` | Required | Claim a Persona invitation |
 | `GET`/`POST` | `/api/baules/{id}/removal-requests` | Required | Photo removal requests |
 | `POST` | `/api/baules/{id}/removal-requests/{id}/approve\|reject` | Required | Resolve a removal request |
-| `GET`/`POST` | `/api/baules/{baulId}/albums` | Required | Albums |
-| `GET`/`POST` | `/api/albums/{albumId}/photos` | Required | Photos (POST is multipart upload) |
+| `GET`/`POST` | `/api/baules/{baulId}/chapters` | Required | Chapters |
+| `GET`/`POST` | `/api/chapters/{chapterId}/photos` | Required | Photos (POST is multipart upload) |
 | `DELETE` | `/api/photos/{photoId}` | Required (custodio only) | Soft-delete a photo, with a reason |
 | `GET`/`POST` | `/api/photos/{photoId}/recuerdos` | Required | Comments on a photo |
 | `GET` | `/api/users/me` | Required | Current user's profile |
@@ -149,40 +149,13 @@ dotnet ElBaul.Api.dll backfill-exif-dates --dry-run
 it, it updates the DB as it goes. Progress and a final summary (updated / no EXIF found /
 failed counts) are logged to stdout; exit code is `0` if nothing failed, `1` otherwise.
 
-### `backfill-recuerdo-album-id`
-
-Recuerdo now carries its own `AlbumId` (denormalized from the associated photo's `AlbumId`)
-so the Recuerdos feed can query by chapter without joining through Photo. New recuerdos set
-it themselves; this backfills it for every recuerdo created before that change (has a
-`PhotoId` but no `AlbumId` yet). Safe to re-run anytime (only looks at recuerdos still
-missing an `AlbumId`) and safe to run while the app is serving traffic.
-
-```bash
-# Coolify / any docker deployment: find the running API container, then:
-docker exec <api-container> dotnet ElBaul.Api.dll backfill-recuerdo-album-id --dry-run
-docker exec <api-container> dotnet ElBaul.Api.dll backfill-recuerdo-album-id
-
-# Local dev (docker-compose service name is "api"):
-docker compose exec api dotnet ElBaul.Api.dll backfill-recuerdo-album-id --dry-run
-docker compose exec api dotnet ElBaul.Api.dll backfill-recuerdo-album-id
-
-# Running the API outside Docker (dotnet run/dotnet ElBaul.Api.dll directly):
-dotnet ElBaul.Api.dll backfill-recuerdo-album-id --dry-run
-```
-
-`--dry-run` logs what it would change without writing anything — run that first. Without
-it, it updates the DB as it goes. A recuerdo whose photo is loose (no album) is left with a
-null `AlbumId` and counted separately, not as a failure. Progress and a final summary
-(updated / left null / failed counts) are logged to stdout; exit code is `0` if nothing
-failed, `1` otherwise.
-
 ### `backfill-recuerdo-baul-id`
 
-Recuerdo now carries its own `BaulId` (denormalized from `Photo.BaulId`/`Album.BaulId`, or
+Recuerdo now carries its own `BaulId` (denormalized from `Photo.BaulId`/`Chapter.BaulId`, or
 set directly for standalone recuerdos with no photo or chapter) so the Recuerdos tab can
-query a whole baúl without joining through Photo/Album. New recuerdos set it themselves;
+query a whole baúl without joining through Photo/Chapter. New recuerdos set it themselves;
 this backfills it for every recuerdo created before that change, resolving it from the
-recuerdo's `PhotoId` (photo's `BaulId`) or `AlbumId` (album's `BaulId`). Safe to re-run
+recuerdo's `PhotoId` (photo's `BaulId`) or `ChapterId` (chapter's `BaulId`). Safe to re-run
 anytime (only looks at recuerdos still missing a `BaulId`) and safe to run while the app is
 serving traffic.
 

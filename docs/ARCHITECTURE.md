@@ -17,10 +17,10 @@ small image-processing sidecar:
 | `imgproxy/` | An [imgproxy](https://imgproxy.net/) instance, its own Dockerfile/deploy, serving resized photos directly from MinIO via named presets |
 
 El Baúl is a private, shared photo archive: a **baúl** (trunk) is a family archive owned by a
-**custodio** (custodian), containing **albums**, each holding **photos**. A baúl is shared with
-other people as **personas** — a per-baúl identity (nickname + role: `Colaborador`,
+**custodio** (custodian), containing **chapters** (capítulos), each holding **photos**. A baúl is
+shared with other people as **personas** — a per-baúl identity (nickname + role: `Colaborador`,
 `Administrador`, or `Custodio`) distinct from the underlying account, so a "recuerdo" (a memory/
-comment left on a photo or album) is always attributed to the nickname the family chose, not
+comment left on a photo or chapter) is always attributed to the nickname the family chose, not
 whatever name the OIDC provider has on file. Non-custodian members can request a photo's removal
 (`RemovalRequest`); the custodian approves or rejects it — photos are never hard-deleted by
 anyone else.
@@ -51,21 +51,21 @@ contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBau
 `ElBaul`, never `ElBaul.Api`.
 
 - **`ElBaul` (core)** — the domain/use-case project. Contains:
-  - `Application/` — one class per aggregate root (`BaulManager`, `AlbumManager`,
+  - `Application/` — one class per aggregate root (`BaulManager`, `ChapterManager`,
     `PhotoManager`, `UserManager`), each implementing its input port and holding all business
     logic for that area, plus a shared `DtoMapping.cs`.
-  - `Ports/Input/` — use-case interfaces (`IBaulManager`, `IAlbumManager`, `IPhotoManager`,
+  - `Ports/Input/` — use-case interfaces (`IBaulManager`, `IChapterManager`, `IPhotoManager`,
     `IUserManager`) and their DTOs (plain `record` types) — the contract the API layer calls
     into.
   - `Ports/Output/` — interfaces for everything the core needs from the outside world:
-    repositories (`IBaulRepository`, `IAlbumRepository`, `IPhotoRepository`,
+    repositories (`IBaulRepository`, `IChapterRepository`, `IPhotoRepository`,
     `IRecuerdoRepository`, `IUserRepository`), `IClock`, `IIdGenerator`, `ICurrentUserProvider`,
     `IPhotoStorage`, `IPhotoDateExtractor`, `IUserInfoClient` — plus the domain records
-    themselves (`Baul`, `Album`, `Photo`, `Recuerdo`, `SharedUser`, `RemovalRequest`, `User`).
+    themselves (`Baul`, `Chapter`, `Photo`, `Recuerdo`, `Persona`, `RemovalRequest`, `User`).
   - References only `CSharpFunctionalExtensions` (for `Result`/`Result<T>`) and
     `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB driver, no ORM.**
     Fully unit-testable in isolation.
-- **`ElBaul.Infra`** — implements every output port (`BaulRepository`, `AlbumRepository`,
+- **`ElBaul.Infra`** — implements every output port (`BaulRepository`, `ChapterRepository`,
   `PhotoRepository`, `RecuerdoRepository`, `UserRepository` over EF Core; `MinioPhotoStorage`;
   `ExifPhotoDateExtractor`; `SystemClock`; `GuidIdGenerator`; `HttpContextCurrentUserProvider`;
   `OidcUserInfoClient`) and exposes a single composition-root method,
@@ -98,7 +98,7 @@ contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBau
 
 ### Controller conventions
 
-- Thin: one controller per resource area (`BaulesController`, `AlbumsController`,
+- Thin: one controller per resource area (`BaulesController`, `ChaptersController`,
   `PhotosController`, `UsersController`, `AppConfigController`), delegating to a use-case method
   and mapping the `Result`/`Result<T>` to an HTTP response.
 - Errors use `Result.Failure<T>(string)` with a human-readable message; `ErrorMapping.
@@ -140,10 +140,10 @@ contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBau
   `IPhotoDateExtractor`. This is what makes the `Application/` managers unit-testable against
   hand-written fakes, no mocking framework.
 - **Access control is checked explicitly inside each use-case method**, not via a global filter:
-  every `AlbumManager`/`PhotoManager`/`BaulManager` method that touches a baúl-scoped resource
-  loads the baúl, then checks `baul.CustodioId == userId || sharedUser exists for userId`, and
+  every `ChapterManager`/`PhotoManager`/`BaulManager` method that touches a baúl-scoped resource
+  loads the baúl, then checks `baul.CustodioId == userId || persona exists for userId`, and
   returns `Result.Failure<T>("Access denied")` otherwise. This keeps scoping visible at each call
-  site (see `AlbumManager.cs` for the canonical shape) at the cost of some repetition across
+  site (see `ChapterManager.cs` for the canonical shape) at the cost of some repetition across
   managers — there's no shared authorization helper yet.
 - **DI lifetimes are `Scoped` by default.** `MinioPhotoStorage` is the one deliberate
   `Singleton` exception, because it wraps a single `AmazonS3Client`, which the AWS SDK documents
@@ -157,19 +157,19 @@ contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBau
 ### Data access
 
 - **EF Core** over PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`), chosen for the
-  relational, many-to-many-ish shape of baúles/albums/photos/personas. Table/column mapping via
+  relational, many-to-many-ish shape of baúles/chapters/photos/personas. Table/column mapping via
   Fluent API in `EntityConfigurations/` (one file per entity), not data annotations.
 - Migrations are applied automatically at startup — `dbContext.Database.MigrateAsync()` in
   `Program.cs` — never a manual deploy step.
-- **IDs**: `Guid` primary keys for all domain entities (`Baul`, `Album`, `Photo`, `Recuerdo`,
-  `SharedUser`, `RemovalRequest`); `User` is keyed by the OIDC `sub` claim instead, stored as
+- **IDs**: `Guid` primary keys for all domain entities (`Baul`, `Chapter`, `Photo`, `Recuerdo`,
+  `Persona`, `RemovalRequest`); `User` is keyed by the OIDC `sub` claim instead, stored as
   opaque `text` (Zitadel/OIDC subject ids aren't guaranteed to be GUID-shaped). DTOs expose ids
   as `string`; controllers parse route ids to `Guid` via `{id:guid}` route constraints.
 - **Photos are soft-deleted**: `PhotoStatus.Active`/`Deleted`, driven by the removal-request
   workflow rather than a hard `DELETE`.
 - **Photo dates are partial** (`DateYear`/`DateMonth`/`DateDay`, all nullable) — EXIF extraction
   (`ExifPhotoDateExtractor`, via `MetadataExtractor`) fills them in on upload when available, and
-  a photo with no date is still valid (`AlbumManager.ComputeDateRange` treats it as "undated"
+  a photo with no date is still valid (`ChapterManager.ComputeDateRange` treats it as "undated"
   rather than defaulting it into a sort position).
 - **Timestamps**: `CreatedAt`/`UpdatedAt` on every entity, set via `IClock` (UTC), not DB
   defaults.
@@ -183,8 +183,9 @@ photo bytes back out over HTTP itself:
   string the `Application` layer chooses.
 - `IPhotoStorage.GetImageUrl(key, placement)` returns a signed **imgproxy** URL instead of a raw
   storage URL. `ImgproxyUrlBuilder` (`ElBaul.Infra`) builds `s3://bucket/key` as imgproxy's
-  source, maps `ImagePlacement` (`PhotoGridThumbnail`, `PhotoFull`, `AlbumCover`,
-  `AlbumCoverFeatured`, `RemovalRequestThumbnail`, `InvitationPreview`, `BaulCover`) to a
+  source, maps `ImagePlacement` (`PhotoGridThumbnail`, `PhotoFull`, `ChapterCover`,
+  `ChapterCoverFeatured`, `RemovalRequestThumbnail`, `InvitationPreview`, `BaulCover`,
+  `PersonaAvatar`) to a
   **named preset** configured server-side in `imgproxy/presets.conf`, and HMAC-signs the path
   with a shared key/salt.
 - imgproxy is the *only* component that ever reads from MinIO — it holds its own S3 credentials
@@ -197,8 +198,8 @@ photo bytes back out over HTTP itself:
 ### Maintenance commands
 
 `Program.cs` intercepts `args[0]` before starting the web server for one-off maintenance work,
-delegating to `ElBaul.Maintenance` (`backfill-exif-dates`, `backfill-recuerdo-album-id`,
-`backfill-recuerdo-baul-id`, implemented in `ElBaul.Maintenance/Commands/` — see the
+delegating to `ElBaul.Maintenance` (`backfill-exif-dates`, `backfill-recuerdo-baul-id`,
+`backfill-recuerdo-embeddings`, implemented in `ElBaul.Maintenance/Commands/` — see the
 `ElBaul.Maintenance` bullet above for how the framework wires a command up). These run via
 `docker exec <container> dotnet ElBaul.Api.dll <command>` against an already-running
 deployment (see `api/README.md`) — the web process itself never runs them.
@@ -226,7 +227,7 @@ deployment (see `api/README.md`) — the web process itself never runs them.
 
 ### Testing
 
-- **`ElBaul.Tests`** — core/application logic (`AlbumManagerTests`, `BaulManagerTests`,
+- **`ElBaul.Tests`** — core/application logic (`ChapterManagerTests`, `BaulManagerTests`,
   `PhotoManagerTests`) against hand-written fakes in `Fakes/` (`InMemory*Repository`,
   `StaticClock`, `StaticIdGenerator`, `StaticCurrentUserProvider`, `FakePhotoStorage`,
   `FakePhotoDateExtractor`) — no mocking framework, fast, behavior-focused.
@@ -260,20 +261,20 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
         app/components/*.tsx  (presentational screens)
 ```
 
-- **`types/index.ts`** — one class per domain entity (`Baul`, `Album`, `Photo`, `Recuerdo`,
-  `SharedUser`, `RemovalRequest`, `BaulPreview`, `UserProfile`, plus value types like
+- **`types/index.ts`** — one class per domain entity (`Baul`, `Chapter`, `Photo`, `Recuerdo`,
+  `Persona`, `RemovalRequest`, `BaulPreview`, `UserProfile`, plus value types like
   `PhotoDate`/`Subscription`). Classes so raw JSON can be re-hydrated via `new Entity(data)`.
-- **`api.ts`** — a single `api` object, namespaced per resource (`api.baules`, `api.albums`,
-  `api.photos`, `api.recuerdos`, `api.sharedUsers`, `api.users`, `api.appConfig`). Plain `fetch`
+- **`api.ts`** — a single `api` object, namespaced per resource (`api.baules`, `api.chapters`,
+  `api.photos`, `api.recuerdos`, `api.personas`, `api.users`, `api.appConfig`). Plain `fetch`
   through a shared `handleResponse` that throws on non-OK responses; auth token is module-level
   state (`_accessToken`) set via `setAccessToken()`, not read from a hook. Every response is
   mapped back into its `types/index.ts` class before being returned. Base URL from
   `VITE_API_URL`.
 - **`store/`** — not a single store; state is split by concern:
   - `useAppStore.ts` — the main domain store (auth-derived profile/subscription, plus all
-    server data: `baules`, `albums`, `photos`, `loosePhotos`, `sharedUsers`, `removalRequests`,
-    `recuerdos`, `albumRecuerdos`). One `fetchData()` loads baúles on auth; per-screen `load*`
-    actions lazy-load the rest (albums, photos, recuerdos) as routes need them, rather than one
+    server data: `baules`, `chapters`, `photos`, `loosePhotos`, `personas`, `removalRequests`,
+    `recuerdos`, `chapterRecuerdos`). One `fetchData()` loads baúles on auth; per-screen `load*`
+    actions lazy-load the rest (chapters, photos, recuerdos) as routes need them, rather than one
     eager `Promise.all` for everything. Every mutating action calls `api.*` first and updates
     state from the response only after the await resolves.
   - `uiStore.ts` — cross-cutting UI state (toasts, profile menu, plan-limit modal) that isn't
@@ -283,13 +284,13 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
   - `useIncomingShareStore.ts` — state for the native "share into the app" flow (see Capacitor
     below), independent of server data.
 - **`features/<domain>/components/*Route.tsx`** — one container component per route, named
-  `*Route` (`AlbumRoute`, `BaulesListRoute`, `CreateBaulRoute`, …), grouped into
-  `features/{albums,auth,baules,photos,profile,sharing}/`. A Route component reads
+  `*Route` (`ChapterRoute`, `BaulesListRoute`, `CreateBaulRoute`, …), grouped into
+  `features/{chapters,auth,baules,photos,profile,sharing}/`. A Route component reads
   `useParams`/store state, defines the handlers (calling store actions, navigating, showing
   toasts), and renders a presentational component from `app/components/` with everything passed
   as props — no business logic or store access inside `app/components/`.
 - **`app/components/`** — flat directory of presentational screens/modals (`PhotosView`,
-  `AlbumsView`, `BaulesList`, `CreateAlbumForm`, `RecuerdoCard`, …) plus small shared primitives
+  `ChaptersView`, `BaulesList`, `CreateChapterForm`, `RecuerdoCard`, …) plus small shared primitives
   (`Button`, `Card`, `Input`, `FAB`, `Toast`, `LoadingSpinner`). Props-in, callbacks-out; no
   `useAppStore`/`api` imports.
 - **`App.tsx`** — owns routing (`react-router-dom` `<Routes>`, no shared `<Layout>` wrapper —
@@ -324,8 +325,11 @@ isolated rather than spread through the app:
   authenticated and isn't on a public path (`/`, `/invitacion/*`, `/onboarding`); the access
   token is pushed into `api.ts` via `setAccessToken` on every auth state change.
 - **Routing**: `react-router-dom` v7, all routes declared flat in `App.tsx`, in Spanish
-  (`/baules/:baulId/albumes/:albumId/foto/:photoId`, `/eliminar-solicitudes/:baulId`, …) —
-  the domain language ("baúl", "álbum", "recuerdo") is the URL language too.
+  (`/baules/:baulId/capitulos/:chapterId/foto/:photoId`, `/eliminar-solicitudes/:baulId`, …) —
+  the domain language ("baúl", "capítulo", "recuerdo") is the URL language too. Note this is a
+  frontend-only convention: the backend's own API routes are English (`/api/baules/{baulId}/
+  chapters`), so the two surfaces don't share a vocabulary — only the frontend's browser-facing
+  URLs are Spanish.
 - **State management**: Zustand only, split by concern as above — no React Context for domain
   data, no server-state library (React Query, SWR).
 - **Styling**: Tailwind CSS v4, CSS-first config (`styles/theme.css`/`tailwind.css`, no

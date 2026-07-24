@@ -1,7 +1,7 @@
 # El Baúl
 
-A private, shared photo archive for families — "baúles" (trunks) hold albums of photos
-that a custodian can share with collaborators and members.
+A private, shared photo archive for families — "baúles" (trunks) hold chapters
+("capítulos") of photos that a custodian can share with collaborators and members.
 
 Monorepo with independently deployable services, no shared code between them, following
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md):
