@@ -8,7 +8,7 @@ namespace ElBaul.Application;
 public class BaulManager(
     ILogger<BaulManager> logger,
     IBaulRepository baulRepository,
-    IAlbumRepository albumRepository,
+    IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
     IUserRepository userRepository,
@@ -18,7 +18,7 @@ public class BaulManager(
     ICurrentUserProvider currentUserProvider) : IBaulManager
 {
     // Recuerdo author names are always the Persona's apodo for this baúl, never the
-    // underlying account's OIDC-synced name — duplicated from AlbumManager/PhotoManager,
+    // underlying account's OIDC-synced name — duplicated from ChapterManager/PhotoManager,
     // same reasoning: a nickname is what the family chose, the account name may be unset.
     private async Task<(string Nickname, string? AvatarUrl, string? SharedUserId)> GetAuthorInfoAsync(Guid baulId, string userId)
     {
@@ -504,12 +504,12 @@ public class BaulManager(
         }
 
         var photo = await photoRepository.GetByIdAsync(request.PhotoId);
-        if (photo?.AlbumId is { } photoAlbumId)
+        if (photo?.ChapterId is { } photoChapterId)
         {
-            var album = await albumRepository.GetByIdAsync(photoAlbumId);
-            if (album is not null)
+            var chapter = await chapterRepository.GetByIdAsync(photoChapterId);
+            if (chapter is not null)
             {
-                await albumRepository.UpdateAsync(album with { PhotoCount = Math.Max(0, album.PhotoCount - 1) });
+                await chapterRepository.UpdateAsync(chapter with { PhotoCount = Math.Max(0, chapter.PhotoCount - 1) });
             }
         }
 
@@ -522,8 +522,8 @@ public class BaulManager(
         }
 
         logger.LogInformation(
-            "Removal request approved, photo deleted {BaulId} {PhotoId} {RemovalRequestId} {AlbumId}",
-            baulId, request.PhotoId, requestId, photo?.AlbumId);
+            "Removal request approved, photo deleted {BaulId} {PhotoId} {RemovalRequestId} {ChapterId}",
+            baulId, request.PhotoId, requestId, photo?.ChapterId);
 
         return Result.Success();
     }
@@ -555,7 +555,7 @@ public class BaulManager(
             ? await photoStorage.GetImageUrl(baul.CoverPhotoKey, ImagePlacement.BaulCover)
             : null;
 
-        return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.AlbumCount, coverUrl,
+        return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.ChapterCount, coverUrl,
             baul.CreatedAt, baul.UpdatedAt, isCustodio, role.ToApiString(), memberCount);
     }
 
@@ -593,7 +593,7 @@ public class BaulManager(
 
         var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(baulId)).ToList();
 
-        var albumNames = (await albumRepository.GetByBaulIdAsync(baulId)).ToDictionary(a => a.Id, a => a.Name);
+        var chapterNames = (await chapterRepository.GetByBaulIdAsync(baulId)).ToDictionary(a => a.Id, a => a.Name);
 
         var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
         var thumbnailUrls = new Dictionary<Guid, string>();
@@ -609,8 +609,8 @@ public class BaulManager(
         {
             var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(baulId, recuerdo.UserId);
             var thumbnailUrl = recuerdo.PhotoId is { } photoId ? thumbnailUrls.GetValueOrDefault(photoId) : null;
-            var albumName = recuerdo.AlbumId is { } albumId ? albumNames.GetValueOrDefault(albumId) : null;
-            dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, recuerdo.UserId == userId, thumbnailUrl, albumName));
+            var chapterName = recuerdo.ChapterId is { } chapterId ? chapterNames.GetValueOrDefault(chapterId) : null;
+            dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, recuerdo.UserId == userId, thumbnailUrl, chapterName));
         }
 
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
@@ -640,12 +640,12 @@ public class BaulManager(
 
         logger.LogInformation("Recuerdo created {BaulId} {RecuerdoId}", baulId, recuerdo.Id);
 
-        return ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true, photoThumbnailUrl: null, albumName: null);
+        return ToRecuerdoDto(recuerdo, nickname, avatarUrl, sharedUserId, isOwn: true, photoThumbnailUrl: null, chapterName: null);
     }
 
     private static RecuerdoDto ToRecuerdoDto(
         Recuerdo recuerdo, string userName, string? userAvatar, string? sharedUserId, bool isOwn, string? photoThumbnailUrl,
-        string? albumName) =>
+        string? chapterName) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
-            recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, sharedUserId, recuerdo.AlbumId?.ToString(), albumName);
+            recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, sharedUserId, recuerdo.ChapterId?.ToString(), chapterName);
 }

@@ -19,7 +19,7 @@
               <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola Pedro,</p>          <p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">Esto es lo que ha pasado esta semana en tus baúles:</p>
               <h2 style="margin:20px 0 8px 0;font-size:17px;color:#6b3f2a;">&lt;script&gt;alert(1)&lt;/script&gt;</h2>
               <ul style="margin:0 0 8px 0;padding-left:20px;font-size:15px;line-height:1.6;">
-                <li><a href="https://el-baul.test/albumes/1" style="color:#6b3f2a;">&lt;img src=x onerror=alert(1)&gt;</a></li>
+                <li><a href="https://el-baul.test/capitulos/1" style="color:#6b3f2a;">&lt;img src=x onerror=alert(1)&gt;</a></li>
                           </ul>
 
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px;">
@@ -48,7 +48,7 @@ Hola Pedro,
 Esto es lo que ha pasado esta semana en tus baúles:
 
 <script>alert(1)</script>
-- <img src=x onerror=alert(1)>: https://el-baul.test/albumes/1
+- <img src=x onerror=alert(1)>: https://el-baul.test/capitulos/1
 
 Añadir un recuerdo: https://el-baul.test/cta
 

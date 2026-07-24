@@ -38,7 +38,7 @@ public class InfrastructureCompatibilityTests(ElBaulImageFixture fixture)
 
         result.ExitCode.Should().Be(0);
         var tables = result.Stdout.Trim();
-        tables.Should().Contain("Users").And.Contain("Baules").And.Contain("Albums").And.Contain("Photos").And.Contain("Recuerdos");
+        tables.Should().Contain("Users").And.Contain("Baules").And.Contain("Chapters").And.Contain("Photos").And.Contain("Recuerdos");
     }
 
     [Fact]

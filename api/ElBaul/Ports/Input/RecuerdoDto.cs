@@ -12,6 +12,6 @@ public record RecuerdoDto
     string? PhotoThumbnailUrl = null,
     string? UserAvatar = null,
     string? SharedUserId = null,
-    string? AlbumId = null,
-    string? AlbumName = null
+    string? ChapterId = null,
+    string? ChapterName = null
 );

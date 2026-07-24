@@ -4,11 +4,11 @@ using Microsoft.Extensions.Logging;
 namespace ElBaul.Maintenance.Commands;
 
 /// <summary>
-/// Recuerdo now carries its own BaulId (denormalized from Photo.BaulId/Album.BaulId, or set
+/// Recuerdo now carries its own BaulId (denormalized from Photo.BaulId/Chapter.BaulId, or set
 /// directly for standalone recuerdos) so the Recuerdos tab can query a whole baúl without
-/// joining through Photo/Album. This backfills that BaulId for every existing recuerdo
+/// joining through Photo/Chapter. This backfills that BaulId for every existing recuerdo
 /// created before that change, resolving it from the recuerdo's PhotoId (photo's BaulId) or
-/// AlbumId (album's BaulId) — newly created recuerdos set it themselves.
+/// ChapterId (chapter's BaulId) — newly created recuerdos set it themselves.
 ///
 /// Gates a follow-up migration (MakeRecuerdoBaulIdRequired) that makes the column NOT NULL —
 /// do not deploy that migration until a --dry-run of this command reports zero remaining
@@ -18,7 +18,7 @@ namespace ElBaul.Maintenance.Commands;
 public class BackfillRecuerdoBaulIdCommand(
     IRecuerdoRepository recuerdoRepository,
     IPhotoRepository photoRepository,
-    IAlbumRepository albumRepository,
+    IChapterRepository chapterRepository,
     ILogger<BackfillRecuerdoBaulIdCommand> logger) : IMaintenanceCommand
 {
     public async Task<int> RunAsync(bool dryRun)
@@ -43,15 +43,15 @@ public class BackfillRecuerdoBaulIdCommand(
                     var photo = await photoRepository.GetByIdAsync(photoId);
                     baulId = photo?.BaulId;
                 }
-                else if (candidate.AlbumId is { } albumId)
+                else if (candidate.ChapterId is { } chapterId)
                 {
-                    var album = await albumRepository.GetByIdAsync(albumId);
-                    baulId = album?.BaulId;
+                    var chapter = await chapterRepository.GetByIdAsync(chapterId);
+                    baulId = chapter?.BaulId;
                 }
 
                 if (baulId is not { } resolvedBaulId)
                 {
-                    // Standalone recuerdo (no photo, no album) or its photo/album no longer
+                    // Standalone recuerdo (no photo, no chapter) or its photo/chapter no longer
                     // exists — nothing to resolve BaulId from, leave it null.
                     leftNull++;
                     continue;

@@ -5,7 +5,7 @@ public record BaulDto
     string Id,
     string Name,
     string? Description,
-    int AlbumCount,
+    int ChapterCount,
     string? CoverPhotoUrl,
     DateTime CreatedAt,
     DateTime UpdatedAt,

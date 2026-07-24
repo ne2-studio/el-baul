@@ -11,11 +11,11 @@ public class InMemoryPhotoRepository : IPhotoRepository
     public Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId) =>
         Task.FromResult(_photos.Values.FirstOrDefault(p => p.ClientUploadId == clientUploadId));
 
-    public Task<IEnumerable<Photo>> GetByAlbumIdAsync(Guid albumId) =>
-        Task.FromResult(_photos.Values.Where(p => p.AlbumId == albumId && p.Status == PhotoStatus.Active));
+    public Task<IEnumerable<Photo>> GetByChapterIdAsync(Guid chapterId) =>
+        Task.FromResult(_photos.Values.Where(p => p.ChapterId == chapterId && p.Status == PhotoStatus.Active));
 
     public Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(Guid baulId) =>
-        Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.AlbumId == null && p.Status == PhotoStatus.Active));
+        Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.ChapterId == null && p.Status == PhotoStatus.Active));
 
     public Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since) =>
         Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && p.CreatedAt >= since));

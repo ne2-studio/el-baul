@@ -1,6 +1,6 @@
 namespace ElBaul.Ports.Output;
 
-public record Album
+public record Chapter
 (
     Guid Id,
     Guid BaulId,

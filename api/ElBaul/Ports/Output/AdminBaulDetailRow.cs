@@ -11,7 +11,7 @@ public record AdminBaulDetailRow(
     Baul Baul,
     IEnumerable<SharedUser> SharedUsers,
     IReadOnlyDictionary<string, string> LinkedUserNames,
-    IEnumerable<Album> Albums,
+    IEnumerable<Chapter> Chapters,
     int PhotoCount,
     int RecuerdoCount
 );

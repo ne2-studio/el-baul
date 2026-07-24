@@ -49,7 +49,7 @@ public class WeeklyDigestTemplateRendererTests
         {
             new("Familia Pardal", "https://el-baul.test/baules/1",
                 [
-                    new DigestActivityBlock(DigestBlockKind.NewChapter, "Nuevo capítulo: “Verano 1998”", "https://el-baul.test/albumes/1", 1),
+                    new DigestActivityBlock(DigestBlockKind.NewChapter, "Nuevo capítulo: “Verano 1998”", "https://el-baul.test/capitulos/1", 1),
                     new DigestActivityBlock(DigestBlockKind.NewRecuerdos, "3 recuerdos nuevos", "https://el-baul.test/baules/1", 3)
                 ],
                 OverflowSummary: null),
@@ -69,9 +69,9 @@ public class WeeklyDigestTemplateRendererTests
         Assert.Contains("3 recuerdos nuevos", decodedHtml);
         Assert.Contains("6 fotos nuevas sin organizar", decodedHtml);
         Assert.Contains("Y 15 fotos nuevas en 3 capítulos más.", decodedHtml);
-        Assert.Contains("https://el-baul.test/albumes/1", result.Html);
+        Assert.Contains("https://el-baul.test/capitulos/1", result.Html);
         Assert.Contains("Familia Pardal", result.PlainText);
-        Assert.Contains("https://el-baul.test/albumes/1", result.PlainText);
+        Assert.Contains("https://el-baul.test/capitulos/1", result.PlainText);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class WeeklyDigestTemplateRendererTests
         var sections = new List<BaulDigestSection>
         {
             new("<script>alert(1)</script>", "https://el-baul.test/baules/1",
-                [new DigestActivityBlock(DigestBlockKind.NewChapter, "<img src=x onerror=alert(1)>", "https://el-baul.test/albumes/1", 1)],
+                [new DigestActivityBlock(DigestBlockKind.NewChapter, "<img src=x onerror=alert(1)>", "https://el-baul.test/capitulos/1", 1)],
                 OverflowSummary: null)
         };
         var model = new WeeklyDigestEmailModel(

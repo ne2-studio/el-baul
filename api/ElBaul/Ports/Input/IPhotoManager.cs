@@ -4,11 +4,11 @@ namespace ElBaul.Ports.Input;
 
 public interface IPhotoManager
 {
-    Task<Result<IEnumerable<PhotoDto>>> GetByAlbumIdAsync(Guid albumId);
+    Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId);
     Task<Result<IEnumerable<PhotoDto>>> GetLooseByBaulIdAsync(Guid baulId);
 
     Task<Result<PhotoDto>> UploadAsync(
-        Guid albumId,
+        Guid chapterId,
         Stream content,
         string fileName,
         string contentType,
@@ -23,7 +23,7 @@ public interface IPhotoManager
         (int Year, int? Month, int? Day)? date,
         Guid clientUploadId);
 
-    Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetAlbumId);
+    Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetChapterId);
 
     Task<Result> DeleteAsync(Guid photoId, string? reason);
 

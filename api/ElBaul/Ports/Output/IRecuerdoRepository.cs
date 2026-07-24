@@ -6,23 +6,23 @@ namespace ElBaul.Ports.Output;
 /// lands), but the DB column is still nullable for legacy rows until that command finishes —
 /// reading affected rows through the normal Recuerdo entity would throw when materializing a
 /// null column value into a non-nullable Guid, so this is a raw, minimal projection instead.</summary>
-public record RecuerdoBaulIdCandidate(Guid Id, Guid? PhotoId, Guid? AlbumId);
+public record RecuerdoBaulIdCandidate(Guid Id, Guid? PhotoId, Guid? ChapterId);
 
 public interface IRecuerdoRepository
 {
     Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(Guid photoId);
     Task<IEnumerable<Recuerdo>> GetByPhotoIdsAsync(IEnumerable<Guid> photoIds);
-    Task<IEnumerable<Recuerdo>> GetByAlbumIdAsync(Guid albumId);
+    Task<IEnumerable<Recuerdo>> GetByChapterIdAsync(Guid chapterId);
 
-    /// <summary>All recuerdos in a baúl — photo-attached, album-attached, and standalone —
+    /// <summary>All recuerdos in a baúl — photo-attached, chapter-attached, and standalone —
     /// newest first.</summary>
     Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(Guid baulId);
 
     Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since);
 
-    /// <summary>Recuerdos that have a Photo but no AlbumId yet — used only by the one-off
-    /// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoAlbumIdCommand.cs).</summary>
-    Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync();
+    /// <summary>Recuerdos that have a Photo but no ChapterId yet — used only by the one-off
+    /// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoChapterIdCommand.cs).</summary>
+    Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoChapterAsync();
 
     /// <summary>Every recuerdo in the system, unscoped — used only by the one-off backfill
     /// command (see ElBaul.Maintenance/Commands/BackfillRecuerdoEmbeddingsCommand.cs).</summary>

@@ -33,11 +33,11 @@ public class ImgproxyUrlBuilderTests
     }
 
     [Fact]
-    public void Build_ShouldSelectTheFeaturedAlbumCoverPreset_ForAlbumCoverFeatured()
+    public void Build_ShouldSelectTheFeaturedChapterCoverPreset_ForChapterCoverFeatured()
     {
-        var result = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.AlbumCoverFeatured, Options);
+        var result = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.ChapterCoverFeatured, Options);
 
-        Assert.Contains("/album-cover-featured/", result);
+        Assert.Contains("/chapter-cover-featured/", result);
     }
 
     [Fact]
@@ -45,8 +45,8 @@ public class ImgproxyUrlBuilderTests
     {
         var options2 = new ImgproxyOptions { BaseUrl = Options.BaseUrl, Key = "7766554433221100", Salt = Options.Salt };
 
-        var result1 = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.AlbumCover, Options);
-        var result2 = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.AlbumCover, options2);
+        var result1 = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.ChapterCover, Options);
+        var result2 = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.ChapterCover, options2);
 
         Assert.NotEqual(result1, result2);
     }
@@ -69,7 +69,7 @@ public class ImgproxyUrlBuilderTests
         // and 404, verified empirically against a running imgproxy container.
         var key = "admin-user/9ed8bf28-Sin título (1080 x 1080 px).png";
 
-        var result = ImgproxyUrlBuilder.Build("el-baul-photos", key, ImagePlacement.AlbumCover, Options);
+        var result = ImgproxyUrlBuilder.Build("el-baul-photos", key, ImagePlacement.ChapterCover, Options);
 
         var encodedSource = result.Split('/').Last();
         var decodedSource = DecodeBase64Url(encodedSource);

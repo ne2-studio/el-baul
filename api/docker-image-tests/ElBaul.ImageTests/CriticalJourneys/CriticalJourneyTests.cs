@@ -42,14 +42,14 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
         var baulId = (await ParseJsonAsync(createBaulResponse)).GetProperty("id").GetString();
         baulId.Should().NotBeNullOrWhiteSpace();
 
-        // 2. Create a chapter (album) inside it.
-        var createAlbumResponse = await client.PostAsJsonAsync($"/api/baules/{baulId}/albums", new
+        // 2. Create a chapter inside it.
+        var createChapterResponse = await client.PostAsJsonAsync($"/api/baules/{baulId}/chapters", new
         {
             name = "Capítulo de prueba"
         });
-        createAlbumResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createAlbumResponse.Content.ReadAsStringAsync());
-        var albumId = (await ParseJsonAsync(createAlbumResponse)).GetProperty("id").GetString();
-        albumId.Should().NotBeNullOrWhiteSpace();
+        createChapterResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createChapterResponse.Content.ReadAsStringAsync());
+        var chapterId = (await ParseJsonAsync(createChapterResponse)).GetProperty("id").GetString();
+        chapterId.Should().NotBeNullOrWhiteSpace();
 
         // 3. Upload a photo into that chapter.
         using var multipart = new MultipartFormDataContent();
@@ -58,7 +58,7 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
         multipart.Add(fileContent, "File", "sample.jpg");
         multipart.Add(new StringContent(Guid.NewGuid().ToString()), "ClientUploadId");
 
-        var uploadResponse = await client.PostAsync($"/api/albums/{albumId}/photos", multipart);
+        var uploadResponse = await client.PostAsync($"/api/chapters/{chapterId}/photos", multipart);
         uploadResponse.StatusCode.Should().Be(HttpStatusCode.OK, await uploadResponse.Content.ReadAsStringAsync());
         var photoId = (await ParseJsonAsync(uploadResponse)).GetProperty("id").GetString();
         photoId.Should().NotBeNullOrWhiteSpace();

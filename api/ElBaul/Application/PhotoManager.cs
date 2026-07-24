@@ -8,7 +8,7 @@ namespace ElBaul.Application;
 public class PhotoManager(
     ILogger<PhotoManager> logger,
     IPhotoRepository photoRepository,
-    IAlbumRepository albumRepository,
+    IChapterRepository chapterRepository,
     IBaulRepository baulRepository,
     IPhotoStorage photoStorage,
     IRecuerdoRepository recuerdoRepository,
@@ -28,20 +28,20 @@ public class PhotoManager(
         return (sharedUser?.Nickname ?? "Usuario", avatarUrl, sharedUser?.Id.ToString());
     }
 
-    public async Task<Result<IEnumerable<PhotoDto>>> GetByAlbumIdAsync(Guid albumId)
+    public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId)
     {
         var userId = currentUserProvider.GetUserId();
-        var album = await albumRepository.GetByIdAsync(albumId);
-        if (album is null) return Result.Failure<IEnumerable<PhotoDto>>("Album not found");
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
+        if (chapter is null) return Result.Failure<IEnumerable<PhotoDto>>("Chapter not found");
 
-        var baul = await baulRepository.GetByIdAsync(album.BaulId);
+        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
         if (baul is null) return Result.Failure<IEnumerable<PhotoDto>>("Baul not found");
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
+            || await baulRepository.GetSharedUserByUserIdAsync(chapter.BaulId, userId) is not null;
         if (!hasAccess) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
 
-        var photos = (await photoRepository.GetByAlbumIdAsync(albumId)).ToList();
+        var photos = (await photoRepository.GetByChapterIdAsync(chapterId)).ToList();
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
         var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
 
@@ -82,7 +82,7 @@ public class PhotoManager(
     }
 
     public async Task<Result<PhotoDto>> UploadAsync(
-        Guid albumId,
+        Guid chapterId,
         Stream content,
         string fileName,
         string contentType,
@@ -101,25 +101,25 @@ public class PhotoManager(
         }
 
         var userId = currentUserProvider.GetUserId();
-        var album = await albumRepository.GetByIdAsync(albumId);
-        if (album is null)
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
+        if (chapter is null)
         {
-            logger.LogWarning("Photo upload rejected: album not found {AlbumId}", albumId);
-            return Result.Failure<PhotoDto>("Album not found");
+            logger.LogWarning("Photo upload rejected: chapter not found {ChapterId}", chapterId);
+            return Result.Failure<PhotoDto>("Chapter not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(album.BaulId);
+        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
         if (baul is null)
         {
-            logger.LogWarning("Photo upload rejected: baul not found {BaulId} {AlbumId}", album.BaulId, albumId);
+            logger.LogWarning("Photo upload rejected: baul not found {BaulId} {ChapterId}", chapter.BaulId, chapterId);
             return Result.Failure<PhotoDto>("Baul not found");
         }
 
         var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetSharedUserByUserIdAsync(album.BaulId, userId) is not null;
+            || await baulRepository.GetSharedUserByUserIdAsync(chapter.BaulId, userId) is not null;
         if (!hasAccess)
         {
-            logger.LogWarning("Photo upload rejected: access denied {BaulId} {AlbumId}", album.BaulId, albumId);
+            logger.LogWarning("Photo upload rejected: access denied {BaulId} {ChapterId}", chapter.BaulId, chapterId);
             return Result.Failure<PhotoDto>("Access denied");
         }
 
@@ -127,8 +127,8 @@ public class PhotoManager(
         if (existingPhoto is not null)
         {
             logger.LogInformation(
-                "Duplicate photo upload ignored {BaulId} {AlbumId} {ClientUploadId} {PhotoId}",
-                album.BaulId, albumId, clientUploadId, existingPhoto.Id);
+                "Duplicate photo upload ignored {BaulId} {ChapterId} {ClientUploadId} {PhotoId}",
+                chapter.BaulId, chapterId, clientUploadId, existingPhoto.Id);
             var existingThumbnailUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoGridThumbnail);
             var existingFullUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoFull);
             return Result.Success(ToDto(existingPhoto, existingThumbnailUrl, existingFullUrl));
@@ -150,12 +150,12 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Photo upload failed while saving to storage {BaulId} {AlbumId} {FileName} {ContentType} {StorageKey}",
-                album.BaulId, albumId, fileName, contentType, storageKey);
+                "Photo upload failed while saving to storage {BaulId} {ChapterId} {FileName} {ContentType} {StorageKey}",
+                chapter.BaulId, chapterId, fileName, contentType, storageKey);
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), albumId, album.BaulId, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
+        var photo = new Photo(idGenerator.NewId(), chapterId, chapter.BaulId, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
 
         try
         {
@@ -164,21 +164,21 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Photo upload failed while persisting metadata {BaulId} {AlbumId} {PhotoId} {StorageKey}",
-                album.BaulId, albumId, photo.Id, storageKey);
+                "Photo upload failed while persisting metadata {BaulId} {ChapterId} {PhotoId} {StorageKey}",
+                chapter.BaulId, chapterId, photo.Id, storageKey);
             await TryDeleteOrphanedStorageObjectAsync(storageKey);
             throw;
         }
 
         try
         {
-            var updatedAlbum = album with
+            var updatedChapter = chapter with
             {
-                PhotoCount = album.PhotoCount + 1,
-                CoverPhotoKey = string.IsNullOrEmpty(album.CoverPhotoKey) ? storageKey : album.CoverPhotoKey,
+                PhotoCount = chapter.PhotoCount + 1,
+                CoverPhotoKey = string.IsNullOrEmpty(chapter.CoverPhotoKey) ? storageKey : chapter.CoverPhotoKey,
                 UpdatedAt = now
             };
-            await albumRepository.UpdateAsync(updatedAlbum);
+            await chapterRepository.UpdateAsync(updatedChapter);
             await baulRepository.UpdateAsync(baul with
             {
                 CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
@@ -188,12 +188,12 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Photo upload failed while updating album/baul cover {BaulId} {AlbumId} {PhotoId} {StorageKey}",
-                album.BaulId, albumId, photo.Id, storageKey);
+                "Photo upload failed while updating chapter/baul cover {BaulId} {ChapterId} {PhotoId} {StorageKey}",
+                chapter.BaulId, chapterId, photo.Id, storageKey);
             throw;
         }
 
-        logger.LogInformation("Photo uploaded {BaulId} {AlbumId} {PhotoId}", album.BaulId, albumId, photo.Id);
+        logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", chapter.BaulId, chapterId, photo.Id);
 
         var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
@@ -305,7 +305,7 @@ public class PhotoManager(
         return ToDto(photo, thumbnailUrl, fullUrl);
     }
 
-    public async Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetAlbumId)
+    public async Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetChapterId)
     {
         var userId = currentUserProvider.GetUserId();
         var photo = await photoRepository.GetByIdAsync(photoId);
@@ -330,52 +330,52 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Access denied");
         }
 
-        var targetAlbum = await albumRepository.GetByIdAsync(targetAlbumId);
-        if (targetAlbum is null || targetAlbum.BaulId != photo.BaulId)
+        var targetChapter = await chapterRepository.GetByIdAsync(targetChapterId);
+        if (targetChapter is null || targetChapter.BaulId != photo.BaulId)
         {
             logger.LogWarning(
-                "Photo move rejected: target album not found {BaulId} {PhotoId} {TargetAlbumId}",
-                photo.BaulId, photoId, targetAlbumId);
-            return Result.Failure<PhotoDto>("Target album not found");
+                "Photo move rejected: target chapter not found {BaulId} {PhotoId} {TargetChapterId}",
+                photo.BaulId, photoId, targetChapterId);
+            return Result.Failure<PhotoDto>("Target chapter not found");
         }
 
-        if (photo.AlbumId == targetAlbumId)
+        if (photo.ChapterId == targetChapterId)
         {
             logger.LogWarning(
-                "Photo move rejected: photo already in target album {BaulId} {PhotoId} {TargetAlbumId}",
-                photo.BaulId, photoId, targetAlbumId);
-            return Result.Failure<PhotoDto>("Photo is already in that album");
+                "Photo move rejected: photo already in target chapter {BaulId} {PhotoId} {TargetChapterId}",
+                photo.BaulId, photoId, targetChapterId);
+            return Result.Failure<PhotoDto>("Photo is already in that chapter");
         }
 
         var now = clock.UtcNow();
 
-        if (photo.AlbumId is { } sourceAlbumId)
+        if (photo.ChapterId is { } sourceChapterId)
         {
-            var sourceAlbum = await albumRepository.GetByIdAsync(sourceAlbumId);
-            if (sourceAlbum is not null)
+            var sourceChapter = await chapterRepository.GetByIdAsync(sourceChapterId);
+            if (sourceChapter is not null)
             {
-                await albumRepository.UpdateAsync(sourceAlbum with
+                await chapterRepository.UpdateAsync(sourceChapter with
                 {
-                    PhotoCount = Math.Max(0, sourceAlbum.PhotoCount - 1),
-                    CoverPhotoKey = sourceAlbum.CoverPhotoKey == photo.StorageKey ? null : sourceAlbum.CoverPhotoKey,
+                    PhotoCount = Math.Max(0, sourceChapter.PhotoCount - 1),
+                    CoverPhotoKey = sourceChapter.CoverPhotoKey == photo.StorageKey ? null : sourceChapter.CoverPhotoKey,
                     UpdatedAt = now
                 });
             }
         }
 
-        var updatedPhoto = photo with { AlbumId = targetAlbumId };
+        var updatedPhoto = photo with { ChapterId = targetChapterId };
         await photoRepository.UpdateAsync(updatedPhoto);
 
-        await albumRepository.UpdateAsync(targetAlbum with
+        await chapterRepository.UpdateAsync(targetChapter with
         {
-            PhotoCount = targetAlbum.PhotoCount + 1,
-            CoverPhotoKey = string.IsNullOrEmpty(targetAlbum.CoverPhotoKey) ? photo.StorageKey : targetAlbum.CoverPhotoKey,
+            PhotoCount = targetChapter.PhotoCount + 1,
+            CoverPhotoKey = string.IsNullOrEmpty(targetChapter.CoverPhotoKey) ? photo.StorageKey : targetChapter.CoverPhotoKey,
             UpdatedAt = now
         });
 
         logger.LogInformation(
-            "Photo moved {BaulId} {PhotoId} {SourceAlbumId} {TargetAlbumId}",
-            photo.BaulId, photoId, photo.AlbumId, targetAlbumId);
+            "Photo moved {BaulId} {PhotoId} {SourceChapterId} {TargetChapterId}",
+            photo.BaulId, photoId, photo.ChapterId, targetChapterId);
 
         var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
@@ -416,12 +416,12 @@ public class PhotoManager(
         };
         await photoRepository.UpdateAsync(updatedPhoto);
 
-        if (photo.AlbumId is { } albumId)
+        if (photo.ChapterId is { } chapterId)
         {
-            var album = await albumRepository.GetByIdAsync(albumId);
-            if (album is not null)
+            var chapter = await chapterRepository.GetByIdAsync(chapterId);
+            if (chapter is not null)
             {
-                await albumRepository.UpdateAsync(album with { PhotoCount = Math.Max(0, album.PhotoCount - 1) });
+                await chapterRepository.UpdateAsync(chapter with { PhotoCount = Math.Max(0, chapter.PhotoCount - 1) });
             }
         }
 
@@ -539,7 +539,7 @@ public class PhotoManager(
         }
 
         var (nickname, avatarUrl, sharedUserId) = await GetAuthorInfoAsync(photo.BaulId, userId);
-        var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.AlbumId, photo.BaulId, userId, text, clock.UtcNow());
+        var recuerdo = new Recuerdo(idGenerator.NewId(), photoId, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation(
@@ -619,7 +619,7 @@ public class PhotoManager(
     }
 
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
-        new(photo.Id.ToString(), photo.AlbumId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
+        new(photo.Id.ToString(), photo.ChapterId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
             photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 
     private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, string? userAvatar, string? sharedUserId, bool isOwn) =>

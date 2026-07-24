@@ -10,7 +10,7 @@ public class WeeklyDigestManager(
     ILogger<WeeklyDigestManager> logger,
     IUserRepository userRepository,
     IBaulRepository baulRepository,
-    IAlbumRepository albumRepository,
+    IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
     ISentEmailRepository sentEmailRepository,
@@ -175,12 +175,12 @@ public class WeeklyDigestManager(
         var baulUrl = BuildUrl(publicUrl, $"/baules/{baul.Id}");
         var items = new List<DigestActivityBlock>();
 
-        var newAlbums = await albumRepository.GetCreatedSinceAsync(baul.Id, since);
-        foreach (var album in newAlbums)
+        var newChapters = await chapterRepository.GetCreatedSinceAsync(baul.Id, since);
+        foreach (var chapter in newChapters)
         {
             items.Add(new DigestActivityBlock(
-                DigestBlockKind.NewChapter, $"Nuevo capítulo: “{album.Name}”",
-                BuildUrl(publicUrl, $"/baules/{baul.Id}/albumes/{album.Id}"), 1));
+                DigestBlockKind.NewChapter, $"Nuevo capítulo: “{chapter.Name}”",
+                BuildUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
         }
 
         var recuerdos = await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since);
@@ -192,22 +192,22 @@ public class WeeklyDigestManager(
         }
 
         var photos = (await photoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since)).ToList();
-        var photosByAlbum = photos.Where(p => p.AlbumId is not null).GroupBy(p => p.AlbumId!.Value);
-        foreach (var group in photosByAlbum.OrderByDescending(g => g.Count()))
+        var photosByChapter = photos.Where(p => p.ChapterId is not null).GroupBy(p => p.ChapterId!.Value);
+        foreach (var group in photosByChapter.OrderByDescending(g => g.Count()))
         {
-            var album = await albumRepository.GetByIdAsync(group.Key);
-            if (album is null) continue; // chapter deleted since — don't surface stale content
+            var chapter = await chapterRepository.GetByIdAsync(group.Key);
+            if (chapter is null) continue; // chapter deleted since — don't surface stale content
 
             var count = group.Count();
             var label = count == 1
-                ? $"1 foto nueva en “{album.Name}”"
-                : $"{count} fotos nuevas en “{album.Name}”";
+                ? $"1 foto nueva en “{chapter.Name}”"
+                : $"{count} fotos nuevas en “{chapter.Name}”";
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewPhotosInChapter, label,
-                BuildUrl(publicUrl, $"/baules/{baul.Id}/albumes/{album.Id}"), count));
+                BuildUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), count));
         }
 
-        var looseCount = photos.Count(p => p.AlbumId is null);
+        var looseCount = photos.Count(p => p.ChapterId is null);
         if (looseCount > 0)
         {
             var label = looseCount == 1 ? "1 foto nueva sin organizar" : $"{looseCount} fotos nuevas sin organizar";

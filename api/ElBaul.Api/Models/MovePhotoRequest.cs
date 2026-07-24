@@ -1,3 +1,3 @@
 namespace ElBaul.Api.Models;
 
-public record MovePhotoRequest(string AlbumId);
+public record MovePhotoRequest(string ChapterId);

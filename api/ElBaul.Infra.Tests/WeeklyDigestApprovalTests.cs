@@ -21,7 +21,7 @@ public class WeeklyDigestApprovalTests
         {
             new("Familia Pardal", "https://el-baul.test/baules/1",
                 [
-                    new DigestActivityBlock(DigestBlockKind.NewChapter, "Nuevo capítulo: “Verano 1998”", "https://el-baul.test/albumes/1", 1),
+                    new DigestActivityBlock(DigestBlockKind.NewChapter, "Nuevo capítulo: “Verano 1998”", "https://el-baul.test/capitulos/1", 1),
                     new DigestActivityBlock(DigestBlockKind.NewRecuerdos, "3 recuerdos nuevos", "https://el-baul.test/baules/1", 3)
                 ],
                 OverflowSummary: null),
@@ -77,7 +77,7 @@ public class WeeklyDigestApprovalTests
         var sections = new List<BaulDigestSection>
         {
             new("<script>alert(1)</script>", "https://el-baul.test/baules/1",
-                [new DigestActivityBlock(DigestBlockKind.NewChapter, "<img src=x onerror=alert(1)>", "https://el-baul.test/albumes/1", 1)],
+                [new DigestActivityBlock(DigestBlockKind.NewChapter, "<img src=x onerror=alert(1)>", "https://el-baul.test/capitulos/1", 1)],
                 OverflowSummary: null)
         };
         var model = new WeeklyDigestEmailModel(

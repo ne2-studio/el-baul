@@ -7,7 +7,7 @@ namespace ElBaul.Infra;
 /// Backs the backoffice's cross-aggregate, unscoped reads directly against
 /// ElBaulDbContext — the one deliberate exception to the "repositories own a single
 /// aggregate" convention, alongside MinioPhotoStorage's singleton exception. Admin queries
-/// join across Users/Baules/SharedUsers/Photos/Albums/Recuerdos with no per-user ownership
+/// join across Users/Baules/SharedUsers/Photos/Chapters/Recuerdos with no per-user ownership
 /// check, which doesn't fit any single existing repository's contract.
 /// </summary>
 public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
@@ -68,7 +68,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
 
-        var albumCounts = await dbContext.Albums
+        var chapterCounts = await dbContext.Chapters
             .GroupBy(a => a.BaulId)
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
@@ -85,7 +85,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             memberCounts.GetValueOrDefault(b.Id),
             linkedUserCounts.GetValueOrDefault(b.Id),
             photoCounts.GetValueOrDefault(b.Id),
-            albumCounts.GetValueOrDefault(b.Id)));
+            chapterCounts.GetValueOrDefault(b.Id)));
     }
 
     public async Task<AdminBaulDetailRow?> GetBaulDetailAsync(Guid baulId)
@@ -100,12 +100,12 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             .Where(u => linkedUserIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.Name ?? u.Email);
 
-        var albums = await dbContext.Albums.AsNoTracking().Where(a => a.BaulId == baulId).ToListAsync();
+        var chapters = await dbContext.Chapters.AsNoTracking().Where(a => a.BaulId == baulId).ToListAsync();
 
         var photoCount = await dbContext.Photos.CountAsync(p => p.BaulId == baulId);
 
         var recuerdoCount = await dbContext.Recuerdos.CountAsync(r => r.BaulId == baulId);
 
-        return new AdminBaulDetailRow(baul, sharedUsers, linkedUserNames, albums, photoCount, recuerdoCount);
+        return new AdminBaulDetailRow(baul, sharedUsers, linkedUserNames, chapters, photoCount, recuerdoCount);
     }
 }

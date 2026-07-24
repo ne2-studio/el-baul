@@ -3,7 +3,7 @@ namespace ElBaul.Ports.Output;
 public record Photo
 (
     Guid Id,
-    Guid? AlbumId,
+    Guid? ChapterId,
     Guid BaulId,
     string StorageKey,
     int? DateYear,

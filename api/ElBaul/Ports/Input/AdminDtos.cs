@@ -10,16 +10,16 @@ public record AdminUserBaulMembershipDto(string BaulId, string BaulName, string 
 public record AdminUserListItemDto(string Id, string Email, string? Name, DateTime CreatedAt, DateTime? LastAccessAt, int BaulCount);
 public record AdminUserDetailDto(string Id, string Email, string? Name, DateTime CreatedAt, DateTime? LastAccessAt, IEnumerable<AdminUserBaulMembershipDto> Baules);
 
-public record AdminBaulListItemDto(string Id, string Name, string CustodioName, int MemberCount, int LinkedUserCount, int PhotoCount, int AlbumCount, DateTime CreatedAt);
+public record AdminBaulListItemDto(string Id, string Name, string CustodioName, int MemberCount, int LinkedUserCount, int PhotoCount, int ChapterCount, DateTime CreatedAt);
 public record AdminBaulPersonaDto(string PersonId, string Nickname, string? Name, string Role, string? LinkedUserId, string? LinkedUserName);
-public record AdminBaulAlbumDto(string Id, string Name, int PhotoCount);
-public record AdminBaulStatsDto(int Photos, int Recuerdos, int Personas, int Capitulos);
+public record AdminBaulChapterDto(string Id, string Name, int PhotoCount);
+public record AdminBaulStatsDto(int Photos, int Recuerdos, int Personas, int Chapters);
 public record AdminBaulDetailDto(
     string Id,
     string Name,
     DateTime CreatedAt,
     IEnumerable<AdminBaulPersonaDto> Personas,
-    IEnumerable<AdminBaulAlbumDto> Capitulos,
+    IEnumerable<AdminBaulChapterDto> Chapters,
     AdminBaulStatsDto Stats
 );
 

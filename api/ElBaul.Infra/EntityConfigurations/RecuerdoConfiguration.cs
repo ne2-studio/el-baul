@@ -15,7 +15,7 @@ public class RecuerdoConfiguration : IEntityTypeConfiguration<Recuerdo>
         builder.Property(r => r.CreatedAt).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(r => r.PhotoId);
-        builder.HasIndex(r => r.AlbumId);
+        builder.HasIndex(r => r.ChapterId);
         builder.HasIndex(r => r.BaulId);
 
         builder.HasOne<Photo>()
@@ -24,20 +24,20 @@ public class RecuerdoConfiguration : IEntityTypeConfiguration<Recuerdo>
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // AlbumId is denormalized from Photo.AlbumId (or set directly for photo-less,
-        // chapter-level recuerdos) so the Recuerdos feed can query by album without joining
-        // through Photo. Restrict, not Cascade: Album->Photo->Recuerdo is already a cascade
-        // path (see PhotoConfiguration), so a second direct Album->Recuerdo cascade path would
+        // ChapterId is denormalized from Photo.ChapterId (or set directly for photo-less,
+        // chapter-level recuerdos) so the Recuerdos feed can query by chapter without joining
+        // through Photo. Restrict, not Cascade: Chapter->Photo->Recuerdo is already a cascade
+        // path (see PhotoConfiguration), so a second direct Chapter->Recuerdo cascade path would
         // make SQL Server reject the migration.
-        builder.HasOne<Album>()
+        builder.HasOne<Chapter>()
             .WithMany()
-            .HasForeignKey(r => r.AlbumId)
+            .HasForeignKey(r => r.ChapterId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // BaulId is denormalized from Photo.BaulId / Album.BaulId (or set directly for
-        // standalone, photo-less and album-less recuerdos) so the Recuerdos feed can query by
-        // baúl without joining through Photo/Album. Restrict, not Cascade: Baul->Album->Photo->
+        // BaulId is denormalized from Photo.BaulId / Chapter.BaulId (or set directly for
+        // standalone, photo-less and chapter-less recuerdos) so the Recuerdos feed can query by
+        // baúl without joining through Photo/Chapter. Restrict, not Cascade: Baul->Chapter->Photo->
         // Recuerdo and Baul->Photo->Recuerdo are already cascade paths, so a third direct
         // Baul->Recuerdo cascade path would make the migration invalid.
         builder.HasOne<Baul>()

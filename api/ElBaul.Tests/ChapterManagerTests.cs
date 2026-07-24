@@ -5,25 +5,25 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ElBaul.Tests;
 
-public class AlbumManagerTests
+public class ChapterManagerTests
 {
     private const string CustodioId = "custodio-1";
     private const string StrangerId = "stranger";
 
     private readonly InMemoryBaulRepository _baulRepository = new();
-    private readonly InMemoryAlbumRepository _albumRepository = new();
+    private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
-    private AlbumManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<AlbumManager>.Instance, _albumRepository, _baulRepository, _photoRepository,
+    private ChapterManager CreateManager(string currentUserId, Guid? nextId = null) =>
+        new(NullLogger<ChapterManager>.Instance, _chapterRepository, _baulRepository, _photoRepository,
             _recuerdoRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
 
     [Fact]
-    public async Task CreateAsync_ShouldIncrementBaulAlbumCount()
+    public async Task CreateAsync_ShouldIncrementBaulChapterCount()
     {
         var baulId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
@@ -33,7 +33,7 @@ public class AlbumManagerTests
 
         Assert.True(result.IsSuccess);
         var baul = await _baulRepository.GetByIdAsync(baulId);
-        Assert.Equal(1, baul!.AlbumCount);
+        Assert.Equal(1, baul!.ChapterCount);
     }
 
     [Fact]
@@ -81,9 +81,9 @@ public class AlbumManagerTests
     public async Task GetByBaulIdAsync_ShouldResolveSignedUrls_ForCoverPhotos()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, "cover-key", _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, "cover-key", _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -96,37 +96,37 @@ public class AlbumManagerTests
     public async Task SetCoverAsync_ShouldSetCoverPhotoKey_ForCustodio()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(albumId, photoId);
+        var result = await manager.SetCoverAsync(chapterId, photoId);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
 
-        var album = await _albumRepository.GetByIdAsync(albumId);
-        Assert.Equal("photo-key", album!.CoverPhotoKey);
+        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
+        Assert.Equal("photo-key", chapter!.CoverPhotoKey);
     }
 
     [Fact]
     public async Task SetCoverAsync_ShouldAllow_ForColaboradorRole()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, colaboradorId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, colaboradorId, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.SetCoverAsync(albumId, photoId);
+        var result = await manager.SetCoverAsync(chapterId, photoId);
 
         Assert.True(result.IsSuccess);
     }
@@ -135,14 +135,14 @@ public class AlbumManagerTests
     public async Task SetCoverAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
-        var result = await manager.SetCoverAsync(albumId, photoId);
+        var result = await manager.SetCoverAsync(chapterId, photoId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -152,31 +152,31 @@ public class AlbumManagerTests
     public async Task SetCoverAsync_ShouldFail_WhenPhotoDoesNotExist()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(albumId, Guid.NewGuid());
+        var result = await manager.SetCoverAsync(chapterId, Guid.NewGuid());
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
     }
 
     [Fact]
-    public async Task SetCoverAsync_ShouldFail_WhenPhotoBelongsToDifferentAlbum()
+    public async Task SetCoverAsync_ShouldFail_WhenPhotoBelongsToDifferentChapter()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
-        var otherAlbumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        var otherChapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(otherAlbumId, baulId, "Otro album", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, otherAlbumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(otherChapterId, baulId, "Otro chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, otherChapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(albumId, photoId);
+        var result = await manager.SetCoverAsync(chapterId, photoId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
@@ -186,33 +186,33 @@ public class AlbumManagerTests
     public async Task UpdateAsync_ShouldUpdateName_ForCustodio()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdateAsync(albumId, "Vacaciones 2024");
+        var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Vacaciones 2024", result.Value.Name);
 
-        var album = await _albumRepository.GetByIdAsync(albumId);
-        Assert.Equal("Vacaciones 2024", album!.Name);
+        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
+        Assert.Equal("Vacaciones 2024", chapter!.Name);
     }
 
     [Fact]
     public async Task UpdateAsync_ShouldAllow_ForColaboradorRole()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.UpdateAsync(albumId, "Vacaciones 2024");
+        var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
 
         Assert.True(result.IsSuccess);
     }
@@ -221,42 +221,42 @@ public class AlbumManagerTests
     public async Task UpdateAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
-        var result = await manager.UpdateAsync(albumId, "Vacaciones 2024");
+        var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
-    public async Task UpdateAsync_ShouldFail_WhenAlbumDoesNotExist()
+    public async Task UpdateAsync_ShouldFail_WhenChapterDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
         var result = await manager.UpdateAsync(Guid.NewGuid(), "Vacaciones 2024");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Album not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error);
     }
 
     [Fact]
     public async Task GetByBaulIdAsync_ShouldCountRecuerdos_RegardlessOfPhotoAssociation()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "k1", null, null, null, CustodioId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "k1", null, null, null, CustodioId, _clock.UtcNow()));
 
         // Photo-attached recuerdo, plus a chapter-level one with no photo at all — both
-        // must count (this used to only count recuerdos joined through the album's
+        // must count (this used to only count recuerdos joined through the chapter's
         // currently-active photos, silently dropping photo-less ones).
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, CustodioId, "con foto", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, chapterId, baulId, CustodioId, "con foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, chapterId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -269,12 +269,12 @@ public class AlbumManagerTests
     public async Task GetByBaulIdAsync_ShouldComputeDateRangeAndUndatedCount()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 3, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "k1", 2020, 5, 10, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "k2", 2018, null, null, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), albumId, baulId, "k3", null, null, null, CustodioId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 3, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), chapterId, baulId, "k1", 2020, 5, 10, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), chapterId, baulId, "k2", 2018, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), chapterId, baulId, "k3", null, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -290,61 +290,61 @@ public class AlbumManagerTests
     }
 
     [Fact]
-    public async Task GetByBaulIdAsync_ShouldSortAlbumsChronologically_OldestFirst_UndatedLast()
+    public async Task GetByBaulIdAsync_ShouldSortChaptersChronologically_OldestFirst_UndatedLast()
     {
         var baulId = Guid.NewGuid();
-        var olderAlbumId = Guid.NewGuid();
-        var recentAlbumId = Guid.NewGuid();
-        var undatedAlbumId = Guid.NewGuid();
+        var olderChapterId = Guid.NewGuid();
+        var recentChapterId = Guid.NewGuid();
+        var undatedChapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(olderAlbumId, baulId, "Antiguo", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(recentAlbumId, baulId, "Reciente", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(undatedAlbumId, baulId, "Sin fecha", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), olderAlbumId, baulId, "k1", 2015, null, null, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), recentAlbumId, baulId, "k2", 2022, null, null, CustodioId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(olderChapterId, baulId, "Antiguo", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(recentChapterId, baulId, "Reciente", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(undatedChapterId, baulId, "Sin fecha", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), olderChapterId, baulId, "k1", 2015, null, null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(Guid.NewGuid(), recentChapterId, baulId, "k2", 2022, null, null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
 
         Assert.True(result.IsSuccess);
         var ids = result.Value.Select(a => a.Id).ToList();
-        Assert.Equal([olderAlbumId.ToString(), recentAlbumId.ToString(), undatedAlbumId.ToString()], ids);
+        Assert.Equal([olderChapterId.ToString(), recentChapterId.ToString(), undatedChapterId.ToString()], ids);
     }
 
     [Fact]
     public async Task CreateRecuerdoAsync_ShouldCreateRecuerdoWithNoPhoto()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(albumId, "Que buen viaje");
+        var result = await manager.CreateRecuerdoAsync(chapterId, "Que buen viaje");
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.PhotoId);
         Assert.True(result.Value.IsOwn);
         Assert.Equal("Que buen viaje", result.Value.Text);
 
-        var stored = (await _recuerdoRepository.GetByAlbumIdAsync(albumId)).Single();
+        var stored = (await _recuerdoRepository.GetByChapterIdAsync(chapterId)).Single();
         Assert.Null(stored.PhotoId);
-        Assert.Equal(albumId, stored.AlbumId);
+        Assert.Equal(chapterId, stored.ChapterId);
     }
 
     [Fact]
     public async Task CreateRecuerdoAsync_ShouldAllow_ForColaboradorRole()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(albumId, "Recuerdo de un colaborador");
+        var result = await manager.CreateRecuerdoAsync(chapterId, "Recuerdo de un colaborador");
 
         Assert.True(result.IsSuccess);
     }
@@ -353,16 +353,16 @@ public class AlbumManagerTests
     public async Task CreateRecuerdoAsync_ShouldIncludeAuthorsAvatarUrl_WhenPersonaHasOne()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow(),
             AvatarPhotoKey: "avatar-key"));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(albumId, "Recuerdo de un colaborador");
+        var result = await manager.CreateRecuerdoAsync(chapterId, "Recuerdo de un colaborador");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
@@ -372,44 +372,44 @@ public class AlbumManagerTests
     public async Task CreateRecuerdoAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
-        var result = await manager.CreateRecuerdoAsync(albumId, "No debería poder");
+        var result = await manager.CreateRecuerdoAsync(chapterId, "No debería poder");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
-    public async Task CreateRecuerdoAsync_ShouldFail_WhenAlbumDoesNotExist()
+    public async Task CreateRecuerdoAsync_ShouldFail_WhenChapterDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
         var result = await manager.CreateRecuerdoAsync(Guid.NewGuid(), "texto");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Album not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error);
     }
 
     [Fact]
     public async Task GetRecuerdosAsync_ShouldReturnFeedNewestFirst_WithPhotoThumbnailWhenPresent()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "photo-key", null, null, null, CustodioId, _clock.UtcNow()));
 
         var older = _clock.UtcNow().AddDays(-1);
         var newer = _clock.UtcNow();
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, baulId, CustodioId, "sin foto, más antiguo", older));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, CustodioId, "con foto, más reciente", newer));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, chapterId, baulId, CustodioId, "sin foto, más antiguo", older));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, chapterId, baulId, CustodioId, "con foto, más reciente", newer));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetRecuerdosAsync(albumId);
+        var result = await manager.GetRecuerdosAsync(chapterId);
 
         Assert.True(result.IsSuccess);
         var list = result.Value.ToList();
@@ -428,90 +428,90 @@ public class AlbumManagerTests
     public async Task GetRecuerdosAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
-        var result = await manager.GetRecuerdosAsync(albumId);
+        var result = await manager.GetRecuerdosAsync(chapterId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
-    public async Task DeleteAsync_ShouldRemoveAlbum_AndLoosenItsPhotosAndRecuerdos_ForCustodio()
+    public async Task DeleteAsync_ShouldRemoveChapter_AndLoosenItsPhotosAndRecuerdos_ForCustodio()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(new Photo(photoId, albumId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, albumId, baulId, CustodioId, "con foto", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, albumId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), photoId, chapterId, baulId, CustodioId, "con foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(Guid.NewGuid(), null, chapterId, baulId, CustodioId, "sin foto", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.DeleteAsync(albumId);
+        var result = await manager.DeleteAsync(chapterId);
 
         Assert.True(result.IsSuccess);
-        Assert.Null(await _albumRepository.GetByIdAsync(albumId));
+        Assert.Null(await _chapterRepository.GetByIdAsync(chapterId));
 
         var photo = await _photoRepository.GetByIdAsync(photoId);
-        Assert.Null(photo!.AlbumId);
+        Assert.Null(photo!.ChapterId);
         Assert.Equal(baulId, photo.BaulId);
 
         var recuerdos = (await _recuerdoRepository.GetByBaulIdAsync(baulId)).ToList();
         Assert.Equal(2, recuerdos.Count);
-        Assert.All(recuerdos, r => Assert.Null(r.AlbumId));
+        Assert.All(recuerdos, r => Assert.Null(r.ChapterId));
 
         var baul = await _baulRepository.GetByIdAsync(baulId);
-        Assert.Equal(0, baul!.AlbumCount);
+        Assert.Equal(0, baul!.ChapterCount);
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldDenyAccess_ForColaboradorRole()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
         await _baulRepository.AddSharedUserAsync(new SharedUser(
             Guid.NewGuid(), baulId, colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.DeleteAsync(albumId);
+        var result = await manager.DeleteAsync(chapterId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
-        Assert.NotNull(await _albumRepository.GetByIdAsync(albumId));
+        Assert.NotNull(await _chapterRepository.GetByIdAsync(chapterId));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var baulId = Guid.NewGuid();
-        var albumId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _albumRepository.CreateAsync(new Album(albumId, baulId, "Album", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
-        var result = await manager.DeleteAsync(albumId);
+        var result = await manager.DeleteAsync(chapterId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
-    public async Task DeleteAsync_ShouldFail_WhenAlbumDoesNotExist()
+    public async Task DeleteAsync_ShouldFail_WhenChapterDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
         var result = await manager.DeleteAsync(Guid.NewGuid());
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Album not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error);
     }
 }

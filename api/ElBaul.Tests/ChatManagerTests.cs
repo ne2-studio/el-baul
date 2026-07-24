@@ -11,7 +11,7 @@ public class ChatManagerTests
     private const string OtherUserId = "user-2";
 
     private readonly InMemoryBaulRepository _baulRepository = new();
-    private readonly InMemoryAlbumRepository _albumRepository = new();
+    private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemoryChatMessageRepository _chatMessageRepository = new();
     private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
@@ -20,7 +20,7 @@ public class ChatManagerTests
 
     private ChatManager CreateManager(
         string currentUserId, Guid? nextId = null, IEmbeddingBackend? embeddingBackend = null, IAppConfiguration? appConfiguration = null) =>
-        new(NullLogger<ChatManager>.Instance, _baulRepository, _albumRepository, _recuerdoRepository,
+        new(NullLogger<ChatManager>.Instance, _baulRepository, _chapterRepository, _recuerdoRepository,
             _chatMessageRepository, _recuerdoEmbeddingRepository, _aiChatBackend,
             embeddingBackend ?? new FakeEmbeddingBackend([]), appConfiguration ?? new StaticAppConfiguration(),
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
@@ -124,11 +124,11 @@ public class ChatManagerTests
     }
 
     [Fact]
-    public async Task SendMessageAsync_ShouldIncludeBaulRecuerdosAndAlbums_InTheSystemPrompt()
+    public async Task SendMessageAsync_ShouldIncludeBaulRecuerdosAndChapters_InTheSystemPrompt()
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Viajes de la familia");
-        await _albumRepository.CreateAsync(new Album(Guid.NewGuid(), baulId, "Boda de Ana", 5, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(Guid.NewGuid(), baulId, "Boda de Ana", 5, null, _clock.UtcNow(), _clock.UtcNow()));
         _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
             Guid.NewGuid(), null, null, baulId, CustodioId, "Fuimos a Asturias en verano", _clock.UtcNow()));
 

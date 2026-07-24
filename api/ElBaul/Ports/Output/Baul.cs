@@ -6,7 +6,7 @@ public record Baul
     string Name,
     string? Description,
     string CustodioId,
-    int AlbumCount,
+    int ChapterCount,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     string? CoverPhotoKey = null

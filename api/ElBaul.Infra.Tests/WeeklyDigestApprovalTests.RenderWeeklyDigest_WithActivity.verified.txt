@@ -19,7 +19,7 @@
               <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola Pedro,</p>          <p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">Esto es lo que ha pasado esta semana en tus baúles:</p>
               <h2 style="margin:20px 0 8px 0;font-size:17px;color:#6b3f2a;">Familia Pardal</h2>
               <ul style="margin:0 0 8px 0;padding-left:20px;font-size:15px;line-height:1.6;">
-                <li><a href="https://el-baul.test/albumes/1" style="color:#6b3f2a;">Nuevo cap&#237;tulo: “Verano 1998”</a></li>
+                <li><a href="https://el-baul.test/capitulos/1" style="color:#6b3f2a;">Nuevo cap&#237;tulo: “Verano 1998”</a></li>
                 <li><a href="https://el-baul.test/baules/1" style="color:#6b3f2a;">3 recuerdos nuevos</a></li>
                           </ul>
 
@@ -55,7 +55,7 @@ Hola Pedro,
 Esto es lo que ha pasado esta semana en tus baúles:
 
 Familia Pardal
-- Nuevo capítulo: “Verano 1998”: https://el-baul.test/albumes/1
+- Nuevo capítulo: “Verano 1998”: https://el-baul.test/capitulos/1
 - 3 recuerdos nuevos: https://el-baul.test/baules/1
 
 Familia Jimena

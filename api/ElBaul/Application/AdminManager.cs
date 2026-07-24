@@ -7,7 +7,7 @@ namespace ElBaul.Application;
 /// <summary>
 /// Backs the backoffice's Dashboard/Usuarios/Baúles screens. Unlike every other manager in
 /// this codebase, methods here do NOT check per-call ownership (the "load the baúl, check
-/// CustodioId/SharedUser" pattern from BaulManager/PhotoManager/AlbumManager) — there is no
+/// CustodioId/SharedUser" pattern from BaulManager/PhotoManager/ChapterManager) — there is no
 /// ownership scope for an admin read, only the AdminOnly authorization policy at the
 /// controller boundary (see AdminController). This is a deliberate deviation from
 /// docs/ARCHITECTURE.md's "access control is checked explicitly inside each use-case
@@ -58,11 +58,11 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
             su.UserId,
             su.UserId is not null ? row.LinkedUserNames.GetValueOrDefault(su.UserId) : null));
 
-        var capitulos = row.Albums.Select(a => new AdminBaulAlbumDto(a.Id.ToString(), a.Name, a.PhotoCount));
+        var chapters = row.Chapters.Select(a => new AdminBaulChapterDto(a.Id.ToString(), a.Name, a.PhotoCount));
 
-        var stats = new AdminBaulStatsDto(row.PhotoCount, row.RecuerdoCount, row.SharedUsers.Count(), row.Albums.Count());
+        var stats = new AdminBaulStatsDto(row.PhotoCount, row.RecuerdoCount, row.SharedUsers.Count(), row.Chapters.Count());
 
-        return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, capitulos, stats);
+        return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, chapters, stats);
     }
 
     public async Task<Result<IEnumerable<AdminSentEmailDto>>> GetSentEmailsAsync()
@@ -85,5 +85,5 @@ public class AdminManager(IAdminRepository adminRepository, ISentEmailRepository
         new(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);
 
     private static AdminBaulListItemDto ToDto(AdminBaulRow row) =>
-        new(row.Baul.Id.ToString(), row.Baul.Name, row.CustodioName, row.MemberCount, row.LinkedUserCount, row.PhotoCount, row.AlbumCount, row.Baul.CreatedAt);
+        new(row.Baul.Id.ToString(), row.Baul.Name, row.CustodioName, row.MemberCount, row.LinkedUserCount, row.PhotoCount, row.ChapterCount, row.Baul.CreatedAt);
 }

@@ -9,8 +9,8 @@ public enum ImagePlacement
 {
     PhotoGridThumbnail,
     PhotoFull,
-    AlbumCover,
-    AlbumCoverFeatured,
+    ChapterCover,
+    ChapterCoverFeatured,
     RemovalRequestThumbnail,
     InvitationPreview,
     BaulCover,

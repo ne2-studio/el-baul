@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ElBaul.Infra.EntityConfigurations;
 
-public class AlbumConfiguration : IEntityTypeConfiguration<Album>
+public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
 {
-    public void Configure(EntityTypeBuilder<Album> builder)
+    public void Configure(EntityTypeBuilder<Chapter> builder)
     {
-        builder.ToTable("Albums");
+        builder.ToTable("Chapters");
         builder.HasKey(a => a.Id);
         builder.Property(a => a.Name).IsRequired().HasMaxLength(200);
         builder.Property(a => a.CoverPhotoKey).HasMaxLength(1000);

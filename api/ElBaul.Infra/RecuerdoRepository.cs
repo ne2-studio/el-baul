@@ -17,9 +17,9 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
             .OrderBy(r => r.CreatedAt)
             .ToListAsync();
 
-    public async Task<IEnumerable<Recuerdo>> GetByAlbumIdAsync(Guid albumId) =>
+    public async Task<IEnumerable<Recuerdo>> GetByChapterIdAsync(Guid chapterId) =>
         await dbContext.Recuerdos.AsNoTracking()
-            .Where(r => r.AlbumId == albumId)
+            .Where(r => r.ChapterId == chapterId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
@@ -34,9 +34,9 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
             .Where(r => r.BaulId == baulId && r.CreatedAt >= since)
             .ToListAsync();
 
-    public async Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync() =>
+    public async Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoChapterAsync() =>
         await dbContext.Recuerdos.AsNoTracking()
-            .Where(r => r.PhotoId != null && r.AlbumId == null)
+            .Where(r => r.PhotoId != null && r.ChapterId == null)
             .ToListAsync();
 
     public async Task<IEnumerable<Recuerdo>> GetAllAsync() =>
@@ -45,7 +45,7 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
     public async Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync() =>
         await dbContext.Database
             .SqlQueryRaw<RecuerdoBaulIdCandidate>(
-                "SELECT \"Id\", \"PhotoId\", \"AlbumId\" FROM \"Recuerdos\" WHERE \"BaulId\" IS NULL")
+                "SELECT \"Id\", \"PhotoId\", \"ChapterId\" FROM \"Recuerdos\" WHERE \"BaulId\" IS NULL")
             .ToListAsync();
 
     public async Task SetBaulIdAsync(Guid recuerdoId, Guid baulId) =>

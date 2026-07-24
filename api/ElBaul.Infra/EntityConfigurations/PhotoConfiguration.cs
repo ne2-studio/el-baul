@@ -17,18 +17,18 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.Property(p => p.DeletedAt).HasColumnType("timestamp with time zone");
         builder.Property(p => p.DeletionReason).HasMaxLength(2000);
 
-        builder.HasIndex(p => p.AlbumId);
+        builder.HasIndex(p => p.ChapterId);
         builder.HasIndex(p => p.BaulId);
         builder.HasIndex(p => p.ClientUploadId).IsUnique();
 
-        builder.HasOne<Album>()
+        builder.HasOne<Chapter>()
             .WithMany()
-            .HasForeignKey(p => p.AlbumId)
+            .HasForeignKey(p => p.ChapterId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // BaulId is redundant with AlbumId->Baul for cheap baul-scoped queries (preview photos);
-        // Restrict avoids a second cascade path alongside Album's.
+        // BaulId is redundant with ChapterId->Baul for cheap baul-scoped queries (preview photos);
+        // Restrict avoids a second cascade path alongside Chapter's.
         builder.HasOne<Baul>()
             .WithMany()
             .HasForeignKey(p => p.BaulId)

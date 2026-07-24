@@ -4,7 +4,7 @@ public record Recuerdo
 (
     Guid Id,
     Guid? PhotoId,
-    Guid? AlbumId,
+    Guid? ChapterId,
     Guid BaulId,
     string UserId,
     string Text,

@@ -9,7 +9,7 @@ namespace ElBaul.Application;
 public class ChatManager(
     ILogger<ChatManager> logger,
     IBaulRepository baulRepository,
-    IAlbumRepository albumRepository,
+    IChapterRepository chapterRepository,
     IRecuerdoRepository recuerdoRepository,
     IChatMessageRepository chatMessageRepository,
     IRecuerdoEmbeddingRepository recuerdoEmbeddingRepository,
@@ -102,8 +102,8 @@ public class ChatManager(
     private async Task<string> BuildRelevantContextAsync(Guid baulId, string query)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
-        var albums = (await albumRepository.GetByBaulIdAsync(baulId)).ToList();
-        var albumNames = albums.ToDictionary(a => a.Id, a => a.Name);
+        var chapters = (await chapterRepository.GetByBaulIdAsync(baulId)).ToList();
+        var chapterNames = chapters.ToDictionary(a => a.Id, a => a.Name);
         var sharedUsers = (await baulRepository.GetSharedUsersAsync(baulId)).ToList();
         var nicknamesByUserId = sharedUsers
             .Where(s => s.UserId is not null)
@@ -123,8 +123,8 @@ public class ChatManager(
 
         sb.AppendLine();
         sb.AppendLine("Capítulos:");
-        foreach (var album in albums)
-            sb.AppendLine($"- {album.Name} ({album.PhotoCount} fotos)");
+        foreach (var chapter in chapters)
+            sb.AppendLine($"- {chapter.Name} ({chapter.PhotoCount} fotos)");
 
         sb.AppendLine();
         if (relevantRecuerdos.Count < recuerdos.Count)
@@ -144,8 +144,8 @@ public class ChatManager(
         foreach (var recuerdo in relevantRecuerdos.OrderBy(r => r.CreatedAt))
         {
             var author = nicknamesByUserId.GetValueOrDefault(recuerdo.UserId, "Usuario");
-            var albumName = recuerdo.AlbumId is { } albumId ? albumNames.GetValueOrDefault(albumId) : null;
-            var location = albumName is not null ? $", capítulo: {albumName}" : "";
+            var chapterName = recuerdo.ChapterId is { } chapterId ? chapterNames.GetValueOrDefault(chapterId) : null;
+            var location = chapterName is not null ? $", capítulo: {chapterName}" : "";
             sb.AppendLine($"- [{recuerdo.CreatedAt:yyyy-MM-dd}] {author}: \"{recuerdo.Text}\"{location}");
         }
 

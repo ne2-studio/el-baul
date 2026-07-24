@@ -17,8 +17,8 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
         return Task.FromResult(_recuerdos.Where(r => r.PhotoId is { } id && ids.Contains(id)).OrderBy(r => r.CreatedAt).AsEnumerable());
     }
 
-    public Task<IEnumerable<Recuerdo>> GetByAlbumIdAsync(Guid albumId) =>
-        Task.FromResult(_recuerdos.Where(r => r.AlbumId == albumId).OrderByDescending(r => r.CreatedAt).AsEnumerable());
+    public Task<IEnumerable<Recuerdo>> GetByChapterIdAsync(Guid chapterId) =>
+        Task.FromResult(_recuerdos.Where(r => r.ChapterId == chapterId).OrderByDescending(r => r.CreatedAt).AsEnumerable());
 
     public Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(Guid baulId) =>
         Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId).OrderByDescending(r => r.CreatedAt).AsEnumerable());
@@ -26,8 +26,8 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
     public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since) =>
         Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId && r.CreatedAt >= since).AsEnumerable());
 
-    public Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoAlbumAsync() =>
-        Task.FromResult(_recuerdos.Where(r => r.PhotoId != null && r.AlbumId == null).AsEnumerable());
+    public Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoChapterAsync() =>
+        Task.FromResult(_recuerdos.Where(r => r.PhotoId != null && r.ChapterId == null).AsEnumerable());
 
     public Task<IEnumerable<Recuerdo>> GetAllAsync() => Task.FromResult(_recuerdos.AsEnumerable());
 
@@ -37,7 +37,7 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
     public Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync() =>
         Task.FromResult(_recuerdos
             .Where(r => r.BaulId == Guid.Empty)
-            .Select(r => new RecuerdoBaulIdCandidate(r.Id, r.PhotoId, r.AlbumId))
+            .Select(r => new RecuerdoBaulIdCandidate(r.Id, r.PhotoId, r.ChapterId))
             .AsEnumerable());
 
     public Task SetBaulIdAsync(Guid recuerdoId, Guid baulId)

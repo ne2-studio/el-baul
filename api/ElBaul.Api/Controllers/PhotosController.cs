@@ -10,16 +10,16 @@ namespace ElBaul.Api.Controllers;
 [Route("api")]
 public class PhotosController(IPhotoManager photoManager) : ControllerBase
 {
-    [HttpGet("albums/{albumId:guid}/photos")]
-    public async Task<IActionResult> GetByAlbum(Guid albumId)
+    [HttpGet("chapters/{chapterId:guid}/photos")]
+    public async Task<IActionResult> GetByChapter(Guid chapterId)
     {
-        var result = await photoManager.GetByAlbumIdAsync(albumId);
+        var result = await photoManager.GetByChapterIdAsync(chapterId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPost("albums/{albumId:guid}/photos")]
+    [HttpPost("chapters/{chapterId:guid}/photos")]
     [RequestSizeLimit(20_000_000)]
-    public async Task<IActionResult> Upload(Guid albumId, [FromForm] UploadPhotoRequest request)
+    public async Task<IActionResult> Upload(Guid chapterId, [FromForm] UploadPhotoRequest request)
     {
         if (request.File is null || request.File.Length == 0)
             return BadRequest(new { error = "No file provided" });
@@ -29,19 +29,19 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
 
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(
-            albumId, stream, request.File.FileName, request.File.ContentType, ToDateTuple(request),
+            chapterId, stream, request.File.FileName, request.File.ContentType, ToDateTuple(request),
             request.ClientUploadId.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    [HttpPut("photos/{photoId:guid}/album")]
+    [HttpPut("photos/{photoId:guid}/chapter")]
     public async Task<IActionResult> Move(Guid photoId, [FromBody] MovePhotoRequest request)
     {
-        if (!Guid.TryParse(request.AlbumId, out var albumId))
-            return BadRequest(new { error = $"'{request.AlbumId}' is not a valid album id." });
+        if (!Guid.TryParse(request.ChapterId, out var chapterId))
+            return BadRequest(new { error = $"'{request.ChapterId}' is not a valid chapter id." });
 
-        var result = await photoManager.MoveAsync(photoId, albumId);
+        var result = await photoManager.MoveAsync(photoId, chapterId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 

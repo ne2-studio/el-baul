@@ -71,8 +71,8 @@ public class AdminManagerTests
     [Fact]
     public async Task GetAllBaulesAsync_ShouldMapEachRow()
     {
-        var baul = new Baul(Guid.NewGuid(), "Familia Pérez", null, "custodio-1", AlbumCount: 1, _clock.UtcNow(), _clock.UtcNow());
-        _adminRepository.Baules.Add(new AdminBaulRow(baul, "Custodio Uno", MemberCount: 3, LinkedUserCount: 2, PhotoCount: 10, AlbumCount: 1));
+        var baul = new Baul(Guid.NewGuid(), "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        _adminRepository.Baules.Add(new AdminBaulRow(baul, "Custodio Uno", MemberCount: 3, LinkedUserCount: 2, PhotoCount: 10, ChapterCount: 1));
 
         var result = await CreateManager().GetAllBaulesAsync();
 
@@ -113,19 +113,19 @@ public class AdminManagerTests
     }
 
     [Fact]
-    public async Task GetBaulDetailAsync_ShouldMergePersonasAndCapitulosAndStats()
+    public async Task GetBaulDetailAsync_ShouldMergePersonasAndChaptersAndStats()
     {
         var baulId = Guid.NewGuid();
-        var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", AlbumCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
         var linkedSharedUser = new SharedUser(Guid.NewGuid(), baulId, "user-1", "Abuela", BaulRole.Custodio, _clock.UtcNow());
         var unlinkedSharedUser = new SharedUser(Guid.NewGuid(), baulId, null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
-        var album = new Album(Guid.NewGuid(), baulId, "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(Guid.NewGuid(), baulId, "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
 
         _adminRepository.BaulDetails[baulId] = new AdminBaulDetailRow(
             baul,
             [linkedSharedUser, unlinkedSharedUser],
             new Dictionary<string, string> { ["user-1"] = "Abuela Real Name" },
-            [album],
+            [chapter],
             PhotoCount: 5,
             RecuerdoCount: 8);
 
@@ -135,11 +135,11 @@ public class AdminManagerTests
         Assert.Equal(2, result.Value.Personas.Count());
         Assert.Contains(result.Value.Personas, p => p.PersonId == linkedSharedUser.Id.ToString() && p.LinkedUserName == "Abuela Real Name");
         Assert.Contains(result.Value.Personas, p => p.PersonId == unlinkedSharedUser.Id.ToString() && p.LinkedUserName == null);
-        var capitulo = Assert.Single(result.Value.Capitulos);
+        var capitulo = Assert.Single(result.Value.Chapters);
         Assert.Equal("Verano 2020", capitulo.Name);
         Assert.Equal(5, result.Value.Stats.Photos);
         Assert.Equal(8, result.Value.Stats.Recuerdos);
         Assert.Equal(2, result.Value.Stats.Personas);
-        Assert.Equal(1, result.Value.Stats.Capitulos);
+        Assert.Equal(1, result.Value.Stats.Chapters);
     }
 }

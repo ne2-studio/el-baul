@@ -11,14 +11,14 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
     public Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId) =>
         dbContext.Photos.AsNoTracking().FirstOrDefaultAsync(p => p.ClientUploadId == clientUploadId);
 
-    public async Task<IEnumerable<Photo>> GetByAlbumIdAsync(Guid albumId) =>
+    public async Task<IEnumerable<Photo>> GetByChapterIdAsync(Guid chapterId) =>
         await dbContext.Photos.AsNoTracking()
-            .Where(p => p.AlbumId == albumId && p.Status == PhotoStatus.Active)
+            .Where(p => p.ChapterId == chapterId && p.Status == PhotoStatus.Active)
             .ToListAsync();
 
     public async Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(Guid baulId) =>
         await dbContext.Photos.AsNoTracking()
-            .Where(p => p.BaulId == baulId && p.AlbumId == null && p.Status == PhotoStatus.Active)
+            .Where(p => p.BaulId == baulId && p.ChapterId == null && p.Status == PhotoStatus.Active)
             .ToListAsync();
 
     public async Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since) =>

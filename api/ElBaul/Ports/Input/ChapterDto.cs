@@ -1,6 +1,6 @@
 namespace ElBaul.Ports.Input;
 
-public record AlbumDto
+public record ChapterDto
 (
     string Id,
     string BaulId,
