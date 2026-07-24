@@ -30,10 +30,6 @@ import { UploadConfirmationRoute } from '../features/photos/components/UploadCon
 import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadErrorRoute } from '../features/photos/components/UploadErrorRoute';
 import { LoosePhotosRoute } from '../features/photos/components/LoosePhotosRoute';
-import { LoosePhotoViewerRoute } from '../features/photos/components/LoosePhotoViewerRoute';
-import { LooseUploadConfirmationRoute } from '../features/photos/components/LooseUploadConfirmationRoute';
-import { LooseUploadingRoute } from '../features/photos/components/LooseUploadingRoute';
-import { LooseUploadErrorRoute } from '../features/photos/components/LooseUploadErrorRoute';
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { PersonaDetailRoute } from '../features/sharing/components/PersonaDetailRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
@@ -245,22 +241,22 @@ function App() {
         } />
         <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
           <ProtectedRoute>
-            <LoosePhotoViewerRoute />
+            <PhotoViewerRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/fotos-sueltas/confirmar" element={
           <ProtectedRoute>
-            <LooseUploadConfirmationRoute />
+            <UploadConfirmationRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/fotos-sueltas/subiendo" element={
           <ProtectedRoute>
-            <LooseUploadingRoute />
+            <UploadingRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/fotos-sueltas/error" element={
           <ProtectedRoute>
-            <LooseUploadErrorRoute navigate={navigate} />
+            <UploadErrorRoute navigate={navigate} />
           </ProtectedRoute>
         } />
         <Route path="/invitacion/persona/:personaId" element={
@@ -341,7 +337,7 @@ function App() {
           } />
           <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
             <ProtectedRoute>
-              <LoosePhotoViewerRoute />
+              <PhotoViewerRoute />
             </ProtectedRoute>
           } />
         </Routes>

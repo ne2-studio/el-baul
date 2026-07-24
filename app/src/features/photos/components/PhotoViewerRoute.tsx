@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/app/components/PhotoViewer';
 import { Photo } from '@/app/components/PhotosView';
+import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from 'react-oidc-context';
@@ -13,6 +14,10 @@ import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
 
+// chapterId is present when viewing a photo inside a real chapter, absent for the virtual
+// "Fotos sueltas" chapter (see useAppStore's nullable chapterId convention). Real-chapter
+// photos are paginated per-chapter and fetched on demand via loadChapterPhotos; loose photos
+// are already loaded in full by useBaulScope, so no separate fetch/loading state is needed.
 export const PhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,10 +27,10 @@ export const PhotoViewerRoute: React.FC = () => {
 
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
-  const { photos, recuerdos, loadRecuerdos, loadChapterPhotos, addRecuerdo, submitRemovalRequest, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
+  const { photos: chapterPhotosById, recuerdos, loadRecuerdos, loadChapterPhotos, addRecuerdo, submitRemovalRequest, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
 
-  const { baul, chapters, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
-  const chapter = chapters?.find(a => a.id === chapterId);
+  const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
+  const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
 
   const [photosFailed, setPhotosFailed] = useState(false);
 
@@ -36,11 +41,11 @@ export const PhotoViewerRoute: React.FC = () => {
   };
 
   useEffect(() => {
-    if (auth.isAuthenticated && chapterId && !photos[chapterId]) {
+    if (auth.isAuthenticated && chapterId && !chapterPhotosById[chapterId]) {
       fetchChapterPhotos();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, chapterId, photos, loadChapterPhotos]);
+  }, [auth.isAuthenticated, chapterId, chapterPhotosById, loadChapterPhotos]);
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -65,9 +70,9 @@ export const PhotoViewerRoute: React.FC = () => {
     return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
   }
 
-  if (!chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
+  if (chapterId && !chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
-  if (!photos[chapterId!]) {
+  if (chapterId && !chapterPhotosById[chapterId]) {
     if (photosFailed) {
       return (
         <ErrorScreen
@@ -81,15 +86,19 @@ export const PhotoViewerRoute: React.FC = () => {
     return <div className="p-8 text-center">Cargando foto...</div>;
   }
 
-  const photo = photos[chapterId!]?.find(p => p.id === photoId);
+  const photos = chapterId ? (chapterPhotosById[chapterId] || []) : (loosePhotos || []);
+  const photo = photos.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
+
+  const currentChapter: Chapter = chapter ?? { id: 'sueltas', name: 'Fotos sueltas', photoCount: photos.length };
+  const basePath = chapterId ? `/baules/${baul.id}/capitulos/${chapterId}` : `/baules/${baul.id}/fotos-sueltas`;
 
   // Si el visor se abrió desde dentro de la app (backgroundLocation presente), un back de
   // navegador vuelve exactamente a esa pantalla en su mismo scroll; si se accedió por enlace
   // directo no hay nada a lo que volver, así que se navega explícitamente al álbum.
   const closeViewer = () => {
     if (backgroundLocation) navigate(-1);
-    else navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { replace: true });
+    else navigate(basePath, { replace: true });
   };
 
   const handleRequestRemoval = async (photo: Photo, reason: string): Promise<boolean> => {
@@ -110,8 +119,8 @@ export const PhotoViewerRoute: React.FC = () => {
   };
 
   const handleSetChapterCover = async (photo: Photo) => {
-    if (!auth.isAuthenticated) return;
-    await run(() => setChapterCover(baul.id, chapter.id, photo.id, photo.thumbnailUrl), {
+    if (!auth.isAuthenticated || !chapterId) return;
+    await run(() => setChapterCover(baul.id, chapterId, photo.id, photo.thumbnailUrl), {
       successMessage: 'Portada del capítulo actualizada',
       errorMessage: 'Error al establecer la portada',
     });
@@ -123,7 +132,7 @@ export const PhotoViewerRoute: React.FC = () => {
   };
 
   const handleMovePhoto = async (photoToMove: Photo, targetChapterId: string): Promise<boolean> => {
-    const result = await run(() => movePhotos(baul.id, chapter.id, [photoToMove.id], targetChapterId), {
+    const result = await run(() => movePhotos(baul.id, chapterId ?? null, [photoToMove.id], targetChapterId), {
       successMessage: 'Foto movida',
       errorMessage: 'Error al mover la foto',
     });
@@ -132,7 +141,7 @@ export const PhotoViewerRoute: React.FC = () => {
   };
 
   const handleDeletePhoto = async (photoToDelete: Photo, reason: string): Promise<boolean> => {
-    const result = await run(() => deletePhoto(baul.id, chapter.id, photoToDelete.id, reason), {
+    const result = await run(() => deletePhoto(baul.id, chapterId ?? null, photoToDelete.id, reason), {
       successMessage: 'La foto ha sido retirada',
       errorMessage: 'Error al retirar la foto',
     });
@@ -141,7 +150,7 @@ export const PhotoViewerRoute: React.FC = () => {
   };
 
   const handleChangeDate = async (photoToUpdate: Photo, date: PhotoDate): Promise<boolean> => {
-    const result = await run(() => changePhotoDate(baul.id, chapter.id, photoToUpdate.id, date), {
+    const result = await run(() => changePhotoDate(baul.id, chapterId ?? null, photoToUpdate.id, date), {
       successMessage: 'Fecha actualizada',
       errorMessage: 'Error al cambiar la fecha',
     });
@@ -161,21 +170,21 @@ export const PhotoViewerRoute: React.FC = () => {
   return (
     <PhotoViewer
       photo={photo}
-      photos={photos[chapter.id] || []}
+      photos={photos}
       onClose={closeViewer}
-      onPhotoChange={(newPhoto) => navigate(`/baules/${baul.id}/capitulos/${chapter.id}/foto/${newPhoto.id}`, {
+      onPhotoChange={(newPhoto) => navigate(`${basePath}/foto/${newPhoto.id}`, {
         replace: true,
         state: backgroundLocation ? { backgroundLocation } : undefined,
       })}
       onRequestRemoval={handleRequestRemoval}
       isAdmin={isAdminRole(baul.role)}
       onSetBaulCover={handleSetBaulCover}
-      onSetChapterCover={handleSetChapterCover}
+      onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
       onMovePhoto={handleMovePhoto}
       onChangeDate={handleChangeDate}
       onDeletePhoto={handleDeletePhoto}
       allChapters={chapters || []}
-      currentChapter={chapter}
+      currentChapter={currentChapter}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}

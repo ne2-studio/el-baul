@@ -14,6 +14,8 @@ interface LocationState {
   succeededCount: number;
 }
 
+// chapterId is present when the upload targeted a real chapter, absent for the virtual
+// "Fotos sueltas" chapter (see useAppStore's nullable chapterId convention).
 export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
   navigate,
 }) => {
@@ -22,6 +24,8 @@ export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
   const { failedPhotos, date, succeededCount } =
     (location.state as LocationState) || { failedPhotos: [], date: null, succeededCount: 0 };
 
+  const basePath = chapterId ? `/baules/${baulId}/capitulos/${chapterId}` : `/baules/${baulId}/fotos-sueltas`;
+
   return (
     <UploadErrorScreen
       failedPhotos={failedPhotos}
@@ -29,11 +33,16 @@ export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
       onRetry={() =>
         // The chapter (existing or freshly created) is already resolved by this point —
         // retry targets it directly rather than re-running the original chapter choice.
-        navigate(`/baules/${baulId}/capitulos/${chapterId}/subiendo`, {
-          state: { selectedPhotos: failedPhotos, chapter: { type: 'existing', chapterId }, date, succeededCount },
+        navigate(`${basePath}/subiendo`, {
+          state: {
+            selectedPhotos: failedPhotos,
+            chapter: chapterId ? { type: 'existing', chapterId } : { type: 'none' },
+            date,
+            succeededCount,
+          },
         })
       }
-      onBack={() => navigate(`/baules/${baulId}/capitulos/${chapterId}`)}
+      onBack={() => navigate(basePath)}
     />
   );
 };
