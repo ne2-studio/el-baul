@@ -72,18 +72,18 @@ export const api = {
       new Baul(await put<any>(`/api/baules/${baulId}`, { name, description })),
 
     getPersonas: async (baulId: string) =>
-      (await get<any[]>(`/api/baules/${baulId}/shared-users`)).map((u) => new Persona(u)),
+      (await get<any[]>(`/api/baules/${baulId}/personas`)).map((u) => new Persona(u)),
     createPersona: async (baulId: string, nickname: string) =>
       new Persona(await post<any>(`/api/baules/${baulId}/personas`, { nickname })),
     getPersona: async (baulId: string, personaId: string) =>
-      new Persona(await get<any>(`/api/baules/${baulId}/shared-users/${personaId}`)),
+      new Persona(await get<any>(`/api/baules/${baulId}/personas/${personaId}`)),
     updatePersona: async (baulId: string, personaId: string, name: string, nickname: string) =>
-      new Persona(await put<any>(`/api/baules/${baulId}/shared-users/${personaId}`, { name, nickname })),
+      new Persona(await put<any>(`/api/baules/${baulId}/personas/${personaId}`, { name, nickname })),
     uploadPersonaAvatar: async (baulId: string, personaId: string, file: File) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE}/api/baules/${baulId}/shared-users/${personaId}/avatar`, {
+      const response = await fetch(`${API_BASE}/api/baules/${baulId}/personas/${personaId}/avatar`, {
         method: 'POST',
         headers: authHeaders(),
         body: formData,
@@ -92,9 +92,9 @@ export const api = {
       return new Persona(await handleResponse<any>(response));
     },
     updatePersonaRole: (baulId: string, personaId: string, role: string) =>
-      put<void>(`/api/baules/${baulId}/shared-users/${personaId}/role`, { role }),
+      put<void>(`/api/baules/${baulId}/personas/${personaId}/role`, { role }),
     revokeAccess: (baulId: string, personaId: string) =>
-      del<{ success: boolean }>(`/api/baules/${baulId}/shared-users/${personaId}`),
+      del<{ success: boolean }>(`/api/baules/${baulId}/personas/${personaId}`),
 
     getLoosePhotos: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
@@ -199,9 +199,9 @@ export const api = {
 
   personas: {
     getInvitePreview: async (personaId: string) =>
-      new BaulPreview(await get<any>(`/api/shared-users/${personaId}/invite-preview`)),
+      new BaulPreview(await get<any>(`/api/personas/${personaId}/invite-preview`)),
     acceptPersonalInvite: async (personaId: string) =>
-      new Persona(await post<any>(`/api/shared-users/${personaId}/accept-invite`)),
+      new Persona(await post<any>(`/api/personas/${personaId}/accept-invite`)),
   },
 
   users: {
