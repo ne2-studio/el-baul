@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BaulesList } from '@/app/components/BaulesList';
 import { BaulesLoadingScreen } from '@/app/components/BaulesLoadingScreen';
-import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -18,10 +20,10 @@ export const BaulesListRoute: React.FC = () => {
     baules,
     loadChapters: storeLoadChapters,
     loadLoosePhotos,
-    loadBaulRecuerdos,
-    subscription,
     isLoading
-  } = useAppStore();
+  } = useBaulesStore();
+  const { loadBaulRecuerdos } = useRecuerdosStore();
+  const { subscription } = useAuthStore();
 
   const {
     showToastMessage,

@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RequestBaulDeletionScreen } from '@/app/components/RequestBaulDeletionScreen';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { api } from '@/api';
 
 export const RequestBaulDeletionRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
-  const { baules } = useAppStore();
+  const { baules } = useBaulesStore();
   const { run, isPending } = useAsyncAction();
 
   const baul = baules.find((b) => b.id === baulId);

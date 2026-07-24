@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Share } from '@capacitor/share';
 import { PersonaDetailScreen } from '@/app/components/PersonaDetailScreen';
 import { EditPersonaModal } from '@/app/components/EditPersonaModal';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -15,15 +16,15 @@ export const PersonaDetailRoute: React.FC = () => {
   const { baulId, personaId } = useParams();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const appUrl = useAppConfigStore(state => state.appUrl);
+  const { baules } = useBaulesStore();
   const {
-    baules,
     personas,
     loadPersonas,
     updatePersona,
     uploadPersonaAvatar,
     updateUserRole,
     revokeAccess,
-  } = useAppStore();
+  } = usePersonasStore();
   const { run, isPending } = useAsyncAction();
 
   const [isLoading, setIsLoading] = useState(false);

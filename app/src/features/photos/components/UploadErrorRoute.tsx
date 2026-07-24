@@ -15,7 +15,7 @@ interface LocationState {
 }
 
 // chapterId is present when the upload targeted a real chapter, absent for the virtual
-// "Fotos sueltas" chapter (see useAppStore's nullable chapterId convention).
+// "Fotos sueltas" chapter (see useBaulesStore's nullable chapterId convention).
 export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
   navigate,
 }) => {

@@ -11,20 +11,20 @@ vi.mock('@/api', () => ({
 }));
 
 import { api } from '@/api';
-import { useAppStore } from './useAppStore';
+import { useRecuerdosStore } from './useRecuerdosStore';
 
 // Regression coverage for a bug where adding a recuerdo from a photo or a chapter never
 // showed up in the baúl-wide "Recuerdos" tab until the baúl page was reloaded: addRecuerdo
 // and addChapterRecuerdo only ever patched their own narrow cache (recuerdos[photoId] /
 // chapterRecuerdos[chapterId]), never baulRecuerdos[baulId] — the tab's own load is skipped
 // once that cache has *any* value, so it never noticed the addition happened elsewhere.
-describe('useAppStore recuerdo caches stay in sync', () => {
+describe('useRecuerdosStore recuerdo caches stay in sync', () => {
   const baulId = 'baul-1';
   const photoId = 'photo-1';
   const chapterId = 'chapter-1';
 
   beforeEach(() => {
-    useAppStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {} });
+    useRecuerdosStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {} });
     vi.clearAllMocks();
   });
 
@@ -40,47 +40,47 @@ describe('useAppStore recuerdo caches stay in sync', () => {
 
   it('addRecuerdo patches baulRecuerdos when the baúl-level tab was already loaded', async () => {
     const existing = newRecuerdo('existing');
-    useAppStore.setState({ baulRecuerdos: { [baulId]: [existing] } });
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [existing] } });
 
     const created = newRecuerdo('new', { photoId });
     vi.mocked(api.recuerdos.create).mockResolvedValue(created);
 
-    await useAppStore.getState().addRecuerdo(baulId, photoId, 'hola');
+    await useRecuerdosStore.getState().addRecuerdo(baulId, photoId, 'hola');
 
-    expect(useAppStore.getState().recuerdos[photoId]).toEqual([created]);
-    expect(useAppStore.getState().baulRecuerdos[baulId]).toEqual([created, existing]);
+    expect(useRecuerdosStore.getState().recuerdos[photoId]).toEqual([created]);
+    expect(useRecuerdosStore.getState().baulRecuerdos[baulId]).toEqual([created, existing]);
   });
 
   it('addRecuerdo does not fabricate a partial baulRecuerdos entry when the tab was never loaded', async () => {
     const created = newRecuerdo('new', { photoId });
     vi.mocked(api.recuerdos.create).mockResolvedValue(created);
 
-    await useAppStore.getState().addRecuerdo(baulId, photoId, 'hola');
+    await useRecuerdosStore.getState().addRecuerdo(baulId, photoId, 'hola');
 
-    expect(useAppStore.getState().recuerdos[photoId]).toEqual([created]);
-    expect(useAppStore.getState().baulRecuerdos[baulId]).toBeUndefined();
+    expect(useRecuerdosStore.getState().recuerdos[photoId]).toEqual([created]);
+    expect(useRecuerdosStore.getState().baulRecuerdos[baulId]).toBeUndefined();
   });
 
   it('addChapterRecuerdo patches baulRecuerdos when the baúl-level tab was already loaded', async () => {
     const existing = newRecuerdo('existing');
-    useAppStore.setState({ baulRecuerdos: { [baulId]: [existing] } });
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [existing] } });
 
     const created = newRecuerdo('new', { chapterId });
     vi.mocked(api.recuerdos.createForChapter).mockResolvedValue(created);
 
-    await useAppStore.getState().addChapterRecuerdo(baulId, chapterId, 'hola');
+    await useRecuerdosStore.getState().addChapterRecuerdo(baulId, chapterId, 'hola');
 
-    expect(useAppStore.getState().chapterRecuerdos[chapterId]).toEqual([created]);
-    expect(useAppStore.getState().baulRecuerdos[baulId]).toEqual([created, existing]);
+    expect(useRecuerdosStore.getState().chapterRecuerdos[chapterId]).toEqual([created]);
+    expect(useRecuerdosStore.getState().baulRecuerdos[baulId]).toEqual([created, existing]);
   });
 
   it('addChapterRecuerdo does not fabricate a partial baulRecuerdos entry when the tab was never loaded', async () => {
     const created = newRecuerdo('new', { chapterId });
     vi.mocked(api.recuerdos.createForChapter).mockResolvedValue(created);
 
-    await useAppStore.getState().addChapterRecuerdo(baulId, chapterId, 'hola');
+    await useRecuerdosStore.getState().addChapterRecuerdo(baulId, chapterId, 'hola');
 
-    expect(useAppStore.getState().chapterRecuerdos[chapterId]).toEqual([created]);
-    expect(useAppStore.getState().baulRecuerdos[baulId]).toBeUndefined();
+    expect(useRecuerdosStore.getState().chapterRecuerdos[chapterId]).toEqual([created]);
+    expect(useRecuerdosStore.getState().baulRecuerdos[baulId]).toBeUndefined();
   });
 });

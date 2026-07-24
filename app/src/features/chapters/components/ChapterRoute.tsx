@@ -3,7 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { PhotosView } from '@/app/components/PhotosView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -17,9 +18,10 @@ export const ChapterRoute: React.FC = () => {
   const { baulId, chapterId } = useParams();
   const auth = useAuth();
   const {
-    photos, chapterRecuerdos, loadChapterPhotos,
-    movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, loadChapterRecuerdos, addChapterRecuerdo,
-  } = useAppStore();
+    photos, loadChapterPhotos,
+    movePhotos, changePhotoDateBatch, renameChapter, deleteChapter,
+  } = useBaulesStore();
+  const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo } = useRecuerdosStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
 

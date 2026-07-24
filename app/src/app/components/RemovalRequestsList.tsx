@@ -17,7 +17,7 @@ interface RemovalRequestsListProps {
   requests: RemovalRequest[];
   onBack: () => void;
   /** Devuelven si la operación tuvo éxito — la tarjeta solo desaparece de la lista
-   * cuando el store la quita tras confirmarse en el servidor (ver useAppStore.removePhoto/keepPhoto). */
+   * cuando el store la quita tras confirmarse en el servidor (ver usePersonasStore.removePhoto/keepPhoto). */
   onRemovePhoto: (requestId: string, photoId: string) => Promise<boolean>;
   onKeepPhoto: (requestId: string) => Promise<boolean>;
 }

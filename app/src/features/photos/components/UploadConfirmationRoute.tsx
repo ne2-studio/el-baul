@@ -2,15 +2,15 @@ import React from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadConfirmationScreen } from '@/app/components/UploadConfirmationScreen';
 import { Chapter } from '@/app/components/ChaptersView';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
 
 // chapterId is present when uploading into a real chapter, absent when uploading into the
-// virtual "Fotos sueltas" chapter (see useAppStore's nullable chapterId convention).
+// virtual "Fotos sueltas" chapter (see useBaulesStore's nullable chapterId convention).
 export const UploadConfirmationRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId, chapterId } = useParams();
   const location = useLocation();
-  const { baules, chapters, loosePhotos } = useAppStore();
+  const { baules, chapters, loosePhotos } = useBaulesStore();
   const baul = baules.find(b => b.id === baulId);
   const existingChapters = chapters[baulId!] || [];
   const looseChapterPhotos = loosePhotos[baulId!] || [];

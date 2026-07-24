@@ -44,8 +44,10 @@ import { HelpSupportRoute } from '../features/support/components/HelpSupportRout
 import { SupportFormRoute } from '../features/support/components/SupportFormRoute';
 
 import { useUIStore } from '../store/uiStore';
-import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
+import { useBaulesStore } from '../store/useBaulesStore';
 import { useAppConfigStore } from '../store/useAppConfigStore';
+import { loadUserData, resetAllStores } from '../store/session';
 
 function App() {
   const navigate = useNavigate();
@@ -66,9 +68,7 @@ function App() {
     subscription,
     setSubscription,
     setAuthenticated,
-    fetchData,
-    reset
-  } = useAppStore();
+  } = useAuthStore();
 
   const { run, isPending } = useAsyncAction();
 
@@ -97,21 +97,21 @@ function App() {
     setAuthenticated(auth.isAuthenticated);
 
     if (auth.isAuthenticated) {
-      loadUserData();
+      handleLoadUserData();
     } else {
-      reset();
+      resetAllStores();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, auth.user]);
 
-  const loadUserData = async () => {
-    const result = await run(() => fetchData(), {
+  const handleLoadUserData = async () => {
+    const result = await run(() => loadUserData(), {
       key: 'loadUserData',
       errorMessage: 'No se pudieron cargar tus baúles. Comprueba tu conexión e inténtalo de nuevo.',
     });
     if (!result.ok) return;
 
-    const currentBaules = useAppStore.getState().baules;
+    const currentBaules = useBaulesStore.getState().baules;
 
     // Update subscription usage
     const custodianBaules = currentBaules.filter((b: Baul) => b.isCustodio);
@@ -147,7 +147,7 @@ function App() {
     });
     if (!result.ok) return false;
 
-    reset();
+    resetAllStores();
     navigate('/');
     return true;
   };

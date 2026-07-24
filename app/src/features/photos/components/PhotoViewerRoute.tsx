@@ -4,7 +4,9 @@ import { PhotoViewer } from '@/app/components/PhotoViewer';
 import { Photo } from '@/app/components/PhotosView';
 import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -15,7 +17,7 @@ import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
 
 // chapterId is present when viewing a photo inside a real chapter, absent for the virtual
-// "Fotos sueltas" chapter (see useAppStore's nullable chapterId convention). Real-chapter
+// "Fotos sueltas" chapter (see useBaulesStore's nullable chapterId convention). Real-chapter
 // photos are paginated per-chapter and fetched on demand via loadChapterPhotos; loose photos
 // are already loaded in full by useBaulScope, so no separate fetch/loading state is needed.
 export const PhotoViewerRoute: React.FC = () => {
@@ -27,7 +29,9 @@ export const PhotoViewerRoute: React.FC = () => {
 
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
-  const { photos: chapterPhotosById, recuerdos, loadRecuerdos, loadChapterPhotos, addRecuerdo, submitRemovalRequest, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useAppStore();
+  const { photos: chapterPhotosById, loadChapterPhotos, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useBaulesStore();
+  const { submitRemovalRequest } = usePersonasStore();
+  const { recuerdos, loadRecuerdos, addRecuerdo } = useRecuerdosStore();
 
   const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
   const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;

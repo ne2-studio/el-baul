@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadingScreen } from '@/app/components/UploadingScreen';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { ChapterSelection } from '@/app/components/ChapterSelector';
-import { useAppStore, UploadItemResult } from '@/store/useAppStore';
+import { useBaulesStore, UploadItemResult } from '@/store/useBaulesStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { PhotoDate } from '@/types';
@@ -20,7 +20,7 @@ export const UploadingRoute: React.FC = () => {
   const { baulId } = useParams();
   const location = useLocation();
   const auth = useAuth();
-  const { baules, uploadPhotosWithChapter } = useAppStore();
+  const { baules, uploadPhotosWithChapter } = useBaulesStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);

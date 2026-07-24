@@ -1,16 +1,11 @@
 import { create } from 'zustand';
 import * as Sentry from '@sentry/react';
-import { Baul, Chapter, Photo, Persona, RemovalRequest, BaulRole, Recuerdo, Subscription, UserProfile, PhotoDate } from '@/types';
+import { Baul, Chapter, Photo, PhotoDate } from '@/types';
 import { api } from '@/api';
 import { isAdminRole } from '@/utils/roleUtils';
 import { ChapterSelection } from '@/app/components/ChapterSelector';
-
-const defaultSubscription: Subscription = {
-  currentPlan: 'gratuito',
-  baulesUsed: 0,
-  baulesLimit: 2,
-  storagePerBaulGB: 10,
-};
+import { useRecuerdosStore } from './useRecuerdosStore';
+import { usePersonasStore } from './usePersonasStore';
 
 export interface UploadItem {
   clientUploadId: string;
@@ -35,38 +30,19 @@ async function verifyFileReadable(file: File): Promise<void> {
   await file.slice(0, 16).arrayBuffer();
 }
 
-interface AppState {
-  // Auth-derived state. The raw access token itself lives only in api.ts.
-  isAuthenticated: boolean;
-  userProfile: { photoUrl: string; name: string; email: string };
-  subscription: Subscription;
-
-  // Domain data
+export interface BaulesState {
   baules: Baul[];
   chapters: Record<string, Chapter[]>;
   photos: Record<string, Photo[]>;
   loosePhotos: Record<string, Photo[]>;
-  personas: Record<string, Persona[]>;
-  removalRequests: Record<string, RemovalRequest[]>;
-  recuerdos: Record<string, Recuerdo[]>;
-  chapterRecuerdos: Record<string, Recuerdo[]>;
-  baulRecuerdos: Record<string, Recuerdo[]>;
   isLoading: boolean;
 
-  setAuthenticated: (value: boolean) => void;
-  setSubscription: (subscription: Subscription | ((prev: Subscription) => Subscription)) => void;
   reset: () => void;
 
-  fetchData: () => Promise<void>;
+  loadBaules: () => Promise<void>;
   loadChapters: (baulId: string) => Promise<void>;
   loadChapterPhotos: (chapterId: string) => Promise<void>;
   loadLoosePhotos: (baulId: string) => Promise<void>;
-  loadRecuerdos: (photoId: string) => Promise<void>;
-  addRecuerdo: (baulId: string, photoId: string, text: string) => Promise<void>;
-  loadChapterRecuerdos: (baulId: string, chapterId: string) => Promise<void>;
-  addChapterRecuerdo: (baulId: string, chapterId: string, text: string) => Promise<void>;
-  loadBaulRecuerdos: (baulId: string) => Promise<void>;
-  addBaulRecuerdo: (baulId: string, text: string) => Promise<void>;
 
   createBaul: (name: string, description: string) => Promise<Baul>;
   createChapter: (baulId: string, name: string) => Promise<Chapter>;
@@ -103,72 +79,31 @@ interface AppState {
   renameChapter: (baulId: string, chapterId: string, name: string) => Promise<void>;
   deleteChapter: (baulId: string, chapterId: string) => Promise<void>;
 
-  createPersona: (baulId: string, nickname: string) => Promise<void>;
-  loadPersonas: (baulId: string) => Promise<void>;
-  updatePersona: (baulId: string, personaId: string, name: string, nickname: string) => Promise<void>;
-  uploadPersonaAvatar: (baulId: string, personaId: string, file: File) => Promise<void>;
-  updateUserRole: (baulId: string, personaId: string, role: BaulRole) => Promise<void>;
-  revokeAccess: (baulId: string, personaId: string) => Promise<void>;
-
-  removePhoto: (baulId: string, requestId: string, photoId: string) => Promise<void>;
-  keepPhoto: (baulId: string, requestId: string) => Promise<void>;
-  // Solo se usa photo.id — se acepta cualquier objeto con id para no acoplar esta acción
-  // al tipo Photo concreto de cada pantalla (PhotoViewer usa su propia interfaz local).
-  submitRemovalRequest: (baulId: string, photo: { id: string }, reason: string) => Promise<void>;
+  // Cross-store support for usePersonasStore.removePhoto: a removal request being approved
+  // deletes a photo that may be cached under any chapter or as a loose photo here.
+  removePhotoFromCaches: (photoId: string) => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  isAuthenticated: false,
-  userProfile: { photoUrl: '', name: '', email: '' },
-  subscription: defaultSubscription,
-
+export const useBaulesStore = create<BaulesState>((set, get) => ({
   baules: [],
   chapters: {},
   photos: {},
   loosePhotos: {},
-  personas: {},
-  removalRequests: {},
-  recuerdos: {},
-  chapterRecuerdos: {},
-  baulRecuerdos: {},
   isLoading: true,
 
-  setAuthenticated: (value) => set({ isAuthenticated: value }),
-
-  setSubscription: (subscriptionOrFn) => set((state) => ({
-    subscription: typeof subscriptionOrFn === 'function' ? subscriptionOrFn(state.subscription) : subscriptionOrFn,
-  })),
-
   reset: () => set({
-    isAuthenticated: false,
-    userProfile: { photoUrl: '', name: '', email: '' },
-    subscription: defaultSubscription,
     baules: [],
     chapters: {},
     photos: {},
     loosePhotos: {},
-    personas: {},
-    removalRequests: {},
-    recuerdos: {},
-    chapterRecuerdos: {},
-    baulRecuerdos: {},
+    isLoading: true,
   }),
 
-  fetchData: async () => {
+  loadBaules: async () => {
     set({ isLoading: true });
     try {
-      const [baules, profile] = await Promise.all([
-        api.baules.getAll(),
-        loadProfile(),
-      ]);
-
-      set({
-        baules,
-        userProfile: profile
-          ? { photoUrl: '', name: profile.name || profile.email, email: profile.email }
-          : get().userProfile,
-        isLoading: false,
-      });
+      const baules = await api.baules.getAll();
+      set({ baules, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -179,21 +114,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     const chapters = await api.chapters.getAll(baulId);
     set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
 
-    try {
-      const personas = await api.baules.getPersonas(baulId);
-      set((state) => ({ personas: { ...state.personas, [baulId]: personas } }));
-    } catch (err) {
-      console.log('No shared users or error loading:', err);
-    }
+    await usePersonasStore.getState().loadPersonas(baulId);
 
     const baul = get().baules.find((b) => b.id === baulId);
     if (isAdminRole(baul?.role)) {
-      try {
-        const removalRequests = await api.baules.getRemovalRequests(baulId);
-        set((state) => ({ removalRequests: { ...state.removalRequests, [baulId]: removalRequests } }));
-      } catch (err) {
-        console.log('No removal requests or error loading:', err);
-      }
+      await usePersonasStore.getState().loadRemovalRequests(baulId);
     }
   },
 
@@ -205,53 +130,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadLoosePhotos: async (baulId) => {
     const photos = await api.baules.getLoosePhotos(baulId);
     set((state) => ({ loosePhotos: { ...state.loosePhotos, [baulId]: photos } }));
-  },
-
-  loadRecuerdos: async (photoId) => {
-    const recuerdos = await api.recuerdos.getAll(photoId);
-    set((state) => ({ recuerdos: { ...state.recuerdos, [photoId]: recuerdos } }));
-  },
-
-  addRecuerdo: async (baulId, photoId, text) => {
-    const recuerdo = await api.recuerdos.create(photoId, text);
-    set((state) => ({
-      recuerdos: { ...state.recuerdos, [photoId]: [...(state.recuerdos[photoId] || []), recuerdo] },
-      // Keeps the baúl-wide "Recuerdos" tab in sync — otherwise it stays stale until
-      // BaulRoute is remounted, since its own load is guarded by "already have a cached
-      // value for this baulId" (see BaulRoute.tsx). Only patches it when already loaded:
-      // creating a one-item stub here would make that guard think it's fully loaded.
-      baulRecuerdos: state.baulRecuerdos[baulId]
-        ? { ...state.baulRecuerdos, [baulId]: [recuerdo, ...state.baulRecuerdos[baulId]] }
-        : state.baulRecuerdos,
-    }));
-  },
-
-  loadChapterRecuerdos: async (baulId, chapterId) => {
-    const recuerdos = await api.recuerdos.getAllByChapter(baulId, chapterId);
-    set((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: recuerdos } }));
-  },
-
-  addChapterRecuerdo: async (baulId, chapterId, text) => {
-    const recuerdo = await api.recuerdos.createForChapter(baulId, chapterId, text);
-    set((state) => ({
-      chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: [recuerdo, ...(state.chapterRecuerdos[chapterId] || [])] },
-      // Same reasoning as addRecuerdo above — keep the baúl-wide tab's cache in sync too.
-      baulRecuerdos: state.baulRecuerdos[baulId]
-        ? { ...state.baulRecuerdos, [baulId]: [recuerdo, ...state.baulRecuerdos[baulId]] }
-        : state.baulRecuerdos,
-    }));
-  },
-
-  loadBaulRecuerdos: async (baulId) => {
-    const recuerdos = await api.recuerdos.getAllByBaul(baulId);
-    set((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [baulId]: recuerdos } }));
-  },
-
-  addBaulRecuerdo: async (baulId, text) => {
-    const recuerdo = await api.recuerdos.createStandalone(baulId, text);
-    set((state) => ({
-      baulRecuerdos: { ...state.baulRecuerdos, [baulId]: [recuerdo, ...(state.baulRecuerdos[baulId] || [])] },
-    }));
   },
 
   createBaul: async (name, description) => {
@@ -568,13 +446,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set((state) => {
       const { [chapterId]: _removedPhotos, ...restPhotos } = state.photos;
-      const { [chapterId]: _removedRecuerdos, ...restChapterRecuerdos } = state.chapterRecuerdos;
       return {
         chapters: { ...state.chapters, [baulId]: (state.chapters[baulId] || []).filter((a) => a.id !== chapterId) },
         photos: restPhotos,
-        chapterRecuerdos: restChapterRecuerdos,
       };
     });
+    useRecuerdosStore.getState().clearChapterRecuerdos(chapterId);
 
     const [loosePhotos, baulRecuerdos] = await Promise.all([
       api.baules.getLoosePhotos(baulId),
@@ -582,115 +459,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     ]);
     set((state) => ({
       loosePhotos: { ...state.loosePhotos, [baulId]: loosePhotos },
-      baulRecuerdos: { ...state.baulRecuerdos, [baulId]: baulRecuerdos },
     }));
+    useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [baulId]: baulRecuerdos } }));
   },
 
-  createPersona: async (baulId, nickname) => {
-    const persona = await api.baules.createPersona(baulId, nickname);
-    set((state) => ({
-      personas: { ...state.personas, [baulId]: [...(state.personas[baulId] || []), persona] },
-    }));
-  },
-
-  loadPersonas: async (baulId) => {
-    const personas = await api.baules.getPersonas(baulId);
-    set((state) => ({ personas: { ...state.personas, [baulId]: personas } }));
-  },
-
-  updatePersona: async (baulId, personaId, name, nickname) => {
-    const updated = await api.baules.updatePersona(baulId, personaId, name, nickname);
-    set((state) => ({
-      personas: {
-        ...state.personas,
-        [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? updated : u)),
-      },
-    }));
-  },
-
-  uploadPersonaAvatar: async (baulId, personaId, file) => {
-    const updated = await api.baules.uploadPersonaAvatar(baulId, personaId, file);
-    set((state) => ({
-      personas: {
-        ...state.personas,
-        [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? updated : u)),
-      },
-    }));
-  },
-
-  // Optimista: el <select> de rol está controlado por este valor, así que sin aplicar
-  // el cambio antes del await se ve "rebotar" al valor anterior mientras se espera al
-  // servidor. Si la petición falla, se revierte al snapshot previo.
-  updateUserRole: async (baulId, personaId, role) => {
-    const previous = get().personas[baulId] || [];
-    set((state) => ({
-      personas: {
-        ...state.personas,
-        [baulId]: previous.map((u) => (u.id === personaId ? { ...u, role } : u)),
-      },
-    }));
-    try {
-      await api.baules.updatePersonaRole(baulId, personaId, role);
-    } catch (error) {
-      set((state) => ({ personas: { ...state.personas, [baulId]: previous } }));
-      throw error;
+  removePhotoFromCaches: (photoId) => set((state) => {
+    const photos = { ...state.photos };
+    for (const chapterId of Object.keys(photos)) {
+      photos[chapterId] = photos[chapterId].filter((p) => p.id !== photoId);
     }
-  },
 
-  revokeAccess: async (baulId, personaId) => {
-    await api.baules.revokeAccess(baulId, personaId);
-    set((state) => ({
-      personas: {
-        ...state.personas,
-        [baulId]: (state.personas[baulId] || []).filter((u) => u.id !== personaId),
-      },
-    }));
-  },
+    const loosePhotos = { ...state.loosePhotos };
+    for (const id of Object.keys(loosePhotos)) {
+      loosePhotos[id] = loosePhotos[id].filter((p) => p.id !== photoId);
+    }
 
-  removePhoto: async (baulId, requestId, photoId) => {
-    await api.baules.approveRemovalRequest(baulId, requestId);
-    set((state) => {
-      const photos = { ...state.photos };
-      for (const chapterId of Object.keys(photos)) {
-        photos[chapterId] = photos[chapterId].filter((p) => p.id !== photoId);
-      }
-
-      const loosePhotos = { ...state.loosePhotos };
-      for (const id of Object.keys(loosePhotos)) {
-        loosePhotos[id] = loosePhotos[id].filter((p) => p.id !== photoId);
-      }
-
-      return {
-        photos,
-        loosePhotos,
-        removalRequests: {
-          ...state.removalRequests,
-          [baulId]: (state.removalRequests[baulId] || []).filter((r) => r.id !== requestId),
-        },
-      };
-    });
-  },
-
-  keepPhoto: async (baulId, requestId) => {
-    await api.baules.rejectRemovalRequest(baulId, requestId);
-    set((state) => ({
-      removalRequests: {
-        ...state.removalRequests,
-        [baulId]: (state.removalRequests[baulId] || []).filter((r) => r.id !== requestId),
-      },
-    }));
-  },
-
-  submitRemovalRequest: async (baulId, photo, reason) => {
-    await api.baules.submitRemovalRequest(baulId, photo.id, reason);
-  },
+    return { photos, loosePhotos };
+  }),
 }));
-
-async function loadProfile(): Promise<UserProfile | null> {
-  try {
-    return await api.users.getProfile();
-  } catch (error) {
-    console.log('Failed to load user profile:', error);
-    return null;
-  }
-}

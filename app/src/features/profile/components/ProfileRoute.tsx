@@ -2,18 +2,19 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MiPerfilScreen } from '@/app/components/MiPerfilScreen';
 import { useAuth } from 'react-oidc-context';
-import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { resetAllStores } from '@/store/session';
 import { useUIStore } from '@/store/uiStore';
 
 export const ProfileRoute: React.FC = () => {
   const navigate = useNavigate();
   const auth = useAuth();
-  const { userProfile, reset } = useAppStore();
+  const { userProfile } = useAuthStore();
   const { setShowProfileMenu, showToastMessage } = useUIStore();
 
   const handleSignOut = async () => {
     try {
-      reset();
+      resetAllStores();
       await auth.removeUser();
       navigate('/');
     } catch (error) {

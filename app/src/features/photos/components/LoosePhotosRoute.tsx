@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotosView } from '@/app/components/PhotosView';
 import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -14,7 +14,7 @@ export const LoosePhotosRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { baulId } = useParams();
-  const { movePhotos, changePhotoDateBatch, createChapter } = useAppStore();
+  const { movePhotos, changePhotoDateBatch, createChapter } = useBaulesStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
 

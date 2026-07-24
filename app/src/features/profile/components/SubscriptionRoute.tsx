@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MiSuscripcionScreen } from '@/app/components/MiSuscripcionScreen';
-import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/uiStore';
 
 export const SubscriptionRoute: React.FC = () => {
   const navigate = useNavigate();
-  const { subscription } = useAppStore();
+  const { subscription } = useAuthStore();
   const { setShowProfileMenu } = useUIStore();
 
   return (

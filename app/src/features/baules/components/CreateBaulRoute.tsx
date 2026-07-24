@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CreateBaulForm } from '@/app/components/CreateBaulForm';
-import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -10,7 +11,8 @@ export const CreateBaulRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
-  const { setSubscription, baules, createBaul: storeCreateBaul } = useAppStore();
+  const { setSubscription } = useAuthStore();
+  const { baules, createBaul: storeCreateBaul } = useBaulesStore();
   const { showToastMessage } = useUIStore();
   const { run, isPending } = useAsyncAction();
 

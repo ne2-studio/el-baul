@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RemovalRequestsList } from '@/app/components/RemovalRequestsList.tsx';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
@@ -11,12 +12,12 @@ export const RemovalRequestsRoute: React.FC = () => {
   const auth = useAuth();
   const { run } = useAsyncAction();
 
+  const { baules } = useBaulesStore();
   const {
-    baules,
     removalRequests,
     removePhoto,
     keepPhoto
-  } = useAppStore();
+  } = usePersonasStore();
 
   const baul = baules.find(b => b.id === baulId);
 

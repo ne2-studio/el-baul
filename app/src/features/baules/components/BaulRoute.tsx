@@ -3,7 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChaptersView } from '@/app/components/ChaptersView';
 import { BlockingLoadingOverlay } from '@/app/components/BlockingLoadingOverlay';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
-import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -20,18 +23,10 @@ export const BaulRoute: React.FC = () => {
   const chatEnabled = useAppConfigStore(state => state.chatEnabled);
   const { run } = useAsyncAction();
 
-  const {
-    chapters,
-    loosePhotos,
-    personas,
-    baulRecuerdos,
-    removalRequests,
-    userProfile,
-    loadChapterPhotos,
-    addBaulRecuerdo,
-    renameBaul,
-    createPersona,
-  } = useAppStore();
+  const { chapters, loosePhotos, loadChapterPhotos, renameBaul } = useBaulesStore();
+  const { personas, removalRequests, createPersona } = usePersonasStore();
+  const { baulRecuerdos, addBaulRecuerdo } = useRecuerdosStore();
+  const { userProfile } = useAuthStore();
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
 

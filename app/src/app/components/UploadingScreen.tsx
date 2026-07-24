@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
 import { BaulIcon } from './BaulIcon';
 import { SelectedPhoto } from './UploadConfirmationScreen';
-import { UploadItemResult } from '@/store/useAppStore';
+import { UploadItemResult } from '@/store/useBaulesStore';
 
 type PhotoStatus = 'pending' | 'success' | 'error';
 

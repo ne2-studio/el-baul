@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { useAppStore } from '@/store/useAppStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { loadUserData } from '@/store/session';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 // Cualquier ruta bajo /baules/:baulId depende de que el baúl, sus capítulos y sus fotos
@@ -11,7 +13,8 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 export function useBaulScope(baulId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
-  const { baules, chapters, loosePhotos, baulRecuerdos, fetchData, loadChapters, loadLoosePhotos, loadBaulRecuerdos } = useAppStore();
+  const { baules, chapters, loosePhotos, loadChapters, loadLoosePhotos } = useBaulesStore();
+  const { baulRecuerdos, loadBaulRecuerdos } = useRecuerdosStore();
 
   const [isLoading, setIsLoading] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -20,7 +23,7 @@ export function useBaulScope(baulId: string | undefined) {
 
   const attemptRefresh = async () => {
     setIsLoading(true);
-    const result = await run(() => fetchData(), {
+    const result = await run(() => loadUserData(), {
       key: 'refresh-baul',
       errorMessage: 'No se pudo cargar el baúl. Comprueba tu conexión e inténtalo de nuevo.',
     });
@@ -39,7 +42,8 @@ export function useBaulScope(baulId: string | undefined) {
       }
 
       // Leídos vía getState() (no reactivos) a propósito: ver BaulRoute para el porqué.
-      const { chapters, baulRecuerdos } = useAppStore.getState();
+      const { chapters } = useBaulesStore.getState();
+      const { baulRecuerdos } = useRecuerdosStore.getState();
       const needsChapters = !chapters[baulId];
       const needsRecuerdos = !baulRecuerdos[baulId];
 
@@ -57,7 +61,7 @@ export function useBaulScope(baulId: string | undefined) {
 
     initBaul();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baulId, auth.isAuthenticated, baul, loadChapters, loadLoosePhotos, loadBaulRecuerdos, fetchData]);
+  }, [baulId, auth.isAuthenticated, baul, loadChapters, loadLoosePhotos, loadBaulRecuerdos]);
 
   return {
     baul,
