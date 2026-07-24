@@ -121,81 +121,7 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Access denied");
         }
 
-        var existingPhoto = await photoRepository.GetByClientUploadIdAsync(clientUploadId);
-        if (existingPhoto is not null)
-        {
-            logger.LogInformation(
-                "Duplicate photo upload ignored {BaulId} {ChapterId} {ClientUploadId} {PhotoId}",
-                chapter.BaulId, chapterId, clientUploadId, existingPhoto.Id);
-            var existingThumbnailUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoGridThumbnail);
-            var existingFullUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoFull);
-            return Result.Success(ToDto(existingPhoto, existingThumbnailUrl, existingFullUrl));
-        }
-
-        var now = clock.UtcNow();
-        var storageKey = $"{userId}/{idGenerator.NewId()}-{fileName}";
-
-        using var buffered = new MemoryStream();
-        await content.CopyToAsync(buffered);
-        buffered.Position = 0;
-        var (dateYear, dateMonth, dateDay) = ResolvePhotoDate(date, buffered);
-        buffered.Position = 0;
-
-        try
-        {
-            await photoStorage.SaveAsync(storageKey, buffered, contentType);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Photo upload failed while saving to storage {BaulId} {ChapterId} {FileName} {ContentType} {StorageKey}",
-                chapter.BaulId, chapterId, fileName, contentType, storageKey);
-            throw;
-        }
-
-        var photo = new Photo(idGenerator.NewId(), chapterId, chapter.BaulId, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
-
-        try
-        {
-            await photoRepository.CreateAsync(photo);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Photo upload failed while persisting metadata {BaulId} {ChapterId} {PhotoId} {StorageKey}",
-                chapter.BaulId, chapterId, photo.Id, storageKey);
-            await TryDeleteOrphanedStorageObjectAsync(storageKey);
-            throw;
-        }
-
-        try
-        {
-            var updatedChapter = chapter with
-            {
-                PhotoCount = chapter.PhotoCount + 1,
-                CoverPhotoKey = string.IsNullOrEmpty(chapter.CoverPhotoKey) ? storageKey : chapter.CoverPhotoKey,
-                UpdatedAt = now
-            };
-            await chapterRepository.UpdateAsync(updatedChapter);
-            await baulRepository.UpdateAsync(baul with
-            {
-                CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
-                UpdatedAt = now
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Photo upload failed while updating chapter/baul cover {BaulId} {ChapterId} {PhotoId} {StorageKey}",
-                chapter.BaulId, chapterId, photo.Id, storageKey);
-            throw;
-        }
-
-        logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", chapter.BaulId, chapterId, photo.Id);
-
-        var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
-        var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
-        return ToDto(photo, thumbnailUrl, fullUrl);
+        return await UploadPhotoAsync(baul, chapter, content, fileName, contentType, date, clientUploadId, userId);
     }
 
     public async Task<Result<PhotoDto>> UploadToBaulAsync(
@@ -232,12 +158,27 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Access denied");
         }
 
+        return await UploadPhotoAsync(baul, null, content, fileName, contentType, date, clientUploadId, userId);
+    }
+
+    private async Task<Result<PhotoDto>> UploadPhotoAsync(
+        Baul baul,
+        Chapter? chapter,
+        Stream content,
+        string fileName,
+        string contentType,
+        (int Year, int? Month, int? Day)? date,
+        Guid clientUploadId,
+        string userId)
+    {
+        var chapterId = chapter?.Id;
+
         var existingPhoto = await photoRepository.GetByClientUploadIdAsync(clientUploadId);
         if (existingPhoto is not null)
         {
             logger.LogInformation(
-                "Duplicate loose photo upload ignored {BaulId} {ClientUploadId} {PhotoId}",
-                baulId, clientUploadId, existingPhoto.Id);
+                "Duplicate photo upload ignored {BaulId} {ChapterId} {ClientUploadId} {PhotoId}",
+                baul.Id, chapterId, clientUploadId, existingPhoto.Id);
             var existingThumbnailUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoGridThumbnail);
             var existingFullUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoFull);
             return Result.Success(ToDto(existingPhoto, existingThumbnailUrl, existingFullUrl));
@@ -259,12 +200,12 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Loose photo upload failed while saving to storage {BaulId} {FileName} {ContentType} {StorageKey}",
-                baulId, fileName, contentType, storageKey);
+                "Photo upload failed while saving to storage {BaulId} {ChapterId} {FileName} {ContentType} {StorageKey}",
+                baul.Id, chapterId, fileName, contentType, storageKey);
             throw;
         }
 
-        var photo = new Photo(idGenerator.NewId(), null, baulId, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
+        var photo = new Photo(idGenerator.NewId(), chapterId, baul.Id, storageKey, dateYear, dateMonth, dateDay, userId, now, clientUploadId);
 
         try
         {
@@ -273,14 +214,24 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Loose photo upload failed while persisting metadata {BaulId} {PhotoId} {StorageKey}",
-                baulId, photo.Id, storageKey);
+                "Photo upload failed while persisting metadata {BaulId} {ChapterId} {PhotoId} {StorageKey}",
+                baul.Id, chapterId, photo.Id, storageKey);
             await TryDeleteOrphanedStorageObjectAsync(storageKey);
             throw;
         }
 
         try
         {
+            if (chapter is not null)
+            {
+                await chapterRepository.UpdateAsync(chapter with
+                {
+                    PhotoCount = chapter.PhotoCount + 1,
+                    CoverPhotoKey = string.IsNullOrEmpty(chapter.CoverPhotoKey) ? storageKey : chapter.CoverPhotoKey,
+                    UpdatedAt = now
+                });
+            }
+
             await baulRepository.UpdateAsync(baul with
             {
                 CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
@@ -290,12 +241,12 @@ public class PhotoManager(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Loose photo upload failed while updating baul cover {BaulId} {PhotoId} {StorageKey}",
-                baulId, photo.Id, storageKey);
+                "Photo upload failed while updating chapter/baul cover {BaulId} {ChapterId} {PhotoId} {StorageKey}",
+                baul.Id, chapterId, photo.Id, storageKey);
             throw;
         }
 
-        logger.LogInformation("Photo uploaded (loose) {BaulId} {PhotoId}", baulId, photo.Id);
+        logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", baul.Id, chapterId, photo.Id);
 
         var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
         var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
