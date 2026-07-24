@@ -20,10 +20,6 @@ public interface IRecuerdoRepository
 
     Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since);
 
-    /// <summary>Recuerdos that have a Photo but no ChapterId yet — used only by the one-off
-    /// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoChapterIdCommand.cs).</summary>
-    Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoChapterAsync();
-
     /// <summary>Every recuerdo in the system, unscoped — used only by the one-off backfill
     /// command (see ElBaul.Maintenance/Commands/BackfillRecuerdoEmbeddingsCommand.cs).</summary>
     Task<IEnumerable<Recuerdo>> GetAllAsync();

@@ -34,11 +34,6 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
             .Where(r => r.BaulId == baulId && r.CreatedAt >= since)
             .ToListAsync();
 
-    public async Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoChapterAsync() =>
-        await dbContext.Recuerdos.AsNoTracking()
-            .Where(r => r.PhotoId != null && r.ChapterId == null)
-            .ToListAsync();
-
     public async Task<IEnumerable<Recuerdo>> GetAllAsync() =>
         await dbContext.Recuerdos.AsNoTracking().ToListAsync();
 

@@ -26,9 +26,6 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
     public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(Guid baulId, DateTime since) =>
         Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId && r.CreatedAt >= since).AsEnumerable());
 
-    public Task<IEnumerable<Recuerdo>> GetWithPhotoAndNoChapterAsync() =>
-        Task.FromResult(_recuerdos.Where(r => r.PhotoId != null && r.ChapterId == null).AsEnumerable());
-
     public Task<IEnumerable<Recuerdo>> GetAllAsync() => Task.FromResult(_recuerdos.AsEnumerable());
 
     // Recuerdo.BaulId is a non-nullable Guid, so this fake uses Guid.Empty as the "missing"
