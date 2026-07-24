@@ -3,14 +3,13 @@ import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
-import { MoveModal } from './MoveModal';
-import { DateModal } from './DateModal';
-import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 import { TabButton } from './TabButton';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, CheckSquare, FolderInput, Calendar, MoreVertical, Pencil, Trash2, BookOpen, X } from 'lucide-react';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Chapter } from './ChaptersView';
 import { SelectedPhoto, materializeSelectedPhoto } from './UploadConfirmationScreen';
 import { DeleteChapterModal } from './DeleteChapterModal';
+import { RecuerdosFeed } from './RecuerdosFeed';
+import { BatchPhotoActionsBar } from './BatchPhotoActionsBar';
 import { PhotoDate } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
@@ -108,10 +107,7 @@ export function PhotosView({
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
-  const sortedRecuerdos = [...recuerdos].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos'>('fotos');
-  const [showWriteRecuerdoModal, setShowWriteRecuerdoModal] = useState(false);
-  const [writeRecuerdoText, setWriteRecuerdoText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
@@ -136,14 +132,6 @@ export function PhotosView({
   // Multi-selection state
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const [showBatchMoveModal, setShowBatchMoveModal] = useState(false);
-  const [batchMoveTargetId, setBatchMoveTargetId] = useState('');
-  const [batchMoveItems, setBatchMoveItems] = useState<BatchOperationItem[] | null>(null);
-  const [showBatchDateModal, setShowBatchDateModal] = useState(false);
-  const [isBatchDateSubmitting, setIsBatchDateSubmitting] = useState(false);
-  const [showBatchCreateChapterModal, setShowBatchCreateChapterModal] = useState(false);
-  const [isBatchCreatingChapter, setIsBatchCreatingChapter] = useState(false);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -177,54 +165,6 @@ export function PhotosView({
     setSelectedIds(new Set());
   };
 
-  const handleBatchMoveSubmit = async () => {
-    if (!batchMoveTargetId || !onBatchMove) return;
-    const targetChapterId = batchMoveTargetId;
-    const ids = Array.from(selectedIds);
-    setShowBatchMoveModal(false);
-    setBatchMoveTargetId('');
-    setBatchMoveItems(
-      ids.map((id) => ({
-        id,
-        thumbnailUrl: photos.find((p) => p.id === id)?.thumbnailUrl ?? '',
-        status: 'pending' as const,
-      }))
-    );
-
-    await onBatchMove(ids, targetChapterId, (result) => {
-      setBatchMoveItems((prev) =>
-        prev?.map((item) =>
-          item.id === result.photoId ? { ...item, status: result.error ? ('error' as const) : ('success' as const) } : item
-        ) ?? prev
-      );
-    });
-
-    setBatchMoveItems(null);
-    exitSelection();
-  };
-
-  const handleBatchDateSubmit = async (date: PhotoDate) => {
-    if (!onBatchChangeDate) return;
-    setIsBatchDateSubmitting(true);
-    const ok = await onBatchChangeDate(Array.from(selectedIds), date);
-    setIsBatchDateSubmitting(false);
-    if (ok) {
-      setShowBatchDateModal(false);
-      exitSelection();
-    }
-  };
-
-  const handleBatchCreateChapterSave = async (name: string) => {
-    if (!onBatchCreateChapter) return;
-    setIsBatchCreatingChapter(true);
-    const ok = await onBatchCreateChapter(Array.from(selectedIds), name);
-    setIsBatchCreatingChapter(false);
-    if (ok) {
-      setShowBatchCreateChapterModal(false);
-      exitSelection();
-    }
-  };
-
   const moveableChapters = allChapters.filter(a => a.id !== chapter.id);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,14 +181,6 @@ export function PhotosView({
     if (selectedPhotos.length === 0) return;
 
     onAddPhotos(selectedPhotos);
-  };
-
-  const handleSaveRecuerdo = () => {
-    const text = writeRecuerdoText.trim();
-    if (!text) return;
-    onAddRecuerdo?.(text);
-    setShowWriteRecuerdoModal(false);
-    setWriteRecuerdoText('');
   };
 
   return (
@@ -410,119 +342,36 @@ export function PhotosView({
           )
         )}
 
-        {activeTab === 'recuerdos' && hasRecuerdosTab && (
-          sortedRecuerdos.length === 0 ? (
-            <div className="py-12 text-center max-w-xs mx-auto">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-primary/60" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-lg font-serif text-foreground mb-2">Aún no hay recuerdos escritos</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Los recuerdos escritos por la familia harán que este capítulo cobre vida.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sortedRecuerdos.map((recuerdo) => (
-                <RecuerdoFeedCard
-                  key={recuerdo.id}
-                  recuerdo={recuerdo}
-                  onPhotoClick={
-                    recuerdo.photoId
-                      ? () => {
-                          const photo = photos.find((p) => p.id === recuerdo.photoId);
-                          if (photo) onSelectPhoto(photo);
-                        }
-                      : undefined
-                  }
-                  onUserClick={onUserClick}
-                />
-              ))}
-            </div>
-          )
+        {hasRecuerdosTab && (
+          <RecuerdosFeed
+            active={activeTab === 'recuerdos'}
+            photos={photos}
+            recuerdos={recuerdos}
+            onSelectPhoto={onSelectPhoto}
+            onAddRecuerdo={onAddRecuerdo}
+            onUserClick={onUserClick}
+            selectionMode={selectionMode}
+          />
         )}
       </div>
 
       <SimpleFAB
-        label={activeTab === 'recuerdos' ? 'Escribe lo que recuerdas' : 'Subir fotos'}
-        icon={activeTab === 'recuerdos' ? <BookOpen className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-        onClick={() => activeTab === 'recuerdos' ? setShowWriteRecuerdoModal(true) : fileInputRef.current?.click()}
-        hidden={selectionMode}
+        label="Subir fotos"
+        icon={<Plus className="w-5 h-5" />}
+        onClick={() => fileInputRef.current?.click()}
+        hidden={activeTab !== 'fotos' || selectionMode}
       />
 
-      {/* Batch action bar */}
-      {selectionMode && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter) && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
-          <div className="max-w-2xl mx-auto px-6 py-4 flex gap-3">
-            {onBatchChangeDate && (
-              <button
-                onClick={() => setShowBatchDateModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                Cambiar fecha
-              </button>
-            )}
-            {moveableChapters.length > 0 && (
-              <button
-                onClick={() => setShowBatchMoveModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <FolderInput className="w-4 h-4 text-muted-foreground" />
-                Mover
-              </button>
-            )}
-            {onBatchCreateChapter && (
-              <button
-                onClick={() => setShowBatchCreateChapterModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <Plus className="w-4 h-4 text-muted-foreground" />
-                Crear nuevo capítulo
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Batch date modal */}
-      {showBatchDateModal && (
-        <DateModal
-          title={`Cambiar fecha · ${selectedIds.size} ${selectedIds.size === 1 ? 'foto' : 'fotos'}`}
-          onCancel={() => setShowBatchDateModal(false)}
-          onConfirm={handleBatchDateSubmit}
-          isSubmitting={isBatchDateSubmitting}
-        />
-      )}
-
-      {/* Batch move modal */}
-      {showBatchMoveModal && (
-        <MoveModal
-          title={`Mover ${selectedIds.size} ${selectedIds.size === 1 ? 'foto' : 'fotos'}`}
-          chapters={moveableChapters}
-          selectedId={batchMoveTargetId}
-          onSelect={setBatchMoveTargetId}
-          onCancel={() => setShowBatchMoveModal(false)}
-          onConfirm={handleBatchMoveSubmit}
-        />
-      )}
-
-      {/* Progreso ítem a ítem mientras se mueve el lote (una petición por foto) */}
-      {batchMoveItems && (
-        <BatchOperationProgress title="Moviendo fotos..." items={batchMoveItems} />
-      )}
-
-      {/* Batch create-chapter modal */}
-      {showBatchCreateChapterModal && (
-        <EditInfoModal
-          title="Nuevo capítulo"
-          initialName=""
-          namePlaceholder="Nombre del capítulo"
-          onCancel={() => setShowBatchCreateChapterModal(false)}
-          onSave={handleBatchCreateChapterSave}
-          isSubmitting={isBatchCreatingChapter}
-        />
-      )}
+      <BatchPhotoActionsBar
+        active={selectionMode}
+        photos={photos}
+        selectedIds={selectedIds}
+        moveableChapters={moveableChapters}
+        onBatchMove={onBatchMove}
+        onBatchChangeDate={onBatchChangeDate}
+        onBatchCreateChapter={onBatchCreateChapter}
+        onDone={exitSelection}
+      />
 
       {showEditModal && (
         <EditInfoModal
@@ -544,111 +393,6 @@ export function PhotosView({
           isSubmitting={isDeletingChapter}
         />
       )}
-
-      {showWriteRecuerdoModal && (
-        <WriteRecuerdoModal
-          text={writeRecuerdoText}
-          onTextChange={setWriteRecuerdoText}
-          onCancel={() => setShowWriteRecuerdoModal(false)}
-          onSave={handleSaveRecuerdo}
-        />
-      )}
-    </div>
-  );
-}
-
-// ─── Recuerdo feed card ───────────────────────────────────────────────────────
-function getInitials(name: string): string {
-  if (!name) return '??';
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
-
-function RecuerdoFeedCard({
-  recuerdo, onPhotoClick, onUserClick,
-}: { recuerdo: Recuerdo; onPhotoClick?: () => void; onUserClick?: (personaId: string) => void }) {
-  const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
-  const canOpenPersona = !!(recuerdo.personaId && onUserClick);
-
-  return (
-    <div className="bg-card border border-border/60 rounded-2xl p-5">
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
-          disabled={!canOpenPersona}
-          className={`w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5 overflow-hidden ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
-        >
-          {recuerdo.userAvatar ? (
-            <img src={recuerdo.userAvatar} alt={userName} className="w-full h-full object-cover rounded-full" />
-          ) : (
-            getInitials(userName)
-          )}
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-sm font-medium text-foreground">{userName}</p>
-            <p className="text-xs text-muted-foreground shrink-0">{new Date(recuerdo.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-          </div>
-          <p className="text-sm text-foreground/90 leading-relaxed font-serif">{recuerdo.text}</p>
-          {recuerdo.photoThumbnailUrl && (
-            <button
-              onClick={onPhotoClick}
-              className="mt-3 block rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
-            >
-              <img src={recuerdo.photoThumbnailUrl} alt="" className="w-full max-h-36 object-cover rounded-xl" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Write recuerdo modal ───────────────────────────────────────────────────────
-function WriteRecuerdoModal({
-  text,
-  onTextChange,
-  onCancel,
-  onSave,
-}: {
-  text: string;
-  onTextChange: (v: string) => void;
-  onCancel: () => void;
-  onSave: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 bg-foreground/40 z-[60] flex items-end justify-center">
-      <div className="absolute inset-0" onClick={onCancel} />
-      <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-medium text-foreground">Escribe lo que recuerdas</h2>
-          <button onClick={onCancel} className="p-1.5 rounded-full hover:bg-secondary transition-colors text-muted-foreground">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <textarea
-          autoFocus
-          value={text}
-          onChange={(e) => onTextChange(e.target.value)}
-          rows={5}
-          placeholder="¿Qué recuerdas de este momento? Escríbelo para que la familia lo guarde…"
-          className="w-full border border-border rounded-2xl px-4 py-3 text-sm text-foreground bg-card outline-none focus:ring-2 focus:ring-ring resize-none placeholder:text-muted-foreground/60 leading-relaxed"
-        />
-        <div className="flex gap-3 mt-5">
-          <button onClick={onCancel} className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors">
-            Cancelar
-          </button>
-          <button
-            onClick={onSave}
-            disabled={!text.trim()}
-            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
-          >
-            Guardar recuerdo
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
