@@ -2,29 +2,37 @@ using ElBaul.Application;
 using ElBaul.Ports.Output;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 
 namespace ElBaul.Tests;
 
+// Orchestration only — access checks, message persistence, prompt composition, AI-backend
+// failure handling. Prompt-building/RAG-ranking behavior lives in ChatContextBuilder and is
+// tested in isolation there; here IChatContextBuilder is stubbed so these tests don't need to
+// know anything about recuerdos, chapters or embeddings.
 public class ChatManagerTests
 {
     private const string CustodioId = "custodio-1";
     private const string OtherUserId = "user-2";
+    private const string StubbedContext = "contexto de prueba";
 
     private readonly InMemoryBaulRepository _baulRepository = new();
-    private readonly InMemoryChapterRepository _chapterRepository = new();
-    private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemoryChatMessageRepository _chatMessageRepository = new();
-    private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
     private readonly FakeAiChatBackend _aiChatBackend = new();
     private readonly StaticClock _clock = new();
+    private readonly IChatContextBuilder _chatContextBuilder = Substitute.For<IChatContextBuilder>();
+
+    public ChatManagerTests()
+    {
+        _chatContextBuilder.BuildAsync(Arg.Any<Baul>(), Arg.Any<string>()).Returns(StubbedContext);
+    }
 
     private ChatManager CreateManager(
-        string currentUserId, Guid? nextId = null, IEmbeddingBackend? embeddingBackend = null, IAppConfiguration? appConfiguration = null) =>
-        new(NullLogger<ChatManager>.Instance, _baulRepository, _chapterRepository, _recuerdoRepository,
-            _chatMessageRepository, _recuerdoEmbeddingRepository, _aiChatBackend,
-            embeddingBackend ?? new FakeEmbeddingBackend([]), appConfiguration ?? new StaticAppConfiguration(),
-            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_baulRepository));
+        string currentUserId, Guid? nextId = null, IAppConfiguration? appConfiguration = null) =>
+        new(NullLogger<ChatManager>.Instance, _baulRepository, _chatMessageRepository, _aiChatBackend,
+            appConfiguration ?? new StaticAppConfiguration(), new StaticIdGenerator(nextId ?? Guid.NewGuid()),
+            _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository),
+            _chatContextBuilder);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
     {
@@ -125,47 +133,17 @@ public class ChatManagerTests
     }
 
     [Fact]
-    public async Task SendMessageAsync_ShouldIncludeBaulRecuerdosAndChapters_InTheSystemPrompt()
+    public async Task SendMessageAsync_ShouldBuildTheSystemPrompt_FromTheBaulAndTheContextBuilder()
     {
         var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Viajes de la familia");
-        await _chapterRepository.CreateAsync(new Chapter(Guid.NewGuid(), baulId, "Boda de Ana", 5, null, _clock.UtcNow(), _clock.UtcNow()));
-        _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-            Guid.NewGuid(), null, null, baulId, CustodioId, "Fuimos a Asturias en verano", _clock.UtcNow()));
+        var baul = await SeedBaulAsync(baulId, "Familia");
 
         var manager = CreateManager(CustodioId);
-        await manager.SendMessageAsync(baulId, "¿Cuándo fue el viaje a Asturias?");
-
-        var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
-        Assert.Contains("Boda de Ana", systemPrompt);
-        Assert.Contains("Fuimos a Asturias en verano", systemPrompt);
-    }
-
-    [Fact]
-    public async Task SendMessageAsync_ShouldOnlyIncludeTheMostRelevantRecuerdos_WhenThereAreManyOfThem()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-        var embeddingBackend = new FakeEmbeddingBackend(["asturias", "relleno"]);
-
-        _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-            Guid.NewGuid(), null, null, baulId, CustodioId, "Fuimos de viaje a Asturias en verano", _clock.UtcNow()));
-        for (var i = 0; i < 25; i++)
-        {
-            _recuerdoRepository.SeedForBaul(baulId, new Recuerdo(
-                Guid.NewGuid(), null, null, baulId, CustodioId, $"Recuerdo de relleno numero {i}", _clock.UtcNow()));
-        }
-
-        var manager = CreateManager(CustodioId, embeddingBackend: embeddingBackend);
         await manager.SendMessageAsync(baulId, "¿Qué sabemos del viaje a Asturias?");
 
+        await _chatContextBuilder.Received(1).BuildAsync(baul, "¿Qué sabemos del viaje a Asturias?");
         var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
-        Assert.Contains("Fuimos de viaje a Asturias en verano", systemPrompt);
-        Assert.Contains("recuerdos en total en el baúl", systemPrompt);
-
-        var includedFillerCount = Enumerable.Range(0, 25)
-            .Count(i => systemPrompt.Contains($"Recuerdo de relleno numero {i}"));
-        Assert.True(includedFillerCount < 25, "Some filler recuerdos should have been left out of the prompt");
+        Assert.Contains(StubbedContext, systemPrompt);
     }
 
     [Fact]

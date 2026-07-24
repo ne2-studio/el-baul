@@ -162,6 +162,7 @@ builder.Services.AddScoped<IChapterManager, ChapterManager>();
 builder.Services.AddScoped<IPhotoManager, PhotoManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<ISupportManager, SupportManager>();
+builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
 builder.Services.AddScoped<IChatManager, ChatManager>();
 builder.Services.AddScoped<IAdminManager, AdminManager>();
 builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
