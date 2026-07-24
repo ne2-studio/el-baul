@@ -42,7 +42,8 @@ Valid evidence includes:
 * slow or combinatorial acceptance tests;
 * infrastructure leaking into domain decisions;
 * frequent modifications to the same fragile area;
-* configuration or behaviour duplicated across multiple locations.
+* configuration or behaviour duplicated across multiple locations;
+* code that contradicts a stated rule or invariant in `ARCHITECTURE.md` or an ADR under `docs/adr/` / `<app>/docs/adr/`, or such a document describing a reality the code no longer matches.
 
 Do not rely only on generic statements such as "this violates SOLID", "this should use a repository", "this class is too large", "this should follow hexagonal architecture", "this would be cleaner", or "this is not best practice". Explain the concrete cost currently caused by the observed structure.
 
@@ -134,6 +135,8 @@ Identify deployable applications, packages or libraries, public APIs, background
 
 Determine the real public boundaries of each component: HTTP endpoints, browser-visible behaviour, messages consumed or produced, NuGet public APIs, CLI commands, scheduled jobs, persisted business effects.
 
+Read the repository's documented architecture: a root-level architecture document (e.g. `ARCHITECTURE.md`), and any ADRs under `docs/adr/` or under `<app>/docs/adr/` for each deployable application. Where these exist, the rules, invariants, and boundaries they state are binding ground truth for `architecture-documentation-drift` in Step 4 — not general background. Skip this if none of these locations exist or contain nothing binding.
+
 ## Step 2: Inspect recent change pressure
 
 When Git history is available, inspect files commonly changed together, hotspots with high churn, repeated fixes in the same area, features that repeatedly modify the same conditional logic, tests frequently updated alongside implementation details, and modules that accumulate unrelated responsibilities.
@@ -195,7 +198,7 @@ possible_measurements:
 
 Some files add short prose after the block clarifying when the criterion legitimately applies versus when it looks applicable but isn't — read that prose too, it disambiguates the signals.
 
-Current criteria: `duplicated-knowledge`, `unclear-naming`, `implicit-domain-concept`, `insufficient-behavioural-coverage`, `test-descent-opportunity`, `mixed-decisions-and-effects`, `excessive-coupling`, `low-cohesion`, `implementation-coupled-tests`, `technology-fake-risk`, `code-smell-with-impact`, `dead-or-obsolete-code`, `missing-operational-boundary`.
+Current criteria: `duplicated-knowledge`, `unclear-naming`, `implicit-domain-concept`, `insufficient-behavioural-coverage`, `test-descent-opportunity`, `mixed-decisions-and-effects`, `excessive-coupling`, `low-cohesion`, `implementation-coupled-tests`, `technology-fake-risk`, `code-smell-with-impact`, `dead-or-obsolete-code`, `missing-operational-boundary`, `architecture-documentation-drift`.
 
 ## Adding new criteria
 
