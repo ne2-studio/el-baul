@@ -26,4 +26,9 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/dist/ /usr/share/nginx/html/
 
+# Renders env-config.template.js (copied above, part of dist/) into env-config.js at container
+# start, so VITE_* can be overridden per-container without rebuilding — see
+# src/runtimeConfig.ts for how the app reads it.
+COPY --chmod=755 docker-entrypoint.d/95-generate-runtime-env.sh /docker-entrypoint.d/
+
 EXPOSE 80

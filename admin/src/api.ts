@@ -1,6 +1,7 @@
 import { AdminBaul, AdminBaulDetail, AdminSentEmail, AdminUser, AdminUserDetail, DashboardKpis } from './types';
+import { getEnv } from './runtimeConfig';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+const API_BASE_URL = getEnv('VITE_API_URL') || 'http://localhost:5050';
 
 let _accessToken: string | undefined;
 

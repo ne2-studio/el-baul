@@ -6,6 +6,10 @@
     <title>El Baúl — Backoffice</title>
     <meta name="theme-color" content="#F5F1ED" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
+    <!-- Classic script: executes synchronously during parsing, before the deferred
+         type="module" bundle script below — window.__ENV__ is guaranteed to exist by the
+         time any app code runs. See src/runtimeConfig.ts. -->
+    <script src="/env-config.js"></script>
   </head>
 
   <body>

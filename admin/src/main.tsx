@@ -5,13 +5,14 @@ import { WebStorageStateStore } from 'oidc-client-ts';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './styles/index.css';
+import { getEnv } from './runtimeConfig';
 
-const organizationId = import.meta.env.VITE_ZITADEL_ORGANIZATION_ID as string;
+const organizationId = getEnv('VITE_ZITADEL_ORGANIZATION_ID');
 
 const oidcConfig = {
-  authority: import.meta.env.VITE_OIDC_AUTHORITY as string,
-  client_id: import.meta.env.VITE_OIDC_CLIENT_ID as string,
-  redirect_uri: import.meta.env.VITE_OIDC_CALLBACK_URI as string,
+  authority: getEnv('VITE_OIDC_AUTHORITY'),
+  client_id: getEnv('VITE_OIDC_CLIENT_ID'),
+  redirect_uri: getEnv('VITE_OIDC_CALLBACK_URI'),
   // urn:zitadel:iam:org:project:role:admin is what makes Zitadel include the caller's project
   // roles on the token — needed here (unlike the consumer app) so the backend's AdminOnly
   // policy has something to check.

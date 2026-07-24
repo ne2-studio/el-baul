@@ -201,12 +201,14 @@ services:
     build:
       context: ./admin
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: "http://localhost:5050"
-        VITE_OIDC_AUTHORITY: "http://localhost:5000"
-        VITE_OIDC_CLIENT_ID: "el-baul-admin"
-        VITE_OIDC_CALLBACK_URI: "http://localhost:3001/callback"
-        VITE_APP_URL: "http://localhost:3000"
+    # VITE_* is read at container start, not baked at build time — see
+    # admin/src/runtimeConfig.ts + admin/docker-entrypoint.d/. Same mechanism as app/ above.
+    environment:
+      VITE_API_URL: "http://localhost:5050"
+      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_OIDC_CLIENT_ID: "el-baul-admin"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:3001/callback"
+      VITE_APP_URL: "http://localhost:3000"
     ports:
       - "3001:80"
     depends_on:

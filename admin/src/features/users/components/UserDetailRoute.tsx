@@ -7,8 +7,9 @@ import { formatDate } from '@/utils/format';
 import { EMAIL_TYPE_LABELS, EMAIL_STATUS_LABELS } from '@/utils/emailLabels';
 import { api } from '@/api';
 import type { AdminSentEmail, AdminUserBaulMembership } from '@/types';
+import { getEnv } from '@/runtimeConfig';
 
-const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:3000';
+const APP_URL = getEnv('VITE_APP_URL') || 'http://localhost:3000';
 
 export function UserDetailRoute() {
   const { userId } = useParams<{ userId: string }>();
