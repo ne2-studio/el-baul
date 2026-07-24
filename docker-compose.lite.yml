@@ -25,7 +25,8 @@ services:
       OIDC_CLIENTS: >-
         [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback"]}]
       OIDC_USERS: >-
-        [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]}]
+        [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]},
+        {"key":"user","sub":"normal-user","email":"user@test.local","name":"Normal User","roles":["user"]}]
       OIDC_DEFAULT_USER: "admin"
     ports:
       - "5000:5000"
@@ -46,6 +47,13 @@ services:
       # The API's own public URL — LitePhotoStorage uses it to build /lite/photos/{key} URLs
       # the browser can actually reach (see api/ElBaul.Infra.Lite/LitePhotoStorage.cs).
       Api__PublicUrl: "http://localhost:5051"
+      # Every page.goto() in the e2e-image-acceptance specs is a full reload, and each one
+      # re-fetches /api/app-config (PublicLimiter-gated, unauthenticated) — across ~4 spec
+      # files that adds up well past the real backend's 20/min default within one IP (all test
+      # traffic shares the host's). This isn't testing rate-limiting behavior, so raise the
+      # limit for this throwaway stack instead of throttling the test suite itself.
+      RateLimiter__PublicLimiter__PermitLimit: "1000"
+      RateLimiter__ChatLimiter__PermitLimit: "1000"
     ports:
       - "5051:8080"
     depends_on:
