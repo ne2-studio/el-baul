@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Serilog.Context;
 
 namespace ElBaul.Api.Logging;

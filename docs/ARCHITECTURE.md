@@ -36,19 +36,50 @@ authenticated independently and scoped to the caller's identity.
 
 ### Architecture: ports & adapters
 
-The backend is split across four projects, with dependencies pointing inward toward the core:
+The backend builds into **two independent Docker images** — `el-baul-api` (real infra) and
+`el-baul-api-lite` (everything in memory, for frontend/Playwright testing — see
+`api/README.md`'s "el-baul-api-lite" section for usage). They are never the same image behind
+an `ASPNETCORE_ENVIRONMENT` switch; instead, everything that must stay identical between them
+(the HTTP pipeline, auth, the manager DI graph) lives in shared projects that both hosts
+reference, so the two images can't silently diverge on anything but which adapter backs each
+port:
 
 ```
-ElBaul.Api ──┐
-             ├──→  ElBaul.Infra  ──→  ElBaul  (core: Application + Ports)
-             │                          ↑
-             └──→  ElBaul.Maintenance ──┘
+ElBaul.Api ──────┐                          ElBaul.Api.Lite ──────┐
+                 ├──→  ElBaul.Api.Common  ──┤                     │
+ElBaul.Infra ────┤            │            ├──→  ElBaul.Infra.Lite┤
+                 ├──→  ElBaul.Infra.Common ─┴─────────────────────┤
+ElBaul.Maintenance ───┘                                           │
+                                                                   ↓
+                                                    ElBaul  (core: Application + Ports)
 ```
 
-`ElBaul.Api` references both `ElBaul.Infra` (controllers, web startup) and `ElBaul.Maintenance`
-(one line in `Program.cs` to dispatch a recognized command-line arg — see below). It never
-contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBaul.Infra` and
-`ElBaul`, never `ElBaul.Api`.
+- `ElBaul.Api` / `ElBaul.Api.Lite` — thin `Program.cs` per image: register that image's own
+  infrastructure (`AddInfrastructure`/`AddLiteInfrastructure`) on `builder.Services`, call the
+  shared `ElBaulApiHost.Build(builder)`, then handle whatever is genuinely infra-specific
+  (Hangfire + migrations + the Hangfire dashboard route for the real image; nothing extra for
+  Lite besides mapping its own `GET /lite/photos/{*key}` route). `ElBaul.Api` additionally
+  references `ElBaul.Maintenance` (one line in `Program.cs` to dispatch a recognized
+  command-line arg — see below); `ElBaul.Api.Lite` doesn't, since none of those commands make
+  sense against an ephemeral in-memory backend.
+- `ElBaul.Api.Common` — everything about the HTTP host that doesn't depend on which
+  infrastructure is behind it: controllers (`Controllers/`), request DTOs (`Models/`),
+  `ErrorMapping`, JWT auth setup, CORS, rate limiting, the `Application/` manager DI
+  registrations, and the middleware pipeline (`ElBaulApiHost.cs`). Controllers depend only on
+  `Ports/Input` interfaces, never on `Infra`/`Infra.Lite` or `Application` concrete types
+  directly.
+- `ElBaul.Infra` / `ElBaul.Infra.Lite` — implement every output port with, respectively, real
+  adapters (EF Core repositories, `MinioPhotoStorage`, Hangfire+Postgres) or in-memory ones
+  (`InMemory*Repository`, `LitePhotoStorage`, deterministic `Fake*` backends for
+  email/AI/embeddings/support — the same classes `ElBaul.Tests` uses for its own unit tests,
+  see Testing below). Each exposes its own composition-root method,
+  `AddInfrastructure()`/`AddLiteInfrastructure()`. `ElBaul.Infra.Lite` never references
+  `ElBaul.Infra` — it has no Npgsql/AWSSDK/Hangfire package dependency at all.
+- `ElBaul.Infra.Common` — the handful of output-port implementations that don't depend on
+  Postgres/S3/Hangfire and so are identical in both images: `SystemClock`, `GuidIdGenerator`,
+  `HttpContextCurrentUserProvider`, `UserSyncMiddleware`, `OidcUserInfoClient`,
+  `AppConfiguration`. Referenced by both `ElBaul.Infra` and `ElBaul.Infra.Lite`.
+- `ElBaul.Maintenance` references `ElBaul.Infra` and `ElBaul`, never `ElBaul.Api`.
 
 - **`ElBaul` (core)** — the domain/use-case project. Contains:
   - `Application/` — one class per aggregate root (`BaulManager`, `ChapterManager`,
@@ -65,19 +96,12 @@ contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBau
   - References only `CSharpFunctionalExtensions` (for `Result`/`Result<T>`) and
     `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB driver, no ORM.**
     Fully unit-testable in isolation.
-- **`ElBaul.Infra`** — implements every output port (`BaulRepository`, `ChapterRepository`,
-  `PhotoRepository`, `RecuerdoRepository`, `UserRepository` over EF Core; `MinioPhotoStorage`;
-  `ExifPhotoDateExtractor`; `SystemClock`; `GuidIdGenerator`; `HttpContextCurrentUserProvider`;
-  `OidcUserInfoClient`) and exposes a single composition-root method,
-  `ServiceRegistration.AddInfrastructure()`, called once from `Program.cs`. Also owns
-  `ElBaulDbContext` + EF Core migrations, and two cross-cutting ASP.NET Core middlewares that
-  belong to infra concerns rather than business logic (see below) — this is why `Infra` needs a
-  `<FrameworkReference Include="Microsoft.AspNetCore.App" />` despite being otherwise a plain
-  class library.
-- **`ElBaul.Api`** — thin ASP.NET Core host: controllers, `Program.cs`, auth/rate-limiting/
-  Swagger setup. Controllers depend only on `Ports/Input` interfaces, never on `Infra` or
-  `Application` concrete types directly. Contains no maintenance-command code — `Program.cs`
-  delegates to `ElBaul.Maintenance` for that (see below).
+- **`ElBaul.Infra`** — the real-adapter half of the split described above (EF Core
+  repositories, `MinioPhotoStorage`, `ExifPhotoDateExtractor`, Hangfire+Postgres), exposing
+  `ServiceRegistration.AddInfrastructure()`. Also owns `ElBaulDbContext` + EF Core migrations.
+- **`ElBaul.Api`** — see the diagram above; contains no controller/maintenance-command code
+  itself — controllers live in `ElBaul.Api.Common`, maintenance commands in
+  `ElBaul.Maintenance`.
 - **`ElBaul.Maintenance`** — a small framework plus every one-off maintenance CLI command
   (`Commands/`). A command is a class implementing `IMaintenanceCommand` (one method,
   `RunAsync(bool dryRun)`, containing only business logic — dependencies come via constructor
@@ -102,7 +126,7 @@ contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBau
   `PhotosController`, `UsersController`, `AppConfigController`), delegating to a use-case method
   and mapping the `Result`/`Result<T>` to an HTTP response.
 - Errors use `Result.Failure<T>(string)` with a human-readable message; `ErrorMapping.
-  ToActionResult` (`api/ElBaul.Api/ErrorMapping.cs`) maps it to a status code by matching
+  ToActionResult` (`api/ElBaul.Api.Common/ErrorMapping.cs`) maps it to a status code by matching
   substrings — `"access denied"` → 403, `"not found"` → 404, everything else → 400. This mirrors
   the way per-message checks worked in the original app it replaced; there's no typed error enum
   yet, so a new failure message needs to contain one of those two phrases (or fall through to
@@ -122,12 +146,12 @@ contains maintenance-command code itself. `ElBaul.Maintenance` references `ElBau
   set to the address the *browser* used (`localhost:5000`) — those two are unreachable from each
   other, so `Auth:JwksUri` and `Auth:ValidIssuer` are configured independently instead of letting
   the library auto-discover.
-- `UserSyncMiddleware` (`ElBaul.Infra`) just-in-time syncs the local `Users` row for the
+- `UserSyncMiddleware` (`ElBaul.Infra.Common`, shared with `el-baul-api-lite`) just-in-time syncs the local `Users` row for the
   authenticated `sub` claim. OIDC access tokens only carry `sub` (no email/name), and baúl-sharing
   invitations need a local user row to exist, so email/name are fetched from the userinfo
   endpoint the first time a `sub` is seen (or whenever the local row is incomplete) — never on
   every request.
-- `UserLogContextMiddleware` (`ElBaul.Api`) pushes the authenticated user id onto Serilog's
+- `UserLogContextMiddleware` (`ElBaul.Api.Common`) pushes the authenticated user id onto Serilog's
   `LogContext` so every log line for a request — including business-event logs from
   `Application/` — carries `{UserId}`, without every call site threading it through explicitly.
 - `Application/` use-case code never reads `HttpContext`/claims directly — `UserSyncMiddleware`,
@@ -228,9 +252,19 @@ deployment (see `api/README.md`) — the web process itself never runs them.
 ### Testing
 
 - **`ElBaul.Tests`** — core/application logic (`ChapterManagerTests`, `BaulManagerTests`,
-  `PhotoManagerTests`) against hand-written fakes in `Fakes/` (`InMemory*Repository`,
-  `StaticClock`, `StaticIdGenerator`, `StaticCurrentUserProvider`, `FakePhotoStorage`,
-  `FakePhotoDateExtractor`) — no mocking framework, fast, behavior-focused.
+  `PhotoManagerTests`) against hand-written fakes — no mocking framework, fast,
+  behavior-focused. Most fakes (`InMemory*Repository`, `FakeEmailSender`,
+  `FakeBackgroundJobScheduler`, `FakeAiChatBackend`, `FakeEmbeddingBackend`,
+  `FakeSupportBackend`, `FakeEmailTemplateRenderer`, `FakePhotoDateExtractor`) live in
+  `ElBaul.Infra.Lite` instead of this project's own `Fakes/` — they're the same classes that
+  back `el-baul-api-lite`, so a unit test and the lite image can never quietly disagree on
+  what a fake does. `Fakes/` itself keeps only what's specific to pinning down a single test's
+  assertions rather than standing in for a whole live app: `FakePhotoStorage` (asserts on
+  saved/deleted keys directly, unlike `LitePhotoStorage`, which needs to actually serve bytes
+  back over HTTP), `StaticClock`/`StaticIdGenerator`/`StaticCurrentUserProvider` (a fixed
+  time/id/user a test can assert against — unsuitable for a real multi-request app, which is
+  why `el-baul-api-lite` uses the real `SystemClock`/`GuidIdGenerator`/
+  `HttpContextCurrentUserProvider` from `ElBaul.Infra.Common` instead).
 - **`ElBaul.Infra.Tests`** — infra-layer units that are cheap to isolate without a real
   MinIO/DB (`ImgproxyUrlBuilderTests`, `UserSyncMiddlewareTests`). Also where
   `EmailTemplateRenderer` is tested: `WelcomeEmailTemplateRendererTests`/

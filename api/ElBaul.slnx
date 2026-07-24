@@ -1,6 +1,10 @@
 <Solution>
   <Project Path="ElBaul.Api/ElBaul.Api.csproj" />
+  <Project Path="ElBaul.Api.Common/ElBaul.Api.Common.csproj" />
+  <Project Path="ElBaul.Api.Lite/ElBaul.Api.Lite.csproj" />
   <Project Path="ElBaul.Api.Tests/ElBaul.Api.Tests.csproj" />
+  <Project Path="ElBaul.Infra.Common/ElBaul.Infra.Common.csproj" />
+  <Project Path="ElBaul.Infra.Lite/ElBaul.Infra.Lite.csproj" />
   <Project Path="ElBaul.Infra.Tests/ElBaul.Infra.Tests.csproj" />
   <Project Path="ElBaul.Infra/ElBaul.Infra.csproj" />
   <Project Path="ElBaul.Maintenance/ElBaul.Maintenance.csproj" />

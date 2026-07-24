@@ -1,6 +1,7 @@
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace ElBaul.Api.Controllers;
 

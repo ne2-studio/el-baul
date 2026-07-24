@@ -1,7 +1,7 @@
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Output;
 
-namespace ElBaul.Tests.Fakes;
+namespace ElBaul.Infra.Lite;
 
 // Deterministic, no real OpenAI call: each text is embedded as a bag-of-words vector over a
 // fixed vocabulary supplied by the test, so cosine similarity in ChatManager behaves

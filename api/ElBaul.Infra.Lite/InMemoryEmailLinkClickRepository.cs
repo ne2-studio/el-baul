@@ -1,6 +1,6 @@
 using ElBaul.Ports.Output;
 
-namespace ElBaul.Tests.Fakes;
+namespace ElBaul.Infra.Lite;
 
 public class InMemoryEmailLinkClickRepository : IEmailLinkClickRepository
 {

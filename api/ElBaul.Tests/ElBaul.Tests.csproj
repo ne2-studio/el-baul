@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ElBaul\ElBaul.csproj" />
+    <ProjectReference Include="..\ElBaul.Infra.Lite\ElBaul.Infra.Lite.csproj" />
   </ItemGroup>
 
 </Project>

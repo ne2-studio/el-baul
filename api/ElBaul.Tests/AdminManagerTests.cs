@@ -1,5 +1,6 @@
 using ElBaul.Application;
 using ElBaul.Ports.Output;
+using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 
 namespace ElBaul.Tests;

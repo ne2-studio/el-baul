@@ -1,6 +1,6 @@
 using ElBaul.Ports.Output;
 
-namespace ElBaul.Tests.Fakes;
+namespace ElBaul.Infra.Lite;
 
 /// <summary>
 /// Deterministic stand-in for the real (Infra) HTML renderer — WelcomeEmailManagerTests
