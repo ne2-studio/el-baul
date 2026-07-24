@@ -41,12 +41,8 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
   },
 
   loadPersonas: async (baulId) => {
-    try {
-      const personas = await api.baules.getPersonas(baulId);
-      set((state) => ({ personas: { ...state.personas, [baulId]: personas } }));
-    } catch (err) {
-      console.log('No shared users or error loading:', err);
-    }
+    const personas = await api.baules.getPersonas(baulId);
+    set((state) => ({ personas: { ...state.personas, [baulId]: personas } }));
   },
 
   updatePersona: async (baulId, personaId, name, nickname) => {
@@ -99,12 +95,8 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
   },
 
   loadRemovalRequests: async (baulId) => {
-    try {
-      const removalRequests = await api.baules.getRemovalRequests(baulId);
-      set((state) => ({ removalRequests: { ...state.removalRequests, [baulId]: removalRequests } }));
-    } catch (err) {
-      console.log('No removal requests or error loading:', err);
-    }
+    const removalRequests = await api.baules.getRemovalRequests(baulId);
+    set((state) => ({ removalRequests: { ...state.removalRequests, [baulId]: removalRequests } }));
   },
 
   removePhoto: async (baulId, requestId, photoId) => {
