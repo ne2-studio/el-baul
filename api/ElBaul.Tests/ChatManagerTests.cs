@@ -32,7 +32,7 @@ public class ChatManagerTests
         string currentUserId, Guid? nextId = null, IAppConfiguration? appConfiguration = null) =>
         new(NullLogger<ChatManager>.Instance, _baulRepository, _chatMessageRepository, _aiChatBackend,
             appConfiguration ?? new StaticAppConfiguration(), new StaticIdGenerator(nextId ?? Guid.NewGuid()),
-            _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository),
+            _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
             _chatContextBuilder);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)

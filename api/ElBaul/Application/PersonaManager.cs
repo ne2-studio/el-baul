@@ -104,19 +104,11 @@ public class PersonaManager(
         var bId = new BaulId(baulId);
         var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Persona detail rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<PersonaDto>("Baul not found");
-        }
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Persona detail rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            bId, userId, AccessLevel.Member, "Persona detail", new { BaulId = baulId, PersonaId = personaId });
+        if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
+        var access = auth.Value;
 
         var persona = await baulRepository.GetPersonaByIdAsync(pId);
         if (persona is null || persona.BaulId != bId)
@@ -134,19 +126,9 @@ public class PersonaManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null)
-        {
-            logger.LogWarning("Persona creation rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<PersonaDto>("Baul not found");
-        }
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Persona creation rejected: access denied {BaulId}", baulId);
-            return Result.Failure<PersonaDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Persona creation", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var persona = new Persona(
             new PersonaId(idGenerator.NewId()), id, null, nickname, BaulRole.Colaborador, clock.UtcNow());
@@ -161,12 +143,10 @@ public class PersonaManager(
         var bId = new BaulId(baulId);
         var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Persona update rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<PersonaDto>("Baul not found");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            bId, userId, AccessLevel.Member, "Persona update", new { BaulId = baulId, PersonaId = personaId });
+        if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var persona = await baulRepository.GetPersonaByIdAsync(pId);
         if (persona is null || persona.BaulId != bId)
@@ -175,8 +155,7 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>("Persona not found");
         }
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        var canEdit = CanEditPersona(persona, userId, access);
+        var canEdit = CanEditPersona(persona, userId, auth.Value);
         if (!canEdit)
         {
             logger.LogWarning("Persona update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
@@ -197,12 +176,10 @@ public class PersonaManager(
         var bId = new BaulId(baulId);
         var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Persona avatar update rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<PersonaDto>("Baul not found");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            bId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
+        if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var persona = await baulRepository.GetPersonaByIdAsync(pId);
         if (persona is null || persona.BaulId != bId)
@@ -212,8 +189,7 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>("Persona not found");
         }
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        var canEdit = CanEditPersona(persona, userId, access);
+        var canEdit = CanEditPersona(persona, userId, auth.Value);
         if (!canEdit)
         {
             logger.LogWarning(
@@ -251,18 +227,9 @@ public class PersonaManager(
         var bId = new BaulId(baulId);
         var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Persona role update rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<PersonaDto>("Baul not found");
-        }
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Persona role update rejected: access denied {BaulId}", baulId);
-            return Result.Failure<PersonaDto>("Access denied");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Persona role update", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         if (!DtoMapping.TryParseBaulRole(role, out var parsedRole))
         {
@@ -292,18 +259,9 @@ public class PersonaManager(
         var bId = new BaulId(baulId);
         var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Persona removal rejected: baul not found {BaulId}", baulId);
-            return Result.Failure("Baul not found");
-        }
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Persona removal rejected: access denied {BaulId}", baulId);
-            return Result.Failure("Access denied");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Persona removal", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure(auth.Error);
 
         await baulRepository.RemovePersonaAsync(bId, pId);
         logger.LogInformation("Persona removed {BaulId} {PersonaId}", baulId, personaId);

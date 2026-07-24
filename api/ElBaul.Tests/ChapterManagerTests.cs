@@ -22,7 +22,7 @@ public class ChapterManagerTests
         new(NullLogger<ChapterManager>.Instance, _chapterRepository, _baulRepository, _photoRepository,
             _recuerdoRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_baulRepository));
+            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
     [Fact]
     public async Task CreateAsync_ShouldIncrementBaulChapterCount()

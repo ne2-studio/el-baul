@@ -22,7 +22,7 @@ public class PhotoManagerTests
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(currentUserId), _photoDateExtractor, new BaulAccessService(_baulRepository));
+            new StaticCurrentUserProvider(currentUserId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
     private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
     {
@@ -123,7 +123,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository, failingStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -143,7 +143,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -166,7 +166,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(

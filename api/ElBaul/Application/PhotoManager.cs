@@ -18,17 +18,6 @@ public class PhotoManager(
     IPhotoDateExtractor photoDateExtractor,
     BaulAccessService baulAccess) : IPhotoManager
 {
-    // Recuerdo author names are always the Persona's apodo for this baúl, never the
-    // underlying account's OIDC-synced name.
-    private async Task<(string Nickname, string? AvatarUrl, string? PersonaId)> GetAuthorInfoAsync(BaulId baulId, string userId)
-    {
-        var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var avatarUrl = persona?.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
-            : null;
-        return (persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
-    }
-
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId)
     {
         var id = new ChapterId(chapterId);
@@ -36,11 +25,9 @@ public class PhotoManager(
         var chapter = await chapterRepository.GetByIdAsync(id);
         if (chapter is null) return Result.Failure<IEnumerable<PhotoDto>>("Chapter not found");
 
-        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
-        if (baul is null) return Result.Failure<IEnumerable<PhotoDto>>("Baul not found");
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Photos by chapter", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var photos = (await photoRepository.GetByChapterIdAsync(id)).ToList();
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
@@ -61,11 +48,9 @@ public class PhotoManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null) return Result.Failure<IEnumerable<PhotoDto>>("Baul not found");
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<IEnumerable<PhotoDto>>("Access denied");
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Loose photos", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var photos = (await photoRepository.GetLooseByBaulIdAsync(id)).ToList();
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
@@ -110,21 +95,11 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Chapter not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Photo upload rejected: baul not found {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<PhotoDto>("Baul not found");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Photo upload", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Photo upload rejected: access denied {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<PhotoDto>("Access denied");
-        }
-
-        return await UploadPhotoAsync(baul, chapter, content, fileName, contentType, date, clientUploadId, userId);
+        return await UploadPhotoAsync(auth.Value.Baul, chapter, content, fileName, contentType, date, clientUploadId, userId);
     }
 
     public async Task<Result<PhotoDto>> UploadToBaulAsync(
@@ -148,21 +123,11 @@ public class PhotoManager(
 
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null)
-        {
-            logger.LogWarning("Loose photo upload rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<PhotoDto>("Baul not found");
-        }
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Loose photo upload rejected: access denied {BaulId}", baulId);
-            return Result.Failure<PhotoDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Loose photo upload", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        return await UploadPhotoAsync(baul, null, content, fileName, contentType, date, clientUploadId, userId);
+        return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId);
     }
 
     private async Task<Result<PhotoDto>> UploadPhotoAsync(
@@ -269,19 +234,9 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Photo not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Photo move rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<PhotoDto>("Baul not found");
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Photo move rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<PhotoDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo move", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
         var targetChapter = await chapterRepository.GetByIdAsync(targetId);
         if (targetChapter is null || targetChapter.BaulId != photo.BaulId)
@@ -346,19 +301,9 @@ public class PhotoManager(
             return Result.Failure("Photo not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Photo delete rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure("Baul not found");
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Photo delete rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Admin, "Photo delete", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure(auth.Error);
 
         if (photo.Status == PhotoStatus.Deleted) return Result.Success();
 
@@ -397,19 +342,9 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Photo not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Photo date change rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<PhotoDto>("Baul not found");
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Photo date change rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<PhotoDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo date change", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
         var updatedPhoto = photo.WithDate(newDate);
         await photoRepository.UpdateAsync(updatedPhoto);
@@ -450,17 +385,15 @@ public class PhotoManager(
         var photo = await photoRepository.GetByIdAsync(id);
         if (photo is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Photo not found");
 
-        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Baul not found");
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo recuerdos", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
 
         var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(id);
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(photo.BaulId, recuerdo.UserId);
+            var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(photo.BaulId, recuerdo.UserId, photoStorage);
             dtos.Add(ToDto(recuerdo, nickname, avatarUrl, personaId, recuerdo.UserId == userId));
         }
 
@@ -478,21 +411,11 @@ public class PhotoManager(
             return Result.Failure<RecuerdoDto>("Photo not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Recuerdo creation rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<RecuerdoDto>("Baul not found");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Recuerdo creation", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Recuerdo creation rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<RecuerdoDto>("Access denied");
-        }
-
-        var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(photo.BaulId, userId);
+        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(photo.BaulId, userId, photoStorage);
         var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), id, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
@@ -513,19 +436,9 @@ public class PhotoManager(
             return Result.Failure<PhotoDownloadResult>("Photo not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Photo download rejected: baul not found {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<PhotoDownloadResult>("Baul not found");
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Photo download rejected: access denied {BaulId} {PhotoId}", photo.BaulId, photoId);
-            return Result.Failure<PhotoDownloadResult>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo download", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<PhotoDownloadResult>(auth.Error);
 
         var content = await photoStorage.OpenReadForDownloadAsync(photo.StorageKey);
         return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(photo.StorageKey).OriginalFileName);

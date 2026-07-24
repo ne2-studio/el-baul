@@ -18,18 +18,6 @@ public class BaulManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess) : IBaulManager
 {
-    // Recuerdo author names are always the Persona's apodo for this baúl, never the
-    // underlying account's OIDC-synced name — duplicated from ChapterManager/PhotoManager,
-    // same reasoning: a nickname is what the family chose, the account name may be unset.
-    private async Task<(string Nickname, string? AvatarUrl, string? PersonaId)> GetAuthorInfoAsync(BaulId baulId, string userId)
-    {
-        var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var avatarUrl = persona?.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
-            : null;
-        return (persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
-    }
-
     public async Task<Result<IEnumerable<BaulDto>>> GetAllForCurrentUserAsync()
     {
         var userId = currentUserProvider.GetUserId();
@@ -73,32 +61,23 @@ public class BaulManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null) return Result.Failure<BaulDto>("Baul not found");
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<BaulDto>("Access denied");
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Baul detail", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
+        var access = auth.Value;
 
         var memberCount = (await baulRepository.GetPersonasAsync(id)).Count();
-        return await ToDtoAsync(baul, access.IsCustodio, access.Role, memberCount);
+        return await ToDtoAsync(access.Baul, access.IsCustodio, access.Role, memberCount);
     }
 
     public async Task<Result<BaulDto>> SetCoverAsync(Guid baulId, Guid photoId)
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null)
-        {
-            logger.LogWarning("Baul cover update rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<BaulDto>("Baul not found");
-        }
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Baul cover update rejected: access denied {BaulId}", baulId);
-            return Result.Failure<BaulDto>("Access denied");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Baul cover update", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
+        var access = auth.Value;
 
         var photo = await photoRepository.GetByIdAsync(new PhotoId(photoId));
         if (photo is null || photo.BaulId != id)
@@ -107,7 +86,7 @@ public class BaulManager(
             return Result.Failure<BaulDto>("Photo not found");
         }
 
-        var updated = baul with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
+        var updated = access.Baul with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
         await baulRepository.UpdateAsync(updated);
 
         logger.LogInformation("Baul cover updated {BaulId} {PhotoId}", baulId, photoId);
@@ -120,20 +99,12 @@ public class BaulManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null)
-        {
-            logger.LogWarning("Baul update rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<BaulDto>("Baul not found");
-        }
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Baul update rejected: access denied {BaulId}", baulId);
-            return Result.Failure<BaulDto>("Access denied");
-        }
 
-        var updated = baul with { Name = name, Description = description, UpdatedAt = clock.UtcNow() };
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Baul update", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
+        var access = auth.Value;
+
+        var updated = access.Baul with { Name = name, Description = description, UpdatedAt = clock.UtcNow() };
         await baulRepository.UpdateAsync(updated);
 
         logger.LogInformation("Baul updated {BaulId} {Name}", baulId, name);
@@ -156,11 +127,8 @@ public class BaulManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Baul not found");
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Baul recuerdos", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
 
         var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(id)).ToList();
 
@@ -178,7 +146,7 @@ public class BaulManager(
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(id, recuerdo.UserId);
+            var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(id, recuerdo.UserId, photoStorage);
             var thumbnailUrl = recuerdo.PhotoId is { } photoId ? thumbnailUrls.GetValueOrDefault(photoId) : null;
             var chapterName = recuerdo.ChapterId is { } chapterId ? chapterNames.GetValueOrDefault(chapterId) : null;
             dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, personaId, recuerdo.UserId == userId, thumbnailUrl, chapterName));
@@ -191,21 +159,11 @@ public class BaulManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null)
-        {
-            logger.LogWarning("Recuerdo creation rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<RecuerdoDto>("Baul not found");
-        }
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Recuerdo creation rejected: access denied {BaulId}", baulId);
-            return Result.Failure<RecuerdoDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Recuerdo creation", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
 
-        var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(id, userId);
+        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(id, userId, photoStorage);
         var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), null, null, id, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 

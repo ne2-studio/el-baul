@@ -19,27 +19,13 @@ public class ChapterManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess) : IChapterManager
 {
-    // Recuerdo/chapter author names are always the Persona's apodo for this baúl, never
-    // the underlying account's OIDC-synced name — a nickname is what the family chose,
-    // and the account name may be unrelated or unset.
-    private async Task<(string Nickname, string? AvatarUrl, string? PersonaId)> GetAuthorInfoAsync(BaulId baulId, string userId)
-    {
-        var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var avatarUrl = persona?.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
-            : null;
-        return (persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
-    }
-
     public async Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(Guid baulId)
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null) return Result.Failure<IEnumerable<ChapterDto>>("Baul not found");
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<IEnumerable<ChapterDto>>("Access denied");
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Chapters by baul", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<ChapterDto>>(auth.Error);
 
         var chapters = await chapterRepository.GetByBaulIdAsync(id);
         var dtos = new List<ChapterDto>();
@@ -63,20 +49,11 @@ public class ChapterManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null)
-        {
-            logger.LogWarning("Chapter creation rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<ChapterDto>("Baul not found");
-        }
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Chapter creation rejected: access denied {BaulId}", baulId);
-            return Result.Failure<ChapterDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Chapter creation", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
+        var baul = auth.Value.Baul;
         var now = clock.UtcNow();
         var chapter = new Chapter(new ChapterId(idGenerator.NewId()), id, name, 0, null, now, now);
         await chapterRepository.CreateAsync(chapter);
@@ -98,19 +75,9 @@ public class ChapterManager(
             return Result.Failure<ChapterDto>("Chapter not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Chapter cover update rejected: baul not found {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<ChapterDto>("Baul not found");
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Chapter cover update rejected: access denied {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<ChapterDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Chapter cover update", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
         var photo = await photoRepository.GetByIdAsync(new PhotoId(photoId));
         if (photo is null || photo.ChapterId != id)
@@ -139,19 +106,9 @@ public class ChapterManager(
             return Result.Failure<ChapterDto>("Chapter not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Chapter update rejected: baul not found {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<ChapterDto>("Baul not found");
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Chapter update rejected: access denied {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<ChapterDto>("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Chapter update", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
         var updated = chapter with { Name = name, UpdatedAt = clock.UtcNow() };
         await chapterRepository.UpdateAsync(updated);
@@ -171,19 +128,10 @@ public class ChapterManager(
             return Result.Failure("Chapter not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Chapter delete rejected: baul not found {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure("Baul not found");
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Chapter delete rejected: access denied {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure("Access denied");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Admin, "Chapter delete", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure(auth.Error);
+        var baul = auth.Value.Baul;
 
         var photos = await photoRepository.GetByChapterIdAsync(id);
         foreach (var photo in photos)
@@ -207,11 +155,9 @@ public class ChapterManager(
         var chapter = await chapterRepository.GetByIdAsync(id);
         if (chapter is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Chapter not found");
 
-        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
-        if (baul is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Baul not found");
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Chapter recuerdos", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
 
         var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(id)).ToList();
 
@@ -227,7 +173,7 @@ public class ChapterManager(
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(chapter.BaulId, recuerdo.UserId);
+            var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(chapter.BaulId, recuerdo.UserId, photoStorage);
             var thumbnailUrl = recuerdo.PhotoId is { } photoId ? thumbnailUrls.GetValueOrDefault(photoId) : null;
             dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, personaId, recuerdo.UserId == userId, thumbnailUrl, chapter.Name));
         }
@@ -246,21 +192,11 @@ public class ChapterManager(
             return Result.Failure<RecuerdoDto>("Chapter not found");
         }
 
-        var baul = await baulRepository.GetByIdAsync(chapter.BaulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Recuerdo creation rejected: baul not found {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<RecuerdoDto>("Baul not found");
-        }
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Recuerdo creation", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Recuerdo creation rejected: access denied {BaulId} {ChapterId}", chapter.BaulId, chapterId);
-            return Result.Failure<RecuerdoDto>("Access denied");
-        }
-
-        var (nickname, avatarUrl, personaId) = await GetAuthorInfoAsync(chapter.BaulId, userId);
+        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(chapter.BaulId, userId, photoStorage);
         var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), null, id, chapter.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
@@ -289,7 +225,7 @@ public class ChapterManager(
         var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
         var latestAuthor = latestRecuerdo is null
             ? null
-            : (await GetAuthorInfoAsync(chapter.BaulId, latestRecuerdo.UserId)).Nickname;
+            : (await baulAccess.GetAuthorInfoAsync(chapter.BaulId, latestRecuerdo.UserId, photoStorage)).Nickname;
 
         var dateRange = ComputeDateRange(photos);
 

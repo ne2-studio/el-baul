@@ -27,7 +27,7 @@ public class RemovalRequestManagerTests
     private RemovalRequestManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<RemovalRequestManager>.Instance, _baulRepository, _chapterRepository, _photoRepository,
             _userRepository, _photoStorage, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository));
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.

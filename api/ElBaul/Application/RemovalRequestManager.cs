@@ -21,11 +21,9 @@ public class RemovalRequestManager(
     {
         var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
-        if (baul is null) return Result.Failure<IEnumerable<RemovalRequestDto>>("Baul not found");
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-            return Result.Failure<IEnumerable<RemovalRequestDto>>("Access denied");
+
+        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Removal requests", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<RemovalRequestDto>>(auth.Error);
 
         var requests = await baulRepository.GetRemovalRequestsAsync(id);
         var dtos = new List<RemovalRequestDto>();
@@ -42,20 +40,11 @@ public class RemovalRequestManager(
     {
         var bId = new BaulId(baulId);
         var pId = new PhotoId(photoId);
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Removal request creation rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<RemovalRequestDto>("Baul not found");
-        }
-
         var userId = currentUserProvider.GetUserId();
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Removal request creation rejected: access denied {BaulId}", baulId);
-            return Result.Failure<RemovalRequestDto>("Access denied");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Member, "Removal request creation", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<RemovalRequestDto>(auth.Error);
+        var access = auth.Value;
 
         var photo = await photoRepository.GetByIdAsync(pId);
         if (photo is null)
@@ -85,18 +74,9 @@ public class RemovalRequestManager(
         var bId = new BaulId(baulId);
         var rId = new RemovalRequestId(requestId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Removal request approval rejected: baul not found {BaulId}", baulId);
-            return Result.Failure("Baul not found");
-        }
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Removal request approval rejected: access denied {BaulId}", baulId);
-            return Result.Failure("Access denied");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Removal request approval", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure(auth.Error);
 
         var request = await baulRepository.GetRemovalRequestAsync(bId, rId);
         if (request is null)
@@ -137,18 +117,9 @@ public class RemovalRequestManager(
         var bId = new BaulId(baulId);
         var rId = new RemovalRequestId(requestId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(bId);
-        if (baul is null)
-        {
-            logger.LogWarning("Reject removal request failed: baul not found {BaulId}", baulId);
-            return Result.Failure("Baul not found");
-        }
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsAdmin)
-        {
-            logger.LogWarning("Reject removal request failed: access denied {BaulId}", baulId);
-            return Result.Failure("Access denied");
-        }
+
+        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Removal request rejection", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure(auth.Error);
 
         await baulRepository.DeleteRemovalRequestAsync(bId, rId);
         logger.LogInformation("Removal request rejected {BaulId} {RemovalRequestId}", baulId, requestId);

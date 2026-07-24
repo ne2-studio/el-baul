@@ -29,7 +29,7 @@ public class BaulManagerTests
         new(NullLogger<BaulManager>.Instance, _baulRepository, _chapterRepository, _photoRepository,
             _recuerdoRepository, _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_baulRepository));
+            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
