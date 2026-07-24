@@ -48,12 +48,7 @@ export interface BaulesState {
   createChapter: (baulId: string, name: string) => Promise<Chapter>;
   uploadPhotos: (
     baulId: string,
-    chapterId: string,
-    selectedPhotos: UploadItem[],
-    onItemSettled?: (result: UploadItemResult) => void
-  ) => Promise<UploadItemResult[]>;
-  uploadLoosePhotos: (
-    baulId: string,
+    chapterId: string | null,
     selectedPhotos: UploadItem[],
     onItemSettled?: (result: UploadItemResult) => void
   ) => Promise<UploadItemResult[]>;
@@ -165,7 +160,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
         continue;
       }
       try {
-        const photo = await api.photos.upload(chapterId, selected.file, selected.clientUploadId, selected.date);
+        const photo = await api.photos.upload(baulId, chapterId, selected.file, selected.clientUploadId, selected.date);
         uploaded.push(photo);
         result = { clientUploadId: selected.clientUploadId, photo };
       } catch (error) {
@@ -177,74 +172,44 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
     }
 
     if (uploaded.length > 0) {
-      // Re-fetch the chapter's full photo list from the server rather than appending
-      // client-side — the chapter may not have been loaded into the store yet (e.g.
-      // uploading via the native share flow into a chapter never opened this session),
-      // and an append onto an empty/stale slice would silently drop its existing photos.
-      // Mirrors the same fix already applied in movePhotos.
-      const photosForChapter = await api.photos.getAll(chapterId);
-      set((state) => ({
-        photos: { ...state.photos, [chapterId]: photosForChapter },
-        chapters: {
-          ...state.chapters,
-          [baulId]: (state.chapters[baulId] || []).map((a) =>
-            a.id === chapterId
-              ? {
-                  ...a,
-                  photoCount: a.photoCount + uploaded.length,
-                  coverPhotoUrl: a.coverPhotoUrl || uploaded[0]?.thumbnailUrl,
-                }
-              : a
+      if (chapterId) {
+        // Re-fetch the chapter's full photo list from the server rather than appending
+        // client-side — the chapter may not have been loaded into the store yet (e.g.
+        // uploading via the native share flow into a chapter never opened this session),
+        // and an append onto an empty/stale slice would silently drop its existing photos.
+        // Mirrors the same fix already applied in movePhotos.
+        const photosForChapter = await api.photos.getAll(chapterId);
+        set((state) => ({
+          photos: { ...state.photos, [chapterId]: photosForChapter },
+          chapters: {
+            ...state.chapters,
+            [baulId]: (state.chapters[baulId] || []).map((a) =>
+              a.id === chapterId
+                ? {
+                    ...a,
+                    photoCount: a.photoCount + uploaded.length,
+                    coverPhotoUrl: a.coverPhotoUrl || uploaded[0]?.thumbnailUrl,
+                  }
+                : a
+            ),
+          },
+          baules: state.baules.map((b) =>
+            b.id === baulId
+              ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
+              : b
           ),
-        },
-        baules: state.baules.map((b) =>
-          b.id === baulId
-            ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
-            : b
-        ),
-      }));
-    }
-
-    return results;
-  },
-
-  uploadLoosePhotos: async (baulId, selectedPhotos, onItemSettled) => {
-    const uploaded: Photo[] = [];
-    const results: UploadItemResult[] = [];
-    for (const selected of selectedPhotos) {
-      let result: UploadItemResult;
-      try {
-        await verifyFileReadable(selected.file);
-      } catch (readError) {
-        Sentry.captureException(readError, {
-          tags: { phase: 'read-file-before-upload' },
-          extra: { name: selected.file.name, size: selected.file.size, type: selected.file.type },
-        });
-        result = { clientUploadId: selected.clientUploadId, error: 'No se pudo leer la foto (puede que ya no esté disponible)' };
-        results.push(result);
-        onItemSettled?.(result);
-        continue;
+        }));
+      } else {
+        set((state) => ({
+          loosePhotos: { ...state.loosePhotos, [baulId]: [...(state.loosePhotos[baulId] || []), ...uploaded] },
+          baules: state.baules.map((b) =>
+            b.id === baulId
+              ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
+              : b
+          ),
+        }));
       }
-      try {
-        const photo = await api.baules.uploadPhoto(baulId, selected.file, selected.clientUploadId, selected.date);
-        uploaded.push(photo);
-        result = { clientUploadId: selected.clientUploadId, photo };
-      } catch (error) {
-        Sentry.captureException(error, { tags: { phase: 'upload-request' } });
-        result = { clientUploadId: selected.clientUploadId, error: error instanceof Error ? error.message : 'Upload failed' };
-      }
-      results.push(result);
-      onItemSettled?.(result);
     }
-
-    if (uploaded.length > 0) set((state) => ({
-      loosePhotos: { ...state.loosePhotos, [baulId]: [...(state.loosePhotos[baulId] || []), ...uploaded] },
-      baules: state.baules.map((b) =>
-        b.id === baulId
-          ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
-          : b
-      ),
-    }));
 
     return results;
   },
@@ -268,9 +233,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
       }
     }
 
-    const results = targetChapterId
-      ? await get().uploadPhotos(baulId, targetChapterId, selectedPhotos, onItemSettled)
-      : await get().uploadLoosePhotos(baulId, selectedPhotos, onItemSettled);
+    const results = await get().uploadPhotos(baulId, targetChapterId, selectedPhotos, onItemSettled);
 
     return { results, chapterId: targetChapterId };
   },

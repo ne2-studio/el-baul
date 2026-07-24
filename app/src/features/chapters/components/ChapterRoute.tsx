@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { PhotosView } from '@/app/components/PhotosView';
+import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
@@ -12,6 +13,11 @@ import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
 
+// chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
+// (see useBaulesStore's nullable chapterId convention). Real-chapter photos are paginated
+// per-chapter and fetched on demand via loadChapterPhotos; loose photos are already loaded
+// in full by useBaulScope, so no separate fetch/loading state is needed for them. Chapter-only
+// concerns (rename/delete, recuerdos) stay conditional on chapterId being present.
 export const ChapterRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,14 +25,14 @@ export const ChapterRoute: React.FC = () => {
   const auth = useAuth();
   const {
     photos, loadChapterPhotos,
-    movePhotos, changePhotoDateBatch, renameChapter, deleteChapter,
+    movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, createChapter,
   } = useBaulesStore();
   const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo } = useRecuerdosStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
 
-  const { baul, chapters, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
-  const chapter = chapters?.find(a => a.id === chapterId);
+  const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
+  const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
 
   const [photosFailed, setPhotosFailed] = useState(false);
 
@@ -65,9 +71,9 @@ export const ChapterRoute: React.FC = () => {
     return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
   }
 
-  if (!chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
+  if (chapterId && !chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
-  if (!photos[chapterId!]) {
+  if (chapterId && !photos[chapterId]) {
     if (photosFailed) {
       return (
         <ErrorScreen
@@ -81,15 +87,27 @@ export const ChapterRoute: React.FC = () => {
     return <div className="p-8 text-center">Cargando capítulo...</div>;
   }
 
+  const currentPhotos = chapterId ? (photos[chapterId] || []) : (loosePhotos || []);
+  const looseChapter: Chapter = {
+    id: 'sueltas',
+    name: 'Fotos sueltas',
+    photoCount: currentPhotos.length,
+    coverPhotoUrl: currentPhotos[0]?.thumbnailUrl,
+  };
+  const currentChapter = chapter ?? looseChapter;
+  const basePath = chapterId ? `/baules/${baul.id}/capitulos/${chapterId}` : `/baules/${baul.id}/fotos-sueltas`;
+
   const handleAddRecuerdo = (text: string) => {
-    addChapterRecuerdo(baul.id, chapter.id, text).catch((error) => {
+    if (!chapterId) return;
+    addChapterRecuerdo(baul.id, chapterId, text).catch((error) => {
       console.error('Error adding recuerdo:', error);
       showToastMessage('Error al guardar el recuerdo');
     });
   };
 
   const handleUpdateChapterInfo = async (name: string): Promise<boolean> => {
-    const result = await run(() => renameChapter(baul.id, chapter.id, name), {
+    if (!chapterId) return false;
+    const result = await run(() => renameChapter(baul.id, chapterId, name), {
       successMessage: 'Información del capítulo actualizada',
       errorMessage: 'Error al actualizar la información del capítulo',
     });
@@ -97,7 +115,8 @@ export const ChapterRoute: React.FC = () => {
   };
 
   const handleDeleteChapter = async (): Promise<boolean> => {
-    const result = await run(() => deleteChapter(baul.id, chapter.id), {
+    if (!chapterId) return false;
+    const result = await run(() => deleteChapter(baul.id, chapterId), {
       successMessage: 'Capítulo eliminado',
       errorMessage: 'Error al eliminar el capítulo',
     });
@@ -110,7 +129,7 @@ export const ChapterRoute: React.FC = () => {
     targetChapterId: string,
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => {
-    const result = await run(() => movePhotos(baul.id, chapter.id, photoIds, targetChapterId, onItemSettled), {
+    const result = await run(() => movePhotos(baul.id, chapterId ?? null, photoIds, targetChapterId, onItemSettled), {
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
       errorMessage: 'Algunas fotos no se pudieron mover',
     });
@@ -118,32 +137,49 @@ export const ChapterRoute: React.FC = () => {
   };
 
   const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
-    const result = await run(() => changePhotoDateBatch(baul.id, chapter.id, photoIds, date), {
+    const result = await run(() => changePhotoDateBatch(baul.id, chapterId ?? null, photoIds, date), {
       successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
       errorMessage: 'Error al cambiar la fecha',
     });
     return result.ok;
   };
 
+  const handleBatchCreateChapter = async (photoIds: string[], name: string): Promise<boolean> => {
+    const result = await run(
+      async () => {
+        const newChapter = await createChapter(baul.id, name);
+        await movePhotos(baul.id, null, photoIds, newChapter.id);
+        return newChapter;
+      },
+      {
+        successMessage: `Capítulo "${name}" creado`,
+        errorMessage: 'Error al crear el capítulo',
+      }
+    );
+    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${result.value.id}`);
+    return result.ok;
+  };
+
   return (
     <PhotosView
-      chapter={chapter}
-      photos={photos[chapter.id] || []}
-      recuerdos={chapterRecuerdos[chapter.id] || []}
+      chapter={currentChapter}
+      photos={currentPhotos}
+      recuerdos={chapterId ? (chapterRecuerdos[chapterId] || []) : undefined}
       allChapters={chapters || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
-      onSelectPhoto={(photo) => navigate(`/baules/${baul.id}/capitulos/${chapter.id}/foto/${photo.id}`, { state: { backgroundLocation: location } })}
+      onSelectPhoto={(photo) => navigate(`${basePath}/foto/${photo.id}`, { state: { backgroundLocation: location } })}
       onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>
-        navigate(`/baules/${baul.id}/capitulos/${chapter.id}/confirmar`, { state: { selectedPhotos } })
+        navigate(`${basePath}/confirmar`, { state: { selectedPhotos } })
       }
       onPhotosDropped={(count) =>
         showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`)
       }
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
-      onUpdateChapterInfo={handleUpdateChapterInfo}
-      onDeleteChapter={isAdminRole(baul.role) ? handleDeleteChapter : undefined}
-      onAddRecuerdo={handleAddRecuerdo}
+      onBatchCreateChapter={chapterId ? undefined : handleBatchCreateChapter}
+      onUpdateChapterInfo={chapterId ? handleUpdateChapterInfo : undefined}
+      onDeleteChapter={chapterId && isAdminRole(baul.role) ? handleDeleteChapter : undefined}
+      onAddRecuerdo={chapterId ? handleAddRecuerdo : undefined}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
     />
   );

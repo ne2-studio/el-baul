@@ -99,24 +99,6 @@ export const api = {
 
     getLoosePhotos: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
-    uploadPhoto: async (baulId: string, file: File, clientUploadId: string, date?: PhotoDate) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('clientUploadId', clientUploadId);
-      if (date) {
-        formData.append('dateYear', String(date.year));
-        if (date.month) formData.append('dateMonth', String(date.month));
-        if (date.day) formData.append('dateDay', String(date.day));
-      }
-
-      const response = await fetch(`${API_BASE}/api/baules/${baulId}/photos/sueltas`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: formData,
-      });
-
-      return new Photo(await handleResponse<any>(response));
-    },
 
     getRemovalRequests: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/removal-requests`)).map((r) => new RemovalRequest(r)),
@@ -142,7 +124,9 @@ export const api = {
 
   photos: {
     getAll: async (chapterId: string) => (await get<any[]>(`/api/chapters/${chapterId}/photos`)).map((p) => new Photo(p)),
-    upload: async (chapterId: string, file: File, clientUploadId: string, date?: PhotoDate) => {
+    // chapterId null uploads into the baúl's "fotos sueltas" (loose photos) instead of a
+    // real chapter — see useBaulesStore's nullable chapterId convention.
+    upload: async (baulId: string, chapterId: string | null, file: File, clientUploadId: string, date?: PhotoDate) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('clientUploadId', clientUploadId);
@@ -152,7 +136,8 @@ export const api = {
         if (date.day) formData.append('dateDay', String(date.day));
       }
 
-      const response = await fetch(`${API_BASE}/api/chapters/${chapterId}/photos`, {
+      const path = chapterId ? `/api/chapters/${chapterId}/photos` : `/api/baules/${baulId}/photos/sueltas`;
+      const response = await fetch(`${API_BASE}${path}`, {
         method: 'POST',
         headers: authHeaders(),
         body: formData,

@@ -29,7 +29,6 @@ import { PhotoViewerRoute } from '../features/photos/components/PhotoViewerRoute
 import { UploadConfirmationRoute } from '../features/photos/components/UploadConfirmationRoute';
 import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadErrorRoute } from '../features/photos/components/UploadErrorRoute';
-import { LoosePhotosRoute } from '../features/photos/components/LoosePhotosRoute';
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { PersonaDetailRoute } from '../features/sharing/components/PersonaDetailRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
@@ -236,7 +235,7 @@ function App() {
         } />
         <Route path="/baules/:baulId/fotos-sueltas" element={
           <ProtectedRoute>
-            <LoosePhotosRoute />
+            <ChapterRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
