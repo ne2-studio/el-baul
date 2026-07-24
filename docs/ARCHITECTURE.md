@@ -123,8 +123,12 @@ ElBaul.Maintenance ───┘                                           │
 ### Controller conventions
 
 - Thin: one controller per resource area (`BaulesController`, `ChaptersController`,
-  `PhotosController`, `UsersController`, `AppConfigController`), delegating to a use-case method
-  and mapping the `Result`/`Result<T>` to an HTTP response.
+  `PhotosController`, `UsersController`, `AppConfigController`, `AdminController`,
+  `ChatController`, `SupportController`, `EmailTrackingController`), delegating to a use-case
+  method and mapping the `Result`/`Result<T>` to an HTTP response. `AdminController` is the one
+  partial exception — every handler still delegates to `IAdminManager`/`IWelcomeEmailManager`/
+  `IWeeklyDigestManager`, but it also has a small local `GetExternalLinks()` helper reading
+  `IConfiguration` directly for display purposes.
 - Errors use `Result.Failure<T>(string)` with a human-readable message; `ErrorMapping.
   ToActionResult` (`api/ElBaul.Api.Common/ErrorMapping.cs`) maps it to a status code by matching
   substrings — `"access denied"` → 403, `"not found"` → 404, everything else → 400. This mirrors
@@ -163,12 +167,16 @@ ElBaul.Maintenance ───┘                                           │
   `IIdGenerator` (`GuidIdGenerator`), `ICurrentUserProvider`, `IPhotoStorage`,
   `IPhotoDateExtractor`. This is what makes the `Application/` managers unit-testable against
   hand-written fakes, no mocking framework.
-- **Access control is checked explicitly inside each use-case method**, not via a global filter:
-  every `ChapterManager`/`PhotoManager`/`BaulManager` method that touches a baúl-scoped resource
-  loads the baúl, then checks `baul.CustodioId == userId || persona exists for userId`, and
-  returns `Result.Failure<T>("Access denied")` otherwise. This keeps scoping visible at each call
-  site (see `ChapterManager.cs` for the canonical shape) at the cost of some repetition across
-  managers — there's no shared authorization helper yet.
+- **Access control is centralized in `BaulAccessService`** (`Application/BaulAccess.cs`), not via
+  a global filter and not re-derived per manager: it's the single interpretation of "does this
+  user belong to this baúl / are they an admin of it", built on `baul.CustodioId == userId ||
+  persona exists for userId`. Every manager that touches a baúl-scoped resource calls
+  `baulAccess.AuthorizeAsync(...)` (resolve the baúl → check membership/role → return
+  `Result.Failure<T>("Access denied")` on failure, with a uniform log line either way) instead of
+  re-implementing the check inline — currently 42 call sites across `BaulManager`,
+  `ChapterManager`, `ChatManager`, `PersonaManager`, `PhotoManager`, and `RemovalRequestManager`.
+  `BaulAccessService.GetAuthorInfoAsync` is the same story for resolving a persona's
+  nickname/avatar as recuerdo/chapter authorship.
 - **DI lifetimes are `Scoped` by default.** `MinioPhotoStorage` is the one deliberate
   `Singleton` exception, because it wraps a single `AmazonS3Client`, which the AWS SDK documents
   as thread-safe and meant to be reused/pooled across requests — not request state.
