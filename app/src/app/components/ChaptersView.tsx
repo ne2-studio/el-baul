@@ -49,6 +49,7 @@ interface ChaptersViewProps {
   recuerdos?: Recuerdo[];
   isAdmin?: boolean;
   currentUserEmail?: string;
+  initialTab?: 'capitulos' | 'personas' | 'recuerdos';
   onBack: () => void;
   onSelectChapter: (chapter: Chapter) => void;
   onCreateChapter: () => void;
@@ -78,6 +79,7 @@ export function ChaptersView({
   recuerdos = [],
   isAdmin = false,
   currentUserEmail,
+  initialTab = 'capitulos',
   onBack,
   onSelectChapter,
   onCreateChapter,
@@ -100,7 +102,7 @@ export function ChaptersView({
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>('capitulos');
+  const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>(initialTab);
   const [isCreatingPersona, setIsCreatingPersona] = useState(false);
   const [isSavingBaulInfo, setIsSavingBaulInfo] = useState(false);
 

@@ -32,6 +32,8 @@ export const BaulRoute: React.FC = () => {
 
   const { baul, isLoading, refreshFailed, retry } = useBaulScope(baulId);
 
+  const initialTab = (location.state as { activeTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.activeTab;
+
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
 
   if (!baul) {
@@ -104,6 +106,7 @@ export const BaulRoute: React.FC = () => {
         recuerdos={baulRecuerdos[baul.id] || []}
         isAdmin={isAdminRole(baul.role)}
         currentUserEmail={userProfile.email}
+        initialTab={initialTab}
         onBack={() => navigate('/baules')}
         onSelectChapter={handleSelectChapter}
         onCreateChapter={() => navigate(`/baules/${baul.id}/nuevo-capitulo`)}
@@ -115,12 +118,16 @@ export const BaulRoute: React.FC = () => {
           showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`)
         }
         onCreatePersona={handleCreatePersona}
-        onSelectPersona={(persona) => navigate(`/baules/${baul.id}/personas/${persona.id}`)}
+        onSelectPersona={(persona) =>
+          navigate(`/baules/${baul.id}/personas/${persona.id}`, { state: { returnTab: 'personas' } })
+        }
         onCreateRecuerdo={handleCreateRecuerdo}
         onOpenChat={chatEnabled ? () => navigate(`/baules/${baul.id}/recordar`) : undefined}
         onOpenChapterFromRecuerdo={(chapterId) => handleSelectChapter({ id: chapterId })}
         onOpenPhotoFromRecuerdo={handleOpenPhotoFromRecuerdo}
-        onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
+        onUserClick={(personaId) =>
+          navigate(`/baules/${baul.id}/personas/${personaId}`, { state: { returnTab: 'recuerdos' } })
+        }
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}

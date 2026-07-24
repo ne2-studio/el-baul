@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Share } from '@capacitor/share';
 import { PersonaDetailScreen } from '@/app/components/PersonaDetailScreen';
 import { EditPersonaModal } from '@/app/components/EditPersonaModal';
@@ -13,7 +13,9 @@ import { BaulRole } from '@/types';
 
 export const PersonaDetailRoute: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { baulId, personaId } = useParams();
+  const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const appUrl = useAppConfigStore(state => state.appUrl);
   const { baules } = useBaulesStore();
@@ -102,7 +104,7 @@ export const PersonaDetailRoute: React.FC = () => {
       key: 'revoke',
       errorMessage: 'Error al quitar el acceso',
     });
-    if (result.ok) navigate(`/baules/${baulId}`);
+    if (result.ok) navigate(`/baules/${baulId}`, { state: { activeTab: returnTab } });
     return result.ok;
   };
 
@@ -111,7 +113,7 @@ export const PersonaDetailRoute: React.FC = () => {
       <PersonaDetailScreen
         persona={persona}
         isAdmin={isAdminRole(baul?.role)}
-        onBack={() => navigate(`/baules/${baulId}`)}
+        onBack={() => navigate(`/baules/${baulId}`, { state: { activeTab: returnTab } })}
         onEdit={() => setIsEditing(true)}
         onShareInvite={handleShareInvite}
         onChangeRole={handleChangeRole}
