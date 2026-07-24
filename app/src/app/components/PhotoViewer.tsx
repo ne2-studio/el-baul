@@ -15,6 +15,7 @@ import { RecuerdoInput } from './RecuerdoInput';
 import { RecuerdosList } from './RecuerdosList';
 import { Recuerdo } from './RecuerdoCard';
 import { PhotoDate } from '@/types';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -67,6 +68,8 @@ export function PhotoViewer({
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
   const [isSubmittingDate, setIsSubmittingDate] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
+
+  useScrollLock();
 
   const moveableChapters = allChapters.filter(a => a.id !== currentChapter?.id);
 
