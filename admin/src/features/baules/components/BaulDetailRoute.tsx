@@ -39,7 +39,7 @@ export function BaulDetailRoute() {
         <StatCard label="Fotos" value={selectedBaul.stats.photos} icon={Image} />
         <StatCard label="Recuerdos" value={selectedBaul.stats.recuerdos} icon={MessageSquare} />
         <StatCard label="Personas" value={selectedBaul.stats.personas} icon={Users} />
-        <StatCard label="Capítulos" value={selectedBaul.stats.capitulos} icon={BookOpen} />
+        <StatCard label="Capítulos" value={selectedBaul.stats.chapters} icon={BookOpen} />
       </div>
 
       <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
@@ -69,11 +69,11 @@ export function BaulDetailRoute() {
 
       <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
         <h3 className="mb-4">Capítulos</h3>
-        {selectedBaul.capitulos.length === 0 ? (
+        {selectedBaul.chapters.length === 0 ? (
           <p className="text-muted-foreground text-sm py-4">Este baúl no tiene capítulos todavía.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {selectedBaul.capitulos.map((c) => (
+            {selectedBaul.chapters.map((c) => (
               <li key={c.id} className="py-2.5 flex items-center justify-between text-sm">
                 <span>{c.name}</span>
                 <span className="text-muted-foreground">{c.photoCount} fotos</span>

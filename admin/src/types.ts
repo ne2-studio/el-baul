@@ -105,7 +105,7 @@ export class AdminBaul {
   memberCount: number;
   linkedUserCount: number;
   photoCount: number;
-  albumCount: number;
+  chapterCount: number;
   createdAt: string;
 
   constructor(data: any) {
@@ -115,7 +115,7 @@ export class AdminBaul {
     this.memberCount = data.memberCount;
     this.linkedUserCount = data.linkedUserCount;
     this.photoCount = data.photoCount;
-    this.albumCount = data.albumCount;
+    this.chapterCount = data.chapterCount;
     this.createdAt = data.createdAt;
   }
 }
@@ -138,7 +138,7 @@ export class AdminBaulPersona {
   }
 }
 
-export class AdminBaulAlbum {
+export class AdminBaulChapter {
   id: string;
   name: string;
   photoCount: number;
@@ -154,13 +154,13 @@ export class AdminBaulStats {
   photos: number;
   recuerdos: number;
   personas: number;
-  capitulos: number;
+  chapters: number;
 
   constructor(data: any) {
     this.photos = data.photos;
     this.recuerdos = data.recuerdos;
     this.personas = data.personas;
-    this.capitulos = data.capitulos;
+    this.chapters = data.chapters;
   }
 }
 
@@ -169,7 +169,7 @@ export class AdminBaulDetail {
   name: string;
   createdAt: string;
   personas: AdminBaulPersona[];
-  capitulos: AdminBaulAlbum[];
+  chapters: AdminBaulChapter[];
   stats: AdminBaulStats;
 
   constructor(data: any) {
@@ -177,7 +177,7 @@ export class AdminBaulDetail {
     this.name = data.name;
     this.createdAt = data.createdAt;
     this.personas = (data.personas ?? []).map((p: any) => new AdminBaulPersona(p));
-    this.capitulos = (data.capitulos ?? []).map((c: any) => new AdminBaulAlbum(c));
+    this.chapters = (data.chapters ?? []).map((c: any) => new AdminBaulChapter(c));
     this.stats = new AdminBaulStats(data.stats);
   }
 }
