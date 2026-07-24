@@ -9,7 +9,9 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules")]
-public class BaulesController(IBaulManager baulManager) : ControllerBase
+public class BaulesController(
+    IBaulManager baulManager, IPersonaManager personaManager, IRemovalRequestManager removalRequestManager)
+    : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -54,42 +56,42 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
     [HttpGet("/api/personas/{personaId:guid}/invite-preview")]
     public async Task<IActionResult> GetInvitePreview(Guid personaId)
     {
-        var result = await baulManager.GetInvitePreviewAsync(personaId);
+        var result = await personaManager.GetInvitePreviewAsync(personaId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpPost("/api/personas/{personaId:guid}/accept-invite")]
     public async Task<IActionResult> AcceptPersonalInvite(Guid personaId)
     {
-        var result = await baulManager.AcceptPersonalInviteAsync(personaId);
+        var result = await personaManager.AcceptPersonalInviteAsync(personaId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpGet("{baulId:guid}/personas")]
     public async Task<IActionResult> GetPersonas(Guid baulId)
     {
-        var result = await baulManager.GetPersonasAsync(baulId);
+        var result = await personaManager.GetPersonasAsync(baulId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpPost("{baulId:guid}/personas")]
     public async Task<IActionResult> CreatePersona(Guid baulId, [FromBody] CreatePersonaRequest request)
     {
-        var result = await baulManager.CreatePersonaAsync(baulId, request.Nickname);
+        var result = await personaManager.CreatePersonaAsync(baulId, request.Nickname);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpGet("{baulId:guid}/personas/{personaId:guid}")]
     public async Task<IActionResult> GetPersona(Guid baulId, Guid personaId)
     {
-        var result = await baulManager.GetPersonaAsync(baulId, personaId);
+        var result = await personaManager.GetPersonaAsync(baulId, personaId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpPut("{baulId:guid}/personas/{personaId:guid}")]
     public async Task<IActionResult> UpdatePersona(Guid baulId, Guid personaId, [FromBody] UpdatePersonaRequest request)
     {
-        var result = await baulManager.UpdatePersonaAsync(baulId, personaId, request.Name, request.Nickname);
+        var result = await personaManager.UpdatePersonaAsync(baulId, personaId, request.Name, request.Nickname);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -102,7 +104,7 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
             return BadRequest(new { error = "No file provided" });
 
         await using var stream = request.File.OpenReadStream();
-        var result = await baulManager.UpdatePersonaAvatarAsync(
+        var result = await personaManager.UpdatePersonaAvatarAsync(
             baulId, personaId, stream, request.File.FileName, request.File.ContentType);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
@@ -111,21 +113,21 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
     [HttpPut("{baulId:guid}/personas/{personaId:guid}/role")]
     public async Task<IActionResult> UpdatePersonaRole(Guid baulId, Guid personaId, [FromBody] UpdateRoleRequest request)
     {
-        var result = await baulManager.UpdatePersonaRoleAsync(baulId, personaId, request.Role);
+        var result = await personaManager.UpdatePersonaRoleAsync(baulId, personaId, request.Role);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpDelete("{baulId:guid}/personas/{personaId:guid}")]
     public async Task<IActionResult> RemovePersona(Guid baulId, Guid personaId)
     {
-        var result = await baulManager.RemovePersonaAsync(baulId, personaId);
+        var result = await personaManager.RemovePersonaAsync(baulId, personaId);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpGet("{baulId:guid}/removal-requests")]
     public async Task<IActionResult> GetRemovalRequests(Guid baulId)
     {
-        var result = await baulManager.GetRemovalRequestsAsync(baulId);
+        var result = await removalRequestManager.GetRemovalRequestsAsync(baulId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -135,21 +137,21 @@ public class BaulesController(IBaulManager baulManager) : ControllerBase
         if (!Guid.TryParse(request.PhotoId, out var photoId))
             return BadRequest(new { error = $"'{request.PhotoId}' is not a valid photo id." });
 
-        var result = await baulManager.CreateRemovalRequestAsync(baulId, photoId, request.Reason);
+        var result = await removalRequestManager.CreateRemovalRequestAsync(baulId, photoId, request.Reason);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpPost("{baulId:guid}/removal-requests/{requestId:guid}/approve")]
     public async Task<IActionResult> ApproveRemovalRequest(Guid baulId, Guid requestId)
     {
-        var result = await baulManager.ApproveRemovalRequestAsync(baulId, requestId);
+        var result = await removalRequestManager.ApproveRemovalRequestAsync(baulId, requestId);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpPost("{baulId:guid}/removal-requests/{requestId:guid}/reject")]
     public async Task<IActionResult> RejectRemovalRequest(Guid baulId, Guid requestId)
     {
-        var result = await baulManager.RejectRemovalRequestAsync(baulId, requestId);
+        var result = await removalRequestManager.RejectRemovalRequestAsync(baulId, requestId);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
