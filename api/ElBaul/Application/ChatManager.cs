@@ -18,7 +18,8 @@ public class ChatManager(
     IAppConfiguration appConfiguration,
     IIdGenerator idGenerator,
     IClock clock,
-    ICurrentUserProvider currentUserProvider) : IChatManager
+    ICurrentUserProvider currentUserProvider,
+    BaulAccessService baulAccess) : IChatManager
 {
     // Only the recuerdos most relevant to the current question are sent to the model — see
     // FindRelevantRecuerdosAsync. Keeps the prompt (and its cost) bounded regardless of how
@@ -41,9 +42,8 @@ public class ChatManager(
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure<IEnumerable<ChatMessageDto>>("Baul not found");
 
-        var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
-        if (!hasAccess) return Result.Failure<IEnumerable<ChatMessageDto>>("Access denied");
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember) return Result.Failure<IEnumerable<ChatMessageDto>>("Access denied");
 
         var messages = await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId);
         return Result.Success(messages.Select(ToDto));
@@ -65,9 +65,8 @@ public class ChatManager(
             return Result.Failure<ChatMessageDto>("Baul not found");
         }
 
-        var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
-        if (!hasAccess)
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember)
         {
             logger.LogWarning("Chat message rejected: access denied {BaulId}", baulId);
             return Result.Failure<ChatMessageDto>("Access denied");

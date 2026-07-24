@@ -23,7 +23,8 @@ public class ChatManagerTests
         new(NullLogger<ChatManager>.Instance, _baulRepository, _chapterRepository, _recuerdoRepository,
             _chatMessageRepository, _recuerdoEmbeddingRepository, _aiChatBackend,
             embeddingBackend ?? new FakeEmbeddingBackend([]), appConfiguration ?? new StaticAppConfiguration(),
-            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
+            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
+            new BaulAccessService(_baulRepository));
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
     {

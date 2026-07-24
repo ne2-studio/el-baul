@@ -154,6 +154,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Register application services
+builder.Services.AddScoped<BaulAccessService>();
 builder.Services.AddScoped<IBaulManager, BaulManager>();
 builder.Services.AddScoped<IChapterManager, ChapterManager>();
 builder.Services.AddScoped<IPhotoManager, PhotoManager>();

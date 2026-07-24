@@ -15,7 +15,8 @@ public class BaulManager(
     IPhotoStorage photoStorage,
     IIdGenerator idGenerator,
     IClock clock,
-    ICurrentUserProvider currentUserProvider) : IBaulManager
+    ICurrentUserProvider currentUserProvider,
+    BaulAccessService baulAccess) : IBaulManager
 {
     // Recuerdo author names are always the Persona's apodo for this baúl, never the
     // underlying account's OIDC-synced name — duplicated from ChapterManager/PhotoManager,
@@ -74,14 +75,11 @@ public class BaulManager(
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure<BaulDto>("Baul not found");
 
-        var isCustodio = baul.CustodioId == userId;
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember) return Result.Failure<BaulDto>("Access denied");
 
-        if (!isCustodio && sharedAccess is null) return Result.Failure<BaulDto>("Access denied");
-
-        var role = isCustodio ? BaulRole.Custodio : sharedAccess!.Role;
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
-        return await ToDtoAsync(baul, isCustodio, role, memberCount);
+        return await ToDtoAsync(baul, access.IsCustodio, access.Role, memberCount);
     }
 
     public async Task<Result<BaulDto>> SetCoverAsync(Guid baulId, Guid photoId)
@@ -93,8 +91,8 @@ public class BaulManager(
             logger.LogWarning("Baul cover update rejected: baul not found {BaulId}", baulId);
             return Result.Failure<BaulDto>("Baul not found");
         }
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
         {
             logger.LogWarning("Baul cover update rejected: access denied {BaulId}", baulId);
             return Result.Failure<BaulDto>("Access denied");
@@ -113,7 +111,7 @@ public class BaulManager(
         logger.LogInformation("Baul cover updated {BaulId} {PhotoId}", baulId, photoId);
 
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
-        return await ToDtoAsync(updated, baul.CustodioId == userId, sharedAccess.Role, memberCount);
+        return await ToDtoAsync(updated, access.IsCustodio, access.Role, memberCount);
     }
 
     public async Task<Result<BaulDto>> UpdateAsync(Guid baulId, string name, string? description)
@@ -125,8 +123,8 @@ public class BaulManager(
             logger.LogWarning("Baul update rejected: baul not found {BaulId}", baulId);
             return Result.Failure<BaulDto>("Baul not found");
         }
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
         {
             logger.LogWarning("Baul update rejected: access denied {BaulId}", baulId);
             return Result.Failure<BaulDto>("Access denied");
@@ -138,7 +136,7 @@ public class BaulManager(
         logger.LogInformation("Baul updated {BaulId} {Name}", baulId, name);
 
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
-        return await ToDtoAsync(updated, baul.CustodioId == userId, sharedAccess.Role, memberCount);
+        return await ToDtoAsync(updated, access.IsCustodio, access.Role, memberCount);
     }
 
     public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(Guid personaId)
@@ -206,8 +204,7 @@ public class BaulManager(
         if (baul is null) return Result.Failure<IEnumerable<PersonaDto>>("Baul not found");
 
         var userId = currentUserProvider.GetUserId();
-        var isCustodio = baul.CustodioId == userId;
-        var callerAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
+        var access = await baulAccess.GetAsync(baul, userId);
 
         var personas = await baulRepository.GetPersonasAsync(baulId);
         var dtos = new List<PersonaDto>();
@@ -215,7 +212,7 @@ public class BaulManager(
         foreach (var persona in personas)
         {
             var user = persona.UserId is not null ? await userRepository.GetByIdAsync(persona.UserId) : null;
-            var canEdit = CanEditPersona(persona, userId, isCustodio, callerAccess);
+            var canEdit = CanEditPersona(persona, userId, access);
             dtos.Add(await ToPersonaDtoAsync(persona, user, canEdit));
         }
 
@@ -232,9 +229,8 @@ public class BaulManager(
             return Result.Failure<PersonaDto>("Baul not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var callerAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (!isCustodio && callerAccess is null)
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember)
         {
             logger.LogWarning("Persona detail rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
             return Result.Failure<PersonaDto>("Access denied");
@@ -247,7 +243,7 @@ public class BaulManager(
             return Result.Failure<PersonaDto>("Persona not found");
         }
 
-        var canEdit = CanEditPersona(persona, userId, isCustodio, callerAccess);
+        var canEdit = CanEditPersona(persona, userId, access);
         var user = persona.UserId is not null ? await userRepository.GetByIdAsync(persona.UserId) : null;
         return await ToPersonaDtoAsync(persona, user, canEdit);
     }
@@ -262,8 +258,8 @@ public class BaulManager(
             return Result.Failure<PersonaDto>("Baul not found");
         }
 
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
         {
             logger.LogWarning("Persona creation rejected: access denied {BaulId}", baulId);
             return Result.Failure<PersonaDto>("Access denied");
@@ -294,9 +290,8 @@ public class BaulManager(
             return Result.Failure<PersonaDto>("Persona not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var callerAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var canEdit = CanEditPersona(persona, userId, isCustodio, callerAccess);
+        var access = await baulAccess.GetAsync(baul, userId);
+        var canEdit = CanEditPersona(persona, userId, access);
         if (!canEdit)
         {
             logger.LogWarning("Persona update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
@@ -330,9 +325,8 @@ public class BaulManager(
             return Result.Failure<PersonaDto>("Persona not found");
         }
 
-        var isCustodio = baul.CustodioId == userId;
-        var callerAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var canEdit = CanEditPersona(persona, userId, isCustodio, callerAccess);
+        var access = await baulAccess.GetAsync(baul, userId);
+        var canEdit = CanEditPersona(persona, userId, access);
         if (!canEdit)
         {
             logger.LogWarning(
@@ -374,8 +368,8 @@ public class BaulManager(
             logger.LogWarning("Persona role update rejected: baul not found {BaulId}", baulId);
             return Result.Failure<PersonaDto>("Baul not found");
         }
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
         {
             logger.LogWarning("Persona role update rejected: access denied {BaulId}", baulId);
             return Result.Failure<PersonaDto>("Access denied");
@@ -413,8 +407,8 @@ public class BaulManager(
             logger.LogWarning("Persona removal rejected: baul not found {BaulId}", baulId);
             return Result.Failure("Baul not found");
         }
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
         {
             logger.LogWarning("Persona removal rejected: access denied {BaulId}", baulId);
             return Result.Failure("Access denied");
@@ -430,8 +424,8 @@ public class BaulManager(
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure<IEnumerable<RemovalRequestDto>>("Baul not found");
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
             return Result.Failure<IEnumerable<RemovalRequestDto>>("Access denied");
 
         var requests = await baulRepository.GetRemovalRequestsAsync(baulId);
@@ -454,6 +448,14 @@ public class BaulManager(
             return Result.Failure<RemovalRequestDto>("Baul not found");
         }
 
+        var userId = currentUserProvider.GetUserId();
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember)
+        {
+            logger.LogWarning("Removal request creation rejected: access denied {BaulId}", baulId);
+            return Result.Failure<RemovalRequestDto>("Access denied");
+        }
+
         var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
@@ -462,8 +464,7 @@ public class BaulManager(
             return Result.Failure<RemovalRequestDto>("Photo not found");
         }
 
-        var userId = currentUserProvider.GetUserId();
-        var nickname = (await baulRepository.GetPersonaByUserIdAsync(baulId, userId))?.Nickname ?? "Usuario";
+        var nickname = access.Persona?.Nickname ?? "Usuario";
         var userProfile = await userRepository.GetByIdAsync(userId);
         var now = clock.UtcNow();
         var request = new RemovalRequest(
@@ -487,8 +488,8 @@ public class BaulManager(
             logger.LogWarning("Removal request approval rejected: baul not found {BaulId}", baulId);
             return Result.Failure("Baul not found");
         }
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
         {
             logger.LogWarning("Removal request approval rejected: access denied {BaulId}", baulId);
             return Result.Failure("Access denied");
@@ -537,8 +538,8 @@ public class BaulManager(
             logger.LogWarning("Reject removal request failed: baul not found {BaulId}", baulId);
             return Result.Failure("Baul not found");
         }
-        var sharedAccess = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        if (sharedAccess is null || !sharedAccess.Role.IsAdmin())
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsAdmin)
         {
             logger.LogWarning("Reject removal request failed: access denied {BaulId}", baulId);
             return Result.Failure("Access denied");
@@ -559,10 +560,8 @@ public class BaulManager(
             baul.CreatedAt, baul.UpdatedAt, isCustodio, role.ToApiString(), memberCount);
     }
 
-    private static bool CanEditPersona(Persona target, string callerUserId, bool callerIsCustodio, Persona? callerAccess) =>
-        callerIsCustodio
-        || (callerAccess is not null && callerAccess.Role.IsAdmin())
-        || (target.UserId is not null && target.UserId == callerUserId);
+    private static bool CanEditPersona(Persona target, string callerUserId, BaulAccess callerAccess) =>
+        callerAccess.IsAdmin || (target.UserId is not null && target.UserId == callerUserId);
 
     private async Task<PersonaDto> ToPersonaDtoAsync(Persona persona, User? user, bool canEdit)
     {
@@ -587,9 +586,8 @@ public class BaulManager(
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Baul not found");
 
-        var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
-        if (!hasAccess) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember) return Result.Failure<IEnumerable<RecuerdoDto>>("Access denied");
 
         var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(baulId)).ToList();
 
@@ -626,9 +624,8 @@ public class BaulManager(
             return Result.Failure<RecuerdoDto>("Baul not found");
         }
 
-        var hasAccess = baul.CustodioId == userId
-            || await baulRepository.GetPersonaByUserIdAsync(baulId, userId) is not null;
-        if (!hasAccess)
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember)
         {
             logger.LogWarning("Recuerdo creation rejected: access denied {BaulId}", baulId);
             return Result.Failure<RecuerdoDto>("Access denied");

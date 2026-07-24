@@ -27,7 +27,8 @@ public class BaulManagerTests
     private BaulManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<BaulManager>.Instance, _baulRepository, _chapterRepository, _photoRepository,
             _recuerdoRepository, _userRepository, _photoStorage,
-            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId));
+            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
+            new BaulAccessService(_baulRepository));
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
@@ -263,6 +264,23 @@ public class BaulManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Tita Solicitudes", result.Value.RequesterName);
+    }
+
+    [Fact]
+    public async Task CreateRemovalRequestAsync_ShouldDenyAccess_WhenCallerHasNoRelationToBaul()
+    {
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 1, "key", _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(new Photo(photoId, chapterId, baulId, "key", null, null, null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.CreateRemovalRequestAsync(baulId, photoId, "no me gusta");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
