@@ -141,6 +141,37 @@ api/app/imgproxy fresh regardless of what changed, deliberately decoupled from t
 per-app `backend-deploy.yml`/`frontend-deploy.yml`/`imgproxy-deploy.yml`/
 `storybook-deploy.yml` pipelines so a slow e2e run never blocks or delays a deploy.
 
+## 4b. The `app/e2e-image-acceptance/` suite
+
+Same idea as 4a, but against a much lighter stack: the frontend image + `el-baul-api-lite`
+(everything in memory — no Postgres/MinIO/imgproxy, see `api/README.md`'s "el-baul-api-lite"
+section) instead of the full `docker-compose.yaml`. This is the suite to reach for while
+working on **photo upload/move/delete, persona invite/role-change/revoke, or
+removal-request submit/approve/reject** — real regression coverage for exactly those flows,
+noticeably faster than 4a (~30s combined vs. ~1.5min), and it's what gates
+`frontend-deploy.yml` (build → this suite → push/deploy).
+
+```bash
+docker build -t el-baul-app:local app/
+docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local api/
+cd app
+APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local npm run test:image-acceptance
+```
+
+Own compose file (`docker-compose.lite.yml`), own `global-setup.ts`/`global-teardown.ts`, own
+`helpers.ts` — deliberately not sharing anything with 4a's `app/e2e/`, so a change to one
+can't silently affect the other. `personas.spec.ts` and `removal-requests.spec.ts` each log
+into a **second** `browser.newContext()` as fake-oidc's second seeded user ("Normal User",
+`login_hint=user`) — the backend won't let the same account both invite and accept its own
+invite, and only shows "submit removal request" to a non-admin member, never the baúl's own
+custodian.
+
+To rebuild after a source change (same idea as step 1's `docker compose build api`):
+```bash
+docker build -t el-baul-app:local app/                                    # frontend changed
+docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local api/  # lite backend changed
+```
+
 ## 5. Extracting the access token (for raw API probing)
 
 Useful to check what the backend is *actually* returning, independent of any

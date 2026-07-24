@@ -79,6 +79,36 @@ request's `login_hint` selects.
 
 ---
 
+## 🧪 Tests
+
+```bash
+npm test                       # Vitest — unit tests (store logic, utils)
+npm run test:image-acceptance  # Playwright — el-baul-api-lite, behavioral regression coverage
+npm run test:e2e               # Playwright — full docker-compose stack, login-only smoke check
+```
+
+- **`npm test`** (Vitest) — fast, in-process: store logic (`useAppStore.recuerdos.test.ts`)
+  and `utils/timeUtils.test.ts`. `npm run test:watch` while iterating.
+- **`npm run test:image-acceptance`** (`e2e-image-acceptance/`) — the suite to reach for while
+  working on **photo upload/move/delete, persona invite/role-change/revoke, or
+  removal-request submit/approve/reject**: it's real end-to-end coverage of exactly those
+  flows, against the already-built frontend image + [`el-baul-api-lite`](../api/README.md)
+  (everything in memory, no Postgres/MinIO/imgproxy). ~5x faster than `test:e2e` and what
+  gates `frontend-deploy.yml`. Needs both images built first:
+  ```bash
+  docker build -t el-baul-app:local .
+  docker build -f ../api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local ../api
+  APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local npm run test:image-acceptance
+  ```
+- **`npm run test:e2e`** (`e2e/`) — boots the real `docker-compose.yaml` stack from source and
+  checks login → home end to end. The only suite exercising actual production infra wiring
+  (real Postgres/MinIO/imgproxy); also runs nightly in CI, decoupled from any deploy.
+
+See the Frontend Testing section in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) and the
+repo's `run`/`verify` Claude Code skills for more on when to run which.
+
+---
+
 ## 📁 Estructura del proyecto
 
 ```text

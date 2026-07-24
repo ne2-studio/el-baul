@@ -397,13 +397,44 @@ isolated rather than spread through the app:
   (`npm run sentry:upload-sourcemaps`) that only CI runs, against the `dist/` extracted from the
   already-built Docker image.
 - **TypeScript**: `@/*` path alias maps to `app/src`.
-- **Config**: environment-driven via Vite (`VITE_API_URL`, `VITE_OIDC_AUTHORITY`,
-  `VITE_OIDC_CLIENT_ID`, `VITE_OIDC_CALLBACK_URI`, `VITE_ZITADEL_ORGANIZATION_ID`,
-  `VITE_SENTRY_DSN`), baked in at build time as Docker build args (see `docker-compose.yaml` and
-  `frontend-deploy.yml`).
+- **Config**: `VITE_API_URL`, `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`,
+  `VITE_OIDC_CALLBACK_URI`, `VITE_ZITADEL_ORGANIZATION_ID`, `VITE_SENTRY_DSN` — read via
+  `src/runtimeConfig.ts`'s `getEnv()`, which prefers a runtime override
+  (`window.__ENV__`, set by `docker-entrypoint.d/95-generate-runtime-env.sh` inside the built
+  image from container env vars) and falls back to the Vite build-time value
+  (`import.meta.env`) when no override is set. This lets the *same built image* be pointed at
+  a different backend without rebuilding (see `docker-compose.lite.yml`'s `app` service and
+  `frontend-deploy.yml`'s acceptance-test step below) while `npm run dev`, Storybook, and the
+  Capacitor/Android build (no server to inject a runtime value into) keep working exactly as
+  before off the Vite build-time value alone. `admin/` has no equivalent mechanism — its image
+  is still config-baked at build time only.
 - **No shared package/types** between frontend and backend — DTO shapes are duplicated by hand
   (backend `Ports/Input/*Dto.cs` vs. `types/index.ts` classes) and kept in sync manually; the
   intended contract is documented in [`docs/API.md`](API.md).
+
+### Testing
+
+- **Unit** (Vitest, `npm test`) — narrow, in-process, no network: store logic
+  (`useAppStore.recuerdos.test.ts`) and `utils/timeUtils.test.ts`.
+- **`app/e2e/`** (`npm run test:e2e`) — full-stack Playwright: `docker compose up --build`
+  against the real `docker-compose.yaml` stack (Postgres, MinIO, imgproxy, fake-oidc), one
+  spec (`smoke.spec.ts`), login → home only. The one suite that actually exercises real infra
+  wiring. Runs nightly (`e2e-nightly.yml`), decoupled from any deploy.
+- **`app/e2e-image-acceptance/`** (`npm run test:image-acceptance`) — behavioral-regression
+  Playwright against the built frontend image + `el-baul-api-lite` (see the backend Testing
+  section above) instead of the real stack, ~5x faster since there's no real Postgres/MinIO/
+  imgproxy to boot: photo upload/move/delete (`photos.spec.ts`), persona invite/role-change/
+  revoke (`personas.spec.ts`), and removal-request submit/approve/reject
+  (`removal-requests.spec.ts`, two tests). Gates `frontend-deploy.yml` — build image → this
+  suite → push/deploy, the frontend-side equivalent of `docker-image-tests` gating the
+  backend. `personas.spec.ts` and `removal-requests.spec.ts` each need a second identity (a
+  second `browser.newContext()` logged in as fake-oidc's "Normal User") since the backend
+  rejects an account accepting its own invite, and only shows "submit removal request" to a
+  non-admin member — never the baúl's own custodian. `docker-compose.lite.yml`'s `api-lite`
+  raises `RateLimiter__PublicLimiter`/`ChatLimiter` well above the real backend's default,
+  since this suite's many full-page `page.goto()` reloads (each re-fetching the rate-limited,
+  public `/api/app-config`) hit the real limit once all spec files run together — not a
+  behavior this suite is testing, so the throwaway stack's limit is raised instead.
 
 ---
 
@@ -412,27 +443,33 @@ isolated rather than spread through the app:
 - **CI/CD**: four independent, path-filtered GitHub Actions workflows —
   `backend-deploy.yml` (`api/**`), `frontend-deploy.yml` (`app/**`), `imgproxy-deploy.yml`
   (`imgproxy/**`), `storybook-deploy.yml` (`app/**`, `storybook/**`) — each triggered only by
-  pushes to `main` that touch its own paths. All four: build → (backend also runs
-  `dotnet test`) → build a Docker image → push to GHCR (`ghcr.io/<repo>-api`, `-app`,
-  `-imgproxy`, `-storybook`) → trigger a Coolify deploy webhook. The frontend workflow
-  additionally extracts `dist/` from the just-built image afterward and uploads its
-  sourcemaps to Sentry (see above) — a step that needs Node/npm, not the Docker image.
-  Deliberately simple and fast: no unit-test or e2e gate sits in front of these, so a deploy
-  is only ever as slow as its own build.
-- **E2E smoke tests**: `e2e-nightly.yml` runs the Playwright suite (see
-  `.claude/skills/run/SKILL.md`) on a nightly cron (plus manual `workflow_dispatch`),
-  always rebuilding api/app/imgproxy from scratch regardless of what changed. It's fully
-  decoupled from the deploy workflows above — a slow or flaky e2e run never blocks a
-  deploy, it just gives a daily signal.
+  pushes to `main` that touch its own paths. All four: build → build a Docker image → push to
+  GHCR (`ghcr.io/<repo>-api`, `-app`, `-imgproxy`, `-storybook`) → trigger a Coolify deploy
+  webhook. Two of the four now gate that push on the freshly built image itself, not just a
+  unit-test run: `backend-deploy.yml` runs `docker-image-tests` against the built
+  `el-baul-api` image, and `frontend-deploy.yml` runs `app/e2e-image-acceptance/` against the
+  built `el-baul-app` image redirected (via the runtime-config mechanism above) at
+  `el-baul-api-lite` — see each project's own Testing section. `imgproxy-deploy.yml`/
+  `storybook-deploy.yml` have no equivalent gate yet. The frontend workflow additionally
+  extracts `dist/` from the just-built image afterward and uploads its sourcemaps to Sentry
+  (see above) — a step that needs Node/npm, not the Docker image.
+- **E2E smoke tests**: `e2e-nightly.yml` runs `app/e2e/` (see `.claude/skills/run/SKILL.md`)
+  on a nightly cron (plus manual `workflow_dispatch`), always rebuilding api/app/imgproxy from
+  scratch regardless of what changed. Fully decoupled from the deploy workflows above — a slow
+  or flaky run never blocks a deploy, it just gives a daily signal against real infra that
+  `frontend-deploy.yml`'s own (faster, `el-baul-api-lite`-backed) acceptance gate doesn't
+  cover.
 - **Android CI**: `android-ci.yml` runs on PRs/pushes touching `app/**`. It builds the web
   bundle against `app/.env.android`'s prod values (`npm run android:build`, which also runs
   `cap sync android`), then `./gradlew assembleDebug` and uploads the resulting APK as a
   build artifact. No signing config yet, so this stops at a debug artifact — no store
   publish or release build.
-- **Containers**: backend is a multi-stage .NET SDK→ASP.NET runtime image exposing port 8080.
-  Frontend is built by Vite inside its own Dockerfile build stage (VITE_* build args baked in),
-  then the static `dist/` is served by `nginx:alpine` (port 80) with SPA-fallback
-  `nginx.conf`. imgproxy has its own minimal `Dockerfile`/`presets.conf`.
+- **Containers**: backend is a multi-stage .NET SDK→ASP.NET runtime image exposing port 8080
+  (plus a second image, `el-baul-api-lite`, same pipeline shape but everything in memory — see
+  `api/README.md`). Frontend is built by Vite inside its own Dockerfile build stage, then the
+  static `dist/` is served by `nginx:alpine` (port 80, SPA-fallback `nginx.conf`) — `app/`'s
+  image also runs a runtime-config entrypoint script on container start (see the Config
+  bullet above); `admin/`'s doesn't. imgproxy has its own minimal `Dockerfile`/`presets.conf`.
 - **Local dev**: `docker-compose.yaml` at the repo root runs Postgres, MinIO, imgproxy,
   [fake-oidc](https://github.com/ne2-studio/fake-oidc) (a throwaway OIDC provider — no login UI,
   users selected via `login_hint`), the API, and the frontend, each built from its own

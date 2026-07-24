@@ -64,17 +64,28 @@ production, which is the whole point of these commands.
 ## Frontend changes
 
 ```bash
-cd app && npm run typecheck   # tsc --noEmit — fast, catches type errors
-cd app && npm run test:e2e    # login + reach the real home screen, against a fresh stack
+cd app && npm run typecheck            # tsc --noEmit — fast, catches type errors, run always
+cd app && npm run test:image-acceptance  # behavioral coverage — photos, personas, removal requests
+cd app && npm run test:e2e             # login + reach the real home screen, against the full real stack
 ```
 
-`test:e2e` (`app/e2e/smoke.spec.ts`, see the `run` skill's section 4a) boots
-docker-compose itself and confirms the login → home path still works end to end — it's
-real coverage for that one path, not a rubber stamp. It does **not** cover the specific
-screen/component you just changed unless that's the home screen itself. For anything
-UI-facing beyond that path, load the `run` skill, get a logged-in browser, and actually
-drive to the changed screen. Prefer the Vite dev server flow in that skill over the
-docker `app` container for this — see below.
+**Run `test:image-acceptance` before considering done any change touching photo
+upload/move/delete, persona invite/role-change/revoke, or removal-request
+submit/approve/reject** — that's exactly the coverage those four specs give
+(`app/e2e-image-acceptance/`, see the `run` skill's section 4b for the two images it needs
+built first). It's real regression protection for a broken store action or route wiring, not
+a rubber stamp, and markedly faster than `test:e2e` since there's no real Postgres/MinIO/
+imgproxy to boot. It does **not** cover anything outside those four flows.
+
+`test:e2e` (`app/e2e/smoke.spec.ts`, see the `run` skill's section 4a) boots the full
+docker-compose stack itself and confirms the login → home path still works against **real**
+infra — the one check here that actually exercises Postgres/MinIO/imgproxy wiring, not just
+application code. Run it for anything touching that wiring specifically (it's also covered
+automatically by the nightly CI job regardless).
+
+For anything UI-facing beyond what these two suites cover, load the `run` skill, get a
+logged-in browser, and actually drive to the changed screen. Prefer the Vite dev server flow
+in that skill over the docker `app` container for this — see below.
 
 ## The stale-container trap
 
