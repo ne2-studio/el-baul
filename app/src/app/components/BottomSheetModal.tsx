@@ -1,4 +1,5 @@
 import React from 'react';
+import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 
 interface BottomSheetModalProps {
   onCancel: () => void;
@@ -32,6 +33,7 @@ export function BottomSheetModal({
   backdropOpacity = 50,
 }: BottomSheetModalProps) {
   const isLg = size === 'lg';
+  const viewportInset = useVisualViewportInset();
 
   const overlayBg = isLg
     ? 'bg-black/50'
@@ -41,19 +43,20 @@ export function BottomSheetModal({
 
   return (
     <div
-      className={`fixed inset-0 ${overlayBg} ${isLg ? 'z-50' : 'z-[60]'} flex items-end ${
+      className={`fixed left-0 right-0 ${overlayBg} ${isLg ? 'z-50' : 'z-[60]'} flex items-end ${
         desktopCentered ? 'md:items-center' : ''
       } justify-center`}
+      style={{ top: viewportInset.top, height: viewportInset.height }}
     >
       <div className="absolute inset-0" onClick={onCancel} />
       {isLg ? (
-        <div className="relative bg-card w-full max-w-2xl rounded-t-3xl px-6 pt-6 pb-10 space-y-5 animate-slide-up">
+        <div className="relative bg-card w-full max-w-2xl max-h-[90%] overflow-y-auto rounded-t-3xl px-6 pt-6 pb-10 space-y-5 animate-slide-up">
           <div className="w-10 h-1 bg-border rounded-full mx-auto mb-2" />
           {children}
         </div>
       ) : (
         <div
-          className={`relative z-10 bg-background w-full max-w-md rounded-t-2xl ${
+          className={`relative z-10 bg-background w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-2xl ${
             desktopCentered ? 'md:rounded-2xl' : ''
           } p-6 animate-slide-up`}
         >

@@ -16,6 +16,7 @@ import { RecuerdosList } from './RecuerdosList';
 import { Recuerdo } from './RecuerdoCard';
 import { PhotoDate } from '@/types';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -70,6 +71,7 @@ export function PhotoViewer({
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
 
   useScrollLock();
+  const viewportInset = useVisualViewportInset();
 
   const moveableChapters = allChapters.filter(a => a.id !== currentChapter?.id);
 
@@ -204,7 +206,10 @@ export function PhotoViewer({
 
   return (
     <>
-      <div className="fixed inset-0 bg-foreground/95 z-50 flex flex-col">
+      <div
+        className="fixed left-0 right-0 bg-foreground/95 z-50 flex flex-col"
+        style={{ top: viewportInset.top, height: viewportInset.height }}
+      >
         <PhotoViewerHeader
           currentIndex={currentIndex}
           totalCount={photos.length}
@@ -226,7 +231,7 @@ export function PhotoViewer({
         {/* Info & Recuerdos section: el conjunto no supera el 50% de la pantalla; dentro,
             solo la fecha y la lista hacen scroll propio, mientras el input se queda fijo
             abajo sin encogerse. */}
-        <div className="flex flex-col max-h-[50vh]">
+        <div className="flex flex-col max-h-[50%]">
           <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
             {/* Date */}
             {(photo.date || onChangeDate) && (
