@@ -7,6 +7,15 @@ on:
     paths:
       - '.github/workflows/frontend-deploy.yml'
       - 'app/**'
+      - 'docker-compose.lite.yml'
+      # Everything el-baul-api-lite is built from (see api/ElBaul.Api.Lite/Dockerfile) — this
+      # pipeline builds and runs that image as part of its acceptance test, so a change to any
+      # of these can break it just as much as a change under app/ can.
+      - 'api/ElBaul/**'
+      - 'api/ElBaul.Api.Common/**'
+      - 'api/ElBaul.Api.Lite/**'
+      - 'api/ElBaul.Infra.Common/**'
+      - 'api/ElBaul.Infra.Lite/**'
 
 permissions:
   contents: read
