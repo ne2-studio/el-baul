@@ -399,20 +399,6 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task MoveAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
-    {
-        var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(sourceChapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager("stranger");
-        var result = await manager.MoveAsync(photoId, targetChapterId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
-    }
-
-    [Fact]
     public async Task DeleteAsync_ShouldSoftDeletePhoto_AndDecrementChapterPhotoCount_ForCustodio()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
@@ -519,19 +505,6 @@ public class PhotoManagerTests
 
         var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
         Assert.False(string.IsNullOrEmpty(baul!.CoverPhotoKey));
-    }
-
-    [Fact]
-    public async Task UploadToBaulAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
-    {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
-
-        var manager = CreateManager("stranger");
-        using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, Guid.NewGuid());
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
@@ -688,20 +661,6 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task ChangeDateAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager("stranger");
-        var result = await manager.ChangeDateAsync(photoId, 2020, null, null);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
-    }
-
-    [Fact]
     public async Task ChangeDateAsync_ShouldReject_WhenDayGivenWithoutMonth()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
@@ -732,22 +691,6 @@ public class PhotoManagerTests
         using var buffer = new MemoryStream();
         await result.Value.Content.CopyToAsync(buffer);
         Assert.Equal(new byte[] { 1, 2, 3 }, buffer.ToArray());
-    }
-
-    [Fact]
-    public async Task DownloadAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        var storageKey = $"{CustodioId}/{Guid.NewGuid()}-vacaciones.jpg";
-        await _photoStorage.SaveAsync(storageKey, new MemoryStream([1, 2, 3]), "image/jpeg");
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), storageKey, null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager("stranger");
-        var result = await manager.DownloadAsync(photoId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]

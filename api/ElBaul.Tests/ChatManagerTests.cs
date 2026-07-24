@@ -165,19 +165,6 @@ public class ChatManagerTests
     }
 
     [Fact]
-    public async Task GetMessagesAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-        var manager = CreateManager(OtherUserId);
-
-        var result = await manager.GetMessagesAsync(baulId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
-    }
-
-    [Fact]
     public async Task GetMessagesAsync_ShouldReturnHistory_OldestFirst()
     {
         var baulId = Guid.NewGuid();

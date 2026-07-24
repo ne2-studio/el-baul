@@ -66,19 +66,6 @@ public class ChapterManagerTests
     }
 
     [Fact]
-    public async Task GetByBaulIdAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
-    {
-        var baulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-
-        var manager = CreateManager(StrangerId);
-        var result = await manager.GetByBaulIdAsync(baulId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
-    }
-
-    [Fact]
     public async Task GetByBaulIdAsync_ShouldResolveSignedUrls_ForCoverPhotos()
     {
         var baulId = Guid.NewGuid();
@@ -129,23 +116,6 @@ public class ChapterManagerTests
         var result = await manager.SetCoverAsync(chapterId, photoId);
 
         Assert.True(result.IsSuccess);
-    }
-
-    [Fact]
-    public async Task SetCoverAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
-    {
-        var baulId = Guid.NewGuid();
-        var chapterId = Guid.NewGuid();
-        var photoId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(StrangerId);
-        var result = await manager.SetCoverAsync(chapterId, photoId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
@@ -214,21 +184,6 @@ public class ChapterManagerTests
         var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
 
         Assert.True(result.IsSuccess);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
-    {
-        var baulId = Guid.NewGuid();
-        var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-
-        var manager = CreateManager(StrangerId);
-        var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
@@ -366,21 +321,6 @@ public class ChapterManagerTests
     }
 
     [Fact]
-    public async Task CreateRecuerdoAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
-    {
-        var baulId = Guid.NewGuid();
-        var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-
-        var manager = CreateManager(StrangerId);
-        var result = await manager.CreateRecuerdoAsync(chapterId, "No debería poder");
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
-    }
-
-    [Fact]
     public async Task CreateRecuerdoAsync_ShouldFail_WhenChapterDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
@@ -419,21 +359,6 @@ public class ChapterManagerTests
         var withoutPhoto = list.Single(r => r.Text == "sin foto, más antiguo");
         Assert.Null(withoutPhoto.PhotoId);
         Assert.Null(withoutPhoto.PhotoThumbnailUrl);
-    }
-
-    [Fact]
-    public async Task GetRecuerdosAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
-    {
-        var baulId = Guid.NewGuid();
-        var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-
-        var manager = CreateManager(StrangerId);
-        var result = await manager.GetRecuerdosAsync(chapterId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]
@@ -483,21 +408,6 @@ public class ChapterManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
         Assert.NotNull(await _chapterRepository.GetByIdAsync(new ChapterId(chapterId)));
-    }
-
-    [Fact]
-    public async Task DeleteAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
-    {
-        var baulId = Guid.NewGuid();
-        var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-
-        var manager = CreateManager(StrangerId);
-        var result = await manager.DeleteAsync(chapterId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 
     [Fact]

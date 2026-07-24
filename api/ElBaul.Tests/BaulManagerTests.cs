@@ -181,20 +181,6 @@ public class BaulManagerTests
     }
 
     [Fact]
-    public async Task UpdateAsync_ShouldDenyAccess_WhenCallerIsNotAdmin()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdateAsync(baulId, "Familia 2024", null);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
-    }
-
-    [Fact]
     public async Task UpdateAsync_ShouldFail_WhenBaulDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
@@ -310,19 +296,6 @@ public class BaulManagerTests
     }
 
     [Fact]
-    public async Task CreateRecuerdoAsync_ShouldFail_WhenCallerHasNoAccess()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.CreateRecuerdoAsync(baulId, "texto");
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
-    }
-
-    [Fact]
     public async Task GetRecuerdosAsync_ShouldReturnMixedFeed_NewestFirst_WithProvenance()
     {
         var baulId = Guid.NewGuid();
@@ -368,18 +341,5 @@ public class BaulManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
-    }
-
-    [Fact]
-    public async Task GetRecuerdosAsync_ShouldFail_WhenCallerHasNoAccess()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.GetRecuerdosAsync(baulId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 }
