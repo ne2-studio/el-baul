@@ -5,7 +5,7 @@ import { Chapter } from './ChaptersView';
 import { Recuerdo } from './RecuerdoCard';
 
 const meta = {
-  title: 'Components/PhotoViewer',
+  title: 'Features/Photos/PhotoViewer',
   component: PhotoViewer,
   tags: ['autodocs'],
   parameters: {

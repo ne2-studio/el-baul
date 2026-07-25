@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BlockingLoadingOverlay } from './BlockingLoadingOverlay';
 
 const meta = {
-  title: 'Components/BlockingLoadingOverlay',
+  title: 'Components/Feedback/BlockingLoadingOverlay',
   component: BlockingLoadingOverlay,
   tags: ['autodocs'],
 } satisfies Meta<typeof BlockingLoadingOverlay>;

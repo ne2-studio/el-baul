@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CreateChapterForm } from './CreateChapterForm';
 
 const meta = {
-  title: 'Components/CreateChapterForm',
+  title: 'Features/Chapters/CreateChapterForm',
   component: CreateChapterForm,
   tags: ['autodocs'],
 } satisfies Meta<typeof CreateChapterForm>;

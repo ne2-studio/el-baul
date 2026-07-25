@@ -4,7 +4,7 @@ import { ChapterSelector, ChapterSelection } from './ChapterSelector';
 import { Chapter } from './ChaptersView';
 
 const meta = {
-  title: 'Components/ChapterSelector',
+  title: 'Features/Chapters/ChapterSelector',
   component: ChapterSelector,
   tags: ['autodocs'],
 } satisfies Meta<typeof ChapterSelector>;

@@ -3,7 +3,7 @@ import { ImageIcon } from 'lucide-react';
 import { EmptyState } from './EmptyState';
 
 const meta = {
-  title: 'Components/EmptyState',
+  title: 'Components/Feedback/EmptyState',
   component: EmptyState,
   tags: ['autodocs'],
 } satisfies Meta<typeof EmptyState>;

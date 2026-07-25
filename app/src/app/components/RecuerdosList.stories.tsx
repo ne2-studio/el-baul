@@ -3,7 +3,7 @@ import { RecuerdosList } from './RecuerdosList';
 import { Recuerdo } from './RecuerdoCard';
 
 const meta = {
-  title: 'Components/RecuerdosList',
+  title: 'Features/Memories/RecuerdosList',
   component: RecuerdosList,
   tags: ['autodocs'],
   decorators: [(Story) => <div className="bg-foreground p-8"><Story /></div>],

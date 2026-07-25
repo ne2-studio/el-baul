@@ -4,7 +4,7 @@ import { MoveModal } from './MoveModal';
 import { Chapter } from './ChaptersView';
 
 const meta = {
-  title: 'Components/MoveModal',
+  title: 'Features/Photos/MoveModal',
   component: MoveModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof MoveModal>;

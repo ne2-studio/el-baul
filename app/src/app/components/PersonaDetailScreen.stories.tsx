@@ -3,7 +3,7 @@ import { PersonaDetailScreen } from './PersonaDetailScreen';
 import { Persona } from '@/types';
 
 const meta = {
-  title: 'Components/PersonaDetailScreen',
+  title: 'Screens/Person/Detail',
   component: PersonaDetailScreen,
   tags: ['autodocs'],
 } satisfies Meta<typeof PersonaDetailScreen>;

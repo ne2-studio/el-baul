@@ -3,7 +3,7 @@ import { RecuerdosFeed } from './RecuerdosFeed';
 import { Photo, Recuerdo } from './PhotosView';
 
 const meta = {
-  title: 'Components/RecuerdosFeed',
+  title: 'Features/Memories/RecuerdosFeed',
   component: RecuerdosFeed,
   tags: ['autodocs'],
   decorators: [(Story) => <div className="max-w-2xl mx-auto px-6 py-6 bg-background min-h-screen"><Story /></div>],

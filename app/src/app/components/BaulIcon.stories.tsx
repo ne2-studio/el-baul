@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BaulIcon } from './BaulIcon';
 
 const meta = {
-  title: 'Components/BaulIcon',
+  title: 'Foundations/Icons/BaulIcon',
   component: BaulIcon,
   tags: ['autodocs'],
 } satisfies Meta<typeof BaulIcon>;

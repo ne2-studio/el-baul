@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SupportFormScreen } from './SupportFormScreen';
 
 const meta = {
-  title: 'Components/SupportFormScreen',
+  title: 'Screens/Support/Form',
   component: SupportFormScreen,
   tags: ['autodocs'],
 } satisfies Meta<typeof SupportFormScreen>;

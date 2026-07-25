@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ManageAccessModal } from './ManageAccessModal';
 
 const meta = {
-  title: 'Components/ManageAccessModal',
+  title: 'Features/Sharing/ManageAccessModal',
   component: ManageAccessModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof ManageAccessModal>;

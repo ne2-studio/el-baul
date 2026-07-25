@@ -38,7 +38,7 @@ function IconRegistryGallery({ filter }: GalleryArgs) {
 }
 
 const meta = {
-  title: 'Components/Icon/Gallery',
+  title: 'Foundations/Icons/Gallery',
   parameters: {
     docs: {
       description: {

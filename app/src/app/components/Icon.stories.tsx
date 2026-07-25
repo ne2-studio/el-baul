@@ -4,7 +4,7 @@ import { icons } from './icons';
 import { Button } from './Button';
 
 const meta = {
-  title: 'Components/Icon',
+  title: 'Foundations/Icons/Icon',
   component: Icon,
   tags: ['autodocs'],
   args: {

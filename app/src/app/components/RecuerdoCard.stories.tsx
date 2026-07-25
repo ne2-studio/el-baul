@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RecuerdoCard, Recuerdo } from './RecuerdoCard';
 
 const meta = {
-  title: 'Components/RecuerdoCard',
+  title: 'Features/Memories/RecuerdoCard',
   component: RecuerdoCard,
   tags: ['autodocs'],
   decorators: [(Story) => <div className="bg-foreground p-8"><Story /></div>],

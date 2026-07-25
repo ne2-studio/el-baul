@@ -3,7 +3,7 @@ import { PersonasTab } from './PersonasTab';
 import { Persona } from '@/types';
 
 const meta = {
-  title: 'Components/PersonasTab',
+  title: 'Features/People/PersonasTab',
   component: PersonasTab,
   tags: ['autodocs'],
 } satisfies Meta<typeof PersonasTab>;

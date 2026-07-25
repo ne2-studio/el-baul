@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 
 const meta = {
-  title: 'Components/BatchOperationProgress',
+  title: 'Components/Feedback/BatchOperationProgress',
   component: BatchOperationProgress,
   tags: ['autodocs'],
 } satisfies Meta<typeof BatchOperationProgress>;

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CreateBaulForm } from './CreateBaulForm';
 
 const meta = {
-  title: 'Components/CreateBaulForm',
+  title: 'Features/Baules/CreateBaulForm',
   component: CreateBaulForm,
   tags: ['autodocs'],
 } satisfies Meta<typeof CreateBaulForm>;

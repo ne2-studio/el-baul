@@ -15,7 +15,15 @@ const preview: Preview = {
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
       test: 'todo'
-    }
+    },
+
+    // Sidebar order: from generic/reusable (Foundations) down to app-specific (Screens),
+    // instead of Storybook's default alphabetical order.
+    options: {
+      storySort: {
+        order: ['Foundations', 'Components', 'Patterns', 'Layouts', 'Features', 'Screens'],
+      },
+    },
   },
 };
 

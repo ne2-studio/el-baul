@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TabButton } from './TabButton';
 
 const meta = {
-  title: 'Components/TabButton',
+  title: 'Components/Navigation/TabButton',
   component: TabButton,
   tags: ['autodocs'],
 } satisfies Meta<typeof TabButton>;

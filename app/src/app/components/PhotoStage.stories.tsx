@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotoStage } from './PhotoStage';
 
 const meta = {
-  title: 'Components/PhotoStage',
+  title: 'Patterns/Media/PhotoStage',
   component: PhotoStage,
   tags: ['autodocs'],
   decorators: [(Story) => <div className="bg-foreground h-[70vh]"><Story /></div>],

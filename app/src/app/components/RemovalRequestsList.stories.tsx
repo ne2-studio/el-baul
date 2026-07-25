@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RemovalRequestsList, RemovalRequest } from './RemovalRequestsList';
 
 const meta = {
-  title: 'Components/RemovalRequestsList',
+  title: 'Features/Photos/RemovalRequestsList',
   component: RemovalRequestsList,
   tags: ['autodocs'],
 } satisfies Meta<typeof RemovalRequestsList>;

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EditBiografiaModal } from './EditBiografiaModal';
 
 const meta = {
-  title: 'Components/EditBiografiaModal',
+  title: 'Features/People/EditBiografiaModal',
   component: EditBiografiaModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof EditBiografiaModal>;

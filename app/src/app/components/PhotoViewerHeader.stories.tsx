@@ -3,7 +3,7 @@ import { BookImage, Calendar, FolderInput, Trash2 } from 'lucide-react';
 import { PhotoViewerHeader } from './PhotoViewerHeader';
 
 const meta = {
-  title: 'Components/PhotoViewerHeader',
+  title: 'Features/Photos/PhotoViewerHeader',
   component: PhotoViewerHeader,
   tags: ['autodocs'],
   decorators: [(Story) => <div className="bg-foreground p-8"><Story /></div>],

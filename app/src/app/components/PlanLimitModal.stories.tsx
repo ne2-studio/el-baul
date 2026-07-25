@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PlanLimitModal } from './PlanLimitModal';
 
 const meta = {
-  title: 'Components/PlanLimitModal',
+  title: 'Features/Subscription/PlanLimitModal',
   component: PlanLimitModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof PlanLimitModal>;

@@ -11,7 +11,7 @@ function makePhotos(count: number, offset = 0): Photo[] {
 }
 
 const meta = {
-  title: 'Components/CoverPhotoPickerModal',
+  title: 'Features/Photos/CoverPhotoPickerModal',
   component: CoverPhotoPickerModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof CoverPhotoPickerModal>;

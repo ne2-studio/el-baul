@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ErrorScreen } from './ErrorScreen';
 
 const meta = {
-  title: 'Components/ErrorScreen',
+  title: 'Screens/Error',
   component: ErrorScreen,
   tags: ['autodocs'],
 } satisfies Meta<typeof ErrorScreen>;

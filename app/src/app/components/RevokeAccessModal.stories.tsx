@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RevokeAccessModal } from './RevokeAccessModal';
 
 const meta = {
-  title: 'Components/RevokeAccessModal',
+  title: 'Features/Sharing/RevokeAccessModal',
   component: RevokeAccessModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof RevokeAccessModal>;

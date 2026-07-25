@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Toast } from './Toast';
 
 const meta = {
-  title: 'Components/Toast',
+  title: 'Components/Feedback/Toast',
   component: Toast,
   tags: ['autodocs'],
 } satisfies Meta<typeof Toast>;

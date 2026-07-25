@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { DateModal } from './DateModal';
 
 const meta = {
-  title: 'Components/DateModal',
+  title: 'Patterns/Forms/DateModal',
   component: DateModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof DateModal>;

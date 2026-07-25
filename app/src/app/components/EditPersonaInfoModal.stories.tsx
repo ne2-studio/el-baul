@@ -3,7 +3,7 @@ import { EditPersonaInfoModal } from './EditPersonaInfoModal';
 import { Persona } from '@/types';
 
 const meta = {
-  title: 'Components/EditPersonaInfoModal',
+  title: 'Features/People/EditPersonaInfoModal',
   component: EditPersonaInfoModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof EditPersonaInfoModal>;

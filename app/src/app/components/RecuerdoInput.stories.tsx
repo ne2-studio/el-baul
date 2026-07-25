@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RecuerdoInput } from './RecuerdoInput';
 
 const meta = {
-  title: 'Components/RecuerdoInput',
+  title: 'Features/Memories/RecuerdoInput',
   component: RecuerdoInput,
   tags: ['autodocs'],
   decorators: [(Story) => <div className="bg-foreground p-8"><Story /></div>],

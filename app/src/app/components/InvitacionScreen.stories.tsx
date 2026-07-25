@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { InvitacionScreen } from './InvitacionScreen';
 
 const meta = {
-  title: 'Components/InvitacionScreen',
+  title: 'Screens/Onboarding/Invitacion',
   component: InvitacionScreen,
   tags: ['autodocs'],
 } satisfies Meta<typeof InvitacionScreen>;

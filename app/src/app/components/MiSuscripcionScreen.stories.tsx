@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MiSuscripcionScreen } from './MiSuscripcionScreen';
 
 const meta = {
-  title: 'Components/MiSuscripcionScreen',
+  title: 'Screens/Profile/MiSuscripcion',
   component: MiSuscripcionScreen,
   tags: ['autodocs'],
 } satisfies Meta<typeof MiSuscripcionScreen>;

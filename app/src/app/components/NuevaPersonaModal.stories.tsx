@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NuevaPersonaModal } from './NuevaPersonaModal';
 
 const meta = {
-  title: 'Components/NuevaPersonaModal',
+  title: 'Features/People/NuevaPersonaModal',
   component: NuevaPersonaModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof NuevaPersonaModal>;

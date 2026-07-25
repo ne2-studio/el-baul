@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { DeletePhotoModal } from './DeletePhotoModal';
 
 const meta = {
-  title: 'Components/DeletePhotoModal',
+  title: 'Features/Photos/DeletePhotoModal',
   component: DeletePhotoModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof DeletePhotoModal>;

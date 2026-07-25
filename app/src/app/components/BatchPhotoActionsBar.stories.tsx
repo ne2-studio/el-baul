@@ -4,7 +4,7 @@ import { Photo } from './PhotosView';
 import { Chapter } from './ChaptersView';
 
 const meta = {
-  title: 'Components/BatchPhotoActionsBar',
+  title: 'Features/Photos/BatchPhotoActionsBar',
   component: BatchPhotoActionsBar,
   tags: ['autodocs'],
 } satisfies Meta<typeof BatchPhotoActionsBar>;

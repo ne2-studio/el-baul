@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ProfileMenuModal } from './ProfileMenuModal';
 
 const meta = {
-  title: 'Components/ProfileMenuModal',
+  title: 'Features/Profile/ProfileMenuModal',
   component: ProfileMenuModal,
   tags: ['autodocs'],
 } satisfies Meta<typeof ProfileMenuModal>;

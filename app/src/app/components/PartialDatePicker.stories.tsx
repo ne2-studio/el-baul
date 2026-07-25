@@ -4,7 +4,7 @@ import { PartialDatePicker } from './PartialDatePicker';
 import { PhotoDate } from '@/types';
 
 const meta = {
-  title: 'Components/PartialDatePicker',
+  title: 'Components/Forms/PartialDatePicker',
   component: PartialDatePicker,
   tags: ['autodocs'],
 } satisfies Meta<typeof PartialDatePicker>;
