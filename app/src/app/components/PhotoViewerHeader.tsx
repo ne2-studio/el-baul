@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, MoreVertical } from 'lucide-react';
+import { Icon } from './Icon';
+import { icons } from './icons';
 
 export interface PhotoViewerMenuItem {
   key: string;
@@ -27,7 +28,7 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
         aria-label="Cerrar"
         className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors"
       >
-        <X className="w-6 h-6 text-background" />
+        <Icon icon={icons.close} size="lg" className="text-background" aria-hidden />
       </button>
 
       <div className="text-background/75 text-sm">
@@ -41,7 +42,7 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
             aria-label="Más opciones"
             className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors"
           >
-            <MoreVertical className="w-6 h-6 text-background" />
+            <Icon icon={icons.moreOptions} size="lg" className="text-background" aria-hidden />
           </button>
 
           {showMenu && (

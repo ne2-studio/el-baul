@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { Icon } from './Icon';
+import { icons } from './icons';
 
 interface RevokeAccessModalProps {
   userName: string;
@@ -21,7 +22,7 @@ export function RevokeAccessModal({ userName, onConfirm, onCancel, isSubmitting 
             className="p-1 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
             aria-label="Cerrar"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <Icon icon={icons.close} className="text-gray-500" aria-hidden />
           </button>
         </div>
 
@@ -46,7 +47,7 @@ export function RevokeAccessModal({ userName, onConfirm, onCancel, isSubmitting 
             disabled={isSubmitting}
             className="flex-1 px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isSubmitting && <Icon icon={icons.spinner} size="sm" className="animate-spin" aria-hidden />}
             Quitar acceso
           </button>
         </div>

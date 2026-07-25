@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Icon } from './Icon';
+import { icons } from './icons';
 
 // ─── Simple FAB (single action) ───────────────────────────────────────────────
 interface SimpleFABProps {
@@ -17,7 +18,7 @@ export function SimpleFAB({ label, icon, onClick, hidden }: SimpleFABProps) {
       className="fixed bottom-6 right-5 z-30 flex items-center gap-2.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 active:scale-95 hover:bg-primary/90 transition-all"
       style={{ boxShadow: '0 4px 20px rgba(198,123,92,0.4)' }}
     >
-      {icon ?? <Plus className="w-5 h-5" />}
+      {icon ?? <Icon icon={icons.add} aria-hidden />}
       <span className="text-sm font-medium">{label}</span>
     </button>
   );
@@ -77,7 +78,7 @@ export function ExpandableFAB({ actions, hidden }: ExpandableFABProps) {
         aria-label={open ? 'Cerrar menú' : 'Acciones'}
       >
         <div className={`transition-transform duration-200 ${open ? 'rotate-45' : 'rotate-0'}`}>
-          <Plus className="w-6 h-6" />
+          <Icon icon={icons.add} size="lg" aria-hidden />
         </div>
       </button>
     </>

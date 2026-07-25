@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SimpleFAB } from './FAB';
-import { BookOpen, X } from 'lucide-react';
+import { Icon } from './Icon';
+import { icons } from './icons';
 import { Photo, Recuerdo } from './PhotosView';
 import { RecuerdoFeedCard } from './RecuerdoFeedCard';
 
@@ -36,7 +37,7 @@ export function RecuerdosFeed({
         sortedRecuerdos.length === 0 ? (
           <div className="py-12 text-center max-w-xs mx-auto">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-8 h-8 text-primary/60" strokeWidth={1.5} />
+              <Icon icon={icons.bookOpen} size="xl" className="text-primary/60" strokeWidth={1.5} aria-hidden />
             </div>
             <h3 className="text-lg font-serif text-foreground mb-2">Aún no hay recuerdos escritos</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -67,7 +68,7 @@ export function RecuerdosFeed({
 
       <SimpleFAB
         label="Escribe lo que recuerdas"
-        icon={<BookOpen className="w-5 h-5" />}
+        icon={<Icon icon={icons.bookOpen} aria-hidden />}
         onClick={() => setShowWriteModal(true)}
         hidden={!active || selectionMode}
       />
@@ -98,8 +99,12 @@ function WriteRecuerdoModal({
       <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-medium text-foreground">Escribe lo que recuerdas</h2>
-          <button onClick={onCancel} className="p-1.5 rounded-full hover:bg-secondary transition-colors text-muted-foreground">
-            <X className="w-4 h-4" />
+          <button
+            onClick={onCancel}
+            aria-label="Cerrar"
+            className="p-1.5 rounded-full hover:bg-secondary transition-colors text-muted-foreground"
+          >
+            <Icon icon={icons.close} size="sm" aria-hidden />
           </button>
         </div>
         <textarea

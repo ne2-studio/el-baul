@@ -1,4 +1,5 @@
-import { Check, Loader2, X } from 'lucide-react';
+import { Icon } from './Icon';
+import { icons } from './icons';
 
 export interface BatchOperationItem {
   id: string;
@@ -34,10 +35,18 @@ export function BatchOperationProgress({ title, items }: BatchOperationProgressP
               />
               <div className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center bg-background/90 shadow">
                 {item.status === 'pending' && (
-                  <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                  <Icon icon={icons.spinner} size="sm" className="text-muted-foreground animate-spin" aria-hidden />
                 )}
-                {item.status === 'success' && <Check className="w-4 h-4 text-green-600" />}
-                {item.status === 'error' && <X className="w-4 h-4 text-destructive" />}
+                {/* text-green-600 is a raw color, not a theme token - the app has no
+                    "success" token yet (see Icon.mdx). Left as-is; migrating it means
+                    picking a token value, which is a design-system decision out of
+                    scope here. */}
+                {item.status === 'success' && (
+                  <Icon icon={icons.check} size="sm" className="text-green-600" aria-hidden />
+                )}
+                {item.status === 'error' && (
+                  <Icon icon={icons.close} size="sm" className="text-destructive" aria-hidden />
+                )}
               </div>
             </div>
           ))}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Crown, User as UserIcon } from 'lucide-react';
+import { Icon } from './Icon';
+import { icons } from './icons';
 import { Persona } from '@/types';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
@@ -16,7 +17,7 @@ export function PersonasTab({ personas, currentUserEmail, onSelectPersona }: Per
   if (personas.length === 0) {
     return (
       <EmptyState
-        icon={<UserIcon className="w-20 h-20" strokeWidth={1.5} />}
+        icon={<Icon icon={icons.user} className="w-20 h-20" strokeWidth={1.5} aria-hidden />}
         title="Todavía no hay personas"
         subtitle="Añade a los miembros de tu familia para poder invitarles al baúl"
       />
@@ -31,9 +32,9 @@ export function PersonasTab({ personas, currentUserEmail, onSelectPersona }: Per
             {persona.avatarUrl ? (
               <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" />
             ) : persona.role === 'custodio' ? (
-              <Crown className="w-10 h-10 text-primary opacity-60" strokeWidth={1.5} />
+              <Icon icon={icons.crown} className="w-10 h-10 text-primary opacity-60" strokeWidth={1.5} aria-hidden />
             ) : (
-              <UserIcon className="w-10 h-10 text-muted-foreground opacity-40" strokeWidth={1.5} />
+              <Icon icon={icons.user} className="w-10 h-10 text-muted-foreground opacity-40" strokeWidth={1.5} aria-hidden />
             )}
           </div>
           <div className="p-3">

@@ -10,17 +10,20 @@ interface ButtonProps {
   fullWidth?: boolean;
   disabled?: boolean;
   isLoading?: boolean;
+  /** Required for icon-only buttons, which have no visible text to name them. */
+  'aria-label'?: string;
 }
 
-export function Button({ 
-  children, 
-  variant = 'primary', 
-  onClick, 
+export function Button({
+  children,
+  variant = 'primary',
+  onClick,
   type = 'button',
   className = '',
   fullWidth = false,
   disabled = false,
-  isLoading = false
+  isLoading = false,
+  'aria-label': ariaLabel,
 }: ButtonProps) {
   const baseStyles = "px-6 py-3 rounded-xl transition-all duration-200 font-medium flex items-center justify-center gap-2";
   
@@ -39,6 +42,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled || isLoading}
+      aria-label={ariaLabel}
       className={`${baseStyles} ${variantStyles[variant]} ${widthStyles} ${disabledStyles} ${className}`}
     >
       {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}

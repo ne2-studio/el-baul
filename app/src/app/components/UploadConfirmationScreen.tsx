@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button } from './Button';
-import { ChevronLeft, X } from 'lucide-react';
+import { Icon } from './Icon';
+import { icons } from './icons';
 import { Baul } from './BaulesList';
 import { Chapter } from './ChaptersView';
 import { ChapterSelector, ChapterSelection } from './ChapterSelector';
@@ -85,7 +86,7 @@ export function UploadConfirmationScreen({
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <Icon icon={icons.chevronLeft} size="sm" aria-hidden />
             <span className="text-sm">Volver</span>
           </button>
           <h1 className="text-3xl text-foreground mb-1">Añadir fotos al capítulo</h1>
@@ -114,9 +115,10 @@ export function UploadConfirmationScreen({
               {/* Remove button */}
               <button
                 onClick={() => handleRemovePhoto(photo.id)}
+                aria-label="Quitar foto"
                 className="absolute -top-2 -right-2 w-8 h-8 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <X className="w-4 h-4" />
+                <Icon icon={icons.close} size="sm" aria-hidden />
               </button>
             </div>
           ))}
