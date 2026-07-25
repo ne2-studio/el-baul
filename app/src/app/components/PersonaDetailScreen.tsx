@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, MoreVertical, Share2, UserX } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Pencil, Share2, UserX } from 'lucide-react';
 import { Persona, BaulRole, Photo } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 import { PageContainer } from './PageContainer';
@@ -65,33 +65,45 @@ export function PersonaDetailScreen({
               <span className="text-sm">Volver</span>
             </button>
 
-            {canManage && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-                    aria-label="Opciones de la persona"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {isPending && (
-                    <DropdownMenuItem onClick={onShareInvite}>
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Compartir invitación
+            <div className="flex items-center gap-1">
+              {persona.canEdit && (
+                <button
+                  onClick={onEdit}
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+                  aria-label="Editar persona"
+                >
+                  <Pencil className="w-5 h-5" />
+                </button>
+              )}
+
+              {canManage && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+                      aria-label="Opciones de la persona"
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {isPending && (
+                      <DropdownMenuItem onClick={onShareInvite}>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Compartir invitación
+                      </DropdownMenuItem>
+                    )}
+
+                    {isPending && <DropdownMenuSeparator />}
+
+                    <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
+                      <UserX className="w-4 h-4 mr-2" />
+                      Quitar acceso
                     </DropdownMenuItem>
-                  )}
-
-                  {isPending && <DropdownMenuSeparator />}
-
-                  <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
-                    <UserX className="w-4 h-4 mr-2" />
-                    Quitar acceso
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </div>
         </PageContainer>
       </StickyHeader>
@@ -127,34 +139,6 @@ export function PersonaDetailScreen({
       </div>
 
       <PageContainer className="py-8 space-y-6">
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <p
-            className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
-            style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-          >
-            Información
-          </p>
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-0.5">Nombre</p>
-              <p className="text-foreground">{persona.name || '—'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-0.5">Apodo</p>
-              <p className="text-foreground">{persona.nickname}</p>
-            </div>
-          </div>
-
-          {persona.canEdit && (
-            <button
-              onClick={onEdit}
-              className="w-full mt-6 py-3 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Editar
-            </button>
-          )}
-        </div>
-
         {persona.biografia && (
           <div className="bg-card rounded-2xl border border-border p-6">
             <p
