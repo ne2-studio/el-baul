@@ -1,9 +1,7 @@
 ---
-title: "Política de privacidad"
+title: "Política de Privacidad"
 layout: single
 ---
-
-# Política de Privacidad
 
 **Última actualización:** 25-07-2026
 
@@ -23,17 +21,13 @@ Dirección: **C/ Trinidad 2, 1ºC, 18001 Granada (Granada)**
 
 EXEAL SOLUTIONS, S.L. es la entidad responsable del tratamiento de los datos personales tratados a través de El Baúl.
 
----
-
-# 2. Qué es El Baúl
+## 2. Qué es El Baúl
 
 El Baúl es un servicio diseñado para ayudar a las familias a preservar, compartir y enriquecer su historia mediante fotografías, recuerdos, capítulos y personas, permitiendo que los miembros autorizados de cada baúl puedan acceder a ese contenido en un entorno privado.
 
 Cada baúl constituye un espacio privado administrado por un **Custodio**, responsable de gestionar las personas con acceso al mismo.
 
----
-
-# 3. Datos personales que tratamos
+## 3. Datos personales que tratamos
 
 Dependiendo del uso que haga del servicio, podremos tratar las siguientes categorías de datos:
 
@@ -82,9 +76,7 @@ También podremos tratar información técnica necesaria para el funcionamiento 
 * sistema operativo
 * registros de errores
 
----
-
-# 4. Finalidades del tratamiento
+## 4. Finalidades del tratamiento
 
 Utilizamos los datos personales para:
 
@@ -101,9 +93,7 @@ Utilizamos los datos personales para:
 
 Cuando el usuario haya prestado su consentimiento, también utilizaremos sus datos para enviar la newsletter y comunicaciones comerciales.
 
----
-
-# 5. Base jurídica del tratamiento
+## 5. Base jurídica del tratamiento
 
 Tratamos los datos personales sobre las siguientes bases jurídicas:
 
@@ -119,9 +109,7 @@ Tratamos los datos personales sobre las siguientes bases jurídicas:
 | Cumplimiento de obligaciones legales       | Obligación legal                          |
 | Newsletter y comunicaciones comerciales    | Consentimiento                            |
 
----
-
-# 6. Uso responsable del servicio
+## 6. Uso responsable del servicio
 
 El Baúl ha sido concebido como un espacio privado para preservar, compartir y enriquecer la historia de una familia o grupo cercano de personas.
 
@@ -133,9 +121,7 @@ El Custodio de cada baúl será responsable de administrar las personas que tien
 
 El Baúl no está concebido como una red social pública ni como un servicio para la difusión masiva de contenidos.
 
----
-
-# 7. Menores de edad
+## 7. Menores de edad
 
 Solo podrán crear una cuenta en El Baúl las personas mayores de 14 años.
 
@@ -143,9 +129,7 @@ No obstante, podrán incorporarse fotografías, recuerdos o fichas de personas c
 
 Los usuarios que incorporen información relativa a menores serán responsables de hacerlo conforme a la legislación aplicable.
 
----
-
-# 8. Inteligencia artificial
+## 8. Inteligencia artificial
 
 Algunas funcionalidades de El Baúl utilizan servicios de inteligencia artificial proporcionados por OpenAI.
 
@@ -155,9 +139,7 @@ OpenAI no utiliza la información enviada a través de su API para entrenar sus 
 
 Estas funcionalidades únicamente se utilizarán cuando el propio usuario las solicite.
 
----
-
-# 9. Destinatarios de los datos
+## 9. Destinatarios de los datos
 
 Los datos podrán ser tratados por proveedores que prestan servicios necesarios para el funcionamiento de El Baúl, actuando siempre como encargados del tratamiento cuando resulte aplicable.
 
@@ -172,17 +154,13 @@ Entre ellos se encuentran:
 
 No venderemos ni cederemos datos personales a terceros con fines comerciales.
 
----
-
-# 10. Transferencias internacionales
+## 10. Transferencias internacionales
 
 Algunos de nuestros proveedores pueden realizar transferencias internacionales de datos fuera del Espacio Económico Europeo.
 
 Cuando esto ocurra, nos aseguraremos de que dichas transferencias se realizan con las garantías exigidas por la normativa aplicable, incluyendo, cuando corresponda, las Cláusulas Contractuales Tipo aprobadas por la Comisión Europea.
 
----
-
-# 11. Conservación de los datos
+## 11. Conservación de los datos
 
 Los datos personales se conservarán mientras exista una cuenta activa o mientras resulte necesario para prestar el servicio.
 
@@ -194,9 +172,7 @@ Cuando un usuario elimine su cuenta:
 
 Las copias de seguridad se conservarán durante un máximo de **un año**.
 
----
-
-# 12. Seguridad
+## 12. Seguridad
 
 Aplicamos medidas técnicas y organizativas apropiadas para proteger la información frente a accesos no autorizados, pérdida, destrucción o alteración.
 
@@ -209,9 +185,7 @@ Entre otras medidas, utilizamos:
 * monitorización de la infraestructura;
 * registro de incidencias de seguridad.
 
----
-
-# 13. Derechos de los interesados
+## 13. Derechos de los interesados
 
 Puede ejercer en cualquier momento sus derechos de:
 
@@ -230,15 +204,11 @@ También podrá ejercer sus derechos escribiendo a:
 
 Si considera que el tratamiento de sus datos no cumple la normativa vigente, podrá presentar una reclamación ante la Agencia Española de Protección de Datos (AEPD).
 
----
-
-# 14. Fallecimiento del titular de una cuenta
+## 14. Fallecimiento del titular de una cuenta
 
 En caso de fallecimiento del titular de una cuenta, los familiares podrán ponerse en contacto con nuestro equipo de soporte para solicitar la gestión de la misma conforme a la legislación aplicable y a nuestros procedimientos internos.
 
----
-
-# 15. Cambios en esta política
+## 15. Cambios en esta política
 
 Podremos modificar la presente Política de Privacidad para adaptarla a cambios legislativos, técnicos o funcionales del servicio.
 

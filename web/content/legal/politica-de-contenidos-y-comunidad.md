@@ -3,13 +3,9 @@ title: "Política de Contenidos y Comunidad"
 layout: single
 ---
 
-# Política de Contenidos y Comunidad
-
 **Última actualización:** 25-07-2026
 
----
-
-# 1. Nuestra filosofía
+## 1. Nuestra filosofía
 
 El Baúl existe para ayudar a las familias a preservar, compartir y enriquecer su historia.
 
@@ -17,9 +13,7 @@ No somos una red social ni una plataforma pública de publicación de contenidos
 
 Esperamos que todos los usuarios contribuyan a mantener ese entorno desde el respeto, la honestidad y el cuidado hacia los demás.
 
----
-
-# 2. Qué contenido puedes compartir
+## 2. Qué contenido puedes compartir
 
 Puedes compartir cualquier contenido relacionado con la historia de tu familia o de las personas que forman parte de tu baúl, incluyendo, entre otros:
 
@@ -34,9 +28,7 @@ Puedes compartir cualquier contenido relacionado con la historia de tu familia o
 * información biográfica;
 * cualquier otro contenido que contribuya a preservar vuestra memoria.
 
----
-
-# 3. Respeto hacia las personas
+## 3. Respeto hacia las personas
 
 Al publicar contenido en El Baúl te comprometes a respetar la dignidad, la privacidad y los derechos de las personas que aparecen o son mencionadas.
 
@@ -49,9 +41,7 @@ En particular, deberás procurar que:
 
 Las historias familiares pueden contener puntos de vista distintos o recuerdos diferentes sobre un mismo acontecimiento. El Baúl no pretende determinar cuál de ellos es correcto, sino facilitar su conservación.
 
----
-
-# 4. Contenido relativo a terceras personas
+## 4. Contenido relativo a terceras personas
 
 Es habitual que los recuerdos familiares hagan referencia a personas que no tienen cuenta en El Baúl.
 
@@ -59,9 +49,7 @@ Al incorporar información sobre terceras personas, el usuario declara que dispo
 
 Cuando sea posible, recomendamos respetar la voluntad de aquellas personas que prefieran no aparecer en fotografías o recuerdos compartidos.
 
----
-
-# 5. Menores de edad
+## 5. Menores de edad
 
 Los menores de edad forman parte natural de la historia de una familia y pueden aparecer en fotografías, recuerdos y demás contenidos del baúl.
 
@@ -69,9 +57,7 @@ Los usuarios deberán actuar siempre teniendo en cuenta el interés superior del
 
 Los menores de 14 años no pueden disponer de una cuenta propia en El Baúl.
 
----
-
-# 6. Qué contenido no está permitido
+## 6. Qué contenido no está permitido
 
 No está permitido utilizar El Baúl para publicar o almacenar contenidos que:
 
@@ -84,9 +70,7 @@ No está permitido utilizar El Baúl para publicar o almacenar contenidos que:
 * se utilicen con fines publicitarios o comerciales no autorizados;
 * tengan como finalidad el envío masivo de comunicaciones no solicitadas.
 
----
-
-# 7. Fotografías y derechos de imagen
+## 7. Fotografías y derechos de imagen
 
 Las fotografías continúan perteneciendo a quienes ostenten sus derechos.
 
@@ -94,9 +78,7 @@ Al subir una fotografía, el usuario declara que dispone de los derechos o autor
 
 EXEAL SOLUTIONS, S.L. no adquiere la propiedad de dichos contenidos. Únicamente recibe la licencia necesaria para almacenarlos y prestar el servicio conforme a las Condiciones de Uso.
 
----
-
-# 8. Contenido generado mediante inteligencia artificial
+## 8. Contenido generado mediante inteligencia artificial
 
 Las funcionalidades de inteligencia artificial de El Baúl tienen como finalidad ayudar a descubrir, relacionar y recordar información ya existente dentro del baúl.
 
@@ -104,9 +86,7 @@ La IA puede cometer errores, realizar interpretaciones inexactas o generar respu
 
 Los usuarios deberán revisar críticamente las respuestas obtenidas y no considerarlas como hechos verificados sin la correspondiente comprobación.
 
----
-
-# 9. Denuncia de contenidos
+## 9. Denuncia de contenidos
 
 Si consideras que un contenido vulnera tus derechos, afecta a tu privacidad o incumple esta política, podrás comunicarlo desde la propia aplicación o contactando con nuestro equipo de soporte.
 
@@ -114,9 +94,7 @@ Siempre estudiaremos cada caso de forma individual.
 
 Cuando resulte necesario podremos solicitar información adicional para verificar la reclamación.
 
----
-
-# 10. Solicitud de retirada o anonimización
+## 10. Solicitud de retirada o anonimización
 
 Las personas que aparezcan identificadas en contenidos publicados en El Baúl podrán solicitar la retirada o anonimización de aquellos datos que les afecten cuando exista una base legal para ello.
 
@@ -129,9 +107,7 @@ Cada solicitud será analizada teniendo en cuenta:
 
 Nuestro objetivo será buscar una solución equilibrada que respete tanto la privacidad de las personas como el valor histórico y familiar del baúl.
 
----
-
-# 11. Actuación frente a incumplimientos
+## 11. Actuación frente a incumplimientos
 
 Cuando detectemos o recibamos una comunicación sobre un posible incumplimiento de esta política, podremos adoptar, entre otras, las siguientes medidas:
 
@@ -144,9 +120,7 @@ Cuando detectemos o recibamos una comunicación sobre un posible incumplimiento 
 
 Siempre que resulte posible, intentaremos informar previamente al usuario afectado y ofrecerle la oportunidad de aportar explicaciones.
 
----
-
-# 12. Resolver conflictos dentro de un baúl
+## 12. Resolver conflictos dentro de un baúl
 
 Las familias pueden tener recuerdos distintos sobre un mismo acontecimiento o mantener desacuerdos acerca de determinados contenidos.
 
@@ -156,9 +130,7 @@ El Custodio dispone de herramientas para administrar el acceso al baúl y modera
 
 EXEAL SOLUTIONS, S.L. no actúa como árbitro de las relaciones familiares ni determina la veracidad histórica de los recuerdos compartidos, salvo cuando sea necesario para cumplir una obligación legal o proteger los derechos de terceros.
 
----
-
-# 13. Nuestro compromiso
+## 13. Nuestro compromiso
 
 Creemos que las fotografías, las historias y los recuerdos forman parte del patrimonio emocional de las familias.
 

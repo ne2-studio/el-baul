@@ -1,9 +1,7 @@
 ---
-title: "Condiciones de uso"
+title: "Condiciones de Uso de El Baúl"
 layout: "single"
 ---
-
-# Condiciones de Uso de El Baúl
 
 **Última actualización:** 25-07-2026
 
@@ -13,9 +11,7 @@ Las presentes Condiciones de Uso regulan el acceso y utilización de El Baúl, u
 
 El acceso o utilización del servicio implica la aceptación de estas condiciones.
 
----
-
-# 2. Requisitos de uso
+## 2. Requisitos de uso
 
 Para utilizar El Baúl es necesario disponer de una cuenta de usuario.
 
@@ -23,9 +19,7 @@ Solo podrán crear una cuenta las personas mayores de 14 años.
 
 El acceso a un baúl requiere haber sido invitado por uno de sus custodios.
 
----
-
-# 3. Qué es un baúl
+## 3. Qué es un baúl
 
 Cada baúl representa un espacio privado compartido entre las personas autorizadas por su custodio.
 
@@ -33,9 +27,7 @@ Todos los miembros de un mismo baúl pueden acceder a la totalidad del contenido
 
 Antes de invitar a una persona a un baúl, el custodio debe ser consciente de que dicha persona podrá acceder a toda la información existente y futura almacenada en ese baúl.
 
----
-
-# 4. El Custodio
+## 4. El Custodio
 
 Cada baúl tendrá al menos un Custodio.
 
@@ -48,9 +40,7 @@ El Custodio es la persona responsable de administrar el baúl y podrá, entre ot
 
 La existencia de un Custodio no exime a cada usuario de la responsabilidad sobre el contenido que publique.
 
----
-
-# 5. Responsabilidad sobre los contenidos
+## 5. Responsabilidad sobre los contenidos
 
 Cada usuario conserva la plena responsabilidad sobre los contenidos que incorpora al servicio.
 
@@ -62,9 +52,7 @@ Al subir fotografías, recuerdos, documentos u otra información, el usuario dec
 
 Cuando un usuario publique información relativa a terceras personas, será responsable de disponer de una base legítima para hacerlo.
 
----
-
-# 6. Licencia necesaria para prestar el servicio
+## 6. Licencia necesaria para prestar el servicio
 
 El usuario conserva la propiedad intelectual de todo el contenido que incorpora a El Baúl.
 
@@ -79,9 +67,7 @@ No obstante, concede a EXEAL SOLUTIONS, S.L. una licencia no exclusiva, mundial,
 
 Esta licencia finalizará cuando el contenido sea eliminado, salvo en la medida necesaria para mantener copias de seguridad o cumplir obligaciones legales.
 
----
-
-# 7. Uso permitido
+## 7. Uso permitido
 
 El Baúl está concebido como un espacio privado para preservar la memoria familiar.
 
@@ -96,17 +82,13 @@ En particular, no podrá utilizarse para:
 * realizar actividades fraudulentas;
 * utilizar el servicio para spam o publicidad no autorizada.
 
----
-
-# 8. Personas menores de edad
+## 8. Personas menores de edad
 
 Podrán incorporarse fotografías y recuerdos relativos a menores de edad cuando ello forme parte de la historia familiar y exista una base legítima para hacerlo.
 
 Los menores de 14 años no podrán crear cuentas propias.
 
----
-
-# 9. Inteligencia artificial
+## 9. Inteligencia artificial
 
 Algunas funcionalidades utilizan servicios de inteligencia artificial para ayudar al usuario a explorar, comprender y recordar la información almacenada en su baúl.
 
@@ -114,9 +96,7 @@ Estas funcionalidades constituyen herramientas de apoyo y sus respuestas pueden 
 
 El usuario será responsable de valorar la información obtenida antes de adoptar decisiones basadas en ella.
 
----
-
-# 10. Disponibilidad del servicio
+## 10. Disponibilidad del servicio
 
 Trabajamos para mantener El Baúl disponible de forma continua.
 
@@ -129,17 +109,13 @@ No obstante, podrán producirse interrupciones derivadas de:
 
 Siempre que resulte posible informaremos previamente de los mantenimientos programados.
 
----
-
-# 11. Copias de seguridad
+## 11. Copias de seguridad
 
 Realizamos copias de seguridad periódicas con el objetivo de proteger la información almacenada.
 
 Aunque adoptamos medidas razonables para evitar pérdidas de información, no podemos garantizar la recuperación absoluta de cualquier contenido en todas las circunstancias.
 
----
-
-# 12. Eliminación de cuentas
+## 12. Eliminación de cuentas
 
 Los usuarios podrán solicitar la eliminación de su cuenta.
 
@@ -147,9 +123,7 @@ La eliminación de la cuenta no implica necesariamente la eliminación automáti
 
 Cuando proceda conforme a la legislación aplicable, el usuario podrá solicitar la anonimización de los contenidos que le identifiquen.
 
----
-
-# 13. Suspensión del servicio
+## 13. Suspensión del servicio
 
 Podremos suspender temporal o definitivamente una cuenta cuando existan indicios razonables de:
 
@@ -160,23 +134,17 @@ Podremos suspender temporal o definitivamente una cuenta cuando existan indicios
 
 Siempre que resulte posible, informaremos previamente al usuario y le ofreceremos la posibilidad de formular alegaciones.
 
----
-
-# 14. Fallecimiento del titular
+## 14. Fallecimiento del titular
 
 En caso de fallecimiento del titular de una cuenta, los familiares podrán ponerse en contacto con nuestro equipo de soporte para estudiar la gestión de la misma conforme a la legislación vigente y a nuestros procedimientos internos.
 
----
-
-# 15. Modificaciones
+## 15. Modificaciones
 
 Podremos actualizar estas Condiciones de Uso cuando resulte necesario por motivos legales, técnicos o funcionales.
 
 Las modificaciones relevantes serán comunicadas a los usuarios antes de su entrada en vigor.
 
----
-
-# 16. Legislación aplicable y jurisdicción
+## 16. Legislación aplicable y jurisdicción
 
 Las presentes Condiciones de Uso se regirán por la legislación española.
 
