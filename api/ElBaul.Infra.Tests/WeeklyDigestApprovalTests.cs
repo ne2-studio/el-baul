@@ -12,6 +12,9 @@ namespace ElBaul.Infra.Tests;
 /// </summary>
 public class WeeklyDigestApprovalTests
 {
+    private static readonly EmailFooterLinks TestFooter = new(
+        "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
+
     private readonly EmailTemplateRenderer _renderer = new();
 
     [Fact]
@@ -36,7 +39,8 @@ public class WeeklyDigestApprovalTests
             Sections: sections,
             PrimaryCtaUrl: "https://el-baul.test/cta",
             PrimaryCtaLabel: "Añadir un recuerdo",
-            NotificationSettingsUrl: "https://el-baul.test/perfil");
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }
@@ -51,7 +55,8 @@ public class WeeklyDigestApprovalTests
             Sections: [],
             PrimaryCtaUrl: "https://el-baul.test/cta",
             PrimaryCtaLabel: "Añadir un recuerdo",
-            NotificationSettingsUrl: "https://el-baul.test/perfil");
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }
@@ -66,7 +71,8 @@ public class WeeklyDigestApprovalTests
             Sections: [],
             PrimaryCtaUrl: "https://el-baul.test/baules/nuevo",
             PrimaryCtaLabel: "Crear mi primer baúl",
-            NotificationSettingsUrl: "https://el-baul.test/perfil");
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }
@@ -87,7 +93,8 @@ public class WeeklyDigestApprovalTests
             Sections: sections,
             PrimaryCtaUrl: "https://el-baul.test/cta",
             PrimaryCtaLabel: "Añadir un recuerdo",
-            NotificationSettingsUrl: "https://el-baul.test/perfil");
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }

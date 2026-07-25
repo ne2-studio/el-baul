@@ -5,12 +5,15 @@ namespace ElBaul.Infra.Tests;
 
 public class WeeklyDigestTemplateRendererTests
 {
+    private static readonly EmailFooterLinks TestFooter = new(
+        "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
+
     private readonly EmailTemplateRenderer _renderer = new();
 
     private static WeeklyDigestEmailModel EmptyModel(bool hasBaules) => new(
         UserName: "Pedro", HasBaules: hasBaules, HasActivity: false, Sections: [],
         PrimaryCtaUrl: "https://el-baul.test/cta", PrimaryCtaLabel: "Añadir un recuerdo",
-        NotificationSettingsUrl: "https://el-baul.test/perfil");
+        NotificationSettingsUrl: "https://el-baul.test/perfil", Footer: TestFooter);
 
     [Fact]
     public void RenderWeeklyDigest_ShouldReportTemplateVersionLocaleAndFixedSubject()
@@ -58,7 +61,7 @@ public class WeeklyDigestTemplateRendererTests
                 OverflowSummary: "Y 15 fotos nuevas en 3 capítulos más.")
         };
         var model = new WeeklyDigestEmailModel(
-            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil");
+            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter);
 
         var result = _renderer.RenderWeeklyDigest(model);
         var decodedHtml = WebUtility.HtmlDecode(result.Html);
@@ -84,7 +87,7 @@ public class WeeklyDigestTemplateRendererTests
                 OverflowSummary: null)
         };
         var model = new WeeklyDigestEmailModel(
-            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil");
+            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter);
 
         var result = _renderer.RenderWeeklyDigest(model);
 

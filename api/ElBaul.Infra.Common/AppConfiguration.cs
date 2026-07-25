@@ -8,6 +8,8 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public string PublicUrl => configuration["App:PublicUrl"] ?? "";
     public string ApiPublicUrl => configuration["Api:PublicUrl"] ?? "";
     public string AdminTestEmailRecipient => configuration["Resend:AdminTestRecipient"] ?? "";
+    public string HelpCenterUrl => configuration["Support:HelpCenterUrl"] ?? "";
+    public string PrivacyPolicyUrl => configuration["Legal:PrivacyPolicyUrl"] ?? "";
 
     // GetValue<bool> defaults to false when the key is absent, matching the required default.
     public bool WelcomeEmailsEnabled => configuration.GetValue<bool>("Features:WelcomeEmailsEnabled");

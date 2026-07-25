@@ -76,6 +76,9 @@ public class EmailTemplateRenderer : IEmailTemplateRenderer
                         </td>
                       </tr>
                     </table>
+            """);
+        AppendFooterHtml(html, model.NotificationSettingsUrl, model.Footer);
+        html.Append("""
                   </td>
                 </tr>
               </table>
@@ -103,6 +106,7 @@ public class EmailTemplateRenderer : IEmailTemplateRenderer
         }
         plainTextBuilder.AppendLine();
         plainTextBuilder.AppendLine($"{model.PrimaryCtaLabel}: {model.PrimaryCtaUrl}");
+        AppendFooterPlainText(plainTextBuilder, model.NotificationSettingsUrl, model.Footer);
 
         return new RenderedEmail(subject, html.ToString(), plainTextBuilder.ToString(), WelcomeTemplateVersion, Locale);
     }
@@ -201,6 +205,9 @@ public class EmailTemplateRenderer : IEmailTemplateRenderer
                         </td>
                       </tr>
                     </table>
+            """);
+        AppendFooterHtml(html, model.NotificationSettingsUrl, model.Footer);
+        html.Append("""
                   </td>
                 </tr>
               </table>
@@ -213,8 +220,49 @@ public class EmailTemplateRenderer : IEmailTemplateRenderer
         plainTextBuilder.AppendLine();
         plainTextBuilder.AppendLine("Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de");
         plainTextBuilder.AppendLine($"email desde la configuración de notificaciones: {model.NotificationSettingsUrl}");
+        AppendFooterPlainText(plainTextBuilder, model.NotificationSettingsUrl, model.Footer);
 
         return new RenderedEmail(subject, html.ToString(), plainTextBuilder.ToString(), DigestTemplateVersion, Locale);
+    }
+
+    private static void AppendFooterHtml(StringBuilder html, string notificationSettingsUrl, EmailFooterLinks footer)
+    {
+        html.Append($$"""
+
+                    <table role="presentation" width="100%" style="max-width:480px;margin-top:16px;">
+                      <tr>
+                        <td style="padding:0 16px;text-align:center;font-size:12px;line-height:1.6;color:#8a7a6d;">
+                          <p style="margin:0 0 4px 0;font-weight:bold;color:#6b3f2a;">El Baúl</p>
+                          <p style="margin:0 0 12px 0;">Conserva la historia de tu familia.</p>
+                          <p style="margin:0 0 12px 0;">Este correo se ha enviado automáticamente porque tienes una cuenta en El Baúl o formas parte de un baúl compartido.</p>
+                          <p style="margin:0 0 12px 0;">
+                            <a href="{{HtmlEncode(footer.HelpCenterUrl)}}" style="color:#8a7a6d;">Centro de ayuda</a> ·
+                            <a href="{{HtmlEncode(notificationSettingsUrl)}}" style="color:#8a7a6d;">Preferencias de notificación</a> ·
+                            <a href="{{HtmlEncode(footer.PrivacyPolicyUrl)}}" style="color:#8a7a6d;">Política de privacidad</a> ·
+                            <a href="{{HtmlEncode(footer.SupportUrl)}}" style="color:#8a7a6d;">Contactar con soporte</a>
+                          </p>
+                          <p style="margin:0;">© {{footer.Year}} El Baúl — Servicio prestado por Exeal Solutions SLU</p>
+                        </td>
+                      </tr>
+                    </table>
+            """);
+    }
+
+    private static void AppendFooterPlainText(StringBuilder plainText, string notificationSettingsUrl, EmailFooterLinks footer)
+    {
+        plainText.AppendLine();
+        plainText.AppendLine("El Baúl");
+        plainText.AppendLine();
+        plainText.AppendLine("Conserva la historia de tu familia.");
+        plainText.AppendLine();
+        plainText.AppendLine("Este correo se ha enviado automáticamente porque tienes una cuenta en El Baúl o formas parte de un baúl compartido.");
+        plainText.AppendLine();
+        plainText.AppendLine($"Centro de ayuda: {footer.HelpCenterUrl}");
+        plainText.AppendLine($"Preferencias de notificación: {notificationSettingsUrl}");
+        plainText.AppendLine($"Política de privacidad: {footer.PrivacyPolicyUrl}");
+        plainText.AppendLine($"Contactar con soporte: {footer.SupportUrl}");
+        plainText.AppendLine();
+        plainText.AppendLine($"© {footer.Year} El Baúl — Servicio prestado por Exeal Solutions SLU");
     }
 
     private static string HtmlEncode(string value) => WebUtility.HtmlEncode(value);

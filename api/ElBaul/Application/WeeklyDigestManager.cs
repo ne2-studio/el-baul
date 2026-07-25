@@ -168,7 +168,8 @@ public class WeeklyDigestManager(
         var notificationSettingsUrl = BuildUrl(publicUrl, "/configuracion/notificaciones");
 
         return new WeeklyDigestEmailModel(
-            user.Name ?? user.Email, hasBaules, hasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl);
+            user.Name ?? user.Email, hasBaules, hasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
+            EmailFooterLinksFactory.Build(publicUrl, appConfiguration, clock));
     }
 
     private async Task<BaulDigestSection?> BuildBaulSectionAsync(Baul baul, DateTime since, string publicUrl)
@@ -259,7 +260,8 @@ public class WeeklyDigestManager(
         {
             PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl),
             NotificationSettingsUrl = linkBuilder.Track("notification-settings", model.NotificationSettingsUrl),
-            Sections = trackedSections
+            Sections = trackedSections,
+            Footer = EmailFooterLinksFactory.Track(model.Footer, linkBuilder)
         };
     }
 }

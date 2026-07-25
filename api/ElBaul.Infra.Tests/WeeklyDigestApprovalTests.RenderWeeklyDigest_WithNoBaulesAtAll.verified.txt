@@ -33,7 +33,22 @@
             </td>
           </tr>
         </table>
-      </td>
+        <table role="presentation" width="100%" style="max-width:480px;margin-top:16px;">
+          <tr>
+            <td style="padding:0 16px;text-align:center;font-size:12px;line-height:1.6;color:#8a7a6d;">
+              <p style="margin:0 0 4px 0;font-weight:bold;color:#6b3f2a;">El Baúl</p>
+              <p style="margin:0 0 12px 0;">Conserva la historia de tu familia.</p>
+              <p style="margin:0 0 12px 0;">Este correo se ha enviado automáticamente porque tienes una cuenta en El Baúl o formas parte de un baúl compartido.</p>
+              <p style="margin:0 0 12px 0;">
+                <a href="https://el-baul.test/ayuda" style="color:#8a7a6d;">Centro de ayuda</a> ·
+                <a href="https://el-baul.test/perfil" style="color:#8a7a6d;">Preferencias de notificación</a> ·
+                <a href="https://el-baul.test/legal/privacy-policy/" style="color:#8a7a6d;">Política de privacidad</a> ·
+                <a href="https://el-baul.test/soporte" style="color:#8a7a6d;">Contactar con soporte</a>
+              </p>
+              <p style="margin:0;">© 2026 El Baúl — Servicio prestado por Exeal Solutions SLU</p>
+            </td>
+          </tr>
+        </table>      </td>
     </tr>
   </table>
 </body>
@@ -47,6 +62,19 @@ Crear mi primer baúl: https://el-baul.test/baules/nuevo
 
 Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de
 email desde la configuración de notificaciones: https://el-baul.test/perfil
+
+El Baúl
+
+Conserva la historia de tu familia.
+
+Este correo se ha enviado automáticamente porque tienes una cuenta en El Baúl o formas parte de un baúl compartido.
+
+Centro de ayuda: https://el-baul.test/ayuda
+Preferencias de notificación: https://el-baul.test/perfil
+Política de privacidad: https://el-baul.test/legal/privacy-policy/
+Contactar con soporte: https://el-baul.test/soporte
+
+© 2026 El Baúl — Servicio prestado por Exeal Solutions SLU
 ,
   TemplateVersion: weekly-digest-v1,
   Locale: es-ES

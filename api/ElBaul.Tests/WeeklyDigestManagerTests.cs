@@ -341,11 +341,14 @@ public class WeeklyDigestManagerTests
         var trackedPrefix = $"{_appConfiguration.ApiPublicUrl}/email/click/";
         Assert.StartsWith(trackedPrefix, model.PrimaryCtaUrl);
         Assert.StartsWith(trackedPrefix, model.NotificationSettingsUrl);
+        Assert.StartsWith(trackedPrefix, model.Footer.HelpCenterUrl);
+        Assert.StartsWith(trackedPrefix, model.Footer.PrivacyPolicyUrl);
+        Assert.StartsWith(trackedPrefix, model.Footer.SupportUrl);
         var section = Assert.Single(model.Sections);
         Assert.All(section.Blocks, b => Assert.StartsWith(trackedPrefix, b.DeepLinkUrl));
 
-        // primary-cta + notification-settings + one block for the new chapter
-        Assert.Equal(3, _emailLinkClickRepository.All.Count);
+        // primary-cta + notification-settings + help-center + privacy-policy + support + one block for the new chapter
+        Assert.Equal(6, _emailLinkClickRepository.All.Count);
     }
 
     // --- Feature toggle ---

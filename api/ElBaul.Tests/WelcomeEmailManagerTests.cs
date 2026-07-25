@@ -229,7 +229,7 @@ public class WelcomeEmailManagerTests
         var sentEmail = Assert.Single(_sentEmailRepository.All); // still one row, not a duplicate
         Assert.Equal(EmailStatus.Sent, sentEmail.Status);
         Assert.Equal("retry-message-id", sentEmail.ProviderMessageId);
-        Assert.Single(_emailLinkClickRepository.All); // tracked links not duplicated on retry
+        Assert.Equal(5, _emailLinkClickRepository.All.Count); // tracked links not duplicated on retry
     }
 
     [Fact]
@@ -360,9 +360,27 @@ public class WelcomeEmailManagerTests
         await manager.SendWelcomeEmailAsync(UserId);
 
         Assert.Contains($"{_appConfiguration.ApiPublicUrl}/email/click/", _templateRenderer.LastModel!.PrimaryCtaUrl);
-        var link = Assert.Single(_emailLinkClickRepository.All);
-        Assert.Equal("primary-cta", link.LinkKey);
+        var link = Assert.Single(_emailLinkClickRepository.All, l => l.LinkKey == "primary-cta");
         Assert.Contains("/baules/nuevo", Uri.UnescapeDataString(link.DestinationUrl));
+    }
+
+    [Fact]
+    public async Task SendWelcomeEmailAsync_ShouldRouteEveryFooterLinkThroughTheTrackingEndpoint()
+    {
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager();
+
+        await manager.SendWelcomeEmailAsync(UserId);
+
+        var model = _templateRenderer.LastModel!;
+        var trackedPrefix = $"{_appConfiguration.ApiPublicUrl}/email/click/";
+        Assert.StartsWith(trackedPrefix, model.NotificationSettingsUrl);
+        Assert.StartsWith(trackedPrefix, model.Footer.HelpCenterUrl);
+        Assert.StartsWith(trackedPrefix, model.Footer.PrivacyPolicyUrl);
+        Assert.StartsWith(trackedPrefix, model.Footer.SupportUrl);
+
+        // primary-cta + notification-settings + help-center + privacy-policy + support
+        Assert.Equal(5, _emailLinkClickRepository.All.Count);
     }
 
     private string ResolveTrackedDestination(string trackedUrl)

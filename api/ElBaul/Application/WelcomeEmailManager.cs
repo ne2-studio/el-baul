@@ -128,15 +128,26 @@ public class WelcomeEmailManager(
         var targetPath = hasBaules ? $"/baules/{baules[0].Id}" : "/baules/nuevo";
         var ctaUrl = $"{publicUrl}/?redirectTo={Uri.EscapeDataString(targetPath)}";
         var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
+        var notificationSettingsUrl = BuildUrl(publicUrl, "/configuracion/notificaciones");
 
         return new WelcomeEmailModel(
             user.Name ?? user.Email,
             baules.Select(b => b.Name).ToList(),
             hasBaules,
             ctaUrl,
-            ctaLabel);
+            ctaLabel,
+            notificationSettingsUrl,
+            EmailFooterLinksFactory.Build(publicUrl, appConfiguration, clock));
     }
 
+    private static string BuildUrl(string publicUrl, string path) =>
+        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
+
     private static WelcomeEmailModel ApplyTracking(WelcomeEmailModel model, TrackedLinkBuilder linkBuilder) =>
-        model with { PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl) };
+        model with
+        {
+            PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl),
+            NotificationSettingsUrl = linkBuilder.Track("notification-settings", model.NotificationSettingsUrl),
+            Footer = EmailFooterLinksFactory.Track(model.Footer, linkBuilder)
+        };
 }

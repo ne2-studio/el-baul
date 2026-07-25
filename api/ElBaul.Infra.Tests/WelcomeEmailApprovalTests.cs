@@ -12,6 +12,9 @@ namespace ElBaul.Infra.Tests;
 /// </summary>
 public class WelcomeEmailApprovalTests
 {
+    private static readonly EmailFooterLinks TestFooter = new(
+        "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
+
     private readonly EmailTemplateRenderer _renderer = new();
 
     [Fact]
@@ -22,7 +25,9 @@ public class WelcomeEmailApprovalTests
             BaulNames: ["Familia Pardal", "Familia Jimena"],
             HasBaules: true,
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
-            PrimaryCtaLabel: "Añadir un recuerdo");
+            PrimaryCtaLabel: "Añadir un recuerdo",
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -35,7 +40,9 @@ public class WelcomeEmailApprovalTests
             BaulNames: [],
             HasBaules: false,
             PrimaryCtaUrl: "https://el-baul.test/baules/nuevo",
-            PrimaryCtaLabel: "Crear mi primer baúl");
+            PrimaryCtaLabel: "Crear mi primer baúl",
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -49,7 +56,9 @@ public class WelcomeEmailApprovalTests
             BaulNames: names,
             HasBaules: true,
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
-            PrimaryCtaLabel: "Añadir un recuerdo");
+            PrimaryCtaLabel: "Añadir un recuerdo",
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -62,7 +71,9 @@ public class WelcomeEmailApprovalTests
             BaulNames: ["Verano en Salobreña 🏖️", "<img src=x onerror=alert(1)>"],
             HasBaules: true,
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
-            PrimaryCtaLabel: "Añadir un recuerdo");
+            PrimaryCtaLabel: "Añadir un recuerdo",
+            NotificationSettingsUrl: "https://el-baul.test/perfil",
+            Footer: TestFooter);
 
         return Verify(_renderer.RenderWelcome(model));
     }

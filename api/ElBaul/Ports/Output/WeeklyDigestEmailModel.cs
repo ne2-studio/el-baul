@@ -19,4 +19,5 @@ public record WeeklyDigestEmailModel(
     IReadOnlyList<BaulDigestSection> Sections,
     string PrimaryCtaUrl,
     string PrimaryCtaLabel,
-    string NotificationSettingsUrl);
+    string NotificationSettingsUrl,
+    EmailFooterLinks Footer);

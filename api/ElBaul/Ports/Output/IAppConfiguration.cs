@@ -12,6 +12,13 @@ public interface IAppConfiguration
     string AdminTestEmailRecipient { get; }
 
     /// <summary>
+    /// External marketing/support site links reused in the transactional-email footer
+    /// (and, for HelpCenterUrl, already exposed to the frontend via AppConfigController).
+    /// </summary>
+    string HelpCenterUrl { get; }
+    string PrivacyPolicyUrl { get; }
+
+    /// <summary>
     /// Kill switch for the real (non-test) automatic sends — the recurring schedulers and the
     /// per-user send jobs both check this, so flipping it off mid-batch stops anything still
     /// queued too, not just future scheduling. Defaults to false (opt-in rollout); admin
