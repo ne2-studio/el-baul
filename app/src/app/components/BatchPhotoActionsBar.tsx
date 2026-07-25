@@ -5,6 +5,7 @@ import { MoveModal } from './MoveModal';
 import { DateModal } from './DateModal';
 import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 import { Chapter } from './ChaptersView';
+import { PageContainer } from './PageContainer';
 import { Photo } from './PhotosView';
 import { PhotoDate } from '@/types';
 
@@ -90,7 +91,7 @@ export function BatchPhotoActionsBar({
     <>
       {active && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
-          <div className="max-w-2xl mx-auto px-6 py-4 flex gap-3">
+          <PageContainer className="py-4 flex gap-3">
             {onBatchChangeDate && (
               <button
                 onClick={() => setShowDateModal(true)}
@@ -118,7 +119,7 @@ export function BatchPhotoActionsBar({
                 Crear nuevo capítulo
               </button>
             )}
-          </div>
+          </PageContainer>
         </div>
       )}
 

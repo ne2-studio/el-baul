@@ -1,5 +1,7 @@
 import React from 'react';
 import { ChevronLeft, Mail } from 'lucide-react';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 
 interface NotificationPreferencesScreenProps {
   onBack: () => void;
@@ -17,8 +19,8 @@ export function NotificationPreferencesScreen({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-4">
+      <StickyHeader>
+        <PageContainer className="py-5 flex items-center gap-4">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
@@ -26,11 +28,11 @@ export function NotificationPreferencesScreen({
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
           <h1 className="text-3xl text-foreground">Notificaciones</h1>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
+      <PageContainer className="py-8 space-y-8">
         <section>
           <p className="text-muted-foreground mb-3 uppercase tracking-wide text-xs">Notificaciones</p>
 
@@ -67,7 +69,7 @@ export function NotificationPreferencesScreen({
             </button>
           </div>
         </section>
-      </div>
+      </PageContainer>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import React from 'react';
 import { ChevronLeft, Lock, CreditCard } from 'lucide-react';
 import { Button } from './Button';
 import { PlanType } from './MiSuscripcionScreen';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 
 interface PaymentPlaceholderScreenProps {
   onBack: () => void;
@@ -15,8 +17,8 @@ export function PaymentPlaceholderScreen({ onBack, selectedPlan, onComplete }: P
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-4">
+      <StickyHeader>
+        <PageContainer className="py-5 flex items-center gap-4">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
@@ -24,11 +26,11 @@ export function PaymentPlaceholderScreen({ onBack, selectedPlan, onComplete }: P
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
           <h1 className="text-3xl text-foreground">Pago seguro</h1>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <PageContainer className="py-12">
         {/* Icon */}
         <div className="flex justify-center mb-8">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
@@ -92,7 +94,7 @@ export function PaymentPlaceholderScreen({ onBack, selectedPlan, onComplete }: P
             Esta es una pantalla de demostración. En la aplicación real, serías redirigido a un proveedor de pagos seguro.
           </p>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

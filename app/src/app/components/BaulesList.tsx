@@ -3,6 +3,8 @@ import { SimpleFAB } from './FAB';
 import { EmptyState } from './EmptyState';
 import { Crown, User, Users, Clock, UserCircle } from 'lucide-react';
 import { BaulIcon } from './BaulIcon';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 import { BaulRole } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 
@@ -40,8 +42,8 @@ export function BaulesList({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
+      <StickyHeader>
+        <PageContainer className="py-5 flex items-center justify-between">
           <h1 className="text-3xl font-serif text-foreground">El Baúl</h1>
           <div className="flex items-center gap-2">
             <button
@@ -52,11 +54,11 @@ export function BaulesList({
               <UserCircle className="w-6 h-6 text-primary" />
             </button>
           </div>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-6 pb-24">
+      <PageContainer className="py-6 pb-24">
         <section>
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
             Mis baúles
@@ -103,7 +105,7 @@ export function BaulesList({
             </div>
           )}
         </section>
-      </div>
+      </PageContainer>
 
       <SimpleFAB label="Nuevo baúl" onClick={onCreateBaul} />
     </div>

@@ -3,6 +3,8 @@ import { ChevronLeft } from 'lucide-react';
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
 import { BaulIcon } from './BaulIcon';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 import { Baul } from '@/types';
 
 interface ShareTargetBaulScreenProps {
@@ -22,8 +24,8 @@ export function ShareTargetBaulScreen({
 }: ShareTargetBaulScreenProps) {
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5">
+      <StickyHeader>
+        <PageContainer className="py-5">
           <button
             onClick={onCancel}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
@@ -35,10 +37,10 @@ export function ShareTargetBaulScreen({
             Compartir {photoCount} {photoCount === 1 ? 'foto' : 'fotos'}
           </h1>
           <p className="text-sm text-muted-foreground">Elige a qué baúl quieres añadirlas</p>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
-      <div className="max-w-2xl mx-auto px-6 py-6 pb-24">
+      <PageContainer className="py-6 pb-24">
         {baules.length === 0 ? (
           <EmptyState
             icon={<BaulIcon className="w-20 h-20" />}
@@ -72,7 +74,7 @@ export function ShareTargetBaulScreen({
             ))}
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }

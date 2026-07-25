@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { ChevronLeft, MoreVertical, Share2, UserX } from 'lucide-react';
 import { Persona, BaulRole } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
+import { PageContainer } from './PageContainer';
 import { RevokeAccessModal } from './RevokeAccessModal';
+import { StickyHeader } from './StickyHeader';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,8 +49,8 @@ export function PersonaDetailScreen({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-4">
+      <StickyHeader>
+        <PageContainer className="py-4">
           <div className="flex items-center justify-between">
             <button
               onClick={onBack}
@@ -86,8 +88,8 @@ export function PersonaDetailScreen({
               </DropdownMenu>
             )}
           </div>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Hero */}
       <div className="relative overflow-hidden" style={{ height: '210px' }}>
@@ -98,7 +100,7 @@ export function PersonaDetailScreen({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 pb-5">
-          <div className="max-w-2xl mx-auto px-6">
+          <PageContainer>
             <h1 className="text-3xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
               {displayName}
             </h1>
@@ -115,11 +117,11 @@ export function PersonaDetailScreen({
                 {isPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
               </span>
             </div>
-          </div>
+          </PageContainer>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+      <PageContainer className="py-8 space-y-6">
         <div className="bg-card rounded-2xl border border-border p-6">
           <p
             className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
@@ -170,7 +172,7 @@ export function PersonaDetailScreen({
             </div>
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {showRevokeModal && (
         <RevokeAccessModal

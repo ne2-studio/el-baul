@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
 import { Input } from './Input';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 import { ChevronLeft } from 'lucide-react';
 
 interface CreateChapterFormProps {
@@ -22,9 +24,9 @@ export function CreateChapterForm({ onBack, onSubmit, isSubmitting = false }: Cr
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5">
-          <button 
+      <StickyHeader>
+        <PageContainer className="py-5">
+          <button
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
@@ -32,11 +34,11 @@ export function CreateChapterForm({ onBack, onSubmit, isSubmitting = false }: Cr
             <span className="text-sm">Volver</span>
           </button>
           <h1 className="text-3xl text-foreground">Nuevo capítulo</h1>
-        </div>
-      </div>
-      
+        </PageContainer>
+      </StickyHeader>
+
       {/* Form */}
-      <div className="max-w-2xl mx-auto px-6 py-6">
+      <PageContainer className="py-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             label="Nombre del capítulo"
@@ -56,7 +58,7 @@ export function CreateChapterForm({ onBack, onSubmit, isSubmitting = false }: Cr
             Crear capítulo
           </Button>
         </form>
-      </div>
+      </PageContainer>
     </div>
   );
 }

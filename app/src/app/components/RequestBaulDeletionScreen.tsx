@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronLeft, AlertTriangle } from 'lucide-react';
 import { Button } from './Button';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 
 interface RequestBaulDeletionScreenProps {
   baulName: string;
@@ -20,8 +22,8 @@ export function RequestBaulDeletionScreen({ baulName, onBack, onSubmit, isSubmit
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-4">
+      <StickyHeader>
+        <PageContainer className="py-5 flex items-center gap-4">
           <button
             onClick={onBack}
             disabled={isSubmitting}
@@ -30,11 +32,11 @@ export function RequestBaulDeletionScreen({ baulName, onBack, onSubmit, isSubmit
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
           <h1 className="text-3xl text-foreground">Eliminar baúl</h1>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <PageContainer className="py-8">
         <div className="flex items-start gap-3 bg-destructive/8 border border-destructive/20 rounded-xl p-4 mb-6">
           <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
           <p className="text-sm text-destructive/80 leading-relaxed">
@@ -65,7 +67,7 @@ export function RequestBaulDeletionScreen({ baulName, onBack, onSubmit, isSubmit
         >
           Enviar solicitud
         </Button>
-      </div>
+      </PageContainer>
     </div>
   );
 }

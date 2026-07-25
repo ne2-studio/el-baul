@@ -1,5 +1,7 @@
 import React from 'react';
 import { ChevronLeft, BookOpen, Bug, Lightbulb, MessageCircle, ExternalLink } from 'lucide-react';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 
 interface HelpSupportScreenProps {
   onBack: () => void;
@@ -19,8 +21,8 @@ export function HelpSupportScreen({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-4">
+      <StickyHeader>
+        <PageContainer className="py-5 flex items-center gap-4">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
@@ -28,11 +30,11 @@ export function HelpSupportScreen({
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
           <h1 className="text-3xl text-foreground">Ayuda y soporte</h1>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-3">
+      <PageContainer className="py-8 space-y-3">
         <button
           onClick={onOpenHelpCenter}
           className="w-full flex items-center gap-4 px-4 py-4 bg-card border border-border rounded-2xl hover:shadow-md transition-shadow text-left"
@@ -85,7 +87,7 @@ export function HelpSupportScreen({
             <div className="text-sm text-muted-foreground">Escríbenos y te responderemos</div>
           </div>
         </button>
-      </div>
+      </PageContainer>
     </div>
   );
 }

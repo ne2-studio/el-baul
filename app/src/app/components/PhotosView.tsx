@@ -4,6 +4,8 @@ import { useFileInputSelection } from '@/hooks/useFileInputSelection';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Chapter } from './ChaptersView';
@@ -178,8 +180,8 @@ export function PhotosView({
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky header — back + actions */}
-      <div ref={headerRef} className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-4">
+      <StickyHeader ref={headerRef}>
+        <PageContainer className="py-4">
           <div className="flex items-center justify-between">
             <button
               onClick={selectionMode ? exitSelection : onBack}
@@ -229,8 +231,8 @@ export function PhotosView({
               </DropdownMenu>
             )}
           </div>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Hero — shown when not in selection mode */}
       {!selectionMode && (
@@ -246,7 +248,7 @@ export function PhotosView({
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 pb-5">
-            <div className="max-w-2xl mx-auto px-6">
+            <PageContainer>
               <h1 className="text-3xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
                 {chapter.name}
               </h1>
@@ -255,7 +257,7 @@ export function PhotosView({
                   {formatDateRange(chapter.minDate, chapter.maxDate)}
                 </p>
               )}
-            </div>
+            </PageContainer>
           </div>
         </div>
       )}
@@ -275,17 +277,17 @@ export function PhotosView({
           className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
           style={{ top: headerHeight }}
         >
-          <div className="max-w-2xl mx-auto px-6 overflow-x-auto scrollbar-hide">
+          <PageContainer className="overflow-x-auto scrollbar-hide">
             <div className="flex w-max md:w-full">
               <TabButton label="Fotos" count={photos.length} active={activeTab === 'fotos'} onClick={() => setActiveTab('fotos')} />
               <TabButton label="Recuerdos" count={recuerdos.length} active={activeTab === 'recuerdos'} onClick={() => setActiveTab('recuerdos')} />
             </div>
-          </div>
+          </PageContainer>
         </div>
       )}
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
+      <PageContainer className="py-6 pb-28">
         {!selectionMode && !hasRecuerdosTab && totalRecuerdos > 0 && (
           <div className="flex items-center gap-1.5 mb-5 -mt-1">
             <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
@@ -351,7 +353,7 @@ export function PhotosView({
             selectionMode={selectionMode}
           />
         )}
-      </div>
+      </PageContainer>
 
       <SimpleFAB
         label="Subir fotos"

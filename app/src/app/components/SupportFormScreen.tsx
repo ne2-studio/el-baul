@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronLeft, CheckCircle, Info } from 'lucide-react';
 import { Button } from './Button';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 
 interface SupportFormScreenProps {
   title: string;
@@ -52,8 +54,8 @@ export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreen
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-4">
+      <StickyHeader>
+        <PageContainer className="py-5 flex items-center gap-4">
           <button
             onClick={onBack}
             disabled={isSubmitting}
@@ -62,11 +64,11 @@ export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreen
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
           <h1 className="text-3xl text-foreground">{title}</h1>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <PageContainer className="py-8">
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -99,7 +101,7 @@ export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreen
         >
           Enviar
         </Button>
-      </div>
+      </PageContainer>
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { icons } from './icons';
 import { Baul } from './BaulesList';
 import { Chapter } from './ChaptersView';
 import { ChapterSelector, ChapterSelection } from './ChapterSelector';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 import { PhotoDate } from '@/types';
 
 export interface SelectedPhoto {
@@ -80,8 +82,8 @@ export function UploadConfirmationScreen({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5">
+      <StickyHeader>
+        <PageContainer className="py-5">
           <button
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
@@ -91,11 +93,11 @@ export function UploadConfirmationScreen({
           </button>
           <h1 className="text-3xl text-foreground mb-1">Añadir fotos al capítulo</h1>
           <p className="text-sm text-muted-foreground">{currentChapter.name}</p>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-6">
+      <PageContainer className="py-6">
         {/* Photo count */}
         <div className="mb-6">
           <p className="text-center text-muted-foreground">
@@ -151,7 +153,7 @@ export function UploadConfirmationScreen({
             Cancelar
           </Button>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

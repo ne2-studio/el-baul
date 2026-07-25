@@ -6,8 +6,10 @@ import { EmptyState } from './EmptyState';
 import { ExpandableFAB, SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
 import { NuevaPersonaModal } from './NuevaPersonaModal';
+import { PageContainer } from './PageContainer';
 import { PersonasTab } from './PersonasTab';
 import { RecuerdosTab } from './RecuerdosTab';
+import { StickyHeader } from './StickyHeader';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Baul } from './BaulesList';
@@ -133,8 +135,8 @@ export function ChaptersView({
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky header — back + actions only */}
-      <div ref={headerRef} className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-4">
+      <StickyHeader ref={headerRef}>
+        <PageContainer className="py-4">
           <div className="flex items-center justify-between">
             <button
               onClick={onBack}
@@ -198,8 +200,8 @@ export function ChaptersView({
               </DropdownMenu>
             )}
           </div>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Hero */}
       <div className="relative overflow-hidden" style={{ height: '260px' }}>
@@ -210,7 +212,7 @@ export function ChaptersView({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 pb-6">
-          <div className="max-w-2xl mx-auto px-6">
+          <PageContainer>
             <h1 className="text-4xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
               {baul.name}
             </h1>
@@ -220,7 +222,7 @@ export function ChaptersView({
             {!baul.description && onUpdateBaulInfo && (
               <p className="text-sm text-white/40 mt-1.5 italic">Sin descripción · edita desde el menú ···</p>
             )}
-          </div>
+          </PageContainer>
         </div>
       </div>
 
@@ -240,7 +242,7 @@ export function ChaptersView({
         className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
         style={{ top: headerHeight }}
       >
-        <div className="max-w-2xl mx-auto px-6 overflow-x-auto scrollbar-hide">
+        <PageContainer className="overflow-x-auto scrollbar-hide">
           <div className="flex w-max md:w-full">
             <TabButton
               label="Capítulos"
@@ -261,11 +263,11 @@ export function ChaptersView({
               onClick={() => setActiveTab('personas')}
             />
           </div>
-        </div>
+        </PageContainer>
       </div>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-6 pb-28">
+      <PageContainer className="py-6 pb-28">
         {activeTab === 'capitulos' && (
         chapters.length === 0 && loosePhotos.length === 0 ? (
           <EmptyState
@@ -294,7 +296,7 @@ export function ChaptersView({
                         style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}>
                         {year}
                       </p>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {yearChapters.map((chapter) => (
                           <Card key={chapter.id} onClick={() => onSelectChapter(chapter)} className="!p-0 overflow-hidden">
                             {/* Chapter cover */}
@@ -377,7 +379,7 @@ export function ChaptersView({
             onUserClick={onUserClick}
           />
         )}
-      </div>
+      </PageContainer>
 
       {activeTab === 'capitulos' && (
         <ExpandableFAB

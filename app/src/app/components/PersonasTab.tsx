@@ -25,7 +25,7 @@ export function PersonasTab({ personas, currentUserEmail, onSelectPersona }: Per
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
       {personas.map((persona) => (
         <Card key={persona.id} onClick={() => onSelectPersona(persona)} className="!p-0 overflow-hidden">
           <div className="aspect-square bg-secondary flex items-center justify-center overflow-hidden">

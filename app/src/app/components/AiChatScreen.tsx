@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Send, Sparkles } from 'lucide-react';
+import { PageContainer } from './PageContainer';
+import { StickyHeader } from './StickyHeader';
 import { ChatMessage } from '@/types';
 
 interface AiChatScreenProps {
@@ -36,8 +38,8 @@ export function AiChatScreen({ messages, isLoadingHistory, isSending, hasError, 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-4">
+      <StickyHeader>
+        <PageContainer className="py-5 flex items-center gap-4">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
@@ -45,11 +47,11 @@ export function AiChatScreen({ messages, isLoadingHistory, isSending, hasError, 
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
           <h1 className="text-2xl text-foreground">Ayúdame a recordar</h1>
-        </div>
-      </div>
+        </PageContainer>
+      </StickyHeader>
 
       {/* Messages */}
-      <div className="flex-1 max-w-2xl w-full mx-auto px-6 py-6">
+      <PageContainer className="flex-1 w-full py-6">
         {!isLoadingHistory && messages.length === 0 && (
           <div className="mb-8">
             <div className="mb-6 flex justify-center">
@@ -104,11 +106,11 @@ export function AiChatScreen({ messages, isLoadingHistory, isSending, hasError, 
           )}
         </div>
         <div ref={bottomRef} />
-      </div>
+      </PageContainer>
 
       {/* Input */}
       <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t border-border">
-        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-3">
+        <PageContainer className="py-4 flex items-center gap-3">
           <input
             type="text"
             value={input}
@@ -127,7 +129,7 @@ export function AiChatScreen({ messages, isLoadingHistory, isSending, hasError, 
           >
             <Send className="w-5 h-5" />
           </button>
-        </div>
+        </PageContainer>
       </div>
     </div>
   );
