@@ -264,8 +264,8 @@ export function PhotosView({
           className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
           style={{ top: headerHeight }}
         >
-          <div className="max-w-2xl mx-auto px-6">
-            <div className="flex">
+          <div className="max-w-2xl mx-auto px-6 overflow-x-auto scrollbar-hide">
+            <div className="flex w-max md:w-full">
               <TabButton label="Fotos" count={photos.length} active={activeTab === 'fotos'} onClick={() => setActiveTab('fotos')} />
               <TabButton label="Recuerdos" count={recuerdos.length} active={activeTab === 'recuerdos'} onClick={() => setActiveTab('recuerdos')} />
             </div>

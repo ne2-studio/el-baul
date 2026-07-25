@@ -60,6 +60,17 @@
   animation: progress 1.5s ease-in-out infinite;
 }
 
+/* Tailwind v4 has no built-in utility to hide the native scrollbar on an
+   overflow-x-auto container (used by the tab bars when they don't fit the viewport). */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Hero cover photos are full-bleed but the source is thumbnail-resolution, so on wide
    desktop viewports they get upscaled and pixelate. Blur increases with viewport width
    (0 on mobile, capping at 6px past ~1900px) to mask it; scale(1.08) keeps the blur from
