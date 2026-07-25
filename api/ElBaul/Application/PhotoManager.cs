@@ -67,6 +67,41 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
+    public async Task<Result<PhotoPageDto>> GetPageAsync(Guid baulId, Guid? chapterId, int skip, int take)
+    {
+        var id = new BaulId(baulId);
+        var chapId = chapterId is { } cId ? new ChapterId(cId) : (ChapterId?)null;
+        var userId = currentUserProvider.GetUserId();
+
+        if (chapId is { } wantedChapterId)
+        {
+            var chapter = await chapterRepository.GetByIdAsync(wantedChapterId);
+            if (chapter is null || chapter.BaulId != id) return Result.Failure<PhotoPageDto>("Chapter not found");
+        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            id, userId, AccessLevel.Member, "Photo page", new { BaulId = baulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<PhotoPageDto>(auth.Error);
+
+        var clampedTake = Math.Clamp(take, 1, 100);
+        var page = (await photoRepository.GetPageAsync(id, chapId, skip, clampedTake + 1)).ToList();
+        var hasMore = page.Count > clampedTake;
+        var photos = hasMore ? page.Take(clampedTake).ToList() : page;
+
+        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
+        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
+
+        var dtos = new List<PhotoDto>();
+        foreach (var photo in photos)
+        {
+            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
+            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
+        }
+
+        return Result.Success(new PhotoPageDto(dtos, hasMore));
+    }
+
     public async Task<Result<PhotoDto>> UploadAsync(
         Guid chapterId,
         Stream content,

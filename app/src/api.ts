@@ -124,6 +124,17 @@ export const api = {
 
   photos: {
     getAll: async (chapterId: string) => (await get<any[]>(`/api/chapters/${chapterId}/photos`)).map((p) => new Photo(p)),
+    // Paginated, chronologically-ascending listing used by the cover photo picker — omit
+    // chapterId for every photo in the baúl (all chapters + loose), or pass it to scope to
+    // just that chapter.
+    getPage: async (baulId: string, options: { chapterId?: string; skip?: number; take?: number } = {}) => {
+      const params = new URLSearchParams();
+      if (options.chapterId) params.set('chapterId', options.chapterId);
+      params.set('skip', String(options.skip ?? 0));
+      params.set('take', String(options.take ?? 60));
+      const result = await get<{ items: any[]; hasMore: boolean }>(`/api/baules/${baulId}/photos?${params}`);
+      return { photos: result.items.map((p) => new Photo(p)), hasMore: result.hasMore };
+    },
     // chapterId null uploads into the baúl's "fotos sueltas" (loose photos) instead of a
     // real chapter — see useBaulesStore's nullable chapterId convention.
     upload: async (baulId: string, chapterId: string | null, file: File, clientUploadId: string, date?: PhotoDate) => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import { PhotosView } from '@/app/components/PhotosView';
+import { PhotosView, Photo } from '@/app/components/PhotosView';
 import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
@@ -12,6 +12,7 @@ import { useBaulScope } from '@/hooks/useBaulScope';
 import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
+import { api } from '@/api';
 
 // chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
 // (see useBaulesStore's nullable chapterId convention). Real-chapter photos are paginated
@@ -25,7 +26,7 @@ export const ChapterRoute: React.FC = () => {
   const auth = useAuth();
   const {
     photos, loadChapterPhotos,
-    movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, createChapter,
+    movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, createChapter, setChapterCover,
   } = useBaulesStore();
   const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo } = useRecuerdosStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
@@ -114,6 +115,14 @@ export const ChapterRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleSetChapterCover = async (photo: Photo) => {
+    if (!chapterId) return;
+    await run(() => setChapterCover(baul.id, chapterId, photo.id, photo.thumbnailUrl), {
+      successMessage: 'Portada del capítulo actualizada',
+      errorMessage: 'Error al establecer la portada',
+    });
+  };
+
   const handleDeleteChapter = async (): Promise<boolean> => {
     if (!chapterId) return false;
     const result = await run(() => deleteChapter(baul.id, chapterId), {
@@ -179,6 +188,8 @@ export const ChapterRoute: React.FC = () => {
       onBatchCreateChapter={chapterId ? undefined : handleBatchCreateChapter}
       onUpdateChapterInfo={chapterId ? handleUpdateChapterInfo : undefined}
       onDeleteChapter={chapterId && isAdminRole(baul.role) ? handleDeleteChapter : undefined}
+      onFetchChapterCoverPhotos={chapterId ? (skip, take) => api.photos.getPage(baul.id, { chapterId, skip, take }) : undefined}
+      onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
       onAddRecuerdo={chapterId ? handleAddRecuerdo : undefined}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
     />

@@ -13,6 +13,8 @@ import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { isAdminRole } from '@/utils/roleUtils';
+import { api } from '@/api';
+import { Photo } from '@/app/components/PhotosView';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ export const BaulRoute: React.FC = () => {
   const chatEnabled = useAppConfigStore(state => state.chatEnabled);
   const { run } = useAsyncAction();
 
-  const { chapters, loosePhotos, loadChapterPhotos, renameBaul } = useBaulesStore();
+  const { chapters, loosePhotos, loadChapterPhotos, renameBaul, setBaulCover } = useBaulesStore();
   const { personas, removalRequests, createPersona } = usePersonasStore();
   const { baulRecuerdos, addBaulRecuerdo } = useRecuerdosStore();
   const { userProfile } = useAuthStore();
@@ -89,6 +91,14 @@ export const BaulRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleSetBaulCover = async (photo: Photo) => {
+    if (!auth.isAuthenticated) return;
+    await run(() => setBaulCover(baul.id, photo.id, photo.thumbnailUrl), {
+      successMessage: 'Portada del baúl actualizada',
+      errorMessage: 'Error al establecer la portada',
+    });
+  };
+
   const handleCreateRecuerdo = async (text: string): Promise<boolean> => {
     const result = await run(() => addBaulRecuerdo(baul.id, text), {
       errorMessage: 'Error al añadir el recuerdo',
@@ -132,6 +142,8 @@ export const BaulRoute: React.FC = () => {
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}
         onRequestBaulDeletion={() => navigate(`/baules/${baul.id}/solicitar-borrado`)}
+        onFetchBaulCoverPhotos={isAdminRole(baul.role) ? (skip, take) => api.photos.getPage(baul.id, { skip, take }) : undefined}
+        onSetBaulCover={isAdminRole(baul.role) ? handleSetBaulCover : undefined}
       />
       {isLoadingChapterPhotos && <BlockingLoadingOverlay message="Cargando fotos..." />}
     </>

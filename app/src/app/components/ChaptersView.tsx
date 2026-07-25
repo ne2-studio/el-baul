@@ -11,7 +11,9 @@ import { RecuerdosTab } from './RecuerdosTab';
 import { TabButton } from './TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Baul } from './BaulesList';
+import { Photo } from './PhotosView';
 import { SelectedPhoto } from './UploadConfirmationScreen';
+import { CoverPhotoPickerModal } from './CoverPhotoPickerModal';
 import { PhotoDate, Recuerdo, Persona } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
@@ -70,6 +72,8 @@ interface ChaptersViewProps {
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
   onRequestBaulDeletion?: () => void;
+  onFetchBaulCoverPhotos?: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
+  onSetBaulCover?: (photo: Photo) => void;
 }
 
 export function ChaptersView({
@@ -98,10 +102,13 @@ export function ChaptersView({
   pendingRemovalRequestsCount,
   onUpdateBaulInfo,
   onRequestBaulDeletion,
+  onFetchBaulCoverPhotos,
+  onSetBaulCover,
 }: ChaptersViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>(initialTab);
   const [isCreatingPersona, setIsCreatingPersona] = useState(false);
@@ -151,6 +158,13 @@ export function ChaptersView({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                  {onFetchBaulCoverPhotos && onSetBaulCover && (
+                    <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Elegir foto de portada
+                    </DropdownMenuItem>
+                  )}
+
                   {onUpdateBaulInfo && (
                     <DropdownMenuItem onClick={() => setShowEditModal(true)}>
                       <Pencil className="w-4 h-4 mr-2" />
@@ -415,6 +429,15 @@ export function ChaptersView({
           onCancel={() => setShowEditModal(false)}
           onSave={handleSaveBaulInfo}
           isSubmitting={isSavingBaulInfo}
+        />
+      )}
+
+      {showCoverPicker && onFetchBaulCoverPhotos && onSetBaulCover && (
+        <CoverPhotoPickerModal
+          title="Elegir portada del baúl"
+          fetchPage={onFetchBaulCoverPhotos}
+          onSelect={onSetBaulCover}
+          onCancel={() => setShowCoverPicker(false)}
         />
       )}
     </div>

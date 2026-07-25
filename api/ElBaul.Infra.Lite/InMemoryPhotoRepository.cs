@@ -44,6 +44,24 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.Date == null && p.Status == PhotoStatus.Active).ToList().AsEnumerable());
     }
 
+    public Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take)
+    {
+        lock (_lock)
+        {
+            var page = _photos.Values
+                .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && (chapterId == null || p.ChapterId == chapterId))
+                .OrderBy(p => p.DateYear == null)
+                .ThenBy(p => p.DateYear)
+                .ThenBy(p => p.DateMonth ?? 1)
+                .ThenBy(p => p.DateDay ?? 1)
+                .ThenBy(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .ToList();
+            return Task.FromResult(page.AsEnumerable());
+        }
+    }
+
     public Task CreateAsync(Photo photo)
     {
         lock (_lock) _photos[photo.Id] = photo;

@@ -6,6 +6,7 @@ public interface IPhotoManager
 {
     Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId);
     Task<Result<IEnumerable<PhotoDto>>> GetLooseByBaulIdAsync(Guid baulId);
+    Task<Result<PhotoPageDto>> GetPageAsync(Guid baulId, Guid? chapterId, int skip, int take);
 
     Task<Result<PhotoDto>> UploadAsync(
         Guid chapterId,

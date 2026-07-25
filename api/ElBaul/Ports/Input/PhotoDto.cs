@@ -16,3 +16,5 @@ public record PhotoDto
 );
 
 public record PhotoDownloadResult(Stream Content, string ContentType, string FileName);
+
+public record PhotoPageDto(IReadOnlyList<PhotoDto> Items, bool HasMore);

@@ -523,6 +523,125 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task GetPageAsync_ShouldReturnBaulWidePhotos_InChronologicalOrder_WithUndatedLast()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        PhotoDate.TryCreate(2019, 6, 1, out var earlyDate, out _);
+        PhotoDate.TryCreate(2020, 1, 1, out var laterDate, out _);
+
+        var earlyPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "early-key", earlyDate, CustodioId, _clock.UtcNow());
+        var laterPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "later-key", laterDate, CustodioId, _clock.UtcNow());
+        var undatedPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "undated-key", null, CustodioId, _clock.UtcNow());
+
+        // Created out of chronological order to prove the manager sorts, rather than
+        // happening to preserve insertion order.
+        await _photoRepository.CreateAsync(laterPhoto);
+        await _photoRepository.CreateAsync(undatedPhoto);
+        await _photoRepository.CreateAsync(earlyPhoto);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            new[] { earlyPhoto.Id.ToString(), laterPhoto.Id.ToString(), undatedPhoto.Id.ToString() },
+            result.Value.Items.Select(p => p.Id).ToList());
+        Assert.False(result.Value.HasMore);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ShouldReturnOnlyThatChaptersPhotos_WhenChapterIdGiven()
+    {
+        var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
+        var inSourceChapter = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(sourceChapterId), new BaulId(baulId), "source-key", null, CustodioId, _clock.UtcNow());
+        var inTargetChapter = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(targetChapterId), new BaulId(baulId), "target-key", null, CustodioId, _clock.UtcNow());
+        await _photoRepository.CreateAsync(inSourceChapter);
+        await _photoRepository.CreateAsync(inTargetChapter);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetPageAsync(baulId, sourceChapterId, 0, 10);
+
+        Assert.True(result.IsSuccess);
+        var photo = Assert.Single(result.Value.Items);
+        Assert.Equal(inSourceChapter.Id.ToString(), photo.Id);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ShouldSetHasMore_WhenMorePhotosThanTake()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        for (var i = 0; i < 3; i++)
+        {
+            await _photoRepository.CreateAsync(Photo.Create(
+                new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), $"key-{i}", null, CustodioId, _clock.UtcNow()));
+        }
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetPageAsync(baulId, null, 0, 2);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.Items.Count);
+        Assert.True(result.Value.HasMore);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ShouldClearHasMore_WhenAllPhotosFitInPage()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        for (var i = 0; i < 2; i++)
+        {
+            await _photoRepository.CreateAsync(Photo.Create(
+                new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), $"key-{i}", null, CustodioId, _clock.UtcNow()));
+        }
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.Items.Count);
+        Assert.False(result.Value.HasMore);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ShouldExcludeDeletedPhotos()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        await manager.DeleteAsync(photoId, "reason");
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value.Items);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
+    {
+        var (baulId, _) = await SeedBaulWithChapterAsync();
+        var manager = CreateManager("stranger");
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ShouldFail_WhenChapterDoesNotBelongToBaul()
+    {
+        var (baulId, _) = await SeedBaulWithChapterAsync();
+        var (_, otherChapterId) = await SeedBaulWithChapterAsync();
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetPageAsync(baulId, otherChapterId, 0, 10);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Chapter not found", result.Error);
+    }
+
+    [Fact]
     public async Task UploadAsync_ShouldLeavePhotoUndated_WhenNoDateGivenAndNoExifFound()
     {
         var (_, chapterId) = await SeedBaulWithChapterAsync();

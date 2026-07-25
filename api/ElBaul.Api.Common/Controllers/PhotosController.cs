@@ -74,6 +74,13 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpGet("baules/{baulId:guid}/photos")]
+    public async Task<IActionResult> GetPage(Guid baulId, [FromQuery] Guid? chapterId, [FromQuery] int skip = 0, [FromQuery] int take = 60)
+    {
+        var result = await photoManager.GetPageAsync(baulId, chapterId, skip, take);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpGet("baules/{baulId:guid}/photos/sueltas")]
     public async Task<IActionResult> GetLoose(Guid baulId)
     {

@@ -33,6 +33,20 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Take(limit)
             .ToListAsync();
 
+    // Queries the raw DateYear/Month/Day columns, not the computed Photo.Date — Date isn't part
+    // of the EF model (see PhotoConfiguration's Ignore), so it can't be translated into SQL.
+    public async Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take) =>
+        await dbContext.Photos.AsNoTracking()
+            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && (chapterId == null || p.ChapterId == chapterId))
+            .OrderBy(p => p.DateYear == null)
+            .ThenBy(p => p.DateYear)
+            .ThenBy(p => p.DateMonth ?? 1)
+            .ThenBy(p => p.DateDay ?? 1)
+            .ThenBy(p => p.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
+
     // Queries the raw DateYear column, not the computed Photo.Date — Date isn't part of the EF
     // model (see PhotoConfiguration's Ignore), so it can't be translated into SQL.
     public async Task<IEnumerable<Photo>> GetUndatedAsync() =>

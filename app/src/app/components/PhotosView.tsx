@@ -9,6 +9,7 @@ import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, CheckSquare, MoreVe
 import { Chapter } from './ChaptersView';
 import { SelectedPhoto } from './UploadConfirmationScreen';
 import { DeleteChapterModal } from './DeleteChapterModal';
+import { CoverPhotoPickerModal } from './CoverPhotoPickerModal';
 import { RecuerdosFeed } from './RecuerdosFeed';
 import { BatchPhotoActionsBar } from './BatchPhotoActionsBar';
 import { PhotoDate } from '@/types';
@@ -60,6 +61,8 @@ interface PhotosViewProps {
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
   onUpdateChapterInfo?: (name: string) => Promise<boolean>;
   onDeleteChapter?: () => Promise<boolean>;
+  onFetchChapterCoverPhotos?: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
+  onSetChapterCover?: (photo: Photo) => void;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
   onUserClick?: (personaId: string) => void;
@@ -104,7 +107,8 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
 
 export function PhotosView({
   chapter, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allChapters = [], onBatchMove, onBatchChangeDate,
-  onBatchCreateChapter, onUpdateChapterInfo, onDeleteChapter, recuerdos = [], onAddRecuerdo, onUserClick,
+  onBatchCreateChapter, onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos, onSetChapterCover,
+  recuerdos = [], onAddRecuerdo, onUserClick,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
@@ -112,6 +116,7 @@ export function PhotosView({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
   const [isSavingChapterInfo, setIsSavingChapterInfo] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeletingChapter, setIsDeletingChapter] = useState(false);
@@ -203,6 +208,12 @@ export function PhotosView({
                     <CheckSquare className="w-4 h-4 mr-2" />
                     Seleccionar fotos
                   </DropdownMenuItem>
+                  {onFetchChapterCoverPhotos && onSetChapterCover && (
+                    <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Elegir foto de portada
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setShowEditModal(true)}>
                     <Pencil className="w-4 h-4 mr-2" />
@@ -378,6 +389,15 @@ export function PhotosView({
           onCancel={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteChapter}
           isSubmitting={isDeletingChapter}
+        />
+      )}
+
+      {showCoverPicker && onFetchChapterCoverPhotos && onSetChapterCover && (
+        <CoverPhotoPickerModal
+          title="Elegir portada del capítulo"
+          fetchPage={onFetchChapterCoverPhotos}
+          onSelect={onSetChapterCover}
+          onCancel={() => setShowCoverPicker(false)}
         />
       )}
     </div>
