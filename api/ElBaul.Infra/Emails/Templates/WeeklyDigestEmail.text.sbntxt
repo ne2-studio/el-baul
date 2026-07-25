@@ -1,0 +1,27 @@
+{{~ capture subject ~}}Resumen semanal de tus baúles{{~ end ~}}
+{{~ user_name_t = truncate user_name 100 ~}}
+Hola {{ user_name_t }},
+
+{{~ if has_activity ~}}
+Esto es lo que ha pasado esta semana en tus baúles:
+{{~ for section in sections ~}}
+
+{{ truncate section.baul_name 80 }}
+{{~ for block in section.blocks ~}}
+- {{ block.label }}: {{ block.deep_link_url }}
+{{~ end ~}}
+{{~ if section.overflow_summary ~}}
+- {{ section.overflow_summary }}
+{{~ end ~}}
+{{~ end ~}}
+{{~ else if has_baules ~}}
+Esta semana tus baúles han estado tranquilos. Quizá sea un buen momento para rescatar una foto o escribir ese recuerdo que siempre se cuenta en casa.
+{{~ else ~}}
+Todavía no tienes ningún baúl. Crea el tuyo para empezar a guardar fotos y recuerdos con tu familia.
+{{~ end ~}}
+
+{{ primary_cta_label }}: {{ primary_cta_url }}
+
+Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de
+email desde la configuración de notificaciones: {{ notification_settings_url }}
+{{ include "Footer.text" footer: footer notification_settings_url: notification_settings_url }}

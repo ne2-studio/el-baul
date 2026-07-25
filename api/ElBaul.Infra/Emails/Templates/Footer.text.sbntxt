@@ -1,0 +1,13 @@
+
+El Baúl
+
+Conserva la historia de tu familia.
+
+Este correo se ha enviado automáticamente porque tienes una cuenta en El Baúl o formas parte de un baúl compartido.
+
+Centro de ayuda: {{ $.footer.help_center_url }}
+Preferencias de notificación: {{ $.notification_settings_url }}
+Política de privacidad: {{ $.footer.privacy_policy_url }}
+Contactar con soporte: {{ $.footer.support_url }}
+
+© {{ $.footer.year }} El Baúl — Servicio prestado por Exeal Solutions SLU

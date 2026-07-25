@@ -1,0 +1,7 @@
+<table role="presentation" cellpadding="0" cellspacing="0"{{ if $.margin_top }} style="margin-top:{{ $.margin_top }};"{{ end }}>
+  <tr>
+    <td style="border-radius:8px;background-color:#6b3f2a;">
+      <a href="{{ $.url | html.escape }}" style="display:inline-block;padding:12px 24px;font-size:15px;color:#ffffff;text-decoration:none;">{{ $.label | html.escape }}</a>
+    </td>
+  </tr>
+</table>

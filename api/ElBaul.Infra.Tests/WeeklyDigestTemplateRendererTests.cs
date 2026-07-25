@@ -1,4 +1,5 @@
 using System.Net;
+using ElBaul.Infra.Emails;
 using ElBaul.Ports.Output;
 
 namespace ElBaul.Infra.Tests;
@@ -8,7 +9,7 @@ public class WeeklyDigestTemplateRendererTests
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
 
-    private readonly EmailTemplateRenderer _renderer = new();
+    private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
     private static WeeklyDigestEmailModel EmptyModel(bool hasBaules) => new(
         UserName: "Pedro", HasBaules: hasBaules, HasActivity: false, Sections: [],

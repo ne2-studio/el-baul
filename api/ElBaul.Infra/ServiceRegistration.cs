@@ -1,3 +1,4 @@
+using ElBaul.Infra.Emails;
 using ElBaul.Ports.Output;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -53,6 +54,10 @@ public static class ServiceRegistration
 
         services.Configure<ResendOptions>(configuration.GetSection("Resend"));
         services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
+        // Singleton: parsed Scriban templates are immutable and safe to reuse across
+        // concurrent renders; eagerly parsing all of them at construction means a template
+        // syntax error fails fast at startup instead of on the first email send.
+        services.AddSingleton<IEmailRenderer, ScribanEmailRenderer>();
         services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 
         // Three-way fallback: Smtp:Host set (docker-compose's local Mailpit) wins first so

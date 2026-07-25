@@ -1,0 +1,29 @@
+{{~ capture subject ~}}Resumen semanal de tus baúles{{~ end ~}}
+{{~ user_name_t = truncate user_name 100 ~}}
+{{~ capture content ~}}
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola {{ user_name_t | html.escape }},</p>
+{{~ if has_activity ~}}
+<p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">Esto es lo que ha pasado esta semana en tus baúles:</p>
+{{~ for section in sections ~}}
+<h2 style="margin:20px 0 8px 0;font-size:17px;color:#6b3f2a;">{{ truncate section.baul_name 80 | html.escape }}</h2>
+<ul style="margin:0 0 8px 0;padding-left:20px;font-size:15px;line-height:1.6;">
+{{~ for block in section.blocks ~}}
+  <li><a href="{{ block.deep_link_url | html.escape }}" style="color:#6b3f2a;">{{ block.label | html.escape }}</a></li>
+{{~ end ~}}
+{{~ if section.overflow_summary ~}}
+  <li>{{ section.overflow_summary | html.escape }}</li>
+{{~ end ~}}
+</ul>
+{{~ end ~}}
+{{~ else if has_baules ~}}
+<p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">{{ "Esta semana tus baúles han estado tranquilos. Quizá sea un buen momento para rescatar una foto o escribir ese recuerdo que siempre se cuenta en casa." | html.escape }}</p>
+{{~ else ~}}
+<p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">{{ "Todavía no tienes ningún baúl. Crea el tuyo para empezar a guardar fotos y recuerdos con tu familia." | html.escape }}</p>
+{{~ end ~}}
+{{ include "Button.html" url: primary_cta_url label: primary_cta_label margin_top: "16px" }}
+<p style="margin:28px 0 0 0;font-size:12px;line-height:1.5;color:#8a7a6d;">
+  Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de
+  email desde la <a href="{{ notification_settings_url | html.escape }}" style="color:#8a7a6d;">configuración de notificaciones</a>.
+</p>
+{{~ end ~}}
+{{ include "Layout.html" }}

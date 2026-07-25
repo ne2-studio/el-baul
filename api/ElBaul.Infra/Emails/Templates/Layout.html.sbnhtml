@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ subject | html.escape }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#3a2f28;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ec;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:32px 32px 16px 32px;">
+              <h1 style="margin:0 0 16px 0;font-size:22px;color:#6b3f2a;">El Baúl</h1>
+              {{ content }}
+            </td>
+          </tr>
+        </table>
+        {{ include "Footer.html" footer: footer notification_settings_url: notification_settings_url }}
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

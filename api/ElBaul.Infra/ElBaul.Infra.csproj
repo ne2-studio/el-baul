@@ -10,6 +10,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The SDK's default None-item glob would otherwise also pick these up as loose
+         content, producing a duplicate-item build error once declared as EmbeddedResource. -->
+    <None Remove="Emails\Templates\*.sbnhtml" />
+    <None Remove="Emails\Templates\*.sbntxt" />
+    <EmbeddedResource Include="Emails\Templates\*.sbnhtml" />
+    <EmbeddedResource Include="Emails\Templates\*.sbntxt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.7.415.4" />
     <PackageReference Include="Hangfire.Core" Version="1.8.24" />
     <PackageReference Include="MetadataExtractor" Version="2.9.3" />
@@ -21,6 +30,7 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Scriban" Version="7.2.5" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -1,3 +1,4 @@
+using ElBaul.Infra.Emails;
 using ElBaul.Ports.Output;
 using static VerifyXunit.Verifier;
 
@@ -15,7 +16,7 @@ public class WeeklyDigestApprovalTests
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
 
-    private readonly EmailTemplateRenderer _renderer = new();
+    private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
     [Fact]
     public Task RenderWeeklyDigest_WithActivity()
