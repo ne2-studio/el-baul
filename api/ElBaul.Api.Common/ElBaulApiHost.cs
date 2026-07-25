@@ -164,6 +164,14 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<ISupportManager, SupportManager>();
         builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
         builder.Services.AddScoped<IChatManager, ChatManager>();
+
+        // "Ai" costs a real AI call every time the chat opens with no history and can fail;
+        // "Static" (the default) is deterministic templates filled from the baúl's own
+        // personas/capítulos and never fails. See ISuggestedQuestionsStrategy.
+        if (string.Equals(builder.Configuration["Features:ChatSuggestionsStrategy"], "Ai", StringComparison.OrdinalIgnoreCase))
+            builder.Services.AddScoped<ISuggestedQuestionsStrategy, AiSuggestedQuestionsStrategy>();
+        else
+            builder.Services.AddScoped<ISuggestedQuestionsStrategy, StaticSuggestedQuestionsStrategy>();
         builder.Services.AddScoped<IAdminManager, AdminManager>();
         builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
         builder.Services.AddScoped<IWeeklyDigestManager, WeeklyDigestManager>();

@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using ElBaul.Application;
 using ElBaul.Ports.Output;
 using ElBaul.Infra.Lite;
@@ -8,9 +9,12 @@ using NSubstitute;
 namespace ElBaul.Tests;
 
 // Orchestration only — access checks, message persistence, prompt composition, AI-backend
-// failure handling. Prompt-building/RAG-ranking behavior lives in ChatContextBuilder and is
-// tested in isolation there; here IChatContextBuilder is stubbed so these tests don't need to
-// know anything about recuerdos, chapters or embeddings.
+// failure handling, and delegating to whichever ISuggestedQuestionsStrategy is configured.
+// Prompt-building/RAG-ranking behavior lives in ChatContextBuilder and is tested in isolation
+// there; the strategies themselves are tested in isolation in
+// StaticSuggestedQuestionsStrategyTests/AiSuggestedQuestionsStrategyTests — here both
+// IChatContextBuilder and ISuggestedQuestionsStrategy are stubbed so these tests don't need to
+// know anything about recuerdos, chapters, embeddings or question-generation strategy.
 public class ChatManagerTests
 {
     private const string CustodioId = "custodio-1";
@@ -22,11 +26,13 @@ public class ChatManagerTests
     private readonly FakeAiChatBackend _aiChatBackend = new();
     private readonly StaticClock _clock = new();
     private readonly IChatContextBuilder _chatContextBuilder = Substitute.For<IChatContextBuilder>();
+    private readonly ISuggestedQuestionsStrategy _suggestedQuestionsStrategy = Substitute.For<ISuggestedQuestionsStrategy>();
 
     public ChatManagerTests()
     {
         _chatContextBuilder.BuildAsync(Arg.Any<Baul>(), Arg.Any<string>()).Returns(StubbedContext);
-        _chatContextBuilder.BuildSummaryAsync(Arg.Any<Baul>()).Returns(StubbedContext);
+        _suggestedQuestionsStrategy.GenerateAsync(Arg.Any<Baul>())
+            .Returns(Result.Success<IEnumerable<string>>(["¿Pregunta de prueba?"]));
     }
 
     private ChatManager CreateManager(
@@ -34,7 +40,7 @@ public class ChatManagerTests
         new(NullLogger<ChatManager>.Instance, _baulRepository, _chatMessageRepository, _aiChatBackend,
             appConfiguration ?? new StaticAppConfiguration(), new StaticIdGenerator(nextId ?? Guid.NewGuid()),
             _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _chatContextBuilder);
+            _chatContextBuilder, _suggestedQuestionsStrategy);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
     {
@@ -194,7 +200,7 @@ public class ChatManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chat is not enabled", result.Error);
-        Assert.Empty(_aiChatBackend.Calls);
+        await _suggestedQuestionsStrategy.DidNotReceive().GenerateAsync(Arg.Any<Baul>());
     }
 
     [Fact]
@@ -219,45 +225,32 @@ public class ChatManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
-        Assert.Empty(_aiChatBackend.Calls);
+        await _suggestedQuestionsStrategy.DidNotReceive().GenerateAsync(Arg.Any<Baul>());
     }
 
     [Fact]
-    public async Task GetSuggestedQuestionsAsync_ShouldReturnOneQuestionPerLine_FromTheAiReply()
+    public async Task GetSuggestedQuestionsAsync_ShouldReturnWhatTheConfiguredStrategyGenerates()
     {
         var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-        _aiChatBackend.NextResult = "- ¿Qué sabemos del abuelo Antonio?\n- ¿Cuándo fue la boda de Ana?\n\n- Ayúdame a escribir un recuerdo.";
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        _suggestedQuestionsStrategy.GenerateAsync(baul)
+            .Returns(Result.Success<IEnumerable<string>>(["¿Qué pasó durante la boda de Ana?"]));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetSuggestedQuestionsAsync(baulId);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(
-            ["¿Qué sabemos del abuelo Antonio?", "¿Cuándo fue la boda de Ana?", "Ayúdame a escribir un recuerdo."],
-            result.Value);
+        Assert.Equal(["¿Qué pasó durante la boda de Ana?"], result.Value);
+        await _suggestedQuestionsStrategy.Received(1).GenerateAsync(baul);
     }
 
     [Fact]
-    public async Task GetSuggestedQuestionsAsync_ShouldBuildThePrompt_FromTheBaulSummary()
+    public async Task GetSuggestedQuestionsAsync_ShouldFail_WhenTheStrategyFails()
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-
-        var manager = CreateManager(CustodioId);
-        await manager.GetSuggestedQuestionsAsync(baulId);
-
-        await _chatContextBuilder.Received(1).BuildSummaryAsync(baul);
-        var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
-        Assert.Contains(StubbedContext, systemPrompt);
-    }
-
-    [Fact]
-    public async Task GetSuggestedQuestionsAsync_ShouldFail_WhenTheAiBackendFails()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-        _aiChatBackend.NextResult = CSharpFunctionalExtensions.Result.Failure<string>("Chat is not configured.");
+        _suggestedQuestionsStrategy.GenerateAsync(baul)
+            .Returns(Result.Failure<IEnumerable<string>>("Chat is not configured."));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetSuggestedQuestionsAsync(baulId);
