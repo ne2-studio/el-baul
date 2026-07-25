@@ -88,7 +88,7 @@ public class ChapterManager(
             return Result.Failure<ChapterDto>("Photo not found");
         }
 
-        var updated = chapter with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
+        var updated = chapter.WithCover(photo, clock.UtcNow());
         await chapterRepository.UpdateAsync(updated);
 
         logger.LogInformation("Chapter cover updated {BaulId} {ChapterId} {PhotoId}", chapter.BaulId, chapterId, photoId);

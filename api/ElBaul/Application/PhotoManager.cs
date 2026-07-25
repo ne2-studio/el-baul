@@ -229,19 +229,10 @@ public class PhotoManager(
         {
             if (chapter is not null)
             {
-                await chapterRepository.UpdateAsync(chapter with
-                {
-                    PhotoCount = chapter.PhotoCount + 1,
-                    CoverPhotoKey = string.IsNullOrEmpty(chapter.CoverPhotoKey) ? storageKey : chapter.CoverPhotoKey,
-                    UpdatedAt = now
-                });
+                await chapterRepository.UpdateAsync(chapter.WithPhotoAdded(photo, now));
             }
 
-            await baulRepository.UpdateAsync(baul with
-            {
-                CoverPhotoKey = string.IsNullOrEmpty(baul.CoverPhotoKey) ? storageKey : baul.CoverPhotoKey,
-                UpdatedAt = now
-            });
+            await baulRepository.UpdateAsync(baul.WithPhotoAdded(photo, now));
         }
         catch (Exception ex)
         {
@@ -298,24 +289,14 @@ public class PhotoManager(
             var sourceChapter = await chapterRepository.GetByIdAsync(sourceChapterId);
             if (sourceChapter is not null)
             {
-                await chapterRepository.UpdateAsync(sourceChapter with
-                {
-                    PhotoCount = Math.Max(0, sourceChapter.PhotoCount - 1),
-                    CoverPhotoKey = sourceChapter.CoverPhotoKey == photo.StorageKey ? null : sourceChapter.CoverPhotoKey,
-                    UpdatedAt = now
-                });
+                await chapterRepository.UpdateAsync(sourceChapter.WithPhotoRemoved(photo, now));
             }
         }
 
         var updatedPhoto = photo with { ChapterId = targetId };
         await photoRepository.UpdateAsync(updatedPhoto);
 
-        await chapterRepository.UpdateAsync(targetChapter with
-        {
-            PhotoCount = targetChapter.PhotoCount + 1,
-            CoverPhotoKey = string.IsNullOrEmpty(targetChapter.CoverPhotoKey) ? photo.StorageKey : targetChapter.CoverPhotoKey,
-            UpdatedAt = now
-        });
+        await chapterRepository.UpdateAsync(targetChapter.WithPhotoAdded(photo, now));
 
         logger.LogInformation(
             "Photo moved {BaulId} {PhotoId} {SourceChapterId} {TargetChapterId}",
@@ -343,10 +324,11 @@ public class PhotoManager(
 
         if (photo.Status == PhotoStatus.Deleted) return Result.Success();
 
+        var now = clock.UtcNow();
         var updatedPhoto = photo with
         {
             Status = PhotoStatus.Deleted,
-            DeletedAt = clock.UtcNow(),
+            DeletedAt = now,
             DeletionReason = reason
         };
         await photoRepository.UpdateAsync(updatedPhoto);
@@ -356,8 +338,14 @@ public class PhotoManager(
             var chapter = await chapterRepository.GetByIdAsync(chapterId);
             if (chapter is not null)
             {
-                await chapterRepository.UpdateAsync(chapter with { PhotoCount = Math.Max(0, chapter.PhotoCount - 1) });
+                await chapterRepository.UpdateAsync(chapter.WithPhotoRemoved(photo, now));
             }
+        }
+
+        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
+        if (baul is not null && baul.CoverPhotoKey == photo.StorageKey)
+        {
+            await baulRepository.UpdateAsync(baul.WithPhotoRemoved(photo, now));
         }
 
         logger.LogInformation("Photo deleted {BaulId} {PhotoId}", photo.BaulId, photoId);

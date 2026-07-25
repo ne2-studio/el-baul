@@ -86,7 +86,7 @@ public class BaulManager(
             return Result.Failure<BaulDto>("Photo not found");
         }
 
-        var updated = access.Baul with { CoverPhotoKey = photo.StorageKey, UpdatedAt = clock.UtcNow() };
+        var updated = access.Baul.WithCover(photo, clock.UtcNow());
         await baulRepository.UpdateAsync(updated);
 
         logger.LogInformation("Baul cover updated {BaulId} {PhotoId}", baulId, photoId);

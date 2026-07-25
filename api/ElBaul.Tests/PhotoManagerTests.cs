@@ -486,6 +486,74 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task DeleteAsync_ShouldClearChapterCover_WhenDeletedPhotoWasTheCover()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "cover-key", null, CustodioId, _clock.UtcNow()));
+        var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
+        await _chapterRepository.UpdateAsync(chapter! with { PhotoCount = 1, CoverPhotoKey = "cover-key" });
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(photoId, "reason");
+
+        Assert.True(result.IsSuccess);
+        var updatedChapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
+        Assert.Null(updatedChapter!.CoverPhotoKey);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldNotClearChapterCover_WhenDeletedPhotoWasNotTheCover()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
+        await _chapterRepository.UpdateAsync(chapter! with { PhotoCount = 1, CoverPhotoKey = "cover-key" });
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(photoId, "reason");
+
+        Assert.True(result.IsSuccess);
+        var updatedChapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
+        Assert.Equal("cover-key", updatedChapter!.CoverPhotoKey);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldClearBaulCover_WhenDeletedPhotoWasTheCover()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "cover-key", null, CustodioId, _clock.UtcNow()));
+        var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
+        await _baulRepository.UpdateAsync(baul! with { CoverPhotoKey = "cover-key" });
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(photoId, "reason");
+
+        Assert.True(result.IsSuccess);
+        var updatedBaul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
+        Assert.Null(updatedBaul!.CoverPhotoKey);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldNotClearBaulCover_WhenDeletedPhotoWasNotTheCover()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
+        await _baulRepository.UpdateAsync(baul! with { CoverPhotoKey = "cover-key" });
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(photoId, "reason");
+
+        Assert.True(result.IsSuccess);
+        var updatedBaul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
+        Assert.Equal("cover-key", updatedBaul!.CoverPhotoKey);
+    }
+
+    [Fact]
     public async Task UploadToBaulAsync_ShouldSaveFile_WithNullChapterId()
     {
         var (baulId, _) = await SeedBaulWithChapterAsync();
