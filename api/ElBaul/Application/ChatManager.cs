@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using ElBaul.Ports.Input;
@@ -24,6 +25,19 @@ public class ChatManager(
         "Responde únicamente basándote en la información del baúl familiar que se te proporciona a continuación. " +
         "Si la respuesta no está en esa información, dilo claramente en vez de inventar. " +
         "Cuando sea posible, menciona en tu respuesta el recuerdo o capítulo del que proviene la información.";
+
+    // Shown before the user has asked anything, so there's no query to build a real (recuerdo-
+    // ranked) ChatContextBuilder.BuildAsync context from — BuildSummaryAsync's baúl/personas/
+    // capítulos header is enough to suggest questions grounded in this specific baúl.
+    private const string SuggestionsInstruction =
+        "Eres un asistente que ayuda a una familia a explorar la historia guardada en su baúl familiar digital. " +
+        "A partir de la información del baúl que se te proporciona a continuación (sus personas y sus capítulos), " +
+        "genera exactamente 4 preguntas cortas y variadas, en español, que alguien de la familia podría hacerte " +
+        "para empezar a explorar sus recuerdos. Cuando tenga sentido, menciona nombres reales de personas o " +
+        "capítulos del baúl. Devuelve únicamente las 4 preguntas, una por línea, sin numeración, sin viñetas y " +
+        "sin ningún otro texto.";
+
+    private static readonly Regex ListMarker = new(@"^[\s\-\*•\d\.\)]+", RegexOptions.Compiled);
 
     public async Task<Result<IEnumerable<ChatMessageDto>>> GetMessagesAsync(Guid baulId)
     {
@@ -87,6 +101,46 @@ public class ChatManager(
         logger.LogInformation("Chat message answered {BaulId} {ChatMessageId}", baulId, assistantMessage.Id);
         return ToDto(assistantMessage);
     }
+
+    public async Task<Result<IEnumerable<string>>> GetSuggestedQuestionsAsync(Guid baulId)
+    {
+        if (!appConfiguration.ChatEnabled)
+        {
+            logger.LogWarning("Suggested questions rejected: chat is not enabled {BaulId}", baulId);
+            return Result.Failure<IEnumerable<string>>("Chat is not enabled");
+        }
+
+        var id = new BaulId(baulId);
+        var userId = currentUserProvider.GetUserId();
+        var baul = await baulRepository.GetByIdAsync(id);
+        if (baul is null)
+        {
+            logger.LogWarning("Suggested questions rejected: baul not found {BaulId}", baulId);
+            return Result.Failure<IEnumerable<string>>("Baul not found");
+        }
+
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (!access.IsMember)
+        {
+            logger.LogWarning("Suggested questions rejected: access denied {BaulId}", baulId);
+            return Result.Failure<IEnumerable<string>>("Access denied");
+        }
+
+        var prompt = SuggestionsInstruction + "\n\n" + await chatContextBuilder.BuildSummaryAsync(baul);
+        var replyResult = await aiChatBackend.GetReplyAsync(prompt, []);
+        if (replyResult.IsFailure)
+        {
+            logger.LogError("Suggested questions failed {BaulId} {Error}", baulId, replyResult.Error);
+            return Result.Failure<IEnumerable<string>>(replyResult.Error);
+        }
+
+        return Result.Success(ParseQuestions(replyResult.Value));
+    }
+
+    private static IEnumerable<string> ParseQuestions(string reply) =>
+        reply.Split('\n')
+            .Select(line => ListMarker.Replace(line, "").Trim())
+            .Where(line => line.Length > 0);
 
     private static ChatMessageDto ToDto(ChatMessage message) =>
         new(message.Id.ToString(), message.Role.ToApiString(), message.Content, message.CreatedAt);

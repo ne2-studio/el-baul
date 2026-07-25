@@ -144,4 +144,23 @@ public class ChatContextBuilderTests
 
         Assert.Contains("- Custodio: \"Un recuerdo suelto sin fecha\"", context);
     }
+
+    [Fact]
+    public async Task BuildSummaryAsync_ShouldIncludePersonasAndChapters_ButNotRecuerdos()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(chapter);
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Un recuerdo que no debería aparecer", _clock.UtcNow()));
+
+        var builder = CreateBuilder();
+        var summary = await builder.BuildSummaryAsync(baul);
+
+        Assert.Contains("Nombre del baúl: Familia", summary);
+        Assert.Contains("- Custodio", summary);
+        Assert.Contains("- Boda de Ana (5 fotos)", summary);
+        Assert.DoesNotContain("Un recuerdo que no debería aparecer", summary);
+        Assert.DoesNotContain("Recuerdos", summary);
+    }
 }

@@ -11,11 +11,22 @@ export const AiChatRoute: React.FC = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     if (!baulId) return;
     api.chat.getMessages(baulId)
-      .then(setMessages)
+      .then((history) => {
+        setMessages(history);
+        if (history.length === 0) {
+          setIsLoadingSuggestions(true);
+          api.chat.getSuggestedQuestions(baulId)
+            .then(setSuggestions)
+            .catch(() => setSuggestions([]))
+            .finally(() => setIsLoadingSuggestions(false));
+        }
+      })
       .catch(() => setHasError(true))
       .finally(() => setIsLoadingHistory(false));
   }, [baulId]);
@@ -45,6 +56,8 @@ export const AiChatRoute: React.FC = () => {
       isLoadingHistory={isLoadingHistory}
       isSending={isSending}
       hasError={hasError}
+      suggestions={suggestions}
+      isLoadingSuggestions={isLoadingSuggestions}
       onBack={() => navigate(-1)}
       onSend={handleSend}
     />

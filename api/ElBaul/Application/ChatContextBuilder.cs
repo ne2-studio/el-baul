@@ -9,6 +9,10 @@ namespace ElBaul.Application;
 public interface IChatContextBuilder
 {
     Task<string> BuildAsync(Baul baul, string query);
+
+    // No query to rank recuerdos against yet (used for starter-question suggestions, before the
+    // user has asked anything) — just the baúl/personas/chapters header, recuerdos omitted.
+    Task<string> BuildSummaryAsync(Baul baul);
 }
 
 public class ChatContextBuilder(
@@ -53,19 +57,7 @@ public class ChatContextBuilder(
         var chapterDates = photosByChapter.ToDictionary(kv => kv.Key, kv => EarliestDate(kv.Value));
 
         var sb = new StringBuilder();
-        sb.AppendLine($"Nombre del baúl: {baul.Name}");
-        if (!string.IsNullOrWhiteSpace(baul.Description))
-            sb.AppendLine($"Descripción del baúl: {baul.Description}");
-
-        sb.AppendLine();
-        sb.AppendLine("Personas de la familia en este baúl:");
-        foreach (var persona in personas)
-            sb.AppendLine($"- {persona.Nickname}" + (persona.Name is { Length: > 0 } ? $" ({persona.Name})" : ""));
-
-        sb.AppendLine();
-        sb.AppendLine("Capítulos:");
-        foreach (var chapter in chapters)
-            sb.AppendLine($"- {chapter.Name} ({chapter.PhotoCount} fotos)");
+        AppendHeader(sb, baul, personas, chapters);
 
         sb.AppendLine();
         if (relevantRecuerdos.Count < recuerdos.Count)
@@ -100,6 +92,33 @@ public class ChatContextBuilder(
         }
 
         return sb.ToString();
+    }
+
+    public async Task<string> BuildSummaryAsync(Baul baul)
+    {
+        var chapters = (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToList();
+        var personas = (await baulRepository.GetPersonasAsync(baul.Id)).ToList();
+
+        var sb = new StringBuilder();
+        AppendHeader(sb, baul, personas, chapters);
+        return sb.ToString();
+    }
+
+    private static void AppendHeader(StringBuilder sb, Baul baul, List<Persona> personas, List<Chapter> chapters)
+    {
+        sb.AppendLine($"Nombre del baúl: {baul.Name}");
+        if (!string.IsNullOrWhiteSpace(baul.Description))
+            sb.AppendLine($"Descripción del baúl: {baul.Description}");
+
+        sb.AppendLine();
+        sb.AppendLine("Personas de la familia en este baúl:");
+        foreach (var persona in personas)
+            sb.AppendLine($"- {persona.Nickname}" + (persona.Name is { Length: > 0 } ? $" ({persona.Name})" : ""));
+
+        sb.AppendLine();
+        sb.AppendLine("Capítulos:");
+        foreach (var chapter in chapters)
+            sb.AppendLine($"- {chapter.Name} ({chapter.PhotoCount} fotos)");
     }
 
     // The recuerdo's own photo wins when it has a date; failing that, the chapter it (or its

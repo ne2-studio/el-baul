@@ -9,18 +9,22 @@ interface AiChatScreenProps {
   isLoadingHistory: boolean;
   isSending: boolean;
   hasError: boolean;
+  suggestions: string[];
+  isLoadingSuggestions: boolean;
   onBack: () => void;
   onSend: (text: string) => void;
 }
 
-const SUGGESTIONS = [
-  '¿Qué fotos tenemos de la boda?',
-  '¿Qué sabemos sobre el abuelo Antonio?',
-  '¿Cuándo fue nuestro viaje a Asturias?',
-  'Ayúdame a escribir un recuerdo.',
-];
-
-export function AiChatScreen({ messages, isLoadingHistory, isSending, hasError, onBack, onSend }: AiChatScreenProps) {
+export function AiChatScreen({
+  messages,
+  isLoadingHistory,
+  isSending,
+  hasError,
+  suggestions,
+  isLoadingSuggestions,
+  onBack,
+  onSend,
+}: AiChatScreenProps) {
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -63,15 +67,19 @@ export function AiChatScreen({ messages, isLoadingHistory, isSending, hasError, 
               Pregúntame lo que quieras sobre la historia de tu familia.
             </p>
             <div className="flex flex-col gap-2">
-              {SUGGESTIONS.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  onClick={() => handleSend(suggestion)}
-                  className="text-left text-sm px-4 py-3 bg-card border border-border rounded-xl hover:bg-muted transition-colors text-foreground"
-                >
-                  {suggestion}
-                </button>
-              ))}
+              {isLoadingSuggestions ? (
+                <p className="text-center text-sm text-muted-foreground">Pensando en preguntas...</p>
+              ) : (
+                suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => handleSend(suggestion)}
+                    className="text-left text-sm px-4 py-3 bg-card border border-border rounded-xl hover:bg-muted transition-colors text-foreground"
+                  >
+                    {suggestion}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}

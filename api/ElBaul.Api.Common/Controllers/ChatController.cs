@@ -28,4 +28,12 @@ public class ChatController(IChatManager chatManager) : ControllerBase
         var result = await chatManager.SendMessageAsync(baulId, request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
+
+    [HttpGet("suggestions")]
+    [EnableRateLimiting("ChatLimiter")]
+    public async Task<IActionResult> GetSuggestedQuestions(Guid baulId)
+    {
+        var result = await chatManager.GetSuggestedQuestionsAsync(baulId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
 }

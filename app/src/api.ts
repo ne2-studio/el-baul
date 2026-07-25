@@ -225,5 +225,6 @@ export const api = {
       (await get<any[]>(`/api/baules/${baulId}/chat`)).map((m) => new ChatMessage(m)),
     sendMessage: async (baulId: string, text: string) =>
       new ChatMessage(await post<any>(`/api/baules/${baulId}/chat`, { text })),
+    getSuggestedQuestions: (baulId: string) => get<string[]>(`/api/baules/${baulId}/chat/suggestions`),
   },
 };

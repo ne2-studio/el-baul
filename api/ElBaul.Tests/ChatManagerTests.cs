@@ -26,6 +26,7 @@ public class ChatManagerTests
     public ChatManagerTests()
     {
         _chatContextBuilder.BuildAsync(Arg.Any<Baul>(), Arg.Any<string>()).Returns(StubbedContext);
+        _chatContextBuilder.BuildSummaryAsync(Arg.Any<Baul>()).Returns(StubbedContext);
     }
 
     private ChatManager CreateManager(
@@ -180,5 +181,88 @@ public class ChatManagerTests
         Assert.Equal(4, messages.Count);
         Assert.Equal("Primera pregunta", messages[0].Content);
         Assert.Equal("Segunda pregunta", messages[2].Content);
+    }
+
+    [Fact]
+    public async Task GetSuggestedQuestionsAsync_ShouldFail_WhenChatIsDisabled()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var manager = CreateManager(CustodioId, appConfiguration: new StaticAppConfiguration(chatEnabled: false));
+
+        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Chat is not enabled", result.Error);
+        Assert.Empty(_aiChatBackend.Calls);
+    }
+
+    [Fact]
+    public async Task GetSuggestedQuestionsAsync_ShouldFail_WhenBaulDoesNotExist()
+    {
+        var manager = CreateManager(CustodioId);
+
+        var result = await manager.GetSuggestedQuestionsAsync(Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Baul not found", result.Error);
+    }
+
+    [Fact]
+    public async Task GetSuggestedQuestionsAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var manager = CreateManager(OtherUserId);
+
+        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+        Assert.Empty(_aiChatBackend.Calls);
+    }
+
+    [Fact]
+    public async Task GetSuggestedQuestionsAsync_ShouldReturnOneQuestionPerLine_FromTheAiReply()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        _aiChatBackend.NextResult = "- ¿Qué sabemos del abuelo Antonio?\n- ¿Cuándo fue la boda de Ana?\n\n- Ayúdame a escribir un recuerdo.";
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            ["¿Qué sabemos del abuelo Antonio?", "¿Cuándo fue la boda de Ana?", "Ayúdame a escribir un recuerdo."],
+            result.Value);
+    }
+
+    [Fact]
+    public async Task GetSuggestedQuestionsAsync_ShouldBuildThePrompt_FromTheBaulSummary()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+
+        var manager = CreateManager(CustodioId);
+        await manager.GetSuggestedQuestionsAsync(baulId);
+
+        await _chatContextBuilder.Received(1).BuildSummaryAsync(baul);
+        var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
+        Assert.Contains(StubbedContext, systemPrompt);
+    }
+
+    [Fact]
+    public async Task GetSuggestedQuestionsAsync_ShouldFail_WhenTheAiBackendFails()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        _aiChatBackend.NextResult = CSharpFunctionalExtensions.Result.Failure<string>("Chat is not configured.");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Chat is not configured.", result.Error);
     }
 }
