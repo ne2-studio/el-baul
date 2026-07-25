@@ -184,6 +184,11 @@ export const api = {
     getTaggedPersonas: (photoId: string) => get<TaggedPersona[]>(`/api/photos/${photoId}/personas`),
     setTaggedPersonas: (photoId: string, personaIds: string[]) =>
       put<TaggedPersona[]>(`/api/photos/${photoId}/personas`, { personaIds }),
+    // Añade (no reemplaza) las personas dadas a las etiquetas ya existentes de cada foto —
+    // acción en lote desde la selección múltiple, a diferencia de setTaggedPersonas que
+    // sustituye el conjunto completo desde el visor de una sola foto.
+    addTaggedPersonasBatch: (baulId: string, photoIds: string[], personaIds: string[]) =>
+      put<string[]>('/api/photos/tag-batch', { baulId, photoIds, personaIds }),
   },
 
   recuerdos: {

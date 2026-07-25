@@ -5,6 +5,7 @@ import { PhotosView, Photo } from '@/app/components/PhotosView';
 import { Chapter } from '@/app/components/ChaptersView';
 import { ErrorScreen } from '@/app/components/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -29,6 +30,7 @@ export const ChapterRoute: React.FC = () => {
     movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, createChapter, setChapterCover,
   } = useBaulesStore();
   const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo } = useRecuerdosStore();
+  const { personas, loadPersonas, addTaggedPersonasBatch } = usePersonasStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const { run } = useAsyncAction();
 
@@ -55,6 +57,15 @@ export const ChapterRoute: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, chapterId, photos, loadChapterPhotos]);
+
+  useEffect(() => {
+    if (auth.isAuthenticated && baulId && !personas[baulId]) {
+      // Distinct key — useAsyncAction.run() shares a default key across unkeyed calls, and
+      // this effect can fire in the same flush as fetchChapterPhotos' unkeyed one above.
+      run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'No se pudieron cargar las personas del baúl' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.isAuthenticated, baulId, personas, loadPersonas]);
 
   if (isLoadingBaul) return <div className="p-8 text-center">Cargando...</div>;
 
@@ -169,6 +180,14 @@ export const ChapterRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleBatchTagPersonas = async (photoIds: string[], personaIds: string[]): Promise<boolean> => {
+    const result = await run(() => addTaggedPersonasBatch(baul.id, photoIds, personaIds), {
+      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto etiquetada' : 'fotos etiquetadas'}`,
+      errorMessage: 'Error al etiquetar las fotos',
+    });
+    return result.ok;
+  };
+
   return (
     <PhotosView
       chapter={currentChapter}
@@ -186,6 +205,8 @@ export const ChapterRoute: React.FC = () => {
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
       onBatchCreateChapter={chapterId ? undefined : handleBatchCreateChapter}
+      personas={personas[baul.id] || []}
+      onBatchTagPersonas={handleBatchTagPersonas}
       onUpdateChapterInfo={chapterId ? handleUpdateChapterInfo : undefined}
       onDeleteChapter={chapterId && isAdminRole(baul.role) ? handleDeleteChapter : undefined}
       onFetchChapterCoverPhotos={chapterId ? (skip, take) => api.photos.getPage(baul.id, { chapterId, skip, take }) : undefined}

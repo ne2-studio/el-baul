@@ -28,6 +28,7 @@ export interface PersonasState {
   loadTaggedPersonas: (photoId: string) => Promise<void>;
   setTaggedPersonas: (photoId: string, personaIds: string[]) => Promise<void>;
   loadPersonaPhotos: (baulId: string, personaId: string) => Promise<void>;
+  addTaggedPersonasBatch: (baulId: string, photoIds: string[], personaIds: string[]) => Promise<void>;
 }
 
 export const usePersonasStore = create<PersonasState>((set, get) => ({
@@ -147,5 +148,11 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
   loadPersonaPhotos: async (baulId, personaId) => {
     const photos = await api.baules.getPersonaPhotos(baulId, personaId);
     set((state) => ({ personaPhotos: { ...state.personaPhotos, [personaId]: photos } }));
+  },
+
+  // No hay estado que actualizar: la cuadrícula de fotos no muestra chips de personas
+  // etiquetadas (solo el visor de una foto lo hace, vía taggedPersonas).
+  addTaggedPersonasBatch: async (baulId, photoIds, personaIds) => {
+    await api.photos.addTaggedPersonasBatch(baulId, photoIds, personaIds);
   },
 }));

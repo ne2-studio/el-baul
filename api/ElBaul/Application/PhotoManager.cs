@@ -578,6 +578,52 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
+    public async Task<Result<IEnumerable<string>>> AddTaggedPersonasBatchAsync(
+        Guid baulId, IEnumerable<Guid> photoIds, IEnumerable<Guid> personaIds)
+    {
+        var bId = new BaulId(baulId);
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Member, "Batch photo tagging", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<string>>(auth.Error);
+
+        // The persona set is shared by every photo in the batch (they all come from the same
+        // baúl-scoped grid), so it's validated once up front rather than per photo — unlike
+        // photo validity below, which tolerates individual failures.
+        var distinctPersonaIds = personaIds.Select(p => new PersonaId(p)).Distinct().ToList();
+        foreach (var personaId in distinctPersonaIds)
+        {
+            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+            if (persona is null || persona.BaulId != bId)
+            {
+                logger.LogWarning("Batch photo tagging rejected: persona not found in this baúl {BaulId} {PersonaId}", baulId, personaId);
+                return Result.Failure<IEnumerable<string>>("Persona not found");
+            }
+        }
+
+        var now = clock.UtcNow();
+        var updated = new List<string>();
+        foreach (var photoId in photoIds)
+        {
+            var id = new PhotoId(photoId);
+            var photo = await photoRepository.GetByIdAsync(id);
+            if (photo is null || photo.BaulId != bId)
+            {
+                logger.LogWarning("Skipping photo in batch tagging: not found in this baúl {BaulId} {PhotoId}", baulId, photoId);
+                continue;
+            }
+
+            var existingIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(id);
+            var union = existingIds.Concat(distinctPersonaIds).Distinct().ToList();
+            await photoPersonaTagRepository.SetTagsAsync(id, bId, union, now);
+            updated.Add(photoId.ToString());
+        }
+
+        logger.LogInformation(
+            "Batch photo tagging completed {BaulId} {PhotoCount} {PersonaCount}", baulId, updated.Count, distinctPersonaIds.Count);
+        return Result.Success<IEnumerable<string>>(updated);
+    }
+
     private async Task<TaggedPersonaDto> ToTaggedPersonaDtoAsync(Persona persona)
     {
         var avatarUrl = persona.AvatarPhotoKey is { Length: > 0 }

@@ -14,7 +14,7 @@ import { DeleteChapterModal } from './DeleteChapterModal';
 import { CoverPhotoPickerModal } from './CoverPhotoPickerModal';
 import { RecuerdosFeed } from './RecuerdosFeed';
 import { BatchPhotoActionsBar } from './BatchPhotoActionsBar';
-import { PhotoDate } from '@/types';
+import { PhotoDate, Persona } from '@/types';
 import { formatDateRange } from '../utils/timeUtils';
 import {
   DropdownMenu,
@@ -61,6 +61,8 @@ interface PhotosViewProps {
   ) => Promise<void>;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
+  personas?: Persona[];
+  onBatchTagPersonas?: (photoIds: string[], personaIds: string[]) => Promise<boolean>;
   onUpdateChapterInfo?: (name: string) => Promise<boolean>;
   onDeleteChapter?: () => Promise<boolean>;
   onFetchChapterCoverPhotos?: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
@@ -109,8 +111,8 @@ function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
 
 export function PhotosView({
   chapter, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allChapters = [], onBatchMove, onBatchChangeDate,
-  onBatchCreateChapter, onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos, onSetChapterCover,
-  recuerdos = [], onAddRecuerdo, onUserClick,
+  onBatchCreateChapter, personas = [], onBatchTagPersonas, onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos,
+  onSetChapterCover, recuerdos = [], onAddRecuerdo, onUserClick,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
@@ -367,9 +369,11 @@ export function PhotosView({
         photos={photos}
         selectedIds={selectedIds}
         moveableChapters={moveableChapters}
+        personas={personas}
         onBatchMove={onBatchMove}
         onBatchChangeDate={onBatchChangeDate}
         onBatchCreateChapter={onBatchCreateChapter}
+        onBatchTagPersonas={onBatchTagPersonas}
         onDone={exitSelection}
       />
 

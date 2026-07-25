@@ -4,6 +4,7 @@ import { BottomSheetModal } from './BottomSheetModal';
 import { Persona } from '@/types';
 
 interface TagPersonasModalProps {
+  title?: string;
   personas: Persona[];
   selectedIds: string[];
   onToggle: (personaId: string) => void;
@@ -13,8 +14,11 @@ interface TagPersonasModalProps {
 }
 
 // Variante multi-selección de MoveModal: en vez de un único capítulo, se pueden marcar
-// varias personas del baúl para etiquetarlas en la foto actual.
+// varias personas del baúl para etiquetarlas. Se usa tanto en el visor de una foto
+// (reemplaza el conjunto completo de etiquetas) como en la selección múltiple de la
+// cuadrícula (añade a las etiquetas ya existentes de cada foto) — `title` distingue el caso.
 export function TagPersonasModal({
+  title = 'Etiquetar personas',
   personas,
   selectedIds,
   onToggle,
@@ -24,7 +28,7 @@ export function TagPersonasModal({
 }: TagPersonasModalProps) {
   return (
     <BottomSheetModal onCancel={onCancel} backdropOpacity={40}>
-      <h2 className="text-lg font-medium text-foreground mb-4">Etiquetar personas</h2>
+      <h2 className="text-lg font-medium text-foreground mb-4">{title}</h2>
       <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
         {personas.map((persona) => {
           const isSelected = selectedIds.includes(persona.id);

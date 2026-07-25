@@ -133,6 +133,32 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("photos/tag-batch")]
+    public async Task<IActionResult> TagBatch([FromBody] TagPhotosBatchRequest request)
+    {
+        if (!Guid.TryParse(request.BaulId, out var baulId))
+            return BadRequest(new { error = $"'{request.BaulId}' is not a valid baúl id." });
+
+        var photoIds = new List<Guid>();
+        foreach (var id in request.PhotoIds)
+        {
+            if (!Guid.TryParse(id, out var photoId))
+                return BadRequest(new { error = $"'{id}' is not a valid photo id." });
+            photoIds.Add(photoId);
+        }
+
+        var personaIds = new List<Guid>();
+        foreach (var id in request.PersonaIds)
+        {
+            if (!Guid.TryParse(id, out var personaId))
+                return BadRequest(new { error = $"'{id}' is not a valid persona id." });
+            personaIds.Add(personaId);
+        }
+
+        var result = await photoManager.AddTaggedPersonasBatchAsync(baulId, photoIds, personaIds);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpGet("photos/{photoId:guid}/personas")]
     public async Task<IActionResult> GetTaggedPersonas(Guid photoId)
     {

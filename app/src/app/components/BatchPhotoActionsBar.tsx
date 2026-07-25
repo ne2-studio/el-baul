@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { Calendar, FolderInput, Plus } from 'lucide-react';
+import { Calendar, FolderInput, Plus, Tag } from 'lucide-react';
 import { EditInfoModal } from './EditInfoModal';
 import { MoveModal } from './MoveModal';
 import { DateModal } from './DateModal';
+import { TagPersonasModal } from './TagPersonasModal';
 import { BatchOperationProgress, BatchOperationItem } from './BatchOperationProgress';
 import { Chapter } from './ChaptersView';
 import { PageContainer } from './PageContainer';
 import { Photo } from './PhotosView';
-import { PhotoDate } from '@/types';
+import { PhotoDate, Persona } from '@/types';
 
 interface BatchPhotoActionsBarProps {
   active: boolean;
   photos: Photo[];
   selectedIds: Set<string>;
   moveableChapters: Chapter[];
+  personas?: Persona[];
   onBatchMove?: (
     photoIds: string[],
     targetChapterId: string,
@@ -21,15 +23,17 @@ interface BatchPhotoActionsBarProps {
   ) => Promise<void>;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
+  onBatchTagPersonas?: (photoIds: string[], personaIds: string[]) => Promise<boolean>;
   onDone: () => void;
 }
 
-// Barra de acciones en lote (mover / cambiar fecha / crear capítulo) y sus modales,
-// para el modo de selección múltiple de PhotosView. `active` refleja el modo de
+// Barra de acciones en lote (mover / cambiar fecha / crear capítulo / etiquetar personas) y
+// sus modales, para el modo de selección múltiple de PhotosView. `active` refleja el modo de
 // selección del padre; se mantiene como prop en vez de desmontar el componente para
 // no perder el patrón de gating explícito que tenía PhotosView antes de la extracción.
 export function BatchPhotoActionsBar({
-  active, photos, selectedIds, moveableChapters, onBatchMove, onBatchChangeDate, onBatchCreateChapter, onDone,
+  active, photos, selectedIds, moveableChapters, personas = [], onBatchMove, onBatchChangeDate, onBatchCreateChapter,
+  onBatchTagPersonas, onDone,
 }: BatchPhotoActionsBarProps) {
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
@@ -38,6 +42,9 @@ export function BatchPhotoActionsBar({
   const [isDateSubmitting, setIsDateSubmitting] = useState(false);
   const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [tagPersonaIds, setTagPersonaIds] = useState<string[]>([]);
+  const [isTaggingSubmitting, setIsTaggingSubmitting] = useState(false);
 
   const handleMoveSubmit = async () => {
     if (!moveTargetId || !onBatchMove) return;
@@ -87,9 +94,26 @@ export function BatchPhotoActionsBar({
     }
   };
 
+  const toggleTagPersona = (personaId: string) => {
+    setTagPersonaIds((current) =>
+      current.includes(personaId) ? current.filter((id) => id !== personaId) : [...current, personaId]);
+  };
+
+  const handleTagSubmit = async () => {
+    if (!onBatchTagPersonas) return;
+    setIsTaggingSubmitting(true);
+    const ok = await onBatchTagPersonas(Array.from(selectedIds), tagPersonaIds);
+    setIsTaggingSubmitting(false);
+    if (ok) {
+      setShowTagModal(false);
+      setTagPersonaIds([]);
+      onDone();
+    }
+  };
+
   return (
     <>
-      {active && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter) && (
+      {active && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
           <PageContainer className="py-4 flex gap-3">
             {onBatchChangeDate && (
@@ -117,6 +141,15 @@ export function BatchPhotoActionsBar({
               >
                 <Plus className="w-4 h-4 text-muted-foreground" />
                 Crear nuevo capítulo
+              </button>
+            )}
+            {onBatchTagPersonas && (
+              <button
+                onClick={() => setShowTagModal(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <Tag className="w-4 h-4 text-muted-foreground" />
+                Etiquetar personas
               </button>
             )}
           </PageContainer>
@@ -156,6 +189,18 @@ export function BatchPhotoActionsBar({
           onCancel={() => setShowCreateChapterModal(false)}
           onSave={handleCreateChapterSave}
           isSubmitting={isCreatingChapter}
+        />
+      )}
+
+      {showTagModal && (
+        <TagPersonasModal
+          title={`Etiquetar · ${selectedIds.size} ${selectedIds.size === 1 ? 'foto' : 'fotos'}`}
+          personas={personas}
+          selectedIds={tagPersonaIds}
+          onToggle={toggleTagPersona}
+          onCancel={() => { setShowTagModal(false); setTagPersonaIds([]); }}
+          onConfirm={handleTagSubmit}
+          isSubmitting={isTaggingSubmitting}
         />
       )}
     </>
