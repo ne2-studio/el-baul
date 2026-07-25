@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using CSharpFunctionalExtensions;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -9,15 +10,23 @@ namespace ElBaul.Infra;
 public class ResendEmailSender(HttpClient httpClient, IOptions<ResendOptions> options, ILogger<ResendEmailSender> logger)
     : IEmailSender
 {
-    private const string FromName = "El Baúl";
+    private record ResendRequest(
+        string From,
+        string[] To,
+        string Subject,
+        string Html,
+        string Text,
+        [property: JsonPropertyName("reply_to")] string ReplyTo);
 
-    private record ResendRequest(string From, string[] To, string Subject, string Html, string Text);
     private record ResendResponse(string Id);
 
     public async Task<Result<EmailSendResult>> SendAsync(EmailMessage message)
     {
-        var from = $"{FromName} <{options.Value.FromAddress}>";
-        var request = new ResendRequest(from, [message.To], message.Subject, message.Html, message.PlainText);
+        var from = $"{options.Value.FromName} <{options.Value.FromAddress}>";
+        var replyTo = string.IsNullOrEmpty(options.Value.ReplyToAddress)
+            ? options.Value.FromAddress
+            : options.Value.ReplyToAddress;
+        var request = new ResendRequest(from, [message.To], message.Subject, message.Html, message.PlainText, replyTo);
 
         try
         {
