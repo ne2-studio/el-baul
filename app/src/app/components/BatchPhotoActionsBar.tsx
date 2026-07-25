@@ -115,43 +115,47 @@ export function BatchPhotoActionsBar({
     <>
       {active && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
-          <PageContainer className="py-4 flex gap-3">
-            {onBatchChangeDate && (
-              <button
-                onClick={() => setShowDateModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                Cambiar fecha
-              </button>
-            )}
-            {moveableChapters.length > 0 && (
-              <button
-                onClick={() => setShowMoveModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <FolderInput className="w-4 h-4 text-muted-foreground" />
-                Mover
-              </button>
-            )}
-            {onBatchCreateChapter && (
-              <button
-                onClick={() => setShowCreateChapterModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <Plus className="w-4 h-4 text-muted-foreground" />
-                Crear nuevo capítulo
-              </button>
-            )}
-            {onBatchTagPersonas && (
-              <button
-                onClick={() => setShowTagModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <Tag className="w-4 h-4 text-muted-foreground" />
-                Etiquetar personas
-              </button>
-            )}
+          {/* w-max en el contenedor interno evita que los botones se compriman: con muchas
+              acciones el PageContainer hace scroll lateral en vez de aplastar la barra. */}
+          <PageContainer className="py-3 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 w-max">
+              {onBatchChangeDate && (
+                <button
+                  onClick={() => setShowDateModal(true)}
+                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                >
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  Cambiar fecha
+                </button>
+              )}
+              {moveableChapters.length > 0 && (
+                <button
+                  onClick={() => setShowMoveModal(true)}
+                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                >
+                  <FolderInput className="w-4 h-4 text-muted-foreground" />
+                  Mover
+                </button>
+              )}
+              {onBatchCreateChapter && (
+                <button
+                  onClick={() => setShowCreateChapterModal(true)}
+                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 text-muted-foreground" />
+                  Crear nuevo capítulo
+                </button>
+              )}
+              {onBatchTagPersonas && (
+                <button
+                  onClick={() => setShowTagModal(true)}
+                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                >
+                  <Tag className="w-4 h-4 text-muted-foreground" />
+                  Etiquetar personas
+                </button>
+              )}
+            </div>
           </PageContainer>
         </div>
       )}
