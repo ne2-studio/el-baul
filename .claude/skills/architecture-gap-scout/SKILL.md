@@ -43,7 +43,9 @@ Valid evidence includes:
 * infrastructure leaking into domain decisions;
 * frequent modifications to the same fragile area;
 * configuration or behaviour duplicated across multiple locations;
-* code that contradicts a stated rule or invariant in `ARCHITECTURE.md` or an ADR under `docs/adr/` / `<app>/docs/adr/`, or such a document describing a reality the code no longer matches.
+* code that contradicts a stated rule or invariant in `ARCHITECTURE.md` or an ADR under `docs/adr/` / `<app>/docs/adr/`, or such a document describing a reality the code no longer matches;
+* consumers reconstructing a domain decision from an object's exposed state instead of calling one explicit operation;
+* a representative maintenance task trace showing the files opened, searches performed, layers crossed, or symbols resolved to understand or change one capability.
 
 Do not rely only on generic statements such as "this violates SOLID", "this should use a repository", "this class is too large", "this should follow hexagonal architecture", "this would be cleaner", or "this is not best practice". Explain the concrete cost currently caused by the observed structure.
 
@@ -68,7 +70,8 @@ Every initiative must improve one or more explicit attributes:
 * security;
 * deletion of accidental complexity;
 * reduction of duplication;
-* reduction of cognitive load.
+* reduction of cognitive load;
+* context efficiency — how much a maintainer, human or agent, must read, search, and hold in mind to understand or safely change one capability.
 
 A recommendation is invalid if its only justification is personal preference or architectural symmetry.
 
@@ -84,9 +87,15 @@ Do not recommend abstractions pre-emptively. Recommend an abstraction only when 
 * infrastructure obstructing testing of a real decision;
 * a concept with rules but no explicit representation;
 * an external boundary with real behavioural or operational complexity;
-* a responsibility that already varies independently.
+* a responsibility that already varies independently;
+* consumers repeatedly reconstructing a domain decision from an object's exposed state rather than calling one explicit operation;
+* active code repeatedly needing to inspect, coordinate, or understand the internal concepts of another module, whether or not that module changes often.
 
 Do not introduce an interface merely because a class has dependencies, or a layer merely to conform to an architectural template. Do not suggest repositories, services, factories, handlers, ports, adapters, or domain objects unless repository evidence supports their existence.
+
+Cognitive and context pressure are valid architectural pressure in their own right, not just a flavour of coupling. A module may warrant a boundary even when it changes rarely, if active code repeatedly needs to inspect, coordinate, or understand its internal concepts. The improvement must make that internal context safely ignorable — a clear contract, few entry points, no lateral access, stable terminology — not merely move files or add a facade that still exposes the same internals.
+
+Prefer deep boundaries over fragmented indirection. When several public abstractions jointly provide one cohesive capability, evaluate whether consumers are exposed to internal decomposition rather than to the capability itself. A valid initiative reduces the knowledge callers need while preserving genuinely independent variation, failure, deployment, or testing boundaries. Stability alone does not justify extracting a module — extraction is justified only when it removes recurring cognitive or dependency cost from active code, not merely because the code hasn't changed recently.
 
 ## 4. Preserve the outer safety net
 
@@ -176,6 +185,16 @@ For every candidate:
 6. estimate regression risk;
 7. describe how success could be measured.
 
+For representative capabilities, additionally perform a context reconstruction:
+
+1. Start from the public entry point.
+2. Record the files, symbols, abstractions, and decisions required to explain the behaviour.
+3. Distinguish essential domain knowledge from forwarding, mapping, configuration, and infrastructure detail.
+4. Identify which internal concepts consumers or maintainers cannot safely ignore.
+5. Evaluate whether a narrower and deeper boundary would reduce the required context.
+
+This reconstruction is the required evidence for `context-scattering` and `excessive-module-surface`, and it often surfaces `encapsulation-violation` along the way when the reconstructed decisions turn out to belong to a concept the consumer had to interpret rather than call.
+
 Discard candidates that cannot be supported with evidence.
 
 ---
@@ -198,7 +217,7 @@ possible_measurements:
 
 Some files add short prose after the block clarifying when the criterion legitimately applies versus when it looks applicable but isn't — read that prose too, it disambiguates the signals.
 
-Current criteria: `duplicated-knowledge`, `unclear-naming`, `implicit-domain-concept`, `insufficient-behavioural-coverage`, `test-descent-opportunity`, `mixed-decisions-and-effects`, `excessive-coupling`, `low-cohesion`, `implementation-coupled-tests`, `technology-fake-risk`, `code-smell-with-impact`, `dead-or-obsolete-code`, `missing-operational-boundary`, `architecture-documentation-drift`.
+Current criteria: `duplicated-knowledge`, `unclear-naming`, `implicit-domain-concept`, `insufficient-behavioural-coverage`, `test-descent-opportunity`, `mixed-decisions-and-effects`, `excessive-coupling`, `low-cohesion`, `implementation-coupled-tests`, `technology-fake-risk`, `code-smell-with-impact`, `dead-or-obsolete-code`, `missing-operational-boundary`, `architecture-documentation-drift`, `encapsulation-violation`, `excessive-module-surface`, `context-scattering`.
 
 ## Adding new criteria
 
@@ -215,23 +234,54 @@ The catalogue must remain solution-independent wherever possible.
 
 # Prioritisation model
 
-Score every valid initiative from 1 to 5 on each dimension below.
+Score every valid initiative across three separate concerns: how much the underlying behaviour matters (**Value**), how much it currently hurts to work in that area (**Maintenance friction**), and how hard the fix itself is (**Delivery difficulty**). Keep these separate — do not fold context or cognitive cost back into Impact, or it gets rewarded (or forgotten) inconsistently across initiatives.
+
+Score every dimension from 1 to 5.
+
+### Value
 
 | Dimension | 1 | 3 | 5 |
 |---|---|---|---|
 | Impact | negligible local inconvenience | repeated cost in an active area | significant risk or major delivery constraint |
 | Evidence confidence | plausible inference | multiple concrete examples | demonstrated by history, defects, tests, or measurements |
-| Frequency | rare path | recurring area | central or frequently changed behaviour |
-| Leverage | one isolated location | one important module or workflow | multiple features, teams, or future changes |
-| Cost | small focused refactor | several coordinated changes | broad migration or high uncertainty |
-| Regression risk | well-protected and local | moderate behavioural surface | weakly protected or cross-cutting |
-
-Calculate:
+| Change frequency | rare path | recurring area | central or frequently changed behaviour |
+| Scope of benefit | one isolated location | one important module or workflow | multiple features, teams, or future changes |
 
 ```text
-Priority score =
-(Impact × Evidence confidence × Frequency × Leverage)
-÷ (Cost + Regression risk)
+Value = Impact × Evidence confidence × Change frequency × Scope of benefit
+```
+
+### Maintenance friction
+
+The cost of living with the current structure today, independent of how hard it would be to fix. A stable, rarely-changed area can still score high here if active code must repeatedly cross into it to get anything done.
+
+| Dimension | 1 | 3 | 5 |
+|---|---|---|---|
+| Change surface | change is typically localised | several coordinated files | a small change forces crossing modules, projects, or layers |
+| Context cost | behaviour is locatable from one clear entry point | requires navigating several related collaborators | requires reconstructing a scattered flow across many files, searches, or concepts |
+| Failure ambiguity | failure is clearly attributable | diagnosis requires following several layers | multiple components could explain the same symptom and tests do not localise the decision |
+
+```text
+Maintenance friction = Change surface + Context cost + Failure ambiguity
+```
+
+Context cost and change surface are related but distinct: a fix may touch one file yet require reading fifteen to find which one, or the system may be well understood yet still require editing six contracts because of a badly placed boundary. Score them independently and let a representative maintenance task trace (see Step 4) back the Context cost score with real numbers rather than impression.
+
+### Delivery difficulty
+
+| Dimension | 1 | 3 | 5 |
+|---|---|---|---|
+| Implementation cost | small focused refactor | several coordinated changes | broad migration or high uncertainty |
+| Regression risk | well-protected and local | moderate behavioural surface | weakly protected or cross-cutting |
+
+```text
+Delivery difficulty = Implementation cost + Regression risk
+```
+
+### Priority score
+
+```text
+Priority score = (Value + Maintenance friction) ÷ Delivery difficulty
 ```
 
 Use the score for ordering, not as an unquestionable decision. A lower-scoring initiative may rank higher when it removes an immediate correctness or security risk, unlocks several blocked initiatives, establishes missing tests required for later work, or prevents imminent architectural lock-in. Explain any manual adjustment.
@@ -265,7 +315,7 @@ Use this exact structure for every initiative.
 ## `<rank>. <initiative title>`
 
 **Priority:** Critical | High | Medium | Low
-**Score:** `<calculated score>`
+**Score:** `<calculated priority score>` (Value: `<v>` · Maintenance friction: `<f>` · Delivery difficulty: `<d>`)
 **Confidence:** High | Medium | Low
 **Type:** `<criterion id>`
 **Affected area:** `<modules, files, components or capabilities>`
@@ -275,6 +325,7 @@ Use this exact structure for every initiative.
 * `<specific repository observation with file or symbol references>`
 * `<second supporting observation when available>`
 * `<history, test, metric or defect evidence when available>`
+* `<representative maintenance task trace when available: files opened, searches performed, layers crossed>`
 
 ### Current cost
 
@@ -316,6 +367,6 @@ Explain why this initiative should be addressed before lower-ranked alternatives
 
 * Prefer five strong initiatives over twenty weak observations; merge findings that represent the same underlying architectural pressure rather than splitting one coherent refactor into many.
 * Do not recommend rewriting working modules without strong evidence, and do not confuse architectural consistency with architectural quality.
-* Weight high-churn, business-critical areas more heavily; do not optimise code that changes rarely unless it presents correctness, security, or operational risk.
+* Weight high-churn, business-critical areas more heavily; do not optimise code that changes rarely unless it presents correctness, security, or operational risk — or imposes recurring cognitive or context cost on active code (see `context-scattering`, `excessive-module-surface`).
 * Distinguish abstraction from indirection, and large code from low-cohesion code.
 * Treat tests and coverage as evidence, not as an end in themselves.
