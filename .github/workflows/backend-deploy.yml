@@ -38,7 +38,20 @@ jobs:
         run: dotnet build --no-restore -c Release
 
       - name: Run tests
-        run: dotnet test --no-build -c Release
+        run: dotnet test --no-build -c Release --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      # Merges the per-project cobertura files coverlet drops under coverage/<guid>/ (one per
+      # xunit project: ElBaul.Tests, ElBaul.Api.Tests, ElBaul.Infra.Tests) into a single
+      # markdown report with a combined total plus a per-assembly breakdown.
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:"coverage/**/coverage.cobertura.xml" \
+            -targetdir:"coverage/report" \
+            -reporttypes:"MarkdownSummaryGithub"
+          cat coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

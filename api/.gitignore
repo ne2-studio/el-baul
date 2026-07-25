@@ -11,3 +11,6 @@ riderModule.iml
 .idea/
 *.DotSettings.user
 node_modules/
+
+# dotnet test --collect coverage output
+/coverage/
