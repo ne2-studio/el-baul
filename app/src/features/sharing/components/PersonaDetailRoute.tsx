@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Share } from '@capacitor/share';
 import { PersonaDetailScreen } from '@/app/components/PersonaDetailScreen';
-import { EditPersonaModal } from '@/app/components/EditPersonaModal';
+import { EditPersonaInfoModal } from '@/app/components/EditPersonaInfoModal';
+import { EditBiografiaModal } from '@/app/components/EditBiografiaModal';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
@@ -32,7 +33,8 @@ export const PersonaDetailRoute: React.FC = () => {
   const { run, isPending } = useAsyncAction();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isEditingBiografia, setIsEditingBiografia] = useState(false);
 
   const baul = baules.find(b => b.id === baulId);
   const persona = (personas[baulId || ''] || []).find(u => u.id === personaId);
@@ -59,13 +61,22 @@ export const PersonaDetailRoute: React.FC = () => {
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
   if (!baulId || !personaId || !persona) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
 
-  const handleSave = async (name: string, nickname: string, biografia: string) => {
-    const result = await run(() => updatePersona(baulId, personaId, name, nickname, biografia), {
+  const handleSaveInfo = async (name: string, nickname: string) => {
+    const result = await run(() => updatePersona(baulId, personaId, name, nickname, persona.biografia || ''), {
       key: 'save',
       successMessage: 'Ficha actualizada',
       errorMessage: 'Error al actualizar la ficha',
     });
-    if (result.ok) setIsEditing(false);
+    if (result.ok) setIsEditingInfo(false);
+  };
+
+  const handleSaveBiografia = async (biografia: string) => {
+    const result = await run(() => updatePersona(baulId, personaId, persona.name || '', persona.nickname, biografia), {
+      key: 'save',
+      successMessage: 'Biografía actualizada',
+      errorMessage: 'Error al actualizar la biografía',
+    });
+    if (result.ok) setIsEditingBiografia(false);
   };
 
   const handleUploadAvatar = (file: File) => {
@@ -125,7 +136,10 @@ export const PersonaDetailRoute: React.FC = () => {
         persona={persona}
         isAdmin={isAdminRole(baul?.role)}
         onBack={() => navigate(`/baules/${baulId}`, { state: { activeTab: returnTab } })}
-        onEdit={() => setIsEditing(true)}
+        onEditInfo={() => setIsEditingInfo(true)}
+        onEditBiografia={() => setIsEditingBiografia(true)}
+        onUploadAvatar={handleUploadAvatar}
+        isUploadingAvatar={isPending('avatar')}
         onShareInvite={handleShareInvite}
         onChangeRole={handleChangeRole}
         onRevokeAccess={handleRevokeAccess}
@@ -134,14 +148,20 @@ export const PersonaDetailRoute: React.FC = () => {
           state: { backgroundLocation: location },
         })}
       />
-      {isEditing && (
-        <EditPersonaModal
+      {isEditingInfo && (
+        <EditPersonaInfoModal
           persona={persona}
-          onCancel={() => setIsEditing(false)}
-          onSave={handleSave}
-          onUploadAvatar={handleUploadAvatar}
+          onCancel={() => setIsEditingInfo(false)}
+          onSave={handleSaveInfo}
           isSubmitting={isPending('save')}
-          isUploadingAvatar={isPending('avatar')}
+        />
+      )}
+      {isEditingBiografia && (
+        <EditBiografiaModal
+          initialBiografia={persona.biografia || ''}
+          onCancel={() => setIsEditingBiografia(false)}
+          onSave={handleSaveBiografia}
+          isSubmitting={isPending('save')}
         />
       )}
     </>

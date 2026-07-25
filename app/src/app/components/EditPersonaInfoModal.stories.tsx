@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { EditPersonaModal } from './EditPersonaModal';
+import { EditPersonaInfoModal } from './EditPersonaInfoModal';
 import { Persona } from '@/types';
 
 const meta = {
-  title: 'Components/EditPersonaModal',
-  component: EditPersonaModal,
+  title: 'Components/EditPersonaInfoModal',
+  component: EditPersonaInfoModal,
   tags: ['autodocs'],
-} satisfies Meta<typeof EditPersonaModal>;
+} satisfies Meta<typeof EditPersonaInfoModal>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -26,7 +26,6 @@ export const Default: Story = {
     persona,
     onCancel: () => alert('onCancel clicked'),
     onSave: () => alert('onSave clicked'),
-    onUploadAvatar: () => alert('onUploadAvatar clicked'),
   },
 };
 
@@ -34,12 +33,5 @@ export const Submitting: Story = {
   args: {
     ...Default.args,
     isSubmitting: true,
-  },
-};
-
-export const UploadingAvatar: Story = {
-  args: {
-    ...Default.args,
-    isUploadingAvatar: true,
   },
 };

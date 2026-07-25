@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
-import { ChevronLeft, MoreVertical, Pencil, Share2, UserX } from 'lucide-react';
-import { Persona, BaulRole, Photo } from '@/types';
+import React, { useRef, useState } from 'react';
+import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserX } from 'lucide-react';
+import { Persona, BaulRole } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
+import { useElementHeight } from '@/hooks/useElementHeight';
+import { EmptyState } from './EmptyState';
+import { SimpleFAB } from './FAB';
 import { PageContainer } from './PageContainer';
+import { Photo } from './PhotosView';
+import { PhotoSwimlanes } from './PhotoSwimlanes';
 import { RevokeAccessModal } from './RevokeAccessModal';
 import { StickyHeader } from './StickyHeader';
+import { TabButton } from './TabButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +23,10 @@ interface PersonaDetailScreenProps {
   persona: Persona;
   isAdmin: boolean;
   onBack: () => void;
-  onEdit: () => void;
+  onEditInfo: () => void;
+  onEditBiografia: () => void;
+  onUploadAvatar: (file: File) => void;
+  isUploadingAvatar?: boolean;
   onShareInvite: () => void;
   onChangeRole: (role: BaulRole) => void;
   /** Devuelve si la revocación tuvo éxito — el modal se queda abierto (con spinner)
@@ -32,7 +41,10 @@ export function PersonaDetailScreen({
   persona,
   isAdmin,
   onBack,
-  onEdit,
+  onEditInfo,
+  onEditBiografia,
+  onUploadAvatar,
+  isUploadingAvatar = false,
   onShareInvite,
   onChangeRole,
   onRevokeAccess,
@@ -41,6 +53,9 @@ export function PersonaDetailScreen({
 }: PersonaDetailScreenProps) {
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
+  const [activeTab, setActiveTab] = useState<'biografia' | 'fotos'>('biografia');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const displayName = persona.name || persona.nickname;
   const isPending = persona.status === 'pending';
   const canManage = isAdmin && persona.role !== 'custodio';
@@ -52,9 +67,15 @@ export function PersonaDetailScreen({
     if (ok) setShowRevokeModal(false);
   };
 
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onUploadAvatar(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <StickyHeader>
+      <StickyHeader ref={headerRef}>
         <PageContainer className="py-4">
           <div className="flex items-center justify-between">
             <button
@@ -65,48 +86,70 @@ export function PersonaDetailScreen({
               <span className="text-sm">Volver</span>
             </button>
 
-            <div className="flex items-center gap-1">
-              {persona.canEdit && (
-                <button
-                  onClick={onEdit}
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-                  aria-label="Editar persona"
-                >
-                  <Pencil className="w-5 h-5" />
-                </button>
-              )}
+            {(persona.canEdit || canManage) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+                    aria-label="Opciones de la persona"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {persona.canEdit && (
+                    <DropdownMenuItem onClick={onEditInfo}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar información
+                    </DropdownMenuItem>
+                  )}
 
-              {canManage && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-                      aria-label="Opciones de la persona"
+                  {persona.canEdit && (
+                    <DropdownMenuItem
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
                     >
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    {isPending && (
-                      <DropdownMenuItem onClick={onShareInvite}>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Compartir invitación
-                      </DropdownMenuItem>
-                    )}
+                      {isUploadingAvatar ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4 mr-2" />
+                      )}
+                      Cambiar foto de perfil
+                    </DropdownMenuItem>
+                  )}
 
-                    {isPending && <DropdownMenuSeparator />}
+                  {persona.canEdit && canManage && <DropdownMenuSeparator />}
 
+                  {canManage && isPending && (
+                    <DropdownMenuItem onClick={onShareInvite}>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Compartir invitación
+                    </DropdownMenuItem>
+                  )}
+
+                  {canManage && isPending && <DropdownMenuSeparator />}
+
+                  {canManage && (
                     <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
                       <UserX className="w-4 h-4 mr-2" />
                       Quitar acceso
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </PageContainer>
       </StickyHeader>
+
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleAvatarFileChange}
+        disabled={isUploadingAvatar}
+      />
 
       {/* Hero */}
       <div className="relative overflow-hidden" style={{ height: '210px' }}>
@@ -138,39 +181,50 @@ export function PersonaDetailScreen({
         </div>
       </div>
 
-      <PageContainer className="py-8 space-y-6">
-        {persona.biografia && (
-          <div className="bg-card rounded-2xl border border-border p-6">
-            <p
-              className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
-              style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-            >
-              Biografía
-            </p>
-            <p className="text-foreground whitespace-pre-wrap">{persona.biografia}</p>
+      {/* Tabs — same sticky underline pattern as ChaptersView.tsx / PhotosView.tsx */}
+      <div
+        className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
+        style={{ top: headerHeight }}
+      >
+        <PageContainer className="overflow-x-auto scrollbar-hide">
+          <div className="flex w-max md:w-full">
+            <TabButton label="Biografía" count={0} active={activeTab === 'biografia'} onClick={() => setActiveTab('biografia')} />
+            <TabButton label="Fotos" count={photos.length} active={activeTab === 'fotos'} onClick={() => setActiveTab('fotos')} />
           </div>
+        </PageContainer>
+      </div>
+
+      <PageContainer className="py-8 space-y-6 pb-28">
+        {activeTab === 'biografia' && (
+          persona.biografia ? (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <p
+                className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
+                style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+              >
+                Biografía
+              </p>
+              <p className="text-foreground whitespace-pre-wrap">{persona.biografia}</p>
+            </div>
+          ) : (
+            <EmptyState
+              icon={<BookOpen className="w-20 h-20" strokeWidth={1.5} />}
+              title="Todavía no hay biografía"
+              subtitle={`Este usuario aún no tiene biografía${persona.canEdit ? ', ¡añádela!' : '.'}`}
+            />
+          )
         )}
 
-        {photos.length > 0 && (
-          <div className="bg-card rounded-2xl border border-border p-6">
-            <p
-              className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
-              style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-            >
-              Fotos
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {photos.map((photo) => (
-                <button
-                  key={photo.id}
-                  onClick={() => onSelectPhoto(photo)}
-                  className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 active:opacity-80 transition-opacity"
-                >
-                  <img src={photo.thumbnailUrl} alt="Foto" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          </div>
+        {activeTab === 'fotos' && (
+          photos.length === 0 ? (
+            <EmptyState
+              icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
+              title="Todavía no hay fotos"
+              subtitle="Las fotos en las que etiquetes a esta persona aparecerán aquí"
+            />
+          ) : (
+            <PhotoSwimlanes photos={photos} onSelectPhoto={onSelectPhoto} />
+          )
         )}
 
         {canManage && !isPending && (
@@ -196,6 +250,13 @@ export function PersonaDetailScreen({
           </div>
         )}
       </PageContainer>
+
+      <SimpleFAB
+        label="Editar biografía"
+        icon={<Pencil className="w-5 h-5" />}
+        onClick={onEditBiografia}
+        hidden={activeTab !== 'biografia' || !persona.canEdit}
+      />
 
       {showRevokeModal && (
         <RevokeAccessModal

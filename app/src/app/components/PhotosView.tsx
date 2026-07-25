@@ -5,9 +5,10 @@ import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
 import { EditInfoModal } from './EditInfoModal';
 import { PageContainer } from './PageContainer';
+import { PhotoSwimlanes } from './PhotoSwimlanes';
 import { StickyHeader } from './StickyHeader';
 import { TabButton } from './TabButton';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, Check, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Chapter } from './ChaptersView';
 import { SelectedPhoto } from './UploadConfirmationScreen';
 import { DeleteChapterModal } from './DeleteChapterModal';
@@ -70,43 +71,6 @@ interface PhotosViewProps {
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
   onUserClick?: (personaId: string) => void;
-}
-
-// Groups photos by year+month (or by year alone, when only a year is known — never
-// assume a month for display, that defaulting only applies to sorting), oldest first so
-// the baúl reads like a story, with a trailing "Sin fecha" group for anything undated.
-function groupPhotos(photos: Photo[]): { label: string; photos: Photo[] }[] {
-  const MONTH_NAMES = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
-
-  const groups = new Map<string, { year: number; month?: number; photos: Photo[] }>();
-  const undated: Photo[] = [];
-
-  for (const photo of photos) {
-    if (!photo.date) {
-      undated.push(photo);
-      continue;
-    }
-    const { year, month } = photo.date;
-    const key = month ? `${year}-${month}` : `${year}`;
-    if (!groups.has(key)) groups.set(key, { year, month, photos: [] });
-    groups.get(key)!.photos.push(photo);
-  }
-
-  const sorted = Array.from(groups.values()).sort((a, b) =>
-    a.year !== b.year ? a.year - b.year : (a.month ?? 0) - (b.month ?? 0)
-  );
-
-  const result = sorted.map((g) => ({
-    label: g.month ? `${MONTH_NAMES[g.month - 1]} ${g.year}` : `${g.year}`,
-    photos: [...g.photos].sort((a, b) => (a.date?.day ?? 1) - (b.date?.day ?? 1)),
-  }));
-
-  if (undated.length > 0) result.push({ label: 'Sin fecha', photos: undated });
-
-  return result;
 }
 
 export function PhotosView({
@@ -307,40 +271,15 @@ export function PhotosView({
               subtitle="Añade fotos para empezar este recuerdo"
             />
           ) : (
-            <div className="space-y-6">
-              {groupPhotos(photos).map((group) => {
-                const groupAllSelected = group.photos.every((p) => selectedIds.has(p.id));
-                return (
-                <div key={group.label}>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleGroup(group.photos)}
-                    className="group/swimlane flex items-center gap-1.5 mb-2 -ml-0.5 px-0.5 py-0.5 rounded"
-                  >
-                    {selectionMode && (
-                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        groupAllSelected ? 'bg-primary border-primary' : 'bg-background/60 border-muted-foreground/40'
-                      }`}>
-                        {groupAllSelected && <Check className="w-2.5 h-2.5 text-white" />}
-                      </span>
-                    )}
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide group-hover/swimlane:text-foreground transition-colors"
-                      style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
-                      {group.label}
-                    </p>
-                  </button>
-                  <PhotoGrid
-                    photos={group.photos}
-                    selectionMode={selectionMode}
-                    selectedIds={selectedIds}
-                    onSelectPhoto={onSelectPhoto}
-                    onToggleSelect={toggleSelect}
-                    onLongPress={handleLongPress}
-                  />
-                </div>
-                );
-              })}
-            </div>
+            <PhotoSwimlanes
+              photos={photos}
+              onSelectPhoto={onSelectPhoto}
+              selectionMode={selectionMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onLongPress={handleLongPress}
+              onToggleGroup={handleToggleGroup}
+            />
           )
         )}
 
@@ -409,144 +348,3 @@ export function PhotosView({
     </div>
   );
 }
-
-// ─── Photo Grid ───────────────────────────────────────────────────────────────
-function PhotoGrid({
-  photos,
-  selectionMode,
-  selectedIds,
-  onSelectPhoto,
-  onToggleSelect,
-  onLongPress,
-}: {
-  photos: Photo[];
-  selectionMode: boolean;
-  selectedIds: Set<string>;
-  onSelectPhoto: (p: Photo) => void;
-  onToggleSelect: (id: string) => void;
-  onLongPress: (id: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {photos.map(photo => (
-        <PhotoCell
-          key={photo.id}
-          photo={photo}
-          selectionMode={selectionMode}
-          isSelected={selectedIds.has(photo.id)}
-          onOpen={onSelectPhoto}
-          onToggleSelect={onToggleSelect}
-          onLongPress={onLongPress}
-        />
-      ))}
-    </div>
-  );
-}
-
-function PhotoCell({
-  photo,
-  selectionMode,
-  isSelected,
-  onOpen,
-  onToggleSelect,
-  onLongPress,
-}: {
-  photo: Photo;
-  selectionMode: boolean;
-  isSelected: boolean;
-  onOpen: (p: Photo) => void;
-  onToggleSelect: (id: string) => void;
-  onLongPress: (id: string) => void;
-}) {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startPosRef = useRef<{ x: number; y: number } | null>(null);
-  const didLongPressRef = useRef(false);
-
-  const cancelTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    startPosRef.current = { x: e.clientX, y: e.clientY };
-    didLongPressRef.current = false;
-    timerRef.current = setTimeout(() => {
-      didLongPressRef.current = true;
-      onLongPress(photo.id);
-    }, 500);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!startPosRef.current) return;
-    const dx = e.clientX - startPosRef.current.x;
-    const dy = e.clientY - startPosRef.current.y;
-    if (Math.sqrt(dx * dx + dy * dy) > 8) cancelTimer();
-  };
-
-  const handlePointerUp = () => cancelTimer();
-
-  const handleClick = () => {
-    if (didLongPressRef.current) {
-      didLongPressRef.current = false;
-      return; // long-press already handled — don't open
-    }
-    if (selectionMode) {
-      onToggleSelect(photo.id);
-    } else {
-      onOpen(photo);
-    }
-  };
-
-  return (
-    <button
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onClick={handleClick}
-      className={`aspect-square bg-secondary rounded-lg overflow-hidden transition-all relative group select-none ${
-        isSelected ? 'ring-2 ring-primary ring-offset-1' : 'hover:opacity-90 active:opacity-80'
-      }`}
-    >
-      <img
-        src={photo.thumbnailUrl}
-        alt="Foto"
-        className="w-full h-full object-cover pointer-events-none"
-        draggable={false}
-      />
-      {(photo.recuerdoCount || 0) > 0 && !selectionMode && (
-        <div className="absolute bottom-1.5 right-1.5 w-6 h-6 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-75 group-hover:opacity-90 transition-opacity">
-          <MessageCircle className="w-3.5 h-3.5 text-foreground/70" strokeWidth={1.5} />
-        </div>
-      )}
-      {/* Selection circle — top-left, like Google Photos: hidden until the photo is hovered,
-          filled on hover (preview) or when actually selected. Always visible once selection
-          mode is active. A click here selects this photo without opening it. */}
-      <div
-        role="checkbox"
-        aria-checked={isSelected}
-        aria-label={isSelected ? 'Quitar de la selección' : 'Seleccionar foto'}
-        tabIndex={-1}
-        onClick={(e) => {
-          e.stopPropagation();
-          selectionMode ? onToggleSelect(photo.id) : onLongPress(photo.id);
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onPointerUp={(e) => e.stopPropagation()}
-        className={`group/checkbox absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
-          selectionMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-        } ${
-          isSelected ? 'bg-primary border-primary' : 'bg-background/60 border-white hover:bg-primary hover:border-primary'
-        }`}
-      >
-        <Check className={`w-3 h-3 text-white transition-opacity ${
-          isSelected ? 'opacity-100' : 'opacity-0 group-hover/checkbox:opacity-100'
-        }`} />
-      </div>
-    </button>
-  );
-}
-

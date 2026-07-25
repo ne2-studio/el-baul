@@ -30,7 +30,9 @@ const pendingPersona: Persona = {
 
 const sharedDefaults = {
   onBack: () => alert('onBack clicked'),
-  onEdit: () => alert('onEdit clicked'),
+  onEditInfo: () => alert('onEditInfo clicked'),
+  onEditBiografia: () => alert('onEditBiografia clicked'),
+  onUploadAvatar: () => alert('onUploadAvatar clicked'),
   onShareInvite: () => alert('onShareInvite clicked'),
   onChangeRole: () => alert('onChangeRole clicked'),
   onRevokeAccess: async () => true,
