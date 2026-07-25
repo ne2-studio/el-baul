@@ -10,7 +10,8 @@ namespace ElBaul.Api.Controllers;
 [ApiController]
 [Route("api/baules")]
 public class BaulesController(
-    IBaulManager baulManager, IPersonaManager personaManager, IRemovalRequestManager removalRequestManager)
+    IBaulManager baulManager, IPersonaManager personaManager, IRemovalRequestManager removalRequestManager,
+    IPhotoManager photoManager)
     : ControllerBase
 {
     [HttpGet]
@@ -122,6 +123,13 @@ public class BaulesController(
     {
         var result = await personaManager.RemovePersonaAsync(baulId, personaId);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpGet("{baulId:guid}/personas/{personaId:guid}/photos")]
+    public async Task<IActionResult> GetPersonaPhotos(Guid baulId, Guid personaId)
+    {
+        var result = await photoManager.GetByPersonaIdAsync(baulId, personaId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
     [HttpGet("{baulId:guid}/removal-requests")]

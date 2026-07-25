@@ -133,6 +133,28 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpGet("photos/{photoId:guid}/personas")]
+    public async Task<IActionResult> GetTaggedPersonas(Guid photoId)
+    {
+        var result = await photoManager.GetTaggedPersonasAsync(photoId);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPut("photos/{photoId:guid}/personas")]
+    public async Task<IActionResult> SetTaggedPersonas(Guid photoId, [FromBody] SetPhotoPersonaTagsRequest request)
+    {
+        var personaIds = new List<Guid>();
+        foreach (var id in request.PersonaIds)
+        {
+            if (!Guid.TryParse(id, out var personaId))
+                return BadRequest(new { error = $"'{id}' is not a valid persona id." });
+            personaIds.Add(personaId);
+        }
+
+        var result = await photoManager.SetTaggedPersonasAsync(photoId, personaIds);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     private static (int Year, int? Month, int? Day)? ToDateTuple(UploadPhotoRequest request) =>
         request.DateYear is { } year ? (year, request.DateMonth, request.DateDay) : null;
 }

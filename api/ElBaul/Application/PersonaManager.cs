@@ -14,7 +14,8 @@ public class PersonaManager(
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess) : IPersonaManager
+    BaulAccessService baulAccess,
+    IPhotoPersonaTagRepository photoPersonaTagRepository) : IPersonaManager
 {
     public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(Guid personaId)
     {
@@ -263,6 +264,10 @@ public class PersonaManager(
         var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Persona removal", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
+        // Must run before the persona row is removed: PhotoPersonaTag's FK to Persona is
+        // Restrict (see PhotoPersonaTagConfiguration), so a real Postgres delete would
+        // otherwise fail with any tags still pointing at this persona.
+        await photoPersonaTagRepository.DeleteByPersonaIdAsync(pId);
         await baulRepository.RemovePersonaAsync(bId, pId);
         logger.LogInformation("Persona removed {BaulId} {PersonaId}", baulId, personaId);
         return Result.Success();

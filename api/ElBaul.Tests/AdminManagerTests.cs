@@ -14,12 +14,13 @@ public class AdminManagerTests
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
+    private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
     private AdminManager CreateManager() => new(
         _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
-        _recuerdoRepository, _photoStorage, _clock, NullLogger<AdminManager>.Instance);
+        _recuerdoRepository, _photoPersonaTagRepository, _photoStorage, _clock, NullLogger<AdminManager>.Instance);
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()
@@ -182,6 +183,8 @@ public class AdminManagerTests
             new PersonaId(Guid.NewGuid()), baulId, "custodio-1", "Abuela", BaulRole.Custodio, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
         await _baulRepository.AddPersonaAsync(persona);
 
+        await _photoPersonaTagRepository.SetTagsAsync(photo.Id, baulId, [persona.Id], _clock.UtcNow());
+
         var result = await CreateManager().DeleteBaulAsync(baulId.Value);
 
         Assert.True(result.IsSuccess);
@@ -190,6 +193,7 @@ public class AdminManagerTests
         Assert.Empty(await _photoRepository.GetAllByBaulIdAsync(baulId));
         Assert.Empty(await _recuerdoRepository.GetByBaulIdAsync(baulId));
         Assert.Empty(await _baulRepository.GetPersonasAsync(baulId));
+        Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id));
         Assert.Contains("photos/one.jpg", _photoStorage.DeletedKeys);
         Assert.Contains("avatars/abuela.jpg", _photoStorage.DeletedKeys);
     }

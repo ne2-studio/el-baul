@@ -8,6 +8,9 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
     public Task<Photo?> GetByIdAsync(PhotoId id) =>
         dbContext.Photos.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
 
+    public async Task<IEnumerable<Photo>> GetByIdsAsync(IEnumerable<PhotoId> ids) =>
+        await dbContext.Photos.AsNoTracking().Where(p => ids.Contains(p.Id)).ToListAsync();
+
     public Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId) =>
         dbContext.Photos.AsNoTracking().FirstOrDefaultAsync(p => p.ClientUploadId == clientUploadId);
 

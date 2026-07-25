@@ -41,6 +41,15 @@ export class Persona {
   }
 }
 
+// Display-only shape for the personas tagged in a photo — fetched separately (keyed by
+// photoId), never embedded in Photo itself.
+export interface TaggedPersona {
+  id: string;
+  nickname: string;
+  name?: string;
+  avatarUrl?: string;
+}
+
 export class Baul {
   id: string;
   name: string;

@@ -14,6 +14,15 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock) return Task.FromResult(_photos.GetValueOrDefault(id));
     }
 
+    public Task<IEnumerable<Photo>> GetByIdsAsync(IEnumerable<PhotoId> ids)
+    {
+        lock (_lock)
+        {
+            var idSet = ids.ToHashSet();
+            return Task.FromResult(_photos.Values.Where(p => idSet.Contains(p.Id)).ToList().AsEnumerable());
+        }
+    }
+
     public Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId)
     {
         lock (_lock) return Task.FromResult(_photos.Values.FirstOrDefault(p => p.ClientUploadId == clientUploadId));

@@ -30,7 +30,7 @@ export const PhotoViewerRoute: React.FC = () => {
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
   const { photos: chapterPhotosById, loadChapterPhotos, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useBaulesStore();
-  const { submitRemovalRequest } = usePersonasStore();
+  const { personas, loadPersonas, submitRemovalRequest, taggedPersonas, loadTaggedPersonas, setTaggedPersonas } = usePersonasStore();
   const { recuerdos, loadRecuerdos, addRecuerdo } = useRecuerdosStore();
 
   const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
@@ -53,10 +53,21 @@ export const PhotoViewerRoute: React.FC = () => {
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
-      run(() => loadRecuerdos(photoId), { errorMessage: 'No se pudieron cargar los recuerdos' });
+      // Distinct keys — useAsyncAction.run() shares a single default key across calls with
+      // no explicit one, so two unkeyed run() calls fired in the same effect flush collide:
+      // the second silently short-circuits as "already-pending" instead of actually running.
+      run(() => loadRecuerdos(photoId), { key: 'recuerdos', errorMessage: 'No se pudieron cargar los recuerdos' });
+      run(() => loadTaggedPersonas(photoId), { key: 'tagged-personas', errorMessage: 'No se pudieron cargar las personas etiquetadas' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, photoId, loadRecuerdos]);
+  }, [auth.isAuthenticated, photoId, loadRecuerdos, loadTaggedPersonas]);
+
+  useEffect(() => {
+    if (auth.isAuthenticated && baulId && !personas[baulId]) {
+      run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'No se pudieron cargar las personas del baúl' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.isAuthenticated, baulId, personas, loadPersonas]);
 
   if (isLoadingBaul) return <div className="p-8 text-center">Cargando foto...</div>;
 
@@ -161,6 +172,14 @@ export const PhotoViewerRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleSaveTags = async (photoToTag: Photo, personaIds: string[]): Promise<boolean> => {
+    const result = await run(() => setTaggedPersonas(photoToTag.id, personaIds), {
+      successMessage: 'Personas etiquetadas actualizadas',
+      errorMessage: 'Error al etiquetar personas',
+    });
+    return result.ok;
+  };
+
   const handleDownloadPhoto = async (photoToDownload: Photo) => {
     await run(async () => {
       const { blob, fileName } = await api.photos.download(photoToDownload.id);
@@ -193,6 +212,9 @@ export const PhotoViewerRoute: React.FC = () => {
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
       onDownloadPhoto={handleDownloadPhoto}
+      taggedPersonas={taggedPersonas[photo.id] || []}
+      baulPersonas={personas[baul.id] || []}
+      onSaveTags={handleSaveTags}
     />
   );
 };

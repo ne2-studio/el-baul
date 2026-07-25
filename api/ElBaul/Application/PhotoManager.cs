@@ -16,7 +16,8 @@ public class PhotoManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     IPhotoDateExtractor photoDateExtractor,
-    BaulAccessService baulAccess) : IPhotoManager
+    BaulAccessService baulAccess,
+    IPhotoPersonaTagRepository photoPersonaTagRepository) : IPhotoManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId)
     {
@@ -477,6 +478,112 @@ public class PhotoManager(
 
         var content = await photoStorage.OpenReadForDownloadAsync(photo.StorageKey);
         return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(photo.StorageKey).OriginalFileName);
+    }
+
+    public async Task<Result<IEnumerable<TaggedPersonaDto>>> GetTaggedPersonasAsync(Guid photoId)
+    {
+        var id = new PhotoId(photoId);
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(id);
+        if (photo is null) return Result.Failure<IEnumerable<TaggedPersonaDto>>("Photo not found");
+
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo tagged personas", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
+
+        var personaIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(id);
+        var dtos = new List<TaggedPersonaDto>();
+        foreach (var personaId in personaIds)
+        {
+            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+            if (persona is not null) dtos.Add(await ToTaggedPersonaDtoAsync(persona));
+        }
+
+        return Result.Success<IEnumerable<TaggedPersonaDto>>(dtos);
+    }
+
+    public async Task<Result<IEnumerable<TaggedPersonaDto>>> SetTaggedPersonasAsync(Guid photoId, IEnumerable<Guid> personaIds)
+    {
+        var id = new PhotoId(photoId);
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(id);
+        if (photo is null)
+        {
+            logger.LogWarning("Photo tagging rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<IEnumerable<TaggedPersonaDto>>("Photo not found");
+        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo tagging", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
+
+        var distinctIds = personaIds.Select(p => new PersonaId(p)).Distinct().ToList();
+        var personas = new List<Persona>();
+        foreach (var personaId in distinctIds)
+        {
+            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+            if (persona is null || persona.BaulId != photo.BaulId)
+            {
+                logger.LogWarning(
+                    "Photo tagging rejected: persona not found in this baúl {BaulId} {PhotoId} {PersonaId}",
+                    photo.BaulId, photoId, personaId);
+                return Result.Failure<IEnumerable<TaggedPersonaDto>>("Persona not found");
+            }
+            personas.Add(persona);
+        }
+
+        await photoPersonaTagRepository.SetTagsAsync(id, photo.BaulId, distinctIds, clock.UtcNow());
+        logger.LogInformation("Photo tags updated {BaulId} {PhotoId} {PersonaCount}", photo.BaulId, photoId, personas.Count);
+
+        var dtos = new List<TaggedPersonaDto>();
+        foreach (var persona in personas) dtos.Add(await ToTaggedPersonaDtoAsync(persona));
+        return Result.Success<IEnumerable<TaggedPersonaDto>>(dtos);
+    }
+
+    public async Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(Guid baulId, Guid personaId)
+    {
+        var bId = new BaulId(baulId);
+        var pId = new PersonaId(personaId);
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Member, "Photos by persona", new { BaulId = baulId, PersonaId = personaId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
+
+        var persona = await baulRepository.GetPersonaByIdAsync(pId);
+        if (persona is null || persona.BaulId != bId) return Result.Failure<IEnumerable<PhotoDto>>("Persona not found");
+
+        var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(pId);
+        var photos = (await photoRepository.GetByIdsAsync(photoIds))
+            .Where(p => p.BaulId == bId && p.Status == PhotoStatus.Active)
+            // Same chronological key as PhotoRepository.GetPageAsync: dated photos first
+            // (oldest to newest), undated last, CreatedAt as the final tiebreaker.
+            .OrderBy(p => p.DateYear == null)
+            .ThenBy(p => p.DateYear)
+            .ThenBy(p => p.DateMonth ?? 1)
+            .ThenBy(p => p.DateDay ?? 1)
+            .ThenBy(p => p.CreatedAt)
+            .ToList();
+
+        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
+        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
+
+        var dtos = new List<PhotoDto>();
+        foreach (var photo in photos)
+        {
+            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
+            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
+        }
+
+        return Result.Success<IEnumerable<PhotoDto>>(dtos);
+    }
+
+    private async Task<TaggedPersonaDto> ToTaggedPersonaDtoAsync(Persona persona)
+    {
+        var avatarUrl = persona.AvatarPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
+            : null;
+        return new TaggedPersonaDto(persona.Id.ToString(), persona.Nickname, persona.Name, avatarUrl);
     }
 
     private PhotoDate? ResolvePhotoDate((int Year, int? Month, int? Day)? explicitDate, Stream content)

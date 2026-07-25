@@ -34,6 +34,8 @@ const sharedDefaults = {
   onShareInvite: () => alert('onShareInvite clicked'),
   onChangeRole: () => alert('onChangeRole clicked'),
   onRevokeAccess: async () => true,
+  photos: [],
+  onSelectPhoto: () => alert('onSelectPhoto clicked'),
 };
 
 export const Default: Story = {

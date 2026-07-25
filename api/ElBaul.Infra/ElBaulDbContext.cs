@@ -11,6 +11,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<Recuerdo> Recuerdos => Set<Recuerdo>();
     public DbSet<Persona> Personas => Set<Persona>();
+    public DbSet<PhotoPersonaTag> PhotoPersonaTags => Set<PhotoPersonaTag>();
     public DbSet<RemovalRequest> RemovalRequests => Set<RemovalRequest>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
     public DbSet<EmailLinkClick> EmailLinkClicks => Set<EmailLinkClick>();

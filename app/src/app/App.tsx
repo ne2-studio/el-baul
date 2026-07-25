@@ -26,6 +26,7 @@ import { RequestBaulDeletionRoute } from '../features/baules/components/RequestB
 import { CreateChapterFormRoute } from '../features/chapters/components/CreateChapterFormRoute';
 import { ChapterRoute } from '../features/chapters/components/ChapterRoute';
 import { PhotoViewerRoute } from '../features/photos/components/PhotoViewerRoute';
+import { PersonaPhotoViewerRoute } from '../features/photos/components/PersonaPhotoViewerRoute';
 import { UploadConfirmationRoute } from '../features/photos/components/UploadConfirmationRoute';
 import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadErrorRoute } from '../features/photos/components/UploadErrorRoute';
@@ -198,6 +199,11 @@ function App() {
             <PersonaDetailRoute />
           </ProtectedRoute>
         } />
+        <Route path="/baules/:baulId/personas/:personaId/foto/:photoId" element={
+          <ProtectedRoute>
+            <PersonaPhotoViewerRoute />
+          </ProtectedRoute>
+        } />
         <Route path="/baules/:baulId/solicitar-borrado" element={
           <ProtectedRoute>
             <RequestBaulDeletionRoute />
@@ -337,6 +343,11 @@ function App() {
           <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
             <ProtectedRoute>
               <PhotoViewerRoute />
+            </ProtectedRoute>
+          } />
+          <Route path="/baules/:baulId/personas/:personaId/foto/:photoId" element={
+            <ProtectedRoute>
+              <PersonaPhotoViewerRoute />
             </ProtectedRoute>
           } />
         </Routes>

@@ -21,6 +21,7 @@ public class AdminManager(
     IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
+    IPhotoPersonaTagRepository photoPersonaTagRepository,
     IPhotoStorage photoStorage,
     IClock clock,
     ILogger<AdminManager> logger) : IAdminManager
@@ -76,13 +77,16 @@ public class AdminManager(
     }
 
     /// <summary>
-    /// Hard-deletes a baúl and everything in it: recuerdos, photos (incl. soft-deleted ones
-    /// and their storage blobs), chapters, personas, and pending removal requests. Deletion
-    /// order matters — Photo/Recuerdo have Restrict FKs to Baul (see PhotoConfiguration/
-    /// RecuerdoConfiguration) specifically to avoid multiple-cascade-path errors, so those
-    /// rows must be gone before the Baul row itself can go. Chapters/Personas/RemovalRequests
-    /// do cascade at the DB level, but are deleted explicitly anyway so behavior doesn't
-    /// depend on which backend (Postgres vs. the in-memory Lite repositories) is running.
+    /// Hard-deletes a baúl and everything in it: recuerdos, photo-persona tags, photos (incl.
+    /// soft-deleted ones and their storage blobs), chapters, personas, and pending removal
+    /// requests. Deletion order matters — Photo/Recuerdo/PhotoPersonaTag have Restrict FKs to
+    /// Baul (or, for PhotoPersonaTag, to Photo and Persona — see PhotoConfiguration/
+    /// RecuerdoConfiguration/PhotoPersonaTagConfiguration) specifically to avoid
+    /// multiple-cascade-path errors, so those rows must be gone before the Baul row itself can
+    /// go — PhotoPersonaTag first, since it references both Photo and Persona. Chapters/
+    /// Personas/RemovalRequests do cascade at the DB level, but are deleted explicitly anyway
+    /// so behavior doesn't depend on which backend (Postgres vs. the in-memory Lite
+    /// repositories) is running.
     /// </summary>
     public async Task<Result> DeleteBaulAsync(Guid baulId)
     {
@@ -93,6 +97,7 @@ public class AdminManager(
         var photos = (await photoRepository.GetAllByBaulIdAsync(id)).ToList();
         var personas = (await baulRepository.GetPersonasAsync(id)).ToList();
 
+        await photoPersonaTagRepository.DeleteByBaulIdAsync(id);
         await recuerdoRepository.DeleteByBaulIdAsync(id);
         await photoRepository.DeleteByBaulIdAsync(id);
         await chapterRepository.DeleteByBaulIdAsync(id);

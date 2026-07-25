@@ -16,6 +16,7 @@ public class PersonaManagerTests
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
+    private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
 
     public PersonaManagerTests()
     {
@@ -26,7 +27,7 @@ public class PersonaManagerTests
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PersonaManager>.Instance, _baulRepository, _photoRepository, _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance), _photoPersonaTagRepository);
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
@@ -259,5 +260,23 @@ public class PersonaManagerTests
 
         var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
         Assert.Null(persona!.UserId);
+    }
+
+    [Fact]
+    public async Task RemovePersonaAsync_ShouldClearHerPhotoTags_BeforeRemovingHer()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
+        var photoId = Guid.NewGuid();
+        await _photoPersonaTagRepository.SetTagsAsync(new PhotoId(photoId), new BaulId(baulId), [new PersonaId(personaId)], _clock.UtcNow());
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.RemovePersonaAsync(baulId, personaId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
+        Assert.Null(await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId)));
     }
 }

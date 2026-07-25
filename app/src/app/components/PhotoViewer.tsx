@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, BookImage, FolderInput, Calendar, Flag, Trash2 } from 'lucide-react';
+import { Download, BookImage, FolderInput, Calendar, Flag, Trash2, Tag } from 'lucide-react';
 import { Photo } from './PhotosView';
 import { BaulIcon } from './BaulIcon';
 import { MoveModal } from './MoveModal';
 import { DateModal } from './DateModal';
 import { DeletePhotoModal } from './DeletePhotoModal';
 import { RemovalRequestModal } from './RemovalRequestModal';
+import { TagPersonasModal } from './TagPersonasModal';
 import { ConfirmationToast } from './ConfirmationToast';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from './PhotoViewerHeader';
 import { PhotoStage } from './PhotoStage';
@@ -14,7 +15,7 @@ import { formatPartialDate } from '../utils/timeUtils';
 import { RecuerdoInput } from './RecuerdoInput';
 import { RecuerdosList } from './RecuerdosList';
 import { Recuerdo } from './RecuerdoCard';
-import { PhotoDate } from '@/types';
+import { PhotoDate, Persona, TaggedPersona } from '@/types';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 
@@ -38,6 +39,11 @@ interface PhotoViewerProps {
   onAddRecuerdo?: (photoId: string, text: string) => void;
   onUserClick?: (personaId: string) => void;
   onDownloadPhoto?: (photo: Photo) => void;
+  /** Personas etiquetadas en la foto actualmente mostrada. */
+  taggedPersonas?: TaggedPersona[];
+  /** Roster completo del baúl, para el checklist del modal de etiquetado. */
+  baulPersonas?: Persona[];
+  onSaveTags?: (photo: Photo, personaIds: string[]) => Promise<boolean>;
 }
 
 export function PhotoViewer({
@@ -57,7 +63,10 @@ export function PhotoViewer({
   recuerdos = [],
   onAddRecuerdo,
   onUserClick,
-  onDownloadPhoto
+  onDownloadPhoto,
+  taggedPersonas = [],
+  baulPersonas = [],
+  onSaveTags
 }: PhotoViewerProps) {
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -65,10 +74,13 @@ export function PhotoViewer({
   const [moveTargetId, setMoveTargetId] = useState('');
   const [showDateModal, setShowDateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
   const [isSubmittingRemoval, setIsSubmittingRemoval] = useState(false);
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
   const [isSubmittingDate, setIsSubmittingDate] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
+  const [isSubmittingTags, setIsSubmittingTags] = useState(false);
 
   useScrollLock();
   const viewportInset = useVisualViewportInset();
@@ -131,7 +143,28 @@ export function PhotoViewer({
     }, 3000);
   };
 
+  const openTagModal = () => {
+    setSelectedPersonaIds(taggedPersonas.map((p) => p.id));
+    setShowTagModal(true);
+  };
+
+  const toggleTaggedPersona = (personaId: string) => {
+    setSelectedPersonaIds((current) =>
+      current.includes(personaId) ? current.filter((id) => id !== personaId) : [...current, personaId]);
+  };
+
+  const handleTagsSubmit = async () => {
+    if (!onSaveTags) return;
+    setIsSubmittingTags(true);
+    const ok = await onSaveTags(photo, selectedPersonaIds);
+    setIsSubmittingTags(false);
+    if (ok) setShowTagModal(false);
+  };
+
   const menuItems: PhotoViewerMenuItem[] = [];
+  if (onSaveTags) {
+    menuItems.push({ key: 'tag-personas', label: 'Etiquetar personas', icon: Tag, onSelect: openTagModal });
+  }
   if (onDownloadPhoto) {
     menuItems.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: () => onDownloadPhoto(photo) });
   }
@@ -244,6 +277,29 @@ export function PhotoViewer({
               </button>
             )}
 
+            {/* Tagged personas */}
+            {taggedPersonas.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {taggedPersonas.map((persona) => (
+                  <button
+                    key={persona.id}
+                    onClick={() => onUserClick && onUserClick(persona.id)}
+                    disabled={!onUserClick}
+                    className="flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full bg-background/10 hover:bg-background/20 transition-colors disabled:hover:bg-background/10"
+                  >
+                    {persona.avatarUrl ? (
+                      <img src={persona.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-background/20 flex items-center justify-center text-[10px] text-background/70">
+                        {persona.nickname.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="text-xs text-background/80">{persona.nickname}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Recuerdos List */}
             {!hasRecuerdos ? (
               <div className="text-center">
@@ -310,6 +366,18 @@ export function PhotoViewer({
           onCancel={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteSubmit}
           isSubmitting={isDeletingPhoto}
+        />
+      )}
+
+      {/* Etiquetar personas modal */}
+      {showTagModal && (
+        <TagPersonasModal
+          personas={baulPersonas}
+          selectedIds={selectedPersonaIds}
+          onToggle={toggleTaggedPersona}
+          onCancel={() => setShowTagModal(false)}
+          onConfirm={handleTagsSubmit}
+          isSubmitting={isSubmittingTags}
         />
       )}
     </>

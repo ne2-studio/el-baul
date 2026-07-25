@@ -15,6 +15,7 @@ public class PhotoManagerTests
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
+    private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
     private readonly FakePhotoDateExtractor _photoDateExtractor = new();
@@ -22,7 +23,8 @@ public class PhotoManagerTests
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(currentUserId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new StaticCurrentUserProvider(currentUserId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            _photoPersonaTagRepository);
 
     private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
     {
@@ -123,7 +125,8 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository, failingStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            _photoPersonaTagRepository);
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -143,7 +146,8 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            _photoPersonaTagRepository);
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -166,7 +170,8 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            _photoPersonaTagRepository);
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -841,5 +846,135 @@ public class PhotoManagerTests
         var updated = Assert.Single(result.Value);
         Assert.Equal(ownPhotoId.ToString(), updated.Id);
         Assert.Equal(2018, updated.DateYear);
+    }
+
+    [Fact]
+    public async Task SetTaggedPersonasAsync_ShouldTagPersonas_ThenGetTaggedPersonasAsync_ShouldReturnThem()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var setResult = await manager.SetTaggedPersonasAsync(photoId, [personaId]);
+
+        Assert.True(setResult.IsSuccess);
+        Assert.Equal("Abuelo Antonio", Assert.Single(setResult.Value).Nickname);
+
+        var getResult = await manager.GetTaggedPersonasAsync(photoId);
+        Assert.True(getResult.IsSuccess);
+        Assert.Equal(personaId.ToString(), Assert.Single(getResult.Value).Id);
+    }
+
+    [Fact]
+    public async Task SetTaggedPersonasAsync_ShouldReplaceThePreviousTagSet()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var firstPersonaId = Guid.NewGuid();
+        var secondPersonaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(firstPersonaId), new BaulId(baulId), null, "Primera", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(secondPersonaId), new BaulId(baulId), null, "Segunda", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        await manager.SetTaggedPersonasAsync(photoId, [firstPersonaId]);
+        var result = await manager.SetTaggedPersonasAsync(photoId, [secondPersonaId]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Segunda", Assert.Single(result.Value).Nickname);
+    }
+
+    [Fact]
+    public async Task SetTaggedPersonasAsync_ShouldFail_WhenPersonaBelongsToAnotherBaul()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+
+        var otherBaulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
+        var foreignPersonaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(foreignPersonaId), new BaulId(otherBaulId), null, "Ajeno", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetTaggedPersonasAsync(photoId, [foreignPersonaId]);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Persona not found", result.Error);
+        Assert.Empty((await manager.GetTaggedPersonasAsync(photoId)).Value);
+    }
+
+    [Fact]
+    public async Task SetTaggedPersonasAsync_ShouldFail_WhenPhotoNotFound()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetTaggedPersonasAsync(Guid.NewGuid(), []);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error);
+    }
+
+    [Fact]
+    public async Task GetByPersonaIdAsync_ShouldReturnTaggedPhotos_OrderedChronologically()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var newerPhotoId = Guid.NewGuid();
+        var olderPhotoId = Guid.NewGuid();
+        var undatedPhotoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(newerPhotoId), new ChapterId(chapterId), new BaulId(baulId), "newer", PhotoDates.Of(2020, 5, 10), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(olderPhotoId), new ChapterId(chapterId), new BaulId(baulId), "older", PhotoDates.Of(1998, 6, 15), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(undatedPhotoId), new ChapterId(chapterId), new BaulId(baulId), "undated", null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        await manager.SetTaggedPersonasAsync(newerPhotoId, [personaId]);
+        await manager.SetTaggedPersonasAsync(olderPhotoId, [personaId]);
+        await manager.SetTaggedPersonasAsync(undatedPhotoId, [personaId]);
+
+        var result = await manager.GetByPersonaIdAsync(baulId, personaId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal([olderPhotoId.ToString(), newerPhotoId.ToString(), undatedPhotoId.ToString()], result.Value.Select(p => p.Id));
+    }
+
+    [Fact]
+    public async Task GetByPersonaIdAsync_ShouldExcludeSoftDeletedPhotos()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var photoId = Guid.NewGuid();
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        await manager.SetTaggedPersonasAsync(photoId, [personaId]);
+        await manager.DeleteAsync(photoId, "duplicada");
+
+        var result = await manager.GetByPersonaIdAsync(baulId, personaId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value);
+    }
+
+    [Fact]
+    public async Task GetByPersonaIdAsync_ShouldFail_WhenPersonaBelongsToAnotherBaul()
+    {
+        var (baulId, _) = await SeedBaulWithChapterAsync();
+        var otherBaulId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
+        var foreignPersonaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(foreignPersonaId), new BaulId(otherBaulId), null, "Ajeno", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetByPersonaIdAsync(baulId, foreignPersonaId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Persona not found", result.Error);
     }
 }

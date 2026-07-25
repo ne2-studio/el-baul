@@ -26,6 +26,8 @@ export const PersonaDetailRoute: React.FC = () => {
     uploadPersonaAvatar,
     updateUserRole,
     revokeAccess,
+    personaPhotos,
+    loadPersonaPhotos,
   } = usePersonasStore();
   const { run, isPending } = useAsyncAction();
 
@@ -39,11 +41,20 @@ export const PersonaDetailRoute: React.FC = () => {
     if (!baulId || persona) return;
 
     setIsLoading(true);
-    run(() => loadPersonas(baulId), { errorMessage: 'Error al cargar la ficha' }).finally(() =>
+    run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'Error al cargar la ficha' }).finally(() =>
       setIsLoading(false)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baulId, persona, loadPersonas]);
+
+  useEffect(() => {
+    if (!baulId || !personaId || personaPhotos[personaId]) return;
+    // Distinct key — this effect can fire in the same flush as the one above (e.g. on first
+    // mount with nothing cached yet), and useAsyncAction.run() shares a default key across
+    // unkeyed calls, so without this the second call would silently no-op.
+    run(() => loadPersonaPhotos(baulId, personaId), { key: 'persona-photos', errorMessage: 'Error al cargar las fotos' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baulId, personaId, personaPhotos, loadPersonaPhotos]);
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
   if (!baulId || !personaId || !persona) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
@@ -118,6 +129,10 @@ export const PersonaDetailRoute: React.FC = () => {
         onShareInvite={handleShareInvite}
         onChangeRole={handleChangeRole}
         onRevokeAccess={handleRevokeAccess}
+        photos={personaPhotos[personaId] || []}
+        onSelectPhoto={(photo) => navigate(`/baules/${baulId}/personas/${personaId}/foto/${photo.id}`, {
+          state: { backgroundLocation: location },
+        })}
       />
       {isEditing && (
         <EditPersonaModal

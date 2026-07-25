@@ -1,4 +1,4 @@
-import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage } from './types';
+import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
 import { getEnv } from './runtimeConfig';
 
 export const API_BASE = getEnv('VITE_API_URL');
@@ -99,6 +99,10 @@ export const api = {
 
     getLoosePhotos: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
+    // Every photo tagged with this persona, ordered chronologically (oldest first) —
+    // powers the "ficha de persona" photo gallery.
+    getPersonaPhotos: async (baulId: string, personaId: string) =>
+      (await get<any[]>(`/api/baules/${baulId}/personas/${personaId}/photos`)).map((p) => new Photo(p)),
 
     getRemovalRequests: async (baulId: string) =>
       (await get<any[]>(`/api/baules/${baulId}/removal-requests`)).map((r) => new RemovalRequest(r)),
@@ -177,6 +181,9 @@ export const api = {
 
       return { blob: await response.blob(), fileName };
     },
+    getTaggedPersonas: (photoId: string) => get<TaggedPersona[]>(`/api/photos/${photoId}/personas`),
+    setTaggedPersonas: (photoId: string, personaIds: string[]) =>
+      put<TaggedPersona[]>(`/api/photos/${photoId}/personas`, { personaIds }),
   },
 
   recuerdos: {

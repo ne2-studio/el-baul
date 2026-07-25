@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, MoreVertical, Share2, UserX } from 'lucide-react';
-import { Persona, BaulRole } from '@/types';
+import { Persona, BaulRole, Photo } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 import { PageContainer } from './PageContainer';
 import { RevokeAccessModal } from './RevokeAccessModal';
@@ -23,6 +23,9 @@ interface PersonaDetailScreenProps {
   /** Devuelve si la revocación tuvo éxito — el modal se queda abierto (con spinner)
    * hasta saberlo, y solo se cierra por sí solo si el resultado fue true. */
   onRevokeAccess: () => Promise<boolean>;
+  /** Fotos etiquetadas con esta persona, ya ordenadas cronológicamente por el backend. */
+  photos: Photo[];
+  onSelectPhoto: (photo: Photo) => void;
 }
 
 export function PersonaDetailScreen({
@@ -33,6 +36,8 @@ export function PersonaDetailScreen({
   onShareInvite,
   onChangeRole,
   onRevokeAccess,
+  photos,
+  onSelectPhoto,
 }: PersonaDetailScreenProps) {
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
@@ -149,6 +154,28 @@ export function PersonaDetailScreen({
             </button>
           )}
         </div>
+
+        {photos.length > 0 && (
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <p
+              className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
+              style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+            >
+              Fotos
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {photos.map((photo) => (
+                <button
+                  key={photo.id}
+                  onClick={() => onSelectPhoto(photo)}
+                  className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 active:opacity-80 transition-opacity"
+                >
+                  <img src={photo.thumbnailUrl} alt="Foto" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {canManage && !isPending && (
           <div className="bg-card rounded-2xl border border-border p-6 space-y-4">

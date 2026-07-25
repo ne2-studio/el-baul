@@ -1,11 +1,13 @@
 import { create } from 'zustand';
-import { Persona, RemovalRequest, BaulRole } from '@/types';
+import { Persona, RemovalRequest, BaulRole, Photo, TaggedPersona } from '@/types';
 import { api } from '@/api';
 import { useBaulesStore } from './useBaulesStore';
 
 export interface PersonasState {
   personas: Record<string, Persona[]>;
   removalRequests: Record<string, RemovalRequest[]>;
+  taggedPersonas: Record<string, TaggedPersona[]>; // keyed by photoId
+  personaPhotos: Record<string, Photo[]>; // keyed by personaId
 
   reset: () => void;
 
@@ -22,15 +24,23 @@ export interface PersonasState {
   // Solo se usa photo.id — se acepta cualquier objeto con id para no acoplar esta acción
   // al tipo Photo concreto de cada pantalla (PhotoViewer usa su propia interfaz local).
   submitRemovalRequest: (baulId: string, photo: { id: string }, reason: string) => Promise<void>;
+
+  loadTaggedPersonas: (photoId: string) => Promise<void>;
+  setTaggedPersonas: (photoId: string, personaIds: string[]) => Promise<void>;
+  loadPersonaPhotos: (baulId: string, personaId: string) => Promise<void>;
 }
 
 export const usePersonasStore = create<PersonasState>((set, get) => ({
   personas: {},
   removalRequests: {},
+  taggedPersonas: {},
+  personaPhotos: {},
 
   reset: () => set({
     personas: {},
     removalRequests: {},
+    taggedPersonas: {},
+    personaPhotos: {},
   }),
 
   createPersona: async (baulId, nickname) => {
@@ -122,5 +132,20 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
 
   submitRemovalRequest: async (baulId, photo, reason) => {
     await api.baules.submitRemovalRequest(baulId, photo.id, reason);
+  },
+
+  loadTaggedPersonas: async (photoId) => {
+    const taggedPersonas = await api.photos.getTaggedPersonas(photoId);
+    set((state) => ({ taggedPersonas: { ...state.taggedPersonas, [photoId]: taggedPersonas } }));
+  },
+
+  setTaggedPersonas: async (photoId, personaIds) => {
+    const taggedPersonas = await api.photos.setTaggedPersonas(photoId, personaIds);
+    set((state) => ({ taggedPersonas: { ...state.taggedPersonas, [photoId]: taggedPersonas } }));
+  },
+
+  loadPersonaPhotos: async (baulId, personaId) => {
+    const photos = await api.baules.getPersonaPhotos(baulId, personaId);
+    set((state) => ({ personaPhotos: { ...state.personaPhotos, [personaId]: photos } }));
   },
 }));

@@ -3,6 +3,7 @@ namespace ElBaul.Ports.Output;
 public interface IPhotoRepository
 {
     Task<Photo?> GetByIdAsync(PhotoId id);
+    Task<IEnumerable<Photo>> GetByIdsAsync(IEnumerable<PhotoId> ids);
     Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId);
     Task<IEnumerable<Photo>> GetByChapterIdAsync(ChapterId chapterId);
     Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(BaulId baulId);
