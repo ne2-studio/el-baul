@@ -146,6 +146,19 @@ public class ChatContextBuilderTests
     }
 
     [Fact]
+    public async Task BuildAsync_ShouldIncludeAPersonasBiografia_WhenSet()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow(), Biografia: "Nació en Asturias en 1945."));
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Qué sabemos del abuelo?");
+
+        Assert.Contains("Biografía: Nació en Asturias en 1945.", context);
+    }
+
+    [Fact]
     public async Task BuildSummaryAsync_ShouldIncludePersonasAndChapters_ButNotRecuerdos()
     {
         var baulId = Guid.NewGuid();

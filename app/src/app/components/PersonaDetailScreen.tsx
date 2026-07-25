@@ -155,6 +155,18 @@ export function PersonaDetailScreen({
           )}
         </div>
 
+        {persona.biografia && (
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <p
+              className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
+              style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+            >
+              Biografía
+            </p>
+            <p className="text-foreground whitespace-pre-wrap">{persona.biografia}</p>
+          </div>
+        )}
+
         {photos.length > 0 && (
           <div className="bg-card rounded-2xl border border-border p-6">
             <p

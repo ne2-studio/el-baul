@@ -92,7 +92,7 @@ public class BaulesController(
     [HttpPut("{baulId:guid}/personas/{personaId:guid}")]
     public async Task<IActionResult> UpdatePersona(Guid baulId, Guid personaId, [FromBody] UpdatePersonaRequest request)
     {
-        var result = await personaManager.UpdatePersonaAsync(baulId, personaId, request.Name, request.Nickname);
+        var result = await personaManager.UpdatePersonaAsync(baulId, personaId, request.Name, request.Nickname, request.Biografia);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 

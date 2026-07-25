@@ -9,5 +9,6 @@ public record Persona
     BaulRole Role,
     DateTime InvitedDate,
     string? Name = null,
-    string? AvatarPhotoKey = null
+    string? AvatarPhotoKey = null,
+    string? Biografia = null
 );

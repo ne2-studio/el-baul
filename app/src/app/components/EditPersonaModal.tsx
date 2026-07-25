@@ -7,7 +7,7 @@ import { BottomSheetModal } from './BottomSheetModal';
 interface EditPersonaModalProps {
   persona: Persona;
   onCancel: () => void;
-  onSave: (name: string, nickname: string) => void;
+  onSave: (name: string, nickname: string, biografia: string) => void;
   onUploadAvatar: (file: File) => void;
   isSubmitting?: boolean;
   isUploadingAvatar?: boolean;
@@ -23,13 +23,14 @@ export function EditPersonaModal({
 }: EditPersonaModalProps) {
   const [name, setName] = useState(persona.name || '');
   const [nickname, setNickname] = useState(persona.nickname);
+  const [biografia, setBiografia] = useState(persona.biografia || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
     const trimmedName = name.trim();
     const trimmedNickname = nickname.trim();
     if (!trimmedName || !trimmedNickname || isSubmitting) return;
-    onSave(trimmedName, trimmedNickname);
+    onSave(trimmedName, trimmedNickname, biografia.trim());
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,6 +110,22 @@ export function EditPersonaModal({
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           placeholder="Ej. Abuela, Tío Juan…"
           className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
+        />
+      </div>
+
+      <div>
+        <label
+          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
+          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+        >
+          Biografía
+        </label>
+        <textarea
+          value={biografia}
+          onChange={(e) => setBiografia(e.target.value)}
+          placeholder="Cuéntanos su historia: dónde nació, cómo era, anécdotas…"
+          rows={4}
+          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30 resize-none"
         />
       </div>
 

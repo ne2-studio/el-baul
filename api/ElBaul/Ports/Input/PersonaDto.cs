@@ -12,5 +12,6 @@ public record PersonaDto
     DateTime InvitedDate,
     string BaulId,
     string? AvatarUrl,
-    bool CanEdit
+    bool CanEdit,
+    string? Biografia
 );

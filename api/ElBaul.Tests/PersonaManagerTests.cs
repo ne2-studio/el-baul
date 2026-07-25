@@ -129,7 +129,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu");
+        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu", null);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -144,7 +144,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Otro Nombre", "Otro");
+        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Otro Nombre", "Otro", null);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Otro Nombre", result.Value.Name);
@@ -161,10 +161,27 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu");
+        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu", null);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Abuela María", result.Value.Name);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaAsync_ShouldSaveTheBiografia()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu", "Nació en Asturias en 1945.");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
+        var persisted = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
+        Assert.Equal("Nació en Asturias en 1945.", persisted!.Biografia);
     }
 
     [Fact]

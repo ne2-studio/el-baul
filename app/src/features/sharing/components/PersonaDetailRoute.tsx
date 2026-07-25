@@ -59,8 +59,8 @@ export const PersonaDetailRoute: React.FC = () => {
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
   if (!baulId || !personaId || !persona) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
 
-  const handleSave = async (name: string, nickname: string) => {
-    const result = await run(() => updatePersona(baulId, personaId, name, nickname), {
+  const handleSave = async (name: string, nickname: string, biografia: string) => {
+    const result = await run(() => updatePersona(baulId, personaId, name, nickname, biografia), {
       key: 'save',
       successMessage: 'Ficha actualizada',
       errorMessage: 'Error al actualizar la ficha',

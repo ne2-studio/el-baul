@@ -139,7 +139,7 @@ public class PersonaManager(
         return await ToPersonaDtoAsync(persona, null, canEdit: true);
     }
 
-    public async Task<Result<PersonaDto>> UpdatePersonaAsync(Guid baulId, Guid personaId, string? name, string nickname)
+    public async Task<Result<PersonaDto>> UpdatePersonaAsync(Guid baulId, Guid personaId, string? name, string nickname, string? biografia)
     {
         var bId = new BaulId(baulId);
         var pId = new PersonaId(personaId);
@@ -163,7 +163,7 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>("Access denied");
         }
 
-        var updated = persona with { Name = name, Nickname = nickname };
+        var updated = persona with { Name = name, Nickname = nickname, Biografia = biografia };
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona updated {BaulId} {PersonaId}", baulId, personaId);
 
@@ -285,6 +285,6 @@ public class PersonaManager(
         return new PersonaDto(
             persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
             persona.Nickname, persona.Role.ToApiString(), persona.UserId is not null ? "active" : "pending",
-            persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit);
+            persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia);
     }
 }

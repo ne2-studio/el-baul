@@ -26,6 +26,7 @@ export class Persona {
   invitedDate: string;
   avatarUrl?: string;
   canEdit?: boolean;
+  biografia?: string;
 
   constructor(data: any) {
     this.id = data.id;
@@ -38,6 +39,7 @@ export class Persona {
     this.invitedDate = formatRelativeTime(data.invitedDate);
     this.avatarUrl = data.avatarUrl;
     this.canEdit = data.canEdit;
+    this.biografia = data.biografia;
   }
 }
 

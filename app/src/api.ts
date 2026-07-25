@@ -78,8 +78,8 @@ export const api = {
       new Persona(await post<any>(`/api/baules/${baulId}/personas`, { nickname })),
     getPersona: async (baulId: string, personaId: string) =>
       new Persona(await get<any>(`/api/baules/${baulId}/personas/${personaId}`)),
-    updatePersona: async (baulId: string, personaId: string, name: string, nickname: string) =>
-      new Persona(await put<any>(`/api/baules/${baulId}/personas/${personaId}`, { name, nickname })),
+    updatePersona: async (baulId: string, personaId: string, name: string, nickname: string, biografia: string) =>
+      new Persona(await put<any>(`/api/baules/${baulId}/personas/${personaId}`, { name, nickname, biografia })),
     uploadPersonaAvatar: async (baulId: string, personaId: string, file: File) => {
       const formData = new FormData();
       formData.append('file', file);

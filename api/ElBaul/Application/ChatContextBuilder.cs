@@ -113,7 +113,11 @@ public class ChatContextBuilder(
         sb.AppendLine();
         sb.AppendLine("Personas de la familia en este baúl:");
         foreach (var persona in personas)
+        {
             sb.AppendLine($"- {persona.Nickname}" + (persona.Name is { Length: > 0 } ? $" ({persona.Name})" : ""));
+            if (persona.Biografia is { Length: > 0 })
+                sb.AppendLine($"  Biografía: {persona.Biografia}");
+        }
 
         sb.AppendLine();
         sb.AppendLine("Capítulos:");

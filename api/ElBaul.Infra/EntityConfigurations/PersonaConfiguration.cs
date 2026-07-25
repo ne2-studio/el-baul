@@ -16,6 +16,7 @@ public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
         builder.Property(s => s.Nickname).IsRequired().HasMaxLength(100);
         builder.Property(s => s.Name).HasMaxLength(100);
         builder.Property(s => s.AvatarPhotoKey).HasMaxLength(1000);
+        builder.Property(s => s.Biografia).HasMaxLength(4000);
         builder.Property(s => s.Role).HasConversion<string>().HasMaxLength(20);
         builder.Property(s => s.InvitedDate).HasColumnType("timestamp with time zone");
 
