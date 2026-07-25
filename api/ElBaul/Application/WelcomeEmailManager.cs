@@ -14,6 +14,7 @@ public class WelcomeEmailManager(
     EmailDeliveryCoordinator deliveryCoordinator,
     IBackgroundJobScheduler backgroundJobScheduler,
     IAppConfiguration appConfiguration,
+    ICurrentUserProvider currentUserProvider,
     IClock clock) : IWelcomeEmailManager
 {
     private static readonly TimeSpan EligibilityDelay = TimeSpan.FromHours(2);
@@ -100,8 +101,9 @@ public class WelcomeEmailManager(
             return Result.Failure("Resend:AdminTestRecipient is not configured");
 
         var deduplicationKey = $"test-welcome:{sourceUserId}:{Guid.NewGuid()}";
+        var adminUserId = currentUserProvider.GetUserId();
         return await deliveryCoordinator.SendAsync(
-            sourceUserId, testRecipient, deduplicationKey, EmailType.TestWelcome,
+            adminUserId, testRecipient, deduplicationKey, EmailType.TestWelcome,
             activitySince: null, activityUntil: null,
             renderAsync: async linkBuilder =>
             {

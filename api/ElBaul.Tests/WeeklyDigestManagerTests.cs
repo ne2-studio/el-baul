@@ -10,6 +10,7 @@ namespace ElBaul.Tests;
 public class WeeklyDigestManagerTests
 {
     private const string UserId = "user-1";
+    private const string AdminUserId = "admin-1";
 
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly InMemoryBaulRepository _baulRepository = new();
@@ -22,6 +23,7 @@ public class WeeklyDigestManagerTests
     private readonly FakeEmailSender _emailSender = new();
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
     private readonly StaticAppConfiguration _appConfiguration = new();
+    private readonly StaticCurrentUserProvider _currentUserProvider = new(AdminUserId);
     private readonly StaticClock _clock = new();
 
     private WeeklyDigestManager CreateManager() => CreateManager(_appConfiguration);
@@ -33,7 +35,7 @@ public class WeeklyDigestManagerTests
         new EmailDeliveryCoordinator(
             _sentEmailRepository, _emailLinkClickRepository, _emailSender, appConfiguration, _clock,
             new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance),
-        _jobScheduler, appConfiguration, _clock);
+        _jobScheduler, appConfiguration, _currentUserProvider, _clock);
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
     {
@@ -292,6 +294,18 @@ public class WeeklyDigestManagerTests
         var message = Assert.Single(_emailSender.SentMessages);
         Assert.Equal(_appConfiguration.AdminTestEmailRecipient, message.To);
         Assert.StartsWith("[TEST]", message.Subject);
+    }
+
+    [Fact]
+    public async Task SendTestWeeklyDigestAsync_ShouldRecordTheSentEmailAgainstTheRequestingAdmin_NotTheTargetUser()
+    {
+        SeedUser(UserId);
+        var manager = CreateManager();
+
+        await manager.SendTestWeeklyDigestAsync(UserId);
+
+        var sentEmail = Assert.Single(_sentEmailRepository.All);
+        Assert.Equal(AdminUserId, sentEmail.UserId);
     }
 
     [Fact]

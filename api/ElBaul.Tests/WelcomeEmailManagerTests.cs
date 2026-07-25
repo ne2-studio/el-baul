@@ -10,6 +10,7 @@ namespace ElBaul.Tests;
 public class WelcomeEmailManagerTests
 {
     private const string UserId = "user-1";
+    private const string AdminUserId = "admin-1";
 
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly InMemoryBaulRepository _baulRepository = new();
@@ -19,6 +20,7 @@ public class WelcomeEmailManagerTests
     private readonly FakeEmailSender _emailSender = new();
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
     private readonly StaticAppConfiguration _appConfiguration = new();
+    private readonly StaticCurrentUserProvider _currentUserProvider = new(AdminUserId);
     private readonly StaticClock _clock = new();
 
     private EmailDeliveryCoordinator CreateCoordinator() => new(
@@ -30,7 +32,7 @@ public class WelcomeEmailManagerTests
     private WelcomeEmailManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WelcomeEmailManager>.Instance,
         _userRepository, _baulRepository, _sentEmailRepository,
-        _templateRenderer, CreateCoordinator(), _jobScheduler, appConfiguration, _clock);
+        _templateRenderer, CreateCoordinator(), _jobScheduler, appConfiguration, _currentUserProvider, _clock);
 
     private User SeedUser(string id, DateTime createdAt, string email = "user@example.com")
     {
@@ -282,6 +284,18 @@ public class WelcomeEmailManagerTests
         await manager.SendTestWelcomeEmailAsync(UserId);
 
         Assert.DoesNotContain(UserId, await _sentEmailRepository.GetUserIdsWithSentEmailAsync(EmailType.Welcome));
+    }
+
+    [Fact]
+    public async Task SendTestWelcomeEmailAsync_ShouldRecordTheSentEmailAgainstTheRequestingAdmin_NotTheTargetUser()
+    {
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager();
+
+        await manager.SendTestWelcomeEmailAsync(UserId);
+
+        var sentEmail = Assert.Single(_sentEmailRepository.All);
+        Assert.Equal(AdminUserId, sentEmail.UserId);
     }
 
     [Fact]

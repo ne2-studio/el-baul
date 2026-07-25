@@ -17,6 +17,7 @@ public class WeeklyDigestManager(
     EmailDeliveryCoordinator deliveryCoordinator,
     IBackgroundJobScheduler backgroundJobScheduler,
     IAppConfiguration appConfiguration,
+    ICurrentUserProvider currentUserProvider,
     IClock clock) : IWeeklyDigestManager
 {
     private static readonly TimeSpan DigestInterval = TimeSpan.FromDays(7);
@@ -118,9 +119,10 @@ public class WeeklyDigestManager(
         var lastSent = await sentEmailRepository.GetLatestSentAtAsync(sourceUserId, EmailType.WeeklyDigest);
         var since = lastSent ?? until - DigestInterval;
         var deduplicationKey = $"test-weekly-digest:{sourceUserId}:{Guid.NewGuid()}";
+        var adminUserId = currentUserProvider.GetUserId();
 
         return await deliveryCoordinator.SendAsync(
-            sourceUserId, testRecipient, deduplicationKey, EmailType.TestWeeklyDigest,
+            adminUserId, testRecipient, deduplicationKey, EmailType.TestWeeklyDigest,
             activitySince: since, activityUntil: until,
             renderAsync: async linkBuilder =>
             {
