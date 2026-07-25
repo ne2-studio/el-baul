@@ -71,10 +71,8 @@ async function submitRemovalRequest(guestPage: Page, baulId: string, photoId: st
   await guestPage.getByRole('button', { name: 'Enviar solicitud' }).click();
   // Without this wait, guestContext.close() right after returning can abort the POST before
   // it completes — the admin side then never sees a pending request (this raced intermittently
-  // once the suite had more concurrent load from the other specs, not in isolation). .first():
-  // there are two overlapping "enviada" success signals on this screen (an async-action toast
-  // and a separate self-dismissing ConfirmationToast) — either one confirms success.
-  await expect(guestPage.getByText(/enviada/).first()).toBeVisible({ timeout: 10_000 });
+  // once the suite had more concurrent load from the other specs, not in isolation).
+  await expect(guestPage.getByText(/enviada/)).toBeVisible({ timeout: 10_000 });
 }
 
 test('submit removal request → approve (photo is removed)', async ({ page, browser }) => {

@@ -7,7 +7,6 @@ import { DateModal } from './DateModal';
 import { DeletePhotoModal } from './DeletePhotoModal';
 import { RemovalRequestModal } from './RemovalRequestModal';
 import { TagPersonasModal } from './TagPersonasModal';
-import { ConfirmationToast } from './ConfirmationToast';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from './PhotoViewerHeader';
 import { PhotoStage } from './PhotoStage';
 import { Chapter } from './ChaptersView';
@@ -69,7 +68,6 @@ export function PhotoViewer({
   onSaveTags
 }: PhotoViewerProps) {
   const [showRemovalModal, setShowRemovalModal] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
   const [showDateModal, setShowDateModal] = useState(false);
@@ -135,12 +133,6 @@ export function PhotoViewer({
     if (!ok) return;
 
     setShowRemovalModal(false);
-    setShowConfirmation(true);
-
-    // Auto-close confirmation after 3 seconds
-    setTimeout(() => {
-      setShowConfirmation(false);
-    }, 3000);
   };
 
   const openTagModal = () => {
@@ -330,11 +322,6 @@ export function PhotoViewer({
           onConfirm={handleSubmitRequest}
           isSubmitting={isSubmittingRemoval}
         />
-      )}
-
-      {/* Confirmation toast */}
-      {showConfirmation && (
-        <ConfirmationToast message="Tu solicitud ha sido enviada al custodio del baúl." />
       )}
 
       {/* Mover a otro capítulo modal */}
