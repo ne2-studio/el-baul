@@ -50,8 +50,16 @@ jobs:
           reportgenerator \
             -reports:"coverage/**/coverage.cobertura.xml" \
             -targetdir:"coverage/report" \
-            -reporttypes:"MarkdownSummaryGithub"
+            -reporttypes:"MarkdownSummaryGithub;Html"
           cat coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: api/coverage/report
+          retention-days: 7
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

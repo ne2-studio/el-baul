@@ -10,6 +10,14 @@ export default mergeConfig(
     test: {
       environment: 'node',
       include: ['src/**/*.test.{ts,tsx}'],
+      coverage: {
+        provider: 'v8',
+        include: ['src/**/*.{ts,tsx}'],
+        // 'text-summary' with a `file` writes the totals table to coverage/summary.txt
+        // instead of only stdout, so CI can drop it straight into the job's step summary.
+        reporter: [['text-summary', { file: 'summary.txt' }], 'json-summary', 'html'],
+        reportsDirectory: './coverage',
+      },
     },
   })
 );
