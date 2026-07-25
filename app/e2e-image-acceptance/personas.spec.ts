@@ -35,9 +35,13 @@ test('create persona → accept invite → change role → revoke access', async
   await guestPage.waitForURL((url) => /\/baules\/[^/]+$/.test(url.pathname), { timeout: 15_000 });
   await guestContext.close();
 
-  // Back as Admin: the persona is no longer pending, so the role <select> is now rendered.
+  // Back as Admin: the persona is no longer pending, so "Gestionar acceso" is now offered
+  // in the options menu — the role <select> lives inside that modal, not on the page itself.
   await page.goto(`/baules/${baulId}/personas/${personaId}`);
+  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
+  await page.getByRole('menuitem', { name: 'Gestionar acceso' }).click();
   await page.getByRole('combobox').selectOption('administrador');
+  await page.getByRole('button', { name: 'Cerrar' }).click();
 
   await page.getByRole('button', { name: 'Opciones de la persona' }).click();
   await page.getByRole('menuitem', { name: 'Quitar acceso' }).click();
