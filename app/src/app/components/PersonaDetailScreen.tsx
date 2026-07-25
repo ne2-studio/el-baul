@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserX } from 'lucide-react';
+import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserX } from 'lucide-react';
 import { Persona, BaulRole } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from './EmptyState';
 import { SimpleFAB } from './FAB';
+import { ManageAccessModal } from './ManageAccessModal';
 import { PageContainer } from './PageContainer';
 import { Photo } from './PhotosView';
 import { PhotoSwimlanes } from './PhotoSwimlanes';
@@ -52,6 +53,7 @@ export function PersonaDetailScreen({
   onSelectPhoto,
 }: PersonaDetailScreenProps) {
   const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [showManageAccessModal, setShowManageAccessModal] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [activeTab, setActiveTab] = useState<'biografia' | 'fotos'>('biografia');
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -127,7 +129,14 @@ export function PersonaDetailScreen({
                     </DropdownMenuItem>
                   )}
 
-                  {canManage && isPending && <DropdownMenuSeparator />}
+                  {canManage && !isPending && (
+                    <DropdownMenuItem onClick={() => setShowManageAccessModal(true)}>
+                      <UserCog className="w-4 h-4 mr-2" />
+                      Gestionar acceso
+                    </DropdownMenuItem>
+                  )}
+
+                  {canManage && <DropdownMenuSeparator />}
 
                   {canManage && (
                     <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
@@ -226,29 +235,6 @@ export function PersonaDetailScreen({
             <PhotoSwimlanes photos={photos} onSelectPhoto={onSelectPhoto} />
           )
         )}
-
-        {canManage && !isPending && (
-          <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-            <p
-              className="text-xs text-muted-foreground uppercase tracking-wide"
-              style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-            >
-              Gestión
-            </p>
-
-            <div>
-              <label className="text-xs text-muted-foreground mb-1.5 block">Rol</label>
-              <select
-                value={persona.role}
-                onChange={(e) => onChangeRole(e.target.value as BaulRole)}
-                className="w-full text-sm px-3 py-2.5 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="colaborador">Colaborador</option>
-                <option value="administrador">Administrador</option>
-              </select>
-            </div>
-          </div>
-        )}
       </PageContainer>
 
       <SimpleFAB
@@ -264,6 +250,14 @@ export function PersonaDetailScreen({
           isSubmitting={isRevoking}
           onConfirm={handleConfirmRevoke}
           onCancel={() => setShowRevokeModal(false)}
+        />
+      )}
+
+      {showManageAccessModal && (
+        <ManageAccessModal
+          role={persona.role}
+          onChangeRole={onChangeRole}
+          onCancel={() => setShowManageAccessModal(false)}
         />
       )}
     </div>
