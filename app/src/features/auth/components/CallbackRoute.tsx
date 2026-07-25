@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useNavigate } from 'react-router-dom';
-import { BaulIcon } from '@/app/components/BaulIcon';
+import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 
 export const CallbackRoute: React.FC = () => {
   const auth = useAuth();

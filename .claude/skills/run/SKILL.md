@@ -128,7 +128,7 @@ has zero baúles, which routes to a completely different empty-state screen — 
 `loadUserData` in `app/src/app/App.tsx` — and a fixed name would eventually collide with a
 leftover from a prior local run and break Playwright's strict-mode locator with a
 "resolved to 2 elements" error), and asserts it lands on the real home screen
-(`app/src/app/components/BaulesList.tsx`).
+(`app/src/features/baules/components/BaulesList.tsx`).
 
 ```bash
 cd app && npm run test:e2e

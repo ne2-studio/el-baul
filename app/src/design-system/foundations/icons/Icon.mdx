@@ -1,0 +1,102 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Icons/Guidelines" />
+
+# Iconografía
+
+Todos los iconos de la aplicación se renderizan a través del componente base `Icon`
+(`app/src/app/components/Icon.tsx`). No se debe importar un icono de `lucide-react`
+directamente en un JSX de pantalla o componente: siempre a través de `Icon`.
+
+```tsx
+import { Icon } from '@/design-system/foundations/icons/Icon';
+import { icons } from '@/design-system/foundations/icons/icons';
+
+<Icon icon={icons.delete} aria-hidden />
+```
+
+`icon` acepta cualquier componente de icono de lucide (no solo los que ya están en el
+catálogo), pero usar el catálogo (`icons.ts`) es la forma recomendada de asegurar que
+dos desarrolladores no acaben representando el mismo concepto con dos iconos distintos.
+
+## Color
+
+Los iconos no tienen paleta propia: usan `currentColor`, así que heredan el color del
+texto que los rodea. Para cambiar el color de un icono, envuélvelo (o su contenedor) con
+una clase de color existente del tema:
+
+```tsx
+<span className="text-destructive">
+  <Icon icon={icons.alertTriangle} aria-hidden />
+</span>
+```
+
+No se debe pasar un color hardcodeado (`text-green-600`, `text-gray-500`, etc.) a un
+icono. Si necesitas un color de estado que hoy no existe como token (por ejemplo
+"éxito" o "advertencia"), es una señal para añadir ese token al tema, no para escribir
+un color suelto.
+
+## Tamaños
+
+`Icon` expone una escala semántica de tamaños en vez de clases `w-*`/`h-*` sueltas:
+
+| `size` | Clase aplicada |
+| --- | --- |
+| `xs` | `w-3 h-3` (12px) |
+| `sm` | `w-4 h-4` (16px) |
+| `md` (por defecto) | `w-5 h-5` (20px) |
+| `lg` | `w-6 h-6` (24px) |
+| `xl` | `w-8 h-8` (32px) |
+
+Solo se debe pasar una clase de tamaño explícita por `className` cuando exista una
+necesidad real y puntual (por ejemplo, un icono decorativo muy grande en un estado
+vacío) — no como sustituto habitual de la escala.
+
+## Icono decorativo vs. informativo
+
+**Decorativo** — el icono acompaña un texto visible o su significado ya lo transmite
+otro elemento. Debe quedar oculto para tecnologías asistivas:
+
+```tsx
+<p>
+  <Icon icon={icons.check} aria-hidden />
+  Guardado correctamente
+</p>
+```
+
+**Informativo** — el icono es la única forma en que se transmite el significado (no hay
+texto visible adyacente). Necesita un nombre accesible mediante `aria-label`, nunca
+`title`:
+
+```tsx
+<Icon icon={icons.alertTriangle} aria-label="Advertencia" />
+```
+
+`Icon` obliga a elegir uno de los dos: sus tipos de TypeScript no compilan si no se pasa
+ni `aria-hidden` ni `aria-label`.
+
+## Botones que solo contienen un icono
+
+El nombre accesible va en el propio botón, no en el icono (que debe seguir siendo
+`aria-hidden`, ya que el botón ya tiene su nombre):
+
+```tsx
+<Button aria-label="Eliminar fotografía">
+  <Icon icon={icons.delete} aria-hidden />
+</Button>
+```
+
+## Añadir un icono nuevo al catálogo oficial
+
+1. Confirma que el concepto no está ya cubierto por otro icono del catálogo (mira la
+   [galería](?path=/story/foundations-icons-gallery--gallery)).
+2. En `icons.ts`, añade un import nombrado del icono de `lucide-react` y una entrada al
+   objeto `icons` con una clave semántica/funcional (`delete`, no `trash2`), no el
+   nombre visual del icono.
+3. Úsalo a través de `<Icon icon={icons.miNuevoIcono} ... />`. La galería y el resto de
+   esta documentación se generan directamente desde ese registro, así que no hace falta
+   tocar nada más.
+
+No importes toda la librería de `lucide-react` en el registro (`import * as icons from
+'lucide-react'`): cada icono se añade con su propio import nombrado para que solo entren
+en el bundle los iconos que la aplicación realmente usa.

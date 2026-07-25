@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PaymentPlaceholderScreen } from '@/app/components/PaymentPlaceholderScreen';
+import { PaymentPlaceholderScreen } from '@/features/profile/components/PaymentPlaceholderScreen';
 import { PlanType } from '@/types';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/useAuthStore';

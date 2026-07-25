@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BaulesList } from '@/app/components/BaulesList';
-import { BaulesLoadingScreen } from '@/app/components/BaulesLoadingScreen';
+import { BaulesList } from '@/features/baules/components/BaulesList';
+import { BaulesLoadingScreen } from '@/features/baules/components/BaulesLoadingScreen';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';

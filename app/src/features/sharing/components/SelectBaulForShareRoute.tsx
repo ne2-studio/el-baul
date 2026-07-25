@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
-import { ShareTargetBaulScreen } from '@/app/components/ShareTargetBaulScreen';
-import { BaulesLoadingScreen } from '@/app/components/BaulesLoadingScreen';
+import { ShareTargetBaulScreen } from '@/features/sharing/components/ShareTargetBaulScreen';
+import { BaulesLoadingScreen } from '@/features/baules/components/BaulesLoadingScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useIncomingShareStore } from '@/store/useIncomingShareStore';
 import { useUIStore } from '@/store/uiStore';

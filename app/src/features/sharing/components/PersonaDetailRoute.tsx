@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Share } from '@capacitor/share';
-import { PersonaDetailScreen } from '@/app/components/PersonaDetailScreen';
-import { EditPersonaInfoModal } from '@/app/components/EditPersonaInfoModal';
-import { EditBiografiaModal } from '@/app/components/EditBiografiaModal';
+import { PersonaDetailScreen } from '@/features/people/components/PersonaDetailScreen';
+import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaInfoModal';
+import { EditBiografiaModal } from '@/features/people/components/EditBiografiaModal';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Browser } from '@capacitor/browser';
-import { HelpSupportScreen } from '@/app/components/HelpSupportScreen';
+import { HelpSupportScreen } from '@/features/support/components/HelpSupportScreen';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CreateChapterForm } from '@/app/components/CreateChapterForm';
+import { CreateChapterForm } from '@/features/chapters/components/CreateChapterForm';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';

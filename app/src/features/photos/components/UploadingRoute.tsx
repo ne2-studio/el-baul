@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { UploadingScreen } from '@/app/components/UploadingScreen';
-import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
-import { ChapterSelection } from '@/app/components/ChapterSelector';
+import { UploadingScreen } from '@/features/photos/components/UploadingScreen';
+import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
+import { ChapterSelection } from '@/features/chapters/components/ChapterSelector';
 import { useBaulesStore, UploadItemResult } from '@/store/useBaulesStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';

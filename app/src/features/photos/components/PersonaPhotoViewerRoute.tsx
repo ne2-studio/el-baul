@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { PhotoViewer } from '@/app/components/PhotoViewer';
-import { Photo } from '@/app/components/PhotosView';
-import { ErrorScreen } from '@/app/components/ErrorScreen';
+import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
+import { Photo } from '@/features/chapters/components/PhotosView';
+import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAuth } from 'react-oidc-context';

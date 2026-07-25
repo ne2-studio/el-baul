@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AiChatScreen } from '@/app/components/AiChatScreen';
+import { AiChatScreen } from '@/features/chat/components/AiChatScreen';
 import { api } from '@/api';
 import { ChatMessage } from '@/types';
 

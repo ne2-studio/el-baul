@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { OnboardingCarousel } from '@/app/components/OnboardingCarousel';
+import { OnboardingCarousel } from '@/features/auth/components/OnboardingCarousel';
 import { useAuth } from 'react-oidc-context';
 
 export const OnboardingRoute: React.FC = () => {

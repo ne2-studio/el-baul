@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { InvitacionScreen } from '@/app/components/InvitacionScreen';
+import { InvitacionScreen } from '@/features/sharing/components/InvitacionScreen';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';

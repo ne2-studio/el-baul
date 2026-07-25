@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { UploadConfirmationScreen } from '@/app/components/UploadConfirmationScreen';
-import { Chapter } from '@/app/components/ChaptersView';
+import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
+import { Chapter } from '@/features/baules/components/ChaptersView';
 import { useBaulesStore } from '@/store/useBaulesStore';
 
 // chapterId is present when uploading into a real chapter, absent when uploading into the

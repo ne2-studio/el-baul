@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Capacitor } from '@capacitor/core';
 import * as Sentry from '@sentry/react';
 import { IncomingShare, SharedFile } from '@/native/shareReceiver';
-import { SelectedPhoto } from '@/app/components/UploadConfirmationScreen';
+import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
 
 interface IncomingShareState {
   share: IncomingShare | null;

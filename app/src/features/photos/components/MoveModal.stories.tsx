@@ -1,0 +1,55 @@
+import { useState } from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { MoveModal } from '@/features/photos/components/MoveModal';
+import { Chapter } from '@/features/baules/components/ChaptersView';
+
+const meta = {
+  title: 'Features/Photos/MoveModal',
+  component: MoveModal,
+  tags: ['autodocs'],
+} satisfies Meta<typeof MoveModal>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+const chapters: Chapter[] = [
+  { id: '1', name: 'Verano 2023', photoCount: 42 },
+  { id: '2', name: 'Cumpleaños de la abuela', photoCount: 18 },
+  { id: '3', name: 'Navidad', photoCount: 30 },
+];
+
+export const Default: Story = {
+  args: {
+    title: 'Mover a otro capítulo',
+    chapters,
+    selectedId: '',
+    onSelect: () => alert('onSelect clicked'),
+    onCancel: () => alert('onCancel clicked'),
+    onConfirm: () => alert('onConfirm clicked'),
+  },
+};
+
+export const Submitting: Story = {
+  args: {
+    ...Default.args,
+    selectedId: '2',
+    isSubmitting: true,
+  },
+};
+
+export const Interactive: Story = {
+  args: Default.args,
+  render: function Render() {
+    const [selectedId, setSelectedId] = useState('');
+    return (
+      <MoveModal
+        title="Mover a otro capítulo"
+        chapters={chapters}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onCancel={() => alert('onCancel clicked')}
+        onConfirm={() => alert('onConfirm clicked')}
+      />
+    );
+  },
+};

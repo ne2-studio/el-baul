@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SupportFormScreen } from '@/app/components/SupportFormScreen';
+import { SupportFormScreen } from '@/features/support/components/SupportFormScreen';
 import { api } from '@/api';
 import { SupportCategory } from '@/types';
 

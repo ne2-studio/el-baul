@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NotificationPreferencesScreen } from '@/app/components/NotificationPreferencesScreen';
+import { NotificationPreferencesScreen } from '@/features/profile/components/NotificationPreferencesScreen';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';

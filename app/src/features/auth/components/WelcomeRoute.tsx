@@ -1,5 +1,5 @@
 import React from 'react';
-import { WelcomeScreen } from '@/app/components/WelcomeScreen';
+import { WelcomeScreen } from '@/features/auth/components/WelcomeScreen';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useSearchParams } from 'react-router-dom';

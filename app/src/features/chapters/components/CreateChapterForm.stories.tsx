@@ -1,0 +1,26 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { CreateChapterForm } from '@/features/chapters/components/CreateChapterForm';
+
+const meta = {
+  title: 'Features/Chapters/CreateChapterForm',
+  component: CreateChapterForm,
+  tags: ['autodocs'],
+} satisfies Meta<typeof CreateChapterForm>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    onBack: () => alert('onBack clicked'),
+    onSubmit: () => alert('onSubmit clicked'),
+  },
+};
+
+export const Submitting: Story = {
+  args: {
+    onBack: () => alert('onBack clicked'),
+    onSubmit: () => alert('onSubmit clicked'),
+    isSubmitting: true,
+  },
+};

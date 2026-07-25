@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MiPerfilScreen } from '@/app/components/MiPerfilScreen';
+import { MiPerfilScreen } from '@/features/profile/components/MiPerfilScreen';
 import { useAuth } from 'react-oidc-context';
 import { useAuthStore } from '@/store/useAuthStore';
 import { resetAllStores } from '@/store/session';

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { RequestBaulDeletionScreen } from '@/app/components/RequestBaulDeletionScreen';
+import { RequestBaulDeletionScreen } from '@/features/baules/components/RequestBaulDeletionScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { api } from '@/api';

@@ -1,0 +1,25 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { DeletePhotoModal } from '@/features/photos/components/DeletePhotoModal';
+
+const meta = {
+  title: 'Features/Photos/DeletePhotoModal',
+  component: DeletePhotoModal,
+  tags: ['autodocs'],
+} satisfies Meta<typeof DeletePhotoModal>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    onCancel: () => alert('onCancel clicked'),
+    onConfirm: () => alert('onConfirm clicked'),
+  },
+};
+
+export const Submitting: Story = {
+  args: {
+    ...Default.args,
+    isSubmitting: true,
+  },
+};

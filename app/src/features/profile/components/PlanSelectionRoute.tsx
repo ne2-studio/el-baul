@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlanSelectionScreen } from '@/app/components/PlanSelectionScreen';
+import { PlanSelectionScreen } from '@/features/profile/components/PlanSelectionScreen';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const PlanSelectionRoute: React.FC = () => {

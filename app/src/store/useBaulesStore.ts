@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react';
 import { Baul, Chapter, Photo, PhotoDate } from '@/types';
 import { api } from '@/api';
 import { isAdminRole } from '@/utils/roleUtils';
-import { ChapterSelection } from '@/app/components/ChapterSelector';
+import { ChapterSelection } from '@/features/chapters/components/ChapterSelector';
 import { useRecuerdosStore } from './useRecuerdosStore';
 import { usePersonasStore } from './usePersonasStore';
 

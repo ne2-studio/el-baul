@@ -8,7 +8,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import * as Sentry from "@sentry/react";
 
 import App from "./app/App.tsx";
-import { CrashFallback } from "./app/components/CrashFallback";
+import { CrashFallback } from "@/design-system/components/feedback/CrashFallback";
 import "./styles/index.css";
 import { registerSW } from "virtual:pwa-register";
 import { initSentry } from "./sentry";

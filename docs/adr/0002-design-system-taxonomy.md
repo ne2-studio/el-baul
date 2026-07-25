@@ -60,33 +60,23 @@ different app (CashClarity, say) with just a theme swap and no El Baúl-specific
 If it only needs strings/booleans/callbacks → Components or Patterns. If it needs a `Persona`
 or a `Photo` → Features.
 
-Current inventory (Storybook `title` as of this ADR):
-
-| Category | Members |
-|---|---|
-| `Foundations/Icons` | `Icon`, `Gallery`, `Guidelines`, `BaulIcon` |
-| `Components/Actions` | `Button` |
-| `Components/Forms` | `Input`, `PartialDatePicker` |
-| `Components/Navigation` | `TabButton` |
-| `Components/Feedback` | `Toast`, `LoadingSpinner`, `BlockingLoadingOverlay`, `EmptyState`, `BatchOperationProgress` |
-| `Components/DataDisplay` | `Card` |
-| `Patterns/Forms` | `EditInfoModal`, `DateModal` |
-| `Patterns/Media` | `PhotoStage` |
-| `Features/Baules` | `CreateBaulForm` |
-| `Features/Chapters` | `CreateChapterForm`, `ChapterSelector` |
-| `Features/People` | `NuevaPersonaModal`, `EditPersonaInfoModal`, `EditBiografiaModal`, `PersonasTab` |
-| `Features/Photos` | `PhotoViewer`, `PhotoViewerHeader`, `CoverPhotoPickerModal`, `DeletePhotoModal`, `MoveModal`, `RemovalRequestModal`, `RemovalRequestsList`, `BatchPhotoActionsBar` |
-| `Features/Memories` | `RecuerdoCard`, `RecuerdoInput`, `RecuerdosFeed`, `RecuerdosList` |
-| `Features/Sharing` | `ManageAccessModal`, `RevokeAccessModal` |
-| `Features/Subscription` | `PlanLimitModal` |
-| `Features/Profile` | `ProfileMenuModal` |
-| `Screens` | `Error`, `Support/Help`, `Support/Form`, `Onboarding/Invitacion`, `Profile/MiSuscripcion`, `Person/Detail` |
+That test needs one refinement, found while classifying single-purpose confirmation dialogs
+(`DeleteChapterModal`, `DeletePhotoModal`, `RemovalRequestModal`, `RevokeAccessModal`,
+`TagPersonasModal`, `NuevoRecuerdoModal`): none of them import a domain *type*, but none of
+them are reusable either — each is hardcoded, copy and all, to one specific destructive or
+domain action. The real test isn't just "does it import a domain type," it's "could this be
+dropped into a different call site for a different purpose." `EditInfoModal`/`DateModal`/
+`PhotoStage` pass that test (generic mechanism, several unrelated call sites); the
+confirmation dialogs above don't, so they're `Features` despite the clean type signature.
 
 `preview.tsx` sets `parameters.options.storySort` to `['Foundations', 'Components',
 'Patterns', 'Layouts', 'Features', 'Screens']` so the sidebar reflects this order (generic →
-domain-specific) instead of alphabetizing `Components` before `Foundations`.
+domain-specific) instead of alphabetizing `Components` before `Foundations`. The full,
+current inventory is Storybook itself, not a table in this file — a hand-maintained list here
+would start rotting the day after this ADR merges. Browse the sidebar (`npm run storybook`) or
+grep story `title`s for the authoritative list.
 
-Longer-term dependency rule once the physical layout catches up (see Consequences):
+Dependency rule for both the Storybook grouping and the physical file layout (see below):
 
 ```
 Screens → Features → Patterns → Components → Foundations
@@ -96,34 +86,58 @@ Never the reverse — a `Component` must never import a `Feature`, a `Pattern` m
 import a domain type, etc. This is the rule that keeps the "design system" from becoming
 quietly coupled to the domain, which is the failure mode this ADR exists to prevent.
 
+### Physical layout
+
+The taxonomy above is also the physical directory layout under `app/src/`:
+
+- `design-system/foundations/`, `design-system/components/{actions,forms,navigation,
+  feedback,data-display,overlays,ui}`, `design-system/patterns/{forms,media}`,
+  `design-system/layouts/` — every file classified as `Foundations`, `Components`,
+  `Patterns`, or `Layouts`. No file here imports a domain type or a `features/*` module.
+- `features/<domain>/components/` — every file classified as `Features` or `Screens` lives
+  next to the `*Route.tsx` container(s) that render it, one folder per domain (`baules`,
+  `chapters`, `people`, `photos`, `memories`, `sharing`, `profile`, `chat`, `auth`, `support`).
+  This colocates a Route with the presentational component(s) it renders, matching the
+  pre-existing `features/<domain>/components/*Route.tsx` convention rather than inventing a
+  parallel `screens/` tree.
+
+**Presentational components reused across more than one domain's routes** (e.g. `ChaptersView`
+is rendered as the background screen under a photo-viewer overlay reached from `baules`,
+`chapters`, and `photos` routes, via the `location.state.backgroundLocation` pattern — see
+`ScrollToTop.tsx`) live in the folder of their *primary* domain and are imported cross-feature
+by the others (`import { ChaptersView } from '@/features/baules/components/ChaptersView'`).
+There is no dedicated "shared screens" folder — introducing one would add a third physical
+tier (`design-system` / `screens` / `features`) the rest of the codebase doesn't have, for a
+handful of components. `ErrorScreen` is the one component originally filed under `Screens`
+that turned out to have no domain coupling at all (generic `title`/`message`/`actionLabel`
+props, reused by five unrelated routes) — it was reclassified to
+`Components/Feedback/ErrorScreen` and physically lives in `design-system/components/feedback/`.
+
 ## Consequences
 
-- **Phase 1 (done, this ADR's companion commit)**: every existing story's `title` was
-  reclassified. No file was moved, no import was changed, no component was renamed. This was
-  intentionally the cheapest possible first step — Storybook's own navigation improves
-  immediately without touching runtime code.
-- **Physical layout is still flat and mixed.** All 70 components (45 with stories, 25
-  without) still live in `src/app/components/`, regardless of category. `Foundations`,
-  `Patterns`, and `Components` are mixed in the same directory as `Features` and `Screens`.
-  This ADR documents the target taxonomy; it does not claim the codebase matches it yet.
-- **`Layouts` has zero members today.** `PageContainer` and `StickyHeader` are the closest
-  candidates (they take `children`, don't import domain types, and are composed into nearly
-  every screen) but neither has a story yet. Giving them stories under `Layouts` is a
-  reasonable next step, not a prerequisite for this ADR.
-- **25 components have no story at all**, including `BottomSheetModal` — the overlay
-  primitive that almost every `Features/*` modal in the table above wraps. It's arguably the
-  single highest-leverage missing story: documenting it once in `Components/Overlays` covers
-  the shared behavior (open/close, backdrop, safe-area handling) that today is only ever seen
-  indirectly through a dozen domain-specific modals.
-- **Some classifications are judgment calls, not facts**, and should be revisited if they
-  start to chafe:
+- **Phase 1 (done)**: every existing story's `title` was reclassified, no file moved. The
+  cheapest possible first step — Storybook's own navigation improved immediately without
+  touching runtime code.
+- **Phase 2 (done)**: `BottomSheetModal` (the overlay primitive nearly every domain modal
+  wraps), `PageContainer`/`StickyHeader` (populating the previously-empty `Layouts` category),
+  and the 23 remaining components with no story all got one — every component in the app now
+  has a story except `ScrollToTop` (renders `null`; it's a pure route-change side effect, not a
+  visual component). Every one of the resulting 190 stories was verified to load without a
+  console error or thrown exception.
+- **Phase 3 (done)**: the physical file layout now matches this taxonomy (see "Physical
+  layout" above) — `design-system/` and `features/<domain>/components/` replaced the flat
+  `app/components/` directory entirely. All cross-file imports (154 files moved, ~165 files
+  with import statements updated) go through the `@/` alias rather than relative paths, so a
+  file's physical location and its import specifiers agree.
+- **Judgment calls made along the way, worth revisiting if they start to chafe**:
   - `BaulIcon` is under `Foundations/Icons` because it takes only `SVGProps` and no domain
     data — but it's visually and conceptually tied to the "baúl" brand concept, so
     `Features/Baules` would also be defensible.
-  - `DateModal` and `EditInfoModal` are under `Patterns` because their props are generic
-    (`PhotoDate`, plain strings) even though today's only call sites are domain-specific
-    (editing a photo's date, a baúl's or chapter's name/description). If either grows a
-    domain-shaped prop, it should move to `Features`.
+  - `DateModal` and `EditInfoModal` are under `Patterns` because they're a generic mechanism
+    reused for unrelated purposes (see the litmus-test refinement above), even though every
+    current call site happens to be domain-specific. If a future call site needs
+    domain-shaped behavior instead of a generic one, that instance should move to `Features`
+    rather than dragging the generic component along with it.
   - `RecuerdoInput` is under `Features/Memories` rather than `Patterns` despite having no
     domain-type import, because its copy (rotating reflection prompts) is specific to the
     "recuerdo" concept, not a generic text composer.

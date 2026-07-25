@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import { ProfileMenuModal } from './components/ProfileMenuModal';
-import { PlanLimitModal } from './components/PlanLimitModal';
-import { Toast } from './components/Toast';
+import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal';
+import { PlanLimitModal } from '@/features/profile/components/PlanLimitModal';
+import { Toast } from '@/design-system/components/feedback/Toast';
 import { NativeShareHandler } from '../native/NativeShareHandler';
-import { ScrollToTop } from './components/ScrollToTop';
+import { ScrollToTop } from '@/app/ScrollToTop';
 import { setAccessToken } from '@/api';
 import { Baul } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';

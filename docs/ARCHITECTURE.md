@@ -321,7 +321,9 @@ deployment (see `api/README.md`) — the web process itself never runs them.
 ```
 features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/index.ts
                     ↓ renders
-        app/components/*.tsx  (presentational screens)
+        features/<domain>/components/*.tsx  (presentational screens/modals)
+                    ↓ composed from
+        design-system/{foundations,components,patterns,layouts}/*.tsx
 ```
 
 - **`types/index.ts`** — one class per domain entity (`Baul`, `Chapter`, `Photo`, `Recuerdo`,
@@ -356,13 +358,24 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
   `*Route` (`ChapterRoute`, `BaulesListRoute`, `CreateBaulRoute`, …), grouped into
   `features/{chapters,auth,baules,photos,profile,sharing,chat,support}/`. A Route component reads
   `useParams`/store state, defines the handlers (calling store actions, navigating, showing
-  toasts), and renders a presentational component from `app/components/` with everything passed
-  as props — no business logic or store access inside `app/components/`.
-- **`app/components/`** — flat directory of presentational screens/modals (`PhotosView`,
-  `ChaptersView`, `BaulesList`, `CreateChapterForm`, `RecuerdoCard`, …) plus small shared primitives
-  (`Button`, `Card`, `Input`, `FAB`, `Toast`, `LoadingSpinner`). Props-in, callbacks-out; no
-  `store/*`/`api` imports. Headless, store-driven wiring components (e.g. `NativeShareHandler.tsx`)
-  live in `native/` instead — see Capacitor section below.
+  toasts), and renders a presentational component colocated in the same feature's `components/`
+  folder, with everything passed as props — no business logic or store access in the
+  presentational component itself.
+- **`features/<domain>/components/`** — alongside each `*Route.tsx`, the presentational
+  screens/modals it renders (`PhotosView`, `ChaptersView`, `CreateChapterForm`, `RecuerdoCard`, …),
+  one folder per domain: `baules`, `chapters`, `people`, `photos`, `memories`, `sharing`,
+  `profile`, `chat`, `auth`, `support`. Props-in, callbacks-out; no `store/*`/`api` imports. A
+  presentational component reused across route files from *different* domains (e.g.
+  `ChaptersView`, rendered as the background screen under a photo-viewer overlay reached from
+  three different routes) still lives in the folder of its primary domain, imported cross-feature
+  by the others — see ADR 0002 for the reasoning.
+- **`design-system/`** — everything with zero knowledge of El Baúl's domain types, split by how
+  reusable/composed it is: `foundations/` (icons), `components/{actions,forms,navigation,
+  feedback,data-display,overlays,ui}` (`Button`, `Card`, `Input`, `Toast`, `BottomSheetModal`, …),
+  `patterns/` (generic reusable compositions like `EditInfoModal`, `PhotoStage`), `layouts/`
+  (`PageContainer`, `StickyHeader`). See ADR 0002 for the full taxonomy and the litmus test for
+  what belongs here versus in a feature. Headless, store-driven wiring components (e.g.
+  `NativeShareHandler.tsx`) live in `native/` instead — see Capacitor section below.
 - **`App.tsx`** — owns routing (`react-router-dom` `<Routes>`, no shared `<Layout>` wrapper —
   each route renders its own screen directly), the auth redirect gate (`react-oidc-context`),
   pushing the access token into `api.ts`, and one-time domain data load

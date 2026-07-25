@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MiSuscripcionScreen } from '@/app/components/MiSuscripcionScreen';
+import { MiSuscripcionScreen } from '@/features/profile/components/MiSuscripcionScreen';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/uiStore';
 

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChaptersView } from '@/app/components/ChaptersView';
-import { BlockingLoadingOverlay } from '@/app/components/BlockingLoadingOverlay';
-import { ErrorScreen } from '@/app/components/ErrorScreen';
+import { ChaptersView } from '@/features/baules/components/ChaptersView';
+import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
+import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
@@ -14,7 +14,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { isAdminRole } from '@/utils/roleUtils';
 import { api } from '@/api';
-import { Photo } from '@/app/components/PhotosView';
+import { Photo } from '@/features/chapters/components/PhotosView';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();

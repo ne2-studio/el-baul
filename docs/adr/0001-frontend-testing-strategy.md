@@ -54,7 +54,7 @@ concretely, this decision is why `RecuerdoFeedCard`'s avatar/photo buttons carry
 `aria-label`s (`"Ver perfil de <nombre>"`, `"Ver foto"`) instead of `data-testid`s: it's
 both a better test query and a real accessibility improvement for the same cost.
 
-Reference implementation: `app/src/app/components/RecuerdoFeedCard.test.tsx`.
+Reference implementation: `app/src/features/memories/components/RecuerdoFeedCard.test.tsx`.
 
 ### Level 3 — Playwright, real browser
 

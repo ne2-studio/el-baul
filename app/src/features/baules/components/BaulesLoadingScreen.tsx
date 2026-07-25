@@ -1,0 +1,21 @@
+import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
+
+export function BaulesLoadingScreen() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="max-w-md w-full text-center">
+        {/* App Icon with animation */}
+        <div className="mb-8 flex justify-center">
+          <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center shadow-lg animate-pulse">
+            <BaulIcon className="w-12 h-12 text-primary-foreground" />
+          </div>
+        </div>
+
+        {/* Loading text */}
+        <p className="text-lg text-muted-foreground">
+          Preparando tus baúles…
+        </p>
+      </div>
+    </div>
+  );
+}

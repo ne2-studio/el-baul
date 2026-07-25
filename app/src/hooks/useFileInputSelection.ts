@@ -1,5 +1,5 @@
 import React from 'react';
-import { SelectedPhoto, materializeSelectedPhoto } from '@/app/components/UploadConfirmationScreen';
+import { SelectedPhoto, materializeSelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
 
 /**
  * Handles a <input type="file"> onChange: materializes the selected files into
