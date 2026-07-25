@@ -1,7 +1,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-size: 16px;
+  --font-size: 18px;
   /* El Baúl warm color palette */
   --background: #F5F1ED; /* warm beige / off-white */
   --foreground: #3A3230; /* dark brown for text */
