@@ -59,7 +59,7 @@ using (var scope = app.Services.CreateScope())
     recurringJobManager.AddOrUpdate<IWeeklyDigestManager>(
         "schedule-weekly-digests",
         m => m.ScheduleWeeklyDigestsAsync(),
-        Cron.Daily(4)); // 4am UTC — once a day is enough per PRD, off-peak hour
+        Cron.Weekly(DayOfWeek.Sunday, 8)); // Sundays 8am UTC — everyone gets it at the same time
 }
 
 app.MapHangfireDashboard("/hangfire", new DashboardOptions
