@@ -67,7 +67,7 @@ public class AdminManager(
             su.Name,
             su.Role.ToApiString(),
             su.UserId,
-            su.UserId is not null ? row.LinkedUserNames.GetValueOrDefault(su.UserId) : null));
+            su.IsClaimed ? row.LinkedUserNames.GetValueOrDefault(su.UserId!) : null));
 
         var chapters = row.Chapters.Select(a => new AdminBaulChapterDto(a.Id.ToString(), a.Name, a.PhotoCount));
 

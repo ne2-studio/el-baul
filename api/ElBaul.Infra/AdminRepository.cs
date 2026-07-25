@@ -24,6 +24,8 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
     public async Task<IEnumerable<AdminUserRow>> GetAllUsersAsync()
     {
+        // Persona.IsClaimed can't be used here — this Where runs server-side as SQL, and EF
+        // can't translate a C#-only computed property, only the raw column check it wraps.
         var baulCounts = await dbContext.Personas
             .Where(su => su.UserId != null)
             .GroupBy(su => su.UserId!)
@@ -57,6 +59,8 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
 
+        // Same SQL-translation constraint as GetAllUsersAsync above — Persona.IsClaimed can't
+        // be used in a server-side Where here.
         var linkedUserCounts = await dbContext.Personas
             .Where(su => su.UserId != null)
             .GroupBy(su => su.BaulId)
@@ -95,7 +99,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
         var personas = await dbContext.Personas.AsNoTracking().Where(su => su.BaulId == baulId).ToListAsync();
 
-        var linkedUserIds = personas.Where(su => su.UserId != null).Select(su => su.UserId!).Distinct().ToList();
+        var linkedUserIds = personas.Where(su => su.IsClaimed).Select(su => su.UserId!).Distinct().ToList();
         var linkedUserNames = await dbContext.Users.AsNoTracking()
             .Where(u => linkedUserIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.Name ?? u.Email);

@@ -11,4 +11,9 @@ public record Persona
     string? Name = null,
     string? AvatarPhotoKey = null,
     string? Biografia = null
-);
+)
+{
+    // The single interpretation of "is this Persona row linked to an authenticated account" —
+    // callers should ask this instead of re-deriving it from UserId nullity by hand.
+    public bool IsClaimed => UserId is not null;
+}

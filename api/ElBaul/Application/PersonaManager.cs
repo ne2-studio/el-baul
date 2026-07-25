@@ -21,7 +21,7 @@ public class PersonaManager(
     {
         var id = new PersonaId(personaId);
         var persona = await baulRepository.GetPersonaByIdAsync(id);
-        if (persona is null || persona.UserId is not null)
+        if (persona is null || persona.IsClaimed)
             return Result.Failure<BaulPreviewDto>("Invitation not found");
 
         var baul = await baulRepository.GetByIdAsync(persona.BaulId);
@@ -49,13 +49,13 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>("Invitation not found");
         }
 
-        if (persona.UserId is not null && persona.UserId != userId)
+        if (persona.IsClaimed && persona.UserId != userId)
         {
             logger.LogWarning("Personal invitation acceptance rejected: already claimed {PersonaId}", personaId);
             return Result.Failure<PersonaDto>("This invitation has already been used");
         }
 
-        if (persona.UserId is null)
+        if (!persona.IsClaimed)
         {
             // The caller may already belong to this baúl under a different Persona row
             // (e.g. they're its custodio, or already claimed another Persona here) — the
@@ -92,7 +92,7 @@ public class PersonaManager(
 
         foreach (var persona in personas)
         {
-            var user = persona.UserId is not null ? await userRepository.GetByIdAsync(persona.UserId) : null;
+            var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!) : null;
             var canEdit = CanEditPersona(persona, userId, access);
             dtos.Add(await ToPersonaDtoAsync(persona, user, canEdit));
         }
@@ -119,7 +119,7 @@ public class PersonaManager(
         }
 
         var canEdit = CanEditPersona(persona, userId, access);
-        var user = persona.UserId is not null ? await userRepository.GetByIdAsync(persona.UserId) : null;
+        var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!) : null;
         return await ToPersonaDtoAsync(persona, user, canEdit);
     }
 
@@ -167,7 +167,7 @@ public class PersonaManager(
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona updated {BaulId} {PersonaId}", baulId, personaId);
 
-        var user = updated.UserId is not null ? await userRepository.GetByIdAsync(updated.UserId) : null;
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await ToPersonaDtoAsync(updated, user, canEdit);
     }
 
@@ -219,7 +219,7 @@ public class PersonaManager(
             }
         }
 
-        var user = updated.UserId is not null ? await userRepository.GetByIdAsync(updated.UserId) : null;
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await ToPersonaDtoAsync(updated, user, canEdit);
     }
 
@@ -251,7 +251,7 @@ public class PersonaManager(
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona role updated {BaulId} {PersonaId} {Role}", baulId, personaId, parsedRole);
 
-        var user = updated.UserId is not null ? await userRepository.GetByIdAsync(updated.UserId) : null;
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await ToPersonaDtoAsync(updated, user, canEdit: true);
     }
 
@@ -274,7 +274,7 @@ public class PersonaManager(
     }
 
     private static bool CanEditPersona(Persona target, string callerUserId, BaulAccess callerAccess) =>
-        callerAccess.IsAdmin || (target.UserId is not null && target.UserId == callerUserId);
+        callerAccess.IsAdmin || (target.IsClaimed && target.UserId == callerUserId);
 
     private async Task<PersonaDto> ToPersonaDtoAsync(Persona persona, User? user, bool canEdit)
     {
@@ -284,7 +284,7 @@ public class PersonaManager(
 
         return new PersonaDto(
             persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
-            persona.Nickname, persona.Role.ToApiString(), persona.UserId is not null ? "active" : "pending",
+            persona.Nickname, persona.Role.ToApiString(), persona.IsClaimed ? "active" : "pending",
             persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia);
     }
 }
