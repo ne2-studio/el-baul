@@ -1,6 +1,6 @@
 # Minimal stack for the frontend image acceptance tests (app/e2e/) —
 # el-baul-app + el-baul-api-lite + fake-oidc, nothing else. No Postgres/MinIO/imgproxy/Mailpit:
-# el-baul-api-lite keeps everything in memory (see api/README.md's "el-baul-api-lite" section).
+# el-baul-api-lite keeps everything in memory (see docs/operations/api-lite.md).
 #
 # Both `app` and `api-lite` are images **supplied from outside** via env vars, never built by
 # this file — same principle api/docker-image-tests/README.md states for the backend's own

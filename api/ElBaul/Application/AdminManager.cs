@@ -11,8 +11,7 @@ namespace ElBaul.Application;
 /// CustodioId/Persona" pattern from BaulManager/PhotoManager/ChapterManager) — there is no
 /// ownership scope for an admin read, only the AdminOnly authorization policy at the
 /// controller boundary (see AdminController). This is a deliberate deviation from
-/// docs/ARCHITECTURE.md's "access control is checked explicitly inside each use-case
-/// method" convention, not an oversight.
+/// docs/architecture/backend.md's centralized-access-control convention, not an oversight.
 /// </summary>
 public class AdminManager(
     IAdminRepository adminRepository,

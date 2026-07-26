@@ -129,6 +129,13 @@ collaborators and members. The product is Spanish-first and built for an intimat
 non-technical audience — often several generations of the same family — so the UI
 favors warmth and reassurance over density or novelty.
 
+## Origin
+
+This design system originates from a prototype designed in Figma:
+[El Baúl App Prototype](https://www.figma.com/design/2TWXsOsRjSdpphDCRWzgf6/El-Ba%C3%BAl-App-Prototype).
+The tokens below (colors, typography, spacing, radii) are derived from that prototype and are
+the source of truth for the Tailwind theme (`@theme` in `app/src/styles/index.css`).
+
 The brand personality is **cozy, nostalgic, and trustworthy**, like an heirloom trunk
 rather than a cloud storage dashboard: warm beige and terracotta tones instead of cold
 neutrals or corporate blue, generously rounded shapes instead of sharp edges, and a

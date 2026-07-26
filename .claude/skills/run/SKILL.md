@@ -144,8 +144,8 @@ per-app `backend-deploy.yml`/`frontend-deploy.yml`/`imgproxy-deploy.yml`/
 ## 4b. The `app/e2e/` suite
 
 Same idea as 4a, but against a much lighter stack: the frontend image + `el-baul-api-lite`
-(everything in memory — no Postgres/MinIO/imgproxy, see `api/README.md`'s "el-baul-api-lite"
-section) instead of the full `docker-compose.yaml`. This is the suite to reach for while
+(everything in memory — no Postgres/MinIO/imgproxy, see `docs/operations/api-lite.md`)
+instead of the full `docker-compose.yaml`. This is the suite to reach for while
 working on **photo upload/move/delete, persona invite/role-change/revoke, or
 removal-request submit/approve/reject** — real regression coverage for exactly those flows,
 noticeably faster than 4a (~30s combined vs. ~1.5min), and it's what gates
@@ -195,7 +195,7 @@ Then: `curl -s "http://localhost:5050/api/..." -H "Authorization: Bearer $TOKEN"
 
 ## 6. One-off maintenance commands
 
-Documented per-command in `api/README.md`. General shape:
+Documented per-command in `docs/operations/maintenance-commands.md`. General shape:
 
 ```bash
 docker compose exec api dotnet ElBaul.Api.dll <command-name> --dry-run

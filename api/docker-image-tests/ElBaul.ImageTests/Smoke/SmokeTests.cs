@@ -11,7 +11,7 @@ namespace ElBaul.ImageTests.Smoke;
 /// answer its health check, actually listen on the port it claims to, and pick up
 /// configuration from environment variables the way every other part of this stack expects
 /// it to (docker-compose.yaml, Coolify, `docker run -e ...` all configure it this way — see
-/// api/README.md).
+/// docs/operations/local-development.md).
 /// </summary>
 [Collection(ImageTestCollection.Name)]
 public class SmokeTests(ElBaulImageFixture fixture)

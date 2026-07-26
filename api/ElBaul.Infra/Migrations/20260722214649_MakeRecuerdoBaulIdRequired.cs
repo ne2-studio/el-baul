@@ -8,7 +8,7 @@ namespace ElBaul.Infra.Migrations
     /// <summary>
     /// Makes Recuerdo.BaulId mandatory. MUST NOT be deployed until `backfill-recuerdo-baul-id`
     /// has been run against production with zero remaining candidates (`--dry-run` reports
-    /// "0 recuerdo(s) to check") — see the "Maintenance commands" section of api/README.md.
+    /// "0 recuerdo(s) to check") — see docs/operations/maintenance-commands.md.
     /// Deliberately has no defaultValue: if any row still has a null BaulId, `ALTER COLUMN
     /// ... SET NOT NULL` fails outright (Postgres rejects it) and the app fails to start
     /// (migrations run at startup, Program.cs) — that's the intended gate. A defaultValue

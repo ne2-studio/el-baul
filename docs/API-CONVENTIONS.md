@@ -29,13 +29,12 @@ Anonymous exceptions:
 - `404 Not Found` — the resource doesn't exist, or its existence must not be disclosed to
   this caller (e.g. `invite-preview` for an already-claimed invitation).
 
-All three error bodies share one shape, `{ "error": "..." }`, produced by
-`ElBaul.Api.ErrorMapping.ToActionResult` from the Application layer's `Result.Error`
-string: it checks the message for `"access denied"` → 403, `"not found"` → 404, and
-defaults to 400 otherwise. Because that mapping is shared and message-driven, almost any
-authenticated endpoint can genuinely return any of 400/403/404 depending on what failed —
-the OpenAPI spec documents all three uniformly rather than trying to guess which apply to
-a given action.
+All three error bodies share one shape, `{ "error": "..." }`. Because the mapping from an
+application-layer failure to a status code is message-driven (see
+[`architecture/backend.md`](architecture/backend.md#controllers) for the implementation),
+almost any authenticated endpoint can genuinely return any of 400/403/404 depending on what
+failed — the OpenAPI spec documents all three uniformly rather than trying to guess which
+apply to a given action.
 
 ## Authorization / roles
 
@@ -70,7 +69,7 @@ Within a baúl, user-facing authorship — recuerdo `userName`, removal-request
 nickname for that baúl, never the account-level OIDC-synced name. This is why the same
 person can show up with a different display name in different baúles.
 
-## Keeping the frontend in sync
+## Contract changes
 
 There's no shared package or generated client between `api/` and `app/`/`admin/` yet —
 `app/src/types/index.ts` and `admin/src/types.ts` are hand-maintained TypeScript mirrors of

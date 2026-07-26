@@ -40,8 +40,8 @@ docker compose up --build
 ```
 
 Brings up Postgres, MinIO, fake-oidc, the backend, the frontend, and the admin backoffice
-together. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) ("Local dev") for ports and the
-fake-oidc login flow.
+together. See [`docs/operations/local-development.md`](docs/operations/local-development.md)
+for ports and the fake-oidc login flow.
 
 ### Backend only
 
@@ -67,11 +67,12 @@ See [`app/README.md`](app/README.md) for environment configuration and tests.
 
 ## Documentation
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the architecture standard both services follow
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — entry point to the architecture docs, routes to the rest
 - [`docs/API-CONVENTIONS.md`](docs/API-CONVENTIONS.md) — auth, error and authorization rules not visible in the OpenAPI schema (see `/swagger` for the routes/DTOs themselves)
 - [`docs/DESIGN.md`](docs/DESIGN.md) — the frontend design system
 - [`api/README.md`](api/README.md) — backend development
 - [`app/README.md`](app/README.md) — frontend development
+- [`admin/README.md`](admin/README.md) — admin backoffice development
 
 ## Deployment
 

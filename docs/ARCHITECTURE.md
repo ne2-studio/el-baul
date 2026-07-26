@@ -1,527 +1,69 @@
-# El Baúl Architecture
+# El Baúl architecture
 
-This document describes the architecture actually in place for El Baúl: project structure,
-layering, and conventions for both services, plus the surrounding infrastructure (image
-serving, auth, CI/CD). Follow these patterns when extending the app; if you deviate, leave a
-comment explaining why.
+This document is the entry point to the architecture documentation. It contains system-wide
+constraints and routes readers to the detailed documentation for each subsystem. It
+intentionally does not document individual classes, endpoints, or operational commands — those
+live in the subsystem docs below, or are cheap to discover by reading the code.
+
+Follow the patterns described across these documents when extending the app; if you deviate,
+leave a comment explaining why.
 
 ## System overview
 
-Monorepo with three independently deployable services, no shared code between them, plus a
-small image-processing sidecar:
+El Baúl is composed of independently deployable services, with no shared runtime code between
+them:
 
-| Directory | Stack |
-|---|---|
-| `app/` | React 18, TypeScript, Vite, Tailwind CSS v4, Zustand, react-router-dom v7, react-oidc-context, Capacitor (Android), vite-plugin-pwa |
-| `admin/` | React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, react-router-dom v7, react-oidc-context |
-| `api/` | ASP.NET Core (.NET 10), PostgreSQL via EF Core, MinIO (S3-compatible), Serilog |
-| `imgproxy/` | An [imgproxy](https://imgproxy.net/) instance, its own Dockerfile/deploy, serving resized photos directly from MinIO via named presets |
+- `api/` — ASP.NET Core backend
+- `app/` — React consumer application
+- `app/android/` — Capacitor Android shell for `app/`
+- `admin/` — React operations backoffice
+- `imgproxy/` — image transformation service
+- `e2e-tests/` — whole-system Playwright smoke tests
 
 El Baúl is a private, shared photo archive: a **baúl** (trunk) is a family archive owned by a
 **custodio** (custodian), containing **chapters** (capítulos), each holding **photos**. A baúl is
-shared with other people as **personas** — a per-baúl identity (nickname + role: `Colaborador`,
-`Administrador`, or `Custodio`) distinct from the underlying account, so a "recuerdo" (a memory/
-comment left on a photo or chapter) is always attributed to the nickname the family chose, not
-whatever name the OIDC provider has on file. Non-custodian members can request a photo's removal
-(`RemovalRequest`); the custodian approves or rejects it — photos are never hard-deleted by
-anyone else.
+shared with other people as **personas** — a per-baúl identity (nickname + role: `custodio`,
+`administrador`, or `colaborador`) distinct from the underlying account. Non-custodian members
+can request a photo's removal (`RemovalRequest`); the custodian or an administrador approves or
+rejects it — photos are never hard-deleted by anyone else.
 
-Auth is OIDC/JWT Bearer end-to-end (Zitadel in practice): the frontend authenticates against the
-external OIDC provider, attaches the access token to every API call, and the backend validates it
-via `JwtBearer` middleware — there is no Supabase (or any other bespoke auth) anywhere in the
-stack. There is no session state on the backend — every request is authenticated independently
-and scoped to the caller's identity.
+## System-wide rules
 
----
+- Each deployable service owns its implementation and dependencies — no shared package or
+  generated client between `api/` and `app/`/`admin/`.
+- The backend (`api/`) is the source of truth for business rules.
+- OpenAPI generated from the backend (`/swagger` in Development) is the source of truth for API
+  routes and schemas — see [`API-CONVENTIONS.md`](API-CONVENTIONS.md) for the semantics that
+  don't show up in a schema.
+- Authentication is OIDC/JWT Bearer end-to-end (Zitadel in practice); the backend is stateless —
+  every request is authenticated independently, there is no session state.
+- Object-storage URLs are never exposed directly to clients — see
+  [`architecture/infrastructure.md`](architecture/infrastructure.md).
+- Architectural exceptions or deviations from these docs should leave a comment explaining why;
+  significant decisions get an ADR (see [`adr/`](adr/)).
 
-## Backend (`api/`)
+## Documentation map
 
-### Architecture: ports & adapters
+Read only the documents relevant to the change:
 
-The backend builds into **two independent Docker images** — `el-baul-api` (real infra) and
-`el-baul-api-lite` (everything in memory, for frontend/Playwright testing — see
-`api/README.md`'s "el-baul-api-lite" section for usage). They are never the same image behind
-an `ASPNETCORE_ENVIRONMENT` switch; instead, everything that must stay identical between them
-(the HTTP pipeline, auth, the manager DI graph) lives in shared projects that both hosts
-reference, so the two images can't silently diverge on anything but which adapter backs each
-port:
+| Change | Read |
+|---|---|
+| Backend domain, use cases, persistence, project boundaries | [`architecture/backend.md`](architecture/backend.md) |
+| Consumer frontend (`app/`) | [`architecture/frontend.md`](architecture/frontend.md) |
+| Admin backoffice (`admin/`) | [`architecture/admin.md`](architecture/admin.md) |
+| Capacitor or native Android | [`architecture/native-android.md`](architecture/native-android.md) |
+| Test selection or test structure | [`architecture/testing.md`](architecture/testing.md) |
+| MinIO, imgproxy, container build shape | [`architecture/infrastructure.md`](architecture/infrastructure.md) |
+| GitHub Actions / CI/CD | [`architecture/deployment.md`](architecture/deployment.md) |
+| API authorization, error and product semantics | [`API-CONVENTIONS.md`](API-CONVENTIONS.md) |
+| Visual design system, tokens | [`DESIGN.md`](DESIGN.md) |
+| Running the stack locally | [`operations/local-development.md`](operations/local-development.md) |
+| `el-baul-api-lite` (in-memory backend for frontend tests) | [`operations/api-lite.md`](operations/api-lite.md) |
+| Backend maintenance commands | [`operations/maintenance-commands.md`](operations/maintenance-commands.md) |
 
-```
-ElBaul.Api ──────┐                          ElBaul.Api.Lite ──────┐
-                 ├──→  ElBaul.Api.Common  ──┤                     │
-ElBaul.Infra ────┤            │            ├──→  ElBaul.Infra.Lite┤
-                 ├──→  ElBaul.Infra.Common ─┴─────────────────────┤
-ElBaul.Maintenance ───┘                                           │
-                                                                   ↓
-                                                    ElBaul  (core: Application + Ports)
-```
+## Decision precedence
 
-- `ElBaul.Api` / `ElBaul.Api.Lite` — thin `Program.cs` per image: register that image's own
-  infrastructure (`AddInfrastructure`/`AddLiteInfrastructure`) on `builder.Services`, call the
-  shared `ElBaulApiHost.Build(builder)`, then handle whatever is genuinely infra-specific
-  (Hangfire + migrations + the Hangfire dashboard route for the real image; nothing extra for
-  Lite besides mapping its own `GET /lite/photos/{*key}` route). `ElBaul.Api` additionally
-  references `ElBaul.Maintenance` (one line in `Program.cs` to dispatch a recognized
-  command-line arg — see below); `ElBaul.Api.Lite` doesn't, since none of those commands make
-  sense against an ephemeral in-memory backend.
-- `ElBaul.Api.Common` — everything about the HTTP host that doesn't depend on which
-  infrastructure is behind it: controllers (`Controllers/`), request DTOs (`Models/`),
-  `ErrorMapping`, JWT auth setup, CORS, rate limiting, the `Application/` manager DI
-  registrations, and the middleware pipeline (`ElBaulApiHost.cs`). Controllers depend only on
-  `Ports/Input` interfaces, never on `Infra`/`Infra.Lite` or `Application` concrete types
-  directly.
-- `ElBaul.Infra` / `ElBaul.Infra.Lite` — implement every output port with, respectively, real
-  adapters (EF Core repositories, `MinioPhotoStorage`, Hangfire+Postgres) or in-memory ones
-  (`InMemory*Repository`, `LitePhotoStorage`, deterministic `Fake*` backends for
-  email/AI/embeddings/support — the same classes `ElBaul.Tests` uses for its own unit tests,
-  see Testing below). Each exposes its own composition-root method,
-  `AddInfrastructure()`/`AddLiteInfrastructure()`. `ElBaul.Infra.Lite` never references
-  `ElBaul.Infra` — it has no Npgsql/AWSSDK/Hangfire package dependency at all.
-- `ElBaul.Infra.Common` — the handful of output-port implementations that don't depend on
-  Postgres/S3/Hangfire and so are identical in both images: `SystemClock`, `GuidIdGenerator`,
-  `HttpContextCurrentUserProvider`, `UserSyncMiddleware`, `OidcUserInfoClient`,
-  `AppConfiguration`. Referenced by both `ElBaul.Infra` and `ElBaul.Infra.Lite`.
-- `ElBaul.Maintenance` references `ElBaul.Infra` and `ElBaul`, never `ElBaul.Api`.
-
-- **`ElBaul` (core)** — the domain/use-case project. Contains:
-  - `Application/` — one class per aggregate root (`BaulManager`, `ChapterManager`,
-    `PhotoManager`, `UserManager`), each implementing its input port and holding all business
-    logic for that area, plus a shared `DtoMapping.cs`.
-  - `Ports/Input/` — use-case interfaces (`IBaulManager`, `IChapterManager`, `IPhotoManager`,
-    `IUserManager`) and their DTOs (plain `record` types) — the contract the API layer calls
-    into.
-  - `Ports/Output/` — interfaces for everything the core needs from the outside world:
-    repositories (`IBaulRepository`, `IChapterRepository`, `IPhotoRepository`,
-    `IRecuerdoRepository`, `IUserRepository`), `IClock`, `IIdGenerator`, `ICurrentUserProvider`,
-    `IPhotoStorage`, `IPhotoDateExtractor`, `IUserInfoClient` — plus the domain records
-    themselves (`Baul`, `Chapter`, `Photo`, `Recuerdo`, `Persona`, `RemovalRequest`, `User`).
-  - References only `CSharpFunctionalExtensions` (for `Result`/`Result<T>`) and
-    `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB driver, no ORM.**
-    Fully unit-testable in isolation.
-- **`ElBaul.Infra`** — the real-adapter half of the split described above (EF Core
-  repositories, `MinioPhotoStorage`, `ExifPhotoDateExtractor`, Hangfire+Postgres), exposing
-  `ServiceRegistration.AddInfrastructure()`. Also owns `ElBaulDbContext` + EF Core migrations.
-- **`ElBaul.Api`** — see the diagram above; contains no controller/maintenance-command code
-  itself — controllers live in `ElBaul.Api.Common`, maintenance commands in
-  `ElBaul.Maintenance`.
-- **`ElBaul.Maintenance`** — a small framework plus every one-off maintenance CLI command
-  (`Commands/`). A command is a class implementing `IMaintenanceCommand` (one method,
-  `RunAsync(bool dryRun)`, containing only business logic — dependencies come via constructor
-  injection off the same `AddInfrastructure()` container the web app uses) tagged with
-  `[MaintenanceCommand("name")]`. `MaintenanceCommandRunner.TryRunAsync(args)` — the single
-  thing `Program.cs` calls — reflects over the assembly to find every attributed command,
-  and if `args[0]` names one, bootstraps a minimal host (same `WebApplication.CreateBuilder`
-  + `AddInfrastructure()` + Serilog config the web app uses, so appsettings/
-  `ASPNETCORE_ENVIRONMENT`/env vars all resolve identically), resolves the command via a
-  keyed DI registration (keyed by its attribute name), and runs it inside a canonical
-  start/finish log pair carrying elapsed time and exit code — so every command's execution is
-  traceable in Seq the same way regardless of what it does. Returns `null` (not a command)
-  so `Program.cs` falls through to normal web startup otherwise. Needs
-  `<FrameworkReference Include="Microsoft.AspNetCore.App" />` for the same reason
-  `ElBaul.Infra` does, and opts out of `WebApplicationBuilder`'s Development-mode
-  eager service-provider validation (`ValidateOnBuild`) since it deliberately registers a
-  narrower service graph than the full web app's `Program.cs` does.
-
-### Controller conventions
-
-- Thin: one controller per resource area (`BaulesController`, `ChaptersController`,
-  `PhotosController`, `UsersController`, `AppConfigController`, `AdminController`,
-  `ChatController`, `SupportController`, `EmailTrackingController`), delegating to a use-case
-  method and mapping the `Result`/`Result<T>` to an HTTP response. `AdminController` is the one
-  partial exception — every handler still delegates to `IAdminManager`/`IWelcomeEmailManager`/
-  `IWeeklyDigestManager`, but it also has a small local `GetExternalLinks()` helper reading
-  `IConfiguration` directly for display purposes.
-- Errors use `Result.Failure<T>(string)` with a human-readable message; `ErrorMapping.
-  ToActionResult` (`api/ElBaul.Api.Common/ErrorMapping.cs`) maps it to a status code by matching
-  substrings — `"access denied"` → 403, `"not found"` → 404, everything else → 400. This mirrors
-  the way per-message checks worked in the original app it replaced; there's no typed error enum
-  yet, so a new failure message needs to contain one of those two phrases (or fall through to
-  400) to get the right status code.
-- Every endpoint is `[Authorize]` by default, except `AppConfigController` (`[AllowAnonymous]`,
-  rate-limited) and `/health`.
-- The caller's identity is never a controller parameter — use cases call
-  `ICurrentUserProvider.GetUserId()` themselves.
-
-### Auth
-
-- `JwtBearer` validates access tokens. `ValidIssuer`/`Audience` come from config
-  (`Auth:ValidIssuer`, `Auth:Audience`); signing keys are fetched directly from a configured
-  `Auth:JwksUri` and cached in-process, **not** resolved from the token issuer's discovery
-  document. Locally the backend reaches the OIDC provider over the internal Docker network
-  (`fake-oidc:5000`), but the token's `iss` claim (and everything in its discovery document) is
-  set to the address the *browser* used (`localhost:5000`) — those two are unreachable from each
-  other, so `Auth:JwksUri` and `Auth:ValidIssuer` are configured independently instead of letting
-  the library auto-discover.
-- `UserSyncMiddleware` (`ElBaul.Infra.Common`, shared with `el-baul-api-lite`) just-in-time syncs the local `Users` row for the
-  authenticated `sub` claim. OIDC access tokens only carry `sub` (no email/name), and baúl-sharing
-  invitations need a local user row to exist, so email/name are fetched from the userinfo
-  endpoint the first time a `sub` is seen (or whenever the local row is incomplete) — never on
-  every request.
-- `UserLogContextMiddleware` (`ElBaul.Api.Common`) pushes the authenticated user id onto Serilog's
-  `LogContext` so every log line for a request — including business-event logs from
-  `Application/` — carries `{UserId}`, without every call site threading it through explicitly.
-- `Application/` use-case code never reads `HttpContext`/claims directly — `UserSyncMiddleware`,
-  `UserLogContextMiddleware`, and `HttpContextCurrentUserProvider` are the only places that do.
-
-### Core conventions
-
-- **Every external effect sits behind an output port**: `IClock` (no `DateTime.UtcNow` inline),
-  `IIdGenerator` (`GuidIdGenerator`), `ICurrentUserProvider`, `IPhotoStorage`,
-  `IPhotoDateExtractor`. This is what makes the `Application/` managers unit-testable against
-  hand-written fakes, no mocking framework.
-- **Access control is centralized in `BaulAccessService`** (`Application/BaulAccess.cs`), not via
-  a global filter and not re-derived per manager: it's the single interpretation of "does this
-  user belong to this baúl / are they an admin of it", built on `baul.CustodioId == userId ||
-  persona exists for userId`. Every manager that touches a baúl-scoped resource calls
-  `baulAccess.AuthorizeAsync(...)` (resolve the baúl → check membership/role → return
-  `Result.Failure<T>("Access denied")` on failure, with a uniform log line either way) instead of
-  re-implementing the check inline — currently 42 call sites across `BaulManager`,
-  `ChapterManager`, `ChatManager`, `PersonaManager`, `PhotoManager`, and `RemovalRequestManager`.
-  `BaulAccessService.GetAuthorInfoAsync` is the same story for resolving a persona's
-  nickname/avatar as recuerdo/chapter authorship.
-- **DI lifetimes are `Scoped` by default.** `MinioPhotoStorage` is the one deliberate
-  `Singleton` exception, because it wraps a single `AmazonS3Client`, which the AWS SDK documents
-  as thread-safe and meant to be reused/pooled across requests — not request state.
-- No decorator or null-object patterns are in use yet — infra concerns like `IPhotoStorage`
-  compose imgproxy URL-building directly rather than through a wrapping decorator, and the one
-  feature flag in the app (`Features:MonetizationEnabled`, surfaced by `AppConfigController`) is
-  read straight from `IConfiguration` in the controller rather than switching an implementation
-  at the composition root.
-
-### Data access
-
-- **EF Core** over PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`), chosen for the
-  relational, many-to-many-ish shape of baúles/chapters/photos/personas. Table/column mapping via
-  Fluent API in `EntityConfigurations/` (one file per entity), not data annotations.
-- Migrations are applied automatically at startup — `dbContext.Database.MigrateAsync()` in
-  `Program.cs` — never a manual deploy step.
-- **IDs**: `Guid` primary keys for all domain entities (`Baul`, `Chapter`, `Photo`, `Recuerdo`,
-  `Persona`, `RemovalRequest`); `User` is keyed by the OIDC `sub` claim instead, stored as
-  opaque `text` (Zitadel/OIDC subject ids aren't guaranteed to be GUID-shaped). DTOs expose ids
-  as `string`; controllers parse route ids to `Guid` via `{id:guid}` route constraints.
-- **Photos are soft-deleted**: `PhotoStatus.Active`/`Deleted`, driven by the removal-request
-  workflow rather than a hard `DELETE`.
-- **Photo dates are partial** (`DateYear`/`DateMonth`/`DateDay`, all nullable) — EXIF extraction
-  (`ExifPhotoDateExtractor`, via `MetadataExtractor`) fills them in on upload when available, and
-  a photo with no date is still valid (`ChapterManager.ComputeDateRange` treats it as "undated"
-  rather than defaulting it into a sort position).
-- **Timestamps**: `CreatedAt`/`UpdatedAt` on every entity, set via `IClock` (UTC), not DB
-  defaults.
-
-### Photo storage & image serving
-
-Uploaded photo bytes live in MinIO (S3-compatible); the API never hands out a MinIO URL or reads
-photo bytes back out over HTTP itself:
-
-- `IPhotoStorage.SaveAsync`/`DeleteAsync` write/delete objects in MinIO, keyed by an opaque
-  string the `Application` layer chooses.
-- `IPhotoStorage.GetImageUrl(key, placement)` returns a signed **imgproxy** URL instead of a raw
-  storage URL. `ImgproxyUrlBuilder` (`ElBaul.Infra`) builds `s3://bucket/key` as imgproxy's
-  source, maps `ImagePlacement` (`PhotoGridThumbnail`, `PhotoFull`, `ChapterCover`,
-  `ChapterCoverFeatured`, `RemovalRequestThumbnail`, `InvitationPreview`, `BaulCover`,
-  `PersonaAvatar`) to a
-  **named preset** configured server-side in `imgproxy/presets.conf`, and HMAC-signs the path
-  with a shared key/salt.
-- imgproxy is the *only* component that ever reads from MinIO — it holds its own S3 credentials
-  and fetches originals directly over the internal Docker network. Because presets are named and
-  `IMGPROXY_ONLY_PRESETS` is enabled, a leaked signing key can only request one of the
-  pre-configured resize shapes, never an arbitrary render size.
-- `IPhotoStorage.OpenReadAsync` (raw bytes) exists only for server-side tooling — e.g. the EXIF
-  backfill command — and is never reachable through the API.
-
-### Maintenance commands
-
-`Program.cs` intercepts `args[0]` before starting the web server for one-off maintenance work,
-delegating to `ElBaul.Maintenance` (`backfill-exif-dates`, `backfill-recuerdo-baul-id`,
-`backfill-recuerdo-embeddings`, implemented in `ElBaul.Maintenance/Commands/` — see the
-`ElBaul.Maintenance` bullet above for how the framework wires a command up). These run via
-`docker exec <container> dotnet ElBaul.Api.dll <command>` against an already-running
-deployment (see `api/README.md`) — the web process itself never runs them.
-
-### Other conventions
-
-- **Logging**: Serilog, bootstrap console logger before `WebApplication.CreateBuilder`, then
-  reconfigured via `ReadFrom.Configuration` + `UseSerilog`. `Serilog.Sinks.Seq` ships alongside
-  the console sink; request logging via `UseSerilogRequestLogging()`. Maintenance commands
-  (`ElBaul.Maintenance`) configure Serilog the same way (`ReadFrom.Configuration` off the same
-  appsettings, so Seq is active there too whenever it's active for the web app) but skip the
-  bootstrap-logger phase — there's no early Kestrel-startup window to protect against in a
-  one-shot CLI run, and `Log.CloseAndFlushAsync()` runs before the process exits so a short
-  command's last log line isn't lost to Seq's send-batching.
-- **API docs**: Swagger/Swashbuckle, enabled only in `Development`.
-- **CORS**: `AllowAnyOrigin`/`AllowAnyMethod`/`AllowAnyHeader` — acceptable since auth is bearer
-  token, not cookies/origin-based.
-- **Rate limiting**: a fixed-window `PublicLimiter` policy, keyed by client IP, applied to
-  `/health` and `AppConfigController` — the only unauthenticated endpoints. Config-driven limit,
-  structured logging on rejection.
-- **Config**: `appsettings.json` (dev defaults committed) + `appsettings.Production.json` +
-  environment variables in the container (see `docker-compose.yaml` for the full local env var
-  set: `ConnectionStrings__DefaultConnection`, `Auth__*`, `Storage__*`, `Imgproxy__*`). Never
-  commit production secrets.
-
-### Testing
-
-- **`ElBaul.Tests`** — core/application logic (`ChapterManagerTests`, `BaulManagerTests`,
-  `PhotoManagerTests`) against hand-written fakes — no mocking framework, fast,
-  behavior-focused. Most fakes (`InMemory*Repository`, `FakeEmailSender`,
-  `FakeBackgroundJobScheduler`, `FakeAiChatBackend`, `FakeEmbeddingBackend`,
-  `FakeSupportBackend`, `FakeEmailTemplateRenderer`, `FakePhotoDateExtractor`) live in
-  `ElBaul.Infra.Lite` instead of this project's own `Fakes/` — they're the same classes that
-  back `el-baul-api-lite`, so a unit test and the lite image can never quietly disagree on
-  what a fake does. `Fakes/` itself keeps only what's specific to pinning down a single test's
-  assertions rather than standing in for a whole live app: `FakePhotoStorage` (asserts on
-  saved/deleted keys directly, unlike `LitePhotoStorage`, which needs to actually serve bytes
-  back over HTTP), `StaticClock`/`StaticIdGenerator`/`StaticCurrentUserProvider` (a fixed
-  time/id/user a test can assert against — unsuitable for a real multi-request app, which is
-  why `el-baul-api-lite` uses the real `SystemClock`/`GuidIdGenerator`/
-  `HttpContextCurrentUserProvider` from `ElBaul.Infra.Common` instead).
-- **`ElBaul.Infra.Tests`** — infra-layer units that are cheap to isolate without a real
-  MinIO/DB (`ImgproxyUrlBuilderTests`, `UserSyncMiddlewareTests`). Also where
-  `EmailTemplateRenderer` is tested: `WelcomeEmailTemplateRendererTests`/
-  `WeeklyDigestTemplateRendererTests` assert specific behaviors (escaping, truncation, CTA
-  wiring) via targeted substrings, while `WelcomeEmailApprovalTests`/
-  `WeeklyDigestApprovalTests` are **approval tests** (`Verify.Xunit`) that snapshot each
-  scenario's full `RenderedEmail` (subject/HTML/plain-text together) against a committed
-  `*.verified.txt` baseline next to the test — catching incidental template changes the
-  substring tests wouldn't. A mismatch writes a `*.received.txt` next to it (gitignored) for
-  diffing; re-approve an intentional change by reviewing that file and overwriting the
-  `.verified.txt` with it.
-- **`ElBaul.Api.Tests`** — controller-level concerns that need the ASP.NET pipeline itself
-  (authorization policies, the email-tracking endpoint), not just the `Application/` logic
-  behind it.
-- **`docker-image-tests/ElBaul.ImageTests`** — a separate solution, not part of the above
-  (`ElBaul.ImageTests.slnx`, excluded from `ElBaul.slnx` — plain `dotnet test` from `api/`
-  does not run it). Black-box acceptance tests for the *built Docker image*, run via
-  Testcontainers against a real Postgres + MinIO + fake-oidc stack it stands up itself: no
-  `ProjectReference` to anything above, no shared fixtures/DTOs, HTTP and container state
-  only. Runs in CI right after `docker build`, before the image is pushed
-  (`.github/workflows/backend-deploy.yml`). See its own `README.md` for the full rule set
-  and what it does/doesn't cover.
-
-  The unit suites above run against hand-written fakes, which is exactly what makes them
-  fast — and exactly why they can't catch a few classes of bug: an EF model that fails to
-  build or a query that fails to translate against a *real* Postgres (fakes have no query
-  translation step at all), a wire-format regression the backend's own DTOs wouldn't
-  reveal (a test recompiled against the same, now-broken, shared type can't catch a
-  regression in that type), or a raw-SQL/Testcontainers-only path. Run
-  `docker-image-tests` too — not just `dotnet test` — for any change to the domain model,
-  persistence (entities, EF configuration, migrations, value converters), or the public API
-  contract:
-
-  ```bash
-  cd api
-  docker build -t el-baul-api:local .
-  BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
-  ```
-
----
-
-## Frontend (`app/src`)
-
-### Layers
-
-```
-features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/index.ts
-                    ↓ renders
-        features/<domain>/components/*.tsx  (presentational screens/modals)
-                    ↓ composed from
-        design-system/{foundations,components,patterns,layouts}/*.tsx
-```
-
-- **`types/index.ts`** — one class per domain entity (`Baul`, `Chapter`, `Photo`, `Recuerdo`,
-  `Persona`, `RemovalRequest`, `BaulPreview`, `UserProfile`, plus value types like
-  `PhotoDate`/`Subscription`). Classes so raw JSON can be re-hydrated via `new Entity(data)`.
-- **`api.ts`** — a single `api` object, namespaced per resource (`api.baules`, `api.chapters`,
-  `api.photos`, `api.recuerdos`, `api.personas`, `api.users`, `api.appConfig`). Plain `fetch`
-  through a shared `handleResponse` that throws on non-OK responses; auth token is module-level
-  state (`_accessToken`) set via `setAccessToken()`, not read from a hook. Every response is
-  mapped back into its `types/index.ts` class before being returned. Base URL from
-  `VITE_API_URL`.
-- **`store/`** — not a single store; state is split by domain (split apart from one combined
-  domain store in `c4102a2`):
-  - `useAuthStore.ts` — auth-derived state only (`userProfile`, `subscription`).
-  - `useBaulesStore.ts` — the largest domain store: `baules`, `chapters`, `photos`,
-    `loosePhotos`. Per-screen `load*` actions lazy-load chapters/photos as routes need them,
-    rather than one eager `Promise.all` for everything. Every mutating action calls `api.*`
-    first and updates state from the response only after the await resolves.
-  - `usePersonasStore.ts` — `personas`, `removalRequests`.
-  - `useRecuerdosStore.ts` — `recuerdos`, `chapterRecuerdos`, `baulRecuerdos`.
-  - `session.ts` — not a store itself; `loadUserData()` fires the baúles list + profile fetch
-    together on login/refresh (isLoading only reflects the baúles fetch), and
-    `resetAllStores()` is the one place that fans a sign-out reset out across all four domain
-    stores above.
-  - `uiStore.ts` — cross-cutting UI state (toasts, profile menu, plan-limit modal) that isn't
-    server data and doesn't belong to one screen.
-  - `useAppConfigStore.ts` — remote feature flags (`api.appConfig.get()`), fetched once per
-    session in `App.tsx` on mount; screens gated by a flag stay off until it resolves.
-  - `useIncomingShareStore.ts` — state for the native "share into the app" flow (see Capacitor
-    below), independent of server data.
-- **`features/<domain>/components/*Route.tsx`** — one container component per route, named
-  `*Route` (`ChapterRoute`, `BaulesListRoute`, `CreateBaulRoute`, …), grouped into
-  `features/{chapters,auth,baules,photos,profile,sharing,chat,support}/`. A Route component reads
-  `useParams`/store state, defines the handlers (calling store actions, navigating, showing
-  toasts), and renders a presentational component colocated in the same feature's `components/`
-  folder, with everything passed as props — no business logic or store access in the
-  presentational component itself.
-- **`features/<domain>/components/`** — alongside each `*Route.tsx`, the presentational
-  screens/modals it renders (`PhotosView`, `ChaptersView`, `CreateChapterForm`, `RecuerdoCard`, …),
-  one folder per domain: `baules`, `chapters`, `people`, `photos`, `memories`, `sharing`,
-  `profile`, `chat`, `auth`, `support`. Props-in, callbacks-out; no `store/*`/`api` imports. A
-  presentational component reused across route files from *different* domains (e.g.
-  `ChaptersView`, rendered as the background screen under a photo-viewer overlay reached from
-  three different routes) still lives in the folder of its primary domain, imported cross-feature
-  by the others — see ADR 0002 for the reasoning.
-- **`design-system/`** — everything with zero knowledge of El Baúl's domain types, split by how
-  reusable/composed it is: `foundations/` (icons), `components/{actions,forms,navigation,
-  feedback,data-display,overlays,ui}` (`Button`, `Card`, `Input`, `Toast`, `BottomSheetModal`, …),
-  `patterns/` (generic reusable compositions like `EditInfoModal`, `PhotoStage`), `layouts/`
-  (`PageContainer`, `StickyHeader`). See ADR 0002 for the full taxonomy and the litmus test for
-  what belongs here versus in a feature. Headless, store-driven wiring components (e.g.
-  `NativeShareHandler.tsx`) live in `native/` instead — see Capacitor section below.
-- **`App.tsx`** — owns routing (`react-router-dom` `<Routes>`, no shared `<Layout>` wrapper —
-  each route renders its own screen directly), the auth redirect gate (`react-oidc-context`),
-  pushing the access token into `api.ts`, and one-time domain data load
-  (`loadUserData`/`fetchData`) whenever auth state changes. Every protected route is wrapped in
-  `<ProtectedRoute>`/`<PublicRoute>` (`app/routes/AuthGuards.tsx`), not a layout component.
-- **`main.tsx`** — entry point. Wraps `<App />` in a Sentry `ErrorBoundary` (`CrashFallback`),
-  `<AuthProvider>` (OIDC config inlined here, including the Zitadel-specific
-  `urn:zitadel:iam:org:id:{organizationId}` scope), and `<BrowserRouter>`. Also registers the PWA
-  service worker (`vite-plugin-pwa`) and, on native platforms, wires Capacitor deep-link
-  callbacks into the OIDC redirect flow.
-
-### Native app (Capacitor) and PWA
-
-The frontend ships as three things from one codebase: a browser SPA, an installable PWA
-(`vite-plugin-pwa`, `manifest` in `vite.config.ts`), and a native Android app
-(`@capacitor/android`, `app/android/`, `capacitor.config.ts`). Capacitor-specific bits are
-isolated rather than spread through the app:
-
-- `native/shareReceiver.ts` + `useIncomingShareStore.ts` handle Android's native
-  "share photos into El Baúl" intent; `native/NativeShareHandler.tsx` is the component that
-  wires the two together (mounted once in `App.tsx`, inside `<BrowserRouter>`).
-- `main.tsx` special-cases the OIDC redirect on native: `AppUrlOpen`/launch-URL deep links
-  (`studio.ne2.elbaul://…`) are rewritten to the in-app `/callback` route, because
-  `react-oidc-context` expects `code`/`state` on the page URL, not an OS-level deep link.
-- `npm run android:build` builds with `--mode android` (a separate `.env.android`) and runs
-  `cap sync android`.
-
-### Conventions
-
-- **Auth**: `react-oidc-context`. `App.tsx` redirects to sign-in whenever the user isn't
-  authenticated and isn't on a public path (`/`, `/invitacion/*`, `/onboarding`); the access
-  token is pushed into `api.ts` via `setAccessToken` on every auth state change.
-- **Routing**: `react-router-dom` v7, all routes declared flat in `App.tsx`, in Spanish
-  (`/baules/:baulId/capitulos/:chapterId/foto/:photoId`, `/eliminar-solicitudes/:baulId`, …) —
-  the domain language ("baúl", "capítulo", "recuerdo") is the URL language too. Note this is a
-  frontend-only convention: the backend's own API routes are English (`/api/baules/{baulId}/
-  chapters`), so the two surfaces don't share a vocabulary — only the frontend's browser-facing
-  URLs are Spanish.
-- **State management**: Zustand only, split by concern as above — no React Context for domain
-  data, no server-state library (React Query, SWR).
-- **Styling**: Tailwind CSS v4, CSS-first config (`styles/theme.css`/`tailwind.css`, no
-  `tailwind.config.js`). Colors/typography are theme tokens sourced from
-  [`docs/DESIGN.md`](DESIGN.md) — never raw hex/Tailwind palette classes in components.
-- **Error monitoring**: `@sentry/react` (+ `@sentry/capacitor` on native), initialized in
-  `sentry.ts`, with a top-level `ErrorBoundary`/`CrashFallback`. `npm run build` never talks to
-  Sentry itself — it only stamps deterministic debug ids into `dist/`
-  (`sentry-cli sourcemaps inject`); uploading sourcemaps is a separate script
-  (`npm run sentry:upload-sourcemaps`) that only CI runs, against the `dist/` extracted from the
-  already-built Docker image.
-- **TypeScript**: `@/*` path alias maps to `app/src`.
-- **Config**: `VITE_API_URL`, `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`,
-  `VITE_OIDC_CALLBACK_URI`, `VITE_ZITADEL_ORGANIZATION_ID`, `VITE_SENTRY_DSN` — read via
-  `src/runtimeConfig.ts`'s `getEnv()`, which prefers a runtime override
-  (`window.__ENV__`, set by `docker-entrypoint.d/95-generate-runtime-env.sh` inside the built
-  image from container env vars) and falls back to the Vite build-time value
-  (`import.meta.env`) when no override is set. This lets the *same built image* be pointed at
-  a different backend without rebuilding (see `docker-compose.lite.yml`'s `app` service and
-  `frontend-deploy.yml`'s acceptance-test step below) while `npm run dev`, Storybook, and the
-  Capacitor/Android build (no server to inject a runtime value into) keep working exactly as
-  before off the Vite build-time value alone. `admin/` has no equivalent mechanism — its image
-  is still config-baked at build time only.
-- **No shared package/types** between frontend and backend — DTO shapes are duplicated by hand
-  (backend `Ports/Input/*Dto.cs` vs. `types/index.ts` classes) and kept in sync manually; the
-  routes/schemas themselves are generated OpenAPI (`/swagger` in Development), and the rules
-  that don't show up in a schema are in [`docs/API-CONVENTIONS.md`](API-CONVENTIONS.md).
-
-### Testing
-
-Three levels, matched to what's under test — see
-[`docs/adr/0001-frontend-testing-strategy.md`](adr/0001-frontend-testing-strategy.md) for
-the full rationale.
-
-- **Unit** (Vitest, `environment: 'node'`, the config default, `npm test`) — narrow,
-  in-process, no DOM: store logic (`useRecuerdosStore.test.ts`) and
-  `utils/timeUtils.test.ts`.
-- **Component** (Vitest + jsdom + React Testing Library, opted in per-file via a
-  `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM, e.g.
-  `RecuerdoFeedCard.test.tsx`. Query priority: role/label/placeholder/text before
-  `data-testid`.
-- **`/e2e-tests/`** (repo root, own `package.json`; `npm run test:e2e`) — full-stack
-  Playwright: `docker compose up --build` against the real `docker-compose.yaml` stack
-  (Postgres, MinIO, imgproxy, fake-oidc), one spec (`smoke.spec.ts`), login → home only. The
-  one suite that actually exercises real infra wiring. Lives outside `app/` because it
-  exercises the whole repo (api + app + imgproxy), not just the frontend. Runs nightly
-  (`e2e-nightly.yml`), decoupled from any deploy.
-- **`app/e2e/`** (`npm run test:e2e`) — behavioral-regression
-  Playwright against the built frontend image + `el-baul-api-lite` (see the backend Testing
-  section above) instead of the real stack, ~5x faster since there's no real Postgres/MinIO/
-  imgproxy to boot: photo upload/move/delete (`photos.spec.ts`), persona invite/role-change/
-  revoke (`personas.spec.ts`), and removal-request submit/approve/reject
-  (`removal-requests.spec.ts`, two tests). Gates `frontend-deploy.yml` — build image → this
-  suite → push/deploy, the frontend-side equivalent of `docker-image-tests` gating the
-  backend. `personas.spec.ts` and `removal-requests.spec.ts` each need a second identity (a
-  second `browser.newContext()` logged in as fake-oidc's "Normal User") since the backend
-  rejects an account accepting its own invite, and only shows "submit removal request" to a
-  non-admin member — never the baúl's own custodian. `docker-compose.lite.yml`'s `api-lite`
-  raises `RateLimiter__PublicLimiter`/`ChatLimiter` well above the real backend's default,
-  since this suite's many full-page `page.goto()` reloads (each re-fetching the rate-limited,
-  public `/api/app-config`) hit the real limit once all spec files run together — not a
-  behavior this suite is testing, so the throwaway stack's limit is raised instead.
-
----
-
-## Cross-cutting / deployment
-
-- **CI/CD**: four independent, path-filtered GitHub Actions workflows —
-  `backend-deploy.yml` (`api/**`), `frontend-deploy.yml` (`app/**`), `imgproxy-deploy.yml`
-  (`imgproxy/**`), `storybook-deploy.yml` (`app/**`, `storybook/**`) — each triggered only by
-  pushes to `main` that touch its own paths. All four: build → build a Docker image → push to
-  GHCR (`ghcr.io/<repo>-api`, `-app`, `-imgproxy`, `-storybook`) → trigger a Coolify deploy
-  webhook. Two of the four now gate that push on the freshly built image itself, not just a
-  unit-test run: `backend-deploy.yml` runs `docker-image-tests` against the built
-  `el-baul-api` image, and `frontend-deploy.yml` runs `app/e2e/` against the
-  built `el-baul-app` image redirected (via the runtime-config mechanism above) at
-  `el-baul-api-lite` — see each project's own Testing section. `imgproxy-deploy.yml`/
-  `storybook-deploy.yml` have no equivalent gate yet. The frontend workflow additionally
-  extracts `dist/` from the just-built image afterward and uploads its sourcemaps to Sentry
-  (see above) — a step that needs Node/npm, not the Docker image.
-- **E2E smoke tests**: `e2e-nightly.yml` runs `/e2e-tests/` (see `.claude/skills/run/SKILL.md`)
-  on a nightly cron (plus manual `workflow_dispatch`), always rebuilding api/app/imgproxy from
-  scratch regardless of what changed. Fully decoupled from the deploy workflows above — a slow
-  or flaky run never blocks a deploy, it just gives a daily signal against real infra that
-  `frontend-deploy.yml`'s own (faster, `el-baul-api-lite`-backed) acceptance gate doesn't
-  cover.
-- **Android CI**: `android-ci.yml` runs on PRs/pushes touching `app/**`. It builds the web
-  bundle against `app/.env.android`'s prod values (`npm run android:build`, which also runs
-  `cap sync android`), then `./gradlew assembleDebug` and uploads the resulting APK as a
-  build artifact. No signing config yet, so this stops at a debug artifact — no store
-  publish or release build.
-- **Containers**: backend is a multi-stage .NET SDK→ASP.NET runtime image exposing port 8080
-  (plus a second image, `el-baul-api-lite`, same pipeline shape but everything in memory — see
-  `api/README.md`). Frontend is built by Vite inside its own Dockerfile build stage, then the
-  static `dist/` is served by `nginx:alpine` (port 80, SPA-fallback `nginx.conf`) — `app/`'s
-  image also runs a runtime-config entrypoint script on container start (see the Config
-  bullet above); `admin/`'s doesn't. imgproxy has its own minimal `Dockerfile`/`presets.conf`.
-- **Local dev**: `docker-compose.yaml` at the repo root runs Postgres, MinIO, imgproxy,
-  [fake-oidc](https://github.com/ne2-studio/fake-oidc), the API, the frontend, and the admin
-  backoffice together, each built from its own Dockerfile (`docker compose up --build`; both
-  frontends' Dockerfiles run `npm run build` themselves in a build stage, so no separate
-  frontend build step is needed). Frontend: `http://localhost:3000` · Admin backoffice:
-  `http://localhost:3001` · Backend: `http://localhost:5050` · Postgres: `localhost:5432` ·
-  MinIO console: `http://localhost:9001` · fake-oidc: `http://localhost:5000`. fake-oidc is a
-  throwaway OIDC provider for local/E2E use — there's no login UI, users are selected via
-  `login_hint`. The compose file preconfigures two test users (`admin`, `user`) and two clients
-  (`el-baul-app`, `el-baul-admin`); the `admin` test user carries the `admin` role, so it's the
-  one to sign into the backoffice with — `user` will hit `AccessDenied` there. See the
-  [fake-oidc README](https://github.com/ne2-studio/fake-oidc) for the full flow.
+1. ADRs (`adr/`) override general architecture within their stated scope.
+2. This documentation defines intended conventions.
+3. Existing code is evidence of implementation, not automatically the standard — code and docs
+   drift; when they disagree, treat it as a bug in one of them, not a tiebreaker.
