@@ -7,12 +7,13 @@ comment explaining why.
 
 ## System overview
 
-Monorepo with two independently deployable services, no shared code between them, plus a
+Monorepo with three independently deployable services, no shared code between them, plus a
 small image-processing sidecar:
 
 | Directory | Stack |
 |---|---|
 | `app/` | React 18, TypeScript, Vite, Tailwind CSS v4, Zustand, react-router-dom v7, react-oidc-context, Capacitor (Android), vite-plugin-pwa |
+| `admin/` | React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, react-router-dom v7, react-oidc-context |
 | `api/` | ASP.NET Core (.NET 10), PostgreSQL via EF Core, MinIO (S3-compatible), Serilog |
 | `imgproxy/` | An [imgproxy](https://imgproxy.net/) instance, its own Dockerfile/deploy, serving resized photos directly from MinIO via named presets |
 
@@ -27,8 +28,9 @@ anyone else.
 
 Auth is OIDC/JWT Bearer end-to-end (Zitadel in practice): the frontend authenticates against the
 external OIDC provider, attaches the access token to every API call, and the backend validates it
-via `JwtBearer` middleware. There is no session state on the backend — every request is
-authenticated independently and scoped to the caller's identity.
+via `JwtBearer` middleware — there is no Supabase (or any other bespoke auth) anywhere in the
+stack. There is no session state on the backend — every request is authenticated independently
+and scoped to the caller's identity.
 
 ---
 
@@ -511,6 +513,14 @@ the full rationale.
   image also runs a runtime-config entrypoint script on container start (see the Config
   bullet above); `admin/`'s doesn't. imgproxy has its own minimal `Dockerfile`/`presets.conf`.
 - **Local dev**: `docker-compose.yaml` at the repo root runs Postgres, MinIO, imgproxy,
-  [fake-oidc](https://github.com/ne2-studio/fake-oidc) (a throwaway OIDC provider — no login UI,
-  users selected via `login_hint`), the API, and the frontend, each built from its own
-  Dockerfile — see the root [`README.md`](../README.md) for the full flow and ports.
+  [fake-oidc](https://github.com/ne2-studio/fake-oidc), the API, the frontend, and the admin
+  backoffice together, each built from its own Dockerfile (`docker compose up --build`; both
+  frontends' Dockerfiles run `npm run build` themselves in a build stage, so no separate
+  frontend build step is needed). Frontend: `http://localhost:3000` · Admin backoffice:
+  `http://localhost:3001` · Backend: `http://localhost:5050` · Postgres: `localhost:5432` ·
+  MinIO console: `http://localhost:9001` · fake-oidc: `http://localhost:5000`. fake-oidc is a
+  throwaway OIDC provider for local/E2E use — there's no login UI, users are selected via
+  `login_hint`. The compose file preconfigures two test users (`admin`, `user`) and two clients
+  (`el-baul-app`, `el-baul-admin`); the `admin` test user carries the `admin` role, so it's the
+  one to sign into the backoffice with — `user` will hit `AccessDenied` there. See the
+  [fake-oidc README](https://github.com/ne2-studio/fake-oidc) for the full flow.
