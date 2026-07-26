@@ -18,12 +18,6 @@ docs/ARCHITECTURE.md
 docs/API-CONVENTIONS.md
 docs/DESIGN.md
 
-The generated OpenAPI spec (`/swagger` in Development, see the `run` skill) is the source
-of truth for API routes, request/response schemas and status codes — read
-`docs/API-CONVENTIONS.md` for the rules that don't show up in a schema (auth, errors,
-roles, invitations, cross-application behaviour). Don't hand-duplicate DTO shapes into
-markdown; update the backend first, then check OpenAPI before touching frontend types.
-
 ## Environment
 
 Console commands run in WSL2 — always use Linux command syntax, never PowerShell/cmd.
