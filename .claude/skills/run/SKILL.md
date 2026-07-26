@@ -90,10 +90,9 @@ local/E2E) picks the user via a button click:
 Two independent Playwright setups in this repo, each its own `@playwright/test` devDependency
 pinned to `1.61.1` (matching the Chromium build already cached at `~/.cache/ms-playwright` on
 this machine — `npx playwright install --dry-run chromium` from either `app/` or
-`e2e-tests/` confirms this without downloading anything): `app/`'s own, used by the
-image-acceptance suite (4b), and `/e2e-tests/`'s, a separate root-level package for the
-full-stack smoke suite (4a) since it exercises the whole repo (api + app + imgproxy), not
-just the frontend.
+`e2e-tests/` confirms this without downloading anything): `app/`'s own, used by its `e2e/`
+suite (4b), and `/e2e-tests/`'s, a separate root-level package for the full-stack smoke suite
+(4a) since it exercises the whole repo (api + app + imgproxy), not just the frontend.
 
 For ad hoc one-off scripting against a stack you started yourself (steps 1-3 above, not
 either suite's own `globalSetup`), `require('playwright')` resolves straight from
@@ -142,7 +141,7 @@ api/app/imgproxy fresh regardless of what changed, deliberately decoupled from t
 per-app `backend-deploy.yml`/`frontend-deploy.yml`/`imgproxy-deploy.yml`/
 `storybook-deploy.yml` pipelines so a slow e2e run never blocks or delays a deploy.
 
-## 4b. The `app/e2e-image-acceptance/` suite
+## 4b. The `app/e2e/` suite
 
 Same idea as 4a, but against a much lighter stack: the frontend image + `el-baul-api-lite`
 (everything in memory — no Postgres/MinIO/imgproxy, see `api/README.md`'s "el-baul-api-lite"
@@ -156,7 +155,7 @@ noticeably faster than 4a (~30s combined vs. ~1.5min), and it's what gates
 docker build -t el-baul-app:local app/
 docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local api/
 cd app
-APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local npm run test:image-acceptance
+APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local npm run test:e2e
 ```
 
 Own compose file (`docker-compose.lite.yml`), own `global-setup.ts`/`global-teardown.ts`, own

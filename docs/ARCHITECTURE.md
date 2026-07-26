@@ -460,7 +460,7 @@ the full rationale.
   one suite that actually exercises real infra wiring. Lives outside `app/` because it
   exercises the whole repo (api + app + imgproxy), not just the frontend. Runs nightly
   (`e2e-nightly.yml`), decoupled from any deploy.
-- **`app/e2e-image-acceptance/`** (`npm run test:image-acceptance`) — behavioral-regression
+- **`app/e2e/`** (`npm run test:e2e`) — behavioral-regression
   Playwright against the built frontend image + `el-baul-api-lite` (see the backend Testing
   section above) instead of the real stack, ~5x faster since there's no real Postgres/MinIO/
   imgproxy to boot: photo upload/move/delete (`photos.spec.ts`), persona invite/role-change/
@@ -487,7 +487,7 @@ the full rationale.
   GHCR (`ghcr.io/<repo>-api`, `-app`, `-imgproxy`, `-storybook`) → trigger a Coolify deploy
   webhook. Two of the four now gate that push on the freshly built image itself, not just a
   unit-test run: `backend-deploy.yml` runs `docker-image-tests` against the built
-  `el-baul-api` image, and `frontend-deploy.yml` runs `app/e2e-image-acceptance/` against the
+  `el-baul-api` image, and `frontend-deploy.yml` runs `app/e2e/` against the
   built `el-baul-app` image redirected (via the runtime-config mechanism above) at
   `el-baul-api-lite` — see each project's own Testing section. `imgproxy-deploy.yml`/
   `storybook-deploy.yml` have no equivalent gate yet. The frontend workflow additionally

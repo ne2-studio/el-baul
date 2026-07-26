@@ -21,7 +21,7 @@ async function waitForOk(url: string, timeoutMs: number) {
   throw new Error(`Timed out waiting for ${url}: ${lastError}`);
 }
 
-// Deliberately a separate global-setup from e2e/'s — this suite verifies el-baul-api-lite +
+// Deliberately a separate global-setup from /e2e-tests/'s — this suite verifies el-baul-api-lite +
 // the already-built frontend image, not the full docker-compose.yaml stack, and the two must
 // never be able to affect each other's config.
 export default async function globalSetup() {

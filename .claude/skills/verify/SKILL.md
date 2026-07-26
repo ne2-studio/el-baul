@@ -64,15 +64,17 @@ production, which is the whole point of these commands.
 ## Frontend changes
 
 ```bash
-cd app && npm run typecheck              # tsc --noEmit — fast, catches type errors, run always
-cd app && npm run test:image-acceptance  # behavioral coverage — photos, personas, removal requests
-cd e2e-tests && npm run test:e2e         # login + reach the real home screen, against the full real stack
+cd app && npm run typecheck   # tsc --noEmit — fast, catches type errors, run always
+cd app && npm run test:e2e    # behavioral coverage — photos, personas, removal requests
+cd e2e-tests && npm run test:e2e  # login + reach the real home screen, against the full real stack
 ```
 
-**Run `test:image-acceptance` before considering done any change touching photo
+Two different packages, each with its own `test:e2e` script — don't confuse them.
+
+**Run `app`'s `test:e2e` before considering done any change touching photo
 upload/move/delete, persona invite/role-change/revoke, or removal-request
 submit/approve/reject** — that's exactly the coverage those four specs give
-(`app/e2e-image-acceptance/`, see the `run` skill's section 4b for the two images it needs
+(`app/e2e/`, see the `run` skill's section 4b for the two images it needs
 built first). It's real regression protection for a broken store action or route wiring, not
 a rubber stamp, and markedly faster than `e2e-tests`' `test:e2e` since there's no real
 Postgres/MinIO/imgproxy to boot. It does **not** cover anything outside those four flows.

@@ -62,7 +62,7 @@ For critical end-to-end journeys, run against Chromium/Firefox/WebKit for real: 
 login, accepting an invite, creating the first baúl, creating a chapter, uploading a photo,
 adding a recuerdo, navigating from a recuerdo to a persona, sharing or deleting content,
 permission flows, basic responsive behavior. This is `/e2e-tests/` (repo root, full stack
-smoke test) and `app/e2e-image-acceptance/` (lighter stack, covers photo/persona/removal-
+smoke test) and `app/e2e/` (lighter stack, covers photo/persona/removal-
 request flows) — see the `run` and `verify` skills for how to drive them.
 
 Do **not** use Playwright to cover the six prop combinations of a single component like
