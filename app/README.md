@@ -29,6 +29,33 @@ npm run typecheck
 npm run build
 ```
 
+### Storybook
+
+Component/design-system catalog, built from this same `app/` tree.
+
+```bash
+npm run storybook         # dev server at http://localhost:6006
+npm run build-storybook   # static site, output to storybook-static/
+```
+
+Also available via the root Docker Compose stack (`storybook` service) at
+`http://localhost:6006`, built from [`../storybook/Dockerfile`](../storybook/Dockerfile) — its
+build context is the repo root since it needs this whole directory.
+
+### Android (Capacitor)
+
+`app/` also ships as a native Android app — see
+[`docs/architecture/native-android.md`](../docs/architecture/native-android.md) for how
+Capacitor is wired in.
+
+```bash
+npm run android:build       # vite build --mode android (.env.android) + cap sync android
+cd android && ./gradlew assembleDebug
+```
+
+Produces an unsigned debug APK. Open `app/android` in Android Studio instead of the Gradle CLI
+if you need an emulator/device run rather than just a build artifact.
+
 ## Verify
 
 ```bash
