@@ -202,7 +202,7 @@ scope so far — this image has only been built and smoke-tested manually):
 - A compose file bringing up just `el-baul-api-lite` + `fake-oidc` + the frontend (no
   Postgres/MinIO/imgproxy/Mailpit) — dramatically fewer containers/healthchecks than
   `docker-compose.yaml`.
-- Pointing `app/e2e/global-setup.ts` (or a new lite-specific Playwright config) at that
+- Pointing `/e2e-tests/global-setup.ts` (or a new lite-specific Playwright config) at that
   compose file instead of the full stack.
 - A decision on state isolation between spec files — restart-the-container is the only option
   today; a `/test/reset` endpoint (mentioned above) would be the natural next step if restart

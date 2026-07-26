@@ -87,18 +87,17 @@ local/E2E) picks the user via a button click:
 
 ## 4. Driving it with Playwright
 
-`@playwright/test` is a real devDependency of `app/` (pinned to `1.61.1`, matching the
-Chromium build already cached at `~/.cache/ms-playwright` on this machine — `cd app &&
-npx playwright install --dry-run chromium` confirms this without downloading anything).
-No more hunting for a cached `npx` copy or exporting `NODE_PATH` — just run from `app/`:
+Two independent Playwright setups in this repo, each its own `@playwright/test` devDependency
+pinned to `1.61.1` (matching the Chromium build already cached at `~/.cache/ms-playwright` on
+this machine — `npx playwright install --dry-run chromium` from either `app/` or
+`e2e-tests/` confirms this without downloading anything): `app/`'s own, used by the
+image-acceptance suite (4b), and `/e2e-tests/`'s, a separate root-level package for the
+full-stack smoke suite (4a) since it exercises the whole repo (api + app + imgproxy), not
+just the frontend.
 
-```bash
-cd app
-npx playwright test        # the smoke suite in app/e2e/ — see 4a below
-```
-
-For ad hoc one-off scripting (not the smoke suite), `require('playwright')` resolves
-straight from `app/node_modules` as long as your cwd is `app/`:
+For ad hoc one-off scripting against a stack you started yourself (steps 1-3 above, not
+either suite's own `globalSetup`), `require('playwright')` resolves straight from
+`app/node_modules` as long as your cwd is `app/`:
 
 ```js
 const { chromium } = require('playwright');
@@ -115,23 +114,25 @@ await page.getByRole('button', { name: 'Admin User' }).click();
 await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/empty', { timeout: 15000 });
 ```
 
-## 4a. The `app/e2e/` smoke suite
+## 4a. The `/e2e-tests/` smoke suite
 
-`app/e2e/smoke.spec.ts` is a minimal Playwright Test smoke suite that boots the whole
-docker-compose stack itself — no need to run steps 1-3 above first. `app/e2e/global-setup.ts`
-does the clean-slate check, `docker compose up --build -d` (always rebuilds from current
-source, never trusts a stale image — see the gotcha below), and polls `/health` and
-`:3000` until ready; `app/e2e/global-teardown.ts` runs `docker compose down` (no `-v`)
-afterwards. The test logs in as Admin User through fake-oidc, seeds one baúl with a
-`Date.now()`-suffixed unique name via a direct `POST /api/baules` call (a fresh Admin User
-has zero baúles, which routes to a completely different empty-state screen — see
-`loadUserData` in `app/src/app/App.tsx` — and a fixed name would eventually collide with a
-leftover from a prior local run and break Playwright's strict-mode locator with a
-"resolved to 2 elements" error), and asserts it lands on the real home screen
+`e2e-tests/smoke.spec.ts` is a minimal Playwright Test smoke suite, at the repo root as its
+own package (`cd e2e-tests && npm install` the first time) because it exercises the whole
+stack — api + app + imgproxy — not just the frontend, and boots the whole docker-compose
+stack itself, no need to run steps 1-3 above first. `e2e-tests/global-setup.ts` does the
+clean-slate check, `docker compose up --build -d` (always rebuilds from current source,
+never trusts a stale image — see the gotcha below), and polls `/health` and `:3000` until
+ready; `e2e-tests/global-teardown.ts` runs `docker compose down` (no `-v`) afterwards. The
+test logs in as Admin User through fake-oidc, seeds one baúl with a `Date.now()`-suffixed
+unique name via a direct `POST /api/baules` call (a fresh Admin User has zero baúles, which
+routes to a completely different empty-state screen — see `loadUserData` in
+`app/src/app/App.tsx` — and a fixed name would eventually collide with a leftover from a
+prior local run and break Playwright's strict-mode locator with a "resolved to 2 elements"
+error), and asserts it lands on the real home screen
 (`app/src/features/baules/components/BaulesList.tsx`).
 
 ```bash
-cd app && npm run test:e2e
+cd e2e-tests && npm run test:e2e
 ```
 
 Because teardown keeps the volumes, repeated local runs accumulate one seeded baúl each
@@ -159,7 +160,7 @@ APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local npm run test:i
 ```
 
 Own compose file (`docker-compose.lite.yml`), own `global-setup.ts`/`global-teardown.ts`, own
-`helpers.ts` — deliberately not sharing anything with 4a's `app/e2e/`, so a change to one
+`helpers.ts` — deliberately not sharing anything with 4a's `/e2e-tests/`, so a change to one
 can't silently affect the other. `personas.spec.ts` and `removal-requests.spec.ts` each log
 into a **second** `browser.newContext()` as fake-oidc's second seeded user ("Normal User",
 `login_hint=user`) — the backend won't let the same account both invite and accept its own

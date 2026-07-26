@@ -14,6 +14,7 @@ Monorepo with independently deployable services, no shared code between them, fo
 | `api/` | ASP.NET Core (.NET 10) ports & adapters backend — see [`api/README.md`](api/README.md) |
 | `app/` | React 19 + Vite + Zustand consumer frontend — see [`app/README.md`](app/README.md) |
 | `admin/` | React 19 + Vite + Zustand ops backoffice (Dashboard/Usuarios/Baúles), same `api/`, gated by a Zitadel "admin" role |
+| `e2e-tests/` | Whole-repo Playwright smoke suite (own `package.json`) — boots the real `docker-compose.yaml` stack and checks login → home |
 | `.github/workflows/` | Path-filtered CI/CD for each service (build → test → Docker image → registry → deploy webhook) |
 
 ## Architecture

@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 
 export const API_BASE_URL = 'http://localhost:5051';
 
-// Shared by every spec in this directory only — not app/e2e/, which has its own equivalent
+// Shared by every spec in this directory only — not /e2e-tests/, which has its own equivalent
 // logic in smoke.spec.ts. Two independent suites, no cross-suite coupling.
 export async function loginAs(page: Page, userButtonName: 'Admin User' | 'Normal User'): Promise<string> {
   await page.goto('/');

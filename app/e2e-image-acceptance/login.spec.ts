@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loginAs, createBaulViaApi } from './helpers';
 
-// Same journey as e2e/smoke.spec.ts (login → seed a baúl → see it on /baules), against a
+// Same journey as e2e-tests/smoke.spec.ts (login → seed a baúl → see it on /baules), against a
 // completely different stack: the actual frontend image under test (APP_IMAGE) + el-baul-api-lite
 // instead of a from-source rebuild against the full docker-compose.yaml stack. Kept as its own
 // file rather than shared/imported — these are two independent suites (own config, own

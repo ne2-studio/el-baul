@@ -454,10 +454,12 @@ the full rationale.
   `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM, e.g.
   `RecuerdoFeedCard.test.tsx`. Query priority: role/label/placeholder/text before
   `data-testid`.
-- **`app/e2e/`** (`npm run test:e2e`) — full-stack Playwright: `docker compose up --build`
-  against the real `docker-compose.yaml` stack (Postgres, MinIO, imgproxy, fake-oidc), one
-  spec (`smoke.spec.ts`), login → home only. The one suite that actually exercises real infra
-  wiring. Runs nightly (`e2e-nightly.yml`), decoupled from any deploy.
+- **`/e2e-tests/`** (repo root, own `package.json`; `npm run test:e2e`) — full-stack
+  Playwright: `docker compose up --build` against the real `docker-compose.yaml` stack
+  (Postgres, MinIO, imgproxy, fake-oidc), one spec (`smoke.spec.ts`), login → home only. The
+  one suite that actually exercises real infra wiring. Lives outside `app/` because it
+  exercises the whole repo (api + app + imgproxy), not just the frontend. Runs nightly
+  (`e2e-nightly.yml`), decoupled from any deploy.
 - **`app/e2e-image-acceptance/`** (`npm run test:image-acceptance`) — behavioral-regression
   Playwright against the built frontend image + `el-baul-api-lite` (see the backend Testing
   section above) instead of the real stack, ~5x faster since there's no real Postgres/MinIO/
@@ -491,7 +493,7 @@ the full rationale.
   `storybook-deploy.yml` have no equivalent gate yet. The frontend workflow additionally
   extracts `dist/` from the just-built image afterward and uploads its sourcemaps to Sentry
   (see above) — a step that needs Node/npm, not the Docker image.
-- **E2E smoke tests**: `e2e-nightly.yml` runs `app/e2e/` (see `.claude/skills/run/SKILL.md`)
+- **E2E smoke tests**: `e2e-nightly.yml` runs `/e2e-tests/` (see `.claude/skills/run/SKILL.md`)
   on a nightly cron (plus manual `workflow_dispatch`), always rebuilding api/app/imgproxy from
   scratch regardless of what changed. Fully decoupled from the deploy workflows above — a slow
   or flaky run never blocks a deploy, it just gives a daily signal against real infra that
