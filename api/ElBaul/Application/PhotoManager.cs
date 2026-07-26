@@ -543,13 +543,7 @@ public class PhotoManager(
         var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(pId);
         var photos = (await photoRepository.GetByIdsAsync(photoIds))
             .Where(p => p.BaulId == bId && p.Status == PhotoStatus.Active)
-            // Same chronological key as PhotoRepository.GetPageAsync: dated photos first
-            // (oldest to newest), undated last, CreatedAt as the final tiebreaker.
-            .OrderBy(p => p.DateYear == null)
-            .ThenBy(p => p.DateYear)
-            .ThenBy(p => p.DateMonth ?? 1)
-            .ThenBy(p => p.DateDay ?? 1)
-            .ThenBy(p => p.CreatedAt)
+            .OrderByChronology()
             .ToList();
 
         var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));

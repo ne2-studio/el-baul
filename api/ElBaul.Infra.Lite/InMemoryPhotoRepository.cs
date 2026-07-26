@@ -59,11 +59,7 @@ public class InMemoryPhotoRepository : IPhotoRepository
         {
             var page = _photos.Values
                 .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && (chapterId == null || p.ChapterId == chapterId))
-                .OrderBy(p => p.DateYear == null)
-                .ThenBy(p => p.DateYear)
-                .ThenBy(p => p.DateMonth ?? 1)
-                .ThenBy(p => p.DateDay ?? 1)
-                .ThenBy(p => p.CreatedAt)
+                .OrderByChronology()
                 .Skip(skip)
                 .Take(take)
                 .ToList();
