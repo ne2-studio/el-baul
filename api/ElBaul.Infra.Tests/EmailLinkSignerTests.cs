@@ -57,7 +57,11 @@ public class EmailLinkSignerTests
     public void TryDecode_ShouldReturnNull_WhenTheSignatureIsTampered()
     {
         var token = _signer.CreateToken(Guid.NewGuid(), "primary-cta", "https://app.test/x");
-        var tampered = token[..^1] + (token[^1] == 'A' ? 'B' : 'A');
+
+        // Flip the second-to-last character rather than the last: base64url encodes the 32-byte
+        // signature with a trailing group whose final character has two unused padding bits, so
+        // toggling it can decode to the exact same signature bytes and make this test flaky.
+        var tampered = token[..^2] + (token[^2] == 'A' ? 'B' : 'A') + token[^1];
 
         Assert.Null(_signer.TryDecode(tampered));
     }
