@@ -14,15 +14,6 @@ public class InMemoryEmailLinkClickRepository : IEmailLinkClickRepository
         lock (_lock) return Task.FromResult(_links.GetValueOrDefault(token));
     }
 
-    public Task CreateManyAsync(IEnumerable<EmailLinkClick> links)
-    {
-        lock (_lock)
-        {
-            foreach (var link in links) _links[link.Token] = link;
-        }
-        return Task.CompletedTask;
-    }
-
     public Task RegisterClickAsync(string token, DateTime clickedAt)
     {
         lock (_lock)
@@ -35,6 +26,23 @@ public class InMemoryEmailLinkClickRepository : IEmailLinkClickRepository
                     LastClickedAt = clickedAt,
                     ClickCount = link.ClickCount + 1
                 };
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task RegisterSignedClickAsync(string token, Guid sentEmailId, string linkKey, string destinationUrl, DateTime clickedAt)
+    {
+        lock (_lock)
+        {
+            if (_links.TryGetValue(token, out var link))
+            {
+                _links[token] = link with { LastClickedAt = clickedAt, ClickCount = link.ClickCount + 1 };
+            }
+            else
+            {
+                _links[token] = new EmailLinkClick(
+                    token, sentEmailId, linkKey, destinationUrl, clickedAt, clickedAt, clickedAt, ClickCount: 1);
             }
         }
         return Task.CompletedTask;

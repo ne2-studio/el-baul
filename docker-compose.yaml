@@ -134,6 +134,7 @@ services:
       Imgproxy__BaseUrl: "http://localhost:8081"
       Imgproxy__Key: "de60801120d03c14c8f17cfc7f8e77c4ee21712606163c1ef4c8ea45a80173a4"
       Imgproxy__Salt: "bbf343c1d3a7def2db1faa30c446fe815e2b87add292ab65c30ce8e774bcc96c"
+      EmailLinkSigning__Key: "e4fba7d5a78a5f266963b6a0a2dbc57070cb66a70aa273c63b7e4270be3e6d8c"
       # The API's own public URL — used to build absolute email tracking links
       # (/email/click/{token}) from background jobs, which have no HttpContext to infer it from.
       Api__PublicUrl: "http://localhost:5050"

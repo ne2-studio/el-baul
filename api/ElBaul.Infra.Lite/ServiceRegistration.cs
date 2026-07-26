@@ -29,6 +29,7 @@ public static class ServiceRegistration
         services.AddSingleton<IAdminRepository, InMemoryAdminRepository>();
         services.AddSingleton<ISentEmailRepository, InMemorySentEmailRepository>();
         services.AddSingleton<IEmailLinkClickRepository, InMemoryEmailLinkClickRepository>();
+        services.AddSingleton<IEmailLinkSigner, EmailLinkSigner>();
         services.AddSingleton<IPhotoPersonaTagRepository, InMemoryPhotoPersonaTagRepository>();
 
         services.AddSingleton<IPhotoStorage, LitePhotoStorage>();

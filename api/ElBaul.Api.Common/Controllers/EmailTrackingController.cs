@@ -7,19 +7,34 @@ namespace ElBaul.Api.Controllers;
 
 /// <summary>
 /// Clicked from an email client, never carries auth — resolves a token to a server-generated
-/// destination and redirects. The destination is never taken from the request itself (only
-/// ever the DestinationUrl stored when the link was created), so this can't become an open
-/// redirect.
+/// destination and redirects. New tokens are self-contained and signed (IEmailLinkSigner):
+/// the destination travels inside the token itself, verified rather than looked up, so a click
+/// row only ever gets created when a link is actually clicked. Tokens minted before this scheme
+/// existed (plain Guid.NewGuid(), no signature) still resolve via the old DB-lookup path, so
+/// already-delivered emails don't break. Either way the destination is never taken from the
+/// request itself — only ever the value embedded in the verified token or stored at click time —
+/// so this can't become an open redirect.
 /// </summary>
 [AllowAnonymous]
 [ApiController]
 [Route("email/click")]
 [EnableRateLimiting("PublicLimiter")]
-public class EmailTrackingController(IEmailLinkClickRepository clickRepository, IClock clock) : ControllerBase
+public class EmailTrackingController(
+    IEmailLinkClickRepository clickRepository,
+    IEmailLinkSigner emailLinkSigner,
+    IClock clock) : ControllerBase
 {
     [HttpGet("{token}")]
     public async Task<IActionResult> Click(string token)
     {
+        var decoded = emailLinkSigner.TryDecode(token);
+        if (decoded is not null)
+        {
+            await clickRepository.RegisterSignedClickAsync(
+                token, decoded.SentEmailId, decoded.LinkKey, decoded.DestinationUrl, clock.UtcNow());
+            return Redirect(decoded.DestinationUrl);
+        }
+
         var link = await clickRepository.GetByTokenAsync(token);
         if (link is null) return NotFound();
 

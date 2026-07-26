@@ -19,6 +19,7 @@ public class WeeklyDigestManagerTests
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
     private readonly InMemoryEmailLinkClickRepository _emailLinkClickRepository = new();
+    private readonly FakeEmailLinkSigner _emailLinkSigner = new();
     private readonly FakeEmailTemplateRenderer _templateRenderer = new();
     private readonly FakeEmailSender _emailSender = new();
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
@@ -33,7 +34,7 @@ public class WeeklyDigestManagerTests
         _userRepository, _baulRepository, _chapterRepository, _photoRepository, _recuerdoRepository, _sentEmailRepository,
         _templateRenderer,
         new EmailDeliveryCoordinator(
-            _sentEmailRepository, _emailLinkClickRepository, _emailSender, appConfiguration, _clock,
+            _sentEmailRepository, _emailLinkSigner, _emailSender, appConfiguration, _clock,
             new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance),
         _jobScheduler, appConfiguration, _currentUserProvider, _clock);
 
@@ -346,9 +347,22 @@ public class WeeklyDigestManagerTests
         Assert.StartsWith(trackedPrefix, model.Footer.SupportUrl);
         var section = Assert.Single(model.Sections);
         Assert.All(section.Blocks, b => Assert.StartsWith(trackedPrefix, b.DeepLinkUrl));
+    }
 
-        // primary-cta + notification-settings + help-center + privacy-policy + support + one block for the new chapter
-        Assert.Equal(6, _emailLinkClickRepository.All.Count);
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldNotPersistAnyClickRows_UntilALinkIsActuallyClicked()
+    {
+        // Tracked links used to be pre-inserted (one row per link, whether ever opened or not) —
+        // now the token is self-contained and a row is only created lazily, on an actual click.
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        var since = _clock.UtcNow().AddDays(-7);
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        var manager = CreateManager();
+
+        await manager.SendWeeklyDigestAsync(UserId, since);
+
+        Assert.Empty(_emailLinkClickRepository.All);
     }
 
     // --- Feature toggle ---

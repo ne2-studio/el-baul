@@ -24,6 +24,7 @@ public static class ServiceRegistration
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<ISentEmailRepository, SentEmailRepository>();
         services.AddScoped<IEmailLinkClickRepository, EmailLinkClickRepository>();
+        services.AddSingleton<IEmailLinkSigner, EmailLinkSigner>();
         services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
         services.AddScoped<EmailJobs>();
         services.AddScoped<IAppConfiguration, AppConfiguration>();

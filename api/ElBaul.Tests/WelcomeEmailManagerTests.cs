@@ -16,6 +16,7 @@ public class WelcomeEmailManagerTests
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
     private readonly InMemoryEmailLinkClickRepository _emailLinkClickRepository = new();
+    private readonly FakeEmailLinkSigner _emailLinkSigner = new();
     private readonly FakeEmailTemplateRenderer _templateRenderer = new();
     private readonly FakeEmailSender _emailSender = new();
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
@@ -24,7 +25,7 @@ public class WelcomeEmailManagerTests
     private readonly StaticClock _clock = new();
 
     private EmailDeliveryCoordinator CreateCoordinator() => new(
-        _sentEmailRepository, _emailLinkClickRepository, _emailSender, _appConfiguration, _clock,
+        _sentEmailRepository, _emailLinkSigner, _emailSender, _appConfiguration, _clock,
         new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance);
 
     private WelcomeEmailManager CreateManager() => CreateManager(_appConfiguration);
@@ -229,7 +230,10 @@ public class WelcomeEmailManagerTests
         var sentEmail = Assert.Single(_sentEmailRepository.All); // still one row, not a duplicate
         Assert.Equal(EmailStatus.Sent, sentEmail.Status);
         Assert.Equal("retry-message-id", sentEmail.ProviderMessageId);
-        Assert.Equal(5, _emailLinkClickRepository.All.Count); // tracked links not duplicated on retry
+
+        // The retry's tracked links point at the same SentEmail row, not a second, orphaned one.
+        var decoded = _emailLinkSigner.TryDecode(_templateRenderer.LastModel!.PrimaryCtaUrl.Split('/').Last());
+        Assert.Equal(sentEmail.Id, decoded!.SentEmailId);
     }
 
     [Fact]
@@ -360,8 +364,10 @@ public class WelcomeEmailManagerTests
         await manager.SendWelcomeEmailAsync(UserId);
 
         Assert.Contains($"{_appConfiguration.ApiPublicUrl}/email/click/", _templateRenderer.LastModel!.PrimaryCtaUrl);
-        var link = Assert.Single(_emailLinkClickRepository.All, l => l.LinkKey == "primary-cta");
-        Assert.Contains("/baules/nuevo", Uri.UnescapeDataString(link.DestinationUrl));
+        var token = _templateRenderer.LastModel.PrimaryCtaUrl.Split('/').Last();
+        var decoded = _emailLinkSigner.TryDecode(token)!;
+        Assert.Equal("primary-cta", decoded.LinkKey);
+        Assert.Contains("/baules/nuevo", Uri.UnescapeDataString(decoded.DestinationUrl));
     }
 
     [Fact]
@@ -378,14 +384,24 @@ public class WelcomeEmailManagerTests
         Assert.StartsWith(trackedPrefix, model.Footer.HelpCenterUrl);
         Assert.StartsWith(trackedPrefix, model.Footer.PrivacyPolicyUrl);
         Assert.StartsWith(trackedPrefix, model.Footer.SupportUrl);
+    }
 
-        // primary-cta + notification-settings + help-center + privacy-policy + support
-        Assert.Equal(5, _emailLinkClickRepository.All.Count);
+    [Fact]
+    public async Task SendWelcomeEmailAsync_ShouldNotPersistAnyClickRows_UntilALinkIsActuallyClicked()
+    {
+        // Tracked links used to be pre-inserted (one row per link, whether ever opened or not) —
+        // now the token is self-contained and a row is only created lazily, on an actual click.
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager();
+
+        await manager.SendWelcomeEmailAsync(UserId);
+
+        Assert.Empty(_emailLinkClickRepository.All);
     }
 
     private string ResolveTrackedDestination(string trackedUrl)
     {
         var token = trackedUrl.Split('/').Last();
-        return _emailLinkClickRepository.All.Single(l => l.Token == token).DestinationUrl;
+        return _emailLinkSigner.TryDecode(token)!.DestinationUrl;
     }
 }
