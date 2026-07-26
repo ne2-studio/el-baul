@@ -1,9 +1,13 @@
 # El Baúl
 
-Private, shared photo archive. Monorepo, three independently deployable services, **no
-shared code between them** — `docs/ARCHITECTURE.md` is the binding architecture standard
-for both `api/`, `app/` and `admin/` (layering, conventions, testing strategy). Read the
-relevant section before making a non-trivial change.
+El Baúl helps families preserve, share and enrich their memories over decades.
+
+## Repository structure
+
+Monorepo, three independently deployable services, **no shared code between them**
+— `docs/ARCHITECTURE.md` is the binding architecture standard for both `api/`, `app/`
+and `admin/` (layering, conventions, testing strategy). Read the relevant section
+before making a non-trivial change.
 
 | Directory | Contents |
 |---|---|
@@ -15,11 +19,11 @@ relevant section before making a non-trivial change.
 | `docs/DESIGN.md` | Frontend design tokens |
 | `docs/adr/` | Decisions that override the general conventions within their stated scope |
 
-## Before finishing a task
-
-- Load the `verify` skill and follow it.
-- Need the stack running — screenshot, manual check, exploring current behavior: load the `run` skill first.
-
 ## Environment
 
 Console commands run in WSL2 — always use Linux command syntax, never PowerShell/cmd.
+
+## Before finishing a task
+
+- Load the `verify` skill and fix all issues found.
+- Need the stack running — screenshot, manual check, exploring current behavior: load the `run` skill first.
