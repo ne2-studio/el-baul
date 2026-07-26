@@ -15,10 +15,11 @@ A private, shared photo archive for families — "baúles" (trunks) hold chapter
 ```text
 api/            ASP.NET Core (.NET 10) backend
 app/            React consumer frontend
+app/android/    Capacitor Android wrapper around app/'s built dist/
 admin/          React ops backoffice
 e2e-tests/      Whole-repo Playwright smoke suite
 imgproxy/       Image-resizing sidecar
-docs/           Architecture standard, API contract, design system
+docs/           Architecture standard, API conventions, design system
 ```
 
 Monorepo, independently deployable services, no shared code between them.

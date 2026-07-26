@@ -6,9 +6,11 @@ El Baúl helps families preserve, share and enrich their memories over decades.
 
 Monorepo, three independently deployable services, **no shared code between them**
 
-api/    ASP.NET Core backend
-app/    End-user React application
-admin/  Internal administration React application
+api/         ASP.NET Core backend
+app/         End-user React application
+app/android/ Capacitor Android shell
+admin/       Internal administration React application
+e2e-tests/   Whole-repo Playwright e2e suite
 
 ## Documentation
 
