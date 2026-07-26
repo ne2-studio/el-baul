@@ -6,14 +6,17 @@ El Baúl helps families preserve, share and enrich their memories over decades.
 
 Monorepo, three independently deployable services, **no shared code between them**
 
-api/      ASP.NET Core backend
-app/      React frontend
-admin/    React admin
+api/    ASP.NET Core backend
+app/    End-user React application
+admin/  Internal administration React application
 
-docs/ARCHITECTURE.md  Layering, conventions, testing strategy — Read before making a non-trivial change
-docs/API.md           Backend API contract
-docs/DESIGN.md        Frontend design tokens
-docs/adr/             Decisions that override the general conventions
+## Documentation
+
+Read the relevant docs before making architectural, cross-service or UI changes.
+
+docs/ARCHITECTURE.md
+docs/API.md
+docs/DESIGN.md
 
 ## Environment
 
@@ -21,5 +24,5 @@ Console commands run in WSL2 — always use Linux command syntax, never PowerShe
 
 ## Before finishing a task
 
-- Load the `verify` skill and fix all issues found.
-- Need the stack running — screenshot, manual check, exploring current behavior: load the `run` skill first.
+- Load the `verify` skill and fix all issues found. Verification MUST succeed to consider the task done.
+- If the task requires manual verification, use the `run` skill first.
