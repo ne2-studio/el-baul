@@ -26,15 +26,18 @@ black-box acceptance tests for the *built Docker image* (`el-baul-api`, never th
 not this source tree. See its own README for the full rule set; it runs in CI right after
 `docker build`, before the image is pushed.
 
-Domain: a **Baúl** (trunk) is owned by a custodian, holds **Chapters** of **Photos**
+Domain: a **Baúl** (trunk) is owned by a custodio, holds **Chapters** of **Photos**
 (each photo can carry **Recuerdos** — comments — from anyone with access), and can be
-shared with other people as *colaborador* (can add chapters/photos) or *miembro*
-(read-only) via **Persona** invitations, and **RemovalRequest**s
+shared with other people as *administrador* (same permissions as custodio) or
+*colaborador* (can add chapters/photos, but not manage people or the baúl itself — there
+is no read-only role) via **Persona** invitations, and **RemovalRequest**s
 (a non-custodian asking to have a photo removed).
 
 ## API endpoints
 
-Full request/response shapes are documented in [`docs/API.md`](../docs/API.md).
+Full request/response shapes are generated OpenAPI (`/swagger` in Development — see the
+`run` skill); semantic rules not visible in a schema are in
+[`docs/API-CONVENTIONS.md`](../docs/API-CONVENTIONS.md).
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|

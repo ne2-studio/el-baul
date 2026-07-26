@@ -2,6 +2,8 @@ using System.Security.Claims;
 using System.Threading.RateLimiting;
 using ElBaul.Api;
 using ElBaul.Api.Logging;
+using ElBaul.Api.Models;
+using ElBaul.Api.Swagger;
 using ElBaul.Application;
 using ElBaul.Infra;
 using ElBaul.Ports.Input;
@@ -43,6 +45,7 @@ public static class ElBaulApiHost
                 Version = "v1",
                 Description = "El Baul backend, following the Exeal backend architecture conventions."
             });
+            c.OperationFilter<DefaultResponseTypesOperationFilter>();
         });
         builder.Services.AddCors();
 
@@ -213,7 +216,8 @@ public static class ElBaulApiHost
 
         // Public, unauthenticated endpoint — rate-limited per the architecture convention.
         app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
-            .RequireRateLimiting("PublicLimiter");
+            .RequireRateLimiting("PublicLimiter")
+            .Produces<HealthResponse>(StatusCodes.Status200OK);
 
         return app;
     }

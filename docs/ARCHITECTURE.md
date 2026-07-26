@@ -441,7 +441,8 @@ isolated rather than spread through the app:
   is still config-baked at build time only.
 - **No shared package/types** between frontend and backend — DTO shapes are duplicated by hand
   (backend `Ports/Input/*Dto.cs` vs. `types/index.ts` classes) and kept in sync manually; the
-  intended contract is documented in [`docs/API.md`](API.md).
+  routes/schemas themselves are generated OpenAPI (`/swagger` in Development), and the rules
+  that don't show up in a schema are in [`docs/API-CONVENTIONS.md`](API-CONVENTIONS.md).
 
 ### Testing
 

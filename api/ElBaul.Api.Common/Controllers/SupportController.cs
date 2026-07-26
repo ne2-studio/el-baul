@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElBaul.Api.Controllers;
@@ -11,6 +12,7 @@ namespace ElBaul.Api.Controllers;
 public class SupportController(ISupportManager supportManager) : ControllerBase
 {
     [HttpPost]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Submit([FromBody] SubmitSupportRequest request)
     {
         var technicalInfo = Request.Headers.UserAgent.ToString();

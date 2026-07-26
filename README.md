@@ -67,7 +67,7 @@ See [`app/README.md`](app/README.md) for environment configuration and tests.
 ## Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the architecture standard both services follow
-- [`docs/API.md`](docs/API.md) — the backend API contract
+- [`docs/API-CONVENTIONS.md`](docs/API-CONVENTIONS.md) — auth, error and authorization rules not visible in the OpenAPI schema (see `/swagger` for the routes/DTOs themselves)
 - [`docs/DESIGN.md`](docs/DESIGN.md) — the frontend design system
 - [`api/README.md`](api/README.md) — backend development
 - [`app/README.md`](app/README.md) — frontend development

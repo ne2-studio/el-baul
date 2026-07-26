@@ -1,4 +1,6 @@
+using ElBaul.Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +14,7 @@ namespace ElBaul.Api.Controllers;
 public class AppConfigController(IConfiguration configuration) : ControllerBase
 {
     [HttpGet]
+    [ProducesResponseType(typeof(AppConfigResponse), StatusCodes.Status200OK)]
     public IActionResult Get()
     {
         var monetizationEnabled = configuration.GetValue<bool>("Features:MonetizationEnabled");

@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElBaul.Api.Controllers;
@@ -11,6 +12,7 @@ namespace ElBaul.Api.Controllers;
 public class UsersController(IUserManager userManager) : ControllerBase
 {
     [HttpGet("me")]
+    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMe()
     {
         var result = await userManager.GetCurrentProfileAsync();
@@ -18,6 +20,7 @@ public class UsersController(IUserManager userManager) : ControllerBase
     }
 
     [HttpPut("me/notification-preferences")]
+    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateNotificationPreferences([FromBody] UpdateNotificationPreferencesRequest request)
     {
         var result = await userManager.UpdateNotificationPreferencesAsync(request.WeeklyDigestEnabled);

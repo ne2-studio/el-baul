@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -15,6 +16,7 @@ public class BaulesController(
     : ControllerBase
 {
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<BaulDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
         var result = await baulManager.GetAllForCurrentUserAsync();
@@ -22,6 +24,7 @@ public class BaulesController(
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create([FromBody] CreateBaulRequest request)
     {
         var result = await baulManager.CreateAsync(request.Name, request.Description);
@@ -29,6 +32,7 @@ public class BaulesController(
     }
 
     [HttpGet("{baulId:guid}")]
+    [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(Guid baulId)
     {
         var result = await baulManager.GetByIdAsync(baulId);
@@ -36,6 +40,7 @@ public class BaulesController(
     }
 
     [HttpPut("{baulId:guid}/cover")]
+    [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetCover(Guid baulId, [FromBody] SetBaulCoverRequest request)
     {
         if (!Guid.TryParse(request.PhotoId, out var photoId))
@@ -46,6 +51,7 @@ public class BaulesController(
     }
 
     [HttpPut("{baulId:guid}")]
+    [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid baulId, [FromBody] UpdateBaulRequest request)
     {
         var result = await baulManager.UpdateAsync(baulId, request.Name, request.Description);
@@ -55,6 +61,7 @@ public class BaulesController(
     [AllowAnonymous]
     [EnableRateLimiting("PublicLimiter")]
     [HttpGet("/api/personas/{personaId:guid}/invite-preview")]
+    [ProducesResponseType(typeof(BaulPreviewDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInvitePreview(Guid personaId)
     {
         var result = await personaManager.GetInvitePreviewAsync(personaId);
@@ -62,6 +69,7 @@ public class BaulesController(
     }
 
     [HttpPost("/api/personas/{personaId:guid}/accept-invite")]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> AcceptPersonalInvite(Guid personaId)
     {
         var result = await personaManager.AcceptPersonalInviteAsync(personaId);
@@ -69,6 +77,7 @@ public class BaulesController(
     }
 
     [HttpGet("{baulId:guid}/personas")]
+    [ProducesResponseType(typeof(IEnumerable<PersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPersonas(Guid baulId)
     {
         var result = await personaManager.GetPersonasAsync(baulId);
@@ -76,6 +85,7 @@ public class BaulesController(
     }
 
     [HttpPost("{baulId:guid}/personas")]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreatePersona(Guid baulId, [FromBody] CreatePersonaRequest request)
     {
         var result = await personaManager.CreatePersonaAsync(baulId, request.Nickname);
@@ -83,6 +93,7 @@ public class BaulesController(
     }
 
     [HttpGet("{baulId:guid}/personas/{personaId:guid}")]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPersona(Guid baulId, Guid personaId)
     {
         var result = await personaManager.GetPersonaAsync(baulId, personaId);
@@ -90,6 +101,7 @@ public class BaulesController(
     }
 
     [HttpPut("{baulId:guid}/personas/{personaId:guid}")]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePersona(Guid baulId, Guid personaId, [FromBody] UpdatePersonaRequest request)
     {
         var result = await personaManager.UpdatePersonaAsync(baulId, personaId, request.Name, request.Nickname, request.Biografia);
@@ -98,6 +110,7 @@ public class BaulesController(
 
     [HttpPost("{baulId:guid}/personas/{personaId:guid}/avatar")]
     [RequestSizeLimit(5_000_000)]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UploadPersonaAvatar(
         Guid baulId, Guid personaId, [FromForm] UploadPersonaAvatarRequest request)
     {
@@ -112,6 +125,7 @@ public class BaulesController(
     }
 
     [HttpPut("{baulId:guid}/personas/{personaId:guid}/role")]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePersonaRole(Guid baulId, Guid personaId, [FromBody] UpdateRoleRequest request)
     {
         var result = await personaManager.UpdatePersonaRoleAsync(baulId, personaId, request.Role);
@@ -119,6 +133,7 @@ public class BaulesController(
     }
 
     [HttpDelete("{baulId:guid}/personas/{personaId:guid}")]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> RemovePersona(Guid baulId, Guid personaId)
     {
         var result = await personaManager.RemovePersonaAsync(baulId, personaId);
@@ -126,6 +141,7 @@ public class BaulesController(
     }
 
     [HttpGet("{baulId:guid}/personas/{personaId:guid}/photos")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPersonaPhotos(Guid baulId, Guid personaId)
     {
         var result = await photoManager.GetByPersonaIdAsync(baulId, personaId);
@@ -133,6 +149,7 @@ public class BaulesController(
     }
 
     [HttpGet("{baulId:guid}/removal-requests")]
+    [ProducesResponseType(typeof(IEnumerable<RemovalRequestDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRemovalRequests(Guid baulId)
     {
         var result = await removalRequestManager.GetRemovalRequestsAsync(baulId);
@@ -140,6 +157,7 @@ public class BaulesController(
     }
 
     [HttpPost("{baulId:guid}/removal-requests")]
+    [ProducesResponseType(typeof(RemovalRequestDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateRemovalRequest(Guid baulId, [FromBody] CreateRemovalRequestRequest request)
     {
         if (!Guid.TryParse(request.PhotoId, out var photoId))
@@ -150,6 +168,7 @@ public class BaulesController(
     }
 
     [HttpPost("{baulId:guid}/removal-requests/{requestId:guid}/approve")]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> ApproveRemovalRequest(Guid baulId, Guid requestId)
     {
         var result = await removalRequestManager.ApproveRemovalRequestAsync(baulId, requestId);
@@ -157,6 +176,7 @@ public class BaulesController(
     }
 
     [HttpPost("{baulId:guid}/removal-requests/{requestId:guid}/reject")]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> RejectRemovalRequest(Guid baulId, Guid requestId)
     {
         var result = await removalRequestManager.RejectRemovalRequestAsync(baulId, requestId);
@@ -164,6 +184,7 @@ public class BaulesController(
     }
 
     [HttpGet("{baulId:guid}/recuerdos")]
+    [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid baulId)
     {
         var result = await baulManager.GetRecuerdosAsync(baulId);
@@ -171,6 +192,7 @@ public class BaulesController(
     }
 
     [HttpPost("{baulId:guid}/recuerdos")]
+    [ProducesResponseType(typeof(RecuerdoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateRecuerdo(Guid baulId, [FromBody] CreateRecuerdoRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Text))

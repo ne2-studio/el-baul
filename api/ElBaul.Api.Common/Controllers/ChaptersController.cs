@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElBaul.Api.Controllers;
@@ -11,6 +12,7 @@ namespace ElBaul.Api.Controllers;
 public class ChaptersController(IChapterManager chapterManager) : ControllerBase
 {
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ChapterDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(Guid baulId)
     {
         var result = await chapterManager.GetByBaulIdAsync(baulId);
@@ -18,6 +20,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create(Guid baulId, [FromBody] CreateChapterRequest request)
     {
         var result = await chapterManager.CreateAsync(baulId, request.Name);
@@ -25,6 +28,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
     }
 
     [HttpPut("{chapterId:guid}")]
+    [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid baulId, Guid chapterId, [FromBody] UpdateChapterRequest request)
     {
         var result = await chapterManager.UpdateAsync(chapterId, request.Name);
@@ -32,6 +36,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
     }
 
     [HttpDelete("{chapterId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(Guid baulId, Guid chapterId)
     {
         var result = await chapterManager.DeleteAsync(chapterId);
@@ -39,6 +44,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
     }
 
     [HttpPut("{chapterId:guid}/cover")]
+    [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetCover(Guid baulId, Guid chapterId, [FromBody] SetChapterCoverRequest request)
     {
         if (!Guid.TryParse(request.PhotoId, out var photoId))
@@ -49,6 +55,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
     }
 
     [HttpGet("{chapterId:guid}/recuerdos")]
+    [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid baulId, Guid chapterId)
     {
         var result = await chapterManager.GetRecuerdosAsync(chapterId);
@@ -56,6 +63,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
     }
 
     [HttpPost("{chapterId:guid}/recuerdos")]
+    [ProducesResponseType(typeof(RecuerdoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateRecuerdo(Guid baulId, Guid chapterId, [FromBody] CreateRecuerdoRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Text))

@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -12,6 +13,7 @@ namespace ElBaul.Api.Controllers;
 public class ChatController(IChatManager chatManager) : ControllerBase
 {
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ChatMessageDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMessages(Guid baulId)
     {
         var result = await chatManager.GetMessagesAsync(baulId);
@@ -20,6 +22,7 @@ public class ChatController(IChatManager chatManager) : ControllerBase
 
     [HttpPost]
     [EnableRateLimiting("ChatLimiter")]
+    [ProducesResponseType(typeof(ChatMessageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SendMessage(Guid baulId, [FromBody] SendChatMessageRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Text))
@@ -31,6 +34,7 @@ public class ChatController(IChatManager chatManager) : ControllerBase
 
     [HttpGet("suggestions")]
     [EnableRateLimiting("ChatLimiter")]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSuggestedQuestions(Guid baulId)
     {
         var result = await chatManager.GetSuggestedQuestionsAsync(baulId);

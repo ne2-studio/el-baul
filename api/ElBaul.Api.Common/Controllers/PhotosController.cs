@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElBaul.Api.Controllers;
@@ -11,6 +12,7 @@ namespace ElBaul.Api.Controllers;
 public class PhotosController(IPhotoManager photoManager) : ControllerBase
 {
     [HttpGet("chapters/{chapterId:guid}/photos")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByChapter(Guid chapterId)
     {
         var result = await photoManager.GetByChapterIdAsync(chapterId);
@@ -19,6 +21,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
 
     [HttpPost("chapters/{chapterId:guid}/photos")]
     [RequestSizeLimit(20_000_000)]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Upload(Guid chapterId, [FromForm] UploadPhotoRequest request)
     {
         if (request.File is null || request.File.Length == 0)
@@ -36,6 +39,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpPut("photos/{photoId:guid}/chapter")]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Move(Guid photoId, [FromBody] MovePhotoRequest request)
     {
         if (!Guid.TryParse(request.ChapterId, out var chapterId))
@@ -46,6 +50,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpDelete("photos/{photoId:guid}")]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Delete(Guid photoId, [FromBody] DeletePhotoRequest request)
     {
         var result = await photoManager.DeleteAsync(photoId, request.Reason);
@@ -53,6 +58,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpPut("photos/{photoId:guid}/date")]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeDate(Guid photoId, [FromBody] ChangePhotoDateRequest request)
     {
         var result = await photoManager.ChangeDateAsync(photoId, request.Year, request.Month, request.Day);
@@ -60,6 +66,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpPut("photos/date-batch")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeDateBatch([FromBody] ChangePhotoDateBatchRequest request)
     {
         var photoIds = new List<Guid>();
@@ -75,6 +82,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpGet("baules/{baulId:guid}/photos")]
+    [ProducesResponseType(typeof(PhotoPageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPage(Guid baulId, [FromQuery] Guid? chapterId, [FromQuery] int skip = 0, [FromQuery] int take = 60)
     {
         var result = await photoManager.GetPageAsync(baulId, chapterId, skip, take);
@@ -82,6 +90,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpGet("baules/{baulId:guid}/photos/sueltas")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLoose(Guid baulId)
     {
         var result = await photoManager.GetLooseByBaulIdAsync(baulId);
@@ -90,6 +99,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
 
     [HttpPost("baules/{baulId:guid}/photos/sueltas")]
     [RequestSizeLimit(20_000_000)]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UploadLoose(Guid baulId, [FromForm] UploadPhotoRequest request)
     {
         if (request.File is null || request.File.Length == 0)
@@ -107,6 +117,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpGet("photos/{photoId:guid}/recuerdos")]
+    [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid photoId)
     {
         var result = await photoManager.GetRecuerdosAsync(photoId);
@@ -114,6 +125,8 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpGet("photos/{photoId:guid}/download")]
+    [Produces("application/octet-stream")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Download(Guid photoId)
     {
         var result = await photoManager.DownloadAsync(photoId);
@@ -124,6 +137,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpPost("photos/{photoId:guid}/recuerdos")]
+    [ProducesResponseType(typeof(RecuerdoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateRecuerdo(Guid photoId, [FromBody] CreateRecuerdoRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Text))
@@ -134,6 +148,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpPut("photos/tag-batch")]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> TagBatch([FromBody] TagPhotosBatchRequest request)
     {
         if (!Guid.TryParse(request.BaulId, out var baulId))
@@ -160,6 +175,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpGet("photos/{photoId:guid}/personas")]
+    [ProducesResponseType(typeof(IEnumerable<TaggedPersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTaggedPersonas(Guid photoId)
     {
         var result = await photoManager.GetTaggedPersonasAsync(photoId);
@@ -167,6 +183,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     }
 
     [HttpPut("photos/{photoId:guid}/personas")]
+    [ProducesResponseType(typeof(IEnumerable<TaggedPersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetTaggedPersonas(Guid photoId, [FromBody] SetPhotoPersonaTagsRequest request)
     {
         var personaIds = new List<Guid>();

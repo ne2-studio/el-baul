@@ -1,5 +1,6 @@
 using ElBaul.Ports.Output;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -25,6 +26,8 @@ public class EmailTrackingController(
     IClock clock) : ControllerBase
 {
     [HttpGet("{token}")]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Click(string token)
     {
         var decoded = emailLinkSigner.TryDecode(token);

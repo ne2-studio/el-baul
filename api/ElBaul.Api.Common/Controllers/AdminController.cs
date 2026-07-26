@@ -1,5 +1,7 @@
+using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
@@ -15,6 +17,7 @@ public class AdminController(
     IConfiguration configuration) : ControllerBase
 {
     [HttpGet("dashboard")]
+    [ProducesResponseType(typeof(AdminDashboardResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDashboard()
     {
         var result = await adminManager.GetDashboardCountsAsync();
@@ -32,6 +35,7 @@ public class AdminController(
     }
 
     [HttpGet("users")]
+    [ProducesResponseType(typeof(IEnumerable<AdminUserListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUsers()
     {
         var result = await adminManager.GetAllUsersAsync();
@@ -39,6 +43,7 @@ public class AdminController(
     }
 
     [HttpGet("users/{userId}")]
+    [ProducesResponseType(typeof(AdminUserDetailDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUser(string userId)
     {
         var result = await adminManager.GetUserDetailAsync(userId);
@@ -46,6 +51,7 @@ public class AdminController(
     }
 
     [HttpGet("baules")]
+    [ProducesResponseType(typeof(IEnumerable<AdminBaulListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBaules()
     {
         var result = await adminManager.GetAllBaulesAsync();
@@ -53,6 +59,7 @@ public class AdminController(
     }
 
     [HttpGet("baules/{baulId:guid}")]
+    [ProducesResponseType(typeof(AdminBaulDetailDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBaul(Guid baulId)
     {
         var result = await adminManager.GetBaulDetailAsync(baulId);
@@ -60,6 +67,7 @@ public class AdminController(
     }
 
     [HttpDelete("baules/{baulId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteBaul(Guid baulId)
     {
         var result = await adminManager.DeleteBaulAsync(baulId);
@@ -67,6 +75,7 @@ public class AdminController(
     }
 
     [HttpGet("emails")]
+    [ProducesResponseType(typeof(IEnumerable<AdminSentEmailDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEmails()
     {
         var result = await adminManager.GetSentEmailsAsync();
@@ -74,6 +83,7 @@ public class AdminController(
     }
 
     [HttpGet("users/{userId}/emails")]
+    [ProducesResponseType(typeof(IEnumerable<AdminSentEmailDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserEmails(string userId)
     {
         var result = await adminManager.GetUserSentEmailsAsync(userId);
@@ -81,6 +91,7 @@ public class AdminController(
     }
 
     [HttpPost("emails/welcome-test/{userId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SendWelcomeTestEmail(string userId)
     {
         var result = await welcomeEmailManager.SendTestWelcomeEmailAsync(userId);
@@ -88,6 +99,7 @@ public class AdminController(
     }
 
     [HttpPost("emails/digest-test/{userId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SendDigestTestEmail(string userId)
     {
         var result = await weeklyDigestManager.SendTestWeeklyDigestAsync(userId);
