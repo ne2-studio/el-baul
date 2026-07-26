@@ -119,7 +119,7 @@ semantics.
 recognized commands to `ElBaul.Maintenance`. A command is a class holding only business logic,
 registered by name so it can be run standalone against an already-running deployment via
 `docker exec`. See [`../operations/maintenance-commands.md`](../operations/maintenance-commands.md)
-for the current command list and invocation.
+for how to add a command and how to run one, locally and in production.
 
 ## Other conventions
 
