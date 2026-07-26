@@ -28,7 +28,7 @@
       "Bash(git diff *)",
       "Bash(git log *)",
       "Bash(git show *)",
-      "Bash(lsof -ti:* -sTCP:LISTEN)"
+      "Bash(lsof -ti* -sTCP:LISTEN)"
     ]
   }
 }
