@@ -16,11 +16,10 @@ Use the checks below according to the surface area of the change.
 
 That's real coverage for `Application/` logic (managers), not a rubber stamp — the
 fakes in `ElBaul.Tests/Fakes/` are proper in-memory implementations of the output
-ports, and this suite has caught real bugs (see "Known sharp edges" below). But it's
-coverage against **fakes**, which structurally cannot catch: an EF model/mapping that
-fails against a real Postgres, a query that fails to translate to SQL, a wire-format
-regression the backend's own DTOs wouldn't reveal, or anything only reachable through a
-real container (raw SQL, migrations, the built image's env-var contract).
+ports. But it's coverage against **fakes**, which structurally cannot catch: an EF
+model/mapping that fails against a real Postgres, a query that fails to translate to SQL, a
+wire-format regression the backend's own DTOs wouldn't reveal, or anything only reachable
+through a real container (raw SQL, migrations, the built image's env-var contract).
 
 **Any change to the domain model, persistence (entities, EF configuration, migrations,
 value converters), or the public API contract is not verified until `acceptance-tests`
@@ -90,32 +89,6 @@ wiring specifically (it's also covered automatically by the nightly CI job regar
 For anything UI-facing beyond what these two suites cover, invoke the `run` skill, use
 the exact URL it returns, and actually drive to the changed screen. Do not start an
 additional frontend server manually.
-
-## Known sharp edges (things that have actually broken here)
-
-- **Denormalized counts drift from their source of truth.** `Recuerdo.ChapterId` exists
-  specifically so chapter-scoped queries don't need to join through `Photo` — but
-  `ChapterManager.ToDtoAsync`'s `RecuerdoCount` was still computed the old way (joining
-  through the chapter's *currently active* photos) after that field was added, so it
-  silently dropped photo-less recuerdos and any recuerdo whose photo had since been
-  soft-deleted. If you're computing a count/aggregate that has a "cheap" denormalized
-  field available, grep for other places computing the same logical value the old way
-  before assuming a fix is complete.
-- **Access-level asymmetry.** `BaulManager` used to compute the Persona count only
-  when the caller was the custodio, defaulting to `0` otherwise — so a baúl shown to a
-  non-owning member always looked memberless. When a value depends on "am I the
-  custodio," check every call site computes it the same way, not just the one you're
-  looking at.
-- **EF Core model changes that only fail against a real database.** Introducing a
-  `PhotoDate` value object initially mapped it as an EF Core `ComplexProperty` on a
-  nullable `Photo.Date` — compiled clean, and all 194 `ElBaul.Tests` (fakes, no EF
-  involved) passed. The container crashed on startup: EF Core doesn't support optional/
-  nullable complex properties at all (dotnet/efcore#31376), and separately, a positional
-  record's primary constructor can't bind a complex-type parameter in the first place —
-  both are model-validation/materialization failures that only surface when
-  `OnModelCreating` actually runs against a real `DbContext`, which no fake-backed test
-  ever does. `acceptance-tests` (or just running the built image against real Postgres)
-  is what caught it; `dotnet test` alone would have looked green and shipped.
 
 ## Playwright verification pattern
 
