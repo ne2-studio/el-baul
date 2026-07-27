@@ -10,15 +10,14 @@ public class PhotoManager(
     IPhotoRepository photoRepository,
     IChapterRepository chapterRepository,
     IBaulRepository baulRepository,
-    IPhotoStorage photoStorage,
-    IRecuerdoRepository recuerdoRepository,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    IPhotoDateExtractor photoDateExtractor,
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
-    PhotoSoftDeleteService photoSoftDeleteService) : IPhotoManager
+    PhotoSoftDeleteService photoSoftDeleteService,
+    IPhotoDtoProjector photoDtoProjector,
+    PhotoFileService photoFileService) : IPhotoManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
     {
@@ -31,7 +30,7 @@ public class PhotoManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var photos = await photoRepository.GetByChapterIdAsync(chapterId);
-        var dtos = await EnrichAndMapAsync(photos);
+        var dtos = await photoDtoProjector.ProjectAsync(photos);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -44,7 +43,7 @@ public class PhotoManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var photos = await photoRepository.GetLooseByBaulIdAsync(baulId);
-        var dtos = await EnrichAndMapAsync(photos);
+        var dtos = await photoDtoProjector.ProjectAsync(photos);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -68,7 +67,7 @@ public class PhotoManager(
         var hasMore = page.Count > clampedTake;
         var photos = hasMore ? page.Take(clampedTake).ToList() : page;
 
-        var dtos = await EnrichAndMapAsync(photos);
+        var dtos = await photoDtoProjector.ProjectAsync(photos);
 
         return Result.Success(new PhotoPageDto(dtos, hasMore));
     }
@@ -130,33 +129,25 @@ public class PhotoManager(
             logger.LogInformation(
                 "Duplicate photo upload ignored {BaulId} {ChapterId} {ClientUploadId} {PhotoId}",
                 baul.Id, chapterId, clientUploadId, existingPhoto.Id);
-            var existingThumbnailUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoGridThumbnail);
-            var existingFullUrl = await photoStorage.GetImageUrl(existingPhoto.StorageKey, ImagePlacement.PhotoFull);
-            return Result.Success(ToDto(existingPhoto, existingThumbnailUrl, existingFullUrl));
+            return Result.Success(await photoDtoProjector.ProjectAsync(existingPhoto));
         }
 
         var now = clock.UtcNow();
-        var storageKey = StorageKey.ForPhoto(userId, idGenerator.NewId(), fileName);
-
-        using var buffered = new MemoryStream();
-        await content.CopyToAsync(buffered);
-        buffered.Position = 0;
-        var photoDate = ResolvePhotoDate(date, buffered);
-        buffered.Position = 0;
+        StoredPhotoFile storedFile;
 
         try
         {
-            await photoStorage.SaveAsync(storageKey, buffered, contentType);
+            storedFile = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, date);
         }
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Photo upload failed while saving to storage {BaulId} {ChapterId} {FileName} {ContentType} {StorageKey}",
-                baul.Id, chapterId, fileName, contentType, storageKey);
+                "Photo upload failed while saving to storage {BaulId} {ChapterId} {FileName} {ContentType}",
+                baul.Id, chapterId, fileName, contentType);
             throw;
         }
 
-        var photo = Photo.Create(new PhotoId(idGenerator.NewId()), chapterId, baul.Id, storageKey, photoDate, userId, now, clientUploadId);
+        var photo = Photo.Create(new PhotoId(idGenerator.NewId()), chapterId, baul.Id, storedFile.StorageKey, storedFile.Date, userId, now, clientUploadId);
 
         try
         {
@@ -166,8 +157,8 @@ public class PhotoManager(
         {
             logger.LogError(ex,
                 "Photo upload failed while persisting metadata {BaulId} {ChapterId} {PhotoId} {StorageKey}",
-                baul.Id, chapterId, photo.Id, storageKey);
-            await TryDeleteOrphanedStorageObjectAsync(storageKey);
+                baul.Id, chapterId, photo.Id, storedFile.StorageKey);
+            await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
             throw;
         }
 
@@ -184,15 +175,13 @@ public class PhotoManager(
         {
             logger.LogError(ex,
                 "Photo upload failed while updating chapter/baul cover {BaulId} {ChapterId} {PhotoId} {StorageKey}",
-                baul.Id, chapterId, photo.Id, storageKey);
+                baul.Id, chapterId, photo.Id, storedFile.StorageKey);
             throw;
         }
 
         logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", baul.Id, chapterId, photo.Id);
 
-        var thumbnailUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoGridThumbnail);
-        var fullUrl = await photoStorage.GetImageUrl(storageKey, ImagePlacement.PhotoFull);
-        return ToDto(photo, thumbnailUrl, fullUrl);
+        return await photoDtoProjector.ProjectAsync(photo);
     }
 
     public async Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId)
@@ -246,9 +235,7 @@ public class PhotoManager(
             "Photo moved {BaulId} {PhotoId} {SourceChapterId} {TargetChapterId}",
             photo.BaulId, photoId, photo.ChapterId, targetChapterId);
 
-        var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-        var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
-        return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
+        return await photoDtoProjector.ProjectAsync(updatedPhoto);
     }
 
     public async Task<Result> DeleteAsync(PhotoId photoId, string? reason)
@@ -290,9 +277,7 @@ public class PhotoManager(
 
         logger.LogInformation("Photo date changed {BaulId} {PhotoId}", photo.BaulId, photoId);
 
-        var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-        var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
-        return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
+        return await photoDtoProjector.ProjectAsync(updatedPhoto);
     }
 
     public async Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<PhotoId> photoIds, PhotoDate date)
@@ -328,8 +313,7 @@ public class PhotoManager(
             photo.BaulId, userId, AccessLevel.Member, "Photo download", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<PhotoDownloadResult>(auth.Error);
 
-        var content = await photoStorage.OpenReadForDownloadAsync(photo.StorageKey);
-        return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(photo.StorageKey).OriginalFileName);
+        return await photoFileService.OpenForDownloadAsync(photo.StorageKey);
     }
 
     public async Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(BaulId baulId, PersonaId personaId)
@@ -348,54 +332,9 @@ public class PhotoManager(
             .OrderByChronology()
             .ToList();
 
-        var dtos = await EnrichAndMapAsync(photos);
+        var dtos = await photoDtoProjector.ProjectAsync(photos);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
-    private async Task<List<PhotoDto>> EnrichAndMapAsync(IEnumerable<Photo> photos)
-    {
-        var photoList = photos as IReadOnlyCollection<Photo> ?? photos.ToList();
-        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photoList.Select(p => p.Id));
-        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
-
-        var dtos = new List<PhotoDto>();
-        foreach (var photo in photoList)
-        {
-            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
-            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
-        }
-
-        return dtos;
-    }
-
-    private PhotoDate? ResolvePhotoDate(PhotoDate? explicitDate, Stream content)
-    {
-        if (explicitDate is not null) return explicitDate;
-
-        // EXIF always yields a full, in-range Y-M-D, so TryCreate can't fail here.
-        var extracted = photoDateExtractor.TryExtractDate(content);
-        return extracted is { } e && PhotoDate.TryCreate(e.Year, e.Month, e.Day, out var extractedDate, out _)
-            ? extractedDate
-            : null;
-    }
-
-    private async Task TryDeleteOrphanedStorageObjectAsync(string storageKey)
-    {
-        try
-        {
-            await photoStorage.DeleteAsync(storageKey);
-        }
-        catch (Exception cleanupEx)
-        {
-            logger.LogError(cleanupEx,
-                "Failed to clean up orphaned storage object {StorageKey} after failed photo insert",
-                storageKey);
-        }
-    }
-
-    private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
-        new(photo.Id.ToString(), photo.ChapterId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
-            photo.Date?.Year, photo.Date?.Month, photo.Date?.Day, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 }
