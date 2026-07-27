@@ -24,7 +24,11 @@ public class ChatManager(
         "Eres un asistente que ayuda a una familia a recordar su propia historia. " +
         "Responde únicamente basándote en la información del baúl familiar que se te proporciona a continuación. " +
         "Si la respuesta no está en esa información, dilo claramente en vez de inventar. " +
-        "Cuando sea posible, menciona en tu respuesta el recuerdo o capítulo del que proviene la información.";
+        "Cuando sea posible, menciona en tu respuesta el recuerdo o capítulo del que proviene la información. " +
+        "Responde siempre en español de España.";
+
+    private string BuildSystemInstruction() =>
+        SystemInstruction + $"\n\nHoy es {clock.UtcNow():yyyy-MM-dd}.";
 
     public async Task<Result<IEnumerable<ChatMessageDto>>> GetMessagesAsync(Guid baulId)
     {
@@ -70,7 +74,7 @@ public class ChatManager(
         var userMessage = new ChatMessage(idGenerator.NewId(), id, userId, ChatMessageRole.User, text, now);
         await chatMessageRepository.CreateAsync(userMessage);
 
-        var systemPrompt = SystemInstruction + "\n\n" + await chatContextBuilder.BuildAsync(baul, text);
+        var systemPrompt = BuildSystemInstruction() + "\n\n" + await chatContextBuilder.BuildAsync(baul, text);
         var history = (await chatMessageRepository.GetByBaulAndUserAsync(id, userId))
             .Select(m => new ChatTurn(m.Role.ToApiString(), m.Content));
 
