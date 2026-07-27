@@ -201,34 +201,11 @@ Discard candidates that cannot be supported with evidence.
 
 # Criteria catalogue
 
-Each criterion lives in its own file under `criteria/`, one file per `<id>.md`, so the catalogue can grow without inflating this file. Read every file in that directory when performing Step 4.
+During Step 4, read every `criteria/*.md` file except `criteria/README.md`.
 
-Each file contains a fenced `yaml` block with this schema:
+Each criterion defines a recurring architectural pressure, its signals, invalid interpretations, and possible measurements. Read the fenced `yaml` block and any prose that follows it.
 
-```yaml
-id:
-name:
-attribute_improved:
-signals:
-questions:
-invalid_recommendations:
-possible_measurements:
-```
-
-Some files add short prose after the block clarifying when the criterion legitimately applies versus when it looks applicable but isn't — read that prose too, it disambiguates the signals.
-
-Current criteria: `duplicated-knowledge`, `unclear-naming`, `implicit-domain-concept`, `insufficient-behavioural-coverage`, `test-descent-opportunity`, `mixed-decisions-and-effects`, `excessive-coupling`, `low-cohesion`, `implementation-coupled-tests`, `technology-fake-risk`, `code-smell-with-impact`, `dead-or-obsolete-code`, `missing-operational-boundary`, `architecture-documentation-drift`, `encapsulation-violation`, `excessive-module-surface`, `context-scattering`.
-
-## Adding new criteria
-
-Add a new file `criteria/<id>.md` following the schema above. No other part of this skill needs to change — Step 4 reads the whole directory.
-
-A new criterion must describe a recurring codebase pressure, not a preferred solution.
-
-Good: "Repeated permission rules are interpreted differently across endpoints."
-Weak: "Use the specification pattern."
-
-The catalogue must remain solution-independent wherever possible.
+Treat criteria as descriptions of architectural pressure, not mandatory solutions. A matching signal does not justify the pattern mentioned by the criterion unless repository evidence independently supports it.
 
 ---
 
