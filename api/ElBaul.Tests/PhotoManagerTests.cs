@@ -20,11 +20,14 @@ public class PhotoManagerTests
     private readonly StaticClock _clock = new();
     private readonly FakePhotoDateExtractor _photoDateExtractor = new();
 
+    private PhotoSoftDeleteService CreatePhotoSoftDeleteService(IPhotoRepository? photoRepository = null) =>
+        new(photoRepository ?? _photoRepository, _chapterRepository, _baulRepository, _clock);
+
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository);
+            _photoPersonaTagRepository, CreatePhotoSoftDeleteService());
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
     // (it's a photo listing method), but tests need to tag photos first to exercise it.
@@ -133,7 +136,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository, failingStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository);
+            _photoPersonaTagRepository, CreatePhotoSoftDeleteService());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -154,7 +157,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository);
+            _photoPersonaTagRepository, CreatePhotoSoftDeleteService(failingRepository));
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -178,7 +181,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository, _photoStorage,
             _recuerdoRepository, new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository);
+            _photoPersonaTagRepository, CreatePhotoSoftDeleteService(failingRepository));
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(

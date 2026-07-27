@@ -25,9 +25,10 @@ public class RemovalRequestManagerTests
     }
 
     private RemovalRequestManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<RemovalRequestManager>.Instance, _baulRepository, _chapterRepository, _photoRepository,
+        new(NullLogger<RemovalRequestManager>.Instance, _baulRepository, _photoRepository,
             _userRepository, _photoStorage, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            new PhotoSoftDeleteService(_photoRepository, _chapterRepository, _baulRepository, _clock));
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
@@ -78,7 +79,7 @@ public class RemovalRequestManagerTests
     }
 
     [Fact]
-    public async Task ApproveRemovalRequestAsync_ShouldDeletePhoto_AndDecrementChapterPhotoCount()
+    public async Task ApproveRemovalRequestAsync_ShouldSoftDeletePhoto_AndDecrementChapterPhotoCount()
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
@@ -89,13 +90,21 @@ public class RemovalRequestManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var requestId = Guid.NewGuid();
-        await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
+        await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", "Retirar por privacidad", _clock.UtcNow(), RequestStatus.Pending));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.ApproveRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId));
 
         Assert.True(result.IsSuccess);
-        Assert.Null(await _photoRepository.GetByIdAsync(new PhotoId(photoId)));
+
+        var deletedPhoto = await _photoRepository.GetByIdAsync(new PhotoId(photoId));
+        Assert.NotNull(deletedPhoto);
+        Assert.Equal(PhotoStatus.Deleted, deletedPhoto.Status);
+        Assert.Equal("key", deletedPhoto.StorageKey);
+        Assert.Equal(_clock.UtcNow(), deletedPhoto.DeletedAt);
+        Assert.Equal("Retirar por privacidad", deletedPhoto.DeletionReason);
+        Assert.Empty(_photoStorage.DeletedKeys);
+        Assert.Null(await _baulRepository.GetRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId)));
 
         var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
         Assert.Equal(0, chapter!.PhotoCount);

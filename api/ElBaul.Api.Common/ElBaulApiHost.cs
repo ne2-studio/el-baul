@@ -158,6 +158,7 @@ public static class ElBaulApiHost
 
         // Register application services
         builder.Services.AddScoped<BaulAccessService>();
+        builder.Services.AddScoped<PhotoSoftDeleteService>();
         builder.Services.AddScoped<IBaulManager, BaulManager>();
         builder.Services.AddScoped<IPersonaManager, PersonaManager>();
         builder.Services.AddScoped<IRemovalRequestManager, RemovalRequestManager>();

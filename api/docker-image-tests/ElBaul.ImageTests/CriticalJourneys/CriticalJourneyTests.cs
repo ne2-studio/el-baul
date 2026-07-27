@@ -82,6 +82,66 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
     }
 
     [Fact]
+    public async Task Approving_removal_request_hides_photo_but_keeps_downloadable_blob()
+    {
+        using var tokenClient = fixture.CreateOidcTokenClient();
+        var accessToken = await tokenClient.GetAccessTokenAsync(ElBaulImageFixture.OidcAdminUserKey);
+
+        using var client = new HttpClient { BaseAddress = fixture.BackendClient.BaseAddress };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var createBaulResponse = await client.PostAsJsonAsync("/api/baules", new
+        {
+            name = "Baúl de solicitud de retirada",
+            description = (string?)null
+        });
+        createBaulResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createBaulResponse.Content.ReadAsStringAsync());
+        var baulId = (await ParseJsonAsync(createBaulResponse)).GetProperty("id").GetString();
+
+        var createChapterResponse = await client.PostAsJsonAsync($"/api/baules/{baulId}/chapters", new
+        {
+            name = "Capítulo con retirada"
+        });
+        createChapterResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createChapterResponse.Content.ReadAsStringAsync());
+        var chapterId = (await ParseJsonAsync(createChapterResponse)).GetProperty("id").GetString();
+
+        using var multipart = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(SampleJpegBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        multipart.Add(fileContent, "File", "removal-sample.jpg");
+        multipart.Add(new StringContent(Guid.NewGuid().ToString()), "ClientUploadId");
+
+        var uploadResponse = await client.PostAsync($"/api/chapters/{chapterId}/photos", multipart);
+        uploadResponse.StatusCode.Should().Be(HttpStatusCode.OK, await uploadResponse.Content.ReadAsStringAsync());
+        var photoId = (await ParseJsonAsync(uploadResponse)).GetProperty("id").GetString();
+        photoId.Should().NotBeNullOrWhiteSpace();
+
+        var createRequestResponse = await client.PostAsJsonAsync($"/api/baules/{baulId}/removal-requests", new
+        {
+            photoId,
+            reason = "Retirada validada por test de imagen"
+        });
+        createRequestResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createRequestResponse.Content.ReadAsStringAsync());
+        var requestId = (await ParseJsonAsync(createRequestResponse)).GetProperty("id").GetString();
+        requestId.Should().NotBeNullOrWhiteSpace();
+
+        var approveResponse = await client.PostAsync($"/api/baules/{baulId}/removal-requests/{requestId}/approve", null);
+        approveResponse.StatusCode.Should().Be(HttpStatusCode.OK, await approveResponse.Content.ReadAsStringAsync());
+
+        var chapterPhotosResponse = await client.GetAsync($"/api/chapters/{chapterId}/photos");
+        chapterPhotosResponse.StatusCode.Should().Be(HttpStatusCode.OK, await chapterPhotosResponse.Content.ReadAsStringAsync());
+        var chapterPhotosJson = await ParseJsonAsync(chapterPhotosResponse);
+        chapterPhotosJson.EnumerateArray()
+            .Select(photo => photo.GetProperty("id").GetString())
+            .Should().NotContain(photoId);
+
+        var downloadResponse = await client.GetAsync($"/api/photos/{photoId}/download");
+        downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK, await downloadResponse.Content.ReadAsStringAsync());
+        var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
+        downloadedBytes.Should().Equal(SampleJpegBytes, "approval should soft-delete metadata without deleting the storage object");
+    }
+
+    [Fact]
     public async Task Rejects_unauthenticated_requests_to_protected_endpoints()
     {
         using var anonymousClient = new HttpClient { BaseAddress = fixture.BackendClient.BaseAddress };

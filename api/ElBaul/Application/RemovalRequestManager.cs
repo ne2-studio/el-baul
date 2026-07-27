@@ -8,14 +8,14 @@ namespace ElBaul.Application;
 public class RemovalRequestManager(
     ILogger<RemovalRequestManager> logger,
     IBaulRepository baulRepository,
-    IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
     IPhotoStorage photoStorage,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess) : IRemovalRequestManager
+    BaulAccessService baulAccess,
+    PhotoSoftDeleteService photoSoftDeleteService) : IRemovalRequestManager
 {
     public async Task<Result<IEnumerable<RemovalRequestDto>>> GetRemovalRequestsAsync(BaulId baulId)
     {
@@ -83,22 +83,12 @@ public class RemovalRequestManager(
         }
 
         var photo = await photoRepository.GetByIdAsync(request.PhotoId);
-        if (photo?.ChapterId is { } photoChapterId)
-        {
-            var chapter = await chapterRepository.GetByIdAsync(photoChapterId);
-            if (chapter is not null)
-            {
-                await chapterRepository.UpdateAsync(chapter with { PhotoCount = Math.Max(0, chapter.PhotoCount - 1) });
-            }
-        }
-
-        await photoRepository.DeleteAsync(request.PhotoId);
-        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
-
         if (photo is not null)
         {
-            await photoStorage.DeleteAsync(photo.StorageKey);
+            await photoSoftDeleteService.SoftDeleteAsync(photo, request.Reason);
         }
+
+        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
 
         logger.LogInformation(
             "Removal request approved, photo deleted {BaulId} {PhotoId} {RemovalRequestId} {ChapterId}",
