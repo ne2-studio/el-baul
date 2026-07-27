@@ -26,6 +26,13 @@ public class PhotoManagerTests
             new StaticCurrentUserProvider(currentUserId), _photoDateExtractor, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
             _photoPersonaTagRepository);
 
+    // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
+    // (it's a photo listing method), but tests need to tag photos first to exercise it.
+    private PhotoPersonaTagManager CreateTagManager(string currentUserId) =>
+        new(NullLogger<PhotoPersonaTagManager>.Instance, _photoRepository, _baulRepository, _photoStorage, _clock,
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            _photoPersonaTagRepository);
+
     private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
     {
         var baulId = Guid.NewGuid();
@@ -214,117 +221,6 @@ public class PhotoManagerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(existingPhoto.Id.ToString(), result.Value.Id);
         Assert.Empty(_photoStorage.SavedKeys);
-    }
-
-    [Fact]
-    public async Task CreateRecuerdoAsync_ShouldStampIsOwn_ForTheAuthor()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
-
-        Assert.True(result.IsSuccess);
-        Assert.True(result.Value.IsOwn);
-        Assert.Equal("Custodio", result.Value.UserName);
-    }
-
-    [Fact]
-    public async Task CreateRecuerdoAsync_ShouldUsePersonaNickname_ForTheAuthorName()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-        const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal("Tito Recuerdos", result.Value.UserName);
-    }
-
-    [Fact]
-    public async Task CreateRecuerdoAsync_ShouldIncludeAuthorsAvatarUrl_WhenPersonaHasOne()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-        const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow(),
-            AvatarPhotoKey: "avatar-key"));
-
-        var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
-    }
-
-    [Fact]
-    public async Task CreateRecuerdoAsync_ShouldLeaveAvatarNull_WhenPersonaHasNone()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
-
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Value.UserAvatar);
-    }
-
-    [Fact]
-    public async Task CreateRecuerdoAsync_ShouldSetChapterId_FromThePhotosChapter()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
-
-        Assert.True(result.IsSuccess);
-        var stored = (await _recuerdoRepository.GetByPhotoIdAsync(new PhotoId(photoId))).Single();
-        Assert.Equal(new ChapterId(chapterId), stored.ChapterId);
-    }
-
-    [Fact]
-    public async Task CreateRecuerdoAsync_ShouldLeaveChapterIdNull_ForLoosePhoto()
-    {
-        var baulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), null, new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Foto suelta");
-
-        Assert.True(result.IsSuccess);
-        var stored = (await _recuerdoRepository.GetByPhotoIdAsync(new PhotoId(photoId))).Single();
-        Assert.Null(stored.ChapterId);
-    }
-
-    [Fact]
-    public async Task GetRecuerdosAsync_ShouldMarkIsOwn_OnlyForCurrentUsersEntries()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "mine", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "other-user", "not mine", _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetRecuerdosAsync(photoId);
-
-        Assert.True(result.IsSuccess);
-        var list = result.Value.ToList();
-        Assert.True(list.Single(r => r.Text == "mine").IsOwn);
-        Assert.False(list.Single(r => r.Text == "not mine").IsOwn);
     }
 
     [Fact]
@@ -917,75 +813,6 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task SetTaggedPersonasAsync_ShouldTagPersonas_ThenGetTaggedPersonasAsync_ShouldReturnThem()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-        var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var setResult = await manager.SetTaggedPersonasAsync(photoId, [personaId]);
-
-        Assert.True(setResult.IsSuccess);
-        Assert.Equal("Abuelo Antonio", Assert.Single(setResult.Value).Nickname);
-
-        var getResult = await manager.GetTaggedPersonasAsync(photoId);
-        Assert.True(getResult.IsSuccess);
-        Assert.Equal(personaId.ToString(), Assert.Single(getResult.Value).Id);
-    }
-
-    [Fact]
-    public async Task SetTaggedPersonasAsync_ShouldReplaceThePreviousTagSet()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-        var firstPersonaId = Guid.NewGuid();
-        var secondPersonaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(firstPersonaId), new BaulId(baulId), null, "Primera", BaulRole.Colaborador, _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(secondPersonaId), new BaulId(baulId), null, "Segunda", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        await manager.SetTaggedPersonasAsync(photoId, [firstPersonaId]);
-        var result = await manager.SetTaggedPersonasAsync(photoId, [secondPersonaId]);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal("Segunda", Assert.Single(result.Value).Nickname);
-    }
-
-    [Fact]
-    public async Task SetTaggedPersonasAsync_ShouldFail_WhenPersonaBelongsToAnotherBaul()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var otherBaulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
-        var foreignPersonaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(foreignPersonaId), new BaulId(otherBaulId), null, "Ajeno", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.SetTaggedPersonasAsync(photoId, [foreignPersonaId]);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Persona not found", result.Error);
-        Assert.Empty((await manager.GetTaggedPersonasAsync(photoId)).Value);
-    }
-
-    [Fact]
-    public async Task SetTaggedPersonasAsync_ShouldFail_WhenPhotoNotFound()
-    {
-        var manager = CreateManager(CustodioId);
-        var result = await manager.SetTaggedPersonasAsync(Guid.NewGuid(), []);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
-    }
-
-    [Fact]
     public async Task GetByPersonaIdAsync_ShouldReturnTaggedPhotos_OrderedChronologically()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
@@ -1000,9 +827,10 @@ public class PhotoManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(undatedPhotoId), new ChapterId(chapterId), new BaulId(baulId), "undated", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        await manager.SetTaggedPersonasAsync(newerPhotoId, [personaId]);
-        await manager.SetTaggedPersonasAsync(olderPhotoId, [personaId]);
-        await manager.SetTaggedPersonasAsync(undatedPhotoId, [personaId]);
+        var tagManager = CreateTagManager(CustodioId);
+        await tagManager.SetTaggedPersonasAsync(newerPhotoId, [personaId]);
+        await tagManager.SetTaggedPersonasAsync(olderPhotoId, [personaId]);
+        await tagManager.SetTaggedPersonasAsync(undatedPhotoId, [personaId]);
 
         var result = await manager.GetByPersonaIdAsync(baulId, personaId);
 
@@ -1021,7 +849,7 @@ public class PhotoManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        await manager.SetTaggedPersonasAsync(photoId, [personaId]);
+        await CreateTagManager(CustodioId).SetTaggedPersonasAsync(photoId, [personaId]);
         await manager.DeleteAsync(photoId, "duplicada");
 
         var result = await manager.GetByPersonaIdAsync(baulId, personaId);
@@ -1044,102 +872,5 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error);
-    }
-
-    [Fact]
-    public async Task AddTaggedPersonasBatchAsync_ShouldTagEveryPhoto_WithTheGivenPersonas()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
-        var firstPhotoId = Guid.NewGuid();
-        var secondPhotoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(firstPhotoId), new ChapterId(chapterId), new BaulId(baulId), "key-1", null, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(secondPhotoId), new ChapterId(chapterId), new BaulId(baulId), "key-2", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [firstPhotoId, secondPhotoId], [personaId]);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal([firstPhotoId.ToString(), secondPhotoId.ToString()], result.Value);
-        Assert.Contains(new PersonaId(personaId), await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(firstPhotoId)));
-        Assert.Contains(new PersonaId(personaId), await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(secondPhotoId)));
-    }
-
-    [Fact]
-    public async Task AddTaggedPersonasBatchAsync_ShouldAddToExistingTags_WithoutRemovingThem()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var existingPersonaId = Guid.NewGuid();
-        var newPersonaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(existingPersonaId), new BaulId(baulId), null, "Ya etiquetada", BaulRole.Colaborador, _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(newPersonaId), new BaulId(baulId), null, "Nueva", BaulRole.Colaborador, _clock.UtcNow()));
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        await manager.SetTaggedPersonasAsync(photoId, [existingPersonaId]);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [photoId], [newPersonaId]);
-
-        Assert.True(result.IsSuccess);
-        var tags = await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId));
-        Assert.Contains(new PersonaId(existingPersonaId), tags);
-        Assert.Contains(new PersonaId(newPersonaId), tags);
-    }
-
-    [Fact]
-    public async Task AddTaggedPersonasBatchAsync_ShouldSkipPhotos_NotBelongingToTheBaul()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
-        var ownPhotoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(ownPhotoId), new ChapterId(chapterId), new BaulId(baulId), "key-1", null, CustodioId, _clock.UtcNow()));
-
-        var otherBaulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
-        var foreignPhotoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(foreignPhotoId), null, new BaulId(otherBaulId), "key-2", null, "someone-else", _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [ownPhotoId, foreignPhotoId], [personaId]);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal([ownPhotoId.ToString()], result.Value);
-        Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(foreignPhotoId)));
-    }
-
-    [Fact]
-    public async Task AddTaggedPersonasBatchAsync_ShouldFail_WhenPersonaBelongsToAnotherBaul()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var otherBaulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
-        var foreignPersonaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(foreignPersonaId), new BaulId(otherBaulId), null, "Ajeno", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [photoId], [foreignPersonaId]);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Persona not found", result.Error);
-        Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
-    }
-
-    [Fact]
-    public async Task AddTaggedPersonasBatchAsync_ShouldDenyAccess_WhenUserHasNoRelationToBaul()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager("someone-else");
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [photoId], []);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
     }
 }

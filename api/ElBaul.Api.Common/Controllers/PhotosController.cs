@@ -9,7 +9,9 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api")]
-public class PhotosController(IPhotoManager photoManager) : ControllerBase
+public class PhotosController(
+    IPhotoManager photoManager, IRecuerdoManager recuerdoManager, IPhotoPersonaTagManager photoPersonaTagManager)
+    : ControllerBase
 {
     [HttpGet("chapters/{chapterId:guid}/photos")]
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
@@ -120,7 +122,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid photoId)
     {
-        var result = await photoManager.GetRecuerdosAsync(photoId);
+        var result = await recuerdoManager.GetRecuerdosAsync(photoId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -143,7 +145,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await photoManager.CreateRecuerdoAsync(photoId, request.Text);
+        var result = await recuerdoManager.CreateRecuerdoAsync(photoId, request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -170,7 +172,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
             personaIds.Add(personaId);
         }
 
-        var result = await photoManager.AddTaggedPersonasBatchAsync(baulId, photoIds, personaIds);
+        var result = await photoPersonaTagManager.AddTaggedPersonasBatchAsync(baulId, photoIds, personaIds);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -178,7 +180,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<TaggedPersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTaggedPersonas(Guid photoId)
     {
-        var result = await photoManager.GetTaggedPersonasAsync(photoId);
+        var result = await photoPersonaTagManager.GetTaggedPersonasAsync(photoId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -194,7 +196,7 @@ public class PhotosController(IPhotoManager photoManager) : ControllerBase
             personaIds.Add(personaId);
         }
 
-        var result = await photoManager.SetTaggedPersonasAsync(photoId, personaIds);
+        var result = await photoPersonaTagManager.SetTaggedPersonasAsync(photoId, personaIds);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 

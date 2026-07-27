@@ -30,17 +30,8 @@ public class PhotoManager(
             chapter.BaulId, userId, AccessLevel.Member, "Photos by chapter", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var photos = (await photoRepository.GetByChapterIdAsync(id)).ToList();
-        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
-        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
-
-        var dtos = new List<PhotoDto>();
-        foreach (var photo in photos)
-        {
-            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
-            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
-        }
+        var photos = await photoRepository.GetByChapterIdAsync(id);
+        var dtos = await EnrichAndMapAsync(photos);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -53,17 +44,8 @@ public class PhotoManager(
         var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Loose photos", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var photos = (await photoRepository.GetLooseByBaulIdAsync(id)).ToList();
-        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
-        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
-
-        var dtos = new List<PhotoDto>();
-        foreach (var photo in photos)
-        {
-            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
-            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
-        }
+        var photos = await photoRepository.GetLooseByBaulIdAsync(id);
+        var dtos = await EnrichAndMapAsync(photos);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -89,16 +71,7 @@ public class PhotoManager(
         var hasMore = page.Count > clampedTake;
         var photos = hasMore ? page.Take(clampedTake).ToList() : page;
 
-        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
-        var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
-
-        var dtos = new List<PhotoDto>();
-        foreach (var photo in photos)
-        {
-            var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-            var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
-            dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
-        }
+        var dtos = await EnrichAndMapAsync(photos);
 
         return Result.Success(new PhotoPageDto(dtos, hasMore));
     }
@@ -402,53 +375,6 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(updated);
     }
 
-    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId)
-    {
-        var id = new PhotoId(photoId);
-        var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
-        if (photo is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Photo not found");
-
-        var auth = await baulAccess.AuthorizeAsync(
-            photo.BaulId, userId, AccessLevel.Member, "Photo recuerdos", new { photo.BaulId, PhotoId = photoId });
-        if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
-
-        var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(id);
-        var dtos = new List<RecuerdoDto>();
-        foreach (var recuerdo in recuerdos)
-        {
-            var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(photo.BaulId, recuerdo.UserId, photoStorage);
-            dtos.Add(ToDto(recuerdo, nickname, avatarUrl, personaId, recuerdo.UserId == userId));
-        }
-
-        return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
-    }
-
-    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid photoId, string text)
-    {
-        var id = new PhotoId(photoId);
-        var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
-        if (photo is null)
-        {
-            logger.LogWarning("Recuerdo creation rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<RecuerdoDto>("Photo not found");
-        }
-
-        var auth = await baulAccess.AuthorizeAsync(
-            photo.BaulId, userId, AccessLevel.Member, "Recuerdo creation", new { photo.BaulId, PhotoId = photoId });
-        if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
-
-        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(photo.BaulId, userId, photoStorage);
-        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), id, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
-        await recuerdoRepository.CreateAsync(recuerdo);
-
-        logger.LogInformation(
-            "Recuerdo created {BaulId} {PhotoId} {RecuerdoId}", photo.BaulId, photoId, recuerdo.Id);
-
-        return ToDto(recuerdo, nickname, avatarUrl, personaId, isOwn: true);
-    }
-
     public async Task<Result<PhotoDownloadResult>> DownloadAsync(Guid photoId)
     {
         var id = new PhotoId(photoId);
@@ -466,66 +392,6 @@ public class PhotoManager(
 
         var content = await photoStorage.OpenReadForDownloadAsync(photo.StorageKey);
         return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(photo.StorageKey).OriginalFileName);
-    }
-
-    public async Task<Result<IEnumerable<TaggedPersonaDto>>> GetTaggedPersonasAsync(Guid photoId)
-    {
-        var id = new PhotoId(photoId);
-        var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
-        if (photo is null) return Result.Failure<IEnumerable<TaggedPersonaDto>>("Photo not found");
-
-        var auth = await baulAccess.AuthorizeAsync(
-            photo.BaulId, userId, AccessLevel.Member, "Photo tagged personas", new { photo.BaulId, PhotoId = photoId });
-        if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
-
-        var personaIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(id);
-        var dtos = new List<TaggedPersonaDto>();
-        foreach (var personaId in personaIds)
-        {
-            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-            if (persona is not null) dtos.Add(await ToTaggedPersonaDtoAsync(persona));
-        }
-
-        return Result.Success<IEnumerable<TaggedPersonaDto>>(dtos);
-    }
-
-    public async Task<Result<IEnumerable<TaggedPersonaDto>>> SetTaggedPersonasAsync(Guid photoId, IEnumerable<Guid> personaIds)
-    {
-        var id = new PhotoId(photoId);
-        var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
-        if (photo is null)
-        {
-            logger.LogWarning("Photo tagging rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<IEnumerable<TaggedPersonaDto>>("Photo not found");
-        }
-
-        var auth = await baulAccess.AuthorizeAsync(
-            photo.BaulId, userId, AccessLevel.Member, "Photo tagging", new { photo.BaulId, PhotoId = photoId });
-        if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
-
-        var distinctIds = personaIds.Select(p => new PersonaId(p)).Distinct().ToList();
-        var personas = new List<Persona>();
-        foreach (var personaId in distinctIds)
-        {
-            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-            if (persona is null || persona.BaulId != photo.BaulId)
-            {
-                logger.LogWarning(
-                    "Photo tagging rejected: persona not found in this baúl {BaulId} {PhotoId} {PersonaId}",
-                    photo.BaulId, photoId, personaId);
-                return Result.Failure<IEnumerable<TaggedPersonaDto>>("Persona not found");
-            }
-            personas.Add(persona);
-        }
-
-        await photoPersonaTagRepository.SetTagsAsync(id, photo.BaulId, distinctIds, clock.UtcNow());
-        logger.LogInformation("Photo tags updated {BaulId} {PhotoId} {PersonaCount}", photo.BaulId, photoId, personas.Count);
-
-        var dtos = new List<TaggedPersonaDto>();
-        foreach (var persona in personas) dtos.Add(await ToTaggedPersonaDtoAsync(persona));
-        return Result.Success<IEnumerable<TaggedPersonaDto>>(dtos);
     }
 
     public async Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(Guid baulId, Guid personaId)
@@ -546,72 +412,26 @@ public class PhotoManager(
             .OrderByChronology()
             .ToList();
 
-        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photos.Select(p => p.Id));
+        var dtos = await EnrichAndMapAsync(photos);
+
+        return Result.Success<IEnumerable<PhotoDto>>(dtos);
+    }
+
+    private async Task<List<PhotoDto>> EnrichAndMapAsync(IEnumerable<Photo> photos)
+    {
+        var photoList = photos as IReadOnlyCollection<Photo> ?? photos.ToList();
+        var recuerdos = await recuerdoRepository.GetByPhotoIdsAsync(photoList.Select(p => p.Id));
         var recuerdoCounts = recuerdos.GroupBy(r => r.PhotoId!.Value).ToDictionary(g => g.Key, g => g.Count());
 
         var dtos = new List<PhotoDto>();
-        foreach (var photo in photos)
+        foreach (var photo in photoList)
         {
             var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
             var fullUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull);
             dtos.Add(ToDto(photo, thumbnailUrl, fullUrl, recuerdoCounts.GetValueOrDefault(photo.Id)));
         }
 
-        return Result.Success<IEnumerable<PhotoDto>>(dtos);
-    }
-
-    public async Task<Result<IEnumerable<string>>> AddTaggedPersonasBatchAsync(
-        Guid baulId, IEnumerable<Guid> photoIds, IEnumerable<Guid> personaIds)
-    {
-        var bId = new BaulId(baulId);
-        var userId = currentUserProvider.GetUserId();
-
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Member, "Batch photo tagging", new { BaulId = baulId });
-        if (auth.IsFailure) return Result.Failure<IEnumerable<string>>(auth.Error);
-
-        // The persona set is shared by every photo in the batch (they all come from the same
-        // baúl-scoped grid), so it's validated once up front rather than per photo — unlike
-        // photo validity below, which tolerates individual failures.
-        var distinctPersonaIds = personaIds.Select(p => new PersonaId(p)).Distinct().ToList();
-        foreach (var personaId in distinctPersonaIds)
-        {
-            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-            if (persona is null || persona.BaulId != bId)
-            {
-                logger.LogWarning("Batch photo tagging rejected: persona not found in this baúl {BaulId} {PersonaId}", baulId, personaId);
-                return Result.Failure<IEnumerable<string>>("Persona not found");
-            }
-        }
-
-        var now = clock.UtcNow();
-        var updated = new List<string>();
-        foreach (var photoId in photoIds)
-        {
-            var id = new PhotoId(photoId);
-            var photo = await photoRepository.GetByIdAsync(id);
-            if (photo is null || photo.BaulId != bId)
-            {
-                logger.LogWarning("Skipping photo in batch tagging: not found in this baúl {BaulId} {PhotoId}", baulId, photoId);
-                continue;
-            }
-
-            var existingIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(id);
-            var union = existingIds.Concat(distinctPersonaIds).Distinct().ToList();
-            await photoPersonaTagRepository.SetTagsAsync(id, bId, union, now);
-            updated.Add(photoId.ToString());
-        }
-
-        logger.LogInformation(
-            "Batch photo tagging completed {BaulId} {PhotoCount} {PersonaCount}", baulId, updated.Count, distinctPersonaIds.Count);
-        return Result.Success<IEnumerable<string>>(updated);
-    }
-
-    private async Task<TaggedPersonaDto> ToTaggedPersonaDtoAsync(Persona persona)
-    {
-        var avatarUrl = persona.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
-            : null;
-        return new TaggedPersonaDto(persona.Id.ToString(), persona.Nickname, persona.Name, avatarUrl);
+        return dtos;
     }
 
     private PhotoDate? ResolvePhotoDate((int Year, int? Month, int? Day)? explicitDate, Stream content)
@@ -644,8 +464,4 @@ public class PhotoManager(
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount = 0) =>
         new(photo.Id.ToString(), photo.ChapterId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
             photo.Date?.Year, photo.Date?.Month, photo.Date?.Day, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
-
-    private static RecuerdoDto ToDto(Recuerdo recuerdo, string userName, string? userAvatar, string? personaId, bool isOwn) =>
-        new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
-            recuerdo.CreatedAt, isOwn, UserAvatar: userAvatar, PersonaId: personaId);
 }
