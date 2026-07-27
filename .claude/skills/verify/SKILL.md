@@ -75,7 +75,7 @@ tests. `admin-unit` covers the backoffice TypeScript check and Vitest tests.
 **Run `frontend-acceptance` before considering done any change touching photo
 upload/move/delete, persona invite/role-change/revoke, or removal-request
 submit/approve/reject** — that's exactly the coverage those four specs give
-(`app/e2e/`). It builds fresh consumer-app and `el-baul-api-lite` images, runs Playwright
+(`app/acceptance-tests/`). It builds fresh consumer-app and `el-baul-api-lite` images, runs Playwright
 against `docker-compose.lite.yml`, and cleans up the compose stack and verification images.
 It's real regression protection for a broken store action or route wiring, not a rubber stamp,
 and markedly faster than `e2e` since there's no real Postgres/MinIO/imgproxy to boot. It does

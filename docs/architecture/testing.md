@@ -11,7 +11,7 @@ Choose the smallest test that can detect the failure.
 | Backend domain model, persistence, or public API contract | + `api/acceptance-tests` |
 | Frontend pure logic (mappers, formatters, reducers) | Vitest, `environment: 'node'` (default) |
 | Frontend component/hook behavior | Vitest + jsdom + React Testing Library |
-| Frontend journey: photo/persona/removal-request flows | `app/e2e/` (against `el-baul-api-lite`) |
+| Frontend journey: photo/persona/removal-request flows | `app/acceptance-tests/` (against `el-baul-api-lite`) |
 | Whole-stack wiring (login → home against real infra) | root `/e2e-tests/` |
 
 ## Canonical Commands
@@ -24,7 +24,7 @@ Run verification from the repository root through `./scripts/verify`:
 | `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/acceptance-tests` |
 | `./scripts/verify frontend-unit` | Consumer app TypeScript check + Vitest |
 | `./scripts/verify admin-unit` | Admin TypeScript check + Vitest |
-| `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/e2e` |
+| `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/acceptance-tests` |
 | `./scripts/verify e2e` | Root `e2e-tests` smoke against the real `docker-compose.yaml` stack |
 | `./scripts/verify all` | Complete local verification: every command above |
 
@@ -74,7 +74,7 @@ for the full rationale.
 - **Component** (Vitest + jsdom + React Testing Library, opted in per-file via a
   `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM. Query
   priority: role/label/placeholder/text before `data-testid`.
-- **`app/e2e/`** (`./scripts/verify frontend-acceptance`) — behavioral-regression Playwright against the built
+- **`app/acceptance-tests/`** (`./scripts/verify frontend-acceptance`) — behavioral-regression Playwright against the built
   frontend image + `el-baul-api-lite` (see [`../operations/api-lite.md`](../operations/api-lite.md)),
   no real Postgres/MinIO/imgproxy to boot. Covers photo upload/move/delete, persona
   invite/role-change/revoke, and removal-request submit/approve/reject. Gates
@@ -88,4 +88,4 @@ for the full rationale.
   against the real `docker-compose.yaml` stack (Postgres, MinIO, imgproxy, fake-oidc). Lives
   outside `app/` because it exercises the whole repo, not just the frontend. Runs nightly,
   decoupled from any deploy — exercise only critical wiring here, not behavioral coverage that
-  belongs in `app/e2e/`.
+  belongs in `app/acceptance-tests/`.

@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
 // docker-compose.yaml stack built from source — different subjects under test, different
 // failure modes; a shared config would let a change made for one silently affect the other.
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './acceptance-tests',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
@@ -14,8 +14,8 @@ export default defineConfig({
     ? [['html', { outputFolder: 'playwright-report', open: 'never' }], ['list']]
     : 'list',
   outputDir: './test-results',
-  globalSetup: './e2e/global-setup.ts',
-  globalTeardown: './e2e/global-teardown.ts',
+  globalSetup: './acceptance-tests/global-setup.ts',
+  globalTeardown: './acceptance-tests/global-teardown.ts',
   timeout: 30_000,
   use: {
     baseURL: 'http://localhost:3000',

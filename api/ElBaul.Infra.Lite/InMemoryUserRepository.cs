@@ -6,7 +6,7 @@ namespace ElBaul.Infra.Lite;
 // across requests — unlike ElBaul.Tests, where this class is exercised single-threadedly, a
 // live ASP.NET Core app fires genuinely concurrent requests at it (confirmed: an unguarded
 // Dictionary here corrupted its internal state and crashed under real concurrent traffic from
-// app/e2e-image-acceptance's Playwright run). Every method locks around the read/write and
+// app/acceptance-tests' Playwright run). Every method locks around the read/write and
 // materializes (.ToList()) any LINQ query before returning it, since a lazily-evaluated
 // IEnumerable would otherwise enumerate the live dictionary outside the lock.
 public class InMemoryUserRepository : IUserRepository

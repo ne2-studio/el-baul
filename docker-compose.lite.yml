@@ -1,4 +1,4 @@
-# Minimal stack for the frontend image acceptance tests (app/e2e/) —
+# Minimal stack for the frontend image acceptance tests (app/acceptance-tests/) —
 # el-baul-app + el-baul-api-lite + fake-oidc, nothing else. No Postgres/MinIO/imgproxy/Mailpit:
 # el-baul-api-lite keeps everything in memory (see docs/operations/api-lite.md).
 #
@@ -47,7 +47,7 @@ services:
       # The API's own public URL — LitePhotoStorage uses it to build /lite/photos/{key} URLs
       # the browser can actually reach (see api/ElBaul.Infra.Lite/LitePhotoStorage.cs).
       Api__PublicUrl: "http://localhost:5051"
-      # Every page.goto() in the app/e2e specs is a full reload, and each one
+      # Every page.goto() in the app/acceptance-tests specs is a full reload, and each one
       # re-fetches /api/app-config (PublicLimiter-gated, unauthenticated) — across ~4 spec
       # files that adds up well past the real backend's 20/min default within one IP (all test
       # traffic shares the host's). This isn't testing rate-limiting behavior, so raise the

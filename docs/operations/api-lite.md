@@ -4,7 +4,7 @@ A second, independently built Docker image — `ElBaul.Api.Lite/Dockerfile` — 
 API surface as `el-baul-api` but with every output port backed by an in-memory adapter instead
 of Postgres/MinIO/imgproxy/Hangfire/OpenAI. It exists so Playwright/frontend work can run
 against a fast, deterministic, disposable backend instead of the full compose stack. See
-[`../architecture/testing.md`](../architecture/testing.md) for how `app/e2e/` uses it.
+[`../architecture/testing.md`](../architecture/testing.md) for how `app/acceptance-tests/` uses it.
 
 It is a **separate image**, not a flag: there's no `ASPNETCORE_ENVIRONMENT`-style switch that
 turns `el-baul-api` into this. `ElBaul.Api.Common`/`ElBaul.Infra.Common` hold everything that
@@ -61,5 +61,5 @@ Everything lives in memory for the container's process lifetime — `docker rest
 
 This image is **not** exercised by `acceptance-tests/` and shouldn't be — that suite exists
 specifically to verify the real image against real infrastructure. There's currently no
-automated check that `el-baul-api-lite` still builds/works on its own; `app/e2e/` running
+automated check that `el-baul-api-lite` still builds/works on its own; `app/acceptance-tests/` running
 successfully in CI is the closest thing to one today.

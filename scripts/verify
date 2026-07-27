@@ -179,7 +179,7 @@ frontend_acceptance() {
   docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" "$ROOT_DIR/api"
 
   run_in app npx playwright install chromium
-  run_in app env APP_IMAGE="$app_image" API_LITE_IMAGE="$api_lite_image" npm run test:e2e
+  run_in app env APP_IMAGE="$app_image" API_LITE_IMAGE="$api_lite_image" npm run test:acceptance
 }
 
 e2e() {
