@@ -25,10 +25,25 @@ run that first, always.
    `0` if everything succeeded, non-zero otherwise. The runner already handles hosting, config,
    logging, and an unhandled exception around the whole call — a command only needs the
    per-item loop.
-4. Document what the command does, whether it's safe to re-run, and any deploy-order gate it
+4. Add unit tests in `api/ElBaul.Maintenance.Tests/` covering dry-run behavior, the write path,
+   and failure handling for the new command.
+5. Document what the command does, whether it's safe to re-run, and any deploy-order gate it
    creates (e.g. "must reach zero remaining candidates before deploying migration X") in that
    class's own XML doc comment — that's the source of truth for an individual command, not this
    file. See `BackfillExifDatesCommand.cs` or `BackfillRecuerdoBaulIdCommand.cs` for the shape.
+
+## Testing commands
+
+Maintenance command unit tests live in `api/ElBaul.Maintenance.Tests/` and are included in
+`api/ElBaul.slnx`, so the normal backend verification command runs them:
+
+```bash
+cd api
+dotnet test
+```
+
+For changes that touch real persistence, storage, external providers, or deploy-order behavior,
+also run the command against the live container with `--dry-run` before and after applying it.
 
 ## Running a command
 

@@ -65,7 +65,8 @@ faked, pairing it with fake-oidc, and the state-reset caveat.
 dotnet test
 ```
 
-Runs everything in `ElBaul.slnx` — see [`docs/architecture/testing.md`](../docs/architecture/testing.md)
+Runs everything in `ElBaul.slnx`, including `ElBaul.Maintenance.Tests` for the one-off
+maintenance commands — see [`docs/architecture/testing.md`](../docs/architecture/testing.md)
 for what each test project covers.
 
 Changes to the domain model, persistence, or the public API contract also require the image
@@ -99,6 +100,7 @@ ElBaul.Infra        — real adapters (EF Core repositories, MinIO photo storage
 ElBaul.Infra.Lite   — in-memory adapters (backs el-baul-api-lite and ElBaul.Tests' fakes)
 ElBaul.Infra.Common — shared with both: auth/user-sync logic that doesn't touch real infra
 ElBaul.Maintenance  — one-off maintenance CLI commands + the framework that runs them
+ElBaul.Maintenance.Tests — unit tests for maintenance command behavior
 docker-image-tests  — separate solution, black-box tests for the built image
 ```
 

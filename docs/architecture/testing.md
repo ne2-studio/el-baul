@@ -7,6 +7,7 @@ Choose the smallest test that can detect the failure.
 | Backend application/domain logic | `api/ElBaul.Tests` (unit, fake-first, NSubstitute for narrow seams) |
 | Backend infra-layer logic (URL building, middleware) | `api/ElBaul.Infra.Tests` |
 | Backend controller/authorization concerns | `api/ElBaul.Api.Tests` |
+| Backend maintenance command logic | `api/ElBaul.Maintenance.Tests` |
 | Backend domain model, persistence, or public API contract | + `api/docker-image-tests` |
 | Frontend pure logic (mappers, formatters, reducers) | Vitest, `environment: 'node'` (default) |
 | Frontend component/hook behavior | Vitest + jsdom + React Testing Library |
@@ -31,6 +32,10 @@ Choose the smallest test that can detect the failure.
   diffing; re-approve an intentional change by reviewing and overwriting the `.verified.txt`.
 - **`ElBaul.Api.Tests`** — concerns that need the ASP.NET pipeline itself (authorization
   policies), not just the `Application/` logic behind it.
+- **`ElBaul.Maintenance.Tests`** — one-off maintenance command behavior with the same
+  fake-first convention as `ElBaul.Tests`: use `ElBaul.Infra.Lite`'s `InMemory*Repository`
+  implementations for stateful ports and small test-local fakes for deterministic storage,
+  clocks, extractors, or provider failures.
 - **`docker-image-tests/`** — a separate solution (excluded from `ElBaul.slnx` — plain
   `dotnet test` does not run it). Black-box acceptance tests for the *built Docker image*, run
   via Testcontainers against a real Postgres + MinIO + fake-oidc stack: no `ProjectReference` to

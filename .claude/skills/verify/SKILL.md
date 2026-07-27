@@ -12,7 +12,7 @@ Use the checks below according to the surface area of the change.
 
 ```bash
 cd api
-dotnet test   # ElBaul.slnx: ElBaul.Tests, ElBaul.Infra.Tests, ElBaul.Api.Tests
+dotnet test   # ElBaul.slnx: unit/API/infra/maintenance tests
 dotnet build  # whole solution, compile-only sanity
 ```
 
@@ -46,9 +46,10 @@ See [`docker-image-tests/README.md`](../../api/docker-image-tests/README.md) for
 each test group covers.
 
 For anything in `ElBaul.Maintenance/Commands/` (one-off maintenance commands like
-`backfill-*`): these are **untested by convention** — `BackfillExifDatesCommand` has
-zero unit tests, and new ones follow the same pattern. Real verification is running it
-against the live container (see the `run` skill to bring the stack up):
+`backfill-*`): add or update unit coverage in `ElBaul.Maintenance.Tests`, and then
+verify the command against the live container when the change touches real persistence,
+storage, external providers, or deploy-order behavior (see the `run` skill to bring
+the stack up):
 
 ```bash
 docker compose exec api dotnet ElBaul.Maintenance.dll <command> --dry-run   # reports, changes nothing
