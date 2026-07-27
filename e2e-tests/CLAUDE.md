@@ -10,4 +10,5 @@ Do not import implementation code or DTOs from `api/`, `app/`, or `admin/`.
 
 ## Before finishing a task
 
+Use the `verify` skill to confirm this suite is the right evidence for the diff.
 Run `./scripts/verify e2e` from the repo root and fix all issues found.
