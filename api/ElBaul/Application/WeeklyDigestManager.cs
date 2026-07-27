@@ -53,57 +53,29 @@ public class WeeklyDigestManager(
 
     public async Task SendWeeklyDigestAsync(UserId userId, DateTime since)
     {
-        if (!appConfiguration.WeeklyDigestEmailsEnabled)
-        {
-            logger.LogInformation("WeeklyDigestSkipped {UserId} feature disabled", userId);
-            return;
-        }
+        await deliveryCoordinator.SendToEligibleUserAsync(
+            userId,
+            appConfiguration.WeeklyDigestEmailsEnabled,
+            logger,
+            "WeeklyDigestSkipped",
+            EmailType.WeeklyDigest,
+            activitySince: since,
+            getActivityUntil: () => clock.UtcNow(),
+            isEligibleAsync: user =>
+            {
+                if (user.WeeklyDigestEnabled)
+                    return Task.FromResult(true);
 
-        var user = await userRepository.GetByIdAsync(userId);
-        if (user is null)
-        {
-            logger.LogWarning("WeeklyDigestSkipped {UserId} user not found", userId);
-            return;
-        }
-
-        if (!user.WeeklyDigestEnabled)
-        {
-            logger.LogInformation("WeeklyDigestSkipped {UserId} digest disabled", userId);
-            return;
-        }
-
-        if (!EmailAddress.TryCreate(user.Email, out _))
-        {
-            logger.LogWarning("WeeklyDigestSkipped {UserId} invalid email", userId);
-            return;
-        }
-
-        var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
-        if (blocked.Contains(userId))
-        {
-            logger.LogInformation("WeeklyDigestSkipped {UserId} blocked by provider", userId);
-            return;
-        }
-
-        var until = clock.UtcNow();
-        var deduplicationKey = $"weekly-digest:{userId}:{since:O}";
-
-        var result = await deliveryCoordinator.SendAsync(
-            userId, user.Email, deduplicationKey, EmailType.WeeklyDigest,
-            activitySince: since, activityUntil: until,
-            renderAsync: async linkBuilder =>
+                logger.LogInformation("WeeklyDigestSkipped {UserId} digest disabled", userId);
+                return Task.FromResult(false);
+            },
+            getDeduplicationKey: _ => $"weekly-digest:{userId}:{since:O}",
+            renderAsync: async (user, linkBuilder) =>
             {
                 var model = await BuildModelAsync(user, since);
                 LogGenerated(userId, model);
                 return templateRenderer.RenderWeeklyDigest(ApplyTracking(model, linkBuilder));
             });
-
-        if (result.IsFailure)
-        {
-            // Throwing lets Hangfire's automatic retry pick this back up; the next attempt
-            // re-uses the same reserved SentEmail row instead of double-sending.
-            throw new InvalidOperationException(result.Error);
-        }
     }
 
     public async Task<Result> SendTestWeeklyDigestAsync(UserId sourceUserId)
@@ -162,10 +134,10 @@ public class WeeklyDigestManager(
         var hasActivity = sections.Count > 0;
 
         var targetPath = hasBaules ? $"/baules/{baules[0].Id}" : "/baules/nuevo";
-        var ctaUrl = BuildUrl(publicUrl, targetPath);
+        var ctaUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, targetPath);
         var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
 
-        var notificationSettingsUrl = BuildUrl(publicUrl, "/configuracion/notificaciones");
+        var notificationSettingsUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, "/configuracion/notificaciones");
 
         return new WeeklyDigestEmailModel(
             user.Name ?? user.Email, hasBaules, hasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
@@ -174,7 +146,7 @@ public class WeeklyDigestManager(
 
     private async Task<BaulDigestSection?> BuildBaulSectionAsync(Baul baul, DateTime since, string publicUrl)
     {
-        var baulUrl = BuildUrl(publicUrl, $"/baules/{baul.Id}");
+        var baulUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}");
         var items = new List<DigestActivityBlock>();
 
         var newChapters = await chapterRepository.GetCreatedSinceAsync(baul.Id, since);
@@ -182,7 +154,7 @@ public class WeeklyDigestManager(
         {
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewChapter, $"Nuevo capítulo: “{chapter.Name}”",
-                BuildUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
+                EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
         }
 
         var recuerdos = await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since);
@@ -206,7 +178,7 @@ public class WeeklyDigestManager(
                 : $"{count} fotos nuevas en “{chapter.Name}”";
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewPhotosInChapter, label,
-                BuildUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), count));
+                EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), count));
         }
 
         var looseCount = photos.Count(p => p.ChapterId is null);
@@ -214,7 +186,8 @@ public class WeeklyDigestManager(
         {
             var label = looseCount == 1 ? "1 foto nueva sin organizar" : $"{looseCount} fotos nuevas sin organizar";
             items.Add(new DigestActivityBlock(
-                DigestBlockKind.NewLoosePhotos, label, BuildUrl(publicUrl, $"/baules/{baul.Id}/fotos-sueltas"), looseCount));
+                DigestBlockKind.NewLoosePhotos, label,
+                EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}/fotos-sueltas"), looseCount));
         }
 
         if (items.Count == 0) return null;
@@ -242,9 +215,6 @@ public class WeeklyDigestManager(
 
         return overflow.Count == 1 ? "Y 1 novedad más." : $"Y {overflow.Count} novedades más.";
     }
-
-    private static string BuildUrl(string publicUrl, string path) =>
-        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
 
     private static WeeklyDigestEmailModel ApplyTracking(WeeklyDigestEmailModel model, TrackedLinkBuilder linkBuilder)
     {

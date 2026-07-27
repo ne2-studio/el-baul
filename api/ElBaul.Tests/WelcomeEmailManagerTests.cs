@@ -28,7 +28,7 @@ public class WelcomeEmailManagerTests
     private readonly StaticClock _clock = new();
 
     private EmailDeliveryCoordinator CreateCoordinator() => new(
-        _sentEmailRepository, _emailLinkSigner, _emailSender, _appConfiguration, _clock,
+        _userRepository, _sentEmailRepository, _emailLinkSigner, _emailSender, _appConfiguration, _clock,
         new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance);
 
     private WelcomeEmailManager CreateManager() => CreateManager(_appConfiguration);

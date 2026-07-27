@@ -37,7 +37,7 @@ public class WeeklyDigestManagerTests
         _userRepository, _baulRepository, _chapterRepository, _photoRepository, _recuerdoRepository, _sentEmailRepository,
         _templateRenderer,
         new EmailDeliveryCoordinator(
-            _sentEmailRepository, _emailLinkSigner, _emailSender, appConfiguration, _clock,
+            _userRepository, _sentEmailRepository, _emailLinkSigner, _emailSender, appConfiguration, _clock,
             new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance),
         _jobScheduler, appConfiguration, _currentUserProvider, _clock);
 

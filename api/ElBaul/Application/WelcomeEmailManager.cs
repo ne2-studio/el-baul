@@ -44,51 +44,26 @@ public class WelcomeEmailManager(
 
     public async Task SendWelcomeEmailAsync(UserId userId)
     {
-        if (!appConfiguration.WelcomeEmailsEnabled)
-        {
-            logger.LogInformation("WelcomeEmailSkipped {UserId} feature disabled", userId);
-            return;
-        }
+        await deliveryCoordinator.SendToEligibleUserAsync(
+            userId,
+            appConfiguration.WelcomeEmailsEnabled,
+            logger,
+            "WelcomeEmailSkipped",
+            EmailType.Welcome,
+            activitySince: null,
+            getActivityUntil: () => null,
+            isEligibleAsync: user =>
+            {
+                var cutoff = clock.UtcNow() - EligibilityDelay;
+                if (user.CreatedAt <= cutoff)
+                    return Task.FromResult(true);
 
-        var user = await userRepository.GetByIdAsync(userId);
-        if (user is null)
-        {
-            logger.LogWarning("WelcomeEmailSkipped {UserId} user not found", userId);
-            return;
-        }
-
-        var cutoff = clock.UtcNow() - EligibilityDelay;
-        if (user.CreatedAt > cutoff)
-        {
-            logger.LogInformation("WelcomeEmailSkipped {UserId} not yet eligible", userId);
-            return;
-        }
-
-        if (!EmailAddress.TryCreate(user.Email, out _))
-        {
-            logger.LogWarning("WelcomeEmailSkipped {UserId} invalid email", userId);
-            return;
-        }
-
-        var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
-        if (blocked.Contains(userId))
-        {
-            logger.LogInformation("WelcomeEmailSkipped {UserId} blocked by provider", userId);
-            return;
-        }
-
-        var result = await deliveryCoordinator.SendAsync(
-            userId, user.Email, $"welcome:{userId}", EmailType.Welcome,
-            activitySince: null, activityUntil: null,
-            renderAsync: async linkBuilder =>
+                logger.LogInformation("WelcomeEmailSkipped {UserId} not yet eligible", userId);
+                return Task.FromResult(false);
+            },
+            getDeduplicationKey: _ => $"welcome:{userId}",
+            renderAsync: async (user, linkBuilder) =>
                 templateRenderer.RenderWelcome(ApplyTracking(await BuildModelAsync(user), linkBuilder)));
-
-        if (result.IsFailure)
-        {
-            // Throwing lets Hangfire's automatic retry pick this back up; the next attempt
-            // re-uses the same reserved SentEmail row instead of double-sending.
-            throw new InvalidOperationException(result.Error);
-        }
     }
 
     public async Task<Result> SendTestWelcomeEmailAsync(UserId sourceUserId)
@@ -126,9 +101,9 @@ public class WelcomeEmailManager(
         var hasBaules = baules.Count > 0;
 
         var targetPath = hasBaules ? $"/baules/{baules[0].Id}" : "/baules/nuevo";
-        var ctaUrl = $"{publicUrl}/?redirectTo={Uri.EscapeDataString(targetPath)}";
+        var ctaUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, targetPath);
         var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
-        var notificationSettingsUrl = BuildUrl(publicUrl, "/configuracion/notificaciones");
+        var notificationSettingsUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, "/configuracion/notificaciones");
 
         return new WelcomeEmailModel(
             user.Name ?? user.Email,
@@ -139,9 +114,6 @@ public class WelcomeEmailManager(
             notificationSettingsUrl,
             EmailFooterLinksFactory.Build(publicUrl, appConfiguration, clock));
     }
-
-    private static string BuildUrl(string publicUrl, string path) =>
-        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
 
     private static WelcomeEmailModel ApplyTracking(WelcomeEmailModel model, TrackedLinkBuilder linkBuilder) =>
         model with

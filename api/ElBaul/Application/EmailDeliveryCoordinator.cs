@@ -12,6 +12,7 @@ namespace ElBaul.Application;
 /// exactly one place instead of being copy-pasted per email type.
 /// </summary>
 public class EmailDeliveryCoordinator(
+    IUserRepository userRepository,
     ISentEmailRepository sentEmailRepository,
     IEmailLinkSigner emailLinkSigner,
     IEmailSender emailSender,
@@ -20,6 +21,63 @@ public class EmailDeliveryCoordinator(
     IIdGenerator idGenerator,
     ILogger<EmailDeliveryCoordinator> logger)
 {
+    public async Task SendToEligibleUserAsync(
+        UserId userId,
+        bool isEnabled,
+        ILogger callerLogger,
+        string skippedEventName,
+        EmailType type,
+        DateTime? activitySince,
+        Func<DateTime?> getActivityUntil,
+        Func<User, Task<bool>> isEligibleAsync,
+        Func<User, string> getDeduplicationKey,
+        Func<User, TrackedLinkBuilder, Task<RenderedEmail>> renderAsync)
+    {
+        if (!isEnabled)
+        {
+            callerLogger.LogInformation("{SkippedEventName} {UserId} feature disabled", skippedEventName, userId);
+            return;
+        }
+
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user is null)
+        {
+            callerLogger.LogWarning("{SkippedEventName} {UserId} user not found", skippedEventName, userId);
+            return;
+        }
+
+        if (!await isEligibleAsync(user))
+            return;
+
+        if (!EmailAddress.TryCreate(user.Email, out _))
+        {
+            callerLogger.LogWarning("{SkippedEventName} {UserId} invalid email", skippedEventName, userId);
+            return;
+        }
+
+        var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
+        if (blocked.Contains(userId))
+        {
+            callerLogger.LogInformation("{SkippedEventName} {UserId} blocked by provider", skippedEventName, userId);
+            return;
+        }
+
+        var result = await SendAsync(
+            userId, user.Email, getDeduplicationKey(user), type,
+            activitySince, getActivityUntil(),
+            renderAsync: linkBuilder => renderAsync(user, linkBuilder));
+
+        if (result.IsFailure)
+        {
+            // Throwing lets Hangfire's automatic retry pick this back up; the next attempt
+            // re-uses the same reserved SentEmail row instead of double-sending.
+            throw new InvalidOperationException(result.Error);
+        }
+    }
+
+    public static string BuildRedirectUrl(string publicUrl, string path) =>
+        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
+
     public async Task<Result> SendAsync(
         string userId,
         string recipientEmail,
