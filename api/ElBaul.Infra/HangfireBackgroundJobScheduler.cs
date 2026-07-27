@@ -1,3 +1,4 @@
+using ElBaul.Infra.Emails;
 using ElBaul.Ports.Output;
 using Hangfire;
 

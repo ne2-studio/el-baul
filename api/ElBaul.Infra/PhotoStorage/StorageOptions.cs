@@ -1,4 +1,4 @@
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.PhotoStorage;
 
 public class StorageOptions
 {

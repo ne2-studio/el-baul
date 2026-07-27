@@ -1,7 +1,7 @@
 using ElBaul.Ports.Output;
 using Microsoft.EntityFrameworkCore;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Persistence;
 
 public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
 {

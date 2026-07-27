@@ -3,7 +3,7 @@ using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using Microsoft.Extensions.Logging;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.PhotoStorage;
 
 public class ExifPhotoDateExtractor(ILogger<ExifPhotoDateExtractor> logger) : IPhotoDateExtractor
 {

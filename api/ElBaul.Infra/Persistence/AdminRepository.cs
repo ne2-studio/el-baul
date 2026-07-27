@@ -1,7 +1,7 @@
 using ElBaul.Ports.Output;
 using Microsoft.EntityFrameworkCore;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Persistence;
 
 /// <summary>
 /// Backs the backoffice's cross-aggregate, unscoped reads directly against

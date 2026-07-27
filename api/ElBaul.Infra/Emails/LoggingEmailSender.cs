@@ -2,7 +2,7 @@ using CSharpFunctionalExtensions;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Emails;
 
 /// <summary>
 /// Stand-in for ResendEmailSender when Resend:ApiKey isn't configured (local/dev, no real

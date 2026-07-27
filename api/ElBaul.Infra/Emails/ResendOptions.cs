@@ -1,4 +1,4 @@
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Emails;
 
 public class ResendOptions
 {

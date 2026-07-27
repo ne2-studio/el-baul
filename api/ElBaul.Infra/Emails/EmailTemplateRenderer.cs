@@ -1,7 +1,6 @@
-using ElBaul.Infra.Emails;
 using ElBaul.Ports.Output;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Emails;
 
 internal class EmailTemplateRenderer(IEmailRenderer emailRenderer) : IEmailTemplateRenderer
 {

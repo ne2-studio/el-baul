@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using ElBaul.Ports.Output;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.PhotoStorage;
 
 /// <summary>
 /// Builds signed imgproxy URLs pointing at photos stored in MinIO, via imgproxy's native

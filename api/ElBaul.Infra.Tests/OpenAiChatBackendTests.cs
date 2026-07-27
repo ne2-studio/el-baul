@@ -1,4 +1,5 @@
 using System.Net;
+using ElBaul.Infra.Chat;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

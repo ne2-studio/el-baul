@@ -5,7 +5,7 @@ using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Emails;
 
 public class ResendEmailSender(HttpClient httpClient, IOptions<ResendOptions> options, ILogger<ResendEmailSender> logger)
     : IEmailSender

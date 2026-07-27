@@ -6,7 +6,7 @@ using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Chat;
 
 public class OpenAiChatBackend(HttpClient httpClient, IOptions<OpenAiOptions> options, ILogger<OpenAiChatBackend> logger)
     : IAiChatBackend

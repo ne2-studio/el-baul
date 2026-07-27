@@ -1,3 +1,4 @@
+using ElBaul.Infra.PhotoStorage;
 using ElBaul.Ports.Output;
 
 namespace ElBaul.Infra.Tests;

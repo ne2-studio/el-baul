@@ -4,7 +4,7 @@ using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Emails;
 
 // Local-dev adapter: relays through Mailpit (docker-compose's `mailpit` service, web UI at
 // http://localhost:8025) so emails can be inspected in a real inbox instead of just reading

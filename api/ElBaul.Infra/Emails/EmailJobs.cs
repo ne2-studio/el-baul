@@ -1,7 +1,7 @@
 using ElBaul.Ports.Input;
 using Hangfire;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Emails;
 
 /// <summary>
 /// The actual Hangfire-invoked entry points for per-user email jobs — HangfireBackgroundJobScheduler

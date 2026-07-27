@@ -2,7 +2,7 @@ using ElBaul.Ports.Output;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.Persistence;
 
 public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
 {

@@ -5,7 +5,7 @@ using Amazon.S3.Util;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Options;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Infra.PhotoStorage;
 
 /// <summary>
 /// Stores photos in MinIO (S3-compatible), reachable only over the internal docker
