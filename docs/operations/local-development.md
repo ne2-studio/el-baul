@@ -12,7 +12,8 @@ docker compose up --build
 
 | Service | URL |
 |---|---|
-| Frontend (`app/`) | http://localhost:3000 |
+| Frontend Docker image (`app/`, prebuilt `dist/`) | http://localhost:3000 |
+| Frontend Vite dev server (`app/`, hot reload) | http://localhost:5173 |
 | Admin backoffice (`admin/`) | http://localhost:3001 |
 | Backend (`api/`) | http://localhost:5050 |
 | Postgres | localhost:5432 |
@@ -70,8 +71,13 @@ npm install
 npm run dev
 ```
 
-The dev server runs at `http://localhost:5173`. You'll need the backend (and, for a full login
-flow, fake-oidc) running too.
+The Vite dev server runs at the stable URL `http://localhost:5173`. If that port is already
+occupied, startup fails instead of switching ports. You'll need the backend (and, for a full
+login flow, fake-oidc) running too.
+
+Use `http://localhost:3000` only when you intentionally want the precompiled frontend image
+served by Docker. The Playwright E2E suites use that Docker contract; routine local frontend
+iteration should use `http://localhost:5173`.
 
 ## Admin only
 

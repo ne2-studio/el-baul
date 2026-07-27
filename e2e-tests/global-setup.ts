@@ -21,9 +21,8 @@ async function waitForOk(url: string, timeoutMs: number) {
 }
 
 export default async function globalSetup() {
-  // Stale el-baul-* containers from a previous session are the single most expensive
-  // failure mode in this repo (serving an old build on the port we're about to test) —
-  // see the `run`/`verify` skills. Always start from a clean slate.
+  // This suite owns the full Docker stack and verifies freshly built images on their
+  // Docker ports, so start from a clean compose state.
   const running = execSync('docker ps --format "{{.Names}}"').toString();
   if (running.split('\n').some((name) => name.startsWith('el-baul-'))) {
     execSync('docker compose down', { cwd: REPO_ROOT, stdio: 'inherit' });

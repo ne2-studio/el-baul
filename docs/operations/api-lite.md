@@ -37,7 +37,7 @@ docker build -f ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local .
 docker network create el-baul-lite-test
 docker run -d --name fake-oidc --network el-baul-lite-test -p 5000:5000 \
   -e OIDC_ISSUER="http://localhost:5000" \
-  -e OIDC_CLIENTS='[{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback"]}]' \
+  -e OIDC_CLIENTS='[{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"]}]' \
   -e OIDC_USERS='[{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]}]' \
   ghcr.io/ne2-studio/fake-oidc:latest
 

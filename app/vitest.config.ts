@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
-import viteConfig from './vite.config';
+import { createViteConfig } from './vite.config';
 
 // Separate from vite.config.ts (rather than adding a `test:` block there) so the
 // production build config stays untouched by test-only concerns — merged in via
@@ -11,7 +11,7 @@ import viteConfig from './vite.config';
 // — see docs/adr/0001-frontend-testing-strategy.md. Component tests opt into jsdom
 // per-file with a `// @vitest-environment jsdom` docblock at the top of the file.
 export default mergeConfig(
-  viteConfig,
+  createViteConfig(),
   defineConfig({
     test: {
       environment: 'node',

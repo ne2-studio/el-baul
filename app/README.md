@@ -20,8 +20,9 @@ npm run dev
 `.env` needs `VITE_API_URL` (the backend's base URL), `VITE_OIDC_AUTHORITY`,
 `VITE_OIDC_CLIENT_ID`, `VITE_OIDC_CALLBACK_URI`, and `VITE_ZITADEL_ORGANIZATION_ID`. The
 committed defaults point at the backend/fake-oidc from the root `docker-compose.yaml` running on
-localhost. The app is then available at `http://localhost:5173` — you'll need the backend (and,
-for a full login flow, fake-oidc) running too, see the root [`README.md`](../README.md) or
+localhost. The app is then available at the stable Vite URL `http://localhost:5173`;
+if that port is occupied, `npm run dev` fails instead of moving to another port. You'll need
+the backend (and, for a full login flow, fake-oidc) running too, see the root [`README.md`](../README.md) or
 [`docs/operations/local-development.md`](../docs/operations/local-development.md).
 
 ```bash

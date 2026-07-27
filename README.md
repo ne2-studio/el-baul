@@ -41,7 +41,7 @@ docker compose up --build
 
 Brings up Postgres, MinIO, fake-oidc, the backend, the frontend, and the admin backoffice
 together. See [`docs/operations/local-development.md`](docs/operations/local-development.md)
-for ports and the fake-oidc login flow.
+for the Docker/Vite frontend port contract and the fake-oidc login flow.
 
 ### Backend only
 

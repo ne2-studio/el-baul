@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build && sentry-cli sourcemaps inject --ignore 'env-config*.js' dist",
-    "dev": "vite",
+    "dev": "VITE_OIDC_CALLBACK_URI=http://localhost:5173/callback vite --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "android:build": "vite build --mode android && cap sync android",
     "sentry:upload-sourcemaps": "sentry-cli sourcemaps upload --org pedro-pardal --project el-baul dist",

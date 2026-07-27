@@ -1,14 +1,12 @@
 ---
 name: verify
-description: "Verifies a backend or frontend change in El Baúl actually works: dotnet test for backend logic, a live check against the running stack (via the `run` skill) for anything user-facing. Use before considering backend or frontend work in this repo done — especially UI changes, which this repo has a specific way of silently lying to you about."
+description: "Verifies backend and frontend changes using automated tests and, when required, a live environment provided by the run skill. Use before considering implementation work complete."
 ---
 
 ## Goal
 
-"The tests pass" and "the diff looks right" are not verification here — this repo has
-a specific, repeatable way to fool you into thinking a UI change didn't work when it
-actually did (or vice versa). Read "The stale-container trap" before verifying
-anything user-facing.
+"The tests pass" and "the diff looks right" are not always enough verification here.
+Use the checks below according to the surface area of the change.
 
 ## Backend changes
 
@@ -65,6 +63,7 @@ production, which is the whole point of these commands.
 
 ```bash
 cd app && npm run typecheck   # tsc --noEmit — fast, catches type errors, run always
+cd app && npm test            # Vitest — unit/component/store coverage
 cd app && npm run test:e2e    # behavioral coverage — photos, personas, removal requests
 cd e2e-tests && npm run test:e2e  # login + reach the real home screen, against the full real stack
 ```
@@ -86,44 +85,9 @@ infra — the one check here that actually exercises Postgres/MinIO/imgproxy wir
 application code. Run it for anything touching that wiring specifically (it's also covered
 automatically by the nightly CI job regardless).
 
-For anything UI-facing beyond what these two suites cover, load the `run` skill, get a
-logged-in browser, and actually drive to the changed screen. Prefer the Vite dev server flow
-in that skill over the docker `app` container for this — see below.
-
-## The stale-container trap
-
-This is the one lesson worth internalizing before you verify anything visual here.
-
-**What happened**: a backend fix (`ChapterDto.RecuerdoCount`) was correct — confirmed via
-`dotnet test` and a raw `curl` against the API. But the chapter card in the browser
-still showed no recuerdo count, twice in a row, across two "fix and re-verify" cycles.
-The actual cause: the docker-compose `app` container (serving a `dist/` built *before*
-the frontend change) was still bound to port 3000 the whole time, un-torn-down from an
-earlier session. A `Vite` dev server started alongside it silently bound to **3001**
-instead (port 3000 was taken) and was never actually the thing being looked at.
-
-**Why it's easy to fall into**: the browser at `localhost:3000` looked completely
-normal — real data, real login, no errors. Nothing about the *symptom* pointed at
-"wrong container"; it looked exactly like "my frontend fix is wrong."
-
-**The check that resolves it in seconds, every time:**
-
-1. `docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}' | grep el-baul` —
-   is `el-baul-app-1` (the prebuilt-dist container) actually up on `:3000`? If yes,
-   that's what you're looking at, not your dev server.
-2. If you started a dev server, re-read its **own startup log** for the port it
-   actually bound to (`Local: http://localhost:XXXX/`) — don't assume it got the port
-   you asked for. Use `--strictPort` to fail loudly instead of silently picking
-   another one (see the `run` skill).
-3. When in doubt, get the ground truth straight from the API instead of the rendered
-   page: extract the bearer token from the browser's `localStorage` (see the `run`
-   skill, step 5) and `curl` the endpoint directly. If the JSON already has the right
-   shape, the backend is done and any remaining bug is in what's being served or how
-   it's rendered — that distinction alone tells you where to keep looking.
-
-Run the `docker ps` check as step 0 of *every* verification session in this repo, not
-just when something looks wrong — it's cheap and it's the thing that was skipped both
-times this actually bit.
+For anything UI-facing beyond what these two suites cover, invoke the `run` skill, use
+the exact URL it returns, and actually drive to the changed screen. Do not start an
+additional frontend server manually.
 
 ## Known sharp edges (things that have actually broken here)
 
