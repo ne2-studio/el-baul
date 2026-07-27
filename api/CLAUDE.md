@@ -6,5 +6,7 @@ boundaries, persistence, or infrastructure adapters.
 Read `../docs/API-CONVENTIONS.md` before changing API authentication, authorization, or
 observable error semantics.
 
-For changes to the domain model, persistence, or the public API contract, run the backend
-image tests in addition to `dotnet test` — see `../docs/architecture/testing.md`.
+## Before finishing a task
+
+- Load the `verify` skill and fix all issues found. Verification MUST succeed to consider the task done.
+- If the task requires manual verification, use the `run` skill first.
