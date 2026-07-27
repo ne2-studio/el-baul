@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Chapter } from '@/types';
 
 interface MoveModalProps {
   title: string;

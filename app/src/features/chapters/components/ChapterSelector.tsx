@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, Plus } from 'lucide-react';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Chapter } from '@/types';
 
 export type ChapterSelection =
   | { type: 'existing'; chapterId: string }

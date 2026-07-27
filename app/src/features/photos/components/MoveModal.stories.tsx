@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MoveModal } from '@/features/photos/components/MoveModal';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Chapter } from '@/types';
 
 const meta = {
   title: 'Features/Photos/MoveModal',
@@ -13,9 +13,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const chapters: Chapter[] = [
-  { id: '1', name: 'Verano 2023', photoCount: 42 },
-  { id: '2', name: 'Cumpleaños de la abuela', photoCount: 18 },
-  { id: '3', name: 'Navidad', photoCount: 30 },
+  { id: '1', name: 'Verano 2023', photoCount: 42, lastUpdated: 'hace 1 día', recuerdoCount: 0, undatedPhotoCount: 0 },
+  { id: '2', name: 'Cumpleaños de la abuela', photoCount: 18, lastUpdated: 'hace 2 días', recuerdoCount: 0, undatedPhotoCount: 0 },
+  { id: '3', name: 'Navidad', photoCount: 30, lastUpdated: 'hace 3 días', recuerdoCount: 0, undatedPhotoCount: 0 },
 ];
 
 export const Default: Story = {

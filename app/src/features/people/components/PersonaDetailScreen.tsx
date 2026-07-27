@@ -1,13 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserX } from 'lucide-react';
-import { Persona, BaulRole } from '@/types';
+import { Persona, BaulRole, Photo } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { ManageAccessModal } from '@/features/sharing/components/ManageAccessModal';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
-import { Photo } from '@/features/chapters/components/PhotosView';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';

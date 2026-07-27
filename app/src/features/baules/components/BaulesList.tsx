@@ -5,20 +5,8 @@ import { Crown, User, Users, Clock, UserCircle } from 'lucide-react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
-import { BaulRole } from '@/types';
+import { Baul } from '@/types';
 import { getRoleDisplayName } from '@/utils/roleUtils';
-
-export interface Baul {
-  id: string;
-  name: string;
-  description?: string;
-  chapterCount: number;
-  coverPhotoUrl?: string;
-  lastUpdated: string;
-  isCustodio?: boolean;
-  role?: BaulRole;
-  memberCount?: number;
-}
 
 interface BaulesListProps {
   baules: Baul[];

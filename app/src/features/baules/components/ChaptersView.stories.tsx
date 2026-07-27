@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChaptersView, Chapter } from '@/features/baules/components/ChaptersView';
-import { Baul } from '@/features/baules/components/BaulesList';
-import { Persona, Recuerdo } from '@/types';
+import { ChaptersView } from '@/features/baules/components/ChaptersView';
+import { Baul, Chapter, Persona, Recuerdo } from '@/types';
 
 const meta = {
   title: 'Screens/Baul/Detail',
@@ -26,9 +25,9 @@ const baul: Baul = {
 };
 
 const chapters: Chapter[] = [
-  { id: 'c1', name: 'Verano 2024', photoCount: 24, recuerdoCount: 3, coverPhotoUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400', minDate: { year: 2024, month: 7 }, maxDate: { year: 2024, month: 8 } },
-  { id: 'c2', name: 'Navidad', photoCount: 12, recuerdoCount: 1, minDate: { year: 2023, month: 12 }, maxDate: { year: 2023, month: 12 } },
-  { id: 'c3', name: 'Cumpleaños de la abuela', photoCount: 8, minDate: { year: 2023, month: 5 }, maxDate: { year: 2023, month: 5 } },
+  { id: 'c1', name: 'Verano 2024', photoCount: 24, lastUpdated: 'hace 2 días', recuerdoCount: 3, undatedPhotoCount: 0, coverPhotoUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400', minDate: { year: 2024, month: 7 }, maxDate: { year: 2024, month: 8 } },
+  { id: 'c2', name: 'Navidad', photoCount: 12, lastUpdated: 'hace 1 mes', recuerdoCount: 1, undatedPhotoCount: 0, minDate: { year: 2023, month: 12 }, maxDate: { year: 2023, month: 12 } },
+  { id: 'c3', name: 'Cumpleaños de la abuela', photoCount: 8, lastUpdated: 'hace 3 meses', recuerdoCount: 0, undatedPhotoCount: 0, minDate: { year: 2023, month: 5 }, maxDate: { year: 2023, month: 5 } },
 ];
 
 const personas: Persona[] = [

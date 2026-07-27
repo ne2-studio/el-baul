@@ -9,13 +9,12 @@ import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { Chapter } from '@/features/baules/components/ChaptersView';
 import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
 import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { RecuerdosFeed } from '@/features/memories/components/RecuerdosFeed';
 import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
-import { PhotoDate, Persona } from '@/types';
+import { Chapter, Photo, PhotoDate, Persona, Recuerdo } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
 import {
   DropdownMenu,
@@ -24,26 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/design-system/components/ui/dropdown-menu';
-
-export interface Photo {
-  id: string;
-  thumbnailUrl: string;
-  fullUrl: string;
-  date?: PhotoDate;
-  recuerdoCount?: number;
-}
-
-export interface Recuerdo {
-  id: string;
-  text: string;
-  personaId?: string;
-  userName: string;
-  userAvatar?: string;
-  createdAt: string;
-  isOwn?: boolean;
-  photoId?: string;
-  photoThumbnailUrl?: string;
-}
 
 interface PhotosViewProps {
   chapter: Chapter;

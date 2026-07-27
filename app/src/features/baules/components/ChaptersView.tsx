@@ -12,11 +12,9 @@ import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { Baul } from '@/features/baules/components/BaulesList';
-import { Photo } from '@/features/chapters/components/PhotosView';
 import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
-import { PhotoDate, Recuerdo, Persona } from '@/types';
+import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
 import {
   DropdownMenu,
@@ -25,21 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/design-system/components/ui/dropdown-menu';
-
-export interface Chapter {
-  id: string;
-  name: string;
-  photoCount: number;
-  coverPhotoUrl?: string;
-  featuredCoverPhotoUrl?: string;
-  lastUpdated?: string;
-  recuerdoCount?: number;
-  latestRecuerdoText?: string;
-  latestRecuerdoAuthor?: string;
-  minDate?: PhotoDate;
-  maxDate?: PhotoDate;
-  undatedPhotoCount?: number;
-}
 
 interface LoosePhoto {
   id: string;

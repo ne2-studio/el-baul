@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { RecuerdoCard, Recuerdo } from '@/features/memories/components/RecuerdoCard';
+import { motion } from 'motion/react';
+import { Recuerdo } from '@/types';
+import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
 
 interface RecuerdosListProps {
   recuerdos: Recuerdo[];
@@ -30,15 +31,14 @@ export function RecuerdosList({
     <div className="space-y-5">
       {/* Lista de recuerdos */}
       <div className="space-y-4">
-        <AnimatePresence mode="popLayout">
-          {visibleRecuerdos.map((recuerdo, index) => (
-            <RecuerdoCard
-              key={recuerdo.id}
-              recuerdo={recuerdo}
-              onUserClick={onUserClick}
-            />
-          ))}
-        </AnimatePresence>
+        {visibleRecuerdos.map((recuerdo) => (
+          <RecuerdoFeedCard
+            key={recuerdo.id}
+            recuerdo={recuerdo}
+            onUserClick={onUserClick}
+            showChapterBadge={false}
+          />
+        ))}
       </div>
 
       {/* Botón para expandir/colapsar - interactivo */}

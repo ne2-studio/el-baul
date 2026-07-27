@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
-import { Baul } from '@/features/baules/components/BaulesList';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Baul, Chapter } from '@/types';
 
 const meta = {
   title: 'Screens/Upload/Confirmation',
@@ -16,10 +15,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const baul: Baul = { id: 'b1', name: 'Familia García', chapterCount: 3, lastUpdated: 'hace 2 días' };
-const currentChapter: Chapter = { id: 'c1', name: 'Verano 2024', photoCount: 12 };
+const currentChapter: Chapter = { id: 'c1', name: 'Verano 2024', photoCount: 12, lastUpdated: 'hace 1 día', recuerdoCount: 0, undatedPhotoCount: 0 };
 const existingChapters: Chapter[] = [
   currentChapter,
-  { id: 'c2', name: 'Navidad', photoCount: 30 },
+  { id: 'c2', name: 'Navidad', photoCount: 30, lastUpdated: 'hace 2 días', recuerdoCount: 0, undatedPhotoCount: 0 },
 ];
 
 const selectedPhotos = [

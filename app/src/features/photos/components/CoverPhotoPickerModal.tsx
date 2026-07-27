@@ -3,7 +3,7 @@ import { X, ImageIcon } from 'lucide-react';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { LoadingSpinner } from '@/design-system/components/feedback/LoadingSpinner';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
-import { Photo } from '@/features/chapters/components/PhotosView';
+import { Photo } from '@/types';
 
 const PAGE_SIZE = 60;
 

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Check, MessageCircle } from 'lucide-react';
-import type { Photo } from '@/features/chapters/components/PhotosView';
+import type { Photo } from '@/types';
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
 // assume a month for display, that defaulting only applies to sorting), oldest first so

@@ -3,12 +3,10 @@ import * as Sentry from '@sentry/react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
-import { Baul } from '@/features/baules/components/BaulesList';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Baul, Chapter, PhotoDate } from '@/types';
 import { ChapterSelector, ChapterSelection } from '@/features/chapters/components/ChapterSelector';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
-import { PhotoDate } from '@/types';
 
 export interface SelectedPhoto {
   id: string;

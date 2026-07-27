@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Recuerdo } from '@/types';
 import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
+import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
 
 function newRecuerdo(overrides: Partial<Recuerdo> = {}): Recuerdo {
   return new Recuerdo({
@@ -85,6 +86,24 @@ describe('RecuerdoFeedCard', () => {
     render(
       <RecuerdoFeedCard
         recuerdo={newRecuerdo({ photoId: 'photo-1', chapterId: 'chapter-1', chapterName: 'Verano 2019' })}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Ver foto' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'en «Verano 2019»' })).not.toBeInTheDocument();
+  });
+
+  it('is used by RecuerdosList without showing chapter badges in the photo viewer context', () => {
+    render(
+      <RecuerdosList
+        recuerdos={[
+          newRecuerdo({
+            photoId: 'photo-1',
+            photoThumbnailUrl: '/thumb.jpg',
+            chapterId: 'chapter-1',
+            chapterName: 'Verano 2019',
+          }),
+        ]}
       />
     );
 

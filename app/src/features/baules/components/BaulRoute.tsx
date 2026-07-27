@@ -14,7 +14,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { isAdminRole } from '@/utils/roleUtils';
 import { api } from '@/api';
-import { Photo } from '@/features/chapters/components/PhotosView';
+import { Photo } from '@/types';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();

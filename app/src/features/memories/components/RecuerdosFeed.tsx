@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
-import { Photo, Recuerdo } from '@/features/chapters/components/PhotosView';
+import { Photo, Recuerdo } from '@/types';
 import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
 
 interface RecuerdosFeedProps {

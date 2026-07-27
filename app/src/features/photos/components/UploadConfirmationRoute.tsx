@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Chapter } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 
 // chapterId is present when uploading into a real chapter, absent when uploading into the
@@ -21,6 +21,9 @@ export const UploadConfirmationRoute: React.FC = () => {
         name: 'Fotos sueltas',
         photoCount: looseChapterPhotos.length,
         coverPhotoUrl: looseChapterPhotos[0]?.thumbnailUrl,
+        lastUpdated: '',
+        recuerdoCount: 0,
+        undatedPhotoCount: looseChapterPhotos.length,
       };
   const { selectedPhotos } = location.state || { selectedPhotos: [] };
 

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
-import { Photo } from '@/features/chapters/components/PhotosView';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Chapter, Photo, PhotoDate } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
@@ -10,7 +9,6 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
-import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
@@ -105,7 +103,14 @@ export const PhotoViewerRoute: React.FC = () => {
   const photo = photos.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 
-  const currentChapter: Chapter = chapter ?? { id: 'sueltas', name: 'Fotos sueltas', photoCount: photos.length };
+  const currentChapter: Chapter = chapter ?? {
+    id: 'sueltas',
+    name: 'Fotos sueltas',
+    photoCount: photos.length,
+    lastUpdated: '',
+    recuerdoCount: 0,
+    undatedPhotoCount: photos.length,
+  };
   const basePath = chapterId ? `/baules/${baul.id}/capitulos/${chapterId}` : `/baules/${baul.id}/fotos-sueltas`;
 
   // Si el visor se abrió desde dentro de la app (backgroundLocation presente), un back de

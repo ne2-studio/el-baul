@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
-import { Recuerdo } from '@/features/memories/components/RecuerdoCard';
+import { Recuerdo } from '@/types';
 
 const meta = {
   title: 'Features/Memories/RecuerdosList',

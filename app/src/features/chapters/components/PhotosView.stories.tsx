@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { PhotosView, Photo, Recuerdo } from '@/features/chapters/components/PhotosView';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { PhotosView } from '@/features/chapters/components/PhotosView';
+import { Chapter, Photo, Recuerdo } from '@/types';
 
 const meta = {
   title: 'Screens/Chapter/Detail',
@@ -18,6 +18,9 @@ const chapter: Chapter = {
   id: 'c1',
   name: 'Verano 2024',
   photoCount: 3,
+  lastUpdated: 'hace 2 días',
+  recuerdoCount: 1,
+  undatedPhotoCount: 0,
   coverPhotoUrl: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=1200',
   minDate: { year: 2024, month: 7 },
   maxDate: { year: 2024, month: 8 },
@@ -25,8 +28,8 @@ const chapter: Chapter = {
 
 const photos: Photo[] = [
   { id: '1', thumbnailUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300', fullUrl: '', date: { year: 2024, month: 7, day: 15 }, recuerdoCount: 2 },
-  { id: '2', thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300', fullUrl: '', date: { year: 2024, month: 7, day: 20 } },
-  { id: '3', thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300', fullUrl: '', date: { year: 2024, month: 8, day: 2 } },
+  { id: '2', thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300', fullUrl: '', date: { year: 2024, month: 7, day: 20 }, recuerdoCount: 0 },
+  { id: '3', thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300', fullUrl: '', date: { year: 2024, month: 8, day: 2 }, recuerdoCount: 0 },
 ];
 
 const recuerdos: Recuerdo[] = [

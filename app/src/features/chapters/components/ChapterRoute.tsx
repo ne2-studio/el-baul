@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import { PhotosView, Photo } from '@/features/chapters/components/PhotosView';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { PhotosView } from '@/features/chapters/components/PhotosView';
+import { Chapter, Photo } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
@@ -105,6 +105,9 @@ export const ChapterRoute: React.FC = () => {
     name: 'Fotos sueltas',
     photoCount: currentPhotos.length,
     coverPhotoUrl: currentPhotos[0]?.thumbnailUrl,
+    lastUpdated: '',
+    recuerdoCount: 0,
+    undatedPhotoCount: currentPhotos.length,
   };
   const currentChapter = chapter ?? looseChapter;
   const basePath = chapterId ? `/baules/${baul.id}/capitulos/${chapterId}` : `/baules/${baul.id}/fotos-sueltas`;

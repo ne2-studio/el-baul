@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
-import { Photo } from '@/features/chapters/components/PhotosView';
-import { Chapter } from '@/features/baules/components/ChaptersView';
+import { Chapter, Photo } from '@/types';
 
 const meta = {
   title: 'Features/Photos/BatchPhotoActionsBar',
@@ -17,17 +16,19 @@ const photos: Photo[] = [
     id: 'p1',
     thumbnailUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300',
     fullUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=1200',
+    recuerdoCount: 0,
   },
   {
     id: 'p2',
     thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300',
     fullUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=1200',
+    recuerdoCount: 0,
   },
 ];
 
 const moveableChapters: Chapter[] = [
-  { id: 'c1', name: 'Verano 2023', photoCount: 42 },
-  { id: 'c2', name: 'Navidad', photoCount: 30 },
+  { id: 'c1', name: 'Verano 2023', photoCount: 42, lastUpdated: 'hace 1 día', recuerdoCount: 0, undatedPhotoCount: 0 },
+  { id: 'c2', name: 'Navidad', photoCount: 30, lastUpdated: 'hace 2 días', recuerdoCount: 0, undatedPhotoCount: 0 },
 ];
 
 // Simulates one settle-per-photo, like the real batch-move request, so the progress

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, BookImage, FolderInput, Calendar, Flag, Trash2, Tag } from 'lucide-react';
-import { Photo } from '@/features/chapters/components/PhotosView';
+import { Chapter, Photo, PhotoDate, Persona, Recuerdo, TaggedPersona } from '@/types';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { MoveModal } from '@/features/photos/components/MoveModal';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
@@ -9,12 +9,9 @@ import { RemovalRequestModal } from '@/features/photos/components/RemovalRequest
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
-import { Chapter } from '@/features/baules/components/ChaptersView';
 import { formatPartialDate } from '@/app/utils/timeUtils';
 import { RecuerdoInput } from '@/features/memories/components/RecuerdoInput';
 import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
-import { Recuerdo } from '@/features/memories/components/RecuerdoCard';
-import { PhotoDate, Persona, TaggedPersona } from '@/types';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 

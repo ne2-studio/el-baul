@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { BaulesList, Baul } from '@/features/baules/components/BaulesList';
+import { BaulesList } from '@/features/baules/components/BaulesList';
+import { Baul } from '@/types';
 
 const meta = {
   title: 'Screens/Baules/List',

@@ -5,10 +5,8 @@ import { MoveModal } from '@/features/photos/components/MoveModal';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
 import { BatchOperationProgress, BatchOperationItem } from '@/design-system/components/feedback/BatchOperationProgress';
-import { Chapter } from '@/features/baules/components/ChaptersView';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
-import { Photo } from '@/features/chapters/components/PhotosView';
-import { PhotoDate, Persona } from '@/types';
+import { Chapter, Photo, PhotoDate, Persona } from '@/types';
 
 interface BatchPhotoActionsBarProps {
   active: boolean;
