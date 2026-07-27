@@ -122,6 +122,6 @@ handle and extracting a token): navigate → act → `page.screenshot({ path, fu
 true })` → actually **read the screenshot** (don't infer success from absence of a
 thrown error). `page.on('pageerror', ...)` and `page.on('response', r => r.status() >=
 400 && ...)` catch client exceptions and failed requests respectively — wire both up
-before driving anything non-trivial. Filter out `:8081/` (imgproxy) 4xx noise
-separately — this local stack's seeded photos frequently reference storage keys with
-no matching MinIO object, which is a pre-existing data-seeding gap, not a code bug.
+before driving anything non-trivial. Treat unexpected HTTP failures from any service,
+including imgproxy, as a real verification failure unless the scenario is explicitly
+testing an error path.
