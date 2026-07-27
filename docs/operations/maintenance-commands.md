@@ -2,11 +2,12 @@
 
 ## Overview
 
-The published `el-baul-api` image doubles as a one-off command runner: passing a recognized
-command name as the first argument makes `ElBaul.Api.dll` run that command and exit instead of
-starting the web server. This is safe to run against an **already-running** deployment (Coolify,
+The published `el-baul-api` image includes `ElBaul.Maintenance.dll`, a standalone executable
+published alongside the web app: passing a recognized command name as its first argument runs
+that command and exits. This is safe to run against an **already-running** deployment (Coolify,
 docker-compose, etc.) via `docker exec` — it's a separate process inside the same container, so
-it can't crash or interrupt the running server. See
+it can't crash or interrupt the running server. `ElBaul.Api` doesn't reference `ElBaul.Maintenance`
+at all; the two are independent entry points that happen to ship in the same image. See
 [`../architecture/backend.md`](../architecture/backend.md#maintenance-commands) for how the
 dispatch mechanism (`MaintenanceCommandRunner`) fits into the project structure.
 
@@ -33,15 +34,15 @@ run that first, always.
 
 ```bash
 # Local dev (docker-compose service name is "api"):
-docker compose exec api dotnet ElBaul.Api.dll <command> --dry-run
-docker compose exec api dotnet ElBaul.Api.dll <command>
+docker compose exec api dotnet ElBaul.Maintenance.dll <command> --dry-run
+docker compose exec api dotnet ElBaul.Maintenance.dll <command>
 
 # Coolify / any docker deployment: find the running API container, then:
-docker exec <api-container> dotnet ElBaul.Api.dll <command> --dry-run
-docker exec <api-container> dotnet ElBaul.Api.dll <command>
+docker exec <api-container> dotnet ElBaul.Maintenance.dll <command> --dry-run
+docker exec <api-container> dotnet ElBaul.Maintenance.dll <command>
 
-# Running the API outside Docker (dotnet run/dotnet ElBaul.Api.dll directly):
-dotnet ElBaul.Api.dll <command> --dry-run
+# Running outside Docker (from api/ElBaul.Maintenance's publish/build output):
+dotnet ElBaul.Maintenance.dll <command> --dry-run
 ```
 
 `<command>` is the name each command registers via `[MaintenanceCommand("...")]` — see

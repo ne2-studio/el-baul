@@ -47,15 +47,15 @@ startup against real Postgres — `dotnet test ElBaul.Tests` alone would have sh
 See [`docker-image-tests/README.md`](../../api/docker-image-tests/README.md) for what
 each test group covers.
 
-For anything in `ElBaul.Api/Tools/` (one-off maintenance commands like
+For anything in `ElBaul.Maintenance/Commands/` (one-off maintenance commands like
 `backfill-*`): these are **untested by convention** — `BackfillExifDatesCommand` has
 zero unit tests, and new ones follow the same pattern. Real verification is running it
 against the live container (see the `run` skill to bring the stack up):
 
 ```bash
-docker compose exec api dotnet ElBaul.Api.dll <command> --dry-run   # reports, changes nothing
-docker compose exec api dotnet ElBaul.Api.dll <command>             # applies it
-docker compose exec api dotnet ElBaul.Api.dll <command> --dry-run   # re-run: should report 0 candidates
+docker compose exec api dotnet ElBaul.Maintenance.dll <command> --dry-run   # reports, changes nothing
+docker compose exec api dotnet ElBaul.Maintenance.dll <command>             # applies it
+docker compose exec api dotnet ElBaul.Maintenance.dll <command> --dry-run   # re-run: should report 0 candidates
 ```
 
 That third run matters — it's what proves the command is idempotent/safe to re-run in

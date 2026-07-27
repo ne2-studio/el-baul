@@ -15,6 +15,11 @@ COPY . .
 RUN dotnet build "ElBaul.Api/ElBaul.Api.csproj" -c Release -o /app/build
 RUN dotnet publish "ElBaul.Api/ElBaul.Api.csproj" -c Release -o /app/publish
 
+# ElBaul.Maintenance is a separate executable (see docs/operations/maintenance-commands.md) —
+# published into the same output directory so it ships in the same image/container as the web
+# app, runnable via `docker exec <container> dotnet ElBaul.Maintenance.dll <command>`.
+RUN dotnet publish "ElBaul.Maintenance/ElBaul.Maintenance.csproj" -c Release -o /app/publish
+
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 WORKDIR /app

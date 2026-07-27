@@ -1,24 +1,12 @@
 using ElBaul.Api;
 using ElBaul.Api.Common;
 using ElBaul.Infra;
-using ElBaul.Maintenance;
 using ElBaul.Ports.Input;
 using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-
-// One-off maintenance commands take over the whole process instead of starting the web
-// server — run via `docker exec <container> dotnet ElBaul.Api.dll <command>` against an
-// already-running deployment (see docs/operations/maintenance-commands.md), never by the web
-// process itself. Commands
-// themselves live in ElBaul.Maintenance (see MaintenanceCommandRunner.cs) so ElBaul.Api
-// doesn't carry one-off business logic — this is just the dispatch point.
-if (await MaintenanceCommandRunner.TryRunAsync(args) is { } maintenanceExitCode)
-{
-    return maintenanceExitCode;
-}
 
 // Bootstrap logger: catches startup failures before configuration is available.
 Log.Logger = new LoggerConfiguration()

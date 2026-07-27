@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ElBaul\ElBaul.csproj" />
     <ProjectReference Include="..\ElBaul.Infra\ElBaul.Infra.csproj" />
-    <ProjectReference Include="..\ElBaul.Maintenance\ElBaul.Maintenance.csproj" />
     <ProjectReference Include="..\ElBaul.Api.Common\ElBaul.Api.Common.csproj" />
   </ItemGroup>
 

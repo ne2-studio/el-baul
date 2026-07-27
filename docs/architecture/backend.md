@@ -32,9 +32,8 @@ ElBaul.Maintenance ───┘                                           │
 - **`ElBaul.Api` / `ElBaul.Api.Lite`** — thin `Program.cs` per image: register that image's own
   infrastructure, call the shared host bootstrap, then handle whatever's genuinely
   infra-specific (migrations/Hangfire dashboard for the real image; nothing extra for Lite).
-  `ElBaul.Api` additionally references `ElBaul.Maintenance` to dispatch maintenance commands
-  (see below); `ElBaul.Api.Lite` doesn't — an ephemeral in-memory backend has nothing for them
-  to act on.
+  Neither references `ElBaul.Maintenance` (see below) — it's a separate executable, not
+  something either web app dispatches into.
 - **`ElBaul.Api.Common`** — everything about the HTTP host that doesn't depend on which
   infrastructure is behind it: controllers, request DTOs, `ErrorMapping`, JWT auth setup, CORS,
   rate limiting, the manager DI registrations, the middleware pipeline. Controllers depend only
@@ -46,8 +45,12 @@ ElBaul.Maintenance ───┘                                           │
 - **`ElBaul.Infra.Common`** — the output-port implementations that don't depend on
   Postgres/S3/Hangfire and so are identical in both images (clock, id generator, current-user
   provider, user-sync middleware, OIDC userinfo client). Referenced by both Infra projects.
-- **`ElBaul.Maintenance`** — one-off maintenance CLI commands, references `ElBaul.Infra` and
-  `ElBaul`, never `ElBaul.Api`. See [`../operations/maintenance-commands.md`](../operations/maintenance-commands.md).
+- **`ElBaul.Maintenance`** — one-off maintenance CLI commands, with its own `Program.cs`
+  (`OutputType=Exe`). References `ElBaul.Infra` and `ElBaul`, never `ElBaul.Api`. Published
+  alongside `ElBaul.Api` into the same `el-baul-api` image/container so it can be invoked via
+  `docker exec ... dotnet ElBaul.Maintenance.dll <command>`, but the two are independent
+  executables — there's no compile-time or runtime dependency between them. See
+  [`../operations/maintenance-commands.md`](../operations/maintenance-commands.md).
 
 `docker-image-tests/` is a deliberately separate solution testing the *built image* — see
 [`architecture/testing.md`](testing.md).
@@ -115,11 +118,12 @@ semantics.
 
 ## Maintenance commands
 
-`ElBaul.Api`'s `Program.cs` intercepts `args[0]` before starting the web server, dispatching
-recognized commands to `ElBaul.Maintenance`. A command is a class holding only business logic,
-registered by name so it can be run standalone against an already-running deployment via
-`docker exec`. See [`../operations/maintenance-commands.md`](../operations/maintenance-commands.md)
-for how to add a command and how to run one, locally and in production.
+`ElBaul.Maintenance` is its own executable, with its own `Program.cs`, entirely separate from
+`ElBaul.Api`'s. A command is a class holding only business logic, registered by name
+(`MaintenanceCommandRunner` discovers it via reflection) so it can be run standalone against an
+already-running deployment via `docker exec ... dotnet ElBaul.Maintenance.dll <command>`. See
+[`../operations/maintenance-commands.md`](../operations/maintenance-commands.md) for how to add
+a command and how to run one, locally and in production.
 
 ## Other conventions
 

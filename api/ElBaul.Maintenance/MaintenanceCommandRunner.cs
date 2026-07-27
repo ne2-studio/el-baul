@@ -10,39 +10,34 @@ using Serilog;
 namespace ElBaul.Maintenance;
 
 /// <summary>
-/// Entry point for the maintenance-command micro-framework. `Program.cs` calls
-/// <see cref="TryRunAsync"/> with the process args before starting the web server; if
-/// <c>args[0]</c> names a command registered via <see cref="MaintenanceCommandAttribute"/>,
-/// this bootstraps a minimal host, runs it, and returns its exit code — otherwise it returns
-/// null so the caller falls through to normal web startup. This is the only place that
-/// touches hosting/DI/config/logging for maintenance work; command classes hold nothing but
-/// business logic (see <see cref="IMaintenanceCommand"/>).
+/// Entry point for the maintenance-command micro-framework. ElBaul.Maintenance's own
+/// `Program.cs` calls <see cref="RunAsync"/> with the process args — this project builds to a
+/// standalone executable (`dotnet ElBaul.Maintenance.dll <command>`), published alongside
+/// `el-baul-api` in the same image/container but never referenced by `ElBaul.Api` itself. This
+/// is the only place that touches hosting/DI/config/logging for maintenance work; command
+/// classes hold nothing but business logic (see <see cref="IMaintenanceCommand"/>).
 ///
 /// Config and DI are bootstrapped the exact same way the web app itself is
 /// (`WebApplication.CreateBuilder` + `AddInfrastructure`), so appsettings.json /
 /// appsettings.&lt;ASPNETCORE_ENVIRONMENT&gt;.json / environment variables all resolve
 /// identically whether ASPNETCORE_ENVIRONMENT is Development or Production — including which
-/// Serilog sinks are active (Seq is only configured in appsettings.Production.json). Logging
-/// is deliberately reconfigured from scratch here rather than reused from anywhere else,
-/// since a maintenance command run never goes through Program.cs's own Serilog setup (that
-/// code path returns before reaching it).
+/// Serilog sinks are active (Seq is only configured in appsettings.Production.json).
 /// </summary>
 public static class MaintenanceCommandRunner
 {
     private static readonly Lazy<IReadOnlyList<(string Name, Type Type)>> Commands = new(DiscoverCommands);
 
-    public static async Task<int?> TryRunAsync(string[] args)
+    public static async Task<int> RunAsync(string[] args)
     {
-        if (args.Length == 0)
-        {
-            return null;
-        }
-
-        var commandName = args[0];
-        var commandType = Commands.Value.FirstOrDefault(c => c.Name == commandName).Type;
+        var commandName = args.Length == 0 ? null : args[0];
+        var commandType = commandName is null ? null : Commands.Value.FirstOrDefault(c => c.Name == commandName).Type;
         if (commandType is null)
         {
-            return null;
+            Console.Error.WriteLine(commandName is null
+                ? "Usage: dotnet ElBaul.Maintenance.dll <command> [--dry-run]"
+                : $"Unknown maintenance command '{commandName}'.");
+            Console.Error.WriteLine($"Available commands: {string.Join(", ", Commands.Value.Select(c => c.Name))}");
+            return 1;
         }
 
         var dryRun = args.Contains("--dry-run");

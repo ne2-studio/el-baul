@@ -198,8 +198,8 @@ Then: `curl -s "http://localhost:5050/api/..." -H "Authorization: Bearer $TOKEN"
 Documented per-command in `docs/operations/maintenance-commands.md`. General shape:
 
 ```bash
-docker compose exec api dotnet ElBaul.Api.dll <command-name> --dry-run
-docker compose exec api dotnet ElBaul.Api.dll <command-name>
+docker compose exec api dotnet ElBaul.Maintenance.dll <command-name> --dry-run
+docker compose exec api dotnet ElBaul.Maintenance.dll <command-name>
 ```
 
 ## Tear down
