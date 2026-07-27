@@ -15,7 +15,7 @@ Use the helper script from the repository root:
 ./scripts/run-env <mode>
 ```
 
-If the script fails, do not work around it by starting services manually. Fix the
+If the script fails, do not work around it by starting services manually.
 Use the helper's diagnostics and cleanup command. Fix repository-owned defects
 when they are part of the task; otherwise report the failure. Do not stop or
 modify unrelated user processes.
