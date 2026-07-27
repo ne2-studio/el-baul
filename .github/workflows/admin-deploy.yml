@@ -15,10 +15,6 @@ permissions:
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-admin
 
-defaults:
-  run:
-    working-directory: admin
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -34,10 +30,11 @@ jobs:
           cache-dependency-path: admin/package-lock.json
 
       - name: Install dependencies
+        working-directory: admin
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:coverage
+      - name: Run admin unit verification
+        run: VERIFY_COVERAGE=1 ./scripts/verify admin-unit
 
       - name: Publish coverage summary
         if: always()
@@ -45,7 +42,7 @@ jobs:
           {
             echo '### Admin unit test coverage'
             echo '```'
-            cat coverage/summary.txt
+            cat admin/coverage/summary.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -66,7 +63,7 @@ jobs:
       # GitHub Actions repo/environment vars. docker-compose.yaml's `admin` service configures
       # the same thing the same way for local dev.
       - name: Build image
-        run: docker build -t $IMAGE_NAME:latest .
+        run: docker build -t $IMAGE_NAME:latest admin
 
       - name: Push image
         run: docker push $IMAGE_NAME:latest

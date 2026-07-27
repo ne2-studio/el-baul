@@ -62,12 +62,10 @@ Three groups, in `Smoke/`, `InfrastructureCompatibility/`, and `CriticalJourneys
 
 ## Running locally
 
-Build the image, then point these tests at it:
+From the repository root:
 
 ```bash
-# from api/
-docker build -t el-baul-api:local .
-BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
+./scripts/verify backend-acceptance
 ```
 
 Requires a running Docker daemon reachable from the test process (Testcontainers talks to it
@@ -75,7 +73,7 @@ directly — no extra configuration needed on a normal local Docker Desktop/Engi
 
 ## Running in CI
 
-`.github/workflows/backend-deploy.yml` runs this straight after `docker build` and before
+`.github/workflows/backend-deploy.yml` runs `./scripts/verify backend-acceptance` before
 `docker push` — the image these tests exercise is the exact one about to be pushed and
-deployed, still sitting in the runner's local Docker daemon, never pulled from a registry.
+deployed, freshly built in the runner's local Docker daemon, never pulled from a registry.
 A failure here blocks the push (and therefore the Coolify deploy trigger after it).

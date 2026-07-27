@@ -65,6 +65,22 @@ npm run dev
 
 See [`app/README.md`](app/README.md) for environment configuration and tests.
 
+## Verification
+
+All canonical verification commands run from the repository root:
+
+```bash
+./scripts/verify backend-unit
+./scripts/verify backend-acceptance
+./scripts/verify frontend-unit
+./scripts/verify admin-unit
+./scripts/verify frontend-acceptance
+./scripts/verify e2e
+./scripts/verify all
+```
+
+See [`docs/architecture/testing.md`](docs/architecture/testing.md) for what each level covers.
+
 ## Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — entry point to the architecture docs, routes to the rest

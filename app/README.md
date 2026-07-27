@@ -60,17 +60,11 @@ if you need an emulator/device run rather than just a build artifact.
 ## Verify
 
 ```bash
-npm test            # Vitest — unit tests (store logic, utils)
-npm run test:e2e    # Playwright — el-baul-api-lite, behavioral regression coverage
+../scripts/verify frontend-unit        # TypeScript + Vitest
+../scripts/verify frontend-acceptance  # Playwright — el-baul-api-lite behavioral coverage
 ```
 
-`npm run test:e2e` needs both images built first:
-
-```bash
-docker build -t el-baul-app:local .
-docker build -f ../api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local ../api
-APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local npm run test:e2e
-```
+`frontend-acceptance` builds both Docker images with fresh verification tags before running.
 
 See [`docs/architecture/testing.md`](../docs/architecture/testing.md) for what each test level
 covers and when to reach for the root-level [`/e2e-tests`](../e2e-tests) suite instead.

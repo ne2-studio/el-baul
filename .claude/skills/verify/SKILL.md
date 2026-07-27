@@ -11,9 +11,7 @@ Use the checks below according to the surface area of the change.
 ## Backend changes
 
 ```bash
-cd api
-dotnet test   # ElBaul.slnx: unit/API/infra/maintenance tests
-dotnet build  # whole solution, compile-only sanity
+./scripts/verify backend-unit
 ```
 
 That's real coverage for `Application/` logic (managers), not a rubber stamp — the
@@ -28,12 +26,10 @@ real container (raw SQL, migrations, the built image's env-var contract).
 value converters), or the public API contract is not verified until `docker-image-tests`
 has also passed against the actual built image** — this is a separate solution
 (`docker-image-tests/ElBaul.ImageTests.slnx`, not part of `ElBaul.slnx`), so
-`dotnet test` above does **not** run it:
+`backend-unit` does **not** run it:
 
 ```bash
-cd api
-docker build -t el-baul-api:local .
-BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
+./scripts/verify backend-acceptance
 ```
 
 This spins up real Postgres + MinIO + fake-oidc via Testcontainers and drives the image
@@ -42,8 +38,12 @@ create-baúl → chapter → upload-photo → download-same-bytes → recuerdo j
 It's what actually caught, for example, an EF Core limitation where an optional/nullable
 complex property compiled fine and passed every fake-backed unit test but threw at
 startup against real Postgres — `dotnet test ElBaul.Tests` alone would have shipped it.
-See [`docker-image-tests/README.md`](../../api/docker-image-tests/README.md) for what
+See [`docker-image-tests/README.md`](../../../api/docker-image-tests/README.md) for what
 each test group covers.
+
+`backend-acceptance` builds the backend image locally with a fresh verification tag before
+running the image tests, removes any existing local image with that tag first, and removes the
+verification image afterward unless `KEEP_VERIFY_IMAGES=1` is set.
 
 For anything in `ElBaul.Maintenance/Commands/` (one-off maintenance commands like
 `backfill-*`): add or update unit coverage in `ElBaul.Maintenance.Tests`, and then
@@ -63,28 +63,29 @@ production, which is the whole point of these commands.
 ## Frontend changes
 
 ```bash
-cd app && npm run typecheck   # tsc --noEmit — fast, catches type errors, run always
-cd app && npm test            # Vitest — unit/component/store coverage
-cd app && npm run test:e2e    # behavioral coverage — photos, personas, removal requests
-cd e2e-tests && npm run test:e2e  # login + reach the real home screen, against the full real stack
+./scripts/verify frontend-unit
+./scripts/verify admin-unit
+./scripts/verify frontend-acceptance
+./scripts/verify e2e
 ```
 
-Two different packages, each with its own `test:e2e` script — don't confuse them.
+`frontend-unit` covers the consumer app TypeScript check and Vitest unit/component/store
+tests. `admin-unit` covers the backoffice TypeScript check and Vitest tests.
 
-**Run `app`'s `test:e2e` before considering done any change touching photo
+**Run `frontend-acceptance` before considering done any change touching photo
 upload/move/delete, persona invite/role-change/revoke, or removal-request
 submit/approve/reject** — that's exactly the coverage those four specs give
-(`app/e2e/`, see the `run` skill's section 4b for the two images it needs
-built first). It's real regression protection for a broken store action or route wiring, not
-a rubber stamp, and markedly faster than `e2e-tests`' `test:e2e` since there's no real
-Postgres/MinIO/imgproxy to boot. It does **not** cover anything outside those four flows.
+(`app/e2e/`). It builds fresh consumer-app and `el-baul-api-lite` images, runs Playwright
+against `docker-compose.lite.yml`, and cleans up the compose stack and verification images.
+It's real regression protection for a broken store action or route wiring, not a rubber stamp,
+and markedly faster than `e2e` since there's no real Postgres/MinIO/imgproxy to boot. It does
+**not** cover anything outside those four flows.
 
-`e2e-tests`' `test:e2e` (`e2e-tests/smoke.spec.ts`, see the `run` skill's section 4a, a
-repo-root package separate from `app/` since it exercises the whole stack) boots the full
-docker-compose stack itself and confirms the login → home path still works against **real**
-infra — the one check here that actually exercises Postgres/MinIO/imgproxy wiring, not just
-application code. Run it for anything touching that wiring specifically (it's also covered
-automatically by the nightly CI job regardless).
+`e2e` (`e2e-tests/smoke.spec.ts`, a repo-root package separate from `app/` since it exercises
+the whole stack) boots the full docker-compose stack itself and confirms the login → home path
+still works against **real** infra — the one check here that actually exercises
+Postgres/MinIO/imgproxy wiring, not just application code. Run it for anything touching that
+wiring specifically (it's also covered automatically by the nightly CI job regardless).
 
 For anything UI-facing beyond what these two suites cover, invoke the `run` skill, use
 the exact URL it returns, and actually drive to the changed screen. Do not start an

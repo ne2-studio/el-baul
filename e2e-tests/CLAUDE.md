@@ -7,3 +7,7 @@ Do not duplicate behavioural coverage that belongs in `app/e2e/` — see
 `../docs/architecture/testing.md` for the boundary between the two suites.
 
 Do not import implementation code or DTOs from `api/`, `app/`, or `admin/`.
+
+## Before finishing a task
+
+Run `./scripts/verify e2e` from the repo root and fix all issues found.

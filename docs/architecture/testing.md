@@ -14,6 +14,20 @@ Choose the smallest test that can detect the failure.
 | Frontend journey: photo/persona/removal-request flows | `app/e2e/` (against `el-baul-api-lite`) |
 | Whole-stack wiring (login → home against real infra) | root `/e2e-tests/` |
 
+## Canonical Commands
+
+Run verification from the repository root through `./scripts/verify`:
+
+| Command | Coverage |
+|---|---|
+| `./scripts/verify backend-unit` | Restore, Release build, and Release `--no-build` tests for `api/ElBaul.slnx` |
+| `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/docker-image-tests` |
+| `./scripts/verify frontend-unit` | Consumer app TypeScript check + Vitest |
+| `./scripts/verify admin-unit` | Admin TypeScript check + Vitest |
+| `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/e2e` |
+| `./scripts/verify e2e` | Root `e2e-tests` smoke against the real `docker-compose.yaml` stack |
+| `./scripts/verify all` | Complete local verification: every command above |
+
 ## Backend
 
 - **`ElBaul.Tests`** — `Application/` business logic with hand-written fakes as the default.
@@ -45,11 +59,7 @@ Choose the smallest test that can detect the failure.
   that fails to build against a real Postgres, or a wire-format regression a DTO recompiled
   against itself can't reveal.
 
-  ```bash
-  cd api
-  docker build -t el-baul-api:local .
-  BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
-  ```
+  Run with `./scripts/verify backend-acceptance`.
 
   See `api/docker-image-tests/README.md` for its own rule set.
 
@@ -58,12 +68,13 @@ Choose the smallest test that can detect the failure.
 Three levels — see [`../adr/0001-frontend-testing-strategy.md`](../adr/0001-frontend-testing-strategy.md)
 for the full rationale.
 
-- **Unit** (Vitest, `environment: 'node'`, the config default, `npm test`) — narrow, in-process,
+- **Unit** (Vitest, `environment: 'node'`, the config default, run by
+  `./scripts/verify frontend-unit`) — narrow, in-process,
   no DOM: store logic, utils.
 - **Component** (Vitest + jsdom + React Testing Library, opted in per-file via a
   `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM. Query
   priority: role/label/placeholder/text before `data-testid`.
-- **`app/e2e/`** (`npm run test:e2e`) — behavioral-regression Playwright against the built
+- **`app/e2e/`** (`./scripts/verify frontend-acceptance`) — behavioral-regression Playwright against the built
   frontend image + `el-baul-api-lite` (see [`../operations/api-lite.md`](../operations/api-lite.md)),
   no real Postgres/MinIO/imgproxy to boot. Covers photo upload/move/delete, persona
   invite/role-change/revoke, and removal-request submit/approve/reject. Gates
@@ -73,7 +84,7 @@ for the full rationale.
 
 ## Whole-system
 
-- **`/e2e-tests/`** (repo root, own `package.json`, `npm run test:e2e`) — full-stack Playwright
+- **`/e2e-tests/`** (`./scripts/verify e2e`) — full-stack Playwright
   against the real `docker-compose.yaml` stack (Postgres, MinIO, imgproxy, fake-oidc). Lives
   outside `app/` because it exercises the whole repo, not just the frontend. Runs nightly,
   decoupled from any deploy — exercise only critical wiring here, not behavioral coverage that

@@ -62,7 +62,7 @@ faked, pairing it with fake-oidc, and the state-reset caveat.
 ## Verify
 
 ```bash
-dotnet test
+../scripts/verify backend-unit
 ```
 
 Runs everything in `ElBaul.slnx`, including `ElBaul.Maintenance.Tests` for the one-off
@@ -73,8 +73,7 @@ Changes to the domain model, persistence, or the public API contract also requir
 tests (a separate solution, not part of `ElBaul.slnx`):
 
 ```bash
-docker build -t el-baul-api:local .
-BACKEND_IMAGE=el-baul-api:local dotnet test docker-image-tests/ElBaul.ImageTests.slnx
+../scripts/verify backend-acceptance
 ```
 
 See [`docker-image-tests/README.md`](docker-image-tests/README.md) for what it covers and the

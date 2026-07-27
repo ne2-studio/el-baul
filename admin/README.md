@@ -22,7 +22,7 @@ npm run build
 ## Verify
 
 ```bash
-npm test
+../scripts/verify admin-unit
 ```
 
 ## Structure

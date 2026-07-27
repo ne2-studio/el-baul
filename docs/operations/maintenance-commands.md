@@ -38,8 +38,7 @@ Maintenance command unit tests live in `api/ElBaul.Maintenance.Tests/` and are i
 `api/ElBaul.slnx`, so the normal backend verification command runs them:
 
 ```bash
-cd api
-dotnet test
+./scripts/verify backend-unit
 ```
 
 For changes that touch real persistence, storage, external providers, or deploy-order behavior,

@@ -24,10 +24,6 @@ permissions:
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-app
 
-defaults:
-  run:
-    working-directory: app
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -43,10 +39,11 @@ jobs:
           cache-dependency-path: app/package-lock.json
 
       - name: Install dependencies
+        working-directory: app
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:coverage
+      - name: Run frontend unit verification
+        run: VERIFY_COVERAGE=1 ./scripts/verify frontend-unit
 
       - name: Publish coverage summary
         if: always()
@@ -54,7 +51,7 @@ jobs:
           {
             echo '### Frontend unit test coverage'
             echo '```'
-            cat coverage/summary.txt
+            cat app/coverage/summary.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -69,23 +66,6 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # No --build-arg VITE_* here on purpose: this image reads its VITE_* config at container
-      # start instead (see app/src/runtimeConfig.ts + app/docker-entrypoint.d/), configured as
-      # Coolify's runtime Environment Variables on the frontend service — not build args, not
-      # GitHub Actions repo/environment vars. docker-compose.yaml's `app` service configures
-      # the same thing the same way for local dev.
-      - name: Build image
-        run: docker build -t $IMAGE_NAME:latest .
-
-      # Everything below, up to Push image, verifies the image just built above — same
-      # artifact, redirected at a throwaway backend via the runtime env-config mechanism
-      # (see app/src/runtimeConfig.ts), never rebuilt. Mirrors backend-deploy.yml's own
-      # build → docker-image-tests → push ordering: a failure here blocks the push/deploy.
-
-      - name: Build backend lite image
-        working-directory: api
-        run: docker build -f ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:ci .
-
       - name: Cache Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
@@ -95,17 +75,22 @@ jobs:
 
       - name: Install Playwright browsers (+ OS deps)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: app
         run: npx playwright install --with-deps chromium
 
       - name: Install Playwright OS deps only (browsers already cached)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: app
         run: npx playwright install-deps chromium
 
-      - name: Run frontend image acceptance tests (against el-baul-api-lite)
+      - name: Run frontend acceptance verification
+        # The script builds both images first. No VITE_* build args are passed for app: the
+        # image reads runtime config at container start, matching production deployment.
         env:
           APP_IMAGE: ${{ env.IMAGE_NAME }}:latest
           API_LITE_IMAGE: el-baul-api-lite:ci
-        run: npm run test:e2e
+          KEEP_VERIFY_IMAGES: "1"
+        run: ./scripts/verify frontend-acceptance
 
       - name: Upload Playwright report
         if: always()
@@ -124,12 +109,14 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
 
       - name: Extract dist from the built image
+        working-directory: app
         run: |
           docker create --name extract $IMAGE_NAME:latest
           docker cp extract:/usr/share/nginx/html ./dist
           docker rm extract
 
       - name: Upload sourcemaps to Sentry
+        working-directory: app
         run: npm run sentry:upload-sourcemaps
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

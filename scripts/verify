@@ -1,0 +1,216 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUN_ID="$(date -u +%Y%m%d%H%M%S)-$$"
+
+created_images=()
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/verify <command>
+
+Commands:
+  backend-unit          Build and test the .NET backend solution in Release.
+  backend-acceptance    Build the real backend image and run docker-image-tests.
+  frontend-unit         Run app type checks and unit/component tests.
+  admin-unit            Run admin type checks and unit/component tests.
+  frontend-acceptance   Build app + api-lite images and run app Playwright E2E.
+  e2e                   Run whole-stack smoke tests against docker-compose.yaml.
+  all                   Run every verification above.
+
+Environment:
+  BACKEND_IMAGE          Tag for backend-acceptance. Defaults to el-baul-api:verify-<run>.
+  APP_IMAGE              Tag for frontend-acceptance app image. Defaults to el-baul-app:verify-<run>.
+  API_LITE_IMAGE         Tag for frontend-acceptance lite API image. Defaults to el-baul-api-lite:verify-<run>.
+  KEEP_VERIFY_IMAGES=1   Keep images built by this script.
+  VERIFY_COVERAGE=1      Run coverage variants for fast unit checks.
+  VERIFY_NPM_CI=1        Force npm ci before Node checks.
+EOF
+}
+
+log() {
+  printf '\n==> %s\n' "$*"
+}
+
+die() {
+  printf 'verify: %s\n' "$*" >&2
+  exit 1
+}
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+port_in_use() {
+  local port="$1"
+
+  if docker ps --format '{{.Names}} {{.Ports}}' | grep -Eq "(^|[ ,])([0-9.]+:|\\[::\\]:)?$port->"; then
+    return 0
+  fi
+
+  if command -v ss >/dev/null 2>&1 && ss -ltn | awk '{print $4}' | grep -Eq "(:|\\])$port$"; then
+    return 0
+  fi
+
+  return 1
+}
+
+require_ports_available() {
+  local port
+  for port in "$@"; do
+    if port_in_use "$port"; then
+      die "port $port is already in use; stop the conflicting service before running this verification"
+    fi
+  done
+}
+
+run() {
+  log "$*"
+  "$@"
+}
+
+run_in() {
+  local dir="$1"
+  shift
+  log "($dir) $*"
+  (cd "$ROOT_DIR/$dir" && "$@")
+}
+
+ensure_root() {
+  [[ -f "$ROOT_DIR/docker-compose.yaml" ]] || die "cannot locate repo root"
+  [[ -f "$ROOT_DIR/api/ElBaul.slnx" ]] || die "cannot locate backend solution"
+  [[ -f "$ROOT_DIR/app/package.json" ]] || die "cannot locate app package"
+}
+
+ensure_npm_deps() {
+  local dir="$1"
+  local node_modules="$ROOT_DIR/$dir/node_modules"
+  local hidden_lock="$node_modules/.package-lock.json"
+
+  if [[ "${VERIFY_NPM_CI:-}" == "1" || ! -d "$node_modules" || ! -f "$hidden_lock" || "$ROOT_DIR/$dir/package-lock.json" -nt "$hidden_lock" ]]; then
+    run_in "$dir" npm ci
+  fi
+}
+
+docker_build_fresh() {
+  local tag="$1"
+  shift
+
+  need docker
+  log "Removing any existing local tag $tag"
+  docker image rm -f "$tag" >/dev/null 2>&1 || true
+
+  run docker build -t "$tag" "$@"
+  created_images+=("$tag")
+}
+
+cleanup() {
+  local status=$?
+  set +e
+
+  if [[ "${KEEP_VERIFY_IMAGES:-}" != "1" && ${#created_images[@]} -gt 0 ]]; then
+    for image in "${created_images[@]}"; do
+      log "Removing verification image $image"
+      docker image rm -f "$image" >/dev/null 2>&1 || true
+    done
+  fi
+
+  exit "$status"
+}
+trap cleanup EXIT
+
+backend_unit() {
+  need dotnet
+  run dotnet restore "$ROOT_DIR/api/ElBaul.slnx"
+  run dotnet build "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-restore
+
+  if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
+    run dotnet test "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory "$ROOT_DIR/api/coverage"
+  else
+    run dotnet test "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-build
+  fi
+}
+
+backend_acceptance() {
+  need dotnet
+  need docker
+  local image="${BACKEND_IMAGE:-el-baul-api:verify-$RUN_ID}"
+
+  docker_build_fresh "$image" "$ROOT_DIR/api"
+  run env BACKEND_IMAGE="$image" dotnet test "$ROOT_DIR/api/docker-image-tests/ElBaul.ImageTests.slnx"
+}
+
+frontend_unit_package() {
+  local dir="$1"
+  local typecheck_script="$2"
+
+  ensure_npm_deps "$dir"
+  run_in "$dir" npm run "$typecheck_script"
+
+  if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
+    run_in "$dir" npm run test:coverage
+  else
+    run_in "$dir" npm test
+  fi
+}
+
+frontend_unit() {
+  need npm
+  frontend_unit_package app typecheck
+}
+
+admin_unit() {
+  need npm
+  frontend_unit_package admin lint
+}
+
+frontend_acceptance() {
+  need npm
+  need docker
+  local app_image="${APP_IMAGE:-el-baul-app:verify-$RUN_ID}"
+  local api_lite_image="${API_LITE_IMAGE:-el-baul-api-lite:verify-$RUN_ID}"
+
+  ensure_npm_deps app
+  run docker compose -f "$ROOT_DIR/docker-compose.lite.yml" down -v --remove-orphans
+  require_ports_available 3000 5000 5051
+
+  docker_build_fresh "$app_image" "$ROOT_DIR/app"
+  docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" "$ROOT_DIR/api"
+
+  run_in app npx playwright install chromium
+  run_in app env APP_IMAGE="$app_image" API_LITE_IMAGE="$api_lite_image" npm run test:e2e
+}
+
+e2e() {
+  need npm
+  need docker
+
+  ensure_npm_deps e2e-tests
+  run_in e2e-tests npx playwright install chromium
+  run_in e2e-tests npm run typecheck
+  run_in e2e-tests npm run test:e2e
+}
+
+all() {
+  backend_unit
+  backend_acceptance
+  frontend_unit
+  admin_unit
+  frontend_acceptance
+  e2e
+}
+
+ensure_root
+
+case "${1:-}" in
+  backend-unit) backend_unit ;;
+  backend-acceptance) backend_acceptance ;;
+  frontend-unit) frontend_unit ;;
+  admin-unit) admin_unit ;;
+  frontend-acceptance) frontend_acceptance ;;
+  e2e) e2e ;;
+  all) all ;;
+  -h|--help|help|"") usage ;;
+  *) usage >&2; die "unknown command: $1" ;;
+esac
