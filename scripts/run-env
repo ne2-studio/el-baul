@@ -1,0 +1,328 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+STATE_DIR="$ROOT_DIR/.run"
+LOG_DIR="$STATE_DIR/logs"
+VITE_PID="$STATE_DIR/frontend-vite.pid"
+BACKEND_PID="$STATE_DIR/backend-dev.pid"
+VITE_LOG="$LOG_DIR/frontend-vite.log"
+BACKEND_LOG="$LOG_DIR/backend-dev.log"
+API_LITE_IMAGE="${API_LITE_IMAGE:-el-baul-api-lite:run-dev}"
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/run-env <command>
+
+Commands:
+  frontend-dev   fake-oidc + api-lite in Docker, app from Vite on port 5173.
+  backend-dev    dependencies in Docker, backend from local dotnet on port 5050.
+  full-stack     compose-built API, app, admin, and dependencies in Docker.
+  logs [mode]    show logs for frontend-dev, backend-dev, or full-stack.
+  cleanup        stop local dev processes and compose stacks started by this helper.
+EOF
+}
+
+die() {
+  printf 'run-env: %s\n' "$*" >&2
+  exit 1
+}
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+ensure_dirs() {
+  mkdir -p "$LOG_DIR"
+}
+
+port_in_use() {
+  local port="$1"
+
+  if docker ps --format '{{.Names}} {{.Ports}}' | grep -Eq "(^|[ ,])([0-9.]+:|\\[::\\]:)?$port->"; then
+    return 0
+  fi
+
+  if command -v ss >/dev/null 2>&1 && ss -ltn | awk '{print $4}' | grep -Eq "(:|\\])$port$"; then
+    return 0
+  fi
+
+  return 1
+}
+
+docker_port_owned_by() {
+  local port="$1"
+  shift
+  local name
+
+  for name in "$@"; do
+    if docker ps --format '{{.Names}} {{.Ports}}' |
+      grep -F "$name" |
+      grep -Eq "(^|[ ,])([0-9.]+:|\\[::\\]:)?$port->"; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+require_port_free() {
+  local port="$1"
+  local purpose="$2"
+
+  if port_in_use "$port"; then
+    die "$purpose port $port is already in use; run './scripts/run-env cleanup' or stop the conflicting process"
+  fi
+}
+
+require_port_free_unless_owned() {
+  local port="$1"
+  local purpose="$2"
+  shift 2
+
+  if port_in_use "$port" && ! docker_port_owned_by "$port" "$@"; then
+    die "$purpose port $port is already in use by an unexpected process; run './scripts/run-env cleanup' or stop it"
+  fi
+}
+
+pid_alive() {
+  local pid_file="$1"
+  [[ -f "$pid_file" ]] || return 1
+  local pid
+  pid="$(cat "$pid_file")"
+  [[ -n "$pid" ]] && kill -0 "$pid" >/dev/null 2>&1
+}
+
+stop_pid() {
+  local pid_file="$1"
+  [[ -f "$pid_file" ]] || return 0
+
+  local pid
+  pid="$(cat "$pid_file")"
+  if [[ -n "$pid" ]] && kill -0 "$pid" >/dev/null 2>&1; then
+    kill "$pid" >/dev/null 2>&1 || true
+    for _ in {1..20}; do
+      kill -0 "$pid" >/dev/null 2>&1 || break
+      sleep 0.2
+    done
+    kill -9 "$pid" >/dev/null 2>&1 || true
+  fi
+  rm -f "$pid_file"
+}
+
+wait_http() {
+  local url="$1"
+  local timeout_seconds="$2"
+  local label="$3"
+  local deadline=$((SECONDS + timeout_seconds))
+
+  until curl -fs --max-time 2 "$url" >/dev/null 2>&1; do
+    if (( SECONDS >= deadline )); then
+      die "$label did not become ready at $url within ${timeout_seconds}s"
+    fi
+    sleep 1
+  done
+}
+
+ensure_npm_deps() {
+  local dir="$1"
+  local node_modules="$ROOT_DIR/$dir/node_modules"
+  local hidden_lock="$node_modules/.package-lock.json"
+
+  if [[ ! -d "$node_modules" || ! -f "$hidden_lock" || "$ROOT_DIR/$dir/package-lock.json" -nt "$hidden_lock" ]]; then
+    (cd "$ROOT_DIR/$dir" && npm ci)
+  fi
+}
+
+print_frontend_dev() {
+  cat <<EOF
+Mode: frontend-dev
+Frontend: http://localhost:5173
+Backend: http://localhost:5051
+Frontend source: Vite app/ source with hot reload
+Backend source: Docker image $API_LITE_IMAGE
+Docker components: fake-oidc, api-lite
+Development components: app Vite dev server
+Health: ready
+Test user: fake-oidc admin -> admin-user (Admin User); user -> normal-user (Normal User)
+Logs: ./scripts/run-env logs frontend-dev
+Cleanup: ./scripts/run-env cleanup
+EOF
+}
+
+print_backend_dev() {
+  cat <<'EOF'
+Mode: backend-dev
+Frontend: none
+Backend: http://localhost:5050
+Frontend source: none
+Backend source: local api/ElBaul.Api via dotnet run
+Docker components: postgres, minio, imgproxy, fake-oidc, mailpit
+Development components: backend
+Health: ready
+Test user: fake-oidc admin -> admin-user (Admin User); user -> normal-user (Normal User)
+Logs: ./scripts/run-env logs backend-dev
+Cleanup: ./scripts/run-env cleanup
+EOF
+}
+
+print_full_stack() {
+  cat <<'EOF'
+Mode: full-stack
+Frontend: http://localhost:3000
+Backend: http://localhost:5050
+Admin: http://localhost:3001
+Frontend source: Docker image built from app/
+Backend source: Docker image built from api/
+Docker components: postgres, minio, imgproxy, fake-oidc, mailpit, api, app, admin
+Development components: none
+Health: ready
+Test user: fake-oidc admin -> admin-user (Admin User); user -> normal-user (Normal User)
+Logs: ./scripts/run-env logs full-stack
+Cleanup: ./scripts/run-env cleanup
+EOF
+}
+
+frontend_dev() {
+  need docker
+  need npm
+  need curl
+  ensure_dirs
+
+  require_port_free 3000 "Docker frontend"
+  require_port_free_unless_owned 5000 "fake-oidc" el-baul-lite-fake-oidc-1
+  require_port_free_unless_owned 5051 "api-lite" el-baul-lite-api-lite-1
+
+  if ! pid_alive "$VITE_PID"; then
+    require_port_free 5173 "Vite frontend"
+  fi
+
+  docker build -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" -t "$API_LITE_IMAGE" "$ROOT_DIR/api"
+  API_LITE_IMAGE="$API_LITE_IMAGE" docker compose -f "$ROOT_DIR/docker-compose.lite.yml" up -d fake-oidc api-lite
+
+  wait_http "http://localhost:5000/.well-known/jwks.json" 120 "fake-oidc"
+  wait_http "http://localhost:5051/health" 120 "api-lite"
+
+  ensure_npm_deps app
+  if ! pid_alive "$VITE_PID"; then
+    (
+      cd "$ROOT_DIR/app"
+      nohup env \
+        VITE_API_URL="http://localhost:5051" \
+        VITE_OIDC_AUTHORITY="http://localhost:5000" \
+        VITE_OIDC_CLIENT_ID="el-baul-app" \
+        VITE_OIDC_CALLBACK_URI="http://localhost:5173/callback" \
+        npm run dev >"$VITE_LOG" 2>&1 &
+      echo $! >"$VITE_PID"
+    )
+  fi
+
+  wait_http "http://localhost:5173" 60 "Vite frontend"
+  print_frontend_dev
+}
+
+backend_dev() {
+  need docker
+  need dotnet
+  need curl
+  ensure_dirs
+
+  require_port_free 3000 "Docker frontend"
+  require_port_free 3001 "Docker admin"
+  require_port_free_unless_owned 5000 "fake-oidc" el-baul-fake-oidc-1
+  require_port_free_unless_owned 5432 "postgres" el-baul-postgres-1
+  require_port_free_unless_owned 9000 "minio" el-baul-minio-1
+  require_port_free_unless_owned 9001 "minio console" el-baul-minio-1
+  require_port_free_unless_owned 8081 "imgproxy" el-baul-imgproxy-1
+  require_port_free_unless_owned 8025 "mailpit UI" el-baul-mailpit-1
+  require_port_free_unless_owned 1025 "mailpit SMTP" el-baul-mailpit-1
+
+  if ! pid_alive "$BACKEND_PID"; then
+    require_port_free 5050 "backend"
+  fi
+
+  docker compose -f "$ROOT_DIR/docker-compose.yaml" up --build -d postgres minio imgproxy fake-oidc mailpit
+  wait_http "http://localhost:5000/.well-known/jwks.json" 120 "fake-oidc"
+
+  if ! pid_alive "$BACKEND_PID"; then
+    (
+      cd "$ROOT_DIR/api"
+      nohup env ASPNETCORE_ENVIRONMENT=Development \
+        dotnet run --project ElBaul.Api/ElBaul.Api.csproj >"$BACKEND_LOG" 2>&1 &
+      echo $! >"$BACKEND_PID"
+    )
+  fi
+
+  wait_http "http://localhost:5050/health" 120 "backend"
+  print_backend_dev
+}
+
+full_stack() {
+  need docker
+  need curl
+  ensure_dirs
+
+  if port_in_use 5173 && ! pid_alive "$VITE_PID"; then
+    die "Vite frontend port 5173 is already in use; full-stack must not leave a second frontend running"
+  fi
+  if pid_alive "$VITE_PID"; then
+    die "Vite frontend from run-env is running; use './scripts/run-env cleanup' before full-stack"
+  fi
+
+  require_port_free_unless_owned 3000 "Docker frontend" el-baul-app-1
+  require_port_free_unless_owned 3001 "Docker admin" el-baul-admin-1
+  require_port_free_unless_owned 5050 "backend" el-baul-api-1
+  require_port_free_unless_owned 5000 "fake-oidc" el-baul-fake-oidc-1
+  require_port_free_unless_owned 5432 "postgres" el-baul-postgres-1
+  require_port_free_unless_owned 9000 "minio" el-baul-minio-1
+  require_port_free_unless_owned 9001 "minio console" el-baul-minio-1
+  require_port_free_unless_owned 8081 "imgproxy" el-baul-imgproxy-1
+  require_port_free_unless_owned 8025 "mailpit UI" el-baul-mailpit-1
+  require_port_free_unless_owned 1025 "mailpit SMTP" el-baul-mailpit-1
+
+  docker compose -f "$ROOT_DIR/docker-compose.yaml" up --build -d postgres minio imgproxy fake-oidc mailpit api app admin
+  wait_http "http://localhost:5000/.well-known/jwks.json" 120 "fake-oidc"
+  wait_http "http://localhost:5050/health" 120 "backend"
+  wait_http "http://localhost:3000" 120 "frontend"
+  wait_http "http://localhost:3001" 120 "admin"
+  print_full_stack
+}
+
+logs() {
+  local mode="${1:-}"
+  case "$mode" in
+    frontend-dev)
+      [[ -f "$VITE_LOG" ]] && tail -80 "$VITE_LOG" || true
+      docker compose -f "$ROOT_DIR/docker-compose.lite.yml" logs --tail=80 fake-oidc api-lite
+      ;;
+    backend-dev)
+      [[ -f "$BACKEND_LOG" ]] && tail -120 "$BACKEND_LOG" || true
+      docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=80 postgres minio imgproxy fake-oidc mailpit
+      ;;
+    full-stack)
+      docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=120 postgres minio imgproxy fake-oidc mailpit api app admin
+      ;;
+    *)
+      die "usage: ./scripts/run-env logs <frontend-dev|backend-dev|full-stack>"
+      ;;
+  esac
+}
+
+cleanup() {
+  ensure_dirs
+  stop_pid "$VITE_PID"
+  stop_pid "$BACKEND_PID"
+  docker compose -f "$ROOT_DIR/docker-compose.lite.yml" down --remove-orphans >/dev/null 2>&1 || true
+  docker compose -f "$ROOT_DIR/docker-compose.yaml" down --remove-orphans >/dev/null 2>&1 || true
+  echo "Cleanup: stopped run-env processes and compose stacks; named volumes were kept."
+}
+
+case "${1:-}" in
+  frontend-dev) frontend_dev ;;
+  backend-dev) backend_dev ;;
+  full-stack) full_stack ;;
+  logs) shift; logs "${1:-}" ;;
+  cleanup) cleanup ;;
+  -h|--help|help|"") usage ;;
+  *) usage >&2; die "unknown command: $1" ;;
+esac
