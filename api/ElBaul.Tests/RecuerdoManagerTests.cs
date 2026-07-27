@@ -9,6 +9,7 @@ namespace ElBaul.Tests;
 public class RecuerdoManagerTests
 {
     private const string CustodioId = "custodio-1";
+    private const string OtherUserId = "user-2";
 
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemoryChapterRepository _chapterRepository = new();
@@ -18,7 +19,7 @@ public class RecuerdoManagerTests
     private readonly StaticClock _clock = new();
 
     private RecuerdoManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<RecuerdoManager>.Instance, _photoRepository, _recuerdoRepository,
+        new(NullLogger<RecuerdoManager>.Instance, _chapterRepository, _photoRepository, _recuerdoRepository,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
             _photoStorage, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
@@ -31,6 +32,18 @@ public class RecuerdoManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, chapterId);
     }
+
+    // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
+    // tests that seed the Baul directly via the repository need to add it themselves.
+    private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
+    {
+        var baul = new Baul(new BaulId(baulId), name, null, custodioId, 0, _clock.UtcNow(), _clock.UtcNow());
+        await _baulRepository.CreateAsync(baul);
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), custodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
+        return baul;
+    }
+
+    // --- Photo-scoped ------------------------------------------------------------------
 
     [Fact]
     public async Task CreateRecuerdoAsync_ShouldStampIsOwn_ForTheAuthor()
@@ -141,5 +154,196 @@ public class RecuerdoManagerTests
         var list = result.Value.ToList();
         Assert.True(list.Single(r => r.Text == "mine").IsOwn);
         Assert.False(list.Single(r => r.Text == "not mine").IsOwn);
+    }
+
+    // --- Chapter-scoped ----------------------------------------------------------------
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldCreateRecuerdoWithNoPhoto()
+    {
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(chapterId), "Que buen viaje");
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.PhotoId);
+        Assert.True(result.Value.IsOwn);
+        Assert.Equal("Que buen viaje", result.Value.Text);
+
+        var stored = (await _recuerdoRepository.GetByChapterIdAsync(new ChapterId(chapterId))).Single();
+        Assert.Null(stored.PhotoId);
+        Assert.Equal(new ChapterId(chapterId), stored.ChapterId);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldAllow_ForColaboradorRole()
+    {
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(chapterId), "Recuerdo de un colaborador");
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldIncludeAuthorsAvatarUrl_WhenPersonaHasOne_ForChapter()
+    {
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow(),
+            AvatarPhotoKey: "avatar-key"));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(chapterId), "Recuerdo de un colaborador");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldFail_WhenChapterDoesNotExist()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(Guid.NewGuid()), "texto");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Chapter not found", result.Error);
+    }
+
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldReturnFeedNewestFirst_WithPhotoThumbnailWhenPresent()
+    {
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
+
+        var older = _clock.UtcNow().AddDays(-1);
+        var newer = _clock.UtcNow();
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "sin foto, más antiguo", older));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "con foto, más reciente", newer));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetRecuerdosAsync(new ChapterId(chapterId));
+
+        Assert.True(result.IsSuccess);
+        var list = result.Value.ToList();
+        Assert.Equal(["con foto, más reciente", "sin foto, más antiguo"], list.Select(r => r.Text));
+
+        var withPhoto = list.Single(r => r.Text == "con foto, más reciente");
+        Assert.Equal(photoId.ToString(), withPhoto.PhotoId);
+        Assert.Contains("photo-key", withPhoto.PhotoThumbnailUrl);
+
+        var withoutPhoto = list.Single(r => r.Text == "sin foto, más antiguo");
+        Assert.Null(withoutPhoto.PhotoId);
+        Assert.Null(withoutPhoto.PhotoThumbnailUrl);
+    }
+
+    // --- Baul-scoped -------------------------------------------------------------------
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldCreateStandaloneRecuerdo_WithNoPhotoOrChapter()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(new BaulId(baulId), "Un recuerdo suelto");
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.PhotoId);
+        Assert.Null(result.Value.ChapterId);
+        Assert.True(result.Value.IsOwn);
+
+        var stored = (await _recuerdoRepository.GetByBaulIdAsync(new BaulId(baulId))).Single();
+        Assert.Equal(baulId, stored.BaulId);
+        Assert.Null(stored.PhotoId);
+        Assert.Null(stored.ChapterId);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldSucceed_ForPersonaWithAccess()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.CreateRecuerdoAsync(new BaulId(baulId), "Recuerdo de un miembro");
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task CreateRecuerdoAsync_ShouldFail_WhenBaulNotFound()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRecuerdoAsync(new BaulId(Guid.NewGuid()), "texto");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Baul not found", result.Error);
+    }
+
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldReturnMixedFeed_NewestFirst_WithProvenance()
+    {
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Vacaciones", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
+
+        var oldest = _clock.UtcNow().AddDays(-2);
+        var middle = _clock.UtcNow().AddDays(-1);
+        var newest = _clock.UtcNow();
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "suelto", oldest));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "de capítulo", middle));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "de foto", newest));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetRecuerdosAsync(new BaulId(baulId));
+
+        Assert.True(result.IsSuccess);
+        var list = result.Value.ToList();
+        Assert.Equal(["de foto", "de capítulo", "suelto"], list.Select(r => r.Text));
+
+        var photoRecuerdo = list.Single(r => r.Text == "de foto");
+        Assert.Equal(photoId.ToString(), photoRecuerdo.PhotoId);
+        Assert.NotNull(photoRecuerdo.PhotoThumbnailUrl);
+
+        var chapterRecuerdo = list.Single(r => r.Text == "de capítulo");
+        Assert.Null(chapterRecuerdo.PhotoId);
+        Assert.Equal(chapterId.ToString(), chapterRecuerdo.ChapterId);
+        Assert.Equal("Vacaciones", chapterRecuerdo.ChapterName);
+
+        var standaloneRecuerdo = list.Single(r => r.Text == "suelto");
+        Assert.Null(standaloneRecuerdo.PhotoId);
+        Assert.Null(standaloneRecuerdo.ChapterId);
+    }
+
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldFail_WhenBaulNotFound()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetRecuerdosAsync(new BaulId(Guid.NewGuid()));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Baul not found", result.Error);
     }
 }

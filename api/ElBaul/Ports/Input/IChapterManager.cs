@@ -10,7 +10,4 @@ public interface IChapterManager
     Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId);
     Task<Result<ChapterDto>> UpdateAsync(ChapterId chapterId, string name);
     Task<Result> DeleteAsync(ChapterId chapterId);
-
-    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(ChapterId chapterId);
-    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(ChapterId chapterId, string text);
 }

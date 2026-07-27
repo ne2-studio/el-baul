@@ -13,7 +13,7 @@ namespace ElBaul.Api.Controllers;
 [Route("api/baules")]
 public class BaulesController(
     IBaulManager baulManager, IPersonaManager personaManager, IRemovalRequestManager removalRequestManager,
-    IPhotoManager photoManager)
+    IPhotoManager photoManager, IRecuerdoManager recuerdoManager)
     : ControllerBase
 {
     [HttpGet]
@@ -192,7 +192,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid baulId)
     {
-        var result = await baulManager.GetRecuerdosAsync(new BaulId(baulId));
+        var result = await recuerdoManager.GetRecuerdosAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -203,7 +203,7 @@ public class BaulesController(
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await baulManager.CreateRecuerdoAsync(new BaulId(baulId), request.Text);
+        var result = await recuerdoManager.CreateRecuerdoAsync(new BaulId(baulId), request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 }

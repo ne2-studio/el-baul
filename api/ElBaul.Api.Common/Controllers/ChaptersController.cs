@@ -10,7 +10,7 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules/{baulId:guid}/chapters")]
-public class ChaptersController(IChapterManager chapterManager) : ControllerBase
+public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager recuerdoManager) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ChapterDto>), StatusCodes.Status200OK)]
@@ -59,7 +59,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid baulId, Guid chapterId)
     {
-        var result = await chapterManager.GetRecuerdosAsync(new ChapterId(chapterId));
+        var result = await recuerdoManager.GetRecuerdosAsync(new ChapterId(chapterId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -70,7 +70,7 @@ public class ChaptersController(IChapterManager chapterManager) : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await chapterManager.CreateRecuerdoAsync(new ChapterId(chapterId), request.Text);
+        var result = await recuerdoManager.CreateRecuerdoAsync(new ChapterId(chapterId), request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 }

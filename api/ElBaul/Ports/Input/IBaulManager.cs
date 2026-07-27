@@ -10,7 +10,4 @@ public interface IBaulManager
     Task<Result<BaulDto>> GetByIdAsync(BaulId baulId);
     Task<Result<BaulDto>> SetCoverAsync(BaulId baulId, PhotoId photoId);
     Task<Result<BaulDto>> UpdateAsync(BaulId baulId, string name, string? description);
-
-    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(BaulId baulId);
-    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(BaulId baulId, string text);
 }
