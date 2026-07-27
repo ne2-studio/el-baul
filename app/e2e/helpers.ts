@@ -33,3 +33,33 @@ export async function createBaulViaApi(page: Page, accessToken: string, name: st
   const body = await response.json();
   return body.id as string;
 }
+
+export async function getCurrentPersonaViaApi(
+  page: Page,
+  accessToken: string,
+  baulId: string,
+): Promise<{ id: string; nickname: string }> {
+  const response = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(response.ok(), `failed to list personas: ${response.status()}`).toBeTruthy();
+  const personas = await response.json();
+  const persona = personas.find((p: { canEdit?: boolean; role?: string }) => p.canEdit || p.role === 'custodio');
+  expect(persona, 'expected current user persona to exist for the baúl').toBeTruthy();
+  return { id: persona.id as string, nickname: persona.nickname as string };
+}
+
+export async function createBaulRecuerdoViaApi(
+  page: Page,
+  accessToken: string,
+  baulId: string,
+  text: string,
+): Promise<{ id: string; personaId?: string }> {
+  const response = await page.request.post(`${API_BASE_URL}/api/baules/${baulId}/recuerdos`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    data: { text },
+  });
+  expect(response.ok(), `failed to create recuerdo: ${response.status()}`).toBeTruthy();
+  const body = await response.json();
+  return { id: body.id as string, personaId: body.personaId as string | undefined };
+}
