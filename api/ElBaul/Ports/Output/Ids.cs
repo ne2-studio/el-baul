@@ -41,3 +41,12 @@ public readonly record struct RemovalRequestId(Guid Value)
     public static implicit operator Guid(RemovalRequestId id) => id.Value;
     public override string ToString() => Value.ToString();
 }
+
+// A client-generated idempotency token for a photo upload — deliberately its own type rather
+// than reusing PhotoId, since it identifies the upload *attempt*, not the resulting photo (see
+// IPhotoRepository.GetByClientUploadIdAsync, used to detect and no-op a retried upload).
+public readonly record struct ClientUploadId(Guid Value)
+{
+    public static implicit operator Guid(ClientUploadId id) => id.Value;
+    public override string ToString() => Value.ToString();
+}

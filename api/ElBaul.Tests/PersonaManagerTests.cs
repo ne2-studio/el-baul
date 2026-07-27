@@ -50,7 +50,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.CreatePersonaAsync(baulId, "Abuela");
+        var result = await manager.CreatePersonaAsync(new BaulId(baulId), "Abuela");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -63,7 +63,7 @@ public class PersonaManagerTests
         await SeedBaulAsync(baulId, "Familia");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreatePersonaAsync(baulId, "Abuela");
+        var result = await manager.CreatePersonaAsync(new BaulId(baulId), "Abuela");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Abuela", result.Value.Nickname);
@@ -82,7 +82,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), administradorId, "Administrador", BaulRole.Administrador, _clock.UtcNow()));
 
         var manager = CreateManager(administradorId);
-        var result = await manager.CreatePersonaAsync(baulId, "Tío Juan");
+        var result = await manager.CreatePersonaAsync(new BaulId(baulId), "Tío Juan");
 
         Assert.True(result.IsSuccess);
     }
@@ -96,7 +96,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.GetPersonaAsync(baulId, personaId);
+        var result = await manager.GetPersonaAsync(new BaulId(baulId), new PersonaId(personaId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -112,7 +112,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.GetPersonaAsync(baulId, personaId);
+        var result = await manager.GetPersonaAsync(new BaulId(baulId), new PersonaId(personaId));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Abuela", result.Value.Nickname);
@@ -129,7 +129,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu", null);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", null);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -144,7 +144,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Otro Nombre", "Otro", null);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Otro Nombre", "Otro", null);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Otro Nombre", result.Value.Name);
@@ -161,7 +161,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu", null);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", null);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Abuela María", result.Value.Name);
@@ -176,7 +176,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdatePersonaAsync(baulId, personaId, "Abuela María", "Abu", "Nació en Asturias en 1945.");
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", "Nació en Asturias en 1945.");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
@@ -194,7 +194,7 @@ public class PersonaManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UpdatePersonaAvatarAsync(baulId, personaId, content, "avatar.jpg", "image/jpeg");
+        var result = await manager.UpdatePersonaAvatarAsync(new BaulId(baulId), new PersonaId(personaId), content, "avatar.jpg", "image/jpeg");
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.AvatarUrl);
@@ -213,7 +213,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
+        var result = await manager.AcceptPersonalInviteAsync(new PersonaId(personaId));
 
         Assert.True(result.IsSuccess);
         var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
@@ -229,7 +229,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), OtherUserId, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
+        var result = await manager.AcceptPersonalInviteAsync(new PersonaId(personaId));
 
         Assert.True(result.IsSuccess);
     }
@@ -243,7 +243,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), OtherUserId, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager("someone-else");
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
+        var result = await manager.AcceptPersonalInviteAsync(new PersonaId(personaId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("This invitation has already been used", result.Error);
@@ -253,7 +253,7 @@ public class PersonaManagerTests
     public async Task AcceptPersonalInviteAsync_ShouldFail_WhenInvitationDoesNotExist()
     {
         var manager = CreateManager(OtherUserId);
-        var result = await manager.AcceptPersonalInviteAsync(Guid.NewGuid());
+        var result = await manager.AcceptPersonalInviteAsync(new PersonaId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Invitation not found", result.Error);
@@ -270,7 +270,7 @@ public class PersonaManagerTests
         // CustodioId already has a Persona row in this baul — accepting a second
         // invitation for the same baul must not attempt a conflicting (BaulId, UserId) update.
         var manager = CreateManager(CustodioId);
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
+        var result = await manager.AcceptPersonalInviteAsync(new PersonaId(personaId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("You already have access to this baúl with a different account link", result.Error);
@@ -290,7 +290,7 @@ public class PersonaManagerTests
         await _photoPersonaTagRepository.SetTagsAsync(new PhotoId(photoId), new BaulId(baulId), [new PersonaId(personaId)], _clock.UtcNow());
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.RemovePersonaAsync(baulId, personaId);
+        var result = await manager.RemovePersonaAsync(new BaulId(baulId), new PersonaId(personaId));
 
         Assert.True(result.IsSuccess);
         Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));

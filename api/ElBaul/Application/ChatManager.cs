@@ -30,23 +30,22 @@ public class ChatManager(
     private string BuildSystemInstruction() =>
         SystemInstruction + $"\n\nHoy es {clock.UtcNow():yyyy-MM-dd}.";
 
-    public async Task<Result<IEnumerable<ChatMessageDto>>> GetMessagesAsync(Guid baulId)
+    public async Task<Result<IEnumerable<ChatMessageDto>>> GetMessagesAsync(BaulId baulId)
     {
         if (!appConfiguration.ChatEnabled) return Result.Failure<IEnumerable<ChatMessageDto>>("Chat is not enabled");
 
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
+        var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure<IEnumerable<ChatMessageDto>>("Baul not found");
 
         var access = await baulAccess.GetAsync(baul, userId);
         if (!access.IsMember) return Result.Failure<IEnumerable<ChatMessageDto>>("Access denied");
 
-        var messages = await chatMessageRepository.GetByBaulAndUserAsync(id, userId);
+        var messages = await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId);
         return Result.Success(messages.Select(ToDto));
     }
 
-    public async Task<Result<ChatMessageDto>> SendMessageAsync(Guid baulId, string text)
+    public async Task<Result<ChatMessageDto>> SendMessageAsync(BaulId baulId, string text)
     {
         if (!appConfiguration.ChatEnabled)
         {
@@ -54,9 +53,8 @@ public class ChatManager(
             return Result.Failure<ChatMessageDto>("Chat is not enabled");
         }
 
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
+        var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null)
         {
             logger.LogWarning("Chat message rejected: baul not found {BaulId}", baulId);
@@ -71,11 +69,11 @@ public class ChatManager(
         }
 
         var now = clock.UtcNow();
-        var userMessage = new ChatMessage(idGenerator.NewId(), id, userId, ChatMessageRole.User, text, now);
+        var userMessage = new ChatMessage(idGenerator.NewId(), baulId, userId, ChatMessageRole.User, text, now);
         await chatMessageRepository.CreateAsync(userMessage);
 
         var systemPrompt = BuildSystemInstruction() + "\n\n" + await chatContextBuilder.BuildAsync(baul, text);
-        var history = (await chatMessageRepository.GetByBaulAndUserAsync(id, userId))
+        var history = (await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId))
             .Select(m => new ChatTurn(m.Role.ToApiString(), m.Content));
 
         var replyResult = await aiChatBackend.GetReplyAsync(systemPrompt, history);
@@ -86,14 +84,14 @@ public class ChatManager(
         }
 
         var assistantMessage = new ChatMessage(
-            idGenerator.NewId(), id, userId, ChatMessageRole.Assistant, replyResult.Value, clock.UtcNow());
+            idGenerator.NewId(), baulId, userId, ChatMessageRole.Assistant, replyResult.Value, clock.UtcNow());
         await chatMessageRepository.CreateAsync(assistantMessage);
 
         logger.LogInformation("Chat message answered {BaulId} {ChatMessageId}", baulId, assistantMessage.Id);
         return ToDto(assistantMessage);
     }
 
-    public async Task<Result<IEnumerable<string>>> GetSuggestedQuestionsAsync(Guid baulId)
+    public async Task<Result<IEnumerable<string>>> GetSuggestedQuestionsAsync(BaulId baulId)
     {
         if (!appConfiguration.ChatEnabled)
         {
@@ -101,9 +99,8 @@ public class ChatManager(
             return Result.Failure<IEnumerable<string>>("Chat is not enabled");
         }
 
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(id);
+        var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null)
         {
             logger.LogWarning("Suggested questions rejected: baul not found {BaulId}", baulId);

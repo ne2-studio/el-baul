@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using ElBaul.Ports.Output;
 
 namespace ElBaul.Ports.Input;
 
@@ -8,8 +9,8 @@ public interface IWeeklyDigestManager
     Task ScheduleWeeklyDigestsAsync();
 
     /// <summary>Per-user job, invoked by the scheduler above via Hangfire. `since` is the activity window's start.</summary>
-    Task SendWeeklyDigestAsync(string userId, DateTime since);
+    Task SendWeeklyDigestAsync(UserId userId, DateTime since);
 
     /// <summary>Admin-triggered test send, using sourceUserId's current data but mailed to the configured admin test recipient.</summary>
-    Task<Result> SendTestWeeklyDigestAsync(string sourceUserId);
+    Task<Result> SendTestWeeklyDigestAsync(UserId sourceUserId);
 }

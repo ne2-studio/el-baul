@@ -40,7 +40,7 @@ public class RecuerdoManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+        var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.IsOwn);
@@ -57,7 +57,7 @@ public class RecuerdoManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+        var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Tito Recuerdos", result.Value.UserName);
@@ -74,7 +74,7 @@ public class RecuerdoManagerTests
             AvatarPhotoKey: "avatar-key"));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+        var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
@@ -88,7 +88,7 @@ public class RecuerdoManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+        var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.UserAvatar);
@@ -102,7 +102,7 @@ public class RecuerdoManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Que buen recuerdo");
+        var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");
 
         Assert.True(result.IsSuccess);
         var stored = (await _recuerdoRepository.GetByPhotoIdAsync(new PhotoId(photoId))).Single();
@@ -118,7 +118,7 @@ public class RecuerdoManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), null, new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(photoId, "Foto suelta");
+        var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Foto suelta");
 
         Assert.True(result.IsSuccess);
         var stored = (await _recuerdoRepository.GetByPhotoIdAsync(new PhotoId(photoId))).Single();
@@ -135,7 +135,7 @@ public class RecuerdoManagerTests
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "other-user", "not mine", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetRecuerdosAsync(photoId);
+        var result = await manager.GetRecuerdosAsync(new PhotoId(photoId));
 
         Assert.True(result.IsSuccess);
         var list = result.Value.ToList();

@@ -54,7 +54,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetUserDetailAsync_ShouldReturnFailure_WhenUserNotFound()
     {
-        var result = await CreateManager().GetUserDetailAsync("missing");
+        var result = await CreateManager().GetUserDetailAsync(new UserId("missing"));
 
         Assert.True(result.IsFailure);
         Assert.Equal("User not found", result.Error);
@@ -69,7 +69,7 @@ public class AdminManagerTests
         _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(
             user, [new AdminUserBaulRow(new BaulId(baulId), "Familia Pérez", BaulRole.Custodio, new PersonaId(personId))]);
 
-        var result = await CreateManager().GetUserDetailAsync("user-1");
+        var result = await CreateManager().GetUserDetailAsync(new UserId("user-1"));
 
         var membership = Assert.Single(result.Value.Baules);
         Assert.Equal(baulId.ToString(), membership.BaulId);
@@ -107,7 +107,7 @@ public class AdminManagerTests
         await _sentEmailRepository.TryReserveAsync(newer);
         await _sentEmailRepository.TryReserveAsync(otherUser);
 
-        var result = await CreateManager().GetUserSentEmailsAsync("user-1");
+        var result = await CreateManager().GetUserSentEmailsAsync(new UserId("user-1"));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(["WeeklyDigest", "Welcome"], result.Value.Select(e => e.Type));
@@ -116,7 +116,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetBaulDetailAsync_ShouldReturnFailure_WhenBaulNotFound()
     {
-        var result = await CreateManager().GetBaulDetailAsync(Guid.NewGuid());
+        var result = await CreateManager().GetBaulDetailAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
@@ -139,7 +139,7 @@ public class AdminManagerTests
             PhotoCount: 5,
             RecuerdoCount: 8);
 
-        var result = await CreateManager().GetBaulDetailAsync(baulId);
+        var result = await CreateManager().GetBaulDetailAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Personas.Count());
@@ -156,7 +156,7 @@ public class AdminManagerTests
     [Fact]
     public async Task DeleteBaulAsync_ShouldReturnFailure_WhenBaulNotFound()
     {
-        var result = await CreateManager().DeleteBaulAsync(Guid.NewGuid());
+        var result = await CreateManager().DeleteBaulAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
@@ -185,7 +185,7 @@ public class AdminManagerTests
 
         await _photoPersonaTagRepository.SetTagsAsync(photo.Id, baulId, [persona.Id], _clock.UtcNow());
 
-        var result = await CreateManager().DeleteBaulAsync(baulId.Value);
+        var result = await CreateManager().DeleteBaulAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.Null(await _baulRepository.GetByIdAsync(baulId));

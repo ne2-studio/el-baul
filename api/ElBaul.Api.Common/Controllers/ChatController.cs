@@ -1,5 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Output;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,7 @@ public class ChatController(IChatManager chatManager) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ChatMessageDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMessages(Guid baulId)
     {
-        var result = await chatManager.GetMessagesAsync(baulId);
+        var result = await chatManager.GetMessagesAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -28,7 +29,7 @@ public class ChatController(IChatManager chatManager) : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await chatManager.SendMessageAsync(baulId, request.Text);
+        var result = await chatManager.SendMessageAsync(new BaulId(baulId), request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -37,7 +38,7 @@ public class ChatController(IChatManager chatManager) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSuggestedQuestions(Guid baulId)
     {
-        var result = await chatManager.GetSuggestedQuestionsAsync(baulId);
+        var result = await chatManager.GetSuggestedQuestionsAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 }

@@ -31,7 +31,7 @@ public class ChapterManagerTests
         await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateAsync(baulId, "Vacaciones");
+        var result = await manager.CreateAsync(new BaulId(baulId), "Vacaciones");
 
         Assert.True(result.IsSuccess);
         var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
@@ -45,7 +45,7 @@ public class ChapterManagerTests
         await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(StrangerId);
-        var result = await manager.CreateAsync(baulId, "Vacaciones");
+        var result = await manager.CreateAsync(new BaulId(baulId), "Vacaciones");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -60,7 +60,7 @@ public class ChapterManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateAsync(baulId, "Vacaciones");
+        var result = await manager.CreateAsync(new BaulId(baulId), "Vacaciones");
 
         Assert.True(result.IsSuccess);
     }
@@ -74,7 +74,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, "cover-key", _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetByBaulIdAsync(baulId);
+        var result = await manager.GetByBaulIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         Assert.Contains("cover-key", result.Value.Single().CoverPhotoUrl);
@@ -91,7 +91,7 @@ public class ChapterManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, photoId);
+        var result = await manager.SetCoverAsync(new ChapterId(chapterId), new PhotoId(photoId));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
@@ -113,7 +113,7 @@ public class ChapterManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, colaboradorId, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.SetCoverAsync(chapterId, photoId);
+        var result = await manager.SetCoverAsync(new ChapterId(chapterId), new PhotoId(photoId));
 
         Assert.True(result.IsSuccess);
     }
@@ -127,7 +127,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, Guid.NewGuid());
+        var result = await manager.SetCoverAsync(new ChapterId(chapterId), new PhotoId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
@@ -146,7 +146,7 @@ public class ChapterManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(otherChapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, photoId);
+        var result = await manager.SetCoverAsync(new ChapterId(chapterId), new PhotoId(photoId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
@@ -161,7 +161,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
+        var result = await manager.UpdateAsync(new ChapterId(chapterId), "Vacaciones 2024");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Vacaciones 2024", result.Value.Name);
@@ -181,7 +181,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.UpdateAsync(chapterId, "Vacaciones 2024");
+        var result = await manager.UpdateAsync(new ChapterId(chapterId), "Vacaciones 2024");
 
         Assert.True(result.IsSuccess);
     }
@@ -190,7 +190,7 @@ public class ChapterManagerTests
     public async Task UpdateAsync_ShouldFail_WhenChapterDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdateAsync(Guid.NewGuid(), "Vacaciones 2024");
+        var result = await manager.UpdateAsync(new ChapterId(Guid.NewGuid()), "Vacaciones 2024");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error);
@@ -213,7 +213,7 @@ public class ChapterManagerTests
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "sin foto", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetByBaulIdAsync(baulId);
+        var result = await manager.GetByBaulIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Single().RecuerdoCount);
@@ -231,7 +231,7 @@ public class ChapterManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "k3", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetByBaulIdAsync(baulId);
+        var result = await manager.GetByBaulIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         var dto = result.Value.Single();
@@ -258,7 +258,7 @@ public class ChapterManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(recentChapterId), new BaulId(baulId), "k2", PhotoDates.Of(2022, null, null), CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetByBaulIdAsync(baulId);
+        var result = await manager.GetByBaulIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         var ids = result.Value.Select(a => a.Id).ToList();
@@ -274,7 +274,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(chapterId, "Que buen viaje");
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(chapterId), "Que buen viaje");
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.PhotoId);
@@ -297,7 +297,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(chapterId, "Recuerdo de un colaborador");
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(chapterId), "Recuerdo de un colaborador");
 
         Assert.True(result.IsSuccess);
     }
@@ -314,7 +314,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(chapterId, "Recuerdo de un colaborador");
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(chapterId), "Recuerdo de un colaborador");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
@@ -324,7 +324,7 @@ public class ChapterManagerTests
     public async Task CreateRecuerdoAsync_ShouldFail_WhenChapterDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(Guid.NewGuid(), "texto");
+        var result = await manager.CreateRecuerdoAsync(new ChapterId(Guid.NewGuid()), "texto");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error);
@@ -346,7 +346,7 @@ public class ChapterManagerTests
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "con foto, más reciente", newer));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetRecuerdosAsync(chapterId);
+        var result = await manager.GetRecuerdosAsync(new ChapterId(chapterId));
 
         Assert.True(result.IsSuccess);
         var list = result.Value.ToList();
@@ -375,7 +375,7 @@ public class ChapterManagerTests
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "sin foto", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.DeleteAsync(chapterId);
+        var result = await manager.DeleteAsync(new ChapterId(chapterId));
 
         Assert.True(result.IsSuccess);
         Assert.Null(await _chapterRepository.GetByIdAsync(new ChapterId(chapterId)));
@@ -403,7 +403,7 @@ public class ChapterManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.DeleteAsync(chapterId);
+        var result = await manager.DeleteAsync(new ChapterId(chapterId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -414,7 +414,7 @@ public class ChapterManagerTests
     public async Task DeleteAsync_ShouldFail_WhenChapterDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
-        var result = await manager.DeleteAsync(Guid.NewGuid());
+        var result = await manager.DeleteAsync(new ChapterId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error);

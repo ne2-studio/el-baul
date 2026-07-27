@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using ElBaul.Ports.Output;
 
 namespace ElBaul.Ports.Input;
 
@@ -7,6 +8,6 @@ namespace ElBaul.Ports.Input;
 // one also resolves chapter name/photo thumbnail per entry.
 public interface IRecuerdoManager
 {
-    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId);
-    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid photoId, string text);
+    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(PhotoId photoId);
+    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(PhotoId photoId, string text);
 }

@@ -51,7 +51,7 @@ public class WeeklyDigestManager(
         }
     }
 
-    public async Task SendWeeklyDigestAsync(string userId, DateTime since)
+    public async Task SendWeeklyDigestAsync(UserId userId, DateTime since)
     {
         if (!appConfiguration.WeeklyDigestEmailsEnabled)
         {
@@ -106,7 +106,7 @@ public class WeeklyDigestManager(
         }
     }
 
-    public async Task<Result> SendTestWeeklyDigestAsync(string sourceUserId)
+    public async Task<Result> SendTestWeeklyDigestAsync(UserId sourceUserId)
     {
         var user = await userRepository.GetByIdAsync(sourceUserId);
         if (user is null) return Result.Failure("User not found");

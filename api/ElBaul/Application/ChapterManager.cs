@@ -19,15 +19,14 @@ public class ChapterManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess) : IChapterManager
 {
-    public async Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(Guid baulId)
+    public async Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(BaulId baulId)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Chapters by baul", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapters by baul", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<ChapterDto>>(auth.Error);
 
-        var chapters = await chapterRepository.GetByBaulIdAsync(id);
+        var chapters = await chapterRepository.GetByBaulIdAsync(baulId);
         var dtos = new List<ChapterDto>();
         foreach (var chapter in chapters)
             dtos.Add(await ToDtoAsync(chapter));
@@ -45,17 +44,16 @@ public class ChapterManager(
         return Result.Success<IEnumerable<ChapterDto>>(sorted);
     }
 
-    public async Task<Result<ChapterDto>> CreateAsync(Guid baulId, string name)
+    public async Task<Result<ChapterDto>> CreateAsync(BaulId baulId, string name)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Chapter creation", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapter creation", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
         var baul = auth.Value.Baul;
         var now = clock.UtcNow();
-        var chapter = new Chapter(new ChapterId(idGenerator.NewId()), id, name, 0, null, now, now);
+        var chapter = new Chapter(new ChapterId(idGenerator.NewId()), baulId, name, 0, null, now, now);
         await chapterRepository.CreateAsync(chapter);
 
         await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });
@@ -64,11 +62,10 @@ public class ChapterManager(
         return ToDto(chapter, null, null, 0, null, null, EmptyDateRange);
     }
 
-    public async Task<Result<ChapterDto>> SetCoverAsync(Guid chapterId, Guid photoId)
+    public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId)
     {
-        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(id);
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
         if (chapter is null)
         {
             logger.LogWarning("Chapter cover update rejected: chapter not found {ChapterId}", chapterId);
@@ -79,8 +76,8 @@ public class ChapterManager(
             chapter.BaulId, userId, AccessLevel.Member, "Chapter cover update", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
-        var photo = await photoRepository.GetByIdAsync(new PhotoId(photoId));
-        if (photo is null || photo.ChapterId != id)
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null || photo.ChapterId != chapterId)
         {
             logger.LogWarning(
                 "Chapter cover update rejected: photo not found {BaulId} {ChapterId} {PhotoId}",
@@ -95,11 +92,10 @@ public class ChapterManager(
         return await ToDtoAsync(updated);
     }
 
-    public async Task<Result<ChapterDto>> UpdateAsync(Guid chapterId, string name)
+    public async Task<Result<ChapterDto>> UpdateAsync(ChapterId chapterId, string name)
     {
-        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(id);
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
         if (chapter is null)
         {
             logger.LogWarning("Chapter update rejected: chapter not found {ChapterId}", chapterId);
@@ -117,11 +113,10 @@ public class ChapterManager(
         return await ToDtoAsync(updated);
     }
 
-    public async Task<Result> DeleteAsync(Guid chapterId)
+    public async Task<Result> DeleteAsync(ChapterId chapterId)
     {
-        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(id);
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
         if (chapter is null)
         {
             logger.LogWarning("Chapter delete rejected: chapter not found {ChapterId}", chapterId);
@@ -133,33 +128,32 @@ public class ChapterManager(
         if (auth.IsFailure) return Result.Failure(auth.Error);
         var baul = auth.Value.Baul;
 
-        var photos = await photoRepository.GetByChapterIdAsync(id);
+        var photos = await photoRepository.GetByChapterIdAsync(chapterId);
         foreach (var photo in photos)
             await photoRepository.UpdateAsync(photo with { ChapterId = null });
 
-        var recuerdos = await recuerdoRepository.GetByChapterIdAsync(id);
+        var recuerdos = await recuerdoRepository.GetByChapterIdAsync(chapterId);
         foreach (var recuerdo in recuerdos)
             await recuerdoRepository.UpdateAsync(recuerdo with { ChapterId = null });
 
-        await chapterRepository.DeleteAsync(id);
+        await chapterRepository.DeleteAsync(chapterId);
         await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount - 1, UpdatedAt = clock.UtcNow() });
 
         logger.LogInformation("Chapter deleted {BaulId} {ChapterId}", chapter.BaulId, chapterId);
         return Result.Success();
     }
 
-    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid chapterId)
+    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(ChapterId chapterId)
     {
-        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(id);
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
         if (chapter is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Chapter not found");
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Chapter recuerdos", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
 
-        var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(id)).ToList();
+        var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(chapterId)).ToList();
 
         var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
         var thumbnailUrls = new Dictionary<PhotoId, string>();
@@ -181,11 +175,10 @@ public class ChapterManager(
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
     }
 
-    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid chapterId, string text)
+    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(ChapterId chapterId, string text)
     {
-        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(id);
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
         if (chapter is null)
         {
             logger.LogWarning("Recuerdo creation rejected: chapter not found {ChapterId}", chapterId);
@@ -197,7 +190,7 @@ public class ChapterManager(
         if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
 
         var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(chapter.BaulId, userId, photoStorage);
-        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), null, id, chapter.BaulId, userId, text, clock.UtcNow());
+        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), null, chapterId, chapter.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation("Recuerdo created {BaulId} {ChapterId} {RecuerdoId}", chapter.BaulId, chapterId, recuerdo.Id);

@@ -4,6 +4,9 @@ using ElBaul.Ports.Output;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
+// The class below has a `UserId` string constant (the fixture's test user), which shadows the
+// ElBaul.Ports.Output.UserId VO type by name — this alias is how the VO gets referenced at all.
+using UserIdVo = ElBaul.Ports.Output.UserId;
 
 namespace ElBaul.Tests;
 
@@ -118,7 +121,7 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var manager = CreateManager();
 
-        await manager.SendWeeklyDigestAsync(UserId, _clock.UtcNow().AddDays(-7));
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-7));
 
         Assert.False(_templateRenderer.LastDigestModel!.HasBaules);
         Assert.False(_templateRenderer.LastDigestModel.HasActivity);
@@ -132,7 +135,7 @@ public class WeeklyDigestManagerTests
         SeedOwnedBaul(UserId);
         var manager = CreateManager();
 
-        await manager.SendWeeklyDigestAsync(UserId, _clock.UtcNow().AddDays(-7));
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-7));
 
         Assert.True(_templateRenderer.LastDigestModel!.HasBaules);
         Assert.False(_templateRenderer.LastDigestModel.HasActivity);
@@ -150,7 +153,7 @@ public class WeeklyDigestManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Verano 1998", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         var manager = CreateManager();
 
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
         Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewChapter && b.Label.Contains("Verano 1998"));
@@ -170,7 +173,7 @@ public class WeeklyDigestManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, UserId, _clock.UtcNow()));
 
         var manager = CreateManager();
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
         Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewPhotosInChapter && b.Count == 3);
@@ -187,7 +190,7 @@ public class WeeklyDigestManagerTests
             with { Status = PhotoStatus.Deleted, DeletedAt = _clock.UtcNow(), DeletionReason = "test" });
 
         var manager = CreateManager();
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         Assert.False(_templateRenderer.LastDigestModel!.HasActivity);
     }
@@ -202,7 +205,7 @@ public class WeeklyDigestManagerTests
         _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), UserId, "Otro más", _clock.UtcNow()));
 
         var manager = CreateManager();
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
         Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewRecuerdos && b.Count == 2);
@@ -224,7 +227,7 @@ public class WeeklyDigestManagerTests
         }
 
         var manager = CreateManager();
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
         Assert.Equal(3, section.Blocks.Count);
@@ -243,7 +246,7 @@ public class WeeklyDigestManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager();
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         Assert.False(_templateRenderer.LastDigestModel!.HasActivity);
     }
@@ -259,7 +262,7 @@ public class WeeklyDigestManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager();
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         Assert.True(_templateRenderer.LastDigestModel!.HasActivity);
     }
@@ -274,7 +277,7 @@ public class WeeklyDigestManagerTests
         SeedSentDigest(UserId, since); // same `since` -> same DeduplicationKey the manager will compute
         var manager = CreateManager();
 
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         Assert.Empty(_emailSender.SentMessages);
     }
@@ -288,7 +291,7 @@ public class WeeklyDigestManagerTests
         SeedOwnedBaul(UserId);
         var manager = CreateManager();
 
-        var result = await manager.SendTestWeeklyDigestAsync(UserId);
+        var result = await manager.SendTestWeeklyDigestAsync(new UserIdVo(UserId));
 
         Assert.True(result.IsSuccess);
         Assert.Empty(await _sentEmailRepository.GetLatestSentAtByTypeAsync(EmailType.WeeklyDigest));
@@ -303,7 +306,7 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var manager = CreateManager();
 
-        await manager.SendTestWeeklyDigestAsync(UserId);
+        await manager.SendTestWeeklyDigestAsync(new UserIdVo(UserId));
 
         var sentEmail = Assert.Single(_sentEmailRepository.All);
         Assert.Equal(AdminUserId, sentEmail.UserId);
@@ -317,7 +320,7 @@ public class WeeklyDigestManagerTests
         SeedSentDigest(UserId, lastSent);
         var manager = CreateManager();
 
-        await manager.SendTestWeeklyDigestAsync(UserId);
+        await manager.SendTestWeeklyDigestAsync(new UserIdVo(UserId));
 
         // No exception and a message was sent — the important behavioral check (exact `since`
         // propagation) is exercised indirectly via BuildModelAsync's baúl activity queries,
@@ -336,7 +339,7 @@ public class WeeklyDigestManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         var manager = CreateManager();
 
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         var model = _templateRenderer.LastDigestModel!;
         var trackedPrefix = $"{_appConfiguration.ApiPublicUrl}/email/click/";
@@ -360,7 +363,7 @@ public class WeeklyDigestManagerTests
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         var manager = CreateManager();
 
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         Assert.Empty(_emailLinkClickRepository.All);
     }
@@ -385,7 +388,7 @@ public class WeeklyDigestManagerTests
         var since = _clock.UtcNow().AddDays(-7);
         var manager = CreateManager(new StaticAppConfiguration(weeklyDigestEmailsEnabled: false));
 
-        await manager.SendWeeklyDigestAsync(UserId, since);
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
 
         Assert.Empty(_emailSender.SentMessages);
     }
@@ -399,7 +402,7 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var manager = CreateManager(new StaticAppConfiguration(weeklyDigestEmailsEnabled: false));
 
-        var result = await manager.SendTestWeeklyDigestAsync(UserId);
+        var result = await manager.SendTestWeeklyDigestAsync(new UserIdVo(UserId));
 
         Assert.True(result.IsSuccess);
         Assert.Single(_emailSender.SentMessages);

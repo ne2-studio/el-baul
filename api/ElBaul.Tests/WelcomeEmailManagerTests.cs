@@ -4,6 +4,9 @@ using ElBaul.Ports.Output;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
+// The class below has a `UserId` string constant (the fixture's test user), which shadows the
+// ElBaul.Ports.Output.UserId VO type by name — this alias is how the VO gets referenced at all.
+using UserIdVo = ElBaul.Ports.Output.UserId;
 
 namespace ElBaul.Tests;
 
@@ -131,7 +134,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.Single(_emailSender.SentMessages);
         var sentEmail = Assert.Single(_sentEmailRepository.All);
@@ -147,7 +150,7 @@ public class WelcomeEmailManagerTests
         await _baulRepository.CreateAsync(baul);
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.NotNull(_templateRenderer.LastModel);
         Assert.True(_templateRenderer.LastModel!.HasBaules);
@@ -166,7 +169,7 @@ public class WelcomeEmailManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.Contains("Familia Jimena", _templateRenderer.LastModel!.BaulNames);
     }
@@ -177,7 +180,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.False(_templateRenderer.LastModel!.HasBaules);
         Assert.Equal("Crear mi primer baúl", _templateRenderer.LastModel.PrimaryCtaLabel);
@@ -195,7 +198,7 @@ public class WelcomeEmailManagerTests
             "welcome-v1", "es-ES", EmailStatus.Sent, $"welcome:{UserId}", _clock.UtcNow()));
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.Empty(_emailSender.SentMessages);
     }
@@ -221,11 +224,11 @@ public class WelcomeEmailManagerTests
         _emailSender.NextResult = Result.Failure<EmailSendResult>("Resend is down");
         var manager = CreateManager();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync(UserId));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync(new UserIdVo(UserId)));
         Assert.Equal(EmailStatus.Failed, Assert.Single(_sentEmailRepository.All).Status);
 
         _emailSender.NextResult = new EmailSendResult("retry-message-id");
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         var sentEmail = Assert.Single(_sentEmailRepository.All); // still one row, not a duplicate
         Assert.Equal(EmailStatus.Sent, sentEmail.Status);
@@ -241,7 +244,7 @@ public class WelcomeEmailManagerTests
     {
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync("missing-user");
+        await manager.SendWelcomeEmailAsync(new UserIdVo("missing-user"));
 
         Assert.Empty(_emailSender.SentMessages);
     }
@@ -254,10 +257,10 @@ public class WelcomeEmailManagerTests
         var manager = CreateManager();
 
         _emailSender.NextResult = Result.Failure<EmailSendResult>("boom");
-        await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync("failing-user"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync(new UserIdVo("failing-user")));
 
         _emailSender.NextResult = new EmailSendResult("ok-message-id");
-        await manager.SendWelcomeEmailAsync("healthy-user");
+        await manager.SendWelcomeEmailAsync(new UserIdVo("healthy-user"));
 
         var healthyEmail = _sentEmailRepository.All.Single(e => e.UserId == "healthy-user");
         Assert.Equal(EmailStatus.Sent, healthyEmail.Status);
@@ -271,7 +274,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow(), email: "not-yet-eligible@example.com"); // registered "now" — would fail real eligibility
         var manager = CreateManager();
 
-        var result = await manager.SendTestWelcomeEmailAsync(UserId);
+        var result = await manager.SendTestWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.True(result.IsSuccess);
         var message = Assert.Single(_emailSender.SentMessages);
@@ -285,7 +288,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager();
 
-        await manager.SendTestWelcomeEmailAsync(UserId);
+        await manager.SendTestWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.DoesNotContain(UserId, await _sentEmailRepository.GetUserIdsWithSentEmailAsync(EmailType.Welcome));
     }
@@ -296,7 +299,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager();
 
-        await manager.SendTestWelcomeEmailAsync(UserId);
+        await manager.SendTestWelcomeEmailAsync(new UserIdVo(UserId));
 
         var sentEmail = Assert.Single(_sentEmailRepository.All);
         Assert.Equal(AdminUserId, sentEmail.UserId);
@@ -308,7 +311,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager(new StaticAppConfiguration(adminTestEmailRecipient: ""));
 
-        var result = await manager.SendTestWelcomeEmailAsync(UserId);
+        var result = await manager.SendTestWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.True(result.IsFailure);
         Assert.Empty(_emailSender.SentMessages);
@@ -333,7 +336,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager(new StaticAppConfiguration(welcomeEmailsEnabled: false));
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.Empty(_emailSender.SentMessages);
     }
@@ -347,7 +350,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager(new StaticAppConfiguration(welcomeEmailsEnabled: false));
 
-        var result = await manager.SendTestWelcomeEmailAsync(UserId);
+        var result = await manager.SendTestWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.True(result.IsSuccess);
         Assert.Single(_emailSender.SentMessages);
@@ -361,7 +364,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.Contains($"{_appConfiguration.ApiPublicUrl}/email/click/", _templateRenderer.LastModel!.PrimaryCtaUrl);
         var token = _templateRenderer.LastModel.PrimaryCtaUrl.Split('/').Last();
@@ -376,7 +379,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         var model = _templateRenderer.LastModel!;
         var trackedPrefix = $"{_appConfiguration.ApiPublicUrl}/email/click/";
@@ -394,7 +397,7 @@ public class WelcomeEmailManagerTests
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         var manager = CreateManager();
 
-        await manager.SendWelcomeEmailAsync(UserId);
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.Empty(_emailLinkClickRepository.All);
     }

@@ -19,55 +19,51 @@ public class PhotoManager(
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository) : IPhotoManager
 {
-    public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(Guid chapterId)
+    public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
     {
-        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(id);
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
         if (chapter is null) return Result.Failure<IEnumerable<PhotoDto>>("Chapter not found");
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Photos by chapter", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var photos = await photoRepository.GetByChapterIdAsync(id);
+        var photos = await photoRepository.GetByChapterIdAsync(chapterId);
         var dtos = await EnrichAndMapAsync(photos);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
-    public async Task<Result<IEnumerable<PhotoDto>>> GetLooseByBaulIdAsync(Guid baulId)
+    public async Task<Result<IEnumerable<PhotoDto>>> GetLooseByBaulIdAsync(BaulId baulId)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Loose photos", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photos", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var photos = await photoRepository.GetLooseByBaulIdAsync(id);
+        var photos = await photoRepository.GetLooseByBaulIdAsync(baulId);
         var dtos = await EnrichAndMapAsync(photos);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
-    public async Task<Result<PhotoPageDto>> GetPageAsync(Guid baulId, Guid? chapterId, int skip, int take)
+    public async Task<Result<PhotoPageDto>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take)
     {
-        var id = new BaulId(baulId);
-        var chapId = chapterId is { } cId ? new ChapterId(cId) : (ChapterId?)null;
         var userId = currentUserProvider.GetUserId();
 
-        if (chapId is { } wantedChapterId)
+        if (chapterId is { } wantedChapterId)
         {
             var chapter = await chapterRepository.GetByIdAsync(wantedChapterId);
-            if (chapter is null || chapter.BaulId != id) return Result.Failure<PhotoPageDto>("Chapter not found");
+            if (chapter is null || chapter.BaulId != baulId) return Result.Failure<PhotoPageDto>("Chapter not found");
         }
 
         var auth = await baulAccess.AuthorizeAsync(
-            id, userId, AccessLevel.Member, "Photo page", new { BaulId = baulId, ChapterId = chapterId });
+            baulId, userId, AccessLevel.Member, "Photo page", new { BaulId = baulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<PhotoPageDto>(auth.Error);
 
         var clampedTake = Math.Clamp(take, 1, 100);
-        var page = (await photoRepository.GetPageAsync(id, chapId, skip, clampedTake + 1)).ToList();
+        var page = (await photoRepository.GetPageAsync(baulId, chapterId, skip, clampedTake + 1)).ToList();
         var hasMore = page.Count > clampedTake;
         var photos = hasMore ? page.Take(clampedTake).ToList() : page;
 
@@ -77,27 +73,15 @@ public class PhotoManager(
     }
 
     public async Task<Result<PhotoDto>> UploadAsync(
-        Guid chapterId,
+        ChapterId chapterId,
         Stream content,
         string fileName,
         string contentType,
-        (int Year, int? Month, int? Day)? date,
-        Guid clientUploadId)
+        PhotoDate? date,
+        ClientUploadId clientUploadId)
     {
-        if (date is { } explicitDate)
-        {
-            var dateValidationError = PhotoDate.Validate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
-            if (dateValidationError is not null)
-            {
-                logger.LogWarning("Photo upload rejected: invalid date {Year}/{Month}/{Day}",
-                    explicitDate.Year, explicitDate.Month, explicitDate.Day);
-                return Result.Failure<PhotoDto>(dateValidationError);
-            }
-        }
-
-        var id = new ChapterId(chapterId);
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(id);
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
         if (chapter is null)
         {
             logger.LogWarning("Photo upload rejected: chapter not found {ChapterId}", chapterId);
@@ -112,28 +96,16 @@ public class PhotoManager(
     }
 
     public async Task<Result<PhotoDto>> UploadToBaulAsync(
-        Guid baulId,
+        BaulId baulId,
         Stream content,
         string fileName,
         string contentType,
-        (int Year, int? Month, int? Day)? date,
-        Guid clientUploadId)
+        PhotoDate? date,
+        ClientUploadId clientUploadId)
     {
-        if (date is { } explicitDate)
-        {
-            var dateValidationError = PhotoDate.Validate(explicitDate.Year, explicitDate.Month, explicitDate.Day);
-            if (dateValidationError is not null)
-            {
-                logger.LogWarning("Loose photo upload rejected: invalid date {Year}/{Month}/{Day}",
-                    explicitDate.Year, explicitDate.Month, explicitDate.Day);
-                return Result.Failure<PhotoDto>(dateValidationError);
-            }
-        }
-
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Loose photo upload", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photo upload", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
         return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId);
@@ -145,8 +117,8 @@ public class PhotoManager(
         Stream content,
         string fileName,
         string contentType,
-        (int Year, int? Month, int? Day)? date,
-        Guid clientUploadId,
+        PhotoDate? date,
+        ClientUploadId clientUploadId,
         string userId)
     {
         var chapterId = chapter?.Id;
@@ -222,12 +194,10 @@ public class PhotoManager(
         return ToDto(photo, thumbnailUrl, fullUrl);
     }
 
-    public async Task<Result<PhotoDto>> MoveAsync(Guid photoId, Guid targetChapterId)
+    public async Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId)
     {
-        var pId = new PhotoId(photoId);
-        var targetId = new ChapterId(targetChapterId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(pId);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
             logger.LogWarning("Photo move rejected: photo not found {PhotoId}", photoId);
@@ -238,7 +208,7 @@ public class PhotoManager(
             photo.BaulId, userId, AccessLevel.Member, "Photo move", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        var targetChapter = await chapterRepository.GetByIdAsync(targetId);
+        var targetChapter = await chapterRepository.GetByIdAsync(targetChapterId);
         if (targetChapter is null || targetChapter.BaulId != photo.BaulId)
         {
             logger.LogWarning(
@@ -247,7 +217,7 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>("Target chapter not found");
         }
 
-        if (photo.ChapterId == targetId)
+        if (photo.ChapterId == targetChapterId)
         {
             logger.LogWarning(
                 "Photo move rejected: photo already in target chapter {BaulId} {PhotoId} {TargetChapterId}",
@@ -266,7 +236,7 @@ public class PhotoManager(
             }
         }
 
-        var updatedPhoto = photo with { ChapterId = targetId };
+        var updatedPhoto = photo with { ChapterId = targetChapterId };
         await photoRepository.UpdateAsync(updatedPhoto);
 
         await chapterRepository.UpdateAsync(targetChapter.WithPhotoAdded(photo, now));
@@ -280,11 +250,10 @@ public class PhotoManager(
         return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
     }
 
-    public async Task<Result> DeleteAsync(Guid photoId, string? reason)
+    public async Task<Result> DeleteAsync(PhotoId photoId, string? reason)
     {
-        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
             logger.LogWarning("Photo delete rejected: photo not found {PhotoId}", photoId);
@@ -325,14 +294,10 @@ public class PhotoManager(
         return Result.Success();
     }
 
-    public async Task<Result<PhotoDto>> ChangeDateAsync(Guid photoId, int year, int? month, int? day)
+    public async Task<Result<PhotoDto>> ChangeDateAsync(PhotoId photoId, PhotoDate date)
     {
-        if (!PhotoDate.TryCreate(year, month, day, out var newDate, out var validationError))
-            return Result.Failure<PhotoDto>(validationError!);
-
-        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
             logger.LogWarning("Photo date change rejected: photo not found {PhotoId}", photoId);
@@ -343,7 +308,7 @@ public class PhotoManager(
             photo.BaulId, userId, AccessLevel.Member, "Photo date change", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        var updatedPhoto = photo.WithDate(newDate);
+        var updatedPhoto = photo.WithDate(date);
         await photoRepository.UpdateAsync(updatedPhoto);
 
         logger.LogInformation("Photo date changed {BaulId} {PhotoId}", photo.BaulId, photoId);
@@ -353,15 +318,12 @@ public class PhotoManager(
         return ToDto(updatedPhoto, thumbnailUrl, fullUrl);
     }
 
-    public async Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<Guid> photoIds, int year, int? month, int? day)
+    public async Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<PhotoId> photoIds, PhotoDate date)
     {
-        var validationError = PhotoDate.Validate(year, month, day);
-        if (validationError is not null) return Result.Failure<IEnumerable<PhotoDto>>(validationError);
-
         var updated = new List<PhotoDto>();
         foreach (var photoId in photoIds)
         {
-            var result = await ChangeDateAsync(photoId, year, month, day);
+            var result = await ChangeDateAsync(photoId, date);
             if (result.IsSuccess)
             {
                 updated.Add(result.Value);
@@ -375,11 +337,10 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(updated);
     }
 
-    public async Task<Result<PhotoDownloadResult>> DownloadAsync(Guid photoId)
+    public async Task<Result<PhotoDownloadResult>> DownloadAsync(PhotoId photoId)
     {
-        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
             logger.LogWarning("Photo download rejected: photo not found {PhotoId}", photoId);
@@ -394,21 +355,19 @@ public class PhotoManager(
         return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(photo.StorageKey).OriginalFileName);
     }
 
-    public async Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(Guid baulId, Guid personaId)
+    public async Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(BaulId baulId, PersonaId personaId)
     {
-        var bId = new BaulId(baulId);
-        var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Member, "Photos by persona", new { BaulId = baulId, PersonaId = personaId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Photos by persona", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(pId);
-        if (persona is null || persona.BaulId != bId) return Result.Failure<IEnumerable<PhotoDto>>("Persona not found");
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId) return Result.Failure<IEnumerable<PhotoDto>>("Persona not found");
 
-        var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(pId);
+        var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(personaId);
         var photos = (await photoRepository.GetByIdsAsync(photoIds))
-            .Where(p => p.BaulId == bId && p.Status == PhotoStatus.Active)
+            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
             .OrderByChronology()
             .ToList();
 
@@ -434,13 +393,11 @@ public class PhotoManager(
         return dtos;
     }
 
-    private PhotoDate? ResolvePhotoDate((int Year, int? Month, int? Day)? explicitDate, Stream content)
+    private PhotoDate? ResolvePhotoDate(PhotoDate? explicitDate, Stream content)
     {
-        // Both branches feed already-validated components (explicitDate was checked by the
-        // caller; EXIF always yields a full, in-range Y-M-D), so TryCreate can't fail here.
-        if (explicitDate is { } d)
-            return PhotoDate.TryCreate(d.Year, d.Month, d.Day, out var date, out _) ? date : null;
+        if (explicitDate is not null) return explicitDate;
 
+        // EXIF always yields a full, in-range Y-M-D, so TryCreate can't fail here.
         var extracted = photoDateExtractor.TryExtractDate(content);
         return extracted is { } e && PhotoDate.TryCreate(e.Year, e.Month, e.Day, out var extractedDate, out _)
             ? extractedDate

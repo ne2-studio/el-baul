@@ -42,7 +42,7 @@ public class WelcomeEmailManager(
         }
     }
 
-    public async Task SendWelcomeEmailAsync(string userId)
+    public async Task SendWelcomeEmailAsync(UserId userId)
     {
         if (!appConfiguration.WelcomeEmailsEnabled)
         {
@@ -91,7 +91,7 @@ public class WelcomeEmailManager(
         }
     }
 
-    public async Task<Result> SendTestWelcomeEmailAsync(string sourceUserId)
+    public async Task<Result> SendTestWelcomeEmailAsync(UserId sourceUserId)
     {
         var user = await userRepository.GetByIdAsync(sourceUserId);
         if (user is null) return Result.Failure("User not found");

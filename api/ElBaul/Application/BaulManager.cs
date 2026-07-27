@@ -57,30 +57,28 @@ public class BaulManager(
         return await ToDtoAsync(baul, isCustodio: true, BaulRole.Custodio);
     }
 
-    public async Task<Result<BaulDto>> GetByIdAsync(Guid baulId)
+    public async Task<Result<BaulDto>> GetByIdAsync(BaulId baulId)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Baul detail", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Baul detail", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 
-        var memberCount = (await baulRepository.GetPersonasAsync(id)).Count();
+        var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(access.Baul, access.IsCustodio, access.Role, memberCount);
     }
 
-    public async Task<Result<BaulDto>> SetCoverAsync(Guid baulId, Guid photoId)
+    public async Task<Result<BaulDto>> SetCoverAsync(BaulId baulId, PhotoId photoId)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Baul cover update", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul cover update", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 
-        var photo = await photoRepository.GetByIdAsync(new PhotoId(photoId));
-        if (photo is null || photo.BaulId != id)
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null || photo.BaulId != baulId)
         {
             logger.LogWarning("Baul cover update rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);
             return Result.Failure<BaulDto>("Photo not found");
@@ -91,16 +89,15 @@ public class BaulManager(
 
         logger.LogInformation("Baul cover updated {BaulId} {PhotoId}", baulId, photoId);
 
-        var memberCount = (await baulRepository.GetPersonasAsync(id)).Count();
+        var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(updated, access.IsCustodio, access.Role, memberCount);
     }
 
-    public async Task<Result<BaulDto>> UpdateAsync(Guid baulId, string name, string? description)
+    public async Task<Result<BaulDto>> UpdateAsync(BaulId baulId, string name, string? description)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Baul update", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul update", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 
@@ -109,7 +106,7 @@ public class BaulManager(
 
         logger.LogInformation("Baul updated {BaulId} {Name}", baulId, name);
 
-        var memberCount = (await baulRepository.GetPersonasAsync(id)).Count();
+        var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(updated, access.IsCustodio, access.Role, memberCount);
     }
 
@@ -123,16 +120,15 @@ public class BaulManager(
             baul.CreatedAt, baul.UpdatedAt, isCustodio, role.ToApiString(), memberCount);
     }
 
-    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid baulId)
+    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(BaulId baulId)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Baul recuerdos", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Baul recuerdos", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
 
-        var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(id)).ToList();
+        var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(baulId)).ToList();
 
-        var chapterNames = (await chapterRepository.GetByBaulIdAsync(id)).ToDictionary(a => a.Id, a => a.Name);
+        var chapterNames = (await chapterRepository.GetByBaulIdAsync(baulId)).ToDictionary(a => a.Id, a => a.Name);
 
         var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
         var thumbnailUrls = new Dictionary<PhotoId, string>();
@@ -146,7 +142,7 @@ public class BaulManager(
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(id, recuerdo.UserId, photoStorage);
+            var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(baulId, recuerdo.UserId, photoStorage);
             var thumbnailUrl = recuerdo.PhotoId is { } photoId ? thumbnailUrls.GetValueOrDefault(photoId) : null;
             var chapterName = recuerdo.ChapterId is { } chapterId ? chapterNames.GetValueOrDefault(chapterId) : null;
             dtos.Add(ToRecuerdoDto(recuerdo, nickname, avatarUrl, personaId, recuerdo.UserId == userId, thumbnailUrl, chapterName));
@@ -155,16 +151,15 @@ public class BaulManager(
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
     }
 
-    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid baulId, string text)
+    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(BaulId baulId, string text)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Member, "Recuerdo creation", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Recuerdo creation", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
 
-        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(id, userId, photoStorage);
-        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), null, null, id, userId, text, clock.UtcNow());
+        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(baulId, userId, photoStorage);
+        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), null, null, baulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation("Recuerdo created {BaulId} {RecuerdoId}", baulId, recuerdo.Id);

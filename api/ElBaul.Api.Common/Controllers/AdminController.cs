@@ -1,5 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Output;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,7 @@ public class AdminController(
     [ProducesResponseType(typeof(AdminUserDetailDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUser(string userId)
     {
-        var result = await adminManager.GetUserDetailAsync(userId);
+        var result = await adminManager.GetUserDetailAsync(new UserId(userId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -62,7 +63,7 @@ public class AdminController(
     [ProducesResponseType(typeof(AdminBaulDetailDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBaul(Guid baulId)
     {
-        var result = await adminManager.GetBaulDetailAsync(baulId);
+        var result = await adminManager.GetBaulDetailAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -70,7 +71,7 @@ public class AdminController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteBaul(Guid baulId)
     {
-        var result = await adminManager.DeleteBaulAsync(baulId);
+        var result = await adminManager.DeleteBaulAsync(new BaulId(baulId));
         return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -86,7 +87,7 @@ public class AdminController(
     [ProducesResponseType(typeof(IEnumerable<AdminSentEmailDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserEmails(string userId)
     {
-        var result = await adminManager.GetUserSentEmailsAsync(userId);
+        var result = await adminManager.GetUserSentEmailsAsync(new UserId(userId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -94,7 +95,7 @@ public class AdminController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SendWelcomeTestEmail(string userId)
     {
-        var result = await welcomeEmailManager.SendTestWelcomeEmailAsync(userId);
+        var result = await welcomeEmailManager.SendTestWelcomeEmailAsync(new UserId(userId));
         return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -102,7 +103,7 @@ public class AdminController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SendDigestTestEmail(string userId)
     {
-        var result = await weeklyDigestManager.SendTestWeeklyDigestAsync(userId);
+        var result = await weeklyDigestManager.SendTestWeeklyDigestAsync(new UserId(userId));
         return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
     }
 

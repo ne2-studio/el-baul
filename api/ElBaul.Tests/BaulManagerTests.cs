@@ -62,7 +62,7 @@ public class BaulManagerTests
     {
         var manager = CreateManager(CustodioId);
 
-        var result = await manager.GetByIdAsync(Guid.NewGuid());
+        var result = await manager.GetByIdAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
@@ -75,7 +75,7 @@ public class BaulManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var manager = CreateManager(OtherUserId);
 
-        var result = await manager.GetByIdAsync(baulId);
+        var result = await manager.GetByIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -89,7 +89,7 @@ public class BaulManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.GetByIdAsync(baulId);
+        var result = await manager.GetByIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.IsCustodio);
@@ -106,7 +106,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(baulId, photoId);
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
@@ -125,7 +125,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.SetCoverAsync(baulId, photoId);
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -138,7 +138,7 @@ public class BaulManagerTests
         await SeedBaulAsync(baulId, "Familia");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(baulId, Guid.NewGuid());
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
@@ -156,7 +156,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(otherBaulId), "photo-key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(baulId, photoId);
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
@@ -169,7 +169,7 @@ public class BaulManagerTests
         await SeedBaulAsync(baulId, "Familia", "desc vieja");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdateAsync(baulId, "Familia 2024", "desc nueva");
+        var result = await manager.UpdateAsync(new BaulId(baulId), "Familia 2024", "desc nueva");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Familia 2024", result.Value.Name);
@@ -184,7 +184,7 @@ public class BaulManagerTests
     public async Task UpdateAsync_ShouldFail_WhenBaulDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdateAsync(Guid.NewGuid(), "Familia 2024", null);
+        var result = await manager.UpdateAsync(new BaulId(Guid.NewGuid()), "Familia 2024", null);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
@@ -246,7 +246,7 @@ public class BaulManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.GetByIdAsync(baulId);
+        var result = await manager.GetByIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.MemberCount);
@@ -259,7 +259,7 @@ public class BaulManagerTests
         await SeedBaulAsync(baulId, "Familia");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(baulId, "Un recuerdo suelto");
+        var result = await manager.CreateRecuerdoAsync(new BaulId(baulId), "Un recuerdo suelto");
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.PhotoId);
@@ -280,7 +280,7 @@ public class BaulManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.CreateRecuerdoAsync(baulId, "Recuerdo de un miembro");
+        var result = await manager.CreateRecuerdoAsync(new BaulId(baulId), "Recuerdo de un miembro");
 
         Assert.True(result.IsSuccess);
     }
@@ -289,7 +289,7 @@ public class BaulManagerTests
     public async Task CreateRecuerdoAsync_ShouldFail_WhenBaulNotFound()
     {
         var manager = CreateManager(CustodioId);
-        var result = await manager.CreateRecuerdoAsync(Guid.NewGuid(), "texto");
+        var result = await manager.CreateRecuerdoAsync(new BaulId(Guid.NewGuid()), "texto");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
@@ -313,7 +313,7 @@ public class BaulManagerTests
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "de foto", newest));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetRecuerdosAsync(baulId);
+        var result = await manager.GetRecuerdosAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         var list = result.Value.ToList();
@@ -337,7 +337,7 @@ public class BaulManagerTests
     public async Task GetRecuerdosAsync_ShouldFail_WhenBaulNotFound()
     {
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetRecuerdosAsync(Guid.NewGuid());
+        var result = await manager.GetRecuerdosAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);

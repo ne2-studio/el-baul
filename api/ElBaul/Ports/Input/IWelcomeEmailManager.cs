@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using ElBaul.Ports.Output;
 
 namespace ElBaul.Ports.Input;
 
@@ -8,8 +9,8 @@ public interface IWelcomeEmailManager
     Task SchedulePendingWelcomeEmailsAsync();
 
     /// <summary>Per-user job, invoked by the scheduler above via Hangfire.</summary>
-    Task SendWelcomeEmailAsync(string userId);
+    Task SendWelcomeEmailAsync(UserId userId);
 
     /// <summary>Admin-triggered test send, using sourceUserId's current data but mailed to the configured admin test recipient.</summary>
-    Task<Result> SendTestWelcomeEmailAsync(string sourceUserId);
+    Task<Result> SendTestWelcomeEmailAsync(UserId sourceUserId);
 }

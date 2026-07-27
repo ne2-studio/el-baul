@@ -42,12 +42,12 @@ public class PhotoPersonaTagManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var setResult = await manager.SetTaggedPersonasAsync(photoId, [personaId]);
+        var setResult = await manager.SetTaggedPersonasAsync(new PhotoId(photoId), [new PersonaId(personaId)]);
 
         Assert.True(setResult.IsSuccess);
         Assert.Equal("Abuelo Antonio", Assert.Single(setResult.Value).Nickname);
 
-        var getResult = await manager.GetTaggedPersonasAsync(photoId);
+        var getResult = await manager.GetTaggedPersonasAsync(new PhotoId(photoId));
         Assert.True(getResult.IsSuccess);
         Assert.Equal(personaId.ToString(), Assert.Single(getResult.Value).Id);
     }
@@ -64,8 +64,8 @@ public class PhotoPersonaTagManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(secondPersonaId), new BaulId(baulId), null, "Segunda", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        await manager.SetTaggedPersonasAsync(photoId, [firstPersonaId]);
-        var result = await manager.SetTaggedPersonasAsync(photoId, [secondPersonaId]);
+        await manager.SetTaggedPersonasAsync(new PhotoId(photoId), [new PersonaId(firstPersonaId)]);
+        var result = await manager.SetTaggedPersonasAsync(new PhotoId(photoId), [new PersonaId(secondPersonaId)]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Segunda", Assert.Single(result.Value).Nickname);
@@ -84,18 +84,18 @@ public class PhotoPersonaTagManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(foreignPersonaId), new BaulId(otherBaulId), null, "Ajeno", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetTaggedPersonasAsync(photoId, [foreignPersonaId]);
+        var result = await manager.SetTaggedPersonasAsync(new PhotoId(photoId), [new PersonaId(foreignPersonaId)]);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error);
-        Assert.Empty((await manager.GetTaggedPersonasAsync(photoId)).Value);
+        Assert.Empty((await manager.GetTaggedPersonasAsync(new PhotoId(photoId))).Value);
     }
 
     [Fact]
     public async Task SetTaggedPersonasAsync_ShouldFail_WhenPhotoNotFound()
     {
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetTaggedPersonasAsync(Guid.NewGuid(), []);
+        var result = await manager.SetTaggedPersonasAsync(new PhotoId(Guid.NewGuid()), []);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error);
@@ -113,7 +113,8 @@ public class PhotoPersonaTagManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(secondPhotoId), new ChapterId(chapterId), new BaulId(baulId), "key-2", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [firstPhotoId, secondPhotoId], [personaId]);
+        var result = await manager.AddTaggedPersonasBatchAsync(
+            new BaulId(baulId), [new PhotoId(firstPhotoId), new PhotoId(secondPhotoId)], [new PersonaId(personaId)]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal([firstPhotoId.ToString(), secondPhotoId.ToString()], result.Value);
@@ -133,8 +134,8 @@ public class PhotoPersonaTagManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        await manager.SetTaggedPersonasAsync(photoId, [existingPersonaId]);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [photoId], [newPersonaId]);
+        await manager.SetTaggedPersonasAsync(new PhotoId(photoId), [new PersonaId(existingPersonaId)]);
+        var result = await manager.AddTaggedPersonasBatchAsync(new BaulId(baulId), [new PhotoId(photoId)], [new PersonaId(newPersonaId)]);
 
         Assert.True(result.IsSuccess);
         var tags = await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId));
@@ -157,7 +158,8 @@ public class PhotoPersonaTagManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(foreignPhotoId), null, new BaulId(otherBaulId), "key-2", null, "someone-else", _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [ownPhotoId, foreignPhotoId], [personaId]);
+        var result = await manager.AddTaggedPersonasBatchAsync(
+            new BaulId(baulId), [new PhotoId(ownPhotoId), new PhotoId(foreignPhotoId)], [new PersonaId(personaId)]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal([ownPhotoId.ToString()], result.Value);
@@ -177,7 +179,7 @@ public class PhotoPersonaTagManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(foreignPersonaId), new BaulId(otherBaulId), null, "Ajeno", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [photoId], [foreignPersonaId]);
+        var result = await manager.AddTaggedPersonasBatchAsync(new BaulId(baulId), [new PhotoId(photoId)], [new PersonaId(foreignPersonaId)]);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error);
@@ -192,7 +194,7 @@ public class PhotoPersonaTagManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager("someone-else");
-        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [photoId], []);
+        var result = await manager.AddTaggedPersonasBatchAsync(new BaulId(baulId), [new PhotoId(photoId)], []);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);

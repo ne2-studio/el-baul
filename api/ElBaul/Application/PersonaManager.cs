@@ -17,10 +17,9 @@ public class PersonaManager(
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository) : IPersonaManager
 {
-    public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(Guid personaId)
+    public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(PersonaId personaId)
     {
-        var id = new PersonaId(personaId);
-        var persona = await baulRepository.GetPersonaByIdAsync(id);
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.IsClaimed)
             return Result.Failure<BaulPreviewDto>("Invitation not found");
 
@@ -37,12 +36,11 @@ public class PersonaManager(
         return new BaulPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, persona.Nickname, urls);
     }
 
-    public async Task<Result<PersonaDto>> AcceptPersonalInviteAsync(Guid personaId)
+    public async Task<Result<PersonaDto>> AcceptPersonalInviteAsync(PersonaId personaId)
     {
-        var id = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
         var user = await userRepository.GetByIdAsync(userId);
-        var persona = await baulRepository.GetPersonaByIdAsync(id);
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null)
         {
             logger.LogWarning("Personal invitation acceptance rejected: persona not found {PersonaId}", personaId);
@@ -78,16 +76,15 @@ public class PersonaManager(
         return await ToPersonaDtoAsync(persona, user, canEdit: true);
     }
 
-    public async Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(Guid baulId)
+    public async Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(BaulId baulId)
     {
-        var id = new BaulId(baulId);
-        var baul = await baulRepository.GetByIdAsync(id);
+        var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure<IEnumerable<PersonaDto>>("Baul not found");
 
         var userId = currentUserProvider.GetUserId();
         var access = await baulAccess.GetAsync(baul, userId);
 
-        var personas = await baulRepository.GetPersonasAsync(id);
+        var personas = await baulRepository.GetPersonasAsync(baulId);
         var dtos = new List<PersonaDto>();
 
         foreach (var persona in personas)
@@ -100,19 +97,17 @@ public class PersonaManager(
         return Result.Success<IEnumerable<PersonaDto>>(dtos);
     }
 
-    public async Task<Result<PersonaDto>> GetPersonaAsync(Guid baulId, Guid personaId)
+    public async Task<Result<PersonaDto>> GetPersonaAsync(BaulId baulId, PersonaId personaId)
     {
-        var bId = new BaulId(baulId);
-        var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
 
         var auth = await baulAccess.AuthorizeAsync(
-            bId, userId, AccessLevel.Member, "Persona detail", new { BaulId = baulId, PersonaId = personaId });
+            baulId, userId, AccessLevel.Member, "Persona detail", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
         var access = auth.Value;
 
-        var persona = await baulRepository.GetPersonaByIdAsync(pId);
-        if (persona is null || persona.BaulId != bId)
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId)
         {
             logger.LogWarning("Persona detail rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
             return Result.Failure<PersonaDto>("Persona not found");
@@ -123,34 +118,31 @@ public class PersonaManager(
         return await ToPersonaDtoAsync(persona, user, canEdit);
     }
 
-    public async Task<Result<PersonaDto>> CreatePersonaAsync(Guid baulId, string nickname)
+    public async Task<Result<PersonaDto>> CreatePersonaAsync(BaulId baulId, string nickname)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Persona creation", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona creation", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var persona = new Persona(
-            new PersonaId(idGenerator.NewId()), id, null, nickname, BaulRole.Colaborador, clock.UtcNow());
+            new PersonaId(idGenerator.NewId()), baulId, null, nickname, BaulRole.Colaborador, clock.UtcNow());
 
         await baulRepository.AddPersonaAsync(persona);
         logger.LogInformation("Persona created {BaulId} {PersonaId} {Nickname}", baulId, persona.Id, nickname);
         return await ToPersonaDtoAsync(persona, null, canEdit: true);
     }
 
-    public async Task<Result<PersonaDto>> UpdatePersonaAsync(Guid baulId, Guid personaId, string? name, string nickname, string? biografia)
+    public async Task<Result<PersonaDto>> UpdatePersonaAsync(BaulId baulId, PersonaId personaId, string? name, string nickname, string? biografia)
     {
-        var bId = new BaulId(baulId);
-        var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
 
         var auth = await baulAccess.AuthorizeAsync(
-            bId, userId, AccessLevel.Member, "Persona update", new { BaulId = baulId, PersonaId = personaId });
+            baulId, userId, AccessLevel.Member, "Persona update", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(pId);
-        if (persona is null || persona.BaulId != bId)
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId)
         {
             logger.LogWarning("Persona update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
             return Result.Failure<PersonaDto>("Persona not found");
@@ -172,18 +164,16 @@ public class PersonaManager(
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaAvatarAsync(
-        Guid baulId, Guid personaId, Stream content, string fileName, string contentType)
+        BaulId baulId, PersonaId personaId, Stream content, string fileName, string contentType)
     {
-        var bId = new BaulId(baulId);
-        var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
 
         var auth = await baulAccess.AuthorizeAsync(
-            bId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
+            baulId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(pId);
-        if (persona is null || persona.BaulId != bId)
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId)
         {
             logger.LogWarning(
                 "Persona avatar update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
@@ -223,22 +213,14 @@ public class PersonaManager(
         return await ToPersonaDtoAsync(updated, user, canEdit);
     }
 
-    public async Task<Result<PersonaDto>> UpdatePersonaRoleAsync(Guid baulId, Guid personaId, string role)
+    public async Task<Result<PersonaDto>> UpdatePersonaRoleAsync(BaulId baulId, PersonaId personaId, BaulRole role)
     {
-        var bId = new BaulId(baulId);
-        var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Persona role update", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona role update", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
-        if (!DtoMapping.TryParseBaulRole(role, out var parsedRole))
-        {
-            logger.LogWarning("Persona role update rejected: invalid role {BaulId} {Role}", baulId, role);
-            return Result.Failure<PersonaDto>("Invalid role");
-        }
-
-        var persona = await baulRepository.GetPersonaByIdAsync(pId);
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null)
         {
             logger.LogWarning(
@@ -247,28 +229,26 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>("Persona not found");
         }
 
-        var updated = persona with { Role = parsedRole };
+        var updated = persona with { Role = role };
         await baulRepository.UpdatePersonaAsync(updated);
-        logger.LogInformation("Persona role updated {BaulId} {PersonaId} {Role}", baulId, personaId, parsedRole);
+        logger.LogInformation("Persona role updated {BaulId} {PersonaId} {Role}", baulId, personaId, role);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await ToPersonaDtoAsync(updated, user, canEdit: true);
     }
 
-    public async Task<Result> RemovePersonaAsync(Guid baulId, Guid personaId)
+    public async Task<Result> RemovePersonaAsync(BaulId baulId, PersonaId personaId)
     {
-        var bId = new BaulId(baulId);
-        var pId = new PersonaId(personaId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Persona removal", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona removal", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
         // Must run before the persona row is removed: PhotoPersonaTag's FK to Persona is
         // Restrict (see PhotoPersonaTagConfiguration), so a real Postgres delete would
         // otherwise fail with any tags still pointing at this persona.
-        await photoPersonaTagRepository.DeleteByPersonaIdAsync(pId);
-        await baulRepository.RemovePersonaAsync(bId, pId);
+        await photoPersonaTagRepository.DeleteByPersonaIdAsync(personaId);
+        await baulRepository.RemovePersonaAsync(baulId, personaId);
         logger.LogInformation("Persona removed {BaulId} {PersonaId}", baulId, personaId);
         return Result.Success();
     }

@@ -54,7 +54,7 @@ public class RemovalRequestManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.CreateRemovalRequestAsync(baulId, photoId, "no me gusta");
+        var result = await manager.CreateRemovalRequestAsync(new BaulId(baulId), new PhotoId(photoId), "no me gusta");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Tita Solicitudes", result.Value.RequesterName);
@@ -71,7 +71,7 @@ public class RemovalRequestManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.CreateRemovalRequestAsync(baulId, photoId, "no me gusta");
+        var result = await manager.CreateRemovalRequestAsync(new BaulId(baulId), new PhotoId(photoId), "no me gusta");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -92,7 +92,7 @@ public class RemovalRequestManagerTests
         await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.ApproveRemovalRequestAsync(baulId, requestId);
+        var result = await manager.ApproveRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId));
 
         Assert.True(result.IsSuccess);
         Assert.Null(await _photoRepository.GetByIdAsync(new PhotoId(photoId)));
@@ -112,7 +112,7 @@ public class RemovalRequestManagerTests
         await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.RejectRemovalRequestAsync(baulId, requestId);
+        var result = await manager.RejectRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId));
 
         Assert.True(result.IsSuccess);
         Assert.Null(await _baulRepository.GetRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId)));

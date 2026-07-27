@@ -15,18 +15,17 @@ public class PhotoPersonaTagManager(
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository) : IPhotoPersonaTagManager
 {
-    public async Task<Result<IEnumerable<TaggedPersonaDto>>> GetTaggedPersonasAsync(Guid photoId)
+    public async Task<Result<IEnumerable<TaggedPersonaDto>>> GetTaggedPersonasAsync(PhotoId photoId)
     {
-        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null) return Result.Failure<IEnumerable<TaggedPersonaDto>>("Photo not found");
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo tagged personas", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
 
-        var personaIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(id);
+        var personaIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photoId);
         var dtos = new List<TaggedPersonaDto>();
         foreach (var personaId in personaIds)
         {
@@ -37,11 +36,10 @@ public class PhotoPersonaTagManager(
         return Result.Success<IEnumerable<TaggedPersonaDto>>(dtos);
     }
 
-    public async Task<Result<IEnumerable<TaggedPersonaDto>>> SetTaggedPersonasAsync(Guid photoId, IEnumerable<Guid> personaIds)
+    public async Task<Result<IEnumerable<TaggedPersonaDto>>> SetTaggedPersonasAsync(PhotoId photoId, IEnumerable<PersonaId> personaIds)
     {
-        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
             logger.LogWarning("Photo tagging rejected: photo not found {PhotoId}", photoId);
@@ -52,7 +50,7 @@ public class PhotoPersonaTagManager(
             photo.BaulId, userId, AccessLevel.Member, "Photo tagging", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
 
-        var distinctIds = personaIds.Select(p => new PersonaId(p)).Distinct().ToList();
+        var distinctIds = personaIds.Distinct().ToList();
         var personas = new List<Persona>();
         foreach (var personaId in distinctIds)
         {
@@ -67,7 +65,7 @@ public class PhotoPersonaTagManager(
             personas.Add(persona);
         }
 
-        await photoPersonaTagRepository.SetTagsAsync(id, photo.BaulId, distinctIds, clock.UtcNow());
+        await photoPersonaTagRepository.SetTagsAsync(photoId, photo.BaulId, distinctIds, clock.UtcNow());
         logger.LogInformation("Photo tags updated {BaulId} {PhotoId} {PersonaCount}", photo.BaulId, photoId, personas.Count);
 
         var dtos = new List<TaggedPersonaDto>();
@@ -76,22 +74,21 @@ public class PhotoPersonaTagManager(
     }
 
     public async Task<Result<IEnumerable<string>>> AddTaggedPersonasBatchAsync(
-        Guid baulId, IEnumerable<Guid> photoIds, IEnumerable<Guid> personaIds)
+        BaulId baulId, IEnumerable<PhotoId> photoIds, IEnumerable<PersonaId> personaIds)
     {
-        var bId = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Member, "Batch photo tagging", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Batch photo tagging", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<string>>(auth.Error);
 
         // The persona set is shared by every photo in the batch (they all come from the same
         // baúl-scoped grid), so it's validated once up front rather than per photo — unlike
         // photo validity below, which tolerates individual failures.
-        var distinctPersonaIds = personaIds.Select(p => new PersonaId(p)).Distinct().ToList();
+        var distinctPersonaIds = personaIds.Distinct().ToList();
         foreach (var personaId in distinctPersonaIds)
         {
             var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-            if (persona is null || persona.BaulId != bId)
+            if (persona is null || persona.BaulId != baulId)
             {
                 logger.LogWarning("Batch photo tagging rejected: persona not found in this baúl {BaulId} {PersonaId}", baulId, personaId);
                 return Result.Failure<IEnumerable<string>>("Persona not found");
@@ -102,17 +99,16 @@ public class PhotoPersonaTagManager(
         var updated = new List<string>();
         foreach (var photoId in photoIds)
         {
-            var id = new PhotoId(photoId);
-            var photo = await photoRepository.GetByIdAsync(id);
-            if (photo is null || photo.BaulId != bId)
+            var photo = await photoRepository.GetByIdAsync(photoId);
+            if (photo is null || photo.BaulId != baulId)
             {
                 logger.LogWarning("Skipping photo in batch tagging: not found in this baúl {BaulId} {PhotoId}", baulId, photoId);
                 continue;
             }
 
-            var existingIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(id);
+            var existingIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photoId);
             var union = existingIds.Concat(distinctPersonaIds).Distinct().ToList();
-            await photoPersonaTagRepository.SetTagsAsync(id, bId, union, now);
+            await photoPersonaTagRepository.SetTagsAsync(photoId, baulId, union, now);
             updated.Add(photoId.ToString());
         }
 

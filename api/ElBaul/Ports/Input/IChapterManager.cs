@@ -1,15 +1,16 @@
 using CSharpFunctionalExtensions;
+using ElBaul.Ports.Output;
 
 namespace ElBaul.Ports.Input;
 
 public interface IChapterManager
 {
-    Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(Guid baulId);
-    Task<Result<ChapterDto>> CreateAsync(Guid baulId, string name);
-    Task<Result<ChapterDto>> SetCoverAsync(Guid chapterId, Guid photoId);
-    Task<Result<ChapterDto>> UpdateAsync(Guid chapterId, string name);
-    Task<Result> DeleteAsync(Guid chapterId);
+    Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(BaulId baulId);
+    Task<Result<ChapterDto>> CreateAsync(BaulId baulId, string name);
+    Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId);
+    Task<Result<ChapterDto>> UpdateAsync(ChapterId chapterId, string name);
+    Task<Result> DeleteAsync(ChapterId chapterId);
 
-    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid chapterId);
-    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid chapterId, string text);
+    Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(ChapterId chapterId);
+    Task<Result<RecuerdoDto>> CreateRecuerdoAsync(ChapterId chapterId, string text);
 }

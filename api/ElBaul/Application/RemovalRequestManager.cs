@@ -17,15 +17,14 @@ public class RemovalRequestManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess) : IRemovalRequestManager
 {
-    public async Task<Result<IEnumerable<RemovalRequestDto>>> GetRemovalRequestsAsync(Guid baulId)
+    public async Task<Result<IEnumerable<RemovalRequestDto>>> GetRemovalRequestsAsync(BaulId baulId)
     {
-        var id = new BaulId(baulId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(id, userId, AccessLevel.Admin, "Removal requests", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal requests", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<RemovalRequestDto>>(auth.Error);
 
-        var requests = await baulRepository.GetRemovalRequestsAsync(id);
+        var requests = await baulRepository.GetRemovalRequestsAsync(baulId);
         var dtos = new List<RemovalRequestDto>();
         foreach (var request in requests)
         {
@@ -36,17 +35,15 @@ public class RemovalRequestManager(
         return Result.Success<IEnumerable<RemovalRequestDto>>(dtos);
     }
 
-    public async Task<Result<RemovalRequestDto>> CreateRemovalRequestAsync(Guid baulId, Guid photoId, string? reason)
+    public async Task<Result<RemovalRequestDto>> CreateRemovalRequestAsync(BaulId baulId, PhotoId photoId, string? reason)
     {
-        var bId = new BaulId(baulId);
-        var pId = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Member, "Removal request creation", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Removal request creation", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<RemovalRequestDto>(auth.Error);
         var access = auth.Value;
 
-        var photo = await photoRepository.GetByIdAsync(pId);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
             logger.LogWarning(
@@ -58,7 +55,7 @@ public class RemovalRequestManager(
         var userProfile = await userRepository.GetByIdAsync(userId);
         var now = clock.UtcNow();
         var request = new RemovalRequest(
-            new RemovalRequestId(idGenerator.NewId()), bId, pId, photo.StorageKey,
+            new RemovalRequestId(idGenerator.NewId()), baulId, photoId, photo.StorageKey,
             nickname, userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
         await baulRepository.CreateRemovalRequestAsync(request);
@@ -69,16 +66,14 @@ public class RemovalRequestManager(
         return ToDto(request, url);
     }
 
-    public async Task<Result> ApproveRemovalRequestAsync(Guid baulId, Guid requestId)
+    public async Task<Result> ApproveRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
     {
-        var bId = new BaulId(baulId);
-        var rId = new RemovalRequestId(requestId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Removal request approval", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request approval", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        var request = await baulRepository.GetRemovalRequestAsync(bId, rId);
+        var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
         if (request is null)
         {
             logger.LogWarning(
@@ -98,7 +93,7 @@ public class RemovalRequestManager(
         }
 
         await photoRepository.DeleteAsync(request.PhotoId);
-        await baulRepository.DeleteRemovalRequestAsync(bId, rId);
+        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
 
         if (photo is not null)
         {
@@ -112,16 +107,14 @@ public class RemovalRequestManager(
         return Result.Success();
     }
 
-    public async Task<Result> RejectRemovalRequestAsync(Guid baulId, Guid requestId)
+    public async Task<Result> RejectRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
     {
-        var bId = new BaulId(baulId);
-        var rId = new RemovalRequestId(requestId);
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(bId, userId, AccessLevel.Admin, "Removal request rejection", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request rejection", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        await baulRepository.DeleteRemovalRequestAsync(bId, rId);
+        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
         logger.LogInformation("Removal request rejected {BaulId} {RemovalRequestId}", baulId, requestId);
         return Result.Success();
     }

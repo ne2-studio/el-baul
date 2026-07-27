@@ -1,4 +1,5 @@
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Output;
 using Hangfire;
 
 namespace ElBaul.Infra.Emails;
@@ -17,9 +18,9 @@ public class EmailJobs(IWelcomeEmailManager welcomeEmailManager, IWeeklyDigestMa
 {
     [DisableConcurrentExecution(timeoutInSeconds: 300)]
     public Task SendWelcomeEmailAsync(string userId) =>
-        welcomeEmailManager.SendWelcomeEmailAsync(userId);
+        welcomeEmailManager.SendWelcomeEmailAsync(new UserId(userId));
 
     [DisableConcurrentExecution(timeoutInSeconds: 300)]
     public Task SendWeeklyDigestAsync(string userId, DateTime since) =>
-        weeklyDigestManager.SendWeeklyDigestAsync(userId, since);
+        weeklyDigestManager.SendWeeklyDigestAsync(new UserId(userId), since);
 }

@@ -38,7 +38,7 @@ public class AdminManager(
         return Result.Success(rows.Select(ToDto));
     }
 
-    public async Task<Result<AdminUserDetailDto>> GetUserDetailAsync(string userId)
+    public async Task<Result<AdminUserDetailDto>> GetUserDetailAsync(UserId userId)
     {
         var row = await adminRepository.GetUserDetailAsync(userId);
         if (row is null) return Result.Failure<AdminUserDetailDto>("User not found");
@@ -55,9 +55,9 @@ public class AdminManager(
         return Result.Success(rows.Select(ToDto));
     }
 
-    public async Task<Result<AdminBaulDetailDto>> GetBaulDetailAsync(Guid baulId)
+    public async Task<Result<AdminBaulDetailDto>> GetBaulDetailAsync(BaulId baulId)
     {
-        var row = await adminRepository.GetBaulDetailAsync(new BaulId(baulId));
+        var row = await adminRepository.GetBaulDetailAsync(baulId);
         if (row is null) return Result.Failure<AdminBaulDetailDto>("Baul not found");
 
         var personas = row.Personas.Select(su => new AdminBaulPersonaDto(
@@ -87,22 +87,21 @@ public class AdminManager(
     /// so behavior doesn't depend on which backend (Postgres vs. the in-memory Lite
     /// repositories) is running.
     /// </summary>
-    public async Task<Result> DeleteBaulAsync(Guid baulId)
+    public async Task<Result> DeleteBaulAsync(BaulId baulId)
     {
-        var id = new BaulId(baulId);
-        var baul = await baulRepository.GetByIdAsync(id);
+        var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure("Baul not found");
 
-        var photos = (await photoRepository.GetAllByBaulIdAsync(id)).ToList();
-        var personas = (await baulRepository.GetPersonasAsync(id)).ToList();
+        var photos = (await photoRepository.GetAllByBaulIdAsync(baulId)).ToList();
+        var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
 
-        await photoPersonaTagRepository.DeleteByBaulIdAsync(id);
-        await recuerdoRepository.DeleteByBaulIdAsync(id);
-        await photoRepository.DeleteByBaulIdAsync(id);
-        await chapterRepository.DeleteByBaulIdAsync(id);
-        await baulRepository.RemoveAllPersonasAsync(id);
-        await baulRepository.DeleteAllRemovalRequestsAsync(id);
-        await baulRepository.DeleteAsync(id);
+        await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
+        await recuerdoRepository.DeleteByBaulIdAsync(baulId);
+        await photoRepository.DeleteByBaulIdAsync(baulId);
+        await chapterRepository.DeleteByBaulIdAsync(baulId);
+        await baulRepository.RemoveAllPersonasAsync(baulId);
+        await baulRepository.DeleteAllRemovalRequestsAsync(baulId);
+        await baulRepository.DeleteAsync(baulId);
 
         logger.LogWarning(
             "Baul hard-deleted {BaulId} ({PhotoCount} photos, {PersonaCount} personas)", baulId, photos.Count, personas.Count);
@@ -131,7 +130,7 @@ public class AdminManager(
         return Result.Success(emails.Select(ToDto));
     }
 
-    public async Task<Result<IEnumerable<AdminSentEmailDto>>> GetUserSentEmailsAsync(string userId)
+    public async Task<Result<IEnumerable<AdminSentEmailDto>>> GetUserSentEmailsAsync(UserId userId)
     {
         var emails = await sentEmailRepository.GetByUserIdAsync(userId);
         return Result.Success(emails.Select(ToDto));

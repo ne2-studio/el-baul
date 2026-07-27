@@ -1,5 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Output;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -35,7 +36,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(Guid baulId)
     {
-        var result = await baulManager.GetByIdAsync(baulId);
+        var result = await baulManager.GetByIdAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -46,7 +47,7 @@ public class BaulesController(
         if (!Guid.TryParse(request.PhotoId, out var photoId))
             return BadRequest(new { error = $"'{request.PhotoId}' is not a valid photo id." });
 
-        var result = await baulManager.SetCoverAsync(baulId, photoId);
+        var result = await baulManager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -54,7 +55,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid baulId, [FromBody] UpdateBaulRequest request)
     {
-        var result = await baulManager.UpdateAsync(baulId, request.Name, request.Description);
+        var result = await baulManager.UpdateAsync(new BaulId(baulId), request.Name, request.Description);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -64,7 +65,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(BaulPreviewDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInvitePreview(Guid personaId)
     {
-        var result = await personaManager.GetInvitePreviewAsync(personaId);
+        var result = await personaManager.GetInvitePreviewAsync(new PersonaId(personaId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -72,7 +73,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> AcceptPersonalInvite(Guid personaId)
     {
-        var result = await personaManager.AcceptPersonalInviteAsync(personaId);
+        var result = await personaManager.AcceptPersonalInviteAsync(new PersonaId(personaId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -80,7 +81,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<PersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPersonas(Guid baulId)
     {
-        var result = await personaManager.GetPersonasAsync(baulId);
+        var result = await personaManager.GetPersonasAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -88,7 +89,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreatePersona(Guid baulId, [FromBody] CreatePersonaRequest request)
     {
-        var result = await personaManager.CreatePersonaAsync(baulId, request.Nickname);
+        var result = await personaManager.CreatePersonaAsync(new BaulId(baulId), request.Nickname);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -96,7 +97,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPersona(Guid baulId, Guid personaId)
     {
-        var result = await personaManager.GetPersonaAsync(baulId, personaId);
+        var result = await personaManager.GetPersonaAsync(new BaulId(baulId), new PersonaId(personaId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -104,7 +105,8 @@ public class BaulesController(
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePersona(Guid baulId, Guid personaId, [FromBody] UpdatePersonaRequest request)
     {
-        var result = await personaManager.UpdatePersonaAsync(baulId, personaId, request.Name, request.Nickname, request.Biografia);
+        var result = await personaManager.UpdatePersonaAsync(
+            new BaulId(baulId), new PersonaId(personaId), request.Name, request.Nickname, request.Biografia);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -119,7 +121,7 @@ public class BaulesController(
 
         await using var stream = request.File.OpenReadStream();
         var result = await personaManager.UpdatePersonaAvatarAsync(
-            baulId, personaId, stream, request.File.FileName, request.File.ContentType);
+            new BaulId(baulId), new PersonaId(personaId), stream, request.File.FileName, request.File.ContentType);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
@@ -128,7 +130,10 @@ public class BaulesController(
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePersonaRole(Guid baulId, Guid personaId, [FromBody] UpdateRoleRequest request)
     {
-        var result = await personaManager.UpdatePersonaRoleAsync(baulId, personaId, request.Role);
+        if (!BaulRoleParser.TryParse(request.Role, out var role))
+            return BadRequest(new { error = "Invalid role" });
+
+        var result = await personaManager.UpdatePersonaRoleAsync(new BaulId(baulId), new PersonaId(personaId), role);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -136,7 +141,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> RemovePersona(Guid baulId, Guid personaId)
     {
-        var result = await personaManager.RemovePersonaAsync(baulId, personaId);
+        var result = await personaManager.RemovePersonaAsync(new BaulId(baulId), new PersonaId(personaId));
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -144,7 +149,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPersonaPhotos(Guid baulId, Guid personaId)
     {
-        var result = await photoManager.GetByPersonaIdAsync(baulId, personaId);
+        var result = await photoManager.GetByPersonaIdAsync(new BaulId(baulId), new PersonaId(personaId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -152,7 +157,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<RemovalRequestDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRemovalRequests(Guid baulId)
     {
-        var result = await removalRequestManager.GetRemovalRequestsAsync(baulId);
+        var result = await removalRequestManager.GetRemovalRequestsAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -163,7 +168,7 @@ public class BaulesController(
         if (!Guid.TryParse(request.PhotoId, out var photoId))
             return BadRequest(new { error = $"'{request.PhotoId}' is not a valid photo id." });
 
-        var result = await removalRequestManager.CreateRemovalRequestAsync(baulId, photoId, request.Reason);
+        var result = await removalRequestManager.CreateRemovalRequestAsync(new BaulId(baulId), new PhotoId(photoId), request.Reason);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -171,7 +176,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> ApproveRemovalRequest(Guid baulId, Guid requestId)
     {
-        var result = await removalRequestManager.ApproveRemovalRequestAsync(baulId, requestId);
+        var result = await removalRequestManager.ApproveRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId));
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -179,7 +184,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> RejectRemovalRequest(Guid baulId, Guid requestId)
     {
-        var result = await removalRequestManager.RejectRemovalRequestAsync(baulId, requestId);
+        var result = await removalRequestManager.RejectRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId));
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -187,7 +192,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid baulId)
     {
-        var result = await baulManager.GetRecuerdosAsync(baulId);
+        var result = await baulManager.GetRecuerdosAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -198,7 +203,7 @@ public class BaulesController(
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await baulManager.CreateRecuerdoAsync(baulId, request.Text);
+        var result = await baulManager.CreateRecuerdoAsync(new BaulId(baulId), request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 }

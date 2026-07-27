@@ -15,18 +15,17 @@ public class RecuerdoManager(
     IPhotoStorage photoStorage,
     BaulAccessService baulAccess) : IRecuerdoManager
 {
-    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(Guid photoId)
+    public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(PhotoId photoId)
     {
-        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Photo not found");
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo recuerdos", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
 
-        var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(id);
+        var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(photoId);
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
@@ -37,11 +36,10 @@ public class RecuerdoManager(
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
     }
 
-    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(Guid photoId, string text)
+    public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(PhotoId photoId, string text)
     {
-        var id = new PhotoId(photoId);
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(id);
+        var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null)
         {
             logger.LogWarning("Recuerdo creation rejected: photo not found {PhotoId}", photoId);
@@ -53,7 +51,7 @@ public class RecuerdoManager(
         if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
 
         var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(photo.BaulId, userId, photoStorage);
-        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), id, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
+        var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), photoId, photo.ChapterId, photo.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 
         logger.LogInformation(

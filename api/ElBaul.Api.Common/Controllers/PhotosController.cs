@@ -1,5 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Output;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByChapter(Guid chapterId)
     {
-        var result = await photoManager.GetByChapterIdAsync(chapterId);
+        var result = await photoManager.GetByChapterIdAsync(new ChapterId(chapterId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -32,10 +33,13 @@ public class PhotosController(
         if (request.ClientUploadId is null)
             return BadRequest(new { error = "ClientUploadId is required" });
 
+        if (!TryBuildDate(request, out var date, out var dateError))
+            return BadRequest(new { error = dateError });
+
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(
-            chapterId, stream, request.File.FileName, request.File.ContentType, ToDateTuple(request),
-            request.ClientUploadId.Value);
+            new ChapterId(chapterId), stream, request.File.FileName, request.File.ContentType, date,
+            new ClientUploadId(request.ClientUploadId.Value));
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
@@ -47,7 +51,7 @@ public class PhotosController(
         if (!Guid.TryParse(request.ChapterId, out var chapterId))
             return BadRequest(new { error = $"'{request.ChapterId}' is not a valid chapter id." });
 
-        var result = await photoManager.MoveAsync(photoId, chapterId);
+        var result = await photoManager.MoveAsync(new PhotoId(photoId), new ChapterId(chapterId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -55,7 +59,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Delete(Guid photoId, [FromBody] DeletePhotoRequest request)
     {
-        var result = await photoManager.DeleteAsync(photoId, request.Reason);
+        var result = await photoManager.DeleteAsync(new PhotoId(photoId), request.Reason);
         return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -63,7 +67,10 @@ public class PhotosController(
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeDate(Guid photoId, [FromBody] ChangePhotoDateRequest request)
     {
-        var result = await photoManager.ChangeDateAsync(photoId, request.Year, request.Month, request.Day);
+        if (!PhotoDate.TryCreate(request.Year, request.Month, request.Day, out var date, out var error))
+            return BadRequest(new { error });
+
+        var result = await photoManager.ChangeDateAsync(new PhotoId(photoId), date);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -71,15 +78,18 @@ public class PhotosController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeDateBatch([FromBody] ChangePhotoDateBatchRequest request)
     {
-        var photoIds = new List<Guid>();
+        if (!PhotoDate.TryCreate(request.Year, request.Month, request.Day, out var date, out var error))
+            return BadRequest(new { error });
+
+        var photoIds = new List<PhotoId>();
         foreach (var id in request.PhotoIds)
         {
             if (!Guid.TryParse(id, out var photoId))
                 return BadRequest(new { error = $"'{id}' is not a valid photo id." });
-            photoIds.Add(photoId);
+            photoIds.Add(new PhotoId(photoId));
         }
 
-        var result = await photoManager.ChangeDateBatchAsync(photoIds, request.Year, request.Month, request.Day);
+        var result = await photoManager.ChangeDateBatchAsync(photoIds, date);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -87,7 +97,8 @@ public class PhotosController(
     [ProducesResponseType(typeof(PhotoPageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPage(Guid baulId, [FromQuery] Guid? chapterId, [FromQuery] int skip = 0, [FromQuery] int take = 60)
     {
-        var result = await photoManager.GetPageAsync(baulId, chapterId, skip, take);
+        var result = await photoManager.GetPageAsync(
+            new BaulId(baulId), chapterId is { } cId ? new ChapterId(cId) : null, skip, take);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -95,7 +106,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLoose(Guid baulId)
     {
-        var result = await photoManager.GetLooseByBaulIdAsync(baulId);
+        var result = await photoManager.GetLooseByBaulIdAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -110,10 +121,13 @@ public class PhotosController(
         if (request.ClientUploadId is null)
             return BadRequest(new { error = "ClientUploadId is required" });
 
+        if (!TryBuildDate(request, out var date, out var dateError))
+            return BadRequest(new { error = dateError });
+
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadToBaulAsync(
-            baulId, stream, request.File.FileName, request.File.ContentType, ToDateTuple(request),
-            request.ClientUploadId.Value);
+            new BaulId(baulId), stream, request.File.FileName, request.File.ContentType, date,
+            new ClientUploadId(request.ClientUploadId.Value));
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
@@ -122,7 +136,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecuerdos(Guid photoId)
     {
-        var result = await recuerdoManager.GetRecuerdosAsync(photoId);
+        var result = await recuerdoManager.GetRecuerdosAsync(new PhotoId(photoId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -131,7 +145,7 @@ public class PhotosController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Download(Guid photoId)
     {
-        var result = await photoManager.DownloadAsync(photoId);
+        var result = await photoManager.DownloadAsync(new PhotoId(photoId));
         if (result.IsFailure) return ErrorMapping.ToActionResult(result.Error);
 
         var download = result.Value;
@@ -145,7 +159,7 @@ public class PhotosController(
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await recuerdoManager.CreateRecuerdoAsync(photoId, request.Text);
+        var result = await recuerdoManager.CreateRecuerdoAsync(new PhotoId(photoId), request.Text);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -156,23 +170,23 @@ public class PhotosController(
         if (!Guid.TryParse(request.BaulId, out var baulId))
             return BadRequest(new { error = $"'{request.BaulId}' is not a valid baúl id." });
 
-        var photoIds = new List<Guid>();
+        var photoIds = new List<PhotoId>();
         foreach (var id in request.PhotoIds)
         {
             if (!Guid.TryParse(id, out var photoId))
                 return BadRequest(new { error = $"'{id}' is not a valid photo id." });
-            photoIds.Add(photoId);
+            photoIds.Add(new PhotoId(photoId));
         }
 
-        var personaIds = new List<Guid>();
+        var personaIds = new List<PersonaId>();
         foreach (var id in request.PersonaIds)
         {
             if (!Guid.TryParse(id, out var personaId))
                 return BadRequest(new { error = $"'{id}' is not a valid persona id." });
-            personaIds.Add(personaId);
+            personaIds.Add(new PersonaId(personaId));
         }
 
-        var result = await photoPersonaTagManager.AddTaggedPersonasBatchAsync(baulId, photoIds, personaIds);
+        var result = await photoPersonaTagManager.AddTaggedPersonasBatchAsync(new BaulId(baulId), photoIds, personaIds);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -180,7 +194,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(IEnumerable<TaggedPersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTaggedPersonas(Guid photoId)
     {
-        var result = await photoPersonaTagManager.GetTaggedPersonasAsync(photoId);
+        var result = await photoPersonaTagManager.GetTaggedPersonasAsync(new PhotoId(photoId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
@@ -188,18 +202,32 @@ public class PhotosController(
     [ProducesResponseType(typeof(IEnumerable<TaggedPersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetTaggedPersonas(Guid photoId, [FromBody] SetPhotoPersonaTagsRequest request)
     {
-        var personaIds = new List<Guid>();
+        var personaIds = new List<PersonaId>();
         foreach (var id in request.PersonaIds)
         {
             if (!Guid.TryParse(id, out var personaId))
                 return BadRequest(new { error = $"'{id}' is not a valid persona id." });
-            personaIds.Add(personaId);
+            personaIds.Add(new PersonaId(personaId));
         }
 
-        var result = await photoPersonaTagManager.SetTaggedPersonasAsync(photoId, personaIds);
+        var result = await photoPersonaTagManager.SetTaggedPersonasAsync(new PhotoId(photoId), personaIds);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
-    private static (int Year, int? Month, int? Day)? ToDateTuple(UploadPhotoRequest request) =>
-        request.DateYear is { } year ? (year, request.DateMonth, request.DateDay) : null;
+    // Optional at the wire level (a photo may upload with no known date at all, falling back to
+    // EXIF extraction downstream) but validated here if present, so an invalid year/month/day
+    // never crosses the IPhotoManager boundary.
+    private static bool TryBuildDate(UploadPhotoRequest request, out PhotoDate? date, out string? error)
+    {
+        if (request.DateYear is not { } year)
+        {
+            date = null;
+            error = null;
+            return true;
+        }
+
+        var ok = PhotoDate.TryCreate(year, request.DateMonth, request.DateDay, out var created, out error);
+        date = ok ? created : null;
+        return ok;
+    }
 }

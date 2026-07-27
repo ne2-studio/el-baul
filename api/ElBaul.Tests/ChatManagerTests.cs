@@ -58,7 +58,7 @@ public class ChatManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var manager = CreateManager(CustodioId, appConfiguration: new StaticAppConfiguration(chatEnabled: false));
 
-        var result = await manager.SendMessageAsync(baulId, "Hola");
+        var result = await manager.SendMessageAsync(new BaulId(baulId), "Hola");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chat is not enabled", result.Error);
@@ -72,7 +72,7 @@ public class ChatManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var manager = CreateManager(CustodioId, appConfiguration: new StaticAppConfiguration(chatEnabled: false));
 
-        var result = await manager.GetMessagesAsync(baulId);
+        var result = await manager.GetMessagesAsync(new BaulId(baulId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chat is not enabled", result.Error);
@@ -83,7 +83,7 @@ public class ChatManagerTests
     {
         var manager = CreateManager(CustodioId);
 
-        var result = await manager.SendMessageAsync(Guid.NewGuid(), "¿Qué sabemos del abuelo?");
+        var result = await manager.SendMessageAsync(new BaulId(Guid.NewGuid()), "¿Qué sabemos del abuelo?");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
@@ -96,7 +96,7 @@ public class ChatManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var manager = CreateManager(OtherUserId);
 
-        var result = await manager.SendMessageAsync(baulId, "Hola");
+        var result = await manager.SendMessageAsync(new BaulId(baulId), "Hola");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -111,7 +111,7 @@ public class ChatManagerTests
         _aiChatBackend.NextResult = "El abuelo Antonio nació en Asturias.";
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SendMessageAsync(baulId, "¿Qué sabemos del abuelo Antonio?");
+        var result = await manager.SendMessageAsync(new BaulId(baulId), "¿Qué sabemos del abuelo Antonio?");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("assistant", result.Value.Role);
@@ -133,7 +133,7 @@ public class ChatManagerTests
         _aiChatBackend.NextResult = longReply;
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SendMessageAsync(baulId, "Cuéntame mucho sobre la familia");
+        var result = await manager.SendMessageAsync(new BaulId(baulId), "Cuéntame mucho sobre la familia");
 
         Assert.True(result.IsSuccess);
         Assert.Equal(longReply, result.Value.Content);
@@ -146,7 +146,7 @@ public class ChatManagerTests
         var baul = await SeedBaulAsync(baulId, "Familia");
 
         var manager = CreateManager(CustodioId);
-        await manager.SendMessageAsync(baulId, "¿Qué sabemos del viaje a Asturias?");
+        await manager.SendMessageAsync(new BaulId(baulId), "¿Qué sabemos del viaje a Asturias?");
 
         await _chatContextBuilder.Received(1).BuildAsync(baul, "¿Qué sabemos del viaje a Asturias?");
         var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
@@ -161,7 +161,7 @@ public class ChatManagerTests
         _aiChatBackend.NextResult = CSharpFunctionalExtensions.Result.Failure<string>("Chat is not configured.");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SendMessageAsync(baulId, "Hola");
+        var result = await manager.SendMessageAsync(new BaulId(baulId), "Hola");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chat is not configured.", result.Error);
@@ -177,10 +177,10 @@ public class ChatManagerTests
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var manager = CreateManager(CustodioId);
-        await manager.SendMessageAsync(baulId, "Primera pregunta");
-        await manager.SendMessageAsync(baulId, "Segunda pregunta");
+        await manager.SendMessageAsync(new BaulId(baulId), "Primera pregunta");
+        await manager.SendMessageAsync(new BaulId(baulId), "Segunda pregunta");
 
-        var result = await manager.GetMessagesAsync(baulId);
+        var result = await manager.GetMessagesAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         var messages = result.Value.ToList();
@@ -196,7 +196,7 @@ public class ChatManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var manager = CreateManager(CustodioId, appConfiguration: new StaticAppConfiguration(chatEnabled: false));
 
-        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+        var result = await manager.GetSuggestedQuestionsAsync(new BaulId(baulId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chat is not enabled", result.Error);
@@ -208,7 +208,7 @@ public class ChatManagerTests
     {
         var manager = CreateManager(CustodioId);
 
-        var result = await manager.GetSuggestedQuestionsAsync(Guid.NewGuid());
+        var result = await manager.GetSuggestedQuestionsAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error);
@@ -221,7 +221,7 @@ public class ChatManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var manager = CreateManager(OtherUserId);
 
-        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+        var result = await manager.GetSuggestedQuestionsAsync(new BaulId(baulId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error);
@@ -237,7 +237,7 @@ public class ChatManagerTests
             .Returns(Result.Success<IEnumerable<string>>(["¿Qué pasó durante la boda de Ana?"]));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+        var result = await manager.GetSuggestedQuestionsAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(["¿Qué pasó durante la boda de Ana?"], result.Value);
@@ -253,7 +253,7 @@ public class ChatManagerTests
             .Returns(Result.Failure<IEnumerable<string>>("Chat is not configured."));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetSuggestedQuestionsAsync(baulId);
+        var result = await manager.GetSuggestedQuestionsAsync(new BaulId(baulId));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chat is not configured.", result.Error);
