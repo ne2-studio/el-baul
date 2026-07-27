@@ -18,7 +18,8 @@ Commands:
   frontend-dev   fake-oidc + api-lite in Docker, app from Vite on port 5173.
   backend-dev    dependencies in Docker, backend from local dotnet on port 5050.
   full-stack     compose-built API, app, admin, and dependencies in Docker.
-  logs [mode]    show logs for frontend-dev, backend-dev, or full-stack.
+  logs [mode] [component]
+                 show recent logs for a mode, optionally narrowed to a component.
   cleanup        stop local dev processes and compose stacks started by this helper.
 EOF
 }
@@ -71,7 +72,7 @@ require_port_free() {
   local purpose="$2"
 
   if port_in_use "$port"; then
-    die "$purpose port $port is already in use; run './scripts/run-env cleanup' or stop the conflicting process"
+    die "$purpose port $port is already in use; run './scripts/run-env cleanup' or report the conflicting user process"
   fi
 }
 
@@ -81,7 +82,7 @@ require_port_free_unless_owned() {
   shift 2
 
   if port_in_use "$port" && ! docker_port_owned_by "$port" "$@"; then
-    die "$purpose port $port is already in use by an unexpected process; run './scripts/run-env cleanup' or stop it"
+    die "$purpose port $port is already in use by an unexpected process; run './scripts/run-env cleanup' or report the conflict"
   fi
 }
 
@@ -134,6 +135,24 @@ ensure_npm_deps() {
   fi
 }
 
+reconcile_frontend_dev() {
+  stop_pid "$BACKEND_PID"
+  docker compose -f "$ROOT_DIR/docker-compose.yaml" down --remove-orphans >/dev/null 2>&1 || true
+}
+
+reconcile_backend_dev() {
+  stop_pid "$VITE_PID"
+  docker compose -f "$ROOT_DIR/docker-compose.lite.yml" down --remove-orphans >/dev/null 2>&1 || true
+  docker compose -f "$ROOT_DIR/docker-compose.yaml" stop api app admin >/dev/null 2>&1 || true
+  docker compose -f "$ROOT_DIR/docker-compose.yaml" rm -f api app admin >/dev/null 2>&1 || true
+}
+
+reconcile_full_stack() {
+  stop_pid "$VITE_PID"
+  stop_pid "$BACKEND_PID"
+  docker compose -f "$ROOT_DIR/docker-compose.lite.yml" down --remove-orphans >/dev/null 2>&1 || true
+}
+
 print_frontend_dev() {
   cat <<EOF
 Mode: frontend-dev
@@ -145,7 +164,11 @@ Docker components: fake-oidc, api-lite
 Development components: app Vite dev server
 Health: ready
 Test user: fake-oidc admin -> admin-user (Admin User); user -> normal-user (Normal User)
-Logs: ./scripts/run-env logs frontend-dev
+Logs:
+  all: ./scripts/run-env logs frontend-dev
+  frontend: ./scripts/run-env logs frontend-dev frontend
+  backend: ./scripts/run-env logs frontend-dev backend
+  auth: ./scripts/run-env logs frontend-dev auth
 Cleanup: ./scripts/run-env cleanup
 EOF
 }
@@ -161,7 +184,11 @@ Docker components: postgres, minio, imgproxy, fake-oidc, mailpit
 Development components: backend
 Health: ready
 Test user: fake-oidc admin -> admin-user (Admin User); user -> normal-user (Normal User)
-Logs: ./scripts/run-env logs backend-dev
+Logs:
+  all: ./scripts/run-env logs backend-dev
+  backend: ./scripts/run-env logs backend-dev backend
+  infra: ./scripts/run-env logs backend-dev infra
+  auth: ./scripts/run-env logs backend-dev auth
 Cleanup: ./scripts/run-env cleanup
 EOF
 }
@@ -178,7 +205,12 @@ Docker components: postgres, minio, imgproxy, fake-oidc, mailpit, api, app, admi
 Development components: none
 Health: ready
 Test user: fake-oidc admin -> admin-user (Admin User); user -> normal-user (Normal User)
-Logs: ./scripts/run-env logs full-stack
+Logs:
+  all: ./scripts/run-env logs full-stack
+  frontend: ./scripts/run-env logs full-stack frontend
+  backend: ./scripts/run-env logs full-stack backend
+  admin: ./scripts/run-env logs full-stack admin
+  infra: ./scripts/run-env logs full-stack infra
 Cleanup: ./scripts/run-env cleanup
 EOF
 }
@@ -188,6 +220,7 @@ frontend_dev() {
   need npm
   need curl
   ensure_dirs
+  reconcile_frontend_dev
 
   require_port_free 3000 "Docker frontend"
   require_port_free_unless_owned 5000 "fake-oidc" el-baul-lite-fake-oidc-1
@@ -226,6 +259,7 @@ backend_dev() {
   need dotnet
   need curl
   ensure_dirs
+  reconcile_backend_dev
 
   require_port_free 3000 "Docker frontend"
   require_port_free 3001 "Docker admin"
@@ -261,6 +295,7 @@ full_stack() {
   need docker
   need curl
   ensure_dirs
+  reconcile_full_stack
 
   if port_in_use 5173 && ! pid_alive "$VITE_PID"; then
     die "Vite frontend port 5173 is already in use; full-stack must not leave a second frontend running"
@@ -290,20 +325,44 @@ full_stack() {
 
 logs() {
   local mode="${1:-}"
+  local component="${2:-all}"
   case "$mode" in
     frontend-dev)
-      [[ -f "$VITE_LOG" ]] && tail -80 "$VITE_LOG" || true
-      docker compose -f "$ROOT_DIR/docker-compose.lite.yml" logs --tail=80 fake-oidc api-lite
+      case "$component" in
+        all)
+          [[ -f "$VITE_LOG" ]] && tail -80 "$VITE_LOG" || true
+          docker compose -f "$ROOT_DIR/docker-compose.lite.yml" logs --tail=80 fake-oidc api-lite
+          ;;
+        frontend) [[ -f "$VITE_LOG" ]] && tail -120 "$VITE_LOG" || true ;;
+        backend) docker compose -f "$ROOT_DIR/docker-compose.lite.yml" logs --tail=120 api-lite ;;
+        auth) docker compose -f "$ROOT_DIR/docker-compose.lite.yml" logs --tail=120 fake-oidc ;;
+        *) die "unknown frontend-dev log component: $component" ;;
+      esac
       ;;
     backend-dev)
-      [[ -f "$BACKEND_LOG" ]] && tail -120 "$BACKEND_LOG" || true
-      docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=80 postgres minio imgproxy fake-oidc mailpit
+      case "$component" in
+        all)
+          [[ -f "$BACKEND_LOG" ]] && tail -120 "$BACKEND_LOG" || true
+          docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=80 postgres minio imgproxy fake-oidc mailpit
+          ;;
+        backend) [[ -f "$BACKEND_LOG" ]] && tail -160 "$BACKEND_LOG" || true ;;
+        infra) docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=120 postgres minio imgproxy mailpit ;;
+        auth) docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=120 fake-oidc ;;
+        *) die "unknown backend-dev log component: $component" ;;
+      esac
       ;;
     full-stack)
-      docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=120 postgres minio imgproxy fake-oidc mailpit api app admin
+      case "$component" in
+        all) docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=120 postgres minio imgproxy fake-oidc mailpit api app admin ;;
+        frontend) docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=160 app ;;
+        backend) docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=160 api ;;
+        admin) docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=160 admin ;;
+        infra) docker compose -f "$ROOT_DIR/docker-compose.yaml" logs --tail=120 postgres minio imgproxy fake-oidc mailpit ;;
+        *) die "unknown full-stack log component: $component" ;;
+      esac
       ;;
     *)
-      die "usage: ./scripts/run-env logs <frontend-dev|backend-dev|full-stack>"
+      die "usage: ./scripts/run-env logs <frontend-dev|backend-dev|full-stack> [component]"
       ;;
   esac
 }
@@ -321,7 +380,7 @@ case "${1:-}" in
   frontend-dev) frontend_dev ;;
   backend-dev) backend_dev ;;
   full-stack) full_stack ;;
-  logs) shift; logs "${1:-}" ;;
+  logs) shift; logs "${1:-}" "${2:-all}" ;;
   cleanup) cleanup ;;
   -h|--help|help|"") usage ;;
   *) usage >&2; die "unknown command: $1" ;;
