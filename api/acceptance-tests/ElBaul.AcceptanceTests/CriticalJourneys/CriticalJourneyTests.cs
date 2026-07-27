@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 
-namespace ElBaul.ImageTests.CriticalJourneys;
+namespace ElBaul.AcceptanceTests.CriticalJourneys;
 
 /// <summary>
 /// The image's core public contract, exercised end to end through real HTTP calls, a real
@@ -15,8 +15,8 @@ namespace ElBaul.ImageTests.CriticalJourneys;
 /// chapter, upload a photo, get the same bytes back, add a recuerdo. All response shapes are
 /// asserted via JsonDocument / local minimal records, never the backend's own DTOs.
 /// </summary>
-[Collection(ImageTestCollection.Name)]
-public class CriticalJourneyTests(ElBaulImageFixture fixture)
+[Collection(AcceptanceTestCollection.Name)]
+public class CriticalJourneyTests(ElBaulAcceptanceFixture fixture)
 {
     // A minimal valid 1x1 JPEG — real image bytes, not an arbitrary blob, so this exercises
     // whatever (if any) image handling happens on the upload path.
@@ -27,7 +27,7 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
     public async Task Full_content_creation_journey_succeeds()
     {
         using var tokenClient = fixture.CreateOidcTokenClient();
-        var accessToken = await tokenClient.GetAccessTokenAsync(ElBaulImageFixture.OidcAdminUserKey);
+        var accessToken = await tokenClient.GetAccessTokenAsync(ElBaulAcceptanceFixture.OidcAdminUserKey);
 
         using var client = new HttpClient { BaseAddress = fixture.BackendClient.BaseAddress };
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -35,7 +35,7 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
         // 1. Create a baúl.
         var createBaulResponse = await client.PostAsJsonAsync("/api/baules", new
         {
-            name = "Baúl de prueba de imagen",
+            name = "Baúl de prueba de aceptación",
             description = (string?)null
         });
         createBaulResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createBaulResponse.Content.ReadAsStringAsync());
@@ -73,7 +73,7 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
         downloadedBytes.Should().Equal(SampleJpegBytes, "the downloaded photo should be byte-identical to what was uploaded");
 
         // 5. Add a recuerdo to the photo.
-        var recuerdoText = "Un recuerdo añadido por los tests de imagen";
+        var recuerdoText = "Un recuerdo añadido por los tests de aceptación";
         var createRecuerdoResponse = await client.PostAsJsonAsync($"/api/photos/{photoId}/recuerdos", new { text = recuerdoText });
         createRecuerdoResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createRecuerdoResponse.Content.ReadAsStringAsync());
         var recuerdoJson = await ParseJsonAsync(createRecuerdoResponse);
@@ -85,7 +85,7 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
     public async Task Approving_removal_request_hides_photo_but_keeps_downloadable_blob()
     {
         using var tokenClient = fixture.CreateOidcTokenClient();
-        var accessToken = await tokenClient.GetAccessTokenAsync(ElBaulImageFixture.OidcAdminUserKey);
+        var accessToken = await tokenClient.GetAccessTokenAsync(ElBaulAcceptanceFixture.OidcAdminUserKey);
 
         using var client = new HttpClient { BaseAddress = fixture.BackendClient.BaseAddress };
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -119,7 +119,7 @@ public class CriticalJourneyTests(ElBaulImageFixture fixture)
         var createRequestResponse = await client.PostAsJsonAsync($"/api/baules/{baulId}/removal-requests", new
         {
             photoId,
-            reason = "Retirada validada por test de imagen"
+            reason = "Retirada validada por test de aceptación"
         });
         createRequestResponse.StatusCode.Should().Be(HttpStatusCode.OK, await createRequestResponse.Content.ReadAsStringAsync());
         var requestId = (await ParseJsonAsync(createRequestResponse)).GetProperty("id").GetString();

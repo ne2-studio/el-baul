@@ -4,15 +4,15 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 
-namespace ElBaul.ImageTests.CriticalJourneys;
+namespace ElBaul.AcceptanceTests.CriticalJourneys;
 
 /// <summary>
 /// Black-box authorization checks at the public HTTP boundary. These scenarios deliberately
 /// use two real tokens and two baúles so regressions in auth, routing, EF, or storage wiring
 /// are observable against the deployed image shape, without referencing backend DTOs.
 /// </summary>
-[Collection(ImageTestCollection.Name)]
-public class CrossBaulAuthorizationTests(ElBaulImageFixture fixture)
+[Collection(AcceptanceTestCollection.Name)]
+public class CrossBaulAuthorizationTests(ElBaulAcceptanceFixture fixture)
 {
     private static readonly byte[] SampleJpegBytes = Convert.FromBase64String(
         "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=");
@@ -22,9 +22,9 @@ public class CrossBaulAuthorizationTests(ElBaulImageFixture fixture)
     {
         using var tokenClient = fixture.CreateOidcTokenClient();
         using var firstClient = await CreateAuthenticatedClientAsync(
-            tokenClient, ElBaulImageFixture.OidcAdminUserKey);
+            tokenClient, ElBaulAcceptanceFixture.OidcAdminUserKey);
         using var secondClient = await CreateAuthenticatedClientAsync(
-            tokenClient, ElBaulImageFixture.OidcSecondUserKey);
+            tokenClient, ElBaulAcceptanceFixture.OidcSecondUserKey);
 
         _ = await CreateBaulAsync(firstClient, "Baúl del primer usuario");
         var secondBaulId = await CreateBaulAsync(secondClient, "Baúl del segundo usuario");
@@ -58,9 +58,9 @@ public class CrossBaulAuthorizationTests(ElBaulImageFixture fixture)
     {
         using var tokenClient = fixture.CreateOidcTokenClient();
         using var firstClient = await CreateAuthenticatedClientAsync(
-            tokenClient, ElBaulImageFixture.OidcAdminUserKey);
+            tokenClient, ElBaulAcceptanceFixture.OidcAdminUserKey);
         using var secondClient = await CreateAuthenticatedClientAsync(
-            tokenClient, ElBaulImageFixture.OidcSecondUserKey);
+            tokenClient, ElBaulAcceptanceFixture.OidcSecondUserKey);
 
         var firstBaulId = await CreateBaulAsync(firstClient, "Baúl ajeno a la retirada");
         var secondBaulId = await CreateBaulAsync(secondClient, "Baúl dueño de la foto");

@@ -1,7 +1,7 @@
 using DotNet.Testcontainers.Builders;
 using FluentAssertions;
 
-namespace ElBaul.ImageTests.InfrastructureCompatibility;
+namespace ElBaul.AcceptanceTests.InfrastructureCompatibility;
 
 /// <summary>
 /// Confirms the image talks correctly to the external services it's contractually built
@@ -12,8 +12,8 @@ namespace ElBaul.ImageTests.InfrastructureCompatibility;
 /// exceptions to "don't touch infrastructure directly" — verifying persistence/migrations,
 /// and talking to S3 as an external interface.
 /// </summary>
-[Collection(ImageTestCollection.Name)]
-public class InfrastructureCompatibilityTests(ElBaulImageFixture fixture)
+[Collection(AcceptanceTestCollection.Name)]
+public class InfrastructureCompatibilityTests(ElBaulAcceptanceFixture fixture)
 {
     [Fact]
     public async Task Runs_EF_Core_migrations_against_Postgres_on_startup()

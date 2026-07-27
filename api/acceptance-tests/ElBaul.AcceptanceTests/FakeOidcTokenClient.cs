@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
-namespace ElBaul.ImageTests;
+namespace ElBaul.AcceptanceTests;
 
 /// <summary>
 /// Mints a real access token from the fake-oidc container over plain HTTP — no browser, no
@@ -13,9 +13,9 @@ namespace ElBaul.ImageTests;
 /// that same doc and is skipped here to keep this helper minimal — it isn't what's under
 /// test.
 ///
-/// Owns its own HttpClient (rather than reusing ElBaulImageFixture.FakeOidcClient) because it
+/// Owns its own HttpClient (rather than reusing ElBaulAcceptanceFixture.FakeOidcClient) because it
 /// needs auto-redirect-following turned off: /authorize/select's 302 points at
-/// ElBaulImageFixture.OidcRedirectUri, an address that only exists to be compared against by
+/// ElBaulAcceptanceFixture.OidcRedirectUri, an address that only exists to be compared against by
 /// fake-oidc/the backend and was never meant to be dereferenced.
 /// </summary>
 public sealed class FakeOidcTokenClient : IDisposable
@@ -33,9 +33,9 @@ public sealed class FakeOidcTokenClient : IDisposable
     public async Task<string> GetAccessTokenAsync(string userKey)
     {
         var query = "response_type=code" +
-            $"&client_id={ElBaulImageFixture.OidcClientId}" +
-            $"&redirect_uri={Uri.EscapeDataString(ElBaulImageFixture.OidcRedirectUri)}" +
-            "&state=image-tests" +
+            $"&client_id={ElBaulAcceptanceFixture.OidcClientId}" +
+            $"&redirect_uri={Uri.EscapeDataString(ElBaulAcceptanceFixture.OidcRedirectUri)}" +
+            "&state=acceptance-tests" +
             $"&user={userKey}";
 
         using var selectResponse = await _httpClient.GetAsync($"/authorize/select?{query}");
@@ -56,8 +56,8 @@ public sealed class FakeOidcTokenClient : IDisposable
         {
             ["grant_type"] = "authorization_code",
             ["code"] = code,
-            ["client_id"] = ElBaulImageFixture.OidcClientId,
-            ["redirect_uri"] = ElBaulImageFixture.OidcRedirectUri,
+            ["client_id"] = ElBaulAcceptanceFixture.OidcClientId,
+            ["redirect_uri"] = ElBaulAcceptanceFixture.OidcRedirectUri,
         }));
         tokenResponse.EnsureSuccessStatusCode();
 

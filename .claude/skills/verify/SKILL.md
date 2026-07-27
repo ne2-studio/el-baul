@@ -23,9 +23,9 @@ regression the backend's own DTOs wouldn't reveal, or anything only reachable th
 real container (raw SQL, migrations, the built image's env-var contract).
 
 **Any change to the domain model, persistence (entities, EF configuration, migrations,
-value converters), or the public API contract is not verified until `docker-image-tests`
+value converters), or the public API contract is not verified until `acceptance-tests`
 has also passed against the actual built image** — this is a separate solution
-(`docker-image-tests/ElBaul.ImageTests.slnx`, not part of `ElBaul.slnx`), so
+(`acceptance-tests/ElBaul.AcceptanceTests.slnx`, not part of `ElBaul.slnx`), so
 `backend-unit` does **not** run it:
 
 ```bash
@@ -38,11 +38,11 @@ create-baúl → chapter → upload-photo → download-same-bytes → recuerdo j
 It's what actually caught, for example, an EF Core limitation where an optional/nullable
 complex property compiled fine and passed every fake-backed unit test but threw at
 startup against real Postgres — `dotnet test ElBaul.Tests` alone would have shipped it.
-See [`docker-image-tests/README.md`](../../../api/docker-image-tests/README.md) for what
+See [`acceptance-tests/README.md`](../../../api/acceptance-tests/README.md) for what
 each test group covers.
 
 `backend-acceptance` builds the backend image locally with a fresh verification tag before
-running the image tests, removes any existing local image with that tag first, and removes the
+running the acceptance tests, removes any existing local image with that tag first, and removes the
 verification image afterward unless `KEEP_VERIFY_IMAGES=1` is set.
 
 For anything in `ElBaul.Maintenance/Commands/` (one-off maintenance commands like
@@ -114,7 +114,7 @@ additional frontend server manually.
   record's primary constructor can't bind a complex-type parameter in the first place —
   both are model-validation/materialization failures that only surface when
   `OnModelCreating` actually runs against a real `DbContext`, which no fake-backed test
-  ever does. `docker-image-tests` (or just running the built image against real Postgres)
+  ever does. `acceptance-tests` (or just running the built image against real Postgres)
   is what caught it; `dotnet test` alone would have looked green and shipped.
 
 ## Playwright verification pattern

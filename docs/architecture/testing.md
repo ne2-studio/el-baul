@@ -8,7 +8,7 @@ Choose the smallest test that can detect the failure.
 | Backend infra-layer logic (URL building, middleware) | `api/ElBaul.Infra.Tests` |
 | Backend controller/authorization concerns | `api/ElBaul.Api.Tests` |
 | Backend maintenance command logic | `api/ElBaul.Maintenance.Tests` |
-| Backend domain model, persistence, or public API contract | + `api/docker-image-tests` |
+| Backend domain model, persistence, or public API contract | + `api/acceptance-tests` |
 | Frontend pure logic (mappers, formatters, reducers) | Vitest, `environment: 'node'` (default) |
 | Frontend component/hook behavior | Vitest + jsdom + React Testing Library |
 | Frontend journey: photo/persona/removal-request flows | `app/e2e/` (against `el-baul-api-lite`) |
@@ -21,7 +21,7 @@ Run verification from the repository root through `./scripts/verify`:
 | Command | Coverage |
 |---|---|
 | `./scripts/verify backend-unit` | Restore, Release build, and Release `--no-build` tests for `api/ElBaul.slnx` |
-| `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/docker-image-tests` |
+| `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/acceptance-tests` |
 | `./scripts/verify frontend-unit` | Consumer app TypeScript check + Vitest |
 | `./scripts/verify admin-unit` | Admin TypeScript check + Vitest |
 | `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/e2e` |
@@ -50,7 +50,7 @@ Run verification from the repository root through `./scripts/verify`:
   fake-first convention as `ElBaul.Tests`: use `ElBaul.Infra.Lite`'s `InMemory*Repository`
   implementations for stateful ports and small test-local fakes for deterministic storage,
   clocks, extractors, or provider failures.
-- **`docker-image-tests/`** — a separate solution (excluded from `ElBaul.slnx` — plain
+- **`acceptance-tests/`** — a separate solution (excluded from `ElBaul.slnx` — plain
   `dotnet test` does not run it). Black-box acceptance tests for the *built Docker image*, run
   via Testcontainers against a real Postgres + MinIO + fake-oidc stack: no `ProjectReference` to
   anything above, no shared fixtures/DTOs. Runs in CI right after `docker build`, before the
@@ -61,7 +61,7 @@ Run verification from the repository root through `./scripts/verify`:
 
   Run with `./scripts/verify backend-acceptance`.
 
-  See `api/docker-image-tests/README.md` for its own rule set.
+  See `api/acceptance-tests/README.md` for its own rule set.
 
 ## Frontend
 

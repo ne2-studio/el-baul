@@ -3,7 +3,7 @@
 # el-baul-api-lite keeps everything in memory (see docs/operations/api-lite.md).
 #
 # Both `app` and `api-lite` are images **supplied from outside** via env vars, never built by
-# this file — same principle api/docker-image-tests/README.md states for the backend's own
+# this file — same principle api/acceptance-tests/README.md states for the backend's own
 # acceptance tests: the subject under test is the artifact, not a rebuild from source. Build
 # them yourself first for a local run:
 #

@@ -52,7 +52,7 @@ ElBaul.Maintenance ───┘                                           │
   executables — there's no compile-time or runtime dependency between them. See
   [`../operations/maintenance-commands.md`](../operations/maintenance-commands.md).
 
-`docker-image-tests/` is a deliberately separate solution testing the *built image* — see
+`acceptance-tests/` is a deliberately separate solution testing the *built image* — see
 [`architecture/testing.md`](testing.md).
 
 ## Controllers

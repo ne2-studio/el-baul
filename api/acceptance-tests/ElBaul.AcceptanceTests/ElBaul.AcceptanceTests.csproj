@@ -2,7 +2,7 @@
 
   <!--
     This project is deliberately isolated from the rest of the backend solution (see
-    ElBaul.slnx) — it has its own .sln and lives in its own directory precisely so it
+    ElBaul.slnx) — it has its own .slnx and lives in its own directory precisely so it
     CANNOT accumulate a ProjectReference to api/src by accident. It exercises the built
     Docker image as an opaque artifact over HTTP/network only. See ../README.md for the
     full set of rules this project follows and ArchitectureRulesTests.cs for the automated

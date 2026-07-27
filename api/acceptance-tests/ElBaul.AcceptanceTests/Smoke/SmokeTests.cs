@@ -4,7 +4,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 
-namespace ElBaul.ImageTests.Smoke;
+namespace ElBaul.AcceptanceTests.Smoke;
 
 /// <summary>
 /// The bare minimum a deployed image must do to be worth deploying at all: start, stay up,
@@ -13,8 +13,8 @@ namespace ElBaul.ImageTests.Smoke;
 /// it to (docker-compose.yaml, Coolify, `docker run -e ...` all configure it this way — see
 /// docs/operations/local-development.md).
 /// </summary>
-[Collection(ImageTestCollection.Name)]
-public class SmokeTests(ElBaulImageFixture fixture)
+[Collection(AcceptanceTestCollection.Name)]
+public class SmokeTests(ElBaulAcceptanceFixture fixture)
 {
     [Fact]
     public void Image_starts_and_keeps_running()
@@ -48,7 +48,7 @@ public class SmokeTests(ElBaulImageFixture fixture)
     [Fact]
     public async Task Picks_up_configuration_from_environment_variables()
     {
-        // App__PublicUrl was injected only via env var (see ElBaulImageFixture.BackendEnvironment)
+        // App__PublicUrl was injected only via env var (see ElBaulAcceptanceFixture.BackendEnvironment)
         // — no baked-in appsettings.json value matches it — so seeing it echoed back here proves
         // env-var configuration actually reaches the running process, not just that the
         // container starts with *some* config.
@@ -56,7 +56,7 @@ public class SmokeTests(ElBaulImageFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var body = await response.Content.ReadAsStringAsync();
-        body.Should().Contain("image-test.el-baul.invalid");
+        body.Should().Contain("acceptance-test.el-baul.invalid");
     }
 
     [Fact]

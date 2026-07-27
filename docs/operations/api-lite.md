@@ -59,7 +59,7 @@ Everything lives in memory for the container's process lifetime — `docker rest
 `appsettings.json` in `ElBaul.Api.Lite/` carries the rest of the defaults (`RateLimiter`,
 `Features`, `Serilog`) — override via env vars the same way as the real image.
 
-This image is **not** exercised by `docker-image-tests/` and shouldn't be — that suite exists
+This image is **not** exercised by `acceptance-tests/` and shouldn't be — that suite exists
 specifically to verify the real image against real infrastructure. There's currently no
 automated check that `el-baul-api-lite` still builds/works on its own; `app/e2e/` running
 successfully in CI is the closest thing to one today.

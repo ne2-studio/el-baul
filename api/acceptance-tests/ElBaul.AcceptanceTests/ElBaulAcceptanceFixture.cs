@@ -2,13 +2,13 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 
-namespace ElBaul.ImageTests;
+namespace ElBaul.AcceptanceTests;
 
 /// <summary>
 /// Boots the same shape of stack docker-compose.yaml gives local dev — Postgres, MinIO,
 /// fake-oidc, and the backend image under test — on an isolated Docker network, entirely
 /// through their public images/ports/env vars. Shared by every test class in the
-/// <see cref="ImageTestCollection"/> collection: one stack per test run, not per test, since
+/// <see cref="AcceptanceTestCollection"/> collection: one stack per test run, not per test, since
 /// the backend genuinely cannot start without a reachable Postgres and MinIO (it runs
 /// migrations and a bucket-existence check before it starts serving — see Program.cs — so
 /// there is no lighter-weight "smoke only" environment to fall back to).
@@ -17,7 +17,7 @@ namespace ElBaul.ImageTests;
 /// names, ports, and environment variable contracts, exactly like an operator standing up
 /// this stack from the outside would. See ../README.md for the full rule set.
 /// </summary>
-public sealed class ElBaulImageFixture : IAsyncLifetime
+public sealed class ElBaulAcceptanceFixture : IAsyncLifetime
 {
     private const string PostgresUser = "imagetest";
     private const string PostgresPassword = "imagetest";
@@ -29,8 +29,8 @@ public sealed class ElBaulImageFixture : IAsyncLifetime
     public const string OidcAdminUserKey = "admin";
     public const string OidcAdminSub = "admin-user";
     public const string OidcSecondUserKey = "second-user";
-    public const string OidcSecondUserSub = "second-image-test-user";
-    public const string OidcRedirectUri = "https://image-test.el-baul.invalid/callback";
+    public const string OidcSecondUserSub = "second-acceptance-test-user";
+    public const string OidcRedirectUri = "https://acceptance-test.el-baul.invalid/callback";
 
     public INetwork Network { get; private set; } = null!;
     public IContainer Postgres { get; private set; } = null!;
@@ -63,7 +63,7 @@ public sealed class ElBaulImageFixture : IAsyncLifetime
         // Observable from the outside via GET /api/app-config's "appUrl" — used by
         // SmokeTests to prove env vars actually reach the running process, not just that
         // the container starts.
-        ["App__PublicUrl"] = "https://image-test.el-baul.invalid",
+        ["App__PublicUrl"] = "https://acceptance-test.el-baul.invalid",
     };
 
     public async Task InitializeAsync()
@@ -104,7 +104,7 @@ public sealed class ElBaulImageFixture : IAsyncLifetime
             .WithPortBinding(5000, true)
             .WithEnvironment("OIDC_ISSUER", "http://fake-oidc:5000")
             .WithEnvironment("OIDC_CLIENTS", $$"""[{"clientId":"{{OidcClientId}}","redirectUris":["{{OidcRedirectUri}}"]}]""")
-            .WithEnvironment("OIDC_USERS", $$"""[{"key":"{{OidcAdminUserKey}}","sub":"{{OidcAdminSub}}","email":"admin@image-test.el-baul.invalid","name":"Image Test Admin","roles":["admin"]},{"key":"{{OidcSecondUserKey}}","sub":"{{OidcSecondUserSub}}","email":"second@image-test.el-baul.invalid","name":"Second Image Test User","roles":[]}]""")
+            .WithEnvironment("OIDC_USERS", $$"""[{"key":"{{OidcAdminUserKey}}","sub":"{{OidcAdminSub}}","email":"admin@acceptance-test.el-baul.invalid","name":"Acceptance Test Admin","roles":["admin"]},{"key":"{{OidcSecondUserKey}}","sub":"{{OidcSecondUserSub}}","email":"second@acceptance-test.el-baul.invalid","name":"Second Acceptance Test User","roles":[]}]""")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r
                 .ForPort(5000)
                 .ForPath("/health")))

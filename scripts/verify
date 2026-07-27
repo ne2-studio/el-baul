@@ -12,7 +12,7 @@ Usage: ./scripts/verify <command>
 
 Commands:
   backend-unit          Build and test the .NET backend solution in Release.
-  backend-acceptance    Build the real backend image and run docker-image-tests.
+  backend-acceptance    Build the real backend image and run acceptance-tests.
   frontend-unit         Run app type checks and unit/component tests.
   admin-unit            Run admin type checks and unit/component tests.
   frontend-acceptance   Build app + api-lite images and run app Playwright E2E.
@@ -138,7 +138,7 @@ backend_acceptance() {
   local image="${BACKEND_IMAGE:-el-baul-api:verify-$RUN_ID}"
 
   docker_build_fresh "$image" "$ROOT_DIR/api"
-  run env BACKEND_IMAGE="$image" dotnet test "$ROOT_DIR/api/docker-image-tests/ElBaul.ImageTests.slnx"
+  run env BACKEND_IMAGE="$image" dotnet test "$ROOT_DIR/api/acceptance-tests/ElBaul.AcceptanceTests.slnx"
 }
 
 frontend_unit_package() {

@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using FluentAssertions;
 
-namespace ElBaul.ImageTests;
+namespace ElBaul.AcceptanceTests;
 
 /// <summary>
 /// Self-enforcing guard for this project's one hard rule: it must never gain a compile-time
@@ -17,13 +17,13 @@ public class ArchitectureRulesTests
     [Fact]
     public void This_project_has_no_ProjectReference_to_anything()
     {
-        var csprojPath = Path.Combine(ProjectDirectory(), "ElBaul.ImageTests.csproj");
+        var csprojPath = Path.Combine(ProjectDirectory(), "ElBaul.AcceptanceTests.csproj");
         File.Exists(csprojPath).Should().BeTrue($"expected to find {csprojPath}");
 
         var csprojContent = File.ReadAllText(csprojPath);
 
         csprojContent.Should().NotContain("<ProjectReference",
-            "docker-image-tests must only know the built image, its env vars, and its public HTTP contract — " +
+            "acceptance-tests must only know the built image, its env vars, and its public HTTP contract — " +
             "a ProjectReference would let it compile against backend source, defeating the point of testing " +
             "the image as an opaque artifact. See README.md.");
     }

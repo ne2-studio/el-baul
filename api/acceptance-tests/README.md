@@ -27,7 +27,7 @@ on every `dotnet test`, or structurally, by what this project simply has no way 
   the Postgres container itself via `ExecAsync` — not EF Core, not a connection string parsed
   out of backend config).
 - **The image is always supplied from outside**, via the `BACKEND_IMAGE` environment variable
-  (see `ElBaulImageFixture.InitializeAsync`) — never built from source as part of running these
+  (see `ElBaulAcceptanceFixture.InitializeAsync`) — never built from source as part of running these
   tests. That's what makes the subject under test unambiguously the artifact, not the code.
 - **No `WebApplicationFactory`.** The backend only ever exists here as a real container,
   reached over the network like any other client would reach it.
