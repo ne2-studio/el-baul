@@ -39,26 +39,32 @@ actual 45 stories and their actual prop signatures instead.
 Adopt this taxonomy for Storybook's `title` (and, later, for physical file layout — see
 Consequences):
 
+The primary goal is to improve Storybook navigation and make component location communicate
+the component's level of reuse inside El Baúl. This is not an attempt to build a
+product-agnostic UI library or a design system intended to be reused across different
+products.
+
 1. **Foundations** — visual primitives and raw design tokens: icons and (later) color/type/
    spacing scales. Not really "components" so much as the app's raw material.
-2. **Components** — generic UI with no import of an El Baúl domain type (`Persona`,
-   `Chapter`, `Photo`, `Recuerdo`, `Baul`, `BaulRole`). Subgrouped by function: `Actions`,
-   `Forms`, `Navigation`, `Feedback`, `DataDisplay`, `Overlays`.
-3. **Patterns** — reusable compositions of Components that still take only primitive/generic
-   props, not domain entities. They don't know what a `Persona` or `Chapter` *is*, even if
-   they're currently only invoked from one domain context.
+2. **Components** — small reusable UI mechanisms that are not tied to a concrete El Baúl
+   feature. They may take primitive props or small shared value types. Subgrouped by
+   function: `Actions`, `Forms`, `Navigation`, `Feedback`, `DataDisplay`, `Overlays`.
+3. **Patterns** — reusable compositions of Components that take primitive props or small
+   shared value types. They are still visual mechanisms rather than concrete feature
+   behavior, even if they're currently only invoked from one domain context.
 4. **Layouts** — page-structure components (fixed header, safe areas, max width, FAB
    position) that take `children`/slots and don't know what's inside them. No members exist
    yet — see Consequences.
-5. **Features** — components that import a domain type directly and speak El Baúl's
-   vocabulary. Grouped by domain area: `Baules`, `Chapters`, `People`, `Photos`, `Memories`
-   (Recuerdos), `Sharing`, `Subscription`, `Profile`.
+5. **Features** — components that implement a concrete El Baúl capability and speak the
+   vocabulary of a domain area. Grouped by domain area: `Baules`, `Chapters`, `People`,
+   `Photos`, `Memories` (Recuerdos), `Sharing`, `Subscription`, `Profile`.
 6. **Screens** — full route pages assembled from Layouts + Features + Components.
 
-**Litmus test** for Components vs. Patterns vs. Features: could this render correctly in a
-different app (CashClarity, say) with just a theme swap and no El Baúl-specific data shape?
-If it only needs strings/booleans/callbacks → Components or Patterns. If it needs a `Persona`
-or a `Photo` → Features.
+**Litmus test** for Components vs. Patterns vs. Features: does this component represent a
+visual mechanism reusable in different El Baúl contexts, or does it implement a concrete
+feature capability? If it is a reusable mechanism (`PartialDatePicker`, `DateModal`,
+`PhotoStage`) → Components or Patterns. If it is hardcoded to a specific domain action or
+workflow (`DeleteChapterModal`, `NuevaPersonaModal`) → Features.
 
 That test needs one refinement, found while classifying single-purpose confirmation dialogs
 (`DeleteChapterModal`, `DeletePhotoModal`, `RemovalRequestModal`, `RevokeAccessModal`,
@@ -66,25 +72,33 @@ That test needs one refinement, found while classifying single-purpose confirmat
 them are reusable either — each is hardcoded, copy and all, to one specific destructive or
 domain action. The real test isn't just "does it import a domain type," it's "could this be
 dropped into a different call site for a different purpose." `EditInfoModal`/`DateModal`/
-`PhotoStage` pass that test (generic mechanism, several unrelated call sites); the
+`PhotoStage` pass that test (reusable mechanism, several unrelated call sites); the
 confirmation dialogs above don't, so they're `Features` despite the clean type signature.
 
+The taxonomy is oriented toward navigation, discoverability, and code placement. It is not an
+ontological classification of every UI element and it does not require every file under
+`design-system/` to be independent of El Baúl's product domain or reusable outside this
+product.
+
 `preview.tsx` sets `parameters.options.storySort` to `['Foundations', 'Components',
-'Patterns', 'Layouts', 'Features', 'Screens']` so the sidebar reflects this order (generic →
-domain-specific) instead of alphabetizing `Components` before `Foundations`. The full,
+'Patterns', 'Layouts', 'Features', 'Screens']` so the sidebar reflects this order (reusable →
+feature-specific) instead of alphabetizing `Components` before `Foundations`. The full,
 current inventory is Storybook itself, not a table in this file — a hand-maintained list here
 would start rotting the day after this ADR merges. Browse the sidebar (`npm run storybook`) or
 grep story `title`s for the authoritative list.
 
-Dependency rule for both the Storybook grouping and the physical file layout (see below):
+Main dependency constraint for the physical file layout (see below):
 
 ```
-Screens → Features → Patterns → Components → Foundations
+Features and Screens → design-system
 ```
 
-Never the reverse — a `Component` must never import a `Feature`, a `Pattern` must never
-import a domain type, etc. This is the rule that keeps the "design system" from becoming
-quietly coupled to the domain, which is the failure mode this ADR exists to prevent.
+Features and Screens may compose elements from `design-system/`. Files under
+`design-system/` should not import concrete feature implementations: feature components,
+feature hooks, routes, API clients, services, or other application-state infrastructure.
+They may depend on small shared value types from the product, such as `PhotoDate`, when
+those types are a natural part of the component contract and do not couple the component to
+one concrete feature.
 
 ### Physical layout
 
@@ -93,7 +107,9 @@ The taxonomy above is also the physical directory layout under `app/src/`:
 - `design-system/foundations/`, `design-system/components/{actions,forms,navigation,
   feedback,data-display,overlays,ui}`, `design-system/patterns/{forms,media}`,
   `design-system/layouts/` — every file classified as `Foundations`, `Components`,
-  `Patterns`, or `Layouts`. No file here imports a domain type or a `features/*` module.
+  `Patterns`, or `Layouts`. Files here avoid concrete feature implementations. Some may use
+  shared value objects or product types when doing so simplifies their contract without
+  reducing their internal reuse across El Baúl.
 - `features/<domain>/components/` — every file classified as `Features` or `Screens` lives
   next to the `*Route.tsx` container(s) that render it, one folder per domain (`baules`,
   `chapters`, `people`, `photos`, `memories`, `sharing`, `profile`, `chat`, `auth`, `support`).
@@ -129,18 +145,21 @@ props, reused by five unrelated routes) — it was reclassified to
   `app/components/` directory entirely. All cross-file imports (154 files moved, ~165 files
   with import statements updated) go through the `@/` alias rather than relative paths, so a
   file's physical location and its import specifiers agree.
+- Importing a product type from `design-system/` is not, by itself, considered a boundary
+  violation. The relevant question is whether the dependency couples the component to a
+  concrete feature implementation or prevents reasonable reuse within El Baúl.
 - **Judgment calls made along the way, worth revisiting if they start to chafe**:
   - `BaulIcon` is under `Foundations/Icons` because it takes only `SVGProps` and no domain
     data — but it's visually and conceptually tied to the "baúl" brand concept, so
     `Features/Baules` would also be defensible.
-  - `DateModal` and `EditInfoModal` are under `Patterns` because they're a generic mechanism
+  - `DateModal` and `EditInfoModal` are under `Patterns` because they're a reusable mechanism
     reused for unrelated purposes (see the litmus-test refinement above), even though every
     current call site happens to be domain-specific. If a future call site needs
-    domain-shaped behavior instead of a generic one, that instance should move to `Features`
-    rather than dragging the generic component along with it.
+    domain-shaped behavior instead of a reusable one, that instance should move to `Features`
+    rather than dragging the reusable component along with it.
   - `RecuerdoInput` is under `Features/Memories` rather than `Patterns` despite having no
     domain-type import, because its copy (rotating reflection prompts) is specific to the
-    "recuerdo" concept, not a generic text composer.
+    "recuerdo" concept, not a reusable text composer.
 - **Not addressed by this ADR**: separating container components (that fetch data via hooks/
   API) from presentational ones for Storybook purposes; this matters for `Features` and
   `Screens` in particular, where some existing components already do this cleanly and others
