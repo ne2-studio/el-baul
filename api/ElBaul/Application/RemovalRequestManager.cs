@@ -44,7 +44,7 @@ public class RemovalRequestManager(
         var access = auth.Value;
 
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null)
+        if (photo is null || photo.BaulId != baulId)
         {
             logger.LogWarning(
                 "Removal request creation rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);

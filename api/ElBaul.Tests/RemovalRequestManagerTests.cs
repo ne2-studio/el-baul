@@ -79,6 +79,27 @@ public class RemovalRequestManagerTests
     }
 
     [Fact]
+    public async Task CreateRemovalRequestAsync_ShouldRejectPhotoFromAnotherBaul()
+    {
+        var firstBaulId = Guid.NewGuid();
+        var secondBaulId = Guid.NewGuid();
+        var secondChapterId = Guid.NewGuid();
+        var secondPhotoId = Guid.NewGuid();
+        await SeedBaulAsync(firstBaulId, "Familia primera");
+        await SeedBaulAsync(secondBaulId, "Familia segunda", custodioId: OtherUserId);
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(secondChapterId), new BaulId(secondBaulId), "Chapter", 1, "key", _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(secondPhotoId), new ChapterId(secondChapterId), new BaulId(secondBaulId), "key", null, OtherUserId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateRemovalRequestAsync(
+            new BaulId(firstBaulId), new PhotoId(secondPhotoId), "cross-baul");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error);
+        Assert.Empty(await _baulRepository.GetRemovalRequestsAsync(new BaulId(firstBaulId)));
+    }
+
+    [Fact]
     public async Task ApproveRemovalRequestAsync_ShouldSoftDeletePhoto_AndDecrementChapterPhotoCount()
     {
         var baulId = Guid.NewGuid();

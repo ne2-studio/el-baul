@@ -28,6 +28,8 @@ public sealed class ElBaulImageFixture : IAsyncLifetime
     public const string OidcClientId = "el-baul-app";
     public const string OidcAdminUserKey = "admin";
     public const string OidcAdminSub = "admin-user";
+    public const string OidcSecondUserKey = "second-user";
+    public const string OidcSecondUserSub = "second-image-test-user";
     public const string OidcRedirectUri = "https://image-test.el-baul.invalid/callback";
 
     public INetwork Network { get; private set; } = null!;
@@ -102,7 +104,7 @@ public sealed class ElBaulImageFixture : IAsyncLifetime
             .WithPortBinding(5000, true)
             .WithEnvironment("OIDC_ISSUER", "http://fake-oidc:5000")
             .WithEnvironment("OIDC_CLIENTS", $$"""[{"clientId":"{{OidcClientId}}","redirectUris":["{{OidcRedirectUri}}"]}]""")
-            .WithEnvironment("OIDC_USERS", $$"""[{"key":"{{OidcAdminUserKey}}","sub":"{{OidcAdminSub}}","email":"admin@image-test.el-baul.invalid","name":"Image Test Admin","roles":["admin"]}]""")
+            .WithEnvironment("OIDC_USERS", $$"""[{"key":"{{OidcAdminUserKey}}","sub":"{{OidcAdminSub}}","email":"admin@image-test.el-baul.invalid","name":"Image Test Admin","roles":["admin"]},{"key":"{{OidcSecondUserKey}}","sub":"{{OidcSecondUserSub}}","email":"second@image-test.el-baul.invalid","name":"Second Image Test User","roles":[]}]""")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r
                 .ForPort(5000)
                 .ForPath("/health")))

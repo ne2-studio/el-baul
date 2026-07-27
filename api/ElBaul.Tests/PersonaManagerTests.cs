@@ -103,6 +103,20 @@ public class PersonaManagerTests
     }
 
     [Fact]
+    public async Task GetPersonasAsync_ShouldDenyAccess_ForNonMemberOfTheBaul()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.GetPersonasAsync(new BaulId(baulId));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error);
+    }
+
+    [Fact]
     public async Task GetPersonaAsync_ShouldAllowAnyMember_ToViewAnothersFicha()
     {
         var baulId = Guid.NewGuid();
@@ -165,6 +179,28 @@ public class PersonaManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Abuela María", result.Value.Name);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaRoleAsync_ShouldNotUpdatePersonaFromAnotherBaul()
+    {
+        var firstBaulId = Guid.NewGuid();
+        var secondBaulId = Guid.NewGuid();
+        await SeedBaulAsync(firstBaulId, "Familia primera");
+        await SeedBaulAsync(secondBaulId, "Familia segunda");
+        var foreignPersonaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(
+            new PersonaId(foreignPersonaId), new BaulId(secondBaulId), OtherUserId, "Otra", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdatePersonaRoleAsync(
+            new BaulId(firstBaulId), new PersonaId(foreignPersonaId), BaulRole.Administrador);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Persona not found", result.Error);
+
+        var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(foreignPersonaId));
+        Assert.Equal(BaulRole.Colaborador, persona!.Role);
     }
 
     [Fact]

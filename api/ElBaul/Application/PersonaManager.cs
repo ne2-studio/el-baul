@@ -78,11 +78,11 @@ public class PersonaManager(
 
     public async Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(BaulId baulId)
     {
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<IEnumerable<PersonaDto>>("Baul not found");
-
         var userId = currentUserProvider.GetUserId();
-        var access = await baulAccess.GetAsync(baul, userId);
+        var auth = await baulAccess.AuthorizeAsync(
+            baulId, userId, AccessLevel.Member, "Personas list", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<PersonaDto>>(auth.Error);
+        var access = auth.Value;
 
         var personas = await baulRepository.GetPersonasAsync(baulId);
         var dtos = new List<PersonaDto>();
@@ -221,7 +221,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null)
+        if (persona is null || persona.BaulId != baulId)
         {
             logger.LogWarning(
                 "Persona role update rejected: persona not found {BaulId} {PersonaId}",
