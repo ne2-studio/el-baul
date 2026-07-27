@@ -4,7 +4,7 @@ Choose the smallest test that can detect the failure.
 
 | Change | Primary verification |
 |---|---|
-| Backend application/domain logic | `api/ElBaul.Tests` (unit, hand-written fakes) |
+| Backend application/domain logic | `api/ElBaul.Tests` (unit, fake-first, NSubstitute for narrow seams) |
 | Backend infra-layer logic (URL building, middleware) | `api/ElBaul.Infra.Tests` |
 | Backend controller/authorization concerns | `api/ElBaul.Api.Tests` |
 | Backend domain model, persistence, or public API contract | + `api/docker-image-tests` |
@@ -15,10 +15,16 @@ Choose the smallest test that can detect the failure.
 
 ## Backend
 
-- **`ElBaul.Tests`** — `Application/` business logic against hand-written fakes, no mocking
-  framework. Most fakes live in `ElBaul.Infra.Lite` — they're the same classes that back
-  `el-baul-api-lite`, so a unit test and the lite image can never quietly disagree on what a
-  fake does.
+- **`ElBaul.Tests`** — `Application/` business logic with hand-written fakes as the default.
+  Most state-bearing fakes live in `ElBaul.Infra.Lite` (`InMemory*Repository` and related
+  collaborators) — they're the same classes that back `el-baul-api-lite`, so a unit test and the
+  lite image can never quietly disagree on what a fake does. Test-local fakes live under
+  `ElBaul.Tests/Fakes` for deterministic ports such as storage, clocks, IDs, and external
+  services.
+- Use **NSubstitute** only for narrow cases where a full fake would add noise: injecting a
+  specific collaborator failure into an otherwise working flow (for example upload rollback
+  tests), or stubbing a single method on a dependency whose full behavior is tested elsewhere
+  (for example `IChatContextBuilder` in chat orchestration and suggested-question tests).
 - **`ElBaul.Infra.Tests`** — infra-layer units cheap to isolate without a real MinIO/DB.
   Includes approval tests (`Verify.Xunit`) for email templates, which snapshot full rendered
   output against a committed baseline — a mismatch writes a `.received.txt` next to it for
@@ -30,9 +36,9 @@ Choose the smallest test that can detect the failure.
   via Testcontainers against a real Postgres + MinIO + fake-oidc stack: no `ProjectReference` to
   anything above, no shared fixtures/DTOs. Runs in CI right after `docker build`, before the
   image is pushed. Run it for any change to the domain model, persistence, or the public API
-  contract — the unit suites run against hand-written fakes and can't catch an EF model that
-  fails to build against a real Postgres, or a wire-format regression a DTO recompiled against
-  itself can't reveal.
+  contract — the unit suites mostly run against hand-written fakes and can't catch an EF model
+  that fails to build against a real Postgres, or a wire-format regression a DTO recompiled
+  against itself can't reveal.
 
   ```bash
   cd api

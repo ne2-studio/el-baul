@@ -92,7 +92,8 @@ semantics.
 
 - **Every external effect sits behind an output port** (`IClock`, `IIdGenerator`,
   `ICurrentUserProvider`, `IPhotoStorage`, `IPhotoDateExtractor`, …) — this is what makes
-  `Application/` managers unit-testable against hand-written fakes, no mocking framework.
+  `Application/` managers unit-testable with shared hand-written fakes by default and small
+  NSubstitute stubs where a test only needs one collaborator method or one injected failure.
 - **Access control is centralized in `BaulAccessService`**, not via a global filter and not
   re-derived per manager: it's the single interpretation of "does this user belong to this baúl
   / are they an admin of it". Every manager touching a baúl-scoped resource calls
