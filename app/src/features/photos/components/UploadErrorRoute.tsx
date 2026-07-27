@@ -1,8 +1,8 @@
 import React from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { UploadErrorScreen } from '@/features/photos/components/UploadErrorScreen';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
 import { PhotoDate } from '@/types';
+import { resolvePhotoRouteContext, SelectedPhoto } from '@/features/photos/uploadFlow';
 
 interface UploadErrorRouteProps {
   navigate: (path: string, options?: { state: unknown }) => void;
@@ -24,7 +24,12 @@ export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
   const { failedPhotos, date, succeededCount } =
     (location.state as LocationState) || { failedPhotos: [], date: null, succeededCount: 0 };
 
-  const basePath = chapterId ? `/baules/${baulId}/capitulos/${chapterId}` : `/baules/${baulId}/fotos-sueltas`;
+  const { basePath, destination } = resolvePhotoRouteContext({
+    baulId: baulId!,
+    chapterId,
+    chapters: [],
+    loosePhotos: [],
+  });
 
   return (
     <UploadErrorScreen
@@ -36,7 +41,7 @@ export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
         navigate(`${basePath}/subiendo`, {
           state: {
             selectedPhotos: failedPhotos,
-            chapter: chapterId ? { type: 'existing', chapterId } : { type: 'none' },
+            chapter: destination,
             date,
             succeededCount,
           },

@@ -3,15 +3,11 @@ import * as Sentry from '@sentry/react';
 import { Baul, Chapter, Photo, PhotoDate } from '@/types';
 import { api } from '@/api';
 import { isAdminRole } from '@/utils/roleUtils';
-import { ChapterSelection } from '@/features/chapters/components/ChapterSelector';
+import { PhotoUploadDestination, UploadItem } from '@/features/photos/uploadFlow';
 import { useRecuerdosStore } from './useRecuerdosStore';
 import { usePersonasStore } from './usePersonasStore';
 
-export interface UploadItem {
-  clientUploadId: string;
-  file: File;
-  date?: PhotoDate;
-}
+export type { UploadItem } from '@/features/photos/uploadFlow';
 
 export interface UploadItemResult {
   clientUploadId: string;
@@ -28,6 +24,10 @@ export interface UploadItemResult {
 // from an actual network/proxy failure on the next occurrence.
 async function verifyFileReadable(file: File): Promise<void> {
   await file.slice(0, 16).arrayBuffer();
+}
+
+function initialTargetChapterId(destination: PhotoUploadDestination): string | null {
+  return destination.type === 'existing' ? destination.chapterId : null;
 }
 
 export interface BaulesState {
@@ -54,7 +54,7 @@ export interface BaulesState {
   ) => Promise<UploadItemResult[]>;
   uploadPhotosWithChapter: (
     baulId: string,
-    chapter: ChapterSelection,
+    chapter: PhotoUploadDestination,
     selectedPhotos: UploadItem[],
     onItemSettled?: (result: UploadItemResult) => void
   ) => Promise<{ results: UploadItemResult[]; chapterId: string | null }>;
@@ -215,7 +215,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
   },
 
   uploadPhotosWithChapter: async (baulId, chapter, selectedPhotos, onItemSettled) => {
-    let targetChapterId: string | null = chapter.type === 'existing' ? chapter.chapterId : null;
+    let targetChapterId = initialTargetChapterId(chapter);
 
     if (chapter.type === 'new') {
       try {

@@ -1,16 +1,20 @@
 import React, { useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadingScreen } from '@/features/photos/components/UploadingScreen';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
-import { ChapterSelection } from '@/features/chapters/components/ChapterSelector';
 import { useBaulesStore, UploadItemResult } from '@/store/useBaulesStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { PhotoDate } from '@/types';
+import {
+  PhotoUploadDestination,
+  resolvePhotoRouteContext,
+  SelectedPhoto,
+  uploadItemsFromSelectedPhotos,
+} from '@/features/photos/uploadFlow';
 
 interface LocationState {
   selectedPhotos: SelectedPhoto[];
-  chapter: ChapterSelection;
+  chapter: PhotoUploadDestination;
   date: PhotoDate | null;
   succeededCount?: number;
 }
@@ -36,7 +40,7 @@ export const UploadingRoute: React.FC = () => {
     return uploadPhotosWithChapter(
       baul.id,
       chapter,
-      photos.map((p) => ({ clientUploadId: p.id, file: p.file, date: date ?? undefined })),
+      uploadItemsFromSelectedPhotos(photos, date),
       onItemSettled
     ).then(({ results, chapterId }) => {
       resolvedChapterIdRef.current = chapterId;
@@ -48,12 +52,13 @@ export const UploadingRoute: React.FC = () => {
     const failed = results.filter((r) => r.error);
     const succeededCount = succeededSoFar + (results.length - failed.length);
     const resolvedChapterId = resolvedChapterIdRef.current;
-    const chapterPath = resolvedChapterId
-      ? `/baules/${baul.id}/capitulos/${resolvedChapterId}`
-      : `/baules/${baul.id}/fotos-sueltas`;
-    const errorPath = resolvedChapterId
-      ? `/baules/${baul.id}/capitulos/${resolvedChapterId}/error`
-      : `/baules/${baul.id}/fotos-sueltas/error`;
+    const { basePath: chapterPath } = resolvePhotoRouteContext({
+      baulId: baul.id,
+      chapterId: resolvedChapterId ?? undefined,
+      chapters: [],
+      loosePhotos: [],
+    });
+    const errorPath = `${chapterPath}/error`;
 
     if (failed.length === 0) {
       navigate(chapterPath);

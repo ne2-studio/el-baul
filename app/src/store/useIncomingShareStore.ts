@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Capacitor } from '@capacitor/core';
 import * as Sentry from '@sentry/react';
 import { IncomingShare, SharedFile } from '@/native/shareReceiver';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
+import { materializeSharedPhoto, SelectedPhoto } from '@/features/photos/uploadFlow';
 
 interface IncomingShareState {
   share: IncomingShare | null;
@@ -29,13 +29,7 @@ async function toSelectedPhoto(sharedFile: SharedFile): Promise<SelectedPhoto | 
       throw new Error('Local share file fetch returned an empty blob');
     }
 
-    const file = new File([blob], sharedFile.name, { type: sharedFile.mimeType });
-
-    return {
-      id: crypto.randomUUID(),
-      file,
-      preview: URL.createObjectURL(blob),
-    };
+    return materializeSharedPhoto(blob, sharedFile.name, sharedFile.mimeType);
   } catch (error) {
     Sentry.captureException(error, {
       extra: { name: sharedFile.name, mimeType: sharedFile.mimeType, path: sharedFile.path },

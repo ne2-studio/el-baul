@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UploadErrorScreen } from '@/features/photos/components/UploadErrorScreen';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
+import { SelectedPhoto } from '@/features/photos/uploadFlow';
 
 const meta = {
   title: 'Screens/Upload/Error',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { AlertCircle, X } from 'lucide-react';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
+import { SelectedPhoto } from '@/features/photos/uploadFlow';
 
 interface UploadErrorScreenProps {
   failedPhotos: SelectedPhoto[];

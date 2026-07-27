@@ -9,7 +9,7 @@ import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
 import { ChevronLeft, Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
+import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { RecuerdosFeed } from '@/features/memories/components/RecuerdosFeed';

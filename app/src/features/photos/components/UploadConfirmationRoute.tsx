@@ -1,8 +1,8 @@
 import React from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
-import { Chapter } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 
 // chapterId is present when uploading into a real chapter, absent when uploading into the
 // virtual "Fotos sueltas" chapter (see useBaulesStore's nullable chapterId convention).
@@ -14,22 +14,12 @@ export const UploadConfirmationRoute: React.FC = () => {
   const baul = baules.find(b => b.id === baulId);
   const existingChapters = chapters[baulId!] || [];
   const looseChapterPhotos = loosePhotos[baulId!] || [];
-  const currentChapter: Chapter | undefined = chapterId
-    ? existingChapters.find(a => a.id === chapterId)
-    : {
-        id: 'sueltas',
-        name: 'Fotos sueltas',
-        photoCount: looseChapterPhotos.length,
-        coverPhotoUrl: looseChapterPhotos[0]?.thumbnailUrl,
-        lastUpdated: '',
-        recuerdoCount: 0,
-        undatedPhotoCount: looseChapterPhotos.length,
-      };
+  const { currentChapter, basePath } = baulId
+    ? resolvePhotoRouteContext({ baulId, chapterId, chapters: existingChapters, loosePhotos: looseChapterPhotos })
+    : { currentChapter: undefined, basePath: '' };
   const { selectedPhotos } = location.state || { selectedPhotos: [] };
 
   if (!baul || !currentChapter) return <div className="p-8 text-center">Cargando...</div>;
-
-  const basePath = chapterId ? `/baules/${baul.id}/capitulos/${chapterId}` : `/baules/${baul.id}/fotos-sueltas`;
 
   return (
     <UploadConfirmationScreen

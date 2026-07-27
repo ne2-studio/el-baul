@@ -1,11 +1,9 @@
 import React from 'react';
 import { Check, Plus } from 'lucide-react';
 import { Chapter } from '@/types';
+import { PhotoUploadDestination } from '@/features/photos/uploadFlow';
 
-export type ChapterSelection =
-  | { type: 'existing'; chapterId: string }
-  | { type: 'new'; name: string }
-  | { type: 'none' };
+export type ChapterSelection = PhotoUploadDestination;
 
 interface ChapterSelectorProps {
   chapters: Chapter[];

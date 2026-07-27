@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { PhotosView } from '@/features/chapters/components/PhotosView';
-import { Chapter, Photo } from '@/types';
+import { Photo, PhotoDate } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
@@ -10,10 +10,9 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
-import { PhotoDate } from '@/types';
 import { isAdminRole } from '@/utils/roleUtils';
 import { api } from '@/api';
+import { resolvePhotoRouteContext, SelectedPhoto } from '@/features/photos/uploadFlow';
 
 // chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
 // (see useBaulesStore's nullable chapterId convention). Real-chapter photos are paginated
@@ -100,17 +99,13 @@ export const ChapterRoute: React.FC = () => {
   }
 
   const currentPhotos = chapterId ? (photos[chapterId] || []) : (loosePhotos || []);
-  const looseChapter: Chapter = {
-    id: 'sueltas',
-    name: 'Fotos sueltas',
-    photoCount: currentPhotos.length,
-    coverPhotoUrl: currentPhotos[0]?.thumbnailUrl,
-    lastUpdated: '',
-    recuerdoCount: 0,
-    undatedPhotoCount: currentPhotos.length,
-  };
-  const currentChapter = chapter ?? looseChapter;
-  const basePath = chapterId ? `/baules/${baul.id}/capitulos/${chapterId}` : `/baules/${baul.id}/fotos-sueltas`;
+  const { currentChapter, basePath, apiChapterId } = resolvePhotoRouteContext({
+    baulId: baul.id,
+    chapterId,
+    chapters: chapters || [],
+    loosePhotos: currentPhotos,
+  });
+  if (!currentChapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
   const handleAddRecuerdo = (text: string) => {
     if (!chapterId) return;
@@ -152,7 +147,7 @@ export const ChapterRoute: React.FC = () => {
     targetChapterId: string,
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => {
-    const result = await run(() => movePhotos(baul.id, chapterId ?? null, photoIds, targetChapterId, onItemSettled), {
+    const result = await run(() => movePhotos(baul.id, apiChapterId, photoIds, targetChapterId, onItemSettled), {
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
       errorMessage: 'Algunas fotos no se pudieron mover',
     });
@@ -160,7 +155,7 @@ export const ChapterRoute: React.FC = () => {
   };
 
   const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
-    const result = await run(() => changePhotoDateBatch(baul.id, chapterId ?? null, photoIds, date), {
+    const result = await run(() => changePhotoDateBatch(baul.id, apiChapterId, photoIds, date), {
       successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
       errorMessage: 'Error al cambiar la fecha',
     });

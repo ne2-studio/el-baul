@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import * as Sentry from '@sentry/react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
@@ -7,36 +6,7 @@ import { Baul, Chapter, PhotoDate } from '@/types';
 import { ChapterSelector, ChapterSelection } from '@/features/chapters/components/ChapterSelector';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
-
-export interface SelectedPhoto {
-  id: string;
-  file: File;
-  preview: string;
-}
-
-// Reads a just-picked file into memory right away and wraps it in a fresh, Blob-backed
-// File. On Android, `<input type=file>` grants Chrome only a transient content:// URI
-// permission for the picked files — if the user takes a while getting through the
-// chapter step before confirming, that grant can expire and later reads throw
-// NotReadableError with zero server logs (seen in production). Reading the bytes now,
-// while the grant is still fresh, avoids ever touching the OS file handle again.
-export async function materializeSelectedPhoto(file: File): Promise<SelectedPhoto | null> {
-  try {
-    const buffer = await file.arrayBuffer();
-    const materialized = new File([buffer], file.name, { type: file.type, lastModified: file.lastModified });
-    return {
-      id: crypto.randomUUID(),
-      file: materialized,
-      preview: URL.createObjectURL(materialized),
-    };
-  } catch (error) {
-    Sentry.captureException(error, {
-      tags: { phase: 'read-file-on-select' },
-      extra: { name: file.name, size: file.size, type: file.type },
-    });
-    return null;
-  }
-}
+import { SelectedPhoto } from '@/features/photos/uploadFlow';
 
 interface UploadConfirmationScreenProps {
   baul: Baul;

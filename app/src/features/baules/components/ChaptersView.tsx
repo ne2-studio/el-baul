@@ -12,7 +12,7 @@ import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
 import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { SelectedPhoto } from '@/features/photos/components/UploadConfirmationScreen';
+import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
