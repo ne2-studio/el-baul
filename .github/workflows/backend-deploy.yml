@@ -58,11 +58,14 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Build backend image
+        run: docker build -t $IMAGE_NAME:latest api
+
       - name: Run backend acceptance verification
         env:
           BACKEND_IMAGE: ${{ env.IMAGE_NAME }}:latest
           KEEP_VERIFY_IMAGES: "1"
-        run: ./scripts/verify backend-acceptance
+        run: ./scripts/verify --skip-image-build backend-acceptance
 
       - name: Push image
         run: docker push $IMAGE_NAME:latest

@@ -90,14 +90,19 @@ jobs:
         working-directory: app
         run: npx playwright install-deps chromium
 
+      - name: Build frontend acceptance images
+        # No VITE_* build args are passed for app: the image reads runtime config at container
+        # start, matching production deployment.
+        run: |
+          docker build -t $IMAGE_NAME:latest app
+          docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:ci api
+
       - name: Run frontend acceptance verification
-        # The script builds both images first. No VITE_* build args are passed for app: the
-        # image reads runtime config at container start, matching production deployment.
         env:
           APP_IMAGE: ${{ env.IMAGE_NAME }}:latest
           API_LITE_IMAGE: el-baul-api-lite:ci
           KEEP_VERIFY_IMAGES: "1"
-        run: ./scripts/verify frontend-acceptance
+        run: ./scripts/verify --skip-image-build frontend-acceptance
 
       - name: Upload Playwright report
         if: always()

@@ -5,17 +5,22 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_ID="$(date -u +%Y%m%d%H%M%S)-$$"
 
 created_images=()
+build_images=1
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/verify <command>
+Usage: ./scripts/verify [options] <command>
+
+Options:
+  --build-images       Build images needed by acceptance commands. Default.
+  --skip-image-build   Reuse already-built images for acceptance commands.
 
 Commands:
   backend               Build and test the .NET backend solution in Release.
-  backend-acceptance    Build the real backend image and run acceptance-tests.
+  backend-acceptance    Run acceptance-tests against the real backend image.
   frontend              Run app type checks and unit/component tests.
   admin                 Run admin type checks and unit/component tests.
-  frontend-acceptance   Build app + api-lite images and run app Playwright E2E.
+  frontend-acceptance   Run app Playwright E2E against app + api-lite images.
   e2e                   Run whole-stack smoke tests against docker-compose.yaml.
   all                   Run every verification above.
 
@@ -105,6 +110,13 @@ docker_build_fresh() {
   created_images+=("$tag")
 }
 
+require_image() {
+  local tag="$1"
+
+  need docker
+  docker image inspect "$tag" >/dev/null 2>&1 || die "required image not found: $tag; build it first or omit --skip-image-build"
+}
+
 cleanup() {
   local status=$?
   set +e
@@ -137,7 +149,12 @@ backend_acceptance() {
   need docker
   local image="${BACKEND_IMAGE:-el-baul-api:verify-$RUN_ID}"
 
-  docker_build_fresh "$image" "$ROOT_DIR/api"
+  if [[ "$build_images" == "1" ]]; then
+    docker_build_fresh "$image" "$ROOT_DIR/api"
+  else
+    require_image "$image"
+  fi
+
   run env BACKEND_IMAGE="$image" dotnet test "$ROOT_DIR/api/acceptance-tests/ElBaul.AcceptanceTests.slnx"
 }
 
@@ -175,8 +192,13 @@ frontend_acceptance() {
   run docker compose -f "$ROOT_DIR/docker-compose.lite.yml" down -v --remove-orphans
   require_ports_available 3000 5000 5051
 
-  docker_build_fresh "$app_image" "$ROOT_DIR/app"
-  docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" "$ROOT_DIR/api"
+  if [[ "$build_images" == "1" ]]; then
+    docker_build_fresh "$app_image" "$ROOT_DIR/app"
+    docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" "$ROOT_DIR/api"
+  else
+    require_image "$app_image"
+    require_image "$api_lite_image"
+  fi
 
   run_in app npx playwright install chromium
   run_in app env APP_IMAGE="$app_image" API_LITE_IMAGE="$api_lite_image" npm run test:acceptance
@@ -203,7 +225,44 @@ all() {
 
 ensure_root
 
-case "${1:-}" in
+command=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --build-images|--rebuild-images)
+      build_images=1
+      shift
+      ;;
+    --skip-image-build|--no-image-build)
+      build_images=0
+      shift
+      ;;
+    --)
+      shift
+      if [[ $# -gt 0 ]]; then
+        command="$1"
+        shift
+      fi
+      break
+      ;;
+    -h|--help|help)
+      usage
+      exit 0
+      ;;
+    -*)
+      usage >&2
+      die "unknown option: $1"
+      ;;
+    *)
+      command="$1"
+      shift
+      break
+      ;;
+  esac
+done
+
+[[ $# -eq 0 ]] || die "unexpected argument: $1"
+
+case "$command" in
   backend) backend ;;
   backend-acceptance) backend_acceptance ;;
   frontend) frontend ;;
@@ -211,6 +270,6 @@ case "${1:-}" in
   frontend-acceptance) frontend_acceptance ;;
   e2e) e2e ;;
   all) all ;;
-  -h|--help|help|"") usage ;;
-  *) usage >&2; die "unknown command: $1" ;;
+  "") usage ;;
+  *) usage >&2; die "unknown command: $command" ;;
 esac
