@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UploadingScreen } from '@/features/photos/components/UploadingScreen';
 import { UploadItemResult } from '@/store/useBaulesStore';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Upload/Uploading',
@@ -15,31 +16,18 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const photos = [
-  { id: '1', file: new File([], 'photo1.jpg'), preview: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300' },
-  { id: '2', file: new File([], 'photo2.jpg'), preview: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300' },
-  { id: '3', file: new File([], 'photo3.jpg'), preview: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300' },
+  { id: '1', file: new File([], 'photo1.jpg'), preview: storybookPhotos.beach },
+  { id: '2', file: new File([], 'photo2.jpg'), preview: storybookPhotos.album },
+  { id: '3', file: new File([], 'photo3.jpg'), preview: storybookPhotos.sunset },
 ];
 
-// Resuelve una foto cada 900ms para que la animación de progreso se vea en Storybook
-// en vez de terminar instantáneamente.
-async function simulateUpload(
-  photosToUpload: typeof photos,
-  onItemSettled: (result: UploadItemResult) => void
-): Promise<UploadItemResult[]> {
-  const results: UploadItemResult[] = [];
-  for (const photo of photosToUpload) {
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    const result: UploadItemResult = { clientUploadId: photo.id };
-    onItemSettled(result);
-    results.push(result);
-  }
-  return results;
-}
+// Keep the story pinned in the uploading state so snapshots do not depend on capture timing.
+const keepUploading = () => new Promise<UploadItemResult[]>(() => {});
 
 export const Default: Story = {
   args: {
     photos,
-    onUpload: simulateUpload,
+    onUpload: keepUploading,
     onSettled: (results) => alert(`onSettled: ${results.length} resultados`),
   },
 };

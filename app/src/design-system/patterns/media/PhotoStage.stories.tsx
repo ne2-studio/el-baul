@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Patterns/Media/PhotoStage',
@@ -36,7 +37,7 @@ Forgetting stable \`photoKey\` when the image changes, exposing previous/next co
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const src = 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=1200';
+const src = storybookPhotos.familyCover;
 
 export const Default: Story = {
   args: {

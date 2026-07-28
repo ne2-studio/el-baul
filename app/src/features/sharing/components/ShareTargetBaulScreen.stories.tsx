@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ShareTargetBaulScreen } from '@/features/sharing/components/ShareTargetBaulScreen';
 import { Baul } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Sharing/ShareTarget',
@@ -16,7 +17,7 @@ type Story = StoryObj<typeof meta>;
 
 const baules: Baul[] = [
   { id: '1', name: 'Familia García', chapterCount: 4, lastUpdated: 'hace 2 días' } as Baul,
-  { id: '2', name: 'Viajes', chapterCount: 2, coverPhotoUrl: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=300', lastUpdated: 'hace 1 semana' } as Baul,
+  { id: '2', name: 'Viajes', chapterCount: 2, coverPhotoUrl: storybookPhotos.familyCover, lastUpdated: 'hace 1 semana' } as Baul,
 ];
 
 export const Default: Story = {

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Recuerdo } from '@/types';
 import { RecuerdoCard } from '@/features/memories/components/RecuerdoCard';
+import { storybookAvatars } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Features/Memories/RecuerdoCard',
@@ -42,7 +43,7 @@ export const WithAvatar: Story = {
       ...recuerdo,
       userId: 'user-1',
       isOwn: false,
-      userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+      userAvatar: storybookAvatars.abuela,
     }),
     onUserClick: () => alert('onUserClick clicked'),
   },

@@ -1,12 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Photo } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
+
+const fixturePhotos = Object.values(storybookPhotos);
 
 function makePhotos(count: number, offset = 0): Photo[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `photo-${offset + i}`,
-    thumbnailUrl: `https://picsum.photos/seed/${offset + i}/300/300`,
-    fullUrl: `https://picsum.photos/seed/${offset + i}/1200/1200`,
+    thumbnailUrl: fixturePhotos[(offset + i) % fixturePhotos.length],
+    fullUrl: fixturePhotos[(offset + i) % fixturePhotos.length],
     recuerdoCount: 0,
   }));
 }

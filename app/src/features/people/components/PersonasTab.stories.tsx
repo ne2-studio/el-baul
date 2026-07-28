@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PersonasTab } from '@/features/people/components/PersonasTab';
 import { Persona } from '@/types';
+import { fixedStorybookDateIso, storybookAvatars } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Features/People/PersonasTab',
@@ -19,7 +20,7 @@ const personas = [
     nickname: 'Yo',
     status: 'active',
     role: 'custodio',
-    invitedDate: new Date().toISOString(),
+    invitedDate: fixedStorybookDateIso,
     canEdit: true,
   }),
   new Persona({
@@ -29,8 +30,8 @@ const personas = [
     nickname: 'Abuela',
     status: 'active',
     role: 'colaborador',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
-    invitedDate: new Date().toISOString(),
+    avatarUrl: storybookAvatars.abuela,
+    invitedDate: fixedStorybookDateIso,
     canEdit: true,
   }),
   new Persona({
@@ -40,7 +41,7 @@ const personas = [
     nickname: 'Tío Paco',
     status: 'pending',
     role: 'administrador',
-    invitedDate: new Date().toISOString(),
+    invitedDate: fixedStorybookDateIso,
     canEdit: true,
   }),
 ];

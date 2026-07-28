@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BaulesList } from '@/features/baules/components/BaulesList';
 import { Baul } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Baules/List',
@@ -20,7 +21,7 @@ const baules: Baul[] = [
     name: 'Familia García',
     description: 'Nuestros mejores momentos',
     chapterCount: 4,
-    coverPhotoUrl: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=600',
+    coverPhotoUrl: storybookPhotos.familyCover,
     lastUpdated: 'hace 2 días',
     isCustodio: true,
     memberCount: 5,

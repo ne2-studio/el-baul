@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RemovalRequestsList, RemovalRequest } from '@/features/photos/components/RemovalRequestsList';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Features/Photos/RemovalRequestsList',
@@ -14,7 +15,7 @@ const requests: RemovalRequest[] = [
   {
     id: '1',
     photoId: 'p1',
-    photoUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=600',
+    photoUrl: storybookPhotos.beach,
     requesterName: 'Ana García',
     requesterEmail: 'ana@example.com',
     reason: 'No me gusta cómo salgo en esta foto',
@@ -24,7 +25,7 @@ const requests: RemovalRequest[] = [
   {
     id: '2',
     photoId: 'p2',
-    photoUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=600',
+    photoUrl: storybookPhotos.album,
     requesterName: 'Carlos Ruiz',
     requesterEmail: 'carlos@example.com',
     reason: 'Esta foto es de otra persona que no dio su consentimiento',

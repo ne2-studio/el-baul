@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RecuerdosFeed } from '@/features/memories/components/RecuerdosFeed';
 import { Photo, Recuerdo } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Features/Memories/RecuerdosFeed',
@@ -15,14 +16,14 @@ type Story = StoryObj<typeof meta>;
 const photos: Photo[] = [
   {
     id: 'p1',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300',
-    fullUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=1200',
+    thumbnailUrl: storybookPhotos.beach,
+    fullUrl: storybookPhotos.beach,
     recuerdoCount: 1,
   },
   {
     id: 'p2',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300',
-    fullUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=1200',
+    thumbnailUrl: storybookPhotos.album,
+    fullUrl: storybookPhotos.album,
     recuerdoCount: 0,
   },
 ];

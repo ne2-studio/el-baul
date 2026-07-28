@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
 import { Baul, Chapter } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Upload/Confirmation',
@@ -22,9 +23,9 @@ const existingChapters: Chapter[] = [
 ];
 
 const selectedPhotos = [
-  { id: '1', file: new File([], 'photo1.jpg'), preview: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300' },
-  { id: '2', file: new File([], 'photo2.jpg'), preview: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300' },
-  { id: '3', file: new File([], 'photo3.jpg'), preview: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300' },
+  { id: '1', file: new File([], 'photo1.jpg'), preview: storybookPhotos.beach },
+  { id: '2', file: new File([], 'photo2.jpg'), preview: storybookPhotos.album },
+  { id: '3', file: new File([], 'photo3.jpg'), preview: storybookPhotos.sunset },
 ];
 
 export const IntoOpenChapter: Story = {

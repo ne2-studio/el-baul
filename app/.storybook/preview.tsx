@@ -1,5 +1,25 @@
 import type { Preview } from '@storybook/react-vite'
-import '../src/styles/index.css'
+import '../src/styles/tailwind.css'
+import '../src/styles/theme.css'
+import './storybook.css'
+
+const fixedNow = new Date('2024-08-20T12:00:00.000Z').valueOf();
+const OriginalDate = Date;
+
+class FixedDate extends OriginalDate {
+  constructor(...args: any[]) {
+    super(...(args.length === 0 ? [fixedNow] : args));
+  }
+
+  static now() {
+    return fixedNow;
+  }
+}
+
+Object.setPrototypeOf(FixedDate, OriginalDate);
+globalThis.Date = FixedDate as DateConstructor;
+
+Math.random = () => 0.37;
 
 const preview: Preview = {
   parameters: {

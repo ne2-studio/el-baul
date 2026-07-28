@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChaptersView } from '@/features/baules/components/ChaptersView';
 import { Baul, Chapter, Persona, Recuerdo } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Baul/Detail',
@@ -19,14 +20,14 @@ const baul: Baul = {
   name: 'Familia García',
   description: 'Nuestros mejores momentos, todos juntos',
   chapterCount: 3,
-  coverPhotoUrl: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=1200',
+  coverPhotoUrl: storybookPhotos.familyCover,
   lastUpdated: 'hace 2 días',
   isCustodio: true,
   role: 'custodio',
 };
 
 const chapters: Chapter[] = [
-  { id: 'c1', name: 'Verano 2024', photoCount: 24, lastUpdated: 'hace 2 días', recuerdoCount: 3, undatedPhotoCount: 0, coverPhotoUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400', minDate: { year: 2024, month: 7 }, maxDate: { year: 2024, month: 8 } },
+  { id: 'c1', name: 'Verano 2024', photoCount: 24, lastUpdated: 'hace 2 días', recuerdoCount: 3, undatedPhotoCount: 0, coverPhotoUrl: storybookPhotos.beach, minDate: { year: 2024, month: 7 }, maxDate: { year: 2024, month: 8 } },
   { id: 'c2', name: 'Navidad', photoCount: 12, lastUpdated: 'hace 1 mes', recuerdoCount: 1, undatedPhotoCount: 0, minDate: { year: 2023, month: 12 }, maxDate: { year: 2023, month: 12 } },
   { id: 'c3', name: 'Cumpleaños de la abuela', photoCount: 8, lastUpdated: 'hace 3 meses', recuerdoCount: 0, undatedPhotoCount: 0, minDate: { year: 2023, month: 5 }, maxDate: { year: 2023, month: 5 } },
 ];
@@ -65,8 +66,8 @@ export const WithLoosePhotos: Story = {
   args: {
     ...sharedDefaults,
     loosePhotos: [
-      { id: 'lp1', thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=200' },
-      { id: 'lp2', thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200' },
+      { id: 'lp1', thumbnailUrl: storybookPhotos.album },
+      { id: 'lp2', thumbnailUrl: storybookPhotos.sunset },
     ],
   },
 };

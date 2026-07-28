@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { InvitacionScreen } from '@/features/sharing/components/InvitacionScreen';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Onboarding/Invitacion',
@@ -11,10 +12,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const previewPhotos = [
-  'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=400',
-  'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=400',
-  'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=400',
-  'https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=400',
+  storybookPhotos.familyCover,
+  storybookPhotos.beach,
+  storybookPhotos.album,
+  storybookPhotos.people,
 ];
 
 export const Default: Story = {

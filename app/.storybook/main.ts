@@ -20,6 +20,13 @@ const config: StorybookConfig = {
     return {
       ...viteConfig,
       plugins: stripPwaPlugins(viteConfig.plugins ?? []) as typeof viteConfig.plugins,
+      build: {
+        ...viteConfig.build,
+        // Storybook's own docs/a11y/runtime bundles are larger than Vite's app-oriented
+        // default. Keep this Storybook-only so the real app build still reports large
+        // product chunks normally.
+        chunkSizeWarningLimit: 1300,
+      },
     };
   },
 };

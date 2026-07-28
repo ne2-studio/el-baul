@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
 import { Recuerdo } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Features/Memories/RecuerdoFeedCard',
@@ -34,7 +35,7 @@ export const WithPhoto: Story = {
     recuerdo: {
       ...baseRecuerdo,
       photoId: 'photo-1',
-      photoThumbnailUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300',
+      photoThumbnailUrl: storybookPhotos.beach,
     } as Recuerdo,
   },
 };

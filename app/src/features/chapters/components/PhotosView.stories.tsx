@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotosView } from '@/features/chapters/components/PhotosView';
 import { Chapter, Photo, Recuerdo } from '@/types';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Chapter/Detail',
@@ -21,15 +22,15 @@ const chapter: Chapter = {
   lastUpdated: 'hace 2 días',
   recuerdoCount: 1,
   undatedPhotoCount: 0,
-  coverPhotoUrl: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=1200',
+  coverPhotoUrl: storybookPhotos.familyCover,
   minDate: { year: 2024, month: 7 },
   maxDate: { year: 2024, month: 8 },
 };
 
 const photos: Photo[] = [
-  { id: '1', thumbnailUrl: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300', fullUrl: '', date: { year: 2024, month: 7, day: 15 }, recuerdoCount: 2 },
-  { id: '2', thumbnailUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300', fullUrl: '', date: { year: 2024, month: 7, day: 20 }, recuerdoCount: 0 },
-  { id: '3', thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300', fullUrl: '', date: { year: 2024, month: 8, day: 2 }, recuerdoCount: 0 },
+  { id: '1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, date: { year: 2024, month: 7, day: 15 }, recuerdoCount: 2 },
+  { id: '2', thumbnailUrl: storybookPhotos.album, fullUrl: storybookPhotos.album, date: { year: 2024, month: 7, day: 20 }, recuerdoCount: 0 },
+  { id: '3', thumbnailUrl: storybookPhotos.sunset, fullUrl: storybookPhotos.sunset, date: { year: 2024, month: 8, day: 2 }, recuerdoCount: 0 },
 ];
 
 const recuerdos: Recuerdo[] = [

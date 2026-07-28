@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UploadErrorScreen } from '@/features/photos/components/UploadErrorScreen';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
+import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Screens/Upload/Error',
@@ -15,8 +16,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const failedPhotos: SelectedPhoto[] = [
-  { id: '1', file: new File([], 'photo1.jpg'), preview: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=300' },
-  { id: '2', file: new File([], 'photo2.jpg'), preview: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=300' },
+  { id: '1', file: new File([], 'photo1.jpg'), preview: storybookPhotos.beach },
+  { id: '2', file: new File([], 'photo2.jpg'), preview: storybookPhotos.album },
 ];
 
 export const Default: Story = {
