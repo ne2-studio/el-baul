@@ -42,6 +42,13 @@ interface PhotoViewerProps {
   onSaveTags?: (photo: Photo, personaIds: string[]) => Promise<boolean>;
 }
 
+function isEditableKeyTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  const tagName = target.tagName.toLowerCase();
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target.isContentEditable;
+}
+
 export function PhotoViewer({
   photo,
   photos,
@@ -212,6 +219,10 @@ export function PhotoViewer({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && isEditableKeyTarget(e.target)) {
+        return;
+      }
+
       if (e.key === 'ArrowLeft') {
         handlePrevious();
       } else if (e.key === 'ArrowRight') {
