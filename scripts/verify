@@ -169,9 +169,55 @@ frontend_unit_package() {
 
   if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
     run_in "$dir" npm run test:coverage
+    write_node_coverage_summary "$dir"
   else
     run_in "$dir" npm test
   fi
+}
+
+write_node_coverage_summary() {
+  local dir="$1"
+
+  run_in "$dir" node <<'NODE'
+const fs = require('node:fs');
+const { createCoverageMap } = require('istanbul-lib-coverage');
+
+const finalCoveragePath = 'coverage/coverage-final.json';
+const jsonSummaryPath = 'coverage/coverage-summary.json';
+const summaryPath = 'coverage/summary.txt';
+
+if (fs.existsSync(summaryPath)) {
+  process.exit(0);
+}
+
+let total;
+if (fs.existsSync(jsonSummaryPath)) {
+  total = JSON.parse(fs.readFileSync(jsonSummaryPath, 'utf8')).total;
+} else if (fs.existsSync(finalCoveragePath)) {
+  const coverage = createCoverageMap(JSON.parse(fs.readFileSync(finalCoveragePath, 'utf8')));
+  total = coverage.getCoverageSummary().toJSON();
+} else {
+  throw new Error(`Cannot write ${summaryPath}: missing ${jsonSummaryPath} and ${finalCoveragePath}`);
+}
+
+function line(label, key) {
+  const metric = total[key];
+  return `${label.padEnd(12)}: ${String(metric.pct).padStart(6)}% ( ${metric.covered}/${metric.total} )`;
+}
+
+fs.mkdirSync('coverage', { recursive: true });
+fs.writeFileSync(
+  summaryPath,
+  [
+    'Coverage summary from v8',
+    line('Statements', 'statements'),
+    line('Branches', 'branches'),
+    line('Functions', 'functions'),
+    line('Lines', 'lines'),
+    '',
+  ].join('\n')
+);
+NODE
 }
 
 frontend() {
@@ -181,6 +227,7 @@ frontend() {
 
   if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
     run_in app npm run test:coverage
+    write_node_coverage_summary app
   else
     run_in app npm test
   fi
