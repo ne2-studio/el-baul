@@ -16,6 +16,7 @@ import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
+import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,6 +99,7 @@ export function ChaptersView({
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>(initialTab);
   const [isCreatingPersona, setIsCreatingPersona] = useState(false);
   const [isSavingBaulInfo, setIsSavingBaulInfo] = useState(false);
+  const looseChapter = makeLooseChapterView(loosePhotos);
 
   const handleSaveNuevaPersona = async (nickname: string) => {
     setIsCreatingPersona(true);
@@ -320,7 +322,7 @@ export function ChaptersView({
             })()}
 
             {/* Fotos sueltas — capítulo virtual */}
-            {loosePhotos.length > 0 && (
+            {looseChapter && (
               <div>
                 <p
                   className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
@@ -331,12 +333,12 @@ export function ChaptersView({
                 <Card onClick={onOpenLoosePhotos} className="!p-0 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
                   {/* Collage cover */}
                   <div className="aspect-[16/10] bg-secondary relative rounded-t-2xl overflow-hidden">
-                    <FotosSueltasCollage coverPhotos={loosePhotos.slice(0, 9).map((p) => p.thumbnailUrl)} />
+                    <FotosSueltasCollage coverPhotos={looseChapter.coverPhotoUrls} />
                   </div>
                   <div className="p-4 bg-card">
-                    <h3 className="font-medium text-lg text-foreground">Fotos sueltas</h3>
+                    <h3 className="font-medium text-lg text-foreground">{looseChapter.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {loosePhotos.length} {loosePhotos.length === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún capítulo
+                      {looseChapter.photoCount} {looseChapter.photoCount === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún capítulo
                     </p>
                   </div>
                 </Card>

@@ -6,6 +6,14 @@ import { isAdminRole } from '@/utils/roleUtils';
 import { PhotoUploadDestination, UploadItem } from '@/features/photos/uploadFlow';
 import { useRecuerdosStore } from './useRecuerdosStore';
 import { usePersonasStore } from './usePersonasStore';
+import {
+  applyCoverUpdate,
+  applyDeletedPhoto,
+  applyMovedPhotos,
+  applyPhotoDateUpdate,
+  applyUploadedPhotos,
+  removePhotoFromAllCaches,
+} from './baulesCacheReconciliation';
 
 export type { UploadItem } from '@/features/photos/uploadFlow';
 
@@ -179,35 +187,9 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
         // and an append onto an empty/stale slice would silently drop its existing photos.
         // Mirrors the same fix already applied in movePhotos.
         const photosForChapter = await api.photos.getAll(chapterId);
-        set((state) => ({
-          photos: { ...state.photos, [chapterId]: photosForChapter },
-          chapters: {
-            ...state.chapters,
-            [baulId]: (state.chapters[baulId] || []).map((a) =>
-              a.id === chapterId
-                ? {
-                    ...a,
-                    photoCount: a.photoCount + uploaded.length,
-                    coverPhotoUrl: a.coverPhotoUrl || uploaded[0]?.thumbnailUrl,
-                  }
-                : a
-            ),
-          },
-          baules: state.baules.map((b) =>
-            b.id === baulId
-              ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
-              : b
-          ),
-        }));
+        set((state) => applyUploadedPhotos(state, { baulId, chapterId, uploaded, photosForChapter }));
       } else {
-        set((state) => ({
-          loosePhotos: { ...state.loosePhotos, [baulId]: [...(state.loosePhotos[baulId] || []), ...uploaded] },
-          baules: state.baules.map((b) =>
-            b.id === baulId
-              ? { ...b, coverPhotoUrl: b.coverPhotoUrl || uploaded[0]?.thumbnailUrl }
-              : b
-          ),
-        }));
+        set((state) => applyUploadedPhotos(state, { baulId, chapterId, uploaded }));
       }
     }
 
@@ -269,37 +251,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
     // existing photos.
     const targetPhotos = await api.photos.getAll(targetChapterId);
 
-    set((state) => {
-      // sourceChapterId is null when moving out of the "Fotos sueltas" virtual chapter.
-      const sourcePhotos = sourceChapterId ? (state.photos[sourceChapterId] || []) : (state.loosePhotos[baulId] || []);
-      const movedCount = sourcePhotos.filter((p) => succeededIds.includes(p.id)).length;
-      const remainingSourcePhotos = sourcePhotos.filter((p) => !succeededIds.includes(p.id));
-
-      return {
-        photos: {
-          ...state.photos,
-          ...(sourceChapterId ? { [sourceChapterId]: remainingSourcePhotos } : {}),
-          [targetChapterId]: targetPhotos,
-        },
-        loosePhotos: sourceChapterId
-          ? state.loosePhotos
-          : { ...state.loosePhotos, [baulId]: remainingSourcePhotos },
-        chapters: {
-          ...state.chapters,
-          [baulId]: (state.chapters[baulId] || []).map((a) => {
-            if (sourceChapterId && a.id === sourceChapterId) return { ...a, photoCount: Math.max(0, a.photoCount - movedCount) };
-            if (a.id === targetChapterId) {
-              return {
-                ...a,
-                photoCount: targetPhotos.length,
-                coverPhotoUrl: a.coverPhotoUrl || targetPhotos[0]?.thumbnailUrl,
-              };
-            }
-            return a;
-          }),
-        },
-      };
-    });
+    set((state) => applyMovedPhotos(state, { baulId, sourceChapterId, targetChapterId, movedPhotoIds: succeededIds, targetPhotos }));
 
     if (failedCount > 0) {
       throw new Error(`${failedCount} de ${photoIds.length} fotos no se pudieron mover`);
@@ -309,10 +261,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
   deletePhoto: async (baulId, chapterId, photoId, reason) => {
     await api.photos.delete(photoId, reason);
 
-    set((state) => (chapterId
-      ? { photos: { ...state.photos, [chapterId]: (state.photos[chapterId] || []).filter((p) => p.id !== photoId) } }
-      : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).filter((p) => p.id !== photoId) } }
-    ));
+    set((state) => applyDeletedPhoto(state, { baulId, chapterId, photoId }));
 
     if (chapterId) {
       const chapters = await api.chapters.getAll(baulId);
@@ -322,10 +271,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
 
   changePhotoDate: async (baulId, chapterId, photoId, date) => {
     const updated = await api.photos.changeDate(photoId, date);
-    set((state) => (chapterId
-      ? { photos: { ...state.photos, [chapterId]: (state.photos[chapterId] || []).map((p) => (p.id === photoId ? updated : p)) } }
-      : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).map((p) => (p.id === photoId ? updated : p)) } }
-    ));
+    set((state) => applyPhotoDateUpdate(state, { baulId, chapterId, updatedPhotos: [updated] }));
 
     const chapters = await api.chapters.getAll(baulId);
     set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
@@ -333,11 +279,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
 
   changePhotoDateBatch: async (baulId, chapterId, photoIds, date) => {
     const updated = await api.photos.changeDateBatch(photoIds, date);
-    const updatedById = new Map(updated.map((p) => [p.id, p]));
-    set((state) => (chapterId
-      ? { photos: { ...state.photos, [chapterId]: (state.photos[chapterId] || []).map((p) => updatedById.get(p.id) || p) } }
-      : { loosePhotos: { ...state.loosePhotos, [baulId]: (state.loosePhotos[baulId] || []).map((p) => updatedById.get(p.id) || p) } }
-    ));
+    set((state) => applyPhotoDateUpdate(state, { baulId, chapterId, updatedPhotos: updated }));
 
     const chapters = await api.chapters.getAll(baulId);
     set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
@@ -350,9 +292,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
   setBaulCover: async (baulId, photoId, optimisticThumbnailUrl) => {
     const previous = get().baules;
     if (optimisticThumbnailUrl) {
-      set((state) => ({
-        baules: state.baules.map((b) => (b.id === baulId ? { ...b, coverPhotoUrl: optimisticThumbnailUrl } : b)),
-      }));
+      set((state) => ({ baules: applyCoverUpdate(state.baules, baulId, optimisticThumbnailUrl) }));
     }
     try {
       const updated = await api.baules.setCover(baulId, photoId);
@@ -369,7 +309,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
       set((state) => ({
         chapters: {
           ...state.chapters,
-          [baulId]: previous.map((a) => (a.id === chapterId ? { ...a, coverPhotoUrl: optimisticThumbnailUrl } : a)),
+          [baulId]: applyCoverUpdate(previous, chapterId, optimisticThumbnailUrl),
         },
       }));
     }
@@ -426,17 +366,5 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
     useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [baulId]: baulRecuerdos } }));
   },
 
-  removePhotoFromCaches: (photoId) => set((state) => {
-    const photos = { ...state.photos };
-    for (const chapterId of Object.keys(photos)) {
-      photos[chapterId] = photos[chapterId].filter((p) => p.id !== photoId);
-    }
-
-    const loosePhotos = { ...state.loosePhotos };
-    for (const id of Object.keys(loosePhotos)) {
-      loosePhotos[id] = loosePhotos[id].filter((p) => p.id !== photoId);
-    }
-
-    return { photos, loosePhotos };
-  }),
+  removePhotoFromCaches: (photoId) => set((state) => removePhotoFromAllCaches(state, photoId)),
 }));
