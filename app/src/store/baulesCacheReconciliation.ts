@@ -21,12 +21,23 @@ export function applyUploadedPhotos(
     chapterId: string | null;
     uploaded: Photo[];
     photosForChapter?: Photo[];
+    chaptersForBaul?: Chapter[];
   }
 ): Pick<BaulesCacheState, 'baules' | 'chapters' | 'photos' | 'loosePhotos'> {
-  const { baulId, chapterId, uploaded, photosForChapter } = params;
+  const { baulId, chapterId, uploaded, photosForChapter, chaptersForBaul } = params;
   const firstThumbnail = uploaded[0]?.thumbnailUrl;
 
   if (chapterId) {
+    const chapters = chaptersForBaul ?? (state.chapters[baulId] || []).map((chapter) =>
+      chapter.id === chapterId
+        ? {
+            ...chapter,
+            photoCount: chapter.photoCount + uploaded.length,
+            coverPhotoUrl: chapter.coverPhotoUrl || firstThumbnail,
+          }
+        : chapter
+    );
+
     return {
       photos: {
         ...state.photos,
@@ -34,15 +45,7 @@ export function applyUploadedPhotos(
       },
       chapters: {
         ...state.chapters,
-        [baulId]: (state.chapters[baulId] || []).map((chapter) =>
-          chapter.id === chapterId
-            ? {
-                ...chapter,
-                photoCount: chapter.photoCount + uploaded.length,
-                coverPhotoUrl: chapter.coverPhotoUrl || firstThumbnail,
-              }
-            : chapter
-        ),
+        [baulId]: chapters,
       },
       baules: fillBaulCover(state.baules, baulId, firstThumbnail),
       loosePhotos: state.loosePhotos,
@@ -68,13 +71,27 @@ export function applyMovedPhotos(
     targetChapterId: string;
     movedPhotoIds: string[];
     targetPhotos: Photo[];
+    chaptersForBaul?: Chapter[];
   }
 ): Pick<BaulesCacheState, 'chapters' | 'photos' | 'loosePhotos'> {
-  const { baulId, sourceChapterId, targetChapterId, movedPhotoIds, targetPhotos } = params;
+  const { baulId, sourceChapterId, targetChapterId, movedPhotoIds, targetPhotos, chaptersForBaul } = params;
   const movedIds = new Set(movedPhotoIds);
   const sourcePhotos = sourceChapterId ? (state.photos[sourceChapterId] || []) : (state.loosePhotos[baulId] || []);
   const movedCount = sourcePhotos.filter((photo) => movedIds.has(photo.id)).length;
   const remainingSourcePhotos = sourcePhotos.filter((photo) => !movedIds.has(photo.id));
+  const chapters = chaptersForBaul ?? (state.chapters[baulId] || []).map((chapter) => {
+    if (sourceChapterId && chapter.id === sourceChapterId) {
+      return { ...chapter, photoCount: Math.max(0, chapter.photoCount - movedCount) };
+    }
+    if (chapter.id === targetChapterId) {
+      return {
+        ...chapter,
+        photoCount: targetPhotos.length,
+        coverPhotoUrl: chapter.coverPhotoUrl || targetPhotos[0]?.thumbnailUrl,
+      };
+    }
+    return chapter;
+  });
 
   return {
     photos: {
@@ -87,19 +104,7 @@ export function applyMovedPhotos(
       : { ...state.loosePhotos, [baulId]: remainingSourcePhotos },
     chapters: {
       ...state.chapters,
-      [baulId]: (state.chapters[baulId] || []).map((chapter) => {
-        if (sourceChapterId && chapter.id === sourceChapterId) {
-          return { ...chapter, photoCount: Math.max(0, chapter.photoCount - movedCount) };
-        }
-        if (chapter.id === targetChapterId) {
-          return {
-            ...chapter,
-            photoCount: targetPhotos.length,
-            coverPhotoUrl: chapter.coverPhotoUrl || targetPhotos[0]?.thumbnailUrl,
-          };
-        }
-        return chapter;
-      }),
+      [baulId]: chapters,
     },
   };
 }

@@ -186,8 +186,16 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
         // uploading via the native share flow into a chapter never opened this session),
         // and an append onto an empty/stale slice would silently drop its existing photos.
         // Mirrors the same fix already applied in movePhotos.
-        const photosForChapter = await api.photos.getAll(chapterId);
-        set((state) => applyUploadedPhotos(state, { baulId, chapterId, uploaded, photosForChapter }));
+        //
+        // Re-fetch chapters too: chapter cards display aggregate metadata (date range,
+        // undated count, ordering) computed server-side from their photos. Without this,
+        // a newly-created chapter receiving dated photos stayed visible without dates until
+        // the user left and re-entered the baúl.
+        const [photosForChapter, chaptersForBaul] = await Promise.all([
+          api.photos.getAll(chapterId),
+          api.chapters.getAll(baulId),
+        ]);
+        set((state) => applyUploadedPhotos(state, { baulId, chapterId, uploaded, photosForChapter, chaptersForBaul }));
       } else {
         set((state) => applyUploadedPhotos(state, { baulId, chapterId, uploaded }));
       }
@@ -249,9 +257,21 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
     // (e.g. moving into a chapter the user hasn't opened this session), and a
     // client-side merge against an empty/stale slice would silently drop its
     // existing photos.
-    const targetPhotos = await api.photos.getAll(targetChapterId);
+    // Re-fetch chapters too so aggregate chapter card metadata (especially date
+    // ranges) is updated after creating a chapter from selected photos.
+    const [targetPhotos, chaptersForBaul] = await Promise.all([
+      api.photos.getAll(targetChapterId),
+      api.chapters.getAll(baulId),
+    ]);
 
-    set((state) => applyMovedPhotos(state, { baulId, sourceChapterId, targetChapterId, movedPhotoIds: succeededIds, targetPhotos }));
+    set((state) => applyMovedPhotos(state, {
+      baulId,
+      sourceChapterId,
+      targetChapterId,
+      movedPhotoIds: succeededIds,
+      targetPhotos,
+      chaptersForBaul,
+    }));
 
     if (failedCount > 0) {
       throw new Error(`${failedCount} de ${photoIds.length} fotos no se pudieron mover`);

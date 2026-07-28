@@ -13,6 +13,7 @@ vi.mock('@/api', () => ({
     },
     chapters: {
       create: vi.fn(),
+      getAll: vi.fn(),
       setCover: vi.fn(),
     },
     photos: {
@@ -117,6 +118,9 @@ describe('useBaulesStore uploads', () => {
         .mockResolvedValueOnce(photo1)
         .mockResolvedValueOnce(photo2);
       vi.mocked(api.photos.getAll).mockResolvedValue([photo1, photo2]);
+      vi.mocked(api.chapters.getAll).mockResolvedValue([
+        newChapter({ photoCount: 2, coverPhotoUrl: photo1.thumbnailUrl }),
+      ]);
 
       const onItemSettled = vi.fn();
       const results = await useBaulesStore.getState().uploadPhotos(baulId, chapterId, items, onItemSettled);
@@ -127,6 +131,7 @@ describe('useBaulesStore uploads', () => {
       ]);
       expect(onItemSettled).toHaveBeenCalledTimes(2);
       expect(api.photos.getAll).toHaveBeenCalledWith(chapterId);
+      expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
 
       const state = useBaulesStore.getState();
       expect(state.photos[chapterId]).toEqual([photo1, photo2]);
@@ -151,6 +156,9 @@ describe('useBaulesStore uploads', () => {
         .mockResolvedValueOnce(photo1)
         .mockRejectedValueOnce(new Error('network down'));
       vi.mocked(api.photos.getAll).mockResolvedValue([photo1]);
+      vi.mocked(api.chapters.getAll).mockResolvedValue([
+        newChapter({ photoCount: 1, coverPhotoUrl: photo1.thumbnailUrl }),
+      ]);
 
       const results = await useBaulesStore.getState().uploadPhotos(baulId, chapterId, items);
 
@@ -176,6 +184,9 @@ describe('useBaulesStore uploads', () => {
 
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
       vi.mocked(api.photos.getAll).mockResolvedValue([photo1]);
+      vi.mocked(api.chapters.getAll).mockResolvedValue([
+        newChapter({ photoCount: 1, coverPhotoUrl: photo1.thumbnailUrl }),
+      ]);
 
       const results = await useBaulesStore.getState().uploadPhotos(baulId, chapterId, items);
 
@@ -291,6 +302,9 @@ describe('useBaulesStore uploads', () => {
       vi.mocked(api.chapters.create).mockResolvedValueOnce(newChapterEntity);
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
       vi.mocked(api.photos.getAll).mockResolvedValue([photo1]);
+      vi.mocked(api.chapters.getAll).mockResolvedValue([
+        newChapter({ id: 'new-chapter', photoCount: 1, coverPhotoUrl: photo1.thumbnailUrl }),
+      ]);
 
       const { results, chapterId: resolvedChapterId } = await useBaulesStore
         .getState()
@@ -299,6 +313,42 @@ describe('useBaulesStore uploads', () => {
       expect(resolvedChapterId).toBe('new-chapter');
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, 'new-chapter', items[0].file, 'c1', undefined);
+    });
+
+    it('refreshes chapter date metadata after creating a chapter and uploading dated photos into it', async () => {
+      useBaulesStore.setState({ baules: [newBaul()], chapters: { [baulId]: [] } });
+      const date = { year: 1984, month: 7, day: 12 };
+      const uploadItems: UploadItem[] = [{ clientUploadId: 'c1', file: fakeFile('a.jpg'), date }];
+      const newChapterEntity = newChapter({ id: 'new-chapter', photoCount: 0 });
+      const photo1 = newPhoto('photo-1', { dateYear: date.year, dateMonth: date.month, dateDay: date.day });
+      const refreshedChapter = newChapter({
+        id: 'new-chapter',
+        photoCount: 1,
+        coverPhotoUrl: photo1.thumbnailUrl,
+        minDateYear: date.year,
+        minDateMonth: date.month,
+        minDateDay: date.day,
+        maxDateYear: date.year,
+        maxDateMonth: date.month,
+        maxDateDay: date.day,
+        undatedPhotoCount: 0,
+      });
+
+      vi.mocked(api.chapters.create).mockResolvedValueOnce(newChapterEntity);
+      vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
+      vi.mocked(api.photos.getAll).mockResolvedValue([photo1]);
+      vi.mocked(api.chapters.getAll).mockResolvedValue([refreshedChapter]);
+
+      await useBaulesStore
+        .getState()
+        .uploadPhotosWithChapter(baulId, { type: 'new', name: 'Verano' }, uploadItems);
+
+      const storedChapter = useBaulesStore.getState().chapters[baulId][0];
+      expect(api.photos.upload).toHaveBeenCalledWith(baulId, 'new-chapter', uploadItems[0].file, 'c1', date);
+      expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
+      expect(storedChapter.minDate).toEqual(date);
+      expect(storedChapter.maxDate).toEqual(date);
+      expect(storedChapter.photoCount).toBe(1);
     });
 
     it('reports every item as failed and resolves chapterId to null when chapter creation fails', async () => {
@@ -380,6 +430,10 @@ describe('useBaulesStore movePhotos', () => {
       .mockResolvedValueOnce(photoA)
       .mockRejectedValueOnce(new Error('no se pudo mover'));
     vi.mocked(api.photos.getAll).mockResolvedValue([photoA]);
+    vi.mocked(api.chapters.getAll).mockResolvedValue([
+      newChapter(sourceChapterId, { photoCount: 1 }),
+      newChapter(targetChapterId, { photoCount: 1, coverPhotoUrl: photoA.thumbnailUrl }),
+    ]);
 
     const onItemSettled = vi.fn();
     await expect(
@@ -429,6 +483,9 @@ describe('useBaulesStore movePhotos', () => {
 
     vi.mocked(api.photos.move).mockResolvedValue(photoA);
     vi.mocked(api.photos.getAll).mockResolvedValue([photoA]);
+    vi.mocked(api.chapters.getAll).mockResolvedValue([
+      newChapter(targetChapterId, { photoCount: 1, coverPhotoUrl: photoA.thumbnailUrl }),
+    ]);
 
     await useBaulesStore.getState().movePhotos(baulId, null, [photoA.id], targetChapterId);
 
@@ -436,6 +493,53 @@ describe('useBaulesStore movePhotos', () => {
     expect(state.loosePhotos[baulId]).toEqual([photoB]);
     expect(state.photos[targetChapterId]).toEqual([photoA]);
     expect(state.chapters[baulId].find((c) => c.id === targetChapterId)?.photoCount).toBe(1);
+  });
+
+  it('refreshes chapter date metadata after creating a chapter from dated loose photos', async () => {
+    const date = { year: 1984, month: 7, day: 12 };
+    const photoA = newPhoto('photo-a', { dateYear: date.year, dateMonth: date.month, dateDay: date.day });
+    const createdChapter = newChapter(targetChapterId, { photoCount: 0 });
+    const refreshedChapter = newChapter(targetChapterId, {
+      photoCount: 1,
+      coverPhotoUrl: photoA.thumbnailUrl,
+      minDateYear: date.year,
+      minDateMonth: date.month,
+      minDateDay: date.day,
+      maxDateYear: date.year,
+      maxDateMonth: date.month,
+      maxDateDay: date.day,
+      undatedPhotoCount: 0,
+    });
+    useBaulesStore.setState({
+      baules: [
+        new Baul({
+          id: baulId,
+          name: 'Baúl',
+          chapterCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isCustodio: true,
+          role: 'custodio',
+          memberCount: 1,
+        }),
+      ],
+      chapters: { [baulId]: [] },
+      loosePhotos: { [baulId]: [photoA] },
+    });
+
+    vi.mocked(api.chapters.create).mockResolvedValue(createdChapter);
+    vi.mocked(api.photos.move).mockResolvedValue(photoA);
+    vi.mocked(api.photos.getAll).mockResolvedValue([photoA]);
+    vi.mocked(api.chapters.getAll).mockResolvedValue([refreshedChapter]);
+
+    const created = await useBaulesStore.getState().createChapter(baulId, 'Verano');
+    await useBaulesStore.getState().movePhotos(baulId, null, [photoA.id], created.id);
+
+    const storedChapter = useBaulesStore.getState().chapters[baulId][0];
+    expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
+    expect(storedChapter.minDate).toEqual(date);
+    expect(storedChapter.maxDate).toEqual(date);
+    expect(storedChapter.photoCount).toBe(1);
   });
 });
 
