@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
@@ -100,8 +101,19 @@ const destructiveConfirmationContent = (
 
 export const Small: Story = {
   args: {
-    onCancel: () => alert('onCancel clicked'),
+    onCancel: fn(),
     children: placeholderContent,
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const backdrop = canvasElement.querySelector<HTMLElement>('.absolute.inset-0');
+
+    await expect(canvas.getByRole('heading', { name: 'Título de la hoja' })).toBeInTheDocument();
+    await expect(backdrop).toBeInTheDocument();
+    if (!backdrop) throw new Error('BottomSheetModal backdrop not found');
+
+    await userEvent.click(backdrop);
+    await expect(args.onCancel).toHaveBeenCalled();
   },
 };
 
@@ -114,7 +126,7 @@ export const SmallDesktopCentered: Story = {
 
 export const Large: Story = {
   args: {
-    onCancel: () => alert('onCancel clicked'),
+    onCancel: fn(),
     size: 'lg',
     children: placeholderContent,
   },
@@ -122,7 +134,7 @@ export const Large: Story = {
 
 export const EditFormSheetMobile: Story = {
   args: {
-    onCancel: () => alert('onCancel clicked'),
+    onCancel: fn(),
     size: 'lg',
     children: editBaulContent,
   },
@@ -145,7 +157,7 @@ export const EditFormDesktopDrawer: Story = {
 
 export const DestructiveConfirmationDesktopDialog: Story = {
   args: {
-    onCancel: () => alert('onCancel clicked'),
+    onCancel: fn(),
     desktopCentered: true,
     backdropOpacity: 60,
     children: destructiveConfirmationContent,

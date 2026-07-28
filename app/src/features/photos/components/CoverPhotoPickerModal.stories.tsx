@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Photo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
@@ -31,8 +32,19 @@ export const Default: Story = {
       photos: makePhotos(Math.min(take, 24 - skip), skip),
       hasMore: skip + take < 24,
     }),
-    onSelect: (photo) => alert(`onSelect: ${photo.id}`),
-    onCancel: () => alert('onCancel clicked'),
+    onSelect: fn(),
+    onCancel: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() => expect(canvas.queryByText('Cargando fotos...')).not.toBeInTheDocument());
+    const photoButtons = canvas.getAllByRole('button', { name: 'Foto' });
+    await expect(photoButtons[0]).toBeInTheDocument();
+
+    await userEvent.click(photoButtons[0]);
+    await expect(args.onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'photo-0' }));
+    await expect(args.onCancel).toHaveBeenCalled();
   },
 };
 

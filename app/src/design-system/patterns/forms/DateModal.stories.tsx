@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
 
 const meta = {
@@ -38,8 +39,20 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     title: 'Cambiar fecha de la foto',
-    onCancel: () => alert('onCancel clicked'),
-    onConfirm: () => alert('onConfirm clicked'),
+    onCancel: fn(),
+    onConfirm: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const confirmButton = canvas.getByRole('button', { name: 'Confirmar' });
+
+    await expect(confirmButton).toBeDisabled();
+    await userEvent.type(canvas.getByLabelText(/Año/), '2024');
+    await userEvent.selectOptions(canvas.getByLabelText('Mes'), '7');
+    await expect(confirmButton).toBeEnabled();
+
+    await userEvent.click(confirmButton);
+    await expect(args.onConfirm).toHaveBeenCalledWith({ year: 2024, month: 7 });
   },
 };
 

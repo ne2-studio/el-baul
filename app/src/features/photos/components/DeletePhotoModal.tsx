@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
@@ -11,6 +11,7 @@ interface DeletePhotoModalProps {
 // Modal de confirmación para retirar una foto del baúl (irreversible).
 export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: DeletePhotoModalProps) {
   const [reason, setReason] = useState('');
+  const reasonInputId = useId();
 
   return (
     <BottomSheetModal onCancel={onCancel} desktopCentered backdropOpacity={60}>
@@ -24,10 +25,11 @@ export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: 
         </p>
       </div>
 
-      <label className="block text-sm font-medium text-foreground mb-2">
+      <label htmlFor={reasonInputId} className="block text-sm font-medium text-foreground mb-2">
         Motivo de la retirada
       </label>
       <textarea
+        id={reasonInputId}
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         placeholder="¿Por qué se retira esta foto?"

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 
 const meta = {
@@ -41,8 +42,26 @@ export const Default: Story = {
     initialName: 'Familia Jimena',
     initialDescription: 'Nuestros momentos en familia',
     namePlaceholder: 'Nombre del baúl',
-    onCancel: () => alert('onCancel clicked'),
-    onSave: () => alert('onSave clicked'),
+    onCancel: fn(),
+    onSave: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const nameInput = canvas.getByLabelText('Nombre');
+    const descriptionInput = canvas.getByLabelText('Descripción');
+    const saveButton = canvas.getByRole('button', { name: 'Guardar' });
+
+    await waitFor(() => expect(nameInput).toHaveFocus());
+    await userEvent.clear(nameInput);
+    await expect(saveButton).toBeDisabled();
+
+    await userEvent.type(nameInput, '  Familia García  ');
+    await userEvent.clear(descriptionInput);
+    await userEvent.type(descriptionInput, '  Recuerdos del verano  ');
+    await expect(saveButton).toBeEnabled();
+
+    await userEvent.click(saveButton);
+    await expect(args.onSave).toHaveBeenCalledWith('Familia García', 'Recuerdos del verano');
   },
 };
 

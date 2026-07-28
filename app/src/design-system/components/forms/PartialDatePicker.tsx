@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Check } from 'lucide-react';
 import { PhotoDate } from '@/types';
 
@@ -23,6 +23,9 @@ export function PartialDatePicker({
   const [month, setMonth] = useState(initialValue?.month ? String(initialValue.month) : '');
   const [day, setDay] = useState(initialValue?.day ? String(initialValue.day) : '');
   const [unknown, setUnknown] = useState(initialUnknown);
+  const yearInputId = useId();
+  const monthSelectId = useId();
+  const dayInputId = useId();
 
   const emit = (nextYear: string, nextMonth: string, nextDay: string, nextUnknown: boolean) => {
     if (nextUnknown) {
@@ -79,15 +82,16 @@ export function PartialDatePicker({
           <p className="text-xs text-muted-foreground mb-3">El año es obligatorio. El mes y el día son opcionales.</p>
           <div className="flex gap-3">
             <div className="flex-[2]">
-              <label className="text-xs text-muted-foreground mb-1 block">Año *</label>
+              <label htmlFor={yearInputId} className="text-xs text-muted-foreground mb-1 block">Año *</label>
               <input
+                id={yearInputId}
                 type="number" placeholder="2022" value={year} onChange={e => handleYearChange(e.target.value)}
                 className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-card"
               />
             </div>
             <div className="flex-1">
-              <label className="text-xs text-muted-foreground mb-1 block">Mes</label>
-              <select value={month} onChange={e => handleMonthChange(e.target.value)}
+              <label htmlFor={monthSelectId} className="text-xs text-muted-foreground mb-1 block">Mes</label>
+              <select id={monthSelectId} value={month} onChange={e => handleMonthChange(e.target.value)}
                 className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring">
                 <option value="">—</option>
                 {MONTHS.map((m, i) => (
@@ -96,8 +100,9 @@ export function PartialDatePicker({
               </select>
             </div>
             <div className="flex-1">
-              <label className="text-xs text-muted-foreground mb-1 block">Día</label>
+              <label htmlFor={dayInputId} className="text-xs text-muted-foreground mb-1 block">Día</label>
               <input
+                id={dayInputId}
                 type="number" placeholder="—" min={1} max={31} value={day} onChange={e => handleDayChange(e.target.value)}
                 className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-card"
               />

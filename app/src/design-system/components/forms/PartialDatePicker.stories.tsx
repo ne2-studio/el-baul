@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { PartialDatePicker } from '@/design-system/components/forms/PartialDatePicker';
 import { PhotoDate } from '@/types';
 
@@ -75,5 +76,22 @@ export const Interactive: Story = {
         </p>
       </div>
     );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const yearInput = canvas.getByLabelText(/Año/);
+    const monthSelect = canvas.getByLabelText('Mes');
+    const dayInput = canvas.getByLabelText('Día');
+
+    await expect(canvas.getByText('Sin valor')).toBeInTheDocument();
+    await userEvent.type(yearInput, '2024');
+    await userEvent.selectOptions(monthSelect, '7');
+    await userEvent.type(dayInput, '15');
+
+    await expect(canvas.getByText('{"year":2024,"month":7,"day":15}')).toBeInTheDocument();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'No me acuerdo' }));
+    await expect(canvas.getByText('Sin fecha (no me acuerdo)')).toBeInTheDocument();
+    await expect(canvas.queryByLabelText(/Año/)).not.toBeInTheDocument();
   },
 };

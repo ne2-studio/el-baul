@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
@@ -25,6 +25,8 @@ export function EditInfoModal({
   const showDescription = initialDescription !== undefined;
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription ?? '');
+  const nameInputId = useId();
+  const descriptionInputId = useId();
 
   const handleSave = () => {
     const trimmedName = name.trim();
@@ -37,12 +39,14 @@ export function EditInfoModal({
       <h2 className="text-xl font-serif text-foreground">{title}</h2>
       <div>
         <label
+          htmlFor={nameInputId}
           className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
           style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
         >
           Nombre
         </label>
         <input
+          id={nameInputId}
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
@@ -55,12 +59,14 @@ export function EditInfoModal({
       {showDescription && (
         <div>
           <label
+            htmlFor={descriptionInputId}
             className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
             style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
           >
             Descripción
           </label>
           <textarea
+            id={descriptionInputId}
             value={description}
             onChange={e => setDescription(e.target.value)}
             rows={3}

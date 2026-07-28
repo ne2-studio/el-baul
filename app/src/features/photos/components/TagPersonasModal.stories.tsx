@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
 import { Persona } from '@/types';
 import { storybookAvatars } from '@/storybook/fixtures';
@@ -23,9 +24,9 @@ export const Default: Story = {
   args: {
     personas,
     selectedIds: ['1'],
-    onToggle: (id) => alert(`onToggle: ${id}`),
-    onCancel: () => alert('onCancel clicked'),
-    onConfirm: () => alert('onConfirm clicked'),
+    onToggle: fn(),
+    onCancel: fn(),
+    onConfirm: fn(),
   },
 };
 
@@ -40,12 +41,31 @@ export const Interactive: Story = {
         <TagPersonasModal
           {...args}
           selectedIds={selectedIds}
-          onToggle={(id) =>
-            setSelectedIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
-          }
+          onToggle={(id) => {
+            args.onToggle(id);
+            setSelectedIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+          }}
         />
       );
     }
     return <InteractiveTagPersonasModal />;
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const papaButton = canvas.getByRole('button', { name: /Papá/ });
+    const martaButton = canvas.getByRole('button', { name: /Marta/ });
+
+    await userEvent.click(papaButton);
+    await expect(args.onToggle).toHaveBeenCalledWith('2');
+    await expect(papaButton).toHaveClass('border-primary/40');
+
+    martaButton.focus();
+    await expect(martaButton).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onToggle).toHaveBeenCalledWith('3');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Guardar' }));
+    await expect(args.onConfirm).toHaveBeenCalled();
   },
 };
