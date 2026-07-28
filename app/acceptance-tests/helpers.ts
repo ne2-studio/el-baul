@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
+import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 
 export const API_BASE_URL = 'http://localhost:5051';
 
@@ -62,4 +64,41 @@ export async function createBaulRecuerdoViaApi(
   expect(response.ok(), `failed to create recuerdo: ${response.status()}`).toBeTruthy();
   const body = await response.json();
   return { id: body.id as string, personaId: body.personaId as string | undefined };
+}
+
+export async function createChapterViaApi(
+  page: Page,
+  accessToken: string,
+  baulId: string,
+  name: string,
+): Promise<string> {
+  const response = await page.request.post(`${API_BASE_URL}/api/baules/${baulId}/chapters`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    data: { name },
+  });
+  expect(response.ok(), `failed to create chapter: ${response.status()}`).toBeTruthy();
+  const body = await response.json();
+  return body.id as string;
+}
+
+export async function uploadPhotoViaApi(
+  page: Page,
+  accessToken: string,
+  chapterId: string,
+  filePath: string,
+): Promise<{ id: string; fullUrl: string; thumbnailUrl: string }> {
+  const response = await page.request.post(`${API_BASE_URL}/api/chapters/${chapterId}/photos`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    multipart: {
+      file: {
+        name: 'test-photo.png',
+        mimeType: 'image/png',
+        buffer: fs.readFileSync(filePath),
+      },
+      clientUploadId: randomUUID(),
+    },
+  });
+  expect(response.ok(), `failed to upload photo: ${response.status()}`).toBeTruthy();
+  const body = await response.json();
+  return { id: body.id as string, fullUrl: body.fullUrl as string, thumbnailUrl: body.thumbnailUrl as string };
 }

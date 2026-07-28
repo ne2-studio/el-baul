@@ -1,5 +1,6 @@
 import React, { useState, forwardRef } from 'react';
 import { motion } from 'motion/react';
+import { Share2 } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
 
@@ -7,6 +8,7 @@ interface RecuerdoCardProps {
   recuerdo: Recuerdo;
   isCompact?: boolean;
   onUserClick?: (personaId: string) => void;
+  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
 }
 
 // Helper para generar color basado en nombre
@@ -35,7 +37,7 @@ function getInitials(name: string): string {
 }
 
 export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
-  ({ recuerdo, onUserClick }, ref) => {
+  ({ recuerdo, onUserClick, onShareRecuerdo }, ref) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
@@ -109,10 +111,21 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
               </Button>
             )}
 
-            {/* Autor - más sutil debajo */}
-            <p className="text-background/35 text-xs mt-1.5">
-              {userName}
-            </p>
+            <div className="flex items-center justify-between gap-3 mt-1.5">
+              <p className="text-background/35 text-xs">
+                {userName}
+              </p>
+              {onShareRecuerdo && (
+                <Button variant="plain"
+                  type="button"
+                  aria-label="Compartir recuerdo"
+                  onClick={() => onShareRecuerdo(recuerdo)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-background/45 hover:text-background/80 hover:bg-background/10 transition-colors flex-shrink-0"
+                >
+                  <Share2 className="w-4 h-4" strokeWidth={1.5} />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>

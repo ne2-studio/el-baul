@@ -14,7 +14,8 @@ public class StaticAppConfiguration(
     bool welcomeEmailsEnabled = true,
     bool weeklyDigestEmailsEnabled = true,
     bool chatEnabled = true,
-    bool chatSuggestionsEnabled = true)
+    bool chatSuggestionsEnabled = true,
+    bool sharedLinksEnabled = true)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -26,4 +27,5 @@ public class StaticAppConfiguration(
     public bool WeeklyDigestEmailsEnabled { get; } = weeklyDigestEmailsEnabled;
     public bool ChatEnabled { get; } = chatEnabled;
     public bool ChatSuggestionsEnabled { get; } = chatSuggestionsEnabled;
+    public bool SharedLinksEnabled { get; } = sharedLinksEnabled;
 }

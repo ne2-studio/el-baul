@@ -21,6 +21,7 @@ public static class ServiceRegistration
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IRecuerdoRepository, RecuerdoRepository>();
+        services.AddScoped<ISharedLinkRepository, SharedLinkRepository>();
         services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
         services.AddScoped<IPhotoPersonaTagRepository, PhotoPersonaTagRepository>();
         services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();

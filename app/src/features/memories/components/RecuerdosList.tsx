@@ -7,12 +7,14 @@ interface RecuerdosListProps {
   recuerdos: Recuerdo[];
   maxVisibleWhenCollapsed?: number;
   onUserClick?: (personaId: string) => void;
+  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
 }
 
 export function RecuerdosList({
   recuerdos,
   maxVisibleWhenCollapsed = 2,
-  onUserClick
+  onUserClick,
+  onShareRecuerdo
 }: RecuerdosListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -37,6 +39,7 @@ export function RecuerdosList({
               key={recuerdo.id}
               recuerdo={recuerdo}
               onUserClick={onUserClick}
+              onShareRecuerdo={onShareRecuerdo}
             />
           ))}
         </AnimatePresence>

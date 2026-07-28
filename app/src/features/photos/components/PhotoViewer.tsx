@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, BookImage, FolderInput, Calendar, Flag, Trash2, Tag } from 'lucide-react';
+import { Download, BookImage, FolderInput, Calendar, Flag, Trash2, Tag, Share2 } from 'lucide-react';
 import { Chapter, Photo, PhotoDate, Persona, Recuerdo, TaggedPersona } from '@/types';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { MoveModal } from '@/features/photos/components/MoveModal';
@@ -36,6 +36,8 @@ interface PhotoViewerProps {
   onAddRecuerdo?: (photoId: string, text: string) => void;
   onUserClick?: (personaId: string) => void;
   onDownloadPhoto?: (photo: Photo) => void;
+  onSharePhoto?: (photo: Photo) => void;
+  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
   /** Personas etiquetadas en la foto actualmente mostrada. */
   taggedPersonas?: TaggedPersona[];
   /** Roster completo del baúl, para el checklist del modal de etiquetado. */
@@ -68,6 +70,8 @@ export function PhotoViewer({
   onAddRecuerdo,
   onUserClick,
   onDownloadPhoto,
+  onSharePhoto,
+  onShareRecuerdo,
   taggedPersonas = [],
   baulPersonas = [],
   onSaveTags
@@ -161,6 +165,9 @@ export function PhotoViewer({
   const menuItems: PhotoViewerMenuItem[] = [];
   if (onSaveTags) {
     menuItems.push({ key: 'tag-personas', label: 'Etiquetar personas', icon: Tag, onSelect: openTagModal });
+  }
+  if (onSharePhoto) {
+    menuItems.push({ key: 'share', label: 'Compartir foto', icon: Share2, onSelect: () => onSharePhoto(photo) });
   }
   if (onDownloadPhoto) {
     menuItems.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: () => onDownloadPhoto(photo) });
@@ -309,7 +316,7 @@ export function PhotoViewer({
                 </p>
               </div>
             ) : (
-              <RecuerdosList recuerdos={recuerdos} onUserClick={onUserClick} />
+              <RecuerdosList recuerdos={recuerdos} onUserClick={onUserClick} onShareRecuerdo={onShareRecuerdo} />
             )}
           </div>
 

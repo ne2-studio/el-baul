@@ -16,4 +16,5 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public bool WeeklyDigestEmailsEnabled => configuration.GetValue<bool>("Features:WeeklyDigestEmailsEnabled");
     public bool ChatEnabled => configuration.GetValue<bool>("Features:ChatEnabled");
     public bool ChatSuggestionsEnabled => configuration.GetValue<bool>("Features:ChatSuggestionsEnabled");
+    public bool SharedLinksEnabled => configuration.GetValue<bool>("Features:SharedLinksEnabled");
 }

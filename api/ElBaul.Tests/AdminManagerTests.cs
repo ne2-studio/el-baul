@@ -14,13 +14,15 @@ public class AdminManagerTests
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
+    private readonly InMemorySharedLinkRepository _sharedLinkRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
     private AdminManager CreateManager() => new(
         _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
-        _recuerdoRepository, _photoPersonaTagRepository, _photoStorage, _clock, NullLogger<AdminManager>.Instance);
+        _recuerdoRepository, _sharedLinkRepository, _photoPersonaTagRepository, _photoStorage, _clock,
+        NullLogger<AdminManager>.Instance);
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()

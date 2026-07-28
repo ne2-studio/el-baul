@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon, Share2 } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { getRelativeTime } from '@/app/utils/timeUtils';
 import { Button } from '@/design-system/components/actions/Button';
@@ -9,6 +9,7 @@ interface RecuerdoFeedCardProps {
   onUserClick?: (personaId: string) => void;
   onPhotoClick?: () => void;
   onChapterClick?: (chapterId: string) => void;
+  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
   /** false cuando la card ya se muestra dentro del propio capítulo al que pertenece el
    * recuerdo, para no repetir un badge que enlazaría al sitio en el que ya estás. */
   showChapterBadge?: boolean;
@@ -38,7 +39,7 @@ function getAvatarColor(name: string): string {
 }
 
 export function RecuerdoFeedCard({
-  recuerdo, onUserClick, onPhotoClick, onChapterClick, showChapterBadge = true,
+  recuerdo, onUserClick, onPhotoClick, onChapterClick, onShareRecuerdo, showChapterBadge = true,
 }: RecuerdoFeedCardProps) {
   const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
   const canOpenPersona = !!(recuerdo.personaId && onUserClick);
@@ -46,7 +47,19 @@ export function RecuerdoFeedCard({
 
   return (
     <div className="bg-card border border-border/60 rounded-2xl p-5">
-      <p className="text-sm text-foreground/90 leading-relaxed font-serif">{recuerdo.text}</p>
+      <div className="flex items-start gap-3">
+        <p className="flex-1 min-w-0 text-sm text-foreground/90 leading-relaxed font-serif">{recuerdo.text}</p>
+        {onShareRecuerdo && (
+          <Button variant="plain"
+            type="button"
+            aria-label="Compartir recuerdo"
+            onClick={() => onShareRecuerdo(recuerdo)}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex-shrink-0"
+          >
+            <Share2 className="w-4 h-4" strokeWidth={1.5} />
+          </Button>
+        )}
+      </div>
 
       <div className="flex items-center gap-2 mt-3">
         <Button variant="plain"

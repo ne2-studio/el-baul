@@ -14,7 +14,8 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
-import { Photo } from '@/types';
+import { Photo, Recuerdo } from '@/types';
+import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export const BaulRoute: React.FC = () => {
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const chatEnabled = useAppConfigStore(state => state.chatEnabled);
+  const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
   const { run } = useAsyncAction();
 
   const { chapters, loosePhotos, loadChapterPhotos, renameBaul, setBaulCover } = useBaulesStore();
@@ -108,6 +110,21 @@ export const BaulRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
+    const result = await run(() => api.recuerdos.createShareLink(recuerdo.id), {
+      key: 'share-recuerdo',
+      errorMessage: 'Error al crear el enlace',
+    });
+    if (!result.ok) return;
+
+    await sharePublicLink({
+      title: `Recuerdo de ${baul.name}`,
+      text: `Te comparto un recuerdo de "${baul.name}" en El Baúl.`,
+      url: result.value.url,
+      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
+    });
+  };
+
   return (
     <>
       <ChaptersView
@@ -140,6 +157,7 @@ export const BaulRoute: React.FC = () => {
         onUserClick={(personaId) =>
           navigate(`/baules/${baul.id}/personas/${personaId}`, { state: { returnTab: 'recuerdos' } })
         }
+        onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={baulPermissions.canEditBaul ? handleUpdateBaulInfo : undefined}

@@ -51,12 +51,13 @@ interface PhotosViewProps {
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (text: string) => void;
   onUserClick?: (personaId: string) => void;
+  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
 }
 
 export function PhotosView({
   chapter, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allChapters = [], onBatchMove, onBatchChangeDate,
   onBatchCreateChapter, personas = [], onBatchTagPersonas, onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos,
-  onSetChapterCover, recuerdos = [], onAddRecuerdo, onUserClick,
+  onSetChapterCover, recuerdos = [], onAddRecuerdo, onUserClick, onShareRecuerdo,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
@@ -271,6 +272,7 @@ export function PhotosView({
             onSelectPhoto={onSelectPhoto}
             onAddRecuerdo={onAddRecuerdo}
             onUserClick={onUserClick}
+            onShareRecuerdo={onShareRecuerdo}
             selectionMode={selectionMode}
           />
         )}

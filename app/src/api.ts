@@ -17,6 +17,11 @@ type SuccessResponse = ApiSchemas['SuccessResponse'];
 type TaggedPersonaDto = ApiSchemas['TaggedPersonaDto'];
 type UserProfileDto = ApiSchemas['UserProfileDto'];
 
+interface SharedLinkResponse {
+  url: string;
+  token: string;
+}
+
 export const API_BASE = getEnv('VITE_API_URL');
 
 // Module-level auth token, pushed in from App.tsx whenever the OIDC user changes —
@@ -206,6 +211,8 @@ export const api = {
 
       return { blob: await response.blob(), fileName };
     },
+    createShareLink: (photoId: string) =>
+      post<SharedLinkResponse>(`/api/photos/${photoId}/share`),
     getTaggedPersonas: async (photoId: string) =>
       (await get<TaggedPersonaDto[]>(`/api/photos/${photoId}/personas`)).map(toTaggedPersona),
     setTaggedPersonas: (photoId: string, personaIds: string[]) =>
@@ -232,6 +239,12 @@ export const api = {
       (await get<RecuerdoDto[]>(`/api/baules/${baulId}/recuerdos`)).map((r) => new Recuerdo(r)),
     createStandalone: async (baulId: string, text: string) =>
       new Recuerdo(await post<RecuerdoDto>(`/api/baules/${baulId}/recuerdos`, { text })),
+    createShareLink: (recuerdoId: string) =>
+      post<SharedLinkResponse>(`/api/recuerdos/${recuerdoId}/share`),
+  },
+
+  sharedLinks: {
+    revoke: (token: string) => del<void>(`/api/shared-links/${encodeURIComponent(token)}`),
   },
 
   personas: {

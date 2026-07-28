@@ -12,6 +12,7 @@ public record RecuerdoBaulIdCandidate(Guid Id, Guid? PhotoId, Guid? ChapterId);
 
 public interface IRecuerdoRepository
 {
+    Task<Recuerdo?> GetByIdAsync(RecuerdoId recuerdoId);
     Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(PhotoId photoId);
     Task<IEnumerable<Recuerdo>> GetByPhotoIdsAsync(IEnumerable<PhotoId> photoIds);
     Task<IEnumerable<Recuerdo>> GetByChapterIdAsync(ChapterId chapterId);

@@ -56,6 +56,7 @@ interface ChaptersViewProps {
   onOpenChapterFromRecuerdo?: (chapterId: string) => void;
   onOpenPhotoFromRecuerdo?: (photoId: string, chapterId?: string) => void;
   onUserClick?: (personaId: string) => void;
+  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
@@ -86,6 +87,7 @@ export function ChaptersView({
   onOpenChapterFromRecuerdo,
   onOpenPhotoFromRecuerdo,
   onUserClick,
+  onShareRecuerdo,
   onRemovalRequests,
   pendingRemovalRequestsCount,
   onUpdateBaulInfo,
@@ -364,6 +366,7 @@ export function ChaptersView({
             onOpenChapter={onOpenChapterFromRecuerdo}
             onOpenPhoto={onOpenPhotoFromRecuerdo}
             onUserClick={onUserClick}
+            onShareRecuerdo={onShareRecuerdo}
           />
         )}
       </PageContainer>

@@ -174,6 +174,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<ISupportManager, SupportManager>();
         builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
         builder.Services.AddScoped<IChatManager, ChatManager>();
+        builder.Services.AddScoped<ISharedLinkManager, SharedLinkManager>();
 
         // "Ai" costs a real AI call every time the chat opens with no history and can fail;
         // "Static" (the default) is deterministic templates filled from the baúl's own

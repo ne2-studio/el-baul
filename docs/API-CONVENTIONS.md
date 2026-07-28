@@ -19,6 +19,7 @@ Anonymous exceptions:
   invitation links before the recipient has signed in.
 - `GET /api/app-config` — public feature flags/URLs the frontend needs before login.
 - `GET /email/click/{token}` — clicked from an email client, never carries auth.
+- `GET /s/{token}` — public shared photo/recuerdo landing with Open Graph metadata.
 - `GET /health` — liveness check.
 
 ## Errors

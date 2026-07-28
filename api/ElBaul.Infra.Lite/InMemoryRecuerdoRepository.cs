@@ -14,6 +14,11 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
         lock (_lock) _recuerdos.Add(recuerdo with { BaulId = baulId });
     }
 
+    public Task<Recuerdo?> GetByIdAsync(RecuerdoId recuerdoId)
+    {
+        lock (_lock) return Task.FromResult(_recuerdos.FirstOrDefault(r => r.Id == recuerdoId));
+    }
+
     public Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(PhotoId photoId)
     {
         lock (_lock) return Task.FromResult(_recuerdos.Where(r => r.PhotoId == photoId).OrderBy(r => r.CreatedAt).ToList().AsEnumerable());

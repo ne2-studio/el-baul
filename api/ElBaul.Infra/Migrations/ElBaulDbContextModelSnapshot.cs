@@ -499,6 +499,57 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("SentEmails", (string)null);
                 });
 
+            modelBuilder.Entity("ElBaul.Ports.Output.SharedLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BaulId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid?>("PhotoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RecuerdoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BaulId");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("PhotoId");
+
+                    b.HasIndex("RecuerdoId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("SharedLinks", (string)null);
+                });
+
             modelBuilder.Entity("ElBaul.Ports.Output.User", b =>
                 {
                     b.Property<string>("Id")
@@ -668,6 +719,31 @@ namespace ElBaul.Infra.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ElBaul.Ports.Output.SharedLink", b =>
+                {
+                    b.HasOne("ElBaul.Ports.Output.Baul", null)
+                        .WithMany()
+                        .HasForeignKey("BaulId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ElBaul.Ports.Output.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ElBaul.Ports.Output.Photo", null)
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ElBaul.Ports.Output.Recuerdo", null)
+                        .WithMany()
+                        .HasForeignKey("RecuerdoId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 #pragma warning restore 612, 618
         }

@@ -17,6 +17,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<EmailLinkClick> EmailLinkClicks => Set<EmailLinkClick>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<RecuerdoEmbedding> RecuerdoEmbeddings => Set<RecuerdoEmbedding>();
+    public DbSet<SharedLink> SharedLinks => Set<SharedLink>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

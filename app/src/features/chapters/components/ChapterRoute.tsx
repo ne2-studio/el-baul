@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { PhotosView } from '@/features/chapters/components/PhotosView';
-import { Photo, PhotoDate } from '@/types';
+import { Photo, PhotoDate, Recuerdo } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { resolvePhotoRouteContext, SelectedPhoto } from '@/features/photos/uploadFlow';
+import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 
 // chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
 // (see useBaulesStore's nullable chapterId convention). Real-chapter photos are paginated
@@ -31,6 +33,7 @@ export const ChapterRoute: React.FC = () => {
   const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo } = useRecuerdosStore();
   const { personas, loadPersonas, addTaggedPersonasBatch } = usePersonasStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
+  const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
   const { run } = useAsyncAction();
 
   const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
@@ -187,6 +190,21 @@ export const ChapterRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
+    const result = await run(() => api.recuerdos.createShareLink(recuerdo.id), {
+      key: 'share-recuerdo',
+      errorMessage: 'Error al crear el enlace',
+    });
+    if (!result.ok) return;
+
+    await sharePublicLink({
+      title: `Recuerdo de ${baul.name}`,
+      text: `Te comparto un recuerdo de "${baul.name}" en El Baúl.`,
+      url: result.value.url,
+      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
+    });
+  };
+
   return (
     <PhotosView
       chapter={currentChapter}
@@ -212,6 +230,7 @@ export const ChapterRoute: React.FC = () => {
       onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
       onAddRecuerdo={chapterId ? handleAddRecuerdo : undefined}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
+      onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
     />
   );
 };

@@ -41,4 +41,10 @@ public interface IAppConfiguration
     /// strategy may spend AI budget depending on deployment config.
     /// </summary>
     bool ChatSuggestionsEnabled { get; }
+
+    /// <summary>
+    /// Global kill switch for public shared links. The backend checks it before creating links
+    /// and before serving public HTML, so hiding the UI is not the only protection.
+    /// </summary>
+    bool SharedLinksEnabled { get; }
 }

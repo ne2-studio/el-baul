@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
-import { Photo, PhotoDate } from '@/types';
+import { Photo, PhotoDate, Recuerdo } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -14,6 +16,7 @@ import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
+import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 
 // chapterId is present when viewing a photo inside a real chapter, absent for the virtual
 // "Fotos sueltas" chapter (see useBaulesStore's nullable chapterId convention). Real-chapter
@@ -25,6 +28,8 @@ export const PhotoViewerRoute: React.FC = () => {
   const { baulId, chapterId, photoId } = useParams();
   const auth = useAuth();
   const { run } = useAsyncAction();
+  const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
+  const showToastMessage = useUIStore(state => state.showToastMessage);
 
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
@@ -194,6 +199,36 @@ export const PhotoViewerRoute: React.FC = () => {
     });
   };
 
+  const handleSharePhoto = async (photoToShare: Photo) => {
+    const result = await run(() => api.photos.createShareLink(photoToShare.id), {
+      key: 'share-photo',
+      errorMessage: 'Error al crear el enlace',
+    });
+    if (!result.ok) return;
+
+    await sharePublicLink({
+      title: `Foto de ${baul.name}`,
+      text: `Te comparto una foto de "${baul.name}" en El Baúl.`,
+      url: result.value.url,
+      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
+    });
+  };
+
+  const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
+    const result = await run(() => api.recuerdos.createShareLink(recuerdo.id), {
+      key: 'share-recuerdo',
+      errorMessage: 'Error al crear el enlace',
+    });
+    if (!result.ok) return;
+
+    await sharePublicLink({
+      title: `Recuerdo de ${baul.name}`,
+      text: `Te comparto un recuerdo de "${baul.name}" en El Baúl.`,
+      url: result.value.url,
+      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
+    });
+  };
+
   return (
     <PhotoViewer
       photo={photo}
@@ -216,6 +251,8 @@ export const PhotoViewerRoute: React.FC = () => {
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
       onDownloadPhoto={handleDownloadPhoto}
+      onSharePhoto={sharedLinksEnabled ? handleSharePhoto : undefined}
+      onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
       taggedPersonas={taggedPersonas[photo.id] || []}
       baulPersonas={personas[baul.id] || []}
       onSaveTags={handleSaveTags}

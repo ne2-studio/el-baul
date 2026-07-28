@@ -5,6 +5,9 @@ namespace ElBaul.Infra.Persistence;
 
 public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
 {
+    public Task<Recuerdo?> GetByIdAsync(RecuerdoId recuerdoId) =>
+        dbContext.Recuerdos.AsNoTracking().FirstOrDefaultAsync(r => r.Id == recuerdoId);
+
     public async Task<IEnumerable<Recuerdo>> GetByPhotoIdAsync(PhotoId photoId) =>
         await dbContext.Recuerdos.AsNoTracking()
             .Where(r => r.PhotoId == photoId)

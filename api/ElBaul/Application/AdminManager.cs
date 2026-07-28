@@ -19,6 +19,7 @@ public class AdminManager(
     IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
+    ISharedLinkRepository sharedLinkRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IPhotoStorage photoStorage,
     IClock clock,
@@ -95,6 +96,7 @@ public class AdminManager(
         var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
 
         await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
+        await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
         await recuerdoRepository.DeleteByBaulIdAsync(baulId);
         await photoRepository.DeleteByBaulIdAsync(baulId);
         await chapterRepository.DeleteByBaulIdAsync(baulId);

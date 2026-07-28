@@ -36,6 +36,12 @@ public readonly record struct RecuerdoId(Guid Value)
     public override string ToString() => Value.ToString();
 }
 
+public readonly record struct SharedLinkId(Guid Value)
+{
+    public static implicit operator Guid(SharedLinkId id) => id.Value;
+    public override string ToString() => Value.ToString();
+}
+
 public readonly record struct RemovalRequestId(Guid Value)
 {
     public static implicit operator Guid(RemovalRequestId id) => id.Value;

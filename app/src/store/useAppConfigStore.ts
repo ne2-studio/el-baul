@@ -10,6 +10,8 @@ interface AppConfigState {
   // Defaults to false so the chat never flashes starter suggestions or calls the suggestions
   // endpoint unless the backend explicitly opts into that experiment.
   chatSuggestionsEnabled: boolean;
+  // Defaults to false so public sharing UI only appears after the backend enables the rollout.
+  sharedLinksEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -21,6 +23,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   monetizationEnabled: false,
   chatEnabled: false,
   chatSuggestionsEnabled: false,
+  sharedLinksEnabled: false,
   helpCenterUrl: '',
   appUrl: window.location.origin,
 
@@ -31,6 +34,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         monetizationEnabled: config.features.monetization,
         chatEnabled: config.features.chatEnabled,
         chatSuggestionsEnabled: config.features.chatSuggestionsEnabled,
+        sharedLinksEnabled: config.features.sharedLinksEnabled ?? false,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
       });
