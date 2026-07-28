@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
 import { Chapter, Photo, Recuerdo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
+import { viewportGlobals } from '@/storybook/viewports';
 
 const meta = {
   title: 'Features/Photos/PhotoViewer',
@@ -94,4 +95,18 @@ export const ReadOnlyCollaborator: Story = {
     currentChapter: chapters[0],
     recuerdos,
   },
+};
+
+export const PhotoViewerMobileStack: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.mobile,
+};
+
+export const PhotoViewerDesktopSideNavigation: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.desktop,
 };

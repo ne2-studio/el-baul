@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
 import { storybookPhotos } from '@/storybook/fixtures';
+import { viewportGlobals } from '@/storybook/viewports';
 
 const meta = {
   title: 'Patterns/Media/PhotoStage',
@@ -72,4 +73,18 @@ export const SinglePhoto: Story = {
     hasPrevious: false,
     hasNext: false,
   },
+};
+
+export const ViewerStageMobileGesturesOnly: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.mobile,
+};
+
+export const ViewerStageDesktopSideNavigation: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.desktop,
 };

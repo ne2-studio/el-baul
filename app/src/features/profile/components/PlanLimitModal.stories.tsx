@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PlanLimitModal } from '@/features/profile/components/PlanLimitModal';
+import { viewportGlobals } from '@/storybook/viewports';
 
 const meta = {
   title: 'Features/Subscription/PlanLimitModal',
@@ -26,4 +27,18 @@ export const HigherPlanLimit: Story = {
     baulesUsed: 5,
     baulesLimit: 5,
   },
+};
+
+export const PlanLimitBottomSheetMobile: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.mobile,
+};
+
+export const PlanLimitCenteredDesktop: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.desktop,
 };

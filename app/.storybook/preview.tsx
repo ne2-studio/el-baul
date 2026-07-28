@@ -2,6 +2,7 @@ import type { Preview } from '@storybook/react-vite'
 import '../src/styles/tailwind.css'
 import '../src/styles/theme.css'
 import './storybook.css'
+import { storybookViewports } from '../src/storybook/viewports'
 
 const fixedNow = new Date('2024-08-20T12:00:00.000Z').valueOf();
 const OriginalDate = Date;
@@ -35,6 +36,10 @@ const preview: Preview = {
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
       test: 'todo'
+    },
+
+    viewport: {
+      options: storybookViewports,
     },
 
     // Sidebar order: from generic/reusable (Foundations) down to app-specific (Screens),

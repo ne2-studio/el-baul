@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal';
+import { viewportGlobals } from '@/storybook/viewports';
 
 const meta = {
   title: 'Features/Profile/ProfileMenuModal',
@@ -34,4 +35,25 @@ export const SigningOut: Story = {
     ...Default.args,
     isSigningOut: true,
   },
+};
+
+export const AccountMenuBottomSheetMobile: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.mobile,
+};
+
+export const AccountMenuNarrowBottomSheet: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.narrow,
+};
+
+export const AccountMenuCenteredDesktop: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.desktop,
 };

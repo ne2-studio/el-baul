@@ -380,6 +380,29 @@ Tailwind's `md` breakpoint (`768px`): large bottom sheets become desktop side dr
 small confirmation sheets may center, media navigation controls become visible, and some
 content grids expand.
 
+Storybook exposes three stable viewports for visual review and regression tests:
+
+| Viewport | Width | Why it exists |
+|---|---:|---|
+| El Baul mobile | 390px | Primary phone layout: bottom sheets, stacked content and compact tab bars. |
+| El Baul narrow | 700px | Below `md` but wider than a phone: exposes max-width, overflow and tablet-like narrow behavior. |
+| El Baul desktop | 1280px | Above `md`: side drawers, centered dialogs, visible media navigation and distributed tabs. |
+
+### Existing Responsive Rules
+
+- `md` is `768px`, inherited from Tailwind. Below it, components should be treated as
+  phone or narrow layouts.
+- `PageContainer` is always centered with `px-6`; its width stops growing at `62rem`.
+- `BottomSheetModal size="lg"` is a bottom sheet below `md`, then a right-side drawer at
+  desktop (`md:w-1/3`, full height, rounded left edge).
+- Compact `BottomSheetModal` instances remain bottom sheets unless `desktopCentered` is
+  set; then they become centered dialogs at `md`.
+- `PhotoStage` hides side previous/next buttons below `md`; desktop reveals them.
+- Tab bars in baul/chapter/person screens use `w-max` below `md` and `md:w-full` above it,
+  so narrow screens scroll horizontally instead of wrapping.
+- Chapter cards use `grid-cols-2 sm:grid-cols-3`; this is a `sm` change, while tab
+  distribution remains controlled by `md`.
+
 ### Responsive Usage
 
 - Build mobile layout first with full-width controls and bottom sheets.
@@ -390,7 +413,9 @@ content grids expand.
   is explicitly operational rather than family-memory oriented.
 
 Representative consumers:
-[BottomSheetModal Large](?path=/story/components-overlays-bottomsheetmodal--large),
-[PhotoStage](?path=/story/patterns-media-photostage--default),
-[ChaptersView](?path=/story/screens-baul-detail--default),
+[BottomSheetModal Mobile Sheet](?path=/story/components-overlays-bottomsheetmodal--edit-form-sheet-mobile),
+[BottomSheetModal Desktop Drawer](?path=/story/components-overlays-bottomsheetmodal--edit-form-desktop-drawer),
+[PageContainer Desktop Max Width](?path=/story/layouts-pagecontainer--screen-rhythm-desktop-max-width),
+[PhotoStage Desktop Navigation](?path=/story/patterns-media-photostage--viewer-stage-desktop-side-navigation),
+[ChaptersView Narrow Tabs](?path=/story/screens-baul-detail--chapter-overview-narrow-scrollable-tabs),
 [TabButton Group](?path=/story/components-navigation-tabbutton--interactive-group).

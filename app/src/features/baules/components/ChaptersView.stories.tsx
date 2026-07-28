@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChaptersView } from '@/features/baules/components/ChaptersView';
 import { Baul, Chapter, Persona, Recuerdo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
+import { viewportGlobals } from '@/storybook/viewports';
 
 const meta = {
   title: 'Screens/Baul/Detail',
@@ -30,6 +31,8 @@ const chapters: Chapter[] = [
   { id: 'c1', name: 'Verano 2024', photoCount: 24, lastUpdated: 'hace 2 días', recuerdoCount: 3, undatedPhotoCount: 0, coverPhotoUrl: storybookPhotos.beach, minDate: { year: 2024, month: 7 }, maxDate: { year: 2024, month: 8 } },
   { id: 'c2', name: 'Navidad', photoCount: 12, lastUpdated: 'hace 1 mes', recuerdoCount: 1, undatedPhotoCount: 0, minDate: { year: 2023, month: 12 }, maxDate: { year: 2023, month: 12 } },
   { id: 'c3', name: 'Cumpleaños de la abuela', photoCount: 8, lastUpdated: 'hace 3 meses', recuerdoCount: 0, undatedPhotoCount: 0, minDate: { year: 2023, month: 5 }, maxDate: { year: 2023, month: 5 } },
+  { id: 'c4', name: 'La casa del pueblo', photoCount: 17, lastUpdated: 'hace 4 meses', recuerdoCount: 2, undatedPhotoCount: 1, coverPhotoUrl: storybookPhotos.people, minDate: { year: 2022, month: 8 }, maxDate: { year: 2022, month: 8 } },
+  { id: 'c5', name: 'Primeros recuerdos familiares', photoCount: 9, lastUpdated: 'hace 1 año', recuerdoCount: 4, undatedPhotoCount: 0, coverPhotoUrl: storybookPhotos.landscape, minDate: { year: 1998 }, maxDate: { year: 2001 } },
 ];
 
 const personas: Persona[] = [
@@ -103,4 +106,19 @@ export const ReadOnlyCollaborator: Story = {
     onUpdateBaulInfo: undefined,
     onRequestBaulDeletion: undefined,
   },
+};
+
+export const ChapterOverviewMobileTwoColumnGrid: Story = {
+  args: sharedDefaults,
+  globals: viewportGlobals.mobile,
+};
+
+export const ChapterOverviewNarrowScrollableTabs: Story = {
+  args: sharedDefaults,
+  globals: viewportGlobals.narrow,
+};
+
+export const ChapterOverviewDesktopDistributedTabs: Story = {
+  args: sharedDefaults,
+  globals: viewportGlobals.desktop,
 };

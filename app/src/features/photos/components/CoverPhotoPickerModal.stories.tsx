@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Photo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
+import { viewportGlobals } from '@/storybook/viewports';
 
 const fixturePhotos = Object.values(storybookPhotos);
 
@@ -51,4 +52,25 @@ export const Loading: Story = {
     onSelect: (photo) => alert(`onSelect: ${photo.id}`),
     onCancel: () => alert('onCancel clicked'),
   },
+};
+
+export const CoverPickerSheetMobileGrid: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.mobile,
+};
+
+export const CoverPickerNarrowOverflowGrid: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.narrow,
+};
+
+export const CoverPickerDesktopDrawerGrid: Story = {
+  args: {
+    ...Default.args,
+  },
+  globals: viewportGlobals.desktop,
 };
