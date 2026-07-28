@@ -23,7 +23,12 @@ npm run build
 
 ```bash
 ../scripts/verify admin
+../scripts/verify admin-acceptance
 ```
+
+`admin-acceptance` builds the admin Docker image plus `el-baul-api-lite`, then runs the
+Playwright suite in `admin/acceptance-tests/`. It covers the current critical journeys only:
+unauthenticated redirect to fake-oidc, admin login, and reaching the dashboard.
 
 ## Structure
 

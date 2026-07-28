@@ -13,7 +13,7 @@ export default async function globalTeardown() {
     });
   }
 
-  // -v: unlike docker-compose.yaml's stack, el-baul-api-lite has no volumes to preserve —
+  // -v: unlike docker-compose.yaml's stack, el-baul-api-lite has no volumes to preserve -
   // everything it has is in memory and gone on container stop anyway.
   execSync(`docker compose --profile admin -f ${COMPOSE_FILE} down -v`, { cwd: REPO_ROOT, stdio: 'inherit' });
 }

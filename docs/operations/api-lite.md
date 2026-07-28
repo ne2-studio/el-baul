@@ -4,7 +4,8 @@ A second, independently built Docker image — `ElBaul.Api.Lite/Dockerfile` — 
 API surface as `el-baul-api` but with every output port backed by an in-memory adapter instead
 of Postgres/MinIO/imgproxy/Hangfire/OpenAI. It exists so Playwright/frontend work can run
 against a fast, deterministic, disposable backend instead of the full compose stack. See
-[`../architecture/testing.md`](../architecture/testing.md) for how `app/acceptance-tests/` uses it.
+[`../architecture/testing.md`](../architecture/testing.md) for how `app/acceptance-tests/` and
+`admin/acceptance-tests/` use it.
 
 It is a **separate image**, not a flag: there's no `ASPNETCORE_ENVIRONMENT`-style switch that
 turns `el-baul-api` into this. `ElBaul.Api.Common`/`ElBaul.Infra.Common` hold everything that
@@ -37,7 +38,7 @@ docker build -f ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local .
 docker network create el-baul-lite-test
 docker run -d --name fake-oidc --network el-baul-lite-test -p 5000:5000 \
   -e OIDC_ISSUER="http://localhost:5000" \
-  -e OIDC_CLIENTS='[{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"]}]' \
+  -e OIDC_CLIENTS='[{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:3001/callback","http://localhost:5173/callback"]}]' \
   -e OIDC_USERS='[{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]}]' \
   ghcr.io/ne2-studio/fake-oidc:latest
 
@@ -61,5 +62,5 @@ Everything lives in memory for the container's process lifetime — `docker rest
 
 This image is **not** exercised by `api/acceptance-tests/` and shouldn't be — that suite exists
 specifically to verify the real image against real infrastructure. There's currently no
-automated check that `el-baul-api-lite` still builds/works on its own; `app/acceptance-tests/` running
-successfully in CI is the closest thing to one today.
+automated check that `el-baul-api-lite` still builds/works on its own; `app/acceptance-tests/`
+and `admin/acceptance-tests/` running successfully in CI are the closest thing to one today.

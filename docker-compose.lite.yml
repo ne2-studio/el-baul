@@ -1,16 +1,20 @@
-# Minimal stack for the frontend image acceptance tests (app/acceptance-tests/) —
-# el-baul-app + el-baul-api-lite + fake-oidc, nothing else. No Postgres/MinIO/imgproxy/Mailpit:
+# Minimal stack for frontend acceptance tests (app/acceptance-tests/ and
+# admin/acceptance-tests/) - app/admin + el-baul-api-lite + fake-oidc, nothing else.
+# No Postgres/MinIO/imgproxy/Mailpit:
 # el-baul-api-lite keeps everything in memory (see docs/operations/api-lite.md).
 #
-# Both `app` and `api-lite` are images **supplied from outside** via env vars, never built by
-# this file — same principle api/acceptance-tests/README.md states for the backend's own
+# `app`, `admin`, and `api-lite` are images **supplied from outside** via env vars, never built
+# by this file - same principle api/acceptance-tests/README.md states for the backend's own
 # acceptance tests: the subject under test is the artifact, not a rebuild from source. Build
-# them yourself first for a local run:
+# the images yourself first for a local run:
 #
 #   docker build -t el-baul-app:local app/
+#   docker build -t el-baul-admin:local admin/
 #   docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local api/
 #   APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local \
-#     docker compose -f docker-compose.lite.yml up -d
+#     docker compose -f docker-compose.lite.yml up -d app
+#   ADMIN_IMAGE=el-baul-admin:local API_LITE_IMAGE=el-baul-api-lite:local \
+#     docker compose -f docker-compose.lite.yml up -d admin
 #
 # fake-oidc (https://github.com/ne2-studio/fake-oidc) is the same throwaway OIDC provider
 # docker-compose.yaml uses for local dev — see that file's header comment for how to sign in.
@@ -23,7 +27,7 @@ services:
     environment:
       OIDC_ISSUER: "http://localhost:5000"
       OIDC_CLIENTS: >-
-        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"]}]
+        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:3001/callback","http://localhost:5173/callback"]}]
       OIDC_USERS: >-
         [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]},
         {"key":"user","sub":"normal-user","email":"user@test.local","name":"Normal User","roles":["user"]}]
@@ -73,5 +77,21 @@ services:
       VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
     ports:
       - "3000:80"
+    depends_on:
+      - api-lite
+
+  admin:
+    image: ${ADMIN_IMAGE:-el-baul-admin:local}
+    profiles: ["admin"]
+    environment:
+      # Runtime overrides - see admin/src/runtimeConfig.ts and
+      # admin/docker-entrypoint.d/95-generate-runtime-env.sh.
+      VITE_API_URL: "http://localhost:5051"
+      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_OIDC_CLIENT_ID: "el-baul-app"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:3001/callback"
+      VITE_ZITADEL_ORGANIZATION_ID: "fake-org"
+    ports:
+      - "3001:80"
     depends_on:
       - api-lite

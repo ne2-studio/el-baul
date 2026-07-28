@@ -12,6 +12,7 @@ Choose the smallest test that can detect the failure.
 | Frontend pure logic (mappers, formatters, reducers) | Vitest, `environment: 'node'` (default) |
 | Frontend component/hook behavior | Vitest + jsdom + React Testing Library |
 | Frontend journey: photo/persona/removal-request flows | `app/acceptance-tests/` (against `el-baul-api-lite`) |
+| Admin journey: login and dashboard access | `admin/acceptance-tests/` (against `el-baul-api-lite`) |
 | Whole-stack wiring (login → home against real infra) | root `/e2e-tests/` |
 
 ## Canonical Commands
@@ -25,6 +26,7 @@ Run verification from the repository root through `./scripts/verify`:
 | `./scripts/verify frontend` | Consumer app TypeScript check + Vitest |
 | `./scripts/verify admin` | Admin TypeScript check + Vitest |
 | `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/acceptance-tests` |
+| `./scripts/verify admin-acceptance` | Fresh admin image + fresh `el-baul-api-lite` image + `admin/acceptance-tests` |
 | `./scripts/verify e2e` | Root `e2e-tests` smoke against the real `docker-compose.yaml` stack |
 | `./scripts/verify all` | Complete local verification: every command above |
 
@@ -81,6 +83,10 @@ for the full rationale.
   `frontend-deploy.yml`. Some flows need a second identity (a second browser context logged in
   as a different fake-oidc user), since the backend rejects an account accepting its own invite
   and only shows "submit removal request" to a non-admin member.
+- **`admin/acceptance-tests/`** (`./scripts/verify admin-acceptance`) — Playwright against the
+  built admin image + the same `el-baul-api-lite` stack. It intentionally starts with a narrow
+  surface: unauthenticated redirect to fake-oidc, admin login, and navigating to `/dashboard`.
+  Gates `admin-deploy.yml`.
 
 ## Whole-system
 

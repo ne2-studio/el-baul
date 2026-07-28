@@ -21,13 +21,15 @@ Commands:
   frontend              Run app type checks and unit/component tests.
   admin                 Run admin type checks and unit/component tests.
   frontend-acceptance   Run app Playwright E2E against app + api-lite images.
+  admin-acceptance      Run admin Playwright E2E against admin + api-lite images.
   e2e                   Run whole-stack smoke tests against docker-compose.yaml.
   all                   Run every verification above.
 
 Environment:
   BACKEND_IMAGE          Tag for backend-acceptance. Defaults to el-baul-api:verify-<run>.
   APP_IMAGE              Tag for frontend-acceptance app image. Defaults to el-baul-app:verify-<run>.
-  API_LITE_IMAGE         Tag for frontend-acceptance lite API image. Defaults to el-baul-api-lite:verify-<run>.
+  ADMIN_IMAGE            Tag for admin-acceptance admin image. Defaults to el-baul-admin:verify-<run>.
+  API_LITE_IMAGE         Tag for frontend/admin acceptance lite API image. Defaults to el-baul-api-lite:verify-<run>.
   KEEP_VERIFY_IMAGES=1   Keep images built by this script.
   VERIFY_COVERAGE=1      Run coverage variants for fast unit checks.
   VERIFY_NPM_CI=1        Force npm ci before Node checks.
@@ -189,7 +191,7 @@ frontend_acceptance() {
   local api_lite_image="${API_LITE_IMAGE:-el-baul-api-lite:verify-$RUN_ID}"
 
   ensure_npm_deps app
-  run docker compose -f "$ROOT_DIR/docker-compose.lite.yml" down -v --remove-orphans
+  run docker compose --profile admin -f "$ROOT_DIR/docker-compose.lite.yml" down -v --remove-orphans
   require_ports_available 3000 5000 5051
 
   if [[ "$build_images" == "1" ]]; then
@@ -202,6 +204,28 @@ frontend_acceptance() {
 
   run_in app npx playwright install chromium
   run_in app env APP_IMAGE="$app_image" API_LITE_IMAGE="$api_lite_image" npm run test:acceptance
+}
+
+admin_acceptance() {
+  need npm
+  need docker
+  local admin_image="${ADMIN_IMAGE:-el-baul-admin:verify-$RUN_ID}"
+  local api_lite_image="${API_LITE_IMAGE:-el-baul-api-lite:verify-$RUN_ID}"
+
+  ensure_npm_deps admin
+  run docker compose --profile admin -f "$ROOT_DIR/docker-compose.lite.yml" down -v --remove-orphans
+  require_ports_available 3001 5000 5051
+
+  if [[ "$build_images" == "1" ]]; then
+    docker_build_fresh "$admin_image" "$ROOT_DIR/admin"
+    docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" "$ROOT_DIR/api"
+  else
+    require_image "$admin_image"
+    require_image "$api_lite_image"
+  fi
+
+  run_in admin npx playwright install chromium
+  run_in admin env ADMIN_IMAGE="$admin_image" API_LITE_IMAGE="$api_lite_image" npm run test:acceptance
 }
 
 e2e() {
@@ -220,6 +244,7 @@ all() {
   frontend
   admin
   frontend_acceptance
+  admin_acceptance
   e2e
 }
 
@@ -268,6 +293,7 @@ case "$command" in
   frontend) frontend ;;
   admin) admin ;;
   frontend-acceptance) frontend_acceptance ;;
+  admin-acceptance) admin_acceptance ;;
   e2e) e2e ;;
   all) all ;;
   "") usage ;;

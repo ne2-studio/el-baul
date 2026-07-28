@@ -7,9 +7,15 @@ on:
     paths:
       - '.github/workflows/admin-deploy.yml'
       - 'admin/**'
+      # Admin acceptance runs el-baul-api-lite next to the admin image, so changes to the lite
+      # stack can break this pipeline even when admin/ itself still builds.
       - 'api/ElBaul/**'
       - 'api/ElBaul.Api.Common/**'
+      - 'api/ElBaul.Api.Lite/**'
+      - 'api/ElBaul.Infra.Common/**'
+      - 'api/ElBaul.Infra.Lite/**'
       - 'api/openapi/**'
+      - 'docker-compose.lite.yml'
       - 'scripts/**'
 
 permissions:
@@ -66,13 +72,47 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('admin/package-lock.json') }}
+
+      - name: Install Playwright browsers (+ OS deps)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: admin
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps only (browsers already cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: admin
+        run: npx playwright install-deps chromium
+
       # No --build-arg VITE_* here on purpose: this image reads its VITE_* config at container
       # start instead (see admin/src/runtimeConfig.ts + admin/docker-entrypoint.d/), configured
       # as Coolify's runtime Environment Variables on the admin service — not build args, not
       # GitHub Actions repo/environment vars. docker-compose.yaml's `admin` service configures
       # the same thing the same way for local dev.
-      - name: Build image
-        run: docker build -t $IMAGE_NAME:latest admin
+      - name: Build admin acceptance images
+        run: |
+          docker build -t $IMAGE_NAME:latest admin
+          docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:ci api
+
+      - name: Run admin acceptance verification
+        env:
+          ADMIN_IMAGE: ${{ env.IMAGE_NAME }}:latest
+          API_LITE_IMAGE: el-baul-api-lite:ci
+          KEEP_VERIFY_IMAGES: "1"
+        run: ./scripts/verify --skip-image-build admin-acceptance
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-playwright-report
+          path: admin/playwright-report/
+          retention-days: 7
 
       - name: Push image
         run: docker push $IMAGE_NAME:latest

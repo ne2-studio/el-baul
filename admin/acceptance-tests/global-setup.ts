@@ -21,24 +21,23 @@ async function waitForOk(url: string, timeoutMs: number) {
   throw new Error(`Timed out waiting for ${url}: ${lastError}`);
 }
 
-// Deliberately a separate global-setup from /e2e-tests/'s — this suite verifies el-baul-api-lite +
-// the already-built frontend image, not the full docker-compose.yaml stack, and the two must
-// never be able to affect each other's config.
+// Deliberately a separate global-setup from app/acceptance-tests: this suite verifies the
+// already-built admin image, not the consumer frontend image.
 export default async function globalSetup() {
   const running = execSync('docker ps --format "{{.Names}}"').toString();
   if (running.split('\n').some((name) => name.startsWith('el-baul-lite-'))) {
     execSync(`docker compose --profile admin -f ${COMPOSE_FILE} down`, { cwd: REPO_ROOT, stdio: 'inherit' });
   }
 
-  // No --build: api-lite/app are images supplied from outside (APP_IMAGE/API_LITE_IMAGE env
+  // No --build: api-lite/admin are images supplied from outside (ADMIN_IMAGE/API_LITE_IMAGE env
   // vars, see docker-compose.lite.yml) — this suite verifies the artifact, not a rebuild of it.
-  execSync(`docker compose -f ${COMPOSE_FILE} up -d`, {
+  execSync(`docker compose --profile admin -f ${COMPOSE_FILE} up -d admin`, {
     cwd: REPO_ROOT,
     stdio: 'inherit',
     timeout: 5 * 60 * 1000,
   });
 
   await waitForOk('http://localhost:5051/health', 120_000);
-  await waitForOk('http://localhost:3000', 120_000);
+  await waitForOk('http://localhost:3001', 120_000);
   await waitForOk('http://localhost:5000/.well-known/jwks.json', 120_000);
 }
