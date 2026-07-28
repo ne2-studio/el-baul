@@ -24,10 +24,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
   const baseStyles = "px-6 py-3 rounded-xl transition-all duration-200 font-medium flex items-center justify-center gap-2";
   
   const variantStyles = {
-    primary: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
-    secondary: "border border-border text-foreground hover:bg-secondary",
-    ghost: "text-foreground hover:bg-secondary",
-    danger: "bg-destructive text-destructive-foreground hover:opacity-90 shadow-sm",
+    primary: "bg-primary text-primary-foreground enabled:hover:opacity-90 shadow-sm",
+    secondary: "border border-border text-foreground enabled:hover:bg-secondary",
+    ghost: "text-foreground enabled:hover:bg-secondary",
+    danger: "bg-destructive text-destructive-foreground enabled:hover:opacity-90 shadow-sm",
     plain: ""
   };
   
