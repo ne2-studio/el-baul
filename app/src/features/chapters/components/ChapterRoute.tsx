@@ -10,7 +10,7 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
-import { isAdminRole } from '@/utils/roleUtils';
+import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { resolvePhotoRouteContext, SelectedPhoto } from '@/features/photos/uploadFlow';
 
@@ -99,6 +99,7 @@ export const ChapterRoute: React.FC = () => {
   }
 
   const currentPhotos = chapterId ? (photos[chapterId] || []) : (loosePhotos || []);
+  const baulPermissions = getBaulPermissions(baul);
   const { currentChapter, basePath, apiChapterId } = resolvePhotoRouteContext({
     baulId: baul.id,
     chapterId,
@@ -206,7 +207,7 @@ export const ChapterRoute: React.FC = () => {
       personas={personas[baul.id] || []}
       onBatchTagPersonas={handleBatchTagPersonas}
       onUpdateChapterInfo={chapterId ? handleUpdateChapterInfo : undefined}
-      onDeleteChapter={chapterId && isAdminRole(baul.role) ? handleDeleteChapter : undefined}
+      onDeleteChapter={chapterId && baulPermissions.canDeleteChapter ? handleDeleteChapter : undefined}
       onFetchChapterCoverPhotos={chapterId ? (skip, take) => api.photos.getPage(baul.id, { chapterId, skip, take }) : undefined}
       onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
       onAddRecuerdo={chapterId ? handleAddRecuerdo : undefined}

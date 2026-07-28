@@ -9,6 +9,7 @@ import { ScrollToTop } from '@/app/ScrollToTop';
 import { setAccessToken } from '@/api';
 import { Baul } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { getBaulPermissions } from '@/utils/roleUtils';
 
 // Auth and Route Guards
 import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
@@ -114,7 +115,7 @@ function App() {
     const currentBaules = useBaulesStore.getState().baules;
 
     // Update subscription usage
-    const custodianBaules = currentBaules.filter((b: Baul) => b.isCustodio);
+    const custodianBaules = currentBaules.filter((b: Baul) => getBaulPermissions(b).isCustodio);
     setSubscription(prev => ({
       ...prev,
       baulesUsed: custodianBaules.length

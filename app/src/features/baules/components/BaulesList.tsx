@@ -6,7 +6,7 @@ import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { Baul } from '@/types';
-import { getRoleDisplayName } from '@/utils/roleUtils';
+import { getBaulPermissions, getRoleDisplayName } from '@/utils/roleUtils';
 
 interface BaulesListProps {
   baules: Baul[];
@@ -103,6 +103,8 @@ export function BaulesList({
 // ─── Baul Card (full-bleed photo) ────────────────────────────────────────────
 
 function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
+  const permissions = getBaulPermissions(baul);
+
   return (
     <button
       onClick={onClick}
@@ -138,7 +140,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
       {/* Bottom-left: role badge */}
       <div className="absolute bottom-4 left-4">
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-sm text-white text-xs font-medium">
-          {baul.isCustodio !== false ? (
+          {permissions.countsAsCustodioForPlan ? (
             <>
               <Crown className="w-3 h-3" />
               Custodio

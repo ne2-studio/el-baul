@@ -22,6 +22,7 @@ const baul: Baul = {
   coverPhotoUrl: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=1200',
   lastUpdated: 'hace 2 días',
   isCustodio: true,
+  role: 'custodio',
 };
 
 const chapters: Chapter[] = [
@@ -44,7 +45,6 @@ const sharedDefaults = {
   chapters,
   personas,
   recuerdos,
-  isAdmin: true,
   onBack: () => alert('onBack clicked'),
   onSelectChapter: (chapter: Chapter) => alert(`onSelectChapter: ${chapter.name}`),
   onCreateChapter: () => alert('onCreateChapter clicked'),
@@ -97,7 +97,6 @@ export const RecuerdosTab: Story = {
 export const ReadOnlyCollaborator: Story = {
   args: {
     ...sharedDefaults,
-    isAdmin: false,
     baul: { ...baul, isCustodio: false, role: 'colaborador' },
     onCreatePersona: undefined,
     onUpdateBaulInfo: undefined,

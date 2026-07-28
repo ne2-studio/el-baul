@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserX } from 'lucide-react';
 import { Persona, BaulRole, Photo } from '@/types';
-import { getRoleDisplayName } from '@/utils/roleUtils';
+import { getPersonaPermissions, getRoleDisplayName, PersonaPermissions } from '@/utils/roleUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
@@ -21,7 +21,7 @@ import {
 
 interface PersonaDetailScreenProps {
   persona: Persona;
-  isAdmin: boolean;
+  permissions?: PersonaPermissions;
   onBack: () => void;
   onEditInfo: () => void;
   onEditBiografia: () => void;
@@ -39,7 +39,7 @@ interface PersonaDetailScreenProps {
 
 export function PersonaDetailScreen({
   persona,
-  isAdmin,
+  permissions = getPersonaPermissions({ persona }),
   onBack,
   onEditInfo,
   onEditBiografia,
@@ -59,7 +59,6 @@ export function PersonaDetailScreen({
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const displayName = persona.name || persona.nickname;
   const isPending = persona.status === 'pending';
-  const canManage = isAdmin && persona.role !== 'custodio';
 
   const handleConfirmRevoke = async () => {
     setIsRevoking(true);
@@ -87,7 +86,7 @@ export function PersonaDetailScreen({
               <span className="text-sm">Volver</span>
             </button>
 
-            {(persona.canEdit || canManage) && (
+            {(permissions.canEditPersonaInfo || permissions.canManagePersona) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -98,14 +97,14 @@ export function PersonaDetailScreen({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {persona.canEdit && (
+                  {permissions.canEditPersonaInfo && (
                     <DropdownMenuItem onClick={onEditInfo}>
                       <Pencil className="w-4 h-4 mr-2" />
                       Editar información
                     </DropdownMenuItem>
                   )}
 
-                  {persona.canEdit && (
+                  {permissions.canUploadPersonaAvatar && (
                     <DropdownMenuItem
                       onClick={() => avatarInputRef.current?.click()}
                       disabled={isUploadingAvatar}
@@ -119,25 +118,25 @@ export function PersonaDetailScreen({
                     </DropdownMenuItem>
                   )}
 
-                  {persona.canEdit && canManage && <DropdownMenuSeparator />}
+                  {permissions.canEditPersonaInfo && permissions.canManagePersona && <DropdownMenuSeparator />}
 
-                  {canManage && isPending && (
+                  {permissions.canSharePersonaInvite && (
                     <DropdownMenuItem onClick={onShareInvite}>
                       <Share2 className="w-4 h-4 mr-2" />
                       Compartir invitación
                     </DropdownMenuItem>
                   )}
 
-                  {canManage && !isPending && (
+                  {permissions.canChangePersonaRole && (
                     <DropdownMenuItem onClick={() => setShowManageAccessModal(true)}>
                       <UserCog className="w-4 h-4 mr-2" />
                       Gestionar acceso
                     </DropdownMenuItem>
                   )}
 
-                  {canManage && <DropdownMenuSeparator />}
+                  {permissions.canManagePersona && <DropdownMenuSeparator />}
 
-                  {canManage && (
+                  {permissions.canRevokePersonaAccess && (
                     <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
                       <UserX className="w-4 h-4 mr-2" />
                       Quitar acceso
@@ -218,7 +217,7 @@ export function PersonaDetailScreen({
             <EmptyState
               icon={<BookOpen className="w-20 h-20" strokeWidth={1.5} />}
               title="Todavía no hay biografía"
-              subtitle={`Este usuario aún no tiene biografía${persona.canEdit ? ', ¡añádela!' : '.'}`}
+              subtitle={`Este usuario aún no tiene biografía${permissions.canEditPersonaBiography ? ', ¡añádela!' : '.'}`}
             />
           )
         )}
@@ -240,7 +239,7 @@ export function PersonaDetailScreen({
         label="Editar biografía"
         icon={<Pencil className="w-5 h-5" />}
         onClick={onEditBiografia}
-        hidden={activeTab !== 'biografia' || !persona.canEdit}
+        hidden={activeTab !== 'biografia' || !permissions.canEditPersonaBiography}
       />
 
       {showRevokeModal && (

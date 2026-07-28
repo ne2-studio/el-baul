@@ -9,6 +9,7 @@ import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { Baul } from '@/types';
+import { getBaulPermissions } from '@/utils/roleUtils';
 
 export const BaulesListRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ export const BaulesListRoute: React.FC = () => {
 
   const handleCreateBaulClick = () => {
     if (monetizationEnabled) {
-      const custodianBaules = baules.filter(b => b.isCustodio !== false);
+      const custodianBaules = baules.filter(b => getBaulPermissions(b).countsAsCustodioForPlan);
       if (custodianBaules.length >= subscription.baulesLimit) {
         setShowPlanLimitModal(true);
         return;

@@ -9,7 +9,7 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { isAdminRole } from '@/utils/roleUtils';
+import { getPersonaPermissions } from '@/utils/roleUtils';
 import { BaulRole } from '@/types';
 
 export const PersonaDetailRoute: React.FC = () => {
@@ -60,6 +60,8 @@ export const PersonaDetailRoute: React.FC = () => {
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
   if (!baulId || !personaId || !persona) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
+
+  const personaPermissions = getPersonaPermissions({ currentBaulRole: baul?.role, persona });
 
   const handleSaveInfo = async (name: string, nickname: string) => {
     const result = await run(() => updatePersona(baulId, personaId, name, nickname, persona.biografia || ''), {
@@ -134,7 +136,7 @@ export const PersonaDetailRoute: React.FC = () => {
     <>
       <PersonaDetailScreen
         persona={persona}
-        isAdmin={isAdminRole(baul?.role)}
+        permissions={personaPermissions}
         onBack={() => navigate(`/baules/${baulId}`, { state: { activeTab: returnTab } })}
         onEditInfo={() => setIsEditingInfo(true)}
         onEditBiografia={() => setIsEditingBiografia(true)}

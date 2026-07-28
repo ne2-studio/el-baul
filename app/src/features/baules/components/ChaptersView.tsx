@@ -15,6 +15,7 @@ import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Be
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
+import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
 import { formatDateRange } from '@/app/utils/timeUtils';
 import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
 import {
@@ -36,7 +37,7 @@ interface ChaptersViewProps {
   loosePhotos?: LoosePhoto[];
   personas?: Persona[];
   recuerdos?: Recuerdo[];
-  isAdmin?: boolean;
+  baulPermissions?: BaulPermissions;
   currentUserEmail?: string;
   initialTab?: 'capitulos' | 'personas' | 'recuerdos';
   onBack: () => void;
@@ -68,7 +69,7 @@ export function ChaptersView({
   loosePhotos = [],
   personas = [],
   recuerdos = [],
-  isAdmin = false,
+  baulPermissions = getBaulPermissions(baul),
   currentUserEmail,
   initialTab = 'capitulos',
   onBack,
@@ -131,7 +132,7 @@ export function ChaptersView({
               <span className="text-sm">Volver</span>
             </button>
 
-            {(onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baul.isCustodio) && (
+            {(onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -173,9 +174,9 @@ export function ChaptersView({
                     </DropdownMenuItem>
                   )}
 
-                  {baul.isCustodio && (onUpdateBaulInfo || onRemovalRequests) && <DropdownMenuSeparator />}
+                  {baulPermissions.canRequestBaulDeletion && (onUpdateBaulInfo || onRemovalRequests) && <DropdownMenuSeparator />}
 
-                  {baul.isCustodio && (
+                  {baulPermissions.canRequestBaulDeletion && (
                     <DropdownMenuItem variant="destructive" onClick={onRequestBaulDeletion}>
                       <Trash2 className="w-4 h-4 mr-2" />
                       Eliminar baúl
@@ -387,7 +388,7 @@ export function ChaptersView({
           label="Nueva persona"
           icon={<UserPlus className="w-5 h-5" />}
           onClick={() => setShowNuevaPersonaModal(true)}
-          hidden={!isAdmin || !onCreatePersona}
+          hidden={!baulPermissions.canCreatePersona || !onCreatePersona}
         />
       )}
       {activeTab === 'recuerdos' && (

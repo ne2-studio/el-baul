@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import * as Sentry from '@sentry/react';
 import { Baul, Chapter, Photo, PhotoDate } from '@/types';
 import { api } from '@/api';
-import { isAdminRole } from '@/utils/roleUtils';
+import { getBaulPermissions } from '@/utils/roleUtils';
 import { PhotoUploadDestination, UploadItem } from '@/features/photos/uploadFlow';
 import { useRecuerdosStore } from './useRecuerdosStore';
 import { usePersonasStore } from './usePersonasStore';
@@ -120,7 +120,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
     await usePersonasStore.getState().loadPersonas(baulId);
 
     const baul = get().baules.find((b) => b.id === baulId);
-    if (isAdminRole(baul?.role)) {
+    if (getBaulPermissions(baul).canReviewRemovalRequests) {
       await usePersonasStore.getState().loadRemovalRequests(baulId);
     }
   },

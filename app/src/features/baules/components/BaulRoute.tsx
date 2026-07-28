@@ -12,7 +12,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
-import { isAdminRole } from '@/utils/roleUtils';
+import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { Photo } from '@/types';
 
@@ -51,6 +51,8 @@ export const BaulRoute: React.FC = () => {
     }
     return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
   }
+
+  const baulPermissions = getBaulPermissions(baul);
 
   const handleSelectChapter = async (chapter: any) => {
     if (!auth.isAuthenticated) return;
@@ -114,7 +116,7 @@ export const BaulRoute: React.FC = () => {
         loosePhotos={loosePhotos[baul.id] || []}
         personas={personas[baul.id] || []}
         recuerdos={baulRecuerdos[baul.id] || []}
-        isAdmin={isAdminRole(baul.role)}
+        baulPermissions={baulPermissions}
         currentUserEmail={userProfile.email}
         initialTab={initialTab}
         onBack={() => navigate('/baules')}
@@ -140,10 +142,10 @@ export const BaulRoute: React.FC = () => {
         }
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
-        onUpdateBaulInfo={isAdminRole(baul.role) ? handleUpdateBaulInfo : undefined}
+        onUpdateBaulInfo={baulPermissions.canEditBaul ? handleUpdateBaulInfo : undefined}
         onRequestBaulDeletion={() => navigate(`/baules/${baul.id}/solicitar-borrado`)}
-        onFetchBaulCoverPhotos={isAdminRole(baul.role) ? (skip, take) => api.photos.getPage(baul.id, { skip, take }) : undefined}
-        onSetBaulCover={isAdminRole(baul.role) ? handleSetBaulCover : undefined}
+        onFetchBaulCoverPhotos={baulPermissions.canSetBaulCover ? (skip, take) => api.photos.getPage(baul.id, { skip, take }) : undefined}
+        onSetBaulCover={baulPermissions.canSetBaulCover ? handleSetBaulCover : undefined}
       />
       {isLoadingChapterPhotos && <BlockingLoadingOverlay message="Cargando fotos..." />}
     </>

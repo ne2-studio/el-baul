@@ -4,6 +4,7 @@ import { icons } from '@/design-system/foundations/icons/icons';
 import { Persona } from '@/types';
 import { Card } from '@/design-system/components/data-display/Card';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
+import { getBaulPermissions } from '@/utils/roleUtils';
 
 interface PersonasTabProps {
   personas: Persona[];
@@ -31,7 +32,7 @@ export function PersonasTab({ personas, currentUserEmail, onSelectPersona }: Per
           <div className="aspect-square bg-secondary flex items-center justify-center overflow-hidden">
             {persona.avatarUrl ? (
               <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" />
-            ) : persona.role === 'custodio' ? (
+            ) : getBaulPermissions({ role: persona.role }).isCustodio ? (
               <Icon icon={icons.crown} className="w-10 h-10 text-primary opacity-60" strokeWidth={1.5} aria-hidden />
             ) : (
               <Icon icon={icons.user} className="w-10 h-10 text-muted-foreground opacity-40" strokeWidth={1.5} aria-hidden />

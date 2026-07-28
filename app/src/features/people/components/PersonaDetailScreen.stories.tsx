@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PersonaDetailScreen } from '@/features/people/components/PersonaDetailScreen';
 import { Persona } from '@/types';
+import { getPersonaPermissions } from '@/utils/roleUtils';
 
 const meta = {
   title: 'Screens/Person/Detail',
@@ -44,7 +45,7 @@ export const Default: Story = {
   args: {
     ...sharedDefaults,
     persona: activePersona,
-    isAdmin: true,
+    permissions: getPersonaPermissions({ currentBaulRole: 'custodio', persona: activePersona }),
   },
 };
 
@@ -52,7 +53,7 @@ export const PendingInvite: Story = {
   args: {
     ...sharedDefaults,
     persona: pendingPersona,
-    isAdmin: true,
+    permissions: getPersonaPermissions({ currentBaulRole: 'custodio', persona: pendingPersona }),
   },
 };
 
@@ -60,6 +61,6 @@ export const NonAdminView: Story = {
   args: {
     ...sharedDefaults,
     persona: activePersona,
-    isAdmin: false,
+    permissions: getPersonaPermissions({ currentBaulRole: 'colaborador', persona: activePersona }),
   },
 };

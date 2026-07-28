@@ -4,6 +4,7 @@ import { RequestBaulDeletionScreen } from '@/features/baules/components/RequestB
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { api } from '@/api';
+import { getBaulPermissions } from '@/utils/roleUtils';
 
 export const RequestBaulDeletionRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -12,15 +13,15 @@ export const RequestBaulDeletionRoute: React.FC = () => {
   const { run, isPending } = useAsyncAction();
 
   const baul = baules.find((b) => b.id === baulId);
-  const isCustodio = baul?.isCustodio ?? false;
+  const canRequestBaulDeletion = getBaulPermissions(baul).canRequestBaulDeletion;
 
   // Solo el custodio puede solicitar el borrado del baúl — cualquier otro rol (incluido
   // administrador) se redirige de vuelta, ya que la opción no debería ser accesible.
   useEffect(() => {
-    if (baul && !isCustodio) navigate(`/baules/${baul.id}`, { replace: true });
-  }, [baul, isCustodio, navigate]);
+    if (baul && !canRequestBaulDeletion) navigate(`/baules/${baul.id}`, { replace: true });
+  }, [baul, canRequestBaulDeletion, navigate]);
 
-  if (!baul || !isCustodio) return <div className="p-8 text-center">Cargando baúl...</div>;
+  if (!baul || !canRequestBaulDeletion) return <div className="p-8 text-center">Cargando baúl...</div>;
 
   const handleSubmit = async (reason: string) => {
     const message = `Solicitud de eliminación del baúl "${baul.name}" (ID: ${baul.id})\n\nMotivo:\n${reason}`;

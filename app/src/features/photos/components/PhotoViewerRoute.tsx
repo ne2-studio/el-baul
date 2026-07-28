@@ -9,7 +9,7 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
-import { isAdminRole } from '@/utils/roleUtils';
+import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
@@ -104,6 +104,7 @@ export const PhotoViewerRoute: React.FC = () => {
   const photo = photos.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 
+  const baulPermissions = getBaulPermissions(baul);
   const { currentChapter, basePath, apiChapterId } = resolvePhotoRouteContext({
     baulId: baul.id,
     chapterId,
@@ -203,7 +204,7 @@ export const PhotoViewerRoute: React.FC = () => {
         state: backgroundLocation ? { backgroundLocation } : undefined,
       })}
       onRequestRemoval={handleRequestRemoval}
-      isAdmin={isAdminRole(baul.role)}
+      isAdmin={baulPermissions.isAdmin}
       onSetBaulCover={handleSetBaulCover}
       onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
       onMovePhoto={handleMovePhoto}
