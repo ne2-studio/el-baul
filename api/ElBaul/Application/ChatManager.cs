@@ -101,6 +101,12 @@ public class ChatManager(
             return Result.Failure<IEnumerable<string>>(ApplicationError.Validation("Chat is not enabled"));
         }
 
+        if (!appConfiguration.ChatSuggestionsEnabled)
+        {
+            logger.LogWarning("Suggested questions rejected: chat suggestions are not enabled {BaulId}", baulId);
+            return Result.Failure<IEnumerable<string>>(ApplicationError.Validation("Chat suggestions are not enabled"));
+        }
+
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null)

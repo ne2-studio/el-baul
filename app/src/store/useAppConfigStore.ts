@@ -7,6 +7,9 @@ interface AppConfigState {
   // Same reasoning as monetizationEnabled — false until the config loads, so the "Ayúdame a
   // recordar" FAB never flashes visible while the feature is still globally off.
   chatEnabled: boolean;
+  // Defaults to false so the chat never flashes starter suggestions or calls the suggestions
+  // endpoint unless the backend explicitly opts into that experiment.
+  chatSuggestionsEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -17,6 +20,7 @@ interface AppConfigState {
 export const useAppConfigStore = create<AppConfigState>((set) => ({
   monetizationEnabled: false,
   chatEnabled: false,
+  chatSuggestionsEnabled: false,
   helpCenterUrl: '',
   appUrl: window.location.origin,
 
@@ -26,6 +30,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
       set({
         monetizationEnabled: config.features.monetization,
         chatEnabled: config.features.chatEnabled,
+        chatSuggestionsEnabled: config.features.chatSuggestionsEnabled,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
       });

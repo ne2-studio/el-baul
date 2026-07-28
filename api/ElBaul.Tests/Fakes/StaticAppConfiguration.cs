@@ -13,7 +13,8 @@ public class StaticAppConfiguration(
     // gating behavior itself is covered by its own dedicated tests, constructed with false.
     bool welcomeEmailsEnabled = true,
     bool weeklyDigestEmailsEnabled = true,
-    bool chatEnabled = true)
+    bool chatEnabled = true,
+    bool chatSuggestionsEnabled = true)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -24,4 +25,5 @@ public class StaticAppConfiguration(
     public bool WelcomeEmailsEnabled { get; } = welcomeEmailsEnabled;
     public bool WeeklyDigestEmailsEnabled { get; } = weeklyDigestEmailsEnabled;
     public bool ChatEnabled { get; } = chatEnabled;
+    public bool ChatSuggestionsEnabled { get; } = chatSuggestionsEnabled;
 }

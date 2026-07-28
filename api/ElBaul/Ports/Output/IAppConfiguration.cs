@@ -34,4 +34,11 @@ public interface IAppConfiguration
     /// not per-family.
     /// </summary>
     bool ChatEnabled { get; }
+
+    /// <summary>
+    /// Independent switch for starter question suggestions inside the AI chat. Defaults to
+    /// false and is checked before invoking the configured suggestion strategy, because that
+    /// strategy may spend AI budget depending on deployment config.
+    /// </summary>
+    bool ChatSuggestionsEnabled { get; }
 }

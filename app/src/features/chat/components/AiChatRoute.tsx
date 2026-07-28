@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AiChatScreen } from '@/features/chat/components/AiChatScreen';
 import { api } from '@/api';
 import { ChatMessage } from '@/types';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 export const AiChatRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -13,13 +14,14 @@ export const AiChatRoute: React.FC = () => {
   const [hasError, setHasError] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const chatSuggestionsEnabled = useAppConfigStore(state => state.chatSuggestionsEnabled);
 
   useEffect(() => {
     if (!baulId) return;
     api.chat.getMessages(baulId)
       .then((history) => {
         setMessages(history);
-        if (history.length === 0) {
+        if (history.length === 0 && chatSuggestionsEnabled) {
           setIsLoadingSuggestions(true);
           api.chat.getSuggestedQuestions(baulId)
             .then(setSuggestions)
@@ -29,7 +31,7 @@ export const AiChatRoute: React.FC = () => {
       })
       .catch(() => setHasError(true))
       .finally(() => setIsLoadingHistory(false));
-  }, [baulId]);
+  }, [baulId, chatSuggestionsEnabled]);
 
   const handleSend = async (text: string) => {
     if (!baulId) return;

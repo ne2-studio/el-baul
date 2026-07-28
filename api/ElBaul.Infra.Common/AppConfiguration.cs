@@ -15,4 +15,5 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public bool WelcomeEmailsEnabled => configuration.GetValue<bool>("Features:WelcomeEmailsEnabled");
     public bool WeeklyDigestEmailsEnabled => configuration.GetValue<bool>("Features:WeeklyDigestEmailsEnabled");
     public bool ChatEnabled => configuration.GetValue<bool>("Features:ChatEnabled");
+    public bool ChatSuggestionsEnabled => configuration.GetValue<bool>("Features:ChatSuggestionsEnabled");
 }

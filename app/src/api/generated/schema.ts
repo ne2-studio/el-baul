@@ -4908,6 +4908,7 @@ export interface components {
         AppConfigFeatures: {
             monetization: boolean;
             chatEnabled: boolean;
+            chatSuggestionsEnabled: boolean;
         };
         AppConfigResponse: {
             features: components["schemas"]["AppConfigFeatures"];

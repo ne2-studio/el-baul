@@ -204,6 +204,22 @@ public class ChatManagerTests
     }
 
     [Fact]
+    public async Task GetSuggestedQuestionsAsync_ShouldFailWithoutGenerating_WhenChatSuggestionsAreDisabled()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var manager = CreateManager(
+            CustodioId,
+            appConfiguration: new StaticAppConfiguration(chatEnabled: true, chatSuggestionsEnabled: false));
+
+        var result = await manager.GetSuggestedQuestionsAsync(new BaulId(baulId));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Chat suggestions are not enabled", result.Error.Message);
+        await _suggestedQuestionsStrategy.DidNotReceive().GenerateAsync(Arg.Any<Baul>());
+    }
+
+    [Fact]
     public async Task GetSuggestedQuestionsAsync_ShouldFail_WhenBaulDoesNotExist()
     {
         var manager = CreateManager(CustodioId);
