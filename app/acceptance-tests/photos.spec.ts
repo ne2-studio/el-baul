@@ -40,7 +40,7 @@ test('create baúl → create chapter → upload photo → move photo → delete
   await page.locator('button:has(img[alt="Foto"])').first().click();
   await page.getByRole('button', { name: 'Más opciones' }).click();
   await page.getByRole('button', { name: 'Retirar foto' }).click();
-  await page.getByRole('textbox', { name: '¿Por qué se retira esta foto?' }).fill('E2E test cleanup');
+  await page.getByRole('textbox', { name: 'Motivo de la retirada' }).fill('E2E test cleanup');
   await page.getByRole('button', { name: 'Sí, retirar foto' }).click();
   await expect(page.getByText('La foto ha sido retirada')).toBeVisible({ timeout: 10_000 });
 });
