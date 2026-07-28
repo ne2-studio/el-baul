@@ -76,7 +76,7 @@ tests (a separate solution, not part of `ElBaul.slnx`):
 ../scripts/verify backend-acceptance
 ```
 
-See [`acceptance-tests/README.md`](acceptance-tests/README.md) for what it covers and the
+See [`api/acceptance-tests/README.md`](acceptance-tests/README.md) for what it covers and the
 rules it enforces on itself.
 
 ## API routes
@@ -100,7 +100,7 @@ ElBaul.Infra.Lite   — in-memory adapters (backs el-baul-api-lite and ElBaul.Te
 ElBaul.Infra.Common — shared with both: auth/user-sync logic that doesn't touch real infra
 ElBaul.Maintenance  — one-off maintenance CLI commands + the framework that runs them
 ElBaul.Maintenance.Tests — unit tests for maintenance command behavior
-acceptance-tests  — separate solution, black-box tests for the built image
+api/acceptance-tests  — separate solution, black-box tests for the built image
 ```
 
 See [`docs/architecture/backend.md`](../docs/architecture/backend.md) for dependency rules and

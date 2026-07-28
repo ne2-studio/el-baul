@@ -50,7 +50,7 @@ Run verification from the repository root through `./scripts/verify`:
   fake-first convention as `ElBaul.Tests`: use `ElBaul.Infra.Lite`'s `InMemory*Repository`
   implementations for stateful ports and small test-local fakes for deterministic storage,
   clocks, extractors, or provider failures.
-- **`acceptance-tests/`** — a separate solution (excluded from `ElBaul.slnx` — plain
+- **`api/acceptance-tests/`** — a separate solution (excluded from `ElBaul.slnx` — plain
   `dotnet test` does not run it). Black-box acceptance tests for the *built Docker image*, run
   via Testcontainers against a real Postgres + MinIO + fake-oidc stack: no `ProjectReference` to
   anything above, no shared fixtures/DTOs. Runs in CI right after `docker build`, before the
