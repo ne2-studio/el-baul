@@ -17,6 +17,7 @@ on:
       - 'api/ElBaul.Api.Lite/**'
       - 'api/ElBaul.Infra.Common/**'
       - 'api/ElBaul.Infra.Lite/**'
+      - 'api/openapi/**'
 
 permissions:
   contents: read
@@ -42,6 +43,11 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: npm ci
+
+      - name: Check generated OpenAPI TypeScript types
+        run: |
+          ./scripts/openapi generate-types app
+          git diff --exit-code -- app/src/api/generated/schema.ts
 
       - name: Run frontend verification
         run: VERIFY_COVERAGE=1 ./scripts/verify frontend

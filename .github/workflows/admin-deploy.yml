@@ -7,6 +7,9 @@ on:
     paths:
       - '.github/workflows/admin-deploy.yml'
       - 'admin/**'
+      - 'api/ElBaul/**'
+      - 'api/ElBaul.Api.Common/**'
+      - 'api/openapi/**'
       - 'scripts/**'
 
 permissions:
@@ -33,6 +36,11 @@ jobs:
       - name: Install dependencies
         working-directory: admin
         run: npm ci
+
+      - name: Check generated OpenAPI TypeScript types
+        run: |
+          ./scripts/openapi generate-types admin
+          git diff --exit-code -- admin/src/api/generated/schema.ts
 
       - name: Run admin verification
         run: VERIFY_COVERAGE=1 ./scripts/verify admin

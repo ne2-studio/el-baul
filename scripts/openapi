@@ -11,6 +11,7 @@ Usage: ./scripts/openapi <command>
 Commands:
   accept-contract   Regenerate the reviewed OpenAPI contract snapshot after review.
   generate-types    Generate app/admin raw TypeScript types from the reviewed snapshot.
+                    Optional target: app, admin, or all. Defaults to all.
 EOF
 }
 
@@ -40,21 +41,40 @@ accept_contract() {
   run env UPDATE_OPENAPI_SNAPSHOT=1 dotnet test "$ROOT_DIR/api/ElBaul.Api.Tests/ElBaul.Api.Tests.csproj" --configuration Release
 }
 
+generate_app_types() {
+  [[ -f "$ROOT_DIR/app/package.json" ]] || die "cannot locate app package"
+  mkdir -p "$ROOT_DIR/app/src/api/generated"
+  run npm --prefix "$ROOT_DIR/app" exec openapi-typescript -- "$OPENAPI_SNAPSHOT" -o "$ROOT_DIR/app/src/api/generated/schema.ts"
+}
+
+generate_admin_types() {
+  [[ -f "$ROOT_DIR/admin/package.json" ]] || die "cannot locate admin package"
+  mkdir -p "$ROOT_DIR/admin/src/api/generated"
+  run npm --prefix "$ROOT_DIR/admin" exec openapi-typescript -- "$OPENAPI_SNAPSHOT" -o "$ROOT_DIR/admin/src/api/generated/schema.ts"
+}
+
 generate_types() {
+  local target="${1:-all}"
+
   need npm
   [[ -f "$OPENAPI_SNAPSHOT" ]] || die "cannot locate OpenAPI snapshot: $OPENAPI_SNAPSHOT"
 
-  mkdir -p "$ROOT_DIR/app/src/api/generated" "$ROOT_DIR/admin/src/api/generated"
-
-  run npm --prefix "$ROOT_DIR/app" exec openapi-typescript -- "$OPENAPI_SNAPSHOT" -o "$ROOT_DIR/app/src/api/generated/schema.ts"
-  run npm --prefix "$ROOT_DIR/admin" exec openapi-typescript -- "$OPENAPI_SNAPSHOT" -o "$ROOT_DIR/admin/src/api/generated/schema.ts"
+  case "$target" in
+    app) generate_app_types ;;
+    admin) generate_admin_types ;;
+    all)
+      generate_app_types
+      generate_admin_types
+      ;;
+    *) die "unknown generate-types target: $target" ;;
+  esac
 }
 
 ensure_root
 
 case "${1:-}" in
   accept-contract) accept_contract ;;
-  generate-types) generate_types ;;
+  generate-types) generate_types "${2:-all}" ;;
   -h|--help|help|"") usage ;;
   *) usage >&2; die "unknown command: $1" ;;
 esac
