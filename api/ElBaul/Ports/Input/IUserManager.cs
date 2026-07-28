@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 
 namespace ElBaul.Ports.Input;
 

@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
 
@@ -39,7 +39,7 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
         if (baul is null)
         {
             logger.LogWarning("{Operation} rejected: baul not found {@Context}", operation, logContext);
-            return Result.Failure<BaulAccess>("Baul not found");
+            return Result.Failure<BaulAccess>(ApplicationError.NotFound("Baul not found"));
         }
 
         return await AuthorizeAsync(baul, userId, level, operation, logContext);
@@ -53,7 +53,7 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
         if (!authorized)
         {
             logger.LogWarning("{Operation} rejected: access denied {@Context}", operation, logContext);
-            return Result.Failure<BaulAccess>("Access denied");
+            return Result.Failure<BaulAccess>(ApplicationError.Forbidden("Access denied"));
         }
 
         return Result.Success(access);

@@ -75,7 +75,7 @@ public class RemovalRequestManagerTests
         var result = await manager.CreateRemovalRequestAsync(new BaulId(baulId), new PhotoId(photoId), "no me gusta");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class RemovalRequestManagerTests
             new BaulId(firstBaulId), new PhotoId(secondPhotoId), "cross-baul");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
         Assert.Empty(await _baulRepository.GetRemovalRequestsAsync(new BaulId(firstBaulId)));
     }
 

@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
@@ -79,7 +78,7 @@ public class BaulManager(
         if (photo is null || photo.BaulId != baulId)
         {
             logger.LogWarning("Baul cover update rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);
-            return Result.Failure<BaulDto>("Photo not found");
+            return Result.Failure<BaulDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var updated = access.Baul.WithCover(photo, clock.UtcNow());

@@ -76,6 +76,6 @@ public class AiSuggestedQuestionsStrategyTests
         var result = await strategy.GenerateAsync(baul);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Chat is not configured.", result.Error);
+        Assert.Equal("Chat is not configured.", result.Error.Message);
     }
 }

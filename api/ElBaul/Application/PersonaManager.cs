@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
@@ -21,10 +20,10 @@ public class PersonaManager(
     {
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.IsClaimed)
-            return Result.Failure<BaulPreviewDto>("Invitation not found");
+            return Result.Failure<BaulPreviewDto>(ApplicationError.NotFound("Invitation not found"));
 
         var baul = await baulRepository.GetByIdAsync(persona.BaulId);
-        if (baul is null) return Result.Failure<BaulPreviewDto>("Baul not found");
+        if (baul is null) return Result.Failure<BaulPreviewDto>(ApplicationError.NotFound("Baul not found"));
 
         var photos = await photoRepository.GetPreviewPhotosAsync(baul.Id, 4);
         var urls = new List<string>();
@@ -44,13 +43,13 @@ public class PersonaManager(
         if (persona is null)
         {
             logger.LogWarning("Personal invitation acceptance rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>("Invitation not found");
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Invitation not found"));
         }
 
         if (persona.IsClaimed && persona.UserId != userId)
         {
             logger.LogWarning("Personal invitation acceptance rejected: already claimed {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>("This invitation has already been used");
+            return Result.Failure<PersonaDto>(ApplicationError.Validation("This invitation has already been used"));
         }
 
         if (!persona.IsClaimed)
@@ -65,7 +64,7 @@ public class PersonaManager(
                 logger.LogWarning(
                     "Personal invitation acceptance rejected: caller already has access to this baul {PersonaId} {BaulId}",
                     personaId, persona.BaulId);
-                return Result.Failure<PersonaDto>("You already have access to this baúl with a different account link");
+                return Result.Failure<PersonaDto>(ApplicationError.Validation("You already have access to this baúl with a different account link"));
             }
 
             persona = persona with { UserId = userId, Name = persona.Name ?? user?.Name };
@@ -110,7 +109,7 @@ public class PersonaManager(
         if (persona is null || persona.BaulId != baulId)
         {
             logger.LogWarning("Persona detail rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>("Persona not found");
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
         var canEdit = CanEditPersona(persona, userId, access);
@@ -145,14 +144,14 @@ public class PersonaManager(
         if (persona is null || persona.BaulId != baulId)
         {
             logger.LogWarning("Persona update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>("Persona not found");
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
         var canEdit = CanEditPersona(persona, userId, auth.Value);
         if (!canEdit)
         {
             logger.LogWarning("Persona update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>("Access denied");
+            return Result.Failure<PersonaDto>(ApplicationError.Forbidden("Access denied"));
         }
 
         var updated = persona with { Name = name, Nickname = nickname, Biografia = biografia };
@@ -177,7 +176,7 @@ public class PersonaManager(
         {
             logger.LogWarning(
                 "Persona avatar update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>("Persona not found");
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
         var canEdit = CanEditPersona(persona, userId, auth.Value);
@@ -185,7 +184,7 @@ public class PersonaManager(
         {
             logger.LogWarning(
                 "Persona avatar update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>("Access denied");
+            return Result.Failure<PersonaDto>(ApplicationError.Forbidden("Access denied"));
         }
 
         var storageKey = StorageKey.ForPersonaAvatar(personaId, idGenerator.NewId(), fileName);
@@ -226,7 +225,7 @@ public class PersonaManager(
             logger.LogWarning(
                 "Persona role update rejected: persona not found {BaulId} {PersonaId}",
                 baulId, personaId);
-            return Result.Failure<PersonaDto>("Persona not found");
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
         var updated = persona with { Role = role };

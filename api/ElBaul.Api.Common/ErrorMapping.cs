@@ -1,22 +1,28 @@
+using ElBaul.Ports.Input;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElBaul.Api;
 
 /// <summary>
-/// Maps a Result.Error string from the Application layer to an HTTP response, mirroring
-/// the old backend's per-message error.message checks in each route handler.
+/// Maps a typed Application-layer error to the shared JSON error response.
 /// </summary>
 public static class ErrorMapping
 {
-    public static IActionResult ToActionResult(string error)
+    public static IActionResult ToActionResult(ApplicationError error)
     {
-        if (error.Contains("access denied", StringComparison.OrdinalIgnoreCase))
-            return new ObjectResult(new { error }) { StatusCode = StatusCodes.Status403Forbidden };
+        var body = new { error = error.Message };
 
-        if (error.Contains("not found", StringComparison.OrdinalIgnoreCase))
-            return new NotFoundObjectResult(new { error });
-
-        return new BadRequestObjectResult(new { error });
+        return error.Code switch
+        {
+            ApplicationErrorCode.Forbidden => new ObjectResult(body) { StatusCode = StatusCodes.Status403Forbidden },
+            ApplicationErrorCode.NotFound => new NotFoundObjectResult(body),
+            ApplicationErrorCode.Validation => new BadRequestObjectResult(body),
+            ApplicationErrorCode.ExternalDependencyUnavailable => new ObjectResult(body)
+            {
+                StatusCode = StatusCodes.Status503ServiceUnavailable
+            },
+            _ => new BadRequestObjectResult(body)
+        };
     }
 }

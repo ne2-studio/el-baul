@@ -127,7 +127,7 @@ public class PhotoManagerTests
         var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -239,7 +239,7 @@ public class PhotoManagerTests
         var result = await manager.GetByChapterIdAsync(new ChapterId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Chapter not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error.Message);
     }
 
     [Fact]
@@ -305,7 +305,7 @@ public class PhotoManagerTests
         var result = await manager.MoveAsync(new PhotoId(photoId), new ChapterId(otherBaulChapterId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Target chapter not found", result.Error);
+        Assert.Equal("Target chapter not found", result.Error.Message);
     }
 
     [Fact]
@@ -336,7 +336,7 @@ public class PhotoManagerTests
         var result = await manager.DeleteAsync(new PhotoId(photoId), "reason");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
 
         var photo = await _photoRepository.GetByIdAsync(new PhotoId(photoId));
         Assert.Equal(PhotoStatus.Active, photo!.Status);
@@ -349,7 +349,7 @@ public class PhotoManagerTests
         var result = await manager.DeleteAsync(new PhotoId(Guid.NewGuid()), "reason");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
     }
 
     [Fact]
@@ -497,7 +497,7 @@ public class PhotoManagerTests
         var result = await manager.GetPageAsync(new BaulId(baulId), null, 0, 10);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -510,7 +510,7 @@ public class PhotoManagerTests
         var result = await manager.GetPageAsync(new BaulId(baulId), new ChapterId(otherChapterId), 0, 10);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Chapter not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error.Message);
     }
 
     [Fact]
@@ -636,7 +636,7 @@ public class PhotoManagerTests
         var result = await manager.DownloadAsync(new PhotoId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
     }
 
     [Fact]
@@ -719,6 +719,6 @@ public class PhotoManagerTests
         var result = await manager.GetByPersonaIdAsync(new BaulId(baulId), new PersonaId(foreignPersonaId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Persona not found", result.Error);
+        Assert.Equal("Persona not found", result.Error.Message);
     }
 }

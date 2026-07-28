@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 
@@ -12,7 +11,7 @@ public class UserManager(
     {
         var userId = currentUserProvider.GetUserId();
         var user = await userRepository.GetByIdAsync(userId);
-        if (user is null) return Result.Failure<UserProfileDto>("User not found");
+        if (user is null) return Result.Failure<UserProfileDto>(ApplicationError.NotFound("User not found"));
 
         return ToDto(user);
     }
@@ -21,7 +20,7 @@ public class UserManager(
     {
         var userId = currentUserProvider.GetUserId();
         var user = await userRepository.GetByIdAsync(userId);
-        if (user is null) return Result.Failure<UserProfileDto>("User not found");
+        if (user is null) return Result.Failure<UserProfileDto>(ApplicationError.NotFound("User not found"));
 
         await userRepository.UpdateWeeklyDigestEnabledAsync(userId, weeklyDigestEnabled);
         return ToDto(user with { WeeklyDigestEnabled = weeklyDigestEnabled });

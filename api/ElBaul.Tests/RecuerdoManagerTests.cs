@@ -220,7 +220,7 @@ public class RecuerdoManagerTests
         var result = await manager.CreateRecuerdoAsync(new ChapterId(Guid.NewGuid()), "texto");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Chapter not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error.Message);
     }
 
     [Fact]
@@ -296,7 +296,7 @@ public class RecuerdoManagerTests
         var result = await manager.CreateRecuerdoAsync(new BaulId(Guid.NewGuid()), "texto");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Baul not found", result.Error);
+        Assert.Equal("Baul not found", result.Error.Message);
     }
 
     [Fact]
@@ -344,6 +344,6 @@ public class RecuerdoManagerTests
         var result = await manager.GetRecuerdosAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Baul not found", result.Error);
+        Assert.Equal("Baul not found", result.Error.Message);
     }
 }

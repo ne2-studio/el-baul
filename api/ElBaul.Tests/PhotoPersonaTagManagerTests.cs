@@ -87,7 +87,7 @@ public class PhotoPersonaTagManagerTests
         var result = await manager.SetTaggedPersonasAsync(new PhotoId(photoId), [new PersonaId(foreignPersonaId)]);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Persona not found", result.Error);
+        Assert.Equal("Persona not found", result.Error.Message);
         Assert.Empty((await manager.GetTaggedPersonasAsync(new PhotoId(photoId))).Value);
     }
 
@@ -98,7 +98,7 @@ public class PhotoPersonaTagManagerTests
         var result = await manager.SetTaggedPersonasAsync(new PhotoId(Guid.NewGuid()), []);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public class PhotoPersonaTagManagerTests
         var result = await manager.AddTaggedPersonasBatchAsync(new BaulId(baulId), [new PhotoId(photoId)], [new PersonaId(foreignPersonaId)]);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Persona not found", result.Error);
+        Assert.Equal("Persona not found", result.Error.Message);
         Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
     }
 
@@ -197,6 +197,6 @@ public class PhotoPersonaTagManagerTests
         var result = await manager.AddTaggedPersonasBatchAsync(new BaulId(baulId), [new PhotoId(photoId)], []);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 }

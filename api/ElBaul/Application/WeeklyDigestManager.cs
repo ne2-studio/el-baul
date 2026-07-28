@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -81,11 +80,11 @@ public class WeeklyDigestManager(
     public async Task<Result> SendTestWeeklyDigestAsync(UserId sourceUserId)
     {
         var user = await userRepository.GetByIdAsync(sourceUserId);
-        if (user is null) return Result.Failure("User not found");
+        if (user is null) return Result.Failure(ApplicationError.NotFound("User not found"));
 
         var testRecipient = appConfiguration.AdminTestEmailRecipient;
         if (string.IsNullOrWhiteSpace(testRecipient))
-            return Result.Failure("Resend:AdminTestRecipient is not configured");
+            return Result.Failure(ApplicationError.Validation("Resend:AdminTestRecipient is not configured"));
 
         var until = clock.UtcNow();
         var lastSent = await sentEmailRepository.GetLatestSentAtAsync(sourceUserId, EmailType.WeeklyDigest);

@@ -48,7 +48,7 @@ public class ChapterManagerTests
         var result = await manager.CreateAsync(new BaulId(baulId), "Vacaciones");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class ChapterManagerTests
         var result = await manager.SetCoverAsync(new ChapterId(chapterId), new PhotoId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public class ChapterManagerTests
         var result = await manager.SetCoverAsync(new ChapterId(chapterId), new PhotoId(photoId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class ChapterManagerTests
         var result = await manager.UpdateAsync(new ChapterId(Guid.NewGuid()), "Vacaciones 2024");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Chapter not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error.Message);
     }
 
     [Fact]
@@ -310,7 +310,7 @@ public class ChapterManagerTests
         var result = await manager.DeleteAsync(new ChapterId(chapterId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
         Assert.NotNull(await _chapterRepository.GetByIdAsync(new ChapterId(chapterId)));
     }
 
@@ -321,6 +321,6 @@ public class ChapterManagerTests
         var result = await manager.DeleteAsync(new ChapterId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Chapter not found", result.Error);
+        Assert.Equal("Chapter not found", result.Error.Message);
     }
 }

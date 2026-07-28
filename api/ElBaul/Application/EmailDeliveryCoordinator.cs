@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
 
@@ -71,7 +71,7 @@ public class EmailDeliveryCoordinator(
         {
             // Throwing lets Hangfire's automatic retry pick this back up; the next attempt
             // re-uses the same reserved SentEmail row instead of double-sending.
-            throw new InvalidOperationException(result.Error);
+            throw new InvalidOperationException(result.Error.Message);
         }
     }
 
@@ -129,7 +129,7 @@ public class EmailDeliveryCoordinator(
         {
             await sentEmailRepository.UpdateAsync(existing with { Status = EmailStatus.Failed, ErrorMessage = sendResult.Error });
             logger.LogError("EmailFailed {Type} {UserId} {SentEmailId} {Error}", type, userId, existing.Id, sendResult.Error);
-            return Result.Failure(sendResult.Error);
+            return Result.Failure(ApplicationError.ExternalDependencyUnavailable(sendResult.Error));
         }
 
         await sentEmailRepository.UpdateAsync(existing with

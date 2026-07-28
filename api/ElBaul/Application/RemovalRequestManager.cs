@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
@@ -48,7 +47,7 @@ public class RemovalRequestManager(
         {
             logger.LogWarning(
                 "Removal request creation rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);
-            return Result.Failure<RemovalRequestDto>("Photo not found");
+            return Result.Failure<RemovalRequestDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var nickname = access.Persona?.Nickname ?? "Usuario";
@@ -79,7 +78,7 @@ public class RemovalRequestManager(
             logger.LogWarning(
                 "Removal request approval rejected: request not found {BaulId} {RemovalRequestId}",
                 baulId, requestId);
-            return Result.Failure("Request not found");
+            return Result.Failure(ApplicationError.NotFound("Request not found"));
         }
 
         var photo = await photoRepository.GetByIdAsync(request.PhotoId);

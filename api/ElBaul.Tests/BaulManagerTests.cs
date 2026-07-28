@@ -63,7 +63,7 @@ public class BaulManagerTests
         var result = await manager.GetByIdAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Baul not found", result.Error);
+        Assert.Equal("Baul not found", result.Error.Message);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class BaulManagerTests
         var result = await manager.GetByIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class BaulManagerTests
         var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class BaulManagerTests
         var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public class BaulManagerTests
         var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Photo not found", result.Error);
+        Assert.Equal("Photo not found", result.Error.Message);
     }
 
     [Fact]
@@ -185,7 +185,7 @@ public class BaulManagerTests
         var result = await manager.UpdateAsync(new BaulId(Guid.NewGuid()), "Familia 2024", null);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Baul not found", result.Error);
+        Assert.Equal("Baul not found", result.Error.Message);
     }
 
     [Fact]

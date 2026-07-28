@@ -65,11 +65,11 @@ The caller's identity is never a controller parameter — use cases call
 `ICurrentUserProvider.GetUserId()` themselves.
 
 **Error mapping**: `ErrorMapping.ToActionResult` (`api/ElBaul.Api.Common/ErrorMapping.cs`) maps
-a `Result.Failure<T>(string)`'s message to a status code by matching substrings —
-`"access denied"` → 403, `"not found"` → 404, everything else → 400. There's no typed error enum
-yet, so a new failure message needs to contain one of those two phrases to get the right status
-code. See [`../API-CONVENTIONS.md`](../API-CONVENTIONS.md) for the resulting observable
-semantics.
+an input-port `Result`/`Result<T>` failure's `ApplicationError.Code` to a status code. The
+observable body remains `{ "error": "..." }`, but the status no longer depends on the message
+text: `Validation` → 400, `Forbidden` → 403, `NotFound` → 404, and
+`ExternalDependencyUnavailable` → 503. See [`../API-CONVENTIONS.md`](../API-CONVENTIONS.md) for
+the resulting observable semantics.
 
 ## Auth
 

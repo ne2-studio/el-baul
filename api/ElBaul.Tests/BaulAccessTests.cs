@@ -131,7 +131,7 @@ public class BaulAccessTests
         var result = await service.AuthorizeAsync(TestBaul.Id, OtherUserId, AccessLevel.Member, "Test op", new { });
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Baul not found", result.Error);
+        Assert.Equal("Baul not found", result.Error.Message);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class BaulAccessTests
         var result = await service.AuthorizeAsync(TestBaul.Id, OtherUserId, AccessLevel.Member, "Test op", new { });
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class BaulAccessTests
         var result = await service.AuthorizeAsync(TestBaul.Id, OtherUserId, AccessLevel.Admin, "Test op", new { });
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]

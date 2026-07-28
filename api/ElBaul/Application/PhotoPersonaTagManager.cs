@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -19,7 +18,7 @@ public class PhotoPersonaTagManager(
     {
         var userId = currentUserProvider.GetUserId();
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null) return Result.Failure<IEnumerable<TaggedPersonaDto>>("Photo not found");
+        if (photo is null) return Result.Failure<IEnumerable<TaggedPersonaDto>>(ApplicationError.NotFound("Photo not found"));
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo tagged personas", new { photo.BaulId, PhotoId = photoId });
@@ -43,7 +42,7 @@ public class PhotoPersonaTagManager(
         if (photo is null)
         {
             logger.LogWarning("Photo tagging rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<IEnumerable<TaggedPersonaDto>>("Photo not found");
+            return Result.Failure<IEnumerable<TaggedPersonaDto>>(ApplicationError.NotFound("Photo not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -60,7 +59,7 @@ public class PhotoPersonaTagManager(
                 logger.LogWarning(
                     "Photo tagging rejected: persona not found in this baúl {BaulId} {PhotoId} {PersonaId}",
                     photo.BaulId, photoId, personaId);
-                return Result.Failure<IEnumerable<TaggedPersonaDto>>("Persona not found");
+                return Result.Failure<IEnumerable<TaggedPersonaDto>>(ApplicationError.NotFound("Persona not found"));
             }
             personas.Add(persona);
         }
@@ -91,7 +90,7 @@ public class PhotoPersonaTagManager(
             if (persona is null || persona.BaulId != baulId)
             {
                 logger.LogWarning("Batch photo tagging rejected: persona not found in this baúl {BaulId} {PersonaId}", baulId, personaId);
-                return Result.Failure<IEnumerable<string>>("Persona not found");
+                return Result.Failure<IEnumerable<string>>(ApplicationError.NotFound("Persona not found"));
             }
         }
 

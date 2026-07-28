@@ -9,13 +9,12 @@ namespace ElBaul.Api.Swagger;
 
 /// <summary>
 /// ErrorMapping.ToActionResult is called uniformly across almost every controller action and,
-/// depending on the Application-layer error message at runtime, can turn into a 400, 403 or 404 —
-/// none of that is visible from an individual action's C# signature, so it can't come from
-/// [ProducesResponseType] on each action without a lot of repetition. This filter adds those three
-/// (plus 401, inferred from [Authorize]) to every operation on a controller that actually uses
-/// ErrorMapping, so the generated OpenAPI reflects the shared error contract without every action
-/// having to repeat it. AppConfigController and EmailTrackingController don't use ErrorMapping at
-/// all (config read that can't fail; a redirect/404 with no JSON body) so they're excluded.
+/// depending on the Application-layer error code at runtime, can turn into a 400, 403, 404 or
+/// 503. This filter adds those shared responses (plus 401, inferred from [Authorize]) to every
+/// operation on a controller that actually uses ErrorMapping, so the generated OpenAPI reflects
+/// the shared error contract without every action having to repeat it. AppConfigController and
+/// EmailTrackingController don't use ErrorMapping at all (config read that can't fail; a
+/// redirect/404 with no JSON body) so they're excluded.
 /// </summary>
 public class DefaultResponseTypesOperationFilter : IOperationFilter
 {
@@ -42,6 +41,7 @@ public class DefaultResponseTypesOperationFilter : IOperationFilter
 
         AddResponse(operation, "404", "The resource does not exist.", errorSchema);
         AddResponse(operation, "400", "The request was invalid.", errorSchema);
+        AddResponse(operation, "503", "A downstream dependency is unavailable.", errorSchema);
     }
 
     private static void AddResponse(OpenApiOperation operation, string statusCode, string description, OpenApiSchema? schema)

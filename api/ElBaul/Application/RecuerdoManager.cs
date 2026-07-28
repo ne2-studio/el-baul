@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -67,7 +66,7 @@ public class RecuerdoManager(
     {
         var userId = currentUserProvider.GetUserId();
         var chapter = await chapterRepository.GetByIdAsync(chapterId);
-        if (chapter is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Chapter not found");
+        if (chapter is null) return Result.Failure<IEnumerable<RecuerdoDto>>(ApplicationError.NotFound("Chapter not found"));
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Chapter recuerdos", new { chapter.BaulId, ChapterId = chapterId });
@@ -102,7 +101,7 @@ public class RecuerdoManager(
         if (chapter is null)
         {
             logger.LogWarning("Recuerdo creation rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure<RecuerdoDto>("Chapter not found");
+            return Result.Failure<RecuerdoDto>(ApplicationError.NotFound("Chapter not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -122,7 +121,7 @@ public class RecuerdoManager(
     {
         var userId = currentUserProvider.GetUserId();
         var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null) return Result.Failure<IEnumerable<RecuerdoDto>>("Photo not found");
+        if (photo is null) return Result.Failure<IEnumerable<RecuerdoDto>>(ApplicationError.NotFound("Photo not found"));
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo recuerdos", new { photo.BaulId, PhotoId = photoId });
@@ -146,7 +145,7 @@ public class RecuerdoManager(
         if (photo is null)
         {
             logger.LogWarning("Recuerdo creation rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<RecuerdoDto>("Photo not found");
+            return Result.Failure<RecuerdoDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(

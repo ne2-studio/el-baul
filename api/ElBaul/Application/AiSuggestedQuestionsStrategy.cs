@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using CSharpFunctionalExtensions;
+using ElBaul.Ports.Input;
 using Microsoft.Extensions.Logging;
 using ElBaul.Ports.Output;
 
@@ -33,7 +33,7 @@ public class AiSuggestedQuestionsStrategy(
         if (replyResult.IsFailure)
         {
             logger.LogError("Suggested questions failed {BaulId} {Error}", baul.Id, replyResult.Error);
-            return Result.Failure<IEnumerable<string>>(replyResult.Error);
+            return Result.Failure<IEnumerable<string>>(ApplicationError.ExternalDependencyUnavailable(replyResult.Error));
         }
 
         return Result.Success(ParseQuestions(replyResult.Value));

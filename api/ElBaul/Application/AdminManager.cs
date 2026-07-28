@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -41,7 +40,7 @@ public class AdminManager(
     public async Task<Result<AdminUserDetailDto>> GetUserDetailAsync(UserId userId)
     {
         var row = await adminRepository.GetUserDetailAsync(userId);
-        if (row is null) return Result.Failure<AdminUserDetailDto>("User not found");
+        if (row is null) return Result.Failure<AdminUserDetailDto>(ApplicationError.NotFound("User not found"));
 
         var baules = row.Baules.Select(b =>
             new AdminUserBaulMembershipDto(b.BaulId.ToString(), b.BaulName, b.Role.ToApiString(), b.PersonId.ToString()));
@@ -58,7 +57,7 @@ public class AdminManager(
     public async Task<Result<AdminBaulDetailDto>> GetBaulDetailAsync(BaulId baulId)
     {
         var row = await adminRepository.GetBaulDetailAsync(baulId);
-        if (row is null) return Result.Failure<AdminBaulDetailDto>("Baul not found");
+        if (row is null) return Result.Failure<AdminBaulDetailDto>(ApplicationError.NotFound("Baul not found"));
 
         var personas = row.Personas.Select(su => new AdminBaulPersonaDto(
             su.Id.ToString(),
@@ -90,7 +89,7 @@ public class AdminManager(
     public async Task<Result> DeleteBaulAsync(BaulId baulId)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure("Baul not found");
+        if (baul is null) return Result.Failure(ApplicationError.NotFound("Baul not found"));
 
         var photos = (await photoRepository.GetAllByBaulIdAsync(baulId)).ToList();
         var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();

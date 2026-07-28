@@ -28,13 +28,15 @@ Anonymous exceptions:
 - `403 Forbidden` — authenticated, but the caller has no access to this resource.
 - `404 Not Found` — the resource doesn't exist, or its existence must not be disclosed to
   this caller (e.g. `invite-preview` for an already-claimed invitation).
+- `503 Service Unavailable` — a downstream dependency required to complete the operation is
+  unavailable.
 
-All three error bodies share one shape, `{ "error": "..." }`. Because the mapping from an
-application-layer failure to a status code is message-driven (see
-[`architecture/backend.md`](architecture/backend.md#controllers) for the implementation),
-almost any authenticated endpoint can genuinely return any of 400/403/404 depending on what
-failed — the OpenAPI spec documents all three uniformly rather than trying to guess which
-apply to a given action.
+All application error bodies share one shape, `{ "error": "..." }`. The mapping from an
+application-layer failure to a status code is driven by `ApplicationError.Code`, not message text
+(see [`architecture/backend.md`](architecture/backend.md#controllers) for the implementation).
+Almost any authenticated endpoint can genuinely return any of 400/403/404/503 depending on what
+failed, so the OpenAPI spec documents them uniformly rather than trying to guess which apply to a
+given action.
 
 ## Authorization / roles
 

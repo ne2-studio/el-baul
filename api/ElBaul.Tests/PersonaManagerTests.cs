@@ -53,7 +53,7 @@ public class PersonaManagerTests
         var result = await manager.CreatePersonaAsync(new BaulId(baulId), "Abuela");
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class PersonaManagerTests
         var result = await manager.GetPersonaAsync(new BaulId(baulId), new PersonaId(personaId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class PersonaManagerTests
         var result = await manager.GetPersonasAsync(new BaulId(baulId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public class PersonaManagerTests
         var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", null);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class PersonaManagerTests
             new BaulId(firstBaulId), new PersonaId(foreignPersonaId), BaulRole.Administrador);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Persona not found", result.Error);
+        Assert.Equal("Persona not found", result.Error.Message);
 
         var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(foreignPersonaId));
         Assert.Equal(BaulRole.Colaborador, persona!.Role);
@@ -282,7 +282,7 @@ public class PersonaManagerTests
         var result = await manager.AcceptPersonalInviteAsync(new PersonaId(personaId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("This invitation has already been used", result.Error);
+        Assert.Equal("This invitation has already been used", result.Error.Message);
     }
 
     [Fact]
@@ -292,7 +292,7 @@ public class PersonaManagerTests
         var result = await manager.AcceptPersonalInviteAsync(new PersonaId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Invitation not found", result.Error);
+        Assert.Equal("Invitation not found", result.Error.Message);
     }
 
     [Fact]
@@ -309,7 +309,7 @@ public class PersonaManagerTests
         var result = await manager.AcceptPersonalInviteAsync(new PersonaId(personaId));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("You already have access to this baúl with a different account link", result.Error);
+        Assert.Equal("You already have access to this baúl with a different account link", result.Error.Message);
 
         var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
         Assert.Null(persona!.UserId);

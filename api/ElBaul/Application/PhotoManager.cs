@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -23,7 +22,7 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
         var chapter = await chapterRepository.GetByIdAsync(chapterId);
-        if (chapter is null) return Result.Failure<IEnumerable<PhotoDto>>("Chapter not found");
+        if (chapter is null) return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Chapter not found"));
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Photos by chapter", new { chapter.BaulId, ChapterId = chapterId });
@@ -55,7 +54,7 @@ public class PhotoManager(
         if (chapterId is { } wantedChapterId)
         {
             var chapter = await chapterRepository.GetByIdAsync(wantedChapterId);
-            if (chapter is null || chapter.BaulId != baulId) return Result.Failure<PhotoPageDto>("Chapter not found");
+            if (chapter is null || chapter.BaulId != baulId) return Result.Failure<PhotoPageDto>(ApplicationError.NotFound("Chapter not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -85,7 +84,7 @@ public class PhotoManager(
         if (chapter is null)
         {
             logger.LogWarning("Photo upload rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure<PhotoDto>("Chapter not found");
+            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Chapter not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -191,7 +190,7 @@ public class PhotoManager(
         if (photo is null)
         {
             logger.LogWarning("Photo move rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDto>("Photo not found");
+            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -204,7 +203,7 @@ public class PhotoManager(
             logger.LogWarning(
                 "Photo move rejected: target chapter not found {BaulId} {PhotoId} {TargetChapterId}",
                 photo.BaulId, photoId, targetChapterId);
-            return Result.Failure<PhotoDto>("Target chapter not found");
+            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Target chapter not found"));
         }
 
         if (photo.ChapterId == targetChapterId)
@@ -212,7 +211,7 @@ public class PhotoManager(
             logger.LogWarning(
                 "Photo move rejected: photo already in target chapter {BaulId} {PhotoId} {TargetChapterId}",
                 photo.BaulId, photoId, targetChapterId);
-            return Result.Failure<PhotoDto>("Photo is already in that chapter");
+            return Result.Failure<PhotoDto>(ApplicationError.Validation("Photo is already in that chapter"));
         }
 
         var now = clock.UtcNow();
@@ -245,7 +244,7 @@ public class PhotoManager(
         if (photo is null)
         {
             logger.LogWarning("Photo delete rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure("Photo not found");
+            return Result.Failure(ApplicationError.NotFound("Photo not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -265,7 +264,7 @@ public class PhotoManager(
         if (photo is null)
         {
             logger.LogWarning("Photo date change rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDto>("Photo not found");
+            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -306,7 +305,7 @@ public class PhotoManager(
         if (photo is null)
         {
             logger.LogWarning("Photo download rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDownloadResult>("Photo not found");
+            return Result.Failure<PhotoDownloadResult>(ApplicationError.NotFound("Photo not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -324,7 +323,7 @@ public class PhotoManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId) return Result.Failure<IEnumerable<PhotoDto>>("Persona not found");
+        if (persona is null || persona.BaulId != baulId) return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Persona not found"));
 
         var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(personaId);
         var photos = (await photoRepository.GetByIdsAsync(photoIds))

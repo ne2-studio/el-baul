@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
@@ -32,14 +31,17 @@ public class ChatManager(
 
     public async Task<Result<IEnumerable<ChatMessageDto>>> GetMessagesAsync(BaulId baulId)
     {
-        if (!appConfiguration.ChatEnabled) return Result.Failure<IEnumerable<ChatMessageDto>>("Chat is not enabled");
+        if (!appConfiguration.ChatEnabled)
+            return Result.Failure<IEnumerable<ChatMessageDto>>(ApplicationError.Validation("Chat is not enabled"));
 
         var userId = currentUserProvider.GetUserId();
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure<IEnumerable<ChatMessageDto>>("Baul not found");
+        if (baul is null)
+            return Result.Failure<IEnumerable<ChatMessageDto>>(ApplicationError.NotFound("Baul not found"));
 
         var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember) return Result.Failure<IEnumerable<ChatMessageDto>>("Access denied");
+        if (!access.IsMember)
+            return Result.Failure<IEnumerable<ChatMessageDto>>(ApplicationError.Forbidden("Access denied"));
 
         var messages = await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId);
         return Result.Success(messages.Select(ToDto));
@@ -50,7 +52,7 @@ public class ChatManager(
         if (!appConfiguration.ChatEnabled)
         {
             logger.LogWarning("Chat message rejected: chat is not enabled {BaulId}", baulId);
-            return Result.Failure<ChatMessageDto>("Chat is not enabled");
+            return Result.Failure<ChatMessageDto>(ApplicationError.Validation("Chat is not enabled"));
         }
 
         var userId = currentUserProvider.GetUserId();
@@ -58,14 +60,14 @@ public class ChatManager(
         if (baul is null)
         {
             logger.LogWarning("Chat message rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<ChatMessageDto>("Baul not found");
+            return Result.Failure<ChatMessageDto>(ApplicationError.NotFound("Baul not found"));
         }
 
         var access = await baulAccess.GetAsync(baul, userId);
         if (!access.IsMember)
         {
             logger.LogWarning("Chat message rejected: access denied {BaulId}", baulId);
-            return Result.Failure<ChatMessageDto>("Access denied");
+            return Result.Failure<ChatMessageDto>(ApplicationError.Forbidden("Access denied"));
         }
 
         var now = clock.UtcNow();
@@ -80,7 +82,7 @@ public class ChatManager(
         if (replyResult.IsFailure)
         {
             logger.LogError("Chat reply failed {BaulId} {Error}", baulId, replyResult.Error);
-            return Result.Failure<ChatMessageDto>(replyResult.Error);
+            return Result.Failure<ChatMessageDto>(ApplicationError.ExternalDependencyUnavailable(replyResult.Error));
         }
 
         var assistantMessage = new ChatMessage(
@@ -96,7 +98,7 @@ public class ChatManager(
         if (!appConfiguration.ChatEnabled)
         {
             logger.LogWarning("Suggested questions rejected: chat is not enabled {BaulId}", baulId);
-            return Result.Failure<IEnumerable<string>>("Chat is not enabled");
+            return Result.Failure<IEnumerable<string>>(ApplicationError.Validation("Chat is not enabled"));
         }
 
         var userId = currentUserProvider.GetUserId();
@@ -104,14 +106,14 @@ public class ChatManager(
         if (baul is null)
         {
             logger.LogWarning("Suggested questions rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<IEnumerable<string>>("Baul not found");
+            return Result.Failure<IEnumerable<string>>(ApplicationError.NotFound("Baul not found"));
         }
 
         var access = await baulAccess.GetAsync(baul, userId);
         if (!access.IsMember)
         {
             logger.LogWarning("Suggested questions rejected: access denied {BaulId}", baulId);
-            return Result.Failure<IEnumerable<string>>("Access denied");
+            return Result.Failure<IEnumerable<string>>(ApplicationError.Forbidden("Access denied"));
         }
 
         var result = await suggestedQuestionsStrategy.GenerateAsync(baul);

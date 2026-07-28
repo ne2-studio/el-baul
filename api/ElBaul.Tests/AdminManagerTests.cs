@@ -57,7 +57,7 @@ public class AdminManagerTests
         var result = await CreateManager().GetUserDetailAsync(new UserId("missing"));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("User not found", result.Error);
+        Assert.Equal("User not found", result.Error.Message);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class AdminManagerTests
         var result = await CreateManager().GetBaulDetailAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Baul not found", result.Error);
+        Assert.Equal("Baul not found", result.Error.Message);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class AdminManagerTests
         var result = await CreateManager().DeleteBaulAsync(new BaulId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
-        Assert.Equal("Baul not found", result.Error);
+        Assert.Equal("Baul not found", result.Error.Message);
     }
 
     [Fact]

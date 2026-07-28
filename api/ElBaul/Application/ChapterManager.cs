@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -69,7 +68,7 @@ public class ChapterManager(
         if (chapter is null)
         {
             logger.LogWarning("Chapter cover update rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure<ChapterDto>("Chapter not found");
+            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Chapter not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -82,7 +81,7 @@ public class ChapterManager(
             logger.LogWarning(
                 "Chapter cover update rejected: photo not found {BaulId} {ChapterId} {PhotoId}",
                 chapter.BaulId, chapterId, photoId);
-            return Result.Failure<ChapterDto>("Photo not found");
+            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var updated = chapter.WithCover(photo, clock.UtcNow());
@@ -99,7 +98,7 @@ public class ChapterManager(
         if (chapter is null)
         {
             logger.LogWarning("Chapter update rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure<ChapterDto>("Chapter not found");
+            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Chapter not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -120,7 +119,7 @@ public class ChapterManager(
         if (chapter is null)
         {
             logger.LogWarning("Chapter delete rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure("Chapter not found");
+            return Result.Failure(ApplicationError.NotFound("Chapter not found"));
         }
 
         var auth = await baulAccess.AuthorizeAsync(
