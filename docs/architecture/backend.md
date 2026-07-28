@@ -132,8 +132,11 @@ a command and how to run one, locally and in production.
 - **API docs**: Swagger/Swashbuckle, enabled only in `Development`.
 - **CORS**: `AllowAnyOrigin`/`AllowAnyMethod`/`AllowAnyHeader` — acceptable since auth is bearer
   token, not cookies/origin-based.
-- **Rate limiting**: a fixed-window policy, keyed by client IP, applied only to the endpoints
-  that are unauthenticated (`/health`, `AppConfigController`).
+- **Rate limiting**: unauthenticated endpoints use the fixed-window `PublicLimiter` policy,
+  keyed by client IP. The current public surface is `/health`, `GET /api/app-config`,
+  `GET /api/personas/{personaId}/invite-preview`, and `GET /email/click/{token}`. Chat
+  message and suggestion endpoints additionally use `ChatLimiter`, keyed by authenticated
+  user id, because each call can spend AI budget.
 - **Config**: `appsettings.json` (dev defaults committed) + `appsettings.Production.json` +
   environment variables in the container — see `docker-compose.yaml` for the local set. Never
   commit production secrets.
