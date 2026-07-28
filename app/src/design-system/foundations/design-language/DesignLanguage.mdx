@@ -1,0 +1,396 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { Button } from '@/design-system/components/actions/Button';
+import { EmptyState } from '@/design-system/components/feedback/EmptyState';
+import { Input } from '@/design-system/components/forms/Input';
+import { Icon } from '@/design-system/foundations/icons/Icon';
+import { icons } from '@/design-system/foundations/icons/icons';
+
+<Meta title="Foundations/Design Language" />
+
+# Design Language
+
+El Baúl is warm, intimate and deliberately non-technical: a private family archive, not
+a cloud storage dashboard. The visual language comes from the current implementation in
+`app/src/styles/theme.css`, `app/src/styles/fonts.css`, `app/src/styles/index.css`,
+the design-system components, and the product/design guidance in `docs/DESIGN.md`.
+
+Use this page as the design-language map before inventing new visual treatments. It
+documents what exists today; it does not introduce a new token system.
+
+## Product Principles In The UI
+
+<div className="grid gap-4 md:grid-cols-3">
+  <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+    <h3 className="font-serif text-lg text-foreground mb-2">Warmth over neutrality</h3>
+    <p className="text-sm text-muted-foreground leading-relaxed">
+      Beige, terracotta and warm brown replace cold grays and corporate blues.
+    </p>
+  </div>
+  <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+    <h3 className="font-serif text-lg text-foreground mb-2">Photos and stories first</h3>
+    <p className="text-sm text-muted-foreground leading-relaxed">
+      Surfaces should support family memories, not compete with them.
+    </p>
+  </div>
+  <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+    <h3 className="font-serif text-lg text-foreground mb-2">Soft, reassuring structure</h3>
+    <p className="text-sm text-muted-foreground leading-relaxed">
+      Rounded shapes, gentle shadows and calm spacing make destructive or complex flows feel safer.
+    </p>
+  </div>
+</div>
+
+Do use the existing foundations to make screens feel calm, private and familiar. Do not
+introduce visual novelty unless the current language cannot express the product need.
+
+## Color
+
+The light palette is the designed product palette. The `.dark` class exists in CSS, but
+`docs/DESIGN.md` explicitly treats it as unbranded starter scaffolding, not a finished
+El Baúl dark mode.
+
+<div className="grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border border-border bg-background p-4">
+    <div className="h-16 rounded-lg bg-background border border-border mb-3" />
+    <div className="font-medium text-foreground">background</div>
+    <div className="text-xs text-muted-foreground">#F5F1ED - screen canvas</div>
+  </div>
+  <div className="rounded-xl border border-border bg-card p-4">
+    <div className="h-16 rounded-lg bg-card border border-border mb-3" />
+    <div className="font-medium text-foreground">card</div>
+    <div className="text-xs text-muted-foreground">#FFFFFF - lifted surfaces and inputs</div>
+  </div>
+  <div className="rounded-xl border border-border bg-card p-4">
+    <div className="h-16 rounded-lg bg-primary mb-3" />
+    <div className="font-medium text-foreground">primary / accent</div>
+    <div className="text-xs text-muted-foreground">#C67B5C - one main action, active states, warm accents</div>
+  </div>
+  <div className="rounded-xl border border-border bg-card p-4">
+    <div className="h-16 rounded-lg bg-secondary mb-3" />
+    <div className="font-medium text-foreground">secondary / muted</div>
+    <div className="text-xs text-muted-foreground">#E8DED7 - quiet controls, hover, muted backgrounds</div>
+  </div>
+  <div className="rounded-xl border border-border bg-card p-4">
+    <div className="h-16 rounded-lg bg-foreground mb-3" />
+    <div className="font-medium text-foreground">foreground</div>
+    <div className="text-xs text-muted-foreground">#3A3230 - warm brown text, never pure black</div>
+  </div>
+  <div className="rounded-xl border border-border bg-card p-4">
+    <div className="h-16 rounded-lg bg-destructive mb-3" />
+    <div className="font-medium text-foreground">destructive</div>
+    <div className="text-xs text-muted-foreground">#D45C4D - errors and irreversible actions</div>
+  </div>
+</div>
+
+### Color Usage
+
+- Use `bg-background` for screens and `bg-card` for lifted content areas.
+- Use `text-foreground` for primary text and `text-muted-foreground` for metadata,
+  helper text, timestamps and secondary explanations.
+- Use `bg-primary text-primary-foreground` for the single highest-priority action in
+  a screen or modal.
+- Use `bg-secondary`, `hover:bg-secondary`, `bg-muted` and low-opacity primary fills
+  such as `bg-primary/10` for quiet affordances.
+- Use `text-destructive`, `bg-destructive/8` and `border-destructive/20` for warnings
+  and destructive confirmation context.
+- Do not add cold raw palette colors for normal UI. Existing raw green/blue/purple
+  avatar/status accents are exceptions in feature code, not general-purpose brand tokens.
+
+Representative consumers:
+[Button](?path=/story/components-actions-button--primary),
+[Input](?path=/story/components-forms-input--default),
+[DeletePhotoModal](?path=/story/features-photos-deletephotomodal--default),
+[BatchOperationProgress](?path=/story/components-feedback-batchoperationprogress--in-progress).
+
+## Typography
+
+The system uses two font families from `app/src/styles/fonts.css`: Lora for headings
+and Inter for everything else.
+
+<div className="space-y-4 rounded-2xl bg-card border border-border p-6">
+  <div>
+    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Screen title</div>
+    <h1 className="font-serif text-3xl text-foreground">El Baúl familiar</h1>
+  </div>
+  <div>
+    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Section title</div>
+    <h2 className="font-serif text-xl text-foreground">Recuerdos recientes</h2>
+  </div>
+  <div>
+    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Body</div>
+    <p className="text-base text-foreground leading-relaxed">
+      Guarda lo que recordáis ahora para que la familia pueda volver a ello más adelante.
+    </p>
+  </div>
+  <div>
+    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Caption / metadata</div>
+    <p className="text-xs text-muted-foreground">3 capítulos - actualizado hace 2 días</p>
+  </div>
+</div>
+
+### Typography Usage
+
+- Use Lora (`font-serif`) for `h1`, `h2`, `h3`, screen titles, section titles and
+  memory/story text that should feel editorial.
+- Use Inter (`font-sans`, default body font) for body copy, controls, form fields,
+  metadata and dense UI.
+- Use medium weight (`font-medium`) for labels, actions and compact interactive text.
+- Use `text-xs uppercase tracking-wide text-muted-foreground` for section labels such
+  as list headings and form metadata.
+- Do not use Lora for buttons, labels, helper text or dense controls.
+
+Representative consumers:
+[ChaptersView](?path=/story/screens-baul-detail--default),
+[RecuerdoCard](?path=/story/features-memories-recuerdocard--default),
+[EmptyState](?path=/story/components-feedback-emptystate--default),
+[CreateBaulForm](?path=/story/features-baules-createbaulform--default).
+
+## Spacing And Layout
+
+Spacing is Tailwind's 4px-based scale. The recurring product rhythm is narrow,
+mobile-first and spacious: 24px page padding, 12-16px control gaps, and 24-32px
+section gaps.
+
+<div className="rounded-2xl bg-card border border-border p-6">
+  <div className="max-w-[62rem] mx-auto px-6 border border-dashed border-primary/40 rounded-xl py-5">
+    <div className="text-xs text-muted-foreground mb-4">PageContainer: max-w-[62rem] + px-6</div>
+    <div className="grid gap-4 md:grid-cols-3">
+      <div className="rounded-xl bg-secondary p-4 text-sm text-foreground">Card column</div>
+      <div className="rounded-xl bg-secondary p-4 text-sm text-foreground">Card column</div>
+      <div className="rounded-xl bg-secondary p-4 text-sm text-foreground">Card column</div>
+    </div>
+  </div>
+</div>
+
+### Spacing Usage
+
+- Use `PageContainer` for top-level screen width and horizontal rhythm.
+- Use `px-6` for page gutters and `py-5` for sticky headers.
+- Use `gap-2` for tight icon/text pairs, `gap-3` or `gap-4` for controls and cards,
+  and `space-y-6` or `py-8` for major screen sections.
+- Use `max-w-md` for focused forms and empty states; use `max-w-[62rem]` for screens
+  that can show multi-column cards on desktop.
+- Do not create a new page wrapper unless `PageContainer` cannot express the layout.
+
+Representative consumers:
+[PageContainer](?path=/story/layouts-pagecontainer--default),
+[StickyHeader](?path=/story/layouts-stickyheader--default),
+[BaulesList](?path=/story/screens-baules-list--default),
+[PhotosView](?path=/story/screens-chapter-detail--default).
+
+## Shape, Radius And Surfaces
+
+The shape language is soft and enclosing. The root radius is `1rem`, with derived
+Tailwind theme radii for `sm`, `md`, `lg` and `xl`; component usage commonly reaches
+for `rounded-xl`, `rounded-2xl`, `rounded-3xl` and `rounded-full`.
+
+<div className="grid gap-4 md:grid-cols-4">
+  <div className="bg-card border border-border rounded-xl p-4 text-sm">rounded-xl<br /><span className="text-muted-foreground">buttons, inputs</span></div>
+  <div className="bg-card border border-border rounded-2xl p-4 text-sm">rounded-2xl<br /><span className="text-muted-foreground">cards, dialogs</span></div>
+  <div className="bg-card border border-border rounded-3xl p-4 text-sm">rounded-3xl<br /><span className="text-muted-foreground">large sheets, icon blocks</span></div>
+  <div className="bg-card border border-border rounded-full p-4 text-sm text-center">full<br /><span className="text-muted-foreground">avatars, FABs, pills</span></div>
+</div>
+
+### Shape Usage
+
+- Use `rounded-xl` for inputs, compact controls and action buttons.
+- Use `rounded-2xl` for cards, modal panels and message bubbles.
+- Use `rounded-3xl` for larger hero/icon blocks and large bottom sheets.
+- Use `rounded-full` for avatars, role badges, icon buttons and FABs.
+- Do not mix sharp-cornered elements into product screens.
+
+Representative consumers:
+[Card](?path=/story/components-datadisplay-card--default),
+[BottomSheetModal](?path=/story/components-overlays-bottomsheetmodal--small),
+[FAB](?path=/story/components-actions-fab--simple),
+[AiChatScreen](?path=/story/features-chat-aichatscreen--with-history).
+
+## Elevation And Overlays
+
+Depth is soft and low contrast. Resting surfaces use white cards, low-opacity warm
+borders and subtle shadows; high-priority floating actions use a warmer terracotta
+shadow defined inline in `FAB.tsx`.
+
+<div className="grid gap-4 md:grid-cols-3">
+  <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+    <div className="font-medium">Resting surface</div>
+    <div className="text-sm text-muted-foreground">Cards and standard panels</div>
+  </div>
+  <div className="bg-card rounded-2xl border border-border p-5 shadow-md">
+    <div className="font-medium">Interactive lift</div>
+    <div className="text-sm text-muted-foreground">Clickable cards on hover</div>
+  </div>
+  <div className="bg-card rounded-2xl border border-border p-5 shadow-2xl">
+    <div className="font-medium">Blocking overlay content</div>
+    <div className="text-sm text-muted-foreground">Rare blocking progress states</div>
+  </div>
+</div>
+
+### Elevation Usage
+
+- Prefer `shadow-sm` and `shadow-md` over heavy chrome.
+- Pair elevation with `border border-border` when a white surface needs definition.
+- Use translucent overlays such as `bg-background/80`, `bg-foreground/40` or
+  `bg-black/50` depending on context: app chrome, warm product sheet, or media viewer.
+- Use `backdrop-blur-sm` for sticky headers and soft blocking states.
+- Do not use crisp gray shadows or high-contrast borders as the default way to separate UI.
+
+Representative consumers:
+[Card](?path=/story/components-datadisplay-card--clickable),
+[BottomSheetModal](?path=/story/components-overlays-bottomsheetmodal--small-desktop-centered),
+[BlockingLoadingOverlay](?path=/story/components-feedback-blockingloadingoverlay--default),
+[PhotoViewer](?path=/story/features-photos-photoviewer--default).
+
+## Motion
+
+Motion is short, functional and mostly entrance/feedback-oriented. CSS motion lives in
+`app/src/styles/index.css`; image gesture motion lives in `PhotoStage.tsx`.
+
+<div className="grid gap-4 md:grid-cols-3">
+  <div className="rounded-2xl bg-card border border-border p-5 animate-slide-up">
+    <div className="font-medium">slide-up</div>
+    <div className="text-sm text-muted-foreground">0.3s ease-out for sheets</div>
+  </div>
+  <div className="rounded-2xl bg-card border border-border p-5 animate-fab-item">
+    <div className="font-medium">fab-item-in</div>
+    <div className="text-sm text-muted-foreground">0.2s ease-out for action menus</div>
+  </div>
+  <div className="rounded-2xl bg-card border border-border p-5 overflow-hidden">
+    <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
+      <div className="h-full w-1/2 bg-primary animate-progress" />
+    </div>
+    <div className="font-medium">progress</div>
+    <div className="text-sm text-muted-foreground">1.5s looping feedback</div>
+  </div>
+</div>
+
+### Motion Usage
+
+- Use `transition-colors`, `transition-opacity`, `transition-transform` and
+  `transition-all duration-200` for simple hover/active feedback.
+- Use `animate-slide-up` for bottom sheets; on desktop large sheets become right-side
+  drawers with `slide-in-right`.
+- Use `active:scale-95` or `active:scale-[0.98]` sparingly for tappable cards/FABs.
+- Keep motion under about 300ms unless it represents ongoing progress.
+- Do not add decorative animation that distracts from photos, memories or form input.
+
+Representative consumers:
+[BottomSheetModal](?path=/story/components-overlays-bottomsheetmodal--large),
+[FAB](?path=/story/components-actions-fab--expandable),
+[PhotoStage](?path=/story/patterns-media-photostage--default),
+[UploadingScreen](?path=/story/screens-upload-uploading--default).
+
+## Icons
+
+Icons are Lucide icons rendered through the product `Icon` component and selected from
+the semantic `icons` catalog. The icon system already has detailed guidance in
+[Foundations / Icons / Guidelines](?path=/docs/foundations-icons-guidelines--docs).
+
+<div className="grid gap-4 md:grid-cols-3">
+  <div className="rounded-2xl bg-card border border-border p-5">
+    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-3">
+      <Icon icon={icons.bookImage} size="lg" className="text-primary" aria-hidden />
+    </div>
+    <div className="font-medium">Decorative support</div>
+    <div className="text-sm text-muted-foreground">Use `aria-hidden` when text already names the concept.</div>
+  </div>
+  <div className="rounded-2xl bg-card border border-border p-5">
+    <Button variant="secondary" aria-label="Eliminar fotografía" className="px-3 mb-3">
+      <Icon icon={icons.delete} aria-hidden />
+    </Button>
+    <div className="font-medium">Icon-only actions</div>
+    <div className="text-sm text-muted-foreground">Name the button, not the icon.</div>
+  </div>
+  <div className="rounded-2xl bg-card border border-border p-5">
+    <div className="flex items-center gap-2 text-destructive mb-3">
+      <Icon icon={icons.alertTriangle} aria-label="Advertencia" />
+      <span className="text-sm font-medium">Advertencia</span>
+    </div>
+    <div className="font-medium">Informative icons</div>
+    <div className="text-sm text-muted-foreground">Use `aria-label` when the icon carries meaning.</div>
+  </div>
+</div>
+
+Representative consumers:
+[Icon](?path=/story/foundations-icons-icon--default),
+[Icon Gallery](?path=/story/foundations-icons-gallery--gallery),
+[Button Inside Icons](?path=/story/foundations-icons-icon--inside-buttons),
+[PhotoViewerHeader](?path=/story/features-photos-photoviewerheader--with-actions).
+
+## Forms And Input Language
+
+Form controls are soft white or beige surfaces with rounded corners, low-opacity borders
+and terracotta focus rings.
+
+<div className="max-w-md rounded-2xl bg-card border border-border p-6 space-y-5">
+  <Input label="Nombre del baúl" placeholder="Familia García" value="" onChange={() => {}} helperText="Usa un nombre familiar y reconocible." />
+  <div>
+    <label className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block">Decision reversible</label>
+    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-primary/40 bg-primary/5 text-left">
+      <span className="w-5 h-5 rounded-full bg-primary border-primary flex items-center justify-center">
+        <Icon icon={icons.check} size="xs" className="text-white" aria-hidden />
+      </span>
+      <span className="text-sm text-foreground">No me acuerdo</span>
+    </button>
+  </div>
+</div>
+
+### Form Usage
+
+- Use labels above fields, helper text below fields, and `text-muted-foreground` for explanations.
+- Use `focus:ring-2 focus:ring-ring` or `focus:ring-primary/30` for focus.
+- Use `bg-input-background` or `bg-card` for normal fields, `bg-secondary` for fields inside
+  large sheet forms where the surface is already card-colored.
+- Use explicit destructive context blocks before irreversible textareas.
+- Do not hide domain uncertainty; controls like "No me acuerdo" are valid product language.
+
+Representative consumers:
+[Input](?path=/story/components-forms-input--default),
+[PartialDatePicker](?path=/story/components-forms-partialdatepicker--with-unknown-toggle),
+[EditInfoModal](?path=/story/patterns-forms-editinfomodal--default),
+[DateModal](?path=/story/patterns-forms-datemodal--default).
+
+## Empty And Supportive States
+
+Empty states should feel like an invitation to contribute, not a dead end.
+
+<EmptyState
+  title="Sin fotos todavía"
+  subtitle="Sube tus primeros recuerdos para empezar a llenar este baúl."
+  icon={<Icon icon={icons.bookImage} size="xl" aria-hidden />}
+/>
+
+### Empty State Usage
+
+- Use a muted low-opacity icon, a short Lora heading and muted explanatory copy.
+- Prefer copy that suggests the next meaningful family action.
+- Use generous vertical space (`py-16`) so empty states feel calm instead of cramped.
+- Do not treat empty states as errors unless the user is blocked by a real failure.
+
+Representative consumers:
+[EmptyState](?path=/story/components-feedback-emptystate--default),
+[Baules Empty Screen](?path=/story/screens-baules-empty--default),
+[PersonasTab Empty](?path=/story/features-people-personastab--empty),
+[RecuerdosFeed Empty](?path=/story/features-memories-recuerdosfeed--empty).
+
+## Breakpoints And Responsive Behavior
+
+The app is mobile-first. The main explicit breakpoint used by design-system primitives is
+Tailwind's `md` breakpoint (`768px`): large bottom sheets become desktop side drawers,
+small confirmation sheets may center, media navigation controls become visible, and some
+content grids expand.
+
+### Responsive Usage
+
+- Build mobile layout first with full-width controls and bottom sheets.
+- Use `md:` only when the desktop behavior genuinely improves repeated use or scanning.
+- Keep screen content centered with `PageContainer`.
+- Let horizontal tab bars scroll with `overflow-x-auto scrollbar-hide` instead of wrapping.
+- Do not introduce dense desktop-only dashboards in the consumer app unless the product need
+  is explicitly operational rather than family-memory oriented.
+
+Representative consumers:
+[BottomSheetModal Large](?path=/story/components-overlays-bottomsheetmodal--large),
+[PhotoStage](?path=/story/patterns-media-photostage--default),
+[ChaptersView](?path=/story/screens-baul-detail--default),
+[TabButton Group](?path=/story/components-navigation-tabbutton--interactive-group).
