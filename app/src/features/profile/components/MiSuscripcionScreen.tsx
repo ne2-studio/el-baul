@@ -28,12 +28,12 @@ export function MiSuscripcionScreen({ onBack, subscription, onChangePlan }: MiSu
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5 flex items-center gap-4">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground">Mi suscripción</h1>
         </PageContainer>
       </StickyHeader>

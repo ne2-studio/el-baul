@@ -16,6 +16,7 @@ import { RecuerdosFeed } from '@/features/memories/components/RecuerdosFeed';
 import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
 import { Chapter, Photo, PhotoDate, Persona, Recuerdo } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
+import { Button } from '@/design-system/components/actions/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,13 +129,13 @@ export function PhotosView({
       <StickyHeader ref={headerRef}>
         <PageContainer className="py-4">
           <div className="flex items-center justify-between">
-            <button
+            <Button variant="plain"
               onClick={selectionMode ? exitSelection : onBack}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm">{selectionMode ? 'Cancelar' : 'Volver'}</span>
-            </button>
+            </Button>
 
             {selectionMode ? (
               <span className="text-sm font-medium text-foreground">
@@ -143,12 +144,12 @@ export function PhotosView({
             ) : onUpdateChapterInfo && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
+                  <Button variant="plain"
                     className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
                     aria-label="Opciones del capítulo"
                   >
                     <MoreVertical className="w-5 h-5" />
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => setSelectionMode(true)}>

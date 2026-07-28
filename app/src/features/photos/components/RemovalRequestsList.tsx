@@ -49,12 +49,12 @@ export function RemovalRequestsList({
       {/* Header */}
       <div className="bg-background border-b border-border sticky top-0 z-10">
         <div className="flex items-center gap-4 p-4">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
+          </Button>
           <div>
             <h1 className="font-serif text-xl text-foreground">
               Solicitudes de retirada

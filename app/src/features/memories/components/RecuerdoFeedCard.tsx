@@ -2,6 +2,7 @@ import React from 'react';
 import { ImageIcon } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { getRelativeTime } from '@/app/utils/timeUtils';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface RecuerdoFeedCardProps {
   recuerdo: Recuerdo;
@@ -48,7 +49,7 @@ export function RecuerdoFeedCard({
       <p className="text-sm text-foreground/90 leading-relaxed font-serif">{recuerdo.text}</p>
 
       <div className="flex items-center gap-2 mt-3">
-        <button
+        <Button variant="plain"
           type="button"
           aria-label={`Ver perfil de ${userName}`}
           onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
@@ -60,13 +61,13 @@ export function RecuerdoFeedCard({
           ) : (
             getInitials(userName)
           )}
-        </button>
+        </Button>
         <p className="text-sm font-medium text-foreground truncate">{userName}</p>
         <p className="text-xs text-muted-foreground shrink-0">· {getRelativeTime(new Date(recuerdo.createdAt))}</p>
       </div>
 
       {recuerdo.photoId && (
-        <button
+        <Button variant="plain"
           type="button"
           aria-label="Ver foto"
           onClick={onPhotoClick}
@@ -80,17 +81,17 @@ export function RecuerdoFeedCard({
               Ver foto
             </span>
           )}
-        </button>
+        </Button>
       )}
 
       {showBadge && (
-        <button
+        <Button variant="plain"
           type="button"
           onClick={() => onChapterClick?.(recuerdo.chapterId!)}
           className="mt-2 inline-flex text-xs text-primary bg-primary/10 hover:bg-primary/15 transition-colors rounded-full px-2 py-0.5"
         >
           en «{recuerdo.chapterName ?? 'un capítulo'}»
-        </button>
+        </Button>
       )}
     </div>
   );

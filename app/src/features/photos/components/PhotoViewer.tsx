@@ -14,6 +14,7 @@ import { RecuerdoInput } from '@/features/memories/components/RecuerdoInput';
 import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -268,20 +269,20 @@ export function PhotoViewer({
           <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
             {/* Date */}
             {(photo.date || onChangeDate) && (
-              <button
+              <Button variant="plain"
                 onClick={() => onChangeDate && setShowDateModal(true)}
                 disabled={!onChangeDate}
                 className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
               >
                 {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
-              </button>
+              </Button>
             )}
 
             {/* Tagged personas */}
             {taggedPersonas.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {taggedPersonas.map((persona) => (
-                  <button
+                  <Button variant="plain"
                     key={persona.id}
                     onClick={() => onUserClick && onUserClick(persona.id)}
                     disabled={!onUserClick}
@@ -295,7 +296,7 @@ export function PhotoViewer({
                       </div>
                     )}
                     <span className="text-xs text-background/80">{persona.nickname}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

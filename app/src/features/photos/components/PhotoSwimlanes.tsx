@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Check, MessageCircle } from 'lucide-react';
 import type { Photo } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
 // assume a month for display, that defaulting only applies to sorting), oldest first so
@@ -68,7 +69,7 @@ export function PhotoSwimlanes({
         const groupAllSelected = group.photos.every((p) => ids.has(p.id));
         return (
           <div key={group.label}>
-            <button
+            <Button variant="plain"
               type="button"
               onClick={() => onToggleGroup?.(group.photos)}
               className="group/swimlane flex items-center gap-1.5 mb-2 -ml-0.5 px-0.5 py-0.5 rounded"
@@ -84,7 +85,7 @@ export function PhotoSwimlanes({
                 style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
                 {group.label}
               </p>
-            </button>
+            </Button>
             <PhotoGrid
               photos={group.photos}
               selectionMode={selectionMode}
@@ -191,7 +192,7 @@ function PhotoCell({
   };
 
   return (
-    <button
+    <Button variant="plain"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -236,6 +237,6 @@ function PhotoCell({
           isSelected ? 'opacity-100' : 'opacity-0 group-hover/checkbox:opacity-100'
         }`} />
       </div>
-    </button>
+    </Button>
   );
 }

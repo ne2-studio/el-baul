@@ -15,6 +15,7 @@ import {
 } from '@/design-system/components/ui/dropdown-menu';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface ActionMenuStoryArgs {
   onChangeCover: () => void;
@@ -70,13 +71,13 @@ export const ChapterActions: Story = {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button variant="plain"
               type="button"
               aria-label="Abrir menú de capítulo"
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Icon icon={icons.moreOptions} size="md" aria-hidden />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Acciones de capítulo</DropdownMenuLabel>
@@ -143,12 +144,12 @@ export const SelectionControls: Story = {
         <div className="flex min-h-64 items-start justify-center bg-background p-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
+              <Button variant="plain"
                 type="button"
                 className="rounded-xl border border-border bg-background px-4 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Filtros de fotos
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
               <DropdownMenuLabel>Vista</DropdownMenuLabel>

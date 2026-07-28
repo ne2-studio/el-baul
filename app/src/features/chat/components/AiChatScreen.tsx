@@ -3,6 +3,7 @@ import { ChevronLeft, Send, Sparkles } from 'lucide-react';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { ChatMessage } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface AiChatScreenProps {
   messages: ChatMessage[];
@@ -44,12 +45,12 @@ export function AiChatScreen({
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5 flex items-center gap-4">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
+          </Button>
           <h1 className="text-2xl text-foreground">Ayúdame a recordar</h1>
         </PageContainer>
       </StickyHeader>
@@ -71,13 +72,13 @@ export function AiChatScreen({
                 <p className="text-center text-sm text-muted-foreground">Pensando en preguntas...</p>
               ) : (
                 suggestions.map((suggestion) => (
-                  <button
+                  <Button variant="plain"
                     key={suggestion}
                     onClick={() => handleSend(suggestion)}
                     className="text-left text-sm px-4 py-3 bg-card border border-border rounded-xl hover:bg-muted transition-colors text-foreground"
                   >
                     {suggestion}
-                  </button>
+                  </Button>
                 ))
               )}
             </div>
@@ -130,13 +131,13 @@ export function AiChatScreen({
             disabled={isSending}
             className="flex-1 px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground placeholder:text-muted-foreground disabled:opacity-50"
           />
-          <button
+          <Button variant="plain"
             onClick={() => handleSend(input)}
             disabled={!input.trim() || isSending}
             className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 transition-opacity flex-shrink-0"
           >
             <Send className="w-5 h-5" />
-          </button>
+          </Button>
         </PageContainer>
       </div>
     </div>

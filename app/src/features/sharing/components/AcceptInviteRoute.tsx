@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
+import { Button } from '@/design-system/components/actions/Button';
 
 export const AcceptInviteRoute: React.FC = () => {
   const { personaId } = useParams<{ personaId: string }>();
@@ -50,12 +51,12 @@ export const AcceptInviteRoute: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold text-foreground">Ups! Algo ha ido mal</h1>
             <p className="text-muted-foreground">{error}</p>
-            <button
+            <Button variant="plain"
               onClick={() => navigate('/baules')}
               className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-full font-medium hover:opacity-90 transition-opacity"
             >
               Ir a mis baúles
-            </button>
+            </Button>
           </div>
         </div>
       </div>

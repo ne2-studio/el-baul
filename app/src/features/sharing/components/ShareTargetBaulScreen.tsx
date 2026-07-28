@@ -6,6 +6,7 @@ import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { Baul } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface ShareTargetBaulScreenProps {
   baules: Baul[];
@@ -26,13 +27,13 @@ export function ShareTargetBaulScreen({
     <div className="min-h-screen bg-background">
       <StickyHeader>
         <PageContainer className="py-5">
-          <button
+          <Button variant="plain"
             onClick={onCancel}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Cancelar</span>
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground mb-1">
             Compartir {photoCount} {photoCount === 1 ? 'foto' : 'fotos'}
           </h1>

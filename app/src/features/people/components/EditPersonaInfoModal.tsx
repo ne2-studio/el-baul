@@ -65,13 +65,13 @@ export function EditPersonaInfoModal({
       </div>
 
       <div className="flex gap-3 pt-1">
-        <button
+        <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+          className="flex-1 text-sm"
         >
           Cancelar
-        </button>
+        </Button>
         <Button
           onClick={handleSave}
           disabled={!name.trim() || !nickname.trim() || isSubmitting}

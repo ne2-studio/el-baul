@@ -29,7 +29,7 @@ export function WelcomeScreen({ onGoogleSignIn }: WelcomeScreenProps) {
         
         {/* Google Sign-In Button */}
         <div className="space-y-4">
-          <button
+          <Button variant="plain"
             onClick={onGoogleSignIn}
             className="w-full bg-card border border-border rounded-2xl px-6 py-4 flex items-center justify-center gap-3 hover:bg-card/80 transition-colors shadow-sm"
           >
@@ -40,7 +40,7 @@ export function WelcomeScreen({ onGoogleSignIn }: WelcomeScreenProps) {
               <path d="M10 3.977c1.468 0 2.786.505 3.823 1.496l2.868-2.868C14.959.99 12.695 0 10 0 6.09 0 2.71 2.24 1.064 5.51l3.34 2.59C5.19 5.736 7.395 3.977 10 3.977z" fill="#EA4335"/>
             </svg>
             <span className="text-foreground font-medium">Continuar con Google</span>
-          </button>
+          </Button>
           
           {/* Terms text */}
           <p className="text-sm text-muted-foreground/75 px-4">

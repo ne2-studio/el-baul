@@ -4,6 +4,7 @@ import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Photo, Recuerdo } from '@/types';
 import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface RecuerdosFeedProps {
   active: boolean;
@@ -99,13 +100,13 @@ function WriteRecuerdoModal({
       <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-medium text-foreground">Escribe lo que recuerdas</h2>
-          <button
+          <Button variant="plain"
             onClick={onCancel}
             aria-label="Cerrar"
             className="p-1.5 rounded-full hover:bg-secondary transition-colors text-muted-foreground"
           >
             <Icon icon={icons.close} size="sm" aria-hidden />
-          </button>
+          </Button>
         </div>
         <textarea
           autoFocus
@@ -116,16 +117,16 @@ function WriteRecuerdoModal({
           className="w-full border border-border rounded-2xl px-4 py-3 text-sm text-foreground bg-card outline-none focus:ring-2 focus:ring-ring resize-none placeholder:text-muted-foreground/60 leading-relaxed"
         />
         <div className="flex gap-3 mt-5">
-          <button onClick={onCancel} className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors">
+          <Button variant="secondary" onClick={onCancel} className="flex-1 text-sm">
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button variant="plain"
             onClick={() => onSave(text)}
             disabled={!text.trim()}
             className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
           >
             Guardar recuerdo
-          </button>
+          </Button>
         </div>
       </div>
     </div>

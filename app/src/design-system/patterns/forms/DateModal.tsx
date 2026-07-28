@@ -22,13 +22,13 @@ export function DateModal({ title, onCancel, onConfirm, isSubmitting = false }: 
         <PartialDatePicker onChange={(v) => setPending(v)} />
       </div>
       <div className="flex gap-3">
-        <button
+        <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+          className="flex-1 text-sm"
         >
           Cancelar
-        </button>
+        </Button>
         <Button
           onClick={() => pending && onConfirm(pending)}
           disabled={!pending?.year || isSubmitting}

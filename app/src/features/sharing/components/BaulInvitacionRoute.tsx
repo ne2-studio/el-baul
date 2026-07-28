@@ -5,6 +5,7 @@ import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 import { BaulPreview } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 export const BaulInvitacionRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -48,12 +49,12 @@ export const BaulInvitacionRoute: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-2xl font-bold mb-4">Invitación no encontrada</h1>
         <p className="text-muted-foreground mb-8">Este enlace de invitación no es válido o ya ha sido usado.</p>
-        <button
+        <Button variant="plain"
           onClick={() => navigate('/baules')}
           className="text-primary hover:underline"
         >
           Ir a mis baúles
-        </button>
+        </Button>
       </div>
     );
   }

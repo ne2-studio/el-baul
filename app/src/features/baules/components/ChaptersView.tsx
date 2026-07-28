@@ -18,6 +18,7 @@ import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
 import { formatDateRange } from '@/app/utils/timeUtils';
 import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
+import { Button } from '@/design-system/components/actions/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -124,18 +125,18 @@ export function ChaptersView({
       <StickyHeader ref={headerRef}>
         <PageContainer className="py-4">
           <div className="flex items-center justify-between">
-            <button
+            <Button variant="plain"
               onClick={onBack}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm">Volver</span>
-            </button>
+            </Button>
 
             {(onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
+                  <Button variant="plain"
                     className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
                     aria-label="Opciones del baúl"
                   >
@@ -143,7 +144,7 @@ export function ChaptersView({
                     {(pendingRemovalRequestsCount ?? 0) > 0 && (
                       <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
                     )}
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   {onFetchBaulCoverPhotos && onSetBaulCover && (

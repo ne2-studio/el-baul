@@ -26,12 +26,12 @@ export function PlanLimitModal({ onClose, onUpgradePlan, baulesUsed, baulesLimit
                 No puedes crear más baúles
               </h2>
             </div>
-            <button
+            <Button variant="plain"
               onClick={onClose}
               className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors flex-shrink-0"
             >
               <X className="w-5 h-5 text-muted-foreground" />
-            </button>
+            </Button>
           </div>
         </div>
 

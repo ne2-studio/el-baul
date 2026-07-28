@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Check } from 'lucide-react';
 import { PhotoDate } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -61,7 +62,7 @@ export function PartialDatePicker({
   return (
     <div>
       {allowUnknown && (
-        <button
+        <Button variant="plain"
           type="button"
           onClick={handleUnknownToggle}
           className={`w-full flex items-center gap-3 px-4 py-3 mb-3 rounded-xl border transition-all text-left ${
@@ -74,7 +75,7 @@ export function PartialDatePicker({
             {unknown && <Check className="w-3 h-3 text-white" />}
           </div>
           <span className="text-sm text-foreground">No me acuerdo</span>
-        </button>
+        </Button>
       )}
 
       {!unknown && (

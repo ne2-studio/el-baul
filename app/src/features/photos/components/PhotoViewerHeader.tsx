@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
+import { Button } from '@/design-system/components/actions/Button';
 
 export interface PhotoViewerMenuItem {
   key: string;
@@ -23,13 +24,13 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
 
   return (
     <div className="flex items-center justify-between p-4">
-      <button
+      <Button variant="plain"
         onClick={onClose}
         aria-label="Cerrar"
         className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors"
       >
         <Icon icon={icons.close} size="lg" className="text-background" aria-hidden />
-      </button>
+      </Button>
 
       <div className="text-background/75 text-sm">
         {currentIndex + 1} / {totalCount}
@@ -37,13 +38,13 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
 
       {menuItems.length > 0 ? (
         <div className="relative">
-          <button
+          <Button variant="plain"
             onClick={() => setShowMenu(!showMenu)}
             aria-label="Más opciones"
             className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors"
           >
             <Icon icon={icons.moreOptions} size="lg" className="text-background" aria-hidden />
-          </button>
+          </Button>
 
           {showMenu && (
             <>
@@ -55,7 +56,7 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
               <div className="absolute top-12 right-0 bg-background rounded-lg shadow-lg py-1 min-w-[200px] z-20">
                 {menuItems.map((item, index) => (
                   <React.Fragment key={item.key}>
-                    <button
+                    <Button variant="plain"
                       onClick={() => {
                         setShowMenu(false);
                         item.onSelect();
@@ -68,7 +69,7 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
                       {item.label}
-                    </button>
+                    </Button>
                     {index < menuItems.length - 1 && (
                       <div className="my-1 border-t border-border/50" />
                     )}

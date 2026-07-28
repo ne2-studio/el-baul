@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronLeft, BookOpen, Bug, Lightbulb, MessageCircle, ExternalLink } from 'lucide-react';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface HelpSupportScreenProps {
   onBack: () => void;
@@ -23,19 +24,19 @@ export function HelpSupportScreen({
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5 flex items-center gap-4">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground">Ayuda y soporte</h1>
         </PageContainer>
       </StickyHeader>
 
       {/* Content */}
       <PageContainer className="py-8 space-y-3">
-        <button
+        <Button variant="plain"
           onClick={onOpenHelpCenter}
           className="w-full flex items-center gap-4 px-4 py-4 bg-card border border-border rounded-2xl hover:shadow-md transition-shadow text-left"
         >
@@ -47,9 +48,9 @@ export function HelpSupportScreen({
             <div className="text-sm text-muted-foreground">Preguntas frecuentes y guías</div>
           </div>
           <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        </button>
+        </Button>
 
-        <button
+        <Button variant="plain"
           onClick={onReportBug}
           className="w-full flex items-center gap-4 px-4 py-4 bg-card border border-border rounded-2xl hover:shadow-md transition-shadow text-left"
         >
@@ -60,9 +61,9 @@ export function HelpSupportScreen({
             <div className="font-medium text-foreground">Informar de un problema</div>
             <div className="text-sm text-muted-foreground">Algo no ha funcionado como esperabas</div>
           </div>
-        </button>
+        </Button>
 
-        <button
+        <Button variant="plain"
           onClick={onSendSuggestion}
           className="w-full flex items-center gap-4 px-4 py-4 bg-card border border-border rounded-2xl hover:shadow-md transition-shadow text-left"
         >
@@ -73,9 +74,9 @@ export function HelpSupportScreen({
             <div className="font-medium text-foreground">Enviar una sugerencia</div>
             <div className="text-sm text-muted-foreground">Cuéntanos qué te gustaría ver</div>
           </div>
-        </button>
+        </Button>
 
-        <button
+        <Button variant="plain"
           onClick={onContactSupport}
           className="w-full flex items-center gap-4 px-4 py-4 bg-card border border-border rounded-2xl hover:shadow-md transition-shadow text-left"
         >
@@ -86,7 +87,7 @@ export function HelpSupportScreen({
             <div className="font-medium text-foreground">Hablar con soporte</div>
             <div className="text-sm text-muted-foreground">Escríbenos y te responderemos</div>
           </div>
-        </button>
+        </Button>
       </PageContainer>
     </div>
   );

@@ -20,7 +20,7 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
       <h2 className="text-lg font-medium text-foreground mb-4">{title}</h2>
       <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
         {chapters.map(a => (
-          <button
+          <Button variant="plain"
             key={a.id}
             onClick={() => onSelect(a.id)}
             disabled={isSubmitting}
@@ -34,17 +34,17 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
               {selectedId === a.id && <Check className="w-3 h-3 text-white" />}
             </div>
             <span className="text-sm text-foreground">{a.name}</span>
-          </button>
+          </Button>
         ))}
       </div>
       <div className="flex gap-3">
-        <button
+        <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+          className="flex-1 text-sm"
         >
           Cancelar
-        </button>
+        </Button>
         <Button
           onClick={onConfirm}
           disabled={!selectedId || isSubmitting}

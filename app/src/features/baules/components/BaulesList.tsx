@@ -7,6 +7,7 @@ import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { Baul } from '@/types';
 import { getBaulPermissions, getRoleDisplayName } from '@/utils/roleUtils';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface BaulesListProps {
   baules: Baul[];
@@ -34,13 +35,13 @@ export function BaulesList({
         <PageContainer className="py-5 flex items-center justify-between">
           <h1 className="text-3xl font-serif text-foreground">El Baúl</h1>
           <div className="flex items-center gap-2">
-            <button
+            <Button variant="plain"
               onClick={onOpenProfileMenu}
               className="w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors"
               aria-label="Abrir menú de cuenta"
             >
               <UserCircle className="w-6 h-6 text-primary" />
-            </button>
+            </Button>
           </div>
         </PageContainer>
       </StickyHeader>
@@ -106,7 +107,7 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
   const permissions = getBaulPermissions(baul);
 
   return (
-    <button
+    <Button variant="plain"
       onClick={onClick}
       className="relative w-full h-52 rounded-2xl overflow-hidden text-left shadow-sm active:scale-[0.98] transition-transform"
     >
@@ -167,6 +168,6 @@ function BaulCard({ baul, onClick }: { baul: Baul; onClick: () => void }) {
           </div>
         )}
       </div>
-    </button>
+    </Button>
   );
 }

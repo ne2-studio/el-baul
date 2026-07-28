@@ -1,6 +1,7 @@
 import React, { useState, forwardRef } from 'react';
 import { motion } from 'motion/react';
 import { Recuerdo } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface RecuerdoCardProps {
   recuerdo: Recuerdo;
@@ -56,7 +57,7 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
       >
         <div className="flex gap-3 items-start">
           {/* Avatar - siempre visible */}
-          <button
+          <Button variant="plain"
             type="button"
             onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
             disabled={!canOpenPersona}
@@ -71,7 +72,7 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
             ) : (
               initials
             )}
-          </button>
+          </Button>
 
           <div className="flex-1 min-w-0">
             {/* Texto del recuerdo con truncado y fade */}
@@ -96,7 +97,7 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
 
             {/* Botón Ver más/menos */}
             {isLongText && (
-              <button
+              <Button variant="plain"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="text-background/60 hover:text-background/85 text-sm mt-1 transition-colors relative group/more"
               >
@@ -105,7 +106,7 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
                   {/* Underline sutil */}
                   <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-background/40 group-hover/more:w-full transition-all duration-300" />
                 </span>
-              </button>
+              </Button>
             )}
 
             {/* Autor - más sutil debajo */}

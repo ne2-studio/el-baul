@@ -52,13 +52,13 @@ export function UploadConfirmationScreen({
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
             <Icon icon={icons.chevronLeft} size="sm" aria-hidden />
             <span className="text-sm">Volver</span>
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground mb-1">Añadir fotos al capítulo</h1>
           <p className="text-sm text-muted-foreground">{currentChapter.name}</p>
         </PageContainer>
@@ -83,13 +83,13 @@ export function UploadConfirmationScreen({
                 className="w-full h-full object-cover rounded-lg"
               />
               {/* Remove button */}
-              <button
+              <Button variant="plain"
                 onClick={() => handleRemovePhoto(photo.id)}
                 aria-label="Quitar foto"
                 className="absolute -top-2 -right-2 w-8 h-8 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Icon icon={icons.close} size="sm" aria-hidden />
-              </button>
+              </Button>
             </div>
           ))}
         </div>

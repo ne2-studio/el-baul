@@ -52,12 +52,12 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Skip button */}
       <div className="flex justify-end p-4">
-        <button 
+        <Button variant="plain" 
           onClick={handleSkip}
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
           Saltar
-        </button>
+        </Button>
       </div>
       
       {/* Content */}

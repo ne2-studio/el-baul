@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, User, CreditCard, LogOut, Loader2, HelpCircle, Bell } from 'lucide-react';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
@@ -34,30 +35,30 @@ export function ProfileMenuModal({
           <div className="w-12 h-1 bg-border rounded-full mx-auto mb-4" />
           <div className="flex items-center justify-between">
             <h2 className="font-serif text-xl text-foreground">Cuenta</h2>
-            <button
+            <Button variant="plain"
               onClick={onClose}
               disabled={isSigningOut}
               className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-50"
             >
               <X className="w-5 h-5 text-muted-foreground" />
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Desktop header */}
         <div className="hidden md:flex items-center justify-between p-6 border-b border-border">
           <h2 className="font-serif text-xl text-foreground">Cuenta</h2>
-          <button
+          <Button variant="plain"
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5 text-muted-foreground" />
-          </button>
+          </Button>
         </div>
 
         {/* Menu items */}
         <div className="p-4">
-          <button
+          <Button variant="plain"
             onClick={onNavigateToProfile}
             className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left"
           >
@@ -68,10 +69,10 @@ export function ProfileMenuModal({
               <div className="font-medium text-foreground">Mi perfil</div>
               <div className="text-sm text-muted-foreground">Información de tu cuenta</div>
             </div>
-          </button>
+          </Button>
 
           {monetizationEnabled && (
-            <button
+            <Button variant="plain"
               onClick={onNavigateToSubscription}
               className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
             >
@@ -82,10 +83,10 @@ export function ProfileMenuModal({
                 <div className="font-medium text-foreground">Mi suscripción</div>
                 <div className="text-sm text-muted-foreground">Plan y espacio disponible</div>
               </div>
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button variant="plain"
             onClick={onNavigateToNotifications}
             className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
           >
@@ -96,9 +97,9 @@ export function ProfileMenuModal({
               <div className="font-medium text-foreground">Notificaciones</div>
               <div className="text-sm text-muted-foreground">Resumen semanal por email</div>
             </div>
-          </button>
+          </Button>
 
-          <button
+          <Button variant="plain"
             onClick={onNavigateToHelp}
             className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
           >
@@ -109,12 +110,12 @@ export function ProfileMenuModal({
               <div className="font-medium text-foreground">Ayuda y soporte</div>
               <div className="text-sm text-muted-foreground">Preguntas, problemas y sugerencias</div>
             </div>
-          </button>
+          </Button>
         </div>
 
         {/* Sign out */}
         <div className="p-4 border-t border-border">
-          <button
+          <Button variant="plain"
             onClick={onSignOut}
             disabled={isSigningOut}
             className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-destructive/10 transition-colors text-left disabled:opacity-50"
@@ -129,7 +130,7 @@ export function ProfileMenuModal({
             <div className="font-medium text-destructive">
               {isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
             </div>
-          </button>
+          </Button>
         </div>
 
         {/* Bottom padding for mobile */}

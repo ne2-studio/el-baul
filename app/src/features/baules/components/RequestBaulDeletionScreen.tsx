@@ -24,13 +24,13 @@ export function RequestBaulDeletionScreen({ baulName, onBack, onSubmit, isSubmit
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5 flex items-center gap-4">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             disabled={isSubmitting}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2 disabled:opacity-50"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground">Eliminar baúl</h1>
         </PageContainer>
       </StickyHeader>

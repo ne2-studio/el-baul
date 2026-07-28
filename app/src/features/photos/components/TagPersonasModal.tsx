@@ -33,7 +33,7 @@ export function TagPersonasModal({
         {personas.map((persona) => {
           const isSelected = selectedIds.includes(persona.id);
           return (
-            <button
+            <Button variant="plain"
               key={persona.id}
               onClick={() => onToggle(persona.id)}
               disabled={isSubmitting}
@@ -54,18 +54,18 @@ export function TagPersonasModal({
               }`}>
                 {isSelected && <Check className="w-3 h-3 text-white" />}
               </div>
-            </button>
+            </Button>
           );
         })}
       </div>
       <div className="flex gap-3">
-        <button
+        <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 py-3 rounded-xl border border-border text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+          className="flex-1 text-sm"
         >
           Cancelar
-        </button>
+        </Button>
         <Button
           onClick={onConfirm}
           disabled={isSubmitting}

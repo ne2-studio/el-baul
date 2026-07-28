@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface TabButtonProps {
   label: string;
@@ -9,7 +10,7 @@ interface TabButtonProps {
 
 export function TabButton({ label, count, active, onClick }: TabButtonProps) {
   return (
-    <button
+    <Button variant="plain"
       onClick={onClick}
       className={`relative flex items-center gap-1.5 py-3.5 px-1 mr-7 text-sm font-medium transition-colors ${
         active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'
@@ -24,6 +25,6 @@ export function TabButton({ label, count, active, onClick }: TabButtonProps) {
         </span>
       )}
       {active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
-    </button>
+    </Button>
   );
 }

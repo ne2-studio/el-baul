@@ -28,12 +28,12 @@ export function PlanSelectionScreen({ onBack, currentPlan, onUpdatePlan }: PlanS
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5 flex items-center gap-4">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground">Elige tu plan</h1>
         </PageContainer>
       </StickyHeader>
@@ -43,7 +43,7 @@ export function PlanSelectionScreen({ onBack, currentPlan, onUpdatePlan }: PlanS
         {/* Plan cards */}
         <div className="space-y-4 mb-6">
           {/* Free plan */}
-          <button
+          <Button variant="plain"
             onClick={() => setSelectedPlan('gratuito')}
             className={`w-full text-left bg-card rounded-2xl border-2 p-6 transition-all ${
               selectedPlan === 'gratuito'
@@ -101,10 +101,10 @@ export function PlanSelectionScreen({ onBack, currentPlan, onUpdatePlan }: PlanS
                 </p>
               </div>
             </div>
-          </button>
+          </Button>
 
           {/* Premium plan */}
-          <button
+          <Button variant="plain"
             onClick={() => setSelectedPlan('premium')}
             className={`w-full text-left bg-card rounded-2xl border-2 p-6 transition-all relative overflow-hidden ${
               selectedPlan === 'premium'
@@ -166,7 +166,7 @@ export function PlanSelectionScreen({ onBack, currentPlan, onUpdatePlan }: PlanS
                 </p>
               </div>
             </div>
-          </button>
+          </Button>
         </div>
 
         {/* CTA */}

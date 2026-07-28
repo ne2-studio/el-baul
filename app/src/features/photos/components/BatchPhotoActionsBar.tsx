@@ -7,6 +7,7 @@ import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal'
 import { BatchOperationProgress, BatchOperationItem } from '@/design-system/components/feedback/BatchOperationProgress';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { Chapter, Photo, PhotoDate, Persona } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface BatchPhotoActionsBarProps {
   active: boolean;
@@ -118,40 +119,40 @@ export function BatchPhotoActionsBar({
           <PageContainer className="py-3 overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 w-max">
               {onBatchChangeDate && (
-                <button
+                <Button variant="plain"
                   onClick={() => setShowDateModal(true)}
                   className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
                 >
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   Cambiar fecha
-                </button>
+                </Button>
               )}
               {moveableChapters.length > 0 && (
-                <button
+                <Button variant="plain"
                   onClick={() => setShowMoveModal(true)}
                   className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
                 >
                   <FolderInput className="w-4 h-4 text-muted-foreground" />
                   Mover
-                </button>
+                </Button>
               )}
               {onBatchCreateChapter && (
-                <button
+                <Button variant="plain"
                   onClick={() => setShowCreateChapterModal(true)}
                   className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 text-muted-foreground" />
                   Crear nuevo capítulo
-                </button>
+                </Button>
               )}
               {onBatchTagPersonas && (
-                <button
+                <Button variant="plain"
                   onClick={() => setShowTagModal(true)}
                   className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
                 >
                   <Tag className="w-4 h-4 text-muted-foreground" />
                   Etiquetar personas
-                </button>
+                </Button>
               )}
             </div>
           </PageContainer>

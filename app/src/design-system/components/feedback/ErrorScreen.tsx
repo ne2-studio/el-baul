@@ -1,3 +1,5 @@
+import { Button } from '@/design-system/components/actions/Button';
+
 interface ErrorScreenProps {
   title: string;
   message: string;
@@ -17,12 +19,12 @@ export function ErrorScreen({ title, message, actionLabel, onAction }: ErrorScre
           </div>
           <h1 className="text-xl font-bold text-foreground">{title}</h1>
           <p className="text-muted-foreground">{message}</p>
-          <button
+          <Button variant="plain"
             onClick={onAction}
             className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-full font-medium hover:opacity-90 transition-opacity"
           >
             {actionLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

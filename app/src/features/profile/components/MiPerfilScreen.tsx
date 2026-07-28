@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronLeft, User } from 'lucide-react';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
+import { Button } from '@/design-system/components/actions/Button';
 
 interface UserProfile {
   photoUrl?: string;
@@ -21,12 +22,12 @@ export function MiPerfilScreen({ onBack, userProfile }: MiPerfilScreenProps) {
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5 flex items-center gap-4">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground">Mi perfil</h1>
         </PageContainer>
       </StickyHeader>

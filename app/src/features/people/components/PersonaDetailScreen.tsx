@@ -11,6 +11,7 @@ import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
+import { Button } from '@/design-system/components/actions/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,23 +79,23 @@ export function PersonaDetailScreen({
       <StickyHeader ref={headerRef}>
         <PageContainer className="py-4">
           <div className="flex items-center justify-between">
-            <button
+            <Button variant="plain"
               onClick={onBack}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm">Volver</span>
-            </button>
+            </Button>
 
             {(permissions.canEditPersonaInfo || permissions.canManagePersona) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
+                  <Button variant="plain"
                     className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
                     aria-label="Opciones de la persona"
                   >
                     <MoreVertical className="w-5 h-5" />
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   {permissions.canEditPersonaInfo && (

@@ -4,6 +4,7 @@ import { BottomSheetModal } from '@/design-system/components/overlays/BottomShee
 import { LoadingSpinner } from '@/design-system/components/feedback/LoadingSpinner';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { Photo } from '@/types';
+import { Button } from '@/design-system/components/actions/Button';
 
 const PAGE_SIZE = 60;
 
@@ -77,13 +78,13 @@ export function CoverPhotoPickerModal({ title, fetchPage, onSelect, onCancel }: 
     <BottomSheetModal onCancel={onCancel} size="lg">
       <div className="sticky top-0 -mx-6 -mt-6 px-6 pt-6 pb-4 bg-card z-10 flex items-center justify-between border-b border-border">
         <h2 className="text-xl font-serif text-foreground">{title}</h2>
-        <button
+        <Button variant="plain"
           onClick={onCancel}
           aria-label="Cerrar"
           className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
         >
           <X className="w-5 h-5" />
-        </button>
+        </Button>
       </div>
 
       {isInitialLoad ? (
@@ -98,13 +99,13 @@ export function CoverPhotoPickerModal({ title, fetchPage, onSelect, onCancel }: 
         <>
           <div className="grid grid-cols-3 gap-2">
             {photos.map((photo) => (
-              <button
+              <Button variant="plain"
                 key={photo.id}
                 onClick={() => handleSelect(photo)}
                 className="aspect-square bg-secondary rounded-lg overflow-hidden hover:opacity-90 active:opacity-80 transition-opacity"
               >
                 <img src={photo.thumbnailUrl} alt="Foto" className="w-full h-full object-cover" draggable={false} />
-              </button>
+              </Button>
             ))}
           </div>
           <div ref={sentinelRef} className="h-1" />

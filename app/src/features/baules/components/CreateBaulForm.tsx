@@ -28,13 +28,13 @@ export function CreateBaulForm({ onBack, onSubmit, isOnboarding = false, isSubmi
       {/* Header */}
       <StickyHeader>
         <PageContainer className="py-5">
-          <button
+          <Button variant="plain"
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Volver</span>
-          </button>
+          </Button>
           <h1 className="text-3xl text-foreground">
             {isOnboarding ? 'Crea tu primer baúl' : 'Crear un baúl'}
           </h1>

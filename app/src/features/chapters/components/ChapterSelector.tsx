@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Plus } from 'lucide-react';
 import { Chapter } from '@/types';
 import { PhotoUploadDestination } from '@/features/photos/uploadFlow';
+import { Button } from '@/design-system/components/actions/Button';
 
 export type ChapterSelection = PhotoUploadDestination;
 
@@ -23,7 +24,7 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button variant="plain"
       type="button"
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
@@ -36,7 +37,7 @@ function Row({
         {selected && <Check className="w-3 h-3 text-white" />}
       </div>
       {children}
-    </button>
+    </Button>
   );
 }
 

@@ -65,12 +65,12 @@ export function InvitacionScreen({
             Unirme al Baúl
           </Button>
 
-          <button
+          <Button variant="plain"
             onClick={onVerMas}
             className="w-full text-muted-foreground hover:text-foreground transition-colors py-3 text-sm"
           >
             Ver de qué va esto
-          </button>
+          </Button>
         </div>
       </div>
     </div>

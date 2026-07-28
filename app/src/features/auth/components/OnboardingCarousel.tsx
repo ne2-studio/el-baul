@@ -184,12 +184,12 @@ export function OnboardingCarousel({
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header con skip */}
       <div className="flex justify-end px-6 pt-6">
-        <button
+        <Button variant="plain"
           onClick={onSkip}
           className="text-muted-foreground hover:text-foreground transition-colors text-sm"
         >
           Saltar
-        </button>
+        </Button>
       </div>
 
       {/* Contenido principal */}
@@ -246,12 +246,12 @@ export function OnboardingCarousel({
           {/* Botones de navegación */}
           <div className="flex gap-3">
             {currentStep > 0 && (
-              <button
+              <Button variant="plain"
                 onClick={handleBack}
                 className="px-6 py-3 text-muted-foreground hover:text-foreground transition-colors"
               >
                 Atrás
-              </button>
+              </Button>
             )}
 
             <Button
