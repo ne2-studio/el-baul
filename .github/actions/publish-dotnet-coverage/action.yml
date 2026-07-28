@@ -1,0 +1,39 @@
+name: Publish .NET coverage
+description: Merge cobertura files into a GitHub summary and upload the HTML report.
+
+inputs:
+  reports:
+    description: Glob for cobertura XML reports.
+    required: true
+  target-directory:
+    description: Directory where reportgenerator writes the merged report.
+    required: true
+  artifact-name:
+    description: Name of the uploaded coverage artifact.
+    required: true
+  retention-days:
+    description: Artifact retention in days.
+    required: false
+    default: "7"
+
+runs:
+  using: composite
+  steps:
+    - name: Publish coverage summary
+      if: always()
+      shell: bash
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        reportgenerator \
+          -reports:"${{ inputs.reports }}" \
+          -targetdir:"${{ inputs.target-directory }}" \
+          -reporttypes:"MarkdownSummaryGithub;Html"
+        cat "${{ inputs.target-directory }}/SummaryGithub.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.target-directory }}
+        retention-days: ${{ inputs.retention-days }}

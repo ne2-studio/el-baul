@@ -1,0 +1,19 @@
+name: Verify generated OpenAPI types
+description: Regenerate OpenAPI TypeScript types and fail if generated files differ.
+
+inputs:
+  target:
+    description: OpenAPI generation target.
+    required: true
+  generated-schema:
+    description: Generated schema file to check.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Check generated OpenAPI TypeScript types
+      shell: bash
+      run: |
+        ./scripts/openapi generate-types "${{ inputs.target }}"
+        git diff --exit-code -- "${{ inputs.generated-schema }}"

@@ -28,49 +28,43 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore dependencies
+      - name: Build/test restore dependencies
         run: dotnet restore api/ElBaul.slnx
 
-      - name: Run backend verification
+      - name: Build/test backend
         run: VERIFY_COVERAGE=1 ./scripts/verify backend
 
       # Merges the per-project cobertura files coverlet drops under coverage/<guid>/ (one per
       # xunit project: ElBaul.Tests, ElBaul.Api.Tests, ElBaul.Infra.Tests) into a single
       # markdown report with a combined total plus a per-assembly breakdown.
-      - name: Publish coverage summary
-        if: always()
-        run: |
-          dotnet tool install -g dotnet-reportgenerator-globaltool
-          reportgenerator \
-            -reports:"api/coverage/**/coverage.cobertura.xml" \
-            -targetdir:"api/coverage/report" \
-            -reporttypes:"MarkdownSummaryGithub;Html"
-          cat api/coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Build/test coverage report
+        uses: ./.github/actions/publish-dotnet-coverage
         with:
-          name: backend-coverage-report
-          path: api/coverage/report
-          retention-days: 7
+          reports: api/coverage/**/coverage.cobertura.xml
+          target-directory: api/coverage/report
+          artifact-name: backend-coverage-report
 
-      - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Package backend image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: api
 
-      - name: Build backend image
-        run: docker build -t $IMAGE_NAME:latest api
-
-      - name: Run backend acceptance verification
+      - name: Verify packaged backend
         env:
           BACKEND_IMAGE: ${{ env.IMAGE_NAME }}:latest
           KEEP_VERIFY_IMAGES: "1"
         run: ./scripts/verify --skip-image-build backend-acceptance
 
-      - name: Push image
-        run: docker push $IMAGE_NAME:latest
+      - name: Release backend image
+        uses: ./.github/actions/release-ghcr-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger Coolify deploy
-        run: |
-          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_BACKEND }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+      - name: Deploy backend
+        uses: ./.github/actions/deploy-coolify
+        with:
+          webhook: ${{ secrets.COOLIFY_WEBHOOK_BACKEND }}
+          token: ${{ secrets.COOLIFY_API_TOKEN }}

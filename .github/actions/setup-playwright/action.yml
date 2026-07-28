@@ -1,0 +1,32 @@
+name: Setup Playwright
+description: Restore Playwright browser cache and install Chromium dependencies.
+
+inputs:
+  working-directory:
+    description: Directory containing the Playwright package.
+    required: true
+  cache-dependency-path:
+    description: Lockfile used to key the Playwright browser cache.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Cache Playwright browsers
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles(inputs.cache-dependency-path) }}
+
+    - name: Install Playwright browsers (+ OS deps)
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npx playwright install --with-deps chromium
+
+    - name: Install Playwright OS deps only (browsers already cached)
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npx playwright install-deps chromium

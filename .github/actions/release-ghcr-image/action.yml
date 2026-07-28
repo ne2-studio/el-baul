@@ -1,0 +1,24 @@
+name: Release GHCR image
+description: Login to GHCR and push an image.
+
+inputs:
+  image:
+    description: Image tag to push.
+    required: true
+  username:
+    description: GHCR username.
+    required: true
+  token:
+    description: GHCR token.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Login to GHCR
+      shell: bash
+      run: echo "${{ inputs.token }}" | docker login ghcr.io -u "${{ inputs.username }}" --password-stdin
+
+    - name: Push image
+      shell: bash
+      run: docker push "${{ inputs.image }}"

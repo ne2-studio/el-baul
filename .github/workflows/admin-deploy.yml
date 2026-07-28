@@ -32,81 +32,60 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Build/test setup
+        uses: ./.github/actions/setup-node-package
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: admin/package-lock.json
+          working-directory: admin
 
-      - name: Install dependencies
-        working-directory: admin
-        run: npm ci
+      - name: Build/test generated API contract
+        uses: ./.github/actions/verify-openapi-types
+        with:
+          target: admin
+          generated-schema: admin/src/api/generated/schema.ts
 
-      - name: Check generated OpenAPI TypeScript types
-        run: |
-          ./scripts/openapi generate-types admin
-          git diff --exit-code -- admin/src/api/generated/schema.ts
-
-      - name: Run admin verification
+      - name: Build/test admin
         run: VERIFY_COVERAGE=1 ./scripts/verify admin
 
-      - name: Publish coverage summary
-        if: always()
-        run: |
-          {
-            echo '### Admin test coverage'
-            echo '```'
-            cat admin/coverage/summary.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Build/test coverage report
+        uses: ./.github/actions/publish-node-coverage
         with:
-          name: admin-coverage-report
-          path: admin/coverage
-          retention-days: 7
+          title: Admin test coverage
+          summary-path: admin/coverage/summary.txt
+          artifact-name: admin-coverage-report
+          artifact-path: admin/coverage
 
-      - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
+      - name: Verify setup
+        uses: ./.github/actions/setup-playwright
         with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('admin/package-lock.json') }}
-
-      - name: Install Playwright browsers (+ OS deps)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        working-directory: admin
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright OS deps only (browsers already cached)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        working-directory: admin
-        run: npx playwright install-deps chromium
+          working-directory: admin
+          cache-dependency-path: admin/package-lock.json
 
       # No --build-arg VITE_* here on purpose: this image reads its VITE_* config at container
       # start instead (see admin/src/runtimeConfig.ts + admin/docker-entrypoint.d/), configured
       # as Coolify's runtime Environment Variables on the admin service — not build args, not
       # GitHub Actions repo/environment vars. docker-compose.yaml's `admin` service configures
       # the same thing the same way for local dev.
-      - name: Build admin acceptance images
-        run: |
-          docker build -t $IMAGE_NAME:latest admin
-          docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:ci api
+      - name: Package admin image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: admin
 
-      - name: Run admin acceptance verification
+      - name: Package acceptance API image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: el-baul-api-lite:ci
+          context: api
+          dockerfile: api/ElBaul.Api.Lite/Dockerfile
+
+      - name: Verify packaged admin
         env:
           ADMIN_IMAGE: ${{ env.IMAGE_NAME }}:latest
           API_LITE_IMAGE: el-baul-api-lite:ci
           KEEP_VERIFY_IMAGES: "1"
         run: ./scripts/verify --skip-image-build admin-acceptance
 
-      - name: Upload Playwright report
+      - name: Verify Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -114,10 +93,15 @@ jobs:
           path: admin/playwright-report/
           retention-days: 7
 
-      - name: Push image
-        run: docker push $IMAGE_NAME:latest
+      - name: Release admin image
+        uses: ./.github/actions/release-ghcr-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger Coolify deploy
-        run: |
-          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_ADMIN }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+      - name: Deploy admin
+        uses: ./.github/actions/deploy-coolify
+        with:
+          webhook: ${{ secrets.COOLIFY_WEBHOOK_ADMIN }}
+          token: ${{ secrets.COOLIFY_API_TOKEN }}

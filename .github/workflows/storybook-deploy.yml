@@ -23,17 +23,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
       # Build context is the repo root - see storybook/Dockerfile.
-      - name: Build image
-        run: docker build -f storybook/Dockerfile -t $IMAGE_NAME:latest .
+      - name: Package Storybook image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: .
+          dockerfile: storybook/Dockerfile
 
-      - name: Push image
-        run: docker push $IMAGE_NAME:latest
+      - name: Release Storybook image
+        uses: ./.github/actions/release-ghcr-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger Coolify deploy
-        run: |
-          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_STORYBOOK }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+      - name: Deploy Storybook
+        uses: ./.github/actions/deploy-coolify
+        with:
+          webhook: ${{ secrets.COOLIFY_WEBHOOK_STORYBOOK }}
+          token: ${{ secrets.COOLIFY_API_TOKEN }}

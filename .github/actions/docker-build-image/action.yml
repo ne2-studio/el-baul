@@ -1,0 +1,26 @@
+name: Build Docker image
+description: Build a Docker image, optionally using a custom Dockerfile.
+
+inputs:
+  image:
+    description: Image tag to build.
+    required: true
+  context:
+    description: Docker build context.
+    required: true
+  dockerfile:
+    description: Optional Dockerfile path.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Build image
+      shell: bash
+      run: |
+        if [[ -n "${{ inputs.dockerfile }}" ]]; then
+          docker build -f "${{ inputs.dockerfile }}" -t "${{ inputs.image }}" "${{ inputs.context }}"
+        else
+          docker build -t "${{ inputs.image }}" "${{ inputs.context }}"
+        fi

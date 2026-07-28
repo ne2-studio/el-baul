@@ -25,15 +25,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Build setup
+        uses: ./.github/actions/setup-node-package
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
+          working-directory: app
 
       # Builds the web assets against app/.env.android's prod values and syncs them into
       # the native android/ project - see the android:build script in package.json.
@@ -52,11 +47,11 @@ jobs:
 
       # No signing config yet, so this is a debug build for now — just enough to get an
       # installable artifact out of CI. Release signing is a follow-up.
-      - name: Build debug APK
+      - name: Package debug APK
         working-directory: app/android
         run: ./gradlew assembleDebug
 
-      - name: Upload APK artifact
+      - name: Release debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: el-baul-android-debug

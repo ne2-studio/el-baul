@@ -1,0 +1,42 @@
+name: Publish Node coverage
+description: Publish a Node coverage summary and upload the coverage directory.
+
+inputs:
+  title:
+    description: Coverage title shown in the GitHub job summary.
+    required: true
+  summary-path:
+    description: Path to the text coverage summary.
+    required: true
+  artifact-name:
+    description: Name of the uploaded coverage artifact.
+    required: true
+  artifact-path:
+    description: Directory to upload as the coverage artifact.
+    required: true
+  retention-days:
+    description: Artifact retention in days.
+    required: false
+    default: "7"
+
+runs:
+  using: composite
+  steps:
+    - name: Publish coverage summary
+      if: always()
+      shell: bash
+      run: |
+        {
+          echo '### ${{ inputs.title }}'
+          echo '```'
+          cat "${{ inputs.summary-path }}"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.artifact-path }}
+        retention-days: ${{ inputs.retention-days }}

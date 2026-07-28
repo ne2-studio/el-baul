@@ -33,78 +33,57 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Build/test setup
+        uses: ./.github/actions/setup-node-package
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: app/package-lock.json
+          working-directory: app
 
-      - name: Install dependencies
-        working-directory: app
-        run: npm ci
+      - name: Build/test generated API contract
+        uses: ./.github/actions/verify-openapi-types
+        with:
+          target: app
+          generated-schema: app/src/api/generated/schema.ts
 
-      - name: Check generated OpenAPI TypeScript types
-        run: |
-          ./scripts/openapi generate-types app
-          git diff --exit-code -- app/src/api/generated/schema.ts
-
-      - name: Run frontend verification
+      - name: Build/test frontend
         run: VERIFY_COVERAGE=1 ./scripts/verify frontend
 
-      - name: Publish coverage summary
-        if: always()
-        run: |
-          {
-            echo '### Frontend test coverage'
-            echo '```'
-            cat app/coverage/summary.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Build/test coverage report
+        uses: ./.github/actions/publish-node-coverage
         with:
-          name: frontend-coverage-report
-          path: app/coverage
-          retention-days: 7
+          title: Frontend test coverage
+          summary-path: app/coverage/summary.txt
+          artifact-name: frontend-coverage-report
+          artifact-path: app/coverage
 
-      - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
+      - name: Verify setup
+        uses: ./.github/actions/setup-playwright
         with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('app/package-lock.json') }}
+          working-directory: app
+          cache-dependency-path: app/package-lock.json
 
-      - name: Install Playwright browsers (+ OS deps)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        working-directory: app
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright OS deps only (browsers already cached)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        working-directory: app
-        run: npx playwright install-deps chromium
-
-      - name: Build frontend acceptance images
+      - name: Package frontend image
         # No VITE_* build args are passed for app: the image reads runtime config at container
         # start, matching production deployment.
-        run: |
-          docker build -t $IMAGE_NAME:latest app
-          docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:ci api
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: app
 
-      - name: Run frontend acceptance verification
+      - name: Package acceptance API image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: el-baul-api-lite:ci
+          context: api
+          dockerfile: api/ElBaul.Api.Lite/Dockerfile
+
+      - name: Verify packaged frontend
         env:
           APP_IMAGE: ${{ env.IMAGE_NAME }}:latest
           API_LITE_IMAGE: el-baul-api-lite:ci
           KEEP_VERIFY_IMAGES: "1"
         run: ./scripts/verify --skip-image-build frontend-acceptance
 
-      - name: Upload Playwright report
+      - name: Verify Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -112,22 +91,27 @@ jobs:
           path: app/playwright-report/
           retention-days: 7
 
-      - name: Push image
-        run: docker push $IMAGE_NAME:latest
+      - name: Release frontend image
+        uses: ./.github/actions/release-ghcr-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger Coolify deploy
-        run: |
-          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+      - name: Deploy frontend
+        uses: ./.github/actions/deploy-coolify
+        with:
+          webhook: ${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}
+          token: ${{ secrets.COOLIFY_API_TOKEN }}
 
-      - name: Extract dist from the built image
+      - name: Release frontend dist
         working-directory: app
         run: |
           docker create --name extract $IMAGE_NAME:latest
           docker cp extract:/usr/share/nginx/html ./dist
           docker rm extract
 
-      - name: Upload sourcemaps to Sentry
+      - name: Release Sentry sourcemaps
         working-directory: app
         run: npm run sentry:upload-sourcemaps
         env:

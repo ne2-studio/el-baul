@@ -1,0 +1,19 @@
+name: Deploy with Coolify
+description: Trigger a Coolify deployment webhook.
+
+inputs:
+  webhook:
+    description: Coolify deployment webhook URL.
+    required: true
+  token:
+    description: Coolify API token.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Trigger Coolify deploy
+      shell: bash
+      run: |
+        curl -X GET "${{ inputs.webhook }}" \
+          -H "Authorization: Bearer ${{ inputs.token }}"

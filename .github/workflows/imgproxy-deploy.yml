@@ -15,10 +15,6 @@ permissions:
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-imgproxy
 
-defaults:
-  run:
-    working-directory: imgproxy
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -26,16 +22,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Package imgproxy image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: imgproxy
 
-      - name: Build image
-        run: docker build -t $IMAGE_NAME:latest .
+      - name: Release imgproxy image
+        uses: ./.github/actions/release-ghcr-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push image
-        run: docker push $IMAGE_NAME:latest
-
-      - name: Trigger Coolify deploy
-        run: |
-          curl -X GET "${{ secrets.COOLIFY_WEBHOOK_IMGPROXY }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+      - name: Deploy imgproxy
+        uses: ./.github/actions/deploy-coolify
+        with:
+          webhook: ${{ secrets.COOLIFY_WEBHOOK_IMGPROXY }}
+          token: ${{ secrets.COOLIFY_API_TOKEN }}
