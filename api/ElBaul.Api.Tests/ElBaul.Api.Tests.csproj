@@ -21,6 +21,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ElBaul.Api\ElBaul.Api.csproj" />
+    <ProjectReference Include="..\ElBaul.Api.Common\ElBaul.Api.Common.csproj" />
+    <ProjectReference Include="..\ElBaul.Infra.Lite\ElBaul.Infra.Lite.csproj" />
   </ItemGroup>
 
 </Project>

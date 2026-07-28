@@ -76,3 +76,10 @@ There's no shared package or generated client between `api/` and `app/`/`admin/`
 `api/ElBaul/Ports/Input/*Dto.cs`. When a DTO or route changes, update the backend first,
 then check the generated OpenAPI spec (not this file, and not memory) for the new shape
 before updating the frontend types by hand.
+
+The reviewed OpenAPI contract snapshot lives at `api/openapi/v1.swagger.json` and is checked
+by `ElBaul.Api.Tests`. Intentional contract changes must be reviewed and then accepted with:
+
+```bash
+./scripts/accept-openapi-contract
+```
