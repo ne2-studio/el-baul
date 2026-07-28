@@ -1,7 +1,5 @@
-import React from 'react';
-import { Icon } from '@/design-system/foundations/icons/Icon';
-import { icons } from '@/design-system/foundations/icons/icons';
 import { Button } from '@/design-system/components/actions/Button';
+import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface RevokeAccessModalProps {
   userName: string;
@@ -12,49 +10,37 @@ interface RevokeAccessModalProps {
 
 export function RevokeAccessModal({ userName, onConfirm, onCancel, isSubmitting = false }: RevokeAccessModalProps) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-serif text-gray-900">Quitar acceso</h2>
-          <Button variant="plain"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
-            aria-label="Cerrar"
-          >
-            <Icon icon={icons.close} className="text-gray-500" aria-hidden />
-          </Button>
-        </div>
+    <BottomSheetModal onCancel={onCancel} desktopCentered backdropOpacity={60}>
+      <h2 className="font-serif text-xl text-foreground mb-1">
+        Quitar acceso
+      </h2>
 
-        {/* Content */}
-        <div className="mb-6">
-          <p className="text-gray-700 leading-relaxed">
-            <span className="font-medium">{userName}</span> dejará de ver el contenido de este baúl.
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <Button
-            variant="secondary"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="flex-1 text-sm"
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            onClick={onConfirm}
-            disabled={isSubmitting}
-            isLoading={isSubmitting}
-            className="flex-1 text-sm"
-          >
-            Quitar acceso
-          </Button>
-        </div>
+      <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-5 mt-3">
+        <p className="text-xs text-destructive/80 leading-relaxed">
+          <span className="font-semibold">Atención:</span>{' '}
+          <span className="font-semibold">{userName}</span> dejará de ver el contenido de este baúl.
+        </p>
       </div>
-    </div>
+
+      <div className="flex flex-col-reverse md:flex-row gap-3">
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="danger"
+          fullWidth
+          onClick={onConfirm}
+          disabled={isSubmitting}
+          isLoading={isSubmitting}
+        >
+          Quitar acceso
+        </Button>
+      </div>
+    </BottomSheetModal>
   );
 }
