@@ -36,3 +36,24 @@ export const SelectionMode: Story = {
     onToggleGroup: (groupPhotos) => alert(`onToggleGroup: ${groupPhotos.length} fotos`),
   },
 };
+
+export const DenseMixedDatesAndMissingMetadata: Story = {
+  args: {
+    ...Default.args,
+    photos: Array.from({ length: 24 }, (_, index) => {
+      const urls = Object.values(storybookPhotos);
+      const date =
+        index % 5 === 0 ? undefined :
+        index % 5 === 1 ? { year: 2024 } :
+        index % 5 === 2 ? { year: 2024, month: 7 } :
+        { year: 2024, month: 7, day: (index % 28) + 1 };
+      return {
+        id: `dense-${index + 1}`,
+        thumbnailUrl: urls[index % urls.length],
+        fullUrl: urls[index % urls.length],
+        date,
+        recuerdoCount: index % 4,
+      } as Photo;
+    }),
+  },
+};

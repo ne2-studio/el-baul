@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChaptersView } from '@/features/baules/components/ChaptersView';
 import { Baul, Chapter, Persona, Recuerdo } from '@/types';
-import { storybookPhotos } from '@/storybook/fixtures';
+import { storybookEdgeText, storybookPhotos } from '@/storybook/fixtures';
 import { viewportGlobals } from '@/storybook/viewports';
 
 const meta = {
@@ -121,4 +121,61 @@ export const ChapterOverviewNarrowScrollableTabs: Story = {
 export const ChapterOverviewDesktopDistributedTabs: Story = {
   args: sharedDefaults,
   globals: viewportGlobals.desktop,
+};
+
+export const EdgeCasesMixedMetadata: Story = {
+  args: {
+    ...sharedDefaults,
+    baul: {
+      ...baul,
+      name: storybookEdgeText.longBaulName,
+      description: storybookEdgeText.missingMetadataNote,
+      coverPhotoUrl: undefined,
+      memberCount: 18,
+    },
+    chapters: [
+      {
+        id: 'edge-c1',
+        name: storybookEdgeText.longChapterName,
+        photoCount: 128,
+        lastUpdated: 'hace 10 minutos',
+        recuerdoCount: 27,
+        undatedPhotoCount: 41,
+        coverPhotoUrl: storybookPhotos.landscape,
+        minDate: { year: 1987 },
+        maxDate: { year: 2024, month: 8 },
+      },
+      {
+        id: 'edge-c2',
+        name: 'Capítulo sin portada ni fechas',
+        photoCount: 6,
+        lastUpdated: '',
+        recuerdoCount: 0,
+        undatedPhotoCount: 6,
+      },
+      {
+        id: 'edge-c3',
+        name: 'Una sola foto con fecha completa',
+        photoCount: 1,
+        lastUpdated: 'hace 1 año',
+        recuerdoCount: 1,
+        undatedPhotoCount: 0,
+        coverPhotoUrl: storybookPhotos.people,
+        minDate: { year: 2001, month: 5, day: 4 },
+        maxDate: { year: 2001, month: 5, day: 4 },
+      },
+    ],
+    loosePhotos: [
+      { id: 'edge-lp1', thumbnailUrl: storybookPhotos.album },
+      { id: 'edge-lp2', thumbnailUrl: storybookPhotos.sunset },
+      { id: 'edge-lp3', thumbnailUrl: storybookPhotos.beach },
+    ],
+    personas: [
+      { id: 'edge-p1', baulId: 'b1', nickname: storybookEdgeText.longPersonName, status: 'active', role: 'custodio', invitedDate: 'hace 4 años' } as Persona,
+      { id: 'edge-p2', baulId: 'b1', nickname: 'Invitada pendiente sin avatar', status: 'pending', role: 'colaborador', invitedDate: 'hace 3 días' } as Persona,
+    ],
+    recuerdos: [
+      { id: 'edge-r1', text: storybookEdgeText.longMemory, userName: storybookEdgeText.longPersonName, createdAt: '2024-08-20T10:00:00Z' } as Recuerdo,
+    ],
+  },
 };

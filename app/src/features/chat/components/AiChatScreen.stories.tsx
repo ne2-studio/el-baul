@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AiChatScreen } from '@/features/chat/components/AiChatScreen';
 import { ChatMessage } from '@/types';
+import { storybookEdgeText } from '@/storybook/fixtures';
 
 const meta = {
   title: 'Features/Chat/AiChatScreen',
@@ -64,5 +65,27 @@ export const LoadingHistory: Story = {
     ...sharedDefaults,
     messages: [],
     isLoadingHistory: true,
+  },
+};
+
+export const EmptyWithoutSuggestions: Story = {
+  args: {
+    ...sharedDefaults,
+    messages: [],
+    suggestions: [],
+    isLoadingSuggestions: false,
+  },
+};
+
+export const LongThreadWithPartialContext: Story = {
+  args: {
+    ...sharedDefaults,
+    messages: [
+      ...messages,
+      { id: 'edge-1', role: 'user', content: '¿Qué sabemos de esta foto si no tiene fecha exacta ni capítulo asociado?', createdAt: '2024-07-15T10:01:00Z' } as ChatMessage,
+      { id: 'edge-2', role: 'assistant', content: storybookEdgeText.longMemory, createdAt: '2024-07-15T10:01:05Z' } as ChatMessage,
+      { id: 'edge-3', role: 'user', content: 'Entonces déjame escribir libremente otra pregunta sin sugerencias guiándome.', createdAt: '2024-07-15T10:02:00Z' } as ChatMessage,
+    ],
+    suggestions: [],
   },
 };
