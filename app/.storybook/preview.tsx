@@ -1,6 +1,5 @@
 import type { Preview } from '@storybook/react-vite'
-import '../src/styles/tailwind.css'
-import '../src/styles/theme.css'
+import '../src/styles/index.css'
 import './storybook.css'
 import { storybookViewports } from '../src/storybook/viewports'
 
