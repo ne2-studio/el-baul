@@ -23,6 +23,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Build/test setup
+        uses: ./.github/actions/setup-node-package
+        with:
+          working-directory: app
+
+      - name: Build/test browser setup
+        uses: ./.github/actions/setup-playwright
+        with:
+          working-directory: app
+          cache-dependency-path: app/package-lock.json
+
+      - name: Verify Storybook executable specs
+        working-directory: app
+        run: npm run test:storybook
+
       # Build context is the repo root - see storybook/Dockerfile.
       - name: Package Storybook image
         uses: ./.github/actions/docker-build-image

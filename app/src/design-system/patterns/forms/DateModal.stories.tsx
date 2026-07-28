@@ -52,7 +52,7 @@ export const Default: Story = {
     await expect(confirmButton).toBeEnabled();
 
     await userEvent.click(confirmButton);
-    await expect(args.onConfirm).toHaveBeenCalledWith({ year: 2024, month: 7 });
+    await expect(args.onConfirm).toHaveBeenCalledWith({ year: 2024, month: 7, day: undefined });
   },
 };
 

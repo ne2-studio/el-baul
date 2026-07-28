@@ -11,6 +11,7 @@ Choose the smallest test that can detect the failure.
 | Backend domain model, persistence, or public API contract | + `api/acceptance-tests` |
 | Frontend pure logic (mappers, formatters, reducers) | Vitest, `environment: 'node'` (default) |
 | Frontend component/hook behavior | Vitest + jsdom + React Testing Library |
+| Frontend isolated Storybook contracts | Storybook Vitest addon, Vitest browser mode, Playwright Chromium |
 | Frontend journey: photo/persona/removal-request flows | `app/acceptance-tests/` (against `el-baul-api-lite`) |
 | Admin journey: login and dashboard access | `admin/acceptance-tests/` (against `el-baul-api-lite`) |
 | Whole-stack wiring (login → home against real infra) | root `/e2e-tests/` |
@@ -23,7 +24,7 @@ Run verification from the repository root through `./scripts/verify`:
 |---|---|
 | `./scripts/verify backend` | Restore, Release build, and Release `--no-build` tests for `api/ElBaul.slnx` |
 | `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/acceptance-tests` |
-| `./scripts/verify frontend` | Consumer app TypeScript check + Vitest |
+| `./scripts/verify frontend` | Consumer app TypeScript check + Vitest unit/component tests + Storybook executable specs |
 | `./scripts/verify admin` | Admin TypeScript check + Vitest |
 | `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/acceptance-tests` |
 | `./scripts/verify admin-acceptance` | Fresh admin image + fresh `el-baul-api-lite` image + `admin/acceptance-tests` |
@@ -70,12 +71,19 @@ Run verification from the repository root through `./scripts/verify`:
 Three levels — see [`../adr/0001-frontend-testing-strategy.md`](../adr/0001-frontend-testing-strategy.md)
 for the full rationale.
 
-- **Unit** (Vitest, `environment: 'node'`, the config default, run by
+- **Unit** (Vitest project `unit`, `environment: 'node'`, run by
   `./scripts/verify frontend`) — narrow, in-process,
   no DOM: store logic, utils.
 - **Component** (Vitest + jsdom + React Testing Library, opted in per-file via a
   `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM. Query
   priority: role/label/placeholder/text before `data-testid`.
+- **Storybook executable specs** (`npm --prefix app run test:storybook`, also run by
+  `./scripts/verify frontend`) — Storybook stories transformed into Vitest tests by
+  `@storybook/addon-vitest` and executed in Playwright Chromium browser mode. Every eligible
+  story must render. Stories with `play` functions also execute their interaction assertions:
+  modal dismissal, form validation/submission, selector state, destructive confirmation, and
+  other isolated component/pattern contracts. These tests run before any frontend Docker image is
+  built; a render, interaction, assertion, or browser-mode failure blocks merge/deploy.
 - **`app/acceptance-tests/`** (`./scripts/verify frontend-acceptance`) — behavioral-regression Playwright against the built
   frontend image + `el-baul-api-lite` (see [`../operations/api-lite.md`](../operations/api-lite.md)),
   no real Postgres/MinIO/imgproxy to boot. Covers photo upload/move/delete, persona
@@ -83,6 +91,9 @@ for the full rationale.
   `frontend-deploy.yml`. Some flows need a second identity (a second browser context logged in
   as a different fake-oidc user), since the backend rejects an account accepting its own invite
   and only shows "submit removal request" to a non-admin member.
+  Keep these after Docker image build: unlike Storybook specs, they validate the packaged app,
+  routing, runtime configuration and API-lite integration rather than isolated source-level UI
+  contracts.
 - **`admin/acceptance-tests/`** (`./scripts/verify admin-acceptance`) — Playwright against the
   built admin image + the same `el-baul-api-lite` stack. It intentionally starts with a narrow
   surface: unauthenticated redirect to fake-oidc, admin login, and navigating to `/dashboard`.

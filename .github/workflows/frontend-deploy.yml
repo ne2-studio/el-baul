@@ -44,6 +44,12 @@ jobs:
           target: app
           generated-schema: app/src/api/generated/schema.ts
 
+      - name: Build/test browser setup
+        uses: ./.github/actions/setup-playwright
+        with:
+          working-directory: app
+          cache-dependency-path: app/package-lock.json
+
       - name: Build/test frontend
         run: VERIFY_COVERAGE=1 ./scripts/verify frontend
 
@@ -54,12 +60,6 @@ jobs:
           summary-path: app/coverage/summary.txt
           artifact-name: frontend-coverage-report
           artifact-path: app/coverage
-
-      - name: Verify setup
-        uses: ./.github/actions/setup-playwright
-        with:
-          working-directory: app
-          cache-dependency-path: app/package-lock.json
 
       - name: Package frontend image
         # No VITE_* build args are passed for app: the image reads runtime config at container

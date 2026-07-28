@@ -75,7 +75,7 @@ All canonical verification commands run from the repository root:
 ```bash
 ./scripts/verify backend
 ./scripts/verify backend-acceptance
-./scripts/verify frontend
+./scripts/verify frontend          # typecheck + Vitest + Storybook executable specs
 ./scripts/verify admin
 ./scripts/verify frontend-acceptance
 ./scripts/verify admin-acceptance

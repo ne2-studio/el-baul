@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, waitFor, within } from 'storybook/test';
 import { UploadingScreen } from '@/features/photos/components/UploadingScreen';
 import { UploadItemResult } from '@/store/useBaulesStore';
 import { storybookPhotos } from '@/storybook/fixtures';
@@ -28,6 +29,35 @@ export const Default: Story = {
   args: {
     photos,
     onUpload: keepUploading,
-    onSettled: (results) => alert(`onSettled: ${results.length} resultados`),
+    onSettled: fn(),
+  },
+};
+
+export const DeterministicSettled: Story = {
+  args: {
+    photos,
+    onUpload: fn(async (_photos, onItemSettled) => {
+      const results: UploadItemResult[] = [
+        { clientUploadId: '1' },
+        { clientUploadId: '2' },
+        { clientUploadId: '3', error: 'No se pudo procesar la foto' },
+      ];
+      results.forEach(onItemSettled);
+      return results;
+    }),
+    onSettled: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('heading', { name: 'Guardando tus recuerdos…' })).toBeInTheDocument();
+    await expect(args.onUpload).toHaveBeenCalled();
+
+    await waitFor(() => expect(canvas.getByText('2 de 3 fotos subidas')).toBeInTheDocument());
+    await expect(args.onSettled).toHaveBeenCalledWith([
+      { clientUploadId: '1' },
+      { clientUploadId: '2' },
+      { clientUploadId: '3', error: 'No se pudo procesar la foto' },
+    ]);
   },
 };

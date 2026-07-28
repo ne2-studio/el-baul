@@ -2,7 +2,7 @@ import type { StorybookConfig } from '@storybook/react-vite';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
-  addons: ['@storybook/addon-a11y', '@storybook/addon-docs'],
+  addons: ['@storybook/addon-a11y', '@storybook/addon-docs', '@storybook/addon-vitest'],
   framework: '@storybook/react-vite',
   // The app's vite.config.ts is merged in automatically. VitePWA is meant for the
   // real app build and breaks Storybook's static build (it tries to precache

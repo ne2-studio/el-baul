@@ -1,5 +1,11 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createViteConfig } from './vite.config';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Separate from vite.config.ts (rather than adding a `test:` block there) so the
 // production build config stays untouched by test-only concerns — merged in via
@@ -14,17 +20,44 @@ export default mergeConfig(
   createViteConfig(),
   defineConfig({
     test: {
-      environment: 'node',
-      include: ['src/**/*.test.{ts,tsx}'],
-      setupFiles: ['./src/test/setup.ts'],
-      coverage: {
-        provider: 'v8',
-        include: ['src/**/*.{ts,tsx}'],
-        // 'text-summary' with a `file` writes the totals table to coverage/summary.txt
-        // instead of only stdout, so CI can drop it straight into the job's step summary.
-        reporter: [['text-summary', { file: 'summary.txt' }], 'json-summary', 'html'],
-        reportsDirectory: './coverage',
-      },
+      projects: [
+        {
+          extends: true,
+          test: {
+            name: 'unit',
+            environment: 'node',
+            include: ['src/**/*.test.{ts,tsx}'],
+            setupFiles: ['./src/test/setup.ts'],
+            coverage: {
+              provider: 'v8',
+              include: ['src/**/*.{ts,tsx}'],
+              // 'text-summary' with a `file` writes the totals table to coverage/summary.txt
+              // instead of only stdout, so CI can drop it straight into the job's step summary.
+              reporter: [['text-summary', { file: 'summary.txt' }], 'json-summary', 'html'],
+              reportsDirectory: './coverage',
+            },
+          },
+        },
+        {
+          extends: true,
+          plugins: [
+            storybookTest({
+              configDir: path.join(dirname, '.storybook'),
+              storybookScript: 'npm run storybook -- --no-open',
+            }),
+          ],
+          test: {
+            name: 'storybook',
+            browser: {
+              enabled: true,
+              provider: playwright({}),
+              headless: true,
+              instances: [{ browser: 'chromium' }],
+            },
+            setupFiles: ['./.storybook/vitest.setup.ts'],
+          },
+        },
+      ],
     },
   })
 );

@@ -37,6 +37,7 @@ Component/design-system catalog, built from this same `app/` tree.
 ```bash
 npm run storybook         # dev server at http://localhost:6006
 npm run build-storybook   # static site, output to storybook-static/
+npm run test:storybook    # executable Storybook specs in Chromium
 ```
 
 Also available via the root Docker Compose stack (`storybook` service) at
@@ -60,11 +61,15 @@ if you need an emulator/device run rather than just a build artifact.
 ## Verify
 
 ```bash
-../scripts/verify frontend        # TypeScript + Vitest
+../scripts/verify frontend        # TypeScript + Vitest unit/component + Storybook specs
 ../scripts/verify frontend-acceptance  # Playwright — el-baul-api-lite behavioral coverage
 ```
 
-`frontend-acceptance` builds both Docker images with fresh verification tags before running.
+`frontend` is the required source-level gate before building the frontend image. It runs ordinary
+Vitest tests first, then Storybook's executable specs through the separate `storybook` Vitest
+project in Chromium. `frontend-acceptance` stays after image build and validates the packaged app
+against `el-baul-api-lite`; it builds both Docker images with fresh verification tags before
+running.
 
 See [`docs/architecture/testing.md`](../docs/architecture/testing.md) for what each test level
 covers and when to reach for the root-level [`/e2e-tests`](../e2e-tests) suite instead.

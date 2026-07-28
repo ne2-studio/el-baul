@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
 import { Baul, Chapter } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
@@ -35,8 +36,25 @@ export const IntoOpenChapter: Story = {
     existingChapters,
     currentChapterId: currentChapter.id,
     selectedPhotos,
-    onBack: () => alert('onBack clicked'),
-    onUpload: (photos, chapter) => alert(`onUpload: ${photos.length} fotos, capítulo ${JSON.stringify(chapter)}`),
+    onBack: fn(),
+    onUpload: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText('3 fotos seleccionadas')).toBeInTheDocument();
+    await expect(canvas.getByRole('button', { name: 'Guardar recuerdos' })).toBeEnabled();
+
+    await userEvent.hover(canvas.getAllByAltText('Preview')[0]);
+    await userEvent.click(canvas.getAllByRole('button', { name: 'Quitar foto' })[0]);
+    await expect(canvas.getByText('2 fotos seleccionadas')).toBeInTheDocument();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Guardar recuerdos' }));
+    await expect(args.onUpload).toHaveBeenCalledWith(
+      [selectedPhotos[1], selectedPhotos[2]],
+      { type: 'existing', chapterId: currentChapter.id },
+      null
+    );
   },
 };
 
@@ -44,5 +62,25 @@ export const ChoosingChapter: Story = {
   args: {
     ...IntoOpenChapter.args,
     currentChapterId: undefined,
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const saveButton = canvas.getByRole('button', { name: 'Guardar recuerdos' });
+
+    await expect(saveButton).toBeDisabled();
+    await userEvent.click(canvas.getByRole('button', { name: 'Crear un capítulo nuevo' }));
+    const nameInput = canvas.getByPlaceholderText('Nombre del capítulo');
+    await expect(nameInput).toHaveFocus();
+    await expect(saveButton).toBeDisabled();
+
+    await userEvent.type(nameInput, 'Cumpleaños de Carmen');
+    await expect(saveButton).toBeEnabled();
+
+    await userEvent.click(saveButton);
+    await expect(args.onUpload).toHaveBeenCalledWith(
+      selectedPhotos,
+      { type: 'new', name: 'Cumpleaños de Carmen' },
+      null
+    );
   },
 };
