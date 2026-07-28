@@ -45,6 +45,8 @@ public static class ElBaulApiHost
                 Version = "v1",
                 Description = "El Baul backend, following the Exeal backend architecture conventions."
             });
+            c.SupportNonNullableReferenceTypes();
+            c.SchemaFilter<RequireNonNullablePropertiesSchemaFilter>();
             c.OperationFilter<DefaultResponseTypesOperationFilter>();
         });
         builder.Services.AddCors();

@@ -26,8 +26,8 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
       set({
         monetizationEnabled: config.features.monetization,
         chatEnabled: config.features.chatEnabled,
-        helpCenterUrl: config.helpCenterUrl,
-        appUrl: config.appUrl,
+        helpCenterUrl: config.helpCenterUrl ?? '',
+        appUrl: config.appUrl ?? window.location.origin,
       });
     } catch (error) {
       console.error('Error loading app config:', error);

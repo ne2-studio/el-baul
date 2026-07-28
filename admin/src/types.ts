@@ -1,8 +1,23 @@
+import type { components } from './api/generated/schema';
+
+type ApiSchemas = components['schemas'];
+type AdminBaulChapterDto = ApiSchemas['AdminBaulChapterDto'];
+type AdminBaulDetailDto = ApiSchemas['AdminBaulDetailDto'];
+type AdminBaulListItemDto = ApiSchemas['AdminBaulListItemDto'];
+type AdminBaulPersonaDto = ApiSchemas['AdminBaulPersonaDto'];
+type AdminBaulStatsDto = ApiSchemas['AdminBaulStatsDto'];
+type AdminDashboardResponse = ApiSchemas['AdminDashboardResponse'];
+type AdminExternalLinkDto = ApiSchemas['AdminExternalLinkDto'];
+type AdminSentEmailDto = ApiSchemas['AdminSentEmailDto'];
+type AdminUserBaulMembershipDto = ApiSchemas['AdminUserBaulMembershipDto'];
+type AdminUserDetailDto = ApiSchemas['AdminUserDetailDto'];
+type AdminUserListItemDto = ApiSchemas['AdminUserListItemDto'];
+
 export class ExternalLink {
   label: string;
   url: string;
 
-  constructor(data: any) {
+  constructor(data: AdminExternalLinkDto) {
     this.label = data.label;
     this.url = data.url;
   }
@@ -15,12 +30,12 @@ export class DashboardKpis {
   photosUploadedToday: number;
   externalLinks: ExternalLink[];
 
-  constructor(data: any) {
+  constructor(data: AdminDashboardResponse) {
     this.registeredUsers = data.registeredUsers;
     this.totalBaules = data.totalBaules;
     this.totalPhotos = data.totalPhotos;
     this.photosUploadedToday = data.photosUploadedToday;
-    this.externalLinks = (data.externalLinks ?? []).map((l: any) => new ExternalLink(l));
+    this.externalLinks = data.externalLinks.map((l) => new ExternalLink(l));
   }
 }
 
@@ -32,12 +47,12 @@ export class AdminUser {
   lastAccessAt?: string;
   baulCount: number;
 
-  constructor(data: any) {
+  constructor(data: AdminUserListItemDto) {
     this.id = data.id;
     this.email = data.email;
-    this.name = data.name;
+    this.name = data.name ?? undefined;
     this.createdAt = data.createdAt;
-    this.lastAccessAt = data.lastAccessAt;
+    this.lastAccessAt = data.lastAccessAt ?? undefined;
     this.baulCount = data.baulCount;
   }
 }
@@ -48,7 +63,7 @@ export class AdminUserBaulMembership {
   role: string;
   personId: string;
 
-  constructor(data: any) {
+  constructor(data: AdminUserBaulMembershipDto) {
     this.baulId = data.baulId;
     this.baulName = data.baulName;
     this.role = data.role;
@@ -64,13 +79,13 @@ export class AdminUserDetail {
   lastAccessAt?: string;
   baules: AdminUserBaulMembership[];
 
-  constructor(data: any) {
+  constructor(data: AdminUserDetailDto) {
     this.id = data.id;
     this.email = data.email;
-    this.name = data.name;
+    this.name = data.name ?? undefined;
     this.createdAt = data.createdAt;
-    this.lastAccessAt = data.lastAccessAt;
-    this.baules = (data.baules ?? []).map((b: any) => new AdminUserBaulMembership(b));
+    this.lastAccessAt = data.lastAccessAt ?? undefined;
+    this.baules = data.baules.map((b) => new AdminUserBaulMembership(b));
   }
 }
 
@@ -85,7 +100,7 @@ export class AdminSentEmail {
   sentAt?: string;
   firstClickedAt?: string;
 
-  constructor(data: any) {
+  constructor(data: AdminSentEmailDto) {
     this.id = data.id;
     this.userId = data.userId;
     this.type = data.type;
@@ -93,8 +108,8 @@ export class AdminSentEmail {
     this.recipientEmail = data.recipientEmail;
     this.status = data.status;
     this.createdAt = data.createdAt;
-    this.sentAt = data.sentAt;
-    this.firstClickedAt = data.firstClickedAt;
+    this.sentAt = data.sentAt ?? undefined;
+    this.firstClickedAt = data.firstClickedAt ?? undefined;
   }
 }
 
@@ -108,7 +123,7 @@ export class AdminBaul {
   chapterCount: number;
   createdAt: string;
 
-  constructor(data: any) {
+  constructor(data: AdminBaulListItemDto) {
     this.id = data.id;
     this.name = data.name;
     this.custodioName = data.custodioName;
@@ -128,13 +143,13 @@ export class AdminBaulPersona {
   linkedUserId?: string;
   linkedUserName?: string;
 
-  constructor(data: any) {
+  constructor(data: AdminBaulPersonaDto) {
     this.personId = data.personId;
     this.nickname = data.nickname;
-    this.name = data.name;
+    this.name = data.name ?? undefined;
     this.role = data.role;
-    this.linkedUserId = data.linkedUserId;
-    this.linkedUserName = data.linkedUserName;
+    this.linkedUserId = data.linkedUserId ?? undefined;
+    this.linkedUserName = data.linkedUserName ?? undefined;
   }
 }
 
@@ -143,7 +158,7 @@ export class AdminBaulChapter {
   name: string;
   photoCount: number;
 
-  constructor(data: any) {
+  constructor(data: AdminBaulChapterDto) {
     this.id = data.id;
     this.name = data.name;
     this.photoCount = data.photoCount;
@@ -156,7 +171,7 @@ export class AdminBaulStats {
   personas: number;
   chapters: number;
 
-  constructor(data: any) {
+  constructor(data: AdminBaulStatsDto) {
     this.photos = data.photos;
     this.recuerdos = data.recuerdos;
     this.personas = data.personas;
@@ -172,12 +187,12 @@ export class AdminBaulDetail {
   chapters: AdminBaulChapter[];
   stats: AdminBaulStats;
 
-  constructor(data: any) {
+  constructor(data: AdminBaulDetailDto) {
     this.id = data.id;
     this.name = data.name;
     this.createdAt = data.createdAt;
-    this.personas = (data.personas ?? []).map((p: any) => new AdminBaulPersona(p));
-    this.chapters = (data.chapters ?? []).map((c: any) => new AdminBaulChapter(c));
+    this.personas = data.personas.map((p) => new AdminBaulPersona(p));
+    this.chapters = data.chapters.map((c) => new AdminBaulChapter(c));
     this.stats = new AdminBaulStats(data.stats);
   }
 }

@@ -8,6 +8,7 @@ on:
       - '.github/workflows/frontend-deploy.yml'
       - 'app/**'
       - 'docker-compose.lite.yml'
+      - 'scripts/**'
       # Everything el-baul-api-lite is built from (see api/ElBaul.Api.Lite/Dockerfile) — this
       # pipeline builds and runs that image as part of its acceptance test, so a change to any
       # of these can break it just as much as a change under app/ can.
@@ -42,14 +43,14 @@ jobs:
         working-directory: app
         run: npm ci
 
-      - name: Run frontend unit verification
-        run: VERIFY_COVERAGE=1 ./scripts/verify frontend-unit
+      - name: Run frontend verification
+        run: VERIFY_COVERAGE=1 ./scripts/verify frontend
 
       - name: Publish coverage summary
         if: always()
         run: |
           {
-            echo '### Frontend unit test coverage'
+            echo '### Frontend test coverage'
             echo '```'
             cat app/coverage/summary.txt
             echo '```'

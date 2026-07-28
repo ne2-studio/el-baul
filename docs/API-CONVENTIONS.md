@@ -71,15 +71,21 @@ person can show up with a different display name in different baúles.
 
 ## Contract changes
 
-There's no shared package or generated client between `api/` and `app/`/`admin/` yet —
-`app/src/types/index.ts` and `admin/src/types.ts` are hand-maintained TypeScript mirrors of
-`api/ElBaul/Ports/Input/*Dto.cs`. When a DTO or route changes, update the backend first,
-then check the generated OpenAPI spec (not this file, and not memory) for the new shape
-before updating the frontend types by hand.
+There's no generated HTTP client between `api/` and `app`/`admin` yet. The backend DTOs and
+controllers remain the source of truth; `app/src/api/generated/schema.ts` and
+`admin/src/api/generated/schema.ts` are generated raw TypeScript contract types, while
+`app/src/types/index.ts` and `admin/src/types.ts` keep the UI/domain adapter classes.
 
 The reviewed OpenAPI contract snapshot lives at `api/openapi/v1.swagger.json` and is checked
 by `ElBaul.Api.Tests`. Intentional contract changes must be reviewed and then accepted with:
 
 ```bash
-./scripts/accept-openapi-contract
+./scripts/openapi accept-contract
+```
+
+The app/admin raw TypeScript contract types are generated from that snapshot. After accepting
+an intentional OpenAPI change, regenerate them with:
+
+```bash
+./scripts/openapi generate-types
 ```

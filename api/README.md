@@ -62,7 +62,7 @@ faked, pairing it with fake-oidc, and the state-reset caveat.
 ## Verify
 
 ```bash
-../scripts/verify backend-unit
+../scripts/verify backend
 ```
 
 Runs everything in `ElBaul.slnx`, including `ElBaul.Maintenance.Tests` for the one-off

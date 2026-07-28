@@ -43,7 +43,15 @@ describe('usePersonasStore load failures are not swallowed', () => {
   });
 
   it('loadPersonas still stores the result on success', async () => {
-    const persona = new Persona({ id: 'p1', baulId, nickname: 'Abu', status: 'active', role: 'colaborador', invitedDate: new Date().toISOString() });
+    const persona = new Persona({
+      id: 'p1',
+      baulId,
+      nickname: 'Abu',
+      status: 'active',
+      role: 'colaborador',
+      invitedDate: new Date().toISOString(),
+      canEdit: true,
+    });
     vi.mocked(api.baules.getPersonas).mockResolvedValue([persona]);
 
     await usePersonasStore.getState().loadPersonas(baulId);

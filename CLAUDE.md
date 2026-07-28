@@ -20,6 +20,16 @@ docs/ARCHITECTURE.md
 docs/API-CONVENTIONS.md
 docs/DESIGN.md
 
+## API contract changes
+
+If backend DTOs or controllers change the HTTP contract, run:
+
+1. `./scripts/openapi accept-contract`
+2. `./scripts/openapi generate-types`
+3. `./scripts/verify backend`
+4. `./scripts/verify frontend`
+5. `./scripts/verify admin`
+
 ## Environment
 
 Console commands run in WSL2 — always use Linux command syntax, never PowerShell/cmd.

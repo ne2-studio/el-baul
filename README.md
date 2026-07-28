@@ -70,10 +70,10 @@ See [`app/README.md`](app/README.md) for environment configuration and tests.
 All canonical verification commands run from the repository root:
 
 ```bash
-./scripts/verify backend-unit
+./scripts/verify backend
 ./scripts/verify backend-acceptance
-./scripts/verify frontend-unit
-./scripts/verify admin-unit
+./scripts/verify frontend
+./scripts/verify admin
 ./scripts/verify frontend-acceptance
 ./scripts/verify e2e
 ./scripts/verify all

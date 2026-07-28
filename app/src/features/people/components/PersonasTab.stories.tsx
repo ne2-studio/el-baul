@@ -20,6 +20,7 @@ const personas = [
     status: 'active',
     role: 'custodio',
     invitedDate: new Date().toISOString(),
+    canEdit: true,
   }),
   new Persona({
     id: '2',
@@ -30,6 +31,7 @@ const personas = [
     role: 'colaborador',
     avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
     invitedDate: new Date().toISOString(),
+    canEdit: true,
   }),
   new Persona({
     id: '3',
@@ -39,6 +41,7 @@ const personas = [
     status: 'pending',
     role: 'administrador',
     invitedDate: new Date().toISOString(),
+    canEdit: true,
   }),
 ];
 

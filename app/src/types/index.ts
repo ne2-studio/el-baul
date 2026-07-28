@@ -1,4 +1,16 @@
 import { formatRelativeTime } from '@/utils/timeUtils';
+import type { components } from '@/api/generated/schema';
+
+type ApiSchemas = components['schemas'];
+type BaulDto = ApiSchemas['BaulDto'];
+type BaulPreviewDto = ApiSchemas['BaulPreviewDto'];
+type ChapterDto = ApiSchemas['ChapterDto'];
+type ChatMessageDto = ApiSchemas['ChatMessageDto'];
+type PersonaDto = ApiSchemas['PersonaDto'];
+type PhotoDto = ApiSchemas['PhotoDto'];
+type RecuerdoDto = ApiSchemas['RecuerdoDto'];
+type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
+type UserProfileDto = ApiSchemas['UserProfileDto'];
 
 export type BaulRole = 'custodio' | 'administrador' | 'colaborador';
 
@@ -10,7 +22,7 @@ export interface PhotoDate {
   day?: number;
 }
 
-function photoDateFrom(year?: number, month?: number, day?: number): PhotoDate | undefined {
+function photoDateFrom(year?: number | null, month?: number | null, day?: number | null): PhotoDate | undefined {
   if (!year) return undefined;
   return { year, month: month ?? undefined, day: day ?? undefined };
 }
@@ -28,18 +40,18 @@ export class Persona {
   canEdit?: boolean;
   biografia?: string;
 
-  constructor(data: any) {
+  constructor(data: PersonaDto) {
     this.id = data.id;
     this.baulId = data.baulId;
-    this.email = data.email;
-    this.name = data.name;
+    this.email = data.email ?? undefined;
+    this.name = data.name ?? undefined;
     this.nickname = data.nickname;
-    this.status = data.status;
-    this.role = data.role;
+    this.status = data.status as 'active' | 'pending';
+    this.role = data.role as BaulRole;
     this.invitedDate = formatRelativeTime(data.invitedDate);
-    this.avatarUrl = data.avatarUrl;
+    this.avatarUrl = data.avatarUrl ?? undefined;
     this.canEdit = data.canEdit;
-    this.biografia = data.biografia;
+    this.biografia = data.biografia ?? undefined;
   }
 }
 
@@ -63,16 +75,16 @@ export class Baul {
   role?: BaulRole;
   memberCount?: number;
 
-  constructor(data: any) {
+  constructor(data: BaulDto) {
     this.id = data.id;
     this.name = data.name;
-    this.description = data.description;
+    this.description = data.description ?? undefined;
     this.chapterCount = data.chapterCount;
-    this.coverPhotoUrl = data.coverPhotoUrl;
+    this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
     this.lastUpdated = formatRelativeTime(data.updatedAt);
     this.isCustodio = data.isCustodio;
-    this.role = data.role;
-    this.memberCount = data.memberCount ?? 0;
+    this.role = data.role as BaulRole;
+    this.memberCount = data.memberCount;
   }
 }
 
@@ -90,19 +102,19 @@ export class Chapter {
   maxDate?: PhotoDate;
   undatedPhotoCount: number;
 
-  constructor(data: any) {
+  constructor(data: ChapterDto) {
     this.id = data.id;
     this.name = data.name;
     this.photoCount = data.photoCount;
-    this.coverPhotoUrl = data.coverPhotoUrl;
-    this.featuredCoverPhotoUrl = data.featuredCoverPhotoUrl;
+    this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
+    this.featuredCoverPhotoUrl = data.featuredCoverPhotoUrl ?? undefined;
     this.lastUpdated = formatRelativeTime(data.updatedAt);
-    this.recuerdoCount = data.recuerdoCount ?? 0;
-    this.latestRecuerdoText = data.latestRecuerdoText;
-    this.latestRecuerdoAuthor = data.latestRecuerdoAuthor;
+    this.recuerdoCount = data.recuerdoCount;
+    this.latestRecuerdoText = data.latestRecuerdoText ?? undefined;
+    this.latestRecuerdoAuthor = data.latestRecuerdoAuthor ?? undefined;
     this.minDate = photoDateFrom(data.minDateYear, data.minDateMonth, data.minDateDay);
     this.maxDate = photoDateFrom(data.maxDateYear, data.maxDateMonth, data.maxDateDay);
-    this.undatedPhotoCount = data.undatedPhotoCount ?? 0;
+    this.undatedPhotoCount = data.undatedPhotoCount;
   }
 }
 
@@ -113,12 +125,12 @@ export class Photo {
   date?: PhotoDate;
   recuerdoCount: number;
 
-  constructor(data: any) {
+  constructor(data: PhotoDto) {
     this.id = data.id;
     this.thumbnailUrl = data.thumbnailUrl;
     this.fullUrl = data.fullUrl;
     this.date = photoDateFrom(data.dateYear, data.dateMonth, data.dateDay);
-    this.recuerdoCount = data.recuerdoCount ?? 0;
+    this.recuerdoCount = data.recuerdoCount;
   }
 }
 
@@ -135,12 +147,12 @@ export class Recuerdo {
   chapterId?: string;
   chapterName?: string;
 
-  constructor(data: any) {
+  constructor(data: RecuerdoDto) {
     this.id = data.id;
     this.text = data.text;
     this.personaId = data.personaId ?? undefined;
     this.userName = data.userName;
-    this.userAvatar = data.userAvatar;
+    this.userAvatar = data.userAvatar ?? undefined;
     this.createdAt = data.createdAt;
     this.isOwn = data.isOwn;
     this.photoId = data.photoId ?? undefined;
@@ -156,9 +168,9 @@ export class ChatMessage {
   content: string;
   createdAt: string;
 
-  constructor(data: any) {
+  constructor(data: ChatMessageDto) {
     this.id = data.id;
-    this.role = data.role;
+    this.role = data.role as 'user' | 'assistant';
     this.content = data.content;
     this.createdAt = data.createdAt;
   }
@@ -175,7 +187,7 @@ export class RemovalRequest {
   requestDate: string;
   status: 'pending' | 'approved' | 'rejected';
 
-  constructor(data: any) {
+  constructor(data: RemovalRequestDto) {
     this.id = data.id;
     this.baulId = data.baulId;
     this.photoId = data.photoId;
@@ -184,7 +196,7 @@ export class RemovalRequest {
     this.requesterEmail = data.requesterEmail;
     this.reason = data.reason ?? '';
     this.requestDate = formatRelativeTime(data.requestDate);
-    this.status = data.status;
+    this.status = data.status as 'pending' | 'approved' | 'rejected';
   }
 }
 
@@ -195,12 +207,12 @@ export class BaulPreview {
   personaNickname: string;
   previewPhotos: string[];
 
-  constructor(data: any) {
+  constructor(data: BaulPreviewDto) {
     this.id = data.id;
     this.name = data.name;
-    this.description = data.description;
+    this.description = data.description ?? undefined;
     this.personaNickname = data.personaNickname;
-    this.previewPhotos = data.previewPhotos ?? [];
+    this.previewPhotos = data.previewPhotos;
   }
 }
 
@@ -211,12 +223,12 @@ export class UserProfile {
   photoUrl: string;
   weeklyDigestEnabled: boolean;
 
-  constructor(data: any) {
+  constructor(data: UserProfileDto) {
     this.id = data.id;
     this.email = data.email;
-    this.name = data.name;
+    this.name = data.name ?? undefined;
     this.photoUrl = '';
-    this.weeklyDigestEnabled = data.weeklyDigestEnabled ?? true;
+    this.weeklyDigestEnabled = data.weeklyDigestEnabled;
   }
 }
 

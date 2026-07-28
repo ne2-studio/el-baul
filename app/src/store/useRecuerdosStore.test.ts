@@ -28,12 +28,14 @@ describe('useRecuerdosStore recuerdo caches stay in sync', () => {
     vi.clearAllMocks();
   });
 
-  function newRecuerdo(id: string, overrides: Partial<Recuerdo> = {}): Recuerdo {
+  function newRecuerdo(id: string, overrides: Partial<ConstructorParameters<typeof Recuerdo>[0]> = {}): Recuerdo {
     return new Recuerdo({
       id,
+      userId: 'user-1',
       text: 'hola',
       userName: 'Pedro',
       createdAt: new Date().toISOString(),
+      isOwn: false,
       ...overrides,
     });
   }

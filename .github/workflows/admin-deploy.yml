@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/admin-deploy.yml'
       - 'admin/**'
+      - 'scripts/**'
 
 permissions:
   contents: read
@@ -33,14 +34,14 @@ jobs:
         working-directory: admin
         run: npm ci
 
-      - name: Run admin unit verification
-        run: VERIFY_COVERAGE=1 ./scripts/verify admin-unit
+      - name: Run admin verification
+        run: VERIFY_COVERAGE=1 ./scripts/verify admin
 
       - name: Publish coverage summary
         if: always()
         run: |
           {
-            echo '### Admin unit test coverage'
+            echo '### Admin test coverage'
             echo '```'
             cat admin/coverage/summary.txt
             echo '```'

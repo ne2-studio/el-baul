@@ -43,7 +43,8 @@ public class OpenApiContractSnapshotTests
         await File.WriteAllTextAsync(receivedPath, currentContract);
         Assert.Fail(
             $"OpenAPI contract changed. Review the diff between {snapshotPath} and {receivedPath}; " +
-            $"if intentional, run {UpdateSnapshotEnvironmentVariable}=1 dotnet test api/ElBaul.Api.Tests/ElBaul.Api.Tests.csproj --configuration Release.");
+            "if intentional, run: ./scripts/openapi accept-contract; ./scripts/openapi generate-types; " +
+            "./scripts/verify frontend; ./scripts/verify admin.");
     }
 
     private static async Task<string> GenerateOpenApiJsonAsync()

@@ -11,10 +11,10 @@ usage() {
 Usage: ./scripts/verify <command>
 
 Commands:
-  backend-unit          Build and test the .NET backend solution in Release.
+  backend               Build and test the .NET backend solution in Release.
   backend-acceptance    Build the real backend image and run acceptance-tests.
-  frontend-unit         Run app type checks and unit/component tests.
-  admin-unit            Run admin type checks and unit/component tests.
+  frontend              Run app type checks and unit/component tests.
+  admin                 Run admin type checks and unit/component tests.
   frontend-acceptance   Build app + api-lite images and run app Playwright E2E.
   e2e                   Run whole-stack smoke tests against docker-compose.yaml.
   all                   Run every verification above.
@@ -120,7 +120,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-backend_unit() {
+backend() {
   need dotnet
   run dotnet restore "$ROOT_DIR/api/ElBaul.slnx"
   run dotnet build "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-restore
@@ -155,12 +155,12 @@ frontend_unit_package() {
   fi
 }
 
-frontend_unit() {
+frontend() {
   need npm
   frontend_unit_package app typecheck
 }
 
-admin_unit() {
+admin() {
   need npm
   frontend_unit_package admin lint
 }
@@ -193,10 +193,10 @@ e2e() {
 }
 
 all() {
-  backend_unit
+  backend
   backend_acceptance
-  frontend_unit
-  admin_unit
+  frontend
+  admin
   frontend_acceptance
   e2e
 }
@@ -204,10 +204,10 @@ all() {
 ensure_root
 
 case "${1:-}" in
-  backend-unit) backend_unit ;;
+  backend) backend ;;
   backend-acceptance) backend_acceptance ;;
-  frontend-unit) frontend_unit ;;
-  admin-unit) admin_unit ;;
+  frontend) frontend ;;
+  admin) admin ;;
   frontend-acceptance) frontend_acceptance ;;
   e2e) e2e ;;
   all) all ;;

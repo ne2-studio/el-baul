@@ -20,10 +20,10 @@ Run verification from the repository root through `./scripts/verify`:
 
 | Command | Coverage |
 |---|---|
-| `./scripts/verify backend-unit` | Restore, Release build, and Release `--no-build` tests for `api/ElBaul.slnx` |
+| `./scripts/verify backend` | Restore, Release build, and Release `--no-build` tests for `api/ElBaul.slnx` |
 | `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/acceptance-tests` |
-| `./scripts/verify frontend-unit` | Consumer app TypeScript check + Vitest |
-| `./scripts/verify admin-unit` | Admin TypeScript check + Vitest |
+| `./scripts/verify frontend` | Consumer app TypeScript check + Vitest |
+| `./scripts/verify admin` | Admin TypeScript check + Vitest |
 | `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/acceptance-tests` |
 | `./scripts/verify e2e` | Root `e2e-tests` smoke against the real `docker-compose.yaml` stack |
 | `./scripts/verify all` | Complete local verification: every command above |
@@ -69,7 +69,7 @@ Three levels — see [`../adr/0001-frontend-testing-strategy.md`](../adr/0001-fr
 for the full rationale.
 
 - **Unit** (Vitest, `environment: 'node'`, the config default, run by
-  `./scripts/verify frontend-unit`) — narrow, in-process,
+  `./scripts/verify frontend`) — narrow, in-process,
   no DOM: store logic, utils.
 - **Component** (Vitest + jsdom + React Testing Library, opted in per-file via a
   `// @vitest-environment jsdom` docblock) — components/hooks needing a real DOM. Query

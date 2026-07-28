@@ -60,7 +60,7 @@ if you need an emulator/device run rather than just a build artifact.
 ## Verify
 
 ```bash
-../scripts/verify frontend-unit        # TypeScript + Vitest
+../scripts/verify frontend        # TypeScript + Vitest
 ../scripts/verify frontend-acceptance  # Playwright — el-baul-api-lite behavioral coverage
 ```
 

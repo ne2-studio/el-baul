@@ -52,15 +52,46 @@ describe('useBaulesStore uploads', () => {
   }
 
   function newBaul(overrides: Partial<ConstructorParameters<typeof Baul>[0]> = {}): Baul {
-    return new Baul({ id: baulId, name: 'Baúl', chapterCount: 1, updatedAt: new Date().toISOString(), ...overrides });
+    const now = new Date().toISOString();
+    return new Baul({
+      id: baulId,
+      name: 'Baúl',
+      chapterCount: 1,
+      createdAt: now,
+      updatedAt: now,
+      isCustodio: true,
+      role: 'custodio',
+      memberCount: 1,
+      ...overrides,
+    });
   }
 
   function newChapter(overrides: Partial<ConstructorParameters<typeof Chapter>[0]> = {}): Chapter {
-    return new Chapter({ id: chapterId, name: 'Capítulo', photoCount: 0, updatedAt: new Date().toISOString(), ...overrides });
+    const now = new Date().toISOString();
+    return new Chapter({
+      id: chapterId,
+      baulId,
+      name: 'Capítulo',
+      photoCount: 0,
+      createdAt: now,
+      updatedAt: now,
+      recuerdoCount: 0,
+      undatedPhotoCount: 0,
+      ...overrides,
+    });
   }
 
   function newPhoto(id: string, overrides: Partial<ConstructorParameters<typeof Photo>[0]> = {}): Photo {
-    return new Photo({ id, thumbnailUrl: `${id}-thumb`, fullUrl: `${id}-full`, ...overrides });
+    return new Photo({
+      id,
+      baulId,
+      thumbnailUrl: `${id}-thumb`,
+      fullUrl: `${id}-full`,
+      uploadedBy: 'user-1',
+      createdAt: new Date().toISOString(),
+      recuerdoCount: 0,
+      ...overrides,
+    });
   }
 
   beforeEach(() => {
@@ -300,11 +331,31 @@ describe('useBaulesStore movePhotos', () => {
   const targetChapterId = 'chapter-target';
 
   function newChapter(id: string, overrides: Partial<ConstructorParameters<typeof Chapter>[0]> = {}): Chapter {
-    return new Chapter({ id, name: 'Capítulo', photoCount: 0, updatedAt: new Date().toISOString(), ...overrides });
+    const now = new Date().toISOString();
+    return new Chapter({
+      id,
+      baulId,
+      name: 'Capítulo',
+      photoCount: 0,
+      createdAt: now,
+      updatedAt: now,
+      recuerdoCount: 0,
+      undatedPhotoCount: 0,
+      ...overrides,
+    });
   }
 
   function newPhoto(id: string, overrides: Partial<ConstructorParameters<typeof Photo>[0]> = {}): Photo {
-    return new Photo({ id, thumbnailUrl: `${id}-thumb`, fullUrl: `${id}-full`, ...overrides });
+    return new Photo({
+      id,
+      baulId,
+      thumbnailUrl: `${id}-thumb`,
+      fullUrl: `${id}-full`,
+      uploadedBy: 'user-1',
+      createdAt: new Date().toISOString(),
+      recuerdoCount: 0,
+      ...overrides,
+    });
   }
 
   beforeEach(() => {
@@ -399,11 +450,33 @@ describe('useBaulesStore cover optimistic updates', () => {
   const photoId = 'photo-1';
 
   function newBaul(overrides: Partial<ConstructorParameters<typeof Baul>[0]> = {}): Baul {
-    return new Baul({ id: baulId, name: 'Baúl', chapterCount: 1, updatedAt: new Date().toISOString(), ...overrides });
+    const now = new Date().toISOString();
+    return new Baul({
+      id: baulId,
+      name: 'Baúl',
+      chapterCount: 1,
+      createdAt: now,
+      updatedAt: now,
+      isCustodio: true,
+      role: 'custodio',
+      memberCount: 1,
+      ...overrides,
+    });
   }
 
   function newChapter(overrides: Partial<ConstructorParameters<typeof Chapter>[0]> = {}): Chapter {
-    return new Chapter({ id: chapterId, name: 'Capítulo', photoCount: 0, updatedAt: new Date().toISOString(), ...overrides });
+    const now = new Date().toISOString();
+    return new Chapter({
+      id: chapterId,
+      baulId,
+      name: 'Capítulo',
+      photoCount: 0,
+      createdAt: now,
+      updatedAt: now,
+      recuerdoCount: 0,
+      undatedPhotoCount: 0,
+      ...overrides,
+    });
   }
 
   beforeEach(() => {

@@ -4990,15 +4990,18 @@
   "components": {
     "schemas": {
       "AdminBaulChapterDto": {
+        "required": [
+          "id",
+          "name",
+          "photoCount"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "photoCount": {
             "type": "integer",
@@ -5008,15 +5011,21 @@
         "additionalProperties": false
       },
       "AdminBaulDetailDto": {
+        "required": [
+          "chapters",
+          "createdAt",
+          "id",
+          "name",
+          "personas",
+          "stats"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -5026,15 +5035,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminBaulPersonaDto"
-            },
-            "nullable": true
+            }
           },
           "chapters": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminBaulChapterDto"
-            },
-            "nullable": true
+            }
           },
           "stats": {
             "$ref": "#/components/schemas/AdminBaulStatsDto"
@@ -5043,19 +5050,26 @@
         "additionalProperties": false
       },
       "AdminBaulListItemDto": {
+        "required": [
+          "chapterCount",
+          "createdAt",
+          "custodioName",
+          "id",
+          "linkedUserCount",
+          "memberCount",
+          "name",
+          "photoCount"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "custodioName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "memberCount": {
             "type": "integer",
@@ -5081,23 +5095,25 @@
         "additionalProperties": false
       },
       "AdminBaulPersonaDto": {
+        "required": [
+          "nickname",
+          "personId",
+          "role"
+        ],
         "type": "object",
         "properties": {
           "personId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "nickname": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
             "type": "string",
             "nullable": true
           },
           "role": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "linkedUserId": {
             "type": "string",
@@ -5111,6 +5127,12 @@
         "additionalProperties": false
       },
       "AdminBaulStatsDto": {
+        "required": [
+          "chapters",
+          "personas",
+          "photos",
+          "recuerdos"
+        ],
         "type": "object",
         "properties": {
           "photos": {
@@ -5133,6 +5155,13 @@
         "additionalProperties": false
       },
       "AdminDashboardResponse": {
+        "required": [
+          "externalLinks",
+          "photosUploadedToday",
+          "registeredUsers",
+          "totalBaules",
+          "totalPhotos"
+        ],
         "type": "object",
         "properties": {
           "registeredUsers": {
@@ -5155,52 +5184,56 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminExternalLinkDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "AdminExternalLinkDto": {
+        "required": [
+          "label",
+          "url"
+        ],
         "type": "object",
         "properties": {
           "label": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "AdminSentEmailDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "recipientEmail",
+          "status",
+          "subject",
+          "type",
+          "userId"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "userId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "subject": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "recipientEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -5220,37 +5253,43 @@
         "additionalProperties": false
       },
       "AdminUserBaulMembershipDto": {
+        "required": [
+          "baulId",
+          "baulName",
+          "personId",
+          "role"
+        ],
         "type": "object",
         "properties": {
           "baulId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "baulName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "personId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "AdminUserDetailDto": {
+        "required": [
+          "baules",
+          "createdAt",
+          "email",
+          "id"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
             "type": "string",
@@ -5269,22 +5308,25 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminUserBaulMembershipDto"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "AdminUserListItemDto": {
+        "required": [
+          "baulCount",
+          "createdAt",
+          "email",
+          "id"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
             "type": "string",
@@ -5307,6 +5349,10 @@
         "additionalProperties": false
       },
       "AppConfigFeatures": {
+        "required": [
+          "chatEnabled",
+          "monetization"
+        ],
         "type": "object",
         "properties": {
           "monetization": {
@@ -5319,6 +5365,9 @@
         "additionalProperties": false
       },
       "AppConfigResponse": {
+        "required": [
+          "features"
+        ],
         "type": "object",
         "properties": {
           "features": {
@@ -5336,15 +5385,23 @@
         "additionalProperties": false
       },
       "BaulDto": {
+        "required": [
+          "chapterCount",
+          "createdAt",
+          "id",
+          "isCustodio",
+          "memberCount",
+          "name",
+          "role",
+          "updatedAt"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -5370,8 +5427,7 @@
             "type": "boolean"
           },
           "role": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "memberCount": {
             "type": "integer",
@@ -5381,43 +5437,48 @@
         "additionalProperties": false
       },
       "BaulPreviewDto": {
+        "required": [
+          "id",
+          "name",
+          "personaNickname",
+          "previewPhotos"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
             "nullable": true
           },
           "personaNickname": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "previewPhotos": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "ChangePhotoDateBatchRequest": {
+        "required": [
+          "photoIds",
+          "year"
+        ],
         "type": "object",
         "properties": {
           "photoIds": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "year": {
             "type": "integer",
@@ -5437,6 +5498,9 @@
         "additionalProperties": false
       },
       "ChangePhotoDateRequest": {
+        "required": [
+          "year"
+        ],
         "type": "object",
         "properties": {
           "year": {
@@ -5457,19 +5521,26 @@
         "additionalProperties": false
       },
       "ChapterDto": {
+        "required": [
+          "baulId",
+          "createdAt",
+          "id",
+          "name",
+          "photoCount",
+          "recuerdoCount",
+          "undatedPhotoCount",
+          "updatedAt"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "baulId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "photoCount": {
             "type": "integer",
@@ -5541,19 +5612,22 @@
         "additionalProperties": false
       },
       "ChatMessageDto": {
+        "required": [
+          "content",
+          "createdAt",
+          "id",
+          "role"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "content": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -5563,11 +5637,13 @@
         "additionalProperties": false
       },
       "CreateBaulRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -5577,41 +5653,49 @@
         "additionalProperties": false
       },
       "CreateChapterRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "CreatePersonaRequest": {
+        "required": [
+          "nickname"
+        ],
         "type": "object",
         "properties": {
           "nickname": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "CreateRecuerdoRequest": {
+        "required": [
+          "text"
+        ],
         "type": "object",
         "properties": {
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "CreateRemovalRequestRequest": {
+        "required": [
+          "photoId"
+        ],
         "type": "object",
         "properties": {
           "photoId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "reason": {
             "type": "string",
@@ -5631,31 +5715,43 @@
         "additionalProperties": false
       },
       "ErrorResponse": {
+        "required": [
+          "error"
+        ],
         "type": "object",
         "properties": {
           "error": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "MovePhotoRequest": {
+        "required": [
+          "chapterId"
+        ],
         "type": "object",
         "properties": {
           "chapterId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "PersonaDto": {
+        "required": [
+          "baulId",
+          "canEdit",
+          "id",
+          "invitedDate",
+          "nickname",
+          "role",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "userId": {
             "type": "string",
@@ -5670,24 +5766,20 @@
             "nullable": true
           },
           "nickname": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "invitedDate": {
             "type": "string",
             "format": "date-time"
           },
           "baulId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "avatarUrl": {
             "type": "string",
@@ -5704,27 +5796,32 @@
         "additionalProperties": false
       },
       "PhotoDto": {
+        "required": [
+          "baulId",
+          "createdAt",
+          "fullUrl",
+          "id",
+          "recuerdoCount",
+          "thumbnailUrl",
+          "uploadedBy"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "chapterId": {
             "type": "string",
             "nullable": true
           },
           "baulId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "thumbnailUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "fullUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "dateYear": {
             "type": "integer",
@@ -5742,8 +5839,7 @@
             "nullable": true
           },
           "uploadedBy": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -5757,14 +5853,17 @@
         "additionalProperties": false
       },
       "PhotoPageDto": {
+        "required": [
+          "hasMore",
+          "items"
+        ],
         "type": "object",
         "properties": {
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PhotoDto"
-            },
-            "nullable": true
+            }
           },
           "hasMore": {
             "type": "boolean"
@@ -5800,27 +5899,31 @@
         "additionalProperties": { }
       },
       "RecuerdoDto": {
+        "required": [
+          "createdAt",
+          "id",
+          "isOwn",
+          "text",
+          "userId",
+          "userName"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "photoId": {
             "type": "string",
             "nullable": true
           },
           "userId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "userName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -5853,27 +5956,32 @@
         "additionalProperties": false
       },
       "RemovalRequestDto": {
+        "required": [
+          "baulId",
+          "id",
+          "photoId",
+          "photoUrl",
+          "requestDate",
+          "requesterEmail",
+          "requesterName",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "photoId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "photoUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "requesterName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "requesterEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "reason": {
             "type": "string",
@@ -5884,74 +5992,85 @@
             "format": "date-time"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "baulId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SendChatMessageRequest": {
+        "required": [
+          "text"
+        ],
         "type": "object",
         "properties": {
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SetBaulCoverRequest": {
+        "required": [
+          "photoId"
+        ],
         "type": "object",
         "properties": {
           "photoId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SetChapterCoverRequest": {
+        "required": [
+          "photoId"
+        ],
         "type": "object",
         "properties": {
           "photoId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SetPhotoPersonaTagsRequest": {
+        "required": [
+          "personaIds"
+        ],
         "type": "object",
         "properties": {
           "personaIds": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "SubmitSupportRequest": {
+        "required": [
+          "category",
+          "message"
+        ],
         "type": "object",
         "properties": {
           "category": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "message": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "SuccessResponse": {
+        "required": [
+          "success"
+        ],
         "type": "object",
         "properties": {
           "success": {
@@ -5961,39 +6080,43 @@
         "additionalProperties": false
       },
       "TagPhotosBatchRequest": {
+        "required": [
+          "baulId",
+          "personaIds",
+          "photoIds"
+        ],
         "type": "object",
         "properties": {
           "baulId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "photoIds": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "personaIds": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
       "TaggedPersonaDto": {
+        "required": [
+          "id",
+          "nickname"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "nickname": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
             "type": "string",
@@ -6007,11 +6130,13 @@
         "additionalProperties": false
       },
       "UpdateBaulRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -6021,16 +6146,21 @@
         "additionalProperties": false
       },
       "UpdateChapterRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "UpdateNotificationPreferencesRequest": {
+        "required": [
+          "weeklyDigestEnabled"
+        ],
         "type": "object",
         "properties": {
           "weeklyDigestEnabled": {
@@ -6040,6 +6170,9 @@
         "additionalProperties": false
       },
       "UpdatePersonaRequest": {
+        "required": [
+          "nickname"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -6047,8 +6180,7 @@
             "nullable": true
           },
           "nickname": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "biografia": {
             "type": "string",
@@ -6058,25 +6190,31 @@
         "additionalProperties": false
       },
       "UpdateRoleRequest": {
+        "required": [
+          "role"
+        ],
         "type": "object",
         "properties": {
           "role": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
       "UserProfileDto": {
+        "required": [
+          "createdAt",
+          "email",
+          "id",
+          "weeklyDigestEnabled"
+        ],
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
             "type": "string",

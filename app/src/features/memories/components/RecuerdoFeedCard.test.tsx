@@ -5,12 +5,14 @@ import userEvent from '@testing-library/user-event';
 import { Recuerdo } from '@/types';
 import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
 
-function newRecuerdo(overrides: Partial<Recuerdo> = {}): Recuerdo {
+function newRecuerdo(overrides: Partial<ConstructorParameters<typeof Recuerdo>[0]> = {}): Recuerdo {
   return new Recuerdo({
     id: 'r1',
+    userId: 'user-1',
     text: 'Un recuerdo precioso',
     userName: 'Ana',
     createdAt: new Date().toISOString(),
+    isOwn: false,
     ...overrides,
   });
 }

@@ -1,5 +1,14 @@
 import { AdminBaul, AdminBaulDetail, AdminSentEmail, AdminUser, AdminUserDetail, DashboardKpis } from './types';
 import { getEnv } from './runtimeConfig';
+import type { components } from './api/generated/schema';
+
+type ApiSchemas = components['schemas'];
+type AdminBaulDetailDto = ApiSchemas['AdminBaulDetailDto'];
+type AdminBaulListItemDto = ApiSchemas['AdminBaulListItemDto'];
+type AdminDashboardResponse = ApiSchemas['AdminDashboardResponse'];
+type AdminSentEmailDto = ApiSchemas['AdminSentEmailDto'];
+type AdminUserDetailDto = ApiSchemas['AdminUserDetailDto'];
+type AdminUserListItemDto = ApiSchemas['AdminUserListItemDto'];
 
 const API_BASE_URL = getEnv('VITE_API_URL') || 'http://localhost:5050';
 
@@ -14,12 +23,12 @@ const getHeaders = (): Record<string, string> => ({
   Authorization: `Bearer ${_accessToken}`,
 });
 
-const handleResponse = async (res: Response) => {
+const handleResponse = async <T>(res: Response): Promise<T> => {
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Unknown error' }));
     throw new Error(error.error || error.message || `API Error: ${res.status}`);
   }
-  if (res.status === 204) return undefined;
+  if (res.status === 204) return undefined as T;
   return res.json();
 };
 
@@ -27,45 +36,47 @@ export const api = {
   dashboard: {
     get: async (): Promise<DashboardKpis> =>
       fetch(`${API_BASE_URL}/api/admin/dashboard`, { headers: getHeaders() })
-        .then(handleResponse)
+        .then((res) => handleResponse<AdminDashboardResponse>(res))
         .then((data) => new DashboardKpis(data)),
   },
   users: {
     getAll: async (): Promise<AdminUser[]> =>
       fetch(`${API_BASE_URL}/api/admin/users`, { headers: getHeaders() })
-        .then(handleResponse)
-        .then((data) => data.map((u: any) => new AdminUser(u))),
+        .then((res) => handleResponse<AdminUserListItemDto[]>(res))
+        .then((data) => data.map((u) => new AdminUser(u))),
     getById: async (id: string): Promise<AdminUserDetail> =>
       fetch(`${API_BASE_URL}/api/admin/users/${id}`, { headers: getHeaders() })
-        .then(handleResponse)
+        .then((res) => handleResponse<AdminUserDetailDto>(res))
         .then((data) => new AdminUserDetail(data)),
     getEmails: async (id: string): Promise<AdminSentEmail[]> =>
       fetch(`${API_BASE_URL}/api/admin/users/${id}/emails`, { headers: getHeaders() })
-        .then(handleResponse)
-        .then((data) => data.map((e: any) => new AdminSentEmail(e))),
+        .then((res) => handleResponse<AdminSentEmailDto[]>(res))
+        .then((data) => data.map((e) => new AdminSentEmail(e))),
   },
   baules: {
     getAll: async (): Promise<AdminBaul[]> =>
       fetch(`${API_BASE_URL}/api/admin/baules`, { headers: getHeaders() })
-        .then(handleResponse)
-        .then((data) => data.map((b: any) => new AdminBaul(b))),
+        .then((res) => handleResponse<AdminBaulListItemDto[]>(res))
+        .then((data) => data.map((b) => new AdminBaul(b))),
     getById: async (id: string): Promise<AdminBaulDetail> =>
       fetch(`${API_BASE_URL}/api/admin/baules/${id}`, { headers: getHeaders() })
-        .then(handleResponse)
+        .then((res) => handleResponse<AdminBaulDetailDto>(res))
         .then((data) => new AdminBaulDetail(data)),
     delete: async (id: string): Promise<void> =>
-      fetch(`${API_BASE_URL}/api/admin/baules/${id}`, { method: 'DELETE', headers: getHeaders() }).then(handleResponse),
+      fetch(`${API_BASE_URL}/api/admin/baules/${id}`, { method: 'DELETE', headers: getHeaders() }).then((res) =>
+        handleResponse<void>(res)
+      ),
   },
   emails: {
     getAll: async (): Promise<AdminSentEmail[]> =>
       fetch(`${API_BASE_URL}/api/admin/emails`, { headers: getHeaders() })
-        .then(handleResponse)
-        .then((data) => data.map((e: any) => new AdminSentEmail(e))),
+        .then((res) => handleResponse<AdminSentEmailDto[]>(res))
+        .then((data) => data.map((e) => new AdminSentEmail(e))),
     sendWelcomeTest: async (userId: string): Promise<void> =>
       fetch(`${API_BASE_URL}/api/admin/emails/welcome-test/${userId}`, { method: 'POST', headers: getHeaders() })
-        .then(handleResponse),
+        .then((res) => handleResponse<void>(res)),
     sendDigestTest: async (userId: string): Promise<void> =>
       fetch(`${API_BASE_URL}/api/admin/emails/digest-test/${userId}`, { method: 'POST', headers: getHeaders() })
-        .then(handleResponse),
+        .then((res) => handleResponse<void>(res)),
   },
 };
