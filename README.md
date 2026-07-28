@@ -81,6 +81,22 @@ All canonical verification commands run from the repository root:
 
 See [`docs/architecture/testing.md`](docs/architecture/testing.md) for what each level covers.
 
+## Git Hooks
+
+This repository includes Git hooks in `.githooks/`. Enable them once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The `commit-msg` hook requires commit messages to follow Conventional Commits:
+
+```text
+feat(app): add photo upload
+fix(api): handle missing user claims
+docs: update local development guide
+```
+
 ## Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — entry point to the architecture docs, routes to the rest
