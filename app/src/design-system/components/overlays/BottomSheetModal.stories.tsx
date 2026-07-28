@@ -5,6 +5,31 @@ const meta = {
   title: 'Components/Overlays/BottomSheetModal',
   component: BottomSheetModal,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: `
+### Purpose
+Shared overlay shell for temporary decisions, forms and contextual actions that should sit above the current screen without becoming a full route.
+
+### When to use
+Use \`sm\` for confirmations and compact action sheets. Use \`lg\` for editing forms or denser modal flows; on desktop it becomes a side drawer. Use \`desktopCentered\` only for compact dialogs that read better centered on wide screens.
+
+### When NOT to use
+Do not use it for full-screen journeys, long navigation flows, or persistent panels. Avoid reimplementing backdrop, rounded sheet, viewport inset or desktop drawer behavior in feature modals.
+
+### Typical examples
+Delete photo/chapter confirmations, move photo, tag personas, edit baul info, add memory, manage access and plan-limit prompts.
+
+### Common mistakes
+Putting padding on the outer overlay instead of inside the sheet, using \`lg\` for simple confirmations, or nesting another modal-like surface inside it.
+
+### Related components
+\`Button\` for footer actions, \`Input\` and \`PartialDatePicker\` for form content, \`EditInfoModal\` and \`DateModal\` as product patterns built on this shell.
+`,
+      },
+    },
+  },
 } satisfies Meta<typeof BottomSheetModal>;
 
 export default meta;

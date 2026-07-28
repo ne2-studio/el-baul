@@ -5,6 +5,31 @@ const meta = {
   title: 'Components/Actions/Button',
   component: Button,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: `
+### Purpose
+Action primitive for clear, explicit commands in forms, empty states, modals and screen headers.
+
+### When to use
+Use \`primary\` for the main next/save/upload action, \`secondary\` for neutral alternatives, \`ghost\` for low-emphasis navigation such as "Omitir", and \`danger\` for destructive or access-removal actions.
+
+### When NOT to use
+Do not use it as a card, tab, menu item or floating action button; those patterns already have their own components. Avoid multiple competing primary buttons in the same decision area.
+
+### Typical examples
+Creating a baul, continuing onboarding, saving modal changes, retrying an upload, removing access or confirming deletion.
+
+### Common mistakes
+Using \`danger\` for non-destructive emphasis, forgetting \`aria-label\` on icon-only buttons, or using loading text without \`isLoading\`.
+
+### Related components
+\`FAB\` for persistent floating creation actions, \`TabButton\` for section switching, \`BottomSheetModal\` for modal action groups.
+`,
+      },
+    },
+  },
   argTypes: {
     variant: {
       control: 'select',

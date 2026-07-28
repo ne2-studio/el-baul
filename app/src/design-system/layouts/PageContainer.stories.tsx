@@ -9,9 +9,25 @@ const meta = {
     docs: {
       description: {
         component:
-          'Shared width constraint used by every top-level screen (max-w-[62rem], centered, ' +
-          'px-6) so screens line up visually. Widen the canvas past ~62rem to see the content ' +
-          'stop growing and stay centered instead of stretching edge to edge.',
+          `
+### Purpose
+Shared horizontal rhythm and max width for top-level app content.
+
+### When to use
+Use around screen headers, body content, tab bars, upload confirmations and action bars so the app aligns consistently across routes.
+
+### When NOT to use
+Do not wrap individual cards or nested controls with it. Do not create a new page-width wrapper unless a screen truly needs a different composition.
+
+### Typical examples
+Baul lists, chapter tabs, chat header/body/input, upload confirmation, support screens and sharing screens.
+
+### Common mistakes
+Stacking containers inside containers, overriding the 62rem max width casually, or forgetting it in a \`StickyHeader\` so header and body no longer align.
+
+### Related components
+\`StickyHeader\` normally contains a \`PageContainer\`; feature screens compose \`PageContainer\` with \`EmptyState\`, forms, lists or media layouts.
+`,
       },
     },
   },

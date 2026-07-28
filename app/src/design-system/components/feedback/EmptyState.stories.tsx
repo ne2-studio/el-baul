@@ -6,6 +6,31 @@ const meta = {
   title: 'Components/Feedback/EmptyState',
   component: EmptyState,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: `
+### Purpose
+Centered, calm feedback for a valid screen or section that has no content yet.
+
+### When to use
+Use when an album, tab, selector or list is empty and the user needs context for what would normally appear there. Keep copy specific to the product state.
+
+### When NOT to use
+Do not use for loading, errors, permission failures or destructive confirmations. Do not use as a decorative hero or marketing block.
+
+### Typical examples
+No photos in a baul, no memories for a photo, no baules available for sharing, or no photos to choose as a cover.
+
+### Common mistakes
+Using generic text such as "No items", omitting the next useful action nearby, or adding a strong icon when the state should remain quiet.
+
+### Related components
+\`Button\` or \`FAB\` usually provides the next action; \`ErrorScreen\` handles failures; feature screens compose \`EmptyState\` inside \`PageContainer\`.
+`,
+      },
+    },
+  },
 } satisfies Meta<typeof EmptyState>;
 
 export default meta;

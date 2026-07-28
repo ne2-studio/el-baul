@@ -11,9 +11,25 @@ const meta = {
     docs: {
       description: {
         component:
-          'Shared sticky top bar shell used by every screen header (usually wrapping a ' +
-          'PageContainer for horizontal alignment with the body below it). Scroll the canvas ' +
-          'to see it stay pinned above the content.',
+          `
+### Purpose
+Sticky top bar shell that keeps route context and back/actions visible while content scrolls.
+
+### When to use
+Use for real app screens with a title, back button, contextual menu, tabs below, or persistent upload/chat/navigation context.
+
+### When NOT to use
+Do not use inside cards, modals, or small embedded sections. Avoid it for transient overlays; \`BottomSheetModal\` owns those surfaces.
+
+### Typical examples
+Create baul, chapters view, photo upload confirmation, share target selection, support and AI chat screens.
+
+### Common mistakes
+Not wrapping the header contents in \`PageContainer\`, placing too much dense content in the sticky area, or using it as a generic border/background band.
+
+### Related components
+\`PageContainer\` for alignment, \`Button\` or icon buttons for actions, \`TabButton\` for section navigation directly below or inside screen headers.
+`,
       },
     },
   },
