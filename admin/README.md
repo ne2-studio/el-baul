@@ -47,4 +47,5 @@ src/
 
 - Admin architecture: [`docs/architecture/admin.md`](../docs/architecture/admin.md)
 - Frontend architecture (shared layering pattern): [`docs/architecture/frontend.md`](../docs/architecture/frontend.md)
+- Product guide: [`docs/PRODUCT.md`](../docs/PRODUCT.md)
 - Design system: [`docs/DESIGN.md`](../docs/DESIGN.md)

@@ -13,5 +13,6 @@ independently deployable service with no shared code.
 - **Features**: `baules`, `dashboard`, `emails`, `users` — operator-facing views over the same
   domain model `app/` exposes to end users, plus admin-only actions (e.g. hard-deleting a baúl).
 
-See [`../DESIGN.md`](../DESIGN.md) for the shared visual design system and
-[`testing.md`](testing.md) for what test level to reach for.
+See [`../PRODUCT.md`](../PRODUCT.md) for product principles and domain language,
+[`../DESIGN.md`](../DESIGN.md) for the shared visual design system, and [`testing.md`](testing.md)
+for what test level to reach for.

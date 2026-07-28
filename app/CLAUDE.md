@@ -6,6 +6,9 @@ routing, or the design-system boundary.
 Read `../docs/architecture/native-android.md` before changing `android/`, Capacitor plugins,
 deep links, or native sharing.
 
+Read `../docs/PRODUCT.md` before changing product copy, domain language, user flows, or AI
+affordances.
+
 Read `../docs/DESIGN.md` before making visual changes.
 
 ## Before finishing a task

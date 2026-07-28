@@ -56,6 +56,7 @@ Read only the documents relevant to the change:
 | MinIO, imgproxy, container build shape | [`architecture/infrastructure.md`](architecture/infrastructure.md) |
 | GitHub Actions / CI/CD | [`architecture/deployment.md`](architecture/deployment.md) |
 | API authorization, error and product semantics | [`API-CONVENTIONS.md`](API-CONVENTIONS.md) |
+| Product mission, priorities, principles and glossary | [`PRODUCT.md`](PRODUCT.md) |
 | Visual design system, tokens | [`DESIGN.md`](DESIGN.md) |
 | Running the stack locally | [`operations/local-development.md`](operations/local-development.md) |
 | `el-baul-api-lite` (in-memory backend for frontend tests) | [`operations/api-lite.md`](operations/api-lite.md) |

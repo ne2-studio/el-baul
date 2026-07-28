@@ -2,7 +2,8 @@
 
 React 19 + TypeScript + Vite consumer app. See [`../ARCHITECTURE.md`](../ARCHITECTURE.md) for
 where this fits in the wider system, [`native-android.md`](native-android.md) for the Capacitor
-shell, and [`../DESIGN.md`](../DESIGN.md) for the visual design system.
+shell, [`../PRODUCT.md`](../PRODUCT.md) for product principles and domain language, and
+[`../DESIGN.md`](../DESIGN.md) for the visual design system.
 
 ## Layers
 
@@ -54,6 +55,8 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
 - **Styling**: Tailwind CSS v4, CSS-first config (no `tailwind.config.js`). Colors/typography are
   theme tokens sourced from [`../DESIGN.md`](../DESIGN.md) — never raw hex/Tailwind palette
   classes in components.
+- **Product semantics**: [`../PRODUCT.md`](../PRODUCT.md) defines the mission, current product
+  priorities and glossary that should guide copy, empty states, AI affordances and domain naming.
 - **Error monitoring**: `@sentry/react` (+ `@sentry/capacitor` on native). `npm run build` never
   talks to Sentry itself — it only stamps deterministic debug ids into `dist/`; uploading
   sourcemaps is a separate script that only CI runs, against the `dist/` extracted from the

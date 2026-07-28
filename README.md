@@ -10,6 +10,9 @@ A private, shared photo archive for families — "baúles" (trunks) hold chapter
 - Clear, documented architecture.
 - Independent deployability per service.
 
+See [`docs/PRODUCT.md`](docs/PRODUCT.md) for the product mission, principles, priorities and
+glossary behind these trade-offs.
+
 ## Repository layout
 
 ```text
@@ -102,6 +105,7 @@ docs: update local development guide
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — entry point to the architecture docs, routes to the rest
 - [`docs/API-CONVENTIONS.md`](docs/API-CONVENTIONS.md) — auth, error and authorization rules not visible in the OpenAPI schema (see `/swagger` for the routes/DTOs themselves)
+- [`docs/PRODUCT.md`](docs/PRODUCT.md) — product mission, priorities, principles and glossary
 - [`docs/DESIGN.md`](docs/DESIGN.md) — the frontend design system
 - [`api/README.md`](api/README.md) — backend development
 - [`app/README.md`](app/README.md) — frontend development

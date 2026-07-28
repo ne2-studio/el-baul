@@ -87,5 +87,6 @@ src/
 
 - Frontend architecture: [`docs/architecture/frontend.md`](../docs/architecture/frontend.md)
 - Native Android: [`docs/architecture/native-android.md`](../docs/architecture/native-android.md)
+- Product guide: [`docs/PRODUCT.md`](../docs/PRODUCT.md)
 - Design system: [`docs/DESIGN.md`](../docs/DESIGN.md)
 - Testing strategy: [`docs/architecture/testing.md`](../docs/architecture/testing.md)
