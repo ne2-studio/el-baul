@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Check, MessageCircle } from 'lucide-react';
 import type { Photo } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
 // assume a month for display, that defaulting only applies to sorting), oldest first so
@@ -69,23 +70,12 @@ export function PhotoSwimlanes({
         const groupAllSelected = group.photos.every((p) => ids.has(p.id));
         return (
           <div key={group.label}>
-            <Button variant="plain"
-              type="button"
-              onClick={() => onToggleGroup?.(group.photos)}
-              className="group/swimlane flex items-center gap-1.5 mb-2 -ml-0.5 px-0.5 py-0.5 rounded"
+            <SwimlaneLabel
+              onClick={onToggleGroup ? () => onToggleGroup(group.photos) : undefined}
+              selected={selectionMode ? groupAllSelected : undefined}
             >
-              {selectionMode && (
-                <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${
-                  groupAllSelected ? 'bg-primary border-primary' : 'bg-background/60 border-muted-foreground/40'
-                }`}>
-                  {groupAllSelected && <Check className="w-2.5 h-2.5 text-white" />}
-                </span>
-              )}
-              <p className="text-xs text-muted-foreground uppercase tracking-wide group-hover/swimlane:text-foreground transition-colors"
-                style={{ fontSize: '0.68rem', letterSpacing: '0.08em' }}>
-                {group.label}
-              </p>
-            </Button>
+              {group.label}
+            </SwimlaneLabel>
             <PhotoGrid
               photos={group.photos}
               selectionMode={selectionMode}
