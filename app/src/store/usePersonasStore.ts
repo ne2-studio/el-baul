@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Persona, RemovalRequest, BaulRole, Photo, TaggedPersona } from '@/types';
-import { api } from '@/api';
+import { AvatarCrop, api } from '@/api';
 import { useBaulesStore } from './useBaulesStore';
 
 export interface PersonasState {
@@ -14,7 +14,8 @@ export interface PersonasState {
   createPersona: (baulId: string, nickname: string) => Promise<void>;
   loadPersonas: (baulId: string) => Promise<void>;
   updatePersona: (baulId: string, personaId: string, name: string, nickname: string, biografia: string) => Promise<void>;
-  uploadPersonaAvatar: (baulId: string, personaId: string, file: File) => Promise<void>;
+  uploadPersonaAvatar: (baulId: string, personaId: string, file: File, crop: AvatarCrop) => Promise<void>;
+  setPersonaAvatarPhoto: (baulId: string, personaId: string, photo: Photo, crop: AvatarCrop) => Promise<void>;
   updateUserRole: (baulId: string, personaId: string, role: BaulRole) => Promise<void>;
   revokeAccess: (baulId: string, personaId: string) => Promise<void>;
 
@@ -66,14 +67,32 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
     }));
   },
 
-  uploadPersonaAvatar: async (baulId, personaId, file) => {
-    const updated = await api.baules.uploadPersonaAvatar(baulId, personaId, file);
+  uploadPersonaAvatar: async (baulId, personaId, file, crop) => {
+    const updated = await api.baules.uploadPersonaAvatar(baulId, personaId, file, crop);
     set((state) => ({
       personas: {
         ...state.personas,
         [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? updated : u)),
       },
     }));
+    get().loadPersonaPhotos(baulId, personaId).catch(() => undefined);
+  },
+
+  setPersonaAvatarPhoto: async (baulId, personaId, photo, crop) => {
+    const updated = await api.baules.setPersonaAvatarPhoto(baulId, personaId, photo.id, crop);
+    set((state) => {
+      const currentPhotos = state.personaPhotos[personaId] || [];
+      const hasPhoto = currentPhotos.some((p) => p.id === photo.id);
+      return {
+        personas: {
+          ...state.personas,
+          [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? updated : u)),
+        },
+        personaPhotos: hasPhoto
+          ? state.personaPhotos
+          : { ...state.personaPhotos, [personaId]: [photo, ...currentPhotos] },
+      };
+    });
   },
 
   // Optimista: el <select> de rol está controlado por este valor, así que sin aplicar

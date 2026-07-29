@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Share } from '@capacitor/share';
 import { PersonaDetailScreen } from '@/features/people/components/PersonaDetailScreen';
+import { PersonaAvatarPickerModal } from '@/features/people/components/PersonaAvatarPickerModal';
 import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaInfoModal';
 import { EditBiografiaModal } from '@/features/people/components/EditBiografiaModal';
 import { useBaulesStore } from '@/store/useBaulesStore';
@@ -10,7 +11,8 @@ import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { getPersonaPermissions } from '@/utils/roleUtils';
-import { BaulRole } from '@/types';
+import { AvatarCrop, api } from '@/api';
+import { BaulRole, Photo } from '@/types';
 
 export const PersonaDetailRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +27,7 @@ export const PersonaDetailRoute: React.FC = () => {
     loadPersonas,
     updatePersona,
     uploadPersonaAvatar,
+    setPersonaAvatarPhoto,
     updateUserRole,
     revokeAccess,
     personaPhotos,
@@ -35,6 +38,7 @@ export const PersonaDetailRoute: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingBiografia, setIsEditingBiografia] = useState(false);
+  const [isChangingAvatar, setIsChangingAvatar] = useState(false);
 
   const baul = baules.find(b => b.id === baulId);
   const persona = (personas[baulId || ''] || []).find(u => u.id === personaId);
@@ -81,10 +85,23 @@ export const PersonaDetailRoute: React.FC = () => {
     if (result.ok) setIsEditingBiografia(false);
   };
 
-  const handleUploadAvatar = (file: File) => {
-    run(() => uploadPersonaAvatar(baulId, personaId, file), {
+  const handleUploadAvatar = (file: File, crop: AvatarCrop) => {
+    run(() => uploadPersonaAvatar(baulId, personaId, file, crop), {
       key: 'avatar',
+      successMessage: 'Foto de perfil actualizada',
       errorMessage: 'Error al subir la foto',
+    }).then((result) => {
+      if (result.ok) setIsChangingAvatar(false);
+    });
+  };
+
+  const handleSetAvatarPhoto = (photo: Photo, crop: AvatarCrop) => {
+    run(() => setPersonaAvatarPhoto(baulId, personaId, photo, crop), {
+      key: 'avatar',
+      successMessage: 'Foto de perfil actualizada',
+      errorMessage: 'Error al actualizar la foto',
+    }).then((result) => {
+      if (result.ok) setIsChangingAvatar(false);
     });
   };
 
@@ -140,7 +157,7 @@ export const PersonaDetailRoute: React.FC = () => {
         onBack={() => navigate(`/baules/${baulId}`, { state: { activeTab: returnTab } })}
         onEditInfo={() => setIsEditingInfo(true)}
         onEditBiografia={() => setIsEditingBiografia(true)}
-        onUploadAvatar={handleUploadAvatar}
+        onChangeAvatar={() => setIsChangingAvatar(true)}
         isUploadingAvatar={isPending('avatar')}
         onShareInvite={handleShareInvite}
         onChangeRole={handleChangeRole}
@@ -164,6 +181,17 @@ export const PersonaDetailRoute: React.FC = () => {
           onCancel={() => setIsEditingBiografia(false)}
           onSave={handleSaveBiografia}
           isSubmitting={isPending('save')}
+        />
+      )}
+      {isChangingAvatar && (
+        <PersonaAvatarPickerModal
+          personaName={persona.nickname}
+          taggedPhotos={personaPhotos[personaId] || []}
+          fetchPage={(skip, take) => api.photos.getPage(baulId, { skip, take })}
+          onSelectExisting={handleSetAvatarPhoto}
+          onUploadNew={handleUploadAvatar}
+          onCancel={() => setIsChangingAvatar(false)}
+          isSubmitting={isPending('avatar')}
         />
       )}
     </>

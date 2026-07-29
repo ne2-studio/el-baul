@@ -13,5 +13,9 @@ public record PersonaDto
     string BaulId,
     string? AvatarUrl,
     bool CanEdit,
-    string? Biografia
+    string? Biografia,
+    string? AvatarPhotoId,
+    decimal AvatarCropX,
+    decimal AvatarCropY,
+    decimal AvatarCropScale
 );

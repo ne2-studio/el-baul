@@ -1925,13 +1925,149 @@
                   "File": {
                     "type": "string",
                     "format": "binary"
+                  },
+                  "CropX": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "CropY": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "CropScale": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "ClientUploadId": {
+                    "type": "string"
                   }
                 }
               },
               "encoding": {
                 "File": {
                   "style": "form"
+                },
+                "CropX": {
+                  "style": "form"
+                },
+                "CropY": {
+                  "style": "form"
+                },
+                "CropScale": {
+                  "style": "form"
+                },
+                "ClientUploadId": {
+                  "style": "form"
                 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonaDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonaDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonaDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication token."
+          },
+          "403": {
+            "description": "The caller does not have access to this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Baules"
+        ],
+        "parameters": [
+          {
+            "name": "baulId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "personaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPersonaAvatarPhotoRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPersonaAvatarPhotoRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPersonaAvatarPhotoRequest"
               }
             }
           }
@@ -6739,6 +6875,9 @@
       },
       "PersonaDto": {
         "required": [
+          "avatarCropScale",
+          "avatarCropX",
+          "avatarCropY",
           "baulId",
           "canEdit",
           "id",
@@ -6790,6 +6929,22 @@
           "biografia": {
             "type": "string",
             "nullable": true
+          },
+          "avatarPhotoId": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarCropX": {
+            "type": "number",
+            "format": "double"
+          },
+          "avatarCropY": {
+            "type": "number",
+            "format": "double"
+          },
+          "avatarCropScale": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -7031,6 +7186,33 @@
         "properties": {
           "photoId": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetPersonaAvatarPhotoRequest": {
+        "required": [
+          "cropScale",
+          "cropX",
+          "cropY",
+          "photoId"
+        ],
+        "type": "object",
+        "properties": {
+          "photoId": {
+            "type": "string"
+          },
+          "cropX": {
+            "type": "number",
+            "format": "double"
+          },
+          "cropY": {
+            "type": "number",
+            "format": "double"
+          },
+          "cropScale": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserPlus, UserX } from 'lucide-react';
 import { Persona, BaulRole, Photo } from '@/types';
 import { getPersonaPermissions, getRoleDisplayName, PersonaPermissions } from '@/utils/roleUtils';
@@ -9,6 +9,7 @@ import { ManageAccessModal } from '@/features/sharing/components/ManageAccessMod
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
+import { personaAvatarImageStyle } from './PersonaAvatarPickerModal';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
 import { Button } from '@/design-system/components/actions/Button';
@@ -26,7 +27,7 @@ interface PersonaDetailScreenProps {
   onBack: () => void;
   onEditInfo: () => void;
   onEditBiografia: () => void;
-  onUploadAvatar: (file: File) => void;
+  onChangeAvatar: () => void;
   isUploadingAvatar?: boolean;
   onShareInvite: () => void;
   onChangeRole: (role: BaulRole) => void;
@@ -44,7 +45,7 @@ export function PersonaDetailScreen({
   onBack,
   onEditInfo,
   onEditBiografia,
-  onUploadAvatar,
+  onChangeAvatar,
   isUploadingAvatar = false,
   onShareInvite,
   onChangeRole,
@@ -56,7 +57,6 @@ export function PersonaDetailScreen({
   const [showManageAccessModal, setShowManageAccessModal] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [activeTab, setActiveTab] = useState<'biografia' | 'fotos'>('biografia');
-  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const displayName = persona.name || persona.nickname;
   const isPending = persona.status === 'pending';
@@ -67,12 +67,6 @@ export function PersonaDetailScreen({
     const ok = await onRevokeAccess();
     setIsRevoking(false);
     if (ok) setShowRevokeModal(false);
-  };
-
-  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) onUploadAvatar(file);
-    e.target.value = '';
   };
 
   return (
@@ -108,7 +102,7 @@ export function PersonaDetailScreen({
 
                   {permissions.canUploadPersonaAvatar && (
                     <DropdownMenuItem
-                      onClick={() => avatarInputRef.current?.click()}
+                      onClick={onChangeAvatar}
                       disabled={isUploadingAvatar}
                     >
                       {isUploadingAvatar ? (
@@ -158,19 +152,10 @@ export function PersonaDetailScreen({
         </PageContainer>
       </StickyHeader>
 
-      <input
-        ref={avatarInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleAvatarFileChange}
-        disabled={isUploadingAvatar}
-      />
-
       {/* Hero */}
       <div className="relative overflow-hidden" style={{ height: '210px' }}>
         {persona.avatarUrl ? (
-          <img src={persona.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={persona.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={personaAvatarImageStyle(persona)} />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />
         )}

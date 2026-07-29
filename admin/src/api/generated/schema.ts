@@ -1750,7 +1750,80 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                    personaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetPersonaAvatarPhotoRequest"];
+                    "text/json": components["schemas"]["SetPersonaAvatarPhotoRequest"];
+                    "application/*+json": components["schemas"]["SetPersonaAvatarPhotoRequest"];
+                };
+            };
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PersonaDto"];
+                        "application/json": components["schemas"]["PersonaDto"];
+                        "text/json": components["schemas"]["PersonaDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         post: {
             parameters: {
                 query?: never;
@@ -1766,6 +1839,13 @@ export interface paths {
                     "multipart/form-data": {
                         /** Format: binary */
                         File?: string;
+                        /** Format: double */
+                        CropX?: number;
+                        /** Format: double */
+                        CropY?: number;
+                        /** Format: double */
+                        CropScale?: number;
+                        ClientUploadId?: string;
                     };
                 };
             };
@@ -5430,6 +5510,13 @@ export interface components {
             avatarUrl?: string | null;
             canEdit: boolean;
             biografia?: string | null;
+            avatarPhotoId?: string | null;
+            /** Format: double */
+            avatarCropX: number;
+            /** Format: double */
+            avatarCropY: number;
+            /** Format: double */
+            avatarCropScale: number;
         };
         PhotoDto: {
             id: string;
@@ -5498,6 +5585,15 @@ export interface components {
         };
         SetChapterCoverRequest: {
             photoId: string;
+        };
+        SetPersonaAvatarPhotoRequest: {
+            photoId: string;
+            /** Format: double */
+            cropX: number;
+            /** Format: double */
+            cropY: number;
+            /** Format: double */
+            cropScale: number;
         };
         SetPhotoPersonaTagsRequest: {
             personaIds: string[];

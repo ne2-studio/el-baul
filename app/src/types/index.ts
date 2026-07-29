@@ -6,7 +6,9 @@ type BaulDto = ApiSchemas['BaulDto'];
 type BaulPreviewDto = ApiSchemas['BaulPreviewDto'];
 type ChapterDto = ApiSchemas['ChapterDto'];
 type ChatMessageDto = ApiSchemas['ChatMessageDto'];
-type PersonaDto = ApiSchemas['PersonaDto'];
+type RawPersonaDto = ApiSchemas['PersonaDto'];
+type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'> &
+  Partial<Pick<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'>>;
 type PhotoDto = ApiSchemas['PhotoDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
 type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
@@ -37,6 +39,10 @@ export class Persona {
   role: BaulRole;
   invitedDate: string;
   avatarUrl?: string;
+  avatarPhotoId?: string;
+  avatarCropX?: number;
+  avatarCropY?: number;
+  avatarCropScale?: number;
   canEdit?: boolean;
   biografia?: string;
 
@@ -50,6 +56,10 @@ export class Persona {
     this.role = data.role as BaulRole;
     this.invitedDate = formatRelativeTime(data.invitedDate);
     this.avatarUrl = data.avatarUrl ?? undefined;
+    this.avatarPhotoId = data.avatarPhotoId ?? undefined;
+    this.avatarCropX = data.avatarCropX ?? 0.5;
+    this.avatarCropY = data.avatarCropY ?? 0.5;
+    this.avatarCropScale = data.avatarCropScale ?? 1;
     this.canEdit = data.canEdit;
     this.biografia = data.biografia ?? undefined;
   }

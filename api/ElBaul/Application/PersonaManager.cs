@@ -13,7 +13,9 @@ public class PersonaManager(
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess) : IPersonaManager
+    BaulAccessService baulAccess,
+    IPhotoPersonaTagRepository photoPersonaTagRepository,
+    PhotoFileService photoFileService) : IPersonaManager
 {
     public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(PersonaId personaId)
     {
@@ -168,53 +170,80 @@ public class PersonaManager(
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaAvatarAsync(
-        BaulId baulId, PersonaId personaId, Stream content, string fileName, string contentType)
+        BaulId baulId,
+        PersonaId personaId,
+        Stream content,
+        string fileName,
+        string contentType,
+        AvatarCrop crop,
+        ClientUploadId clientUploadId)
     {
-        var userId = currentUserProvider.GetUserId();
+        var context = await AuthorizePersonaAvatarChangeAsync(baulId, personaId);
+        if (context.IsFailure) return Result.Failure<PersonaDto>(context.Error);
+        var (persona, access, userId) = context.Value;
 
-        var auth = await baulAccess.AuthorizeAsync(
-            baulId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
-        if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
-
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId)
+        var existingPhoto = await photoRepository.GetByClientUploadIdAsync(clientUploadId);
+        Photo photo;
+        if (existingPhoto is not null)
         {
-            logger.LogWarning(
-                "Persona avatar update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
+            if (existingPhoto.BaulId != baulId || existingPhoto.Status != PhotoStatus.Active)
+                return Result.Failure<PersonaDto>(ApplicationError.NotFound("Photo not found"));
+
+            photo = existingPhoto;
+            logger.LogInformation(
+                "Duplicate persona avatar upload reused existing loose photo {BaulId} {PersonaId} {PhotoId} {ClientUploadId}",
+                baulId, personaId, photo.Id, clientUploadId);
         }
-
-        var canEdit = CanEditPersona(persona, userId, auth.Value);
-        if (!canEdit)
+        else
         {
-            logger.LogWarning(
-                "Persona avatar update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.Forbidden("Access denied"));
-        }
-
-        var storageKey = StorageKey.ForPersonaAvatar(personaId, idGenerator.NewId(), fileName);
-        await photoStorage.SaveAsync(storageKey, content, contentType);
-
-        var previousKey = persona.AvatarPhotoKey;
-        var updated = persona with { AvatarPhotoKey = storageKey };
-        await baulRepository.UpdatePersonaAsync(updated);
-        logger.LogInformation(
-            "Persona avatar updated {BaulId} {PersonaId} {StorageKey}", baulId, personaId, storageKey);
-
-        if (!string.IsNullOrEmpty(previousKey))
-        {
+            StoredPhotoFile storedFile;
             try
             {
-                await photoStorage.DeleteAsync(previousKey);
+                storedFile = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, explicitDate: null);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to clean up orphaned persona avatar {StorageKey}", previousKey);
+                logger.LogError(ex,
+                    "Persona avatar upload failed while saving to storage {BaulId} {PersonaId} {FileName} {ContentType}",
+                    baulId, personaId, fileName, contentType);
+                throw;
+            }
+
+            photo = Photo.Create(new PhotoId(idGenerator.NewId()), null, baulId, storedFile.StorageKey, storedFile.Date, userId, clock.UtcNow(), clientUploadId);
+            try
+            {
+                await photoRepository.CreateAsync(photo);
+                await baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(photo, clock.UtcNow()));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Persona avatar upload failed while persisting photo metadata {BaulId} {PersonaId} {PhotoId} {StorageKey}",
+                    baulId, personaId, photo.Id, storedFile.StorageKey);
+                await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
+                throw;
             }
         }
 
-        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
-        return await ToPersonaDtoAsync(updated, user, canEdit);
+        return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);
+    }
+
+    public async Task<Result<PersonaDto>> SetPersonaAvatarPhotoAsync(BaulId baulId, PersonaId personaId, PhotoId photoId, AvatarCrop crop)
+    {
+        var context = await AuthorizePersonaAvatarChangeAsync(baulId, personaId);
+        if (context.IsFailure) return Result.Failure<PersonaDto>(context.Error);
+        var (persona, access, userId) = context.Value;
+
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null || photo.BaulId != baulId || photo.Status != PhotoStatus.Active)
+        {
+            logger.LogWarning(
+                "Persona avatar photo selection rejected: photo not found in this baúl {BaulId} {PersonaId} {PhotoId}",
+                baulId, personaId, photoId);
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Photo not found"));
+        }
+
+        return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaRoleAsync(BaulId baulId, PersonaId personaId, BaulRole role)
@@ -270,15 +299,79 @@ public class PersonaManager(
     private static bool CanEditPersona(Persona target, string callerUserId, BaulAccess callerAccess) =>
         callerAccess.IsAdmin || (target.IsClaimed && target.UserId == callerUserId);
 
+    private async Task<Result<(Persona Persona, BaulAccess Access, string UserId)>> AuthorizePersonaAvatarChangeAsync(BaulId baulId, PersonaId personaId)
+    {
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(
+            baulId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
+        if (auth.IsFailure) return Result.Failure<(Persona, BaulAccess, string)>(auth.Error);
+
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId)
+        {
+            logger.LogWarning(
+                "Persona avatar update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            return Result.Failure<(Persona, BaulAccess, string)>(ApplicationError.NotFound("Persona not found"));
+        }
+
+        if (!CanEditPersona(persona, userId, auth.Value))
+        {
+            logger.LogWarning(
+                "Persona avatar update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
+            return Result.Failure<(Persona, BaulAccess, string)>(ApplicationError.Forbidden("Access denied"));
+        }
+
+        return (persona, auth.Value, userId);
+    }
+
+    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAccess access, string userId, Photo photo, AvatarCrop crop)
+    {
+        var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
+        if (!existingIds.Contains(persona.Id))
+        {
+            await photoPersonaTagRepository.SetTagsAsync(photo.Id, photo.BaulId, existingIds.Append(persona.Id), clock.UtcNow());
+        }
+
+        var updated = persona with
+        {
+            AvatarPhotoKey = null,
+            AvatarPhotoId = photo.Id,
+            AvatarCropX = crop.X,
+            AvatarCropY = crop.Y,
+            AvatarCropScale = crop.Scale
+        };
+        await baulRepository.UpdatePersonaAsync(updated);
+        logger.LogInformation(
+            "Persona avatar photo updated {BaulId} {PersonaId} {PhotoId}", photo.BaulId, persona.Id, photo.Id);
+
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
+        return await ToPersonaDtoAsync(updated, user, CanEditPersona(updated, userId, access));
+    }
+
     private async Task<PersonaDto> ToPersonaDtoAsync(Persona persona, User? user, bool canEdit)
     {
-        var avatarUrl = persona.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
-            : null;
+        var avatarUrl = await GetPersonaAvatarUrlAsync(persona);
 
         return new PersonaDto(
             persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
             persona.Nickname, persona.Role.ToApiString(), persona.Role == BaulRole.SinAcceso ? "sin_acceso" : persona.IsClaimed ? "active" : "pending",
-            persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia);
+            persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia,
+            persona.AvatarPhotoId?.ToString(), persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
+    }
+
+    private async Task<string?> GetPersonaAvatarUrlAsync(Persona persona)
+    {
+        if (persona.AvatarPhotoId is { } photoId)
+        {
+            var photo = await photoRepository.GetByIdAsync(photoId);
+            return photo is not null && photo.BaulId == persona.BaulId && photo.Status == PhotoStatus.Active
+                ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PersonaAvatar)
+                : null;
+        }
+
+        return persona.AvatarPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
+            : null;
     }
 }

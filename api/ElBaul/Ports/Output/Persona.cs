@@ -10,7 +10,11 @@ public record Persona
     DateTime InvitedDate,
     string? Name = null,
     string? AvatarPhotoKey = null,
-    string? Biografia = null
+    string? Biografia = null,
+    PhotoId? AvatarPhotoId = null,
+    decimal AvatarCropX = 0.5m,
+    decimal AvatarCropY = 0.5m,
+    decimal AvatarCropScale = 1m
 )
 {
     // The single interpretation of "is this Persona row linked to an authenticated account" —

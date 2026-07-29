@@ -1,4 +1,5 @@
 using ElBaul.Application;
+using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
@@ -14,9 +15,11 @@ public class PersonaManagerTests
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryUserRepository _userRepository = new();
+    private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
+    private readonly FakePhotoDateExtractor _photoDateExtractor = new();
 
     public PersonaManagerTests()
     {
@@ -27,7 +30,9 @@ public class PersonaManagerTests
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PersonaManager>.Instance, _baulRepository, _photoRepository, _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance, _photoRepository),
+            _photoPersonaTagRepository,
+            new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor));
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
@@ -221,23 +226,80 @@ public class PersonaManagerTests
     }
 
     [Fact]
-    public async Task UpdatePersonaAvatarAsync_ShouldSwapStorageKey_AndDeleteThePreviousOne()
+    public async Task UpdatePersonaAvatarAsync_ShouldCreateLoosePhoto_TagPersona_AndStoreCrop()
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow(), AvatarPhotoKey: "personas/old-key"));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
-        var manager = CreateManager(CustodioId);
+        var photoId = Guid.NewGuid();
+        var manager = CreateManager(CustodioId, photoId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UpdatePersonaAvatarAsync(new BaulId(baulId), new PersonaId(personaId), content, "avatar.jpg", "image/jpeg");
+        var crop = new AvatarCrop(0.25m, 0.75m, 1.8m);
+        var result = await manager.UpdatePersonaAvatarAsync(
+            new BaulId(baulId), new PersonaId(personaId), content, "avatar.jpg", "image/jpeg", crop, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.AvatarUrl);
-        Assert.Contains("personas/old-key", _photoStorage.DeletedKeys);
+        Assert.Equal(photoId.ToString(), result.Value.AvatarPhotoId);
+        Assert.Equal(0.25m, result.Value.AvatarCropX);
+        Assert.Equal(0.75m, result.Value.AvatarCropY);
+        Assert.Equal(1.8m, result.Value.AvatarCropScale);
 
         var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
-        Assert.NotEqual("personas/old-key", persona!.AvatarPhotoKey);
+        Assert.Equal(new PhotoId(photoId), persona!.AvatarPhotoId);
+        Assert.Null(persona.AvatarPhotoKey);
+
+        var photo = await _photoRepository.GetByIdAsync(new PhotoId(photoId));
+        Assert.NotNull(photo);
+        Assert.Null(photo!.ChapterId);
+        Assert.Contains(new PersonaId(personaId), await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
+    }
+
+    [Fact]
+    public async Task SetPersonaAvatarPhotoAsync_ShouldTagExistingPhoto_WhenPersonaWasNotTagged()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), null, new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetPersonaAvatarPhotoAsync(
+            new BaulId(baulId), new PersonaId(personaId), new PhotoId(photoId), new AvatarCrop(0.4m, 0.6m, 2m));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(photoId.ToString(), result.Value.AvatarPhotoId);
+        Assert.Contains(new PersonaId(personaId), await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
+
+        var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
+        Assert.Equal(new PhotoId(photoId), persona!.AvatarPhotoId);
+    }
+
+    [Fact]
+    public async Task SetPersonaAvatarPhotoAsync_ShouldRejectPhotoFromAnotherBaul()
+    {
+        var baulId = Guid.NewGuid();
+        var otherBaulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await SeedBaulAsync(otherBaulId, "Otra familia");
+        var personaId = Guid.NewGuid();
+        var foreignPhotoId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(foreignPhotoId), null, new BaulId(otherBaulId), "photo-key", null, CustodioId, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetPersonaAvatarPhotoAsync(
+            new BaulId(baulId), new PersonaId(personaId), new PhotoId(foreignPhotoId), new AvatarCrop(0.5m, 0.5m, 1m));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error.Message);
+
+        var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
+        Assert.Null(persona!.AvatarPhotoId);
     }
 
     [Fact]

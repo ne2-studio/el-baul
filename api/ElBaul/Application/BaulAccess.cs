@@ -21,7 +21,7 @@ public enum AccessLevel { Member, Admin }
 // family chose; the account name may be unset or unrelated).
 public sealed record AuthorInfo(string Nickname, string? AvatarUrl, string? PersonaId);
 
-public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger)
+public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger, IPhotoRepository? photoRepository = null)
 {
     public async Task<BaulAccess> GetAsync(Baul baul, string userId)
     {
@@ -62,9 +62,24 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
     public async Task<AuthorInfo> GetAuthorInfoAsync(BaulId baulId, string userId, IPhotoStorage photoStorage)
     {
         var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var avatarUrl = persona?.AvatarPhotoKey is { Length: > 0 }
+        var avatarUrl = await GetPersonaAvatarUrlAsync(persona, photoStorage);
+        return new AuthorInfo(persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
+    }
+
+    private async Task<string?> GetPersonaAvatarUrlAsync(Persona? persona, IPhotoStorage photoStorage)
+    {
+        if (persona is null) return null;
+
+        if (persona.AvatarPhotoId is { } photoId && photoRepository is not null)
+        {
+            var photo = await photoRepository.GetByIdAsync(photoId);
+            return photo is not null && photo.BaulId == persona.BaulId && photo.Status == PhotoStatus.Active
+                ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PersonaAvatar)
+                : null;
+        }
+
+        return persona.AvatarPhotoKey is { Length: > 0 }
             ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
             : null;
-        return new AuthorInfo(persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
     }
 }

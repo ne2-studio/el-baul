@@ -119,9 +119,33 @@ public class BaulesController(
         if (request.File is null || request.File.Length == 0)
             return BadRequest(new { error = "No file provided" });
 
+        var crop = AvatarCrop.Create(request.CropX, request.CropY, request.CropScale);
+        if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
+
+        if (!Guid.TryParse(request.ClientUploadId, out var clientUploadId))
+            clientUploadId = Guid.NewGuid();
+
         await using var stream = request.File.OpenReadStream();
         var result = await personaManager.UpdatePersonaAvatarAsync(
-            new BaulId(baulId), new PersonaId(personaId), stream, request.File.FileName, request.File.ContentType);
+            new BaulId(baulId), new PersonaId(personaId), stream, request.File.FileName, request.File.ContentType,
+            crop.Value, new ClientUploadId(clientUploadId));
+
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPut("{baulId:guid}/personas/{personaId:guid}/avatar")]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetPersonaAvatarPhoto(
+        Guid baulId, Guid personaId, [FromBody] SetPersonaAvatarPhotoRequest request)
+    {
+        if (!Guid.TryParse(request.PhotoId, out var photoId))
+            return BadRequest(new { error = $"'{request.PhotoId}' is not a valid photo id." });
+
+        var crop = AvatarCrop.Create(request.CropX, request.CropY, request.CropScale);
+        if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
+
+        var result = await personaManager.SetPersonaAvatarPhotoAsync(
+            new BaulId(baulId), new PersonaId(personaId), new PhotoId(photoId), crop.Value);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }

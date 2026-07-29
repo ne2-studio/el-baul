@@ -6,6 +6,7 @@ vi.mock('@/api', () => ({
     baules: {
       getPersonas: vi.fn(),
       getRemovalRequests: vi.fn(),
+      setPersonaAvatarPhoto: vi.fn(),
     },
   },
 }));
@@ -20,7 +21,7 @@ describe('usePersonasStore load failures are not swallowed', () => {
   const baulId = 'baul-1';
 
   beforeEach(() => {
-    usePersonasStore.setState({ personas: {}, removalRequests: {} });
+    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
     vi.clearAllMocks();
   });
 
@@ -76,5 +77,45 @@ describe('usePersonasStore load failures are not swallowed', () => {
     await usePersonasStore.getState().loadRemovalRequests(baulId);
 
     expect(usePersonasStore.getState().removalRequests[baulId]).toEqual([request]);
+  });
+
+  it('setPersonaAvatarPhoto updates the persona and adds the selected photo to the persona gallery cache', async () => {
+    const previous = new Persona({
+      id: 'p1',
+      baulId,
+      nickname: 'Abu',
+      status: 'active',
+      role: 'colaborador',
+      invitedDate: new Date().toISOString(),
+      canEdit: true,
+    });
+    const updated = new Persona({
+      id: 'p1',
+      baulId,
+      nickname: 'Abu',
+      status: 'active',
+      role: 'colaborador',
+      invitedDate: new Date().toISOString(),
+      canEdit: true,
+      avatarPhotoId: 'photo-1',
+      avatarUrl: 'avatar-url',
+      avatarCropX: 0.25,
+      avatarCropY: 0.75,
+      avatarCropScale: 2,
+    });
+    const photo = {
+      id: 'photo-1',
+      thumbnailUrl: 'thumb',
+      fullUrl: 'full',
+      recuerdoCount: 0,
+    };
+    usePersonasStore.setState({ personas: { [baulId]: [previous] }, personaPhotos: { p1: [] } });
+    vi.mocked(api.baules.setPersonaAvatarPhoto).mockResolvedValue(updated);
+
+    await usePersonasStore.getState().setPersonaAvatarPhoto(baulId, 'p1', photo, { x: 0.25, y: 0.75, scale: 2 });
+
+    expect(api.baules.setPersonaAvatarPhoto).toHaveBeenCalledWith(baulId, 'p1', 'photo-1', { x: 0.25, y: 0.75, scale: 2 });
+    expect(usePersonasStore.getState().personas[baulId]).toEqual([updated]);
+    expect(usePersonasStore.getState().personaPhotos.p1).toEqual([photo]);
   });
 });

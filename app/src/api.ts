@@ -17,6 +17,12 @@ type SuccessResponse = ApiSchemas['SuccessResponse'];
 type TaggedPersonaDto = ApiSchemas['TaggedPersonaDto'];
 type UserProfileDto = ApiSchemas['UserProfileDto'];
 
+export interface AvatarCrop {
+  x: number;
+  y: number;
+  scale: number;
+}
+
 interface SharedLinkResponse {
   url: string;
   token: string;
@@ -110,9 +116,13 @@ export const api = {
       new Persona(await get<PersonaDto>(`/api/baules/${baulId}/personas/${personaId}`)),
     updatePersona: async (baulId: string, personaId: string, name: string, nickname: string, biografia: string) =>
       new Persona(await put<PersonaDto>(`/api/baules/${baulId}/personas/${personaId}`, { name, nickname, biografia })),
-    uploadPersonaAvatar: async (baulId: string, personaId: string, file: File) => {
+    uploadPersonaAvatar: async (baulId: string, personaId: string, file: File, crop: AvatarCrop) => {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('cropX', String(crop.x));
+      formData.append('cropY', String(crop.y));
+      formData.append('cropScale', String(crop.scale));
+      formData.append('clientUploadId', crypto.randomUUID());
 
       const response = await fetch(`${API_BASE}/api/baules/${baulId}/personas/${personaId}/avatar`, {
         method: 'POST',
@@ -122,6 +132,13 @@ export const api = {
 
       return new Persona(await handleResponse<PersonaDto>(response));
     },
+    setPersonaAvatarPhoto: async (baulId: string, personaId: string, photoId: string, crop: AvatarCrop) =>
+      new Persona(await put<PersonaDto>(`/api/baules/${baulId}/personas/${personaId}/avatar`, {
+        photoId,
+        cropX: crop.x,
+        cropY: crop.y,
+        cropScale: crop.scale,
+      })),
     updatePersonaRole: (baulId: string, personaId: string, role: string) =>
       put<void>(`/api/baules/${baulId}/personas/${personaId}/role`, { role }),
     revokeAccess: (baulId: string, personaId: string) =>
