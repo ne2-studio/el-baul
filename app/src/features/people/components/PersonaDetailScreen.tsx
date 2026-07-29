@@ -12,7 +12,7 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
 import { personaAvatarImageStyle } from './PersonaAvatarPickerModal';
-import { TabButton } from '@/design-system/components/navigation/TabButton';
+import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Button } from '@/design-system/components/actions/Button';
 import {
   DropdownMenu,
@@ -172,52 +172,49 @@ export function PersonaDetailScreen({
         )}
       </Hero>
 
-      {/* Tabs — same sticky underline pattern as ChaptersView.tsx / PhotosView.tsx */}
-      <div
-        className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
-        style={{ top: headerHeight }}
+      <Tabbar
+        tabs={[
+          { key: 'biografia', label: 'Biografía' },
+          { key: 'fotos', label: 'Fotos', count: photos.length },
+        ]}
+        active={activeTab}
+        onChange={(key) => setActiveTab(key as 'biografia' | 'fotos')}
+        top={headerHeight}
       >
-        <PageContainer className="overflow-x-auto scrollbar-hide">
-          <div className="flex w-max md:w-full">
-            <TabButton label="Biografía" count={0} active={activeTab === 'biografia'} onClick={() => setActiveTab('biografia')} />
-            <TabButton label="Fotos" count={photos.length} active={activeTab === 'fotos'} onClick={() => setActiveTab('fotos')} />
-          </div>
+        <PageContainer className="py-8 space-y-6 pb-28">
+          {activeTab === 'biografia' && (
+            persona.biografia ? (
+              <div className="bg-card rounded-2xl border border-border p-6">
+                <p
+                  className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
+                  style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
+                >
+                  Biografía
+                </p>
+                <p className="text-foreground whitespace-pre-wrap">{persona.biografia}</p>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<BookOpen className="w-20 h-20" strokeWidth={1.5} />}
+                title="Todavía no hay biografía"
+                subtitle={`Este usuario aún no tiene biografía${permissions.canEditPersonaBiography ? ', ¡añádela!' : '.'}`}
+              />
+            )
+          )}
+
+          {activeTab === 'fotos' && (
+            photos.length === 0 ? (
+              <EmptyState
+                icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
+                title="Todavía no hay fotos"
+                subtitle="Las fotos en las que etiquetes a esta persona aparecerán aquí"
+              />
+            ) : (
+              <PhotoSwimlanes photos={photos} onSelectPhoto={onSelectPhoto} />
+            )
+          )}
         </PageContainer>
-      </div>
-
-      <PageContainer className="py-8 space-y-6 pb-28">
-        {activeTab === 'biografia' && (
-          persona.biografia ? (
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <p
-                className="text-xs text-muted-foreground uppercase tracking-wide mb-4"
-                style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-              >
-                Biografía
-              </p>
-              <p className="text-foreground whitespace-pre-wrap">{persona.biografia}</p>
-            </div>
-          ) : (
-            <EmptyState
-              icon={<BookOpen className="w-20 h-20" strokeWidth={1.5} />}
-              title="Todavía no hay biografía"
-              subtitle={`Este usuario aún no tiene biografía${permissions.canEditPersonaBiography ? ', ¡añádela!' : '.'}`}
-            />
-          )
-        )}
-
-        {activeTab === 'fotos' && (
-          photos.length === 0 ? (
-            <EmptyState
-              icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
-              title="Todavía no hay fotos"
-              subtitle="Las fotos en las que etiquetes a esta persona aparecerán aquí"
-            />
-          ) : (
-            <PhotoSwimlanes photos={photos} onSelectPhoto={onSelectPhoto} />
-          )
-        )}
-      </PageContainer>
+      </Tabbar>
 
       <SimpleFAB
         label="Editar biografía"

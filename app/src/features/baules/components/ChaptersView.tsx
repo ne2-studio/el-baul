@@ -11,7 +11,7 @@ import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PersonasTab } from '@/features/people/components/PersonasTab';
 import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
-import { TabButton } from '@/design-system/components/navigation/TabButton';
+import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
@@ -206,116 +206,97 @@ export function ChaptersView({
         className="hidden"
       />
 
-      {/* Tabs — same sticky underline pattern as the Álbum/Capítulo screen (PhotosView.tsx).
-          top is the header's measured height, not a hardcoded value — iOS/WKWebView and
-          Android/Chrome WebView render the same header markup at slightly different heights. */}
-      <div
-        className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
-        style={{ top: headerHeight }}
+      {/* top es la altura medida del header, no un valor fijo — iOS/WKWebView y
+          Android/Chrome WebView renderizan el mismo header a alturas ligeramente distintas. */}
+      <Tabbar
+        tabs={[
+          { key: 'capitulos', label: 'Capítulos', count: chapters.length },
+          { key: 'recuerdos', label: 'Recuerdos', count: recuerdos.length },
+          { key: 'personas', label: 'Personas', count: personas.length },
+        ]}
+        active={activeTab}
+        onChange={(key) => setActiveTab(key as 'capitulos' | 'personas' | 'recuerdos')}
+        top={headerHeight}
       >
-        <PageContainer className="overflow-x-auto scrollbar-hide">
-          <div className="flex w-max md:w-full">
-            <TabButton
-              label="Capítulos"
-              count={chapters.length}
-              active={activeTab === 'capitulos'}
-              onClick={() => setActiveTab('capitulos')}
+        <PageContainer className="py-6 pb-28">
+          {activeTab === 'capitulos' && (
+          chapters.length === 0 && loosePhotos.length === 0 ? (
+            <EmptyState
+              icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
+              title="Este baúl está vacío"
+              subtitle="Crea tu primer capítulo para empezar a guardar recuerdos"
             />
-            <TabButton
-              label="Recuerdos"
-              count={recuerdos.length}
-              active={activeTab === 'recuerdos'}
-              onClick={() => setActiveTab('recuerdos')}
-            />
-            <TabButton
-              label="Personas"
-              count={personas.length}
-              active={activeTab === 'personas'}
-              onClick={() => setActiveTab('personas')}
-            />
-          </div>
-        </PageContainer>
-      </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Todos los capítulos, agrupados por año de la fecha mínima (ya vienen
+                  ordenados del backend por fecha mínima ascendente, así que agrupar
+                  consecutivamente preserva ese orden dentro y entre swimlanes) */}
+              {chapters.length > 0 && (() => {
+                const groups = new Map<string, Chapter[]>();
+                for (const chapter of chapters) {
+                  const year = chapter.minDate ? String(chapter.minDate.year) : 'Sin año';
+                  if (!groups.has(year)) groups.set(year, []);
+                  groups.get(year)!.push(chapter);
+                }
 
-      {/* Content */}
-      <PageContainer className="py-6 pb-28">
-        {activeTab === 'capitulos' && (
-        chapters.length === 0 && loosePhotos.length === 0 ? (
-          <EmptyState
-            icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
-            title="Este baúl está vacío"
-            subtitle="Crea tu primer capítulo para empezar a guardar recuerdos"
-          />
-        ) : (
-          <div className="space-y-6">
-            {/* Todos los capítulos, agrupados por año de la fecha mínima (ya vienen
-                ordenados del backend por fecha mínima ascendente, así que agrupar
-                consecutivamente preserva ese orden dentro y entre swimlanes) */}
-            {chapters.length > 0 && (() => {
-              const groups = new Map<string, Chapter[]>();
-              for (const chapter of chapters) {
-                const year = chapter.minDate ? String(chapter.minDate.year) : 'Sin año';
-                if (!groups.has(year)) groups.set(year, []);
-                groups.get(year)!.push(chapter);
-              }
-
-              return (
-                <div className="space-y-6">
-                  {Array.from(groups.entries()).map(([year, yearChapters]) => (
-                    <div key={year}>
-                      <SwimlaneLabel>{year}</SwimlaneLabel>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {yearChapters.map((chapter) => (
-                          <ChapterCard key={chapter.id} chapter={chapter} onClick={() => onSelectChapter(chapter)} />
-                        ))}
+                return (
+                  <div className="space-y-6">
+                    {Array.from(groups.entries()).map(([year, yearChapters]) => (
+                      <div key={year}>
+                        <SwimlaneLabel>{year}</SwimlaneLabel>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          {yearChapters.map((chapter) => (
+                            <ChapterCard key={chapter.id} chapter={chapter} onClick={() => onSelectChapter(chapter)} />
+                          ))}
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Fotos sueltas — capítulo virtual */}
+              {looseChapter && (
+                <div>
+                  <SwimlaneLabel>Otras</SwimlaneLabel>
+                  <Card onClick={onOpenLoosePhotos} className="!p-0 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
+                    {/* Collage cover */}
+                    <div className="aspect-[16/10] bg-secondary relative rounded-t-2xl overflow-hidden">
+                      <FotosSueltasCollage coverPhotos={looseChapter.coverPhotoUrls} />
                     </div>
-                  ))}
+                    <div className="p-4 bg-card">
+                      <h3 className="font-medium text-lg text-foreground">{looseChapter.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {looseChapter.photoCount} {looseChapter.photoCount === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún capítulo
+                      </p>
+                    </div>
+                  </Card>
                 </div>
-              );
-            })()}
+              )}
+            </div>
+          )
+          )}
 
-            {/* Fotos sueltas — capítulo virtual */}
-            {looseChapter && (
-              <div>
-                <SwimlaneLabel>Otras</SwimlaneLabel>
-                <Card onClick={onOpenLoosePhotos} className="!p-0 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
-                  {/* Collage cover */}
-                  <div className="aspect-[16/10] bg-secondary relative rounded-t-2xl overflow-hidden">
-                    <FotosSueltasCollage coverPhotos={looseChapter.coverPhotoUrls} />
-                  </div>
-                  <div className="p-4 bg-card">
-                    <h3 className="font-medium text-lg text-foreground">{looseChapter.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {looseChapter.photoCount} {looseChapter.photoCount === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún capítulo
-                    </p>
-                  </div>
-                </Card>
-              </div>
-            )}
-          </div>
-        )
-        )}
+          {activeTab === 'personas' && (
+            <PersonasTab
+              personas={personas}
+              currentUserEmail={currentUserEmail}
+              onSelectPersona={(persona) => onSelectPersona?.(persona)}
+            />
+          )}
 
-        {activeTab === 'personas' && (
-          <PersonasTab
-            personas={personas}
-            currentUserEmail={currentUserEmail}
-            onSelectPersona={(persona) => onSelectPersona?.(persona)}
-          />
-        )}
-
-        {activeTab === 'recuerdos' && (
-          <RecuerdosTab
-            recuerdos={recuerdos}
-            onOpenChapter={onOpenChapterFromRecuerdo}
-            onOpenPhoto={onOpenPhotoFromRecuerdo}
-            onUserClick={onUserClick}
-            onShareRecuerdo={onShareRecuerdo}
-            onEditRecuerdo={onEditRecuerdo}
-          />
-        )}
-      </PageContainer>
+          {activeTab === 'recuerdos' && (
+            <RecuerdosTab
+              recuerdos={recuerdos}
+              onOpenChapter={onOpenChapterFromRecuerdo}
+              onOpenPhoto={onOpenPhotoFromRecuerdo}
+              onUserClick={onUserClick}
+              onShareRecuerdo={onShareRecuerdo}
+              onEditRecuerdo={onEditRecuerdo}
+            />
+          )}
+        </PageContainer>
+      </Tabbar>
 
       {activeTab === 'capitulos' && (
         <ExpandableFAB

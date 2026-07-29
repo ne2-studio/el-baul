@@ -8,7 +8,7 @@ import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
-import { TabButton } from '@/design-system/components/navigation/TabButton';
+import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
@@ -196,34 +196,65 @@ export function PhotosView({
         className="hidden"
       />
 
-      {/* Tabs — only when the caller supports a Recuerdos feed (real chapters, not the loose-photos virtual one) */}
-      {!selectionMode && hasRecuerdosTab && (
-        <div
-          className="sticky bg-background/90 backdrop-blur-sm z-[9] border-b border-border"
-          style={{ top: headerHeight }}
+      {/* Tabbar solo cuando el llamante soporta un feed de Recuerdos (capítulos reales, no
+          el de fotos sueltas virtual) — sin él no hay nada entre lo que hacer swipe. */}
+      {hasRecuerdosTab ? (
+        <Tabbar
+          tabs={[
+            { key: 'fotos', label: 'Fotos', count: photos.length },
+            { key: 'recuerdos', label: 'Recuerdos', count: recuerdos.length },
+          ]}
+          active={activeTab}
+          onChange={(key) => setActiveTab(key as 'fotos' | 'recuerdos')}
+          top={headerHeight}
+          hideStrip={selectionMode}
         >
-          <PageContainer className="overflow-x-auto scrollbar-hide">
-            <div className="flex w-max md:w-full">
-              <TabButton label="Fotos" count={photos.length} active={activeTab === 'fotos'} onClick={() => setActiveTab('fotos')} />
-              <TabButton label="Recuerdos" count={recuerdos.length} active={activeTab === 'recuerdos'} onClick={() => setActiveTab('recuerdos')} />
-            </div>
+          <PageContainer className="py-6 pb-28">
+            {activeTab === 'fotos' && (
+              photos.length === 0 ? (
+                <EmptyState
+                  icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
+                  title="Todavía no hay fotos aquí"
+                  subtitle="Añade fotos para empezar este recuerdo"
+                />
+              ) : (
+                <PhotoSwimlanes
+                  photos={photos}
+                  onSelectPhoto={onSelectPhoto}
+                  selectionMode={selectionMode}
+                  selectedIds={selectedIds}
+                  onToggleSelect={toggleSelect}
+                  onLongPress={handleLongPress}
+                  onToggleGroup={handleToggleGroup}
+                />
+              )
+            )}
+
+            <RecuerdosFeed
+              active={activeTab === 'recuerdos'}
+              photos={photos}
+              recuerdos={recuerdos}
+              onSelectPhoto={onSelectPhoto}
+              onAddRecuerdo={onAddRecuerdo}
+              onUserClick={onUserClick}
+              onShareRecuerdo={onShareRecuerdo}
+              onEditRecuerdo={onEditRecuerdo}
+              selectionMode={selectionMode}
+            />
           </PageContainer>
-        </div>
-      )}
+        </Tabbar>
+      ) : (
+        <PageContainer className="py-6 pb-28">
+          {!selectionMode && totalRecuerdos > 0 && (
+            <div className="flex items-center gap-1.5 mb-5 -mt-1">
+              <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
+              <span className="text-xs text-muted-foreground/75">
+                {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este capítulo
+              </span>
+            </div>
+          )}
 
-      {/* Content */}
-      <PageContainer className="py-6 pb-28">
-        {!selectionMode && !hasRecuerdosTab && totalRecuerdos > 0 && (
-          <div className="flex items-center gap-1.5 mb-5 -mt-1">
-            <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
-            <span className="text-xs text-muted-foreground/75">
-              {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este capítulo
-            </span>
-          </div>
-        )}
-
-        {activeTab === 'fotos' && (
-          photos.length === 0 ? (
+          {photos.length === 0 ? (
             <EmptyState
               icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
               title="Todavía no hay fotos aquí"
@@ -239,23 +270,9 @@ export function PhotosView({
               onLongPress={handleLongPress}
               onToggleGroup={handleToggleGroup}
             />
-          )
-        )}
-
-        {hasRecuerdosTab && (
-          <RecuerdosFeed
-            active={activeTab === 'recuerdos'}
-            photos={photos}
-            recuerdos={recuerdos}
-            onSelectPhoto={onSelectPhoto}
-            onAddRecuerdo={onAddRecuerdo}
-            onUserClick={onUserClick}
-            onShareRecuerdo={onShareRecuerdo}
-            onEditRecuerdo={onEditRecuerdo}
-            selectionMode={selectionMode}
-          />
-        )}
-      </PageContainer>
+          )}
+        </PageContainer>
+      )}
 
       <SimpleFAB
         label="Subir fotos"

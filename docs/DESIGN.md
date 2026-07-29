@@ -194,15 +194,40 @@ Inter keeps body copy, labels, and UI chrome clean and legible.
 
 ## Layout
 
-The app is a single-column, mobile-first flow (Capacitor-wrapped for Android) with
-generous horizontal padding (24px / `px-6`) and centered `max-w-md` content on wider
-viewports — there is no multi-column desktop grid. Photos and chapters use a masonry/grid
-layout so images of varying aspect ratios can sit edge-to-edge within their card without
-letterboxing.
+The app is mobile-first (Capacitor-wrapped for Android) with generous horizontal padding
+(24px / `px-6`). Every top-level screen is wrapped in `PageContainer`, which centers its
+content and caps its width at `max-w-[62rem]` — on phones and narrow viewports that reads
+as effectively single-column, but on wider viewports it lets card grids (chapters,
+personas) expand up to 3 columns instead of stretching full-bleed. `PageContainer` is the
+single width constraint used everywhere — forms and empty states simply read as
+single-column at that width, while swimlane/card grids use the extra room for more
+columns. There is no separate desktop-only layout system.
+
+Photos and chapters use a masonry/grid layout so images of varying aspect ratios can sit
+edge-to-edge within their card without letterboxing.
 
 Spacing follows Tailwind's 4px-based scale, used consistently rather than as arbitrary
 values: tight groups of icons/text use 4–8px gaps, related fields/controls use 12–16px,
 and separation between distinct sections or screen edges uses 24–32px.
+
+### Content screen composition
+
+Baúl, Capítulo and Persona all share the same screen template, and any future top-level
+content view (e.g. Lugares) should reuse it rather than inventing a new one:
+
+1. **`PageHeader`** (`variant="row"`) — sticky back button plus a `trailing` slot for a
+   contextual menu/actions. It has no title of its own; the title lives in the `Hero`
+   below.
+2. **`Hero`** — full-bleed cover image/gradient with the screen title and short metadata
+   overlaid at the bottom.
+3. **`Tabbar`** — sticky row of pill tabs (offset below the `PageHeader`'s measured
+   height) switching between the screen's sections, with horizontal swipe support on the
+   content beneath it.
+4. **`PageContainer`** — the actual per-tab content, width-constrained and centered as
+   described above.
+
+See `Patterns/Layout/ContentScreen` in Storybook for a live composed example, and
+`ChaptersView.tsx`, `PhotosView.tsx`, `PersonaDetailScreen.tsx` for real usages.
 
 ## Elevation & Depth
 
