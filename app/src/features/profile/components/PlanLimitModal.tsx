@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Heart } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 
 interface PlanLimitModalProps {
@@ -48,14 +49,9 @@ export function PlanLimitModal({ onClose, onUpgradePlan, baulesUsed, baulesLimit
             </p>
             
             {/* Emotional, reassuring message */}
-            <div className="bg-muted/50 rounded-xl p-4 w-full">
-              <div className="flex items-start gap-3">
-                <Heart className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-muted-foreground leading-relaxed text-left">
-                  Actualiza tu plan para seguir guardando recuerdos importantes y compartirlos con las personas que amas.
-                </p>
-              </div>
-            </div>
+            <Notice icon={<Heart className="w-5 h-5 text-primary" />} className="w-full">
+              Actualiza tu plan para seguir guardando recuerdos importantes y compartirlos con las personas que amas.
+            </Notice>
           </div>
 
           {/* Current usage */}

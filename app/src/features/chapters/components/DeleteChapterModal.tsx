@@ -1,4 +1,5 @@
 import { Button } from '@/design-system/components/actions/Button';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface DeleteChapterModalProps {
@@ -22,13 +23,11 @@ export function DeleteChapterModal({ photoCount, recuerdoCount, onCancel, onConf
         Eliminar capítulo
       </h2>
 
-      <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-5 mt-3">
-        <p className="text-xs text-destructive/80 leading-relaxed">
-          <span className="font-semibold">Atención:</span>{' '}
-          {pluralize(photoCount, 'foto', 'fotos')} y {pluralize(recuerdoCount, 'recuerdo', 'recuerdos')} quedarán
-          sueltos en el baúl. ¿Estás seguro?
-        </p>
-      </div>
+      <Notice variant="destructive" size="sm" className="mb-5 mt-3">
+        <span className="font-semibold">Atención:</span>{' '}
+        {pluralize(photoCount, 'foto', 'fotos')} y {pluralize(recuerdoCount, 'recuerdo', 'recuerdos')} quedarán
+        sueltos en el baúl. ¿Estás seguro?
+      </Notice>
 
       <div className="flex flex-col-reverse md:flex-row gap-3">
         <Button

@@ -1,4 +1,5 @@
 import { Button } from '@/design-system/components/actions/Button';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface RevokeAccessModalProps {
@@ -15,11 +16,9 @@ export function RevokeAccessModal({ userName, onConfirm, onCancel, isSubmitting 
         ¿Revocar el acceso?
       </h2>
 
-      <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-5 mt-3">
-        <p className="text-xs text-destructive/80 leading-relaxed">
-          <span className="font-semibold">{userName}</span> dejará de poder acceder al baúl, y no podrá recibir invitaciones en el futuro, pero seguirá formando parte de la historia familiar y aparecerá en fotos, recuerdos y cronologías.
-        </p>
-      </div>
+      <Notice variant="destructive" size="sm" className="mb-5 mt-3">
+        <span className="font-semibold">{userName}</span> dejará de poder acceder al baúl, y no podrá recibir invitaciones en el futuro, pero seguirá formando parte de la historia familiar y aparecerá en fotos, recuerdos y cronologías.
+      </Notice>
 
       <div className="flex flex-col-reverse md:flex-row gap-3">
         <Button

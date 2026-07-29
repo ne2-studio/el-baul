@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, AlertTriangle } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 
@@ -37,14 +38,15 @@ export function RequestBaulDeletionScreen({ baulName, onBack, onSubmit, isSubmit
 
       {/* Content */}
       <PageContainer className="py-8">
-        <div className="flex items-start gap-3 bg-destructive/8 border border-destructive/20 rounded-xl p-4 mb-6">
-          <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-destructive/80 leading-relaxed">
-            Eliminar el baúl <span className="font-semibold">{baulName}</span> afecta a todas las personas que tienen
-            acceso a él y conlleva la pérdida definitiva de sus fotos y recuerdos. Por eso, esta operación no se puede
-            hacer directamente desde la app: cuéntanos tu caso y nuestro equipo de soporte lo gestionará contigo.
-          </p>
-        </div>
+        <Notice
+          variant="destructive"
+          icon={<AlertTriangle className="w-4 h-4 text-destructive" />}
+          className="mb-6"
+        >
+          Eliminar el baúl <span className="font-semibold">{baulName}</span> afecta a todas las personas que tienen
+          acceso a él y conlleva la pérdida definitiva de sus fotos y recuerdos. Por eso, esta operación no se puede
+          hacer directamente desde la app: cuéntanos tu caso y nuestro equipo de soporte lo gestionará contigo.
+        </Notice>
 
         <label className="block text-sm font-medium text-foreground mb-2">
           Explica la situación y el motivo por el que deseas eliminar el baúl

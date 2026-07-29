@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface DeletePhotoModalProps {
@@ -19,11 +20,9 @@ export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: 
         Retirar esta foto
       </h2>
 
-      <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-4 mt-3">
-        <p className="text-xs text-destructive/80 leading-relaxed">
-          <span className="font-semibold">Atención:</span> Esta foto dejará de estar disponible para todos los miembros del baúl. Todos los recuerdos asociados a ella se perderán de forma permanente.
-        </p>
-      </div>
+      <Notice variant="destructive" size="sm" className="mb-4 mt-3">
+        <span className="font-semibold">Atención:</span> Esta foto dejará de estar disponible para todos los miembros del baúl. Todos los recuerdos asociados a ella se perderán de forma permanente.
+      </Notice>
 
       <label htmlFor={reasonInputId} className="block text-sm font-medium text-foreground mb-2">
         Motivo de la retirada

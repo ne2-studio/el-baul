@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, CheckCircle, Info } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 
@@ -78,13 +79,9 @@ export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreen
           autoFocus
         />
 
-        {/* Technical info notice */}
-        <div className="flex items-start gap-3 bg-muted/50 rounded-xl p-4 mb-6">
-          <Info className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Recopilaremos algunos datos técnicos para poder ayudarte más rápido.
-          </p>
-        </div>
+        <Notice icon={<Info className="w-4 h-4 text-muted-foreground" />} className="mb-6">
+          Recopilaremos algunos datos técnicos para poder ayudarte más rápido.
+        </Notice>
 
         {hasError && (
           <p className="text-sm text-destructive mb-4">

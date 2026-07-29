@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, Crown, HardDrive } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
@@ -96,11 +97,9 @@ export function MiSuscripcionScreen({ onBack, subscription, onChangePlan }: MiSu
         </div>
 
         {/* Explanation */}
-        <div className="bg-muted/50 rounded-xl p-4 mb-6">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Tu plan define cuántos baúles puedes custodiar y el espacio disponible para guardar tus recuerdos.
-          </p>
-        </div>
+        <Notice className="mb-6">
+          Tu plan define cuántos baúles puedes custodiar y el espacio disponible para guardar tus recuerdos.
+        </Notice>
 
         {/* CTA */}
         <Button

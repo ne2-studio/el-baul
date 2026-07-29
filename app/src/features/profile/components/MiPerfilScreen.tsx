@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft, User } from 'lucide-react';
+import { Notice } from '@/design-system/components/feedback/Notice';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { Button } from '@/design-system/components/actions/Button';
@@ -61,11 +62,9 @@ export function MiPerfilScreen({ onBack, userProfile }: MiPerfilScreenProps) {
           <div className="border-t border-border my-6" />
 
           {/* Info message */}
-          <div className="bg-muted/50 rounded-xl p-4">
-            <p className="text-sm text-muted-foreground text-center leading-relaxed">
-              Esta información se toma de tu cuenta de Google.
-            </p>
-          </div>
+          <Notice align="center">
+            Esta información se toma de tu cuenta de Google.
+          </Notice>
         </div>
 
         {/* Additional info - calm and informative */}
