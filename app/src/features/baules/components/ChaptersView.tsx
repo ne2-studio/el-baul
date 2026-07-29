@@ -6,6 +6,7 @@ import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { ExpandableFAB, SimpleFAB } from '@/design-system/components/actions/FAB';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { NuevaPersonaModal } from '@/features/people/components/NuevaPersonaModal';
+import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PersonasTab } from '@/features/people/components/PersonasTab';
 import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
@@ -16,9 +17,9 @@ import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
-import { formatDateRange } from '@/app/utils/timeUtils';
 import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
 import { Button } from '@/design-system/components/actions/Button';
+import { ChapterCard } from '@/features/baules/components/ChapterCard';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -194,28 +195,14 @@ export function ChaptersView({
         </PageContainer>
       </StickyHeader>
 
-      {/* Hero */}
-      <div className="relative overflow-hidden" style={{ height: '260px' }}>
-        {baul.coverPhotoUrl ? (
-          <img src={baul.coverPhotoUrl} alt="" className="hero-cover-image absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />
+      <Hero imageUrl={baul.coverPhotoUrl} title={baul.name}>
+        {baul.description && (
+          <p className="text-sm text-white/80 mt-1.5 leading-snug max-w-sm">{baul.description}</p>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 pb-6">
-          <PageContainer>
-            <h1 className="text-4xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
-              {baul.name}
-            </h1>
-            {baul.description && (
-              <p className="text-sm text-white/80 mt-1.5 leading-snug max-w-sm">{baul.description}</p>
-            )}
-            {!baul.description && onUpdateBaulInfo && (
-              <p className="text-sm text-white/40 mt-1.5 italic">Sin descripción · edita desde el menú ···</p>
-            )}
-          </PageContainer>
-        </div>
-      </div>
+        {!baul.description && onUpdateBaulInfo && (
+          <p className="text-sm text-white/40 mt-1.5 italic">Sin descripción · edita desde el menú ···</p>
+        )}
+      </Hero>
 
       <input
         ref={fileInputRef}
@@ -289,36 +276,7 @@ export function ChaptersView({
                       </p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {yearChapters.map((chapter) => (
-                          <Card key={chapter.id} onClick={() => onSelectChapter(chapter)} className="!p-0 overflow-hidden">
-                            {/* Chapter cover */}
-                            <div className="aspect-square bg-secondary flex items-center justify-center">
-                              {chapter.coverPhotoUrl ? (
-                                <img
-                                  src={chapter.coverPhotoUrl}
-                                  alt={chapter.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <ImageIcon className="w-12 h-12 text-muted-foreground opacity-40" strokeWidth={1.5} />
-                              )}
-                            </div>
-
-                            {/* Chapter info */}
-                            <div className="p-4">
-                              <h3 className="font-medium mb-1 text-foreground">{chapter.name}</h3>
-                              {chapter.minDate && chapter.maxDate && (
-                                <p className="text-[11px] text-primary/80 font-medium mb-0.5">
-                                  {formatDateRange(chapter.minDate, chapter.maxDate)}
-                                </p>
-                              )}
-                              <p className="text-sm text-muted-foreground">
-                                {chapter.photoCount} {chapter.photoCount === 1 ? 'foto' : 'fotos'}
-                                {(chapter.recuerdoCount ?? 0) > 0 && (
-                                  <> · {chapter.recuerdoCount} {chapter.recuerdoCount === 1 ? 'recuerdo' : 'recuerdos'}</>
-                                )}
-                              </p>
-                            </div>
-                          </Card>
+                          <ChapterCard key={chapter.id} chapter={chapter} onClick={() => onSelectChapter(chapter)} />
                         ))}
                       </div>
                     </div>

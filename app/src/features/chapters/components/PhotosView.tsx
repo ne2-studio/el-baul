@@ -4,6 +4,7 @@ import { useFileInputSelection } from '@/hooks/useFileInputSelection';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
+import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
@@ -184,30 +185,13 @@ export function PhotosView({
 
       {/* Hero — shown when not in selection mode */}
       {!selectionMode && (
-        <div className="relative overflow-hidden" style={{ height: '210px' }}>
-          {(chapter.featuredCoverPhotoUrl ?? chapter.coverPhotoUrl) ? (
-            <img
-              src={chapter.featuredCoverPhotoUrl ?? chapter.coverPhotoUrl}
-              alt=""
-              className="hero-cover-image absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />
+        <Hero imageUrl={chapter.featuredCoverPhotoUrl ?? chapter.coverPhotoUrl} title={chapter.name}>
+          {chapter.minDate && chapter.maxDate && (
+            <p className="text-xs text-white/65 mt-1 font-medium tracking-wide">
+              {formatDateRange(chapter.minDate, chapter.maxDate)}
+            </p>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 pb-5">
-            <PageContainer>
-              <h1 className="text-3xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
-                {chapter.name}
-              </h1>
-              {chapter.minDate && chapter.maxDate && (
-                <p className="text-xs text-white/65 mt-1 font-medium tracking-wide">
-                  {formatDateRange(chapter.minDate, chapter.maxDate)}
-                </p>
-              )}
-            </PageContainer>
-          </div>
-        </div>
+        </Hero>
       )}
 
       <input

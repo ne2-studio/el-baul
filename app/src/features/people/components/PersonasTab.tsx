@@ -2,10 +2,8 @@ import React from 'react';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Persona } from '@/types';
-import { Card } from '@/design-system/components/data-display/Card';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
-import { getBaulPermissions } from '@/utils/roleUtils';
-import { personaAvatarImageStyle } from './PersonaAvatarPickerModal';
+import { PersonaCard } from './PersonaCard';
 
 interface PersonasTabProps {
   personas: Persona[];
@@ -73,22 +71,13 @@ function PersonaSwimlane({ title, personas, currentUserEmail, onSelectPersona, m
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {personas.map((persona) => (
-          <Card key={persona.id} onClick={() => onSelectPersona(persona)} className="!p-0 overflow-hidden">
-            <div className={`aspect-square bg-secondary flex items-center justify-center overflow-hidden ${muted ? 'opacity-70 grayscale' : ''}`}>
-              {persona.avatarUrl ? (
-                <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" style={personaAvatarImageStyle(persona)} />
-              ) : getBaulPermissions({ role: persona.role }).isCustodio ? (
-                <Icon icon={icons.crown} className="w-10 h-10 text-primary opacity-60" strokeWidth={1.5} aria-hidden />
-              ) : (
-                <Icon icon={icons.user} className="w-10 h-10 text-muted-foreground opacity-40" strokeWidth={1.5} aria-hidden />
-              )}
-            </div>
-            <div className="p-3">
-              <p className="font-medium text-foreground text-center truncate">
-                {isMe(persona) ? 'Tú' : persona.nickname}
-              </p>
-            </div>
-          </Card>
+          <PersonaCard
+            key={persona.id}
+            persona={persona}
+            onClick={() => onSelectPersona(persona)}
+            isMe={isMe(persona)}
+            muted={muted}
+          />
         ))}
       </div>
     </div>

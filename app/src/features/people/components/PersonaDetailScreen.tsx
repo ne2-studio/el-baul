@@ -6,6 +6,7 @@ import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { ManageAccessModal } from '@/features/sharing/components/ManageAccessModal';
+import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
@@ -152,40 +153,31 @@ export function PersonaDetailScreen({
         </PageContainer>
       </StickyHeader>
 
-      {/* Hero */}
-      <div className="relative overflow-hidden" style={{ height: '210px' }}>
-        {persona.avatarUrl ? (
-          <img src={persona.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={personaAvatarImageStyle(persona)} />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />
+      <Hero
+        imageUrl={persona.avatarUrl}
+        imageStyle={persona.avatarUrl ? personaAvatarImageStyle(persona) : undefined}
+        blurUpscaledImage={false}
+        title={displayName}
+      >
+        {persona.name && (
+          <p className="text-sm text-white/80 mt-1 italic">"{persona.nickname}"</p>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 pb-5">
-          <PageContainer>
-            <h1 className="text-3xl font-serif text-white leading-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
-              {displayName}
-            </h1>
-            {persona.name && (
-              <p className="text-sm text-white/80 mt-1 italic">"{persona.nickname}"</p>
-            )}
-            <div className="flex items-center gap-2 mt-2">
-              {!isPending && (
-                <span className="text-xs text-white font-medium px-2 py-1 rounded-full bg-white/20">
-                  {getRoleDisplayName(persona.role)}
-                </span>
-              )}
-              <span className="text-xs text-white/70">
-                {hasNoAccess ? 'Forma parte de la historia familiar' : isPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
-              </span>
-            </div>
-            {hasNoAccess && (
-              <p className="mt-3 max-w-sm rounded-2xl bg-black/35 px-3 py-2 text-xs leading-relaxed text-white/90 backdrop-blur-sm">
-                Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.
-              </p>
-            )}
-          </PageContainer>
+        <div className="flex items-center gap-2 mt-2">
+          {!isPending && (
+            <span className="text-xs text-white font-medium px-2 py-1 rounded-full bg-white/20">
+              {getRoleDisplayName(persona.role)}
+            </span>
+          )}
+          <span className="text-xs text-white/70">
+            {hasNoAccess ? 'Forma parte de la historia familiar' : isPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
+          </span>
         </div>
-      </div>
+        {hasNoAccess && (
+          <p className="mt-3 max-w-sm rounded-2xl bg-black/35 px-3 py-2 text-xs leading-relaxed text-white/90 backdrop-blur-sm">
+            Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.
+          </p>
+        )}
+      </Hero>
 
       {/* Tabs — same sticky underline pattern as ChaptersView.tsx / PhotosView.tsx */}
       <div
