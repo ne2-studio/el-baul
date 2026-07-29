@@ -7,7 +7,7 @@ const meta = {
   title: 'Patterns/Media/PhotoStage',
   component: PhotoStage,
   tags: ['autodocs'],
-  decorators: [(Story) => <div className="bg-foreground h-[70vh]"><Story /></div>],
+  decorators: [(Story) => <div className="bg-foreground h-[70vh] flex"><Story /></div>],
   parameters: {
     docs: {
       description: {

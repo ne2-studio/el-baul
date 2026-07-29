@@ -5,7 +5,7 @@ import { Persona } from '@/types';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 
 const meta = {
-  title: 'Screens/Person/Detail',
+  title: 'Screens/Person/PersonaDetail',
   component: PersonaDetailScreen,
   tags: ['autodocs'],
 } satisfies Meta<typeof PersonaDetailScreen>;

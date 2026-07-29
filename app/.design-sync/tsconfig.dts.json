@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dts-out",
+    "skipLibCheck": true
+  },
+  "include": ["entry.ts", "../src"],
+  "exclude": ["../src/**/*.stories.tsx", "../src/**/*.test.tsx", "../src/**/*.mdx"]
+}

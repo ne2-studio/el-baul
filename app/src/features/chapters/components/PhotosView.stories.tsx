@@ -4,7 +4,7 @@ import { Chapter, Photo, Recuerdo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'Screens/Chapter/Detail',
+  title: 'Screens/Chapter/ChapterDetail',
   component: PhotosView,
   tags: ['autodocs'],
   parameters: {

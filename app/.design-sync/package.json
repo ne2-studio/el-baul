@@ -1,0 +1,6 @@
+{
+  "name": "el-baul-design-system",
+  "private": true,
+  "version": "0.0.1",
+  "types": "dts-out/.design-sync/entry.d.ts"
+}

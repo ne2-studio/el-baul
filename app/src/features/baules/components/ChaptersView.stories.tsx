@@ -5,7 +5,7 @@ import { storybookEdgeText, storybookPhotos } from '@/storybook/fixtures';
 import { viewportGlobals } from '@/storybook/viewports';
 
 const meta = {
-  title: 'Screens/Baul/Detail',
+  title: 'Screens/Baul/BaulDetail',
   component: ChaptersView,
   tags: ['autodocs'],
   parameters: {

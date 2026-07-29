@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "@/types": ["./src/types/index.ts"],
+      "@/features/photos/uploadFlow": ["./src/features/photos/uploadFlow/index.ts"],
+      "@/*": ["./src/*"]
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'Screens/Upload/Error',
+  title: 'Screens/Upload/UploadError',
   component: UploadErrorScreen,
   tags: ['autodocs'],
   parameters: {
