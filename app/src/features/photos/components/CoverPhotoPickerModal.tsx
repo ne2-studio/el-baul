@@ -75,18 +75,22 @@ export function CoverPhotoPickerModal({ title, fetchPage, onSelect, onCancel }: 
   };
 
   return (
-    <BottomSheetModal onCancel={onCancel} size="lg">
-      <div className="sticky top-0 -mx-6 -mt-6 px-6 pt-6 pb-4 bg-card z-10 flex items-center justify-between border-b border-border">
-        <h2 className="text-xl font-serif text-foreground">{title}</h2>
-        <Button variant="plain"
-          onClick={onCancel}
-          aria-label="Cerrar"
-          className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-      </div>
-
+    <BottomSheetModal
+      onCancel={onCancel}
+      size="lg"
+      header={
+        <>
+          <h2 className="text-xl font-serif text-foreground">{title}</h2>
+          <Button variant="plain"
+            onClick={onCancel}
+            aria-label="Cerrar"
+            className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </>
+      }
+    >
       {isInitialLoad ? (
         <LoadingSpinner message="Cargando fotos..." />
       ) : photos.length === 0 ? (

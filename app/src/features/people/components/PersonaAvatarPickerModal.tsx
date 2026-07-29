@@ -121,19 +121,23 @@ export function PersonaAvatarPickerModal({
   };
 
   return (
-    <BottomSheetModal onCancel={onCancel} size="lg">
-      <div className="sticky top-0 -mx-6 -mt-6 px-6 pt-6 pb-4 bg-card z-10 flex items-center justify-between border-b border-border">
-        <h2 className="text-xl font-serif text-foreground">Foto de {personaName}</h2>
-        <Button
-          variant="plain"
-          onClick={onCancel}
-          aria-label="Cerrar"
-          className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-      </div>
-
+    <BottomSheetModal
+      onCancel={onCancel}
+      size="lg"
+      header={
+        <>
+          <h2 className="text-xl font-serif text-foreground">Foto de {personaName}</h2>
+          <Button
+            variant="plain"
+            onClick={onCancel}
+            aria-label="Cerrar"
+            className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </>
+      }
+    >
       <div className="space-y-5">
         <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
           La foto que subas se añadirá al baúl como una foto suelta.
