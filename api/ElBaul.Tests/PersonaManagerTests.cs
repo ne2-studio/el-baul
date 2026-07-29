@@ -27,7 +27,7 @@ public class PersonaManagerTests
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PersonaManager>.Instance, _baulRepository, _photoRepository, _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance), _photoPersonaTagRepository);
+            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
@@ -316,12 +316,12 @@ public class PersonaManagerTests
     }
 
     [Fact]
-    public async Task RemovePersonaAsync_ShouldClearHerPhotoTags_BeforeRemovingHer()
+    public async Task RemovePersonaAsync_ShouldRevokeAccess_WithoutRemovingPersonaOrPhotoTags()
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), OtherUserId, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
         var photoId = Guid.NewGuid();
         await _photoPersonaTagRepository.SetTagsAsync(new PhotoId(photoId), new BaulId(baulId), [new PersonaId(personaId)], _clock.UtcNow());
 
@@ -329,7 +329,55 @@ public class PersonaManagerTests
         var result = await manager.RemovePersonaAsync(new BaulId(baulId), new PersonaId(personaId));
 
         Assert.True(result.IsSuccess);
-        Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
-        Assert.Null(await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId)));
+        Assert.Contains(new PersonaId(personaId), await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
+
+        var persona = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
+        Assert.NotNull(persona);
+        Assert.Null(persona.UserId);
+        Assert.Equal(BaulRole.SinAcceso, persona.Role);
+    }
+
+    [Fact]
+    public async Task RemovePersonaAsync_ShouldRejectCustodio()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var custodioPersona = (await _baulRepository.GetPersonaByUserIdAsync(new BaulId(baulId), CustodioId))!;
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.RemovePersonaAsync(new BaulId(baulId), custodioPersona.Id);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("The custodio cannot lose access", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task AcceptPersonalInviteAsync_ShouldFail_WhenAccessWasRevoked()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.SinAcceso, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.AcceptPersonalInviteAsync(new PersonaId(personaId));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Invitation not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task GetInvitePreviewAsync_ShouldFail_WhenAccessWasRevoked()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.SinAcceso, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.GetInvitePreviewAsync(new PersonaId(personaId));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Invitation not found", result.Error.Message);
     }
 }

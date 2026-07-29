@@ -40,6 +40,18 @@ describe('roleUtils baul permissions', () => {
         canDeleteChapter: false,
       },
     },
+    {
+      role: 'sin_acceso' as BaulRole,
+      expected: {
+        isAdmin: false,
+        isCustodio: false,
+        canEditBaul: false,
+        canRequestBaulDeletion: false,
+        canReviewRemovalRequests: false,
+        canSetBaulCover: false,
+        canDeleteChapter: false,
+      },
+    },
   ])('maps $role to baul capabilities', ({ role, expected }) => {
     expect(getBaulPermissions({ role })).toMatchObject(expected);
     expect(isAdminRole(role)).toBe(expected.isAdmin);
@@ -52,6 +64,7 @@ describe('roleUtils baul permissions', () => {
 
   it('keeps the existing plan-limit fallback for loaded baules without isCustodio', () => {
     expect(getBaulPermissions({ role: 'colaborador' }).countsAsCustodioForPlan).toBe(true);
+    expect(getBaulPermissions({ role: 'sin_acceso' }).countsAsCustodioForPlan).toBe(false);
     expect(getBaulPermissions({ role: 'colaborador', isCustodio: false }).countsAsCustodioForPlan).toBe(false);
     expect(getBaulPermissions().countsAsCustodioForPlan).toBe(false);
   });
@@ -76,6 +89,7 @@ describe('roleUtils persona permissions', () => {
         canSharePersonaInvite: false,
         canChangePersonaRole: true,
         canRevokePersonaAccess: true,
+        canRestorePersonaAccess: false,
       },
     },
     {
@@ -86,6 +100,7 @@ describe('roleUtils persona permissions', () => {
         canSharePersonaInvite: true,
         canChangePersonaRole: false,
         canRevokePersonaAccess: true,
+        canRestorePersonaAccess: false,
       },
     },
     {
@@ -96,6 +111,18 @@ describe('roleUtils persona permissions', () => {
         canSharePersonaInvite: false,
         canChangePersonaRole: false,
         canRevokePersonaAccess: false,
+        canRestorePersonaAccess: false,
+      },
+    },
+    {
+      currentBaulRole: 'administrador' as BaulRole,
+      target: persona({ role: 'sin_acceso', status: 'sin_acceso' }),
+      expected: {
+        canManagePersona: true,
+        canSharePersonaInvite: false,
+        canChangePersonaRole: false,
+        canRevokePersonaAccess: false,
+        canRestorePersonaAccess: true,
       },
     },
     {
@@ -106,6 +133,7 @@ describe('roleUtils persona permissions', () => {
         canSharePersonaInvite: false,
         canChangePersonaRole: false,
         canRevokePersonaAccess: false,
+        canRestorePersonaAccess: false,
       },
     },
   ])('maps current $currentBaulRole and target persona to manage capabilities', ({ currentBaulRole, target, expected }) => {

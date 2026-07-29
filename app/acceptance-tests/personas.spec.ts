@@ -5,7 +5,7 @@ import { loginAs, createBaulViaApi, API_BASE_URL } from './helpers';
 // no longer pending, and a persona can only leave "pending" by a *different* account accepting
 // the invite — the backend rejects self-accept (the inviting/custodian account already has a
 // Persona row in that baúl). See AcceptPersonalInviteAsync.
-test('create persona → accept invite → change role → revoke access', async ({ page, browser }) => {
+test('create persona → accept invite → change role → revoke access → allow invite again', async ({ page, browser }) => {
   const accessToken = await loginAs(page, 'Admin User');
   const baulId = await createBaulViaApi(page, accessToken, `Personas test baúl ${Date.now()}`);
   await page.goto(`/baules/${baulId}`);
@@ -44,7 +44,34 @@ test('create persona → accept invite → change role → revoke access', async
   await page.getByRole('button', { name: 'Cerrar' }).click();
 
   await page.getByRole('button', { name: 'Opciones de la persona' }).click();
-  await page.getByRole('menuitem', { name: 'Quitar acceso' }).click();
-  await page.getByRole('button', { name: 'Quitar acceso' }).click();
-  await page.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 10_000 });
+  await page.getByRole('menuitem', { name: 'Revocar acceso' }).click();
+  await page.getByRole('button', { name: 'Revocar acceso' }).click();
+
+  await expect(page.getByText('Sin acceso')).toBeVisible();
+  await expect(page.getByText('Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.')).toBeVisible();
+
+  const revokedPersonasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(revokedPersonasResponse.ok(), `failed to list revoked personas: ${revokedPersonasResponse.status()}`).toBeTruthy();
+  const revokedPersonas = await revokedPersonasResponse.json();
+  const revokedPersona = revokedPersonas.find((p: { id: string }) => p.id === personaId);
+  expect(revokedPersona).toMatchObject({ id: personaId, nickname, role: 'sin_acceso', status: 'sin_acceso', userId: null });
+
+  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Compartir invitación' })).toBeHidden();
+  await expect(page.getByRole('menuitem', { name: 'Gestionar acceso' })).toBeHidden();
+
+  await page.getByRole('menuitem', { name: 'Permitir invitación' }).click();
+  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Compartir invitación' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Gestionar acceso' })).toBeHidden();
+
+  const restoredPersonasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(restoredPersonasResponse.ok(), `failed to list restored personas: ${restoredPersonasResponse.status()}`).toBeTruthy();
+  const restoredPersonas = await restoredPersonasResponse.json();
+  const restoredPersona = restoredPersonas.find((p: { id: string }) => p.id === personaId);
+  expect(restoredPersona).toMatchObject({ id: personaId, nickname, role: 'colaborador', status: 'pending', userId: null });
 });

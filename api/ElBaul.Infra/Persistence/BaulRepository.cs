@@ -17,7 +17,7 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         // surfaced via GetOwnedByUserIdAsync, and now that custodians also have a
         // real Personas row, without this filter their own baul would be listed twice.
         var rows = await dbContext.Personas.AsNoTracking()
-            .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio)
+            .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio && s.Role != BaulRole.SinAcceso)
             .Join(dbContext.Baules.AsNoTracking(), s => s.BaulId, b => b.Id, (s, b) => new { Baul = b, s.Role })
             .ToListAsync();
 

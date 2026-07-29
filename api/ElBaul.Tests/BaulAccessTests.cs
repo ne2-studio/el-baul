@@ -71,6 +71,16 @@ public class BaulAccessTests
         Assert.False(access.IsAdmin);
     }
 
+    [Fact]
+    public void SinAccesoPersona_ShouldDenyMembershipAndAdmin()
+    {
+        var access = new BaulAccess(TestBaul, IsCustodio: false, MakePersona(BaulRole.SinAcceso));
+
+        Assert.False(access.IsMember);
+        Assert.False(access.IsAdmin);
+        Assert.Equal(BaulRole.SinAcceso, access.Role);
+    }
+
     // --- BaulAccessService.GetAsync: derives IsCustodio from Baul.CustodioId and attaches
     // whatever Persona row the repository returns for (baulId, userId) ---
 

@@ -84,7 +84,11 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
     set((state) => ({
       personas: {
         ...state.personas,
-        [baulId]: previous.map((u) => (u.id === personaId ? { ...u, role } : u)),
+        [baulId]: previous.map((u) => (
+          u.id === personaId
+            ? { ...u, role, status: u.status === 'sin_acceso' ? 'pending' : u.status }
+            : u
+        )),
       },
     }));
     try {
@@ -100,7 +104,11 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
     set((state) => ({
       personas: {
         ...state.personas,
-        [baulId]: (state.personas[baulId] || []).filter((u) => u.id !== personaId),
+        [baulId]: (state.personas[baulId] || []).map((persona) =>
+          persona.id === personaId
+            ? { ...persona, email: undefined, role: 'sin_acceso', status: 'sin_acceso' }
+            : persona
+        ),
       },
     }));
   },

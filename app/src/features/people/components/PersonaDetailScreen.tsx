@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserX } from 'lucide-react';
+import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserPlus, UserX } from 'lucide-react';
 import { Persona, BaulRole, Photo } from '@/types';
 import { getPersonaPermissions, getRoleDisplayName, PersonaPermissions } from '@/utils/roleUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
@@ -60,6 +60,7 @@ export function PersonaDetailScreen({
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const displayName = persona.name || persona.nickname;
   const isPending = persona.status === 'pending';
+  const hasNoAccess = persona.role === 'sin_acceso' || persona.status === 'sin_acceso';
 
   const handleConfirmRevoke = async () => {
     setIsRevoking(true);
@@ -135,12 +136,19 @@ export function PersonaDetailScreen({
                     </DropdownMenuItem>
                   )}
 
+                  {permissions.canRestorePersonaAccess && (
+                    <DropdownMenuItem onClick={() => onChangeRole('colaborador')}>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Permitir invitación
+                    </DropdownMenuItem>
+                  )}
+
                   {permissions.canManagePersona && <DropdownMenuSeparator />}
 
                   {permissions.canRevokePersonaAccess && (
                     <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
                       <UserX className="w-4 h-4 mr-2" />
-                      Quitar acceso
+                      Revocar acceso
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -182,9 +190,14 @@ export function PersonaDetailScreen({
                 </span>
               )}
               <span className="text-xs text-white/70">
-                {isPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
+                {hasNoAccess ? 'Forma parte de la historia familiar' : isPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
               </span>
             </div>
+            {hasNoAccess && (
+              <p className="mt-3 max-w-sm rounded-2xl bg-black/35 px-3 py-2 text-xs leading-relaxed text-white/90 backdrop-blur-sm">
+                Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.
+              </p>
+            )}
           </PageContainer>
         </div>
       </div>

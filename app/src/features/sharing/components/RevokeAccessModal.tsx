@@ -12,13 +12,12 @@ export function RevokeAccessModal({ userName, onConfirm, onCancel, isSubmitting 
   return (
     <BottomSheetModal onCancel={onCancel} desktopCentered backdropOpacity={60}>
       <h2 className="font-serif text-xl text-foreground mb-1">
-        Quitar acceso
+        ¿Revocar el acceso?
       </h2>
 
       <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3 mb-5 mt-3">
         <p className="text-xs text-destructive/80 leading-relaxed">
-          <span className="font-semibold">Atención:</span>{' '}
-          <span className="font-semibold">{userName}</span> dejará de ver el contenido de este baúl.
+          <span className="font-semibold">{userName}</span> dejará de poder acceder al baúl, y no podrá recibir invitaciones en el futuro, pero seguirá formando parte de la historia familiar y aparecerá en fotos, recuerdos y cronologías.
         </p>
       </div>
 
@@ -38,7 +37,7 @@ export function RevokeAccessModal({ userName, onConfirm, onCancel, isSubmitting 
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
-          Quitar acceso
+          Revocar acceso
         </Button>
       </div>
     </BottomSheetModal>

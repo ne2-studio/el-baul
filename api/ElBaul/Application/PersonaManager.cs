@@ -13,13 +13,12 @@ public class PersonaManager(
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
-    IPhotoPersonaTagRepository photoPersonaTagRepository) : IPersonaManager
+    BaulAccessService baulAccess) : IPersonaManager
 {
     public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(PersonaId personaId)
     {
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.IsClaimed)
+        if (persona is null || persona.IsClaimed || persona.Role == BaulRole.SinAcceso)
             return Result.Failure<BaulPreviewDto>(ApplicationError.NotFound("Invitation not found"));
 
         var baul = await baulRepository.GetByIdAsync(persona.BaulId);
@@ -43,6 +42,12 @@ public class PersonaManager(
         if (persona is null)
         {
             logger.LogWarning("Personal invitation acceptance rejected: persona not found {PersonaId}", personaId);
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Invitation not found"));
+        }
+
+        if (persona.Role == BaulRole.SinAcceso)
+        {
+            logger.LogWarning("Personal invitation acceptance rejected: access revoked {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Invitation not found"));
         }
 
@@ -243,12 +248,22 @@ public class PersonaManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona removal", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        // Must run before the persona row is removed: PhotoPersonaTag's FK to Persona is
-        // Restrict (see PhotoPersonaTagConfiguration), so a real Postgres delete would
-        // otherwise fail with any tags still pointing at this persona.
-        await photoPersonaTagRepository.DeleteByPersonaIdAsync(personaId);
-        await baulRepository.RemovePersonaAsync(baulId, personaId);
-        logger.LogInformation("Persona removed {BaulId} {PersonaId}", baulId, personaId);
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId)
+        {
+            logger.LogWarning("Persona access revocation rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            return Result.Failure(ApplicationError.NotFound("Persona not found"));
+        }
+
+        if (persona.Role == BaulRole.Custodio || persona.UserId == auth.Value.Baul.CustodioId)
+        {
+            logger.LogWarning("Persona access revocation rejected: custodio cannot lose access {BaulId} {PersonaId}", baulId, personaId);
+            return Result.Failure(ApplicationError.Validation("The custodio cannot lose access"));
+        }
+
+        var updated = persona with { UserId = null, Role = BaulRole.SinAcceso };
+        await baulRepository.UpdatePersonaAsync(updated);
+        logger.LogInformation("Persona access revoked {BaulId} {PersonaId}", baulId, personaId);
         return Result.Success();
     }
 
@@ -263,7 +278,7 @@ public class PersonaManager(
 
         return new PersonaDto(
             persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
-            persona.Nickname, persona.Role.ToApiString(), persona.IsClaimed ? "active" : "pending",
+            persona.Nickname, persona.Role.ToApiString(), persona.Role == BaulRole.SinAcceso ? "sin_acceso" : persona.IsClaimed ? "active" : "pending",
             persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia);
     }
 }

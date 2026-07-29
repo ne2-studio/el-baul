@@ -126,9 +126,9 @@ export const PersonaDetailRoute: React.FC = () => {
   const handleRevokeAccess = async (): Promise<boolean> => {
     const result = await run(() => revokeAccess(baulId, personaId), {
       key: 'revoke',
-      errorMessage: 'Error al quitar el acceso',
+      successMessage: 'Acceso revocado',
+      errorMessage: 'Error al revocar el acceso',
     });
-    if (result.ok) navigate(`/baules/${baulId}`, { state: { activeTab: returnTab } });
     return result.ok;
   };
 

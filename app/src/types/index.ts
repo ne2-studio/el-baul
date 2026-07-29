@@ -12,7 +12,7 @@ type RecuerdoDto = ApiSchemas['RecuerdoDto'];
 type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
 type UserProfileDto = ApiSchemas['UserProfileDto'];
 
-export type BaulRole = 'custodio' | 'administrador' | 'colaborador';
+export type BaulRole = 'custodio' | 'administrador' | 'colaborador' | 'sin_acceso';
 
 export type SupportCategory = 'Support' | 'Bug' | 'Suggestion' | 'BaulDeletion';
 
@@ -33,7 +33,7 @@ export class Persona {
   email?: string;
   name?: string;
   nickname: string;
-  status: 'active' | 'pending';
+  status: 'active' | 'pending' | 'sin_acceso';
   role: BaulRole;
   invitedDate: string;
   avatarUrl?: string;
@@ -46,7 +46,7 @@ export class Persona {
     this.email = data.email ?? undefined;
     this.name = data.name ?? undefined;
     this.nickname = data.nickname;
-    this.status = data.status as 'active' | 'pending';
+    this.status = data.status as 'active' | 'pending' | 'sin_acceso';
     this.role = data.role as BaulRole;
     this.invitedDate = formatRelativeTime(data.invitedDate);
     this.avatarUrl = data.avatarUrl ?? undefined;

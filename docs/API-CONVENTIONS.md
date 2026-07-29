@@ -41,11 +41,15 @@ given action.
 
 ## Authorization / roles
 
-Baúl roles: `custodio`, `administrador`, `colaborador`. A custodio is just the
+Baúl access roles: `custodio`, `administrador`, `colaborador`. A custodio is just the
 administrador marked as the baúl's original creator — identical permissions otherwise.
-There is no read-only role: every member with access can add chapters/photos and post
-recuerdos. Only custodio/administrador can manage Personas (invite, change role, remove),
-resolve removal requests, delete a photo directly, or set the baúl's cover.
+There is no read-only access role: every member with access can add chapters/photos and post
+recuerdos. Only custodio/administrador can manage Personas (invite, change role, revoke
+access), resolve removal requests, delete a photo directly, or set the baúl's cover.
+
+Personas can also have the internal role `sin_acceso`: they still belong to the baúl's family
+history and can remain tagged in photos/recuerdos, but they do not count as members with access
+and cannot accept or preview invitation links.
 
 ## Invitations
 

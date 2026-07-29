@@ -20,13 +20,15 @@ export interface PersonaPermissions {
   canSharePersonaInvite: boolean;
   canChangePersonaRole: boolean;
   canRevokePersonaAccess: boolean;
+  canRestorePersonaAccess: boolean;
 }
 
 export function getRoleDisplayName(role: BaulRole): string {
   const roleNames: Record<BaulRole, string> = {
     custodio: 'Custodio',
     administrador: 'Administrador',
-    colaborador: 'Colaborador'
+    colaborador: 'Colaborador',
+    sin_acceso: 'Sin acceso'
   };
   return roleNames[role];
 }
@@ -35,7 +37,8 @@ export function getRoleDescription(role: BaulRole): string {
   const descriptions: Record<BaulRole, string> = {
     custodio: 'Gestiona el baúl',
     administrador: 'Gestiona el baúl, igual que el custodio',
-    colaborador: 'Puede añadir fotos'
+    colaborador: 'Puede añadir fotos',
+    sin_acceso: 'Forma parte de la historia, sin acceso al baúl'
   };
   return descriptions[role];
 }
@@ -55,7 +58,7 @@ export function getBaulPermissions(baul?: Pick<Baul, 'role' | 'isCustodio'>): Ba
   return {
     isAdmin,
     isCustodio,
-    countsAsCustodioForPlan: baul ? baul.isCustodio !== false : false,
+    countsAsCustodioForPlan: baul ? baul.isCustodio !== false && baul.role !== 'sin_acceso' : false,
     canCreatePersona: isAdmin,
     canEditBaul: isAdmin,
     canRequestBaulDeletion: isCustodio,
@@ -74,6 +77,7 @@ export function getPersonaPermissions({
 }): PersonaPermissions {
   const currentBaulPermissions = getBaulPermissions({ role: currentBaulRole });
   const canEditOwnPersona = persona.canEdit ?? false;
+  const hasNoAccess = persona.role === 'sin_acceso' || persona.status === 'sin_acceso';
   const canManagePersona = currentBaulPermissions.isAdmin && !isCustodioRole(persona.role);
   const isPending = persona.status === 'pending';
 
@@ -82,8 +86,9 @@ export function getPersonaPermissions({
     canEditPersonaBiography: canEditOwnPersona,
     canUploadPersonaAvatar: canEditOwnPersona,
     canManagePersona,
-    canSharePersonaInvite: canManagePersona && isPending,
-    canChangePersonaRole: canManagePersona && !isPending,
-    canRevokePersonaAccess: canManagePersona,
+    canSharePersonaInvite: canManagePersona && isPending && !hasNoAccess,
+    canChangePersonaRole: canManagePersona && !isPending && !hasNoAccess,
+    canRevokePersonaAccess: canManagePersona && !hasNoAccess,
+    canRestorePersonaAccess: canManagePersona && hasNoAccess,
   };
 }

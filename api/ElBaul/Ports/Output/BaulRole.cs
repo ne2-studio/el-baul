@@ -4,7 +4,8 @@ public enum BaulRole
 {
     Colaborador,
     Administrador,
-    Custodio
+    Custodio,
+    SinAcceso
 }
 
 // Wire-string <-> BaulRole, public (unlike DtoMapping) so the Presentation layer can parse a

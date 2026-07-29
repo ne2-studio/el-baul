@@ -27,7 +27,7 @@ public class InMemoryBaulRepository : IBaulRepository
         lock (_lock)
         {
             var result = _personas.Values
-                .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio)
+                .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio && s.Role != BaulRole.SinAcceso)
                 .Select(s => new BaulAccess(_baules[s.BaulId], s.Role))
                 .ToList();
 

@@ -14,6 +14,7 @@ internal static class DtoMapping
         BaulRole.Colaborador => "colaborador",
         BaulRole.Administrador => "administrador",
         BaulRole.Custodio => "custodio",
+        BaulRole.SinAcceso => "sin_acceso",
         _ => throw new ArgumentOutOfRangeException(nameof(role))
     };
 
