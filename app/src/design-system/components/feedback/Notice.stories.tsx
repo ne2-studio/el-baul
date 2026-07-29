@@ -3,7 +3,7 @@ import { AlertTriangle, Heart, Info } from 'lucide-react';
 import { Notice } from '@/design-system/components/feedback/Notice';
 
 const meta = {
-  title: 'Design System/Feedback/Notice',
+  title: 'Components/Feedback/Notice',
   component: Notice,
   tags: ['autodocs'],
   parameters: {

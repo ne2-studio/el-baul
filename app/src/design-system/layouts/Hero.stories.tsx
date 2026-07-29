@@ -3,7 +3,7 @@ import { Hero } from '@/design-system/layouts/Hero';
 import { storybookAvatars, storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'Design System/Layouts/Hero',
+  title: 'Layouts/Hero',
   component: Hero,
   tags: ['autodocs'],
   parameters: {
