@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { PageHeader } from '@/design-system/layouts/PageHeader';
 
 export interface RemovalRequest {
   id: string;
@@ -46,27 +46,16 @@ export function RemovalRequestsList({
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-background border-b border-border sticky top-0 z-10">
-        <div className="flex items-center gap-4 p-4">
-          <Button variant="plain"
-            onClick={onBack}
-            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
-          >
-            <ChevronLeft className="w-6 h-6 text-foreground" />
-          </Button>
-          <div>
-            <h1 className="font-serif text-xl text-foreground">
-              Solicitudes de retirada
-            </h1>
-            {pendingRequests.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {pendingRequests.length} {pendingRequests.length === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        variant="inline"
+        onBack={onBack}
+        title="Solicitudes de retirada"
+        titleClassName="font-serif text-xl"
+        subtitle={
+          pendingRequests.length > 0 &&
+          `${pendingRequests.length} ${pendingRequests.length === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}`
+        }
+      />
 
       {/* Content */}
       <div className="p-4">

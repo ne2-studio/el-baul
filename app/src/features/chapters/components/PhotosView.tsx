@@ -6,10 +6,10 @@ import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
+import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
-import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
-import { ChevronLeft, Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
@@ -128,60 +128,53 @@ export function PhotosView({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky header — back + actions */}
-      <StickyHeader ref={headerRef}>
-        <PageContainer className="py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="plain"
-              onClick={selectionMode ? exitSelection : onBack}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">{selectionMode ? 'Cancelar' : 'Volver'}</span>
-            </Button>
-
-            {selectionMode ? (
-              <span className="text-sm font-medium text-foreground">
-                {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
-              </span>
-            ) : onUpdateChapterInfo && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="plain"
-                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-                    aria-label="Opciones del capítulo"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setSelectionMode(true)}>
-                    <CheckSquare className="w-4 h-4 mr-2" />
-                    Seleccionar fotos
+      <PageHeader
+        ref={headerRef}
+        variant="row"
+        onBack={selectionMode ? exitSelection : onBack}
+        backLabel={selectionMode ? 'Cancelar' : 'Volver'}
+        trailing={
+          selectionMode ? (
+            <span className="text-sm font-medium text-foreground">
+              {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
+            </span>
+          ) : onUpdateChapterInfo && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="plain"
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+                  aria-label="Opciones del capítulo"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setSelectionMode(true)}>
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                  Seleccionar fotos
+                </DropdownMenuItem>
+                {onFetchChapterCoverPhotos && onSetChapterCover && (
+                  <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    Elegir foto de portada
                   </DropdownMenuItem>
-                  {onFetchChapterCoverPhotos && onSetChapterCover && (
-                    <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Elegir foto de portada
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Editar información del capítulo
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Editar información del capítulo
+                </DropdownMenuItem>
+                {onDeleteChapter && (
+                  <DropdownMenuItem variant="destructive" onClick={() => setShowDeleteModal(true)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar capítulo
                   </DropdownMenuItem>
-                  {onDeleteChapter && (
-                    <DropdownMenuItem variant="destructive" onClick={() => setShowDeleteModal(true)}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Eliminar capítulo
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </PageContainer>
-      </StickyHeader>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
+      />
 
       {/* Hero — shown when not in selection mode */}
       {!selectionMode && (

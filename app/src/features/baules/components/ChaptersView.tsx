@@ -8,11 +8,11 @@ import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { NuevaPersonaModal } from '@/features/people/components/NuevaPersonaModal';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
+import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PersonasTab } from '@/features/people/components/PersonasTab';
 import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
-import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
-import { ChevronLeft, Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
@@ -127,74 +127,66 @@ export function ChaptersView({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky header — back + actions only */}
-      <StickyHeader ref={headerRef}>
-        <PageContainer className="py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="plain"
-              onClick={onBack}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">Volver</span>
-            </Button>
-
-            {(onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="plain"
-                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
-                    aria-label="Opciones del baúl"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                    {(pendingRemovalRequestsCount ?? 0) > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {onFetchBaulCoverPhotos && onSetBaulCover && (
-                    <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Elegir foto de portada
-                    </DropdownMenuItem>
+      <PageHeader
+        ref={headerRef}
+        variant="row"
+        onBack={onBack}
+        trailing={
+          (onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="plain"
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
+                  aria-label="Opciones del baúl"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                  {(pendingRemovalRequestsCount ?? 0) > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
                   )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {onFetchBaulCoverPhotos && onSetBaulCover && (
+                  <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    Elegir foto de portada
+                  </DropdownMenuItem>
+                )}
 
-                  {onUpdateBaulInfo && (
-                    <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Editar información del baúl
-                    </DropdownMenuItem>
-                  )}
+                {onUpdateBaulInfo && (
+                  <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editar información del baúl
+                  </DropdownMenuItem>
+                )}
 
-                  {onUpdateBaulInfo && onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
-                    <DropdownMenuSeparator />
-                  )}
+                {onUpdateBaulInfo && onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
+                  <DropdownMenuSeparator />
+                )}
 
-                  {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
-                    <DropdownMenuItem onClick={onRemovalRequests}>
-                      <Bell className="w-4 h-4 mr-2" />
-                      <span>Solicitudes de eliminación</span>
-                      <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                        {pendingRemovalRequestsCount}
-                      </span>
-                    </DropdownMenuItem>
-                  )}
+                {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
+                  <DropdownMenuItem onClick={onRemovalRequests}>
+                    <Bell className="w-4 h-4 mr-2" />
+                    <span>Solicitudes de eliminación</span>
+                    <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                      {pendingRemovalRequestsCount}
+                    </span>
+                  </DropdownMenuItem>
+                )}
 
-                  {baulPermissions.canRequestBaulDeletion && (onUpdateBaulInfo || onRemovalRequests) && <DropdownMenuSeparator />}
+                {baulPermissions.canRequestBaulDeletion && (onUpdateBaulInfo || onRemovalRequests) && <DropdownMenuSeparator />}
 
-                  {baulPermissions.canRequestBaulDeletion && (
-                    <DropdownMenuItem variant="destructive" onClick={onRequestBaulDeletion}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Eliminar baúl
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </PageContainer>
-      </StickyHeader>
+                {baulPermissions.canRequestBaulDeletion && (
+                  <DropdownMenuItem variant="destructive" onClick={onRequestBaulDeletion}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar baúl
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
+      />
 
       <Hero imageUrl={baul.coverPhotoUrl} title={baul.name}>
         {baul.description && (

@@ -5,7 +5,7 @@ import { icons } from '@/design-system/foundations/icons/icons';
 import { Baul, Chapter, PhotoDate } from '@/types';
 import { ChapterSelector, ChapterSelection } from '@/features/chapters/components/ChapterSelector';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
-import { StickyHeader } from '@/design-system/layouts/StickyHeader';
+import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 
 interface UploadConfirmationScreenProps {
@@ -49,20 +49,12 @@ export function UploadConfirmationScreen({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <StickyHeader>
-        <PageContainer className="py-5">
-          <Button variant="plain"
-            onClick={onBack}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3"
-          >
-            <Icon icon={icons.chevronLeft} size="sm" aria-hidden />
-            <span className="text-sm">Volver</span>
-          </Button>
-          <h1 className="text-3xl text-foreground mb-1">Añadir fotos al capítulo</h1>
-          <p className="text-sm text-muted-foreground">{currentChapter.name}</p>
-        </PageContainer>
-      </StickyHeader>
+      <PageHeader
+        variant="stacked"
+        onBack={onBack}
+        title="Añadir fotos al capítulo"
+        subtitle={currentChapter.name}
+      />
 
       {/* Content */}
       <PageContainer className="py-6">

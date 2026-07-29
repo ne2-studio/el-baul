@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Camera, ChevronLeft, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserPlus, UserX } from 'lucide-react';
+import { BookOpen, Camera, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserPlus, UserX } from 'lucide-react';
 import { Persona, BaulRole, Photo } from '@/types';
 import { getPersonaPermissions, getRoleDisplayName, PersonaPermissions } from '@/utils/roleUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
@@ -8,10 +8,10 @@ import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { ManageAccessModal } from '@/features/sharing/components/ManageAccessModal';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
+import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
 import { personaAvatarImageStyle } from './PersonaAvatarPickerModal';
-import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
 import { Button } from '@/design-system/components/actions/Button';
 import {
@@ -72,86 +72,79 @@ export function PersonaDetailScreen({
 
   return (
     <div className="min-h-screen bg-background">
-      <StickyHeader ref={headerRef}>
-        <PageContainer className="py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="plain"
-              onClick={onBack}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">Volver</span>
-            </Button>
+      <PageHeader
+        ref={headerRef}
+        variant="row"
+        onBack={onBack}
+        trailing={
+          (permissions.canEditPersonaInfo || permissions.canManagePersona) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="plain"
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
+                  aria-label="Opciones de la persona"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {permissions.canEditPersonaInfo && (
+                  <DropdownMenuItem onClick={onEditInfo}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editar información
+                  </DropdownMenuItem>
+                )}
 
-            {(permissions.canEditPersonaInfo || permissions.canManagePersona) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="plain"
-                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-                    aria-label="Opciones de la persona"
+                {permissions.canUploadPersonaAvatar && (
+                  <DropdownMenuItem
+                    onClick={onChangeAvatar}
+                    disabled={isUploadingAvatar}
                   >
-                    <MoreVertical className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {permissions.canEditPersonaInfo && (
-                    <DropdownMenuItem onClick={onEditInfo}>
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Editar información
-                    </DropdownMenuItem>
-                  )}
+                    {isUploadingAvatar ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Camera className="w-4 h-4 mr-2" />
+                    )}
+                    Cambiar foto de perfil
+                  </DropdownMenuItem>
+                )}
 
-                  {permissions.canUploadPersonaAvatar && (
-                    <DropdownMenuItem
-                      onClick={onChangeAvatar}
-                      disabled={isUploadingAvatar}
-                    >
-                      {isUploadingAvatar ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Camera className="w-4 h-4 mr-2" />
-                      )}
-                      Cambiar foto de perfil
-                    </DropdownMenuItem>
-                  )}
+                {permissions.canEditPersonaInfo && permissions.canManagePersona && <DropdownMenuSeparator />}
 
-                  {permissions.canEditPersonaInfo && permissions.canManagePersona && <DropdownMenuSeparator />}
+                {permissions.canSharePersonaInvite && (
+                  <DropdownMenuItem onClick={onShareInvite}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Compartir invitación
+                  </DropdownMenuItem>
+                )}
 
-                  {permissions.canSharePersonaInvite && (
-                    <DropdownMenuItem onClick={onShareInvite}>
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Compartir invitación
-                    </DropdownMenuItem>
-                  )}
+                {permissions.canChangePersonaRole && (
+                  <DropdownMenuItem onClick={() => setShowManageAccessModal(true)}>
+                    <UserCog className="w-4 h-4 mr-2" />
+                    Gestionar acceso
+                  </DropdownMenuItem>
+                )}
 
-                  {permissions.canChangePersonaRole && (
-                    <DropdownMenuItem onClick={() => setShowManageAccessModal(true)}>
-                      <UserCog className="w-4 h-4 mr-2" />
-                      Gestionar acceso
-                    </DropdownMenuItem>
-                  )}
+                {permissions.canRestorePersonaAccess && (
+                  <DropdownMenuItem onClick={() => onChangeRole('colaborador')}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Permitir invitación
+                  </DropdownMenuItem>
+                )}
 
-                  {permissions.canRestorePersonaAccess && (
-                    <DropdownMenuItem onClick={() => onChangeRole('colaborador')}>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Permitir invitación
-                    </DropdownMenuItem>
-                  )}
+                {permissions.canManagePersona && <DropdownMenuSeparator />}
 
-                  {permissions.canManagePersona && <DropdownMenuSeparator />}
-
-                  {permissions.canRevokePersonaAccess && (
-                    <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
-                      <UserX className="w-4 h-4 mr-2" />
-                      Revocar acceso
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </PageContainer>
-      </StickyHeader>
+                {permissions.canRevokePersonaAccess && (
+                  <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>
+                    <UserX className="w-4 h-4 mr-2" />
+                    Revocar acceso
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
+      />
 
       <Hero
         imageUrl={persona.avatarUrl}
