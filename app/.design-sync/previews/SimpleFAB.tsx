@@ -50,5 +50,7 @@ function sized(Inner: () => any) {
   return () => React.createElement('div', { style: { position: 'relative', height: '100vh', width: '100%' } }, React.createElement(Inner));
 }
 
-export const Simple = sized(compose(S, "Simple"));
-export const Expandable = sized(compose(S, "Expandable"));
+export const BaulesListNuevoBaul = sized(compose(S, "BaulesListNuevoBaul"));
+export const PhotosViewSubirFotos = sized(compose(S, "PhotosViewSubirFotos"));
+export const RecuerdosFeedEscribeLoQueRecuerdas = sized(compose(S, "RecuerdosFeedEscribeLoQueRecuerdas"));
+export const PersonaDetailScreenEditarBiografia = sized(compose(S, "PersonaDetailScreenEditarBiografia"));

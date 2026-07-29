@@ -162,7 +162,45 @@
   `#storybook-root` element (ignoring viewport height) while the ds side is viewport-clipped.
   RemovalRequestsList hit this with no `cardMode` override at all (`viewport: "900x2000"` fixed
   it) — check raw PNG heights on ANY tall component graded mismatch/close. Also note:
-  `compare.mjs` appears to cap viewport height around 2000px.
+  `compare.mjs` appears to cap viewport height around 2000px. ChapterCard (`"900x1050"`, 977px
+  measured) and PersonaCard (`"900x1000"`, 918px measured) hit the exact same thing on their
+  first sync — both are plain `aspect-square` cover-image cards where the caption block
+  (name/dates/stats) below the image was cropped in the ds capture but present in storybook's
+  full-element screenshot. Same fix, no `cardMode` needed — just `viewport`.
+
+- [GENERAL] **`.design-sync/entry.ts` silently goes stale when components are added/renamed** —
+  since it's a hand-maintained synthetic barrel (no library `dist/` to introspect), nothing
+  fails loudly when a new storied component's `export *` line is missing; the build just runs
+  with a smaller roster and reports a normal-looking component count. Caught this on the
+  2026-07-29 re-sync: 9 new components from recent "extract X" refactors (BackButton,
+  PageHeader, Tabbar, SwimlaneLabel, Notice, Hero, BaulCard, ChapterCard, PersonaCard) were
+  completely absent from the sync — build succeeded, count just didn't grow. **Before trusting
+  a re-sync's component count, diff entry.ts against the repo's actual storied set**:
+  ```bash
+  find src/design-system src/features -iname "*.tsx" ! -iname "*.stories.tsx" ! -iname "*.test.tsx" | while read -r f; do
+    dir=$(dirname "$f"); base=$(basename "$f" .tsx)
+    [ -f "$dir/$base.stories.tsx" ] && echo "${dir#src/}/${base}"
+  done | sort > /tmp/storied-now.txt
+  grep -oP "(?<=from ')\.\./src/[^']+" .design-sync/entry.ts | sed 's#^\.\./src/##' | sort > /tmp/entry-now.txt
+  diff /tmp/storied-now.txt /tmp/entry-now.txt
+  ```
+  Also caught 2 stale entries the same way (`RecuerdoEditForm`, `PersonaAvatarPickerModal` —
+  files still exist but their `.stories.tsx` were removed at some point); harmless (no story to
+  pair with, so they're silently excluded already) but worth pruning for accuracy. **Run this
+  diff at the start of every re-sync**, not just when something looks off.
+
+- SimpleFAB's stories were renamed wholesale (2026-07-29, "document FAB purpose and remove
+  autodocs, add real-screen stories" commit) — old `Simple`/`Expandable` exports became
+  screen-specific names (`BaulesListNuevoBaul`, `PhotosViewSubirFotos`,
+  `RecuerdosFeedEscribeLoQueRecuerdas`, `PersonaDetailScreenEditarBiografia` for SimpleFAB;
+  `ChaptersViewCapitulos`/`ThreeActions` for ExpandableFAB). Updated the owned preview
+  (`.design-sync/previews/SimpleFAB.tsx`) to export the new names through the same `sized()`
+  wrapper (§ the `.ds-single` 0×0 containing-block fix still applies unchanged). The two
+  ExpandableFAB stories are still `sb-error` in the real storybook (same root cause as the old
+  "Expandable" story — never dug further, out of scope) — updated
+  `cfg.overrides.SimpleFAB.skip` to the new story ids
+  (`components-actions-fab--chapters-view-capitulos`,
+  `components-actions-fab--three-actions`) and `primaryStory` to `BaulesListNuevoBaul`.
 
 - `WelcomeScreen.tsx` renders its app icon as `<img src="/pwa-512x512.png">` — an absolute
   site-root path. That's correct and intentional in the real deployed app (Vite serves
@@ -176,4 +214,20 @@
 
 ## Re-sync risks
 
-(filled in at close-out)
+- **`entry.ts` staleness is the #1 risk on every future re-sync** — see the `[GENERAL]` bullet
+  above. It will not error, it will just silently under-sync. Run the diff script at the start
+  of every re-sync, before trusting the driver's component count.
+- ChapterCard/PersonaCard's `viewport` overrides were sized to the stories present as of
+  2026-07-29 (977px / 918px measured + margin). If either component's card grows a taller
+  variant later (extra badges, longer captions), the same clipping will reappear — check raw
+  PNG heights before assuming a new mismatch is real.
+- SimpleFAB's `skip` list is pinned to specific story ids
+  (`components-actions-fab--chapters-view-capitulos`, `...--three-actions`). If the FAB stories
+  are renamed again, these ids will silently stop matching anything (not an error — the skip
+  just becomes a no-op) and the sb-error stories will resurface in compare. Re-derive the ids
+  from `.design-sync/sb-reference/index.json` if FAB.stories.tsx changes again.
+- This sync's `--max-stories` cap left several new components partially graded-by-trust:
+  PageHeader (6 of 22 stories captured — the rest verified-by-upload only), Hero (6 of 8),
+  Notice (6 of 7). All graded stories were clean `match`, so this is low-risk, but if a future
+  sync reports a PageHeader regression, consider raising the cap for it given how many
+  screen-specific variants it has.

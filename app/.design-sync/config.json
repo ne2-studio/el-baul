@@ -39,7 +39,7 @@
     "UploadError": "UploadErrorScreen"
   },
   "overrides": {
-    "SimpleFAB": { "cardMode": "single", "primaryStory": "Simple", "viewport": "390x300", "skip": ["components-actions-fab--expandable"] },
+    "SimpleFAB": { "cardMode": "single", "primaryStory": "BaulesListNuevoBaul", "viewport": "390x300", "skip": ["components-actions-fab--chapters-view-capitulos", "components-actions-fab--three-actions"] },
     "ChaptersView": { "cardMode": "single", "primaryStory": "Default", "viewport": "900x3100" },
     "BaulesList": { "cardMode": "single", "primaryStory": "Default", "viewport": "900x2800" },
     "PhotosView": { "cardMode": "single", "primaryStory": "Default", "viewport": "900x1300" },
@@ -71,6 +71,8 @@
     "PlanLimitModal": { "cardMode": "single", "primaryStory": "Default" },
     "UploadErrorScreen": { "cardMode": "single", "primaryStory": "Default", "viewport": "390x844" },
     "UploadingScreen": { "cardMode": "single", "primaryStory": "Default", "skip": ["screens-upload-uploading--deterministic-settled"], "viewport": "390x844" },
+    "ChapterCard": { "viewport": "900x1050" },
+    "PersonaCard": { "viewport": "900x1000" },
     "RemovalRequestsList": { "viewport": "900x2000" },
     "InvitacionScreen": { "viewport": "900x1100" },
     "PersonasTab": { "viewport": "900x1850" },
