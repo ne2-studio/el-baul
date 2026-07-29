@@ -38,6 +38,7 @@ interface PhotoViewerProps {
   onDownloadPhoto?: (photo: Photo) => void;
   onSharePhoto?: (photo: Photo) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
+  onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
   /** Personas etiquetadas en la foto actualmente mostrada. */
   taggedPersonas?: TaggedPersona[];
   /** Roster completo del baúl, para el checklist del modal de etiquetado. */
@@ -72,6 +73,7 @@ export function PhotoViewer({
   onDownloadPhoto,
   onSharePhoto,
   onShareRecuerdo,
+  onEditRecuerdo,
   taggedPersonas = [],
   baulPersonas = [],
   onSaveTags
@@ -316,7 +318,12 @@ export function PhotoViewer({
                 </p>
               </div>
             ) : (
-              <RecuerdosList recuerdos={recuerdos} onUserClick={onUserClick} onShareRecuerdo={onShareRecuerdo} />
+              <RecuerdosList
+                recuerdos={recuerdos}
+                onUserClick={onUserClick}
+                onShareRecuerdo={onShareRecuerdo}
+                onEditRecuerdo={onEditRecuerdo}
+              />
             )}
           </div>
 

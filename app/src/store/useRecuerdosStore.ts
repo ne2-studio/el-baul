@@ -13,6 +13,7 @@ export interface RecuerdosState {
   addChapterRecuerdo: (baulId: string, chapterId: string, text: string) => Promise<void>;
   loadBaulRecuerdos: (baulId: string) => Promise<void>;
   addBaulRecuerdo: (baulId: string, text: string) => Promise<void>;
+  editRecuerdo: (recuerdoId: string, text: string) => Promise<void>;
   // Used by useBaulesStore.deleteChapter — an explicit cross-store call rather than this
   // store implicitly reacting to a chapter being deleted elsewhere.
   clearChapterRecuerdos: (chapterId: string) => void;
@@ -68,6 +69,17 @@ export const useRecuerdosStore = create<RecuerdosState>((set) => ({
     const recuerdo = await api.recuerdos.createStandalone(baulId, text);
     set((state) => ({
       baulRecuerdos: { ...state.baulRecuerdos, [baulId]: [recuerdo, ...(state.baulRecuerdos[baulId] || [])] },
+    }));
+  },
+
+  editRecuerdo: async (recuerdoId, text) => {
+    const updated = await api.recuerdos.update(recuerdoId, text);
+    const replace = (items: Recuerdo[]) => items.map((recuerdo) => recuerdo.id === updated.id ? updated : recuerdo);
+
+    set((state) => ({
+      recuerdos: Object.fromEntries(Object.entries(state.recuerdos).map(([key, items]) => [key, replace(items)])),
+      chapterRecuerdos: Object.fromEntries(Object.entries(state.chapterRecuerdos).map(([key, items]) => [key, replace(items)])),
+      baulRecuerdos: Object.fromEntries(Object.entries(state.baulRecuerdos).map(([key, items]) => [key, replace(items)])),
     }));
   },
 

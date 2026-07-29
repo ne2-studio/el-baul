@@ -30,7 +30,7 @@ export const ChapterRoute: React.FC = () => {
     photos, loadChapterPhotos,
     movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, createChapter, setChapterCover,
   } = useBaulesStore();
-  const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo } = useRecuerdosStore();
+  const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo, editRecuerdo } = useRecuerdosStore();
   const { personas, loadPersonas, addTaggedPersonasBatch } = usePersonasStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
@@ -117,6 +117,14 @@ export const ChapterRoute: React.FC = () => {
       console.error('Error adding recuerdo:', error);
       showToastMessage('Error al guardar el recuerdo');
     });
+  };
+
+  const handleEditRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
+    const result = await run(() => editRecuerdo(recuerdo.id, text), {
+      successMessage: 'Recuerdo actualizado',
+      errorMessage: 'Error al guardar el recuerdo',
+    });
+    return result.ok;
   };
 
   const handleUpdateChapterInfo = async (name: string): Promise<boolean> => {
@@ -231,6 +239,7 @@ export const ChapterRoute: React.FC = () => {
       onAddRecuerdo={chapterId ? handleAddRecuerdo : undefined}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
       onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
+      onEditRecuerdo={handleEditRecuerdo}
     />
   );
 };

@@ -239,6 +239,8 @@ export const api = {
       (await get<RecuerdoDto[]>(`/api/baules/${baulId}/recuerdos`)).map((r) => new Recuerdo(r)),
     createStandalone: async (baulId: string, text: string) =>
       new Recuerdo(await post<RecuerdoDto>(`/api/baules/${baulId}/recuerdos`, { text })),
+    update: async (recuerdoId: string, text: string) =>
+      new Recuerdo(await put<RecuerdoDto>(`/api/recuerdos/${recuerdoId}`, { text })),
     createShareLink: (recuerdoId: string) =>
       post<SharedLinkResponse>(`/api/recuerdos/${recuerdoId}/share`),
   },

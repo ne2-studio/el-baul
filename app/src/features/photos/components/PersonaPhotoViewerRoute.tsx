@@ -35,7 +35,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
   const {
     personas, loadPersonas, personaPhotos, loadPersonaPhotos, taggedPersonas, loadTaggedPersonas, setTaggedPersonas,
   } = usePersonasStore();
-  const { recuerdos, loadRecuerdos, addRecuerdo } = useRecuerdosStore();
+  const { recuerdos, loadRecuerdos, addRecuerdo, editRecuerdo } = useRecuerdosStore();
 
   const [photosFailed, setPhotosFailed] = useState(false);
 
@@ -117,6 +117,15 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
     await run(() => addRecuerdo(baul.id, photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
   };
 
+  const handleEditRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
+    if (!auth.isAuthenticated) return false;
+    const result = await run(() => editRecuerdo(recuerdo.id, text), {
+      successMessage: 'Recuerdo actualizado',
+      errorMessage: 'Error al guardar el recuerdo',
+    });
+    return result.ok;
+  };
+
   const handleSaveTags = async (photoToTag: Photo, personaIds: string[]): Promise<boolean> => {
     const result = await run(() => setTaggedPersonas(photoToTag.id, personaIds), {
       successMessage: 'Personas etiquetadas actualizadas',
@@ -180,6 +189,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
       onDownloadPhoto={handleDownloadPhoto}
       onSharePhoto={sharedLinksEnabled ? handleSharePhoto : undefined}
       onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
+      onEditRecuerdo={handleEditRecuerdo}
       taggedPersonas={taggedPersonas[photo.id] || []}
       baulPersonas={personas[baul.id] || []}
       onSaveTags={handleSaveTags}

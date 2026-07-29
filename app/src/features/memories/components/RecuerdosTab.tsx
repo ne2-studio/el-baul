@@ -10,9 +10,10 @@ interface RecuerdosTabProps {
   onOpenPhoto?: (photoId: string, chapterId?: string) => void;
   onUserClick?: (personaId: string) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
+  onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
 }
 
-export function RecuerdosTab({ recuerdos, onOpenChapter, onOpenPhoto, onUserClick, onShareRecuerdo }: RecuerdosTabProps) {
+export function RecuerdosTab({ recuerdos, onOpenChapter, onOpenPhoto, onUserClick, onShareRecuerdo, onEditRecuerdo }: RecuerdosTabProps) {
   if (recuerdos.length === 0) {
     return (
       <EmptyState
@@ -33,6 +34,7 @@ export function RecuerdosTab({ recuerdos, onOpenChapter, onOpenPhoto, onUserClic
           onPhotoClick={() => onOpenPhoto?.(recuerdo.photoId!, recuerdo.chapterId)}
           onChapterClick={onOpenChapter}
           onShareRecuerdo={onShareRecuerdo}
+          onEditRecuerdo={onEditRecuerdo}
         />
       ))}
     </div>

@@ -1,14 +1,16 @@
 import React, { useState, forwardRef } from 'react';
 import { motion } from 'motion/react';
-import { Share2 } from 'lucide-react';
+import { Pencil, Share2 } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { RecuerdoEditForm } from '@/features/memories/components/RecuerdoEditForm';
 
 interface RecuerdoCardProps {
   recuerdo: Recuerdo;
   isCompact?: boolean;
   onUserClick?: (personaId: string) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
+  onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
 }
 
 // Helper para generar color basado en nombre
@@ -37,17 +39,31 @@ function getInitials(name: string): string {
 }
 
 export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
-  ({ recuerdo, onUserClick, onShareRecuerdo }, ref) => {
+  ({ recuerdo, onUserClick, onShareRecuerdo, onEditRecuerdo }, ref) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
     const initials = getInitials(userName);
     const colorClass = getAvatarColor(userName);
     const canOpenPersona = !!(recuerdo.personaId && onUserClick);
+    const canEdit = !!(recuerdo.isOwn && onEditRecuerdo);
 
     // Determinar si el texto es largo (aproximadamente más de 3 líneas)
     // Asumiendo ~40 caracteres por línea = 120 caracteres para 3 líneas
     const isLongText = recuerdo.text.length > 150;
+
+    const handleSave = async (text: string) => {
+      if (!onEditRecuerdo) return;
+      setIsSaving(true);
+      try {
+        const ok = (await onEditRecuerdo(recuerdo, text)) ?? true;
+        if (ok) setIsEditing(false);
+      } finally {
+        setIsSaving(false);
+      }
+    };
 
     return (
       <motion.div
@@ -77,6 +93,16 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
           </Button>
 
           <div className="flex-1 min-w-0">
+            {isEditing ? (
+              <RecuerdoEditForm
+                initialText={recuerdo.text}
+                tone="dark"
+                isSaving={isSaving}
+                onCancel={() => setIsEditing(false)}
+                onSave={handleSave}
+              />
+            ) : (
+              <>
             {/* Texto del recuerdo con truncado y fade */}
             <div className="relative">
               <motion.p
@@ -115,17 +141,31 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
               <p className="text-background/35 text-xs">
                 {userName}
               </p>
-              {onShareRecuerdo && (
-                <Button variant="plain"
-                  type="button"
-                  aria-label="Compartir recuerdo"
-                  onClick={() => onShareRecuerdo(recuerdo)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-background/45 hover:text-background/80 hover:bg-background/10 transition-colors flex-shrink-0"
-                >
-                  <Share2 className="w-4 h-4" strokeWidth={1.5} />
-                </Button>
-              )}
+              <div className="flex items-center gap-1">
+                {canEdit && (
+                  <Button variant="plain"
+                    type="button"
+                    aria-label="Editar recuerdo"
+                    onClick={() => setIsEditing(true)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-background/45 hover:text-background/80 hover:bg-background/10 transition-colors flex-shrink-0"
+                  >
+                    <Pencil className="w-4 h-4" strokeWidth={1.5} />
+                  </Button>
+                )}
+                {onShareRecuerdo && (
+                  <Button variant="plain"
+                    type="button"
+                    aria-label="Compartir recuerdo"
+                    onClick={() => onShareRecuerdo(recuerdo)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-background/45 hover:text-background/80 hover:bg-background/10 transition-colors flex-shrink-0"
+                  >
+                    <Share2 className="w-4 h-4" strokeWidth={1.5} />
+                  </Button>
+                )}
+              </div>
             </div>
+              </>
+            )}
           </div>
         </div>
       </motion.div>

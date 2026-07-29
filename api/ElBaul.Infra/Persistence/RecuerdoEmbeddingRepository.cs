@@ -29,4 +29,11 @@ public class RecuerdoEmbeddingRepository(ElBaulDbContext dbContext) : IRecuerdoE
 
         await dbContext.SaveChangesAsync();
     }
+
+    public async Task DeleteAsync(RecuerdoId recuerdoId)
+    {
+        await dbContext.RecuerdoEmbeddings
+            .Where(e => e.RecuerdoId == recuerdoId)
+            .ExecuteDeleteAsync();
+    }
 }

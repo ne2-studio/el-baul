@@ -29,7 +29,7 @@ export const BaulRoute: React.FC = () => {
 
   const { chapters, loosePhotos, loadChapterPhotos, renameBaul, setBaulCover } = useBaulesStore();
   const { personas, removalRequests, createPersona } = usePersonasStore();
-  const { baulRecuerdos, addBaulRecuerdo } = useRecuerdosStore();
+  const { baulRecuerdos, addBaulRecuerdo, editRecuerdo } = useRecuerdosStore();
   const { userProfile } = useAuthStore();
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
@@ -110,6 +110,14 @@ export const BaulRoute: React.FC = () => {
     return result.ok;
   };
 
+  const handleEditRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
+    const result = await run(() => editRecuerdo(recuerdo.id, text), {
+      successMessage: 'Recuerdo actualizado',
+      errorMessage: 'Error al guardar el recuerdo',
+    });
+    return result.ok;
+  };
+
   const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
     const result = await run(() => api.recuerdos.createShareLink(recuerdo.id), {
       key: 'share-recuerdo',
@@ -158,6 +166,7 @@ export const BaulRoute: React.FC = () => {
           navigate(`/baules/${baul.id}/personas/${personaId}`, { state: { returnTab: 'recuerdos' } })
         }
         onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
+        onEditRecuerdo={handleEditRecuerdo}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={baulPermissions.canEditBaul ? handleUpdateBaulInfo : undefined}

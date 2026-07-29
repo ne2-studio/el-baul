@@ -28,4 +28,10 @@ public class InMemoryRecuerdoEmbeddingRepository : IRecuerdoEmbeddingRepository
         }
         return Task.CompletedTask;
     }
+
+    public Task DeleteAsync(RecuerdoId recuerdoId)
+    {
+        lock (_lock) _embeddings.Remove(recuerdoId);
+        return Task.CompletedTask;
+    }
 }

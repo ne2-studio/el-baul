@@ -79,6 +79,21 @@ public class CriticalJourneyTests(ElBaulAcceptanceFixture fixture)
         var recuerdoJson = await ParseJsonAsync(createRecuerdoResponse);
         recuerdoJson.GetProperty("text").GetString().Should().Be(recuerdoText);
         recuerdoJson.GetProperty("photoId").GetString().Should().Be(photoId);
+        var recuerdoId = recuerdoJson.GetProperty("id").GetString();
+        var recuerdoAuthor = recuerdoJson.GetProperty("userId").GetString();
+        var recuerdoCreatedAt = recuerdoJson.GetProperty("createdAt").GetDateTime();
+        recuerdoId.Should().NotBeNullOrWhiteSpace();
+
+        // 6. Edit only that recuerdo's content through its public endpoint.
+        var editedRecuerdoText = "Un recuerdo editado por los tests de aceptación";
+        var updateRecuerdoResponse = await client.PutAsJsonAsync($"/api/recuerdos/{recuerdoId}", new { text = editedRecuerdoText });
+        updateRecuerdoResponse.StatusCode.Should().Be(HttpStatusCode.OK, await updateRecuerdoResponse.Content.ReadAsStringAsync());
+        var editedRecuerdoJson = await ParseJsonAsync(updateRecuerdoResponse);
+        editedRecuerdoJson.GetProperty("id").GetString().Should().Be(recuerdoId);
+        editedRecuerdoJson.GetProperty("text").GetString().Should().Be(editedRecuerdoText);
+        editedRecuerdoJson.GetProperty("userId").GetString().Should().Be(recuerdoAuthor);
+        editedRecuerdoJson.GetProperty("createdAt").GetDateTime().Should().BeCloseTo(recuerdoCreatedAt, TimeSpan.FromMilliseconds(1));
+        editedRecuerdoJson.GetProperty("photoId").GetString().Should().Be(photoId);
     }
 
     [Fact]

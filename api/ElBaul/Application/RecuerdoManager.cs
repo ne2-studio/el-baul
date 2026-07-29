@@ -9,6 +9,7 @@ public class RecuerdoManager(
     IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
+    IRecuerdoEmbeddingRepository recuerdoEmbeddingRepository,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
@@ -160,6 +161,52 @@ public class RecuerdoManager(
             "Recuerdo created {BaulId} {PhotoId} {RecuerdoId}", photo.BaulId, photoId, recuerdo.Id);
 
         return ToDto(recuerdo, nickname, avatarUrl, personaId, isOwn: true);
+    }
+
+    public async Task<Result<RecuerdoDto>> UpdateRecuerdoAsync(RecuerdoId recuerdoId, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return Result.Failure<RecuerdoDto>(ApplicationError.Validation("Text is required"));
+
+        var userId = currentUserProvider.GetUserId();
+        var recuerdo = await recuerdoRepository.GetByIdAsync(recuerdoId);
+        if (recuerdo is null)
+            return Result.Failure<RecuerdoDto>(ApplicationError.NotFound("Recuerdo not found"));
+
+        var auth = await baulAccess.AuthorizeAsync(
+            recuerdo.BaulId, userId, AccessLevel.Member, "Recuerdo update", new { recuerdo.BaulId, RecuerdoId = recuerdoId });
+        if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
+
+        if (recuerdo.UserId != userId)
+            return Result.Failure<RecuerdoDto>(ApplicationError.Forbidden("Only the author can edit this recuerdo"));
+
+        var updated = recuerdo with { Text = text.Trim() };
+        await recuerdoRepository.UpdateAsync(updated);
+        await recuerdoEmbeddingRepository.DeleteAsync(recuerdoId);
+
+        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(updated.BaulId, updated.UserId, photoStorage);
+        var photoThumbnailUrl = await GetPhotoThumbnailUrlAsync(updated.PhotoId);
+        var chapterName = await GetChapterNameAsync(updated.ChapterId);
+
+        logger.LogInformation("Recuerdo updated {BaulId} {RecuerdoId}", updated.BaulId, updated.Id);
+
+        return ToDto(updated, nickname, avatarUrl, personaId, isOwn: true, photoThumbnailUrl, chapterName);
+    }
+
+    private async Task<string?> GetPhotoThumbnailUrlAsync(PhotoId? photoId)
+    {
+        if (photoId is null) return null;
+
+        var photo = await photoRepository.GetByIdAsync(photoId.Value);
+        return photo is null ? null : await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+    }
+
+    private async Task<string?> GetChapterNameAsync(ChapterId? chapterId)
+    {
+        if (chapterId is null) return null;
+
+        var chapter = await chapterRepository.GetByIdAsync(chapterId.Value);
+        return chapter?.Name;
     }
 
     private static RecuerdoDto ToDto(

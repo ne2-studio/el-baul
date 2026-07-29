@@ -93,4 +93,35 @@ describe('RecuerdoFeedCard', () => {
     expect(screen.getByRole('button', { name: 'Ver foto' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'en «Verano 2019»' })).not.toBeInTheDocument();
   });
+
+  it('shows the edit action only for own recuerdos', () => {
+    const { rerender } = render(
+      <RecuerdoFeedCard recuerdo={newRecuerdo({ isOwn: true })} onEditRecuerdo={vi.fn()} />
+    );
+
+    expect(screen.getByRole('button', { name: 'Editar recuerdo' })).toBeInTheDocument();
+
+    rerender(<RecuerdoFeedCard recuerdo={newRecuerdo({ isOwn: false })} onEditRecuerdo={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'Editar recuerdo' })).not.toBeInTheDocument();
+  });
+
+  it('edits an own recuerdo inline', async () => {
+    const user = userEvent.setup();
+    const onEditRecuerdo = vi.fn().mockResolvedValue(true);
+    render(
+      <RecuerdoFeedCard
+        recuerdo={newRecuerdo({ isOwn: true, text: 'Texto inicial' })}
+        onEditRecuerdo={onEditRecuerdo}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Editar recuerdo' }));
+    const input = screen.getByRole('textbox', { name: 'Contenido del recuerdo' });
+    await user.clear(input);
+    await user.type(input, 'Texto actualizado');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(onEditRecuerdo).toHaveBeenCalledWith(expect.objectContaining({ id: 'r1' }), 'Texto actualizado');
+  });
 });

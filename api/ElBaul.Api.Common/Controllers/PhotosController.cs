@@ -163,6 +163,17 @@ public class PhotosController(
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("recuerdos/{recuerdoId:guid}")]
+    [ProducesResponseType(typeof(RecuerdoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateRecuerdo(Guid recuerdoId, [FromBody] UpdateRecuerdoRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Text))
+            return BadRequest(new { error = "Text is required" });
+
+        var result = await recuerdoManager.UpdateRecuerdoAsync(new RecuerdoId(recuerdoId), request.Text);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPut("photos/tag-batch")]
     [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> TagBatch([FromBody] TagPhotosBatchRequest request)

@@ -6,6 +6,7 @@ vi.mock('@/api', () => ({
     recuerdos: {
       create: vi.fn(),
       createForChapter: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -84,5 +85,25 @@ describe('useRecuerdosStore recuerdo caches stay in sync', () => {
 
     expect(useRecuerdosStore.getState().chapterRecuerdos[chapterId]).toEqual([created]);
     expect(useRecuerdosStore.getState().baulRecuerdos[baulId]).toBeUndefined();
+  });
+
+  it('editRecuerdo patches every loaded cache containing that recuerdo', async () => {
+    const original = newRecuerdo('r1', { text: 'texto original', photoId, chapterId });
+    const other = newRecuerdo('r2', { text: 'otro' });
+    useRecuerdosStore.setState({
+      recuerdos: { [photoId]: [original, other] },
+      chapterRecuerdos: { [chapterId]: [original] },
+      baulRecuerdos: { [baulId]: [original, other] },
+    });
+
+    const updated = newRecuerdo('r1', { text: 'texto editado', photoId, chapterId });
+    vi.mocked(api.recuerdos.update).mockResolvedValue(updated);
+
+    await useRecuerdosStore.getState().editRecuerdo('r1', 'texto editado');
+
+    expect(api.recuerdos.update).toHaveBeenCalledWith('r1', 'texto editado');
+    expect(useRecuerdosStore.getState().recuerdos[photoId]).toEqual([updated, other]);
+    expect(useRecuerdosStore.getState().chapterRecuerdos[chapterId]).toEqual([updated]);
+    expect(useRecuerdosStore.getState().baulRecuerdos[baulId]).toEqual([updated, other]);
   });
 });

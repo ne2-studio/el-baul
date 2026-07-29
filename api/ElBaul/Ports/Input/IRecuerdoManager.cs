@@ -15,4 +15,6 @@ public interface IRecuerdoManager
 
     Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(PhotoId photoId);
     Task<Result<RecuerdoDto>> CreateRecuerdoAsync(PhotoId photoId, string text);
+
+    Task<Result<RecuerdoDto>> UpdateRecuerdoAsync(RecuerdoId recuerdoId, string text);
 }

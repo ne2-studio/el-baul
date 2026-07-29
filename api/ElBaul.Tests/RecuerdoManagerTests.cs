@@ -1,4 +1,5 @@
 using ElBaul.Application;
+using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
@@ -15,13 +16,15 @@ public class RecuerdoManagerTests
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
+    private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
     private RecuerdoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<RecuerdoManager>.Instance, _chapterRepository, _photoRepository, _recuerdoRepository,
-            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            _photoStorage, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            _recuerdoEmbeddingRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
+            new StaticCurrentUserProvider(currentUserId), _photoStorage,
+            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
 
     private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
     {
@@ -345,5 +348,106 @@ public class RecuerdoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Baul not found", result.Error.Message);
+    }
+
+    // --- Updates ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task UpdateRecuerdoAsync_ShouldUpdateOnlyText_ForTheAuthor()
+    {
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        var photoId = Guid.NewGuid();
+        var recuerdoId = Guid.NewGuid();
+        var createdAt = _clock.UtcNow().AddDays(-3);
+        await SeedBaulAsync(baulId, "Familia");
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, CustodioId, _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(
+            new RecuerdoId(recuerdoId), new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "texto viejo", createdAt));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdateRecuerdoAsync(new RecuerdoId(recuerdoId), "  texto nuevo  ");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("texto nuevo", result.Value.Text);
+        Assert.True(result.Value.IsOwn);
+        Assert.Equal("Chapter", result.Value.ChapterName);
+        Assert.Contains("photo-key", result.Value.PhotoThumbnailUrl);
+
+        var stored = await _recuerdoRepository.GetByIdAsync(new RecuerdoId(recuerdoId));
+        Assert.NotNull(stored);
+        Assert.Equal("texto nuevo", stored.Text);
+        Assert.Equal(new PhotoId(photoId), stored.PhotoId);
+        Assert.Equal(new ChapterId(chapterId), stored.ChapterId);
+        Assert.Equal(new BaulId(baulId), stored.BaulId);
+        Assert.Equal(CustodioId, stored.UserId);
+        Assert.Equal(createdAt, stored.CreatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateRecuerdoAsync_ShouldFail_WhenCurrentUserIsNotTheAuthor()
+    {
+        var baulId = Guid.NewGuid();
+        var recuerdoId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _baulRepository.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(
+            new RecuerdoId(recuerdoId), null, null, new BaulId(baulId), CustodioId, "texto viejo", _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdateRecuerdoAsync(new RecuerdoId(recuerdoId), "texto nuevo");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ApplicationErrorCode.Forbidden, result.Error.Code);
+
+        var stored = await _recuerdoRepository.GetByIdAsync(new RecuerdoId(recuerdoId));
+        Assert.Equal("texto viejo", stored?.Text);
+    }
+
+    [Fact]
+    public async Task UpdateRecuerdoAsync_ShouldFail_WhenCurrentUserHasNoAccessToTheBaul()
+    {
+        var baulId = Guid.NewGuid();
+        var recuerdoId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _recuerdoRepository.CreateAsync(new Recuerdo(
+            new RecuerdoId(recuerdoId), null, null, new BaulId(baulId), CustodioId, "texto viejo", _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdateRecuerdoAsync(new RecuerdoId(recuerdoId), "texto nuevo");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ApplicationErrorCode.Forbidden, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task UpdateRecuerdoAsync_ShouldFail_WhenRecuerdoDoesNotExist()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdateRecuerdoAsync(new RecuerdoId(Guid.NewGuid()), "texto");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Recuerdo not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task UpdateRecuerdoAsync_ShouldInvalidateCachedEmbedding()
+    {
+        var baulId = Guid.NewGuid();
+        var recuerdoId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _recuerdoRepository.CreateAsync(new Recuerdo(
+            new RecuerdoId(recuerdoId), null, null, new BaulId(baulId), CustodioId, "texto viejo", _clock.UtcNow()));
+        await _recuerdoEmbeddingRepository.CreateManyAsync([
+            new RecuerdoEmbedding(new RecuerdoId(recuerdoId), new BaulId(baulId), [1, 0], "test-model", _clock.UtcNow())
+        ]);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdateRecuerdoAsync(new RecuerdoId(recuerdoId), "texto nuevo");
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(await _recuerdoEmbeddingRepository.GetByBaulIdAsync(new BaulId(baulId)));
     }
 }

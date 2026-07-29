@@ -35,7 +35,7 @@ export const PhotoViewerRoute: React.FC = () => {
 
   const { photos: chapterPhotosById, loadChapterPhotos, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useBaulesStore();
   const { personas, loadPersonas, submitRemovalRequest, taggedPersonas, loadTaggedPersonas, setTaggedPersonas } = usePersonasStore();
-  const { recuerdos, loadRecuerdos, addRecuerdo } = useRecuerdosStore();
+  const { recuerdos, loadRecuerdos, addRecuerdo, editRecuerdo } = useRecuerdosStore();
 
   const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
   const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
@@ -155,6 +155,15 @@ export const PhotoViewerRoute: React.FC = () => {
     await run(() => addRecuerdo(baul.id, photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
   };
 
+  const handleEditRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
+    if (!auth.isAuthenticated) return false;
+    const result = await run(() => editRecuerdo(recuerdo.id, text), {
+      successMessage: 'Recuerdo actualizado',
+      errorMessage: 'Error al guardar el recuerdo',
+    });
+    return result.ok;
+  };
+
   const handleMovePhoto = async (photoToMove: Photo, targetChapterId: string): Promise<boolean> => {
     const result = await run(() => movePhotos(baul.id, apiChapterId, [photoToMove.id], targetChapterId), {
       successMessage: 'Foto movida',
@@ -253,6 +262,7 @@ export const PhotoViewerRoute: React.FC = () => {
       onDownloadPhoto={handleDownloadPhoto}
       onSharePhoto={sharedLinksEnabled ? handleSharePhoto : undefined}
       onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
+      onEditRecuerdo={handleEditRecuerdo}
       taggedPersonas={taggedPersonas[photo.id] || []}
       baulPersonas={personas[baul.id] || []}
       onSaveTags={handleSaveTags}

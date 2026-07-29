@@ -14,6 +14,7 @@ interface RecuerdosFeedProps {
   onAddRecuerdo?: (text: string) => void;
   onUserClick?: (personaId: string) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
+  onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
   selectionMode: boolean;
 }
 
@@ -21,7 +22,7 @@ interface RecuerdosFeedProps {
 // controla la visibilidad (contenido + FAB) sin desmontar el componente al cambiar
 // de pestaña, igual que hacía PhotosView antes de la extracción.
 export function RecuerdosFeed({
-  active, photos, recuerdos, onSelectPhoto, onAddRecuerdo, onUserClick, onShareRecuerdo, selectionMode,
+  active, photos, recuerdos, onSelectPhoto, onAddRecuerdo, onUserClick, onShareRecuerdo, onEditRecuerdo, selectionMode,
 }: RecuerdosFeedProps) {
   const [showWriteModal, setShowWriteModal] = useState(false);
   const sortedRecuerdos = [...recuerdos].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -63,6 +64,7 @@ export function RecuerdosFeed({
                 }
                 onUserClick={onUserClick}
                 onShareRecuerdo={onShareRecuerdo}
+                onEditRecuerdo={onEditRecuerdo}
               />
             ))}
           </div>
