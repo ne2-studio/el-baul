@@ -56,6 +56,15 @@
   animation: fab-item-in 0.2s ease-out both;
 }
 
+@keyframes step-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-step-in {
+  animation: step-in 0.2s ease-out both;
+}
+
 .animate-progress {
   animation: progress 1.5s ease-in-out infinite;
 }
