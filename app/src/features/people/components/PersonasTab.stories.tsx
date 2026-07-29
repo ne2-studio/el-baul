@@ -44,6 +44,15 @@ const personas = [
     invitedDate: fixedStorybookDateIso,
     canEdit: true,
   }),
+  new Persona({
+    id: '4',
+    baulId: 'b1',
+    nickname: 'Laura',
+    status: 'sin_acceso',
+    role: 'sin_acceso',
+    invitedDate: fixedStorybookDateIso,
+    canEdit: true,
+  }),
 ];
 
 export const Default: Story = {
@@ -81,6 +90,15 @@ export const LongNamesPendingAndMissingAvatars: Story = {
         nickname: 'Pendiente sin avatar',
         status: 'pending',
         role: 'colaborador',
+        invitedDate: fixedStorybookDateIso,
+        canEdit: true,
+      }),
+      new Persona({
+        id: 'edge-no-access',
+        baulId: 'b1',
+        nickname: 'Familiar sin acceso',
+        status: 'sin_acceso',
+        role: 'sin_acceso',
         invitedDate: fixedStorybookDateIso,
         canEdit: true,
       }),
