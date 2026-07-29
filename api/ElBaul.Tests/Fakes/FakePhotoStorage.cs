@@ -26,7 +26,7 @@ public class FakePhotoStorage : IPhotoStorage
             new MemoryStream(_content.GetValueOrDefault(key, [])),
             _contentTypes.GetValueOrDefault(key, "application/octet-stream")));
 
-    public Task<string> GetImageUrl(string key, ImagePlacement placement) =>
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) =>
         Task.FromResult($"https://imgproxy.test/{placement}/{key}");
 
     public Task DeleteAsync(string key)

@@ -29,7 +29,7 @@ public interface IPhotoStorage
     /// </summary>
     Task<PhotoContent> OpenReadForDownloadAsync(string key);
 
-    Task<string> GetImageUrl(string key, ImagePlacement placement);
+    Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null);
     Task DeleteAsync(string key);
     Task EnsureBucketExistsAsync();
 }

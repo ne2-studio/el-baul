@@ -21,7 +21,7 @@ internal sealed class InMemoryMaintenancePhotoStorage : IPhotoStorage
     public Task<PhotoContent> OpenReadForDownloadAsync(string key) =>
         Task.FromResult(new PhotoContent(new MemoryStream(_objects[key]), "application/octet-stream"));
 
-    public Task<string> GetImageUrl(string key, ImagePlacement placement) =>
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) =>
         Task.FromResult($"https://imgproxy.test/{placement}/{key}");
 
     public Task DeleteAsync(string key)
@@ -38,7 +38,7 @@ internal sealed class FailingPhotoStorage : IPhotoStorage
     public Task SaveAsync(string key, Stream content, string contentType) => Task.CompletedTask;
     public Task<Stream> OpenReadAsync(string key) => throw new InvalidOperationException("storage unavailable");
     public Task<PhotoContent> OpenReadForDownloadAsync(string key) => throw new InvalidOperationException("storage unavailable");
-    public Task<string> GetImageUrl(string key, ImagePlacement placement) => Task.FromResult("");
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) => Task.FromResult("");
     public Task DeleteAsync(string key) => Task.CompletedTask;
     public Task EnsureBucketExistsAsync() => Task.CompletedTask;
 }

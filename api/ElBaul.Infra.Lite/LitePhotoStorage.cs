@@ -36,7 +36,10 @@ public class LitePhotoStorage(IAppConfiguration appConfiguration) : IPhotoStorag
     // whole thing back as one value, so each segment is escaped individually instead of
     // escaping the key as a single opaque string (which would turn '/' into %2F and never
     // decode back to a literal slash for route-parameter binding).
-    public Task<string> GetImageUrl(string key, ImagePlacement placement) =>
+    // crop is ignored here: there's no imgproxy in this image to resample against, so the
+    // Lite-backed frontend/e2e stack shows the un-cropped original — real crop rendering is
+    // only exercised against the real image (MinioPhotoStorage + imgproxy).
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) =>
         Task.FromResult($"{appConfiguration.ApiPublicUrl}/lite/photos/{string.Join('/', key.Split('/').Select(Uri.EscapeDataString))}");
 
     public Task DeleteAsync(string key)

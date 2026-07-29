@@ -68,8 +68,8 @@ public class MinioPhotoStorage : IPhotoStorage
         return (buffer, response.Headers.ContentType);
     }
 
-    public Task<string> GetImageUrl(string key, ImagePlacement placement) =>
-        Task.FromResult(ImgproxyUrlBuilder.Build(_options.BucketName, key, placement, _imgproxyOptions));
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) =>
+        Task.FromResult(ImgproxyUrlBuilder.Build(_options.BucketName, key, placement, _imgproxyOptions, crop));
 
     public async Task DeleteAsync(string key)
     {

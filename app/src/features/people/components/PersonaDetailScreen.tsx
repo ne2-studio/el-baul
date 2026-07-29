@@ -11,7 +11,6 @@ import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
-import { personaAvatarImageStyle } from './PersonaAvatarPickerModal';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Button } from '@/design-system/components/actions/Button';
 import {
@@ -148,7 +147,6 @@ export function PersonaDetailScreen({
 
       <Hero
         imageUrl={persona.avatarUrl}
-        imageStyle={persona.avatarUrl ? personaAvatarImageStyle(persona) : undefined}
         blurUpscaledImage={false}
         title={displayName}
       >

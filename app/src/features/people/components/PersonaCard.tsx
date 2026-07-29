@@ -4,7 +4,6 @@ import { icons } from '@/design-system/foundations/icons/icons';
 import { Persona } from '@/types';
 import { Card } from '@/design-system/components/data-display/Card';
 import { getBaulPermissions } from '@/utils/roleUtils';
-import { personaAvatarImageStyle } from './PersonaAvatarPickerModal';
 
 interface PersonaCardProps {
   persona: Persona;
@@ -20,7 +19,7 @@ export function PersonaCard({ persona, onClick, isMe = false, muted = false }: P
     <Card onClick={onClick} className="!p-0 overflow-hidden">
       <div className={`aspect-square bg-secondary flex items-center justify-center overflow-hidden ${muted ? 'opacity-70 grayscale' : ''}`}>
         {persona.avatarUrl ? (
-          <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" style={personaAvatarImageStyle(persona)} />
+          <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" />
         ) : getBaulPermissions({ role: persona.role }).isCustodio ? (
           <Icon icon={icons.crown} className="w-10 h-10 text-primary opacity-60" strokeWidth={1.5} aria-hidden />
         ) : (

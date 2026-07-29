@@ -9,7 +9,6 @@ export const HERO_HEIGHT = 210;
 interface HeroProps {
   imageUrl?: string;
   imageAlt?: string;
-  imageStyle?: React.CSSProperties;
   /** false para imágenes ya recortadas a un tamaño fijo (p. ej. avatares de persona), donde
    * el desenfoque anti-pixelado de las fotos de portada no aplica. */
   blurUpscaledImage?: boolean;
@@ -17,7 +16,7 @@ interface HeroProps {
   children?: React.ReactNode;
 }
 
-export function Hero({ imageUrl, imageAlt = '', imageStyle, blurUpscaledImage = true, title, children }: HeroProps) {
+export function Hero({ imageUrl, imageAlt = '', blurUpscaledImage = true, title, children }: HeroProps) {
   return (
     <div className="relative overflow-hidden" style={{ height: HERO_HEIGHT }}>
       {imageUrl ? (
@@ -25,7 +24,6 @@ export function Hero({ imageUrl, imageAlt = '', imageStyle, blurUpscaledImage = 
           src={imageUrl}
           alt={imageAlt}
           className={cn('absolute inset-0 w-full h-full object-cover', blurUpscaledImage && 'hero-cover-image')}
-          style={imageStyle}
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/30 to-foreground/50" />

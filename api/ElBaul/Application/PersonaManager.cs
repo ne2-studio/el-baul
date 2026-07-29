@@ -387,16 +387,18 @@ public class PersonaManager(
 
     private async Task<string?> GetPersonaAvatarUrlAsync(Persona persona)
     {
+        var crop = new ImageCrop(persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
+
         if (persona.AvatarPhotoId is { } photoId)
         {
             var photo = await photoRepository.GetByIdAsync(photoId);
             return photo is not null && photo.BaulId == persona.BaulId && photo.Status == PhotoStatus.Active
-                ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PersonaAvatar)
+                ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PersonaAvatar, crop)
                 : null;
         }
 
         return persona.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar)
+            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar, crop)
             : null;
     }
 }

@@ -18,7 +18,7 @@ public class ImgproxyUrlBuilderTests
         var result = ImgproxyUrlBuilder.Build("test-bucket", "test-key.jpg", ImagePlacement.PhotoGridThumbnail, Options);
 
         Assert.Equal(
-            "http://imgproxy.test/thLP2P3YXuzS8PRUlB-gNf07Shmx9YlFDpH34dh41Bg/photo-grid-thumbnail/czM6Ly90ZXN0LWJ1Y2tldC90ZXN0LWtleS5qcGc",
+            "http://imgproxy.test/YXuHLujvv6XoelpHsptbaH7GOvmlw_leKt1I8588_Os/pr:photo-grid-thumbnail/czM6Ly90ZXN0LWJ1Y2tldC90ZXN0LWtleS5qcGc",
             result);
     }
 
@@ -28,8 +28,8 @@ public class ImgproxyUrlBuilderTests
         var thumbnail = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.PhotoGridThumbnail, Options);
         var full = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.PhotoFull, Options);
 
-        Assert.Contains("/photo-grid-thumbnail/", thumbnail);
-        Assert.Contains("/photo-full/", full);
+        Assert.Contains("/pr:photo-grid-thumbnail/", thumbnail);
+        Assert.Contains("/pr:photo-full/", full);
         Assert.NotEqual(thumbnail, full);
     }
 
@@ -38,7 +38,44 @@ public class ImgproxyUrlBuilderTests
     {
         var result = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.ChapterCoverFeatured, Options);
 
-        Assert.Contains("/chapter-cover-featured/", result);
+        Assert.Contains("/pr:chapter-cover-featured/", result);
+    }
+
+    [Fact]
+    public void Build_ShouldAppendGravityAndCrop_WhenZoomedIn()
+    {
+        var crop = new ImageCrop(0.3m, 0.7m, 1.5m);
+
+        var result = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.PersonaAvatar, Options, crop);
+
+        Assert.Equal(
+            "http://imgproxy.test/r4F1bm2HD6tMeZZxjpXsYFy5NGozaU4XCd4E1CkebDA/pr:persona-avatar/gravity:fp:0.3:0.7/crop:0.6667:0.6667:fp:0.3:0.7/czM6Ly9idWNrZXQva2V5LmpwZw",
+            result);
+    }
+
+    [Fact]
+    public void Build_ShouldOmitCrop_WhenScaleIsExactlyOne()
+    {
+        // A relative crop:1:1 would be misread by imgproxy as an *absolute* 1x1 pixel
+        // crop (values >= 1 mean pixels, not a fraction) — verified empirically against
+        // a running imgproxy. Scale == 1 (no zoom) must skip the crop option entirely.
+        var crop = new ImageCrop(0.3m, 0.7m, 1m);
+
+        var result = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.PersonaAvatar, Options, crop);
+
+        Assert.Equal(
+            "http://imgproxy.test/_wqMEBNWP9cjZ0zfF83TMmZfCRmv9MGcGZvu4FI3y0I/pr:persona-avatar/gravity:fp:0.3:0.7/czM6Ly9idWNrZXQva2V5LmpwZw",
+            result);
+        Assert.DoesNotContain("crop:", result);
+    }
+
+    [Fact]
+    public void Build_ShouldOmitGravityAndCrop_WhenCropIsNull()
+    {
+        var result = ImgproxyUrlBuilder.Build("bucket", "key.jpg", ImagePlacement.PersonaAvatar, Options);
+
+        Assert.DoesNotContain("gravity:fp", result);
+        Assert.DoesNotContain("crop:", result);
     }
 
     [Fact]

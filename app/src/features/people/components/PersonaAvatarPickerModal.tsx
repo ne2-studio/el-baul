@@ -305,11 +305,3 @@ export function PersonaAvatarPickerModal({
     </BottomSheetModal>
   );
 }
-
-export function personaAvatarImageStyle(persona: { avatarCropX?: number; avatarCropY?: number; avatarCropScale?: number }): React.CSSProperties {
-  return avatarCropStyle({
-    x: persona.avatarCropX ?? DEFAULT_CROP.x,
-    y: persona.avatarCropY ?? DEFAULT_CROP.y,
-    scale: persona.avatarCropScale ?? DEFAULT_CROP.scale,
-  });
-}
