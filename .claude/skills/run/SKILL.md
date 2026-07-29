@@ -118,8 +118,7 @@ curl -s http://localhost:5050/api/baules -H "Authorization: Bearer $TOKEN"
 
 Works unchanged against `docker-compose.lite.yml` (`api-lite`, port 5051) —
 run `./scripts/fake-oidc-token --help` for the client id/redirect URI
-overrides and the `FAKE_OIDC_URL` env var. It implements the same code-exchange
-flow as `api/acceptance-tests/ElBaul.AcceptanceTests/FakeOidcTokenClient.cs`.
+overrides and the `FAKE_OIDC_URL` env var.
 
 ## Logs and cleanup
 
