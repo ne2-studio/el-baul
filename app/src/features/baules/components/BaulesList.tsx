@@ -8,6 +8,7 @@ import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { Baul } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
 import { BaulCard } from '@/features/baules/components/BaulCard';
+import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 
 interface BaulesListProps {
   baules: Baul[];
@@ -49,9 +50,7 @@ export function BaulesList({
       {/* Content */}
       <PageContainer className="py-6 pb-24">
         <section>
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
-            Mis baúles
-          </h2>
+          <SwimlaneLabel>Mis baúles</SwimlaneLabel>
 
           {baules.length === 0 ? (
             <EmptyState

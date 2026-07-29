@@ -20,6 +20,7 @@ import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
 import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
 import { Button } from '@/design-system/components/actions/Button';
 import { ChapterCard } from '@/features/baules/components/ChapterCard';
+import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -270,10 +271,7 @@ export function ChaptersView({
                 <div className="space-y-6">
                   {Array.from(groups.entries()).map(([year, yearChapters]) => (
                     <div key={year}>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
-                        style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}>
-                        {year}
-                      </p>
+                      <SwimlaneLabel>{year}</SwimlaneLabel>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {yearChapters.map((chapter) => (
                           <ChapterCard key={chapter.id} chapter={chapter} onClick={() => onSelectChapter(chapter)} />
@@ -288,12 +286,7 @@ export function ChaptersView({
             {/* Fotos sueltas — capítulo virtual */}
             {looseChapter && (
               <div>
-                <p
-                  className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
-                  style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-                >
-                  Otras
-                </p>
+                <SwimlaneLabel>Otras</SwimlaneLabel>
                 <Card onClick={onOpenLoosePhotos} className="!p-0 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
                   {/* Collage cover */}
                   <div className="aspect-[16/10] bg-secondary relative rounded-t-2xl overflow-hidden">

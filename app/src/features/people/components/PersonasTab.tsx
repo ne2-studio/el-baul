@@ -3,6 +3,7 @@ import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Persona } from '@/types';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
+import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 import { PersonaCard } from './PersonaCard';
 
 interface PersonasTabProps {
@@ -62,12 +63,7 @@ function PersonaSwimlane({ title, personas, currentUserEmail, onSelectPersona, m
 
   return (
     <div>
-      <p
-        className="text-xs text-muted-foreground uppercase tracking-wide mb-3"
-        style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-      >
-        {title}
-      </p>
+      <SwimlaneLabel>{title}</SwimlaneLabel>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {personas.map((persona) => (
