@@ -13,7 +13,8 @@ export interface PersonasState {
 
   createPersona: (baulId: string, nickname: string) => Promise<void>;
   loadPersonas: (baulId: string) => Promise<void>;
-  updatePersona: (baulId: string, personaId: string, name: string, nickname: string, biografia: string) => Promise<void>;
+  updatePersona: (baulId: string, personaId: string, name: string, nickname: string) => Promise<void>;
+  updatePersonaBiografia: (baulId: string, personaId: string, biografia: string) => Promise<void>;
   uploadPersonaAvatar: (baulId: string, personaId: string, file: File, crop: AvatarCrop) => Promise<void>;
   setPersonaAvatarPhoto: (baulId: string, personaId: string, photo: Photo, crop: AvatarCrop) => Promise<void>;
   updateUserRole: (baulId: string, personaId: string, role: BaulRole) => Promise<void>;
@@ -57,8 +58,18 @@ export const usePersonasStore = create<PersonasState>((set, get) => ({
     set((state) => ({ personas: { ...state.personas, [baulId]: personas } }));
   },
 
-  updatePersona: async (baulId, personaId, name, nickname, biografia) => {
-    const updated = await api.baules.updatePersona(baulId, personaId, name, nickname, biografia);
+  updatePersona: async (baulId, personaId, name, nickname) => {
+    const updated = await api.baules.updatePersona(baulId, personaId, name, nickname);
+    set((state) => ({
+      personas: {
+        ...state.personas,
+        [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? updated : u)),
+      },
+    }));
+  },
+
+  updatePersonaBiografia: async (baulId, personaId, biografia) => {
+    const updated = await api.baules.updatePersonaBiografia(baulId, personaId, biografia);
     set((state) => ({
       personas: {
         ...state.personas,

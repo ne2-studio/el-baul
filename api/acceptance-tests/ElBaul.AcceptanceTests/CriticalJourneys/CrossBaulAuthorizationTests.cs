@@ -41,10 +41,14 @@ public class CrossBaulAuthorizationTests(ElBaulAcceptanceFixture fixture)
             new
             {
                 name = "Nombre inyectado",
-                nickname = secondPersonaNickname,
-                biografia = "No debe persistirse"
+                nickname = secondPersonaNickname
             });
         updateForeignPersonaResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden, await updateForeignPersonaResponse.Content.ReadAsStringAsync());
+
+        var updateForeignPersonaBiografiaResponse = await firstClient.PutAsJsonAsync(
+            $"/api/baules/{secondBaulId}/personas/{secondPersonaId}/biografia",
+            new { biografia = "No debe persistirse" });
+        updateForeignPersonaBiografiaResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden, await updateForeignPersonaBiografiaResponse.Content.ReadAsStringAsync());
 
         var personasAfterRejectedUpdate = await GetPersonasAsync(secondClient, secondBaulId);
         var unchangedPersona = personasAfterRejectedUpdate.EnumerateArray()

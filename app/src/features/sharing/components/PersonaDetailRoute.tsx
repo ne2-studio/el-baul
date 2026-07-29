@@ -26,6 +26,7 @@ export const PersonaDetailRoute: React.FC = () => {
     personas,
     loadPersonas,
     updatePersona,
+    updatePersonaBiografia,
     uploadPersonaAvatar,
     setPersonaAvatarPhoto,
     updateUserRole,
@@ -68,7 +69,7 @@ export const PersonaDetailRoute: React.FC = () => {
   const personaPermissions = getPersonaPermissions({ currentBaulRole: baul?.role, persona });
 
   const handleSaveInfo = async (name: string, nickname: string) => {
-    const result = await run(() => updatePersona(baulId, personaId, name, nickname, persona.biografia || ''), {
+    const result = await run(() => updatePersona(baulId, personaId, name, nickname), {
       key: 'save',
       successMessage: 'Ficha actualizada',
       errorMessage: 'Error al actualizar la ficha',
@@ -77,7 +78,7 @@ export const PersonaDetailRoute: React.FC = () => {
   };
 
   const handleSaveBiografia = async (biografia: string) => {
-    const result = await run(() => updatePersona(baulId, personaId, persona.name || '', persona.nickname, biografia), {
+    const result = await run(() => updatePersonaBiografia(baulId, personaId, biografia), {
       key: 'save',
       successMessage: 'Biografía actualizada',
       errorMessage: 'Error al actualizar la biografía',

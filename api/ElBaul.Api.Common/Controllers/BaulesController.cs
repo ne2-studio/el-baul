@@ -106,7 +106,16 @@ public class BaulesController(
     public async Task<IActionResult> UpdatePersona(Guid baulId, Guid personaId, [FromBody] UpdatePersonaRequest request)
     {
         var result = await personaManager.UpdatePersonaAsync(
-            new BaulId(baulId), new PersonaId(personaId), request.Name, request.Nickname, request.Biografia);
+            new BaulId(baulId), new PersonaId(personaId), request.Name, request.Nickname);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPut("{baulId:guid}/personas/{personaId:guid}/biografia")]
+    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdatePersonaBiografia(Guid baulId, Guid personaId, [FromBody] UpdatePersonaBiografiaRequest request)
+    {
+        var result = await personaManager.UpdatePersonaBiografiaAsync(
+            new BaulId(baulId), new PersonaId(personaId), request.Biografia);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 

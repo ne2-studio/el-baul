@@ -114,8 +114,10 @@ export const api = {
       new Persona(await post<PersonaDto>(`/api/baules/${baulId}/personas`, { nickname })),
     getPersona: async (baulId: string, personaId: string) =>
       new Persona(await get<PersonaDto>(`/api/baules/${baulId}/personas/${personaId}`)),
-    updatePersona: async (baulId: string, personaId: string, name: string, nickname: string, biografia: string) =>
-      new Persona(await put<PersonaDto>(`/api/baules/${baulId}/personas/${personaId}`, { name, nickname, biografia })),
+    updatePersona: async (baulId: string, personaId: string, name: string, nickname: string) =>
+      new Persona(await put<PersonaDto>(`/api/baules/${baulId}/personas/${personaId}`, { name, nickname })),
+    updatePersonaBiografia: async (baulId: string, personaId: string, biografia: string) =>
+      new Persona(await put<PersonaDto>(`/api/baules/${baulId}/personas/${personaId}/biografia`, { biografia })),
     uploadPersonaAvatar: async (baulId: string, personaId: string, file: File, crop: AvatarCrop) => {
       const formData = new FormData();
       formData.append('file', file);

@@ -139,7 +139,7 @@ public class PersonaManager(
         return await ToPersonaDtoAsync(persona, null, canEdit: true);
     }
 
-    public async Task<Result<PersonaDto>> UpdatePersonaAsync(BaulId baulId, PersonaId personaId, string? name, string nickname, string? biografia)
+    public async Task<Result<PersonaDto>> UpdatePersonaAsync(BaulId baulId, PersonaId personaId, string? name, string nickname)
     {
         var userId = currentUserProvider.GetUserId();
 
@@ -154,22 +154,44 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
-        // Biografía is shared, wiki-like family content: any baúl member may write it for any
-        // persona. Name/nickname stay identity fields, gated by CanEditPersona as before.
         var canEdit = CanEditPersona(persona, userId, auth.Value);
-        var identityChanged = (name ?? "") != (persona.Name ?? "") || nickname != persona.Nickname;
-        if (identityChanged && !canEdit)
+        if (!canEdit)
         {
             logger.LogWarning("Persona update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
             return Result.Failure<PersonaDto>(ApplicationError.Forbidden("Access denied"));
         }
 
-        var updated = persona with { Name = name, Nickname = nickname, Biografia = biografia };
+        var updated = persona with { Name = name, Nickname = nickname };
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona updated {BaulId} {PersonaId}", baulId, personaId);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await ToPersonaDtoAsync(updated, user, canEdit);
+    }
+
+    // Biografía is shared, wiki-like family content: unlike name/nickname/avatar it only
+    // requires baúl membership, not CanEditPersona's identity-edit permission.
+    public async Task<Result<PersonaDto>> UpdatePersonaBiografiaAsync(BaulId baulId, PersonaId personaId, string? biografia)
+    {
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(
+            baulId, userId, AccessLevel.Member, "Persona biografia update", new { BaulId = baulId, PersonaId = personaId });
+        if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
+
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId)
+        {
+            logger.LogWarning("Persona biografia update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
+        }
+
+        var updated = persona with { Biografia = biografia };
+        await baulRepository.UpdatePersonaAsync(updated);
+        logger.LogInformation("Persona biografia updated {BaulId} {PersonaId}", baulId, personaId);
+
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
+        return await ToPersonaDtoAsync(updated, user, CanEditPersona(updated, userId, auth.Value));
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaAvatarAsync(

@@ -1742,6 +1742,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/baules/{baulId}/personas/{personaId}/biografia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                    personaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdatePersonaBiografiaRequest"];
+                    "text/json": components["schemas"]["UpdatePersonaBiografiaRequest"];
+                    "application/*+json": components["schemas"]["UpdatePersonaBiografiaRequest"];
+                };
+            };
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PersonaDto"];
+                        "application/json": components["schemas"]["PersonaDto"];
+                        "text/json": components["schemas"]["PersonaDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/baules/{baulId}/personas/{personaId}/avatar": {
         parameters: {
             query?: never;
@@ -5626,10 +5715,12 @@ export interface components {
         UpdateNotificationPreferencesRequest: {
             weeklyDigestEnabled: boolean;
         };
+        UpdatePersonaBiografiaRequest: {
+            biografia?: string | null;
+        };
         UpdatePersonaRequest: {
             name?: string | null;
             nickname: string;
-            biografia?: string | null;
         };
         UpdateRecuerdoRequest: {
             text: string;

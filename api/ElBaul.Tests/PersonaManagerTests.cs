@@ -148,7 +148,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", null);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -163,49 +163,12 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Otro Nombre", "Otro", null);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Otro Nombre", "Otro");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Otro Nombre", result.Value.Name);
         Assert.Equal("Otro", result.Value.Nickname);
         Assert.True(result.Value.CanEdit);
-    }
-
-    [Fact]
-    public async Task UpdatePersonaAsync_ShouldAllow_ColaboradorAddingBiografiaToSomeoneElsesFicha()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-        var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), null, "Abuela", "Nació en Asturias en 1945.");
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
-        Assert.Equal("Abuela", result.Value.Nickname);
-        var persisted = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
-        Assert.Equal("Nació en Asturias en 1945.", persisted!.Biografia);
-    }
-
-    [Fact]
-    public async Task UpdatePersonaAsync_ShouldStillDenyAccess_WhenColaboradorSmugglesANameChangeAlongsideBiografia()
-    {
-        var baulId = Guid.NewGuid();
-        await SeedBaulAsync(baulId, "Familia");
-        var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", "Nació en Asturias en 1945.");
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Access denied", result.Error.Message);
-        var persisted = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
-        Assert.Null(persisted!.Biografia);
     }
 
     [Fact]
@@ -217,7 +180,7 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", null);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Abuela María", result.Value.Name);
@@ -246,7 +209,7 @@ public class PersonaManagerTests
     }
 
     [Fact]
-    public async Task UpdatePersonaAsync_ShouldSaveTheBiografia()
+    public async Task UpdatePersonaBiografiaAsync_ShouldSaveTheBiografia()
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
@@ -254,12 +217,45 @@ public class PersonaManagerTests
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", "Nació en Asturias en 1945.");
+        var result = await manager.UpdatePersonaBiografiaAsync(new BaulId(baulId), new PersonaId(personaId), "Nació en Asturias en 1945.");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
         var persisted = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
         Assert.Equal("Nació en Asturias en 1945.", persisted!.Biografia);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaBiografiaAsync_ShouldAllow_ColaboradorEditingSomeoneElsesFicha()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdatePersonaBiografiaAsync(new BaulId(baulId), new PersonaId(personaId), "Nació en Asturias en 1945.");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
+        var persisted = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
+        Assert.Equal("Nació en Asturias en 1945.", persisted!.Biografia);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaBiografiaAsync_ShouldDenyAccess_ForNonMemberOfTheBaul()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdatePersonaBiografiaAsync(new BaulId(baulId), new PersonaId(personaId), "Intento no autorizado");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]
