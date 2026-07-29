@@ -140,17 +140,29 @@ describe('roleUtils persona permissions', () => {
     expect(getPersonaPermissions({ currentBaulRole, persona: target })).toMatchObject(expected);
   });
 
-  it('keeps self-edit capabilities tied to backend canEdit', () => {
+  it('keeps identity self-edit capabilities tied to backend canEdit', () => {
     expect(getPersonaPermissions({ currentBaulRole: 'colaborador', persona: persona({ canEdit: true }) })).toMatchObject({
       canEditPersonaInfo: true,
-      canEditPersonaBiography: true,
       canUploadPersonaAvatar: true,
     });
 
     expect(getPersonaPermissions({ currentBaulRole: 'custodio', persona: persona({ canEdit: false }) })).toMatchObject({
       canEditPersonaInfo: false,
-      canEditPersonaBiography: false,
       canUploadPersonaAvatar: false,
+    });
+  });
+
+  it('lets any baúl member edit biography regardless of backend canEdit', () => {
+    expect(getPersonaPermissions({ currentBaulRole: 'colaborador', persona: persona({ canEdit: false }) })).toMatchObject({
+      canEditPersonaBiography: true,
+    });
+
+    expect(getPersonaPermissions({ currentBaulRole: 'sin_acceso', persona: persona({ canEdit: false }) })).toMatchObject({
+      canEditPersonaBiography: false,
+    });
+
+    expect(getPersonaPermissions({ currentBaulRole: undefined, persona: persona({ canEdit: false }) })).toMatchObject({
+      canEditPersonaBiography: false,
     });
   });
 });

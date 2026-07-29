@@ -172,6 +172,43 @@ public class PersonaManagerTests
     }
 
     [Fact]
+    public async Task UpdatePersonaAsync_ShouldAllow_ColaboradorAddingBiografiaToSomeoneElsesFicha()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), null, "Abuela", "Nació en Asturias en 1945.");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
+        Assert.Equal("Abuela", result.Value.Nickname);
+        var persisted = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
+        Assert.Equal("Nació en Asturias en 1945.", persisted!.Biografia);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaAsync_ShouldStillDenyAccess_WhenColaboradorSmugglesANameChangeAlongsideBiografia()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var personaId = Guid.NewGuid();
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuela", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), OtherUserId, "Other", BaulRole.Colaborador, _clock.UtcNow()));
+
+        var manager = CreateManager(OtherUserId);
+        var result = await manager.UpdatePersonaAsync(new BaulId(baulId), new PersonaId(personaId), "Abuela María", "Abu", "Nació en Asturias en 1945.");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+        var persisted = await _baulRepository.GetPersonaByIdAsync(new PersonaId(personaId));
+        Assert.Null(persisted!.Biografia);
+    }
+
+    [Fact]
     public async Task UpdatePersonaAsync_ShouldAllow_ForAdminEditingAPersonaWithNoLinkedUser()
     {
         var baulId = Guid.NewGuid();

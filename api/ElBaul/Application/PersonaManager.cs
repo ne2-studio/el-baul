@@ -154,8 +154,11 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
+        // Biografía is shared, wiki-like family content: any baúl member may write it for any
+        // persona. Name/nickname stay identity fields, gated by CanEditPersona as before.
         var canEdit = CanEditPersona(persona, userId, auth.Value);
-        if (!canEdit)
+        var identityChanged = (name ?? "") != (persona.Name ?? "") || nickname != persona.Nickname;
+        if (identityChanged && !canEdit)
         {
             logger.LogWarning("Persona update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
             return Result.Failure<PersonaDto>(ApplicationError.Forbidden("Access denied"));

@@ -77,13 +77,16 @@ export function getPersonaPermissions({
 }): PersonaPermissions {
   const currentBaulPermissions = getBaulPermissions({ role: currentBaulRole });
   const canEditOwnPersona = persona.canEdit ?? false;
+  // Biografía is shared, wiki-like family content: any member of the baúl can write it for any
+  // persona, unlike name/nickname/avatar which stay tied to identity-edit permission.
+  const canEditAnyBiography = currentBaulRole !== undefined && currentBaulRole !== 'sin_acceso';
   const hasNoAccess = persona.role === 'sin_acceso' || persona.status === 'sin_acceso';
   const canManagePersona = currentBaulPermissions.isAdmin && !isCustodioRole(persona.role);
   const isPending = persona.status === 'pending';
 
   return {
     canEditPersonaInfo: canEditOwnPersona,
-    canEditPersonaBiography: canEditOwnPersona,
+    canEditPersonaBiography: canEditAnyBiography,
     canUploadPersonaAvatar: canEditOwnPersona,
     canManagePersona,
     canSharePersonaInvite: canManagePersona && isPending && !hasNoAccess,
