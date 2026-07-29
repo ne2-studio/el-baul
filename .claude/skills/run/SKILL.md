@@ -98,6 +98,29 @@ Use only the test identities reported by the helper or documented in the
 repository's fake-oidc configuration. In the browser, choose the desired
 fake-oidc user in the provider flow.
 
+### Getting a bearer token without a browser
+
+`backend-dev` has no frontend to log in through. To call the real API directly
+(`curl`, scripts) as a specific test identity — e.g. to reproduce or verify an
+authorization bug across two different users — mint a token straight from
+fake-oidc with:
+
+```bash
+./scripts/fake-oidc-token <user>   # user key from OIDC_USERS in docker-compose.yaml, e.g. admin or user
+```
+
+It prints only the access token to stdout, so it composes directly:
+
+```bash
+TOKEN=$(./scripts/fake-oidc-token admin)
+curl -s http://localhost:5050/api/baules -H "Authorization: Bearer $TOKEN"
+```
+
+Works unchanged against `docker-compose.lite.yml` (`api-lite`, port 5051) —
+run `./scripts/fake-oidc-token --help` for the client id/redirect URI
+overrides and the `FAKE_OIDC_URL` env var. It implements the same code-exchange
+flow as `api/acceptance-tests/ElBaul.AcceptanceTests/FakeOidcTokenClient.cs`.
+
 ## Logs and cleanup
 
 Use the helper instead of ad hoc `docker ps` inspection:

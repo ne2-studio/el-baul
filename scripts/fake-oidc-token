@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+FAKE_OIDC_URL="${FAKE_OIDC_URL:-http://localhost:5000}"
+DEFAULT_CLIENT_ID="el-baul-app"
+DEFAULT_REDIRECT_URI="http://localhost:3000/callback"
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/fake-oidc-token <user> [client_id] [redirect_uri]
+
+Mints a real access token from the repository's fake-oidc provider without a
+browser, for calling a running API directly (curl, scripts) as a specific
+test identity. Requires fake-oidc to be reachable (any `run-env` mode starts
+it) — see docker-compose.yaml's OIDC_CLIENTS/OIDC_USERS for registered
+clients and user keys (e.g. "admin", "user").
+
+Arguments:
+  user           fake-oidc user key, e.g. admin or user. Required.
+  client_id      Registered OIDC client id. Defaults to el-baul-app.
+  redirect_uri   Must be registered for client_id. Defaults to
+                 http://localhost:3000/callback.
+
+Prints only the access token to stdout; everything else goes to stderr.
+
+Environment:
+  FAKE_OIDC_URL  Base URL of fake-oidc. Defaults to http://localhost:5000.
+
+Example:
+  TOKEN=$(./scripts/fake-oidc-token admin)
+  curl -s http://localhost:5050/api/baules -H "Authorization: Bearer $TOKEN"
+EOF
+}
+
+die() {
+  printf 'fake-oidc-token: %s\n' "$*" >&2
+  exit 1
+}
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+case "${1:-}" in
+  -h|--help|help|"") usage; exit 0 ;;
+esac
+
+need curl
+
+USER_KEY="$1"
+CLIENT_ID="${2:-$DEFAULT_CLIENT_ID}"
+REDIRECT_URI="${3:-$DEFAULT_REDIRECT_URI}"
+
+url_encode() {
+  local string="$1" out= i c
+  for (( i = 0; i < ${#string}; i++ )); do
+    c="${string:i:1}"
+    case "$c" in
+      [a-zA-Z0-9.~_-]) out+="$c" ;;
+      *) out+=$(printf '%%%02X' "'$c") ;;
+    esac
+  done
+  printf '%s' "$out"
+}
+
+url_decode() {
+  printf '%b' "${1//%/\\x}"
+}
+
+AUTHORIZE_URL="$FAKE_OIDC_URL/authorize/select?response_type=code&client_id=$(url_encode "$CLIENT_ID")&redirect_uri=$(url_encode "$REDIRECT_URI")&state=fake-oidc-token&user=$(url_encode "$USER_KEY")"
+
+LOCATION="$(curl -sS -o /dev/null -D - "$AUTHORIZE_URL" | grep -i '^location:' | tr -d '\r' || true)"
+[[ -n "$LOCATION" ]] || die "no redirect from fake-oidc /authorize/select — is it running at $FAKE_OIDC_URL? (see ./scripts/run-env)"
+
+CODE="$(grep -oP '(?<=[?&]code=)[^&]+' <<<"$LOCATION" || true)"
+if [[ -z "$CODE" ]]; then
+  ERROR_DESCRIPTION="$(grep -oP '(?<=[?&]error_description=)[^&]+' <<<"$LOCATION" || true)"
+  die "fake-oidc rejected user '$USER_KEY': $(url_decode "${ERROR_DESCRIPTION:-$LOCATION}")"
+fi
+
+TOKEN_RESPONSE="$(curl -sS -X POST "$FAKE_OIDC_URL/token" \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d "grant_type=authorization_code&code=${CODE}&client_id=$(url_encode "$CLIENT_ID")&redirect_uri=$(url_encode "$REDIRECT_URI")")"
+
+ACCESS_TOKEN="$(grep -oP '(?<="access_token":")[^"]+' <<<"$TOKEN_RESPONSE" || true)"
+[[ -n "$ACCESS_TOKEN" ]] || die "no access_token in response: $TOKEN_RESPONSE"
+
+printf '%s\n' "$ACCESS_TOKEN"
