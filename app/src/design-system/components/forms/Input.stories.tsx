@@ -96,7 +96,7 @@ export const Modal: Story = {
   },
   args: {
     label: 'Apodo',
-    placeholder: 'Ej. Abuela, Tío Juan...',
+    placeholder: 'Ej. Abuela, Tío Juan…',
     value: '',
     variant: 'modal',
     onChange: () => alert('onChange clicked'),

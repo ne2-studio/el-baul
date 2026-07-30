@@ -46,7 +46,7 @@ export function EditPersonaInfoModal({
         value={nickname}
         onChange={setNickname}
         onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-        placeholder="Ej. Abuela, Tío Juan..."
+        placeholder="Ej. Abuela, Tío Juan…"
         variant="modal"
       />
 

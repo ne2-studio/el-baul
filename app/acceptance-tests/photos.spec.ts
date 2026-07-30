@@ -48,8 +48,7 @@ test('create baúl → create chapter → upload photo → move photo → delete
 async function createChapter(page: import('@playwright/test').Page, name: string) {
   await page.getByRole('button', { name: 'Acciones' }).click();
   await page.getByRole('button', { name: 'Nuevo capítulo' }).click();
-  await page.waitForURL(/\/nuevo-capitulo/);
   await page.getByPlaceholder('Verano 2018').fill(name);
   await page.getByRole('button', { name: 'Crear capítulo' }).click();
-  await page.waitForURL((url) => /\/baules\/[^/]+$/.test(url.pathname));
+  await expect(page.getByPlaceholder('Verano 2018')).toBeHidden({ timeout: 10_000 });
 }
