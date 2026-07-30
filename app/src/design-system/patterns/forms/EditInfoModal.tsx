@@ -2,6 +2,7 @@ import React, { useId, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface EditInfoModalProps {
   title: string;
@@ -61,11 +62,11 @@ export function EditInfoModal({
           inputClassName="text-sm resize-none placeholder:text-muted-foreground/50"
         />
       )}
-      <div className="flex gap-3 pt-1">
+      <ModalActions>
         <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Cancelar
         </Button>
@@ -73,11 +74,11 @@ export function EditInfoModal({
           onClick={handleSave}
           disabled={!name.trim() || isSubmitting}
           isLoading={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Guardar
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

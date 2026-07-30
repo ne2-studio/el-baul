@@ -1,6 +1,7 @@
 import { Button } from '@/design-system/components/actions/Button';
 import { Notice } from '@/design-system/components/feedback/Notice';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface DeleteChapterModalProps {
   photoCount: number;
@@ -29,10 +30,9 @@ export function DeleteChapterModal({ photoCount, recuerdoCount, onCancel, onConf
         sueltos en el baúl. ¿Estás seguro?
       </Notice>
 
-      <div className="flex flex-col-reverse md:flex-row gap-3">
+      <ModalActions className="pt-0">
         <Button
           variant="secondary"
-          fullWidth
           onClick={onCancel}
           disabled={isSubmitting}
         >
@@ -40,14 +40,13 @@ export function DeleteChapterModal({ photoCount, recuerdoCount, onCancel, onConf
         </Button>
         <Button
           variant="danger"
-          fullWidth
           onClick={onConfirm}
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
           Sí, eliminar capítulo
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

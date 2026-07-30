@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { viewportGlobals } from '@/storybook/viewports';
@@ -79,10 +80,10 @@ const editBaulContent = (
         el contenido interno hace scroll sin sacar las acciones de su contexto visual.
       </p>
     </div>
-    <div className="space-y-3">
-      <Button variant="primary" fullWidth>Guardar cambios</Button>
-      <Button variant="secondary" fullWidth>Cancelar</Button>
-    </div>
+    <ModalActions>
+      <Button variant="secondary">Cancelar</Button>
+      <Button variant="primary">Guardar cambios</Button>
+    </ModalActions>
   </>
 );
 
@@ -92,10 +93,10 @@ const destructiveConfirmationContent = (
     <p className="text-muted-foreground mb-5">
       Las fotos dejarán de estar agrupadas en este capítulo, pero seguirán dentro del baúl.
     </p>
-    <div className="flex flex-col-reverse md:flex-row gap-3">
-      <Button variant="secondary" fullWidth>Cancelar</Button>
-      <Button variant="danger" fullWidth>Eliminar capítulo</Button>
-    </div>
+    <ModalActions className="pt-0">
+      <Button variant="secondary">Cancelar</Button>
+      <Button variant="danger">Eliminar capítulo</Button>
+    </ModalActions>
   </>
 );
 

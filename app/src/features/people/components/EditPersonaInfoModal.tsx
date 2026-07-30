@@ -3,6 +3,7 @@ import { Persona } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface EditPersonaInfoModalProps {
   persona: Persona;
@@ -49,11 +50,11 @@ export function EditPersonaInfoModal({
         variant="modal"
       />
 
-      <div className="flex gap-3 pt-1">
+      <ModalActions>
         <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Cancelar
         </Button>
@@ -61,11 +62,11 @@ export function EditPersonaInfoModal({
           onClick={handleSave}
           disabled={!name.trim() || !nickname.trim() || isSubmitting}
           isLoading={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Guardar cambios
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

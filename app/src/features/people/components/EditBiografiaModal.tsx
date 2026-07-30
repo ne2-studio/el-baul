@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface EditBiografiaModalProps {
   initialBiografia: string;
@@ -39,11 +40,11 @@ export function EditBiografiaModal({
         autoFocus
       />
 
-      <div className="flex gap-3 pt-1">
+      <ModalActions>
         <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Cancelar
         </Button>
@@ -51,11 +52,11 @@ export function EditBiografiaModal({
           onClick={handleSave}
           isLoading={isSubmitting}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Guardar cambios
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

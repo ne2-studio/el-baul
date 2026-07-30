@@ -1,6 +1,7 @@
 import { Button } from '@/design-system/components/actions/Button';
 import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { Chapter } from '@/types';
 
 interface MoveModalProps {
@@ -30,11 +31,11 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
           </SelectionRow>
         ))}
       </div>
-      <div className="flex gap-3">
+      <ModalActions className="pt-0">
         <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Cancelar
         </Button>
@@ -42,11 +43,11 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
           onClick={onConfirm}
           disabled={!selectedId || isSubmitting}
           isLoading={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Mover aquí
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

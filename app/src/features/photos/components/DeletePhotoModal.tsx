@@ -3,6 +3,7 @@ import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { Notice } from '@/design-system/components/feedback/Notice';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface DeletePhotoModalProps {
   onCancel: () => void;
@@ -40,10 +41,9 @@ export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: 
         autoFocus
       />
 
-      <div className="flex flex-col-reverse md:flex-row gap-3">
+      <ModalActions className="pt-0">
         <Button
           variant="secondary"
-          fullWidth
           onClick={onCancel}
           disabled={isSubmitting}
         >
@@ -51,14 +51,13 @@ export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: 
         </Button>
         <Button
           variant="danger"
-          fullWidth
           onClick={() => reason.trim() && onConfirm(reason.trim())}
           disabled={!reason.trim() || isSubmitting}
           isLoading={isSubmitting}
         >
           Sí, retirar foto
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

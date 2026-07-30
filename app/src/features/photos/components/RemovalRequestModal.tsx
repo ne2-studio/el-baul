@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface RemovalRequestModalProps {
   onCancel: () => void;
@@ -35,10 +36,9 @@ export function RemovalRequestModal({ onCancel, onConfirm, isSubmitting = false 
         autoFocus
       />
 
-      <div className="flex flex-col-reverse md:flex-row gap-3">
+      <ModalActions className="pt-0">
         <Button
           variant="secondary"
-          fullWidth
           onClick={onCancel}
           disabled={isSubmitting}
         >
@@ -46,14 +46,13 @@ export function RemovalRequestModal({ onCancel, onConfirm, isSubmitting = false 
         </Button>
         <Button
           variant="primary"
-          fullWidth
           onClick={() => reason.trim() && onConfirm(reason.trim())}
           disabled={!reason.trim() || isSubmitting}
           isLoading={isSubmitting}
         >
           Enviar solicitud
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

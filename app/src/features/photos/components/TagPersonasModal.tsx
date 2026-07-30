@@ -1,6 +1,7 @@
 import { Button } from '@/design-system/components/actions/Button';
 import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { Persona } from '@/types';
 
 interface TagPersonasModalProps {
@@ -53,11 +54,11 @@ export function TagPersonasModal({
           );
         })}
       </div>
-      <div className="flex gap-3">
+      <ModalActions className="pt-0">
         <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Cancelar
         </Button>
@@ -65,11 +66,11 @@ export function TagPersonasModal({
           onClick={onConfirm}
           disabled={isSubmitting}
           isLoading={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Guardar
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

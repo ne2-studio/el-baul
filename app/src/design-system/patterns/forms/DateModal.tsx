@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PartialDatePicker } from '@/design-system/components/forms/PartialDatePicker';
 import { Button } from '@/design-system/components/actions/Button';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { PhotoDate } from '@/types';
 
 interface DateModalProps {
@@ -21,11 +22,11 @@ export function DateModal({ title, onCancel, onConfirm, isSubmitting = false }: 
       <div className="mb-6">
         <PartialDatePicker onChange={(v) => setPending(v)} />
       </div>
-      <div className="flex gap-3">
+      <ModalActions className="pt-0">
         <Button variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Cancelar
         </Button>
@@ -33,11 +34,11 @@ export function DateModal({ title, onCancel, onConfirm, isSubmitting = false }: 
           onClick={() => pending && onConfirm(pending)}
           disabled={!pending?.year || isSubmitting}
           isLoading={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Confirmar
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

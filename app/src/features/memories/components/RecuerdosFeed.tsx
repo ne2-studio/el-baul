@@ -8,6 +8,7 @@ import { Button } from '@/design-system/components/actions/Button';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface RecuerdosFeedProps {
   active: boolean;
@@ -119,18 +120,18 @@ function WriteRecuerdoModal({
         placeholder="¿Qué recuerdas de este momento? Escríbelo para que la familia lo guarde..."
         inputClassName="rounded-2xl text-sm placeholder:text-muted-foreground/60 leading-relaxed"
       />
-      <div className="flex gap-3">
-        <Button variant="secondary" onClick={onCancel} className="flex-1 text-sm">
+      <ModalActions className="pt-0">
+        <Button variant="secondary" onClick={onCancel} className="text-sm">
           Cancelar
         </Button>
         <Button
           onClick={() => onSave(text)}
           disabled={!text.trim()}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Guardar recuerdo
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }

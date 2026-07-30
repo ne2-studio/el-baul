@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
+import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface CreateBaulModalProps {
   onCancel: () => void;
@@ -49,12 +50,12 @@ export function CreateBaulModal({ onCancel, onSave, isOnboarding = false, isSubm
           ? 'Podrás crear más baúles más adelante'
           : 'Puedes tener varios baúles para distintas etapas o personas'}
       </p>
-      <div className="flex gap-3 pt-1">
+      <ModalActions>
         <Button
           variant="secondary"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Cancelar
         </Button>
@@ -62,11 +63,11 @@ export function CreateBaulModal({ onCancel, onSave, isOnboarding = false, isSubm
           onClick={handleSave}
           disabled={!name.trim() || isSubmitting}
           isLoading={isSubmitting}
-          className="flex-1 text-sm"
+          className="text-sm"
         >
           Crear baúl
         </Button>
-      </div>
+      </ModalActions>
     </BottomSheetModal>
   );
 }
