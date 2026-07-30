@@ -92,6 +92,30 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      # Not distributed anywhere yet - built here only to keep the Play Store publishing
+      # path (which requires an AAB, not an APK) verified and ready for when that's needed.
+      - name: Build signed AAB
+        working-directory: app/android
+        env:
+          ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
+          ANDROID_VERSION_NAME: ${{ env.ANDROID_VERSION_NAME }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/android-signing/el-baul-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew bundleRelease \
+            --no-daemon \
+            --stacktrace
+
+      - name: Upload AAB as GitHub artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: el-baul-${{ env.ANDROID_VERSION_NAME }}-aab
+          path: app/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Restore Firebase credentials
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
