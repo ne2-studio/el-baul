@@ -22,6 +22,7 @@ public class AdminManager(
     ISharedLinkRepository sharedLinkRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IPhotoStorage photoStorage,
+    IChatContextBuilder chatContextBuilder,
     IClock clock,
     ILogger<AdminManager> logger) : IAdminManager
 {
@@ -135,6 +136,23 @@ public class AdminManager(
     {
         var emails = await sentEmailRepository.GetByUserIdAsync(userId);
         return Result.Success(emails.Select(ToDto));
+    }
+
+    public async Task<Result<AdminChatContextDebugDto>> DebugChatContextAsync(UserId userId, BaulId baulId, string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return Result.Failure<AdminChatContextDebugDto>(ApplicationError.Validation("Message is required"));
+
+        var row = await adminRepository.GetUserDetailAsync(userId);
+        if (row is null) return Result.Failure<AdminChatContextDebugDto>(ApplicationError.NotFound("User not found"));
+        if (row.Baules.All(b => b.BaulId != baulId))
+            return Result.Failure<AdminChatContextDebugDto>(ApplicationError.NotFound("Baul not found for user"));
+
+        var baul = await baulRepository.GetByIdAsync(baulId);
+        if (baul is null) return Result.Failure<AdminChatContextDebugDto>(ApplicationError.NotFound("Baul not found"));
+
+        var context = await chatContextBuilder.BuildAsync(baul, message);
+        return new AdminChatContextDebugDto(baul.Id.ToString(), message, context);
     }
 
     private static AdminSentEmailDto ToDto(SentEmail email) =>

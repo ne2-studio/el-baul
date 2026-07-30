@@ -91,6 +91,14 @@ public class AdminController(
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPost("users/{userId}/baules/{baulId:guid}/chat-context-debug")]
+    [ProducesResponseType(typeof(AdminChatContextDebugDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DebugChatContext(string userId, Guid baulId, [FromBody] DebugChatContextRequest request)
+    {
+        var result = await adminManager.DebugChatContextAsync(new UserId(userId), new BaulId(baulId), request.Message);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPost("emails/welcome-test/{userId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SendWelcomeTestEmail(string userId)

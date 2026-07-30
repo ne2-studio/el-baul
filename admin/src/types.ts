@@ -6,6 +6,7 @@ type AdminBaulDetailDto = ApiSchemas['AdminBaulDetailDto'];
 type AdminBaulListItemDto = ApiSchemas['AdminBaulListItemDto'];
 type AdminBaulPersonaDto = ApiSchemas['AdminBaulPersonaDto'];
 type AdminBaulStatsDto = ApiSchemas['AdminBaulStatsDto'];
+type AdminChatContextDebugDto = ApiSchemas['AdminChatContextDebugDto'];
 type AdminDashboardResponse = ApiSchemas['AdminDashboardResponse'];
 type AdminExternalLinkDto = ApiSchemas['AdminExternalLinkDto'];
 type AdminSentEmailDto = ApiSchemas['AdminSentEmailDto'];
@@ -110,6 +111,18 @@ export class AdminSentEmail {
     this.createdAt = data.createdAt;
     this.sentAt = data.sentAt ?? undefined;
     this.firstClickedAt = data.firstClickedAt ?? undefined;
+  }
+}
+
+export class AdminChatContextDebug {
+  baulId: string;
+  message: string;
+  context: string;
+
+  constructor(data: AdminChatContextDebugDto) {
+    this.baulId = data.baulId;
+    this.message = data.message;
+    this.context = data.context;
   }
 }
 

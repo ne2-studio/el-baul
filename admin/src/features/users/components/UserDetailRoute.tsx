@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, ArrowLeft, Send, Check } from 'lucide-react';
+import { ExternalLink, ArrowLeft, Send, Check, Bug, Loader2 } from 'lucide-react';
 import { useUsersStore } from '@/store/useUsersStore';
 import { DataTable } from '@/app/components/DataTable';
 import { AsyncState } from '@/app/components/AsyncState';
@@ -20,6 +20,11 @@ export function UserDetailRoute() {
   type TestSendKey = 'welcome' | 'digest';
   const [sending, setSending] = useState<Record<TestSendKey, boolean>>({ welcome: false, digest: false });
   const [results, setResults] = useState<Record<TestSendKey, 'success' | 'error' | null>>({ welcome: null, digest: null });
+  const [debugBaulId, setDebugBaulId] = useState('');
+  const [debugMessage, setDebugMessage] = useState('');
+  const [debugContext, setDebugContext] = useState('');
+  const [isDebuggingContext, setIsDebuggingContext] = useState(false);
+  const [debugError, setDebugError] = useState<string | null>(null);
 
   useEffect(() => {
     if (userId) {
@@ -40,6 +45,33 @@ export function UserDetailRoute() {
       setResults((r) => ({ ...r, [key]: 'error' }));
     } finally {
       setSending((s) => ({ ...s, [key]: false }));
+    }
+  };
+
+  useEffect(() => {
+    if (selectedUser?.baules.length) {
+      setDebugBaulId((current) =>
+        current && selectedUser.baules.some((b) => b.baulId === current) ? current : selectedUser.baules[0].baulId
+      );
+    } else {
+      setDebugBaulId('');
+    }
+    setDebugContext('');
+    setDebugError(null);
+  }, [selectedUser?.id, selectedUser?.baules]);
+
+  const handleDebugContext = async () => {
+    if (!userId || !debugBaulId || !debugMessage.trim()) return;
+    setIsDebuggingContext(true);
+    setDebugContext('');
+    setDebugError(null);
+    try {
+      const result = await api.users.debugChatContext(userId, debugBaulId, debugMessage.trim());
+      setDebugContext(result.context);
+    } catch (err) {
+      setDebugError(err instanceof Error ? err.message : 'No se pudo generar el contexto.');
+    } finally {
+      setIsDebuggingContext(false);
     }
   };
 
@@ -145,6 +177,57 @@ export function UserDetailRoute() {
                 },
               ]}
             />
+          </div>
+
+          <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <h3>Debug contexto chat</h3>
+              <button
+                onClick={handleDebugContext}
+                disabled={!debugBaulId || !debugMessage.trim() || isDebuggingContext}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
+              >
+                {isDebuggingContext ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bug className="w-3.5 h-3.5" />}
+                Generar contexto
+              </button>
+            </div>
+
+            <div className="grid gap-4">
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-xs text-muted-foreground">Baúl</span>
+                <select
+                  value={debugBaulId}
+                  onChange={(event) => setDebugBaulId(event.target.value)}
+                  disabled={selectedUser.baules.length === 0}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                >
+                  {selectedUser.baules.map((baul) => (
+                    <option key={baul.baulId} value={baul.baulId}>
+                      {baul.baulName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-xs text-muted-foreground">Mensaje</span>
+                <textarea
+                  value={debugMessage}
+                  onChange={(event) => setDebugMessage(event.target.value)}
+                  rows={3}
+                  placeholder="¿Qué recuerdas de las vacaciones?"
+                  className="w-full resize-y rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                />
+              </label>
+
+              {debugError && <p className="text-sm text-destructive">{debugError}</p>}
+
+              {debugContext && (
+                <pre className="max-h-[32rem] overflow-auto rounded-xl border border-border bg-muted p-4 text-xs leading-relaxed whitespace-pre-wrap">
+                  {debugContext}
+                </pre>
+              )}
+            </div>
           </div>
 
           <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">

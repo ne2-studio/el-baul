@@ -12,4 +12,5 @@ public interface IAdminManager
     Task<Result> DeleteBaulAsync(BaulId baulId);
     Task<Result<IEnumerable<AdminSentEmailDto>>> GetSentEmailsAsync();
     Task<Result<IEnumerable<AdminSentEmailDto>>> GetUserSentEmailsAsync(UserId userId);
+    Task<Result<AdminChatContextDebugDto>> DebugChatContextAsync(UserId userId, BaulId baulId, string message);
 }

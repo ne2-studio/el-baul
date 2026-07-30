@@ -17,11 +17,12 @@ public class AdminManagerTests
     private readonly InMemorySharedLinkRepository _sharedLinkRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
+    private readonly FakeChatContextBuilder _chatContextBuilder = new();
     private readonly StaticClock _clock = new();
 
     private AdminManager CreateManager() => new(
         _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
-        _recuerdoRepository, _sharedLinkRepository, _photoPersonaTagRepository, _photoStorage, _clock,
+        _recuerdoRepository, _sharedLinkRepository, _photoPersonaTagRepository, _photoStorage, _chatContextBuilder, _clock,
         NullLogger<AdminManager>.Instance);
 
     [Fact]
@@ -116,6 +117,39 @@ public class AdminManagerTests
     }
 
     [Fact]
+    public async Task DebugChatContextAsync_ShouldBuildContext_WhenUserBelongsToBaul()
+    {
+        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow());
+        var baulId = new BaulId(Guid.NewGuid());
+        var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
+        await _baulRepository.CreateAsync(baul);
+        _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(
+            user, [new AdminUserBaulRow(baulId, "Familia Pérez", BaulRole.Custodio, new PersonaId(Guid.NewGuid()))]);
+        _chatContextBuilder.Context = "contexto debug";
+
+        var result = await CreateManager().DebugChatContextAsync(new UserId("user-1"), baulId, "mensaje");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(baulId.ToString(), result.Value.BaulId);
+        Assert.Equal("mensaje", result.Value.Message);
+        Assert.Equal("contexto debug", result.Value.Context);
+        Assert.Equal(baul, _chatContextBuilder.LastBaul);
+        Assert.Equal("mensaje", _chatContextBuilder.LastQuery);
+    }
+
+    [Fact]
+    public async Task DebugChatContextAsync_ShouldFail_WhenBaulDoesNotBelongToUser()
+    {
+        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow());
+        _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(user, []);
+
+        var result = await CreateManager().DebugChatContextAsync(new UserId("user-1"), new BaulId(Guid.NewGuid()), "mensaje");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Baul not found for user", result.Error.Message);
+    }
+
+    [Fact]
     public async Task GetBaulDetailAsync_ShouldReturnFailure_WhenBaulNotFound()
     {
         var result = await CreateManager().GetBaulDetailAsync(new BaulId(Guid.NewGuid()));
@@ -198,5 +232,21 @@ public class AdminManagerTests
         Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id));
         Assert.Contains("photos/one.jpg", _photoStorage.DeletedKeys);
         Assert.Contains("avatars/abuela.jpg", _photoStorage.DeletedKeys);
+    }
+
+    private class FakeChatContextBuilder : IChatContextBuilder
+    {
+        public string Context { get; set; } = "";
+        public Baul? LastBaul { get; private set; }
+        public string? LastQuery { get; private set; }
+
+        public Task<string> BuildAsync(Baul baul, string query)
+        {
+            LastBaul = baul;
+            LastQuery = query;
+            return Task.FromResult(Context);
+        }
+
+        public Task<string> BuildSummaryAsync(Baul baul) => Task.FromResult("");
     }
 }

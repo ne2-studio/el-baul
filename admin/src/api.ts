@@ -1,10 +1,19 @@
-import { AdminBaul, AdminBaulDetail, AdminSentEmail, AdminUser, AdminUserDetail, DashboardKpis } from './types';
+import {
+  AdminBaul,
+  AdminBaulDetail,
+  AdminChatContextDebug,
+  AdminSentEmail,
+  AdminUser,
+  AdminUserDetail,
+  DashboardKpis,
+} from './types';
 import { getEnv } from './runtimeConfig';
 import type { components } from './api/generated/schema';
 
 type ApiSchemas = components['schemas'];
 type AdminBaulDetailDto = ApiSchemas['AdminBaulDetailDto'];
 type AdminBaulListItemDto = ApiSchemas['AdminBaulListItemDto'];
+type AdminChatContextDebugDto = ApiSchemas['AdminChatContextDebugDto'];
 type AdminDashboardResponse = ApiSchemas['AdminDashboardResponse'];
 type AdminSentEmailDto = ApiSchemas['AdminSentEmailDto'];
 type AdminUserDetailDto = ApiSchemas['AdminUserDetailDto'];
@@ -52,6 +61,14 @@ export const api = {
       fetch(`${API_BASE_URL}/api/admin/users/${id}/emails`, { headers: getHeaders() })
         .then((res) => handleResponse<AdminSentEmailDto[]>(res))
         .then((data) => data.map((e) => new AdminSentEmail(e))),
+    debugChatContext: async (userId: string, baulId: string, message: string): Promise<AdminChatContextDebug> =>
+      fetch(`${API_BASE_URL}/api/admin/users/${userId}/baules/${baulId}/chat-context-debug`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ message }),
+      })
+        .then((res) => handleResponse<AdminChatContextDebugDto>(res))
+        .then((data) => new AdminChatContextDebug(data)),
   },
   baules: {
     getAll: async (): Promise<AdminBaul[]> =>

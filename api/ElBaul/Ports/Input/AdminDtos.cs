@@ -26,3 +26,5 @@ public record AdminBaulDetailDto(
 public record AdminSentEmailDto(
     string Id, string UserId, string Type, string Subject, string RecipientEmail, string Status,
     DateTime CreatedAt, DateTime? SentAt, DateTime? FirstClickedAt);
+
+public record AdminChatContextDebugDto(string BaulId, string Message, string Context);
