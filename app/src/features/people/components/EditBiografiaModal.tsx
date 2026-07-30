@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface EditBiografiaModalProps {
@@ -26,22 +27,17 @@ export function EditBiografiaModal({
     <BottomSheetModal onCancel={onCancel} size="lg">
       <h2 className="text-xl font-serif text-foreground">Editar biografía</h2>
 
-      <div>
-        <label
-          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-        >
-          Biografía
-        </label>
-        <textarea
-          value={biografia}
-          onChange={(e) => setBiografia(e.target.value)}
-          placeholder="Cuéntanos su historia: dónde nació, cómo era, anécdotas…"
-          rows={6}
-          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-          autoFocus
-        />
-      </div>
+      <Input
+        label="Biografía"
+        value={biografia}
+        onChange={setBiografia}
+        placeholder="Cuéntanos su historia: dónde nació, cómo era, anécdotas..."
+        rows={6}
+        multiline
+        variant="modal"
+        inputClassName="resize-none"
+        autoFocus
+      />
 
       <div className="flex gap-3 pt-1">
         <Button variant="secondary"

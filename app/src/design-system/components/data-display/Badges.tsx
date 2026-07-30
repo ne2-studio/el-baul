@@ -88,3 +88,16 @@ export function RoleBadge({ role, tone = 'default', className }: RoleBadgeProps)
     </span>
   );
 }
+
+interface CounterBadgeProps {
+  count: number;
+  className?: string;
+}
+
+export function CounterBadge({ count, className }: CounterBadgeProps) {
+  return (
+    <span className={cn('inline-flex rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-white', className)}>
+      {count}
+    </span>
+  );
+}

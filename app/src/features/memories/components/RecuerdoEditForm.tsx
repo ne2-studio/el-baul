@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 
 interface RecuerdoEditFormProps {
   initialText: string;
@@ -26,17 +27,15 @@ export function RecuerdoEditForm({ initialText, tone = 'light', isSaving = false
 
   return (
     <div className="space-y-3">
-      <textarea
-        ref={inputRef}
+      <Input
+        inputRef={inputRef}
         value={text}
-        onChange={(event) => setText(event.target.value)}
+        onChange={setText}
         rows={4}
         aria-label="Contenido del recuerdo"
-        className={`w-full rounded-2xl px-4 py-3 text-sm leading-relaxed resize-none outline-none border focus:ring-2 focus:ring-ring ${
-          tone === 'dark'
-            ? 'bg-background/10 border-background/15 text-background placeholder:text-background/40'
-            : 'bg-card border-border text-foreground placeholder:text-muted-foreground/60'
-        }`}
+        multiline
+        variant={tone === 'dark' ? 'inlineDark' : 'support'}
+        inputClassName={tone === 'light' ? 'min-h-0 text-sm placeholder:text-muted-foreground/60' : undefined}
       />
       <div className="flex gap-2 justify-end">
         <Button
@@ -50,10 +49,10 @@ export function RecuerdoEditForm({ initialText, tone = 'light', isSaving = false
         </Button>
         <Button
           type="button"
-          variant="plain"
+          variant="primary"
           onClick={handleSubmit}
           disabled={!canSave}
-          className="px-3 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
+          className="px-3 py-2 rounded-xl text-sm disabled:opacity-40"
         >
           {isSaving ? 'Guardando...' : 'Guardar'}
         </Button>

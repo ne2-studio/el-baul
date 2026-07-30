@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Persona } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface EditPersonaInfoModalProps {
@@ -30,39 +31,23 @@ export function EditPersonaInfoModal({
     <BottomSheetModal onCancel={onCancel} size="lg">
       <h2 className="text-xl font-serif text-foreground">Editar información</h2>
 
-      <div>
-        <label
-          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-        >
-          Nombre *
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre completo"
-          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
-          autoFocus
-        />
-      </div>
+      <Input
+        label="Nombre *"
+        value={name}
+        onChange={setName}
+        placeholder="Nombre completo"
+        variant="modal"
+        autoFocus
+      />
 
-      <div>
-        <label
-          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-        >
-          Apodo
-        </label>
-        <input
-          type="text"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-          placeholder="Ej. Abuela, Tío Juan…"
-          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
-        />
-      </div>
+      <Input
+        label="Apodo"
+        value={nickname}
+        onChange={setNickname}
+        onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+        placeholder="Ej. Abuela, Tío Juan..."
+        variant="modal"
+      />
 
       <div className="flex gap-3 pt-1">
         <Button variant="secondary"

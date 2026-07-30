@@ -1,5 +1,5 @@
-import { Check } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { Chapter } from '@/types';
 
@@ -20,21 +20,14 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
       <h2 className="text-lg font-medium text-foreground mb-4">{title}</h2>
       <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
         {chapters.map(a => (
-          <Button variant="plain"
+          <SelectionRow
             key={a.id}
+            selected={selectedId === a.id}
             onClick={() => onSelect(a.id)}
             disabled={isSubmitting}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left disabled:opacity-60 ${
-              selectedId === a.id ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-secondary/30'
-            }`}
           >
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-              selectedId === a.id ? 'bg-primary border-primary' : 'border-border'
-            }`}>
-              {selectedId === a.id && <Check className="w-3 h-3 text-white" />}
-            </div>
             <span className="text-sm text-foreground">{a.name}</span>
-          </Button>
+          </SelectionRow>
         ))}
       </div>
       <div className="flex gap-3">

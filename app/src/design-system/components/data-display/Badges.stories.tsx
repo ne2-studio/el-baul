@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChapterBadge, PersonBadge, RoleBadge } from '@/design-system/components/data-display/Badges';
+import { ChapterBadge, CounterBadge, PersonBadge, RoleBadge } from '@/design-system/components/data-display/Badges';
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
@@ -13,7 +13,7 @@ const meta = {
 Small contextual labels for product metadata that should be scannable but not compete with primary content.
 
 ### When to use
-Use \`ChapterBadge\` to show where a memory belongs, \`PersonBadge\` for compact tagged people, and \`RoleBadge\` for access roles.
+Use \`ChapterBadge\` to show where a memory belongs, \`PersonBadge\` for compact tagged people, \`RoleBadge\` for access roles, and \`CounterBadge\` for compact numeric counts inside rows or menus.
 
 ### When NOT to use
 Do not use badges for primary actions, long explanatory text, error states or counters that need stronger feedback semantics.
@@ -61,4 +61,15 @@ export const OnImage: Story = {
       <RoleBadge role="administrador" tone="onImage" />
     </div>
   ),
+};
+
+export const Counter: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Small numeric indicator for compact menu items or notification counts. Use it for counts that are secondary to a row label, not as a standalone status.',
+      },
+    },
+  },
+  render: () => <CounterBadge count={3} />,
 };

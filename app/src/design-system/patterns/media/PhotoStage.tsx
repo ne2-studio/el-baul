@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, animate, type PanInfo } from 'motion/react';
-import { Button } from '@/design-system/components/actions/Button';
+import { IconButton } from '@/design-system/components/actions/IconButton';
 
 interface PhotoStageProps {
   photoKey: string;
@@ -52,12 +52,15 @@ export function PhotoStage({ photoKey, src, alt, direction, hasPrevious, hasNext
   return (
     <div className="flex-1 flex items-center justify-center relative overflow-hidden">
       {hasPrevious && (
-        <Button variant="plain"
+        <IconButton
           onClick={onPrevious}
-          className="absolute left-4 w-12 h-12 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors z-20 hidden md:flex"
+          aria-label="Foto anterior"
+          size="lg"
+          tone="inverse"
+          className="absolute left-4 z-20 hidden md:flex"
         >
           <ChevronLeft className="w-6 h-6 text-background" />
-        </Button>
+        </IconButton>
       )}
 
       <AnimatePresence initial={false} custom={direction}>
@@ -83,12 +86,15 @@ export function PhotoStage({ photoKey, src, alt, direction, hasPrevious, hasNext
       </AnimatePresence>
 
       {hasNext && (
-        <Button variant="plain"
+        <IconButton
           onClick={onNext}
-          className="absolute right-4 w-12 h-12 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors z-20 hidden md:flex"
+          aria-label="Foto siguiente"
+          size="lg"
+          tone="inverse"
+          className="absolute right-4 z-20 hidden md:flex"
         >
           <ChevronRight className="w-6 h-6 text-background" />
-        </Button>
+        </IconButton>
       )}
     </div>
   );

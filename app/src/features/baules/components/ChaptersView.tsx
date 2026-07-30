@@ -18,9 +18,10 @@ import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPi
 import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
 import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
-import { Button } from '@/design-system/components/actions/Button';
+import { IconButton } from '@/design-system/components/actions/IconButton';
 import { ChapterCard } from '@/features/baules/components/ChapterCard';
 import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
+import { CounterBadge } from '@/design-system/components/data-display/Badges';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,15 +136,12 @@ export function ChaptersView({
           (onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="plain"
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary relative"
+                <IconButton
                   aria-label="Opciones del baúl"
+                  badgeDot={(pendingRemovalRequestsCount ?? 0) > 0}
                 >
                   <MoreVertical className="w-5 h-5" />
-                  {(pendingRemovalRequestsCount ?? 0) > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
-                  )}
-                </Button>
+                </IconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 {onFetchBaulCoverPhotos && onSetBaulCover && (
@@ -168,9 +166,7 @@ export function ChaptersView({
                   <DropdownMenuItem onClick={onRemovalRequests}>
                     <Bell className="w-4 h-4 mr-2" />
                     <span>Solicitudes de eliminación</span>
-                    <span className="ml-auto bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                      {pendingRemovalRequestsCount}
-                    </span>
+                    <CounterBadge count={pendingRemovalRequestsCount ?? 0} className="ml-auto" />
                   </DropdownMenuItem>
                 )}
 

@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChevronLeft } from 'lucide-react';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
-import { Button } from '@/design-system/components/actions/Button';
+import { BackButton } from '@/design-system/components/navigation/BackButton';
 
 const meta = {
   title: 'Layouts/StickyHeader',
@@ -47,9 +46,7 @@ export const Default: Story = {
     <div className="min-h-screen bg-background">
       <StickyHeader>
         <PageContainer className="py-5 flex items-center gap-4">
-          <Button variant="plain" className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2">
-            <ChevronLeft className="w-6 h-6 text-foreground" />
-          </Button>
+          <BackButton onClick={() => alert('back clicked')} />
           <h1 className="text-3xl text-foreground">Título de la pantalla</h1>
         </PageContainer>
       </StickyHeader>

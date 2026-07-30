@@ -8,6 +8,7 @@ import { BatchOperationProgress, BatchOperationItem } from '@/design-system/comp
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { Chapter, Photo, PhotoDate, Persona } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { ActionBarButton } from '@/design-system/components/actions/ActionBarButton';
 
 interface BatchPhotoActionsBarProps {
   active: boolean;
@@ -119,40 +120,36 @@ export function BatchPhotoActionsBar({
           <PageContainer className="py-3 overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 w-max">
               {onBatchChangeDate && (
-                <Button variant="plain"
+                <ActionBarButton
                   onClick={() => setShowDateModal(true)}
-                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                  icon={<Calendar aria-hidden />}
                 >
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
                   Cambiar fecha
-                </Button>
+                </ActionBarButton>
               )}
               {moveableChapters.length > 0 && (
-                <Button variant="plain"
+                <ActionBarButton
                   onClick={() => setShowMoveModal(true)}
-                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                  icon={<FolderInput aria-hidden />}
                 >
-                  <FolderInput className="w-4 h-4 text-muted-foreground" />
                   Mover
-                </Button>
+                </ActionBarButton>
               )}
               {onBatchCreateChapter && (
-                <Button variant="plain"
+                <ActionBarButton
                   onClick={() => setShowCreateChapterModal(true)}
-                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                  icon={<Plus aria-hidden />}
                 >
-                  <Plus className="w-4 h-4 text-muted-foreground" />
                   Crear nuevo capítulo
-                </Button>
+                </ActionBarButton>
               )}
               {onBatchTagPersonas && (
-                <Button variant="plain"
+                <ActionBarButton
                   onClick={() => setShowTagModal(true)}
-                  className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl border border-border text-xs text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                  icon={<Tag aria-hidden />}
                 >
-                  <Tag className="w-4 h-4 text-muted-foreground" />
                   Etiquetar personas
-                </Button>
+                </ActionBarButton>
               )}
             </div>
           </PageContainer>

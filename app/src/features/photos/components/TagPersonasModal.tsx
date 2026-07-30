@@ -1,5 +1,5 @@
-import { Check } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { Persona } from '@/types';
 
@@ -33,28 +33,23 @@ export function TagPersonasModal({
         {personas.map((persona) => {
           const isSelected = selectedIds.includes(persona.id);
           return (
-            <Button variant="plain"
+            <SelectionRow
               key={persona.id}
+              selected={isSelected}
+              control="checkbox"
+              controlPosition="right"
               onClick={() => onToggle(persona.id)}
               disabled={isSubmitting}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left disabled:opacity-60 ${
-                isSelected ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-secondary/30'
-              }`}
-            >
-              {persona.avatarUrl ? (
+              leading={persona.avatarUrl ? (
                 <img src={persona.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs text-muted-foreground">
                   {persona.nickname.charAt(0).toUpperCase()}
                 </div>
               )}
+            >
               <span className="text-sm text-foreground flex-1">{persona.nickname}</span>
-              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-                isSelected ? 'bg-primary border-primary' : 'border-border'
-              }`}>
-                {isSelected && <Check className="w-3 h-3 text-white" />}
-              </div>
-            </Button>
+            </SelectionRow>
           );
         })}
       </div>

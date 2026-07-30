@@ -5,6 +5,9 @@ import { icons } from '@/design-system/foundations/icons/icons';
 import { Photo, Recuerdo } from '@/types';
 import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
 import { Button } from '@/design-system/components/actions/Button';
+import { IconButton } from '@/design-system/components/actions/IconButton';
+import { Input } from '@/design-system/components/forms/Input';
+import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface RecuerdosFeedProps {
   active: boolean;
@@ -99,40 +102,35 @@ function WriteRecuerdoModal({
   const [text, setText] = useState('');
 
   return (
-    <div className="fixed inset-0 bg-foreground/40 z-[60] flex items-end justify-center">
-      <div className="absolute inset-0" onClick={onCancel} />
-      <div className="bg-background rounded-t-2xl w-full max-w-md p-6 relative z-10 animate-slide-up">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-medium text-foreground">Escribe lo que recuerdas</h2>
-          <Button variant="plain"
-            onClick={onCancel}
-            aria-label="Cerrar"
-            className="p-1.5 rounded-full hover:bg-secondary transition-colors text-muted-foreground"
-          >
-            <Icon icon={icons.close} size="sm" aria-hidden />
-          </Button>
-        </div>
-        <textarea
-          autoFocus
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={5}
-          placeholder="¿Qué recuerdas de este momento? Escríbelo para que la familia lo guarde…"
-          className="w-full border border-border rounded-2xl px-4 py-3 text-sm text-foreground bg-card outline-none focus:ring-2 focus:ring-ring resize-none placeholder:text-muted-foreground/60 leading-relaxed"
-        />
-        <div className="flex gap-3 mt-5">
-          <Button variant="secondary" onClick={onCancel} className="flex-1 text-sm">
-            Cancelar
-          </Button>
-          <Button variant="plain"
-            onClick={() => onSave(text)}
-            disabled={!text.trim()}
-            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
-          >
-            Guardar recuerdo
-          </Button>
-        </div>
+    <BottomSheetModal onCancel={onCancel} size="lg">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-medium text-foreground">Escribe lo que recuerdas</h2>
+        <IconButton onClick={onCancel} aria-label="Cerrar" size="sm">
+          <Icon icon={icons.close} size="sm" aria-hidden />
+        </IconButton>
       </div>
-    </div>
+      <Input
+        autoFocus
+        value={text}
+        onChange={setText}
+        rows={5}
+        multiline
+        variant="support"
+        placeholder="¿Qué recuerdas de este momento? Escríbelo para que la familia lo guarde..."
+        inputClassName="rounded-2xl text-sm placeholder:text-muted-foreground/60 leading-relaxed"
+      />
+      <div className="flex gap-3">
+        <Button variant="secondary" onClick={onCancel} className="flex-1 text-sm">
+          Cancelar
+        </Button>
+        <Button
+          onClick={() => onSave(text)}
+          disabled={!text.trim()}
+          className="flex-1 text-sm"
+        >
+          Guardar recuerdo
+        </Button>
+      </div>
+    </BottomSheetModal>
   );
 }

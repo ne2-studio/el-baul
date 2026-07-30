@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { Notice } from '@/design-system/components/feedback/Notice';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
@@ -24,17 +25,18 @@ export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: 
         <span className="font-semibold">Atención:</span> Esta foto dejará de estar disponible para todos los miembros del baúl. Todos los recuerdos asociados a ella se perderán de forma permanente.
       </Notice>
 
-      <label htmlFor={reasonInputId} className="block text-sm font-medium text-foreground mb-2">
-        Motivo de la retirada
-      </label>
-      <textarea
+      <Input
         id={reasonInputId}
+        label="Motivo de la retirada"
         value={reason}
-        onChange={(e) => setReason(e.target.value)}
+        onChange={setReason}
         placeholder="¿Por qué se retira esta foto?"
         rows={3}
+        multiline
         disabled={isSubmitting}
-        className="w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40 placeholder:text-muted-foreground mb-5 disabled:opacity-60"
+        variant="destructive"
+        className="mb-5"
+        labelClassName="block text-sm font-medium text-foreground"
         autoFocus
       />
 

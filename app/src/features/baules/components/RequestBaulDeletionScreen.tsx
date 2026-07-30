@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { Notice } from '@/design-system/components/feedback/Notice';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
@@ -36,15 +37,17 @@ export function RequestBaulDeletionScreen({ baulName, onBack, onSubmit, isSubmit
           hacer directamente desde la app: cuéntanos tu caso y nuestro equipo de soporte lo gestionará contigo.
         </Notice>
 
-        <label className="block text-sm font-medium text-foreground mb-2">
-          Explica la situación y el motivo por el que deseas eliminar el baúl
-        </label>
-        <textarea
+        <Input
+          label="Explica la situación y el motivo por el que deseas eliminar el baúl"
           value={reason}
-          onChange={(e) => setReason(e.target.value)}
+          onChange={setReason}
           placeholder="Cuéntanos qué ha pasado y por qué quieres eliminar este baúl."
           disabled={isSubmitting}
-          className="w-full min-h-[160px] p-4 bg-card border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground placeholder:text-muted-foreground mb-6 disabled:opacity-60"
+          rows={5}
+          multiline
+          variant="support"
+          className="mb-6"
+          labelClassName="block text-sm font-medium text-foreground"
           autoFocus
         />
 

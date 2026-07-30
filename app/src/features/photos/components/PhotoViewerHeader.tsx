@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Button } from '@/design-system/components/actions/Button';
+import { IconButton } from '@/design-system/components/actions/IconButton';
 
 export interface PhotoViewerMenuItem {
   key: string;
@@ -24,13 +25,13 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
 
   return (
     <div className="flex items-center justify-between p-4">
-      <Button variant="plain"
+      <IconButton
         onClick={onClose}
         aria-label="Cerrar"
-        className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors"
+        tone="inverse"
       >
         <Icon icon={icons.close} size="lg" className="text-background" aria-hidden />
-      </Button>
+      </IconButton>
 
       <div className="text-background/75 text-sm">
         {currentIndex + 1} / {totalCount}
@@ -38,13 +39,13 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
 
       {menuItems.length > 0 ? (
         <div className="relative">
-          <Button variant="plain"
+          <IconButton
             onClick={() => setShowMenu(!showMenu)}
             aria-label="Más opciones"
-            className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors"
+            tone="inverse"
           >
             <Icon icon={icons.moreOptions} size="lg" className="text-background" aria-hidden />
-          </Button>
+          </IconButton>
 
           {showMenu && (
             <>

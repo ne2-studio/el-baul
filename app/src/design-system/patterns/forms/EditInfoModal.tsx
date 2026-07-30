@@ -1,5 +1,6 @@
 import React, { useId, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface EditInfoModalProps {
@@ -37,43 +38,28 @@ export function EditInfoModal({
   return (
     <BottomSheetModal onCancel={onCancel} size="lg">
       <h2 className="text-xl font-serif text-foreground">{title}</h2>
-      <div>
-        <label
-          htmlFor={nameInputId}
-          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-        >
-          Nombre
-        </label>
-        <input
-          id={nameInputId}
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSave()}
-          placeholder={namePlaceholder}
-          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
-          autoFocus
-        />
-      </div>
+      <Input
+        id={nameInputId}
+        label="Nombre"
+        value={name}
+        onChange={setName}
+        onKeyDown={e => e.key === 'Enter' && handleSave()}
+        placeholder={namePlaceholder}
+        variant="modal"
+        autoFocus
+      />
       {showDescription && (
-        <div>
-          <label
-            htmlFor={descriptionInputId}
-            className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-            style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-          >
-            Descripción
-          </label>
-          <textarea
-            id={descriptionInputId}
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            rows={3}
-            placeholder="Añadir descripción…"
-            className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 resize-none placeholder:text-muted-foreground/50"
-          />
-        </div>
+        <Input
+          id={descriptionInputId}
+          label="Descripción"
+          value={description}
+          onChange={setDescription}
+          rows={3}
+          multiline
+          placeholder="Añadir descripción…"
+          variant="modal"
+          inputClassName="text-sm resize-none placeholder:text-muted-foreground/50"
+        />
       )}
       <div className="flex gap-3 pt-1">
         <Button variant="secondary"

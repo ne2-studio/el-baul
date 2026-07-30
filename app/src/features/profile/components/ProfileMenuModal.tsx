@@ -1,6 +1,6 @@
-import React from 'react';
 import { X, User, CreditCard, LogOut, Loader2, HelpCircle, Bell } from 'lucide-react';
-import { Button } from '@/design-system/components/actions/Button';
+import { IconButton } from '@/design-system/components/actions/IconButton';
+import { ActionListItem } from '@/design-system/components/data-display/ActionListItem';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
@@ -35,102 +35,74 @@ export function ProfileMenuModal({
           <div className="w-12 h-1 bg-border rounded-full mx-auto mb-4" />
           <div className="flex items-center justify-between">
             <h2 className="font-serif text-xl text-foreground">Cuenta</h2>
-            <Button variant="plain"
+            <IconButton
               onClick={onClose}
               disabled={isSigningOut}
-              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-50"
+              size="sm"
+              aria-label="Cerrar"
             >
               <X className="w-5 h-5 text-muted-foreground" />
-            </Button>
+            </IconButton>
           </div>
         </div>
 
         {/* Desktop header */}
         <div className="hidden md:flex items-center justify-between p-6 border-b border-border">
           <h2 className="font-serif text-xl text-foreground">Cuenta</h2>
-          <Button variant="plain"
+          <IconButton
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+            size="sm"
+            aria-label="Cerrar"
           >
             <X className="w-5 h-5 text-muted-foreground" />
-          </Button>
+          </IconButton>
         </div>
 
         {/* Menu items */}
         <div className="p-4">
-          <Button variant="plain"
+          <ActionListItem
             onClick={onNavigateToProfile}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <User className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <div className="font-medium text-foreground">Mi perfil</div>
-              <div className="text-sm text-muted-foreground">Información de tu cuenta</div>
-            </div>
-          </Button>
+            icon={<User className="w-5 h-5" />}
+            title="Mi perfil"
+            description="Información de tu cuenta"
+          />
 
           {monetizationEnabled && (
-            <Button variant="plain"
+            <ActionListItem
               onClick={onNavigateToSubscription}
-              className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
-            >
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <CreditCard className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <div className="font-medium text-foreground">Mi suscripción</div>
-                <div className="text-sm text-muted-foreground">Plan y espacio disponible</div>
-              </div>
-            </Button>
+              className="mt-2"
+              icon={<CreditCard className="w-5 h-5" />}
+              title="Mi suscripción"
+              description="Plan y espacio disponible"
+            />
           )}
 
-          <Button variant="plain"
+          <ActionListItem
             onClick={onNavigateToNotifications}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Bell className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <div className="font-medium text-foreground">Notificaciones</div>
-              <div className="text-sm text-muted-foreground">Resumen semanal por email</div>
-            </div>
-          </Button>
+            className="mt-2"
+            icon={<Bell className="w-5 h-5" />}
+            title="Notificaciones"
+            description="Resumen semanal por email"
+          />
 
-          <Button variant="plain"
+          <ActionListItem
             onClick={onNavigateToHelp}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-muted transition-colors text-left mt-2"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <HelpCircle className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <div className="font-medium text-foreground">Ayuda y soporte</div>
-              <div className="text-sm text-muted-foreground">Preguntas, problemas y sugerencias</div>
-            </div>
-          </Button>
+            className="mt-2"
+            icon={<HelpCircle className="w-5 h-5" />}
+            title="Ayuda y soporte"
+            description="Preguntas, problemas y sugerencias"
+          />
         </div>
 
         {/* Sign out */}
         <div className="p-4 border-t border-border">
-          <Button variant="plain"
+          <ActionListItem
             onClick={onSignOut}
             disabled={isSigningOut}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-destructive/10 transition-colors text-left disabled:opacity-50"
-          >
-            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
-              {isSigningOut ? (
-                <Loader2 className="w-5 h-5 text-destructive animate-spin" />
-              ) : (
-                <LogOut className="w-5 h-5 text-destructive" />
-              )}
-            </div>
-            <div className="font-medium text-destructive">
-              {isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
-            </div>
-          </Button>
+            variant="destructive"
+            icon={isSigningOut ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+            title={isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+          />
         </div>
 
         {/* Bottom padding for mobile */}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface NuevaPersonaModalProps {
@@ -20,23 +21,15 @@ export function NuevaPersonaModal({ onCancel, onSave, isSubmitting = false }: Nu
   return (
     <BottomSheetModal onCancel={onCancel} size="lg">
       <h2 className="text-xl font-serif text-foreground">Nueva persona</h2>
-      <div>
-        <label
-          className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 block"
-          style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
-        >
-          Apodo
-        </label>
-        <input
-          type="text"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-          placeholder="Ej. Abuela, Tío Juan…"
-          className="w-full bg-secondary rounded-xl px-4 py-3 text-foreground text-base outline-none focus:ring-2 focus:ring-primary/30"
-          autoFocus
-        />
-      </div>
+      <Input
+        label="Apodo"
+        value={nickname}
+        onChange={setNickname}
+        onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+        placeholder="Ej. Abuela, Tío Juan..."
+        variant="modal"
+        autoFocus
+      />
       <div className="flex gap-3 pt-1">
         <Button variant="secondary"
           onClick={onCancel}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface RemovalRequestModalProps {
@@ -22,11 +23,14 @@ export function RemovalRequestModal({ onCancel, onConfirm, isSubmitting = false 
         El custodio del baúl revisará tu solicitud.
       </p>
 
-      <textarea
+      <Input
         value={reason}
-        onChange={(e) => setReason(e.target.value)}
+        onChange={setReason}
         placeholder="Cuéntanos por qué no quieres que esta foto aparezca en este baúl"
-        className="w-full min-h-[120px] p-3 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground mb-6"
+        rows={4}
+        multiline
+        inputClassName="min-h-[120px] rounded-lg p-3 focus:ring-primary"
+        className="mb-6"
         disabled={isSubmitting}
         autoFocus
       />

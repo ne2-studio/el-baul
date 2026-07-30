@@ -1,7 +1,6 @@
 import { useEffect, useId, useState } from 'react';
-import { Check } from 'lucide-react';
 import { PhotoDate } from '@/types';
-import { Button } from '@/design-system/components/actions/Button';
+import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 import { Input } from '@/design-system/components/forms/Input';
 import { Select } from '@/design-system/components/forms/Select';
 
@@ -64,20 +63,14 @@ export function PartialDatePicker({
   return (
     <div>
       {allowUnknown && (
-        <Button variant="plain"
+        <SelectionRow
           type="button"
+          selected={unknown}
           onClick={handleUnknownToggle}
-          className={`w-full flex items-center gap-3 px-4 py-3 mb-3 rounded-xl border transition-all text-left ${
-            unknown ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-secondary/30'
-          }`}
+          className="mb-3"
         >
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-            unknown ? 'bg-primary border-primary' : 'border-border'
-          }`}>
-            {unknown && <Check className="w-3 h-3 text-white" />}
-          </div>
           <span className="text-sm text-foreground">No me acuerdo</span>
-        </Button>
+        </SelectionRow>
       )}
 
       {!unknown && (

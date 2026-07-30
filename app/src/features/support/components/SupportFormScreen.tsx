@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle, Info } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 import { Notice } from '@/design-system/components/feedback/Notice';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
@@ -58,12 +59,16 @@ export function SupportFormScreen({ title, onBack, onSubmit }: SupportFormScreen
 
       {/* Content */}
       <PageContainer className="py-8">
-        <textarea
+        <Input
+          aria-label="Mensaje"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={setMessage}
           placeholder="Cuéntanos qué ha pasado o cómo podemos ayudarte."
           disabled={isSubmitting}
-          className="w-full min-h-[160px] p-4 bg-card border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground placeholder:text-muted-foreground mb-4"
+          rows={5}
+          multiline
+          variant="support"
+          className="mb-4"
           autoFocus
         />
 
