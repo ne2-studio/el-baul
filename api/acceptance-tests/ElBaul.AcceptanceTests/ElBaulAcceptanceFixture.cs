@@ -40,6 +40,7 @@ public sealed class ElBaulAcceptanceFixture : IAsyncLifetime
 
     public HttpClient BackendClient { get; private set; } = null!;
     public HttpClient FakeOidcClient { get; private set; } = null!;
+    public string DockerHost { get; } = Environment.GetEnvironmentVariable("TESTCONTAINERS_HOST_OVERRIDE") ?? "localhost";
 
     /// <summary>
     /// The full set of env vars the backend needs to reach the sibling containers on
@@ -129,11 +130,11 @@ public sealed class ElBaulAcceptanceFixture : IAsyncLifetime
 
         BackendClient = new HttpClient
         {
-            BaseAddress = new Uri($"http://localhost:{Backend.GetMappedPublicPort(8080)}")
+            BaseAddress = new Uri($"http://{DockerHost}:{Backend.GetMappedPublicPort(8080)}")
         };
         FakeOidcClient = new HttpClient
         {
-            BaseAddress = new Uri($"http://localhost:{FakeOidc.GetMappedPublicPort(5000)}")
+            BaseAddress = new Uri($"http://{DockerHost}:{FakeOidc.GetMappedPublicPort(5000)}")
         };
     }
 

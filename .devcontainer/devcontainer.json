@@ -1,0 +1,100 @@
+{
+  "name": "El Baul",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {
+      "version": "28.5.1",
+      "moby": false,
+      "mobyBuildxVersion": "0.36.0",
+      "dockerDashComposeVersion": "v2.40.3",
+      "installDockerBuildx": true
+    }
+  },
+  "containerEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1",
+    "MSBUILDDISABLENODEREUSE": "1",
+    "DOCKER_BUILDKIT": "1",
+    "COMPOSE_DOCKER_CLI_BUILD": "1",
+    "PLAYWRIGHT_BROWSERS_PATH": "/ms-playwright",
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
+    "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal",
+    "TESTCONTAINERS_RYUK_DISABLED": "true"
+  },
+  "remoteEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1",
+    "MSBUILDDISABLENODEREUSE": "1",
+    "DOCKER_BUILDKIT": "1",
+    "COMPOSE_DOCKER_CLI_BUILD": "1",
+    "PLAYWRIGHT_BROWSERS_PATH": "/ms-playwright",
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
+    "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal",
+    "TESTCONTAINERS_RYUK_DISABLED": "true"
+  },
+  "runArgs": [
+    "--network=host"
+  ],
+  "postCreateCommand": ".devcontainer/setup.sh",
+  "forwardPorts": [
+    3000,
+    3001,
+    5000,
+    5050,
+    5051,
+    5173,
+    6006,
+    8025,
+    8081,
+    9000,
+    9001
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Consumer app"
+    },
+    "3001": {
+      "label": "Admin app"
+    },
+    "5000": {
+      "label": "fake-oidc"
+    },
+    "5050": {
+      "label": "Backend API"
+    },
+    "5051": {
+      "label": "Lite API"
+    },
+    "5173": {
+      "label": "Vite consumer app"
+    },
+    "6006": {
+      "label": "Storybook"
+    },
+    "8025": {
+      "label": "Mailpit"
+    },
+    "8081": {
+      "label": "imgproxy"
+    },
+    "9000": {
+      "label": "MinIO API"
+    },
+    "9001": {
+      "label": "MinIO console"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-playwright.playwright",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}

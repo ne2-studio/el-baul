@@ -38,7 +38,7 @@ public class SmokeTests(ElBaulAcceptanceFixture fixture)
         var mappedPort = fixture.Backend.GetMappedPublicPort(8080);
 
         using var tcpClient = new TcpClient();
-        var connectTask = tcpClient.ConnectAsync(IPAddress.Loopback, mappedPort);
+        var connectTask = tcpClient.ConnectAsync(fixture.DockerHost, mappedPort);
         var completed = await Task.WhenAny(connectTask, Task.Delay(TimeSpan.FromSeconds(5)));
 
         completed.Should().Be(connectTask, "the image should accept TCP connections on its published port 8080");
