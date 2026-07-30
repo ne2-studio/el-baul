@@ -42,8 +42,11 @@ Do not use for primary form actions, tab navigation or long multi-step decisions
 ### Typical examples
 Changing a cover, editing metadata, reviewing requests, managing access or opening a destructive confirmation.
 
+### Interaction states
+Hovered or keyboard-focused neutral items use the accent background and switch both text and icons to \`accent-foreground\`. Destructive items keep the destructive text/icon treatment on focus.
+
 ### Common mistakes
-Using vague trigger labels, placing primary actions only inside the menu, omitting separators before destructive items or treating disabled items as selectable.
+Using vague trigger labels, placing primary actions only inside the menu, omitting separators before destructive items, treating disabled items as selectable, or overriding item icon colors in feature code.
 
 ### Related components
 \`PhotoViewerHeader\`, \`ChaptersView\`, \`PhotosView\` and \`PersonaDetailScreen\` compose this primitive for product action menus.
