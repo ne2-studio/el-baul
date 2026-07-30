@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChaptersView } from '@/features/baules/components/ChaptersView';
+import { CreateChapterModal } from '@/features/chapters/components/CreateChapterModal';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -25,14 +26,15 @@ export const BaulRoute: React.FC = () => {
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const chatEnabled = useAppConfigStore(state => state.chatEnabled);
   const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
-  const { run } = useAsyncAction();
+  const { run, isPending } = useAsyncAction();
 
-  const { chapters, loosePhotos, loadChapterPhotos, renameBaul, setBaulCover } = useBaulesStore();
+  const { chapters, loosePhotos, loadChapterPhotos, renameBaul, setBaulCover, createChapter } = useBaulesStore();
   const { personas, removalRequests, createPersona } = usePersonasStore();
   const { baulRecuerdos, addBaulRecuerdo, editRecuerdo } = useRecuerdosStore();
   const { userProfile } = useAuthStore();
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
+  const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
 
   const { baul, isLoading, refreshFailed, retry } = useBaulScope(baulId);
 
@@ -85,6 +87,16 @@ export const BaulRoute: React.FC = () => {
       errorMessage: 'Error al añadir la persona',
     });
     return result.ok;
+  };
+
+  const handleCreateChapter = async (name: string) => {
+    if (!auth.isAuthenticated) return;
+
+    const result = await run(() => createChapter(baul.id, name), {
+      key: 'create-chapter',
+      errorMessage: 'Error al crear el capítulo',
+    });
+    if (result.ok) setShowCreateChapterModal(false);
   };
 
   const handleUpdateBaulInfo = async (name: string, description: string): Promise<boolean> => {
@@ -146,7 +158,7 @@ export const BaulRoute: React.FC = () => {
         initialTab={initialTab}
         onBack={() => navigate('/baules')}
         onSelectChapter={handleSelectChapter}
-        onCreateChapter={() => navigate(`/baules/${baul.id}/nuevo-capitulo`)}
+        onCreateChapter={() => setShowCreateChapterModal(true)}
         onOpenLoosePhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
         onUploadPhotos={(selectedPhotos) =>
           navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
@@ -175,6 +187,13 @@ export const BaulRoute: React.FC = () => {
         onSetBaulCover={baulPermissions.canSetBaulCover ? handleSetBaulCover : undefined}
       />
       {isLoadingChapterPhotos && <BlockingLoadingOverlay message="Cargando fotos..." />}
+      {showCreateChapterModal && (
+        <CreateChapterModal
+          onCancel={() => setShowCreateChapterModal(false)}
+          onSave={handleCreateChapter}
+          isSubmitting={isPending('create-chapter')}
+        />
+      )}
     </>
   );
 };

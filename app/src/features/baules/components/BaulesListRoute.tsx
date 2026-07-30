@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BaulesList } from '@/features/baules/components/BaulesList';
 import { BaulesLoadingScreen } from '@/features/baules/components/BaulesLoadingScreen';
+import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
@@ -10,21 +11,25 @@ import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { Baul } from '@/types';
 import { getBaulPermissions } from '@/utils/roleUtils';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 export const BaulesListRoute: React.FC = () => {
   const navigate = useNavigate();
   const [isLoadingChapters, setIsLoadingChapters] = useState(false);
+  const [showCreateBaulModal, setShowCreateBaulModal] = useState(false);
   const auth = useAuth();
   const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
+  const { run, isPending } = useAsyncAction();
 
   const {
     baules,
+    createBaul: storeCreateBaul,
     loadChapters: storeLoadChapters,
     loadLoosePhotos,
     isLoading
   } = useBaulesStore();
   const { loadBaulRecuerdos } = useRecuerdosStore();
-  const { subscription } = useAuthStore();
+  const { subscription, setSubscription } = useAuthStore();
 
   const {
     showToastMessage,
@@ -62,7 +67,32 @@ export const BaulesListRoute: React.FC = () => {
         return;
       }
     }
-    navigate('/baules/nuevo');
+    setShowCreateBaulModal(true);
+  };
+
+  const handleCreateBaul = async (name: string, description: string) => {
+    if (!auth.isAuthenticated) return;
+
+    const isFirstBaul = baules.length === 0;
+    const result = await run(() => storeCreateBaul(name, description), {
+      key: 'create-baul',
+      errorMessage: 'Error al crear el baúl',
+    });
+    if (!result.ok) return;
+
+    setShowCreateBaulModal(false);
+    setSubscription(prev => ({
+      ...prev,
+      baulesUsed: prev.baulesUsed + 1
+    }));
+
+    navigate(`/baules/${result.value.id}`);
+
+    if (isFirstBaul) {
+      setTimeout(() => {
+        showToastMessage('Tus recuerdos ya están a salvo');
+      }, 300);
+    }
   };
 
   if (isLoading) {
@@ -90,6 +120,14 @@ export const BaulesListRoute: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showCreateBaulModal && (
+        <CreateBaulModal
+          onCancel={() => setShowCreateBaulModal(false)}
+          onSave={handleCreateBaul}
+          isSubmitting={isPending('create-baul')}
+        />
       )}
     </>
   );

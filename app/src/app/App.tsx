@@ -24,7 +24,7 @@ import { CreateBaulRoute } from '../features/baules/components/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/components/BaulRoute';
 import { AiChatRoute } from '../features/chat/components/AiChatRoute';
 import { RequestBaulDeletionRoute } from '../features/baules/components/RequestBaulDeletionRoute';
-import { CreateChapterFormRoute } from '../features/chapters/components/CreateChapterFormRoute';
+import { CreateChapterModalRoute } from '../features/chapters/components/CreateChapterModalRoute';
 import { ChapterRoute } from '../features/chapters/components/ChapterRoute';
 import { PhotoViewerRoute } from '../features/photos/components/PhotoViewerRoute';
 import { PersonaPhotoViewerRoute } from '../features/photos/components/PersonaPhotoViewerRoute';
@@ -212,7 +212,7 @@ function App() {
         } />
         <Route path="/baules/:baulId/nuevo-capitulo" element={
           <ProtectedRoute>
-            <CreateChapterFormRoute />
+            <CreateChapterModalRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/capitulos/:chapterId" element={

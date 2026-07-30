@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CreateBaulForm } from '@/features/baules/components/CreateBaulForm';
+import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAuth } from 'react-oidc-context';
@@ -42,9 +42,9 @@ export const CreateBaulRoute: React.FC = () => {
   };
 
   return (
-    <CreateBaulForm
-      onBack={() => navigate('/baules')}
-      onSubmit={handleCreateBaul}
+    <CreateBaulModal
+      onCancel={() => navigate('/baules')}
+      onSave={handleCreateBaul}
       isOnboarding={isOnboarding}
       isSubmitting={isPending()}
     />
