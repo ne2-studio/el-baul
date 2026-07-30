@@ -36,14 +36,20 @@
     "BaulDetail": "ChaptersView",
     "ChapterDetail": "PhotosView",
     "PersonaDetail": "PersonaDetailScreen",
-    "UploadError": "UploadErrorScreen"
+    "UploadError": "UploadErrorScreen",
+    "AiChat": "AiChatScreen",
+    "RemovalRequests": "RemovalRequestsList",
+    "ContentScreen": null,
+    "Badges": null
   },
   "overrides": {
-    "SimpleFAB": { "cardMode": "single", "primaryStory": "BaulesListNuevoBaul", "viewport": "390x300", "skip": ["components-actions-fab--chapters-view-capitulos", "components-actions-fab--three-actions"] },
+    "SimpleFAB": { "cardMode": "single", "primaryStory": "Simple", "viewport": "390x300", "skip": ["components-actions-fab--expandable", "components-actions-fab--three-actions"] },
     "ChaptersView": { "cardMode": "single", "primaryStory": "Default", "viewport": "900x3100" },
     "BaulesList": { "cardMode": "single", "primaryStory": "Default", "viewport": "900x2800" },
     "PhotosView": { "cardMode": "single", "primaryStory": "Default", "viewport": "900x1300" },
     "DeleteChapterModal": { "cardMode": "single", "primaryStory": "Default" },
+    "CreateBaulModal": { "cardMode": "single", "primaryStory": "Default" },
+    "CreateChapterModal": { "cardMode": "single", "primaryStory": "Default" },
     "AiChatScreen": { "cardMode": "column" },
     "BatchOperationProgress": { "cardMode": "single", "primaryStory": "InProgress", "viewport": "390x200" },
     "BlockingLoadingOverlay": { "cardMode": "single", "primaryStory": "Default", "viewport": "390x844" },

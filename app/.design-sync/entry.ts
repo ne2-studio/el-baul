@@ -2,9 +2,15 @@
 // and feature-presentational component so the converter has a bundlable module
 // graph (this app has no library dist build). Regenerate if components move.
 
+export * from '../src/design-system/components/actions/ActionBarButton';
 export * from '../src/design-system/components/actions/Button';
 export * from '../src/design-system/components/actions/FAB';
+export * from '../src/design-system/components/actions/IconButton';
+export * from '../src/design-system/components/data-display/ActionListItem';
+export * from '../src/design-system/components/data-display/Badges';
 export * from '../src/design-system/components/data-display/Card';
+export * from '../src/design-system/components/data-display/ChatBubble';
+export * from '../src/design-system/components/data-display/SelectionRow';
 export * from '../src/design-system/components/data-display/SwimlaneLabel';
 export * from '../src/design-system/components/feedback/BatchOperationProgress';
 export * from '../src/design-system/components/feedback/BlockingLoadingOverlay';
@@ -16,9 +22,12 @@ export * from '../src/design-system/components/feedback/Notice';
 export * from '../src/design-system/components/feedback/Toast';
 export * from '../src/design-system/components/forms/Input';
 export * from '../src/design-system/components/forms/PartialDatePicker';
+export * from '../src/design-system/components/forms/Select';
+export * from '../src/design-system/components/forms/Toggle';
 export * from '../src/design-system/components/navigation/BackButton';
 export * from '../src/design-system/components/navigation/TabButton';
 export * from '../src/design-system/components/overlays/BottomSheetModal';
+export * from '../src/design-system/components/overlays/ModalActions';
 export * from '../src/design-system/components/ui/dropdown-menu';
 export * from '../src/design-system/foundations/icons/BaulIcon';
 export * from '../src/design-system/foundations/icons/Icon';
@@ -38,11 +47,11 @@ export * from '../src/features/baules/components/BaulesList';
 export * from '../src/features/baules/components/BaulesLoadingScreen';
 export * from '../src/features/baules/components/ChapterCard';
 export * from '../src/features/baules/components/ChaptersView';
-export * from '../src/features/baules/components/CreateBaulForm';
+export * from '../src/features/baules/components/CreateBaulModal';
 export * from '../src/features/baules/components/EmptyBaulesScreen';
 export * from '../src/features/baules/components/RequestBaulDeletionScreen';
 export * from '../src/features/chapters/components/ChapterSelector';
-export * from '../src/features/chapters/components/CreateChapterForm';
+export * from '../src/features/chapters/components/CreateChapterModal';
 export * from '../src/features/chapters/components/DeleteChapterModal';
 export * from '../src/features/chapters/components/PhotosView';
 export * from '../src/features/chat/components/AiChatScreen';

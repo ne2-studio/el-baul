@@ -46,3 +46,4 @@ function sized(Inner: () => any) {
 }
 
 export const Default = /* Default */ sized(compose(S, "Default"));
+export const Error = /* Error */ sized(compose(S, "Error"));

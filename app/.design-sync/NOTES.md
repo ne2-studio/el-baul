@@ -189,18 +189,21 @@
   pair with, so they're silently excluded already) but worth pruning for accuracy. **Run this
   diff at the start of every re-sync**, not just when something looks off.
 
-- SimpleFAB's stories were renamed wholesale (2026-07-29, "document FAB purpose and remove
-  autodocs, add real-screen stories" commit) — old `Simple`/`Expandable` exports became
-  screen-specific names (`BaulesListNuevoBaul`, `PhotosViewSubirFotos`,
-  `RecuerdosFeedEscribeLoQueRecuerdas`, `PersonaDetailScreenEditarBiografia` for SimpleFAB;
-  `ChaptersViewCapitulos`/`ThreeActions` for ExpandableFAB). Updated the owned preview
-  (`.design-sync/previews/SimpleFAB.tsx`) to export the new names through the same `sized()`
-  wrapper (§ the `.ds-single` 0×0 containing-block fix still applies unchanged). The two
-  ExpandableFAB stories are still `sb-error` in the real storybook (same root cause as the old
-  "Expandable" story — never dug further, out of scope) — updated
-  `cfg.overrides.SimpleFAB.skip` to the new story ids
-  (`components-actions-fab--chapters-view-capitulos`,
-  `components-actions-fab--three-actions`) and `primaryStory` to `BaulesListNuevoBaul`.
+- [GENERAL] **SimpleFAB's story names were renamed twice** — reverted back to generic on the
+  2026-07-30 re-sync, superseding the entry below. 2026-07-29: `Simple`/`Expandable` became
+  screen-specific names (`BaulesListNuevoBaul` etc.). 2026-07-30 (commit `203461b docs: document
+  FAB purpose and remove autodocs, add real-screen stories`, despite its message): reverted to
+  generic `Simple`/`SimpleWithIcon`/`Expandable`/`ThreeActions` — the CURRENT and presumably
+  final state. Updated `.design-sync/previews/SimpleFAB.tsx` back to export `Simple`/
+  `SimpleWithIcon` through the same `sized()` wrapper (the `.ds-single` 0×0 containing-block fix
+  still applies unchanged regardless of story names). `Expandable` is `sb-error` in the real
+  storybook (confirmed again this sync, same as always — never dug further, out of scope);
+  `ThreeActions` was already `[STORY_CAP]`-excluded so its own sb-error status wasn't re-checked.
+  Updated `cfg.overrides.SimpleFAB.skip` to `components-actions-fab--expandable` +
+  `components-actions-fab--three-actions`, `primaryStory` to `Simple`. **Lesson: don't trust a
+  commit message to describe what it did — verify story names against the actual
+  `.stories.tsx` file every time**, since this is now the SECOND wholesale rename in as many
+  syncs and a script-based sed on the commit message would have gotten it backwards.
 
 - `WelcomeScreen.tsx` renders its app icon as `<img src="/pwa-512x512.png">` — an absolute
   site-root path. That's correct and intentional in the real deployed app (Vite serves
@@ -212,6 +215,63 @@
   WelcomeScreen's app-icon renders broken in this preview only. Confirmed isolated (grepped all
   of `src/design-system` and `src/features` for absolute `/`-rooted `img src` — only this one).
 
+- [GENERAL] **`cfg.storybookStatic: ".design-sync/sb-reference"` does not resolve from the git
+  repo root — it resolves from the CWD the driver/converter is run from.** This app's
+  `.design-sync/` lives under `app/.design-sync/`, and since the driver is always run with cwd
+  `app/` (per every command in this file), `app/` IS the effective "repo root" for this setting,
+  not the actual git top-level. Building the reference storybook at the git-root
+  `.design-sync/sb-reference` (as an earlier version of this doc's §2.2 instruction literally
+  says: "Make `-o` the repo-root path... `$(git rev-parse --show-toplevel)/.design-sync/sb-reference`")
+  produces a reference the driver never finds — it silently falls back to building its own into
+  `ds-bundle/.sb-static` every run (costs ~1 extra minute per build, not fatal, but wastes the
+  whole point of a persistent reference). **Build the reference at `app/.design-sync/sb-reference`
+  instead** (i.e. just `-o .design-sync/sb-reference` from cwd `app/`, no `git rev-parse`).
+- 2026-07-30 re-sync: `[TITLE_UNMAPPED]` dropped two PREVIOUSLY-SHIPPED components entirely —
+  `AiChat` (title) → `AiChatScreen` (export) and `RemovalRequests` (title) →
+  `RemovalRequestsList` (export) stopped pairing after a storybook taxonomy reclassification
+  changed their title paths (`Screens/Chat/AiChat`, `Screens/Photos/RemovalRequests`) without
+  the last title segment matching the export name. The driver correctly flagged these as
+  `verification.removed`, which is the tell that a `[TITLE_UNMAPPED]` drop is a REGRESSION (an
+  already-synced component silently disappearing) rather than a legitimate exclusion — always
+  cross-check `[TITLE_UNMAPPED]` names against the previous sync's shipped component list before
+  accepting them as new/excluded. Fixed via `cfg.titleMap: {"AiChat": "AiChatScreen",
+  "RemovalRequests": "RemovalRequestsList"}`.
+- Two more `[TITLE_UNMAPPED]` names were NOT regressions, just never-synced gaps: `ContentScreen`
+  (title `Patterns/Layout/ContentScreen`) has no matching `.tsx` at all — it's a docs-only
+  Storybook page (no component export), like `Guidelines`/`DesignLanguage`/`Gallery`. Excluded
+  via `cfg.titleMap: {"ContentScreen": null}`. `Badges` (title `Components/DataDisplay/Badges`)
+  is a single `.stories.tsx` covering FOUR separate component exports (`ChapterBadge`,
+  `PersonBadge`, `RoleBadge`, `CounterBadge`) under one story title with per-story names
+  (`Chapter`/`Person`/`Role`/`OnImage`/`Counter`) that don't match any single export — `titleMap`
+  only supports a 1:1 title→export mapping, so this can't be synced without either the story
+  file being split (one title per exported component — app source change, out of scope for a
+  sync) or a custom pairing override. Excluded via `cfg.titleMap: {"Badges": null}` for now;
+  revisit if the badges become important design-system surface.
+- CreateBaulModal and CreateChapterModal (both new this sync — the standardized-modal-actions
+  refactor) hit `[GRID_OVERFLOW]` — `position:fixed`/portal content escaping their grid cells,
+  same class as every other `BottomSheetModal`-based modal. Fixed with the standard
+  `cfg.overrides.<Name>: {"cardMode": "single", "primaryStory": "Default"}`.
+- [GENERAL] **`ModalActions` (`flex flex-wrap-reverse` + `[&>button]:flex-1 min-w-max`) is
+  sensitive to a hairline flex-wrap threshold that can differ between the real storybook capture
+  and our compiled preview capture even at identical viewport width** — confirmed on
+  `NuevoRecuerdoModal`'s `Default` story: real storybook renders `Cancelar`/`Añadir` side by
+  side, our preview renders them stacked (via the container's `flex-wrap-reverse`, which visibly
+  reverses row order when wrapped — that's why the STACKED preview shows the second button on
+  top). Root cause is almost certainly a font-metric/readiness difference between the two
+  chromium capture passes right at the two-button combined min-width boundary — NOT a
+  cfg/component bug (confirmed container width identical via raw PNGs). Graded `close`, not
+  `mismatch` — not fixable via `cardMode`/`viewport` without misrepresenting the component's real
+  responsive behavior. **Any ModalActions-based modal with two short-ish button labels is a
+  candidate for this same borderline wrap flip** — if a future sync sees an unexplained
+  stacked-vs-inline `ModalActions` mismatch, check this bullet before treating it as a real
+  regression.
+- New stories added mid-development that owned previews needed updating for: `BatchOperationProgress`
+  gained `ThumbStates` (icon states not covered by `InProgress`/`AllSucceeded`), `Toast` gained
+  `Error` (from the "show error styling for failure toasts" fix). Both just needed one more
+  `export const <Name> = sized(compose(S, "<Name>"));` line added to the existing owned preview —
+  no new pattern, just the reminder that owned previews don't auto-grow when a story is added to
+  an already-owned component's `.stories.tsx`.
+
 ## Re-sync risks
 
 - **`entry.ts` staleness is the #1 risk on every future re-sync** — see the `[GENERAL]` bullet
@@ -221,13 +281,28 @@
   2026-07-29 (977px / 918px measured + margin). If either component's card grows a taller
   variant later (extra badges, longer captions), the same clipping will reappear — check raw
   PNG heights before assuming a new mismatch is real.
-- SimpleFAB's `skip` list is pinned to specific story ids
-  (`components-actions-fab--chapters-view-capitulos`, `...--three-actions`). If the FAB stories
-  are renamed again, these ids will silently stop matching anything (not an error — the skip
-  just becomes a no-op) and the sb-error stories will resurface in compare. Re-derive the ids
-  from `.design-sync/sb-reference/index.json` if FAB.stories.tsx changes again.
+- SimpleFAB's `skip` list is pinned to specific story ids (currently
+  `components-actions-fab--expandable`, `components-actions-fab--three-actions`, as of the
+  2026-07-30 revert back to generic names — see the `[GENERAL]` gotcha above). If the FAB
+  stories are renamed AGAIN (this has now happened twice), these ids will silently stop matching
+  anything (not an error — the skip just becomes a no-op) and the sb-error stories will
+  resurface in compare. Re-derive the ids from the storybook build's own `index.json`
+  (`ds-bundle/.sb-static/index.json` mid-run, since `cfg.storybookStatic` doesn't currently
+  resolve — see the storybookStatic path gotcha above) if FAB.stories.tsx changes again.
 - This sync's `--max-stories` cap left several new components partially graded-by-trust:
   PageHeader (6 of 22 stories captured — the rest verified-by-upload only), Hero (6 of 8),
   Notice (6 of 7). All graded stories were clean `match`, so this is low-risk, but if a future
   sync reports a PageHeader regression, consider raising the cap for it given how many
   screen-specific variants it has.
+- **2026-07-30 re-sync watch-list**: (1) `cfg.storybookStatic` still points at a location that
+  never gets built by this doc's own instructions as written — fix the reference build location
+  per the `[GENERAL]` gotcha above on the next sync, or keep paying the ~1min fallback-build tax.
+  (2) `AiChat`/`RemovalRequests` titleMap entries depend on those exact title strings
+  (`Screens/Chat/AiChat`, `Screens/Photos/RemovalRequests`) — if the storybook taxonomy is
+  reclassified again, re-derive from the fresh build's `index.json` rather than assuming the
+  titleMap still matches. (3) `NuevoRecuerdoModal`'s `Default` story is graded `close` (not
+  `match`) for the ModalActions flex-wrap borderline issue — don't be surprised if a future
+  sync's canary spot-check flags it again; re-confirm against fresh screenshots rather than
+  assuming regression. (4) `Badges`/`ContentScreen` are deliberately unsynced
+  (`titleMap: null`) — if `Badges.stories.tsx` is ever split into one story-file-per-component,
+  revisit and sync properly instead of leaving the exclusion in place.

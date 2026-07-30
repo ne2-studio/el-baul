@@ -47,3 +47,4 @@ function sized(Inner: () => any) {
 
 export const InProgress = /* In Progress */ sized(compose(S, "InProgress"));
 export const AllSucceeded = /* All Succeeded */ sized(compose(S, "AllSucceeded"));
+export const ThumbStates = /* Thumb States */ sized(compose(S, "ThumbStates"));
