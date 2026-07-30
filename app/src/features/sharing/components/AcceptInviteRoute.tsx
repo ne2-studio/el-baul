@@ -4,6 +4,7 @@ import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 import { Button } from '@/design-system/components/actions/Button';
+import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 
 export const AcceptInviteRoute: React.FC = () => {
   const { personaId } = useParams<{ personaId: string }>();
@@ -63,14 +64,5 @@ export const AcceptInviteRoute: React.FC = () => {
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-card rounded-2xl p-8 shadow-2xl border border-border">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-foreground font-medium">Uniendose al baúl...</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <BlockingLoadingOverlay message="Uniéndose al baúl..." />;
 };

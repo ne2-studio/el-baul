@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BaulesList } from '@/features/baules/components/BaulesList';
 import { BaulesLoadingScreen } from '@/features/baules/components/BaulesLoadingScreen';
 import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
+import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
@@ -111,16 +112,7 @@ export const BaulesListRoute: React.FC = () => {
         monetizationEnabled={monetizationEnabled}
       />
       
-      {isLoadingChapters && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card rounded-2xl p-8 shadow-2xl border border-border">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-foreground font-medium">Abriendo baúl...</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {isLoadingChapters && <BlockingLoadingOverlay message="Abriendo baúl..." />}
 
       {showCreateBaulModal && (
         <CreateBaulModal
