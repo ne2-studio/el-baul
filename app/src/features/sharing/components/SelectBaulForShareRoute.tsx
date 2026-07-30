@@ -41,7 +41,7 @@ export const SelectBaulForShareRoute: React.FC = () => {
       clear();
     } catch (error) {
       console.error('Error preparing shared photos:', error);
-      showToastMessage('Error al preparar las fotos compartidas');
+      showToastMessage('Error al preparar las fotos compartidas', 'error');
     } finally {
       setIsOpeningBaul(false);
     }

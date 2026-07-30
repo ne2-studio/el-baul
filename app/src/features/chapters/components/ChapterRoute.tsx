@@ -115,7 +115,7 @@ export const ChapterRoute: React.FC = () => {
     if (!chapterId) return;
     addChapterRecuerdo(baul.id, chapterId, text).catch((error) => {
       console.error('Error adding recuerdo:', error);
-      showToastMessage('Error al guardar el recuerdo');
+      showToastMessage('Error al guardar el recuerdo', 'error');
     });
   };
 
@@ -225,7 +225,7 @@ export const ChapterRoute: React.FC = () => {
         navigate(`${basePath}/confirmar`, { state: { selectedPhotos } })
       }
       onPhotosDropped={(count) =>
-        showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`)
+        showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`, 'error')
       }
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}

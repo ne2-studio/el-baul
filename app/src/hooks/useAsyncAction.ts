@@ -44,7 +44,7 @@ export function useAsyncAction() {
         if (!isForbiddenError(error)) {
           const message =
             typeof options.errorMessage === 'function' ? options.errorMessage(error) : options.errorMessage;
-          showToastMessage(message ?? 'Ha ocurrido un error. Inténtalo de nuevo.');
+          showToastMessage(message ?? 'Ha ocurrido un error. Inténtalo de nuevo.', 'error');
         }
         return { ok: false, error };
       } finally {

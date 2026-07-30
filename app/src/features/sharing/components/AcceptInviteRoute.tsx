@@ -32,7 +32,7 @@ export const AcceptInviteRoute: React.FC = () => {
       } catch (err: any) {
         const message = err.message || 'Error al unirse al baúl';
         setError(message);
-        showToastMessage(message);
+        showToastMessage(message, 'error');
       }
     };
 

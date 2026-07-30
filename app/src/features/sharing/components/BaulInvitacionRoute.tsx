@@ -27,7 +27,7 @@ export const BaulInvitacionRoute: React.FC = () => {
         setPreview(previewData);
       } catch (error) {
         console.error('Error loading invitation data:', error);
-        showToastMessage('Error al cargar la invitación');
+        showToastMessage('Error al cargar la invitación', 'error');
       } finally {
         setLoading(false);
       }

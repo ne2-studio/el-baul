@@ -1,10 +1,12 @@
 import { create } from 'zustand';
+import type { ToastVariant } from '@/design-system/components/feedback/Toast';
 
 interface UIState {
   // Toast state
   showToast: boolean;
   toastMessage: string;
-  showToastMessage: (message: string) => void;
+  toastVariant: ToastVariant;
+  showToastMessage: (message: string, variant?: ToastVariant) => void;
   hideToast: () => void;
 
   // Modals state
@@ -18,8 +20,9 @@ export const useUIStore = create<UIState>((set) => ({
   // Toast
   showToast: false,
   toastMessage: '',
-  showToastMessage: (message: string) => {
-    set({ showToast: true, toastMessage: message });
+  toastVariant: 'success',
+  showToastMessage: (message: string, variant: ToastVariant = 'success') => {
+    set({ showToast: true, toastMessage: message, toastVariant: variant });
     // Auto-hide after 3 seconds
     setTimeout(() => {
       set({ showToast: false });

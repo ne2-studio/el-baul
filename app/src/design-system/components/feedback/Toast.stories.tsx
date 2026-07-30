@@ -16,3 +16,11 @@ export const Default: Story = {
     onClose: () => {},
   },
 };
+
+export const Error: Story = {
+  args: {
+    message: 'No se pudieron guardar los cambios.',
+    variant: 'error',
+    onClose: () => {},
+  },
+};

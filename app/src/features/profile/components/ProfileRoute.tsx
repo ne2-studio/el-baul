@@ -19,7 +19,7 @@ export const ProfileRoute: React.FC = () => {
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
-      showToastMessage('Error al cerrar sesión');
+      showToastMessage('Error al cerrar sesión', 'error');
     }
   };
 

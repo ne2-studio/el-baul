@@ -111,7 +111,7 @@ export const PersonaDetailRoute: React.FC = () => {
       showToastMessage('Enlace de invitación copiado al portapapeles');
     }).catch(err => {
       console.error('Error copying to clipboard:', err);
-      showToastMessage('Error al copiar el enlace');
+      showToastMessage('Error al copiar el enlace', 'error');
     });
   };
 

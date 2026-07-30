@@ -16,7 +16,7 @@ export const WelcomeRoute: React.FC = () => {
       await auth.signinRedirect({ state: { redirectTo: redirectTo || undefined } });
     } catch (error) {
       console.error('Error signing in:', error);
-      showToastMessage('Error al iniciar sesión');
+      showToastMessage('Error al iniciar sesión', 'error');
     }
   };
 

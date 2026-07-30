@@ -60,6 +60,7 @@ function App() {
   const {
     showToast,
     toastMessage,
+    toastVariant,
     hideToast,
     showProfileMenu,
     setShowProfileMenu,
@@ -420,6 +421,7 @@ function App() {
       {showToast && (
         <Toast
           message={toastMessage}
+          variant={toastVariant}
           onClose={hideToast}
         />
       )}

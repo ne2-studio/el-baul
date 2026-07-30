@@ -27,7 +27,7 @@ export function NativeShareHandler() {
         await loadShare(share);
       } catch (error) {
         Sentry.captureException(error);
-        if (!disposed) showToastMessage('No se pudo cargar la foto compartida');
+        if (!disposed) showToastMessage('No se pudo cargar la foto compartida', 'error');
         return;
       }
       if (!disposed) navigate('/compartir');
@@ -46,7 +46,7 @@ export function NativeShareHandler() {
         })
         .catch((error) => {
           Sentry.captureException(error);
-          if (!disposed) showToastMessage('No se pudo comprobar si había una foto compartida pendiente');
+          if (!disposed) showToastMessage('No se pudo comprobar si había una foto compartida pendiente', 'error');
         });
     }
 

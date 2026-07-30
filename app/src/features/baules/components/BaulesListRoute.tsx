@@ -53,7 +53,7 @@ export const BaulesListRoute: React.FC = () => {
       navigate(`/baules/${baul.id}`);
     } catch (error) {
       console.error('Error loading chapters:', error);
-      showToastMessage('Error al cargar los capítulos');
+      showToastMessage('Error al cargar los capítulos', 'error');
     } finally {
       setIsLoadingChapters(false);
     }
