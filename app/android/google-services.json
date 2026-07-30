@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860080566734",
+    "project_id": "elbaulapp",
+    "storage_bucket": "elbaulapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860080566734:android:34e6cc9f249b8a696b3b9f",
+        "android_client_info": {
+          "package_name": "studio.ne2.elbaul"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIgErpXEGb_FX9_lPHZJksZKWkyrwYfQ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
