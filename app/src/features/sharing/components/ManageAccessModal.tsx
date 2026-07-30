@@ -1,6 +1,7 @@
 import React from 'react';
 import { BaulRole } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { Select } from '@/design-system/components/forms/Select';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 
 interface ManageAccessModalProps {
@@ -14,17 +15,16 @@ export function ManageAccessModal({ role, onChangeRole, onCancel }: ManageAccess
     <BottomSheetModal onCancel={onCancel}>
       <h2 className="text-xl font-serif text-foreground mb-4">Gestionar acceso</h2>
 
-      <div>
-        <label className="text-xs text-muted-foreground mb-1.5 block">Rol</label>
-        <select
-          value={role}
-          onChange={(e) => onChangeRole(e.target.value as BaulRole)}
-          className="w-full text-sm px-3 py-2.5 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          <option value="colaborador">Colaborador</option>
-          <option value="administrador">Administrador</option>
-        </select>
-      </div>
+      <Select
+        label="Rol"
+        value={role}
+        onChange={(value) => onChangeRole(value as BaulRole)}
+        options={[
+          { value: 'colaborador', label: 'Colaborador' },
+          { value: 'administrador', label: 'Administrador' },
+        ]}
+        className="bg-background px-3 py-2.5 text-sm"
+      />
 
       <Button variant="secondary" fullWidth onClick={onCancel} className="mt-6 text-sm">
         Cerrar

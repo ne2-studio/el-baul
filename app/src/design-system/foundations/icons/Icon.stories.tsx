@@ -83,6 +83,12 @@ export const Colors: Story = {
         </span>
         <span className="text-sm text-muted-foreground">text-destructive</span>
       </div>
+      <div className="flex flex-col items-center gap-2 rounded-xl bg-foreground p-4">
+        <span className="text-white">
+          <Icon icon={icons.check} size="lg" aria-hidden />
+        </span>
+        <span className="text-sm text-white/70">text-white</span>
+      </div>
     </div>
   ),
 };
@@ -170,6 +176,9 @@ export const InsideButtons: Story = {
       <Button variant="danger">
         <Icon icon={icons.delete} aria-hidden />
         Eliminar baúl
+      </Button>
+      <Button variant="ghost" leftIcon={<Icon icon={icons.chevronLeft} aria-hidden />}>
+        Volver
       </Button>
     </div>
   ),

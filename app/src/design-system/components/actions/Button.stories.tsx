@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { SendHorizontal, Sparkles } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 
 const meta = {
@@ -91,4 +92,44 @@ export const FullWidth: Story = {
     variant: 'primary',
     fullWidth: true,
   },
+};
+
+export const WithLeftIcon: Story = {
+  args: {
+    children: 'Ayúdame a recordar',
+    variant: 'primary',
+    leftIcon: <Sparkles className="h-4 w-4" aria-hidden />,
+  },
+};
+
+export const IconOnly: Story = {
+  args: {
+    variant: 'primary',
+    iconOnly: true,
+    'aria-label': 'Enviar',
+    children: <SendHorizontal className="h-5 w-5" aria-hidden />,
+  },
+};
+
+export const AllVariantsWithIcons: Story = {
+  render: () => (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button variant="primary" leftIcon={<Sparkles className="h-4 w-4" aria-hidden />}>Primario</Button>
+      <Button variant="secondary" leftIcon={<Sparkles className="h-4 w-4" aria-hidden />}>Secundario</Button>
+      <Button variant="ghost" leftIcon={<Sparkles className="h-4 w-4" aria-hidden />}>Ghost</Button>
+      <Button variant="danger" leftIcon={<Sparkles className="h-4 w-4" aria-hidden />}>Danger</Button>
+      <Button variant="primary" iconOnly aria-label="Enviar">
+        <SendHorizontal className="h-5 w-5" aria-hidden />
+      </Button>
+      <Button variant="secondary" iconOnly aria-label="Enviar">
+        <SendHorizontal className="h-5 w-5" aria-hidden />
+      </Button>
+      <Button variant="ghost" iconOnly aria-label="Enviar">
+        <SendHorizontal className="h-5 w-5" aria-hidden />
+      </Button>
+      <Button variant="danger" iconOnly aria-label="Enviar">
+        <SendHorizontal className="h-5 w-5" aria-hidden />
+      </Button>
+    </div>
+  ),
 };

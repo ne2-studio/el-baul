@@ -12,6 +12,34 @@ interface BatchOperationProgressProps {
   items: BatchOperationItem[];
 }
 
+interface BatchOperationThumbProps {
+  thumbnailUrl: string;
+  status: BatchOperationItem['status'];
+}
+
+export function BatchOperationThumb({ thumbnailUrl, status }: BatchOperationThumbProps) {
+  return (
+    <div className="relative aspect-square">
+      <img
+        src={thumbnailUrl}
+        alt=""
+        className="w-full h-full object-cover rounded-lg"
+      />
+      <div className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center bg-background/90 shadow">
+        {status === 'pending' && (
+          <Icon icon={icons.spinner} size="sm" className="text-muted-foreground animate-spin" aria-hidden />
+        )}
+        {status === 'success' && (
+          <Icon icon={icons.check} size="sm" className="text-green-600" aria-hidden />
+        )}
+        {status === 'error' && (
+          <Icon icon={icons.close} size="sm" className="text-destructive" aria-hidden />
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Progreso ítem a ítem para operaciones por lote que hacen una petición por elemento
 // (p. ej. mover fotos) — mismo lenguaje visual que UploadingScreen.
 export function BatchOperationProgress({ title, items }: BatchOperationProgressProps) {
@@ -27,28 +55,7 @@ export function BatchOperationProgress({ title, items }: BatchOperationProgressP
 
         <div className="grid grid-cols-3 gap-3">
           {items.map((item) => (
-            <div key={item.id} className="relative aspect-square">
-              <img
-                src={item.thumbnailUrl}
-                alt=""
-                className="w-full h-full object-cover rounded-lg"
-              />
-              <div className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center bg-background/90 shadow">
-                {item.status === 'pending' && (
-                  <Icon icon={icons.spinner} size="sm" className="text-muted-foreground animate-spin" aria-hidden />
-                )}
-                {/* text-green-600 is a raw color, not a theme token - the app has no
-                    "success" token yet (see Icon.mdx). Left as-is; migrating it means
-                    picking a token value, which is a design-system decision out of
-                    scope here. */}
-                {item.status === 'success' && (
-                  <Icon icon={icons.check} size="sm" className="text-green-600" aria-hidden />
-                )}
-                {item.status === 'error' && (
-                  <Icon icon={icons.close} size="sm" className="text-destructive" aria-hidden />
-                )}
-              </div>
-            </div>
+            <BatchOperationThumb key={item.id} thumbnailUrl={item.thumbnailUrl} status={item.status} />
           ))}
         </div>
       </div>

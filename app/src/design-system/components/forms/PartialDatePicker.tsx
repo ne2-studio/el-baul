@@ -2,6 +2,8 @@ import { useEffect, useId, useState } from 'react';
 import { Check } from 'lucide-react';
 import { PhotoDate } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
+import { Select } from '@/design-system/components/forms/Select';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -84,28 +86,40 @@ export function PartialDatePicker({
           <div className="flex gap-3">
             <div className="flex-[2]">
               <label htmlFor={yearInputId} className="text-xs text-muted-foreground mb-1 block">Año *</label>
-              <input
+              <Input
                 id={yearInputId}
-                type="number" placeholder="2022" value={year} onChange={e => handleYearChange(e.target.value)}
-                className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-card"
+                type="number"
+                placeholder="2022"
+                value={year}
+                onChange={handleYearChange}
+                inputClassName="bg-card px-3 py-2.5 text-sm"
               />
             </div>
             <div className="flex-1">
-              <label htmlFor={monthSelectId} className="text-xs text-muted-foreground mb-1 block">Mes</label>
-              <select id={monthSelectId} value={month} onChange={e => handleMonthChange(e.target.value)}
-                className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring">
-                <option value="">—</option>
-                {MONTHS.map((m, i) => (
-                  <option key={i} value={i + 1}>{m}</option>
-                ))}
-              </select>
+              <Select
+                id={monthSelectId}
+                label="Mes"
+                labelClassName="text-xs text-muted-foreground mb-1"
+                value={month}
+                onChange={handleMonthChange}
+                options={[
+                  { value: '', label: '—' },
+                  ...MONTHS.map((m, i) => ({ value: String(i + 1), label: m })),
+                ]}
+                className="bg-card px-3 py-2.5 text-sm"
+              />
             </div>
             <div className="flex-1">
               <label htmlFor={dayInputId} className="text-xs text-muted-foreground mb-1 block">Día</label>
-              <input
+              <Input
                 id={dayInputId}
-                type="number" placeholder="—" min={1} max={31} value={day} onChange={e => handleDayChange(e.target.value)}
-                className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-card"
+                type="number"
+                placeholder="—"
+                min={1}
+                max={31}
+                value={day}
+                onChange={handleDayChange}
+                inputClassName="bg-card px-3 py-2.5 text-sm"
               />
             </div>
           </div>

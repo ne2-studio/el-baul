@@ -1,9 +1,10 @@
 import React from 'react';
-import { Crown, User, Users, Clock } from 'lucide-react';
+import { Users, Clock } from 'lucide-react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { Button } from '@/design-system/components/actions/Button';
+import { RoleBadge } from '@/design-system/components/data-display/Badges';
 import { Baul } from '@/types';
-import { getBaulPermissions, getRoleDisplayName } from '@/utils/roleUtils';
+import { getBaulPermissions } from '@/utils/roleUtils';
 
 interface BaulCardProps {
   baul: Baul;
@@ -47,19 +48,11 @@ export function BaulCard({ baul, onClick }: BaulCardProps) {
 
       {/* Bottom-left: role badge */}
       <div className="absolute bottom-4 left-4">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-sm text-white text-xs font-medium">
-          {permissions.countsAsCustodioForPlan ? (
-            <>
-              <Crown className="w-3 h-3" />
-              Custodio
-            </>
-          ) : (
-            <>
-              <User className="w-3 h-3" />
-              {getRoleDisplayName(baul.role ?? 'colaborador')}
-            </>
-          )}
-        </span>
+        <RoleBadge
+          role={permissions.countsAsCustodioForPlan ? 'custodio' : (baul.role ?? 'colaborador')}
+          tone="onImage"
+          className="bg-black/35 backdrop-blur-sm"
+        />
       </div>
 
       {/* Bottom-right: temporal + sharing metadata */}

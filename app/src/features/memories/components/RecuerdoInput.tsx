@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SendHorizontal } from 'lucide-react';
+import { Button } from '@/design-system/components/actions/Button';
+import { Input } from '@/design-system/components/forms/Input';
 
 interface RecuerdoInputProps {
   photoId: string;
@@ -93,15 +95,17 @@ export function RecuerdoInput({ photoId, onSubmit, onFocus, onBlur }: RecuerdoIn
         className="rounded-2xl overflow-hidden border relative flex items-end"
         style={{ borderWidth: '1px' }}
       >
-        <textarea
-          ref={inputRef}
+        <Input
+          inputRef={inputRef}
+          multiline
+          variant="photoViewerMemory"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={setText}
           onFocus={handleFocus}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={currentPrompt}
-          className="w-full bg-transparent text-background placeholder:text-background/50 px-4 py-3 resize-none focus:outline-none text-sm leading-relaxed"
+          className="flex-1"
           rows={1}
           style={{
             minHeight: '44px',
@@ -113,17 +117,23 @@ export function RecuerdoInput({ photoId, onSubmit, onFocus, onBlur }: RecuerdoIn
         {/* Botón de enviar inline */}
         <AnimatePresence>
           {hasText && (
-            <motion.button
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
-              onMouseDown={handleButtonClick}
-              className="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center rounded-full bg-primary/90 hover:bg-primary transition-colors"
-              aria-label="Enviar recuerdo"
+              className="absolute right-2 bottom-2"
             >
-              <SendHorizontal className="w-4 h-4 text-primary-foreground" />
-            </motion.button>
+              <Button
+                variant="primary"
+                iconOnly
+                onMouseDown={handleButtonClick}
+                className="h-8 w-8 rounded-full bg-primary/90 hover:bg-primary"
+                aria-label="Enviar recuerdo"
+              >
+                <SendHorizontal className="w-4 h-4" />
+              </Button>
+            </motion.div>
           )}
         </AnimatePresence>
       </motion.div>

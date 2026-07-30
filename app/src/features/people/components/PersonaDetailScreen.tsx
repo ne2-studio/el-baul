@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Camera, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserPlus, UserX } from 'lucide-react';
 import { Persona, BaulRole, Photo } from '@/types';
-import { getPersonaPermissions, getRoleDisplayName, PersonaPermissions } from '@/utils/roleUtils';
+import { getPersonaPermissions, PersonaPermissions } from '@/utils/roleUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
@@ -13,6 +13,7 @@ import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Button } from '@/design-system/components/actions/Button';
+import { RoleBadge } from '@/design-system/components/data-display/Badges';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,9 +156,7 @@ export function PersonaDetailScreen({
         )}
         <div className="flex items-center gap-2 mt-2">
           {!isPending && (
-            <span className="text-xs text-white font-medium px-2 py-1 rounded-full bg-white/20">
-              {getRoleDisplayName(persona.role)}
-            </span>
+            <RoleBadge role={persona.role} tone="onImage" />
           )}
           <span className="text-xs text-white/70">
             {hasNoAccess ? 'Forma parte de la historia familiar' : isPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}

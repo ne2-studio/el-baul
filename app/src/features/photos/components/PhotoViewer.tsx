@@ -15,6 +15,7 @@ import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 import { Button } from '@/design-system/components/actions/Button';
+import { PersonBadge } from '@/design-system/components/data-display/Badges';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -291,21 +292,12 @@ export function PhotoViewer({
             {taggedPersonas.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {taggedPersonas.map((persona) => (
-                  <Button variant="plain"
+                  <PersonBadge
                     key={persona.id}
-                    onClick={() => onUserClick && onUserClick(persona.id)}
-                    disabled={!onUserClick}
-                    className="flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full bg-background/10 hover:bg-background/20 transition-colors disabled:hover:bg-background/10"
-                  >
-                    {persona.avatarUrl ? (
-                      <img src={persona.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-background/20 flex items-center justify-center text-[10px] text-background/70">
-                        {persona.nickname.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="text-xs text-background/80">{persona.nickname}</span>
-                  </Button>
+                    nickname={persona.nickname}
+                    avatarUrl={persona.avatarUrl}
+                    onClick={onUserClick ? () => onUserClick(persona.id) : undefined}
+                  />
                 ))}
               </div>
             )}

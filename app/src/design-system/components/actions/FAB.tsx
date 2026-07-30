@@ -3,7 +3,6 @@ import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Button } from '@/design-system/components/actions/Button';
 
-// ─── Simple FAB (single action) ───────────────────────────────────────────────
 interface SimpleFABProps {
   label: string;
   icon?: React.ReactNode;
@@ -11,10 +10,6 @@ interface SimpleFABProps {
   hidden?: boolean;
 }
 
-// CTA predominante de una pantalla potencialmente larga (Baúl, Capítulo, Persona): al ir
-// fijo (position: fixed) se queda siempre "above the fold" sin depender de cuánto haya que
-// hacer scroll para llegar al final del contenido. Pensado para UN único CTA protagonista
-// por pantalla — si necesitas 2 o más con el mismo protagonismo, usa `ExpandableFAB`.
 export function SimpleFAB({ label, icon, onClick, hidden }: SimpleFABProps) {
   if (hidden) return null;
   return (
@@ -29,7 +24,6 @@ export function SimpleFAB({ label, icon, onClick, hidden }: SimpleFABProps) {
   );
 }
 
-// ─── Expandable FAB (multiple actions) ────────────────────────────────────────
 export interface FABAction {
   label: string;
   icon: React.ReactNode;
@@ -41,9 +35,6 @@ interface ExpandableFABProps {
   hidden?: boolean;
 }
 
-// Variante de `SimpleFAB` para cuando una pantalla tiene 2 o más CTAs que competirían por el
-// mismo protagonismo (p. ej. "Nuevo capítulo" + "Subir fotos" en ChaptersView): un único FAB
-// fijo que despliega la lista de acciones en vez de apilar varios FAB simples "above the fold".
 export function ExpandableFAB({ actions, hidden }: ExpandableFABProps) {
   const [open, setOpen] = useState(false);
 

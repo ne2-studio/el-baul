@@ -3,6 +3,7 @@ import { ImageIcon, Pencil, Share2 } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { getRelativeTime } from '@/app/utils/timeUtils';
 import { Button } from '@/design-system/components/actions/Button';
+import { ChapterBadge } from '@/design-system/components/data-display/Badges';
 import { RecuerdoEditForm } from '@/features/memories/components/RecuerdoEditForm';
 
 interface RecuerdoFeedCardProps {
@@ -137,13 +138,11 @@ export function RecuerdoFeedCard({
           )}
 
           {showBadge && (
-            <Button variant="plain"
-              type="button"
+            <ChapterBadge
+              chapterName={recuerdo.chapterName}
               onClick={() => onChapterClick?.(recuerdo.chapterId!)}
-              className="mt-2 inline-flex text-xs text-primary bg-primary/10 hover:bg-primary/15 transition-colors rounded-full px-2 py-0.5"
-            >
-              en «{recuerdo.chapterName ?? 'un capítulo'}»
-            </Button>
+              className="mt-2"
+            />
           )}
         </>
       )}

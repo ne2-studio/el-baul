@@ -4,6 +4,8 @@ import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { ChatMessage } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { ChatBubble } from '@/design-system/components/data-display/ChatBubble';
+import { Input } from '@/design-system/components/forms/Input';
 
 interface AiChatScreenProps {
   messages: ChatMessage[];
@@ -81,25 +83,15 @@ export function AiChatScreen({
 
         <div className="flex flex-col gap-3">
           {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card border border-border text-foreground'
-                }`}
-              >
-                {message.content}
-              </div>
-            </div>
+            <ChatBubble key={message.id} role={message.role}>
+              {message.content}
+            </ChatBubble>
           ))}
 
           {isSending && (
-            <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-2xl px-4 py-3 text-sm bg-card border border-border text-muted-foreground">
-                Escribiendo...
-              </div>
-            </div>
+            <ChatBubble role="assistant" className="text-muted-foreground">
+              Escribiendo...
+            </ChatBubble>
           )}
 
           {hasError && (
@@ -114,23 +106,27 @@ export function AiChatScreen({
       {/* Input */}
       <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t border-border">
         <PageContainer className="py-4 flex items-center gap-3">
-          <input
+          <Input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSend(input);
             }}
             placeholder="Escribe tu pregunta..."
             disabled={isSending}
-            className="flex-1 px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground placeholder:text-muted-foreground disabled:opacity-50"
+            className="flex-1"
+            inputClassName="bg-card text-foreground placeholder:text-muted-foreground"
           />
-          <Button variant="plain"
+          <Button
+            variant="primary"
+            iconOnly
             onClick={() => handleSend(input)}
             disabled={!input.trim() || isSending}
-            className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 transition-opacity flex-shrink-0"
+            className="flex-shrink-0"
+            aria-label="Enviar"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-5 h-5" aria-hidden />
           </Button>
         </PageContainer>
       </div>

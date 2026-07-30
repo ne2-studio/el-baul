@@ -16,12 +16,12 @@ export function BackButton({ onClick, label, disabled, className }: BackButtonPr
   if (label) {
     return (
       <Button
-        variant="plain"
+        variant="ghost"
         onClick={onClick}
         disabled={disabled}
-        className={cn('flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors', className)}
+        leftIcon={<ChevronLeft className="w-5 h-5" aria-hidden />}
+        className={cn('px-0 py-0 text-muted-foreground hover:text-foreground hover:bg-transparent', className)}
       >
-        <ChevronLeft className="w-5 h-5" />
         <span className="text-sm">{label}</span>
       </Button>
     );
@@ -29,11 +29,12 @@ export function BackButton({ onClick, label, disabled, className }: BackButtonPr
 
   return (
     <Button
-      variant="plain"
+      variant="ghost"
+      iconOnly
       onClick={onClick}
       disabled={disabled}
       aria-label="Volver"
-      className={cn('w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors -ml-2', className)}
+      className={cn('h-10 w-10 rounded-full -ml-2', className)}
     >
       <ChevronLeft className="w-6 h-6 text-foreground" />
     </Button>

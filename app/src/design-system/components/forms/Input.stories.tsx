@@ -66,6 +66,26 @@ export const Multiline: Story = {
   },
 };
 
+export const PhotoViewerMemory: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Dark, transparent multiline variant used by `RecuerdoInput` inside the photo viewer. It keeps the field behavior in `Input` while the surrounding component owns focus animation and the inline send button.',
+      },
+    },
+  },
+  decorators: [(Story) => <div className="bg-foreground p-6"><Story /></div>],
+  args: {
+    placeholder: '¿Qué recuerdas de este momento?',
+    value: '',
+    multiline: true,
+    rows: 1,
+    variant: 'photoViewerMemory',
+    onChange: () => alert('onChange clicked'),
+  },
+};
+
 export const Interactive: Story = {
   args: {
     label: 'Nombre del baúl',
