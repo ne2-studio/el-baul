@@ -132,6 +132,67 @@ public class ChatContextBuilderTests
     }
 
     [Fact]
+    public async Task BuildAsync_ShouldIncludeTheChaptersDateRange_InTheHeader()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(chapter);
+
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 5), CustodioId, _clock.UtcNow()));
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Cuándo fue la boda de Ana?");
+
+        Assert.Contains("- Boda de Ana (2 fotos, 2010-05 a 2010-09)", context);
+    }
+
+    [Fact]
+    public async Task BuildAsync_ShouldShowASingleDate_InTheChapterHeader_WhenAllItsPhotosAgree()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Cumple de Marta", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(chapter);
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2015, 3, 20), CustodioId, _clock.UtcNow()));
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Cuándo fue el cumple de Marta?");
+
+        Assert.Contains("- Cumple de Marta (1 fotos, 2015-03-20)", context);
+    }
+
+    [Fact]
+    public async Task BuildAsync_ShouldOmitTheDateRange_InTheChapterHeader_WhenNoneOfItsPhotosAreDated()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Sin fecha", 0, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(chapter);
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Qué capítulos hay?");
+
+        Assert.Contains("- Sin fecha (0 fotos)", context);
+    }
+
+    [Fact]
+    public async Task BuildSummaryAsync_ShouldIncludeTheChaptersDateRange()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(chapter);
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 5), CustodioId, _clock.UtcNow()));
+
+        var builder = CreateBuilder();
+        var summary = await builder.BuildSummaryAsync(baul);
+
+        Assert.Contains("- Boda de Ana (1 fotos, 2010-05)", summary);
+    }
+
+    [Fact]
     public async Task BuildAsync_ShouldOmitTheDateTag_WhenNeitherThePhotoNorTheChapterHasADate()
     {
         var baulId = Guid.NewGuid();

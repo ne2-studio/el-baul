@@ -57,7 +57,7 @@ public class ChatContextBuilder(
         var chapterDates = photosByChapter.ToDictionary(kv => kv.Key, kv => EarliestDate(kv.Value));
 
         var sb = new StringBuilder();
-        AppendHeader(sb, baul, personas, chapters);
+        AppendHeader(sb, baul, personas, chapters, photosByChapter);
 
         sb.AppendLine();
         if (relevantRecuerdos.Count < recuerdos.Count)
@@ -98,13 +98,18 @@ public class ChatContextBuilder(
     {
         var chapters = (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToList();
         var personas = (await baulRepository.GetPersonasAsync(baul.Id)).ToList();
+        var photosByChapter = new Dictionary<ChapterId, List<Photo>>();
+        foreach (var chapter in chapters)
+            photosByChapter[chapter.Id] = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
 
         var sb = new StringBuilder();
-        AppendHeader(sb, baul, personas, chapters);
+        AppendHeader(sb, baul, personas, chapters, photosByChapter);
         return sb.ToString();
     }
 
-    private static void AppendHeader(StringBuilder sb, Baul baul, List<Persona> personas, List<Chapter> chapters)
+    private static void AppendHeader(
+        StringBuilder sb, Baul baul, List<Persona> personas, List<Chapter> chapters,
+        IReadOnlyDictionary<ChapterId, List<Photo>> photosByChapter)
     {
         sb.AppendLine($"Nombre del baúl: {baul.Name}");
         if (!string.IsNullOrWhiteSpace(baul.Description))
@@ -122,7 +127,12 @@ public class ChatContextBuilder(
         sb.AppendLine();
         sb.AppendLine("Capítulos:");
         foreach (var chapter in chapters)
-            sb.AppendLine($"- {chapter.Name} ({chapter.PhotoCount} fotos)");
+        {
+            var photos = photosByChapter.GetValueOrDefault(chapter.Id, []);
+            var dateRange = FormatDateRange(EarliestDate(photos), LatestDate(photos));
+            var dateSuffix = dateRange is not null ? $", {dateRange}" : "";
+            sb.AppendLine($"- {chapter.Name} ({chapter.PhotoCount} fotos{dateSuffix})");
+        }
     }
 
     // The recuerdo's own photo wins when it has a date; failing that, the chapter it (or its
@@ -144,6 +154,24 @@ public class ChatContextBuilder(
             .OrderBy(p => p.Date!.Year).ThenBy(p => p.Date!.Month ?? 1).ThenBy(p => p.Date!.Day ?? 1)
             .Select(p => p.Date)
             .FirstOrDefault();
+
+    private static PhotoDate? LatestDate(IReadOnlyCollection<Photo> photos) =>
+        photos
+            .Where(p => p.Date is not null)
+            .OrderByDescending(p => p.Date!.Year).ThenByDescending(p => p.Date!.Month ?? 1).ThenByDescending(p => p.Date!.Day ?? 1)
+            .Select(p => p.Date)
+            .FirstOrDefault();
+
+    // A chapter's own date is never stored (see the CreatedAt/UpdatedAt note above) — it's shown
+    // as a span across its photos' dates so the model knows roughly when it happened, collapsing
+    // to a single date when every dated photo agrees.
+    private static string? FormatDateRange(PhotoDate? earliest, PhotoDate? latest) =>
+        earliest switch
+        {
+            null => null,
+            _ when latest is null || latest == earliest => FormatDate(earliest),
+            _ => $"{FormatDate(earliest)} a {FormatDate(latest)}"
+        };
 
     private static string FormatDate(PhotoDate date) => (date.Month, date.Day) switch
     {

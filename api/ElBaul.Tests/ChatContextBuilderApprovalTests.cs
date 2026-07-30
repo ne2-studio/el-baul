@@ -41,6 +41,8 @@ public class ChatContextBuilderApprovalTests
 
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, BaseDate, BaseDate);
         await _chapterRepository.CreateAsync(chapter);
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 5), CustodioId, BaseDate));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 9), CustodioId, BaseDate));
 
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapter.Id), new BaulId(baulId), CustodioId, "Fuimos a Asturias en verano", BaseDate.AddDays(-10)));
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), "user-2", "El abuelo cantaba en las bodas", BaseDate.AddDays(-5)));
