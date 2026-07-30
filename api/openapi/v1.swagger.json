@@ -6463,7 +6463,8 @@
           "chapters",
           "personas",
           "photos",
-          "recuerdos"
+          "recuerdos",
+          "totalSizeBytes"
         ],
         "type": "object",
         "properties": {
@@ -6482,6 +6483,10 @@
           "chapters": {
             "type": "integer",
             "format": "int32"
+          },
+          "totalSizeBytes": {
+            "type": "integer",
+            "format": "int64"
           }
         },
         "additionalProperties": false

@@ -108,8 +108,10 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
         var photoCount = await dbContext.Photos.CountAsync(p => p.BaulId == baulId);
 
+        var totalSizeBytes = await dbContext.Photos.Where(p => p.BaulId == baulId).SumAsync(p => p.SizeBytes);
+
         var recuerdoCount = await dbContext.Recuerdos.CountAsync(r => r.BaulId == baulId);
 
-        return new AdminBaulDetailRow(baul, personas, linkedUserNames, chapters, photoCount, recuerdoCount);
+        return new AdminBaulDetailRow(baul, personas, linkedUserNames, chapters, photoCount, recuerdoCount, totalSizeBytes);
     }
 }

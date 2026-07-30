@@ -14,7 +14,8 @@ public record Photo
     Guid? ClientUploadId = null,
     PhotoStatus Status = PhotoStatus.Active,
     DateTime? DeletedAt = null,
-    string? DeletionReason = null
+    string? DeletionReason = null,
+    long SizeBytes = 0
 )
 {
     // DateYear/Month/Day stay the raw persisted columns — EF Core can't map an optional
@@ -27,8 +28,9 @@ public record Photo
 
     public static Photo Create(
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
-        string uploadedBy, DateTime createdAt, Guid? clientUploadId = null) =>
-        new(id, chapterId, baulId, storageKey, date?.Year, date?.Month, date?.Day, uploadedBy, createdAt, clientUploadId);
+        string uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0) =>
+        new(id, chapterId, baulId, storageKey, date?.Year, date?.Month, date?.Day, uploadedBy, createdAt, clientUploadId,
+            SizeBytes: sizeBytes);
 
     public Photo WithDate(PhotoDate? date) =>
         this with { DateYear = date?.Year, DateMonth = date?.Month, DateDay = date?.Day };

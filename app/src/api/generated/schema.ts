@@ -5498,6 +5498,8 @@ export interface components {
             personas: number;
             /** Format: int32 */
             chapters: number;
+            /** Format: int64 */
+            totalSizeBytes: number;
         };
         AdminChatContextDebugDto: {
             baulId: string;

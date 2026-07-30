@@ -146,7 +146,9 @@ public class PhotoManager(
             throw;
         }
 
-        var photo = Photo.Create(new PhotoId(idGenerator.NewId()), chapterId, baul.Id, storedFile.StorageKey, storedFile.Date, userId, now, clientUploadId);
+        var photo = Photo.Create(
+            new PhotoId(idGenerator.NewId()), chapterId, baul.Id, storedFile.StorageKey, storedFile.Date, userId, now,
+            clientUploadId, storedFile.SizeBytes);
 
         try
         {

@@ -13,7 +13,7 @@ public record AdminUserDetailDto(string Id, string Email, string? Name, DateTime
 public record AdminBaulListItemDto(string Id, string Name, string CustodioName, int MemberCount, int LinkedUserCount, int PhotoCount, int ChapterCount, DateTime CreatedAt);
 public record AdminBaulPersonaDto(string PersonId, string Nickname, string? Name, string Role, string? LinkedUserId, string? LinkedUserName);
 public record AdminBaulChapterDto(string Id, string Name, int PhotoCount);
-public record AdminBaulStatsDto(int Photos, int Recuerdos, int Personas, int Chapters);
+public record AdminBaulStatsDto(int Photos, int Recuerdos, int Personas, int Chapters, long TotalSizeBytes);
 public record AdminBaulDetailDto(
     string Id,
     string Name,

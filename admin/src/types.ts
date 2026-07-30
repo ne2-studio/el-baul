@@ -183,12 +183,14 @@ export class AdminBaulStats {
   recuerdos: number;
   personas: number;
   chapters: number;
+  totalSizeBytes: number;
 
   constructor(data: AdminBaulStatsDto) {
     this.photos = data.photos;
     this.recuerdos = data.recuerdos;
     this.personas = data.personas;
     this.chapters = data.chapters;
+    this.totalSizeBytes = data.totalSizeBytes;
   }
 }
 

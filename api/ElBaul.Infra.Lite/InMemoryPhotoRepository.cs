@@ -53,6 +53,11 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.Date == null && p.Status == PhotoStatus.Active).ToList().AsEnumerable());
     }
 
+    public Task<IEnumerable<Photo>> GetMissingSizeBytesAsync()
+    {
+        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.SizeBytes == 0).ToList().AsEnumerable());
+    }
+
     public Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take)
     {
         lock (_lock)

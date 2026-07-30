@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, initials } from './format';
+import { formatBytes, formatDate, initials } from './format';
 
 describe('formatDate', () => {
   it('returns an em dash for undefined', () => {
@@ -54,5 +54,31 @@ describe('initials', () => {
 
   it('uppercases lowercase initials', () => {
     expect(initials('jane doe', 'fallback')).toBe('JD');
+  });
+});
+
+describe('formatBytes', () => {
+  it('returns "0 B" for zero', () => {
+    expect(formatBytes(0)).toBe('0 B');
+  });
+
+  it('returns "0 B" for negative values', () => {
+    expect(formatBytes(-5)).toBe('0 B');
+  });
+
+  it('formats plain bytes without decimals', () => {
+    expect(formatBytes(500)).toBe('500 B');
+  });
+
+  it('formats kilobytes with one decimal', () => {
+    expect(formatBytes(1536)).toBe('1.5 KB');
+  });
+
+  it('formats megabytes with one decimal', () => {
+    expect(formatBytes(5 * 1024 * 1024)).toBe('5.0 MB');
+  });
+
+  it('formats gigabytes with one decimal', () => {
+    expect(formatBytes(2.3 * 1024 * 1024 * 1024)).toBe('2.3 GB');
   });
 });

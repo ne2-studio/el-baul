@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Image, MessageSquare, Users, BookOpen, Trash2 } from 'lucide-react';
+import { ArrowLeft, Image, MessageSquare, Users, BookOpen, HardDrive, Trash2 } from 'lucide-react';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { DataTable } from '@/app/components/DataTable';
 import { StatCard } from '@/app/components/StatCard';
 import { ConfirmDeleteBaulModal } from '@/app/components/ConfirmDeleteBaulModal';
 import { AsyncState } from '@/app/components/AsyncState';
-import { formatDate } from '@/utils/format';
+import { formatDate, formatBytes } from '@/utils/format';
 import type { AdminBaulPersona } from '@/types';
 
 export function BaulDetailRoute() {
@@ -74,11 +74,12 @@ export function BaulDetailRoute() {
             />
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <StatCard label="Fotos" value={selectedBaul.stats.photos} icon={Image} />
             <StatCard label="Recuerdos" value={selectedBaul.stats.recuerdos} icon={MessageSquare} />
             <StatCard label="Personas" value={selectedBaul.stats.personas} icon={Users} />
             <StatCard label="Capítulos" value={selectedBaul.stats.chapters} icon={BookOpen} />
+            <StatCard label="Tamaño" value={formatBytes(selectedBaul.stats.totalSizeBytes)} icon={HardDrive} />
           </div>
 
           <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">

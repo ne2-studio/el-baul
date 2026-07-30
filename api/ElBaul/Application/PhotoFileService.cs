@@ -21,13 +21,14 @@ public class PhotoFileService(
 
         using var buffered = new MemoryStream();
         await content.CopyToAsync(buffered);
+        var sizeBytes = buffered.Length;
         buffered.Position = 0;
         var photoDate = ResolvePhotoDate(explicitDate, buffered);
         buffered.Position = 0;
 
         await photoStorage.SaveAsync(storageKey, buffered, contentType);
 
-        return new StoredPhotoFile(storageKey, photoDate);
+        return new StoredPhotoFile(storageKey, photoDate, sizeBytes);
     }
 
     public async Task<PhotoDownloadResult> OpenForDownloadAsync(string storageKey)
@@ -62,4 +63,4 @@ public class PhotoFileService(
     }
 }
 
-public record StoredPhotoFile(string StorageKey, PhotoDate? Date);
+public record StoredPhotoFile(string StorageKey, PhotoDate? Date, long SizeBytes);

@@ -173,7 +173,8 @@ public class AdminManagerTests
             new Dictionary<string, string> { ["user-1"] = "Abuela Real Name" },
             [chapter],
             PhotoCount: 5,
-            RecuerdoCount: 8);
+            RecuerdoCount: 8,
+            TotalSizeBytes: 12345);
 
         var result = await CreateManager().GetBaulDetailAsync(new BaulId(baulId));
 
@@ -187,6 +188,7 @@ public class AdminManagerTests
         Assert.Equal(8, result.Value.Stats.Recuerdos);
         Assert.Equal(2, result.Value.Stats.Personas);
         Assert.Equal(1, result.Value.Stats.Chapters);
+        Assert.Equal(12345, result.Value.Stats.TotalSizeBytes);
     }
 
     [Fact]

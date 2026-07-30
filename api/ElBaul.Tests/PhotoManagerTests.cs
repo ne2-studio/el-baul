@@ -77,6 +77,20 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task UploadAsync_ShouldRecordFileSizeInBytes()
+    {
+        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var manager = CreateManager(CustodioId);
+
+        using var content = new MemoryStream([1, 2, 3, 4, 5]);
+        var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(result.IsSuccess);
+        var stored = await _photoRepository.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
+        Assert.Equal(5, stored!.SizeBytes);
+    }
+
+    [Fact]
     public async Task UploadAsync_ShouldSetFirstPhotoAsCover()
     {
         var (_, chapterId) = await SeedBaulWithChapterAsync();

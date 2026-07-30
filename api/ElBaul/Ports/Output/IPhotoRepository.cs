@@ -11,6 +11,12 @@ public interface IPhotoRepository
     Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit);
     Task<IEnumerable<Photo>> GetUndatedAsync();
 
+    /// <summary>Photos with no recorded size yet (SizeBytes == 0 — the default for rows created
+    /// before this field existed) — used by the backfill-photo-size-bytes maintenance command.
+    /// Not status-filtered: soft-deleted photos keep their storage blob (see
+    /// PhotoSoftDeleteService) and their size still counts toward the admin baúl-size total.</summary>
+    Task<IEnumerable<Photo>> GetMissingSizeBytesAsync();
+
     /// <summary>Active photos in a baúl, optionally scoped to one chapter, ordered chronologically
     /// ascending (dated photos by date, undated photos last, CreatedAt as the final tiebreaker) —
     /// used by the cover photo picker. Callers requesting take+1 can detect whether more pages

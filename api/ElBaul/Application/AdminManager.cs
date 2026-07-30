@@ -71,7 +71,7 @@ public class AdminManager(
 
         var chapters = row.Chapters.Select(a => new AdminBaulChapterDto(a.Id.ToString(), a.Name, a.PhotoCount));
 
-        var stats = new AdminBaulStatsDto(row.PhotoCount, row.RecuerdoCount, row.Personas.Count(), row.Chapters.Count());
+        var stats = new AdminBaulStatsDto(row.PhotoCount, row.RecuerdoCount, row.Personas.Count(), row.Chapters.Count(), row.TotalSizeBytes);
 
         return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, chapters, stats);
     }

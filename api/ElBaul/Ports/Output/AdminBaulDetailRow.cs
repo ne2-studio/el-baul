@@ -13,5 +13,6 @@ public record AdminBaulDetailRow(
     IReadOnlyDictionary<string, string> LinkedUserNames,
     IEnumerable<Chapter> Chapters,
     int PhotoCount,
-    int RecuerdoCount
+    int RecuerdoCount,
+    long TotalSizeBytes
 );
