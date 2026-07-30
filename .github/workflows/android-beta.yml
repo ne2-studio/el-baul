@@ -1,0 +1,132 @@
+name: Android Beta
+
+on:
+  workflow_dispatch:
+
+  push:
+    tags:
+      - "beta-v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-beta
+  cancel-in-progress: false
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    environment: android-beta
+
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build setup
+        uses: ./.github/actions/setup-node-package
+        with:
+          working-directory: app
+
+      # Must match capacitor.build.gradle's sourceCompatibility/targetCompatibility (21).
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Calculate Android version
+        run: |
+          echo "ANDROID_VERSION_CODE=$((10000 + GITHUB_RUN_NUMBER))" \
+            >> "$GITHUB_ENV"
+
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#beta-v}"
+          else
+            VERSION="0.0.0-beta.${GITHUB_RUN_NUMBER}"
+          fi
+
+          echo "ANDROID_VERSION_NAME=$VERSION" >> "$GITHUB_ENV"
+
+      # Builds the web assets against app/.env.android's prod values and syncs them into
+      # the native android/ project - see the android:build script in package.json.
+      - name: Build web assets + sync Capacitor
+        run: npm run android:build
+
+      - name: Restore Android keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/android-signing"
+
+          printf '%s' "$KEYSTORE_BASE64" \
+            | base64 --decode \
+            > "$RUNNER_TEMP/android-signing/el-baul-release.jks"
+
+      - name: Build signed APK
+        working-directory: app/android
+        env:
+          ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
+          ANDROID_VERSION_NAME: ${{ env.ANDROID_VERSION_NAME }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/android-signing/el-baul-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease \
+            --no-daemon \
+            --stacktrace
+
+      - name: Upload APK as GitHub artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: el-baul-${{ env.ANDROID_VERSION_NAME }}
+          path: app/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Restore Firebase credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/firebase"
+
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" \
+            > "$RUNNER_TEMP/firebase/service-account.json"
+
+      - name: Create release notes
+        run: |
+          cat > "$RUNNER_TEMP/release-notes.txt" <<EOF
+          El Baúl ${ANDROID_VERSION_NAME}
+
+          Commit: ${GITHUB_SHA}
+          Build: ${GITHUB_RUN_NUMBER}
+          EOF
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Distribute APK through Firebase
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase/service-account.json
+          FIREBASE_ANDROID_APP_ID: ${{ vars.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_TESTER_GROUP: ${{ vars.FIREBASE_TESTER_GROUP }}
+        run: |
+          firebase appdistribution:distribute \
+            android/app/build/outputs/apk/release/app-release.apk \
+            --app "$FIREBASE_ANDROID_APP_ID" \
+            --groups "$FIREBASE_TESTER_GROUP" \
+            --release-notes-file "$RUNNER_TEMP/release-notes.txt"
+
+      - name: Remove credentials
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP/android-signing"
+          rm -rf "$RUNNER_TEMP/firebase"
