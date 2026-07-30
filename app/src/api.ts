@@ -29,6 +29,27 @@ interface SharedLinkResponse {
 }
 
 export const API_BASE = getEnv('VITE_API_URL');
+export const API_FORBIDDEN_EVENT = 'elbaul:api-forbidden';
+
+export class ApiError extends Error {
+  readonly status: number;
+  readonly body: unknown;
+
+  constructor(status: number, message: string, body: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
+export function isApiErrorWithStatus(error: unknown, status: number): error is ApiError {
+  return error instanceof ApiError && error.status === status;
+}
+
+export function isForbiddenError(error: unknown): boolean {
+  return isApiErrorWithStatus(error, 403);
+}
 
 // Module-level auth token, pushed in from App.tsx whenever the OIDC user changes —
 // api.ts never reads auth state itself.
@@ -49,7 +70,18 @@ function jsonHeaders(): Record<string, string> {
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(body.error || 'Request failed');
+    const message =
+      typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
+        ? body.error
+        : 'Request failed';
+
+    const error = new ApiError(response.status, message, body);
+
+    if (response.status === 403 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(API_FORBIDDEN_EVENT, { detail: { error } }));
+    }
+
+    throw error;
   }
 
   if (response.status === 204) return undefined as T;
@@ -220,8 +252,7 @@ export const api = {
     download: async (photoId: string): Promise<{ blob: Blob; fileName: string }> => {
       const response = await fetch(`${API_BASE}/api/photos/${photoId}/download`, { headers: authHeaders() });
       if (!response.ok) {
-        const body = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(body.error || 'Request failed');
+        await handleResponse<never>(response);
       }
 
       const disposition = response.headers.get('Content-Disposition') || '';

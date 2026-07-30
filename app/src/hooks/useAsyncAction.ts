@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { isForbiddenError } from '@/api';
 import { useUIStore } from '@/store/uiStore';
 
 const DEFAULT_KEY = '__default__';
@@ -40,9 +41,11 @@ export function useAsyncAction() {
         return { ok: true, value };
       } catch (error) {
         console.error(error);
-        const message =
-          typeof options.errorMessage === 'function' ? options.errorMessage(error) : options.errorMessage;
-        showToastMessage(message ?? 'Ha ocurrido un error. Inténtalo de nuevo.');
+        if (!isForbiddenError(error)) {
+          const message =
+            typeof options.errorMessage === 'function' ? options.errorMessage(error) : options.errorMessage;
+          showToastMessage(message ?? 'Ha ocurrido un error. Inténtalo de nuevo.');
+        }
         return { ok: false, error };
       } finally {
         inFlight.current.delete(key);

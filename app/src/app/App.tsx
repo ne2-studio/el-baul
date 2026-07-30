@@ -4,9 +4,10 @@ import { useAuth } from 'react-oidc-context';
 import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal';
 import { PlanLimitModal } from '@/features/profile/components/PlanLimitModal';
 import { Toast } from '@/design-system/components/feedback/Toast';
+import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { NativeShareHandler } from '../native/NativeShareHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
-import { setAccessToken } from '@/api';
+import { API_FORBIDDEN_EVENT, setAccessToken } from '@/api';
 import { Baul } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { getBaulPermissions } from '@/utils/roleUtils';
@@ -54,6 +55,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
+  const [isAccessDenied, setIsAccessDenied] = React.useState(false);
   const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
   const {
     showToast,
@@ -92,6 +94,12 @@ function App() {
   // own effect got a chance to push the token, calling the API with none attached and
   // getting a 401. A plain synchronous assignment has no such ordering risk.
   setAccessToken(auth.user?.access_token ?? null);
+
+  useEffect(() => {
+    const handleForbidden = () => setIsAccessDenied(true);
+    window.addEventListener(API_FORBIDDEN_EVENT, handleForbidden);
+    return () => window.removeEventListener(API_FORBIDDEN_EVENT, handleForbidden);
+  }, []);
 
   // (Re)load domain data whenever the OIDC user changes.
   useEffect(() => {
@@ -153,10 +161,20 @@ function App() {
     return true;
   };
 
+  const handleBackToBaules = () => {
+    setIsAccessDenied(false);
+    navigate('/baules', { replace: true });
+  };
+
   return (
     <div className="h-screen w-full bg-[var(--bg-primary)]">
       <ScrollToTop />
       <NativeShareHandler />
+
+      {isAccessDenied ? (
+        <AccessDeniedScreen onBackToBaules={handleBackToBaules} />
+      ) : (
+        <>
 
       <Routes location={backgroundLocation || location}>
         {/* Public Routes */}
@@ -352,6 +370,8 @@ function App() {
             </ProtectedRoute>
           } />
         </Routes>
+      )}
+        </>
       )}
 
       {/* Profile Menu Modal */}
