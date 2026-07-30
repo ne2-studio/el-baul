@@ -3,7 +3,7 @@ import { ChapterBadge, CounterBadge, PersonBadge, RoleBadge } from '@/design-sys
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'Components/Data Display/Badges',
+  title: 'Components/DataDisplay/Badges',
   tags: ['autodocs'],
   parameters: {
     docs: {

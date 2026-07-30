@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChatBubble } from '@/design-system/components/data-display/ChatBubble';
 
 const meta = {
-  title: 'Components/Data Display/ChatBubble',
+  title: 'Components/DataDisplay/ChatBubble',
   component: ChatBubble,
   tags: ['autodocs'],
   parameters: {

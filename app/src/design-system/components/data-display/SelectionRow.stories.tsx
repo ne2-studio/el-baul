@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 
 const meta = {
-  title: 'Components/Data Display/SelectionRow',
+  title: 'Components/DataDisplay/SelectionRow',
   component: SelectionRow,
   tags: ['autodocs'],
   parameters: {

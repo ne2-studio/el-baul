@@ -3,7 +3,7 @@ import { RemovalRequestsList, RemovalRequest } from '@/features/photos/component
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'Features/Photos/RemovalRequestsList',
+  title: 'Screens/Photos/RemovalRequests',
   component: RemovalRequestsList,
   tags: ['autodocs'],
 } satisfies Meta<typeof RemovalRequestsList>;

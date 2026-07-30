@@ -24,7 +24,7 @@ interface ActionMenuStoryArgs {
 }
 
 const meta: Meta<ActionMenuStoryArgs> = {
-  title: 'Components/UI/DropdownMenu',
+  title: 'Components/Overlays/DropdownMenu',
   tags: ['autodocs'],
   parameters: {
     docs: {

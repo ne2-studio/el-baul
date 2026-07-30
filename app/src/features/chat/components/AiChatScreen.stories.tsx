@@ -4,7 +4,7 @@ import { ChatMessage } from '@/types';
 import { storybookEdgeText } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'Features/Chat/AiChatScreen',
+  title: 'Screens/Chat/AiChat',
   component: AiChatScreen,
   tags: ['autodocs'],
   parameters: {

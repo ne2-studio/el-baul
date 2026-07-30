@@ -3,7 +3,7 @@ import { BookOpen, ExternalLink, LogOut, User } from 'lucide-react';
 import { ActionListItem } from '@/design-system/components/data-display/ActionListItem';
 
 const meta = {
-  title: 'Components/Data Display/ActionListItem',
+  title: 'Components/DataDisplay/ActionListItem',
   component: ActionListItem,
   tags: ['autodocs'],
   parameters: {
