@@ -50,12 +50,27 @@ test('invite family via global link → guest auto-joins with an auto-created pe
   expect(guestPersonasAfterRejoin, 'rejoining via the same link must not create a duplicate persona').toHaveLength(1);
   expect(guestPersonasAfterRejoin[0].id).toBe(guestPersonas[0].id);
 
-  // Regenerating invalidates the previous token.
+  // Regenerating invalidates the previous token. The trigger button and the confirmation's
+  // confirm button share the same accessible name ("Regenerar enlace") in two different
+  // views, so wait for the confirmation sheet before the second click — otherwise a slow
+  // re-render could let the second click land on the still-visible trigger again instead of
+  // actually confirming, silently no-oping the regenerate.
   await page.getByRole('button', { name: 'Opciones del baúl' }).click();
   await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   await page.getByRole('button', { name: 'Regenerar enlace' }).click();
-  await page.getByRole('button', { name: 'Regenerar enlace' }).click();
+  await expect(page.getByText('¿Regenerar el enlace?')).toBeVisible();
+
+  const [regenerateResponse] = await Promise.all([
+    page.waitForResponse((response) => response.url().includes('/invite-link/regenerate') && response.request().method() === 'POST'),
+    page.getByRole('button', { name: 'Regenerar enlace' }).click(),
+  ]);
+  expect(regenerateResponse.status(), 'regenerate request should succeed').toBe(200);
+
   await expect(page.getByText(linkText)).toBeHidden();
+  const newLinkLocator = page.getByText(/\/invitacion\/baul\//);
+  await expect(newLinkLocator).toBeVisible();
+  const newLinkText = (await newLinkLocator.textContent())!;
+  expect(newLinkText, 'regenerating should produce a different token').not.toBe(linkText);
 
   const oldPreviewResponse = await page.request.get(`${API_BASE_URL}/api/baul-invites/${token}/preview`);
   expect(oldPreviewResponse.status()).toBe(404);
