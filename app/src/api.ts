@@ -1,4 +1,4 @@
-import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
+import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulPreview, BaulInviteLink, BaulInviteLinkPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
 import { getEnv } from './runtimeConfig';
 import type { components } from './api/generated/schema';
 
@@ -6,6 +6,8 @@ type ApiSchemas = components['schemas'];
 type AppConfigResponse = ApiSchemas['AppConfigResponse'];
 type BaulDto = ApiSchemas['BaulDto'];
 type BaulPreviewDto = ApiSchemas['BaulPreviewDto'];
+type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
+type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
 type ChapterDto = ApiSchemas['ChapterDto'];
 type ChatMessageDto = ApiSchemas['ChatMessageDto'];
 type PersonaDto = ApiSchemas['PersonaDto'];
@@ -185,6 +187,11 @@ export const api = {
     getPersonaPhotos: async (baulId: string, personaId: string) =>
       (await get<PhotoDto[]>(`/api/baules/${baulId}/personas/${personaId}/photos`)).map((p) => new Photo(p)),
 
+    getInviteLink: async (baulId: string) =>
+      new BaulInviteLink(await get<BaulInviteLinkDto>(`/api/baules/${baulId}/invite-link`)),
+    regenerateInviteLink: async (baulId: string) =>
+      new BaulInviteLink(await post<BaulInviteLinkDto>(`/api/baules/${baulId}/invite-link/regenerate`)),
+
     getRemovalRequests: async (baulId: string) =>
       (await get<RemovalRequestDto[]>(`/api/baules/${baulId}/removal-requests`)).map((r) => new RemovalRequest(r)),
     submitRemovalRequest: async (baulId: string, photoId: string, reason?: string) =>
@@ -304,6 +311,13 @@ export const api = {
       new BaulPreview(await get<BaulPreviewDto>(`/api/personas/${personaId}/invite-preview`)),
     acceptPersonalInvite: async (personaId: string) =>
       new Persona(await post<PersonaDto>(`/api/personas/${personaId}/accept-invite`)),
+  },
+
+  baulInvites: {
+    getPreview: async (token: string) =>
+      new BaulInviteLinkPreview(await get<BaulInviteLinkPreviewDto>(`/api/baul-invites/${encodeURIComponent(token)}/preview`)),
+    accept: async (token: string) =>
+      new Persona(await post<PersonaDto>(`/api/baul-invites/${encodeURIComponent(token)}/accept`)),
   },
 
   users: {

@@ -4,7 +4,7 @@ import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 
 interface InvitacionScreenProps {
   baulNombre: string;
-  personaNickname: string;
+  personaNickname?: string;
   previewPhotos: string[];
   onUnirme: () => void;
   onVerMas: () => void;
@@ -34,7 +34,9 @@ export function InvitacionScreen({
 
         {/* Mensaje de invitación */}
         <p className="text-center text-muted-foreground mb-8">
-          {personaNickname}, te han invitado a un Baúl privado para guardar recuerdos
+          {personaNickname
+            ? `${personaNickname}, te han invitado a un Baúl privado para guardar recuerdos`
+            : 'Te han invitado a un Baúl privado para guardar recuerdos'}
         </p>
 
         {/* Grid de fotos de preview */}

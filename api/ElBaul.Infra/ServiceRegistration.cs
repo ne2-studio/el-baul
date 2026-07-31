@@ -22,6 +22,7 @@ public static class ServiceRegistration
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IRecuerdoRepository, RecuerdoRepository>();
         services.AddScoped<ISharedLinkRepository, SharedLinkRepository>();
+        services.AddScoped<IBaulInviteLinkRepository, BaulInviteLinkRepository>();
         services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
         services.AddScoped<IPhotoPersonaTagRepository, PhotoPersonaTagRepository>();
         services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();
@@ -41,6 +42,7 @@ public static class ServiceRegistration
         services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
 
         services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
+        services.AddHttpClient<IProfilePictureFetcher, HttpProfilePictureFetcher>();
 
         // LeadHub responds to a successful submission with a redirect to a "thanks"
         // page we have no use for — don't waste a round trip following it.

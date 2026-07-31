@@ -17,6 +17,8 @@ Anonymous exceptions:
 
 - `GET /api/personas/{personaId}/invite-preview` — public, rate-limited; used for personal
   invitation links before the recipient has signed in.
+- `GET /api/baul-invites/{token}/preview` — public, rate-limited; used for the global baúl
+  invite link before the recipient has signed in.
 - `GET /api/app-config` — public feature flags/URLs the frontend needs before login.
 - `GET /email/click/{token}` — clicked from an email client, never carries auth.
 - `GET /s/{token}` — public shared photo/recuerdo landing with Open Graph metadata.
@@ -53,12 +55,28 @@ and cannot accept or preview invitation links.
 
 ## Invitations
 
-Growth is strictly person-to-person, never a generic join link. The custodio/administrador
-creates a Persona for each family member up front — nickname only, no account required —
-and shares that Persona's own invitation link (e.g. over WhatsApp). A Persona row always
-exists, with `userId: null`, before its invitation is ever sent; accepting an invitation
-(`POST /api/personas/{personaId}/accept-invite`) just links the caller's account to that
-existing Persona. There is no self-serve "join this baúl" flow.
+Two coexisting invitation paths (see [ADR 0003](adr/0003-self-serve-baul-join-link.md) for
+why the second one exists alongside the first):
+
+- **Personal invitations** — the custodio/administrador creates a Persona for each family
+  member up front — nickname only, no account required — and shares that Persona's own
+  invitation link (e.g. over WhatsApp). A Persona row always exists, with `userId: null`,
+  before its invitation is ever sent; accepting an invitation
+  (`POST /api/personas/{personaId}/accept-invite`) just links the caller's account to that
+  existing Persona.
+- **Global baúl invite link** — one reusable, regenerable link per baúl
+  (`GET /api/baules/{baulId}/invite-link`, `POST /api/baules/{baulId}/invite-link/regenerate`,
+  both custodio/administrador-only), with no expiry and no usage limit. Anyone who opens it
+  (`GET /api/baul-invites/{token}/preview`, public) and accepts
+  (`POST /api/baul-invites/{token}/accept`) is added to the baúl. If they don't already have a
+  Persona there, one is auto-created — nickname/name from their account, avatar best-effort
+  from the account's OIDC `picture` claim (never blocks the join if it's missing or the fetch
+  fails). If they already have an active Persona in that baúl — including the custodio
+  opening their own link — accepting is a no-op. If their existing Persona there is
+  `sin_acceso`, accepting is rejected: same invariant as personal invites, only an admin can
+  restore revoked access, never a self-serve link. Regenerating the link immediately
+  invalidates the previous one (`404` on its old token) — there is only ever one active
+  global link per baúl at a time.
 
 ## Photos
 

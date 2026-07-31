@@ -36,7 +36,7 @@ public class UserSyncMiddleware(RequestDelegate next)
 
             if (sub is not null && (existing is null || string.IsNullOrEmpty(existing.Email)))
             {
-                if (ExtractBearerToken(context.Request) is { } accessToken)
+                if (BearerTokenExtractor.Extract(context.Request) is { } accessToken)
                 {
                     var userInfo = await userInfoClient.GetUserInfoAsync(accessToken);
                     if (userInfo is not null)
@@ -61,11 +61,5 @@ public class UserSyncMiddleware(RequestDelegate next)
         }
 
         await next(context);
-    }
-
-    private static string? ExtractBearerToken(HttpRequest request)
-    {
-        var header = request.Headers.Authorization.ToString();
-        return header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ? header["Bearer ".Length..] : null;
     }
 }

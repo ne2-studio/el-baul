@@ -9,6 +9,7 @@ describe('roleUtils baul permissions', () => {
       expected: {
         isAdmin: true,
         isCustodio: true,
+        canManageBaulInvite: true,
         canEditBaul: true,
         canRequestBaulDeletion: true,
         canReviewRemovalRequests: true,
@@ -21,6 +22,7 @@ describe('roleUtils baul permissions', () => {
       expected: {
         isAdmin: true,
         isCustodio: false,
+        canManageBaulInvite: true,
         canEditBaul: true,
         canRequestBaulDeletion: false,
         canReviewRemovalRequests: true,
@@ -33,6 +35,7 @@ describe('roleUtils baul permissions', () => {
       expected: {
         isAdmin: false,
         isCustodio: false,
+        canManageBaulInvite: false,
         canEditBaul: false,
         canRequestBaulDeletion: false,
         canReviewRemovalRequests: false,
@@ -45,6 +48,7 @@ describe('roleUtils baul permissions', () => {
       expected: {
         isAdmin: false,
         isCustodio: false,
+        canManageBaulInvite: false,
         canEditBaul: false,
         canRequestBaulDeletion: false,
         canReviewRemovalRequests: false,

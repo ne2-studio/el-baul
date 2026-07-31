@@ -13,7 +13,7 @@ namespace ElBaul.Api.Controllers;
 [Route("api/baules")]
 public class BaulesController(
     IBaulManager baulManager, IPersonaManager personaManager, IRemovalRequestManager removalRequestManager,
-    IPhotoManager photoManager, IRecuerdoManager recuerdoManager)
+    IPhotoManager photoManager, IRecuerdoManager recuerdoManager, IBaulInviteLinkManager baulInviteLinkManager)
     : ControllerBase
 {
     [HttpGet]
@@ -74,6 +74,22 @@ public class BaulesController(
     public async Task<IActionResult> AcceptPersonalInvite(Guid personaId)
     {
         var result = await personaManager.AcceptPersonalInviteAsync(new PersonaId(personaId));
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpGet("{baulId:guid}/invite-link")]
+    [ProducesResponseType(typeof(BaulInviteLinkDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetInviteLink(Guid baulId)
+    {
+        var result = await baulInviteLinkManager.GetOrCreateAsync(new BaulId(baulId));
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("{baulId:guid}/invite-link/regenerate")]
+    [ProducesResponseType(typeof(BaulInviteLinkDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RegenerateInviteLink(Guid baulId)
+    {
+        var result = await baulInviteLinkManager.RegenerateAsync(new BaulId(baulId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 

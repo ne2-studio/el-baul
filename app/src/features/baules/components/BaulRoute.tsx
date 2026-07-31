@@ -185,6 +185,8 @@ export const BaulRoute: React.FC = () => {
         onRequestBaulDeletion={() => navigate(`/baules/${baul.id}/solicitar-borrado`)}
         onFetchBaulCoverPhotos={baulPermissions.canSetBaulCover ? (skip, take) => api.photos.getPage(baul.id, { skip, take }) : undefined}
         onSetBaulCover={baulPermissions.canSetBaulCover ? handleSetBaulCover : undefined}
+        onGetInviteLink={baulPermissions.canManageBaulInvite ? () => api.baules.getInviteLink(baul.id) : undefined}
+        onRegenerateInviteLink={baulPermissions.canManageBaulInvite ? () => api.baules.regenerateInviteLink(baul.id) : undefined}
       />
       {isLoadingChapterPhotos && <BlockingLoadingOverlay message="Cargando fotos..." />}
       {showCreateChapterModal && (

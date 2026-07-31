@@ -163,6 +163,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<PhotoSoftDeleteService>();
         builder.Services.AddScoped<PhotoFileService>();
         builder.Services.AddScoped<IPhotoDtoProjector, PhotoDtoProjector>();
+        builder.Services.AddScoped<IPersonaDtoProjector, PersonaDtoProjector>();
         builder.Services.AddScoped<IBaulManager, BaulManager>();
         builder.Services.AddScoped<IPersonaManager, PersonaManager>();
         builder.Services.AddScoped<IRemovalRequestManager, RemovalRequestManager>();
@@ -175,6 +176,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
         builder.Services.AddScoped<IChatManager, ChatManager>();
         builder.Services.AddScoped<ISharedLinkManager, SharedLinkManager>();
+        builder.Services.AddScoped<IBaulInviteLinkManager, BaulInviteLinkManager>();
 
         // "Ai" costs a real AI call every time the chat opens with no history and can fail;
         // "Static" (the default) is deterministic templates filled from the baúl's own

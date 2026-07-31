@@ -18,4 +18,7 @@ public class HttpContextCurrentUserProvider(IHttpContextAccessor httpContextAcce
 
         return userId ?? throw new InvalidOperationException("The current user token has no 'sub' claim.");
     }
+
+    public string? GetAccessToken() =>
+        httpContextAccessor.HttpContext is { } context ? BearerTokenExtractor.Extract(context.Request) : null;
 }

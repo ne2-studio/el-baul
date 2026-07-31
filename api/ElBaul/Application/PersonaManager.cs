@@ -15,7 +15,8 @@ public class PersonaManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
-    PhotoFileService photoFileService) : IPersonaManager
+    PhotoFileService photoFileService,
+    IPersonaDtoProjector personaDtoProjector) : IPersonaManager
 {
     public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(PersonaId personaId)
     {
@@ -79,7 +80,7 @@ public class PersonaManager(
             logger.LogInformation("Personal invitation accepted {PersonaId} {BaulId}", personaId, persona.BaulId);
         }
 
-        return await ToPersonaDtoAsync(persona, user, canEdit: true);
+        return await personaDtoProjector.ProjectAsync(persona, user, canEdit: true);
     }
 
     public async Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(BaulId baulId)
@@ -97,7 +98,7 @@ public class PersonaManager(
         {
             var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!) : null;
             var canEdit = CanEditPersona(persona, userId, access);
-            dtos.Add(await ToPersonaDtoAsync(persona, user, canEdit));
+            dtos.Add(await personaDtoProjector.ProjectAsync(persona, user, canEdit));
         }
 
         return Result.Success<IEnumerable<PersonaDto>>(dtos);
@@ -121,7 +122,7 @@ public class PersonaManager(
 
         var canEdit = CanEditPersona(persona, userId, access);
         var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!) : null;
-        return await ToPersonaDtoAsync(persona, user, canEdit);
+        return await personaDtoProjector.ProjectAsync(persona, user, canEdit);
     }
 
     public async Task<Result<PersonaDto>> CreatePersonaAsync(BaulId baulId, string nickname)
@@ -136,7 +137,7 @@ public class PersonaManager(
 
         await baulRepository.AddPersonaAsync(persona);
         logger.LogInformation("Persona created {BaulId} {PersonaId} {Nickname}", baulId, persona.Id, nickname);
-        return await ToPersonaDtoAsync(persona, null, canEdit: true);
+        return await personaDtoProjector.ProjectAsync(persona, null, canEdit: true);
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaAsync(BaulId baulId, PersonaId personaId, string? name, string nickname)
@@ -166,7 +167,7 @@ public class PersonaManager(
         logger.LogInformation("Persona updated {BaulId} {PersonaId}", baulId, personaId);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
-        return await ToPersonaDtoAsync(updated, user, canEdit);
+        return await personaDtoProjector.ProjectAsync(updated, user, canEdit);
     }
 
     // Biografía is shared, wiki-like family content: unlike name/nickname/avatar it only
@@ -191,7 +192,7 @@ public class PersonaManager(
         logger.LogInformation("Persona biografia updated {BaulId} {PersonaId}", baulId, personaId);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
-        return await ToPersonaDtoAsync(updated, user, CanEditPersona(updated, userId, auth.Value));
+        return await personaDtoProjector.ProjectAsync(updated, user, CanEditPersona(updated, userId, auth.Value));
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaAvatarAsync(
@@ -292,7 +293,7 @@ public class PersonaManager(
         logger.LogInformation("Persona role updated {BaulId} {PersonaId} {Role}", baulId, personaId, role);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
-        return await ToPersonaDtoAsync(updated, user, canEdit: true);
+        return await personaDtoProjector.ProjectAsync(updated, user, canEdit: true);
     }
 
     public async Task<Result> RemovePersonaAsync(BaulId baulId, PersonaId personaId)
@@ -371,34 +372,6 @@ public class PersonaManager(
             "Persona avatar photo updated {BaulId} {PersonaId} {PhotoId}", photo.BaulId, persona.Id, photo.Id);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
-        return await ToPersonaDtoAsync(updated, user, CanEditPersona(updated, userId, access));
-    }
-
-    private async Task<PersonaDto> ToPersonaDtoAsync(Persona persona, User? user, bool canEdit)
-    {
-        var avatarUrl = await GetPersonaAvatarUrlAsync(persona);
-
-        return new PersonaDto(
-            persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
-            persona.Nickname, persona.Role.ToApiString(), persona.Role == BaulRole.SinAcceso ? "sin_acceso" : persona.IsClaimed ? "active" : "pending",
-            persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia,
-            persona.AvatarPhotoId?.ToString(), persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
-    }
-
-    private async Task<string?> GetPersonaAvatarUrlAsync(Persona persona)
-    {
-        var crop = new ImageCrop(persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
-
-        if (persona.AvatarPhotoId is { } photoId)
-        {
-            var photo = await photoRepository.GetByIdAsync(photoId);
-            return photo is not null && photo.BaulId == persona.BaulId && photo.Status == PhotoStatus.Active
-                ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PersonaAvatar, crop)
-                : null;
-        }
-
-        return persona.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar, crop)
-            : null;
+        return await personaDtoProjector.ProjectAsync(updated, user, CanEditPersona(updated, userId, access));
     }
 }

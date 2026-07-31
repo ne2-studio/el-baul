@@ -1,4 +1,3 @@
-using System.Text;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using Microsoft.Extensions.Logging;
@@ -32,7 +31,7 @@ public class SharedLinkManager(
         if (auth.IsFailure) return Result.Failure<CreateSharedLinkResult>(auth.Error);
 
         var sharedLink = new SharedLink(
-            new SharedLinkId(idGenerator.NewId()), NewToken(), photo.BaulId, SharedLinkContentType.Photo,
+            new SharedLinkId(idGenerator.NewId()), TokenGenerator.NewToken(idGenerator), photo.BaulId, SharedLinkContentType.Photo,
             photo.Id, null, userId, clock.UtcNow());
         await sharedLinkRepository.CreateAsync(sharedLink);
 
@@ -57,7 +56,7 @@ public class SharedLinkManager(
         if (auth.IsFailure) return Result.Failure<CreateSharedLinkResult>(auth.Error);
 
         var sharedLink = new SharedLink(
-            new SharedLinkId(idGenerator.NewId()), NewToken(), recuerdo.BaulId, SharedLinkContentType.Recuerdo,
+            new SharedLinkId(idGenerator.NewId()), TokenGenerator.NewToken(idGenerator), recuerdo.BaulId, SharedLinkContentType.Recuerdo,
             recuerdo.PhotoId, recuerdo.Id, userId, clock.UtcNow());
         await sharedLinkRepository.CreateAsync(sharedLink);
 
@@ -130,12 +129,6 @@ public class SharedLinkManager(
                 : $"{baseUrl}/baules/{sharedLink.BaulId}/fotos-sueltas/foto/{photo.Id}";
         }
         return $"{baseUrl}/baules/{sharedLink.BaulId}";
-    }
-
-    private string NewToken()
-    {
-        var bytes = Encoding.UTF8.GetBytes($"{idGenerator.NewId():N}{idGenerator.NewId():N}");
-        return Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
     }
 
     private static string Truncate(string text, int maxLength) =>

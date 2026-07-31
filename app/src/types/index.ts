@@ -4,6 +4,8 @@ import type { components } from '@/api/generated/schema';
 type ApiSchemas = components['schemas'];
 type BaulDto = ApiSchemas['BaulDto'];
 type BaulPreviewDto = ApiSchemas['BaulPreviewDto'];
+type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
+type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
 type ChapterDto = ApiSchemas['ChapterDto'];
 type ChatMessageDto = ApiSchemas['ChatMessageDto'];
 type RawPersonaDto = ApiSchemas['PersonaDto'];
@@ -222,6 +224,32 @@ export class BaulPreview {
     this.name = data.name;
     this.description = data.description ?? undefined;
     this.personaNickname = data.personaNickname;
+    this.previewPhotos = data.previewPhotos;
+  }
+}
+
+export class BaulInviteLink {
+  token: string;
+  url: string;
+  createdAt: string;
+
+  constructor(data: BaulInviteLinkDto) {
+    this.token = data.token;
+    this.url = data.url;
+    this.createdAt = data.createdAt;
+  }
+}
+
+export class BaulInviteLinkPreview {
+  baulId: string;
+  name: string;
+  description?: string;
+  previewPhotos: string[];
+
+  constructor(data: BaulInviteLinkPreviewDto) {
+    this.baulId = data.baulId;
+    this.name = data.name;
+    this.description = data.description ?? undefined;
     this.previewPhotos = data.previewPhotos;
   }
 }

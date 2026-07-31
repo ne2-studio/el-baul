@@ -6,16 +6,17 @@ import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { ExpandableFAB, SimpleFAB } from '@/design-system/components/actions/FAB';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { NuevaPersonaModal } from '@/features/people/components/NuevaPersonaModal';
+import { InviteFamilyModal } from '@/features/sharing/components/InviteFamilyModal';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PersonasTab } from '@/features/people/components/PersonasTab';
 import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
-import { Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2, Link2 } from 'lucide-react';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
-import { Baul, Chapter, Photo, Recuerdo, Persona } from '@/types';
+import { Baul, BaulInviteLink, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
 import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
 import { IconButton } from '@/design-system/components/actions/IconButton';
@@ -67,6 +68,8 @@ interface ChaptersViewProps {
   onRequestBaulDeletion?: () => void;
   onFetchBaulCoverPhotos?: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
   onSetBaulCover?: (photo: Photo) => void;
+  onGetInviteLink?: () => Promise<BaulInviteLink>;
+  onRegenerateInviteLink?: () => Promise<BaulInviteLink>;
 }
 
 export function ChaptersView({
@@ -99,12 +102,15 @@ export function ChaptersView({
   onRequestBaulDeletion,
   onFetchBaulCoverPhotos,
   onSetBaulCover,
+  onGetInviteLink,
+  onRegenerateInviteLink,
 }: ChaptersViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
+  const [showInviteFamilyModal, setShowInviteFamilyModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>(initialTab);
   const [isCreatingPersona, setIsCreatingPersona] = useState(false);
   const [isSavingBaulInfo, setIsSavingBaulInfo] = useState(false);
@@ -133,7 +139,7 @@ export function ChaptersView({
         variant="row"
         onBack={onBack}
         trailing={
-          (onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
+          (onGetInviteLink || onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <IconButton
@@ -144,6 +150,17 @@ export function ChaptersView({
                 </IconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                {onGetInviteLink && onRegenerateInviteLink && (
+                  <DropdownMenuItem onClick={() => setShowInviteFamilyModal(true)}>
+                    <Link2 className="w-4 h-4 mr-2" />
+                    Invitar a la familia
+                  </DropdownMenuItem>
+                )}
+
+                {onGetInviteLink && onRegenerateInviteLink && ((onFetchBaulCoverPhotos && onSetBaulCover) || onUpdateBaulInfo) && (
+                  <DropdownMenuSeparator />
+                )}
+
                 {onFetchBaulCoverPhotos && onSetBaulCover && (
                   <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
                     <ImageIcon className="w-4 h-4 mr-2" />
@@ -332,6 +349,15 @@ export function ChaptersView({
           onCancel={() => setShowNuevaPersonaModal(false)}
           onSave={handleSaveNuevaPersona}
           isSubmitting={isCreatingPersona}
+        />
+      )}
+
+      {showInviteFamilyModal && onGetInviteLink && onRegenerateInviteLink && (
+        <InviteFamilyModal
+          baulName={baul.name}
+          fetchLink={onGetInviteLink}
+          onRegenerate={onRegenerateInviteLink}
+          onCancel={() => setShowInviteFamilyModal(false)}
         />
       )}
 

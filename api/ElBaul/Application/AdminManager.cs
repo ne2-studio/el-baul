@@ -20,6 +20,7 @@ public class AdminManager(
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
     ISharedLinkRepository sharedLinkRepository,
+    IBaulInviteLinkRepository baulInviteLinkRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IPhotoStorage photoStorage,
     IChatContextBuilder chatContextBuilder,
@@ -98,6 +99,7 @@ public class AdminManager(
 
         await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
         await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
+        await baulInviteLinkRepository.DeleteByBaulIdAsync(baulId);
         await recuerdoRepository.DeleteByBaulIdAsync(baulId);
         await photoRepository.DeleteByBaulIdAsync(baulId);
         await chapterRepository.DeleteByBaulIdAsync(baulId);

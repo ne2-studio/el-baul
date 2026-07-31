@@ -15,6 +15,7 @@ public class AdminManagerTests
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemorySharedLinkRepository _sharedLinkRepository = new();
+    private readonly InMemoryBaulInviteLinkRepository _baulInviteLinkRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly FakeChatContextBuilder _chatContextBuilder = new();
@@ -22,7 +23,7 @@ public class AdminManagerTests
 
     private AdminManager CreateManager() => new(
         _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
-        _recuerdoRepository, _sharedLinkRepository, _photoPersonaTagRepository, _photoStorage, _chatContextBuilder, _clock,
+        _recuerdoRepository, _sharedLinkRepository, _baulInviteLinkRepository, _photoPersonaTagRepository, _photoStorage, _chatContextBuilder, _clock,
         NullLogger<AdminManager>.Instance);
 
     [Fact]

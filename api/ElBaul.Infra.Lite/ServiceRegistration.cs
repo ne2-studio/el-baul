@@ -25,6 +25,7 @@ public static class ServiceRegistration
         services.AddSingleton<IPhotoRepository, InMemoryPhotoRepository>();
         services.AddSingleton<IRecuerdoRepository, InMemoryRecuerdoRepository>();
         services.AddSingleton<ISharedLinkRepository, InMemorySharedLinkRepository>();
+        services.AddSingleton<IBaulInviteLinkRepository, InMemoryBaulInviteLinkRepository>();
         services.AddSingleton<IChatMessageRepository, InMemoryChatMessageRepository>();
         services.AddSingleton<IRecuerdoEmbeddingRepository, InMemoryRecuerdoEmbeddingRepository>();
         services.AddSingleton<IAdminRepository, InMemoryAdminRepository>();
@@ -55,6 +56,7 @@ public static class ServiceRegistration
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
         services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
+        services.AddHttpClient<IProfilePictureFetcher, HttpProfilePictureFetcher>();
 
         return services;
     }

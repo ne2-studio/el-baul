@@ -36,6 +36,8 @@ import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequ
 import { PersonaDetailRoute } from '../features/sharing/components/PersonaDetailRoute';
 import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
 import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
+import { BaulGlobalInvitacionRoute } from '../features/sharing/components/BaulGlobalInvitacionRoute';
+import { AcceptBaulInviteRoute } from '../features/sharing/components/AcceptBaulInviteRoute';
 import { SelectBaulForShareRoute } from '../features/sharing/components/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/components/ProfileRoute';
 import { NotificationPreferencesRoute } from '../features/profile/components/NotificationPreferencesRoute';
@@ -290,6 +292,14 @@ function App() {
         <Route path="/invitacion/persona/:personaId/aceptar" element={
           <ProtectedRoute>
             <AcceptInviteRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/invitacion/baul/:token" element={
+          <BaulGlobalInvitacionRoute />
+        } />
+        <Route path="/invitacion/baul/:token/aceptar" element={
+          <ProtectedRoute>
+            <AcceptBaulInviteRoute />
           </ProtectedRoute>
         } />
         <Route path="/eliminar-solicitudes/:baulId" element={

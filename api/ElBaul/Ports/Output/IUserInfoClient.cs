@@ -9,4 +9,4 @@ public interface IUserInfoClient
     Task<UserInfo?> GetUserInfoAsync(string accessToken);
 }
 
-public record UserInfo(string Email, string? Name);
+public record UserInfo(string Email, string? Name, string? Picture = null);

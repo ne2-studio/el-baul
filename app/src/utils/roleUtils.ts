@@ -5,6 +5,7 @@ export interface BaulPermissions {
   isCustodio: boolean;
   countsAsCustodioForPlan: boolean;
   canCreatePersona: boolean;
+  canManageBaulInvite: boolean;
   canEditBaul: boolean;
   canRequestBaulDeletion: boolean;
   canReviewRemovalRequests: boolean;
@@ -60,6 +61,7 @@ export function getBaulPermissions(baul?: Pick<Baul, 'role' | 'isCustodio'>): Ba
     isCustodio,
     countsAsCustodioForPlan: baul ? baul.isCustodio !== false && baul.role !== 'sin_acceso' : false,
     canCreatePersona: isAdmin,
+    canManageBaulInvite: isAdmin,
     canEditBaul: isAdmin,
     canRequestBaulDeletion: isCustodio,
     canReviewRemovalRequests: isAdmin,
