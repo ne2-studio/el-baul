@@ -72,7 +72,7 @@ export const BaulInvitacionRoute: React.FC = () => {
     const params = new URLSearchParams();
     if (preview) {
       params.set('baulNombre', preview.name);
-      params.set('baulId', preview.id);
+      params.set('redirectTo', `/invitacion/persona/${personaId}/aceptar`);
     }
 
     const onboardingUrl = `/onboarding?${params.toString()}`;

@@ -8,39 +8,24 @@ export const OnboardingRoute: React.FC = () => {
   const [searchParams] = useSearchParams();
   const auth = useAuth();
   const baulNombre = searchParams.get('baulNombre') || 'Tu Primer Baúl';
-  const baulId = searchParams.get('baulId');
+  // The actual "accept this invite" path (persona- or token-scoped) the caller wants to land
+  // on once onboarding is done — not just the baúl id, since accepting needs the specific
+  // persona/link identifier, not a route that doesn't exist.
+  const redirectTarget = searchParams.get('redirectTo');
 
-  const handleComplete = () => {
+  const goToNextStep = () => {
+    const nextTarget = redirectTarget || '/baules/nuevo?onboarding=true';
+
     if (!auth.isAuthenticated) {
-      const nextTarget = baulId 
-        ? `/invitacion/${baulId}/aceptar` 
-        : '/baules/nuevo?onboarding=true';
       navigate(`/?redirectTo=${encodeURIComponent(nextTarget)}`);
       return;
     }
 
-    if (baulId) {
-      navigate(`/invitacion/${baulId}/aceptar`);
-    } else {
-      navigate('/baules/nuevo?onboarding=true');
-    }
+    navigate(nextTarget);
   };
 
-  const handleSkip = () => {
-    if (!auth.isAuthenticated) {
-      const nextTarget = baulId 
-        ? `/invitacion/${baulId}/aceptar` 
-        : '/baules/nuevo?onboarding=true';
-      navigate(`/?redirectTo=${encodeURIComponent(nextTarget)}`);
-      return;
-    }
-
-    if (baulId) {
-      navigate(`/invitacion/${baulId}/aceptar`);
-    } else {
-      navigate('/baules/nuevo?onboarding=true');
-    }
-  };
+  const handleComplete = goToNextStep;
+  const handleSkip = goToNextStep;
 
   return (
     <OnboardingCarousel 

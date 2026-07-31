@@ -70,7 +70,7 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
     const params = new URLSearchParams();
     if (preview) {
       params.set('baulNombre', preview.name);
-      params.set('baulId', preview.baulId);
+      params.set('redirectTo', `/invitacion/baul/${token}/aceptar`);
     }
 
     const onboardingUrl = `/onboarding?${params.toString()}`;
