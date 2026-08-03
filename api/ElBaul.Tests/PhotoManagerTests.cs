@@ -20,7 +20,7 @@ public class PhotoManagerTests
     private readonly StaticClock _clock = new();
     private readonly FakePhotoDateExtractor _photoDateExtractor = new();
 
-    private PhotoSoftDeleteService CreatePhotoSoftDeleteService(IPhotoRepository? photoRepository = null) =>
+    private PhotoLifecycleService CreatePhotoLifecycleService(IPhotoRepository? photoRepository = null) =>
         new(photoRepository ?? _photoRepository, _chapterRepository, _baulRepository, _clock);
 
     private PhotoDtoProjector CreatePhotoDtoProjector(IPhotoStorage? photoStorage = null) =>
@@ -33,7 +33,7 @@ public class PhotoManagerTests
         new(NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoSoftDeleteService(), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            _photoPersonaTagRepository, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService());
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
     // (it's a photo listing method), but tests need to tag photos first to exercise it.
@@ -91,47 +91,6 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task UploadAsync_ShouldSetFirstPhotoAsCover()
-    {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
-        var manager = CreateManager(CustodioId);
-
-        using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
-
-        var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
-        Assert.False(string.IsNullOrEmpty(chapter!.CoverPhotoKey));
-    }
-
-    [Fact]
-    public async Task UploadAsync_ShouldSetBaulCover_WhenBaulHasNoCoverYet()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var manager = CreateManager(CustodioId);
-
-        using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
-
-        var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
-        Assert.False(string.IsNullOrEmpty(baul!.CoverPhotoKey));
-    }
-
-    [Fact]
-    public async Task UploadAsync_ShouldNotOverwriteExistingBaulCover()
-    {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var existingBaul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
-        await _baulRepository.UpdateAsync(existingBaul! with { CoverPhotoKey = "existing-key" });
-
-        var manager = CreateManager(CustodioId);
-        using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
-
-        var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
-        Assert.Equal("existing-key", baul!.CoverPhotoKey);
-    }
-
-    [Fact]
     public async Task UploadAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var (_, chapterId) = await SeedBaulWithChapterAsync();
@@ -156,7 +115,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository,
             new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoSoftDeleteService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage));
+            _photoPersonaTagRepository, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage));
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -177,7 +136,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository,
             new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoSoftDeleteService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            _photoPersonaTagRepository, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -201,7 +160,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository,
             new StaticIdGenerator(Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoSoftDeleteService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            _photoPersonaTagRepository, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -278,36 +237,6 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task MoveAsync_ShouldClearSourceCover_WhenMovedPhotoWasTheCover()
-    {
-        var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(sourceChapterId), new BaulId(baulId), "cover-key", null, CustodioId, _clock.UtcNow()));
-        var sourceChapter = await _chapterRepository.GetByIdAsync(new ChapterId(sourceChapterId));
-        await _chapterRepository.UpdateAsync(sourceChapter! with { PhotoCount = 1, CoverPhotoKey = "cover-key" });
-
-        var manager = CreateManager(CustodioId);
-        await manager.MoveAsync(new PhotoId(photoId), new ChapterId(targetChapterId));
-
-        var updatedSource = await _chapterRepository.GetByIdAsync(new ChapterId(sourceChapterId));
-        Assert.Null(updatedSource!.CoverPhotoKey);
-    }
-
-    [Fact]
-    public async Task MoveAsync_ShouldSetTargetCover_WhenTargetHasNoCoverYet()
-    {
-        var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(sourceChapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-
-        var manager = CreateManager(CustodioId);
-        await manager.MoveAsync(new PhotoId(photoId), new ChapterId(targetChapterId));
-
-        var updatedTarget = await _chapterRepository.GetByIdAsync(new ChapterId(targetChapterId));
-        Assert.Equal("key", updatedTarget!.CoverPhotoKey);
-    }
-
-    [Fact]
     public async Task MoveAsync_ShouldFail_WhenTargetChapterInDifferentBaul()
     {
         var (baulId, sourceChapterId, _) = await SeedBaulWithTwoChaptersAsync();
@@ -378,19 +307,6 @@ public class PhotoManagerTests
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.ChapterId);
         Assert.Single(_photoStorage.SavedKeys);
-    }
-
-    [Fact]
-    public async Task UploadToBaulAsync_ShouldSetBaulCover_WhenBaulHasNoCoverYet()
-    {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
-        var manager = CreateManager(CustodioId);
-
-        using var content = new MemoryStream([1, 2, 3]);
-        await manager.UploadToBaulAsync(new BaulId(baulId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
-
-        var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
-        Assert.False(string.IsNullOrEmpty(baul!.CoverPhotoKey));
     }
 
     [Fact]

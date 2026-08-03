@@ -14,7 +14,7 @@ public class RemovalRequestManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
-    PhotoSoftDeleteService photoSoftDeleteService) : IRemovalRequestManager
+    PhotoLifecycleService photoLifecycle) : IRemovalRequestManager
 {
     public async Task<Result<IEnumerable<RemovalRequestDto>>> GetRemovalRequestsAsync(BaulId baulId)
     {
@@ -84,7 +84,7 @@ public class RemovalRequestManager(
         var photo = await photoRepository.GetByIdAsync(request.PhotoId);
         if (photo is not null)
         {
-            await photoSoftDeleteService.SoftDeleteAsync(photo, request.Reason);
+            await photoLifecycle.SoftDeleteAsync(photo, request.Reason);
         }
 
         await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);

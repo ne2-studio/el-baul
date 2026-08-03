@@ -14,7 +14,7 @@ public class PhotoManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
-    PhotoSoftDeleteService photoSoftDeleteService,
+    PhotoLifecycleService photoLifecycle,
     IPhotoDtoProjector photoDtoProjector,
     PhotoFileService photoFileService) : IPhotoManager
 {
@@ -165,12 +165,7 @@ public class PhotoManager(
 
         try
         {
-            if (chapter is not null)
-            {
-                await chapterRepository.UpdateAsync(chapter.WithPhotoAdded(photo, now));
-            }
-
-            await baulRepository.UpdateAsync(baul.WithPhotoAdded(photo, now));
+            await photoLifecycle.AddAsync(photo, chapter, baul, now);
         }
         catch (Exception ex)
         {
@@ -216,21 +211,13 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>(ApplicationError.Validation("Photo is already in that chapter"));
         }
 
-        var now = clock.UtcNow();
-
+        Chapter? sourceChapter = null;
         if (photo.ChapterId is { } sourceChapterId)
         {
-            var sourceChapter = await chapterRepository.GetByIdAsync(sourceChapterId);
-            if (sourceChapter is not null)
-            {
-                await chapterRepository.UpdateAsync(sourceChapter.WithPhotoRemoved(photo, now));
-            }
+            sourceChapter = await chapterRepository.GetByIdAsync(sourceChapterId);
         }
 
-        var updatedPhoto = photo with { ChapterId = targetChapterId };
-        await photoRepository.UpdateAsync(updatedPhoto);
-
-        await chapterRepository.UpdateAsync(targetChapter.WithPhotoAdded(photo, now));
+        var updatedPhoto = await photoLifecycle.MoveAsync(photo, sourceChapter, targetChapter);
 
         logger.LogInformation(
             "Photo moved {BaulId} {PhotoId} {SourceChapterId} {TargetChapterId}",
@@ -253,7 +240,7 @@ public class PhotoManager(
             photo.BaulId, userId, AccessLevel.Admin, "Photo delete", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        await photoSoftDeleteService.SoftDeleteAsync(photo, reason);
+        await photoLifecycle.SoftDeleteAsync(photo, reason);
 
         logger.LogInformation("Photo deleted {BaulId} {PhotoId}", photo.BaulId, photoId);
         return Result.Success();
