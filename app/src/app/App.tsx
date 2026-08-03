@@ -34,8 +34,6 @@ import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadErrorRoute } from '../features/photos/components/UploadErrorRoute';
 import { RemovalRequestsRoute } from '../features/sharing/components/RemovalRequestsRoute';
 import { PersonaDetailRoute } from '../features/sharing/components/PersonaDetailRoute';
-import { BaulInvitacionRoute } from '../features/sharing/components/BaulInvitacionRoute';
-import { AcceptInviteRoute } from '../features/sharing/components/AcceptInviteRoute';
 import { BaulGlobalInvitacionRoute } from '../features/sharing/components/BaulGlobalInvitacionRoute';
 import { AcceptBaulInviteRoute } from '../features/sharing/components/AcceptBaulInviteRoute';
 import { SelectBaulForShareRoute } from '../features/sharing/components/SelectBaulForShareRoute';
@@ -284,14 +282,6 @@ function App() {
         <Route path="/baules/:baulId/fotos-sueltas/error" element={
           <ProtectedRoute>
             <UploadErrorRoute navigate={navigate} />
-          </ProtectedRoute>
-        } />
-        <Route path="/invitacion/persona/:personaId" element={
-          <BaulInvitacionRoute />
-        } />
-        <Route path="/invitacion/persona/:personaId/aceptar" element={
-          <ProtectedRoute>
-            <AcceptInviteRoute />
           </ProtectedRoute>
         } />
         <Route path="/invitacion/baul/:token" element={

@@ -36,11 +36,6 @@ public record Persona
     public bool IsCustodioProtected(string custodioUserId) =>
         Role == BaulRole.Custodio || UserId == custodioUserId;
 
-    // Links a Pending or already-Active (idempotent, same-caller) Persona to an authenticated
-    // account. Name is only backfilled, never overwritten, so an admin-provided name always wins.
-    public Persona AcceptInvite(string userId, string? fallbackName) =>
-        this with { UserId = userId, Name = Name ?? fallbackName };
-
     // The only way a Persona reaches Revoked — clears the account link alongside the role so
     // the two never drift out of sync (see PersonaAccessStatus).
     public Persona Revoke() => this with { UserId = null, Role = BaulRole.SinAcceso };

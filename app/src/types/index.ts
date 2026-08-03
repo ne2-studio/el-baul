@@ -3,7 +3,6 @@ import type { components } from '@/api/generated/schema';
 
 type ApiSchemas = components['schemas'];
 type BaulDto = ApiSchemas['BaulDto'];
-type BaulPreviewDto = ApiSchemas['BaulPreviewDto'];
 type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
 type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
 type ChapterDto = ApiSchemas['ChapterDto'];
@@ -209,22 +208,6 @@ export class RemovalRequest {
     this.reason = data.reason ?? '';
     this.requestDate = formatRelativeTime(data.requestDate);
     this.status = data.status as 'pending' | 'approved' | 'rejected';
-  }
-}
-
-export class BaulPreview {
-  id: string;
-  name: string;
-  description?: string;
-  personaNickname: string;
-  previewPhotos: string[];
-
-  constructor(data: BaulPreviewDto) {
-    this.id = data.id;
-    this.name = data.name;
-    this.description = data.description ?? undefined;
-    this.personaNickname = data.personaNickname;
-    this.previewPhotos = data.previewPhotos;
   }
 }
 

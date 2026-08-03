@@ -9,7 +9,6 @@ public class PersonaManager(
     IBaulRepository baulRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
-    IPhotoStorage photoStorage,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
@@ -18,71 +17,6 @@ public class PersonaManager(
     PhotoFileService photoFileService,
     IPersonaDtoProjector personaDtoProjector) : IPersonaManager
 {
-    public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(PersonaId personaId)
-    {
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.AccessStatus != PersonaAccessStatus.Pending)
-            return Result.Failure<BaulPreviewDto>(ApplicationError.NotFound("Invitation not found"));
-
-        var baul = await baulRepository.GetByIdAsync(persona.BaulId);
-        if (baul is null) return Result.Failure<BaulPreviewDto>(ApplicationError.NotFound("Baul not found"));
-
-        var photos = await photoRepository.GetPreviewPhotosAsync(baul.Id, 4);
-        var urls = new List<string>();
-        foreach (var photo in photos)
-        {
-            urls.Add(await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.InvitationPreview));
-        }
-
-        return new BaulPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, persona.Nickname, urls);
-    }
-
-    public async Task<Result<PersonaDto>> AcceptPersonalInviteAsync(PersonaId personaId)
-    {
-        var userId = currentUserProvider.GetUserId();
-        var user = await userRepository.GetByIdAsync(userId);
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null)
-        {
-            logger.LogWarning("Personal invitation acceptance rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Invitation not found"));
-        }
-
-        if (persona.AccessStatus == PersonaAccessStatus.Revoked)
-        {
-            logger.LogWarning("Personal invitation acceptance rejected: access revoked {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Invitation not found"));
-        }
-
-        if (persona.AccessStatus == PersonaAccessStatus.Active && persona.UserId != userId)
-        {
-            logger.LogWarning("Personal invitation acceptance rejected: already claimed {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.Validation("This invitation has already been used"));
-        }
-
-        if (persona.AccessStatus == PersonaAccessStatus.Pending)
-        {
-            // The caller may already belong to this baúl under a different Persona row
-            // (e.g. they're its custodio, or already claimed another Persona here) — the
-            // (BaulId, UserId) unique index would reject that at the DB level, so check first
-            // and fail cleanly instead of surfacing a raw constraint-violation error.
-            var existingMembership = await baulRepository.GetPersonaByUserIdAsync(persona.BaulId, userId);
-            if (existingMembership is not null)
-            {
-                logger.LogWarning(
-                    "Personal invitation acceptance rejected: caller already has access to this baul {PersonaId} {BaulId}",
-                    personaId, persona.BaulId);
-                return Result.Failure<PersonaDto>(ApplicationError.Validation("You already have access to this baúl with a different account link"));
-            }
-
-            persona = persona.AcceptInvite(userId, user?.Name);
-            await baulRepository.UpdatePersonaAsync(persona);
-            logger.LogInformation("Personal invitation accepted {PersonaId} {BaulId}", personaId, persona.BaulId);
-        }
-
-        return await personaDtoProjector.ProjectAsync(persona, user, canEdit: true);
-    }
-
     public async Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(BaulId baulId)
     {
         var userId = currentUserProvider.GetUserId();

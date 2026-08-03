@@ -21,7 +21,6 @@ const previewPhotos = [
 export const Default: Story = {
   args: {
     baulNombre: 'Familia García',
-    personaNickname: 'Marta',
     previewPhotos,
     onUnirme: () => alert('onUnirme clicked'),
     onVerMas: () => alert('onVerMas clicked'),
@@ -31,7 +30,6 @@ export const Default: Story = {
 export const SinPreview: Story = {
   args: {
     baulNombre: 'Familia García',
-    personaNickname: 'Marta',
     previewPhotos: [],
     onUnirme: () => alert('onUnirme clicked'),
     onVerMas: () => alert('onVerMas clicked'),

@@ -5,21 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { InvitacionScreen } from './InvitacionScreen';
 
 describe('InvitacionScreen', () => {
-  it('greets by persona nickname for a personal invitation', () => {
-    render(
-      <InvitacionScreen
-        baulNombre="Familia Pérez"
-        personaNickname="Abuela"
-        previewPhotos={[]}
-        onUnirme={vi.fn()}
-        onVerMas={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText('Abuela, te han invitado a un Baúl privado para guardar recuerdos')).toBeInTheDocument();
-  });
-
-  it('falls back to a generic greeting when there is no persona to name (global invite link)', () => {
+  it('shows a generic greeting for the global invite link', () => {
     render(
       <InvitacionScreen
         baulNombre="Familia Pérez"

@@ -86,11 +86,11 @@ for the full rationale.
   built; a render, interaction, assertion, or browser-mode failure blocks merge/deploy.
 - **`app/acceptance-tests/`** (`./scripts/verify frontend-acceptance`) — behavioral-regression Playwright against the built
   frontend image + `el-baul-api-lite` (see [`../operations/api-lite.md`](../operations/api-lite.md)),
-  no real Postgres/MinIO/imgproxy to boot. Covers photo upload/move/delete, persona
-  invite/role-change/revoke, and removal-request submit/approve/reject. Gates
+  no real Postgres/MinIO/imgproxy to boot. Covers photo upload/move/delete, the global baúl
+  invite link, persona role-change/revoke, and removal-request submit/approve/reject. Gates
   `frontend-deploy.yml`. Some flows need a second identity (a second browser context logged in
-  as a different fake-oidc user), since the backend rejects an account accepting its own invite
-  and only shows "submit removal request" to a non-admin member.
+  as a different fake-oidc user) to join a baúl as a genuinely different account, and only
+  shows "submit removal request" to a non-admin member.
   Keep these after Docker image build: unlike Storybook specs, they validate the packaged app,
   routing, runtime configuration and API-lite integration rather than isolated source-level UI
   contracts.

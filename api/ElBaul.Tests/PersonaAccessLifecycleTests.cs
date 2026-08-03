@@ -3,7 +3,7 @@ using ElBaul.Ports.Output;
 namespace ElBaul.Tests;
 
 // Focused coverage of the Persona access lifecycle itself: AccessStatus's derivation from
-// (Role, UserId), and the AcceptInvite/Revoke/IsCustodioProtected transitions. PersonaManagerTests
+// (Role, UserId), and the Revoke/IsCustodioProtected transitions. PersonaManagerTests
 // keeps one scenario per capability to prove wiring/authorization; this file owns the state
 // rule so those scenarios don't need to re-verify the combinatorics too.
 public class PersonaAccessLifecycleTests
@@ -42,30 +42,6 @@ public class PersonaAccessLifecycleTests
         Assert.Equal(PersonaAccessStatus.Revoked, persona.AccessStatus);
     }
 
-    // --- AcceptInvite ---
-
-    [Fact]
-    public void AcceptInvite_ShouldLinkTheUser_AndMoveToActive()
-    {
-        var persona = MakePersona(BaulRole.Colaborador, userId: null);
-
-        var accepted = persona.AcceptInvite(OwnerUserId, "Fallback Name");
-
-        Assert.Equal(OwnerUserId, accepted.UserId);
-        Assert.Equal(PersonaAccessStatus.Active, accepted.AccessStatus);
-        Assert.Equal("Fallback Name", accepted.Name);
-    }
-
-    [Fact]
-    public void AcceptInvite_ShouldNeverOverwriteAnExistingName_WithTheFallback()
-    {
-        var persona = MakePersona(BaulRole.Colaborador, userId: null, name: "Admin-set name");
-
-        var accepted = persona.AcceptInvite(OwnerUserId, "Fallback Name");
-
-        Assert.Equal("Admin-set name", accepted.Name);
-    }
-
     // --- Revoke ---
 
     [Fact]
@@ -80,11 +56,12 @@ public class PersonaAccessLifecycleTests
     }
 
     [Fact]
-    public void Revoke_ThenAcceptInvite_ShouldReturnToPending_NotActive()
+    public void Revoke_ThenRoleReset_ShouldReturnToPending_NotActive()
     {
         // Mirrors the "reopen" path: an admin resets Role away from SinAcceso via
-        // UpdatePersonaRoleAsync, leaving UserId null, so the row is Pending again — accepting
-        // a fresh invite is what moves it to Active, never revocation-then-role-change alone.
+        // UpdatePersonaRoleAsync, leaving UserId null, so the row is Pending again — only
+        // rejoining via the global invite link (or the account being re-linked) moves it to
+        // Active, never revocation-then-role-change alone.
         var persona = MakePersona(BaulRole.Colaborador, OwnerUserId);
 
         var reopened = persona.Revoke() with { Role = BaulRole.Colaborador };

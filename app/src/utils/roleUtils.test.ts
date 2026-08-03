@@ -90,7 +90,6 @@ describe('roleUtils persona permissions', () => {
       target: persona({ role: 'colaborador', status: 'active' }),
       expected: {
         canManagePersona: true,
-        canSharePersonaInvite: false,
         canChangePersonaRole: true,
         canRevokePersonaAccess: true,
         canRestorePersonaAccess: false,
@@ -101,7 +100,6 @@ describe('roleUtils persona permissions', () => {
       target: persona({ role: 'colaborador', status: 'pending' }),
       expected: {
         canManagePersona: true,
-        canSharePersonaInvite: true,
         canChangePersonaRole: false,
         canRevokePersonaAccess: true,
         canRestorePersonaAccess: false,
@@ -112,7 +110,6 @@ describe('roleUtils persona permissions', () => {
       target: persona({ role: 'custodio', status: 'active' }),
       expected: {
         canManagePersona: false,
-        canSharePersonaInvite: false,
         canChangePersonaRole: false,
         canRevokePersonaAccess: false,
         canRestorePersonaAccess: false,
@@ -123,7 +120,6 @@ describe('roleUtils persona permissions', () => {
       target: persona({ role: 'sin_acceso', status: 'sin_acceso' }),
       expected: {
         canManagePersona: true,
-        canSharePersonaInvite: false,
         canChangePersonaRole: false,
         canRevokePersonaAccess: false,
         canRestorePersonaAccess: true,
@@ -134,7 +130,6 @@ describe('roleUtils persona permissions', () => {
       target: persona({ role: 'colaborador', status: 'active' }),
       expected: {
         canManagePersona: false,
-        canSharePersonaInvite: false,
         canChangePersonaRole: false,
         canRevokePersonaAccess: false,
         canRestorePersonaAccess: false,

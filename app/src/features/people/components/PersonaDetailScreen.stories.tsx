@@ -43,7 +43,6 @@ const sharedDefaults = {
   onEditInfo: () => alert('onEditInfo clicked'),
   onEditBiografia: () => alert('onEditBiografia clicked'),
   onChangeAvatar: () => alert('onChangeAvatar clicked'),
-  onShareInvite: () => alert('onShareInvite clicked'),
   onChangeRole: () => alert('onChangeRole clicked'),
   onRevokeAccess: async () => true,
   photos: [],
@@ -88,7 +87,6 @@ export const NoAccess: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Opciones de la persona' }));
     const body = within(document.body);
     await expect(body.getByRole('menuitem', { name: 'Permitir invitación' })).toBeVisible();
-    await expect(body.queryByRole('menuitem', { name: 'Compartir invitación' })).not.toBeInTheDocument();
     await expect(body.queryByRole('menuitem', { name: 'Gestionar acceso' })).not.toBeInTheDocument();
     await expect(body.queryByRole('menuitem', { name: 'Revocar acceso' })).not.toBeInTheDocument();
   },

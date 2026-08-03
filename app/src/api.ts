@@ -1,11 +1,10 @@
-import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulPreview, BaulInviteLink, BaulInviteLinkPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
+import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulInviteLink, BaulInviteLinkPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
 import { getEnv } from './runtimeConfig';
 import type { components } from './api/generated/schema';
 
 type ApiSchemas = components['schemas'];
 type AppConfigResponse = ApiSchemas['AppConfigResponse'];
 type BaulDto = ApiSchemas['BaulDto'];
-type BaulPreviewDto = ApiSchemas['BaulPreviewDto'];
 type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
 type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
 type ChapterDto = ApiSchemas['ChapterDto'];
@@ -304,13 +303,6 @@ export const api = {
 
   sharedLinks: {
     revoke: (token: string) => del<void>(`/api/shared-links/${encodeURIComponent(token)}`),
-  },
-
-  personas: {
-    getInvitePreview: async (personaId: string) =>
-      new BaulPreview(await get<BaulPreviewDto>(`/api/personas/${personaId}/invite-preview`)),
-    acceptPersonalInvite: async (personaId: string) =>
-      new Persona(await post<PersonaDto>(`/api/personas/${personaId}/accept-invite`)),
   },
 
   baulInvites: {

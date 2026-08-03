@@ -45,7 +45,9 @@ separate Persona in the same baúl is not detected or merged.
 
 - `docs/API-CONVENTIONS.md`'s Invitations section now describes both flows; personal
   invitations are unchanged and remain the only way to pre-provision a named, unclaimed
-  Persona ahead of an invite going out.
+  Persona ahead of an invite going out. (Superseded by
+  [ADR 0004](0004-remove-personal-invitations.md), which later removed the personal
+  invitation flow.)
 - New anonymous route surface: `GET /api/baul-invites/{token}/preview`, rate-limited with the
   same `PublicLimiter` policy as the personal-invite preview endpoint.
 - Persona auto-creation on accept (`BaulInviteLinkManager.AcceptAsync`) bypasses the

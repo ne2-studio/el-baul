@@ -24,7 +24,7 @@ public class PersonaManagerTests
     }
 
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<PersonaManager>.Instance, _fixture.Baules, _fixture.Photos, _fixture.Users, _photoStorage,
+        new(NullLogger<PersonaManager>.Instance, _fixture.Baules, _fixture.Photos, _fixture.Users,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance, _fixture.Photos),
             _fixture.PhotoPersonaTags,
@@ -286,73 +286,6 @@ public class PersonaManagerTests
     }
 
     [Fact]
-    public async Task AcceptPersonalInviteAsync_ShouldLinkCallerToPendingPersona()
-    {
-        var baulId = await _fixture.CreateBaulAsync("Familia");
-        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuela");
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
-
-        Assert.True(result.IsSuccess);
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
-        Assert.Equal(OtherUserId, persona!.UserId);
-    }
-
-    [Fact]
-    public async Task AcceptPersonalInviteAsync_ShouldBeIdempotent_WhenCallerAlreadyLinked()
-    {
-        var baulId = await _fixture.CreateBaulAsync("Familia");
-        var personaId = await _fixture.AddColaboradorAsync(baulId, OtherUserId, "Abuela");
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
-
-        Assert.True(result.IsSuccess);
-    }
-
-    [Fact]
-    public async Task AcceptPersonalInviteAsync_ShouldFail_WhenAlreadyClaimedByAnotherUser()
-    {
-        var baulId = await _fixture.CreateBaulAsync("Familia");
-        var personaId = await _fixture.AddColaboradorAsync(baulId, OtherUserId, "Abuela");
-
-        var manager = CreateManager("someone-else");
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("This invitation has already been used", result.Error.Message);
-    }
-
-    [Fact]
-    public async Task AcceptPersonalInviteAsync_ShouldFail_WhenInvitationDoesNotExist()
-    {
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.AcceptPersonalInviteAsync(new PersonaId(Guid.NewGuid()));
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Invitation not found", result.Error.Message);
-    }
-
-    [Fact]
-    public async Task AcceptPersonalInviteAsync_ShouldFail_WhenCallerAlreadyHasAccessToTheBaul()
-    {
-        var baulId = await _fixture.CreateBaulAsync("Familia"); // seeds a Custodio row for CustodioId
-        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuela");
-
-        // CustodioId already has a Persona row in this baul — accepting a second
-        // invitation for the same baul must not attempt a conflicting (BaulId, UserId) update.
-        var manager = CreateManager(CustodioId);
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("You already have access to this baúl with a different account link", result.Error.Message);
-
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
-        Assert.Null(persona!.UserId);
-    }
-
-    [Fact]
     public async Task RemovePersonaAsync_ShouldRevokeAccess_WithoutRemovingPersonaOrPhotoTags()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
@@ -385,29 +318,4 @@ public class PersonaManagerTests
         Assert.Equal("The custodio cannot lose access", result.Error.Message);
     }
 
-    [Fact]
-    public async Task AcceptPersonalInviteAsync_ShouldFail_WhenAccessWasRevoked()
-    {
-        var baulId = await _fixture.CreateBaulAsync("Familia");
-        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuela", BaulRole.SinAcceso);
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.AcceptPersonalInviteAsync(personaId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Invitation not found", result.Error.Message);
-    }
-
-    [Fact]
-    public async Task GetInvitePreviewAsync_ShouldFail_WhenAccessWasRevoked()
-    {
-        var baulId = await _fixture.CreateBaulAsync("Familia");
-        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuela", BaulRole.SinAcceso);
-
-        var manager = CreateManager(OtherUserId);
-        var result = await manager.GetInvitePreviewAsync(personaId);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("Invitation not found", result.Error.Message);
-    }
 }

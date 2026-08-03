@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Share } from '@capacitor/share';
 import { PersonaDetailScreen } from '@/features/people/components/PersonaDetailScreen';
 import { PersonaAvatarPickerModal } from '@/features/people/components/PersonaAvatarPickerModal';
 import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaInfoModal';
 import { EditBiografiaModal } from '@/features/people/components/EditBiografiaModal';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { useUIStore } from '@/store/uiStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 import { AvatarCrop, api } from '@/api';
@@ -19,8 +16,6 @@ export const PersonaDetailRoute: React.FC = () => {
   const location = useLocation();
   const { baulId, personaId } = useParams();
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
-  const showToastMessage = useUIStore(state => state.showToastMessage);
-  const appUrl = useAppConfigStore(state => state.appUrl);
   const { baules } = useBaulesStore();
   const {
     personas,
@@ -106,34 +101,6 @@ export const PersonaDetailRoute: React.FC = () => {
     });
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      showToastMessage('Enlace de invitación copiado al portapapeles');
-    }).catch(err => {
-      console.error('Error copying to clipboard:', err);
-      showToastMessage('Error al copiar el enlace', 'error');
-    });
-  };
-
-  const handleShareInvite = async () => {
-    const inviteUrl = `${appUrl}/invitacion/persona/${persona.id}`;
-
-    try {
-      // @capacitor/share opens the real native share sheet on Android/iOS and the Web
-      // Share API in a browser — one call, no more branching on navigator.share, whose
-      // support inside the Capacitor WebView isn't reliable across Android versions.
-      await Share.share({
-        title: `Invitación a ${baul?.name ?? 'El Baúl'}`,
-        text: `${persona.nickname}, te invito a unirte a mi baúl de recuerdos "${baul?.name ?? ''}" en El Baúl.`,
-        url: inviteUrl,
-      });
-    } catch (error) {
-      if ((error as Error).name === 'AbortError') return;
-      console.error('Error sharing invite:', error);
-      copyToClipboard(inviteUrl);
-    }
-  };
-
   const handleChangeRole = (role: BaulRole) => {
     run(() => updateUserRole(baulId, personaId, role), {
       key: 'role',
@@ -160,7 +127,6 @@ export const PersonaDetailRoute: React.FC = () => {
         onEditBiografia={() => setIsEditingBiografia(true)}
         onChangeAvatar={() => setIsChangingAvatar(true)}
         isUploadingAvatar={isPending('avatar')}
-        onShareInvite={handleShareInvite}
         onChangeRole={handleChangeRole}
         onRevokeAccess={handleRevokeAccess}
         photos={personaPhotos[personaId] || []}

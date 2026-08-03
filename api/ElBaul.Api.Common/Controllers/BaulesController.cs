@@ -4,7 +4,6 @@ using ElBaul.Ports.Output;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace ElBaul.Api.Controllers;
 
@@ -56,24 +55,6 @@ public class BaulesController(
     public async Task<IActionResult> Update(Guid baulId, [FromBody] UpdateBaulRequest request)
     {
         var result = await baulManager.UpdateAsync(new BaulId(baulId), request.Name, request.Description);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
-    }
-
-    [AllowAnonymous]
-    [EnableRateLimiting("PublicLimiter")]
-    [HttpGet("/api/personas/{personaId:guid}/invite-preview")]
-    [ProducesResponseType(typeof(BaulPreviewDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetInvitePreview(Guid personaId)
-    {
-        var result = await personaManager.GetInvitePreviewAsync(new PersonaId(personaId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
-    }
-
-    [HttpPost("/api/personas/{personaId:guid}/accept-invite")]
-    [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> AcceptPersonalInvite(Guid personaId)
-    {
-        var result = await personaManager.AcceptPersonalInviteAsync(new PersonaId(personaId));
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 

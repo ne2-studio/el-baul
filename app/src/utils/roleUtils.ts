@@ -18,7 +18,6 @@ export interface PersonaPermissions {
   canEditPersonaBiography: boolean;
   canUploadPersonaAvatar: boolean;
   canManagePersona: boolean;
-  canSharePersonaInvite: boolean;
   canChangePersonaRole: boolean;
   canRevokePersonaAccess: boolean;
   canRestorePersonaAccess: boolean;
@@ -91,7 +90,6 @@ export function getPersonaPermissions({
     canEditPersonaBiography: canEditAnyBiography,
     canUploadPersonaAvatar: canEditOwnPersona,
     canManagePersona,
-    canSharePersonaInvite: canManagePersona && isPending && !hasNoAccess,
     canChangePersonaRole: canManagePersona && !isPending && !hasNoAccess,
     canRevokePersonaAccess: canManagePersona && !hasNoAccess,
     canRestorePersonaAccess: canManagePersona && hasNoAccess,

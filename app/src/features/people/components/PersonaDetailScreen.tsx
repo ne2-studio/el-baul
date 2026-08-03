@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Camera, ImageIcon, Loader2, MoreVertical, Pencil, Share2, UserCog, UserPlus, UserX } from 'lucide-react';
+import { BookOpen, Camera, ImageIcon, Loader2, MoreVertical, Pencil, UserCog, UserPlus, UserX } from 'lucide-react';
 import { Persona, BaulRole, Photo } from '@/types';
 import { getPersonaPermissions, PersonaPermissions } from '@/utils/roleUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
@@ -30,7 +30,6 @@ interface PersonaDetailScreenProps {
   onEditBiografia: () => void;
   onChangeAvatar: () => void;
   isUploadingAvatar?: boolean;
-  onShareInvite: () => void;
   onChangeRole: (role: BaulRole) => void;
   /** Devuelve si la revocación tuvo éxito — el modal se queda abierto (con spinner)
    * hasta saberlo, y solo se cierra por sí solo si el resultado fue true. */
@@ -48,7 +47,6 @@ export function PersonaDetailScreen({
   onEditBiografia,
   onChangeAvatar,
   isUploadingAvatar = false,
-  onShareInvite,
   onChangeRole,
   onRevokeAccess,
   photos,
@@ -110,13 +108,6 @@ export function PersonaDetailScreen({
                 )}
 
                 {permissions.canEditPersonaInfo && permissions.canManagePersona && <DropdownMenuSeparator />}
-
-                {permissions.canSharePersonaInvite && (
-                  <DropdownMenuItem onClick={onShareInvite}>
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Compartir invitación
-                  </DropdownMenuItem>
-                )}
 
                 {permissions.canChangePersonaRole && (
                   <DropdownMenuItem onClick={() => setShowManageAccessModal(true)}>
