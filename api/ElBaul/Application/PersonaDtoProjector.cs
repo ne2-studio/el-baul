@@ -13,7 +13,7 @@ public class PersonaDtoProjector(
 
         return new PersonaDto(
             persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
-            persona.Nickname, persona.Role.ToApiString(), persona.Role == BaulRole.SinAcceso ? "sin_acceso" : persona.IsClaimed ? "active" : "pending",
+            persona.Nickname, persona.Role.ToApiString(), persona.AccessStatus.ToApiString(),
             persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia,
             persona.AvatarPhotoId?.ToString(), persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
     }

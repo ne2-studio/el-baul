@@ -21,7 +21,7 @@ public class PersonaManager(
     public async Task<Result<BaulPreviewDto>> GetInvitePreviewAsync(PersonaId personaId)
     {
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.IsClaimed || persona.Role == BaulRole.SinAcceso)
+        if (persona is null || persona.AccessStatus != PersonaAccessStatus.Pending)
             return Result.Failure<BaulPreviewDto>(ApplicationError.NotFound("Invitation not found"));
 
         var baul = await baulRepository.GetByIdAsync(persona.BaulId);
@@ -48,19 +48,19 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Invitation not found"));
         }
 
-        if (persona.Role == BaulRole.SinAcceso)
+        if (persona.AccessStatus == PersonaAccessStatus.Revoked)
         {
             logger.LogWarning("Personal invitation acceptance rejected: access revoked {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Invitation not found"));
         }
 
-        if (persona.IsClaimed && persona.UserId != userId)
+        if (persona.AccessStatus == PersonaAccessStatus.Active && persona.UserId != userId)
         {
             logger.LogWarning("Personal invitation acceptance rejected: already claimed {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.Validation("This invitation has already been used"));
         }
 
-        if (!persona.IsClaimed)
+        if (persona.AccessStatus == PersonaAccessStatus.Pending)
         {
             // The caller may already belong to this baúl under a different Persona row
             // (e.g. they're its custodio, or already claimed another Persona here) — the
@@ -75,7 +75,7 @@ public class PersonaManager(
                 return Result.Failure<PersonaDto>(ApplicationError.Validation("You already have access to this baúl with a different account link"));
             }
 
-            persona = persona with { UserId = userId, Name = persona.Name ?? user?.Name };
+            persona = persona.AcceptInvite(userId, user?.Name);
             await baulRepository.UpdatePersonaAsync(persona);
             logger.LogInformation("Personal invitation accepted {PersonaId} {BaulId}", personaId, persona.BaulId);
         }
@@ -310,20 +310,19 @@ public class PersonaManager(
             return Result.Failure(ApplicationError.NotFound("Persona not found"));
         }
 
-        if (persona.Role == BaulRole.Custodio || persona.UserId == auth.Value.Baul.CustodioId)
+        if (persona.IsCustodioProtected(auth.Value.Baul.CustodioId))
         {
             logger.LogWarning("Persona access revocation rejected: custodio cannot lose access {BaulId} {PersonaId}", baulId, personaId);
             return Result.Failure(ApplicationError.Validation("The custodio cannot lose access"));
         }
 
-        var updated = persona with { UserId = null, Role = BaulRole.SinAcceso };
-        await baulRepository.UpdatePersonaAsync(updated);
+        await baulRepository.UpdatePersonaAsync(persona.Revoke());
         logger.LogInformation("Persona access revoked {BaulId} {PersonaId}", baulId, personaId);
         return Result.Success();
     }
 
     private static bool CanEditPersona(Persona target, string callerUserId, BaulAccess callerAccess) =>
-        callerAccess.IsAdmin || (target.IsClaimed && target.UserId == callerUserId);
+        callerAccess.IsAdmin || (target.AccessStatus == PersonaAccessStatus.Active && target.UserId == callerUserId);
 
     private async Task<Result<(Persona Persona, BaulAccess Access, string UserId)>> AuthorizePersonaAvatarChangeAsync(BaulId baulId, PersonaId personaId)
     {

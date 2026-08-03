@@ -1,5 +1,10 @@
 namespace ElBaul.Ports.Output;
 
+// The three observable phases of a Persona's access: invited but unclaimed, claimed by an
+// account, or revoked. Derived from (Role, UserId) rather than stored, because BaulRoleParser
+// never accepts "sin_acceso" from the wire — Revoked is only ever reached via Persona.Revoke().
+public enum PersonaAccessStatus { Pending, Active, Revoked }
+
 public record Persona
 (
     PersonaId Id,
@@ -20,4 +25,23 @@ public record Persona
     // The single interpretation of "is this Persona row linked to an authenticated account" —
     // callers should ask this instead of re-deriving it from UserId nullity by hand.
     public bool IsClaimed => UserId is not null;
+
+    public PersonaAccessStatus AccessStatus => Role == BaulRole.SinAcceso
+        ? PersonaAccessStatus.Revoked
+        : IsClaimed ? PersonaAccessStatus.Active : PersonaAccessStatus.Pending;
+
+    // The custodio's own access can never be revoked — RemovePersonaAsync checks this before
+    // calling Revoke(), whether the target row is itself Custodio-stamped or merely belongs to
+    // the baúl's custodio account.
+    public bool IsCustodioProtected(string custodioUserId) =>
+        Role == BaulRole.Custodio || UserId == custodioUserId;
+
+    // Links a Pending or already-Active (idempotent, same-caller) Persona to an authenticated
+    // account. Name is only backfilled, never overwritten, so an admin-provided name always wins.
+    public Persona AcceptInvite(string userId, string? fallbackName) =>
+        this with { UserId = userId, Name = Name ?? fallbackName };
+
+    // The only way a Persona reaches Revoked — clears the account link alongside the role so
+    // the two never drift out of sync (see PersonaAccessStatus).
+    public Persona Revoke() => this with { UserId = null, Role = BaulRole.SinAcceso };
 }

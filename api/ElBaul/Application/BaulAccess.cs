@@ -9,7 +9,7 @@ namespace ElBaul.Application;
 // membership rule from Baul.CustodioId and IBaulRepository.GetPersonaByUserIdAsync by hand.
 public sealed record BaulAccess(Baul Baul, bool IsCustodio, Persona? Persona)
 {
-    public bool IsMember => IsCustodio || (Persona is not null && Persona.Role != BaulRole.SinAcceso);
+    public bool IsMember => IsCustodio || (Persona is not null && Persona.AccessStatus != PersonaAccessStatus.Revoked);
     public bool IsAdmin => IsCustodio || (Persona?.Role.IsAdmin() ?? false);
     public BaulRole Role => IsCustodio ? BaulRole.Custodio : Persona!.Role;
 }

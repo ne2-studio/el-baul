@@ -95,7 +95,7 @@ public class BaulInviteLinkManager(
         var user = await userRepository.GetByIdAsync(userId);
         var access = await baulAccess.GetAsync(baul, userId);
 
-        if (access.Persona is { Role: BaulRole.SinAcceso })
+        if (access.Persona?.AccessStatus == PersonaAccessStatus.Revoked)
         {
             logger.LogWarning("Global invite acceptance rejected: caller access revoked {BaulId}", link.BaulId);
             return Result.Failure<PersonaDto>(ApplicationError.Validation("You no longer have access to this baúl; ask an admin to restore it"));

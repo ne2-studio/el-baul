@@ -20,6 +20,14 @@ internal static class DtoMapping
 
     public static bool IsAdmin(this BaulRole role) => role is BaulRole.Custodio or BaulRole.Administrador;
 
+    public static string ToApiString(this PersonaAccessStatus status) => status switch
+    {
+        PersonaAccessStatus.Pending => "pending",
+        PersonaAccessStatus.Active => "active",
+        PersonaAccessStatus.Revoked => "sin_acceso",
+        _ => throw new ArgumentOutOfRangeException(nameof(status))
+    };
+
     public static string ToApiString(this RequestStatus status) => status switch
     {
         RequestStatus.Pending => "pending",
