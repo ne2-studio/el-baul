@@ -88,6 +88,15 @@ public class BaulInviteLinkManager(
         var baul = await baulRepository.GetByIdAsync(link.BaulId);
         if (baul is null) return Result.Failure<IEnumerable<ClaimablePersonaDto>>(ApplicationError.NotFound("Baul not found"));
 
+        // A caller who's already a member never needs to pick a persona — AcceptAsync ignores
+        // any personaId they'd submit anyway (see the access.Persona check below), so surfacing
+        // the claim step here would be a dead end. Empty list makes the frontend skip straight
+        // to AcceptAsync, same as its "no claimable personas at all" path.
+        var userId = currentUserProvider.GetUserId();
+        var access = await baulAccess.GetAsync(baul, userId);
+        if (access.Persona is not null)
+            return Result.Success<IEnumerable<ClaimablePersonaDto>>([]);
+
         var personas = await baulRepository.GetPersonasAsync(baul.Id);
         var claimable = new List<ClaimablePersonaDto>();
         foreach (var persona in personas.Where(p => p.IsClaimable))
