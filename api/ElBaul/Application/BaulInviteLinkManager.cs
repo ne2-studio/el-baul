@@ -79,7 +79,31 @@ public class BaulInviteLinkManager(
         return new BaulInviteLinkPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, urls);
     }
 
-    public async Task<Result<PersonaDto>> AcceptAsync(string token)
+    public async Task<Result<IEnumerable<ClaimablePersonaDto>>> GetClaimablePersonasAsync(string token)
+    {
+        var link = await baulInviteLinkRepository.GetByTokenAsync(token);
+        if (link is null || link.IsRevoked)
+            return Result.Failure<IEnumerable<ClaimablePersonaDto>>(ApplicationError.NotFound("Invitation not found"));
+
+        var baul = await baulRepository.GetByIdAsync(link.BaulId);
+        if (baul is null) return Result.Failure<IEnumerable<ClaimablePersonaDto>>(ApplicationError.NotFound("Baul not found"));
+
+        var personas = await baulRepository.GetPersonasAsync(baul.Id);
+        var claimable = new List<ClaimablePersonaDto>();
+        foreach (var persona in personas.Where(p => p.IsClaimable))
+        {
+            // Projected with no User and canEdit: false purely to reuse the avatar-URL
+            // resolution logic — only Id/Nickname/Name/AvatarUrl survive into the narrower
+            // DTO below, so nothing else it computes (Email, Biografia, CanEdit) ever leaks
+            // to a caller who isn't a baúl member yet.
+            var dto = await personaDtoProjector.ProjectAsync(persona, null, canEdit: false);
+            claimable.Add(new ClaimablePersonaDto(dto.Id, dto.Nickname, dto.Name, dto.AvatarUrl));
+        }
+
+        return Result.Success<IEnumerable<ClaimablePersonaDto>>(claimable);
+    }
+
+    public async Task<Result<PersonaDto>> AcceptAsync(string token, PersonaId? personaId = null)
     {
         var link = await baulInviteLinkRepository.GetByTokenAsync(token);
         if (link is null || link.IsRevoked)
@@ -107,6 +131,23 @@ public class BaulInviteLinkManager(
             // row (see BaulManager.CreateAsync). Joining again via the global link is a
             // no-op, not an error or a duplicate Persona.
             return await personaDtoProjector.ProjectAsync(access.Persona, user, canEdit: true);
+        }
+
+        if (personaId is { } claimId)
+        {
+            var target = await baulRepository.GetPersonaByIdAsync(claimId);
+            if (target is null || target.BaulId != link.BaulId || !target.IsClaimable)
+            {
+                logger.LogWarning(
+                    "Global invite claim rejected: persona not claimable {BaulId} {PersonaId}", link.BaulId, claimId);
+                return Result.Failure<PersonaDto>(ApplicationError.Validation("This persona can no longer be claimed"));
+            }
+
+            var claimed = target.AcceptInvite(userId, user?.Name);
+            await baulRepository.UpdatePersonaAsync(claimed);
+            logger.LogInformation("Global invite accepted, existing persona claimed {BaulId} {PersonaId}", link.BaulId, claimed.Id);
+
+            return await personaDtoProjector.ProjectAsync(claimed, user, canEdit: true);
         }
 
         var persona = new Persona(

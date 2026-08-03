@@ -5,6 +5,7 @@ type ApiSchemas = components['schemas'];
 type BaulDto = ApiSchemas['BaulDto'];
 type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
 type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
+type ClaimablePersonaDto = ApiSchemas['ClaimablePersonaDto'];
 type ChapterDto = ApiSchemas['ChapterDto'];
 type ChatMessageDto = ApiSchemas['ChatMessageDto'];
 type RawPersonaDto = ApiSchemas['PersonaDto'];
@@ -234,6 +235,20 @@ export class BaulInviteLinkPreview {
     this.name = data.name;
     this.description = data.description ?? undefined;
     this.previewPhotos = data.previewPhotos;
+  }
+}
+
+export class ClaimablePersona {
+  id: string;
+  nickname: string;
+  name?: string;
+  avatarUrl?: string;
+
+  constructor(data: ClaimablePersonaDto) {
+    this.id = data.id;
+    this.nickname = data.nickname;
+    this.name = data.name ?? undefined;
+    this.avatarUrl = data.avatarUrl ?? undefined;
   }
 }
 

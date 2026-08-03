@@ -39,4 +39,6 @@ is the global invite link from ADR 0003.
   self-serve way to be claimed by its intended recipient — an admin must either grant access
   through the global link (which auto-creates or reuses a Persona for the joining account) or
   the two remain separate, unmerged records. Duplicate-Persona merging is still out of scope,
-  as it was in ADR 0003.
+  as it was in ADR 0003. (Addressed by
+  [ADR 0005](0005-claim-persona-during-global-invite.md), which adds a claim step to the global
+  invite flow itself rather than reinstating a per-persona link.)

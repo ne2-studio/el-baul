@@ -59,15 +59,21 @@ person-to-person flow described in [ADR 0003](adr/0003-self-serve-baul-join-link
 reusable, regenerable link per baúl
 (`GET /api/baules/{baulId}/invite-link`, `POST /api/baules/{baulId}/invite-link/regenerate`,
 both custodio/administrador-only), with no expiry and no usage limit. Anyone who opens it
-(`GET /api/baul-invites/{token}/preview`, public) and accepts
-(`POST /api/baul-invites/{token}/accept`) is added to the baúl. If they don't already have a
-Persona there, one is auto-created — nickname/name from their account, avatar best-effort
-from the account's OIDC `picture` claim (never blocks the join if it's missing or the fetch
-fails). If they already have an active Persona in that baúl — including the custodio opening
-their own link — accepting is a no-op. If their existing Persona there is `sin_acceso`,
-accepting is rejected — only an admin can restore revoked access, never a self-serve link.
-Regenerating the link immediately invalidates the previous one (`404` on its old token) —
-there is only ever one active link per baúl at a time.
+(`GET /api/baul-invites/{token}/preview`, public) can accept it
+(`POST /api/baul-invites/{token}/accept`, optional `personaId` in the body) to join the baúl.
+Before accepting, the client can list the baúl's still-unclaimed Personas
+(`GET /api/baul-invites/{token}/claimable-personas`) — Pending ones only, i.e. `IsClaimable`
+(never `sin_acceso`, never already linked to an account) — so the joining account can say
+"I'm this pre-provisioned family member" instead of always getting a new Persona. Passing a
+`personaId` links the account to that existing (claimable) row — same-name backfill as any
+other claim, existing avatar/biografia untouched; passing none auto-creates a new Persona —
+nickname/name from the account, avatar best-effort from the account's OIDC `picture` claim
+(never blocks the join if it's missing or the fetch fails). If the caller already has an
+active Persona in that baúl — including the custodio opening their own link — accepting is a
+no-op regardless of `personaId`. If their existing Persona there is `sin_acceso`, accepting is
+rejected — only an admin can restore revoked access, never a self-serve link. Regenerating the
+link immediately invalidates the previous one (`404` on its old token) — there is only ever
+one active link per baúl at a time.
 
 ## Photos
 

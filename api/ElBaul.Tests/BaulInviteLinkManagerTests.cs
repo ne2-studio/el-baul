@@ -253,4 +253,83 @@ public class BaulInviteLinkManagerTests
         Assert.True(result.IsSuccess);
         Assert.Empty(_photoStorage.SavedKeys);
     }
+
+    [Fact]
+    public async Task GetClaimablePersonasAsync_ShouldReturnOnlyPendingPersonas()
+    {
+        var baulId = await SeedBaulAsync();
+        var pendingId = new PersonaId(Guid.NewGuid());
+        await _baules.AddPersonaAsync(new Persona(pendingId, baulId, null, "Abuela", BaulRole.Colaborador, Now, Name: "María"));
+        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, GuestId, "Ya unido", BaulRole.Colaborador, Now));
+        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Sin acceso", BaulRole.SinAcceso, Now));
+        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
+
+        var result = await CreateManager(GuestId).GetClaimablePersonasAsync(link.Value.Token);
+
+        Assert.True(result.IsSuccess);
+        var claimable = Assert.Single(result.Value);
+        Assert.Equal(pendingId.ToString(), claimable.Id);
+        Assert.Equal("Abuela", claimable.Nickname);
+        Assert.Equal("María", claimable.Name);
+    }
+
+    [Fact]
+    public async Task GetClaimablePersonasAsync_ShouldReturnNotFound_WhenTokenUnknown()
+    {
+        var result = await CreateManager(GuestId).GetClaimablePersonasAsync("unknown-token");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ApplicationErrorCode.NotFound, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task AcceptAsync_ShouldClaimTheChosenPendingPersona_InsteadOfCreatingANewOne()
+    {
+        var baulId = await SeedBaulAsync();
+        var pendingId = new PersonaId(Guid.NewGuid());
+        await _baules.AddPersonaAsync(new Persona(pendingId, baulId, null, "Abuela", BaulRole.Colaborador, Now));
+        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
+
+        var result = await CreateManager(GuestId).AcceptAsync(link.Value.Token, pendingId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(pendingId.ToString(), result.Value.Id);
+        Assert.Equal("Abuela", result.Value.Nickname);
+        Assert.Equal(GuestId, result.Value.UserId);
+        Assert.Equal("active", result.Value.Status);
+
+        var personas = await _baules.GetPersonasAsync(baulId);
+        Assert.Equal(2, personas.Count()); // custodio + claimed Abuela — no extra persona created
+    }
+
+    [Fact]
+    public async Task AcceptAsync_ShouldReject_WhenChosenPersonaIsNotClaimable()
+    {
+        var baulId = await SeedBaulAsync();
+        var alreadyClaimedId = new PersonaId(Guid.NewGuid());
+        await _baules.AddPersonaAsync(new Persona(alreadyClaimedId, baulId, "someone-else", "Ya unido", BaulRole.Colaborador, Now));
+        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
+
+        var result = await CreateManager(GuestId).AcceptAsync(link.Value.Token, alreadyClaimedId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ApplicationErrorCode.Validation, result.Error.Code);
+        var persona = await _baules.GetPersonaByIdAsync(alreadyClaimedId);
+        Assert.Equal("someone-else", persona!.UserId);
+    }
+
+    [Fact]
+    public async Task AcceptAsync_ShouldReject_WhenChosenPersonaBelongsToAnotherBaul()
+    {
+        var baulId = await SeedBaulAsync();
+        var otherBaulId = await SeedBaulAsync();
+        var otherBaulPendingId = new PersonaId(Guid.NewGuid());
+        await _baules.AddPersonaAsync(new Persona(otherBaulPendingId, otherBaulId, null, "Abuela", BaulRole.Colaborador, Now));
+        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
+
+        var result = await CreateManager(GuestId).AcceptAsync(link.Value.Token, otherBaulPendingId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ApplicationErrorCode.Validation, result.Error.Code);
+    }
 }

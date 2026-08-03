@@ -29,7 +29,7 @@ public class PersonaAccessRevocationTests(ElBaulAcceptanceFixture fixture)
         var previewResponse = await anonymousClient.GetAsync($"/api/baul-invites/{token}/preview");
         previewResponse.StatusCode.Should().Be(HttpStatusCode.OK, await previewResponse.Content.ReadAsStringAsync());
 
-        var acceptResponse = await guestClient.PostAsync($"/api/baul-invites/{token}/accept", null);
+        var acceptResponse = await guestClient.PostAsJsonAsync($"/api/baul-invites/{token}/accept", new { personaId = (string?)null });
         acceptResponse.StatusCode.Should().Be(HttpStatusCode.OK, await acceptResponse.Content.ReadAsStringAsync());
         var joinedPersona = await ParseJsonAsync(acceptResponse);
         var personaId = joinedPersona.GetProperty("id").GetString()!;

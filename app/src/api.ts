@@ -1,4 +1,4 @@
-import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulInviteLink, BaulInviteLinkPreview, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
+import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulInviteLink, BaulInviteLinkPreview, ClaimablePersona, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
 import { getEnv } from './runtimeConfig';
 import type { components } from './api/generated/schema';
 
@@ -7,6 +7,7 @@ type AppConfigResponse = ApiSchemas['AppConfigResponse'];
 type BaulDto = ApiSchemas['BaulDto'];
 type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
 type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
+type ClaimablePersonaDto = ApiSchemas['ClaimablePersonaDto'];
 type ChapterDto = ApiSchemas['ChapterDto'];
 type ChatMessageDto = ApiSchemas['ChatMessageDto'];
 type PersonaDto = ApiSchemas['PersonaDto'];
@@ -308,8 +309,11 @@ export const api = {
   baulInvites: {
     getPreview: async (token: string) =>
       new BaulInviteLinkPreview(await get<BaulInviteLinkPreviewDto>(`/api/baul-invites/${encodeURIComponent(token)}/preview`)),
-    accept: async (token: string) =>
-      new Persona(await post<PersonaDto>(`/api/baul-invites/${encodeURIComponent(token)}/accept`)),
+    getClaimablePersonas: async (token: string) =>
+      (await get<ClaimablePersonaDto[]>(`/api/baul-invites/${encodeURIComponent(token)}/claimable-personas`))
+        .map((dto) => new ClaimablePersona(dto)),
+    accept: async (token: string, personaId?: string) =>
+      new Persona(await post<PersonaDto>(`/api/baul-invites/${encodeURIComponent(token)}/accept`, { personaId: personaId ?? null })),
   },
 
   users: {

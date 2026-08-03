@@ -36,6 +36,21 @@ export async function createBaulViaApi(page: Page, accessToken: string, name: st
   return body.id as string;
 }
 
+export async function createPersonaViaApi(
+  page: Page,
+  accessToken: string,
+  baulId: string,
+  nickname: string,
+): Promise<string> {
+  const response = await page.request.post(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    data: { nickname },
+  });
+  expect(response.ok(), `failed to create persona: ${response.status()}`).toBeTruthy();
+  const body = await response.json();
+  return body.id as string;
+}
+
 export async function getCurrentPersonaViaApi(
   page: Page,
   accessToken: string,

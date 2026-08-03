@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, createBaulViaApi, API_BASE_URL } from './helpers';
+import { loginAs, createBaulViaApi, createPersonaViaApi, API_BASE_URL } from './helpers';
 
 test('invite family via global link → guest auto-joins with an auto-created persona → rejoining is a no-op', async ({ page, browser }) => {
   const accessToken = await loginAs(page, 'Admin User');
@@ -112,4 +112,84 @@ test('invite family via global link → guest takes the "ver más" onboarding de
   expect(guestPersonas, 'expected the guest to still auto-join after the onboarding detour').toHaveLength(1);
 
   await guestContext.close();
+});
+
+test('invite family via global link → pre-provisioned persona exists → guest claims it, preserving its identity', async ({ page, browser }) => {
+  const accessToken = await loginAs(page, 'Admin User');
+  const baulId = await createBaulViaApi(page, accessToken, `Claim persona test baúl ${Date.now()}`);
+  const nickname = `Abuela ${Date.now()}`;
+  const personaId = await createPersonaViaApi(page, accessToken, baulId, nickname);
+
+  await page.goto(`/baules/${baulId}`);
+  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
+  const linkLocator = page.getByText(/\/invitacion\/baul\//);
+  await expect(linkLocator).toBeVisible();
+  const linkText = (await linkLocator.textContent())!;
+  const token = linkText.match(/\/invitacion\/baul\/([^\s"']+)/)?.[1];
+  expect(token, `expected to find an invite token in "${linkText}"`).toBeTruthy();
+  await page.getByRole('button', { name: 'Cerrar' }).click();
+
+  const guestContext = await browser.newContext();
+  const guestPage = await guestContext.newPage();
+  await loginAs(guestPage, 'Normal User');
+  await guestPage.goto(`/invitacion/baul/${token}`);
+  await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.getByText('¿Quién eres tú?').waitFor();
+  await guestPage.getByText(nickname).click();
+  await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
+  await guestContext.close();
+
+  const personasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(personasResponse.ok(), `failed to list personas: ${personasResponse.status()}`).toBeTruthy();
+  const personas = await personasResponse.json();
+
+  const claimed = personas.find((p: { id: string }) => p.id === personaId);
+  expect(claimed, 'expected the pre-provisioned persona to still exist').toBeTruthy();
+  expect(claimed).toMatchObject({ id: personaId, nickname, role: 'colaborador', status: 'active' });
+  expect(claimed.userId, 'claiming should link the guest account to this same persona').toBeTruthy();
+
+  const colaboradorPersonas = personas.filter((p: { role: string }) => p.role === 'colaborador');
+  expect(colaboradorPersonas, 'no extra persona should have been created by claiming').toHaveLength(1);
+});
+
+test('invite family via global link → pre-provisioned persona exists → guest picks "no soy ninguna" → gets a new persona, original stays unclaimed', async ({ page, browser }) => {
+  const accessToken = await loginAs(page, 'Admin User');
+  const baulId = await createBaulViaApi(page, accessToken, `Claim persona skip test baúl ${Date.now()}`);
+  const nickname = `Tío Juan ${Date.now()}`;
+  const personaId = await createPersonaViaApi(page, accessToken, baulId, nickname);
+
+  await page.goto(`/baules/${baulId}`);
+  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
+  const linkLocator = page.getByText(/\/invitacion\/baul\//);
+  await expect(linkLocator).toBeVisible();
+  const linkText = (await linkLocator.textContent())!;
+  const token = linkText.match(/\/invitacion\/baul\/([^\s"']+)/)?.[1];
+  expect(token, `expected to find an invite token in "${linkText}"`).toBeTruthy();
+  await page.getByRole('button', { name: 'Cerrar' }).click();
+
+  const guestContext = await browser.newContext();
+  const guestPage = await guestContext.newPage();
+  await loginAs(guestPage, 'Normal User');
+  await guestPage.goto(`/invitacion/baul/${token}`);
+  await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.getByRole('button', { name: /No soy ninguna de las personas anteriores/ }).click();
+  await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
+  await guestContext.close();
+
+  const personasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(personasResponse.ok(), `failed to list personas: ${personasResponse.status()}`).toBeTruthy();
+  const personas = await personasResponse.json();
+
+  const original = personas.find((p: { id: string }) => p.id === personaId);
+  expect(original).toMatchObject({ id: personaId, nickname, role: 'colaborador', status: 'pending', userId: null });
+
+  const guestPersona = personas.find((p: { role: string; id: string }) => p.role === 'colaborador' && p.id !== personaId);
+  expect(guestPersona, 'expected a distinct auto-created persona for the guest').toBeTruthy();
+  expect(guestPersona.userId, 'auto-created persona should be immediately claimed').toBeTruthy();
 });
