@@ -1,18 +1,27 @@
 import React, { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 
 export const CallbackRoute: React.FC = () => {
   const auth = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (auth.isAuthenticated) {
       const redirectTo = (auth.user?.state as { redirectTo?: string } | undefined)?.redirectTo;
       navigate(redirectTo || '/baules', { replace: true });
+      return;
     }
-  }, [auth.isAuthenticated, auth.user, navigate]);
+
+    // post_logout_redirect_uri del proveedor OIDC apunta a esta misma ruta (ver main.tsx):
+    // un regreso de end_session llega aquí sin `code`, así que no hay nada que procesar —
+    // sin este chequeo se queda colgado en el spinner para siempre.
+    if (!auth.isLoading && !searchParams.has('code')) {
+      navigate('/', { replace: true });
+    }
+  }, [auth.isAuthenticated, auth.isLoading, auth.user, navigate, searchParams]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">

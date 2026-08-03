@@ -10,7 +10,9 @@ isolated rather than spread through the app:
   `App.tsx`).
 - `main.tsx` special-cases the OIDC redirect on native: launch-URL deep links are rewritten to
   the in-app `/callback` route, because `react-oidc-context` expects `code`/`state` on the page
-  URL, not an OS-level deep link.
+  URL, not an OS-level deep link. Sign-out reuses the same deep link as `post_logout_redirect_uri`
+  (no second scheme/intent-filter) — `CallbackRoute` tells the two apart by whether `code` is
+  present in the query string.
 - `npm run android:build` (in `app/`) builds with a separate `.env.android` and runs
   `cap sync android`.
 

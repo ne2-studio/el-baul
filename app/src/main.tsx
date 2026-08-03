@@ -66,6 +66,11 @@ async function bootstrap() {
     authority: getEnv('VITE_OIDC_AUTHORITY'),
     client_id: getEnv('VITE_OIDC_CLIENT_ID'),
     redirect_uri: getEnv('VITE_OIDC_CALLBACK_URI'),
+    // Reutiliza la misma URI que el callback de login: ya está registrada como deep link
+    // nativo (AndroidManifest.xml) y como ruta web (/callback), así que el logout puede
+    // volver a caer ahí sin abrir un segundo esquema/host. CallbackRoute distingue el
+    // regreso de un login (trae `code`) del regreso de un end_session (no lo trae).
+    post_logout_redirect_uri: getEnv('VITE_OIDC_CALLBACK_URI'),
     scope: `openid profile email urn:zitadel:iam:org:id:${organizationId}`,
     userStore: new WebStorageStateStore({ store: window.localStorage }),
 

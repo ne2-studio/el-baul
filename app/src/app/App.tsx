@@ -148,13 +148,21 @@ function App() {
   };
 
   const handleSignOut = async (): Promise<boolean> => {
-    // auth.removeUser() se espera ANTES de limpiar el estado local: si falla, el usuario
-    // se queda con la sesión (y los datos) tal cual estaban, en vez de ver un estado ya
-    // vacío sin haber cerrado sesión de verdad en el proveedor OIDC.
-    const result = await run(() => auth.removeUser(), {
-      key: 'signOut',
-      errorMessage: 'Error al cerrar sesión',
-    });
+    // signoutRedirect() limpia el usuario local ANTES de construir la petición a
+    // end_session, así que aunque el proveedor no la soporte (fake-oidc en local/E2E) o la
+    // navegación falle, el cierre de sesión local ya se ha completado — no es un fallo real.
+    // Si el proveedor sí soporta end_session (Zitadel real), esta llamada nunca resuelve:
+    // navega fuera de la app antes de que la promesa se cumpla.
+    const result = await run(
+      async () => {
+        try {
+          await auth.signoutRedirect();
+        } catch (error) {
+          console.warn('El proveedor OIDC no completó el end_session:', error);
+        }
+      },
+      { key: 'signOut' }
+    );
     if (!result.ok) return false;
 
     resetAllStores();

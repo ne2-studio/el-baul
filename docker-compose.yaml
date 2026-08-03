@@ -82,7 +82,7 @@ services:
     environment:
       OIDC_ISSUER: "http://localhost:5000"
       OIDC_CLIENTS: >-
-        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"]},
+        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"],"postLogoutRedirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"]},
         {"clientId":"el-baul-admin","redirectUris":["http://localhost:3001/callback"]}]
       OIDC_USERS: >-
         [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]},

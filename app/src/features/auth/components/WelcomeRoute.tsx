@@ -13,7 +13,13 @@ export const WelcomeRoute: React.FC = () => {
 
   const handleSignIn = async () => {
     try {
-      await auth.signinRedirect({ state: { redirectTo: redirectTo || undefined } });
+      // select_account fuerza el selector de cuentas de Google incluso si ya hay una
+      // sesión (de Google o de Zitadel) activa, para poder volver a elegir con qué
+      // cuenta entrar en vez de reengancharse en silencio a la última usada.
+      await auth.signinRedirect({
+        state: { redirectTo: redirectTo || undefined },
+        prompt: 'select_account',
+      });
     } catch (error) {
       console.error('Error signing in:', error);
       showToastMessage('Error al iniciar sesión', 'error');
