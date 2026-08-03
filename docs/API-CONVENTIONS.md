@@ -53,27 +53,27 @@ and cannot accept or preview invitation links.
 
 ## Invitations
 
-Growth into a baúl is exclusively through the **global baúl invite link** (see
-[ADR 0004](adr/0004-remove-personal-invitations.md), which retired the earlier
-person-to-person flow described in [ADR 0003](adr/0003-self-serve-baul-join-link.md)): one
-reusable, regenerable link per baúl
-(`GET /api/baules/{baulId}/invite-link`, `POST /api/baules/{baulId}/invite-link/regenerate`,
-both custodio/administrador-only), with no expiry and no usage limit. Anyone who opens it
-(`GET /api/baul-invites/{token}/preview`, public) can accept it
-(`POST /api/baul-invites/{token}/accept`, optional `personaId` in the body) to join the baúl.
+The only way to grow a baúl's membership is the **global invite link**: one reusable,
+regenerable link per baúl (`GET /api/baules/{baulId}/invite-link`,
+`POST /api/baules/{baulId}/invite-link/regenerate`, both custodio/administrador-only), with no
+expiry and no usage limit. Anyone who opens it (`GET /api/baul-invites/{token}/preview`,
+public) can accept it (`POST /api/baul-invites/{token}/accept`, optional `personaId` in the
+body) to join the baúl.
+
 Before accepting, the client can list the baúl's still-unclaimed Personas
-(`GET /api/baul-invites/{token}/claimable-personas`) — Pending ones only, i.e. `IsClaimable`
-(never `sin_acceso`, never already linked to an account) — so the joining account can say
-"I'm this pre-provisioned family member" instead of always getting a new Persona. Passing a
-`personaId` links the account to that existing (claimable) row — same-name backfill as any
-other claim, existing avatar/biografia untouched; passing none auto-creates a new Persona —
-nickname/name from the account, avatar best-effort from the account's OIDC `picture` claim
-(never blocks the join if it's missing or the fetch fails). If the caller already has an
-active Persona in that baúl — including the custodio opening their own link — accepting is a
-no-op regardless of `personaId`. If their existing Persona there is `sin_acceso`, accepting is
-rejected — only an admin can restore revoked access, never a self-serve link. Regenerating the
-link immediately invalidates the previous one (`404` on its old token) — there is only ever
-one active link per baúl at a time.
+(`GET /api/baul-invites/{token}/claimable-personas`, authenticated) — Pending ones only, i.e.
+`IsClaimable` (never `sin_acceso`, never already linked to an account) — so the joining
+account can say "I'm this pre-provisioned family member" instead of always getting a new
+Persona. Passing a `personaId` links the account to that existing (claimable) row —
+same-name backfill as any other claim, existing avatar/biografia untouched; passing none
+auto-creates a new Persona — nickname/name from the account, avatar best-effort from the
+account's OIDC `picture` claim (never blocks the join if it's missing or the fetch fails).
+
+If the caller already has an active Persona in that baúl — including the custodio opening
+their own link — accepting is a no-op regardless of `personaId`. If their existing Persona
+there is `sin_acceso`, accepting is rejected — only an admin can restore revoked access, never
+a self-serve link. Regenerating the link immediately invalidates the previous one (`404` on
+its old token) — there is only ever one active link per baúl at a time.
 
 ## Photos
 

@@ -22,8 +22,9 @@ test('create persona → revoke access while still pending → allow invite agai
   expect(persona, `expected to find persona named ${nickname}`).toBeTruthy();
   const personaId = persona.id as string;
 
-  // A pre-provisioned Persona has no account linked yet and no per-persona invite link any
-  // more (that flow is gone — see ADR 0004); it can still be revoked/restored directly.
+  // A pre-provisioned Persona has no account linked yet and no per-persona invite link —
+  // only the global invite link can link an account to it; it can still be revoked/restored
+  // directly.
   await page.goto(`/baules/${baulId}/personas/${personaId}`);
   await page.getByRole('button', { name: 'Opciones de la persona' }).click();
   await expect(page.getByRole('menuitem', { name: 'Compartir invitación' })).toBeHidden();

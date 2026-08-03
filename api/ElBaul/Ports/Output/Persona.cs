@@ -43,9 +43,9 @@ public record Persona
         Role == BaulRole.Custodio || UserId == custodioUserId;
 
     // Links a Pending Persona to an authenticated account claiming to be that family member —
-    // called only after the caller picked this row from the claimable list (BaulInviteLinkManager
-    // .AcceptAsync), never from a per-persona link (that flow was removed, see ADR 0004). Name is
-    // only backfilled, never overwritten, so an admin-provided name always wins.
+    // called from BaulInviteLinkManager.AcceptAsync once the caller picks this row from the
+    // claimable list. Name is only backfilled, never overwritten, so an admin-provided name
+    // always wins.
     public Persona AcceptInvite(string userId, string? fallbackName) =>
         this with { UserId = userId, Name = Name ?? fallbackName };
 

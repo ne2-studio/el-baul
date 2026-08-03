@@ -98,6 +98,11 @@ the resulting observable semantics.
   re-derived per manager: it's the single interpretation of "does this user belong to this baúl
   / are they an admin of it". Every manager touching a baúl-scoped resource calls
   `baulAccess.AuthorizeAsync(...)` instead of re-implementing the check inline.
+- **One deliberate exception**: `BaulInviteLinkManager.AcceptAsync` creates or claims a Persona
+  without going through the admin-only authorization path that gates
+  `PersonaManager.CreatePersonaAsync` — the caller is authorizing themselves by presenting a
+  baúl-scoped invite token, not by baúl-admin privilege. Any future tightening of Persona
+  creation (rate-limiting joins per baúl, etc.) needs to account for this second creation path.
 - **DI lifetimes are `Scoped` by default.** `MinioPhotoStorage` is the one deliberate
   `Singleton`, since it wraps a single `AmazonS3Client` (thread-safe, meant to be pooled).
 - No decorator or null-object patterns are in use — infra concerns compose behavior directly
