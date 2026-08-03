@@ -2,6 +2,7 @@ using ElBaul.Application;
 using ElBaul.Ports.Output;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
+using ElBaul.Tests.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -9,95 +10,72 @@ namespace ElBaul.Tests;
 
 public class PhotoManagerTests
 {
-    private const string CustodioId = "custodio-1";
+    private const string CustodioId = BaulFixture.DefaultCustodioId;
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
-    private readonly InMemoryChapterRepository _chapterRepository = new();
-    private readonly InMemoryPhotoRepository _photoRepository = new();
-    private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
-    private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
+    private readonly BaulFixture _fixture = new();
     private readonly FakePhotoStorage _photoStorage = new();
-    private readonly StaticClock _clock = new();
     private readonly FakePhotoDateExtractor _photoDateExtractor = new();
 
     private PhotoLifecycleService CreatePhotoLifecycleService(IPhotoRepository? photoRepository = null) =>
-        new(photoRepository ?? _photoRepository, _chapterRepository, _baulRepository, _clock);
+        new(photoRepository ?? _fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Clock);
 
     private PhotoDtoProjector CreatePhotoDtoProjector(IPhotoStorage? photoStorage = null) =>
-        new(photoStorage ?? _photoStorage, _recuerdoRepository);
+        new(photoStorage ?? _photoStorage, _fixture.Recuerdos);
 
     private PhotoFileService CreatePhotoFileService(IPhotoStorage? photoStorage = null) =>
         new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer());
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository,
-            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService());
+        new(NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters, _fixture.Baules,
+            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock,
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService());
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
     // (it's a photo listing method), but tests need to tag photos first to exercise it.
     private PhotoPersonaTagManager CreateTagManager(string currentUserId) =>
-        new(NullLogger<PhotoPersonaTagManager>.Instance, _photoRepository, _baulRepository, _photoStorage, _clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository);
-
-    private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
-    {
-        var baulId = Guid.NewGuid();
-        var chapterId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), CustodioId, "Custodio", BaulRole.Custodio, _clock.UtcNow()));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-        return (baulId, chapterId);
-    }
-
-    private async Task<(Guid baulId, Guid sourceChapterId, Guid targetChapterId)> SeedBaulWithTwoChaptersAsync()
-    {
-        var (baulId, sourceChapterId) = await SeedBaulWithChapterAsync();
-        var targetChapterId = Guid.NewGuid();
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(targetChapterId), new BaulId(baulId), "Destino", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-        return (baulId, sourceChapterId, targetChapterId);
-    }
+        new(NullLogger<PhotoPersonaTagManager>.Instance, _fixture.Photos, _fixture.Baules, _photoStorage, _fixture.Clock,
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            _fixture.PhotoPersonaTags);
 
     [Fact]
     public async Task UploadAsync_ShouldSaveFile_AndIncrementChapterPhotoCount()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Single(_photoStorage.SavedKeys);
 
-        var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
+        var chapter = await _fixture.Chapters.GetByIdAsync(chapterId);
         Assert.Equal(1, chapter!.PhotoCount);
     }
 
     [Fact]
     public async Task UploadAsync_ShouldRecordFileSizeInBytes()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3, 4, 5]);
-        var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
-        var stored = await _photoRepository.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
+        var stored = await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
         Assert.Equal(5, stored!.SizeBytes);
     }
 
     [Fact]
     public async Task UploadAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
 
         var manager = CreateManager("stranger");
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -106,41 +84,41 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadAsync_ShouldPropagateException_WhenStorageSaveFails()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var failingStorage = Substitute.For<IPhotoStorage>();
         failingStorage.SaveAsync(Arg.Any<string>(), Arg.Any<Stream>(), Arg.Any<string>())
             .Returns<Task>(_ => throw new InvalidOperationException("storage unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository,
-            new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage));
+            NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters, _fixture.Baules,
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
+            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage));
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
+            () => manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
 
-        Assert.Empty(await _photoRepository.GetByChapterIdAsync(new ChapterId(chapterId)));
+        Assert.Empty(await _fixture.Photos.GetByChapterIdAsync(chapterId));
     }
 
     [Fact]
     public async Task UploadAsync_ShouldDeleteOrphanedStorageObject_WhenPersistingMetadataFails()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var failingRepository = Substitute.For<IPhotoRepository>();
         failingRepository.CreateAsync(Arg.Any<Photo>())
             .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository,
-            new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters, _fixture.Baules,
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
+            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
+            () => manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
 
         // The file was saved to storage before the DB write failed, so the manager
         // must compensate by deleting it to avoid leaving an orphaned blob.
@@ -151,20 +129,20 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadToBaulAsync_ShouldDeleteOrphanedStorageObject_WhenPersistingMetadataFails()
     {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
         var failingRepository = Substitute.For<IPhotoRepository>();
         failingRepository.CreateAsync(Arg.Any<Photo>())
             .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, failingRepository, _chapterRepository, _baulRepository,
-            new StaticIdGenerator(Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _photoPersonaTagRepository, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters, _fixture.Baules,
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
+            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadToBaulAsync(new BaulId(baulId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
+            () => manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
 
         Assert.Single(_photoStorage.SavedKeys);
         Assert.Equal(_photoStorage.SavedKeys, _photoStorage.DeletedKeys);
@@ -173,17 +151,16 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadAsync_ShouldReturnExistingPhoto_WhenClientUploadIdAlreadyExists()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var clientUploadId = Guid.NewGuid();
-        var existingPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "already-uploaded-key", null, CustodioId, _clock.UtcNow(), clientUploadId);
-        await _photoRepository.CreateAsync(existingPhoto);
+        var existingPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "already-uploaded-key", clientUploadId: clientUploadId);
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(clientUploadId));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(clientUploadId));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(existingPhoto.Id.ToString(), result.Value.Id);
+        Assert.Equal(existingPhotoId.ToString(), result.Value.Id);
         // No new upload should have happened: retrying with a known clientUploadId is a no-op.
         Assert.Empty(_photoStorage.SavedKeys);
     }
@@ -191,17 +168,16 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadToBaulAsync_ShouldReturnExistingPhoto_WhenClientUploadIdAlreadyExists()
     {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
         var clientUploadId = Guid.NewGuid();
-        var existingPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "already-uploaded-key", null, CustodioId, _clock.UtcNow(), clientUploadId);
-        await _photoRepository.CreateAsync(existingPhoto);
+        var existingPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "already-uploaded-key", clientUploadId: clientUploadId);
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(new BaulId(baulId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(clientUploadId));
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(clientUploadId));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(existingPhoto.Id.ToString(), result.Value.Id);
+        Assert.Equal(existingPhotoId.ToString(), result.Value.Id);
         Assert.Empty(_photoStorage.SavedKeys);
     }
 
@@ -218,20 +194,20 @@ public class PhotoManagerTests
     [Fact]
     public async Task MoveAsync_ShouldReassignChapterId_AndUpdatePhotoCounts()
     {
-        var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(sourceChapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
-        var sourceChapter = await _chapterRepository.GetByIdAsync(new ChapterId(sourceChapterId));
-        await _chapterRepository.UpdateAsync(sourceChapter! with { PhotoCount = 1 });
+        var (baulId, sourceChapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var targetChapterId = await _fixture.AddChapterAsync(baulId, "Destino");
+        var photoId = await _fixture.AddPhotoAsync(baulId, sourceChapterId);
+        var sourceChapter = await _fixture.Chapters.GetByIdAsync(sourceChapterId);
+        await _fixture.Chapters.UpdateAsync(sourceChapter! with { PhotoCount = 1 });
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.MoveAsync(new PhotoId(photoId), new ChapterId(targetChapterId));
+        var result = await manager.MoveAsync(photoId, targetChapterId);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(targetChapterId.ToString(), result.Value.ChapterId);
 
-        var updatedSource = await _chapterRepository.GetByIdAsync(new ChapterId(sourceChapterId));
-        var updatedTarget = await _chapterRepository.GetByIdAsync(new ChapterId(targetChapterId));
+        var updatedSource = await _fixture.Chapters.GetByIdAsync(sourceChapterId);
+        var updatedTarget = await _fixture.Chapters.GetByIdAsync(targetChapterId);
         Assert.Equal(0, updatedSource!.PhotoCount);
         Assert.Equal(1, updatedTarget!.PhotoCount);
     }
@@ -239,13 +215,12 @@ public class PhotoManagerTests
     [Fact]
     public async Task MoveAsync_ShouldFail_WhenTargetChapterInDifferentBaul()
     {
-        var (baulId, sourceChapterId, _) = await SeedBaulWithTwoChaptersAsync();
-        var (_, otherBaulChapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(sourceChapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var (baulId, sourceChapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var (_, otherBaulChapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, sourceChapterId);
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.MoveAsync(new PhotoId(photoId), new ChapterId(otherBaulChapterId));
+        var result = await manager.MoveAsync(photoId, otherBaulChapterId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Target chapter not found", result.Error.Message);
@@ -254,14 +229,13 @@ public class PhotoManagerTests
     [Fact]
     public async Task DeleteAsync_ShouldHidePhotoFromChapterListing()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
         var manager = CreateManager(CustodioId);
-        await manager.DeleteAsync(new PhotoId(photoId), "Ya no aplica");
+        await manager.DeleteAsync(photoId, "Ya no aplica");
 
-        var result = await manager.GetByChapterIdAsync(new ChapterId(chapterId));
+        var result = await manager.GetByChapterIdAsync(chapterId);
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value);
     }
@@ -269,19 +243,18 @@ public class PhotoManagerTests
     [Fact]
     public async Task DeleteAsync_ShouldDenyAccess_ForColaboradorRole()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _fixture.AddColaboradorAsync(baulId, colaboradorId);
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.DeleteAsync(new PhotoId(photoId), "reason");
+        var result = await manager.DeleteAsync(photoId, "reason");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
 
-        var photo = await _photoRepository.GetByIdAsync(new PhotoId(photoId));
+        var photo = await _fixture.Photos.GetByIdAsync(photoId);
         Assert.Equal(PhotoStatus.Active, photo!.Status);
     }
 
@@ -298,11 +271,11 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadToBaulAsync_ShouldSaveFile_WithNullChapterId()
     {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(new BaulId(baulId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.ChapterId);
@@ -312,12 +285,12 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetLooseByBaulIdAsync_ShouldReturnOnlyChapterlessPhotos()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "in-chapter-key", null, CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "loose-key", null, CustodioId, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        await _fixture.AddPhotoAsync(baulId, chapterId, "in-chapter-key");
+        await _fixture.AddPhotoAsync(baulId, storageKey: "loose-key");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetLooseByBaulIdAsync(new BaulId(baulId));
+        var result = await manager.GetLooseByBaulIdAsync(baulId);
 
         Assert.True(result.IsSuccess);
         var photo = Assert.Single(result.Value);
@@ -327,26 +300,22 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetPageAsync_ShouldReturnBaulWidePhotos_InChronologicalOrder_WithUndatedLast()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         PhotoDate.TryCreate(2019, 6, 1, out var earlyDate, out _);
         PhotoDate.TryCreate(2020, 1, 1, out var laterDate, out _);
 
-        var earlyPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), "early-key", earlyDate, CustodioId, _clock.UtcNow());
-        var laterPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "later-key", laterDate, CustodioId, _clock.UtcNow());
-        var undatedPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "undated-key", null, CustodioId, _clock.UtcNow());
-
         // Created out of chronological order to prove the manager sorts, rather than
         // happening to preserve insertion order.
-        await _photoRepository.CreateAsync(laterPhoto);
-        await _photoRepository.CreateAsync(undatedPhoto);
-        await _photoRepository.CreateAsync(earlyPhoto);
+        var laterPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "later-key", date: laterDate);
+        var undatedPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "undated-key");
+        var earlyPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "early-key", earlyDate);
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(new BaulId(baulId), null, 0, 10);
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(
-            new[] { earlyPhoto.Id.ToString(), laterPhoto.Id.ToString(), undatedPhoto.Id.ToString() },
+            new[] { earlyPhotoId.ToString(), laterPhotoId.ToString(), undatedPhotoId.ToString() },
             result.Value.Items.Select(p => p.Id).ToList());
         Assert.False(result.Value.HasMore);
     }
@@ -354,32 +323,30 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetPageAsync_ShouldReturnOnlyThatChaptersPhotos_WhenChapterIdGiven()
     {
-        var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var inSourceChapter = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(sourceChapterId), new BaulId(baulId), "source-key", null, CustodioId, _clock.UtcNow());
-        var inTargetChapter = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(targetChapterId), new BaulId(baulId), "target-key", null, CustodioId, _clock.UtcNow());
-        await _photoRepository.CreateAsync(inSourceChapter);
-        await _photoRepository.CreateAsync(inTargetChapter);
+        var (baulId, sourceChapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var targetChapterId = await _fixture.AddChapterAsync(baulId, "Destino");
+        var inSourceChapterId = await _fixture.AddPhotoAsync(baulId, sourceChapterId, "source-key");
+        await _fixture.AddPhotoAsync(baulId, targetChapterId, "target-key");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(new BaulId(baulId), new ChapterId(sourceChapterId), 0, 10);
+        var result = await manager.GetPageAsync(baulId, sourceChapterId, 0, 10);
 
         Assert.True(result.IsSuccess);
         var photo = Assert.Single(result.Value.Items);
-        Assert.Equal(inSourceChapter.Id.ToString(), photo.Id);
+        Assert.Equal(inSourceChapterId.ToString(), photo.Id);
     }
 
     [Fact]
     public async Task GetPageAsync_ShouldSetHasMore_WhenMorePhotosThanTake()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         for (var i = 0; i < 3; i++)
         {
-            await _photoRepository.CreateAsync(Photo.Create(
-                new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), $"key-{i}", null, CustodioId, _clock.UtcNow()));
+            await _fixture.AddPhotoAsync(baulId, chapterId, $"key-{i}");
         }
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(new BaulId(baulId), null, 0, 2);
+        var result = await manager.GetPageAsync(baulId, null, 0, 2);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Items.Count);
@@ -389,15 +356,14 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetPageAsync_ShouldClearHasMore_WhenAllPhotosFitInPage()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         for (var i = 0; i < 2; i++)
         {
-            await _photoRepository.CreateAsync(Photo.Create(
-                new PhotoId(Guid.NewGuid()), new ChapterId(chapterId), new BaulId(baulId), $"key-{i}", null, CustodioId, _clock.UtcNow()));
+            await _fixture.AddPhotoAsync(baulId, chapterId, $"key-{i}");
         }
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(new BaulId(baulId), null, 0, 10);
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Items.Count);
@@ -407,13 +373,12 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetPageAsync_ShouldExcludeDeletedPhotos()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
         var manager = CreateManager(CustodioId);
-        await manager.DeleteAsync(new PhotoId(photoId), "reason");
-        var result = await manager.GetPageAsync(new BaulId(baulId), null, 0, 10);
+        await manager.DeleteAsync(photoId, "reason");
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value.Items);
@@ -422,9 +387,9 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetPageAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
         var manager = CreateManager("stranger");
-        var result = await manager.GetPageAsync(new BaulId(baulId), null, 0, 10);
+        var result = await manager.GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -433,11 +398,11 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetPageAsync_ShouldFail_WhenChapterDoesNotBelongToBaul()
     {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
-        var (_, otherChapterId) = await SeedBaulWithChapterAsync();
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
+        var (_, otherChapterId) = await _fixture.CreateBaulWithChapterAsync();
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(new BaulId(baulId), new ChapterId(otherChapterId), 0, 10);
+        var result = await manager.GetPageAsync(baulId, otherChapterId, 0, 10);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error.Message);
@@ -446,11 +411,11 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadAsync_ShouldLeavePhotoUndated_WhenNoDateGivenAndNoExifFound()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.DateYear);
@@ -461,12 +426,12 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadAsync_ShouldUseExifDate_WhenNoExplicitDateGiven()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         _photoDateExtractor.NextResult = (2019, 8, 3);
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2019, result.Value.DateYear);
@@ -477,13 +442,13 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadAsync_ShouldPreferExplicitDate_OverExif()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         _photoDateExtractor.NextResult = (2019, 8, 3);
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
         var result = await manager.UploadAsync(
-            new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", PhotoDates.Of(2021, 1, 2), new ClientUploadId(Guid.NewGuid()));
+            chapterId, content, "photo.jpg", "image/jpeg", PhotoDates.Of(2021, 1, 2), new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2021, result.Value.DateYear);
@@ -494,12 +459,12 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadAsync_ShouldAcceptPartialExplicitDate_YearOnly()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
         var result = await manager.UploadAsync(
-            new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", PhotoDates.Of(2020), new ClientUploadId(Guid.NewGuid()));
+            chapterId, content, "photo.jpg", "image/jpeg", PhotoDates.Of(2020), new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2020, result.Value.DateYear);
@@ -510,12 +475,12 @@ public class PhotoManagerTests
     [Fact]
     public async Task UploadAsync_ShouldAcceptPartialExplicitDate_YearAndMonth()
     {
-        var (_, chapterId) = await SeedBaulWithChapterAsync();
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
         var result = await manager.UploadAsync(
-            new ChapterId(chapterId), content, "photo.jpg", "image/jpeg", PhotoDates.Of(2020, 6), new ClientUploadId(Guid.NewGuid()));
+            chapterId, content, "photo.jpg", "image/jpeg", PhotoDates.Of(2020, 6), new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2020, result.Value.DateYear);
@@ -526,12 +491,11 @@ public class PhotoManagerTests
     [Fact]
     public async Task ChangeDateAsync_ShouldUpdatePhotoDate()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.ChangeDateAsync(new PhotoId(photoId), PhotoDates.Of(2020, 5));
+        var result = await manager.ChangeDateAsync(photoId, PhotoDates.Of(2020, 5));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2020, result.Value.DateYear);
@@ -542,14 +506,13 @@ public class PhotoManagerTests
     [Fact]
     public async Task DownloadAsync_ShouldReturnOriginalContentAndFileName()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photoId = Guid.NewGuid();
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var storageKey = $"{CustodioId}/{Guid.NewGuid()}-vacaciones.jpg";
         await _photoStorage.SaveAsync(storageKey, new MemoryStream([1, 2, 3]), "image/jpeg");
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), storageKey, null, CustodioId, _clock.UtcNow()));
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, storageKey);
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.DownloadAsync(new PhotoId(photoId));
+        var result = await manager.DownloadAsync(photoId);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("image/jpeg", result.Value.ContentType);
@@ -572,17 +535,14 @@ public class PhotoManagerTests
     [Fact]
     public async Task ChangeDateBatchAsync_ShouldUpdateAllValidPhotos_AndSkipInaccessibleOnes()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var ownPhotoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(ownPhotoId), new ChapterId(chapterId), new BaulId(baulId), "key-1", null, CustodioId, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var ownPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "key-1");
 
-        var otherBaulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
-        var foreignPhotoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(foreignPhotoId), null, new BaulId(otherBaulId), "key-2", null, "someone-else", _clock.UtcNow()));
+        var otherBaulId = await _fixture.CreateBaulAsync("Otro", "someone-else");
+        var foreignPhotoId = await _fixture.AddPhotoAsync(otherBaulId, storageKey: "key-2", uploadedBy: "someone-else");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.ChangeDateBatchAsync([new PhotoId(ownPhotoId), new PhotoId(foreignPhotoId)], PhotoDates.Of(2018));
+        var result = await manager.ChangeDateBatchAsync([ownPhotoId, foreignPhotoId], PhotoDates.Of(2018));
 
         Assert.True(result.IsSuccess);
         var updated = Assert.Single(result.Value);
@@ -593,24 +553,20 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetByPersonaIdAsync_ShouldReturnTaggedPhotos_OrderedChronologically()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuelo Antonio");
 
-        var newerPhotoId = Guid.NewGuid();
-        var olderPhotoId = Guid.NewGuid();
-        var undatedPhotoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(newerPhotoId), new ChapterId(chapterId), new BaulId(baulId), "newer", PhotoDates.Of(2020, 5, 10), CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(olderPhotoId), new ChapterId(chapterId), new BaulId(baulId), "older", PhotoDates.Of(1998, 6, 15), CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(undatedPhotoId), new ChapterId(chapterId), new BaulId(baulId), "undated", null, CustodioId, _clock.UtcNow()));
+        var newerPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "newer", PhotoDates.Of(2020, 5, 10));
+        var olderPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "older", PhotoDates.Of(1998, 6, 15));
+        var undatedPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "undated");
 
         var manager = CreateManager(CustodioId);
         var tagManager = CreateTagManager(CustodioId);
-        await tagManager.SetTaggedPersonasAsync(new PhotoId(newerPhotoId), [new PersonaId(personaId)]);
-        await tagManager.SetTaggedPersonasAsync(new PhotoId(olderPhotoId), [new PersonaId(personaId)]);
-        await tagManager.SetTaggedPersonasAsync(new PhotoId(undatedPhotoId), [new PersonaId(personaId)]);
+        await tagManager.SetTaggedPersonasAsync(newerPhotoId, [personaId]);
+        await tagManager.SetTaggedPersonasAsync(olderPhotoId, [personaId]);
+        await tagManager.SetTaggedPersonasAsync(undatedPhotoId, [personaId]);
 
-        var result = await manager.GetByPersonaIdAsync(new BaulId(baulId), new PersonaId(personaId));
+        var result = await manager.GetByPersonaIdAsync(baulId, personaId);
 
         Assert.True(result.IsSuccess);
         Assert.Equal([olderPhotoId.ToString(), newerPhotoId.ToString(), undatedPhotoId.ToString()], result.Value.Select(p => p.Id));
@@ -619,18 +575,16 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetByPersonaIdAsync_ShouldExcludeSoftDeletedPhotos()
     {
-        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var personaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(personaId), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow()));
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuelo Antonio");
 
-        var photoId = Guid.NewGuid();
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, CustodioId, _clock.UtcNow()));
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
         var manager = CreateManager(CustodioId);
-        await CreateTagManager(CustodioId).SetTaggedPersonasAsync(new PhotoId(photoId), [new PersonaId(personaId)]);
-        await manager.DeleteAsync(new PhotoId(photoId), "duplicada");
+        await CreateTagManager(CustodioId).SetTaggedPersonasAsync(photoId, [personaId]);
+        await manager.DeleteAsync(photoId, "duplicada");
 
-        var result = await manager.GetByPersonaIdAsync(new BaulId(baulId), new PersonaId(personaId));
+        var result = await manager.GetByPersonaIdAsync(baulId, personaId);
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value);
@@ -639,14 +593,12 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetByPersonaIdAsync_ShouldFail_WhenPersonaBelongsToAnotherBaul()
     {
-        var (baulId, _) = await SeedBaulWithChapterAsync();
-        var otherBaulId = Guid.NewGuid();
-        await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, "someone-else", 0, _clock.UtcNow(), _clock.UtcNow()));
-        var foreignPersonaId = Guid.NewGuid();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(foreignPersonaId), new BaulId(otherBaulId), null, "Ajeno", BaulRole.Colaborador, _clock.UtcNow()));
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
+        var otherBaulId = await _fixture.CreateBaulAsync("Otro", "someone-else");
+        var foreignPersonaId = await _fixture.AddPendingPersonaAsync(otherBaulId, "Ajeno");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetByPersonaIdAsync(new BaulId(baulId), new PersonaId(foreignPersonaId));
+        var result = await manager.GetByPersonaIdAsync(baulId, foreignPersonaId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error.Message);
