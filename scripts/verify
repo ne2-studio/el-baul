@@ -18,7 +18,7 @@ Options:
 Commands:
   backend               Build and test the .NET backend solution in Release.
   backend-acceptance    Run acceptance-tests against the real backend image.
-  frontend              Run app type checks, unit/component tests, and Storybook specs.
+  frontend              Run app type checks, a production build, unit/component tests, and Storybook specs.
   admin                 Run admin type checks and unit/component tests.
   frontend-acceptance   Run app Playwright E2E against app + api-lite images.
   admin-acceptance      Run admin Playwright E2E against admin + api-lite images.
@@ -224,6 +224,7 @@ frontend() {
   need npm
   ensure_npm_deps app
   run_in app npm run typecheck
+  run_in app npm run build
 
   if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
     run_in app npm run test:coverage

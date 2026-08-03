@@ -14,6 +14,22 @@ export function createViteConfig() {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        workbox: {
+          // The HEIC decoder is dynamically imported only when previewing an
+          // iPhone HEIC photo, so it shouldn't be eagerly precached for every
+          // visitor. Cache it lazily on first use instead.
+          globIgnores: ['**/heic-to-*.js'],
+          runtimeCaching: [
+            {
+              urlPattern: /\/assets\/heic-to-.*\.js$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'heic-to-decoder',
+                expiration: { maxEntries: 1 }
+              }
+            }
+          ]
+        },
         manifest: {
           name: 'El Baúl',
           short_name: 'El Baúl',

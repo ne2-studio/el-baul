@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/react';
-import { heicTo, isHeic } from 'heic-to';
 import { Chapter, Photo, PhotoDate } from '@/types';
 
 const LOOSE_PHOTOS_CHAPTER_ID = 'sueltas';
@@ -45,6 +44,7 @@ async function resolvePreviewSource(file: File, previewSource: Blob | MediaSourc
   if (!(previewSource instanceof Blob)) return previewSource;
 
   try {
+    const { heicTo, isHeic } = await import('heic-to');
     if (!(await isHeic(file))) return previewSource;
     return await heicTo({ blob: previewSource, type: 'image/jpeg', quality: 0.9 });
   } catch (error) {
