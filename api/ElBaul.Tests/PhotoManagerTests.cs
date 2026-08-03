@@ -27,7 +27,7 @@ public class PhotoManagerTests
         new(photoStorage ?? _photoStorage, _recuerdoRepository);
 
     private PhotoFileService CreatePhotoFileService(IPhotoStorage? photoStorage = null) =>
-        new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor);
+        new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer());
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PhotoManager>.Instance, _photoRepository, _chapterRepository, _baulRepository,

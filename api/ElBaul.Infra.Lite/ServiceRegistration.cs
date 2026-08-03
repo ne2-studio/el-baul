@@ -42,6 +42,7 @@ public static class ServiceRegistration
         services.AddSingleton<ISupportBackend, FakeSupportBackend>();
         services.AddSingleton<IEmailTemplateRenderer, FakeEmailTemplateRenderer>();
         services.AddSingleton<IPhotoDateExtractor, FakePhotoDateExtractor>();
+        services.AddSingleton<IPhotoImageNormalizer, FakePhotoImageNormalizer>();
 
         // These five are the real (ElBaul.Infra.Common) implementations, not fakes — none of
         // them touch Postgres/S3/Hangfire, and the whole point of sharing them is that

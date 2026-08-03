@@ -32,7 +32,7 @@ public class PersonaManagerTests
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance, _photoRepository),
             _photoPersonaTagRepository,
-            new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor),
+            new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer()),
             new PersonaDtoProjector(_photoRepository, _photoStorage));
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);

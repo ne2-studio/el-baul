@@ -23,6 +23,12 @@ RUN dotnet publish "ElBaul.Maintenance/ElBaul.Maintenance.csproj" -c Release -o 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 WORKDIR /app
+
+# imagemagick-heic pulls in libheif, giving `magick` HEIC/HEIF decode support; imagemagick-jpeg
+# is the JPEG delegate, needed separately since Alpine splits format support into subpackages.
+# Both used by HeicToJpegPhotoImageNormalizer to re-encode iPhone photos to JPEG at upload time.
+RUN apk add --no-cache imagemagick imagemagick-heic imagemagick-jpeg
+
 COPY --from=build /app/publish .
 
 # Expose port

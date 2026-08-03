@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react';
+import { heicTo, isHeic } from 'heic-to';
 import { Chapter, Photo, PhotoDate } from '@/types';
 
 const LOOSE_PHOTOS_CHAPTER_ID = 'sueltas';
@@ -28,12 +29,31 @@ export interface PhotoRouteContext {
   apiChapterId: string | null;
 }
 
-function createSelectedPhoto(file: File, previewSource: Blob | MediaSource = file): SelectedPhoto {
+async function createSelectedPhoto(file: File, previewSource: Blob | MediaSource = file): Promise<SelectedPhoto> {
   return {
     id: crypto.randomUUID(),
     file,
-    preview: URL.createObjectURL(previewSource),
+    preview: URL.createObjectURL(await resolvePreviewSource(file, previewSource)),
   };
+}
+
+// Most browsers/WebViews can't decode HEIC/HEIF (iPhone's default photo format) for an <img>,
+// so the pre-upload preview would otherwise render broken. Decodes it to a JPEG blob just for
+// that preview — the file actually uploaded is untouched; the server normalizes it for storage.
+// Falls back to the raw source on any failure so a bad/unsupported file never blocks the flow.
+async function resolvePreviewSource(file: File, previewSource: Blob | MediaSource): Promise<Blob | MediaSource> {
+  if (!(previewSource instanceof Blob)) return previewSource;
+
+  try {
+    if (!(await isHeic(file))) return previewSource;
+    return await heicTo({ blob: previewSource, type: 'image/jpeg', quality: 0.9 });
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { phase: 'heic-preview-decode' },
+      extra: { name: file.name, size: file.size, type: file.type },
+    });
+    return previewSource;
+  }
 }
 
 // Reads a just-picked file into memory right away and wraps it in a fresh, Blob-backed
@@ -44,7 +64,7 @@ export async function materializeSelectedPhoto(file: File): Promise<SelectedPhot
   try {
     const buffer = await file.arrayBuffer();
     const materialized = new File([buffer], file.name, { type: file.type, lastModified: file.lastModified });
-    return createSelectedPhoto(materialized);
+    return await createSelectedPhoto(materialized);
   } catch (error) {
     Sentry.captureException(error, {
       tags: { phase: 'read-file-on-select' },
@@ -54,7 +74,7 @@ export async function materializeSelectedPhoto(file: File): Promise<SelectedPhot
   }
 }
 
-export function materializeSharedPhoto(blob: Blob, name: string, mimeType: string): SelectedPhoto {
+export async function materializeSharedPhoto(blob: Blob, name: string, mimeType: string): Promise<SelectedPhoto> {
   const file = new File([blob], name, { type: mimeType });
   return createSelectedPhoto(file, blob);
 }

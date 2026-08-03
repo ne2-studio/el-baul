@@ -10,13 +10,20 @@ vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
 }));
 
+vi.mock('heic-to', () => ({
+  isHeic: vi.fn(() => Promise.resolve(false)),
+  heicTo: vi.fn(),
+}));
+
 import * as Sentry from '@sentry/react';
+import { heicTo, isHeic } from 'heic-to';
 
 const originalCreateObjectURL = URL.createObjectURL;
 
 describe('uploadFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isHeic).mockResolvedValue(false);
     vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'selected-1') });
     Object.defineProperty(URL, 'createObjectURL', {
       configurable: true,
@@ -72,10 +79,10 @@ describe('uploadFlow', () => {
     });
   });
 
-  it('materializes a native shared blob as a selected photo using the blob as preview source', () => {
+  it('materializes a native shared blob as a selected photo using the blob as preview source', async () => {
     const blob = new Blob(['shared-bytes'], { type: 'image/png' });
 
-    const selected = materializeSharedPhoto(blob, 'compartida.png', 'image/png');
+    const selected = await materializeSharedPhoto(blob, 'compartida.png', 'image/png');
 
     expect(selected).toEqual({
       id: 'selected-1',
@@ -85,6 +92,43 @@ describe('uploadFlow', () => {
     expect(selected.file.name).toBe('compartida.png');
     expect(selected.file.type).toBe('image/png');
     expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
+  });
+
+  it('decodes a HEIC file to JPEG before creating its preview blob URL', async () => {
+    const original = new File(['heic-bytes'], 'foto.heic', { type: 'image/heic' });
+    const jpegBlob = new Blob(['jpeg-bytes'], { type: 'image/jpeg' });
+    vi.mocked(isHeic).mockResolvedValue(true);
+    vi.mocked(heicTo).mockResolvedValue(jpegBlob);
+
+    const selected = await materializeSelectedPhoto(original);
+
+    expect(heicTo).toHaveBeenCalledWith({ blob: selected?.file, type: 'image/jpeg', quality: 0.9 });
+    expect(URL.createObjectURL).toHaveBeenCalledWith(jpegBlob);
+    // The uploaded payload itself stays untouched — only the local preview is re-encoded.
+    expect(selected?.file.type).toBe('image/heic');
+  });
+
+  it('does not attempt HEIC decoding for a non-HEIC file', async () => {
+    const original = new File(['image-bytes'], 'foto.jpg', { type: 'image/jpeg' });
+
+    await materializeSelectedPhoto(original);
+
+    expect(heicTo).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the raw blob preview when HEIC decoding fails', async () => {
+    const original = new File(['heic-bytes'], 'foto.heic', { type: 'image/heic' });
+    vi.mocked(isHeic).mockResolvedValue(true);
+    const decodeError = new Error('unsupported HEIC variant');
+    vi.mocked(heicTo).mockRejectedValue(decodeError);
+
+    const selected = await materializeSelectedPhoto(original);
+
+    expect(URL.createObjectURL).toHaveBeenCalledWith(selected?.file);
+    expect(Sentry.captureException).toHaveBeenCalledWith(decodeError, {
+      tags: { phase: 'heic-preview-decode' },
+      extra: { name: 'foto.heic', size: expect.any(Number), type: 'image/heic' },
+    });
   });
 
   it('resolves real-chapter route context in one operation', () => {

@@ -34,6 +34,7 @@ public static class ServiceRegistration
         services.AddScoped<EmailJobs>();
         services.AddScoped<IAppConfiguration, AppConfiguration>();
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();
+        services.AddScoped<IPhotoImageNormalizer, HeicToJpegPhotoImageNormalizer>();
 
         services.AddScoped<IIdGenerator, GuidIdGenerator>();
         services.AddScoped<IClock, SystemClock>();

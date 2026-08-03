@@ -8,7 +8,8 @@ public class PhotoFileService(
     ILogger<PhotoFileService> logger,
     IPhotoStorage photoStorage,
     IIdGenerator idGenerator,
-    IPhotoDateExtractor photoDateExtractor)
+    IPhotoDateExtractor photoDateExtractor,
+    IPhotoImageNormalizer photoImageNormalizer)
 {
     public async Task<StoredPhotoFile> SaveForUploadAsync(
         string userId,
@@ -17,16 +18,22 @@ public class PhotoFileService(
         Stream content,
         PhotoDate? explicitDate)
     {
-        var storageKey = StorageKey.ForPhoto(userId, idGenerator.NewId(), fileName);
-
         using var buffered = new MemoryStream();
         await content.CopyToAsync(buffered);
-        var sizeBytes = buffered.Length;
-        buffered.Position = 0;
-        var photoDate = ResolvePhotoDate(explicitDate, buffered);
         buffered.Position = 0;
 
-        await photoStorage.SaveAsync(storageKey, buffered, contentType);
+        // Runs before EXIF extraction so ResolvePhotoDate reads dates off web-safe (e.g.
+        // normalized-from-HEIC) bytes rather than a source format the date extractor may not
+        // understand.
+        var normalized = await photoImageNormalizer.NormalizeAsync(buffered, contentType, fileName);
+        var storageKey = StorageKey.ForPhoto(userId, idGenerator.NewId(), normalized.FileName);
+
+        var sizeBytes = normalized.Content.Length;
+        normalized.Content.Position = 0;
+        var photoDate = ResolvePhotoDate(explicitDate, normalized.Content);
+        normalized.Content.Position = 0;
+
+        await photoStorage.SaveAsync(storageKey, normalized.Content, normalized.ContentType);
 
         return new StoredPhotoFile(storageKey, photoDate, sizeBytes);
     }
