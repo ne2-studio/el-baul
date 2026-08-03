@@ -12,7 +12,6 @@ RUN dotnet restore "ElBaul.Api/ElBaul.Api.csproj"
 COPY . .
 
 # Build and publish
-RUN dotnet build "ElBaul.Api/ElBaul.Api.csproj" -c Release -o /app/build
 RUN dotnet publish "ElBaul.Api/ElBaul.Api.csproj" -c Release -o /app/publish
 
 # ElBaul.Maintenance is a separate executable (see docs/operations/maintenance-commands.md) —
