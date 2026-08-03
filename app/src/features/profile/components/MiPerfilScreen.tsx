@@ -13,7 +13,6 @@ interface UserProfile {
 interface MiPerfilScreenProps {
   onBack: () => void;
   userProfile: UserProfile;
-  onSignOut?: () => void;
 }
 
 export function MiPerfilScreen({ onBack, userProfile }: MiPerfilScreenProps) {
