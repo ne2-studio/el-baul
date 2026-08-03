@@ -47,14 +47,14 @@ export function BaulDetailRoute() {
             Baúles
           </button>
 
-          <div className="flex items-start justify-between">
-            <div>
-              <h2>{selectedBaul.name}</h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="truncate">{selectedBaul.name}</h2>
               <p className="text-muted-foreground text-sm mt-1">Creado el {formatDate(selectedBaul.createdAt)}</p>
             </div>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm shrink-0"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm shrink-0 self-start"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Eliminar baúl

@@ -87,13 +87,13 @@ export function UserDetailRoute() {
             Usuarios
           </button>
 
-          <div className="flex items-start justify-between">
-            <div>
-              <h2>{selectedUser.name || selectedUser.email}</h2>
-              <p className="text-muted-foreground text-sm mt-1">{selectedUser.email}</p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <h2 className="truncate">{selectedUser.name || selectedUser.email}</h2>
+              <p className="text-muted-foreground text-sm mt-1 truncate">{selectedUser.email}</p>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col items-start md:items-end gap-1">
                 <button
                   onClick={() => handleSendTest('welcome', api.emails.sendWelcomeTest)}
                   disabled={sending.welcome}
@@ -107,7 +107,7 @@ export function UserDetailRoute() {
                 )}
                 {results.welcome === 'error' && <p className="text-xs text-destructive">No se pudo enviar.</p>}
               </div>
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-col items-start md:items-end gap-1">
                 <button
                   onClick={() => handleSendTest('digest', api.emails.sendDigestTest)}
                   disabled={sending.digest}

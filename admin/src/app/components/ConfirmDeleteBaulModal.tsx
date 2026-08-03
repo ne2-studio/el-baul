@@ -24,7 +24,7 @@ export function ConfirmDeleteBaulModal({
   error = null,
 }: ConfirmDeleteBaulModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="absolute inset-0" onClick={isSubmitting ? undefined : onCancel} />
       <div className="relative bg-card w-full max-w-md rounded-2xl border border-border shadow-lg p-6">
         <h2 className="text-lg mb-1">Eliminar baúl</h2>
