@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { loadUserData } from '@/store/session';
+import { loadUserData } from '@/features/auth/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
 

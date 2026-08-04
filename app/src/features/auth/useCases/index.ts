@@ -1,9 +1,9 @@
 import { api } from '@/api';
 import { UserProfile } from '@/types';
-import { useAuthStore } from './useAuthStore';
-import { useBaulesStore } from './useBaulesStore';
-import { usePersonasStore } from './usePersonasStore';
-import { useRecuerdosStore } from './useRecuerdosStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 
 async function loadProfile(): Promise<UserProfile | null> {
   try {

@@ -9,7 +9,7 @@ vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(() => ({ isAuthenticated: true })),
 }));
 
-vi.mock('@/store/session', () => ({
+vi.mock('@/features/auth/useCases', () => ({
   loadUserData: vi.fn(),
 }));
 
@@ -18,7 +18,7 @@ vi.mock('@/features/memories/useCases', () => ({
 }));
 
 import { useAuth } from 'react-oidc-context';
-import { loadUserData } from '@/store/session';
+import { loadUserData } from '@/features/auth/useCases';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { useBaulScope } from './useBaulScope';
 

@@ -49,7 +49,7 @@ import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useBaulesStore } from '../store/useBaulesStore';
 import { useAppConfigStore } from '../store/useAppConfigStore';
-import { loadUserData, resetAllStores } from '../store/session';
+import { loadUserData, resetAllStores } from '@/features/auth/useCases';
 
 function App() {
   const navigate = useNavigate();
