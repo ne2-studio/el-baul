@@ -189,7 +189,7 @@ export function OnboardingCarousel({
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header con skip */}
-      <div className="flex justify-end px-6 pt-6">
+      <div className="flex justify-end px-6 pt-[calc(1.5rem_+_var(--safe-top))]">
         <Button variant="plain"
           onClick={onSkip}
           className="text-muted-foreground hover:text-foreground transition-colors text-sm"

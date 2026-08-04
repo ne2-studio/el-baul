@@ -113,7 +113,7 @@ export function BatchPhotoActionsBar({
   return (
     <>
       {active && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas) && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 pb-safe">
           {/* w-max en el contenedor interno evita que los botones se compriman: con muchas
               acciones el PageContainer hace scroll lateral en vez de aplastar la barra. */}
           <PageContainer className="py-3 overflow-x-auto scrollbar-hide">

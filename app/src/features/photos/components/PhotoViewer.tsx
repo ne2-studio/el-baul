@@ -251,7 +251,7 @@ export function PhotoViewer({
   return (
     <>
       <div
-        className="fixed left-0 right-0 bg-foreground/95 z-50 flex flex-col"
+        className="fixed left-0 right-0 bg-foreground/95 z-50 flex flex-col pt-safe pb-safe"
         style={{ top: viewportInset.top, height: viewportInset.height }}
       >
         <PhotoViewerHeader

@@ -13,7 +13,7 @@ interface PlanLimitModalProps {
 
 export function PlanLimitModal({ onClose, onUpgradePlan, baulesUsed, baulesLimit }: PlanLimitModalProps) {
   return (
-    <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end md:items-center md:justify-center p-4">
+    <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end pt-4 px-4 pb-[calc(1rem_+_var(--safe-bottom))] md:items-center md:justify-center md:pb-4">
       {/* Modal */}
       <div 
         className="bg-background w-full md:max-w-md rounded-3xl shadow-2xl animate-slide-up md:animate-none"

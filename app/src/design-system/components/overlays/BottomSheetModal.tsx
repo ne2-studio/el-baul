@@ -57,8 +57,8 @@ export function BottomSheetModal({
 
   return (
     <div
-      className={`fixed left-0 right-0 ${overlayBg} ${isLg ? 'z-50' : 'z-[60]'} flex items-end ${
-        isLg ? 'md:items-stretch md:justify-end' : desktopCentered ? 'md:items-center' : ''
+      className={`fixed left-0 right-0 ${overlayBg} ${isLg ? 'z-50' : 'z-[60]'} flex items-end pb-safe ${
+        isLg ? 'md:items-stretch md:justify-end md:pb-0' : desktopCentered ? 'md:items-center md:pb-0' : ''
       } justify-center`}
       style={{ top: viewportInset.top, height: viewportInset.height }}
     >

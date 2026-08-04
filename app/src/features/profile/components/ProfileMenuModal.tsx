@@ -24,7 +24,7 @@ export function ProfileMenuModal({
   isSigningOut = false,
 }: ProfileMenuModalProps) {
   return (
-    <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end md:items-center md:justify-center">
+    <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end pb-safe md:items-center md:justify-center md:pb-0">
       {/* Mobile: Bottom sheet, Desktop: Centered modal */}
       <div 
         className="bg-background w-full md:w-96 md:rounded-2xl rounded-t-3xl shadow-2xl animate-slide-up md:animate-none"

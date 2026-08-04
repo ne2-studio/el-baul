@@ -2,6 +2,25 @@
 @import './tailwind.css';
 @import './theme.css';
 
+/* Insets del notch/Dynamic Island y de la home indicator en iOS nativo (0 en cualquier otra
+   plataforma/navegador, incluida Android — ver docs/architecture/native-ios.md). Los
+   componentes de chrome fijo (headers, barras inferiores, hojas modales) los usan para no
+   pintar controles interactivos donde el sistema no deja tocarlos. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+.pt-safe {
+  padding-top: var(--safe-top);
+}
+
+.pb-safe {
+  padding-bottom: var(--safe-bottom);
+}
+
 /* El Baúl animations */
 @keyframes slide-up {
   from {

@@ -104,7 +104,7 @@ export function AiChatScreen({
       </PageContainer>
 
       {/* Input */}
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t border-border">
+      <div className="sticky bottom-0 pb-safe bg-background/80 backdrop-blur-sm border-t border-border">
         <PageContainer className="py-4 flex items-center gap-3">
           <Input
             type="text"

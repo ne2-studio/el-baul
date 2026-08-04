@@ -11,7 +11,7 @@ export const StickyHeader = React.forwardRef<HTMLDivElement, StickyHeaderProps>(
     return (
       <div
         ref={ref}
-        className={cn('sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border z-10', className)}
+        className={cn('sticky top-0 pt-safe bg-background/80 backdrop-blur-sm border-b border-border z-10', className)}
         {...props}
       >
         {children}

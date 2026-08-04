@@ -15,7 +15,7 @@ export function SimpleFAB({ label, icon, onClick, hidden }: SimpleFABProps) {
   return (
     <Button variant="plain"
       onClick={onClick}
-      className="fixed bottom-6 right-5 z-30 flex items-center gap-2.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 active:scale-95 hover:bg-primary/90 transition-all"
+      className="fixed bottom-[calc(1.5rem_+_var(--safe-bottom))] right-5 z-30 flex items-center gap-2.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 active:scale-95 hover:bg-primary/90 transition-all"
       style={{ boxShadow: '0 4px 20px rgba(198,123,92,0.4)' }}
     >
       {icon ?? <Icon icon={icons.add} aria-hidden />}
@@ -51,7 +51,7 @@ export function ExpandableFAB({ actions, hidden }: ExpandableFABProps) {
       )}
 
       {/* Action items — slide up above the FAB */}
-      <div className="fixed bottom-[5.5rem] right-5 z-30 flex flex-col items-end gap-3">
+      <div className="fixed bottom-[calc(5.5rem_+_var(--safe-bottom))] right-5 z-30 flex flex-col items-end gap-3">
         {open && actions.map((action, i) => (
           <Button variant="plain"
             key={i}
@@ -72,7 +72,7 @@ export function ExpandableFAB({ actions, hidden }: ExpandableFABProps) {
       {/* Main FAB button */}
       <Button variant="plain"
         onClick={() => setOpen(v => !v)}
-        className="fixed bottom-6 right-5 z-30 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center active:scale-95 hover:bg-primary/90 transition-all"
+        className="fixed bottom-[calc(1.5rem_+_var(--safe-bottom))] right-5 z-30 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center active:scale-95 hover:bg-primary/90 transition-all"
         style={{ boxShadow: '0 4px 20px rgba(198,123,92,0.4)' }}
         aria-label={open ? 'Cerrar menú' : 'Acciones'}
       >

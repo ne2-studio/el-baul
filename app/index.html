@@ -3,7 +3,10 @@
   <html lang="en">
     <head>
       <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <!-- viewport-fit=cover: en iOS nativo (Capacitor) el WebView pinta a pantalla completa,
+           por debajo del notch/Dynamic Island y de la home indicator, por defecto. Sin esto los
+           env(safe-area-inset-*) que usa src/styles/index.css siempre valdrían 0. -->
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
       <title>El Baúl</title>
       <meta name="theme-color" content="#ffffff" />
       <link rel="icon" href="/favicon.ico" sizes="any" />
