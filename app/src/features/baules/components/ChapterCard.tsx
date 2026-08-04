@@ -29,7 +29,7 @@ export function ChapterCard({ chapter, onClick }: ChapterCardProps) {
       <div className="p-4">
         <h3 className="font-medium mb-1 text-foreground">{chapter.name}</h3>
         {chapter.minDate && chapter.maxDate && (
-          <p className="text-[11px] text-primary/80 font-medium mb-0.5">
+          <p className="text-[13px] text-primary/80 font-medium mb-0.5">
             {formatDateRange(chapter.minDate, chapter.maxDate)}
           </p>
         )}
