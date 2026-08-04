@@ -25,7 +25,7 @@ describe('InviteFamilyModal', () => {
     const fetchLink = vi.fn().mockResolvedValue(link);
 
     render(
-      <InviteFamilyModal baulName="Familia Pérez" fetchLink={fetchLink} onRegenerate={vi.fn()} onCancel={vi.fn()} />
+      <InviteFamilyModal baulName="Familia Pérez" fetchLink={fetchLink} onRegenerate={vi.fn()} onCancel={vi.fn()} onToast={vi.fn()} />
     );
 
     expect(fetchLink).toHaveBeenCalledTimes(1);
@@ -39,7 +39,7 @@ describe('InviteFamilyModal', () => {
     // clobbered by userEvent's own stub before the click ever happens.
     vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
     render(
-      <InviteFamilyModal baulName="Familia Pérez" fetchLink={() => Promise.resolve(link)} onRegenerate={vi.fn()} onCancel={vi.fn()} />
+      <InviteFamilyModal baulName="Familia Pérez" fetchLink={() => Promise.resolve(link)} onRegenerate={vi.fn()} onCancel={vi.fn()} onToast={vi.fn()} />
     );
     await screen.findByText(link.url);
 
@@ -51,7 +51,7 @@ describe('InviteFamilyModal', () => {
   it('shares the link via the shared sharePublicLink util', async () => {
     const user = userEvent.setup();
     render(
-      <InviteFamilyModal baulName="Familia Pérez" fetchLink={() => Promise.resolve(link)} onRegenerate={vi.fn()} onCancel={vi.fn()} />
+      <InviteFamilyModal baulName="Familia Pérez" fetchLink={() => Promise.resolve(link)} onRegenerate={vi.fn()} onCancel={vi.fn()} onToast={vi.fn()} />
     );
     await screen.findByText(link.url);
 
@@ -70,7 +70,7 @@ describe('InviteFamilyModal', () => {
     const onRegenerate = vi.fn().mockResolvedValue(regenerated);
 
     render(
-      <InviteFamilyModal baulName="Familia Pérez" fetchLink={() => Promise.resolve(link)} onRegenerate={onRegenerate} onCancel={vi.fn()} />
+      <InviteFamilyModal baulName="Familia Pérez" fetchLink={() => Promise.resolve(link)} onRegenerate={onRegenerate} onCancel={vi.fn()} onToast={vi.fn()} />
     );
     await screen.findByText(link.url);
 

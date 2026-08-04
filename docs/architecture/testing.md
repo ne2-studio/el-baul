@@ -24,7 +24,7 @@ Run verification from the repository root through `./scripts/verify`:
 |---|---|
 | `./scripts/verify backend` | Restore, Release build, and Release `--no-build` tests for `api/ElBaul.slnx` |
 | `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/acceptance-tests` |
-| `./scripts/verify frontend` | Consumer app TypeScript check + Vitest unit/component tests + Storybook executable specs |
+| `./scripts/verify frontend` | Consumer app TypeScript check + ESLint + Vitest unit/component tests + Storybook executable specs |
 | `./scripts/verify admin` | Admin TypeScript check + Vitest |
 | `./scripts/verify frontend-acceptance` | Fresh consumer app image + fresh `el-baul-api-lite` image + `app/acceptance-tests` |
 | `./scripts/verify admin-acceptance` | Fresh admin image + fresh `el-baul-api-lite` image + `admin/acceptance-tests` |

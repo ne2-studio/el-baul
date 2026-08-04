@@ -16,6 +16,15 @@ export interface UploadItem {
   date?: PhotoDate;
 }
 
+// The upload use case's result shape lives here (not in useCases/) so presentational
+// components that render upload progress can type their props against it without an
+// import-boundary violation — see eslint.config.js's componentBoundaryRule.
+export interface UploadItemResult {
+  clientUploadId: string;
+  photo?: Photo;
+  error?: string;
+}
+
 export type PhotoUploadDestination =
   | { type: 'existing'; chapterId: string }
   | { type: 'new'; name: string }

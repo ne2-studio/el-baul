@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
-import { UploadItemResult } from '@/features/photos/useCases';
+import { UploadItemResult } from '@/features/photos/uploadFlow';
 
 type PhotoStatus = 'pending' | 'success' | 'error';
 

@@ -4,7 +4,7 @@ import { Button } from '@/design-system/components/actions/Button';
 import { Notice } from '@/design-system/components/feedback/Notice';
 import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
-import { useUIStore } from '@/store/uiStore';
+import type { ToastVariant } from '@/design-system/components/feedback/Toast';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { BaulInviteLink } from '@/types';
 
@@ -13,10 +13,10 @@ interface InviteFamilyModalProps {
   fetchLink: () => Promise<BaulInviteLink>;
   onRegenerate: () => Promise<BaulInviteLink>;
   onCancel: () => void;
+  onToast: (message: string, variant?: ToastVariant) => void;
 }
 
-export function InviteFamilyModal({ baulName, fetchLink, onRegenerate, onCancel }: InviteFamilyModalProps) {
-  const showToastMessage = useUIStore(state => state.showToastMessage);
+export function InviteFamilyModal({ baulName, fetchLink, onRegenerate, onCancel, onToast }: InviteFamilyModalProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -25,7 +25,7 @@ export function InviteFamilyModal({ baulName, fetchLink, onRegenerate, onCancel 
   useEffect(() => {
     fetchLink()
       .then((link) => setUrl(link.url))
-      .catch(() => showToastMessage('Error al cargar el enlace de invitación', 'error'))
+      .catch(() => onToast('Error al cargar el enlace de invitación', 'error'))
       .finally(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -33,8 +33,8 @@ export function InviteFamilyModal({ baulName, fetchLink, onRegenerate, onCancel 
   const handleCopy = () => {
     if (!url) return;
     navigator.clipboard.writeText(url).then(() => {
-      showToastMessage('Enlace copiado al portapapeles');
-    }).catch(() => showToastMessage('Error al copiar el enlace', 'error'));
+      onToast('Enlace copiado al portapapeles');
+    }).catch(() => onToast('Error al copiar el enlace', 'error'));
   };
 
   const handleShare = () => {
@@ -43,7 +43,7 @@ export function InviteFamilyModal({ baulName, fetchLink, onRegenerate, onCancel 
       title: `Invitación a ${baulName}`,
       text: `Te invito a unirte a mi baúl de recuerdos "${baulName}" en El Baúl.`,
       url,
-      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
+      onCopied: () => onToast('Enlace copiado al portapapeles'),
     });
   };
 
@@ -52,10 +52,10 @@ export function InviteFamilyModal({ baulName, fetchLink, onRegenerate, onCancel 
     try {
       const link = await onRegenerate();
       setUrl(link.url);
-      showToastMessage('Enlace regenerado');
+      onToast('Enlace regenerado');
       setConfirmingRegenerate(false);
     } catch {
-      showToastMessage('Error al regenerar el enlace', 'error');
+      onToast('Error al regenerar el enlace', 'error');
     } finally {
       setIsRegenerating(false);
     }

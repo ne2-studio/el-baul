@@ -56,7 +56,11 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
   (navigation and toasts stay in the Route), and renders a presentational component from the
   same feature's `components/` folder, with everything passed as props. `components/` is
   strictly presentational: no `react-router-dom`, `store/`, or `useCases/` imports there — those
-  belong in `routes/`. `memories` and `people` have no `routes/` at all: every one of their
+  belong in `routes/`. Enforced by ESLint (`eslint.config.js`'s `componentBoundaryRule`,
+  scoped to `features/*/components/**`), not just convention — a presentational component that
+  needs to trigger a toast, navigate, or read a store takes a prop callback from its Route
+  instead (see `InviteFamilyModal`'s `onToast` prop for the pattern). `memories` and `people`
+  have no `routes/` at all: every one of their
   components is consumed by another feature's Route (e.g. `RecuerdoInput` renders inside
   `baules`/`chapters`/`photos` routes), so they're pure component+useCase libraries with no URL
   of their own.
@@ -102,6 +106,14 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
   sourcemaps is a separate script that only CI runs, against the `dist/` extracted from the
   already-built Docker image.
 - **TypeScript**: `@/*` path alias maps to `app/src`.
+- **Linting**: ESLint (flat config, `app/eslint.config.js`) — `typescript-eslint` recommended,
+  `react-hooks` (`rules-of-hooks` + `exhaustive-deps`), `react-refresh`, and the
+  `components/` import-boundary rule described above. Deliberately narrow: it isn't the full
+  `recommended-latest` React Hooks ruleset (that pulls in React Compiler-oriented rules this
+  codebase hasn't been written against) or type-checked TS rules — widen it as a deliberate,
+  separate decision, not a side effect of an unrelated change. Run via `npm run lint`, part of
+  `./scripts/verify frontend`. Scoped away from `prototype/`, `ds-bundle/`, `public/` and other
+  `.gitignore`d local scaffolding.
 - **Runtime config**: env vars are read via `src/runtimeConfig.ts`'s `getEnv()`, which prefers a
   runtime override (`window.__ENV__`, injected into the built image from container env vars at
   container start) and falls back to the Vite build-time value when no override is set. This

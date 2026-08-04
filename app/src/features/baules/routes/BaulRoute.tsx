@@ -63,7 +63,7 @@ export const BaulRoute: React.FC = () => {
 
   const baulPermissions = getBaulPermissions(baul);
 
-  const handleSelectChapter = async (chapter: any) => {
+  const handleSelectChapter = async (chapter: { id: string }) => {
     if (!auth.isAuthenticated) return;
     setIsLoadingChapterPhotos(true);
     const result = await run(() => loadChapterPhotos(chapter.id), { errorMessage: 'Error al cargar las fotos' });
@@ -164,6 +164,7 @@ export const BaulRoute: React.FC = () => {
         onBack={() => navigate('/baules')}
         onSelectChapter={handleSelectChapter}
         onCreateChapter={() => setShowCreateChapterModal(true)}
+        onToast={showToastMessage}
         onOpenLoosePhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
         onUploadPhotos={(selectedPhotos) =>
           navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })

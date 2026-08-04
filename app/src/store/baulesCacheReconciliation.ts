@@ -7,13 +7,6 @@ export interface BaulesCacheState {
   loosePhotos: Record<string, Photo[]>;
 }
 
-export interface LooseChapterView {
-  id: null;
-  name: 'Fotos sueltas';
-  photoCount: number;
-  coverPhotoUrls: string[];
-}
-
 export function applyUploadedPhotos(
   state: BaulesCacheState,
   params: {
@@ -185,17 +178,6 @@ export function removePhotoFromAllCaches(
   );
 
   return { photos, loosePhotos };
-}
-
-export function makeLooseChapterView(loosePhotos: Array<{ thumbnailUrl: string }>): LooseChapterView | null {
-  if (loosePhotos.length === 0) return null;
-
-  return {
-    id: null,
-    name: 'Fotos sueltas',
-    photoCount: loosePhotos.length,
-    coverPhotoUrls: loosePhotos.slice(0, 9).map((photo) => photo.thumbnailUrl),
-  };
 }
 
 function fillBaulCover(baules: Baul[], baulId: string, thumbnailUrl?: string): Baul[] {

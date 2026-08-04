@@ -52,6 +52,7 @@ const sharedDefaults = {
   onBack: () => alert('onBack clicked'),
   onSelectChapter: (chapter: Chapter) => alert(`onSelectChapter: ${chapter.name}`),
   onCreateChapter: () => alert('onCreateChapter clicked'),
+  onToast: (message: string) => alert(message),
   onOpenLoosePhotos: () => alert('onOpenLoosePhotos clicked'),
   onCreatePersona: async () => true,
   onSelectPersona: (persona: Persona) => alert(`onSelectPersona: ${persona.nickname}`),

@@ -23,6 +23,7 @@ export const Default: Story = {
     fetchLink: () => Promise.resolve(fakeLink),
     onRegenerate: () => Promise.resolve(fakeLink),
     onCancel: () => alert('onCancel clicked'),
+    onToast: (message: string) => alert(message),
   },
 };
 

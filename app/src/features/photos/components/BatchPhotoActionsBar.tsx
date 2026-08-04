@@ -7,7 +7,6 @@ import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal'
 import { BatchOperationProgress, BatchOperationItem } from '@/design-system/components/feedback/BatchOperationProgress';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { Chapter, Photo, PhotoDate, Persona } from '@/types';
-import { Button } from '@/design-system/components/actions/Button';
 import { ActionBarButton } from '@/design-system/components/actions/ActionBarButton';
 
 interface BatchPhotoActionsBarProps {

@@ -21,7 +21,6 @@ interface UploadConfirmationScreenProps {
 }
 
 export function UploadConfirmationScreen({
-  baul,
   currentChapter,
   existingChapters,
   currentChapterId,

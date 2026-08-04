@@ -53,7 +53,7 @@ export function NativeShareHandler() {
       disposed = true;
       void listenerPromise.then((handle) => handle.remove()).catch((error) => Sentry.captureException(error));
     };
-  }, [auth.isAuthenticated, navigate, loadShare]);
+  }, [auth.isAuthenticated, navigate, showToastMessage]);
 
   return null;
 }

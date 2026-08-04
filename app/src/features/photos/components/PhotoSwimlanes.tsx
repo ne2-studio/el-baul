@@ -213,7 +213,11 @@ function PhotoCell({
         tabIndex={-1}
         onClick={(e) => {
           e.stopPropagation();
-          selectionMode ? onToggleSelect(photo.id) : onLongPress(photo.id);
+          if (selectionMode) {
+            onToggleSelect(photo.id);
+          } else {
+            onLongPress(photo.id);
+          }
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onPointerUp={(e) => e.stopPropagation()}

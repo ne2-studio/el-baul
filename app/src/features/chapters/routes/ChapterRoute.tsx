@@ -54,7 +54,7 @@ export const ChapterRoute: React.FC = () => {
     if (auth.isAuthenticated && baulId && chapterId) {
       loadChapterRecuerdos(baulId, chapterId);
     }
-  }, [auth.isAuthenticated, baulId, chapterId, loadChapterRecuerdos]);
+  }, [auth.isAuthenticated, baulId, chapterId]);
 
   const fetchChapterPhotos = async () => {
     if (!chapterId) return;

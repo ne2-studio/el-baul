@@ -28,8 +28,8 @@ export const AcceptBaulInviteRoute: React.FC = () => {
       setTimeout(() => {
         navigate(`/baules/${persona.baulId}`);
       }, 1500);
-    } catch (err: any) {
-      const message = err.message || 'Error al unirse al baúl';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al unirse al baúl';
       setError(message);
       showToastMessage(message, 'error');
       setIsJoining(false);

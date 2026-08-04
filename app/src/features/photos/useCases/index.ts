@@ -3,7 +3,7 @@ import { api } from '@/api';
 import { Photo, PhotoDate } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { PhotoUploadDestination, UploadItem } from '@/features/photos/uploadFlow';
+import { PhotoUploadDestination, UploadItem, UploadItemResult } from '@/features/photos/uploadFlow';
 import { createChapter } from '@/features/chapters/useCases';
 import {
   applyDeletedPhoto,
@@ -11,12 +11,6 @@ import {
   applyPhotoDateUpdate,
   applyUploadedPhotos,
 } from '@/store/baulesCacheReconciliation';
-
-export interface UploadItemResult {
-  clientUploadId: string;
-  photo?: Photo;
-  error?: string;
-}
 
 // Confirms the File/Blob still has readable bytes before we try to upload it. Files
 // picked a while ago (the chapter/date step can add a real delay before the user hits

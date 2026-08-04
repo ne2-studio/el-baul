@@ -224,6 +224,7 @@ frontend() {
   need npm
   ensure_npm_deps app
   run_in app npm run typecheck
+  run_in app npm run lint
   run_in app npm run build
 
   if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then

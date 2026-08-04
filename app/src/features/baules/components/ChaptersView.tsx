@@ -18,8 +18,9 @@ import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Baul, BaulInviteLink, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
-import { makeLooseChapterView } from '@/store/baulesCacheReconciliation';
+import type { ToastVariant } from '@/design-system/components/feedback/Toast';
 import { IconButton } from '@/design-system/components/actions/IconButton';
+import { makeLooseChapterView } from '@/features/baules/components/looseChapterView';
 import { ChapterCard } from '@/features/baules/components/ChapterCard';
 import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 import { CounterBadge } from '@/design-system/components/data-display/Badges';
@@ -36,6 +37,7 @@ interface LoosePhoto {
   thumbnailUrl: string;
 }
 
+
 interface ChaptersViewProps {
   baul: Baul;
   chapters: Chapter[];
@@ -48,6 +50,7 @@ interface ChaptersViewProps {
   onBack: () => void;
   onSelectChapter: (chapter: Chapter) => void;
   onCreateChapter: () => void;
+  onToast: (message: string, variant?: ToastVariant) => void;
   onOpenLoosePhotos?: () => void;
   onUploadPhotos?: (selectedPhotos: SelectedPhoto[]) => void;
   /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
@@ -84,12 +87,12 @@ export function ChaptersView({
   onBack,
   onSelectChapter,
   onCreateChapter,
+  onToast,
   onOpenLoosePhotos,
   onUploadPhotos,
   onPhotosDropped,
   onCreatePersona,
   onSelectPersona,
-  onCreateRecuerdo,
   onOpenChat,
   onOpenChapterFromRecuerdo,
   onOpenPhotoFromRecuerdo,
@@ -358,6 +361,7 @@ export function ChaptersView({
           fetchLink={onGetInviteLink}
           onRegenerate={onRegenerateInviteLink}
           onCancel={() => setShowInviteFamilyModal(false)}
+          onToast={onToast}
         />
       )}
 

@@ -7,7 +7,7 @@ const fixedNow = new Date('2024-08-20T12:00:00.000Z').valueOf();
 const OriginalDate = Date;
 
 class FixedDate extends OriginalDate {
-  constructor(...args: any[]) {
+  constructor(...args: ConstructorParameters<typeof OriginalDate>) {
     super(...(args.length === 0 ? [fixedNow] : args));
   }
 

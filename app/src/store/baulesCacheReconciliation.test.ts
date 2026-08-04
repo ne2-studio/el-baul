@@ -6,7 +6,6 @@ import {
   applyMovedPhotos,
   applyPhotoDateUpdate,
   applyUploadedPhotos,
-  makeLooseChapterView,
   removePhotoFromAllCaches,
   type BaulesCacheState,
 } from './baulesCacheReconciliation';
@@ -215,17 +214,5 @@ describe('baules cache reconciliation', () => {
 
     expect(next.photos).toEqual({ [chapterId]: [kept], other: [] });
     expect(next.loosePhotos).toEqual({ [baulId]: [], otherBaul: [kept] });
-  });
-
-  it('makeLooseChapterView builds the virtual chapter model only when photos exist', () => {
-    expect(makeLooseChapterView([])).toBeNull();
-
-    const photos = Array.from({ length: 10 }, (_, index) => newPhoto(`photo-${index}`));
-    expect(makeLooseChapterView(photos)).toEqual({
-      id: null,
-      name: 'Fotos sueltas',
-      photoCount: 10,
-      coverPhotoUrls: photos.slice(0, 9).map((photo) => photo.thumbnailUrl),
-    });
   });
 });
