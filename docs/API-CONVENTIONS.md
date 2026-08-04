@@ -111,3 +111,8 @@ an intentional OpenAPI change, regenerate them with:
 ```bash
 ./scripts/openapi generate-types
 ```
+
+`schema.ts` runs several thousand lines and is never hand-edited — don't `Read` it in full.
+Every hand-written call site (`api.ts`, `admin`'s equivalent) only plucks the specific DTO
+types it needs by name (e.g. `components['schemas']['PhotoDto']`); grep for the DTO/type name
+you need instead.
