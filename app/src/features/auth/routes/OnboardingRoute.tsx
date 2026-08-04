@@ -30,7 +30,7 @@ export const OnboardingRoute: React.FC = () => {
       };
 
   const goToNextStep = () => {
-    const nextTarget = redirectTarget || '/baules/nuevo?onboarding=true';
+    const nextTarget = redirectTarget || '/baules/nuevo';
 
     // Only the signup path counts as "seen" for good — the invite-preview detour is an
     // optional, repeatable digression, not the once-ever app intro.

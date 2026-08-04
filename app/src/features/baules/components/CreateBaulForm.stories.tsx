@@ -17,14 +17,7 @@ export const Default: Story = {
   args: {
     onBack: () => alert('onBack clicked'),
     onSubmit: () => alert('onSubmit clicked'),
-  },
-};
-
-export const Onboarding: Story = {
-  args: {
-    onBack: () => alert('onBack clicked'),
-    onSubmit: () => alert('onSubmit clicked'),
-    isOnboarding: true,
+    initialName: 'Familia Jimena',
   },
 };
 
@@ -32,6 +25,7 @@ export const Submitting: Story = {
   args: {
     onBack: () => alert('onBack clicked'),
     onSubmit: () => alert('onSubmit clicked'),
+    initialName: 'Familia Jimena',
     isSubmitting: true,
   },
 };

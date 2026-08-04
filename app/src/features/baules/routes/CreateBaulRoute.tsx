@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CreateBaulForm } from '@/features/baules/components/CreateBaulForm';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
@@ -8,22 +8,24 @@ import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
+function suggestBaulName(userFullName: string): string {
+  const lastName = userFullName.trim().split(/\s+/).pop();
+  return lastName ? `Familia ${lastName}` : 'Nuestra Familia';
+}
+
 export const CreateBaulRoute: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const auth = useAuth();
-  const { setSubscription } = useAuthStore();
+  const { userProfile, setSubscription } = useAuthStore();
   const { baules } = useBaulesStore();
   const { showToastMessage } = useUIStore();
   const { run, isPending } = useAsyncAction();
 
-  const isOnboarding = new URLSearchParams(location.search).get('onboarding') === 'true';
-
-  const handleCreateBaul = async (name: string, description: string) => {
+  const handleCreateBaul = async (name: string) => {
     if (!auth.isAuthenticated) return;
 
     const isFirstBaul = baules.length === 0;
-    const result = await run(() => storeCreateBaul(name, description), {
+    const result = await run(() => storeCreateBaul(name, ''), {
       errorMessage: 'Error al crear el baúl',
     });
     if (!result.ok) return;
@@ -46,7 +48,7 @@ export const CreateBaulRoute: React.FC = () => {
     <CreateBaulForm
       onBack={() => navigate('/baules')}
       onSubmit={handleCreateBaul}
-      isOnboarding={isOnboarding}
+      initialName={suggestBaulName(userProfile.name)}
       isSubmitting={isPending()}
     />
   );

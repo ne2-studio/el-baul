@@ -135,7 +135,7 @@ function App() {
         // hasSeenOnboarding is null while unloaded/on a failed profile fetch — treated as
         // "not seen" so the carousel shows rather than risk silently skipping it forever.
         const hasSeenOnboarding = useAuthStore.getState().hasSeenOnboarding;
-        navigate(hasSeenOnboarding ? '/baules/nuevo?onboarding=true' : '/onboarding');
+        navigate(hasSeenOnboarding ? '/baules/nuevo' : '/onboarding');
       }
     } else {
       // /callback is excluded here: CallbackRoute owns navigation away from it, reading
