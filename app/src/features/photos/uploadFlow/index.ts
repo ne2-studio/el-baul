@@ -27,7 +27,6 @@ export interface UploadItemResult {
 
 export type PhotoUploadDestination =
   | { type: 'existing'; chapterId: string }
-  | { type: 'new'; name: string }
   | { type: 'none' };
 
 export interface PhotoRouteContext {
@@ -86,6 +85,14 @@ export async function materializeSelectedPhoto(file: File): Promise<SelectedPhot
 export async function materializeSharedPhoto(blob: Blob, name: string, mimeType: string): Promise<SelectedPhoto> {
   const file = new File([blob], name, { type: mimeType });
   return createSelectedPhoto(file, blob);
+}
+
+// Shared by the <input type=file> change handler and desktop drag-and-drop: materializes
+// every file and separates out the ones that failed to read instead of silently dropping them.
+export async function materializeFileList(files: File[]): Promise<{ selectedPhotos: SelectedPhoto[]; droppedCount: number }> {
+  const materialized = await Promise.all(files.map(materializeSelectedPhoto));
+  const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
+  return { selectedPhotos, droppedCount: materialized.length - selectedPhotos.length };
 }
 
 function photoChapterPath(baulId: string, chapterId: string | null | undefined): string {

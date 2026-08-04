@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useElementHeight } from '@/hooks/useElementHeight';
-import { useFileInputSelection } from '@/hooks/useFileInputSelection';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
@@ -10,7 +9,6 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { RecuerdosFeed } from '@/features/memories/components/RecuerdosFeed';
@@ -31,10 +29,7 @@ interface PhotosViewProps {
   photos: Photo[];
   onBack: () => void;
   onSelectPhoto: (photo: Photo) => void;
-  onAddPhotos: (selectedPhotos: SelectedPhoto[]) => void;
-  /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
-   * Android caducó) y por tanto se ha excluido en silencio de la selección. */
-  onPhotosDropped?: (count: number) => void;
+  onUploadPhotos: () => void;
   allChapters?: Chapter[];
   onBatchMove?: (
     photoIds: string[],
@@ -57,14 +52,13 @@ interface PhotosViewProps {
 }
 
 export function PhotosView({
-  chapter, photos, onBack, onSelectPhoto, onAddPhotos, onPhotosDropped, allChapters = [], onBatchMove, onBatchChangeDate,
+  chapter, photos, onBack, onSelectPhoto, onUploadPhotos, allChapters = [], onBatchMove, onBatchChangeDate,
   onBatchCreateChapter, personas = [], onBatchTagPersonas, onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos,
   onSetChapterCover, recuerdos = [], onAddRecuerdo, onUserClick, onShareRecuerdo, onEditRecuerdo,
 }: PhotosViewProps) {
   const hasRecuerdosTab = !!onAddRecuerdo;
   const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
   const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos'>('fotos');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
@@ -128,8 +122,6 @@ export function PhotosView({
 
   const moveableChapters = allChapters.filter(a => a.id !== chapter.id);
 
-  const handleFileSelect = useFileInputSelection(onAddPhotos, onPhotosDropped);
-
   return (
     <div className="min-h-screen bg-background">
       <PageHeader
@@ -189,15 +181,6 @@ export function PhotosView({
           )}
         </Hero>
       )}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={handleFileSelect}
-        className="hidden"
-      />
 
       {/* Tabbar solo cuando el llamante soporta un feed de Recuerdos (capítulos reales, no
           el de fotos sueltas virtual) — sin él no hay nada entre lo que hacer swipe. */}
@@ -280,7 +263,7 @@ export function PhotosView({
       <SimpleFAB
         label="Subir fotos"
         icon={<Plus className="w-5 h-5" />}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={onUploadPhotos}
         hidden={activeTab !== 'fotos' || selectionMode}
       />
 

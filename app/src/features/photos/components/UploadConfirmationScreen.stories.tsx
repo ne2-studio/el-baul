@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
-import { Baul, Chapter } from '@/types';
+import { Chapter } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
@@ -16,12 +16,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const baul: Baul = { id: 'b1', name: 'Familia García', chapterCount: 3, lastUpdated: 'hace 2 días' };
 const currentChapter: Chapter = { id: 'c1', name: 'Verano 2024', photoCount: 12, lastUpdated: 'hace 1 día', recuerdoCount: 0, undatedPhotoCount: 0 };
-const existingChapters: Chapter[] = [
-  currentChapter,
-  { id: 'c2', name: 'Navidad', photoCount: 30, lastUpdated: 'hace 2 días', recuerdoCount: 0, undatedPhotoCount: 0 },
-];
 
 const selectedPhotos = [
   { id: '1', file: new File([], 'photo1.jpg'), preview: storybookPhotos.beach },
@@ -29,12 +24,24 @@ const selectedPhotos = [
   { id: '3', file: new File([], 'photo3.jpg'), preview: storybookPhotos.sunset },
 ];
 
-export const IntoOpenChapter: Story = {
+export const Empty: Story = {
   args: {
-    baul,
     currentChapter,
-    existingChapters,
-    currentChapterId: currentChapter.id,
+    selectedPhotos: [],
+    onBack: fn(),
+    onUpload: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText('Sube tus fotos')).toBeInTheDocument();
+    await expect(canvas.queryByRole('button', { name: 'Guardar recuerdos' })).not.toBeInTheDocument();
+  },
+};
+
+export const WithSelectedPhotos: Story = {
+  args: {
+    currentChapter,
     selectedPhotos,
     onBack: fn(),
     onUpload: fn(),
@@ -50,37 +57,23 @@ export const IntoOpenChapter: Story = {
     await expect(canvas.getByText('2 fotos seleccionadas')).toBeInTheDocument();
 
     await userEvent.click(canvas.getByRole('button', { name: 'Guardar recuerdos' }));
-    await expect(args.onUpload).toHaveBeenCalledWith(
-      [selectedPhotos[1], selectedPhotos[2]],
-      { type: 'existing', chapterId: currentChapter.id },
-      null
-    );
+    await expect(args.onUpload).toHaveBeenCalledWith([selectedPhotos[1], selectedPhotos[2]]);
   },
 };
 
-export const ChoosingChapter: Story = {
+export const RemovingAllPhotosReturnsToEmptyState: Story = {
   args: {
-    ...IntoOpenChapter.args,
-    currentChapterId: undefined,
+    currentChapter,
+    selectedPhotos: [selectedPhotos[0]],
+    onBack: fn(),
+    onUpload: fn(),
   },
-  play: async ({ args, canvasElement }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const saveButton = canvas.getByRole('button', { name: 'Guardar recuerdos' });
 
-    await expect(saveButton).toBeDisabled();
-    await userEvent.click(canvas.getByRole('button', { name: 'Crear un capítulo nuevo' }));
-    const nameInput = canvas.getByPlaceholderText('Nombre del capítulo');
-    await expect(nameInput).toHaveFocus();
-    await expect(saveButton).toBeDisabled();
+    await userEvent.hover(canvas.getAllByAltText('Preview')[0]);
+    await userEvent.click(canvas.getByRole('button', { name: 'Quitar foto' }));
 
-    await userEvent.type(nameInput, 'Cumpleaños de Carmen');
-    await expect(saveButton).toBeEnabled();
-
-    await userEvent.click(saveButton);
-    await expect(args.onUpload).toHaveBeenCalledWith(
-      selectedPhotos,
-      { type: 'new', name: 'Cumpleaños de Carmen' },
-      null
-    );
+    await expect(canvas.getByText('Sube tus fotos')).toBeInTheDocument();
   },
 };

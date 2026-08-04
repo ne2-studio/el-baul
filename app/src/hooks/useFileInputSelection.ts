@@ -1,5 +1,5 @@
 import React from 'react';
-import { SelectedPhoto, materializeSelectedPhoto } from '@/features/photos/uploadFlow';
+import { SelectedPhoto, materializeFileList } from '@/features/photos/uploadFlow';
 
 /**
  * Handles a <input type="file"> onChange: materializes the selected files into
@@ -16,11 +16,8 @@ export function useFileInputSelection(
     const fileArray = Array.from(files);
     e.target.value = ''; // must run after snapshotting — files is a live FileList tied to the input
 
-    const materialized = await Promise.all(fileArray.map(materializeSelectedPhoto));
-    const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
-    if (materialized.length > selectedPhotos.length) {
-      onPhotosDropped?.(materialized.length - selectedPhotos.length);
-    }
+    const { selectedPhotos, droppedCount } = await materializeFileList(fileArray);
+    if (droppedCount > 0) onPhotosDropped?.(droppedCount);
     if (selectedPhotos.length === 0) return;
 
     onSelected(selectedPhotos);

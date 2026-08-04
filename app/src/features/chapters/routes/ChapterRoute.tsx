@@ -24,7 +24,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
-import { resolvePhotoRouteContext, SelectedPhoto } from '@/features/photos/uploadFlow';
+import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 
@@ -230,12 +230,7 @@ export const ChapterRoute: React.FC = () => {
       allChapters={chapters || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(basePath, photo.id))}
-      onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>
-        navigate(`${basePath}/confirmar`, { state: { selectedPhotos } })
-      }
-      onPhotosDropped={(count) =>
-        showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`, 'error')
-      }
+      onUploadPhotos={() => navigate(`${basePath}/confirmar`)}
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
       onBatchCreateChapter={chapterId ? undefined : handleBatchCreateChapter}

@@ -42,7 +42,7 @@ const sharedDefaults = {
   photos,
   onBack: () => alert('onBack clicked'),
   onSelectPhoto: (photo: Photo) => alert(`onSelectPhoto: ${photo.id}`),
-  onAddPhotos: () => alert('onAddPhotos clicked'),
+  onUploadPhotos: () => alert('onUploadPhotos clicked'),
   onUpdateChapterInfo: async () => true,
   onDeleteChapter: async () => true,
   onAddRecuerdo: (text: string) => alert(`onAddRecuerdo: ${text}`),

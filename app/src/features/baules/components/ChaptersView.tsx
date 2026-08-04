@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useElementHeight } from '@/hooks/useElementHeight';
-import { useFileInputSelection } from '@/hooks/useFileInputSelection';
 import { Card } from '@/design-system/components/data-display/Card';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { ExpandableFAB, SimpleFAB } from '@/design-system/components/actions/FAB';
@@ -14,7 +13,6 @@ import { PersonasTab } from '@/features/people/components/PersonasTab';
 import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2, Link2 } from 'lucide-react';
-import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { Baul, BaulInviteLink, Chapter, Photo, Recuerdo, Persona } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
@@ -52,10 +50,7 @@ interface ChaptersViewProps {
   onCreateChapter: () => void;
   onToast: (message: string, variant?: ToastVariant) => void;
   onOpenLoosePhotos?: () => void;
-  onUploadPhotos?: (selectedPhotos: SelectedPhoto[]) => void;
-  /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
-   * Android caducó) y por tanto se ha excluido en silencio de la selección. */
-  onPhotosDropped?: (count: number) => void;
+  onUploadPhotos?: () => void;
   onCreatePersona?: (nickname: string) => Promise<boolean>;
   onSelectPersona?: (persona: Persona) => void;
   onCreateRecuerdo?: (text: string) => Promise<boolean>;
@@ -90,7 +85,6 @@ export function ChaptersView({
   onToast,
   onOpenLoosePhotos,
   onUploadPhotos,
-  onPhotosDropped,
   onCreatePersona,
   onSelectPersona,
   onOpenChat,
@@ -108,7 +102,6 @@ export function ChaptersView({
   onGetInviteLink,
   onRegenerateInviteLink,
 }: ChaptersViewProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
@@ -132,8 +125,6 @@ export function ChaptersView({
     setIsSavingBaulInfo(false);
     if (ok) setShowEditModal(false);
   };
-
-  const handleFileSelect = useFileInputSelection((photos) => onUploadPhotos?.(photos), onPhotosDropped);
 
   return (
     <div className="min-h-screen bg-background">
@@ -212,15 +203,6 @@ export function ChaptersView({
           <p className="text-sm text-white/40 mt-1.5 italic">Sin descripción · edita desde el menú ···</p>
         )}
       </Hero>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={handleFileSelect}
-        className="hidden"
-      />
 
       {/* top es la altura medida del header, no un valor fijo — iOS/WKWebView y
           Android/Chrome WebView renderizan el mismo header a alturas ligeramente distintas. */}
@@ -325,7 +307,7 @@ export function ChaptersView({
             ...(onUploadPhotos ? [{
               label: 'Subir fotos',
               icon: <Upload className="w-4 h-4" />,
-              onClick: () => fileInputRef.current?.click(),
+              onClick: onUploadPhotos,
             }] : []),
           ]}
         />

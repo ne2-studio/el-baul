@@ -4,7 +4,6 @@ import { Photo, PhotoDate } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { PhotoUploadDestination, UploadItem, UploadItemResult } from '@/features/photos/uploadFlow';
-import { createChapter } from '@/features/chapters/useCases';
 import {
   applyDeletedPhoto,
   applyMovedPhotos,
@@ -142,24 +141,7 @@ export async function uploadPhotosWithChapter(
   selectedPhotos: UploadItem[],
   onItemSettled?: (result: UploadItemResult) => void
 ): Promise<{ results: UploadItemResult[]; chapterId: string | null }> {
-  let targetChapterId = initialTargetChapterId(chapter);
-
-  if (chapter.type === 'new') {
-    try {
-      const newChapter = await createChapter(baulId, chapter.name);
-      targetChapterId = newChapter.id;
-    } catch (error) {
-      Sentry.captureException(error);
-      const message = error instanceof Error ? error.message : 'No se pudo crear el capítulo';
-      const results = selectedPhotos.map((p) => {
-        const result: UploadItemResult = { clientUploadId: p.clientUploadId, error: message };
-        onItemSettled?.(result);
-        return result;
-      });
-      return { results, chapterId: null };
-    }
-  }
-
+  const targetChapterId = initialTargetChapterId(chapter);
   const results = await uploadPhotos(baulId, targetChapterId, selectedPhotos, onItemSettled);
 
   return { results, chapterId: targetChapterId };

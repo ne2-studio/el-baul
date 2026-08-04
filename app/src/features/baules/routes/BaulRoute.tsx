@@ -166,12 +166,7 @@ export const BaulRoute: React.FC = () => {
         onCreateChapter={() => setShowCreateChapterModal(true)}
         onToast={showToastMessage}
         onOpenLoosePhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
-        onUploadPhotos={(selectedPhotos) =>
-          navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`, { state: { selectedPhotos } })
-        }
-        onPhotosDropped={(count) =>
-          showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`, 'error')
-        }
+        onUploadPhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`)}
         onCreatePersona={handleCreatePersona}
         onSelectPersona={(persona) =>
           navigate(`/baules/${baul.id}/personas/${persona.id}`, { state: { returnTab: 'personas' } })
