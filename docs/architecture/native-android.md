@@ -13,12 +13,19 @@ that calls them) — not before:
   "share photos into El Baúl" intent; `features/sharing/native/NativeShareHandler.tsx` wires the
   two together (mounted once in `App.tsx`). The orchestration itself (`loadShare`/`clear`) lives
   in `features/sharing/useCases`, per [`frontend.md`](frontend.md)'s use-case layer.
-- `main.tsx` special-cases the OIDC redirect on native: launch-URL deep links are rewritten to
-  the in-app `/callback` route, because `react-oidc-context` expects `code`/`state` on the page
-  URL, not an OS-level deep link. Sign-out reuses the same deep link as `post_logout_redirect_uri`
-  (no second scheme/intent-filter) — `CallbackRoute` tells the two apart by whether `code` is
-  present in the query string.
+- `main.tsx` special-cases the OIDC redirect on native — see [`native-ios.md`](native-ios.md) for
+  why this is shared logic rather than an Android-only concern, and for a platform asymmetry in
+  the underlying Capacitor plugin that shaped how it's written: `react-oidc-context` expects
+  `code`/`state` on `window.location`, which never happens on native (`studio.ne2.elbaul://` isn't
+  a page navigation). Instead, `main.tsx` feeds the deep link's URL directly into a `UserManager`
+  instance it constructs and hands to `<AuthProvider userManager={...}>`, calling
+  `userManager.signinCallback(url)` itself — no navigation, no page reload. Sign-out reuses the
+  same deep link as `post_logout_redirect_uri` (no second scheme/intent-filter); since
+  `signoutRedirect()` clears the local user before navigating away, the deep-link handler only
+  needs to tell the two apart (by whether `code`/`error` is present) to know when there's nothing
+  left to do.
 - `npm run android:build` (in `app/`) builds with a separate `.env.android` and runs
   `cap sync android`.
 
-See [`deployment.md`](deployment.md) for the Android CI workflow.
+See [`native-ios.md`](native-ios.md) for the iOS counterpart and [`deployment.md`](deployment.md)
+for the Android CI workflow.
