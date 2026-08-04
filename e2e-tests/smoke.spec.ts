@@ -22,14 +22,14 @@ test('user can log in with Google (fake-oidc) and reach the El Baúl home screen
   // Don't just wait for localhost:3000/** — that glob also matches the transient
   // /callback screen ("Preparando tus baúles…") the SPA shows while it's still
   // exchanging the code for a token, which raced the localStorage read below.
-  await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/empty', {
+  await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/baules/nuevo', {
     timeout: 15_000,
   });
 
-  // A freshly-seeded fake-oidc admin user has zero baúles, which routes to a
-  // completely different empty-state screen instead of the real home. Seed one via the
-  // API (same token-extraction technique the `run` skill documents) so this test
-  // deterministically exercises the actual home screen, not the empty state.
+  // A freshly-seeded fake-oidc admin user has zero baúles, which routes straight to the
+  // create-baúl screen instead of the real home. Seed one via the API (same
+  // token-extraction technique the `run` skill documents) so this test deterministically
+  // exercises the actual home screen, not the create-baúl onboarding screen.
   const accessToken = await page.evaluate(() => {
     const raw = localStorage.getItem('oidc.user:http://localhost:5000:el-baul-app');
     return raw ? JSON.parse(raw).access_token : null;

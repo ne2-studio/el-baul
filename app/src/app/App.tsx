@@ -19,7 +19,6 @@ import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
 import { WelcomeRoute } from '../features/auth/routes/WelcomeRoute';
 import { CallbackRoute } from '../features/auth/routes/CallbackRoute';
 import { OnboardingRoute } from '../features/auth/routes/OnboardingRoute';
-import { EmptyBaulesRoute } from '../features/baules/routes/EmptyBaulesRoute';
 import { BaulesListRoute } from '../features/baules/routes/BaulesListRoute';
 import { CreateBaulRoute } from '../features/baules/routes/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/routes/BaulRoute';
@@ -125,18 +124,23 @@ function App() {
       baulesUsed: custodianBaules.length
     }));
 
-    // Navigate to appropriate screen
+    // Navigate to appropriate screen. Reads window.location rather than the `location` from
+    // useLocation(): this callback is async, so by the time it resolves, that closure is
+    // stale — e.g. after a fresh OIDC login, CallbackRoute's own navigate('/baules') has
+    // already run by now, but the closed-over `location` here would still read '/callback'
+    // and neither branch below would ever match. window.location always reflects where the
+    // browser actually is right now (BrowserRouter keeps it in sync via the History API).
     if (currentBaules.length === 0) {
-      if (location.pathname === '/baules') {
-        navigate('/empty');
+      if (window.location.pathname === '/baules') {
+        navigate('/baules/nuevo?onboarding=true');
       }
     } else {
       // /callback is excluded here: CallbackRoute owns navigation away from it, reading
       // redirectTo from the OIDC state (not a query param, unlike this check).
-      const params = new URLSearchParams(location.search);
+      const params = new URLSearchParams(window.location.search);
       const hasRedirectTo = params.has('redirectTo');
 
-      if (!hasRedirectTo && (location.pathname === '/' || location.pathname === '/empty')) {
+      if (!hasRedirectTo && window.location.pathname === '/') {
         navigate('/baules', { replace: true });
       }
     }
@@ -191,11 +195,6 @@ function App() {
         <Route path="/onboarding" element={<OnboardingRoute />} />
 
         {/* Protected Routes */}
-        <Route path="/empty" element={
-          <ProtectedRoute>
-            <EmptyBaulesRoute />
-          </ProtectedRoute>
-        } />
         <Route path="/baules" element={
           <ProtectedRoute>
             <BaulesListRoute />

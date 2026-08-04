@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
+import { CreateBaulForm } from '@/features/baules/components/CreateBaulForm';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { createBaul as storeCreateBaul } from '@/features/baules/useCases';
@@ -33,7 +33,7 @@ export const CreateBaulRoute: React.FC = () => {
       baulesUsed: prev.baulesUsed + 1
     }));
 
-    navigate(`/baules/${result.value.id}`);
+    navigate(`/baules/${result.value.id}/fotos-sueltas/confirmar`);
 
     if (isFirstBaul) {
       setTimeout(() => {
@@ -43,9 +43,9 @@ export const CreateBaulRoute: React.FC = () => {
   };
 
   return (
-    <CreateBaulModal
-      onCancel={() => navigate('/baules')}
-      onSave={handleCreateBaul}
+    <CreateBaulForm
+      onBack={() => navigate('/baules')}
+      onSubmit={handleCreateBaul}
       isOnboarding={isOnboarding}
       isSubmitting={isPending()}
     />

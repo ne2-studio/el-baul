@@ -18,9 +18,9 @@ test('user can log in with Google (fake-oidc) and reach the El Baúl home screen
 
   const accessToken = await loginAs(page, 'Admin User');
 
-  // A freshly-seeded fake-oidc admin user has zero baúles, which routes to a completely
-  // different empty-state screen instead of the real home. Seed one via the API so this test
-  // deterministically exercises the actual home screen, not the empty state.
+  // A freshly-seeded fake-oidc admin user has zero baúles, which routes straight to the
+  // create-baúl screen instead of the real home. Seed one via the API so this test
+  // deterministically exercises the actual home screen, not the create-baúl onboarding screen.
   const baulName = `Login test baúl ${Date.now()}`;
   await createBaulViaApi(page, accessToken, baulName);
 

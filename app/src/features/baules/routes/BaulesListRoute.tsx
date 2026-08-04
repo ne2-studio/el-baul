@@ -2,30 +2,26 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BaulesList } from '@/features/baules/components/BaulesList';
 import { BaulesLoadingScreen } from '@/features/baules/components/BaulesLoadingScreen';
-import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
-import { createBaul as storeCreateBaul, loadChapters as storeLoadChapters } from '@/features/baules/useCases';
+import { loadChapters as storeLoadChapters } from '@/features/baules/useCases';
 import { loadLoosePhotos } from '@/features/photos/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { Baul } from '@/types';
 import { getBaulPermissions } from '@/utils/roleUtils';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 export const BaulesListRoute: React.FC = () => {
   const navigate = useNavigate();
   const [isLoadingChapters, setIsLoadingChapters] = useState(false);
-  const [showCreateBaulModal, setShowCreateBaulModal] = useState(false);
   const auth = useAuth();
   const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
-  const { run, isPending } = useAsyncAction();
 
   const { baules, isLoading } = useBaulesStore();
-  const { subscription, setSubscription } = useAuthStore();
+  const { subscription } = useAuthStore();
 
   const {
     showToastMessage,
@@ -63,32 +59,7 @@ export const BaulesListRoute: React.FC = () => {
         return;
       }
     }
-    setShowCreateBaulModal(true);
-  };
-
-  const handleCreateBaul = async (name: string, description: string) => {
-    if (!auth.isAuthenticated) return;
-
-    const isFirstBaul = baules.length === 0;
-    const result = await run(() => storeCreateBaul(name, description), {
-      key: 'create-baul',
-      errorMessage: 'Error al crear el baúl',
-    });
-    if (!result.ok) return;
-
-    setShowCreateBaulModal(false);
-    setSubscription(prev => ({
-      ...prev,
-      baulesUsed: prev.baulesUsed + 1
-    }));
-
-    navigate(`/baules/${result.value.id}`);
-
-    if (isFirstBaul) {
-      setTimeout(() => {
-        showToastMessage('Tus recuerdos ya están a salvo');
-      }, 300);
-    }
+    navigate('/baules/nuevo');
   };
 
   if (isLoading) {
@@ -106,16 +77,8 @@ export const BaulesListRoute: React.FC = () => {
         baulesLimit={subscription.baulesLimit}
         monetizationEnabled={monetizationEnabled}
       />
-      
-      {isLoadingChapters && <BlockingLoadingOverlay message="Abriendo baúl..." />}
 
-      {showCreateBaulModal && (
-        <CreateBaulModal
-          onCancel={() => setShowCreateBaulModal(false)}
-          onSave={handleCreateBaul}
-          isSubmitting={isPending('create-baul')}
-        />
-      )}
+      {isLoadingChapters && <BlockingLoadingOverlay message="Abriendo baúl..." />}
     </>
   );
 };

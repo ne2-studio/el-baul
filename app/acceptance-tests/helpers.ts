@@ -14,7 +14,7 @@ export async function loginAs(page: Page, userButtonName: 'Admin User' | 'Normal
   await page.getByRole('button', { name: userButtonName }).click();
   // Don't just wait for localhost:3000/** — that glob also matches the transient /callback
   // screen the SPA shows while it's still exchanging the code for a token.
-  await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/empty', {
+  await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/baules/nuevo', {
     timeout: 15_000,
   });
 
