@@ -17,6 +17,7 @@ import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
+import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // chapterId is present when viewing a photo inside a real chapter, absent for the virtual
 // "Fotos sueltas" chapter (see useBaulesStore's nullable chapterId convention). Real-chapter
@@ -31,7 +32,7 @@ export const PhotoViewerRoute: React.FC = () => {
   const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
-  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
+  const backgroundLocation = getBackgroundLocation(location);
 
   const { photos: chapterPhotosById, loadChapterPhotos, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useBaulesStore();
   const { personas, loadPersonas, submitRemovalRequest, taggedPersonas, loadTaggedPersonas, setTaggedPersonas } = usePersonasStore();
@@ -117,13 +118,7 @@ export const PhotoViewerRoute: React.FC = () => {
     loosePhotos: photos,
   });
 
-  // Si el visor se abrió desde dentro de la app (backgroundLocation presente), un back de
-  // navegador vuelve exactamente a esa pantalla en su mismo scroll; si se accedió por enlace
-  // directo no hay nada a lo que volver, así que se navega explícitamente al álbum.
-  const closeViewer = () => {
-    if (backgroundLocation) navigate(-1);
-    else navigate(basePath, { replace: true });
-  };
+  const closeViewer = () => closePhotoViewer(navigate, backgroundLocation, basePath);
 
   const handleRequestRemoval = async (photo: Photo, reason: string): Promise<boolean> => {
     if (!auth.isAuthenticated) return false;
@@ -243,10 +238,7 @@ export const PhotoViewerRoute: React.FC = () => {
       photo={photo}
       photos={photos}
       onClose={closeViewer}
-      onPhotoChange={(newPhoto) => navigate(`${basePath}/foto/${newPhoto.id}`, {
-        replace: true,
-        state: backgroundLocation ? { backgroundLocation } : undefined,
-      })}
+      onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
       onRequestRemoval={handleRequestRemoval}
       isAdmin={baulPermissions.isAdmin}
       onSetBaulCover={handleSetBaulCover}

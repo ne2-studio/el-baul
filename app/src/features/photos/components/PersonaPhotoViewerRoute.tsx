@@ -14,6 +14,7 @@ import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
+import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // Variante de PhotoViewerRoute que recorre las fotos etiquetadas de una persona concreta en
 // vez de las de un capítulo — cruza capítulos libremente, así que las acciones que dependen
@@ -29,7 +30,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
   const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
-  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
+  const backgroundLocation = getBackgroundLocation(location);
 
   const { baul, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
   const {
@@ -107,10 +108,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
 
   const basePath = `/baules/${baul.id}/personas/${personaId}`;
 
-  const closeViewer = () => {
-    if (backgroundLocation) navigate(-1);
-    else navigate(basePath, { replace: true });
-  };
+  const closeViewer = () => closePhotoViewer(navigate, backgroundLocation, basePath);
 
   const handleAddRecuerdo = async (photoId: string, text: string) => {
     if (!auth.isAuthenticated) return;
@@ -179,10 +177,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
       photo={photo}
       photos={photos}
       onClose={closeViewer}
-      onPhotoChange={(newPhoto) => navigate(`${basePath}/foto/${newPhoto.id}`, {
-        replace: true,
-        state: backgroundLocation ? { backgroundLocation } : undefined,
-      })}
+      onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(clickedPersonaId) => navigate(`/baules/${baul.id}/personas/${clickedPersonaId}`)}

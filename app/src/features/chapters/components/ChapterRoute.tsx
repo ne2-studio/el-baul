@@ -14,6 +14,7 @@ import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { resolvePhotoRouteContext, SelectedPhoto } from '@/features/photos/uploadFlow';
+import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 
 // chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
@@ -220,7 +221,7 @@ export const ChapterRoute: React.FC = () => {
       recuerdos={chapterId ? (chapterRecuerdos[chapterId] || []) : undefined}
       allChapters={chapters || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
-      onSelectPhoto={(photo) => navigate(`${basePath}/foto/${photo.id}`, { state: { backgroundLocation: location } })}
+      onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(basePath, photo.id))}
       onAddPhotos={(selectedPhotos: SelectedPhoto[]) =>
         navigate(`${basePath}/confirmar`, { state: { selectedPhotos } })
       }

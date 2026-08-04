@@ -17,6 +17,7 @@ import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { Photo, Recuerdo } from '@/types';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
+import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -72,14 +73,14 @@ export const BaulRoute: React.FC = () => {
     // Una foto suelta no tiene chapterId: sus fotos ya están cargadas por el efecto de
     // inicialización (loadLoosePhotos), así que no hace falta cargar nada antes de navegar.
     if (!chapterId) {
-      navigate(`/baules/${baul.id}/fotos-sueltas/foto/${photoId}`, { state: { backgroundLocation: location } });
+      openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baul.id}/fotos-sueltas`, photoId));
       return;
     }
 
     setIsLoadingChapterPhotos(true);
     const result = await run(() => loadChapterPhotos(chapterId), { errorMessage: 'Error al cargar las fotos' });
     setIsLoadingChapterPhotos(false);
-    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${chapterId}/foto/${photoId}`, { state: { backgroundLocation: location } });
+    if (result.ok) openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baul.id}/capitulos/${chapterId}`, photoId));
   };
 
   const handleCreatePersona = async (nickname: string): Promise<boolean> => {

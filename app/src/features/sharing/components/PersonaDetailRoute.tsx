@@ -10,6 +10,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 import { AvatarCrop, api } from '@/api';
 import { BaulRole, Photo } from '@/types';
+import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 export const PersonaDetailRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -130,9 +131,7 @@ export const PersonaDetailRoute: React.FC = () => {
         onChangeRole={handleChangeRole}
         onRevokeAccess={handleRevokeAccess}
         photos={personaPhotos[personaId] || []}
-        onSelectPhoto={(photo) => navigate(`/baules/${baulId}/personas/${personaId}/foto/${photo.id}`, {
-          state: { backgroundLocation: location },
-        })}
+        onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/personas/${personaId}`, photo.id))}
       />
       {isEditingInfo && (
         <EditPersonaInfoModal

@@ -27,8 +27,6 @@ import { AiChatRoute } from '../features/chat/components/AiChatRoute';
 import { RequestBaulDeletionRoute } from '../features/baules/components/RequestBaulDeletionRoute';
 import { CreateChapterModalRoute } from '../features/chapters/components/CreateChapterModalRoute';
 import { ChapterRoute } from '../features/chapters/components/ChapterRoute';
-import { PhotoViewerRoute } from '../features/photos/components/PhotoViewerRoute';
-import { PersonaPhotoViewerRoute } from '../features/photos/components/PersonaPhotoViewerRoute';
 import { UploadConfirmationRoute } from '../features/photos/components/UploadConfirmationRoute';
 import { UploadingRoute } from '../features/photos/components/UploadingRoute';
 import { UploadErrorRoute } from '../features/photos/components/UploadErrorRoute';
@@ -44,6 +42,8 @@ import { PlanSelectionRoute } from '../features/profile/components/PlanSelection
 import { PaymentRoute } from '../features/profile/components/PaymentRoute';
 import { HelpSupportRoute } from '../features/support/components/HelpSupportRoute';
 import { SupportFormRoute } from '../features/support/components/SupportFormRoute';
+import { photoViewerRoutes } from '../features/photos/viewerNavigation/routes';
+import { getBackgroundLocation } from '../features/photos/viewerNavigation';
 
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -76,12 +76,7 @@ function App() {
 
   const { run, isPending } = useAsyncAction();
 
-  // Cuando el visor de foto se abre desde dentro de la app (álbum, fotos sueltas, recuerdos),
-  // el origen viaja como location.state.backgroundLocation: el árbol de rutas principal sigue
-  // renderizando esa pantalla de fondo (nunca se desmonta, así que conserva scroll y estado
-  // local) y un segundo <Routes> pinta el visor encima. Sin backgroundLocation (deep link,
-  // refresco, enlace compartido) el visor se renderiza a pantalla completa como cualquier otra ruta.
-  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
+  const backgroundLocation = getBackgroundLocation(location);
 
   // Loaded once per session; features gated by it stay off until the fetch resolves.
   useEffect(() => {
@@ -227,11 +222,6 @@ function App() {
             <PersonaDetailRoute />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/personas/:personaId/foto/:photoId" element={
-          <ProtectedRoute>
-            <PersonaPhotoViewerRoute />
-          </ProtectedRoute>
-        } />
         <Route path="/baules/:baulId/solicitar-borrado" element={
           <ProtectedRoute>
             <RequestBaulDeletionRoute />
@@ -245,11 +235,6 @@ function App() {
         <Route path="/baules/:baulId/capitulos/:chapterId" element={
           <ProtectedRoute>
             <ChapterRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/baules/:baulId/capitulos/:chapterId/foto/:photoId" element={
-          <ProtectedRoute>
-            <PhotoViewerRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/capitulos/:chapterId/confirmar" element={
@@ -270,11 +255,6 @@ function App() {
         <Route path="/baules/:baulId/fotos-sueltas" element={
           <ProtectedRoute>
             <ChapterRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
-          <ProtectedRoute>
-            <PhotoViewerRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/fotos-sueltas/confirmar" element={
@@ -356,6 +336,8 @@ function App() {
             <SupportFormRoute category="Support" title="Hablar con soporte" />
           </ProtectedRoute>
         } />
+
+        {photoViewerRoutes.map(({ path, element }) => <Route key={path} path={path} element={element} />)}
       </Routes>
 
       {/* Visor de foto como overlay: solo se pinta cuando hay una pantalla de fondo que
@@ -363,21 +345,7 @@ function App() {
           backgroundLocation), así que se muestra encima de la pantalla de fondo sin desmontarla. */}
       {backgroundLocation && (
         <Routes>
-          <Route path="/baules/:baulId/capitulos/:chapterId/foto/:photoId" element={
-            <ProtectedRoute>
-              <PhotoViewerRoute />
-            </ProtectedRoute>
-          } />
-          <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={
-            <ProtectedRoute>
-              <PhotoViewerRoute />
-            </ProtectedRoute>
-          } />
-          <Route path="/baules/:baulId/personas/:personaId/foto/:photoId" element={
-            <ProtectedRoute>
-              <PersonaPhotoViewerRoute />
-            </ProtectedRoute>
-          } />
+          {photoViewerRoutes.map(({ path, element }) => <Route key={path} path={path} element={element} />)}
         </Routes>
       )}
         </>
