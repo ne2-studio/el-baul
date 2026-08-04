@@ -5,6 +5,7 @@ import { api } from '@/api';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { PhotoUploadDestination, UploadItem } from '@/features/photos/uploadFlow';
 import { useRecuerdosStore } from './useRecuerdosStore';
+import { clearChapterRecuerdos } from '@/features/memories/useCases';
 import { usePersonasStore } from './usePersonasStore';
 import {
   applyCoverUpdate,
@@ -374,7 +375,7 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
         photos: restPhotos,
       };
     });
-    useRecuerdosStore.getState().clearChapterRecuerdos(chapterId);
+    clearChapterRecuerdos(chapterId);
 
     const [loosePhotos, baulRecuerdos] = await Promise.all([
       api.baules.getLoosePhotos(baulId),

@@ -6,7 +6,7 @@ import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -29,7 +29,6 @@ export const BaulesListRoute: React.FC = () => {
     loadLoosePhotos,
     isLoading
   } = useBaulesStore();
-  const { loadBaulRecuerdos } = useRecuerdosStore();
   const { subscription, setSubscription } = useAuthStore();
 
   const {

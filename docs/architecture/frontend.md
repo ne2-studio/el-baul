@@ -8,9 +8,10 @@ shell, [`../PRODUCT.md`](../PRODUCT.md) for product principles and domain langua
 ## Layers
 
 ```
-features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/index.ts
-                    ↓ renders
-        features/<domain>/components/*.tsx  (presentational screens/modals)
+features/<domain>/components/*Route.tsx  →  features/<domain>/useCases/*  →  store/*  →  api.ts  →  types/index.ts
+                    ↓ renders                          ↑ orchestrates
+        features/<domain>/components/*.tsx      (store actions, api.*, other stores/use cases)
+        (presentational screens/modals)
                     ↓ composed from
         design-system/{foundations,components,patterns,layouts}/*.tsx
 ```
@@ -21,23 +22,45 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
   `handleResponse` that throws on non-OK responses; auth token is module-level state set via
   `setAccessToken()`. Every response is mapped back into its `types/index.ts` class.
 - **`store/`** — not a single store; state is split by domain (Zustand, one store per area),
-  plus a cross-cutting `uiStore.ts` for toast/modal state that isn't server data. Every mutating
-  action calls `api.*` first and updates state from the response only after the await resolves.
-  Sign-out resets every domain store from one place, not per-store.
+  plus a cross-cutting `uiStore.ts` for toast/modal state that isn't server data. Stores hold
+  state, `reset()`, and (for stores not yet migrated — see below) their own actions. Sign-out
+  resets every domain store from one place, not per-store.
+- **`features/<domain>/useCases/index.ts`** — a use case is a plain async function that
+  orchestrates one action end to end: it calls `api.*`, writes the result into a store via
+  `useXStore.setState()`, and may call other stores/use cases when an action has cross-domain
+  side effects (e.g. deleting a chapter also clearing its recuerdos cache). One module per
+  feature, not one file per use case — `features/<domain>/useCases/index.ts`, split into
+  multiple files under that folder only once it grows large enough to earn it (mirrors
+  `features/photos/uploadFlow/` and `features/photos/viewerNavigation/`, the existing precedent
+  for this shape). This layer is being introduced incrementally, store by store; a store with no
+  `useCases/` module yet still owns its actions directly, called straight from its Route.
+  - **Ownership when a store is consumed by several features** (most domain stores are — e.g.
+    `useBaulesStore` backs `baules`, `chapters`, `photos` and `sharing` routes): a use case lives
+    in the feature that is its only caller. When several features call it with the exact same
+    signature and behavior (no per-caller variation), it lives in the feature that owns that
+    entity's presentational components instead (e.g. `editRecuerdo` is called from `baules`,
+    `chapters` and `photos` alike, so it lives in `features/memories/useCases`, which already
+    owns `Recuerdo*` components) — the other callers import across the feature boundary, same as
+    they already cross it to reach the shared store today. When different features need a
+    genuinely different shape of the same store's data, split them into separate use cases, each
+    in its own feature (e.g. `usePersonasStore`'s photo-tagging actions live in
+    `features/photos/useCases`, not `features/people/useCases`, since only photo routes call
+    them).
 - **`features/<domain>/components/*Route.tsx`** — one container component per route. A Route
-  component reads `useParams`/store state, defines handlers (store actions, navigation, toasts),
-  and renders a presentational component colocated in the same feature's `components/` folder,
-  with everything passed as props — no business logic or store access in the presentational
-  component itself.
-  - **Exception**: a Route may call `api.*` directly, bypassing `store/`, when the result is
-    never cached or shared across routes — there's no state a store would own. This covers:
-    blob downloads (`api.photos.download`), one-off share-link creation consumed immediately by
-    the share sheet, on-demand pagination handed to a child as a fetch callback (cover/avatar
-    pickers), secrets that must always be re-fetched fresh rather than cached (invite link
-    regeneration), fire-and-forget submissions with no resulting state (`api.support.submit`),
-    and pre-auth bootstrapping flows that run before domain stores are populated (accepting a
-    baúl invite). If a second call site needs the same data, or the data must survive
-    navigation, move it to a store instead of adding a second direct caller.
+  component reads `useParams`/store state directly (reactive subscription — this does not go
+  through `useCases/`), defines handlers that call `useCases/` functions for anything mutating
+  (navigation and toasts stay in the Route), and renders a presentational component colocated in
+  the same feature's `components/` folder, with everything passed as props — no business logic
+  or store access in the presentational component itself.
+  - **Exception**: a Route may call `api.*` directly, bypassing `store/`/`useCases/`, when the
+    result is never cached or shared across routes — there's no state a store would own. This
+    covers: blob downloads (`api.photos.download`), one-off share-link creation consumed
+    immediately by the share sheet, on-demand pagination handed to a child as a fetch callback
+    (cover/avatar pickers), secrets that must always be re-fetched fresh rather than cached
+    (invite link regeneration), fire-and-forget submissions with no resulting state
+    (`api.support.submit`), and pre-auth bootstrapping flows that run before domain stores are
+    populated (accepting a baúl invite). If a second call site needs the same data, or the data
+    must survive navigation, move it to a store instead of adding a second direct caller.
 - **`design-system/`** — everything with zero knowledge of El Baúl's domain types. See
   [`docs/adr/0002-design-system-taxonomy.md`](../adr/0002-design-system-taxonomy.md) for the
   full Foundations/Components/Patterns/Layouts/Features/Screens taxonomy and the litmus test for
@@ -88,6 +111,8 @@ src/
 ├── types/         # Domain entity classes, hydrated from api.ts responses
 ├── app/           # Base components, routes and main layout
 ├── features/      # Modules per domain (auth, baules, chapters, photos, sharing, profile, …)
+│                  #   <domain>/components/ — Route + presentational components
+│                  #   <domain>/useCases/   — orchestration layer, being introduced incrementally
 ├── store/         # Zustand: one store per domain + uiStore (toasts/modals)
 ├── design-system/ # Domain-independent UI — see ADR 0002
 ├── native/         # Capacitor integrations — see native-android.md

@@ -7,6 +7,7 @@ import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { loadChapterRecuerdos, addChapterRecuerdo, editRecuerdo } from '@/features/memories/useCases';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -31,7 +32,7 @@ export const ChapterRoute: React.FC = () => {
     photos, loadChapterPhotos,
     movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, createChapter, setChapterCover,
   } = useBaulesStore();
-  const { chapterRecuerdos, loadChapterRecuerdos, addChapterRecuerdo, editRecuerdo } = useRecuerdosStore();
+  const { chapterRecuerdos } = useRecuerdosStore();
   const { personas, loadPersonas, addTaggedPersonasBatch } = usePersonasStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);

@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { addBaulRecuerdo, editRecuerdo } from '@/features/memories/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -31,7 +32,7 @@ export const BaulRoute: React.FC = () => {
 
   const { chapters, loosePhotos, loadChapterPhotos, renameBaul, setBaulCover, createChapter } = useBaulesStore();
   const { personas, removalRequests, createPersona } = usePersonasStore();
-  const { baulRecuerdos, addBaulRecuerdo, editRecuerdo } = useRecuerdosStore();
+  const { baulRecuerdos } = useRecuerdosStore();
   const { userProfile } = useAuthStore();
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);

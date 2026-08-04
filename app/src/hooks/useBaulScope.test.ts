@@ -13,8 +13,13 @@ vi.mock('@/store/session', () => ({
   loadUserData: vi.fn(),
 }));
 
+vi.mock('@/features/memories/useCases', () => ({
+  loadBaulRecuerdos: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { useAuth } from 'react-oidc-context';
 import { loadUserData } from '@/store/session';
+import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { useBaulScope } from './useBaulScope';
 
 const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 0 } as Baul;
@@ -25,6 +30,7 @@ describe('useBaulScope', () => {
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(loadUserData).mockReset();
+    vi.mocked(loadBaulRecuerdos).mockClear().mockResolvedValue(undefined);
   });
 
   it('does nothing when there is no baulId', () => {
@@ -63,9 +69,7 @@ describe('useBaulScope', () => {
     useBaulesStore.setState({ baules: [baul] });
     const loadChapters = vi.fn().mockResolvedValue(undefined);
     const loadLoosePhotos = vi.fn().mockResolvedValue(undefined);
-    const loadBaulRecuerdos = vi.fn().mockResolvedValue(undefined);
     useBaulesStore.setState({ loadChapters, loadLoosePhotos });
-    useRecuerdosStore.setState({ loadBaulRecuerdos });
 
     renderHook(() => useBaulScope('baul-1'));
 
@@ -78,9 +82,7 @@ describe('useBaulScope', () => {
     useBaulesStore.setState({ baules: [baul], chapters: { 'baul-1': [] } });
     const loadChapters = vi.fn().mockResolvedValue(undefined);
     const loadLoosePhotos = vi.fn().mockResolvedValue(undefined);
-    const loadBaulRecuerdos = vi.fn().mockResolvedValue(undefined);
     useBaulesStore.setState({ loadChapters, loadLoosePhotos });
-    useRecuerdosStore.setState({ loadBaulRecuerdos });
 
     renderHook(() => useBaulScope('baul-1'));
 
@@ -94,9 +96,7 @@ describe('useBaulScope', () => {
     useRecuerdosStore.setState({ baulRecuerdos: { 'baul-1': [] } });
     const loadChapters = vi.fn().mockResolvedValue(undefined);
     const loadLoosePhotos = vi.fn().mockResolvedValue(undefined);
-    const loadBaulRecuerdos = vi.fn().mockResolvedValue(undefined);
     useBaulesStore.setState({ loadChapters, loadLoosePhotos });
-    useRecuerdosStore.setState({ loadBaulRecuerdos });
 
     renderHook(() => useBaulScope('baul-1'));
 

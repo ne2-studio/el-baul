@@ -9,7 +9,7 @@ Choose the smallest test that can detect the failure.
 | Backend controller/authorization concerns | `api/ElBaul.Api.Tests` |
 | Backend maintenance command logic | `api/ElBaul.Maintenance.Tests` |
 | Backend domain model, persistence, or public API contract | + `api/acceptance-tests` |
-| Frontend pure logic (mappers, formatters, reducers) | Vitest, `environment: 'node'` (default) |
+| Frontend pure logic (mappers, formatters, reducers, use cases) | Vitest, `environment: 'node'` (default) |
 | Frontend component/hook behavior | Vitest + jsdom + React Testing Library |
 | Frontend isolated Storybook contracts | Storybook Vitest addon, Vitest browser mode, Playwright Chromium |
 | Frontend journey: photo/persona/removal-request flows | `app/acceptance-tests/` (against `el-baul-api-lite`) |

@@ -6,6 +6,7 @@ import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { loadRecuerdos, addRecuerdo, editRecuerdo } from '@/features/memories/useCases';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
@@ -36,7 +37,7 @@ export const PhotoViewerRoute: React.FC = () => {
 
   const { photos: chapterPhotosById, loadChapterPhotos, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useBaulesStore();
   const { personas, loadPersonas, submitRemovalRequest, taggedPersonas, loadTaggedPersonas, setTaggedPersonas } = usePersonasStore();
-  const { recuerdos, loadRecuerdos, addRecuerdo, editRecuerdo } = useRecuerdosStore();
+  const { recuerdos } = useRecuerdosStore();
 
   const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
   const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
