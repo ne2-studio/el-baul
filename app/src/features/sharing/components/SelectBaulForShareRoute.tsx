@@ -8,13 +8,15 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { useIncomingShareStore } from '@/store/useIncomingShareStore';
 import { useUIStore } from '@/store/uiStore';
 import { clear } from '@/features/sharing/useCases';
+import { loadChapters } from '@/features/baules/useCases';
+import { loadLoosePhotos } from '@/features/photos/useCases';
 import { ShareReceiver } from '@/features/sharing/native/shareReceiver';
 import { Baul } from '@/types';
 
 export const SelectBaulForShareRoute: React.FC = () => {
   const navigate = useNavigate();
   const [isOpeningBaul, setIsOpeningBaul] = useState(false);
-  const { baules, isLoading: isLoadingBaules, loadChapters, loadLoosePhotos } = useBaulesStore();
+  const { baules, isLoading: isLoadingBaules } = useBaulesStore();
   const { share, selectedPhotos } = useIncomingShareStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   // clear() vacía este store en cuanto se elige baúl, lo que re-renderiza este mismo

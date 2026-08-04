@@ -9,7 +9,9 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { addBaulRecuerdo, editRecuerdo } from '@/features/memories/useCases';
-import { createPersona } from '@/features/baules/useCases';
+import { createPersona, renameBaul, setBaulCover } from '@/features/baules/useCases';
+import { loadChapterPhotos } from '@/features/photos/useCases';
+import { createChapter } from '@/features/chapters/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -31,7 +33,7 @@ export const BaulRoute: React.FC = () => {
   const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
   const { run, isPending } = useAsyncAction();
 
-  const { chapters, loosePhotos, loadChapterPhotos, renameBaul, setBaulCover, createChapter } = useBaulesStore();
+  const { chapters, loosePhotos } = useBaulesStore();
   const { personas, removalRequests } = usePersonasStore();
   const { baulRecuerdos } = useRecuerdosStore();
   const { userProfile } = useAuthStore();

@@ -8,7 +8,17 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadRecuerdos, addRecuerdo, editRecuerdo } from '@/features/memories/useCases';
 import { loadPersonas } from '@/features/people/useCases';
-import { submitRemovalRequest, loadTaggedPersonas, setTaggedPersonas } from '@/features/photos/useCases';
+import {
+  submitRemovalRequest,
+  loadTaggedPersonas,
+  setTaggedPersonas,
+  loadChapterPhotos,
+  movePhotos,
+  deletePhoto,
+  changePhotoDate,
+} from '@/features/photos/useCases';
+import { setBaulCover } from '@/features/baules/useCases';
+import { setChapterCover } from '@/features/chapters/useCases';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
@@ -37,7 +47,7 @@ export const PhotoViewerRoute: React.FC = () => {
 
   const backgroundLocation = getBackgroundLocation(location);
 
-  const { photos: chapterPhotosById, loadChapterPhotos, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useBaulesStore();
+  const { photos: chapterPhotosById } = useBaulesStore();
   const { personas, taggedPersonas } = usePersonasStore();
   const { recuerdos } = useRecuerdosStore();
 

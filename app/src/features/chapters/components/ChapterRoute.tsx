@@ -9,7 +9,15 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadChapterRecuerdos, addChapterRecuerdo, editRecuerdo } from '@/features/memories/useCases';
 import { loadPersonas } from '@/features/people/useCases';
-import { addTaggedPersonasBatch } from '@/features/chapters/useCases';
+import {
+  addTaggedPersonasBatch,
+  changePhotoDateBatch,
+  renameChapter,
+  deleteChapter,
+  createChapter,
+  setChapterCover,
+} from '@/features/chapters/useCases';
+import { loadChapterPhotos, movePhotos } from '@/features/photos/useCases';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -30,10 +38,7 @@ export const ChapterRoute: React.FC = () => {
   const location = useLocation();
   const { baulId, chapterId } = useParams();
   const auth = useAuth();
-  const {
-    photos, loadChapterPhotos,
-    movePhotos, changePhotoDateBatch, renameChapter, deleteChapter, createChapter, setChapterCover,
-  } = useBaulesStore();
+  const { photos } = useBaulesStore();
   const { chapterRecuerdos } = useRecuerdosStore();
   const { personas } = usePersonasStore();
   const showToastMessage = useUIStore(state => state.showToastMessage);

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, waitFor, within } from 'storybook/test';
 import { UploadingScreen } from '@/features/photos/components/UploadingScreen';
-import { UploadItemResult } from '@/store/useBaulesStore';
+import { UploadItemResult } from '@/features/photos/useCases';
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {

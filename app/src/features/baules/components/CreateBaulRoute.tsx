@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { createBaul as storeCreateBaul } from '@/features/baules/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -12,7 +13,7 @@ export const CreateBaulRoute: React.FC = () => {
   const location = useLocation();
   const auth = useAuth();
   const { setSubscription } = useAuthStore();
-  const { baules, createBaul: storeCreateBaul } = useBaulesStore();
+  const { baules } = useBaulesStore();
   const { showToastMessage } = useUIStore();
   const { run, isPending } = useAsyncAction();
 

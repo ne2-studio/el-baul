@@ -7,6 +7,8 @@ import { BlockingLoadingOverlay } from '@/design-system/components/feedback/Bloc
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
+import { createBaul as storeCreateBaul, loadChapters as storeLoadChapters } from '@/features/baules/useCases';
+import { loadLoosePhotos } from '@/features/photos/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -22,13 +24,7 @@ export const BaulesListRoute: React.FC = () => {
   const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
   const { run, isPending } = useAsyncAction();
 
-  const {
-    baules,
-    createBaul: storeCreateBaul,
-    loadChapters: storeLoadChapters,
-    loadLoosePhotos,
-    isLoading
-  } = useBaulesStore();
+  const { baules, isLoading } = useBaulesStore();
   const { subscription, setSubscription } = useAuthStore();
 
   const {

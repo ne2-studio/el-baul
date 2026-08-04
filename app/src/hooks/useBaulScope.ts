@@ -5,6 +5,8 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadUserData } from '@/features/auth/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
+import { loadChapters } from '@/features/baules/useCases';
+import { loadLoosePhotos } from '@/features/photos/useCases';
 
 // Cualquier ruta bajo /baules/:baulId depende de que el baúl, sus capítulos y sus fotos
 // sueltas estén en el store. La navegación normal (BaulesListRoute -> BaulRoute) ya los deja
@@ -14,7 +16,7 @@ import { loadBaulRecuerdos } from '@/features/memories/useCases';
 export function useBaulScope(baulId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
-  const { baules, chapters, loosePhotos, loadChapters, loadLoosePhotos } = useBaulesStore();
+  const { baules, chapters, loosePhotos } = useBaulesStore();
   const { baulRecuerdos } = useRecuerdosStore();
 
   const [isLoading, setIsLoading] = useState(false);

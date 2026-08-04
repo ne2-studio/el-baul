@@ -17,6 +17,14 @@ vi.mock('@/features/sharing/native/shareReceiver', () => ({
   ShareReceiver: { clearPendingShare: vi.fn().mockResolvedValue(undefined) },
 }));
 
+vi.mock('@/features/baules/useCases', () => ({
+  loadChapters: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/photos/useCases', () => ({
+  loadLoosePhotos: vi.fn().mockResolvedValue(undefined),
+}));
+
 const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 0 } as Baul;
 const selectedPhotos = [{ id: 'photo-1' }] as unknown as SelectedPhoto[];
 
@@ -44,12 +52,7 @@ describe('SelectBaulForShareRoute', () => {
       share: { shareId: 'share-1', files: [] },
       selectedPhotos,
     });
-    useBaulesStore.setState({
-      baules: [baul],
-      isLoading: false,
-      loadChapters: vi.fn().mockResolvedValue(undefined),
-      loadLoosePhotos: vi.fn().mockResolvedValue(undefined),
-    });
+    useBaulesStore.setState({ baules: [baul], isLoading: false });
   });
 
   it('redirects to /baules when there is nothing pending to share', () => {

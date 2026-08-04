@@ -1,7 +1,95 @@
 import { api } from '@/api';
+import { Chapter, PhotoDate } from '@/types';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { clearChapterRecuerdos } from '@/features/memories/useCases';
+import { applyCoverUpdate, applyPhotoDateUpdate } from '@/store/baulesCacheReconciliation';
 
 // No hay estado que actualizar: la cuadrícula de fotos no muestra chips de personas
 // etiquetadas (solo el visor de una foto lo hace, vía taggedPersonas).
 export async function addTaggedPersonasBatch(baulId: string, photoIds: string[], personaIds: string[]): Promise<void> {
   await api.photos.addTaggedPersonasBatch(baulId, photoIds, personaIds);
+}
+
+export async function createChapter(baulId: string, name: string): Promise<Chapter> {
+  const chapter = await api.chapters.create(baulId, name);
+  useBaulesStore.setState((state) => ({
+    chapters: { ...state.chapters, [baulId]: [...(state.chapters[baulId] || []), chapter] },
+    baules: state.baules.map((b) => (b.id === baulId ? { ...b, chapterCount: b.chapterCount + 1 } : b)),
+  }));
+  return chapter;
+}
+
+export async function changePhotoDateBatch(
+  baulId: string,
+  chapterId: string | null,
+  photoIds: string[],
+  date: PhotoDate
+): Promise<void> {
+  const updated = await api.photos.changeDateBatch(photoIds, date);
+  useBaulesStore.setState((state) => applyPhotoDateUpdate(state, { baulId, chapterId, updatedPhotos: updated }));
+
+  const chapters = await api.chapters.getAll(baulId);
+  useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
+}
+
+export async function setChapterCover(
+  baulId: string,
+  chapterId: string,
+  photoId: string,
+  optimisticThumbnailUrl?: string
+): Promise<void> {
+  const previous = useBaulesStore.getState().chapters[baulId] || [];
+  if (optimisticThumbnailUrl) {
+    useBaulesStore.setState((state) => ({
+      chapters: {
+        ...state.chapters,
+        [baulId]: applyCoverUpdate(previous, chapterId, optimisticThumbnailUrl),
+      },
+    }));
+  }
+  try {
+    const updated = await api.chapters.setCover(baulId, chapterId, photoId);
+    useBaulesStore.setState((state) => ({
+      chapters: {
+        ...state.chapters,
+        [baulId]: (state.chapters[baulId] || []).map((a) => (a.id === chapterId ? updated : a)),
+      },
+    }));
+  } catch (error) {
+    useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: previous } }));
+    throw error;
+  }
+}
+
+export async function renameChapter(baulId: string, chapterId: string, name: string): Promise<void> {
+  const updated = await api.chapters.update(baulId, chapterId, name);
+  useBaulesStore.setState((state) => ({
+    chapters: {
+      ...state.chapters,
+      [baulId]: (state.chapters[baulId] || []).map((a) => (a.id === chapterId ? updated : a)),
+    },
+  }));
+}
+
+export async function deleteChapter(baulId: string, chapterId: string): Promise<void> {
+  await api.chapters.delete(baulId, chapterId);
+
+  useBaulesStore.setState((state) => {
+    const { [chapterId]: _removedPhotos, ...restPhotos } = state.photos;
+    return {
+      chapters: { ...state.chapters, [baulId]: (state.chapters[baulId] || []).filter((a) => a.id !== chapterId) },
+      photos: restPhotos,
+    };
+  });
+  clearChapterRecuerdos(chapterId);
+
+  const [loosePhotos, baulRecuerdos] = await Promise.all([
+    api.baules.getLoosePhotos(baulId),
+    api.recuerdos.getAllByBaul(baulId),
+  ]);
+  useBaulesStore.setState((state) => ({
+    loosePhotos: { ...state.loosePhotos, [baulId]: loosePhotos },
+  }));
+  useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [baulId]: baulRecuerdos } }));
 }

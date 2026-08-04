@@ -60,8 +60,8 @@ export async function editRecuerdo(recuerdoId: string, text: string): Promise<vo
   }));
 }
 
-// Used by useBaulesStore.deleteChapter — an explicit cross-store call rather than this
-// store implicitly reacting to a chapter being deleted elsewhere.
+// Used by features/chapters/useCases.deleteChapter — an explicit cross-feature call rather
+// than this store implicitly reacting to a chapter being deleted elsewhere.
 export function clearChapterRecuerdos(chapterId: string): void {
   useRecuerdosStore.setState((state) => {
     const { [chapterId]: _removed, ...rest } = state.chapterRecuerdos;

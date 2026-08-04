@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadingScreen } from '@/features/photos/components/UploadingScreen';
-import { useBaulesStore, UploadItemResult } from '@/store/useBaulesStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { uploadPhotosWithChapter, UploadItemResult } from '@/features/photos/useCases';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { PhotoDate } from '@/types';
@@ -24,7 +25,7 @@ export const UploadingRoute: React.FC = () => {
   const { baulId } = useParams();
   const location = useLocation();
   const auth = useAuth();
-  const { baules, uploadPhotosWithChapter } = useBaulesStore();
+  const { baules } = useBaulesStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);

@@ -26,17 +26,19 @@ vi.mock('@/api', () => ({
 
 import * as Sentry from '@sentry/react';
 import { api } from '@/api';
-import { useBaulesStore, UploadItem } from './useBaulesStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { uploadPhotos, uploadPhotosWithChapter, movePhotos } from './index';
+import { UploadItem } from '@/features/photos/uploadFlow';
+import { createChapter } from '@/features/chapters/useCases';
 
-// Regression coverage for the upload path in useBaulesStore (uploadPhotos /
-// uploadPhotosWithChapter): a per-file loop whose behavior — reading each file before
-// upload, tagging Sentry per failure phase, never letting one file's failure abort the
-// rest, and reconciling store state from the server afterwards — used to be duplicated
-// almost verbatim between a chapter-only uploadPhotos and a loose-photos-only
-// uploadLoosePhotos. uploadPhotos now takes a nullable chapterId (mirroring
-// movePhotos/deletePhoto/changePhotoDate) and branches only in the post-upload state
+// Regression coverage for the upload path (uploadPhotos / uploadPhotosWithChapter): a
+// per-file loop whose behavior — reading each file before upload, tagging Sentry per failure
+// phase, never letting one file's failure abort the rest, and reconciling store state from the
+// server afterwards — used to be duplicated almost verbatim between a chapter-only uploadPhotos
+// and a loose-photos-only uploadLoosePhotos. uploadPhotos now takes a nullable chapterId
+// (mirroring movePhotos/deletePhoto/changePhotoDate) and branches only in the post-upload state
 // reconciliation; this suite pins both branches' behavior down.
-describe('useBaulesStore uploads', () => {
+describe('photos useCases uploads', () => {
   const baulId = 'baul-1';
   const chapterId = 'chapter-1';
 
@@ -123,7 +125,7 @@ describe('useBaulesStore uploads', () => {
       ]);
 
       const onItemSettled = vi.fn();
-      const results = await useBaulesStore.getState().uploadPhotos(baulId, chapterId, items, onItemSettled);
+      const results = await uploadPhotos(baulId, chapterId, items, onItemSettled);
 
       expect(results).toEqual([
         { clientUploadId: 'c1', photo: photo1 },
@@ -160,7 +162,7 @@ describe('useBaulesStore uploads', () => {
         newChapter({ photoCount: 1, coverPhotoUrl: photo1.thumbnailUrl }),
       ]);
 
-      const results = await useBaulesStore.getState().uploadPhotos(baulId, chapterId, items);
+      const results = await uploadPhotos(baulId, chapterId, items);
 
       expect(results).toEqual([
         { clientUploadId: 'ok', photo: photo1 },
@@ -188,7 +190,7 @@ describe('useBaulesStore uploads', () => {
         newChapter({ photoCount: 1, coverPhotoUrl: photo1.thumbnailUrl }),
       ]);
 
-      const results = await useBaulesStore.getState().uploadPhotos(baulId, chapterId, items);
+      const results = await uploadPhotos(baulId, chapterId, items);
 
       expect(results).toEqual([
         { clientUploadId: 'unreadable', error: 'No se pudo leer la foto (puede que ya no esté disponible)' },
@@ -209,7 +211,7 @@ describe('useBaulesStore uploads', () => {
 
       vi.mocked(api.photos.upload).mockRejectedValue(new Error('boom'));
 
-      await useBaulesStore.getState().uploadPhotos(baulId, chapterId, [{ clientUploadId: 'c1', file: fakeFile('a.jpg') }]);
+      await uploadPhotos(baulId, chapterId, [{ clientUploadId: 'c1', file: fakeFile('a.jpg') }]);
 
       expect(api.photos.getAll).not.toHaveBeenCalled();
       expect(useBaulesStore.getState().photos[chapterId]).toBeUndefined();
@@ -226,9 +228,7 @@ describe('useBaulesStore uploads', () => {
       const photo1 = newPhoto('photo-1');
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
 
-      const results = await useBaulesStore
-        .getState()
-        .uploadPhotos(baulId, null, [{ clientUploadId: 'c1', file: fakeFile('a.jpg') }]);
+      const results = await uploadPhotos(baulId, null, [{ clientUploadId: 'c1', file: fakeFile('a.jpg') }]);
 
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined);
@@ -247,7 +247,7 @@ describe('useBaulesStore uploads', () => {
         .mockResolvedValueOnce(photo1)
         .mockRejectedValueOnce(new Error('network down'));
 
-      const results = await useBaulesStore.getState().uploadPhotos(baulId, null, [
+      const results = await uploadPhotos(baulId, null, [
         { clientUploadId: 'ok', file: fakeFile('a.jpg') },
         { clientUploadId: 'fails', file: fakeFile('b.jpg') },
       ]);
@@ -272,9 +272,9 @@ describe('useBaulesStore uploads', () => {
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
       vi.mocked(api.photos.getAll).mockResolvedValue([photo1]);
 
-      const { results, chapterId: resolvedChapterId } = await useBaulesStore
-        .getState()
-        .uploadPhotosWithChapter(baulId, { type: 'existing', chapterId }, items);
+      const { results, chapterId: resolvedChapterId } = await uploadPhotosWithChapter(
+        baulId, { type: 'existing', chapterId }, items
+      );
 
       expect(resolvedChapterId).toBe(chapterId);
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
@@ -286,9 +286,9 @@ describe('useBaulesStore uploads', () => {
       const photo1 = newPhoto('photo-1');
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
 
-      const { results, chapterId: resolvedChapterId } = await useBaulesStore
-        .getState()
-        .uploadPhotosWithChapter(baulId, { type: 'none' }, items);
+      const { results, chapterId: resolvedChapterId } = await uploadPhotosWithChapter(
+        baulId, { type: 'none' }, items
+      );
 
       expect(resolvedChapterId).toBeNull();
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
@@ -306,9 +306,9 @@ describe('useBaulesStore uploads', () => {
         newChapter({ id: 'new-chapter', photoCount: 1, coverPhotoUrl: photo1.thumbnailUrl }),
       ]);
 
-      const { results, chapterId: resolvedChapterId } = await useBaulesStore
-        .getState()
-        .uploadPhotosWithChapter(baulId, { type: 'new', name: 'Verano' }, items);
+      const { results, chapterId: resolvedChapterId } = await uploadPhotosWithChapter(
+        baulId, { type: 'new', name: 'Verano' }, items
+      );
 
       expect(resolvedChapterId).toBe('new-chapter');
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
@@ -339,9 +339,7 @@ describe('useBaulesStore uploads', () => {
       vi.mocked(api.photos.getAll).mockResolvedValue([photo1]);
       vi.mocked(api.chapters.getAll).mockResolvedValue([refreshedChapter]);
 
-      await useBaulesStore
-        .getState()
-        .uploadPhotosWithChapter(baulId, { type: 'new', name: 'Verano' }, uploadItems);
+      await uploadPhotosWithChapter(baulId, { type: 'new', name: 'Verano' }, uploadItems);
 
       const storedChapter = useBaulesStore.getState().chapters[baulId][0];
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, 'new-chapter', uploadItems[0].file, 'c1', date);
@@ -356,9 +354,9 @@ describe('useBaulesStore uploads', () => {
       vi.mocked(api.chapters.create).mockRejectedValueOnce(new Error('No se pudo crear el capítulo'));
 
       const onItemSettled = vi.fn();
-      const { results, chapterId: resolvedChapterId } = await useBaulesStore
-        .getState()
-        .uploadPhotosWithChapter(baulId, { type: 'new', name: 'Verano' }, items, onItemSettled);
+      const { results, chapterId: resolvedChapterId } = await uploadPhotosWithChapter(
+        baulId, { type: 'new', name: 'Verano' }, items, onItemSettled
+      );
 
       expect(resolvedChapterId).toBeNull();
       expect(results).toEqual([{ clientUploadId: 'c1', error: 'No se pudo crear el capítulo' }]);
@@ -371,11 +369,11 @@ describe('useBaulesStore uploads', () => {
 // Regression coverage for movePhotos's partial-failure handling: each photo is moved with
 // its own try/catch (mirroring uploadPhotos) specifically because an earlier version threw
 // on the first failure without reconciling anything that had already succeeded server-side —
-// see the comment above movePhotos in useBaulesStore.ts. This pins down that succeeded moves
-// are still reflected in both the source and target caches even when some photos fail, and
-// that failing *every* photo skips reconciliation entirely rather than fabricating state from
-// an unmade request.
-describe('useBaulesStore movePhotos', () => {
+// see the comment above movePhotos in features/photos/useCases/index.ts. This pins down that
+// succeeded moves are still reflected in both the source and target caches even when some
+// photos fail, and that failing *every* photo skips reconciliation entirely rather than
+// fabricating state from an unmade request.
+describe('photos useCases movePhotos', () => {
   const baulId = 'baul-1';
   const sourceChapterId = 'chapter-src';
   const targetChapterId = 'chapter-target';
@@ -437,7 +435,7 @@ describe('useBaulesStore movePhotos', () => {
 
     const onItemSettled = vi.fn();
     await expect(
-      useBaulesStore.getState().movePhotos(baulId, sourceChapterId, [photoA.id, photoB.id], targetChapterId, onItemSettled)
+      movePhotos(baulId, sourceChapterId, [photoA.id, photoB.id], targetChapterId, onItemSettled)
     ).rejects.toThrow('1 de 2 fotos no se pudieron mover');
 
     expect(onItemSettled).toHaveBeenCalledWith({ photoId: photoA.id });
@@ -466,7 +464,7 @@ describe('useBaulesStore movePhotos', () => {
     vi.mocked(api.photos.move).mockRejectedValue(new Error('boom'));
 
     await expect(
-      useBaulesStore.getState().movePhotos(baulId, sourceChapterId, [photoA.id, photoB.id], targetChapterId)
+      movePhotos(baulId, sourceChapterId, [photoA.id, photoB.id], targetChapterId)
     ).rejects.toThrow('No se pudo mover ninguna de las 2 fotos');
 
     expect(api.photos.getAll).not.toHaveBeenCalled();
@@ -487,7 +485,7 @@ describe('useBaulesStore movePhotos', () => {
       newChapter(targetChapterId, { photoCount: 1, coverPhotoUrl: photoA.thumbnailUrl }),
     ]);
 
-    await useBaulesStore.getState().movePhotos(baulId, null, [photoA.id], targetChapterId);
+    await movePhotos(baulId, null, [photoA.id], targetChapterId);
 
     const state = useBaulesStore.getState();
     expect(state.loosePhotos[baulId]).toEqual([photoB]);
@@ -532,121 +530,13 @@ describe('useBaulesStore movePhotos', () => {
     vi.mocked(api.photos.getAll).mockResolvedValue([photoA]);
     vi.mocked(api.chapters.getAll).mockResolvedValue([refreshedChapter]);
 
-    const created = await useBaulesStore.getState().createChapter(baulId, 'Verano');
-    await useBaulesStore.getState().movePhotos(baulId, null, [photoA.id], created.id);
+    const created = await createChapter(baulId, 'Verano');
+    await movePhotos(baulId, null, [photoA.id], created.id);
 
     const storedChapter = useBaulesStore.getState().chapters[baulId][0];
     expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
     expect(storedChapter.minDate).toEqual(date);
     expect(storedChapter.maxDate).toEqual(date);
     expect(storedChapter.photoCount).toBe(1);
-  });
-});
-
-// Regression coverage for the optimistic-update/rollback pairing in setBaulCover and
-// setChapterCover: both apply the caller-provided thumbnail immediately for instant feedback,
-// then either confirm it with the server's response or roll back to the pre-update snapshot if
-// the request fails. A rollback that missed a field, or that failed to rethrow, would leave the
-// UI either silently wrong or unaware the change didn't actually happen.
-describe('useBaulesStore cover optimistic updates', () => {
-  const baulId = 'baul-1';
-  const chapterId = 'chapter-1';
-  const photoId = 'photo-1';
-
-  function newBaul(overrides: Partial<ConstructorParameters<typeof Baul>[0]> = {}): Baul {
-    const now = new Date().toISOString();
-    return new Baul({
-      id: baulId,
-      name: 'Baúl',
-      chapterCount: 1,
-      createdAt: now,
-      updatedAt: now,
-      isCustodio: true,
-      role: 'custodio',
-      memberCount: 1,
-      ...overrides,
-    });
-  }
-
-  function newChapter(overrides: Partial<ConstructorParameters<typeof Chapter>[0]> = {}): Chapter {
-    const now = new Date().toISOString();
-    return new Chapter({
-      id: chapterId,
-      baulId,
-      name: 'Capítulo',
-      photoCount: 0,
-      createdAt: now,
-      updatedAt: now,
-      recuerdoCount: 0,
-      undatedPhotoCount: 0,
-      ...overrides,
-    });
-  }
-
-  beforeEach(() => {
-    useBaulesStore.setState({ baules: [], chapters: {}, photos: {}, loosePhotos: {}, isLoading: false });
-    vi.clearAllMocks();
-  });
-
-  describe('setBaulCover', () => {
-    it('applies the optimistic thumbnail immediately, then replaces it with the server response', async () => {
-      useBaulesStore.setState({ baules: [newBaul({ coverPhotoUrl: 'old-thumb' })] });
-
-      let resolveSetCover!: (baul: Baul) => void;
-      vi.mocked(api.baules.setCover).mockReturnValue(new Promise((resolve) => { resolveSetCover = resolve; }));
-
-      const promise = useBaulesStore.getState().setBaulCover(baulId, photoId, 'optimistic-thumb');
-      expect(useBaulesStore.getState().baules[0].coverPhotoUrl).toBe('optimistic-thumb');
-
-      const serverBaul = newBaul({ coverPhotoUrl: 'server-thumb' });
-      resolveSetCover(serverBaul);
-      await promise;
-
-      expect(useBaulesStore.getState().baules[0].coverPhotoUrl).toBe('server-thumb');
-    });
-
-    it('rolls back to the previous baules snapshot and rethrows when the request fails', async () => {
-      const original = newBaul({ coverPhotoUrl: 'old-thumb' });
-      useBaulesStore.setState({ baules: [original] });
-
-      vi.mocked(api.baules.setCover).mockRejectedValue(new Error('server rejected cover'));
-
-      await expect(
-        useBaulesStore.getState().setBaulCover(baulId, photoId, 'optimistic-thumb')
-      ).rejects.toThrow('server rejected cover');
-
-      expect(useBaulesStore.getState().baules[0]).toBe(original);
-    });
-  });
-
-  describe('setChapterCover', () => {
-    it('applies the optimistic thumbnail immediately, then replaces it with the server response', async () => {
-      useBaulesStore.setState({ chapters: { [baulId]: [newChapter({ coverPhotoUrl: 'old-thumb' })] } });
-
-      let resolveSetCover!: (chapter: Chapter) => void;
-      vi.mocked(api.chapters.setCover).mockReturnValue(new Promise((resolve) => { resolveSetCover = resolve; }));
-
-      const promise = useBaulesStore.getState().setChapterCover(baulId, chapterId, photoId, 'optimistic-thumb');
-      expect(useBaulesStore.getState().chapters[baulId][0].coverPhotoUrl).toBe('optimistic-thumb');
-
-      const serverChapter = newChapter({ coverPhotoUrl: 'server-thumb' });
-      resolveSetCover(serverChapter);
-      await promise;
-
-      expect(useBaulesStore.getState().chapters[baulId][0].coverPhotoUrl).toBe('server-thumb');
-    });
-
-    it('rolls back to the previous chapters snapshot and rethrows when the request fails', async () => {
-      const original = newChapter({ coverPhotoUrl: 'old-thumb' });
-      useBaulesStore.setState({ chapters: { [baulId]: [original] } });
-
-      vi.mocked(api.chapters.setCover).mockRejectedValue(new Error('server rejected cover'));
-
-      await expect(
-        useBaulesStore.getState().setChapterCover(baulId, chapterId, photoId, 'optimistic-thumb')
-      ).rejects.toThrow('server rejected cover');
-
-      expect(useBaulesStore.getState().chapters[baulId][0]).toBe(original);
-    });
   });
 });

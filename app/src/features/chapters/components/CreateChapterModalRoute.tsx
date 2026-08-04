@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CreateChapterModal } from '@/features/chapters/components/CreateChapterModal';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { createChapter } from '@/features/chapters/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
@@ -11,7 +12,7 @@ export const CreateChapterModalRoute: React.FC = () => {
   const auth = useAuth();
   const { run, isPending } = useAsyncAction();
 
-  const { baules, createChapter } = useBaulesStore();
+  const { baules } = useBaulesStore();
   const baul = baules.find(b => b.id === baulId);
 
   if (!baul) return <div className="p-8 text-center">Cargando baúl...</div>;

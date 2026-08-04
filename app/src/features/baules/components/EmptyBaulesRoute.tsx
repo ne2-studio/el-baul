@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { EmptyBaulesScreen } from '@/features/baules/components/EmptyBaulesScreen';
 import { CreateBaulModal } from '@/features/baules/components/CreateBaulModal';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useBaulesStore } from '@/store/useBaulesStore';
+import { createBaul } from '@/features/baules/useCases';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -12,7 +12,6 @@ export const EmptyBaulesRoute: React.FC = () => {
   const navigate = useNavigate();
   const auth = useAuth();
   const [showCreateBaulModal, setShowCreateBaulModal] = useState(false);
-  const { createBaul } = useBaulesStore();
   const { setSubscription } = useAuthStore();
   const { showToastMessage } = useUIStore();
   const { run, isPending } = useAsyncAction();

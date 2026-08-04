@@ -25,10 +25,22 @@ vi.mock('@/features/photos/useCases', () => ({
   loadTaggedPersonas: vi.fn().mockResolvedValue(undefined),
   setTaggedPersonas: vi.fn().mockResolvedValue(undefined),
   submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
+  loadChapterPhotos: vi.fn().mockResolvedValue(undefined),
+  movePhotos: vi.fn().mockResolvedValue(undefined),
+  deletePhoto: vi.fn().mockResolvedValue(undefined),
+  changePhotoDate: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/people/useCases', () => ({
   loadPersonas: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/baules/useCases', () => ({
+  setBaulCover: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/chapters/useCases', () => ({
+  setChapterCover: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { useBaulScope } from '@/hooks/useBaulScope';
