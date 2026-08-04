@@ -13,7 +13,6 @@ RUN dotnet restore "ElBaul.Api.Lite/ElBaul.Api.Lite.csproj"
 COPY . .
 
 # Build and publish
-RUN dotnet build "ElBaul.Api.Lite/ElBaul.Api.Lite.csproj" -c Release -o /app/build
 RUN dotnet publish "ElBaul.Api.Lite/ElBaul.Api.Lite.csproj" -c Release -o /app/publish
 
 # Build runtime image
