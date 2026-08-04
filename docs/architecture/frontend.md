@@ -29,6 +29,15 @@ features/<domain>/components/*Route.tsx  →  store/*  →  api.ts  →  types/i
   and renders a presentational component colocated in the same feature's `components/` folder,
   with everything passed as props — no business logic or store access in the presentational
   component itself.
+  - **Exception**: a Route may call `api.*` directly, bypassing `store/`, when the result is
+    never cached or shared across routes — there's no state a store would own. This covers:
+    blob downloads (`api.photos.download`), one-off share-link creation consumed immediately by
+    the share sheet, on-demand pagination handed to a child as a fetch callback (cover/avatar
+    pickers), secrets that must always be re-fetched fresh rather than cached (invite link
+    regeneration), fire-and-forget submissions with no resulting state (`api.support.submit`),
+    and pre-auth bootstrapping flows that run before domain stores are populated (accepting a
+    baúl invite). If a second call site needs the same data, or the data must survive
+    navigation, move it to a store instead of adding a second direct caller.
 - **`design-system/`** — everything with zero knowledge of El Baúl's domain types. See
   [`docs/adr/0002-design-system-taxonomy.md`](../adr/0002-design-system-taxonomy.md) for the
   full Foundations/Components/Patterns/Layouts/Features/Screens taxonomy and the litmus test for

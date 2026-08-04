@@ -29,6 +29,7 @@ export async function loadUserData(): Promise<void> {
     useBaulesStore.setState({ baules, isLoading: false });
     if (profile) {
       useAuthStore.getState().setUserProfile({ photoUrl: '', name: profile.name || profile.email, email: profile.email });
+      useAuthStore.getState().setWeeklyDigestEnabled(profile.weeklyDigestEnabled);
     }
   } catch (error) {
     useBaulesStore.setState({ isLoading: false });
