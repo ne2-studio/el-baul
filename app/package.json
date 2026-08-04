@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "android:build": "vite build --mode android && cap sync android",
+    "ios:build": "vite build --mode ios && cap sync ios",
     "sentry:upload-sourcemaps": "sentry-cli sourcemaps upload --org pedro-pardal --project el-baul dist",
     "test": "vitest run --project=unit",
     "test:watch": "vitest --project=unit",

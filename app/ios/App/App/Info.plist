@@ -47,5 +47,16 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>studio.ne2.elbaul</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>studio.ne2.elbaul</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>
