@@ -24,6 +24,7 @@
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.4.2",
+    "@capacitor/ios": "^8.5.0",
     "@capacitor/share": "^8.0.1",
     "@radix-ui/react-dropdown-menu": "2.1.6",
     "@sentry/capacitor": "^4.2.0",
@@ -95,5 +96,13 @@
     "overrides": {
       "vite": "6.3.5"
     }
+  },
+  "allowScripts": {
+    "@sentry/capacitor@4.2.0": true,
+    "@sentry/cli@2.58.6": true,
+    "@tailwindcss/oxide@4.1.12": true,
+    "esbuild@0.25.12": true,
+    "fsevents@2.3.3": true,
+    "fsevents@2.3.2": true
   }
 }
