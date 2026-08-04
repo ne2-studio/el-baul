@@ -113,9 +113,9 @@ src/
 ├── features/      # Modules per domain (auth, baules, chapters, photos, sharing, profile, …)
 │                  #   <domain>/components/ — Route + presentational components
 │                  #   <domain>/useCases/   — orchestration layer, being introduced incrementally
+│                  #   <domain>/native/     — Capacitor plugin bridges/wiring, when the feature has one
 ├── store/         # Zustand: one store per domain + uiStore (toasts/modals)
 ├── design-system/ # Domain-independent UI — see ADR 0002
-├── native/         # Capacitor integrations — see native-android.md
 └── utils/         # Utility functions/helpers
 ```
 

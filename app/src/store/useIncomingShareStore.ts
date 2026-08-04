@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { IncomingShare } from '@/native/shareReceiver';
+import { IncomingShare } from '@/features/sharing/native/shareReceiver';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 
 interface IncomingShareState {

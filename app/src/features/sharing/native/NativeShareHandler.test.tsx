@@ -13,7 +13,7 @@ vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
 }));
 
-vi.mock('@/native/shareReceiver', () => ({
+vi.mock('@/features/sharing/native/shareReceiver', () => ({
   ShareReceiver: {
     addListener: vi.fn(),
     getPendingShare: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('@/features/sharing/useCases', () => ({
 }));
 
 import { Capacitor } from '@capacitor/core';
-import { ShareReceiver, type IncomingShare } from '@/native/shareReceiver';
+import { ShareReceiver, type IncomingShare } from '@/features/sharing/native/shareReceiver';
 import { useAuth } from 'react-oidc-context';
 import { loadShare } from '@/features/sharing/useCases';
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { Capacitor } from '@capacitor/core';
 import * as Sentry from '@sentry/react';
-import { ShareReceiver, type IncomingShare } from '@/native/shareReceiver';
+import { ShareReceiver, type IncomingShare } from '@/features/sharing/native/shareReceiver';
 import { useUIStore } from '@/store/uiStore';
 import { loadShare } from '@/features/sharing/useCases';
 

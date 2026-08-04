@@ -5,7 +5,7 @@ import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal
 import { PlanLimitModal } from '@/features/profile/components/PlanLimitModal';
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
-import { NativeShareHandler } from '../native/NativeShareHandler';
+import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
 import { API_FORBIDDEN_EVENT, setAccessToken } from '@/api';
 import { Baul } from '@/types';

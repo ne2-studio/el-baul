@@ -8,7 +8,7 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { useIncomingShareStore } from '@/store/useIncomingShareStore';
 import { useUIStore } from '@/store/uiStore';
 import { clear } from '@/features/sharing/useCases';
-import { ShareReceiver } from '@/native/shareReceiver';
+import { ShareReceiver } from '@/features/sharing/native/shareReceiver';
 import { Baul } from '@/types';
 
 export const SelectBaulForShareRoute: React.FC = () => {

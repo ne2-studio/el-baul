@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import * as Sentry from '@sentry/react';
-import { IncomingShare, SharedFile } from '@/native/shareReceiver';
+import { IncomingShare, SharedFile } from '@/features/sharing/native/shareReceiver';
 import { materializeSharedPhoto, SelectedPhoto } from '@/features/photos/uploadFlow';
 import { useIncomingShareStore } from '@/store/useIncomingShareStore';
 

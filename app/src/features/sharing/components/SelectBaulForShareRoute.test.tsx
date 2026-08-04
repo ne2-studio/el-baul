@@ -13,7 +13,7 @@ vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
 }));
 
-vi.mock('@/native/shareReceiver', () => ({
+vi.mock('@/features/sharing/native/shareReceiver', () => ({
   ShareReceiver: { clearPendingShare: vi.fn().mockResolvedValue(undefined) },
 }));
 
