@@ -320,6 +320,7 @@ export const api = {
     getProfile: async () => new UserProfile(await get<UserProfileDto>('/api/users/me')),
     updateNotificationPreferences: async (weeklyDigestEnabled: boolean) =>
       new UserProfile(await put<UserProfileDto>('/api/users/me/notification-preferences', { weeklyDigestEnabled })),
+    markOnboardingSeen: async () => new UserProfile(await post<UserProfileDto>('/api/users/me/onboarding-seen')),
   },
 
   appConfig: {

@@ -4,14 +4,20 @@ import { Folder, Users, ChevronRight } from 'lucide-react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { motion, AnimatePresence } from 'motion/react';
 
+interface OnboardingCarouselLastStep {
+  title: string;
+  description: string | null;
+  ctaLabel: string;
+}
+
 interface OnboardingCarouselProps {
-  baulNombre: string;
+  lastStep: OnboardingCarouselLastStep;
   onComplete: () => void;
   onSkip: () => void;
 }
 
 export function OnboardingCarousel({
-  baulNombre,
+  lastStep,
   onComplete,
   onSkip
 }: OnboardingCarouselProps) {
@@ -149,8 +155,8 @@ export function OnboardingCarousel({
       )
     },
     {
-      title: 'Este Baúl ya es tuyo',
-      description: `Has sido invitado a formar parte de "${baulNombre}". Empieza a añadir y revivir recuerdos.`,
+      title: lastStep.title,
+      description: lastStep.description,
       icon: BaulIcon,
       visual: (
         <div className="flex justify-center">
@@ -259,7 +265,7 @@ export function OnboardingCarousel({
               fullWidth
               onClick={handleNext}
             >
-              {isLastStep ? 'Entrar al Baúl' : 'Continuar'}
+              {isLastStep ? lastStep.ctaLabel : 'Continuar'}
             </Button>
           </div>
         </div>

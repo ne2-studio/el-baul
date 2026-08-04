@@ -13,9 +13,25 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const Invite: Story = {
   args: {
-    baulNombre: 'Familia García',
+    lastStep: {
+      title: 'Este Baúl ya es tuyo',
+      description: 'Has sido invitado a formar parte de "Familia García". Empieza a añadir y revivir recuerdos.',
+      ctaLabel: 'Entrar al Baúl',
+    },
+    onComplete: () => alert('onComplete clicked'),
+    onSkip: () => alert('onSkip clicked'),
+  },
+};
+
+export const Signup: Story = {
+  args: {
+    lastStep: {
+      title: 'Crea tu primer baúl',
+      description: 'Dale un nombre y empieza a guardar tus recuerdos más preciados.',
+      ctaLabel: 'Crear mi primer baúl',
+    },
     onComplete: () => alert('onComplete clicked'),
     onSkip: () => alert('onSkip clicked'),
   },

@@ -30,10 +30,24 @@ export async function loadUserData(): Promise<void> {
     if (profile) {
       useAuthStore.getState().setUserProfile({ photoUrl: '', name: profile.name || profile.email, email: profile.email });
       useAuthStore.getState().setWeeklyDigestEnabled(profile.weeklyDigestEnabled);
+      useAuthStore.getState().setHasSeenOnboarding(profile.hasSeenOnboarding);
     }
   } catch (error) {
     useBaulesStore.setState({ isLoading: false });
     throw error;
+  }
+}
+
+// Fire-and-forget bookkeeping: OnboardingRoute calls this when a first-time (non-invite)
+// signup finishes or skips the carousel, so it never shows again for that user. Not awaited
+// by the caller — blocking navigation on this pure bookkeeping call would add latency for no
+// user-visible benefit, and a failed request just means they see the carousel once more.
+export async function markOnboardingSeen(): Promise<void> {
+  try {
+    const profile = await api.users.markOnboardingSeen();
+    useAuthStore.getState().setHasSeenOnboarding(profile.hasSeenOnboarding);
+  } catch (error) {
+    console.log('Failed to mark onboarding as seen:', error);
   }
 }
 

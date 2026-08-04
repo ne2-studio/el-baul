@@ -258,6 +258,7 @@ export class UserProfile {
   name?: string;
   photoUrl: string;
   weeklyDigestEnabled: boolean;
+  hasSeenOnboarding: boolean;
 
   constructor(data: UserProfileDto) {
     this.id = data.id;
@@ -265,6 +266,7 @@ export class UserProfile {
     this.name = data.name ?? undefined;
     this.photoUrl = '';
     this.weeklyDigestEnabled = data.weeklyDigestEnabled;
+    this.hasSeenOnboarding = data.hasSeenOnboarding;
   }
 }
 

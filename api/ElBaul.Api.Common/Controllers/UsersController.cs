@@ -26,4 +26,12 @@ public class UsersController(IUserManager userManager) : ControllerBase
         var result = await userManager.UpdateNotificationPreferencesAsync(request.WeeklyDigestEnabled);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
+
+    [HttpPost("me/onboarding-seen")]
+    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> MarkOnboardingSeen()
+    {
+        var result = await userManager.MarkOnboardingSeenAsync();
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
 }

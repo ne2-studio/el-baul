@@ -23,6 +23,10 @@ public interface IUserRepository
 
     Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled);
 
+    /// <summary>One-way flip, never unset — the onboarding carousel a brand-new signup sees
+    /// before creating their first baúl, shown at most once per user.</summary>
+    Task MarkOnboardingSeenAsync(string id);
+
     /// <summary>
     /// Inserts the user if new, or updates email/name if already present.
     /// Called by the JIT sync middleware the first time a given "sub" is seen, since
