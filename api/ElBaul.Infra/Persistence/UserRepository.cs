@@ -28,6 +28,11 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.WeeklyDigestEnabled, enabled));
 
+    public Task MarkOnboardingSeenAsync(string id) =>
+        dbContext.Users
+            .Where(u => u.Id == id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.HasSeenOnboarding, true));
+
     public async Task UpsertAsync(User user)
     {
         var existing = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == user.Id);

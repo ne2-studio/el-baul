@@ -64,6 +64,18 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
+    public Task MarkOnboardingSeenAsync(string id)
+    {
+        lock (_lock)
+        {
+            if (_users.TryGetValue(id, out var user))
+            {
+                _users[id] = user with { HasSeenOnboarding = true };
+            }
+        }
+        return Task.CompletedTask;
+    }
+
     public void Seed(User user)
     {
         lock (_lock) _users[user.Id] = user;

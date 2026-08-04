@@ -13,10 +13,13 @@ export async function loginAs(page: Page, userButtonName: 'Admin User' | 'Normal
   await page.waitForURL('**/authorize**', { timeout: 15_000 });
   await page.getByRole('button', { name: userButtonName }).click();
   // Don't just wait for localhost:3000/** — that glob also matches the transient /callback
-  // screen the SPA shows while it's still exchanging the code for a token.
-  await page.waitForURL((url) => url.pathname === '/baules' || url.pathname === '/baules/nuevo', {
-    timeout: 15_000,
-  });
+  // screen the SPA shows while it's still exchanging the code for a token. A genuinely fresh
+  // identity (zero baúles, never seen onboarding) lands on /onboarding first; one that's
+  // already seen it lands straight on /baules/nuevo.
+  await page.waitForURL(
+    (url) => url.pathname === '/baules' || url.pathname === '/baules/nuevo' || url.pathname === '/onboarding',
+    { timeout: 15_000 },
+  );
 
   const accessToken = await page.evaluate(() => {
     const raw = localStorage.getItem('oidc.user:http://localhost:5000:el-baul-app');

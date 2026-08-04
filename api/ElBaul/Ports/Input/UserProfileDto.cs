@@ -6,5 +6,6 @@ public record UserProfileDto
     string Email,
     string? Name,
     DateTime CreatedAt,
-    bool WeeklyDigestEnabled
+    bool WeeklyDigestEnabled,
+    bool HasSeenOnboarding
 );

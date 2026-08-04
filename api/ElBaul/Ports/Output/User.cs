@@ -7,5 +7,6 @@ public record User
     string? Name,
     DateTime CreatedAt,
     DateTime? LastAccessAt = null,
-    bool WeeklyDigestEnabled = true
+    bool WeeklyDigestEnabled = true,
+    bool HasSeenOnboarding = false
 );

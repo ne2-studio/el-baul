@@ -52,4 +52,29 @@ public class UserManagerTests
 
         Assert.True(result.IsFailure);
     }
+
+    [Fact]
+    public async Task MarkOnboardingSeenAsync_ShouldPersistAndReturnTrue()
+    {
+        SeedUser();
+        var manager = CreateManager();
+
+        var result = await manager.MarkOnboardingSeenAsync();
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value.HasSeenOnboarding);
+
+        var persisted = await _userRepository.GetByIdAsync(UserId);
+        Assert.True(persisted!.HasSeenOnboarding);
+    }
+
+    [Fact]
+    public async Task MarkOnboardingSeenAsync_ShouldFail_WhenUserDoesNotExist()
+    {
+        var manager = CreateManager();
+
+        var result = await manager.MarkOnboardingSeenAsync();
+
+        Assert.True(result.IsFailure);
+    }
 }

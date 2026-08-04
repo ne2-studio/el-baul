@@ -132,7 +132,10 @@ function App() {
     // browser actually is right now (BrowserRouter keeps it in sync via the History API).
     if (currentBaules.length === 0) {
       if (window.location.pathname === '/baules') {
-        navigate('/baules/nuevo?onboarding=true');
+        // hasSeenOnboarding is null while unloaded/on a failed profile fetch — treated as
+        // "not seen" so the carousel shows rather than risk silently skipping it forever.
+        const hasSeenOnboarding = useAuthStore.getState().hasSeenOnboarding;
+        navigate(hasSeenOnboarding ? '/baules/nuevo?onboarding=true' : '/onboarding');
       }
     } else {
       // /callback is excluded here: CallbackRoute owns navigation away from it, reading

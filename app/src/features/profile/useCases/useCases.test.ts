@@ -15,7 +15,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { loadNotificationPreferences, updateNotificationPreferences } from './index';
 
 function makeProfile(weeklyDigestEnabled: boolean): UserProfile {
-  return new UserProfile({ id: 'u1', email: 'a@b.com', name: 'A', createdAt: new Date().toISOString(), weeklyDigestEnabled });
+  return new UserProfile({ id: 'u1', email: 'a@b.com', name: 'A', createdAt: new Date().toISOString(), weeklyDigestEnabled, hasSeenOnboarding: true });
 }
 
 describe('profile useCases notification preferences', () => {
