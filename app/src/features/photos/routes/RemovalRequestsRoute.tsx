@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { RemovalRequestsList } from '@/features/photos/components/RemovalRequestsList';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { removePhoto, keepPhoto } from '@/features/sharing/useCases';
+import { removePhoto, keepPhoto } from '@/features/photos/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 

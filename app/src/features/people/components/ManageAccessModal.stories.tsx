@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ManageAccessModal } from '@/features/sharing/components/ManageAccessModal';
+import { ManageAccessModal } from '@/features/people/components/ManageAccessModal';
 
 const meta = {
   title: 'Features/Sharing/ManageAccessModal',

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { RevokeAccessModal } from '@/features/sharing/components/RevokeAccessModal';
+import { RevokeAccessModal } from '@/features/people/components/RevokeAccessModal';
 
 const meta = {
   title: 'Features/Sharing/RevokeAccessModal',

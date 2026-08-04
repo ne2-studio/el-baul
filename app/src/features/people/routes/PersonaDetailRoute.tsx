@@ -6,15 +6,16 @@ import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaIn
 import { EditBiografiaModal } from '@/features/people/components/EditBiografiaModal';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
 import {
+  loadPersonas,
+  loadPersonaPhotos,
   updatePersona,
   updatePersonaBiografia,
   uploadPersonaAvatar,
   setPersonaAvatarPhoto,
   updateUserRole,
   revokeAccess,
-} from '@/features/sharing/useCases';
+} from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 import { AvatarCrop, api } from '@/api';

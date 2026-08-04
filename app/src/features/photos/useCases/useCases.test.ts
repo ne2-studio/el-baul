@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Baul, Chapter, Photo } from '@/types';
+import { Baul, Chapter, Photo, RemovalRequest } from '@/types';
 
 vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
@@ -10,6 +10,7 @@ vi.mock('@/api', () => ({
   api: {
     baules: {
       setCover: vi.fn(),
+      getRemovalRequests: vi.fn(),
     },
     chapters: {
       create: vi.fn(),
@@ -27,7 +28,8 @@ vi.mock('@/api', () => ({
 import * as Sentry from '@sentry/react';
 import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { uploadPhotos, uploadPhotosWithChapter, movePhotos } from './index';
+import { usePersonasStore } from '@/store/usePersonasStore';
+import { uploadPhotos, uploadPhotosWithChapter, movePhotos, loadRemovalRequests } from './index';
 import { UploadItem } from '@/features/photos/uploadFlow';
 import { createChapter } from '@/features/chapters/useCases';
 
@@ -538,5 +540,45 @@ describe('photos useCases movePhotos', () => {
     expect(storedChapter.minDate).toEqual(date);
     expect(storedChapter.maxDate).toEqual(date);
     expect(storedChapter.photoCount).toBe(1);
+  });
+});
+
+// Regression coverage for a bug where loadRemovalRequests swallowed every error — a genuine
+// network failure looked identical to "this baúl has no pending requests" and never reached
+// the caller's toast/Sentry reporting.
+describe('photos useCases loadRemovalRequests', () => {
+  const baulId = 'baul-1';
+
+  beforeEach(() => {
+    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    vi.clearAllMocks();
+  });
+
+  it('rejects and leaves the store untouched when the API call fails', async () => {
+    const error = new Error('network down');
+    vi.mocked(api.baules.getRemovalRequests).mockRejectedValue(error);
+
+    await expect(loadRemovalRequests(baulId)).rejects.toThrow(error);
+
+    expect(usePersonasStore.getState().removalRequests[baulId]).toBeUndefined();
+  });
+
+  it('still stores the result on success', async () => {
+    const request = new RemovalRequest({
+      id: 'r1',
+      baulId,
+      photoId: 'photo-1',
+      photoUrl: 'url',
+      requesterName: 'Pedro',
+      requesterEmail: 'pedro@example.com',
+      reason: 'blurry',
+      requestDate: new Date().toISOString(),
+      status: 'pending',
+    });
+    vi.mocked(api.baules.getRemovalRequests).mockResolvedValue([request]);
+
+    await loadRemovalRequests(baulId);
+
+    expect(usePersonasStore.getState().removalRequests[baulId]).toEqual([request]);
   });
 });

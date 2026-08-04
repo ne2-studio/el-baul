@@ -59,11 +59,23 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
   belong in `routes/`. Enforced by ESLint (`eslint.config.js`'s `componentBoundaryRule`,
   scoped to `features/*/components/**`), not just convention — a presentational component that
   needs to trigger a toast, navigate, or read a store takes a prop callback from its Route
-  instead (see `InviteFamilyModal`'s `onToast` prop for the pattern). `memories` and `people`
-  have no `routes/` at all: every one of their
-  components is consumed by another feature's Route (e.g. `RecuerdoInput` renders inside
-  `baules`/`chapters`/`photos` routes), so they're pure component+useCase libraries with no URL
-  of their own.
+  instead (see `InviteFamilyModal`'s `onToast` prop for the pattern). `memories` has no
+  `routes/` at all: every one of its components is consumed by another feature's Route (e.g.
+  `RecuerdoInput` renders inside `baules`/`chapters`/`photos` routes), so it's a pure
+  component+useCase library with no URL of its own.
+  - **Domain boundaries get revisited, not just individual files.** `sharing` originally also
+    owned `PersonaDetailRoute` (viewing/editing one persona, including `ManageAccessModal` and
+    `RevokeAccessModal`) and `RemovalRequestsRoute` (reviewing pending photo-removal requests) —
+    neither is about *crossing the app's boundary* (inviting someone in, sharing a photo out),
+    which is what `sharing` is actually for. Both moved to the feature that owns the entity being
+    acted on: the persona-detail cluster to `people` (already a family member, being viewed or
+    managed — not being invited), the removal-request review queue to `photos` (next to
+    `submitRemovalRequest`, reuniting the whole submit → review → resolve lifecycle in one
+    feature). The tell was cross-feature imports with no entity-ownership justification: `sharing`
+    reaching into `people/components` for four single-use modals, `photos/components` for a list
+    only `sharing` ever rendered. When a feature's file list stops fitting a one-sentence
+    description, check whether a piece of it actually belongs to a different feature before
+    assuming the description just needs to get vaguer.
   - **Exception**: a Route may call `api.*` directly, bypassing `store/`/`useCases/`, when the
     result is never cached or shared across routes — there's no state a store would own. This
     covers: blob downloads (`api.photos.download`), one-off share-link creation consumed

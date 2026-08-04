@@ -5,7 +5,7 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { applyCoverUpdate } from '@/store/baulesCacheReconciliation';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { loadPersonas } from '@/features/people/useCases';
-import { loadRemovalRequests } from '@/features/sharing/useCases';
+import { loadRemovalRequests } from '@/features/photos/useCases';
 
 export async function createPersona(baulId: string, nickname: string): Promise<void> {
   const persona = await api.baules.createPersona(baulId, nickname);
