@@ -28,6 +28,12 @@ import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 
+interface LocationState {
+  // Set by UploadingRoute right after a successful upload — see its comment for why this
+  // lives purely in router state instead of a store.
+  recentlyUploadedPhotos?: Photo[];
+}
+
 // chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
 // (see useBaulesStore's nullable chapterId convention). Real-chapter photos are paginated
 // per-chapter and fetched on demand via loadChapterPhotos; loose photos are already loaded
@@ -36,6 +42,7 @@ import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 export const ChapterRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { recentlyUploadedPhotos } = (location.state as LocationState) || {};
   const { baulId, chapterId } = useParams();
   const auth = useAuth();
   const { photos } = useBaulesStore();
@@ -226,6 +233,7 @@ export const ChapterRoute: React.FC = () => {
     <PhotosView
       chapter={currentChapter}
       photos={currentPhotos}
+      recentlyAddedPhotos={recentlyUploadedPhotos}
       recuerdos={chapterId ? (chapterRecuerdos[chapterId] || []) : undefined}
       allChapters={chapters || []}
       onBack={() => navigate(`/baules/${baul.id}`)}

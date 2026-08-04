@@ -27,6 +27,9 @@ import {
 interface PhotosViewProps {
   chapter: Chapter;
   photos: Photo[];
+  /** Photos from the upload the user was just redirected here from — surfaced as a pinned
+   * "Añadido recientemente" swimlane above the date-grouped ones. */
+  recentlyAddedPhotos?: Photo[];
   onBack: () => void;
   onSelectPhoto: (photo: Photo) => void;
   onUploadPhotos: () => void;
@@ -52,7 +55,7 @@ interface PhotosViewProps {
 }
 
 export function PhotosView({
-  chapter, photos, onBack, onSelectPhoto, onUploadPhotos, allChapters = [], onBatchMove, onBatchChangeDate,
+  chapter, photos, recentlyAddedPhotos, onBack, onSelectPhoto, onUploadPhotos, allChapters = [], onBatchMove, onBatchChangeDate,
   onBatchCreateChapter, personas = [], onBatchTagPersonas, onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos,
   onSetChapterCover, recuerdos = [], onAddRecuerdo, onUserClick, onShareRecuerdo, onEditRecuerdo,
 }: PhotosViewProps) {
@@ -206,6 +209,7 @@ export function PhotosView({
               ) : (
                 <PhotoSwimlanes
                   photos={photos}
+                  recentlyAddedPhotos={recentlyAddedPhotos}
                   onSelectPhoto={onSelectPhoto}
                   selectionMode={selectionMode}
                   selectedIds={selectedIds}
@@ -249,6 +253,7 @@ export function PhotosView({
           ) : (
             <PhotoSwimlanes
               photos={photos}
+              recentlyAddedPhotos={recentlyAddedPhotos}
               onSelectPhoto={onSelectPhoto}
               selectionMode={selectionMode}
               selectedIds={selectedIds}

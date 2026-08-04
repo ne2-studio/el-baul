@@ -43,6 +43,10 @@ export function groupPhotosByYear(photos: Photo[]): { label: string; photos: Pho
 
 interface PhotoSwimlanesProps {
   photos: Photo[];
+  /** Pinned above the date-grouped swimlanes, e.g. right after an upload — see
+   * ChapterRoute/PhotosView. Not deduplicated against `photos`: the same photo also shows
+   * in its normal date group below, since this is a "just added" shelf, not a filter. */
+  recentlyAddedPhotos?: Photo[];
   onSelectPhoto: (photo: Photo) => void;
   /** Selection-mode props are optional — screens without batch selection (e.g. the
    * persona sheet) can omit them entirely and just get a plain grouped grid. */
@@ -55,6 +59,7 @@ interface PhotoSwimlanesProps {
 
 export function PhotoSwimlanes({
   photos,
+  recentlyAddedPhotos = [],
   onSelectPhoto,
   selectionMode = false,
   selectedIds,
@@ -66,6 +71,25 @@ export function PhotoSwimlanes({
 
   return (
     <div className="space-y-6">
+      {recentlyAddedPhotos.length > 0 && (
+        <div>
+          <SwimlaneLabel
+            onClick={onToggleGroup ? () => onToggleGroup(recentlyAddedPhotos) : undefined}
+            selected={selectionMode ? recentlyAddedPhotos.every((p) => ids.has(p.id)) : undefined}
+          >
+            Añadido recientemente
+          </SwimlaneLabel>
+          <PhotoGrid
+            photos={recentlyAddedPhotos}
+            selectionMode={selectionMode}
+            selectedIds={ids}
+            onSelectPhoto={onSelectPhoto}
+            onToggleSelect={onToggleSelect ?? (() => {})}
+            onLongPress={onLongPress ?? (() => {})}
+          />
+        </div>
+      )}
+
       {groupPhotosByYear(photos).map((group) => {
         const groupAllSelected = group.photos.every((p) => ids.has(p.id));
         return (

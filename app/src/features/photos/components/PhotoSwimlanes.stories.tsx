@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Photo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
@@ -34,6 +35,22 @@ export const SelectionMode: Story = {
     selectedIds: new Set(['1', '3']),
     onToggleSelect: (id) => alert(`onToggleSelect: ${id}`),
     onToggleGroup: (groupPhotos) => alert(`onToggleGroup: ${groupPhotos.length} fotos`),
+  },
+};
+
+// The photo just uploaded (id '1') is pinned in its own swimlane above the date groups —
+// and still shows in its normal July 2024 group too, since this is a "just added" shelf,
+// not a filter (see ChapterRoute/PhotosView, which populate this from router state right
+// after an upload).
+export const RecentlyAdded: Story = {
+  args: {
+    ...Default.args,
+    recentlyAddedPhotos: [photos[0]],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText('Añadido recientemente')).toBeInTheDocument();
+    await expect(canvas.getAllByRole('img', { name: 'Foto' })).toHaveLength(photos.length + 1);
   },
 };
 

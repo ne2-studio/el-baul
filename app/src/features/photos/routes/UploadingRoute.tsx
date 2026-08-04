@@ -6,7 +6,7 @@ import { uploadPhotosWithChapter } from '@/features/photos/useCases';
 import { UploadItemResult } from '@/features/photos/uploadFlow';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
-import { PhotoDate } from '@/types';
+import { Photo, PhotoDate } from '@/types';
 import {
   PhotoUploadDestination,
   resolvePhotoRouteContext,
@@ -63,7 +63,14 @@ export const UploadingRoute: React.FC = () => {
     const errorPath = `${chapterPath}/error`;
 
     if (failed.length === 0) {
-      navigate(chapterPath);
+      // Shown as an "Añadido recientemente" swimlane at the top of the chapter (see
+      // ChapterRoute) — carried purely via router state, not persisted anywhere, so it
+      // naturally disappears the moment the user navigates away from this exact screen,
+      // reloads, or reopens the baúl later. No explicit cleanup needed.
+      const recentlyUploadedPhotos = results
+        .map((result) => result.photo)
+        .filter((photo): photo is Photo => photo !== undefined);
+      navigate(chapterPath, { state: { recentlyUploadedPhotos } });
       showToastMessage(
         succeededCount === 1
           ? 'Tu recuerdo ya está a salvo'
