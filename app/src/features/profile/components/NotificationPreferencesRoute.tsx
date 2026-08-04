@@ -4,16 +4,17 @@ import { NotificationPreferencesScreen } from '@/features/profile/components/Not
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { loadNotificationPreferences, updateNotificationPreferences } from '@/features/profile/useCases';
 
 export const NotificationPreferencesRoute: React.FC = () => {
   const navigate = useNavigate();
   const { setShowProfileMenu } = useUIStore();
   const { run, isPending } = useAsyncAction();
-  const { weeklyDigestEnabled, loadNotificationPreferences, updateNotificationPreferences } = useAuthStore();
+  const { weeklyDigestEnabled } = useAuthStore();
 
   useEffect(() => {
-    // No-ops if the session-level bootstrap (session.ts) has already populated this — see
-    // useAuthStore.loadNotificationPreferences.
+    // No-ops if the session-level bootstrap (features/auth/useCases) has already populated
+    // this — see loadNotificationPreferences.
     run(() => loadNotificationPreferences(), { errorMessage: 'No se pudieron cargar tus preferencias.' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
