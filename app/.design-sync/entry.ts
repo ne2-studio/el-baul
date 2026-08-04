@@ -40,7 +40,6 @@ export * from '../src/design-system/patterns/forms/DateModal';
 export * from '../src/design-system/patterns/forms/EditInfoModal';
 export * from '../src/design-system/patterns/media/PhotoStage';
 export * from '../src/features/auth/components/OnboardingCarousel';
-export * from '../src/features/auth/components/OnboardingScreen';
 export * from '../src/features/auth/components/WelcomeScreen';
 export * from '../src/features/baules/components/BaulCard';
 export * from '../src/features/baules/components/BaulesList';
