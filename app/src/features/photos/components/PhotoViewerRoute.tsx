@@ -7,6 +7,8 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadRecuerdos, addRecuerdo, editRecuerdo } from '@/features/memories/useCases';
+import { loadPersonas } from '@/features/people/useCases';
+import { submitRemovalRequest, loadTaggedPersonas, setTaggedPersonas } from '@/features/photos/useCases';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
@@ -36,7 +38,7 @@ export const PhotoViewerRoute: React.FC = () => {
   const backgroundLocation = getBackgroundLocation(location);
 
   const { photos: chapterPhotosById, loadChapterPhotos, setBaulCover, setChapterCover, movePhotos, deletePhoto, changePhotoDate } = useBaulesStore();
-  const { personas, loadPersonas, submitRemovalRequest, taggedPersonas, loadTaggedPersonas, setTaggedPersonas } = usePersonasStore();
+  const { personas, taggedPersonas } = usePersonasStore();
   const { recuerdos } = useRecuerdosStore();
 
   const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);

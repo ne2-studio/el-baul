@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { RemovalRequestsList } from '@/features/photos/components/RemovalRequestsList';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { removePhoto, keepPhoto } from '@/features/sharing/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
@@ -13,11 +14,7 @@ export const RemovalRequestsRoute: React.FC = () => {
   const { run } = useAsyncAction();
 
   const { baules } = useBaulesStore();
-  const {
-    removalRequests,
-    removePhoto,
-    keepPhoto
-  } = usePersonasStore();
+  const { removalRequests } = usePersonasStore();
 
   const baul = baules.find(b => b.id === baulId);
 

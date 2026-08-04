@@ -6,6 +6,15 @@ import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaIn
 import { EditBiografiaModal } from '@/features/people/components/EditBiografiaModal';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
+import {
+  updatePersona,
+  updatePersonaBiografia,
+  uploadPersonaAvatar,
+  setPersonaAvatarPhoto,
+  updateUserRole,
+  revokeAccess,
+} from '@/features/sharing/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 import { AvatarCrop, api } from '@/api';
@@ -18,18 +27,7 @@ export const PersonaDetailRoute: React.FC = () => {
   const { baulId, personaId } = useParams();
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
   const { baules } = useBaulesStore();
-  const {
-    personas,
-    loadPersonas,
-    updatePersona,
-    updatePersonaBiografia,
-    uploadPersonaAvatar,
-    setPersonaAvatarPhoto,
-    updateUserRole,
-    revokeAccess,
-    personaPhotos,
-    loadPersonaPhotos,
-  } = usePersonasStore();
+  const { personas, personaPhotos } = usePersonasStore();
   const { run, isPending } = useAsyncAction();
 
   const [isLoading, setIsLoading] = useState(false);

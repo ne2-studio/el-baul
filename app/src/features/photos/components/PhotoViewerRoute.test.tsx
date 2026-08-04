@@ -21,8 +21,19 @@ vi.mock('@/features/memories/useCases', () => ({
   editRecuerdo: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/features/photos/useCases', () => ({
+  loadTaggedPersonas: vi.fn().mockResolvedValue(undefined),
+  setTaggedPersonas: vi.fn().mockResolvedValue(undefined),
+  submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/people/useCases', () => ({
+  loadPersonas: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { loadRecuerdos } from '@/features/memories/useCases';
+import { loadTaggedPersonas } from '@/features/photos/useCases';
 
 const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 0, role: 'custodio' } as Baul;
 const photo: Photo = { id: 'photo-1', thumbnailUrl: '/thumb.jpg', fullUrl: '/full.jpg', recuerdoCount: 0 };
@@ -48,13 +59,10 @@ describe('PhotoViewerRoute concurrent effects', () => {
       retry: vi.fn(),
     } as unknown as ReturnType<typeof useBaulScope>);
 
-    usePersonasStore.setState({
-      personas: { 'baul-1': [] },
-      taggedPersonas: {},
-      loadTaggedPersonas: vi.fn().mockResolvedValue(undefined),
-    });
+    usePersonasStore.setState({ personas: { 'baul-1': [] }, taggedPersonas: {} });
     useRecuerdosStore.setState({ recuerdos: {} });
     vi.mocked(loadRecuerdos).mockClear().mockResolvedValue(undefined);
+    vi.mocked(loadTaggedPersonas).mockClear().mockResolvedValue(undefined);
   });
 
   it('loads both recuerdos and tagged personas for the open photo in the same mount', async () => {
@@ -64,6 +72,6 @@ describe('PhotoViewerRoute concurrent effects', () => {
     // ('recuerdos' / 'tagged-personas') — without them, the second unkeyed call would
     // silently no-op as "already-pending" instead of running (see PhotoViewerRoute.tsx).
     await waitFor(() => expect(loadRecuerdos).toHaveBeenCalledWith('photo-1'));
-    expect(usePersonasStore.getState().loadTaggedPersonas).toHaveBeenCalledWith('photo-1');
+    expect(loadTaggedPersonas).toHaveBeenCalledWith('photo-1');
   });
 });

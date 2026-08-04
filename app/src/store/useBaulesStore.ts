@@ -6,7 +6,8 @@ import { getBaulPermissions } from '@/utils/roleUtils';
 import { PhotoUploadDestination, UploadItem } from '@/features/photos/uploadFlow';
 import { useRecuerdosStore } from './useRecuerdosStore';
 import { clearChapterRecuerdos } from '@/features/memories/useCases';
-import { usePersonasStore } from './usePersonasStore';
+import { loadPersonas } from '@/features/people/useCases';
+import { loadRemovalRequests } from '@/features/sharing/useCases';
 import {
   applyCoverUpdate,
   applyDeletedPhoto,
@@ -118,11 +119,11 @@ export const useBaulesStore = create<BaulesState>((set, get) => ({
     const chapters = await api.chapters.getAll(baulId);
     set((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
 
-    await usePersonasStore.getState().loadPersonas(baulId);
+    await loadPersonas(baulId);
 
     const baul = get().baules.find((b) => b.id === baulId);
     if (getBaulPermissions(baul).canReviewRemovalRequests) {
-      await usePersonasStore.getState().loadRemovalRequests(baulId);
+      await loadRemovalRequests(baulId);
     }
   },
 

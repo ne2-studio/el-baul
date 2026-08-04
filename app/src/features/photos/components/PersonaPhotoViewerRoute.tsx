@@ -6,6 +6,8 @@ import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadRecuerdos, addRecuerdo, editRecuerdo } from '@/features/memories/useCases';
+import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
+import { loadTaggedPersonas, setTaggedPersonas } from '@/features/photos/useCases';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
@@ -34,9 +36,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
   const backgroundLocation = getBackgroundLocation(location);
 
   const { baul, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
-  const {
-    personas, loadPersonas, personaPhotos, loadPersonaPhotos, taggedPersonas, loadTaggedPersonas, setTaggedPersonas,
-  } = usePersonasStore();
+  const { personas, personaPhotos, taggedPersonas } = usePersonasStore();
   const { recuerdos } = useRecuerdosStore();
 
   const [photosFailed, setPhotosFailed] = useState(false);
