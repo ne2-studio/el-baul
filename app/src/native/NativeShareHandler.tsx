@@ -4,8 +4,8 @@ import { useAuth } from 'react-oidc-context';
 import { Capacitor } from '@capacitor/core';
 import * as Sentry from '@sentry/react';
 import { ShareReceiver, type IncomingShare } from '@/native/shareReceiver';
-import { useIncomingShareStore } from '@/store/useIncomingShareStore';
 import { useUIStore } from '@/store/uiStore';
+import { loadShare } from '@/features/sharing/useCases';
 
 // Mounted once inside <BrowserRouter> (needs useNavigate). While the user isn't
 // authenticated it deliberately does nothing — the native plugin keeps the pending
@@ -13,7 +13,6 @@ import { useUIStore } from '@/store/uiStore';
 export function NativeShareHandler() {
   const navigate = useNavigate();
   const auth = useAuth();
-  const loadShare = useIncomingShareStore((state) => state.loadShare);
   const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   useEffect(() => {

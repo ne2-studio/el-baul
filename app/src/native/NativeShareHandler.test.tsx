@@ -2,7 +2,6 @@
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useIncomingShareStore } from '@/store/useIncomingShareStore';
 import { useUIStore } from '@/store/uiStore';
 import { NativeShareHandler } from './NativeShareHandler';
 
@@ -25,9 +24,14 @@ vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock('@/features/sharing/useCases', () => ({
+  loadShare: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { Capacitor } from '@capacitor/core';
 import { ShareReceiver, type IncomingShare } from '@/native/shareReceiver';
 import { useAuth } from 'react-oidc-context';
+import { loadShare } from '@/features/sharing/useCases';
 
 const pendingShare: IncomingShare = { shareId: 'share-1', files: [{ path: '/a.jpg', mimeType: 'image/jpeg', name: 'a.jpg' }] };
 
@@ -52,7 +56,7 @@ describe('NativeShareHandler', () => {
     vi.mocked(ShareReceiver.addListener).mockResolvedValue({ remove: vi.fn() });
     vi.mocked(ShareReceiver.getPendingShare).mockResolvedValue({});
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
-    useIncomingShareStore.setState({ loadShare: vi.fn().mockResolvedValue(undefined) });
+    vi.mocked(loadShare).mockClear().mockResolvedValue(undefined);
     useUIStore.setState({ showToast: false, toastMessage: '' });
   });
 
@@ -73,7 +77,7 @@ describe('NativeShareHandler', () => {
 
     renderHandler();
 
-    await waitFor(() => expect(useIncomingShareStore.getState().loadShare).toHaveBeenCalledWith(pendingShare));
+    await waitFor(() => expect(loadShare).toHaveBeenCalledWith(pendingShare));
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/compartir'));
   });
 
@@ -126,7 +130,7 @@ describe('NativeShareHandler', () => {
       await Promise.resolve();
     });
 
-    expect(useIncomingShareStore.getState().loadShare).not.toHaveBeenCalled();
+    expect(loadShare).not.toHaveBeenCalled();
   });
 
   it('does not navigate if the component unmounts before getPendingShare resolves', async () => {
@@ -148,12 +152,12 @@ describe('NativeShareHandler', () => {
 
     // The `disposed` flag set on cleanup must stop openShare from proceeding — otherwise
     // this would call loadShare and navigate() on an already-unmounted screen.
-    expect(useIncomingShareStore.getState().loadShare).not.toHaveBeenCalled();
+    expect(loadShare).not.toHaveBeenCalled();
   });
 
   it('shows an error toast and does not navigate when loading the share fails', async () => {
     vi.mocked(ShareReceiver.getPendingShare).mockResolvedValue({ share: pendingShare });
-    useIncomingShareStore.setState({ loadShare: vi.fn().mockRejectedValue(new Error('boom')) });
+    vi.mocked(loadShare).mockRejectedValue(new Error('boom'));
 
     renderHandler();
 
