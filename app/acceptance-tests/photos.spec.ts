@@ -19,10 +19,11 @@ test('create baúl → create chapter → upload photo → move photo → delete
   await page.getByText(chapter1Name).click();
   await page.waitForURL(/\/capitulos\//);
 
-  // Upload: the hidden file input's change handler fires regardless of visibility, no need to
-  // click the "Subir fotos" FAB first.
-  await page.locator('input[type="file"]').setInputFiles(FIXTURE_PHOTO);
+  // Upload: the "Subir fotos" FAB now navigates straight to the upload screen (empty state)
+  // instead of opening the native picker itself — the file input only exists there.
+  await page.getByRole('button', { name: 'Subir fotos' }).click();
   await page.waitForURL(/\/confirmar/);
+  await page.locator('input[type="file"]').setInputFiles(FIXTURE_PHOTO);
   await page.getByRole('button', { name: 'Guardar recuerdos' }).click();
   await expect(page.getByText(/ya está a salvo/)).toBeVisible({ timeout: 15_000 });
   await page.waitForURL(/\/capitulos\/[^/]+$/);
