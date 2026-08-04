@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { OnboardingCarousel } from '@/features/auth/components/OnboardingCarousel';
+import { OnboardingCarousel, buildOnboardingSteps } from '@/features/auth/components/OnboardingCarousel';
+import { buildInvitePreviewSteps } from '@/features/auth/components/OnboardingInvitePreviewSteps';
 import { markOnboardingSeen } from '@/features/auth/useCases';
 import { useAuth } from 'react-oidc-context';
+import { api } from '@/api';
+import { BaulInviteLinkPreview } from '@/types';
 
 export const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -16,8 +19,34 @@ export const OnboardingRoute: React.FC = () => {
   // invite-preview "ver más" detour does.
   const redirectTarget = searchParams.get('redirectTo');
   const isInvite = redirectTarget !== null;
+  const inviteToken = searchParams.get('token');
 
-  const lastStep = isInvite
+  // Best-effort: the invite-preview endpoint is public but the personalized carousel is a
+  // nice-to-have layer, not a hard dependency. If there's no token, or the fetch fails (link
+  // revoked between screens, network blip), onboarding just falls back to the generic variant
+  // below rather than blocking or erroring the "ver más" detour.
+  const [invitePreview, setInvitePreview] = useState<BaulInviteLinkPreview | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(isInvite && inviteToken !== null);
+
+  useEffect(() => {
+    if (!isInvite || !inviteToken) return;
+
+    let cancelled = false;
+    api.baulInvites.getPreview(inviteToken)
+      .then((preview) => {
+        if (!cancelled) setInvitePreview(preview);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsPreviewLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isInvite, inviteToken]);
+
+  const genericLastStep = isInvite
     ? {
         title: 'Te han invitado a formar parte de este Baúl',
         description: `Te unirás al Baúl "${baulNombre}" para añadir fotos, recuerdos y formar parte de vuestra historia familiar.`,
@@ -47,9 +76,21 @@ export const OnboardingRoute: React.FC = () => {
   const handleComplete = goToNextStep;
   const handleSkip = goToNextStep;
 
+  if (isPreviewLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  const steps = invitePreview
+    ? buildInvitePreviewSteps(invitePreview)
+    : buildOnboardingSteps(genericLastStep);
+
   return (
     <OnboardingCarousel
-      lastStep={lastStep}
+      steps={steps}
       onComplete={handleComplete}
       onSkip={handleSkip}
     />

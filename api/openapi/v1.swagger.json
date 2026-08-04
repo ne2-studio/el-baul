@@ -7182,6 +7182,7 @@
         "required": [
           "baulId",
           "name",
+          "personaAvatarUrls",
           "previewPhotos"
         ],
         "type": "object",
@@ -7197,6 +7198,16 @@
             "nullable": true
           },
           "previewPhotos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "coverPhotoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "personaAvatarUrls": {
             "type": "array",
             "items": {
               "type": "string"

@@ -229,12 +229,16 @@ export class BaulInviteLinkPreview {
   name: string;
   description?: string;
   previewPhotos: string[];
+  coverPhotoUrl?: string;
+  personaAvatarUrls: string[];
 
   constructor(data: BaulInviteLinkPreviewDto) {
     this.baulId = data.baulId;
     this.name = data.name;
     this.description = data.description ?? undefined;
     this.previewPhotos = data.previewPhotos;
+    this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
+    this.personaAvatarUrls = data.personaAvatarUrls;
   }
 }
 

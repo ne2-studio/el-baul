@@ -76,7 +76,22 @@ public class BaulInviteLinkManager(
             urls.Add(await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.InvitationPreview));
         }
 
-        return new BaulInviteLinkPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, urls);
+        var coverUrl = baul.CoverPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(baul.CoverPhotoKey, ImagePlacement.BaulCover)
+            : null;
+
+        // Up to 4 avatars from real (non-revoked) family members, no name attached — same
+        // limited-disclosure trade-off the public preview already makes for previewPhotos.
+        var avatarUrls = new List<string>();
+        var personas = await baulRepository.GetPersonasAsync(baul.Id);
+        foreach (var persona in personas.Where(p => p.Role != BaulRole.SinAcceso))
+        {
+            if (avatarUrls.Count >= 4) break;
+            var dto = await personaDtoProjector.ProjectAsync(persona, null, canEdit: false);
+            if (dto.AvatarUrl is { Length: > 0 } avatarUrl) avatarUrls.Add(avatarUrl);
+        }
+
+        return new BaulInviteLinkPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, urls, coverUrl, avatarUrls);
     }
 
     public async Task<Result<IEnumerable<ClaimablePersonaDto>>> GetClaimablePersonasAsync(string token)

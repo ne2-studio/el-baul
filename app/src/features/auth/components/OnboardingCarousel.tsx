@@ -4,14 +4,16 @@ import { HardDrive, Image as ImageIcon, MessageCircle, Smartphone, Users, Video 
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { motion, AnimatePresence } from 'motion/react';
 
-interface OnboardingCarouselLastStep {
+export interface OnboardingStep {
   title: string;
   description: string | null;
-  ctaLabel: string;
+  illustration: React.ReactNode;
+  /** Only meaningful on the final step — earlier steps always show "Continuar". */
+  ctaLabel?: string;
 }
 
 interface OnboardingCarouselProps {
-  lastStep: OnboardingCarouselLastStep;
+  steps: OnboardingStep[];
   onComplete: () => void;
   onSkip: () => void;
 }
@@ -111,7 +113,9 @@ function GrowingMemoryIllustration() {
   );
 }
 
-function TrunkReadyIllustration() {
+// Exported for reuse as the invite-personalized variant's final fallback when the invited
+// baúl has neither a cover photo nor any preview photos (OnboardingInvitePreviewSteps.tsx).
+export function TrunkReadyIllustration() {
   return (
     <div className="flex justify-center">
       <motion.div
@@ -126,35 +130,54 @@ function TrunkReadyIllustration() {
   );
 }
 
+export interface OnboardingFinalStepContent {
+  title: string;
+  description: string;
+  ctaLabel: string;
+}
+
+// Title/description for the first three screens — shared with the invite-personalized variant
+// (OnboardingInvitePreviewSteps.tsx), which reuses this exact copy and only swaps the
+// illustration for one built from the invited baúl's real photos/personas.
+export const introStepsCopy: { title: string; description: string }[] = [
+  {
+    title: 'Los recuerdos importantes acaban perdiéndose',
+    description: 'Fotos en WhatsApp, vídeos en móviles antiguos, historias que solo recuerda una persona.'
+  },
+  {
+    title: 'Por eso existe un Baúl',
+    description: 'Un espacio compartido y seguro donde toda la familia guarda fotos, vídeos y recuerdos en un mismo lugar.'
+  },
+  {
+    title: 'Cada recuerdo hace crecer la historia',
+    description: 'Cada uno añade sus fotos, vídeos y recuerdos. Así, el Baúl se convierte en la memoria de toda la familia.'
+  }
+];
+
+export function buildOnboardingSteps(finalStep: OnboardingFinalStepContent): OnboardingStep[] {
+  const illustrations = [
+    <ScatteredMemoriesIllustration key="scattered" />,
+    <SharedSpaceIllustration key="shared" />,
+    <GrowingMemoryIllustration key="growing" />
+  ];
+
+  return [
+    ...introStepsCopy.map((copy, i) => ({ ...copy, illustration: illustrations[i] })),
+    {
+      title: finalStep.title,
+      description: finalStep.description,
+      illustration: <TrunkReadyIllustration />,
+      ctaLabel: finalStep.ctaLabel
+    }
+  ];
+}
+
 export function OnboardingCarousel({
-  lastStep,
+  steps,
   onComplete,
   onSkip
 }: OnboardingCarouselProps) {
   const [currentStep, setCurrentStep] = useState(0);
-
-  const steps = [
-    {
-      title: 'Los recuerdos importantes acaban perdiéndose',
-      description: 'Fotos en WhatsApp, vídeos en móviles antiguos, historias que solo recuerda una persona.',
-      illustration: <ScatteredMemoriesIllustration />
-    },
-    {
-      title: 'Por eso existe un Baúl',
-      description: 'Un espacio compartido y seguro donde toda la familia guarda fotos, vídeos y recuerdos en un mismo lugar.',
-      illustration: <SharedSpaceIllustration />
-    },
-    {
-      title: 'Cada recuerdo hace crecer la historia',
-      description: 'Cada uno añade sus fotos, vídeos y recuerdos. Así, el Baúl se convierte en la memoria de toda la familia.',
-      illustration: <GrowingMemoryIllustration />
-    },
-    {
-      title: lastStep.title,
-      description: lastStep.description,
-      illustration: <TrunkReadyIllustration />
-    }
-  ];
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -240,7 +263,7 @@ export function OnboardingCarousel({
               fullWidth
               onClick={handleNext}
             >
-              {isLastStep ? lastStep.ctaLabel : 'Continuar'}
+              {currentStepData.ctaLabel ?? 'Continuar'}
             </Button>
           </div>
         </div>

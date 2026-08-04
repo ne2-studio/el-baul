@@ -5935,6 +5935,8 @@ export interface components {
             name: string;
             description?: string | null;
             previewPhotos: string[];
+            coverPhotoUrl?: string | null;
+            personaAvatarUrls: string[];
         };
         ChangePhotoDateBatchRequest: {
             photoIds: string[];

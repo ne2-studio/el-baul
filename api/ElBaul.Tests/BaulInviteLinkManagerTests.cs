@@ -134,6 +134,29 @@ public class BaulInviteLinkManagerTests
     }
 
     [Fact]
+    public async Task GetPreviewAsync_ShouldIncludeCoverPhotoAndPersonaAvatars()
+    {
+        var baulId = await SeedBaulAsync();
+        var baul = await _baules.GetByIdAsync(baulId);
+        var coverPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, null, null, CustodioId, Now);
+        await _baules.UpdateAsync(baul!.WithCover(coverPhoto, Now));
+
+        // Custodio persona (seeded by SeedBaulAsync) has no avatar and should be skipped.
+        await _baules.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, GuestId, "Invitado", BaulRole.Colaborador, Now,
+            AvatarPhotoKey: "avatar-key"));
+
+        var manager = CreateManager(CustodioId);
+        var link = await manager.GetOrCreateAsync(baulId);
+
+        var preview = await manager.GetPreviewAsync(link.Value.Token);
+
+        Assert.True(preview.IsSuccess);
+        Assert.Equal("https://imgproxy.test/BaulCover/cover-key", preview.Value.CoverPhotoUrl);
+        Assert.Equal(["https://imgproxy.test/PersonaAvatar/avatar-key"], preview.Value.PersonaAvatarUrls);
+    }
+
+    [Fact]
     public async Task AcceptAsync_ShouldAutoCreatePersona_ForNewJoiner()
     {
         var baulId = await SeedBaulAsync();

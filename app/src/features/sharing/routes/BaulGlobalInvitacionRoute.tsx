@@ -68,9 +68,12 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
 
   const handleVerMas = () => {
     const params = new URLSearchParams();
-    if (preview) {
+    if (preview && token) {
       params.set('baulNombre', preview.name);
       params.set('redirectTo', `/invitacion/baul/${token}/aceptar`);
+      // Lets OnboardingRoute re-fetch the full public preview (real photos, cover, persona
+      // avatars) to personalize the carousel instead of the generic signup version.
+      params.set('token', token);
     }
 
     const onboardingUrl = `/onboarding?${params.toString()}`;
