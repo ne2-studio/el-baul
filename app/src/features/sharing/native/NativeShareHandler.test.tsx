@@ -6,7 +6,7 @@ import { useUIStore } from '@/store/uiStore';
 import { NativeShareHandler } from './NativeShareHandler';
 
 vi.mock('@capacitor/core', () => ({
-  Capacitor: { isNativePlatform: vi.fn(() => true) },
+  Capacitor: { isNativePlatform: vi.fn(() => true), isPluginAvailable: vi.fn(() => true) },
 }));
 
 vi.mock('@sentry/react', () => ({
@@ -53,6 +53,7 @@ describe('NativeShareHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+    vi.mocked(Capacitor.isPluginAvailable).mockReturnValue(true);
     vi.mocked(ShareReceiver.addListener).mockResolvedValue({ remove: vi.fn() });
     vi.mocked(ShareReceiver.getPendingShare).mockResolvedValue({});
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
@@ -70,6 +71,19 @@ describe('NativeShareHandler', () => {
     });
     expect(ShareReceiver.addListener).not.toHaveBeenCalled();
     expect(ShareReceiver.getPendingShare).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when the native platform has no ShareReceiver plugin (e.g. iOS)', async () => {
+    vi.mocked(Capacitor.isPluginAvailable).mockReturnValue(false);
+
+    renderHandler();
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(ShareReceiver.addListener).not.toHaveBeenCalled();
+    expect(ShareReceiver.getPendingShare).not.toHaveBeenCalled();
+    expect(useUIStore.getState().showToast).toBe(false);
   });
 
   it('loads a pending share and navigates to /compartir when authenticated', async () => {

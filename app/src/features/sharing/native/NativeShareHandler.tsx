@@ -16,7 +16,10 @@ export function NativeShareHandler() {
   const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
+    // ShareReceiver solo tiene implementación nativa en Android (ver
+    // docs/architecture/native-android.md) — en iOS el plugin no está registrado, así que
+    // llamarlo rechazaría con un error de "no implementado" en cuanto el usuario se autentica.
+    if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('ShareReceiver')) return;
 
     let disposed = false;
 
