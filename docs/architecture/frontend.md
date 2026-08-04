@@ -8,10 +8,10 @@ shell, [`../PRODUCT.md`](../PRODUCT.md) for product principles and domain langua
 ## Layers
 
 ```
-features/<domain>/components/*Route.tsx  →  features/<domain>/useCases/*  →  store/*  →  api.ts  →  types/index.ts
-                    ↓ renders                          ↑ orchestrates
-        features/<domain>/components/*.tsx      (store actions, api.*, other stores/use cases)
-        (presentational screens/modals)
+features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  store/*  →  api.ts  →  types/index.ts
+                    ↓ renders                    ↑ orchestrates
+        features/<domain>/components/*.tsx  (store actions, api.*, other stores/use cases)
+        (presentational screens/modals — zero router/store/useCases imports)
                     ↓ composed from
         design-system/{foundations,components,patterns,layouts}/*.tsx
 ```
@@ -32,8 +32,11 @@ features/<domain>/components/*Route.tsx  →  features/<domain>/useCases/*  → 
   feature, not one file per use case — `features/<domain>/useCases/index.ts`, split into
   multiple files under that folder only once it grows large enough to earn it (mirrors
   `features/photos/uploadFlow/` and `features/photos/viewerNavigation/`, the existing precedent
-  for this shape). This layer is being introduced incrementally, store by store; a store with no
-  `useCases/` module yet still owns its actions directly, called straight from its Route.
+  for this shape). Every domain store's actions have been extracted this way; a store now holds
+  only state, `reset()`, and (rarely) a cross-store setter with no `api.*` call of its own, like
+  `useBaulesStore.removePhotoFromCaches`. `uiStore` and `useAppConfigStore` are the deliberate
+  exceptions — cross-cutting state with no real orchestration to extract, same category as the
+  auth-session slice of `useAuthStore` (`isAuthenticated`, `userProfile`, `subscription`).
   - **Ownership when a store is consumed by several features** (most domain stores are — e.g.
     `useBaulesStore` backs `baules`, `chapters`, `photos` and `sharing` routes): a use case lives
     in the feature that is its only caller. When several features call it with the exact same
@@ -46,12 +49,17 @@ features/<domain>/components/*Route.tsx  →  features/<domain>/useCases/*  → 
     in its own feature (e.g. `usePersonasStore`'s photo-tagging actions live in
     `features/photos/useCases`, not `features/people/useCases`, since only photo routes call
     them).
-- **`features/<domain>/components/*Route.tsx`** — one container component per route. A Route
-  component reads `useParams`/store state directly (reactive subscription — this does not go
-  through `useCases/`), defines handlers that call `useCases/` functions for anything mutating
-  (navigation and toasts stay in the Route), and renders a presentational component colocated in
-  the same feature's `components/` folder, with everything passed as props — no business logic
-  or store access in the presentational component itself.
+- **`features/<domain>/routes/*Route.tsx`** — one container component per route, one module per
+  feature (peer of `useCases/`, `components/`, `native/`). A Route component reads
+  `useParams`/store state directly (reactive subscription — this does not go through
+  `useCases/`), defines handlers that call `useCases/` functions for anything mutating
+  (navigation and toasts stay in the Route), and renders a presentational component from the
+  same feature's `components/` folder, with everything passed as props. `components/` is
+  strictly presentational: no `react-router-dom`, `store/`, or `useCases/` imports there — those
+  belong in `routes/`. `memories` and `people` have no `routes/` at all: every one of their
+  components is consumed by another feature's Route (e.g. `RecuerdoInput` renders inside
+  `baules`/`chapters`/`photos` routes), so they're pure component+useCase libraries with no URL
+  of their own.
   - **Exception**: a Route may call `api.*` directly, bypassing `store/`/`useCases/`, when the
     result is never cached or shared across routes — there's no state a store would own. This
     covers: blob downloads (`api.photos.download`), one-off share-link creation consumed
@@ -111,8 +119,9 @@ src/
 ├── types/         # Domain entity classes, hydrated from api.ts responses
 ├── app/           # Base components, routes and main layout
 ├── features/      # Modules per domain (auth, baules, chapters, photos, sharing, profile, …)
-│                  #   <domain>/components/ — Route + presentational components
-│                  #   <domain>/useCases/   — orchestration layer, being introduced incrementally
+│                  #   <domain>/routes/     — *Route.tsx container components (one per URL)
+│                  #   <domain>/components/ — presentational only: no router/store/useCases imports
+│                  #   <domain>/useCases/   — orchestration layer: api.* + store writes
 │                  #   <domain>/native/     — Capacitor plugin bridges/wiring, when the feature has one
 ├── store/         # Zustand: one store per domain + uiStore (toasts/modals)
 ├── design-system/ # Domain-independent UI — see ADR 0002

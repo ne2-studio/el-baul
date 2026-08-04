@@ -110,12 +110,14 @@ The taxonomy above is also the physical directory layout under `app/src/`:
   `Patterns`, or `Layouts`. Files here avoid concrete feature implementations. Some may use
   shared value objects or product types when doing so simplifies their contract without
   reducing their internal reuse across El Baúl.
-- `features/<domain>/components/` — every file classified as `Features` or `Screens` lives
-  next to the `*Route.tsx` container(s) that render it, one folder per domain (`baules`,
-  `chapters`, `people`, `photos`, `memories`, `sharing`, `profile`, `chat`, `auth`, `support`).
-  This colocates a Route with the presentational component(s) it renders, matching the
-  pre-existing `features/<domain>/components/*Route.tsx` convention rather than inventing a
-  parallel `screens/` tree.
+- `features/<domain>/components/` — every file classified as `Features` or `Screens` lives here,
+  one folder per domain (`baules`, `chapters`, `people`, `photos`, `memories`, `sharing`,
+  `profile`, `chat`, `auth`, `support`), strictly presentational (no router/store/useCases
+  imports — see [`frontend.md`](../architecture/frontend.md)). The `*Route.tsx` container(s)
+  that render them live in a sibling `features/<domain>/routes/`, not colocated in the same
+  folder — there is still no separate `screens/` tree; `routes/` replaces what used to be
+  Route-and-presentational files interleaved in one `components/` folder, distinguished only by
+  a naming suffix.
 
 **Presentational components reused across more than one domain's routes** (e.g. `ChaptersView`
 is rendered as the background screen under a photo-viewer overlay reached from `baules`,
