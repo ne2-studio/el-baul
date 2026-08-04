@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
-import { Folder, Users, ChevronRight } from 'lucide-react';
+import { HardDrive, Image as ImageIcon, MessageCircle, Smartphone, Users, Video } from 'lucide-react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -16,6 +16,116 @@ interface OnboardingCarouselProps {
   onSkip: () => void;
 }
 
+function ScatteredMemoriesIllustration() {
+  const scattered = [
+    { Icon: MessageCircle, x: -64, y: -40 },
+    { Icon: ImageIcon, x: 64, y: -40 },
+    { Icon: HardDrive, x: -64, y: 40 },
+    { Icon: Smartphone, x: 64, y: 40 },
+  ];
+
+  return (
+    <div className="relative h-40 flex items-center justify-center">
+      {scattered.map(({ Icon, x, y }, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground"
+          initial={{ x, y, opacity: 0.9 }}
+          animate={{ x: 0, y: 0, opacity: 0, scale: 0.6 }}
+          transition={{ duration: 1.6, delay: 0.4, ease: 'easeInOut' }}
+        >
+          <Icon className="w-5 h-5" strokeWidth={1.5} />
+        </motion.div>
+      ))}
+      <motion.div
+        className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center"
+        initial={{ scale: 0.8, opacity: 0.6 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8, delay: 1.2 }}
+      >
+        <BaulIcon className="w-8 h-8 text-primary" />
+      </motion.div>
+    </div>
+  );
+}
+
+function SharedSpaceIllustration() {
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex gap-6">
+        {[0, 1, 2].map(i => (
+          <motion.div
+            key={i}
+            className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/70"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
+          >
+            <Users className="w-5 h-5" strokeWidth={1.5} />
+          </motion.div>
+        ))}
+      </div>
+      <motion.div
+        className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center"
+        initial={{ scale: 0.9, opacity: 0.6 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+      >
+        <BaulIcon className="w-8 h-8 text-primary" />
+      </motion.div>
+    </div>
+  );
+}
+
+function GrowingMemoryIllustration() {
+  const items = [
+    { Icon: ImageIcon, x: -60, y: -46 },
+    { Icon: Video, x: 60, y: -46 },
+    { Icon: MessageCircle, x: -60, y: 46 },
+    { Icon: Users, x: 60, y: 46 },
+  ];
+
+  return (
+    <div className="relative h-40 flex items-center justify-center">
+      {items.map(({ Icon, x, y }, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+          style={{ left: `calc(50% + ${x}px - 1.125rem)`, top: `calc(50% + ${y}px - 1.125rem)` }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.3 + i * 0.2 }}
+        >
+          <Icon className="w-4 h-4" strokeWidth={1.5} />
+        </motion.div>
+      ))}
+      <motion.div
+        className="w-16 h-16 rounded-2xl bg-card border border-primary/20 flex items-center justify-center z-10"
+        initial={{ scale: 0.85 }}
+        animate={{ scale: [0.85, 1, 1.06, 1] }}
+        transition={{ duration: 1.4, delay: 0.3, times: [0, 0.3, 0.7, 1] }}
+      >
+        <BaulIcon className="w-8 h-8 text-primary" />
+      </motion.div>
+    </div>
+  );
+}
+
+function TrunkReadyIllustration() {
+  return (
+    <div className="flex justify-center">
+      <motion.div
+        className="w-32 h-32 bg-primary/10 rounded-3xl flex items-center justify-center"
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        <BaulIcon className="w-16 h-16 text-primary" />
+      </motion.div>
+    </div>
+  );
+}
+
 export function OnboardingCarousel({
   lastStep,
   onComplete,
@@ -25,146 +135,24 @@ export function OnboardingCarousel({
 
   const steps = [
     {
-      title: 'Un lugar para lo que de verdad importa',
-      description: 'En lugar de perder fotos en chats o carpetas, aquí las guardas en un espacio compartido con tu gente.',
-      icon: BaulIcon,
-      visual: (
-        <div className="flex gap-4 items-center justify-center">
-          {/* Lado A - Caos */}
-          <div className="flex-1 opacity-40">
-            <div className="text-xs text-muted-foreground mb-2 text-center">Antes</div>
-            <div className="space-y-2">
-              <div className="h-8 bg-muted rounded-lg flex items-center px-2">
-                <div className="w-6 h-6 bg-muted-foreground/20 rounded mr-2" />
-                <div className="h-2 bg-muted-foreground/20 rounded flex-1" />
-              </div>
-              <div className="h-8 bg-muted rounded-lg flex items-center px-2">
-                <div className="w-6 h-6 bg-muted-foreground/20 rounded mr-2" />
-                <div className="h-2 bg-muted-foreground/20 rounded flex-1" />
-              </div>
-              <div className="h-8 bg-muted rounded-lg flex items-center px-2">
-                <div className="w-6 h-6 bg-muted-foreground/20 rounded mr-2" />
-                <div className="h-2 bg-muted-foreground/20 rounded flex-1" />
-              </div>
-            </div>
-          </div>
-
-          {/* Separador */}
-          <ChevronRight className="w-5 h-5 text-primary" />
-
-          {/* Lado B - Organizado */}
-          <div className="flex-1">
-            <div className="text-xs text-primary mb-2 text-center">Ahora</div>
-            <div className="bg-primary/10 rounded-xl p-3 border border-primary/20">
-              <div className="flex items-center gap-2 mb-2">
-                <BaulIcon className="w-4 h-4 text-primary" />
-                <div className="h-2 bg-primary/40 rounded w-20" />
-              </div>
-              <div className="grid grid-cols-3 gap-1">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="aspect-square bg-primary/20 rounded" />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )
+      title: 'Los recuerdos importantes acaban perdiéndose',
+      description: 'Fotos en WhatsApp, vídeos en móviles antiguos, historias que solo recuerda una persona.',
+      illustration: <ScatteredMemoriesIllustration />
     },
     {
-      title: 'Todo vive dentro de un Baúl',
-      description: 'Un Baúl es tu espacio compartido. Dentro organizas momentos en Capítulos.',
-      icon: Folder,
-      visual: (
-        <div className="bg-muted/30 rounded-2xl p-6">
-          {/* Baúl contenedor */}
-          <div className="bg-card border-2 border-primary/30 rounded-xl p-4 mb-3">
-            <div className="flex items-center gap-2 mb-4">
-              <BaulIcon className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-foreground">Familia García</span>
-            </div>
-
-            {/* Capítulos dentro */}
-            <div className="space-y-2">
-              <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2">
-                <Folder className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs text-foreground">Navidad 2023</span>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2">
-                <Folder className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs text-foreground">Viaje a la playa</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Microcopy explicativo */}
-          <p className="text-xs text-center text-muted-foreground">
-            El Baúl dura años. Los Capítulos organizan momentos.
-          </p>
-        </div>
-      )
+      title: 'Por eso existe un Baúl',
+      description: 'Un espacio compartido y seguro donde toda la familia guarda fotos, vídeos y recuerdos en un mismo lugar.',
+      illustration: <SharedSpaceIllustration />
     },
     {
-      title: 'Cada uno participa a su manera',
-      description: null,
-      icon: Users,
-      visual: (
-        <div className="space-y-3">
-          {/* Custodio */}
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm">👑</span>
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-foreground mb-1">Custodio</div>
-                <div className="text-sm text-muted-foreground">Crea y cuida el Baúl</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Colaborador */}
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm">✏️</span>
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-foreground mb-1">Colaborador</div>
-                <div className="text-sm text-muted-foreground">Añade recuerdos</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Administrador */}
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm">👑</span>
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-foreground mb-1">Administrador</div>
-                <div className="text-sm text-muted-foreground">Gestiona el Baúl, igual que el Custodio</div>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-center text-muted-foreground pt-2">
-            Sin configuraciones complejas
-          </p>
-        </div>
-      )
+      title: 'Cada recuerdo hace crecer la historia',
+      description: 'Cada uno añade sus fotos, vídeos y recuerdos. Así, el Baúl se convierte en la memoria de toda la familia.',
+      illustration: <GrowingMemoryIllustration />
     },
     {
       title: lastStep.title,
       description: lastStep.description,
-      icon: BaulIcon,
-      visual: (
-        <div className="flex justify-center">
-          <div className="w-32 h-32 bg-primary/10 rounded-3xl flex items-center justify-center">
-            <BaulIcon className="w-16 h-16 text-primary" />
-          </div>
-        </div>
-      )
+      illustration: <TrunkReadyIllustration />
     }
   ];
 
@@ -183,22 +171,21 @@ export function OnboardingCarousel({
   };
 
   const currentStepData = steps[currentStep];
-  const Icon = currentStepData.icon;
   const isLastStep = currentStep === steps.length - 1;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header con skip */}
-      <div className="flex justify-end px-6 pt-[calc(1.5rem_+_var(--safe-top))]">
-        <Button variant="plain"
-          onClick={onSkip}
-          className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-        >
-          Saltar
-        </Button>
+      <div className="flex justify-end px-6 pt-[calc(1.5rem_+_var(--safe-top))] h-12">
+        {!isLastStep && (
+          <Button variant="plain"
+            onClick={onSkip}
+            className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+          >
+            Saltar
+          </Button>
+        )}
       </div>
 
-      {/* Contenido principal */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
         <div className="max-w-md w-full">
           <AnimatePresence mode="wait">
@@ -209,33 +196,22 @@ export function OnboardingCarousel({
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Icono */}
-              <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <Icon className="w-8 h-8 text-primary" strokeWidth={1.5} />
-                </div>
-              </div>
-
-              {/* Título */}
               <h1 className="text-2xl text-center mb-3 text-foreground">
                 {currentStepData.title}
               </h1>
 
-              {/* Descripción */}
               {currentStepData.description && (
-                <p className="text-center text-muted-foreground mb-8">
+                <p className="text-center text-muted-foreground mb-10">
                   {currentStepData.description}
                 </p>
               )}
 
-              {/* Visual */}
-              <div className="mb-8">
-                {currentStepData.visual}
+              <div className="mb-10">
+                {currentStepData.illustration}
               </div>
             </motion.div>
           </AnimatePresence>
 
-          {/* Indicadores de progreso */}
           <div className="flex justify-center gap-2 mb-8">
             {steps.map((_, index) => (
               <div
@@ -249,7 +225,6 @@ export function OnboardingCarousel({
             ))}
           </div>
 
-          {/* Botones de navegación */}
           <div className="flex gap-3">
             {currentStep > 0 && (
               <Button variant="plain"

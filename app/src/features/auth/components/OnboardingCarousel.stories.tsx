@@ -16,8 +16,8 @@ type Story = StoryObj<typeof meta>;
 export const Invite: Story = {
   args: {
     lastStep: {
-      title: 'Este Baúl ya es tuyo',
-      description: 'Has sido invitado a formar parte de "Familia García". Empieza a añadir y revivir recuerdos.',
+      title: 'Te han invitado a formar parte de este Baúl',
+      description: 'Te unirás al Baúl "Familia García" para añadir fotos, recuerdos y formar parte de vuestra historia familiar.',
       ctaLabel: 'Entrar al Baúl',
     },
     onComplete: () => alert('onComplete clicked'),
@@ -28,9 +28,9 @@ export const Invite: Story = {
 export const Signup: Story = {
   args: {
     lastStep: {
-      title: 'Crea tu primer baúl',
-      description: 'Dale un nombre y empieza a guardar tus recuerdos más preciados.',
-      ctaLabel: 'Crear mi primer baúl',
+      title: 'Crea vuestro Baúl',
+      description: 'Dale un nombre y guardad juntos vuestros primeros recuerdos.',
+      ctaLabel: 'Crear mi Baúl',
     },
     onComplete: () => alert('onComplete clicked'),
     onSkip: () => alert('onSkip clicked'),
