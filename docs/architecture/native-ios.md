@@ -42,5 +42,10 @@ verify iOS changes manually on a Mac before merging.
   toast right after every native login. Building this for real on iOS means adding a Share
   Extension app target plus an App Group container to hand files to the main app — not yet done.
 - `npm run ios:build` (in `app/`) builds with a separate `.env.ios` and runs `cap sync ios`.
+- **App icon and splash screen** come from the same master assets already used for Android/PWA
+  (`app/assets/icon-only.png`, `icon-foreground.png`, `icon-background.png`, `splash.png` — kept
+  in the repo since they're the only editable source, everything under `android/`/`ios/`/`public/`
+  is generated from them). Regenerate iOS's copies with `npx @capacitor/assets generate --ios`
+  from `app/`; add `--android`/drop `--ios` to also (re)touch the other platforms.
 
 See [`native-android.md`](native-android.md) for the Android counterpart.
