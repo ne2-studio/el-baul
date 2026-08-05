@@ -198,23 +198,9 @@ public class RecuerdoManagerTests
         Assert.True(result.IsSuccess);
     }
 
-    [Fact]
-    public async Task CreateRecuerdoAsync_ShouldIncludeAuthorsAvatarUrl_WhenPersonaHasOne_ForChapter()
-    {
-        var baulId = Guid.NewGuid();
-        var chapterId = Guid.NewGuid();
-        const string colaboradorId = "colaborador-1";
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Colaborador", BaulRole.Colaborador, _clock.UtcNow(),
-            AvatarPhotoKey: "avatar-key"));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
-
-        var manager = CreateManager(colaboradorId);
-        var result = await manager.CreateRecuerdoAsync(new ChapterId(chapterId), "Recuerdo de un colaborador");
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", result.Value.UserAvatar);
-    }
+    // Author-info resolution (nickname/avatar) is shared internal logic now, not repeated per
+    // scope — see CreateRecuerdoAsync_ShouldIncludeAuthorsAvatarUrl_WhenPersonaHasOne above for
+    // the one test that covers it regardless of which scoped entry point is called.
 
     [Fact]
     public async Task CreateRecuerdoAsync_ShouldFail_WhenChapterDoesNotExist()
