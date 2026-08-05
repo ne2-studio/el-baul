@@ -33,6 +33,7 @@ vi.mock('@/api', () => ({
     photos: { download: vi.fn(), createShareLink: vi.fn() },
   },
   isForbiddenError: () => false,
+  isUnauthorizedError: () => false,
 }));
 
 vi.mock('@/utils/downloadFile', () => ({

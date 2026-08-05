@@ -11,6 +11,7 @@ import { BaulRecuerdosTabContainer } from './BaulRecuerdosTabContainer';
 vi.mock('@/api', () => ({
   api: { recuerdos: { createShareLink: vi.fn() } },
   isForbiddenError: () => false,
+  isUnauthorizedError: () => false,
 }));
 
 vi.mock('@/features/memories/useCases', () => ({

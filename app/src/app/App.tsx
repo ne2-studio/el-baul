@@ -7,7 +7,7 @@ import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
-import { API_FORBIDDEN_EVENT, setAccessToken } from '@/api';
+import { API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
 import { Baul } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { getBaulPermissions } from '@/utils/roleUtils';
@@ -94,6 +94,25 @@ function App() {
     const handleForbidden = () => setIsAccessDenied(true);
     window.addEventListener(API_FORBIDDEN_EVENT, handleForbidden);
     return () => window.removeEventListener(API_FORBIDDEN_EVENT, handleForbidden);
+  }, []);
+
+  // A 401 means the API rejected the access token we sent (expired/invalid session) — the
+  // OIDC client's own isAuthenticated wouldn't notice this on its own (nothing here watches
+  // token expiry), so without this we'd otherwise be stuck showing generic error toasts on a
+  // page the user can never use again until a manual reload. Reads window.location rather
+  // than the `location` from useLocation() for the same staleness reason as handleLoadUserData
+  // above: this listener is registered once, so a closed-over `location` would go stale the
+  // moment the user navigates.
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      resetAllStores();
+      auth.removeUser();
+      const redirectTo = encodeURIComponent(window.location.pathname + window.location.search);
+      navigate(`/?redirectTo=${redirectTo}`, { replace: true });
+    };
+    window.addEventListener(API_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(API_UNAUTHORIZED_EVENT, handleUnauthorized);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // (Re)load domain data whenever the OIDC user changes.

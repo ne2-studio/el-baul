@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { isForbiddenError } from '@/api';
+import { isForbiddenError, isUnauthorizedError } from '@/api';
 import { useUIStore } from '@/store/uiStore';
 
 const DEFAULT_KEY = '__default__';
@@ -41,7 +41,9 @@ export function useAsyncAction() {
         return { ok: true, value };
       } catch (error) {
         console.error(error);
-        if (!isForbiddenError(error)) {
+        // 401 is handled globally (App.tsx redirects to login), not per-call-site — showing
+        // this toast too would just flash a confusing "something went wrong" right before it.
+        if (!isForbiddenError(error) && !isUnauthorizedError(error)) {
           const message =
             typeof options.errorMessage === 'function' ? options.errorMessage(error) : options.errorMessage;
           showToastMessage(message ?? 'Ha ocurrido un error. Inténtalo de nuevo.', 'error');

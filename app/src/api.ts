@@ -32,6 +32,7 @@ interface SharedLinkResponse {
 
 export const API_BASE = getEnv('VITE_API_URL');
 export const API_FORBIDDEN_EVENT = 'elbaul:api-forbidden';
+export const API_UNAUTHORIZED_EVENT = 'elbaul:api-unauthorized';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -51,6 +52,10 @@ export function isApiErrorWithStatus(error: unknown, status: number): error is A
 
 export function isForbiddenError(error: unknown): boolean {
   return isApiErrorWithStatus(error, 403);
+}
+
+export function isUnauthorizedError(error: unknown): boolean {
+  return isApiErrorWithStatus(error, 401);
 }
 
 // Module-level auth token, pushed in from App.tsx whenever the OIDC user changes —
@@ -81,6 +86,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
     if (response.status === 403 && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent(API_FORBIDDEN_EVENT, { detail: { error } }));
+    }
+
+    if (response.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(API_UNAUTHORIZED_EVENT, { detail: { error } }));
     }
 
     throw error;

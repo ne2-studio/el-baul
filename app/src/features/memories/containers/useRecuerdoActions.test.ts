@@ -7,6 +7,7 @@ import { useUIStore } from '@/store/uiStore';
 vi.mock('@/api', () => ({
   api: { recuerdos: { createShareLink: vi.fn() } },
   isForbiddenError: () => false,
+  isUnauthorizedError: () => false,
 }));
 
 vi.mock('@/features/memories/useCases', () => ({
