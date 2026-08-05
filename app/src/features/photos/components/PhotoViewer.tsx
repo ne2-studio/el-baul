@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Photo, Persona, Recuerdo, TaggedPersona } from '@/types';
-import { PhotoViewerHeader } from '@/features/photos/components/PhotoViewerHeader';
+import { Photo, Recuerdo, TaggedPersona } from '@/types';
+import { PhotoViewerHeader, PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
 import { formatPartialDate } from '@/app/utils/timeUtils';
 import { RecuerdoInput } from '@/features/memories/components/RecuerdoInput';
@@ -9,26 +9,25 @@ import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 import { Button } from '@/design-system/components/actions/Button';
 import { PersonBadge } from '@/design-system/components/data-display/Badges';
-import { PhotoViewerChapterScope, usePhotoSettingsMenu } from '@/features/photos/containers/usePhotoSettingsMenu';
 
 interface PhotoViewerProps {
   photo: Photo;
   photos: Photo[];
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
-  baulId: string;
-  baulName: string;
-  isAdmin?: boolean;
-  sharedLinksEnabled?: boolean;
-  /** Roster completo del baúl, para el checklist del modal de etiquetado. */
-  baulPersonas?: Persona[];
+  /** Menú "···" ya resuelto — construido por usePhotoViewerActions (vía buildMenuItems), a
+   * través de PhotoViewerContainer/ChapterPhotoViewerContainer. Este componente no sabe qué
+   * acciones hay ni de dónde vienen. */
+  menuItems: PhotoViewerMenuItem[];
+  canChangeDate: boolean;
+  openDateModal: () => void;
+  /** Modales del menú (fecha, retirada, borrado, etiquetado…), ya montados por quien nos
+   * llama — este componente solo les hace sitio en el árbol. */
+  modals: React.ReactNode;
   /** Personas etiquetadas en la foto actualmente mostrada. */
   taggedPersonas?: TaggedPersona[];
-  /** Absent for viewers with no baúl/chapter scope (e.g. a persona's tagged photos, which
-   * cross chapters freely) — see usePhotoSettingsMenu's own doc for what that disables. */
-  chapter?: PhotoViewerChapterScope;
   recuerdos?: Recuerdo[];
-  onAddRecuerdo?: (photoId: string, text: string) => void;
+  onAddRecuerdo?: (text: string) => void;
   onUserClick?: (personaId: string) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
   onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
@@ -41,18 +40,19 @@ function isEditableKeyTarget(target: EventTarget | null) {
   return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target.isContentEditable;
 }
 
+// 100% puro: nada de store/useCases/router aquí — todo lo que habla con servidor vive en
+// PhotoViewerContainer (su único caller, junto con ChapterPhotoViewerContainer que lo
+// envuelve). Ver docs/architecture/frontend.md.
 export function PhotoViewer({
   photo,
   photos,
   onClose,
   onPhotoChange,
-  baulId,
-  baulName,
-  isAdmin,
-  sharedLinksEnabled = false,
-  baulPersonas = [],
+  menuItems,
+  canChangeDate,
+  openDateModal,
+  modals,
   taggedPersonas = [],
-  chapter,
   recuerdos = [],
   onAddRecuerdo,
   onUserClick,
@@ -61,10 +61,6 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   useScrollLock();
   const viewportInset = useVisualViewportInset();
-
-  const { menuItems, canChangeDate, openDateModal, modals } = usePhotoSettingsMenu({
-    baulId, baulName, photo, isAdmin, sharedLinksEnabled, baulPersonas, taggedPersonas, chapter,
-  });
 
   const currentIndex = photos.findIndex(p => p.id === photo.id);
   const hasRecuerdos = recuerdos.length > 0;
@@ -105,12 +101,6 @@ export function PhotoViewer({
       img.src = neighbor.fullUrl;
     });
   }, [currentIndex, photos]);
-
-  const handleAddRecuerdo = (text: string) => {
-    if (onAddRecuerdo) {
-      onAddRecuerdo(photo.id, text);
-    }
-  };
 
   // Keyboard navigation
   useEffect(() => {
@@ -208,7 +198,7 @@ export function PhotoViewer({
             <div className="px-6 pb-6 pt-2 flex-shrink-0">
               <RecuerdoInput
                 photoId={photo.id}
-                onSubmit={handleAddRecuerdo}
+                onSubmit={onAddRecuerdo}
               />
             </div>
           )}

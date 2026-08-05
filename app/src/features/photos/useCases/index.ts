@@ -5,9 +5,7 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { PhotoUploadDestination, UploadItem, UploadItemResult } from '@/features/photos/uploadFlow';
 import {
-  applyDeletedPhoto,
   applyMovedPhotos,
-  applyPhotoDateUpdate,
   applyUploadedPhotos,
 } from '@/store/baulesCacheReconciliation';
 
@@ -38,6 +36,7 @@ export async function loadRemovalRequests(baulId: string): Promise<void> {
 export async function removePhoto(baulId: string, requestId: string, photoId: string): Promise<void> {
   await api.baules.approveRemovalRequest(baulId, requestId);
   useBaulesStore.getState().removePhotoFromCaches(photoId);
+  usePersonasStore.getState().removePhotoFromCaches(photoId);
   usePersonasStore.setState((state) => ({
     removalRequests: {
       ...state.removalRequests,
@@ -203,20 +202,25 @@ export async function movePhotos(
   }
 }
 
-export async function deletePhoto(baulId: string, chapterId: string | null, photoId: string, reason?: string): Promise<void> {
+// Sin chapterId: quien llama (cualquiera de los dos visores de fotos) no necesariamente sabe
+// bajo qué capítulo/foto suelta está cacheada esta foto, así que se invalidan ambas cachés
+// (baúles y personas) allá donde estén, sin arrastrar el "origen". Los capítulos se
+// refrescan siempre — puede que la foto perteneciera a uno y sus metadatos agregados
+// (fecha, portada, contadores) hayan cambiado.
+export async function deletePhoto(baulId: string, photoId: string, reason?: string): Promise<void> {
   await api.photos.delete(photoId, reason);
 
-  useBaulesStore.setState((state) => applyDeletedPhoto(state, { baulId, chapterId, photoId }));
+  useBaulesStore.getState().removePhotoFromCaches(photoId);
+  usePersonasStore.getState().removePhotoFromCaches(photoId);
 
-  if (chapterId) {
-    const chapters = await api.chapters.getAll(baulId);
-    useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
-  }
+  const chapters = await api.chapters.getAll(baulId);
+  useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
 }
 
-export async function changePhotoDate(baulId: string, chapterId: string | null, photoId: string, date: PhotoDate): Promise<void> {
+export async function changePhotoDate(baulId: string, photoId: string, date: PhotoDate): Promise<void> {
   const updated = await api.photos.changeDate(photoId, date);
-  useBaulesStore.setState((state) => applyPhotoDateUpdate(state, { baulId, chapterId, updatedPhotos: [updated] }));
+  useBaulesStore.getState().updatePhotoInCaches(updated);
+  usePersonasStore.getState().updatePhotoInCaches(updated);
 
   const chapters = await api.chapters.getAll(baulId);
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));

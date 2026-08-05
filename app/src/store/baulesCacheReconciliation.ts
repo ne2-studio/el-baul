@@ -102,30 +102,6 @@ export function applyMovedPhotos(
   };
 }
 
-export function applyDeletedPhoto(
-  state: BaulesCacheState,
-  params: { baulId: string; chapterId: string | null; photoId: string }
-): Pick<BaulesCacheState, 'photos' | 'loosePhotos'> {
-  const { baulId, chapterId, photoId } = params;
-  if (chapterId) {
-    return {
-      photos: {
-        ...state.photos,
-        [chapterId]: (state.photos[chapterId] || []).filter((photo) => photo.id !== photoId),
-      },
-      loosePhotos: state.loosePhotos,
-    };
-  }
-
-  return {
-    photos: state.photos,
-    loosePhotos: {
-      ...state.loosePhotos,
-      [baulId]: (state.loosePhotos[baulId] || []).filter((photo) => photo.id !== photoId),
-    },
-  };
-}
-
 export function applyPhotoDateUpdate(
   state: BaulesCacheState,
   params: { baulId: string; chapterId: string | null; updatedPhotos: Photo[] }
@@ -174,6 +150,30 @@ export function removePhotoFromAllCaches(
     Object.entries(state.loosePhotos).map(([baulId, baulLoosePhotos]) => [
       baulId,
       baulLoosePhotos.filter((photo) => photo.id !== photoId),
+    ])
+  );
+
+  return { photos, loosePhotos };
+}
+
+// Sibling of removePhotoFromAllCaches for the "update in place" case (e.g. a date change) —
+// same reasoning: the caller (e.g. changePhotoDate, called from either photo viewer) doesn't
+// necessarily know which chapter/loose slice this photo is cached under, so it searches all
+// of them rather than requiring that context.
+export function updatePhotoInAllCaches(
+  state: Pick<BaulesCacheState, 'photos' | 'loosePhotos'>,
+  updatedPhoto: Photo
+): Pick<BaulesCacheState, 'photos' | 'loosePhotos'> {
+  const photos = Object.fromEntries(
+    Object.entries(state.photos).map(([chapterId, chapterPhotos]) => [
+      chapterId,
+      chapterPhotos.map((photo) => (photo.id === updatedPhoto.id ? updatedPhoto : photo)),
+    ])
+  );
+  const loosePhotos = Object.fromEntries(
+    Object.entries(state.loosePhotos).map(([baulId, baulLoosePhotos]) => [
+      baulId,
+      baulLoosePhotos.map((photo) => (photo.id === updatedPhoto.id ? updatedPhoto : photo)),
     ])
   );
 

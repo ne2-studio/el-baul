@@ -1,5 +1,5 @@
 import { ProtectedRoute } from '@/app/routes/AuthGuards';
-import { PhotoViewerRoute } from '@/features/photos/routes/PhotoViewerRoute';
+import { ChapterPhotoViewerRoute } from '@/features/photos/routes/ChapterPhotoViewerRoute';
 import { PersonaPhotoViewerRoute } from '@/features/photos/routes/PersonaPhotoViewerRoute';
 
 // Única fuente de las rutas del visor de foto: App.tsx las pinta dos veces con exactamente el
@@ -8,11 +8,11 @@ import { PersonaPhotoViewerRoute } from '@/features/photos/routes/PersonaPhotoVi
 export const photoViewerRoutes = [
   {
     path: '/baules/:baulId/capitulos/:chapterId/foto/:photoId',
-    element: <ProtectedRoute><PhotoViewerRoute /></ProtectedRoute>,
+    element: <ProtectedRoute><ChapterPhotoViewerRoute /></ProtectedRoute>,
   },
   {
     path: '/baules/:baulId/fotos-sueltas/foto/:photoId',
-    element: <ProtectedRoute><PhotoViewerRoute /></ProtectedRoute>,
+    element: <ProtectedRoute><ChapterPhotoViewerRoute /></ProtectedRoute>,
   },
   {
     path: '/baules/:baulId/personas/:personaId/foto/:photoId',

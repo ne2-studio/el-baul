@@ -134,16 +134,42 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
   `features/sharing/routes/SelectBaulForShareRoute.test.tsx` — seed the store, mock the use
   cases, `render()` inside a `MemoryRouter`.
   - **A container can also be a hook instead of a component**, when its caller's layout can't
-    fit it into one prop slot. `usePhotoSettingsMenu` (`features/photos/containers`) is
-    `PhotoViewer`'s "···" menu — its trigger lives in the header, its "tap to edit" date
-    affordance lives inline in the body, and its modals render as overlays, three places a
-    single `trailing`-style prop can't reach. The hook owns the state/use cases and returns
-    `{ menuItems, modals, ... }` for `PhotoViewer` to place; `PhotoViewer` itself stays in
-    `components/` and imports only the hook (not `store/`/`useCases/`/`react-router-dom`
-    directly), which is exactly what the `componentBoundaryRule` checks for — so this is legal
-    without needing an exception. Colocate its test next to the hook in `containers/`, not next
-    to the component in `components/`: the ESLint rule scopes the whole `components/**` glob,
-    test files included, and a test mocking `useCases/` to exercise the hook would trip it.
+    fit it into one prop slot. `usePhotoViewerActions` (`features/photos/containers`) is
+    `PhotoViewer`'s "···" menu plus add/edit/share-recuerdo — the menu's trigger lives in the
+    header, its "tap to edit" date affordance lives inline in the body, and its modals render
+    as overlays, three places a single `trailing`-style prop can't reach. The hook owns the
+    state/use cases and returns `{ buildMenuItems, modals, onAddRecuerdo, ... }`; `PhotoViewer`
+    itself stays in `components/` and is 100% pure — it takes an already-resolved
+    `menuItems: PhotoViewerMenuItem[]` prop and imports neither the hook nor `store/`/
+    `useCases/`/`react-router-dom` directly, which is exactly what the `componentBoundaryRule`
+    checks for. Colocate the hook's test next to it in `containers/`, not next to the component
+    in `components/`: the ESLint rule scopes the whole `components/**` glob, test files
+    included, and a test mocking `useCases/` to exercise the hook would trip it.
+  - **A container can compose another container** — only `components/` is barred from
+    containing one. `PhotoViewerContainer` (`features/photos/containers`) owns everything a
+    photo viewer needs regardless of which collection of photos it's browsing (tag/share/
+    download, baúl-cover, date, removal-request/delete, recuerdos) via `usePhotoViewerActions`,
+    and takes only a photo list — never a `chapterId`. The two actions that genuinely need
+    "which chapter" (move, chapter-cover) live one level up in
+    `ChapterPhotoViewerContainer` (`features/chapters/containers`), which wraps
+    `PhotoViewerContainer` and injects them as `extraMenuItems`.
+    `usePhotoViewerActions.buildMenuItems(extraItems?)` always appends `extraItems` before the
+    destructive entries (removal-request/delete), so no caller — present or future — can
+    accidentally sort a destructive action anywhere but last. `ChapterPhotoViewerRoute` (the
+    old `PhotoViewerRoute`) and `PersonaPhotoViewerRoute` each just decide *which photos* to
+    show and mount the container that matches their scope; neither duplicates recuerdo/menu
+    logic, and adding a third photo-viewer entry point (a global search, a "photos with no
+    date" filter, anything) only means picking one of these two containers, never rebuilding
+    the viewer.
+  - **The same "search every cache, don't require the origin" idea used for cover reconciliation
+    extends to per-photo mutations.** `deletePhoto`/`changePhotoDate`
+    (`features/photos/useCases`) used to require a `chapterId` purely to know which cache slot
+    to patch. Since either photo viewer can trigger them without knowing that, they now call
+    `removePhotoFromCaches`/`updatePhotoInCaches` on both `useBaulesStore` (chapter/loose
+    slices) and `usePersonasStore` (`personaPhotos`, keyed by persona — a photo can be tagged
+    with several) — each searches every cached key for a match instead of taking one. Chapter
+    aggregate metadata (covers, counts, date ranges) is always refetched afterwards rather
+    than conditionally, since the caller no longer knows whether the photo belonged to one.
 - **`design-system/`** — everything with zero knowledge of El Baúl's domain types. See
   [`docs/adr/0002-design-system-taxonomy.md`](../adr/0002-design-system-taxonomy.md) for the
   full Foundations/Components/Patterns/Layouts/Features/Screens taxonomy and the litmus test for

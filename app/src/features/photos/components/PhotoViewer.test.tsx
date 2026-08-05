@@ -19,8 +19,10 @@ function renderViewer(overrides: Partial<ComponentProps<typeof PhotoViewer>> = {
       photos={photos}
       onClose={vi.fn()}
       onPhotoChange={onPhotoChange}
-      baulId="baul-1"
-      baulName="Familia García"
+      menuItems={[]}
+      canChangeDate
+      openDateModal={vi.fn()}
+      modals={null}
       onAddRecuerdo={vi.fn()}
       {...overrides}
     />

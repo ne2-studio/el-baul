@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { Baul, Chapter, Photo } from '@/types';
 import {
   applyCoverUpdate,
-  applyDeletedPhoto,
   applyMovedPhotos,
   applyPhotoDateUpdate,
   applyUploadedPhotos,
   removePhotoFromAllCaches,
+  updatePhotoInAllCaches,
   type BaulesCacheState,
 } from './baulesCacheReconciliation';
 
@@ -159,23 +159,6 @@ describe('baules cache reconciliation', () => {
     });
   });
 
-  it('applyDeletedPhoto removes a photo from the selected cache only', () => {
-    const removed = newPhoto('removed');
-    const kept = newPhoto('kept');
-
-    expect(applyDeletedPhoto(cacheState({ photos: { [chapterId]: [removed, kept] } }), {
-      baulId,
-      chapterId,
-      photoId: removed.id,
-    }).photos[chapterId]).toEqual([kept]);
-
-    expect(applyDeletedPhoto(cacheState({ loosePhotos: { [baulId]: [removed, kept] } }), {
-      baulId,
-      chapterId: null,
-      photoId: removed.id,
-    }).loosePhotos[baulId]).toEqual([kept]);
-  });
-
   it('applyPhotoDateUpdate replaces matching photos in chapter and loose caches', () => {
     const original = newPhoto('photo', { dateYear: 1980 });
     const updated = newPhoto('photo', { dateYear: 1981, dateMonth: 5 });
@@ -214,5 +197,21 @@ describe('baules cache reconciliation', () => {
 
     expect(next.photos).toEqual({ [chapterId]: [kept], other: [] });
     expect(next.loosePhotos).toEqual({ [baulId]: [], otherBaul: [kept] });
+  });
+
+  it('updatePhotoInAllCaches updates a photo wherever it is cached', () => {
+    const original = newPhoto('photo', { dateYear: 1980 });
+    const updated = newPhoto('photo', { dateYear: 1981, dateMonth: 5 });
+    const untouched = newPhoto('other');
+
+    const next = updatePhotoInAllCaches({
+      photos: { [chapterId]: [original, untouched], other: [original] },
+      loosePhotos: { [baulId]: [original], otherBaul: [untouched] },
+    }, updated);
+
+    expect(next.photos[chapterId]).toEqual([updated, untouched]);
+    expect(next.photos.other).toEqual([updated]);
+    expect(next.loosePhotos[baulId]).toEqual([updated]);
+    expect(next.loosePhotos.otherBaul).toEqual([untouched]);
   });
 });
