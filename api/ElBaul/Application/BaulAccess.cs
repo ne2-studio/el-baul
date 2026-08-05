@@ -16,12 +16,7 @@ public sealed record BaulAccess(Baul Baul, bool IsCustodio, Persona? Persona)
 
 public enum AccessLevel { Member, Admin }
 
-// A Persona's apodo/avatar for a baúl — always the display identity for recuerdo/chapter
-// authorship, never the underlying account's OIDC-synced name (a nickname is what the
-// family chose; the account name may be unset or unrelated).
-public sealed record AuthorInfo(string Nickname, string? AvatarUrl, string? PersonaId);
-
-public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger, IPhotoRepository? photoRepository = null)
+public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger)
 {
     public async Task<BaulAccess> GetAsync(Baul baul, string userId)
     {
@@ -57,12 +52,5 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
         }
 
         return Result.Success(access);
-    }
-
-    public async Task<AuthorInfo> GetAuthorInfoAsync(BaulId baulId, string userId, IPhotoStorage photoStorage)
-    {
-        var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var avatarUrl = persona is null ? null : await PersonaAvatarUrlResolver.ResolveAsync(persona, photoRepository, photoStorage);
-        return new AuthorInfo(persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
     }
 }

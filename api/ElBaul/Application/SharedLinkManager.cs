@@ -15,7 +15,8 @@ public class SharedLinkManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     IAppConfiguration appConfiguration,
-    BaulAccessService baulAccess) : ISharedLinkManager
+    BaulAccessService baulAccess,
+    AuthorInfoProjector authorInfoProjector) : ISharedLinkManager
 {
     public async Task<Result<CreateSharedLinkResult>> CreateForPhotoAsync(PhotoId photoId)
     {
@@ -87,7 +88,7 @@ public class SharedLinkManager(
             ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoFull)
             : null;
         var authorName = recuerdo is not null
-            ? (await baulAccess.GetAuthorInfoAsync(recuerdo.BaulId, recuerdo.UserId, photoStorage)).Nickname
+            ? (await authorInfoProjector.GetAsync(recuerdo.BaulId, recuerdo.UserId)).Nickname
             : null;
 
         var title = recuerdo is not null ? $"Un recuerdo de {baul.Name}" : $"Una foto de {baul.Name}";

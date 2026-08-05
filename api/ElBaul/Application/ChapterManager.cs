@@ -16,7 +16,8 @@ public class ChapterManager(
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess) : IChapterManager
+    BaulAccessService baulAccess,
+    AuthorInfoProjector authorInfoProjector) : IChapterManager
 {
     public async Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(BaulId baulId)
     {
@@ -156,7 +157,7 @@ public class ChapterManager(
         var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
         var latestAuthor = latestRecuerdo is null
             ? null
-            : (await baulAccess.GetAuthorInfoAsync(chapter.BaulId, latestRecuerdo.UserId, photoStorage)).Nickname;
+            : (await authorInfoProjector.GetAsync(chapter.BaulId, latestRecuerdo.UserId)).Nickname;
 
         var dateRange = ComputeDateRange(photos);
 

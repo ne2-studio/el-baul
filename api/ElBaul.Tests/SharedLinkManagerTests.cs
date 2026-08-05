@@ -82,7 +82,8 @@ public class SharedLinkManagerTests
         _clock,
         _currentUser,
         _configuration,
-        new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance));
+        new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance),
+        new AuthorInfoProjector(_baules, _photos, _photoStorage));
 
     private async Task<Photo> SeedPhotoAsync()
     {

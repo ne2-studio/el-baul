@@ -26,7 +26,7 @@ public class PersonaManagerTests
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PersonaManager>.Instance, _fixture.Baules, _fixture.Photos, _fixture.Users,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance, _fixture.Photos),
+            new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags,
             new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer()),
             new PersonaDtoProjector(_fixture.Photos, _photoStorage));

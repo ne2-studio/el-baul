@@ -41,7 +41,7 @@ public class BaulInviteLinkManagerTests
             NullLogger<BaulInviteLinkManager>.Instance, _links, _baules, _photos, _users, _photoStorage,
             new FakeUserInfoClient(userInfo), pictureFetcher ?? new FakeProfilePictureFetcher(),
             new StaticIdGenerator(Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId, accessToken),
-            _configuration, new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance, _photos),
+            _configuration, new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance),
             new PersonaDtoProjector(_photos, _photoStorage));
 
     [Fact]

@@ -14,7 +14,8 @@ public class RecuerdoManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     IPhotoStorage photoStorage,
-    BaulAccessService baulAccess) : IRecuerdoManager
+    BaulAccessService baulAccess,
+    AuthorInfoProjector authorInfoProjector) : IRecuerdoManager
 {
     // The one internal shape every scoped entry point resolves down to before the shared
     // create/query logic runs — BaulId is always known, ChapterId/PhotoId follow the Photo >
@@ -91,7 +92,7 @@ public class RecuerdoManager(
         await recuerdoRepository.UpdateAsync(updated);
         await recuerdoEmbeddingRepository.DeleteAsync(recuerdoId);
 
-        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(updated.BaulId, updated.UserId, photoStorage);
+        var (nickname, avatarUrl, personaId) = await authorInfoProjector.GetAsync(updated.BaulId, updated.UserId);
         var photoThumbnailUrl = await GetPhotoThumbnailUrlAsync(updated.PhotoId);
         var chapterName = await GetChapterNameAsync(updated.ChapterId);
 
@@ -155,10 +156,14 @@ public class RecuerdoManager(
             ? (await chapterRepository.GetByBaulIdAsync(scope.BaulId)).ToDictionary(c => c.Id, c => c.Name)
             : null;
 
+        // One batched author lookup for the whole list instead of one per recuerdo — a feed
+        // is typically a handful of distinct authors across many entries.
+        var authorsByUserId = await authorInfoProjector.GetManyAsync(scope.BaulId, recuerdos.Select(r => r.UserId).Distinct());
+
         var dtos = new List<RecuerdoDto>();
         foreach (var recuerdo in recuerdos)
         {
-            var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(scope.BaulId, recuerdo.UserId, photoStorage);
+            var (nickname, avatarUrl, personaId) = AuthorInfoProjector.Resolve(authorsByUserId, recuerdo.UserId);
             var thumbnailUrl = thumbnailUrls is not null && recuerdo.PhotoId is { } photoId
                 ? thumbnailUrls.GetValueOrDefault(photoId)
                 : null;
@@ -180,7 +185,7 @@ public class RecuerdoManager(
         var auth = await baulAccess.AuthorizeAsync(scope.BaulId, userId, AccessLevel.Member, operationName, authContext);
         if (auth.IsFailure) return Result.Failure<RecuerdoDto>(auth.Error);
 
-        var (nickname, avatarUrl, personaId) = await baulAccess.GetAuthorInfoAsync(scope.BaulId, userId, photoStorage);
+        var (nickname, avatarUrl, personaId) = await authorInfoProjector.GetAsync(scope.BaulId, userId);
         var recuerdo = new Recuerdo(new RecuerdoId(idGenerator.NewId()), scope.PhotoId, scope.ChapterId, scope.BaulId, userId, text, clock.UtcNow());
         await recuerdoRepository.CreateAsync(recuerdo);
 

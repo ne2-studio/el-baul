@@ -160,6 +160,7 @@ public static class ElBaulApiHost
 
         // Register application services
         builder.Services.AddScoped<BaulAccessService>();
+        builder.Services.AddScoped<AuthorInfoProjector>();
         builder.Services.AddScoped<PhotoLifecycleService>();
         builder.Services.AddScoped<PhotoFileService>();
         builder.Services.AddScoped<IPhotoDtoProjector, PhotoDtoProjector>();

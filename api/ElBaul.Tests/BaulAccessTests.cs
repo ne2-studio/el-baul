@@ -1,6 +1,5 @@
 using ElBaul.Application;
 using ElBaul.Ports.Output;
-using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using BaulAccess = ElBaul.Application.BaulAccess;
@@ -8,10 +7,10 @@ using BaulAccess = ElBaul.Application.BaulAccess;
 namespace ElBaul.Tests;
 
 // Focused coverage of the baúl-role authorization decision itself: the BaulAccess record's
-// IsMember/IsAdmin/Role combinatorics, and BaulAccessService's resolve->authorize->log and
-// author-identity logic. No repository seeding beyond a one-method IBaulRepository stub —
-// the manager test suites keep exactly one "denies access" scenario per capability group to
-// prove wiring, and defer to this file for the role rule itself.
+// IsMember/IsAdmin/Role combinatorics, and BaulAccessService's resolve->authorize->log logic.
+// No repository seeding beyond a one-method IBaulRepository stub — the manager test suites
+// keep exactly one "denies access" scenario per capability group to prove wiring, and defer
+// to this file for the role rule itself.
 public class BaulAccessTests
 {
     private const string OtherUserId = "user-2";
@@ -226,46 +225,7 @@ public class BaulAccessTests
         await repo.DidNotReceive().GetByIdAsync(Arg.Any<BaulId>());
     }
 
-    // --- BaulAccessService.GetAuthorInfoAsync: persona-facing display identity ---
-
-    [Fact]
-    public async Task GetAuthorInfoAsync_ShouldReturnDefaultNickname_AndNullAvatar_WhenNoPersonaExists()
-    {
-        var repo = Substitute.For<IBaulRepository>();
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, OtherUserId).Returns((Persona?)null);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
-
-        var info = await service.GetAuthorInfoAsync(TestBaul.Id, OtherUserId, new FakePhotoStorage());
-
-        Assert.Equal("Usuario", info.Nickname);
-        Assert.Null(info.AvatarUrl);
-        Assert.Null(info.PersonaId);
-    }
-
-    [Fact]
-    public async Task GetAuthorInfoAsync_ShouldReturnPersonaNickname_WithNullAvatar_WhenPersonaHasNoAvatarKey()
-    {
-        var repo = Substitute.For<IBaulRepository>();
-        var persona = MakePersona(BaulRole.Colaborador);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, OtherUserId).Returns(persona);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
-
-        var info = await service.GetAuthorInfoAsync(TestBaul.Id, OtherUserId, new FakePhotoStorage());
-
-        Assert.Equal(persona.Nickname, info.Nickname);
-        Assert.Null(info.AvatarUrl);
-        Assert.Equal(persona.Id.ToString(), info.PersonaId);
-    }
-
-    [Fact]
-    public async Task GetAuthorInfoAsync_ShouldResolveAvatarUrl_WhenPersonaHasAnAvatarKey()
-    {
-        var repo = Substitute.For<IBaulRepository>();
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, OtherUserId).Returns(MakePersona(BaulRole.Colaborador, avatarKey: "avatar-key"));
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
-
-        var info = await service.GetAuthorInfoAsync(TestBaul.Id, OtherUserId, new FakePhotoStorage());
-
-        Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", info.AvatarUrl);
-    }
+    // BaulAccessService.GetAuthorInfoAsync moved out to AuthorInfoProjector — see
+    // AuthorInfoProjectorTests for the persona-facing display identity coverage that used
+    // to live here (default nickname, avatar-key resolution, persona-not-found fallback).
 }

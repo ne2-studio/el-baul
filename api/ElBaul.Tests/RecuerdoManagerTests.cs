@@ -24,7 +24,8 @@ public class RecuerdoManagerTests
         new(NullLogger<RecuerdoManager>.Instance, _chapterRepository, _photoRepository, _recuerdoRepository,
             _recuerdoEmbeddingRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), _photoStorage,
-            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance));
+            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            new AuthorInfoProjector(_baulRepository, _photoRepository, _photoStorage));
 
     private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
     {
@@ -139,6 +140,25 @@ public class RecuerdoManagerTests
         Assert.True(result.IsSuccess);
         var stored = (await _recuerdoRepository.GetByPhotoIdAsync(new PhotoId(photoId))).Single();
         Assert.Null(stored.ChapterId);
+    }
+
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldResolveTheSameAuthor_ForEveryOneOfTheirRecuerdos()
+    {
+        var (baulId, chapterId) = await SeedBaulWithChapterAsync();
+        const string colaboradorId = "colaborador-1";
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), colaboradorId, "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), colaboradorId, "primero", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), colaboradorId, "segundo", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), CustodioId, "de otro autor", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetRecuerdosAsync(new ChapterId(chapterId));
+
+        Assert.True(result.IsSuccess);
+        var list = result.Value.ToList();
+        Assert.All(list.Where(r => r.Text is "primero" or "segundo"), r => Assert.Equal("Tito Recuerdos", r.UserName));
+        Assert.Equal("Custodio", list.Single(r => r.Text == "de otro autor").UserName);
     }
 
     [Fact]
