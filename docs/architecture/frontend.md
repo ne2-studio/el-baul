@@ -170,7 +170,10 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
     with several) — each searches every cached key for a match instead of taking one. Chapter
     aggregate metadata (covers, counts, date ranges) is always refetched afterwards rather
     than conditionally, since the caller no longer knows whether the photo belonged to one.
-- **`design-system/`** — everything with zero knowledge of El Baúl's domain types. See
+- **`design-system/`** — no dependency on concrete feature implementations: feature components,
+  feature hooks, routes, stores, API clients, or other application-state infrastructure. It may
+  depend on small shared product value types (e.g. `PhotoDate`) when they're a natural part of a
+  component's contract and don't couple it to one concrete feature. See
   [`docs/adr/0002-design-system-taxonomy.md`](../adr/0002-design-system-taxonomy.md) for the
   full Foundations/Components/Patterns/Layouts/Features/Screens taxonomy and the litmus test for
   what belongs here versus in a feature.
@@ -235,7 +238,7 @@ src/
 │                  #                          feature's shell component; store/useCases allowed
 │                  #   <domain>/native/     — Capacitor plugin bridges/wiring, when the feature has one
 ├── store/         # Zustand: one store per domain + uiStore (toasts/modals)
-├── design-system/ # Domain-independent UI — see ADR 0002
+├── design-system/ # No feature/store/API/infra deps; small product value types OK — see ADR 0002
 └── utils/         # Utility functions/helpers
 ```
 
