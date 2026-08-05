@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
-import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
@@ -18,6 +17,7 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
+import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { getBaulPermissions } from '@/utils/roleUtils';
 
 type BaulTab = 'capitulos' | 'personas' | 'recuerdos';
@@ -44,23 +44,10 @@ export const BaulRoute: React.FC = () => {
   const initialTab = (location.state as { activeTab?: BaulTab } | null)?.activeTab ?? 'capitulos';
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
 
-  const { baul, isLoading, refreshFailed, retry } = useBaulScope(baulId);
-
-  if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
-
-  if (!baul) {
-    if (refreshFailed) {
-      return (
-        <ErrorScreen
-          title="No se ha podido cargar el baúl"
-          message="Comprueba tu conexión e inténtalo de nuevo."
-          actionLabel="Reintentar"
-          onAction={retry}
-        />
-      );
-    }
-    return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
-  }
+  const baulScope = useBaulScope(baulId);
+  const guard = guardBaulScope(baulScope);
+  if (!guard.ready) return guard.screen;
+  const { baul } = guard;
 
   const baulPermissions = getBaulPermissions(baul);
 

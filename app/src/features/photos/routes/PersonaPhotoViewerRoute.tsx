@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerContainer';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulScope } from '@/hooks/useBaulScope';
+import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
@@ -20,27 +21,18 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
 
   const backgroundLocation = getBackgroundLocation(location);
 
-  const { baul, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
+  const baulScope = useBaulScope(baulId);
 
   // Precarga la persona y sus fotos etiquetadas — bloqueando hasta tener ambas — igual que
   // PersonaDetailRoute, para no duplicar aquí la misma lógica de recuperación.
   const { photos: personaPhotos, isLoading: isLoadingPersona, loadFailed: personaPhotosFailed, retry: retryPersona } = usePersonaScope(baulId, personaId);
 
-  if (isLoadingBaul || isLoadingPersona) return <div className="p-8 text-center">Cargando foto...</div>;
-
-  if (!baul) {
-    if (refreshFailed) {
-      return (
-        <ErrorScreen
-          title="No se ha podido cargar el baúl"
-          message="Comprueba tu conexión e inténtalo de nuevo."
-          actionLabel="Reintentar"
-          onAction={retry}
-        />
-      );
-    }
-    return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
-  }
+  const guard = guardBaulScope(
+    { ...baulScope, isLoading: baulScope.isLoading || isLoadingPersona },
+    { loadingLabel: 'Cargando foto...' },
+  );
+  if (!guard.ready) return guard.screen;
+  const { baul } = guard;
 
   if (!personaId) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
 

@@ -13,6 +13,8 @@ import { loadLoosePhotos } from '@/features/photos/useCases';
 // precargados, pero un refresco o un deep link aterriza aquí con el store vacío. Este hook
 // centraliza la misma lógica de auto-recuperación que ya tenía BaulRoute para que el resto de
 // rutas de la cadena (álbum, visor de foto, fotos sueltas) no se queden colgadas en "Cargando...".
+// La interpretación de isLoading/refreshFailed/baul (qué renderizar mientras no está listo)
+// vive en guardBaulScope (./baulScopeGuard), no en cada caller — ver ese archivo.
 export function useBaulScope(baulId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();

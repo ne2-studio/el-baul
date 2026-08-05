@@ -24,6 +24,7 @@ import { loadPersonas } from '@/features/people/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
+import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
@@ -61,7 +62,8 @@ export const ChapterRoute: React.FC = () => {
   const { personas } = usePersonasStore();
   const { run } = useAsyncAction();
 
-  const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
+  const baulScope = useBaulScope(baulId);
+  const { chapters, loosePhotos } = baulScope;
   const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
 
   const [photosFailed, setPhotosFailed] = useState(false);
@@ -137,21 +139,9 @@ export const ChapterRoute: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, baulId, personas, loadPersonas]);
 
-  if (isLoadingBaul) return <div className="p-8 text-center">Cargando...</div>;
-
-  if (!baul) {
-    if (refreshFailed) {
-      return (
-        <ErrorScreen
-          title="No se ha podido cargar el baúl"
-          message="Comprueba tu conexión e inténtalo de nuevo."
-          actionLabel="Reintentar"
-          onAction={retry}
-        />
-      );
-    }
-    return <div className="p-8 text-center">No se ha encontrado el baúl.</div>;
-  }
+  const guard = guardBaulScope(baulScope);
+  if (!guard.ready) return guard.screen;
+  const { baul } = guard;
 
   if (chapterId && !chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
