@@ -19,87 +19,43 @@ Every reported initiative must demonstrate that the proposed change would object
 
 # Core principles
 
+## 0. The model
+
+Every initiative is built from five distinct things. Keep them distinct — collapsing them is how a report turns into a checklist.
+
+* **Smell** — a general pattern of architectural symptom, defined once in `smells/*.md`. Codebase-independent.
+* **Evidence** — the concrete manifestation of a smell in *this* repository: which files, which change, which cost. Never in the catalogue; always in the report.
+* **Tension** — which attributes from `attributes.md` are competing, or being balanced badly, right now. Naming the attribute an initiative improves without naming what it costs is incomplete.
+* **Movement** — a candidate architectural transformation that could resolve the tension, drawn from the smell's candidate movements or reasoned independently when none fit. A candidate to weigh, not a mandate to apply.
+* **Decision** — the contextual choice, made in Step 4, to recommend the movement now, note it as deferred (real tension, not worth it yet), or drop it. `prioritisation.md` is what this decision is based on.
+
+A smell does not prescribe a refactor. It opens an investigation. See `smells/README.md` for the full model and how to use the catalogue as vocabulary rather than a checklist.
+
 ## 1. Evidence before recommendation
 
-Do not report a gap without repository evidence.
+Do not report a gap without repository evidence — something located in *this* repository, not a general software-engineering opinion.
 
-Valid evidence includes:
-
-* repeated code or repeated test setup;
-* files, methods, components, or modules that change together;
-* duplicated domain rules;
-* concepts represented only implicitly;
-* confusing or inconsistent terminology;
-* tests that cannot detect meaningful regressions;
-* public behaviour lacking acceptance coverage;
-* excessive dependencies;
-* mixed responsibilities;
-* unstable boundaries;
-* dead or unreachable code;
-* repeated production defects;
-* comments compensating for unclear design;
-* tests coupled to implementation details;
-* slow or combinatorial acceptance tests;
-* infrastructure leaking into domain decisions;
-* frequent modifications to the same fragile area;
-* configuration or behaviour duplicated across multiple locations;
-* code that contradicts a stated rule or invariant in `ARCHITECTURE.md` or an ADR under `docs/adr/` / `<app>/docs/adr/`, or such a document describing a reality the code no longer matches;
-* consumers reconstructing a domain decision from an object's exposed state instead of calling one explicit operation;
-* a representative maintenance task trace showing the files opened, searches performed, layers crossed, or symbols resolved to understand or change one capability.
+Evidence shapes that cut across many smells: files, methods, components, or modules that repeatedly change together; repeated production defects tied to the same area; a representative maintenance task trace (Step 2). For evidence specific to one pattern, use the matching row in `smells/*.md`.
 
 Do not rely only on generic statements such as "this violates SOLID", "this should use a repository", "this class is too large", "this should follow hexagonal architecture", "this would be cleaner", or "this is not best practice". Explain the concrete cost currently caused by the observed structure.
 
 ## 2. Improve attributes, not aesthetics
 
-Every initiative must improve one or more explicit attributes:
+Every initiative must name attributes it improves from `attributes.md`, by id, and the attributes it puts under tension. `attributes.md` is the single source of truth for attribute names — do not invent an attribute inline in a report.
 
-* correctness confidence;
-* behavioural coverage;
-* changeability;
-* comprehensibility;
-* cohesion;
-* coupling;
-* locality of change;
-* test feedback speed;
-* test diagnostic quality;
-* domain explicitness;
-* consistency;
-* reliability;
-* operational visibility;
-* performance;
-* security;
-* deletion of accidental complexity;
-* reduction of duplication;
-* reduction of cognitive load;
-* context efficiency — how much a maintainer, human or agent, must read, search, and hold in mind to understand or safely change one capability.
-
-A recommendation is invalid if its only justification is personal preference or architectural symmetry.
+A recommendation is invalid if its only justification is personal preference or architectural symmetry. A recommendation that claims a free improvement, with no tension named, has probably not been thought through — go back to the evidence.
 
 ## 3. Architecture must emerge from pressure
 
-Do not recommend abstractions pre-emptively. Recommend an abstraction only when there is evidence of at least one of the following:
+Do not recommend abstractions pre-emptively. An abstraction needs a stronger bar than ordinary evidence: the pressure must already be real and recurring — duplicated behaviour, growing combinatorial logic, multiple callers depending on the same concept, a responsibility already varying independently — not hypothetical future need. Check the matching row in `smells/*.md` (e.g. `wrong-abstraction`, `hub-dependency`, `missing-domain-concept`, `inappropriate-intimacy`, `context-scattering`) for the specific threshold that pattern requires.
 
-* meaningful duplicated behaviour;
-* growing combinatorial logic;
-* repeated setup around the same decision;
-* multiple callers depending on the same concept;
-* repeated changes affecting the same group of files;
-* infrastructure obstructing testing of a real decision;
-* a concept with rules but no explicit representation;
-* an external boundary with real behavioural or operational complexity;
-* a responsibility that already varies independently;
-* consumers repeatedly reconstructing a domain decision from an object's exposed state rather than calling one explicit operation;
-* active code repeatedly needing to inspect, coordinate, or understand the internal concepts of another module, whether or not that module changes often.
+Do not introduce an interface merely because a class has dependencies, or a layer merely to conform to an architectural template. Do not suggest repositories, services, factories, handlers, ports, adapters, or domain objects unless repository evidence supports their existence. The same restraint applies to a smell's candidate movements (`smells/*.md`): weigh them against the evidence, never look one up by smell name and apply it — matching a signal is not sufficient justification on its own.
 
-Do not introduce an interface merely because a class has dependencies, or a layer merely to conform to an architectural template. Do not suggest repositories, services, factories, handlers, ports, adapters, or domain objects unless repository evidence supports their existence.
-
-Cognitive and context pressure are valid architectural pressure in their own right, not just a flavour of coupling. A module may warrant a boundary even when it changes rarely, if active code repeatedly needs to inspect, coordinate, or understand its internal concepts. The improvement must make that internal context safely ignorable — a clear contract, few entry points, no lateral access, stable terminology — not merely move files or add a facade that still exposes the same internals.
-
-Prefer deep boundaries over fragmented indirection. When several public abstractions jointly provide one cohesive capability, evaluate whether consumers are exposed to internal decomposition rather than to the capability itself. A valid initiative reduces the knowledge callers need while preserving genuinely independent variation, failure, deployment, or testing boundaries. Stability alone does not justify extracting a module — extraction is justified only when it removes recurring cognitive or dependency cost from active code, not merely because the code hasn't changed recently.
+Cognitive and context pressure are valid architectural pressure in their own right, not just a flavour of coupling — a module can warrant a boundary even when it rarely changes, if active code repeatedly has to inspect or coordinate its internals. Check `smells/structural.md`'s notes for `context-scattering` and `excessive-module-surface` for what that improvement should and shouldn't look like — deep modules, stable narrow facades, when extraction is and isn't justified. Throughout, distinguish abstraction from indirection, and large code from low-cohesion code — size alone is never the pressure this principle requires.
 
 ## 4. Preserve the outer safety net
 
-When proposing a test descent or extraction:
+When proposing a movement:
 
 * identify which behavioural tests should remain at the public boundary;
 * identify which combinatorial cases should move to a smaller component;
@@ -122,15 +78,7 @@ Adapter or integration tests
 
 ## 5. Separate capability changes from refactoring
 
-Do not include product features in the report. A valid initiative must preserve observable product behaviour unless explicitly classified as deletion of unused behaviour, correction of an inconsistency, or removal of dead or unreachable paths.
-
-When an opportunity requires changing product behaviour, report it as:
-
-```text
-Not a refactoring initiative — requires product decision
-```
-
-Do not mix it into the prioritized refactoring list.
+Do not include product features in the report. A valid initiative MUST preserve observable product behaviour UNLESS explicitly classified as deletion of unused behaviour, correction of an inconsistency, or removal of dead or unreachable paths.
 
 ---
 
@@ -144,134 +92,47 @@ Identify deployable applications, packages or libraries, public APIs, background
 
 Determine the real public boundaries of each component: HTTP endpoints, browser-visible behaviour, messages consumed or produced, NuGet public APIs, CLI commands, scheduled jobs, persisted business effects.
 
-Read the repository's documented architecture: a root-level architecture document (e.g. `ARCHITECTURE.md`), and any ADRs under `docs/adr/` or under `<app>/docs/adr/` for each deployable application. Where these exist, the rules, invariants, and boundaries they state are binding ground truth for `architecture-documentation-drift` in Step 4 — not general background. Skip this if none of these locations exist or contain nothing binding.
+Read the repository's documented architecture: a root-level architecture document (e.g. `ARCHITECTURE.md`), and any ADRs under `docs/adr/` or under `<app>/docs/adr/` for each deployable application. Where these exist, the rules, invariants, and boundaries they state are binding ground truth for `architecture-documentation-drift` (`smells/meta.md`) in Step 2 — not general background. Skip this if none of these locations exist or contain nothing binding.
 
-## Step 2: Inspect recent change pressure
+## Step 2: Gather evidence
 
-When Git history is available, inspect files commonly changed together, hotspots with high churn, repeated fixes in the same area, features that repeatedly modify the same conditional logic, tests frequently updated alongside implementation details, and modules that accumulate unrelated responsibilities.
+Look in two places, using what Step 1 surfaced as your starting point.
 
-Change history is strong evidence because architecture should optimise actual change patterns, not hypothetical ones. Do not treat churn alone as a problem — explain why the observed co-change suggests an unstable or missing boundary.
+**History** (when Git history is available): files, methods, components, or modules that repeatedly change together; hotspots with high churn; repeated fixes in the same area; features that repeatedly modify the same conditional logic; tests frequently updated alongside implementation details; modules that accumulate unrelated responsibilities. Change history is strong evidence because architecture should optimise actual change patterns, not hypothetical ones — do not treat churn alone as a problem; explain why the observed co-change suggests an unstable or missing boundary.
 
-## Step 3: Inspect behavioural protection
+**Codebase**: use the smell catalogue below as vocabulary to name what you're looking at. You do not need to read every category for every inspection — read the ones the observed symptom points toward, and do not work through the catalogue as a checklist.
 
-For each important capability, determine whether the repository contains evidence that the delivered artifact behaves correctly.
+### Smell catalogue
 
-Look for black-box acceptance tests, component tests, contract tests, package-consumer tests, integration tests against real infrastructure, isolated domain tests, and architecture or static-analysis tests.
+`smells/*.md` groups recurring architectural pressures by category — `structural.md`, `domain.md`, `dependencies.md`, `data.md`, `integration.md`, `testability.md`, `operational.md`, `hygiene.md`, `meta.md` — each as a compact table of smell, description, attributes in tension, candidate movements, and the smell's most common false positive. A handful of smells that need more nuance than a table cell carries have a `## Notes` section below their category's table.
 
-Identify gaps such as:
+Read `smells/README.md` once, before the first inspection, for the full schema.
 
-* critical behaviour covered only through mocks;
-* tests bypassing the production bootstrap;
-* acceptance tests using internal project references;
-* tests altering dependency injection in ways unavailable in production;
-* business rules covered only indirectly;
-* test suites that assert status codes but not business effects;
-* important error or recovery paths with no protection;
-* tests generated from the implementation rather than from an independent capability specification.
+For representative capabilities, additionally perform a context reconstruction: start from the public entry point; record the files, symbols, abstractions, and decisions required to explain the behaviour; distinguish essential domain knowledge from forwarding, mapping, configuration, and infrastructure detail; identify which internal concepts consumers or maintainers cannot safely ignore; evaluate whether a narrower and deeper boundary would reduce the required context. This reconstruction is the required evidence for `context-scattering` and `excessive-module-surface` (`smells/structural.md`), and it often surfaces `inappropriate-intimacy` along the way.
 
-Coverage is evidence of execution, not evidence of correctness. Do not optimise for line coverage alone.
+Confirm with concrete evidence from this repository that a named smell, not a neighbouring one, is what's actually present. Discard candidates that cannot be supported with evidence.
 
-## Step 4: Inspect design pressure
+## Step 3: Identify tension and improvement opportunities
 
-Search for the criteria described in `criteria/` (see "Criteria catalogue" below).
+For each candidate confirmed in Step 2:
 
-For every candidate:
+1. name the tension — which attributes (`attributes.md`) are competing or being balanced badly;
+2. name which attributes a change could improve;
+3. if a movement is worth proposing, draw it from the smell's candidate movements, or reason one independently when none fit (Principle 3), and name its trade-off — what it costs, not only what it buys.
 
-1. locate concrete evidence;
-2. identify the affected attribute;
-3. estimate impact;
-4. estimate confidence;
-5. estimate implementation cost;
-6. estimate regression risk;
-7. describe how success could be measured.
+## Step 4: Prioritise and select
 
-For representative capabilities, additionally perform a context reconstruction:
+Score every candidate using `prioritisation.md` (Value, Maintenance friction, Delivery difficulty → Priority score). Weight high-churn, business-critical areas more heavily; a stable, rarely-changed area can still be worth selecting when active code repeatedly pays a cognitive or context cost to cross it — `prioritisation.md`'s Maintenance friction dimension is built for exactly this case (see `context-scattering`, `excessive-module-surface` in `smells/structural.md`).
 
-1. Start from the public entry point.
-2. Record the files, symbols, abstractions, and decisions required to explain the behaviour.
-3. Distinguish essential domain knowledge from forwarding, mapping, configuration, and infrastructure detail.
-4. Identify which internal concepts consumers or maintainers cannot safely ignore.
-5. Evaluate whether a narrower and deeper boundary would reduce the required context.
+Select only candidates that pass the gate below. Prefer five strong initiatives over twenty weak ones; merge candidates that represent the same underlying pressure rather than reporting one coherent refactor as several.
 
-This reconstruction is the required evidence for `context-scattering` and `excessive-module-surface`, and it often surfaces `encapsulation-violation` along the way when the reconstructed decisions turn out to belong to a concept the consumer had to interpret rather than call.
-
-Discard candidates that cannot be supported with evidence.
-
----
-
-# Criteria catalogue
-
-During Step 4, read every `criteria/*.md` file except `criteria/README.md`.
-
-Each criterion defines a recurring architectural pressure, its signals, invalid interpretations, and possible measurements. Read the fenced `yaml` block and any prose that follows it.
-
-Treat criteria as descriptions of architectural pressure, not mandatory solutions. A matching signal does not justify the pattern mentioned by the criterion unless repository evidence independently supports it.
-
----
-
-# Prioritisation model
-
-Score every valid initiative across three separate concerns: how much the underlying behaviour matters (**Value**), how much it currently hurts to work in that area (**Maintenance friction**), and how hard the fix itself is (**Delivery difficulty**). Keep these separate — do not fold context or cognitive cost back into Impact, or it gets rewarded (or forgotten) inconsistently across initiatives.
-
-Score every dimension from 1 to 5.
-
-### Value
-
-| Dimension | 1 | 3 | 5 |
-|---|---|---|---|
-| Impact | negligible local inconvenience | repeated cost in an active area | significant risk or major delivery constraint |
-| Evidence confidence | plausible inference | multiple concrete examples | demonstrated by history, defects, tests, or measurements |
-| Change frequency | rare path | recurring area | central or frequently changed behaviour |
-| Scope of benefit | one isolated location | one important module or workflow | multiple features, teams, or future changes |
-
-```text
-Value = Impact × Evidence confidence × Change frequency × Scope of benefit
-```
-
-### Maintenance friction
-
-The cost of living with the current structure today, independent of how hard it would be to fix. A stable, rarely-changed area can still score high here if active code must repeatedly cross into it to get anything done.
-
-| Dimension | 1 | 3 | 5 |
-|---|---|---|---|
-| Change surface | change is typically localised | several coordinated files | a small change forces crossing modules, projects, or layers |
-| Context cost | behaviour is locatable from one clear entry point | requires navigating several related collaborators | requires reconstructing a scattered flow across many files, searches, or concepts |
-| Failure ambiguity | failure is clearly attributable | diagnosis requires following several layers | multiple components could explain the same symptom and tests do not localise the decision |
-
-```text
-Maintenance friction = Change surface + Context cost + Failure ambiguity
-```
-
-Context cost and change surface are related but distinct: a fix may touch one file yet require reading fifteen to find which one, or the system may be well understood yet still require editing six contracts because of a badly placed boundary. Score them independently and let a representative maintenance task trace (see Step 4) back the Context cost score with real numbers rather than impression.
-
-### Delivery difficulty
-
-| Dimension | 1 | 3 | 5 |
-|---|---|---|---|
-| Implementation cost | small focused refactor | several coordinated changes | broad migration or high uncertainty |
-| Regression risk | well-protected and local | moderate behavioural surface | weakly protected or cross-cutting |
-
-```text
-Delivery difficulty = Implementation cost + Regression risk
-```
-
-### Priority score
-
-```text
-Priority score = (Value + Maintenance friction) ÷ Delivery difficulty
-```
-
-Use the score for ordering, not as an unquestionable decision. A lower-scoring initiative may rank higher when it removes an immediate correctness or security risk, unlocks several blocked initiatives, establishes missing tests required for later work, or prevents imminent architectural lock-in. Explain any manual adjustment.
-
----
-
-# Initiative validity gate
+### Initiative validity gate
 
 Do not include an initiative unless all answers are yes:
 
 ```text
 [ ] There is concrete repository evidence.
-[ ] The affected attribute is explicit.
+[ ] The affected attributes are explicit, and the attributes under tension are named too.
 [ ] The proposed boundary or change has a reason to exist.
 [ ] The expected improvement can be observed or measured.
 [ ] The initiative is behaviour-preserving or clearly classified otherwise.
@@ -281,69 +142,12 @@ Do not include an initiative unless all answers are yes:
 
 If fewer than three initiatives pass this gate, report fewer than three. Do not fill the report with low-confidence observations.
 
----
+## Step 5: Identify the required safety net
 
-# Required output
+For each initiative selected in Step 4 — scoped to the specific capability it touches, not the codebase in general — determine what currently protects that capability from regression: look for black-box acceptance tests, component tests, contract tests, package-consumer tests, integration tests against real infrastructure, isolated domain tests, and architecture or static-analysis tests. Coverage is evidence of execution, not evidence of correctness — do not optimise for line coverage alone.
 
-Return only a prioritized list of initiatives. Do not modify code, create branches or pull requests, include a generic architecture assessment before the list, or report praise, strengths, or minor stylistic suggestions.
+Apply Principle 4: state which tests must remain unchanged, which additional characterisation tests are needed before the movement, and which cases may descend to a smaller component. If what you find here is itself `mock-architecture`, `insufficient-behavioural-coverage`, or `test-fidelity-mismatch` (`smells/testability.md`), note it — but the initiative's safety net still needs stating either way.
 
-Use this exact structure for every initiative.
+## Step 6: Report
 
-## `<rank>. <initiative title>`
-
-**Priority:** Critical | High | Medium | Low
-**Score:** `<calculated priority score>` (Value: `<v>` · Maintenance friction: `<f>` · Delivery difficulty: `<d>`)
-**Confidence:** High | Medium | Low
-**Type:** `<criterion id>`
-**Affected area:** `<modules, files, components or capabilities>`
-
-### Evidence
-
-* `<specific repository observation with file or symbol references>`
-* `<second supporting observation when available>`
-* `<history, test, metric or defect evidence when available>`
-* `<representative maintenance task trace when available: files opened, searches performed, layers crossed>`
-
-### Current cost
-
-Explain the concrete cost currently caused by the gap — e.g. several files must change for one rule, tests cannot distinguish which decision failed, production behaviour is protected only by mocks, the same concept is interpreted differently, acceptance feedback is too slow for frequent changes, a high-churn module contains unrelated responsibilities.
-
-### Proposed initiative
-
-Describe the smallest coherent refactoring initiative. Do not provide an implementation walkthrough. Do not prescribe a pattern unless the pattern directly follows from the evidence.
-
-### Objective improvement
-
-List the attributes improved and explain why.
-
-```text
-- Changeability: ...
-- Correctness confidence: ...
-- Test feedback speed: ...
-```
-
-### Validation
-
-Describe how to verify that the initiative succeeded. Prefer measurable before-and-after evidence: affected files per representative change, duplicated rule implementations, acceptance suite runtime, retained black-box paths, focused cases added, dependency edges, mutation score, public surface, repeated setup, production failure visibility.
-
-### Behavioural safety net
-
-State which existing black-box or acceptance tests must remain unchanged, which additional characterisation tests are needed, which cases may descend to a smaller component, and what observable behaviour must remain identical.
-
-### Estimated scope
-
-Small | Medium | Large
-
-### Why now
-
-Explain why this initiative should be addressed before lower-ranked alternatives.
-
----
-
-# Final rules
-
-* Prefer five strong initiatives over twenty weak observations; merge findings that represent the same underlying architectural pressure rather than splitting one coherent refactor into many.
-* Do not recommend rewriting working modules without strong evidence, and do not confuse architectural consistency with architectural quality.
-* Weight high-churn, business-critical areas more heavily; do not optimise code that changes rarely unless it presents correctness, security, or operational risk — or imposes recurring cognitive or context cost on active code (see `context-scattering`, `excessive-module-surface`).
-* Distinguish abstraction from indirection, and large code from low-cohesion code.
-* Treat tests and coverage as evidence, not as an end in themselves.
+Return every initiative selected in Step 4, with its Step 5 safety net, using the template in `output-template.md`.

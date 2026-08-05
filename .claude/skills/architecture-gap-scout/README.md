@@ -12,18 +12,23 @@ It is deliberately read-only:
 ## Structure
 
 * `SKILL.md`: runtime instructions for the agent.
-* `criteria/`: independently extensible inspection criteria.
-* `criteria/README.md`: instructions for authoring criteria.
-* `templates/criterion.md`: starting point for a new criterion.
+* `attributes.md`: the quality attribute catalogue — the single source of truth for attribute names, referenced by id from every smell.
+* `smells/`: recurring architectural pressures, grouped by category, extensible independently of `SKILL.md`.
+* `smells/README.md`: the smell/evidence/tension/movement/decision model, and instructions for authoring smells.
+* `prioritisation.md`: the Value / Maintenance friction / Delivery difficulty scoring model.
+* `output-template.md`: the exact structure every reported initiative must follow.
+* `templates/smell-entry.md`: starting point for adding a new smell.
 
 ## Extending the skill
 
-New recurring architectural pressures should normally be added as criteria, rather than by modifying the central skill.
+New recurring architectural pressures should normally be added as a row in the relevant `smells/<category>.md`, rather than by modifying the central skill. New quality attributes go in `attributes.md`. Changes to how initiatives are scored go in `prioritisation.md`. Changes to the report's shape go in `output-template.md`.
 
-Add or change `SKILL.md` only when the inspection workflow, prioritisation model, validity gate, or output contract changes.
+Add or change `SKILL.md` only when the inspection workflow, validity gate, or output contract changes.
 
 ## Design philosophy
 
-The skill separates detection of architectural pressure from selection of a solution. A criterion should help the scout notice evidence in the repository; it should not force a pattern, framework, naming convention, or preferred implementation style.
+The skill separates detection of architectural pressure (a **smell**) from its concrete manifestation in this repository (**evidence**), from what's being traded off (**tension**), from a candidate fix (a **movement**), from the contextual choice to act on it (a **decision**). A smell should help the scout notice and name pressure; it should not force a pattern, framework, naming convention, or preferred implementation style — see `smells/README.md` for the full model.
 
-Criteria should remain independent where possible. When two signals point to the same underlying pressure, prefer improving one criterion over creating overlapping criteria that produce duplicate initiatives.
+`smells/` is vocabulary for diagnosis, not a checklist. The scout is expected to observe a difficult change or a degraded attribute first, and only then reach for the catalogue to name what it found — not work through every row looking for a match.
+
+Smells should remain independent where possible. When two signals point to the same underlying pressure, prefer improving one smell over creating overlapping smells that produce duplicate initiatives.
