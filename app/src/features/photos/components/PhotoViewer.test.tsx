@@ -19,6 +19,8 @@ function renderViewer(overrides: Partial<ComponentProps<typeof PhotoViewer>> = {
       photos={photos}
       onClose={vi.fn()}
       onPhotoChange={onPhotoChange}
+      baulId="baul-1"
+      baulName="Familia García"
       onAddRecuerdo={vi.fn()}
       {...overrides}
     />

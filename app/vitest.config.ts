@@ -48,12 +48,14 @@ export default mergeConfig(
           ],
           // Pre-bundled explicitly: features/*/containers/* (self-sufficient tab/panel
           // components, see docs/architecture/frontend.md) are the first things under
-          // components/ to pull in react-router-dom/zustand, e.g. via PhotosView.stories.tsx's
-          // withRouter decorator. Left implicit, Vite discovers them mid-run on first render
-          // and reloads the whole browser-mode test context, which breaks React for any story
-          // already in flight (`Cannot read properties of null (reading 'useRef')`).
+          // components/ to pull in these deps, e.g. via PhotosView.stories.tsx's withRouter
+          // decorator (react-router-dom/zustand) and PhotoViewer.stories.tsx's
+          // usePhotoSettingsMenu, whose download action pulls in the Capacitor packages.
+          // Left implicit, Vite discovers them mid-run on first render and reloads the whole
+          // browser-mode test context, which breaks React for any story already in flight
+          // (`Cannot read properties of null (reading 'useRef'/'useEffect')`).
           optimizeDeps: {
-            include: ['react-router-dom', 'zustand'],
+            include: ['react-router-dom', 'zustand', '@capacitor/core', '@capacitor-community/media'],
           },
           test: {
             name: 'storybook',

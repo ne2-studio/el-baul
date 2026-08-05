@@ -85,6 +85,15 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
     about (`PersonasTabContainer` in `people`, `RecuerdosTabContainer`/
     `ChapterRecuerdosFeedContainer` in `memories`, `BatchPhotoActionsContainer` in `photos`),
     leaving the shell (`ChaptersView`/`PhotosView`) to just switch between them.
+  - **The same move also applies within a single feature, purely to cut wiring volume.**
+    `ChaptersView`/`PhotosView`/`PersonaDetailScreen`'s "···" settings menus (rename, cover,
+    invite link, delete, manage access, revoke) stayed same-domain the whole time — no
+    cross-feature risk — but each Route still had to construct 6-8 permission-gated props just
+    to wire one dropdown, and each screen had to carry them through its interface to render it.
+    `BaulSettingsMenuContainer`/`ChapterSettingsMenuContainer`/`PersonaSettingsMenuContainer`
+    own the whole menu (trigger, items, modals, permission checks) behind a single
+    entity-object prop (`baul`, or `baulId`+`chapterId`/`persona`), so the owning Route
+    constructs nothing and the shell's interface doesn't carry the settings surface at all.
   - **Exception**: a Route may call `api.*` directly, bypassing `store/`/`useCases/`, when the
     result is never cached or shared across routes — there's no state a store would own. This
     covers: blob downloads (`api.photos.download`), one-off share-link creation consumed
@@ -109,6 +118,17 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
   Library instead (see [`testing.md`](testing.md)), styled after
   `features/sharing/routes/SelectBaulForShareRoute.test.tsx` — seed the store, mock the use
   cases, `render()` inside a `MemoryRouter`.
+  - **A container can also be a hook instead of a component**, when its caller's layout can't
+    fit it into one prop slot. `usePhotoSettingsMenu` (`features/photos/containers`) is
+    `PhotoViewer`'s "···" menu — its trigger lives in the header, its "tap to edit" date
+    affordance lives inline in the body, and its modals render as overlays, three places a
+    single `trailing`-style prop can't reach. The hook owns the state/use cases and returns
+    `{ menuItems, modals, ... }` for `PhotoViewer` to place; `PhotoViewer` itself stays in
+    `components/` and imports only the hook (not `store/`/`useCases/`/`react-router-dom`
+    directly), which is exactly what the `componentBoundaryRule` checks for — so this is legal
+    without needing an exception. Colocate its test next to the hook in `containers/`, not next
+    to the component in `components/`: the ESLint rule scopes the whole `components/**` glob,
+    test files included, and a test mocking `useCases/` to exercise the hook would trip it.
 - **`design-system/`** — everything with zero knowledge of El Baúl's domain types. See
   [`docs/adr/0002-design-system-taxonomy.md`](../adr/0002-design-system-taxonomy.md) for the
   full Foundations/Components/Patterns/Layouts/Features/Screens taxonomy and the litmus test for

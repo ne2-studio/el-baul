@@ -4,14 +4,14 @@ import { Chapter, Photo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
 import { withRouter } from '@/storybook/withRouter';
 
-// Recuerdos feed and multi-select batch actions moved into ChapterRecuerdosFeedContainer/
-// BatchPhotoActionsContainer (features/memories, features/photos) — self-sufficient
-// components that read their own Zustand store slice, own their use cases, and (for batch
-// actions) self-navigate, so this story needs a bare MemoryRouter just to satisfy their
-// useNavigate() call — no route matching or store data involved. Their actual behavior is
-// covered by Vitest+RTL tests colocated with each container, and end to end by
-// app/acceptance-tests/{photos,recuerdos}.spec.ts. This story now only exercises what
-// PhotosView still owns directly: the photo grid, header menu, and chapter settings.
+// Recuerdos feed, multi-select batch actions, and the chapter settings "···" menu moved into
+// ChapterRecuerdosFeedContainer/BatchPhotoActionsContainer/ChapterSettingsMenuContainer
+// (features/memories, features/photos, features/chapters) — self-sufficient components that
+// read their own Zustand store slice, own their use cases, and self-navigate, so this story
+// needs a bare MemoryRouter just to satisfy their useNavigate() call — no route matching or
+// store data involved. Their actual behavior is covered by Vitest+RTL tests colocated with
+// each container, and end to end by app/acceptance-tests/{photos,recuerdos}.spec.ts. This
+// story now only exercises what PhotosView still owns directly: the photo grid and header.
 const meta = {
   title: 'Screens/Chapter/ChapterDetail',
   component: PhotosView,
@@ -53,8 +53,6 @@ const sharedDefaults = {
   onBack: () => alert('onBack clicked'),
   onSelectPhoto: (photo: Photo) => alert(`onSelectPhoto: ${photo.id}`),
   onUploadPhotos: () => alert('onUploadPhotos clicked'),
-  onUpdateChapterInfo: async () => true,
-  onDeleteChapter: async () => true,
 };
 
 export const Default: Story = {
@@ -73,7 +71,5 @@ export const ReadOnlyLoosePhotos: Story = {
     ...sharedDefaults,
     chapterId: null,
     recuerdosCount: 0,
-    onUpdateChapterInfo: undefined,
-    onDeleteChapter: undefined,
   },
 };

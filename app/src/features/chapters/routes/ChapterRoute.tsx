@@ -9,12 +9,9 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadChapterRecuerdos } from '@/features/memories/useCases';
 import { loadPersonas } from '@/features/people/useCases';
-import { renameChapter, deleteChapter, setChapterCover } from '@/features/chapters/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
-import { getBaulPermissions } from '@/utils/roleUtils';
-import { api } from '@/api';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
@@ -110,7 +107,6 @@ export const ChapterRoute: React.FC = () => {
   }
 
   const currentPhotos = chapterId ? (photos[chapterId] || []) : (loosePhotos || []);
-  const baulPermissions = getBaulPermissions(baul);
   const { currentChapter, basePath, apiChapterId } = resolvePhotoRouteContext({
     baulId: baul.id,
     chapterId,
@@ -118,33 +114,6 @@ export const ChapterRoute: React.FC = () => {
     loosePhotos: currentPhotos,
   });
   if (!currentChapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
-
-  const handleUpdateChapterInfo = async (name: string): Promise<boolean> => {
-    if (!chapterId) return false;
-    const result = await run(() => renameChapter(baul.id, chapterId, name), {
-      successMessage: 'Información del capítulo actualizada',
-      errorMessage: 'Error al actualizar la información del capítulo',
-    });
-    return result.ok;
-  };
-
-  const handleSetChapterCover = async (photo: Photo) => {
-    if (!chapterId) return;
-    await run(() => setChapterCover(baul.id, chapterId, photo.id, photo.thumbnailUrl), {
-      successMessage: 'Portada del capítulo actualizada',
-      errorMessage: 'Error al establecer la portada',
-    });
-  };
-
-  const handleDeleteChapter = async (): Promise<boolean> => {
-    if (!chapterId) return false;
-    const result = await run(() => deleteChapter(baul.id, chapterId), {
-      successMessage: 'Capítulo eliminado',
-      errorMessage: 'Error al eliminar el capítulo',
-    });
-    if (result.ok) navigate(`/baules/${baul.id}`);
-    return result.ok;
-  };
 
   return (
     <PhotosView
@@ -159,10 +128,6 @@ export const ChapterRoute: React.FC = () => {
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(basePath, photo.id))}
       onUploadPhotos={() => navigate(`${basePath}/confirmar`)}
-      onUpdateChapterInfo={chapterId ? handleUpdateChapterInfo : undefined}
-      onDeleteChapter={chapterId && baulPermissions.canDeleteChapter ? handleDeleteChapter : undefined}
-      onFetchChapterCoverPhotos={chapterId ? (skip, take) => api.photos.getPage(baul.id, { chapterId, skip, take }) : undefined}
-      onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
     />
   );
 };

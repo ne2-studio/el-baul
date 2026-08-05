@@ -2,27 +2,17 @@ import React, { useState } from 'react';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
-import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
-import { Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
-import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
+import { Plus, ImageIcon, MessageCircle } from 'lucide-react';
 import { ChapterRecuerdosFeedContainer } from '@/features/memories/containers/ChapterRecuerdosFeedContainer';
 import { BatchPhotoActionsContainer } from '@/features/photos/containers/BatchPhotoActionsContainer';
+import { ChapterSettingsMenuContainer } from '@/features/chapters/containers/ChapterSettingsMenuContainer';
 import { Chapter, Photo } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
-import { IconButton } from '@/design-system/components/actions/IconButton';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/design-system/components/ui/dropdown-menu';
 
 interface PhotosViewProps {
   chapter: Chapter;
@@ -34,47 +24,25 @@ interface PhotosViewProps {
   baulName: string;
   /** null = fotos sueltas virtual chapter — mirrors ChapterRoute's apiChapterId discriminator.
    * Gates the Recuerdos tab (only real chapters have one) and is threaded down to
-   * ChapterRecuerdosFeedContainer/BatchPhotoActionsContainer, which own their own data/actions. */
+   * ChapterRecuerdosFeedContainer/BatchPhotoActionsContainer/ChapterSettingsMenuContainer,
+   * which own their own data/actions. */
   chapterId: string | null;
-  /** Solo para el badge de recuento del Tabbar — los datos completos los lee
-   * ChapterRecuerdosFeedContainer directamente del store. */
+  /** Solo para el badge de recuento del Tabbar y el modal de borrado — los datos completos
+   * los lee ChapterRecuerdosFeedContainer directamente del store. */
   recuerdosCount?: number;
   onBack: () => void;
   onSelectPhoto: (photo: Photo) => void;
   onUploadPhotos: () => void;
   allChapters?: Chapter[];
-  onUpdateChapterInfo?: (name: string) => Promise<boolean>;
-  onDeleteChapter?: () => Promise<boolean>;
-  onFetchChapterCoverPhotos?: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
-  onSetChapterCover?: (photo: Photo) => void;
 }
 
 export function PhotosView({
   chapter, photos, recentlyAddedPhotos, baulId, baulName, chapterId, recuerdosCount = 0, onBack, onSelectPhoto, onUploadPhotos,
-  allChapters = [], onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos, onSetChapterCover,
+  allChapters = [],
 }: PhotosViewProps) {
   const totalRecuerdos = chapterId !== null ? recuerdosCount : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
   const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos'>('fotos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showCoverPicker, setShowCoverPicker] = useState(false);
-  const [isSavingChapterInfo, setIsSavingChapterInfo] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isDeletingChapter, setIsDeletingChapter] = useState(false);
-
-  const handleSaveChapterInfo = async (name: string) => {
-    setIsSavingChapterInfo(true);
-    const ok = (await onUpdateChapterInfo?.(name)) ?? false;
-    setIsSavingChapterInfo(false);
-    if (ok) setShowEditModal(false);
-  };
-
-  const handleDeleteChapter = async () => {
-    setIsDeletingChapter(true);
-    const ok = (await onDeleteChapter?.()) ?? false;
-    setIsDeletingChapter(false);
-    if (ok) setShowDeleteModal(false);
-  };
 
   // Multi-selection state
   const [selectionMode, setSelectionMode] = useState(false);
@@ -130,39 +98,15 @@ export function PhotosView({
             <span className="text-sm font-medium text-foreground">
               {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
             </span>
-          ) : onUpdateChapterInfo && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <IconButton
-                  aria-label="Opciones del capítulo"
-                >
-                  <MoreVertical className="w-5 h-5" />
-                </IconButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => setSelectionMode(true)}>
-                  <CheckSquare className="w-4 h-4 mr-2" />
-                  Seleccionar fotos
-                </DropdownMenuItem>
-                {onFetchChapterCoverPhotos && onSetChapterCover && (
-                  <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
-                    <ImageIcon className="w-4 h-4 mr-2" />
-                    Elegir foto de portada
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Editar información del capítulo
-                </DropdownMenuItem>
-                {onDeleteChapter && (
-                  <DropdownMenuItem variant="destructive" onClick={() => setShowDeleteModal(true)}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Eliminar capítulo
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          ) : (
+            <ChapterSettingsMenuContainer
+              baulId={baulId}
+              chapterId={chapterId}
+              chapterName={chapter.name}
+              photoCount={photos.length}
+              recuerdoCount={recuerdosCount}
+              onEnterSelectionMode={() => setSelectionMode(true)}
+            />
           )
         }
       />
@@ -272,36 +216,6 @@ export function PhotosView({
         moveableChapters={moveableChapters}
         onDone={exitSelection}
       />
-
-      {showEditModal && (
-        <EditInfoModal
-          title="Editar información del capítulo"
-          initialName={chapter.name}
-          namePlaceholder="Nombre del capítulo"
-          onCancel={() => setShowEditModal(false)}
-          onSave={handleSaveChapterInfo}
-          isSubmitting={isSavingChapterInfo}
-        />
-      )}
-
-      {showDeleteModal && (
-        <DeleteChapterModal
-          photoCount={photos.length}
-          recuerdoCount={recuerdosCount}
-          onCancel={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteChapter}
-          isSubmitting={isDeletingChapter}
-        />
-      )}
-
-      {showCoverPicker && onFetchChapterCoverPhotos && onSetChapterCover && (
-        <CoverPhotoPickerModal
-          title="Elegir portada del capítulo"
-          fetchPage={onFetchChapterCoverPhotos}
-          onSelect={onSetChapterCover}
-          onCancel={() => setShowCoverPicker(false)}
-        />
-      )}
     </div>
   );
 }

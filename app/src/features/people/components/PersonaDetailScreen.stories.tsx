@@ -1,9 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 import { PersonaDetailScreen } from '@/features/people/components/PersonaDetailScreen';
 import { Persona } from '@/types';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 
+// The "···" settings menu (edit info, avatar, manage access, revoke) moved into
+// PersonaSettingsMenuContainer (features/people/containers) — a self-sufficient component
+// that reads its own Zustand store slice, so it can no longer render meaningfully from props
+// alone in isolation here (no baúl/role seeded, it renders nothing in its trailing slot).
+// Its behavior is covered by PersonaSettingsMenuContainer.test.tsx, and end to end by
+// app/acceptance-tests/personas.spec.ts. This story now only exercises what
+// PersonaDetailScreen still owns directly: the hero, biografia/fotos tabs, and the
+// "Editar biografía" FAB.
 const meta = {
   title: 'Screens/Person/PersonaDetail',
   component: PersonaDetailScreen,
@@ -39,12 +47,9 @@ const noAccessPersona: Persona = {
 };
 
 const sharedDefaults = {
+  baulId: 'baul-1',
   onBack: () => alert('onBack clicked'),
-  onEditInfo: () => alert('onEditInfo clicked'),
   onEditBiografia: () => alert('onEditBiografia clicked'),
-  onChangeAvatar: () => alert('onChangeAvatar clicked'),
-  onChangeRole: () => alert('onChangeRole clicked'),
-  onRevokeAccess: async () => true,
   photos: [],
   onSelectPhoto: () => alert('onSelectPhoto clicked'),
 };
@@ -83,11 +88,5 @@ export const NoAccess: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText('Sin acceso')).toBeVisible();
     await expect(canvas.getByText('Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.')).toBeVisible();
-
-    await userEvent.click(canvas.getByRole('button', { name: 'Opciones de la persona' }));
-    const body = within(document.body);
-    await expect(body.getByRole('menuitem', { name: 'Permitir invitación' })).toBeVisible();
-    await expect(body.queryByRole('menuitem', { name: 'Gestionar acceso' })).not.toBeInTheDocument();
-    await expect(body.queryByRole('menuitem', { name: 'Revocar acceso' })).not.toBeInTheDocument();
   },
 };

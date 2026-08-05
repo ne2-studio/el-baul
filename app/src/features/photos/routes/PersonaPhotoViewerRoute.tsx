@@ -1,29 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
-import { Photo, Recuerdo } from '@/types';
+import { Recuerdo } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadRecuerdos, addRecuerdo, editRecuerdo } from '@/features/memories/useCases';
 import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
-import { loadTaggedPersonas, setTaggedPersonas } from '@/features/photos/useCases';
+import { loadTaggedPersonas } from '@/features/photos/useCases';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { api } from '@/api';
-import { saveDownloadedPhoto } from '@/utils/downloadFile';
-import { Capacitor } from '@capacitor/core';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // Variante de PhotoViewerRoute que recorre las fotos etiquetadas de una persona concreta en
 // vez de las de un capítulo — cruza capítulos libremente, así que las acciones que dependen
 // de "en qué capítulo estoy" (mover, cambiar fecha, retirar, portadas) quedan fuera; lo demás
-// (cerrar, anterior/siguiente, recuerdos, etiquetado, descarga, navegar a otra persona) se
-// mantiene igual que en el visor normal.
+// (cerrar, anterior/siguiente, recuerdos, etiquetado, descarga, compartir, navegar a otra
+// persona) se mantiene igual que en el visor normal.
 export const PersonaPhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,39 +123,6 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
     return result.ok;
   };
 
-  const handleSaveTags = async (photoToTag: Photo, personaIds: string[]): Promise<boolean> => {
-    const result = await run(() => setTaggedPersonas(photoToTag.id, personaIds), {
-      successMessage: 'Personas etiquetadas actualizadas',
-      errorMessage: 'Error al etiquetar personas',
-    });
-    return result.ok;
-  };
-
-  const handleDownloadPhoto = async (photoToDownload: Photo) => {
-    await run(async () => {
-      const { blob, fileName } = await api.photos.download(photoToDownload.id);
-      await saveDownloadedPhoto(blob, fileName);
-    }, {
-      successMessage: Capacitor.isNativePlatform() ? 'Foto guardada en la galería' : undefined,
-      errorMessage: 'Error al descargar la foto',
-    });
-  };
-
-  const handleSharePhoto = async (photoToShare: Photo) => {
-    const result = await run(() => api.photos.createShareLink(photoToShare.id), {
-      key: 'share-photo',
-      errorMessage: 'Error al crear el enlace',
-    });
-    if (!result.ok) return;
-
-    await sharePublicLink({
-      title: `Foto de ${baul.name}`,
-      text: `Te comparto una foto de "${baul.name}" en El Baúl.`,
-      url: result.value.url,
-      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
-    });
-  };
-
   const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
     const result = await run(() => api.recuerdos.createShareLink(recuerdo.id), {
       key: 'share-recuerdo',
@@ -179,16 +144,16 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
       photos={photos}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
+      baulId={baul.id}
+      baulName={baul.name}
+      sharedLinksEnabled={sharedLinksEnabled}
+      baulPersonas={personas[baul.id] || []}
+      taggedPersonas={taggedPersonas[photo.id] || []}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(clickedPersonaId) => navigate(`/baules/${baul.id}/personas/${clickedPersonaId}`)}
-      onDownloadPhoto={handleDownloadPhoto}
-      onSharePhoto={sharedLinksEnabled ? handleSharePhoto : undefined}
       onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
       onEditRecuerdo={handleEditRecuerdo}
-      taggedPersonas={taggedPersonas[photo.id] || []}
-      baulPersonas={personas[baul.id] || []}
-      onSaveTags={handleSaveTags}
     />
   );
 };

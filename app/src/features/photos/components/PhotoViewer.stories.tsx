@@ -32,18 +32,26 @@ const recuerdos: Recuerdo[] = [
   { id: '2', text: 'Yo estuve ahí, fue un día increíble.', userName: 'Yo', isOwn: true, createdAt: '2024-07-16T10:00:00Z' },
 ];
 
+// The "···" settings menu (tag/share/download/covers/move/date/removal-request/delete) is
+// owned by usePhotoSettingsMenu (features/photos/containers) — a hook, not a component, since
+// PhotoViewer's layout places its trigger (header), its inline date affordance (body), and
+// its modals (overlay) in three different places that don't fit a single prop slot. The hook
+// itself needs no Router (none of its actions navigate), so this story renders unchanged.
 const sharedDefaults = {
   onClose: () => alert('onClose clicked'),
   onPhotoChange: () => alert('onPhotoChange clicked'),
-  onRequestRemoval: async () => true,
-  onSetBaulCover: () => alert('onSetBaulCover clicked'),
-  onSetChapterCover: () => alert('onSetChapterCover clicked'),
-  onMovePhoto: async () => true,
-  onChangeDate: async () => true,
-  onDeletePhoto: async () => true,
+  baulId: 'b1',
+  baulName: 'Familia García',
+  sharedLinksEnabled: true,
   onAddRecuerdo: () => alert('onAddRecuerdo clicked'),
   onUserClick: () => alert('onUserClick clicked'),
-  onDownloadPhoto: () => alert('onDownloadPhoto clicked'),
+  chapter: {
+    apiChapterId: chapters[0].id,
+    allChapters: chapters,
+    currentChapter: chapters[0],
+    onMoved: (targetChapterId: string) => alert(`onMoved: ${targetChapterId}`),
+    onDeleted: () => alert('onDeleted'),
+  },
 };
 
 export const Default: Story = {
@@ -52,8 +60,6 @@ export const Default: Story = {
     photo: photos[1],
     photos,
     isAdmin: true,
-    allChapters: chapters,
-    currentChapter: chapters[0],
     recuerdos,
   },
 };
@@ -85,14 +91,6 @@ export const ReadOnlyCollaborator: Story = {
     photo: photos[1],
     photos,
     isAdmin: false,
-    onSetBaulCover: undefined,
-    onSetChapterCover: undefined,
-    onMovePhoto: undefined,
-    onChangeDate: undefined,
-    onDeletePhoto: undefined,
-    onRequestRemoval: undefined,
-    allChapters: chapters,
-    currentChapter: chapters[0],
     recuerdos,
   },
 };

@@ -1,13 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Download, BookImage, FolderInput, Calendar, Flag, Trash2, Tag, Share2 } from 'lucide-react';
-import { Chapter, Photo, PhotoDate, Persona, Recuerdo, TaggedPersona } from '@/types';
-import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
-import { MoveModal } from '@/features/photos/components/MoveModal';
-import { DateModal } from '@/design-system/patterns/forms/DateModal';
-import { DeletePhotoModal } from '@/features/photos/components/DeletePhotoModal';
-import { RemovalRequestModal } from '@/features/photos/components/RemovalRequestModal';
-import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
-import { PhotoViewerHeader, PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
+import React, { useEffect, useRef } from 'react';
+import { Photo, Persona, Recuerdo, TaggedPersona } from '@/types';
+import { PhotoViewerHeader } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
 import { formatPartialDate } from '@/app/utils/timeUtils';
 import { RecuerdoInput } from '@/features/memories/components/RecuerdoInput';
@@ -16,35 +9,29 @@ import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 import { Button } from '@/design-system/components/actions/Button';
 import { PersonBadge } from '@/design-system/components/data-display/Badges';
+import { PhotoViewerChapterScope, usePhotoSettingsMenu } from '@/features/photos/containers/usePhotoSettingsMenu';
 
 interface PhotoViewerProps {
   photo: Photo;
   photos: Photo[];
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
-  /** Devuelven si la operación tuvo éxito — el modal correspondiente se queda abierto
-   * (con spinner) hasta saberlo, y solo se cierra por sí solo si el resultado fue true. */
-  onRequestRemoval?: (photo: Photo, reason: string) => Promise<boolean>;
+  baulId: string;
+  baulName: string;
   isAdmin?: boolean;
-  onSetBaulCover?: (photo: Photo) => void;
-  onSetChapterCover?: (photo: Photo) => void;
-  onMovePhoto?: (photo: Photo, targetChapterId: string) => Promise<boolean>;
-  onChangeDate?: (photo: Photo, date: PhotoDate) => Promise<boolean>;
-  onDeletePhoto?: (photo: Photo, reason: string) => Promise<boolean>;
-  allChapters?: Chapter[];
-  currentChapter?: Chapter;
+  sharedLinksEnabled?: boolean;
+  /** Roster completo del baúl, para el checklist del modal de etiquetado. */
+  baulPersonas?: Persona[];
+  /** Personas etiquetadas en la foto actualmente mostrada. */
+  taggedPersonas?: TaggedPersona[];
+  /** Absent for viewers with no baúl/chapter scope (e.g. a persona's tagged photos, which
+   * cross chapters freely) — see usePhotoSettingsMenu's own doc for what that disables. */
+  chapter?: PhotoViewerChapterScope;
   recuerdos?: Recuerdo[];
   onAddRecuerdo?: (photoId: string, text: string) => void;
   onUserClick?: (personaId: string) => void;
-  onDownloadPhoto?: (photo: Photo) => void;
-  onSharePhoto?: (photo: Photo) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
   onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
-  /** Personas etiquetadas en la foto actualmente mostrada. */
-  taggedPersonas?: TaggedPersona[];
-  /** Roster completo del baúl, para el checklist del modal de etiquetado. */
-  baulPersonas?: Persona[];
-  onSaveTags?: (photo: Photo, personaIds: string[]) => Promise<boolean>;
 }
 
 function isEditableKeyTarget(target: EventTarget | null) {
@@ -59,43 +46,25 @@ export function PhotoViewer({
   photos,
   onClose,
   onPhotoChange,
-  onRequestRemoval,
+  baulId,
+  baulName,
   isAdmin,
-  onSetBaulCover,
-  onSetChapterCover,
-  onMovePhoto,
-  onChangeDate,
-  onDeletePhoto,
-  allChapters = [],
-  currentChapter,
+  sharedLinksEnabled = false,
+  baulPersonas = [],
+  taggedPersonas = [],
+  chapter,
   recuerdos = [],
   onAddRecuerdo,
   onUserClick,
-  onDownloadPhoto,
-  onSharePhoto,
   onShareRecuerdo,
   onEditRecuerdo,
-  taggedPersonas = [],
-  baulPersonas = [],
-  onSaveTags
 }: PhotoViewerProps) {
-  const [showRemovalModal, setShowRemovalModal] = useState(false);
-  const [showMoveModal, setShowMoveModal] = useState(false);
-  const [moveTargetId, setMoveTargetId] = useState('');
-  const [showDateModal, setShowDateModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showTagModal, setShowTagModal] = useState(false);
-  const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
-  const [isSubmittingRemoval, setIsSubmittingRemoval] = useState(false);
-  const [isSubmittingMove, setIsSubmittingMove] = useState(false);
-  const [isSubmittingDate, setIsSubmittingDate] = useState(false);
-  const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
-  const [isSubmittingTags, setIsSubmittingTags] = useState(false);
-
   useScrollLock();
   const viewportInset = useVisualViewportInset();
 
-  const moveableChapters = allChapters.filter(a => a.id !== currentChapter?.id);
+  const { menuItems, canChangeDate, openDateModal, modals } = usePhotoSettingsMenu({
+    baulId, baulName, photo, isAdmin, sharedLinksEnabled, baulPersonas, taggedPersonas, chapter,
+  });
 
   const currentIndex = photos.findIndex(p => p.id === photo.id);
   const hasRecuerdos = recuerdos.length > 0;
@@ -136,90 +105,6 @@ export function PhotoViewer({
       img.src = neighbor.fullUrl;
     });
   }, [currentIndex, photos]);
-
-  const handleSubmitRequest = async (reason: string) => {
-    if (!onRequestRemoval) return;
-    setIsSubmittingRemoval(true);
-    const ok = await onRequestRemoval(photo, reason);
-    setIsSubmittingRemoval(false);
-    if (!ok) return;
-
-    setShowRemovalModal(false);
-  };
-
-  const openTagModal = () => {
-    setSelectedPersonaIds(taggedPersonas.map((p) => p.id));
-    setShowTagModal(true);
-  };
-
-  const toggleTaggedPersona = (personaId: string) => {
-    setSelectedPersonaIds((current) =>
-      current.includes(personaId) ? current.filter((id) => id !== personaId) : [...current, personaId]);
-  };
-
-  const handleTagsSubmit = async () => {
-    if (!onSaveTags) return;
-    setIsSubmittingTags(true);
-    const ok = await onSaveTags(photo, selectedPersonaIds);
-    setIsSubmittingTags(false);
-    if (ok) setShowTagModal(false);
-  };
-
-  const menuItems: PhotoViewerMenuItem[] = [];
-  if (onSaveTags) {
-    menuItems.push({ key: 'tag-personas', label: 'Etiquetar personas', icon: Tag, onSelect: openTagModal });
-  }
-  if (onSharePhoto) {
-    menuItems.push({ key: 'share', label: 'Compartir foto', icon: Share2, onSelect: () => onSharePhoto(photo) });
-  }
-  if (onDownloadPhoto) {
-    menuItems.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: () => onDownloadPhoto(photo) });
-  }
-  if (onSetChapterCover) {
-    menuItems.push({ key: 'chapter-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => onSetChapterCover(photo) });
-  }
-  if (isAdmin && onSetBaulCover) {
-    menuItems.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', icon: BaulIcon, onSelect: () => onSetBaulCover(photo) });
-  }
-  if (onMovePhoto && moveableChapters.length > 0) {
-    menuItems.push({ key: 'move', label: 'Mover a otro capítulo', icon: FolderInput, onSelect: () => setShowMoveModal(true) });
-  }
-  if (onChangeDate) {
-    menuItems.push({ key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => setShowDateModal(true) });
-  }
-  if (!isAdmin && onRequestRemoval) {
-    menuItems.push({ key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => setShowRemovalModal(true) });
-  }
-  if (isAdmin && onDeletePhoto) {
-    menuItems.push({ key: 'delete', label: 'Retirar foto', icon: Trash2, onSelect: () => setShowDeleteModal(true), variant: 'destructive' });
-  }
-
-  const handleMoveSubmit = async () => {
-    if (!moveTargetId || !onMovePhoto) return;
-    setIsSubmittingMove(true);
-    const ok = await onMovePhoto(photo, moveTargetId);
-    setIsSubmittingMove(false);
-    if (ok) {
-      setShowMoveModal(false);
-      setMoveTargetId('');
-    }
-  };
-
-  const handleDateSubmit = async (date: PhotoDate) => {
-    if (!onChangeDate) return;
-    setIsSubmittingDate(true);
-    const ok = await onChangeDate(photo, date);
-    setIsSubmittingDate(false);
-    if (ok) setShowDateModal(false);
-  };
-
-  const handleDeleteSubmit = async (reason: string) => {
-    if (!onDeletePhoto) return;
-    setIsDeletingPhoto(true);
-    const ok = await onDeletePhoto(photo, reason);
-    setIsDeletingPhoto(false);
-    if (ok) setShowDeleteModal(false);
-  };
 
   const handleAddRecuerdo = (text: string) => {
     if (onAddRecuerdo) {
@@ -278,10 +163,10 @@ export function PhotoViewer({
         <div className="flex flex-col max-h-[50%]">
           <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
             {/* Date */}
-            {(photo.date || onChangeDate) && (
+            {(photo.date || canChangeDate) && (
               <Button variant="plain"
-                onClick={() => onChangeDate && setShowDateModal(true)}
-                disabled={!onChangeDate}
+                onClick={() => canChangeDate && openDateModal()}
+                disabled={!canChangeDate}
                 className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
               >
                 {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
@@ -330,58 +215,7 @@ export function PhotoViewer({
         </div>
       </div>
 
-      {/* Removal request modal */}
-      {showRemovalModal && (
-        <RemovalRequestModal
-          onCancel={() => setShowRemovalModal(false)}
-          onConfirm={handleSubmitRequest}
-          isSubmitting={isSubmittingRemoval}
-        />
-      )}
-
-      {/* Mover a otro capítulo modal */}
-      {showMoveModal && (
-        <MoveModal
-          title="Mover a otro capítulo"
-          chapters={moveableChapters}
-          selectedId={moveTargetId}
-          onSelect={setMoveTargetId}
-          onCancel={() => setShowMoveModal(false)}
-          onConfirm={handleMoveSubmit}
-          isSubmitting={isSubmittingMove}
-        />
-      )}
-
-      {/* Cambiar fecha modal */}
-      {showDateModal && (
-        <DateModal
-          title="Cambiar fecha de la foto"
-          onCancel={() => setShowDateModal(false)}
-          onConfirm={handleDateSubmit}
-          isSubmitting={isSubmittingDate}
-        />
-      )}
-
-      {/* Retirar foto modal */}
-      {showDeleteModal && (
-        <DeletePhotoModal
-          onCancel={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteSubmit}
-          isSubmitting={isDeletingPhoto}
-        />
-      )}
-
-      {/* Etiquetar personas modal */}
-      {showTagModal && (
-        <TagPersonasModal
-          personas={baulPersonas}
-          selectedIds={selectedPersonaIds}
-          onToggle={toggleTaggedPersona}
-          onCancel={() => setShowTagModal(false)}
-          onConfirm={handleTagsSubmit}
-          isSubmitting={isSubmittingTags}
-        />
-      )}
+      {modals}
     </>
   );
 }

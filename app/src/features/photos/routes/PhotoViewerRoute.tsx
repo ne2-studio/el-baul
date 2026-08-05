@@ -1,24 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
-import { Photo, PhotoDate, Recuerdo } from '@/types';
+import { Recuerdo } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadRecuerdos, addRecuerdo, editRecuerdo } from '@/features/memories/useCases';
 import { loadPersonas } from '@/features/people/useCases';
-import {
-  submitRemovalRequest,
-  loadTaggedPersonas,
-  setTaggedPersonas,
-  loadChapterPhotos,
-  movePhotos,
-  deletePhoto,
-  changePhotoDate,
-} from '@/features/photos/useCases';
-import { setBaulCover } from '@/features/baules/useCases';
-import { setChapterCover } from '@/features/chapters/useCases';
+import { loadTaggedPersonas, loadChapterPhotos } from '@/features/photos/useCases';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
@@ -26,8 +16,6 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
-import { saveDownloadedPhoto } from '@/utils/downloadFile';
-import { Capacitor } from '@capacitor/core';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
@@ -133,31 +121,6 @@ export const PhotoViewerRoute: React.FC = () => {
 
   const closeViewer = () => closePhotoViewer(navigate, backgroundLocation, basePath);
 
-  const handleRequestRemoval = async (photo: Photo, reason: string): Promise<boolean> => {
-    if (!auth.isAuthenticated) return false;
-    const result = await run(() => submitRemovalRequest(baul.id, photo, reason), {
-      successMessage: 'Tu solicitud ha sido enviada',
-      errorMessage: 'Error al enviar la solicitud',
-    });
-    return result.ok;
-  };
-
-  const handleSetBaulCover = async (photo: Photo) => {
-    if (!auth.isAuthenticated) return;
-    await run(() => setBaulCover(baul.id, photo.id, photo.thumbnailUrl), {
-      successMessage: 'Portada del baúl actualizada',
-      errorMessage: 'Error al establecer la portada',
-    });
-  };
-
-  const handleSetChapterCover = async (photo: Photo) => {
-    if (!auth.isAuthenticated || !chapterId) return;
-    await run(() => setChapterCover(baul.id, chapterId, photo.id, photo.thumbnailUrl), {
-      successMessage: 'Portada del capítulo actualizada',
-      errorMessage: 'Error al establecer la portada',
-    });
-  };
-
   const handleAddRecuerdo = async (photoId: string, text: string) => {
     if (!auth.isAuthenticated) return;
     await run(() => addRecuerdo(baul.id, photoId, text), { errorMessage: 'Error al añadir el recuerdo' });
@@ -170,65 +133,6 @@ export const PhotoViewerRoute: React.FC = () => {
       errorMessage: 'Error al guardar el recuerdo',
     });
     return result.ok;
-  };
-
-  const handleMovePhoto = async (photoToMove: Photo, targetChapterId: string): Promise<boolean> => {
-    const result = await run(() => movePhotos(baul.id, apiChapterId, [photoToMove.id], targetChapterId), {
-      successMessage: 'Foto movida',
-      errorMessage: 'Error al mover la foto',
-    });
-    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${targetChapterId}`, { replace: true });
-    return result.ok;
-  };
-
-  const handleDeletePhoto = async (photoToDelete: Photo, reason: string): Promise<boolean> => {
-    const result = await run(() => deletePhoto(baul.id, apiChapterId, photoToDelete.id, reason), {
-      successMessage: 'La foto ha sido retirada',
-      errorMessage: 'Error al retirar la foto',
-    });
-    if (result.ok) closeViewer();
-    return result.ok;
-  };
-
-  const handleChangeDate = async (photoToUpdate: Photo, date: PhotoDate): Promise<boolean> => {
-    const result = await run(() => changePhotoDate(baul.id, apiChapterId, photoToUpdate.id, date), {
-      successMessage: 'Fecha actualizada',
-      errorMessage: 'Error al cambiar la fecha',
-    });
-    return result.ok;
-  };
-
-  const handleSaveTags = async (photoToTag: Photo, personaIds: string[]): Promise<boolean> => {
-    const result = await run(() => setTaggedPersonas(photoToTag.id, personaIds), {
-      successMessage: 'Personas etiquetadas actualizadas',
-      errorMessage: 'Error al etiquetar personas',
-    });
-    return result.ok;
-  };
-
-  const handleDownloadPhoto = async (photoToDownload: Photo) => {
-    await run(async () => {
-      const { blob, fileName } = await api.photos.download(photoToDownload.id);
-      await saveDownloadedPhoto(blob, fileName);
-    }, {
-      successMessage: Capacitor.isNativePlatform() ? 'Foto guardada en la galería' : undefined,
-      errorMessage: 'Error al descargar la foto',
-    });
-  };
-
-  const handleSharePhoto = async (photoToShare: Photo) => {
-    const result = await run(() => api.photos.createShareLink(photoToShare.id), {
-      key: 'share-photo',
-      errorMessage: 'Error al crear el enlace',
-    });
-    if (!result.ok) return;
-
-    await sharePublicLink({
-      title: `Foto de ${baul.name}`,
-      text: `Te comparto una foto de "${baul.name}" en El Baúl.`,
-      url: result.value.url,
-      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
-    });
   };
 
   const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
@@ -252,25 +156,24 @@ export const PhotoViewerRoute: React.FC = () => {
       photos={photos}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
-      onRequestRemoval={handleRequestRemoval}
+      baulId={baul.id}
+      baulName={baul.name}
       isAdmin={baulPermissions.isAdmin}
-      onSetBaulCover={handleSetBaulCover}
-      onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
-      onMovePhoto={handleMovePhoto}
-      onChangeDate={handleChangeDate}
-      onDeletePhoto={handleDeletePhoto}
-      allChapters={chapters || []}
-      currentChapter={currentChapter}
+      sharedLinksEnabled={sharedLinksEnabled}
+      baulPersonas={personas[baul.id] || []}
+      taggedPersonas={taggedPersonas[photo.id] || []}
+      chapter={{
+        apiChapterId,
+        allChapters: chapters || [],
+        currentChapter,
+        onMoved: (targetChapterId) => navigate(`/baules/${baul.id}/capitulos/${targetChapterId}`, { replace: true }),
+        onDeleted: closeViewer,
+      }}
       recuerdos={recuerdos[photo.id] || []}
       onAddRecuerdo={handleAddRecuerdo}
       onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
-      onDownloadPhoto={handleDownloadPhoto}
-      onSharePhoto={sharedLinksEnabled ? handleSharePhoto : undefined}
       onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
       onEditRecuerdo={handleEditRecuerdo}
-      taggedPersonas={taggedPersonas[photo.id] || []}
-      baulPersonas={personas[baul.id] || []}
-      onSaveTags={handleSaveTags}
     />
   );
 };

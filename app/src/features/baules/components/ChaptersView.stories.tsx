@@ -3,14 +3,18 @@ import { ChaptersView } from '@/features/baules/components/ChaptersView';
 import { Baul, Chapter } from '@/types';
 import { storybookEdgeText, storybookPhotos } from '@/storybook/fixtures';
 import { viewportGlobals } from '@/storybook/viewports';
+import { withRouter } from '@/storybook/withRouter';
 
-// Personas/Recuerdos tab content moved into PersonasTabContainer/RecuerdosTabContainer
-// (features/people, features/memories) — self-sufficient components that read their own
-// Zustand store slice and self-navigate, so they can no longer render from props alone in
-// isolation here. Their behavior is covered by Vitest+RTL tests colocated with each container,
-// and end to end by app/acceptance-tests/{personas,recuerdos}.spec.ts. This story now only
-// exercises what ChaptersView still owns directly: the chapter grid, header menu, and
-// baúl settings.
+// Personas/Recuerdos tab content and the baúl settings "···" menu moved into
+// PersonasTabContainer/RecuerdosTabContainer/BaulSettingsMenuContainer (features/people,
+// features/memories, features/baules) — self-sufficient components that read their own
+// Zustand store slice and self-navigate. BaulSettingsMenuContainer in particular sits in the
+// header, so it's mounted unconditionally on every render (unlike the tab containers, which
+// only mount when their tab is selected) — this story needs a bare MemoryRouter just to
+// satisfy its useNavigate() call, no route matching or store data involved. Their actual
+// behavior is covered by Vitest+RTL tests colocated with each container, and end to end by
+// app/acceptance-tests/{personas,recuerdos,global-invite-link}.spec.ts. This story now only
+// exercises what ChaptersView still owns directly: the chapter grid and header.
 const meta = {
   title: 'Screens/Baul/BaulDetail',
   component: ChaptersView,
@@ -18,6 +22,7 @@ const meta = {
   parameters: {
     layout: 'fullscreen',
   },
+  decorators: [withRouter],
 } satisfies Meta<typeof ChaptersView>;
 
 export default meta;
@@ -50,10 +55,7 @@ const sharedDefaults = {
   onBack: () => alert('onBack clicked'),
   onSelectChapter: (chapter: Chapter) => alert(`onSelectChapter: ${chapter.name}`),
   onCreateChapter: () => alert('onCreateChapter clicked'),
-  onToast: (message: string) => alert(message),
   onOpenLoosePhotos: () => alert('onOpenLoosePhotos clicked'),
-  onUpdateBaulInfo: async () => true,
-  onRequestBaulDeletion: () => alert('onRequestBaulDeletion clicked'),
 };
 
 export const Default: Story = {
@@ -83,8 +85,6 @@ export const ReadOnlyCollaborator: Story = {
   args: {
     ...sharedDefaults,
     baul: { ...baul, isCustodio: false, role: 'colaborador' },
-    onUpdateBaulInfo: undefined,
-    onRequestBaulDeletion: undefined,
   },
 };
 

@@ -3,31 +3,19 @@ import { useElementHeight } from '@/hooks/useElementHeight';
 import { Card } from '@/design-system/components/data-display/Card';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { ExpandableFAB } from '@/design-system/components/actions/FAB';
-import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
-import { InviteFamilyModal } from '@/features/sharing/components/InviteFamilyModal';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PersonasTabContainer } from '@/features/people/containers/PersonasTabContainer';
 import { RecuerdosTabContainer } from '@/features/memories/containers/RecuerdosTabContainer';
+import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
-import { Plus, Upload, BookImage, ImageIcon, Bell, MoreVertical, Pencil, Trash2, Link2 } from 'lucide-react';
-import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
-import { Baul, BaulInviteLink, Chapter, Photo } from '@/types';
+import { Plus, Upload, BookImage } from 'lucide-react';
+import { Baul, Chapter } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
-import type { ToastVariant } from '@/design-system/components/feedback/Toast';
-import { IconButton } from '@/design-system/components/actions/IconButton';
 import { makeLooseChapterView } from '@/features/baules/components/looseChapterView';
 import { ChapterCard } from '@/features/baules/components/ChapterCard';
 import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
-import { CounterBadge } from '@/design-system/components/data-display/Badges';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/design-system/components/ui/dropdown-menu';
 
 interface LoosePhoto {
   id: string;
@@ -48,18 +36,9 @@ interface ChaptersViewProps {
   onBack: () => void;
   onSelectChapter: (chapter: Chapter) => void;
   onCreateChapter: () => void;
-  onToast: (message: string, variant?: ToastVariant) => void;
   onOpenLoosePhotos?: () => void;
   onUploadPhotos?: () => void;
   onOpenChapterFromRecuerdo?: (chapterId: string) => void;
-  onRemovalRequests?: () => void;
-  pendingRemovalRequestsCount?: number;
-  onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
-  onRequestBaulDeletion?: () => void;
-  onFetchBaulCoverPhotos?: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
-  onSetBaulCover?: (photo: Photo) => void;
-  onGetInviteLink?: () => Promise<BaulInviteLink>;
-  onRegenerateInviteLink?: () => Promise<BaulInviteLink>;
 }
 
 export function ChaptersView({
@@ -73,33 +52,13 @@ export function ChaptersView({
   onBack,
   onSelectChapter,
   onCreateChapter,
-  onToast,
   onOpenLoosePhotos,
   onUploadPhotos,
   onOpenChapterFromRecuerdo,
-  onRemovalRequests,
-  pendingRemovalRequestsCount,
-  onUpdateBaulInfo,
-  onRequestBaulDeletion,
-  onFetchBaulCoverPhotos,
-  onSetBaulCover,
-  onGetInviteLink,
-  onRegenerateInviteLink,
 }: ChaptersViewProps) {
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showCoverPicker, setShowCoverPicker] = useState(false);
-  const [showInviteFamilyModal, setShowInviteFamilyModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>(initialTab);
-  const [isSavingBaulInfo, setIsSavingBaulInfo] = useState(false);
   const looseChapter = makeLooseChapterView(loosePhotos);
-
-  const handleSaveBaulInfo = async (name: string, description: string) => {
-    setIsSavingBaulInfo(true);
-    const ok = (await onUpdateBaulInfo?.(name, description)) ?? false;
-    setIsSavingBaulInfo(false);
-    if (ok) setShowEditModal(false);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -107,74 +66,14 @@ export function ChaptersView({
         ref={headerRef}
         variant="row"
         onBack={onBack}
-        trailing={
-          (onGetInviteLink || onUpdateBaulInfo || (onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0) || baulPermissions.canRequestBaulDeletion) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <IconButton
-                  aria-label="Opciones del baúl"
-                  badgeDot={(pendingRemovalRequestsCount ?? 0) > 0}
-                >
-                  <MoreVertical className="w-5 h-5" />
-                </IconButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {onGetInviteLink && onRegenerateInviteLink && (
-                  <DropdownMenuItem onClick={() => setShowInviteFamilyModal(true)}>
-                    <Link2 className="w-4 h-4 mr-2" />
-                    Invitar a la familia
-                  </DropdownMenuItem>
-                )}
-
-                {onGetInviteLink && onRegenerateInviteLink && ((onFetchBaulCoverPhotos && onSetBaulCover) || onUpdateBaulInfo) && (
-                  <DropdownMenuSeparator />
-                )}
-
-                {onFetchBaulCoverPhotos && onSetBaulCover && (
-                  <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
-                    <ImageIcon className="w-4 h-4 mr-2" />
-                    Elegir foto de portada
-                  </DropdownMenuItem>
-                )}
-
-                {onUpdateBaulInfo && (
-                  <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Editar información del baúl
-                  </DropdownMenuItem>
-                )}
-
-                {onUpdateBaulInfo && onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
-                  <DropdownMenuSeparator />
-                )}
-
-                {onRemovalRequests && (pendingRemovalRequestsCount ?? 0) > 0 && (
-                  <DropdownMenuItem onClick={onRemovalRequests}>
-                    <Bell className="w-4 h-4 mr-2" />
-                    <span>Solicitudes de eliminación</span>
-                    <CounterBadge count={pendingRemovalRequestsCount ?? 0} className="ml-auto" />
-                  </DropdownMenuItem>
-                )}
-
-                {baulPermissions.canRequestBaulDeletion && (onUpdateBaulInfo || onRemovalRequests) && <DropdownMenuSeparator />}
-
-                {baulPermissions.canRequestBaulDeletion && (
-                  <DropdownMenuItem variant="destructive" onClick={onRequestBaulDeletion}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Eliminar baúl
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
-        }
+        trailing={<BaulSettingsMenuContainer baul={baul} />}
       />
 
       <Hero imageUrl={baul.coverPhotoUrl} title={baul.name}>
         {baul.description && (
           <p className="text-sm text-white/80 mt-1.5 leading-snug max-w-sm">{baul.description}</p>
         )}
-        {!baul.description && onUpdateBaulInfo && (
+        {!baul.description && baulPermissions.canEditBaul && (
           <p className="text-sm text-white/40 mt-1.5 italic">Sin descripción · edita desde el menú ···</p>
         )}
       </Hero>
@@ -278,37 +177,6 @@ export function ChaptersView({
               onClick: onUploadPhotos,
             }] : []),
           ]}
-        />
-      )}
-
-      {showInviteFamilyModal && onGetInviteLink && onRegenerateInviteLink && (
-        <InviteFamilyModal
-          baulName={baul.name}
-          fetchLink={onGetInviteLink}
-          onRegenerate={onRegenerateInviteLink}
-          onCancel={() => setShowInviteFamilyModal(false)}
-          onToast={onToast}
-        />
-      )}
-
-      {showEditModal && (
-        <EditInfoModal
-          title="Editar información del baúl"
-          initialName={baul.name}
-          initialDescription={baul.description ?? ''}
-          namePlaceholder="Nombre del baúl"
-          onCancel={() => setShowEditModal(false)}
-          onSave={handleSaveBaulInfo}
-          isSubmitting={isSavingBaulInfo}
-        />
-      )}
-
-      {showCoverPicker && onFetchBaulCoverPhotos && onSetBaulCover && (
-        <CoverPhotoPickerModal
-          title="Elegir portada del baúl"
-          fetchPage={onFetchBaulCoverPhotos}
-          onSelect={onSetBaulCover}
-          onCancel={() => setShowCoverPicker(false)}
         />
       )}
     </div>
