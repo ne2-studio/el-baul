@@ -42,13 +42,15 @@ export const Default: Story = {
     onCancel: fn(),
     onConfirm: fn(),
   },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
-    const confirmButton = canvas.getByRole('button', { name: 'Confirmar' });
+  play: async ({ args }) => {
+    // DateModal renders BottomSheetModal, which portals to document.body (see its comment)
+    // instead of rendering inside canvasElement.
+    const body = within(document.body);
+    const confirmButton = body.getByRole('button', { name: 'Confirmar' });
 
     await expect(confirmButton).toBeDisabled();
-    await userEvent.type(canvas.getByLabelText(/Año/), '2024');
-    await userEvent.selectOptions(canvas.getByLabelText('Mes'), '7');
+    await userEvent.type(body.getByLabelText(/Año/), '2024');
+    await userEvent.selectOptions(body.getByLabelText('Mes'), '7');
     await expect(confirmButton).toBeEnabled();
 
     await userEvent.click(confirmButton);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 
 interface BottomSheetModalProps {
@@ -55,7 +56,14 @@ export function BottomSheetModal({
     : backdropOpacity === 60 ? 'bg-foreground/60'
     : 'bg-foreground/50';
 
-  return (
+  // Se porta a document.body: los menús "···" de baúl/capítulo/persona/foto viven dentro
+  // de StickyHeader (sticky + z-index propio), que crea su propio contexto de apilamiento.
+  // Sin el portal, un modal abierto desde ahí quedaría anidado en ese contexto y su z-index
+  // solo competiría dentro de él — comparado con el resto de la página (p. ej. el FAB, z-30,
+  // fuera de ese contexto) quedaría por debajo pese a declarar z-50/z-[60], porque esos
+  // valores ya no se comparan contra el resto del documento. Portar al body deja que el
+  // z-index se compare siempre al nivel raíz, sea cual sea el componente que abra el modal.
+  return createPortal(
     <div
       className={`fixed left-0 right-0 ${overlayBg} ${isLg ? 'z-50' : 'z-[60]'} flex items-end pb-safe ${
         isLg ? 'md:items-stretch md:justify-end md:pb-0' : desktopCentered ? 'md:items-center md:pb-0' : ''
@@ -87,6 +95,7 @@ export function BottomSheetModal({
           {children}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -45,11 +45,13 @@ export const Default: Story = {
     onCancel: fn(),
     onSave: fn(),
   },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
-    const nameInput = canvas.getByLabelText('Nombre');
-    const descriptionInput = canvas.getByLabelText('Descripción');
-    const saveButton = canvas.getByRole('button', { name: 'Guardar' });
+  play: async ({ args }) => {
+    // EditInfoModal renders BottomSheetModal, which portals to document.body (see its
+    // comment) instead of rendering inside canvasElement.
+    const body = within(document.body);
+    const nameInput = body.getByLabelText('Nombre');
+    const descriptionInput = body.getByLabelText('Descripción');
+    const saveButton = body.getByRole('button', { name: 'Guardar' });
 
     await waitFor(() => expect(nameInput).toHaveFocus());
     await userEvent.clear(nameInput);

@@ -16,10 +16,12 @@ export const Default: Story = {
     onCancel: fn(),
     onConfirm: fn(),
   },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
-    const reasonInput = canvas.getByLabelText('Motivo de la retirada');
-    const confirmButton = canvas.getByRole('button', { name: 'Sí, retirar foto' });
+  play: async ({ args }) => {
+    // DeletePhotoModal renders BottomSheetModal, which portals to document.body (see its
+    // comment) instead of rendering inside canvasElement.
+    const body = within(document.body);
+    const reasonInput = body.getByLabelText('Motivo de la retirada');
+    const confirmButton = body.getByRole('button', { name: 'Sí, retirar foto' });
 
     await waitFor(() => expect(reasonInput).toHaveFocus());
     await expect(confirmButton).toBeDisabled();

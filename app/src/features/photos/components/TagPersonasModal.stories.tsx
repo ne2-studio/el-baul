@@ -50,11 +50,13 @@ export const Interactive: Story = {
     }
     return <InteractiveTagPersonasModal />;
   },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
+  play: async ({ args }) => {
+    // TagPersonasModal renders BottomSheetModal, which portals to document.body (see its
+    // comment) instead of rendering inside canvasElement.
+    const body = within(document.body);
 
-    const papaButton = canvas.getByRole('button', { name: /Papá/ });
-    const martaButton = canvas.getByRole('button', { name: /Marta/ });
+    const papaButton = body.getByRole('button', { name: /Papá/ });
+    const martaButton = body.getByRole('button', { name: /Marta/ });
 
     await userEvent.click(papaButton);
     await expect(args.onToggle).toHaveBeenCalledWith('2');
@@ -65,7 +67,7 @@ export const Interactive: Story = {
     await userEvent.keyboard('{Enter}');
     await expect(args.onToggle).toHaveBeenCalledWith('3');
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Guardar' }));
+    await userEvent.click(body.getByRole('button', { name: 'Guardar' }));
     await expect(args.onConfirm).toHaveBeenCalled();
   },
 };

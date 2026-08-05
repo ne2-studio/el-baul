@@ -35,11 +35,13 @@ export const Default: Story = {
     onSelect: fn(),
     onCancel: fn(),
   },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
+  play: async ({ args }) => {
+    // CoverPhotoPickerModal renders BottomSheetModal, which portals to document.body (see
+    // its comment) instead of rendering inside canvasElement.
+    const body = within(document.body);
 
-    await waitFor(() => expect(canvas.queryByText('Cargando fotos...')).not.toBeInTheDocument());
-    const photoButtons = canvas.getAllByRole('button', { name: 'Foto' });
+    await waitFor(() => expect(body.queryByText('Cargando fotos...')).not.toBeInTheDocument());
+    const photoButtons = body.getAllByRole('button', { name: 'Foto' });
     await expect(photoButtons[0]).toBeInTheDocument();
 
     await userEvent.click(photoButtons[0]);

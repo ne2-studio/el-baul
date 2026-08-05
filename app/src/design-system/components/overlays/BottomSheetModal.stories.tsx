@@ -105,11 +105,14 @@ export const Small: Story = {
     onCancel: fn(),
     children: placeholderContent,
   },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
-    const backdrop = canvasElement.querySelector<HTMLElement>('.absolute.inset-0');
+  play: async ({ args }) => {
+    // BottomSheetModal portals to document.body (see its comment) so its z-index always
+    // compares at the document root instead of being capped by whatever stacking context its
+    // caller happens to render inside — so its content lives outside canvasElement here too.
+    const body = within(document.body);
+    const backdrop = document.body.querySelector<HTMLElement>('.absolute.inset-0');
 
-    await expect(canvas.getByRole('heading', { name: 'Título de la hoja' })).toBeInTheDocument();
+    await expect(body.getByRole('heading', { name: 'Título de la hoja' })).toBeInTheDocument();
     await expect(backdrop).toBeInTheDocument();
     if (!backdrop) throw new Error('BottomSheetModal backdrop not found');
 
