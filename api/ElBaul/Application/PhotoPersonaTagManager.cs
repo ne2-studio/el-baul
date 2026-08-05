@@ -118,20 +118,7 @@ public class PhotoPersonaTagManager(
 
     private async Task<TaggedPersonaDto> ToTaggedPersonaDtoAsync(Persona persona)
     {
-        var crop = new ImageCrop(persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
-
-        string? avatarUrl = null;
-        if (persona.AvatarPhotoId is { } photoId)
-        {
-            var photo = await photoRepository.GetByIdAsync(photoId);
-            avatarUrl = photo is not null && photo.BaulId == persona.BaulId && photo.Status == PhotoStatus.Active
-                ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PersonaAvatar, crop)
-                : null;
-        }
-        else if (persona.AvatarPhotoKey is { Length: > 0 })
-        {
-            avatarUrl = await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar, crop);
-        }
+        var avatarUrl = await PersonaAvatarUrlResolver.ResolveAsync(persona, photoRepository, photoStorage);
         return new TaggedPersonaDto(persona.Id.ToString(), persona.Nickname, persona.Name, avatarUrl);
     }
 }

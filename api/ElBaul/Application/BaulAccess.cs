@@ -62,26 +62,7 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
     public async Task<AuthorInfo> GetAuthorInfoAsync(BaulId baulId, string userId, IPhotoStorage photoStorage)
     {
         var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
-        var avatarUrl = await GetPersonaAvatarUrlAsync(persona, photoStorage);
+        var avatarUrl = persona is null ? null : await PersonaAvatarUrlResolver.ResolveAsync(persona, photoRepository, photoStorage);
         return new AuthorInfo(persona?.Nickname ?? "Usuario", avatarUrl, persona?.Id.ToString());
-    }
-
-    private async Task<string?> GetPersonaAvatarUrlAsync(Persona? persona, IPhotoStorage photoStorage)
-    {
-        if (persona is null) return null;
-
-        var crop = new ImageCrop(persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
-
-        if (persona.AvatarPhotoId is { } photoId && photoRepository is not null)
-        {
-            var photo = await photoRepository.GetByIdAsync(photoId);
-            return photo is not null && photo.BaulId == persona.BaulId && photo.Status == PhotoStatus.Active
-                ? await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PersonaAvatar, crop)
-                : null;
-        }
-
-        return persona.AvatarPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(persona.AvatarPhotoKey, ImagePlacement.PersonaAvatar, crop)
-            : null;
     }
 }
