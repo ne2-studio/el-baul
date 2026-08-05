@@ -81,8 +81,11 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
     creation, recuerdo create/edit/share, photo multi-select batch actions — which meant they
     imported use cases from unrelated features just to wire one screen. Each such tab/panel
     now lives in a `features/<domain>/containers/*.tsx` component, owned by the feature whose
-    entity it's about (`BaulPersonasTabContainer` in `people`, `BaulRecuerdosTabContainer`/
-    `ChapterRecuerdosFeedContainer` in `memories`, `BatchPhotoActionsContainer` in `photos`).
+    entity it's about (`BaulPersonasTabContainer`, `PersonaBiografiaTabContainer`,
+    `PersonaFotosTabContainer` in `people`, `BaulRecuerdosTabContainer`/
+    `ChapterRecuerdosFeedContainer` in `memories`, `BatchPhotoActionsContainer` in `photos`) —
+    same-domain tabs get split too, not just cross-feature ones, whenever a tab's own state
+    (e.g. `PersonaFotosTabContainer`'s photo-loading effect) has no reason to live any higher.
   - **The same move also applies within a single feature, purely to cut wiring volume.** The
     "···" settings menus (rename, cover, invite link, delete, manage access, revoke) stayed
     same-domain the whole time — no cross-feature risk — but each Route still had to construct
