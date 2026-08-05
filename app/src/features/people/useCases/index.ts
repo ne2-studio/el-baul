@@ -2,6 +2,15 @@ import { AvatarCrop, api } from '@/api';
 import { BaulRole, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 
+// Its only caller is PersonasTabContainer (features/people/containers) — moved here from
+// features/baules/useCases when that container took over the baúl's Personas tab.
+export async function createPersona(baulId: string, nickname: string): Promise<void> {
+  const persona = await api.baules.createPersona(baulId, nickname);
+  usePersonasStore.setState((state) => ({
+    personas: { ...state.personas, [baulId]: [...(state.personas[baulId] || []), persona] },
+  }));
+}
+
 export async function loadPersonas(baulId: string): Promise<void> {
   const personas = await api.baules.getPersonas(baulId);
   usePersonasStore.setState((state) => ({ personas: { ...state.personas, [baulId]: personas } }));

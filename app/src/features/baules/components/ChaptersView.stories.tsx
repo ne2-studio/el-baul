@@ -1,9 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChaptersView } from '@/features/baules/components/ChaptersView';
-import { Baul, Chapter, Persona, Recuerdo } from '@/types';
+import { Baul, Chapter } from '@/types';
 import { storybookEdgeText, storybookPhotos } from '@/storybook/fixtures';
 import { viewportGlobals } from '@/storybook/viewports';
 
+// Personas/Recuerdos tab content moved into PersonasTabContainer/RecuerdosTabContainer
+// (features/people, features/memories) — self-sufficient components that read their own
+// Zustand store slice and self-navigate, so they can no longer render from props alone in
+// isolation here. Their behavior is covered by Vitest+RTL tests colocated with each container,
+// and end to end by app/acceptance-tests/{personas,recuerdos}.spec.ts. This story now only
+// exercises what ChaptersView still owns directly: the chapter grid, header menu, and
+// baúl settings.
 const meta = {
   title: 'Screens/Baul/BaulDetail',
   component: ChaptersView,
@@ -35,29 +42,16 @@ const chapters: Chapter[] = [
   { id: 'c5', name: 'Primeros recuerdos familiares', photoCount: 9, lastUpdated: 'hace 1 año', recuerdoCount: 4, undatedPhotoCount: 0, coverPhotoUrl: storybookPhotos.landscape, minDate: { year: 1998 }, maxDate: { year: 2001 } },
 ];
 
-const personas: Persona[] = [
-  { id: 'p1', baulId: 'b1', nickname: 'Abuela Rosa', status: 'active', role: 'colaborador', invitedDate: 'hace 1 año' } as Persona,
-  { id: 'p2', baulId: 'b1', nickname: 'Papá', status: 'active', role: 'administrador', invitedDate: 'hace 1 año' } as Persona,
-];
-
-const recuerdos: Recuerdo[] = [
-  { id: 'r1', text: 'Un verano inolvidable en familia.', userName: 'Ana García', createdAt: '2024-07-15T10:00:00Z' } as Recuerdo,
-];
-
 const sharedDefaults = {
   baul,
   chapters,
-  personas,
-  recuerdos,
+  personasCount: 2,
+  recuerdosCount: 1,
   onBack: () => alert('onBack clicked'),
   onSelectChapter: (chapter: Chapter) => alert(`onSelectChapter: ${chapter.name}`),
   onCreateChapter: () => alert('onCreateChapter clicked'),
   onToast: (message: string) => alert(message),
   onOpenLoosePhotos: () => alert('onOpenLoosePhotos clicked'),
-  onCreatePersona: async () => true,
-  onSelectPersona: (persona: Persona) => alert(`onSelectPersona: ${persona.nickname}`),
-  onCreateRecuerdo: async () => true,
-  onOpenChat: () => alert('onOpenChat clicked'),
   onUpdateBaulInfo: async () => true,
   onRequestBaulDeletion: () => alert('onRequestBaulDeletion clicked'),
 };
@@ -80,22 +74,8 @@ export const Empty: Story = {
   args: {
     ...sharedDefaults,
     chapters: [],
-    personas: [],
-    recuerdos: [],
-  },
-};
-
-export const PersonasTab: Story = {
-  args: {
-    ...sharedDefaults,
-    initialTab: 'personas',
-  },
-};
-
-export const RecuerdosTab: Story = {
-  args: {
-    ...sharedDefaults,
-    initialTab: 'recuerdos',
+    personasCount: 0,
+    recuerdosCount: 0,
   },
 };
 
@@ -103,7 +83,6 @@ export const ReadOnlyCollaborator: Story = {
   args: {
     ...sharedDefaults,
     baul: { ...baul, isCustodio: false, role: 'colaborador' },
-    onCreatePersona: undefined,
     onUpdateBaulInfo: undefined,
     onRequestBaulDeletion: undefined,
   },
@@ -170,13 +149,6 @@ export const EdgeCasesMixedMetadata: Story = {
       { id: 'edge-lp1', thumbnailUrl: storybookPhotos.album },
       { id: 'edge-lp2', thumbnailUrl: storybookPhotos.sunset },
       { id: 'edge-lp3', thumbnailUrl: storybookPhotos.beach },
-    ],
-    personas: [
-      { id: 'edge-p1', baulId: 'b1', nickname: storybookEdgeText.longPersonName, status: 'active', role: 'custodio', invitedDate: 'hace 4 años' } as Persona,
-      { id: 'edge-p2', baulId: 'b1', nickname: 'Invitada pendiente sin avatar', status: 'pending', role: 'colaborador', invitedDate: 'hace 3 días' } as Persona,
-    ],
-    recuerdos: [
-      { id: 'edge-r1', text: storybookEdgeText.longMemory, userName: storybookEdgeText.longPersonName, createdAt: '2024-08-20T10:00:00Z' } as Recuerdo,
     ],
   },
 };

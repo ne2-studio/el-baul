@@ -46,6 +46,15 @@ export default mergeConfig(
               storybookScript: 'npm run storybook -- --no-open',
             }),
           ],
+          // Pre-bundled explicitly: features/*/containers/* (self-sufficient tab/panel
+          // components, see docs/architecture/frontend.md) are the first things under
+          // components/ to pull in react-router-dom/zustand, e.g. via PhotosView.stories.tsx's
+          // withRouter decorator. Left implicit, Vite discovers them mid-run on first render
+          // and reloads the whole browser-mode test context, which breaks React for any story
+          // already in flight (`Cannot read properties of null (reading 'useRef')`).
+          optimizeDeps: {
+            include: ['react-router-dom', 'zustand'],
+          },
           test: {
             name: 'storybook',
             testTimeout: 120000,

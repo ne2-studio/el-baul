@@ -4,23 +4,19 @@ import { ChaptersView } from '@/features/baules/components/ChaptersView';
 import { CreateChapterModal } from '@/features/chapters/components/CreateChapterModal';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
-import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { addBaulRecuerdo, editRecuerdo } from '@/features/memories/useCases';
-import { createPersona, renameBaul, setBaulCover } from '@/features/baules/useCases';
+import { renameBaul, setBaulCover } from '@/features/baules/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { createChapter } from '@/features/chapters/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
-import { Photo, Recuerdo } from '@/types';
-import { sharePublicLink } from '@/features/sharing/sharePublicLink';
+import { Photo } from '@/types';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 export const BaulRoute: React.FC = () => {
@@ -29,14 +25,13 @@ export const BaulRoute: React.FC = () => {
   const { baulId } = useParams();
   const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
-  const chatEnabled = useAppConfigStore(state => state.chatEnabled);
-  const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
   const { run, isPending } = useAsyncAction();
 
   const { chapters, loosePhotos } = useBaulesStore();
+  // Solo para los badges de recuento del Tabbar — PersonasTabContainer/RecuerdosTabContainer
+  // leen los datos completos ellos mismos.
   const { personas, removalRequests } = usePersonasStore();
   const { baulRecuerdos } = useRecuerdosStore();
-  const { userProfile } = useAuthStore();
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
   const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
@@ -87,13 +82,6 @@ export const BaulRoute: React.FC = () => {
     if (result.ok) openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baul.id}/capitulos/${chapterId}`, photoId));
   };
 
-  const handleCreatePersona = async (nickname: string): Promise<boolean> => {
-    const result = await run(() => createPersona(baul.id, nickname), {
-      errorMessage: 'Error al añadir la persona',
-    });
-    return result.ok;
-  };
-
   const handleCreateChapter = async (name: string) => {
     if (!auth.isAuthenticated) return;
 
@@ -120,46 +108,15 @@ export const BaulRoute: React.FC = () => {
     });
   };
 
-  const handleCreateRecuerdo = async (text: string): Promise<boolean> => {
-    const result = await run(() => addBaulRecuerdo(baul.id, text), {
-      errorMessage: 'Error al añadir el recuerdo',
-    });
-    return result.ok;
-  };
-
-  const handleEditRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
-    const result = await run(() => editRecuerdo(recuerdo.id, text), {
-      successMessage: 'Recuerdo actualizado',
-      errorMessage: 'Error al guardar el recuerdo',
-    });
-    return result.ok;
-  };
-
-  const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
-    const result = await run(() => api.recuerdos.createShareLink(recuerdo.id), {
-      key: 'share-recuerdo',
-      errorMessage: 'Error al crear el enlace',
-    });
-    if (!result.ok) return;
-
-    await sharePublicLink({
-      title: `Recuerdo de ${baul.name}`,
-      text: `Te comparto un recuerdo de "${baul.name}" en El Baúl.`,
-      url: result.value.url,
-      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
-    });
-  };
-
   return (
     <>
       <ChaptersView
         baul={baul}
         chapters={chapters[baul.id] || []}
         loosePhotos={loosePhotos[baul.id] || []}
-        personas={personas[baul.id] || []}
-        recuerdos={baulRecuerdos[baul.id] || []}
+        personasCount={(personas[baul.id] || []).length}
+        recuerdosCount={(baulRecuerdos[baul.id] || []).length}
         baulPermissions={baulPermissions}
-        currentUserEmail={userProfile.email}
         initialTab={initialTab}
         onBack={() => navigate('/baules')}
         onSelectChapter={handleSelectChapter}
@@ -167,19 +124,8 @@ export const BaulRoute: React.FC = () => {
         onToast={showToastMessage}
         onOpenLoosePhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
         onUploadPhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`)}
-        onCreatePersona={handleCreatePersona}
-        onSelectPersona={(persona) =>
-          navigate(`/baules/${baul.id}/personas/${persona.id}`, { state: { returnTab: 'personas' } })
-        }
-        onCreateRecuerdo={handleCreateRecuerdo}
-        onOpenChat={chatEnabled ? () => navigate(`/baules/${baul.id}/recordar`) : undefined}
         onOpenChapterFromRecuerdo={(chapterId) => handleSelectChapter({ id: chapterId })}
         onOpenPhotoFromRecuerdo={handleOpenPhotoFromRecuerdo}
-        onUserClick={(personaId) =>
-          navigate(`/baules/${baul.id}/personas/${personaId}`, { state: { returnTab: 'recuerdos' } })
-        }
-        onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
-        onEditRecuerdo={handleEditRecuerdo}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={baulPermissions.canEditBaul ? handleUpdateBaulInfo : undefined}

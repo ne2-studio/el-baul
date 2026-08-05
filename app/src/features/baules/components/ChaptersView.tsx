@@ -2,19 +2,18 @@ import React, { useState } from 'react';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { Card } from '@/design-system/components/data-display/Card';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
-import { ExpandableFAB, SimpleFAB } from '@/design-system/components/actions/FAB';
+import { ExpandableFAB } from '@/design-system/components/actions/FAB';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
-import { NuevaPersonaModal } from '@/features/people/components/NuevaPersonaModal';
 import { InviteFamilyModal } from '@/features/sharing/components/InviteFamilyModal';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
-import { PersonasTab } from '@/features/people/components/PersonasTab';
-import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
+import { PersonasTabContainer } from '@/features/people/containers/PersonasTabContainer';
+import { RecuerdosTabContainer } from '@/features/memories/containers/RecuerdosTabContainer';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
-import { Plus, Upload, BookImage, ImageIcon, UserPlus, Sparkles, Bell, MoreVertical, Pencil, Trash2, Link2 } from 'lucide-react';
+import { Plus, Upload, BookImage, ImageIcon, Bell, MoreVertical, Pencil, Trash2, Link2 } from 'lucide-react';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
-import { Baul, BaulInviteLink, Chapter, Photo, Recuerdo, Persona } from '@/types';
+import { Baul, BaulInviteLink, Chapter, Photo } from '@/types';
 import { BaulPermissions, getBaulPermissions } from '@/utils/roleUtils';
 import type { ToastVariant } from '@/design-system/components/feedback/Toast';
 import { IconButton } from '@/design-system/components/actions/IconButton';
@@ -40,10 +39,11 @@ interface ChaptersViewProps {
   baul: Baul;
   chapters: Chapter[];
   loosePhotos?: LoosePhoto[];
-  personas?: Persona[];
-  recuerdos?: Recuerdo[];
+  /** Solo para el badge de recuento del Tabbar — los datos completos los leen
+   * PersonasTabContainer/RecuerdosTabContainer directamente del store. */
+  personasCount?: number;
+  recuerdosCount?: number;
   baulPermissions?: BaulPermissions;
-  currentUserEmail?: string;
   initialTab?: 'capitulos' | 'personas' | 'recuerdos';
   onBack: () => void;
   onSelectChapter: (chapter: Chapter) => void;
@@ -51,15 +51,8 @@ interface ChaptersViewProps {
   onToast: (message: string, variant?: ToastVariant) => void;
   onOpenLoosePhotos?: () => void;
   onUploadPhotos?: () => void;
-  onCreatePersona?: (nickname: string) => Promise<boolean>;
-  onSelectPersona?: (persona: Persona) => void;
-  onCreateRecuerdo?: (text: string) => Promise<boolean>;
-  onOpenChat?: () => void;
   onOpenChapterFromRecuerdo?: (chapterId: string) => void;
   onOpenPhotoFromRecuerdo?: (photoId: string, chapterId?: string) => void;
-  onUserClick?: (personaId: string) => void;
-  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
-  onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
   onRemovalRequests?: () => void;
   pendingRemovalRequestsCount?: number;
   onUpdateBaulInfo?: (name: string, description: string) => Promise<boolean>;
@@ -74,10 +67,9 @@ export function ChaptersView({
   baul,
   chapters,
   loosePhotos = [],
-  personas = [],
-  recuerdos = [],
+  personasCount = 0,
+  recuerdosCount = 0,
   baulPermissions = getBaulPermissions(baul),
-  currentUserEmail,
   initialTab = 'capitulos',
   onBack,
   onSelectChapter,
@@ -85,14 +77,8 @@ export function ChaptersView({
   onToast,
   onOpenLoosePhotos,
   onUploadPhotos,
-  onCreatePersona,
-  onSelectPersona,
-  onOpenChat,
   onOpenChapterFromRecuerdo,
   onOpenPhotoFromRecuerdo,
-  onUserClick,
-  onShareRecuerdo,
-  onEditRecuerdo,
   onRemovalRequests,
   pendingRemovalRequestsCount,
   onUpdateBaulInfo,
@@ -105,19 +91,10 @@ export function ChaptersView({
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
-  const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
   const [showInviteFamilyModal, setShowInviteFamilyModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'capitulos' | 'personas' | 'recuerdos'>(initialTab);
-  const [isCreatingPersona, setIsCreatingPersona] = useState(false);
   const [isSavingBaulInfo, setIsSavingBaulInfo] = useState(false);
   const looseChapter = makeLooseChapterView(loosePhotos);
-
-  const handleSaveNuevaPersona = async (nickname: string) => {
-    setIsCreatingPersona(true);
-    const ok = (await onCreatePersona?.(nickname)) ?? false;
-    setIsCreatingPersona(false);
-    if (ok) setShowNuevaPersonaModal(false);
-  };
 
   const handleSaveBaulInfo = async (name: string, description: string) => {
     setIsSavingBaulInfo(true);
@@ -209,8 +186,8 @@ export function ChaptersView({
       <Tabbar
         tabs={[
           { key: 'capitulos', label: 'Capítulos', count: chapters.length },
-          { key: 'recuerdos', label: 'Recuerdos', count: recuerdos.length },
-          { key: 'personas', label: 'Personas', count: personas.length },
+          { key: 'recuerdos', label: 'Recuerdos', count: recuerdosCount },
+          { key: 'personas', label: 'Personas', count: personasCount },
         ]}
         active={activeTab}
         onChange={(key) => setActiveTab(key as 'capitulos' | 'personas' | 'recuerdos')}
@@ -276,21 +253,15 @@ export function ChaptersView({
           )}
 
           {activeTab === 'personas' && (
-            <PersonasTab
-              personas={personas}
-              currentUserEmail={currentUserEmail}
-              onSelectPersona={(persona) => onSelectPersona?.(persona)}
-            />
+            <PersonasTabContainer baulId={baul.id} canCreatePersona={baulPermissions.canCreatePersona} />
           )}
 
           {activeTab === 'recuerdos' && (
-            <RecuerdosTab
-              recuerdos={recuerdos}
+            <RecuerdosTabContainer
+              baulId={baul.id}
+              baulName={baul.name}
               onOpenChapter={onOpenChapterFromRecuerdo}
               onOpenPhoto={onOpenPhotoFromRecuerdo}
-              onUserClick={onUserClick}
-              onShareRecuerdo={onShareRecuerdo}
-              onEditRecuerdo={onEditRecuerdo}
             />
           )}
         </PageContainer>
@@ -310,30 +281,6 @@ export function ChaptersView({
               onClick: onUploadPhotos,
             }] : []),
           ]}
-        />
-      )}
-      {activeTab === 'personas' && (
-        <SimpleFAB
-          label="Nueva persona"
-          icon={<UserPlus className="w-5 h-5" />}
-          onClick={() => setShowNuevaPersonaModal(true)}
-          hidden={!baulPermissions.canCreatePersona || !onCreatePersona}
-        />
-      )}
-      {activeTab === 'recuerdos' && (
-        <SimpleFAB
-          label="Ayúdame a recordar"
-          icon={<Sparkles className="w-5 h-5" />}
-          onClick={() => onOpenChat?.()}
-          hidden={!onOpenChat}
-        />
-      )}
-
-      {showNuevaPersonaModal && (
-        <NuevaPersonaModal
-          onCancel={() => setShowNuevaPersonaModal(false)}
-          onSave={handleSaveNuevaPersona}
-          isSubmitting={isCreatingPersona}
         />
       )}
 

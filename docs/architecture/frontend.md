@@ -76,6 +76,15 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
     only `sharing` ever rendered. When a feature's file list stops fitting a one-sentence
     description, check whether a piece of it actually belongs to a different feature before
     assuming the description just needs to get vaguer.
+  - **The same principle applies one level down, to a tab or panel instead of a whole URL.**
+    `ChaptersView`/`PhotosView` used to have their owning Route assemble every tab's
+    orchestration inline — persona creation, recuerdo create/edit/share, photo multi-select
+    batch actions — which meant `BaulRoute`/`ChapterRoute` imported use cases from unrelated
+    features just to wire one screen. Each such tab/panel now lives in a
+    `features/<domain>/containers/*.tsx` component, owned by the feature whose entity it's
+    about (`PersonasTabContainer` in `people`, `RecuerdosTabContainer`/
+    `ChapterRecuerdosFeedContainer` in `memories`, `BatchPhotoActionsContainer` in `photos`),
+    leaving the shell (`ChaptersView`/`PhotosView`) to just switch between them.
   - **Exception**: a Route may call `api.*` directly, bypassing `store/`/`useCases/`, when the
     result is never cached or shared across routes — there's no state a store would own. This
     covers: blob downloads (`api.photos.download`), one-off share-link creation consumed
@@ -85,6 +94,21 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
     (`api.support.submit`), and pre-auth bootstrapping flows that run before domain stores are
     populated (accepting a baúl invite). If a second call site needs the same data, or the data
     must survive navigation, move it to a store instead of adding a second direct caller.
+- **`features/<domain>/containers/*.tsx`** — a 5th peer of `routes/`/`components/`/`useCases/`/
+  `native/`, for a tab or panel that's rendered by another feature's shell component (e.g.
+  `ChaptersView` rendering `PersonasTabContainer`) rather than owning a URL of its own. Unlike
+  `components/`, it's **not** scoped by the `componentBoundaryRule` ESLint rule — a container
+  reads its own store slice and calls its own `useCases/`/`useAsyncAction()` directly, same
+  as a Route would. It may call `useNavigate()` itself, but only for navigation that's a
+  direct, ID-only consequence of its own action (e.g. "after moving these photos, go to the
+  target chapter" — needs nothing but `baulId` + the result's id); navigation that depends on
+  route context it doesn't own (a viewer's `backgroundLocation`, a `basePath`, a `returnTab`
+  shared with a sibling tab) stays a callback prop from the composing Route, same as today.
+  A consequence of being store-backed rather than prop-driven: a container can't render in
+  Storybook from props alone, so its behavior is covered by Vitest + jsdom + React Testing
+  Library instead (see [`testing.md`](testing.md)), styled after
+  `features/sharing/routes/SelectBaulForShareRoute.test.tsx` — seed the store, mock the use
+  cases, `render()` inside a `MemoryRouter`.
 - **`design-system/`** — everything with zero knowledge of El Baúl's domain types. See
   [`docs/adr/0002-design-system-taxonomy.md`](../adr/0002-design-system-taxonomy.md) for the
   full Foundations/Components/Patterns/Layouts/Features/Screens taxonomy and the litmus test for
@@ -146,6 +170,8 @@ src/
 │                  #   <domain>/routes/     — *Route.tsx container components (one per URL)
 │                  #   <domain>/components/ — presentational only: no router/store/useCases imports
 │                  #   <domain>/useCases/   — orchestration layer: api.* + store writes
+│                  #   <domain>/containers/ — self-sufficient tab/panel rendered by another
+│                  #                          feature's shell component; store/useCases allowed
 │                  #   <domain>/native/     — Capacitor plugin bridges/wiring, when the feature has one
 ├── store/         # Zustand: one store per domain + uiStore (toasts/modals)
 ├── design-system/ # Domain-independent UI — see ADR 0002

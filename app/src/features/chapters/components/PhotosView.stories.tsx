@@ -1,8 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotosView } from '@/features/chapters/components/PhotosView';
-import { Chapter, Photo, Recuerdo } from '@/types';
+import { Chapter, Photo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
+import { withRouter } from '@/storybook/withRouter';
 
+// Recuerdos feed and multi-select batch actions moved into ChapterRecuerdosFeedContainer/
+// BatchPhotoActionsContainer (features/memories, features/photos) — self-sufficient
+// components that read their own Zustand store slice, own their use cases, and (for batch
+// actions) self-navigate, so this story needs a bare MemoryRouter just to satisfy their
+// useNavigate() call — no route matching or store data involved. Their actual behavior is
+// covered by Vitest+RTL tests colocated with each container, and end to end by
+// app/acceptance-tests/{photos,recuerdos}.spec.ts. This story now only exercises what
+// PhotosView still owns directly: the photo grid, header menu, and chapter settings.
 const meta = {
   title: 'Screens/Chapter/ChapterDetail',
   component: PhotosView,
@@ -10,6 +19,7 @@ const meta = {
   parameters: {
     layout: 'fullscreen',
   },
+  decorators: [withRouter],
 } satisfies Meta<typeof PhotosView>;
 
 export default meta;
@@ -33,20 +43,18 @@ const photos: Photo[] = [
   { id: '3', thumbnailUrl: storybookPhotos.sunset, fullUrl: storybookPhotos.sunset, date: { year: 2024, month: 8, day: 2 }, recuerdoCount: 0 },
 ];
 
-const recuerdos: Recuerdo[] = [
-  { id: 'r1', text: 'Un verano inolvidable.', userName: 'Ana García', createdAt: '2024-07-15T10:00:00Z' },
-];
-
 const sharedDefaults = {
   chapter,
   photos,
+  baulId: 'b1',
+  baulName: 'Familia García',
+  chapterId: 'c1',
+  recuerdosCount: 1,
   onBack: () => alert('onBack clicked'),
   onSelectPhoto: (photo: Photo) => alert(`onSelectPhoto: ${photo.id}`),
   onUploadPhotos: () => alert('onUploadPhotos clicked'),
   onUpdateChapterInfo: async () => true,
   onDeleteChapter: async () => true,
-  onAddRecuerdo: (text: string) => alert(`onAddRecuerdo: ${text}`),
-  recuerdos,
 };
 
 export const Default: Story = {
@@ -63,9 +71,9 @@ export const Empty: Story = {
 export const ReadOnlyLoosePhotos: Story = {
   args: {
     ...sharedDefaults,
+    chapterId: null,
+    recuerdosCount: 0,
     onUpdateChapterInfo: undefined,
     onDeleteChapter: undefined,
-    onAddRecuerdo: undefined,
-    recuerdos: [],
   },
 };

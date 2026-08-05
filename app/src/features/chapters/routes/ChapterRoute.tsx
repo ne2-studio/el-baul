@@ -2,31 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { PhotosView } from '@/features/chapters/components/PhotosView';
-import { Photo, PhotoDate, Recuerdo } from '@/types';
+import { Photo } from '@/types';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { loadChapterRecuerdos, addChapterRecuerdo, editRecuerdo } from '@/features/memories/useCases';
+import { loadChapterRecuerdos } from '@/features/memories/useCases';
 import { loadPersonas } from '@/features/people/useCases';
-import {
-  addTaggedPersonasBatch,
-  changePhotoDateBatch,
-  renameChapter,
-  deleteChapter,
-  createChapter,
-  setChapterCover,
-} from '@/features/chapters/useCases';
-import { loadChapterPhotos, movePhotos } from '@/features/photos/useCases';
-import { useUIStore } from '@/store/uiStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { renameChapter, deleteChapter, setChapterCover } from '@/features/chapters/useCases';
+import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
-import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 
 interface LocationState {
   // Set by UploadingRoute right after a successful upload — see its comment for why this
@@ -46,10 +36,12 @@ export const ChapterRoute: React.FC = () => {
   const { baulId, chapterId } = useParams();
   const auth = useAuth();
   const { photos } = useBaulesStore();
+  // Solo para el badge de recuento del Tabbar — ChapterRecuerdosFeedContainer lee los datos
+  // completos él mismo.
   const { chapterRecuerdos } = useRecuerdosStore();
+  // La carga sigue aquí (guardia + efecto) porque BatchPhotoActionsContainer asume que ya
+  // están cargadas al montar — pero ya no se le pasan como prop a PhotosView.
   const { personas } = usePersonasStore();
-  const showToastMessage = useUIStore(state => state.showToastMessage);
-  const sharedLinksEnabled = useAppConfigStore(state => state.sharedLinksEnabled);
   const { run } = useAsyncAction();
 
   const { baul, chapters, loosePhotos, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
@@ -127,22 +119,6 @@ export const ChapterRoute: React.FC = () => {
   });
   if (!currentChapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
-  const handleAddRecuerdo = (text: string) => {
-    if (!chapterId) return;
-    addChapterRecuerdo(baul.id, chapterId, text).catch((error) => {
-      console.error('Error adding recuerdo:', error);
-      showToastMessage('Error al guardar el recuerdo', 'error');
-    });
-  };
-
-  const handleEditRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
-    const result = await run(() => editRecuerdo(recuerdo.id, text), {
-      successMessage: 'Recuerdo actualizado',
-      errorMessage: 'Error al guardar el recuerdo',
-    });
-    return result.ok;
-  };
-
   const handleUpdateChapterInfo = async (name: string): Promise<boolean> => {
     if (!chapterId) return false;
     const result = await run(() => renameChapter(baul.id, chapterId, name), {
@@ -170,88 +146,23 @@ export const ChapterRoute: React.FC = () => {
     return result.ok;
   };
 
-  const handleBatchMove = async (
-    photoIds: string[],
-    targetChapterId: string,
-    onItemSettled?: (result: { photoId: string; error?: string }) => void
-  ) => {
-    const result = await run(() => movePhotos(baul.id, apiChapterId, photoIds, targetChapterId, onItemSettled), {
-      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
-      errorMessage: 'Algunas fotos no se pudieron mover',
-    });
-    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${targetChapterId}`);
-  };
-
-  const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
-    const result = await run(() => changePhotoDateBatch(baul.id, apiChapterId, photoIds, date), {
-      successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
-      errorMessage: 'Error al cambiar la fecha',
-    });
-    return result.ok;
-  };
-
-  const handleBatchCreateChapter = async (photoIds: string[], name: string): Promise<boolean> => {
-    const result = await run(
-      async () => {
-        const newChapter = await createChapter(baul.id, name);
-        await movePhotos(baul.id, null, photoIds, newChapter.id);
-        return newChapter;
-      },
-      {
-        successMessage: `Capítulo "${name}" creado`,
-        errorMessage: 'Error al crear el capítulo',
-      }
-    );
-    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${result.value.id}`);
-    return result.ok;
-  };
-
-  const handleBatchTagPersonas = async (photoIds: string[], personaIds: string[]): Promise<boolean> => {
-    const result = await run(() => addTaggedPersonasBatch(baul.id, photoIds, personaIds), {
-      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto etiquetada' : 'fotos etiquetadas'}`,
-      errorMessage: 'Error al etiquetar las fotos',
-    });
-    return result.ok;
-  };
-
-  const handleShareRecuerdo = async (recuerdo: Recuerdo) => {
-    const result = await run(() => api.recuerdos.createShareLink(recuerdo.id), {
-      key: 'share-recuerdo',
-      errorMessage: 'Error al crear el enlace',
-    });
-    if (!result.ok) return;
-
-    await sharePublicLink({
-      title: `Recuerdo de ${baul.name}`,
-      text: `Te comparto un recuerdo de "${baul.name}" en El Baúl.`,
-      url: result.value.url,
-      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
-    });
-  };
-
   return (
     <PhotosView
       chapter={currentChapter}
       photos={currentPhotos}
       recentlyAddedPhotos={recentlyUploadedPhotos}
-      recuerdos={chapterId ? (chapterRecuerdos[chapterId] || []) : undefined}
+      baulId={baul.id}
+      baulName={baul.name}
+      chapterId={apiChapterId}
+      recuerdosCount={apiChapterId ? (chapterRecuerdos[apiChapterId] || []).length : 0}
       allChapters={chapters || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
       onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(basePath, photo.id))}
       onUploadPhotos={() => navigate(`${basePath}/confirmar`)}
-      onBatchMove={handleBatchMove}
-      onBatchChangeDate={handleBatchChangeDate}
-      onBatchCreateChapter={chapterId ? undefined : handleBatchCreateChapter}
-      personas={personas[baul.id] || []}
-      onBatchTagPersonas={handleBatchTagPersonas}
       onUpdateChapterInfo={chapterId ? handleUpdateChapterInfo : undefined}
       onDeleteChapter={chapterId && baulPermissions.canDeleteChapter ? handleDeleteChapter : undefined}
       onFetchChapterCoverPhotos={chapterId ? (skip, take) => api.photos.getPage(baul.id, { chapterId, skip, take }) : undefined}
       onSetChapterCover={chapterId ? handleSetChapterCover : undefined}
-      onAddRecuerdo={chapterId ? handleAddRecuerdo : undefined}
-      onUserClick={(personaId) => navigate(`/baules/${baul.id}/personas/${personaId}`)}
-      onShareRecuerdo={sharedLinksEnabled ? handleShareRecuerdo : undefined}
-      onEditRecuerdo={handleEditRecuerdo}
     />
   );
 };

@@ -6,13 +6,14 @@ vi.mock('@/api', () => ({
     baules: {
       getPersonas: vi.fn(),
       setPersonaAvatarPhoto: vi.fn(),
+      createPersona: vi.fn(),
     },
   },
 }));
 
 import { api } from '@/api';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { loadPersonas, setPersonaAvatarPhoto } from './index';
+import { createPersona, loadPersonas, setPersonaAvatarPhoto } from './index';
 
 // Regression coverage for a bug where loadPersonas swallowed every error — a genuine
 // network failure looked identical to "this baúl has no shared people" and never reached
@@ -49,6 +50,33 @@ describe('people useCases load failures are not swallowed', () => {
     await loadPersonas(baulId);
 
     expect(usePersonasStore.getState().personas[baulId]).toEqual([persona]);
+  });
+});
+
+describe('createPersona', () => {
+  const baulId = 'baul-1';
+
+  beforeEach(() => {
+    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    vi.clearAllMocks();
+  });
+
+  it('appends the created persona to the baúl\'s cached list', async () => {
+    const existing = new Persona({
+      id: 'p1', baulId, nickname: 'Abu', status: 'active', role: 'colaborador',
+      invitedDate: new Date().toISOString(), canEdit: true,
+    });
+    const created = new Persona({
+      id: 'p2', baulId, nickname: 'Tío Juan', status: 'active', role: 'colaborador',
+      invitedDate: new Date().toISOString(), canEdit: true,
+    });
+    usePersonasStore.setState({ personas: { [baulId]: [existing] } });
+    vi.mocked(api.baules.createPersona).mockResolvedValue(created);
+
+    await createPersona(baulId, 'Tío Juan');
+
+    expect(api.baules.createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan');
+    expect(usePersonasStore.getState().personas[baulId]).toEqual([existing, created]);
   });
 });
 

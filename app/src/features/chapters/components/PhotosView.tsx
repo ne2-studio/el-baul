@@ -11,9 +11,9 @@ import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { Plus, ImageIcon, MessageCircle, CheckSquare, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
-import { RecuerdosFeed } from '@/features/memories/components/RecuerdosFeed';
-import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
-import { Chapter, Photo, PhotoDate, Persona, Recuerdo } from '@/types';
+import { ChapterRecuerdosFeedContainer } from '@/features/memories/containers/ChapterRecuerdosFeedContainer';
+import { BatchPhotoActionsContainer } from '@/features/photos/containers/BatchPhotoActionsContainer';
+import { Chapter, Photo } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import {
@@ -30,37 +30,30 @@ interface PhotosViewProps {
   /** Photos from the upload the user was just redirected here from — surfaced as a pinned
    * "Añadido recientemente" swimlane above the date-grouped ones. */
   recentlyAddedPhotos?: Photo[];
+  baulId: string;
+  baulName: string;
+  /** null = fotos sueltas virtual chapter — mirrors ChapterRoute's apiChapterId discriminator.
+   * Gates the Recuerdos tab (only real chapters have one) and is threaded down to
+   * ChapterRecuerdosFeedContainer/BatchPhotoActionsContainer, which own their own data/actions. */
+  chapterId: string | null;
+  /** Solo para el badge de recuento del Tabbar — los datos completos los lee
+   * ChapterRecuerdosFeedContainer directamente del store. */
+  recuerdosCount?: number;
   onBack: () => void;
   onSelectPhoto: (photo: Photo) => void;
   onUploadPhotos: () => void;
   allChapters?: Chapter[];
-  onBatchMove?: (
-    photoIds: string[],
-    targetChapterId: string,
-    onItemSettled?: (result: { photoId: string; error?: string }) => void
-  ) => Promise<void>;
-  onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
-  onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
-  personas?: Persona[];
-  onBatchTagPersonas?: (photoIds: string[], personaIds: string[]) => Promise<boolean>;
   onUpdateChapterInfo?: (name: string) => Promise<boolean>;
   onDeleteChapter?: () => Promise<boolean>;
   onFetchChapterCoverPhotos?: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
   onSetChapterCover?: (photo: Photo) => void;
-  recuerdos?: Recuerdo[];
-  onAddRecuerdo?: (text: string) => void;
-  onUserClick?: (personaId: string) => void;
-  onShareRecuerdo?: (recuerdo: Recuerdo) => void;
-  onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
 }
 
 export function PhotosView({
-  chapter, photos, recentlyAddedPhotos, onBack, onSelectPhoto, onUploadPhotos, allChapters = [], onBatchMove, onBatchChangeDate,
-  onBatchCreateChapter, personas = [], onBatchTagPersonas, onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos,
-  onSetChapterCover, recuerdos = [], onAddRecuerdo, onUserClick, onShareRecuerdo, onEditRecuerdo,
+  chapter, photos, recentlyAddedPhotos, baulId, baulName, chapterId, recuerdosCount = 0, onBack, onSelectPhoto, onUploadPhotos,
+  allChapters = [], onUpdateChapterInfo, onDeleteChapter, onFetchChapterCoverPhotos, onSetChapterCover,
 }: PhotosViewProps) {
-  const hasRecuerdosTab = !!onAddRecuerdo;
-  const totalRecuerdos = hasRecuerdosTab ? recuerdos.length : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
+  const totalRecuerdos = chapterId !== null ? recuerdosCount : photos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
   const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos'>('fotos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const [showEditModal, setShowEditModal] = useState(false);
@@ -185,13 +178,13 @@ export function PhotosView({
         </Hero>
       )}
 
-      {/* Tabbar solo cuando el llamante soporta un feed de Recuerdos (capítulos reales, no
-          el de fotos sueltas virtual) — sin él no hay nada entre lo que hacer swipe. */}
-      {hasRecuerdosTab ? (
+      {/* Tabbar solo para capítulos reales (no el de fotos sueltas virtual) — sin un
+          chapterId no hay nada entre lo que hacer swipe. */}
+      {chapterId !== null ? (
         <Tabbar
           tabs={[
             { key: 'fotos', label: 'Fotos', count: photos.length },
-            { key: 'recuerdos', label: 'Recuerdos', count: recuerdos.length },
+            { key: 'recuerdos', label: 'Recuerdos', count: recuerdosCount },
           ]}
           active={activeTab}
           onChange={(key) => setActiveTab(key as 'fotos' | 'recuerdos')}
@@ -220,15 +213,13 @@ export function PhotosView({
               )
             )}
 
-            <RecuerdosFeed
+            <ChapterRecuerdosFeedContainer
               active={activeTab === 'recuerdos'}
+              baulId={baulId}
+              baulName={baulName}
+              chapterId={chapterId}
               photos={photos}
-              recuerdos={recuerdos}
               onSelectPhoto={onSelectPhoto}
-              onAddRecuerdo={onAddRecuerdo}
-              onUserClick={onUserClick}
-              onShareRecuerdo={onShareRecuerdo}
-              onEditRecuerdo={onEditRecuerdo}
               selectionMode={selectionMode}
             />
           </PageContainer>
@@ -272,16 +263,13 @@ export function PhotosView({
         hidden={activeTab !== 'fotos' || selectionMode}
       />
 
-      <BatchPhotoActionsBar
+      <BatchPhotoActionsContainer
         active={selectionMode}
+        baulId={baulId}
+        chapterId={chapterId}
         photos={photos}
         selectedIds={selectedIds}
         moveableChapters={moveableChapters}
-        personas={personas}
-        onBatchMove={onBatchMove}
-        onBatchChangeDate={onBatchChangeDate}
-        onBatchCreateChapter={onBatchCreateChapter}
-        onBatchTagPersonas={onBatchTagPersonas}
         onDone={exitSelection}
       />
 
@@ -299,7 +287,7 @@ export function PhotosView({
       {showDeleteModal && (
         <DeleteChapterModal
           photoCount={photos.length}
-          recuerdoCount={recuerdos.length}
+          recuerdoCount={recuerdosCount}
           onCancel={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteChapter}
           isSubmitting={isDeletingChapter}
