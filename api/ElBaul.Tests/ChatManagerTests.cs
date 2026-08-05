@@ -37,7 +37,7 @@ public class ChatManagerTests
 
     private ChatManager CreateManager(
         string currentUserId, Guid? nextId = null, IAppConfiguration? appConfiguration = null) =>
-        new(NullLogger<ChatManager>.Instance, _baulRepository, _chatMessageRepository, _aiChatBackend,
+        new(NullLogger<ChatManager>.Instance, _chatMessageRepository, _aiChatBackend,
             appConfiguration ?? new StaticAppConfiguration(), new StaticIdGenerator(nextId ?? Guid.NewGuid()),
             _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
             _chatContextBuilder, _suggestedQuestionsStrategy);

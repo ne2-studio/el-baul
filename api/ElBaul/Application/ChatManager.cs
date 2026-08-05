@@ -6,7 +6,6 @@ namespace ElBaul.Application;
 
 public class ChatManager(
     ILogger<ChatManager> logger,
-    IBaulRepository baulRepository,
     IChatMessageRepository chatMessageRepository,
     IAiChatBackend aiChatBackend,
     IAppConfiguration appConfiguration,
@@ -35,13 +34,8 @@ public class ChatManager(
             return Result.Failure<IEnumerable<ChatMessageDto>>(ApplicationError.Validation("Chat is not enabled"));
 
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null)
-            return Result.Failure<IEnumerable<ChatMessageDto>>(ApplicationError.NotFound("Baul not found"));
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-            return Result.Failure<IEnumerable<ChatMessageDto>>(ApplicationError.Forbidden("Access denied"));
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chat messages", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<ChatMessageDto>>(auth.Error);
 
         var messages = await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId);
         return Result.Success(messages.Select(ToDto));
@@ -56,19 +50,9 @@ public class ChatManager(
         }
 
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Chat message rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<ChatMessageDto>(ApplicationError.NotFound("Baul not found"));
-        }
-
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Chat message rejected: access denied {BaulId}", baulId);
-            return Result.Failure<ChatMessageDto>(ApplicationError.Forbidden("Access denied"));
-        }
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chat message", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<ChatMessageDto>(auth.Error);
+        var baul = auth.Value.Baul;
 
         var now = clock.UtcNow();
         var userMessage = new ChatMessage(idGenerator.NewId(), baulId, userId, ChatMessageRole.User, text, now);
@@ -108,21 +92,10 @@ public class ChatManager(
         }
 
         var userId = currentUserProvider.GetUserId();
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null)
-        {
-            logger.LogWarning("Suggested questions rejected: baul not found {BaulId}", baulId);
-            return Result.Failure<IEnumerable<string>>(ApplicationError.NotFound("Baul not found"));
-        }
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Suggested questions", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<string>>(auth.Error);
 
-        var access = await baulAccess.GetAsync(baul, userId);
-        if (!access.IsMember)
-        {
-            logger.LogWarning("Suggested questions rejected: access denied {BaulId}", baulId);
-            return Result.Failure<IEnumerable<string>>(ApplicationError.Forbidden("Access denied"));
-        }
-
-        var result = await suggestedQuestionsStrategy.GenerateAsync(baul);
+        var result = await suggestedQuestionsStrategy.GenerateAsync(auth.Value.Baul);
         if (result.IsFailure)
             logger.LogError("Suggested questions failed {BaulId} {Error}", baulId, result.Error);
 
