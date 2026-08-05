@@ -17,7 +17,6 @@ import { useBaulScope } from '@/hooks/useBaulScope';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { api } from '@/api';
 import { Photo } from '@/types';
-import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -66,22 +65,6 @@ export const BaulRoute: React.FC = () => {
     if (result.ok) navigate(`/baules/${baul.id}/capitulos/${chapter.id}`);
   };
 
-  const handleOpenPhotoFromRecuerdo = async (photoId: string, chapterId?: string) => {
-    if (!auth.isAuthenticated) return;
-
-    // Una foto suelta no tiene chapterId: sus fotos ya están cargadas por el efecto de
-    // inicialización (loadLoosePhotos), así que no hace falta cargar nada antes de navegar.
-    if (!chapterId) {
-      openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baul.id}/fotos-sueltas`, photoId));
-      return;
-    }
-
-    setIsLoadingChapterPhotos(true);
-    const result = await run(() => loadChapterPhotos(chapterId), { errorMessage: 'Error al cargar las fotos' });
-    setIsLoadingChapterPhotos(false);
-    if (result.ok) openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baul.id}/capitulos/${chapterId}`, photoId));
-  };
-
   const handleCreateChapter = async (name: string) => {
     if (!auth.isAuthenticated) return;
 
@@ -125,7 +108,6 @@ export const BaulRoute: React.FC = () => {
         onOpenLoosePhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas`)}
         onUploadPhotos={() => navigate(`/baules/${baul.id}/fotos-sueltas/confirmar`)}
         onOpenChapterFromRecuerdo={(chapterId) => handleSelectChapter({ id: chapterId })}
-        onOpenPhotoFromRecuerdo={handleOpenPhotoFromRecuerdo}
         onRemovalRequests={() => navigate(`/eliminar-solicitudes/${baul.id}`)}
         pendingRemovalRequestsCount={(removalRequests[baul.id] || []).filter(r => r.status === 'pending').length}
         onUpdateBaulInfo={baulPermissions.canEditBaul ? handleUpdateBaulInfo : undefined}

@@ -21,8 +21,13 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
   sharePublicLink: vi.fn(),
 }));
 
+vi.mock('@/features/photos/useCases', () => ({
+  loadChapterPhotos: vi.fn(),
+}));
+
 import { api } from '@/api';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
+import { loadChapterPhotos } from '@/features/photos/useCases';
 
 const baulId = 'baul-1';
 
@@ -43,6 +48,8 @@ function renderContainer() {
         />
         <Route path="/baules/:baulId/personas/:personaId" element={<div>Ficha de persona</div>} />
         <Route path="/baules/:baulId/recordar" element={<div>Chat</div>} />
+        <Route path="/baules/:baulId/fotos-sueltas/foto/:photoId" element={<div>Visor · fotos sueltas</div>} />
+        <Route path="/baules/:baulId/capitulos/:chapterId/foto/:photoId" element={<div>Visor · capítulo</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -111,5 +118,28 @@ describe('RecuerdosTabContainer', () => {
     renderContainer();
 
     expect(screen.queryByRole('button', { name: /ayúdame a recordar/i })).not.toBeInTheDocument();
+  });
+
+  it('opens a loose photo directly, without loading chapter photos first', async () => {
+    const user = userEvent.setup();
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo({ photoId: 'photo-1', chapterId: undefined })] } });
+
+    renderContainer();
+    await user.click(screen.getByRole('button', { name: 'Ver foto' }));
+
+    expect(loadChapterPhotos).not.toHaveBeenCalled();
+    expect(screen.getByText('Visor · fotos sueltas')).toBeInTheDocument();
+  });
+
+  it('loads the chapter photos before opening a photo that belongs to a chapter', async () => {
+    const user = userEvent.setup();
+    vi.mocked(loadChapterPhotos).mockResolvedValue(undefined);
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo({ photoId: 'photo-1', chapterId: 'chapter-1' })] } });
+
+    renderContainer();
+    await user.click(screen.getByRole('button', { name: 'Ver foto' }));
+
+    expect(loadChapterPhotos).toHaveBeenCalledWith('chapter-1');
+    expect(screen.getByText('Visor · capítulo')).toBeInTheDocument();
   });
 });
