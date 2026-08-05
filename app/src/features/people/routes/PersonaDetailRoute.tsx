@@ -1,17 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
+import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { RoleBadge } from '@/design-system/components/data-display/Badges';
 import { PersonaSettingsMenuContainer } from '@/features/people/containers/PersonaSettingsMenuContainer';
 import { PersonaBiografiaTabContainer } from '@/features/people/containers/PersonaBiografiaTabContainer';
 import { PersonaFotosTabContainer } from '@/features/people/containers/PersonaFotosTabContainer';
 import { useElementHeight } from '@/hooks/useElementHeight';
-import { usePersonasStore } from '@/store/usePersonasStore';
-import { loadPersonas } from '@/features/people/useCases';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // PersonaDetailRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las
@@ -24,29 +23,30 @@ export const PersonaDetailRoute: React.FC = () => {
   const location = useLocation();
   const { baulId, personaId } = useParams();
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
-  // Solo para el badge de recuento del Tabbar — PersonaFotosTabContainer lee los datos
-  // completos él mismo.
-  const { personas, personaPhotos } = usePersonasStore();
-  const { run } = useAsyncAction();
 
-  const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'biografia' | 'fotos'>('biografia');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
 
-  const persona = (personas[baulId || ''] || []).find(u => u.id === personaId);
-
-  useEffect(() => {
-    if (!baulId || persona) return;
-
-    setIsLoading(true);
-    run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'Error al cargar la ficha' }).finally(() =>
-      setIsLoading(false)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baulId, persona, loadPersonas]);
+  // Bloquea hasta tener tanto la persona como sus fotos, para que el badge de recuento del
+  // Tabbar sea correcto desde el primer render y no haya un hueco de carga al entrar en la
+  // pestaña de fotos — ver docs/architecture/frontend.md y usePersonaScope.
+  const { persona, photos, isLoading, loadFailed, retry } = usePersonaScope(baulId, personaId);
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
-  if (!baulId || !personaId || !persona) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
+
+  if (!baulId || !personaId || !persona) {
+    if (loadFailed) {
+      return (
+        <ErrorScreen
+          title="No se ha podido cargar la ficha"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          actionLabel="Reintentar"
+          onAction={retry}
+        />
+      );
+    }
+    return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
+  }
 
   const displayName = persona.name || persona.nickname;
   const isPersonaPending = persona.status === 'pending';
@@ -87,7 +87,7 @@ export const PersonaDetailRoute: React.FC = () => {
       <Tabbar
         tabs={[
           { key: 'biografia', label: 'Biografía' },
-          { key: 'fotos', label: 'Fotos', count: (personaPhotos[personaId] || []).length },
+          { key: 'fotos', label: 'Fotos', count: (photos || []).length },
         ]}
         active={activeTab}
         onChange={(key) => setActiveTab(key as 'biografia' | 'fotos')}
@@ -100,7 +100,6 @@ export const PersonaDetailRoute: React.FC = () => {
 
           {activeTab === 'fotos' && (
             <PersonaFotosTabContainer
-              baulId={baulId}
               personaId={personaId}
               onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/personas/${personaId}`, photo.id))}
             />

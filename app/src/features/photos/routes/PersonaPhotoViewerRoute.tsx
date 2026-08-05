@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
 import { Recuerdo } from '@/types';
@@ -6,13 +6,13 @@ import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadRecuerdos, addRecuerdo, editRecuerdo } from '@/features/memories/useCases';
-import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
 import { loadTaggedPersonas } from '@/features/photos/useCases';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
+import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { api } from '@/api';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
@@ -34,30 +34,12 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
   const backgroundLocation = getBackgroundLocation(location);
 
   const { baul, isLoading: isLoadingBaul, refreshFailed, retry } = useBaulScope(baulId);
-  const { personas, personaPhotos, taggedPersonas } = usePersonasStore();
+  const { personas, taggedPersonas } = usePersonasStore();
   const { recuerdos } = useRecuerdosStore();
 
-  const [photosFailed, setPhotosFailed] = useState(false);
-
-  const fetchPersonaPhotos = async () => {
-    if (!baulId || !personaId) return;
-    const result = await run(() => loadPersonaPhotos(baulId, personaId), { errorMessage: 'Error al cargar las fotos' });
-    setPhotosFailed(!result.ok);
-  };
-
-  useEffect(() => {
-    if (auth.isAuthenticated && personaId && !personaPhotos[personaId]) {
-      fetchPersonaPhotos();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, baulId, personaId, personaPhotos, loadPersonaPhotos]);
-
-  useEffect(() => {
-    if (auth.isAuthenticated && baulId && !personas[baulId]) {
-      run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'No se pudieron cargar las personas del baúl' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, baulId, personas, loadPersonas]);
+  // Precarga la persona y sus fotos etiquetadas — bloqueando hasta tener ambas — igual que
+  // PersonaDetailRoute, para no duplicar aquí la misma lógica de recuperación.
+  const { photos: personaPhotos, isLoading: isLoadingPersona, loadFailed: personaPhotosFailed, retry: retryPersona } = usePersonaScope(baulId, personaId);
 
   useEffect(() => {
     if (auth.isAuthenticated && photoId) {
@@ -69,7 +51,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, photoId, loadRecuerdos, loadTaggedPersonas]);
 
-  if (isLoadingBaul) return <div className="p-8 text-center">Cargando foto...</div>;
+  if (isLoadingBaul || isLoadingPersona) return <div className="p-8 text-center">Cargando foto...</div>;
 
   if (!baul) {
     if (refreshFailed) {
@@ -87,21 +69,21 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
 
   if (!personaId) return <div className="p-8 text-center">No se ha encontrado la persona.</div>;
 
-  if (!personaPhotos[personaId]) {
-    if (photosFailed) {
+  if (!personaPhotos) {
+    if (personaPhotosFailed) {
       return (
         <ErrorScreen
           title="No se han podido cargar las fotos"
           message="Comprueba tu conexión e inténtalo de nuevo."
           actionLabel="Reintentar"
-          onAction={fetchPersonaPhotos}
+          onAction={retryPersona}
         />
       );
     }
     return <div className="p-8 text-center">Cargando foto...</div>;
   }
 
-  const photos = personaPhotos[personaId] || [];
+  const photos = personaPhotos;
   const photo = photos.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 
