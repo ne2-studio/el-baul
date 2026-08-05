@@ -26,7 +26,7 @@ interface BaulSettingsMenuContainerProps {
 }
 
 // Self-sufficient "···" menu: owns the invite-link/cover/rename/removal-requests/delete
-// actions and their modals end to end, so ChaptersView (its only caller) doesn't need to
+// actions and their modals end to end, so BaulRoute (its only caller) doesn't need to
 // know baúl settings exist beyond mounting this in its header's trailing slot. Self-navigates
 // to removal-requests/delete-request — both only need baul.id, nothing route-context-dependent
 // — see docs/architecture/frontend.md's containers/ rule.

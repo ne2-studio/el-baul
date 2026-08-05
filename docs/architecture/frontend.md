@@ -77,23 +77,35 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
     description, check whether a piece of it actually belongs to a different feature before
     assuming the description just needs to get vaguer.
   - **The same principle applies one level down, to a tab or panel instead of a whole URL.**
-    `ChaptersView`/`PhotosView` used to have their owning Route assemble every tab's
-    orchestration inline — persona creation, recuerdo create/edit/share, photo multi-select
-    batch actions — which meant `BaulRoute`/`ChapterRoute` imported use cases from unrelated
-    features just to wire one screen. Each such tab/panel now lives in a
-    `features/<domain>/containers/*.tsx` component, owned by the feature whose entity it's
-    about (`PersonasTabContainer` in `people`, `RecuerdosTabContainer`/
-    `ChapterRecuerdosFeedContainer` in `memories`, `BatchPhotoActionsContainer` in `photos`),
-    leaving the shell (`ChaptersView`/`PhotosView`) to just switch between them.
-  - **The same move also applies within a single feature, purely to cut wiring volume.**
-    `ChaptersView`/`PhotosView`/`PersonaDetailScreen`'s "···" settings menus (rename, cover,
-    invite link, delete, manage access, revoke) stayed same-domain the whole time — no
-    cross-feature risk — but each Route still had to construct 6-8 permission-gated props just
-    to wire one dropdown, and each screen had to carry them through its interface to render it.
-    `BaulSettingsMenuContainer`/`ChapterSettingsMenuContainer`/`PersonaSettingsMenuContainer`
-    own the whole menu (trigger, items, modals, permission checks) behind a single
-    entity-object prop (`baul`, or `baulId`+`chapterId`/`persona`), so the owning Route
-    constructs nothing and the shell's interface doesn't carry the settings surface at all.
+    `BaulRoute`/`ChapterRoute` used to assemble every tab's orchestration inline — persona
+    creation, recuerdo create/edit/share, photo multi-select batch actions — which meant they
+    imported use cases from unrelated features just to wire one screen. Each such tab/panel
+    now lives in a `features/<domain>/containers/*.tsx` component, owned by the feature whose
+    entity it's about (`BaulPersonasTabContainer` in `people`, `BaulRecuerdosTabContainer`/
+    `ChapterRecuerdosFeedContainer` in `memories`, `BatchPhotoActionsContainer` in `photos`).
+  - **The same move also applies within a single feature, purely to cut wiring volume.** The
+    "···" settings menus (rename, cover, invite link, delete, manage access, revoke) stayed
+    same-domain the whole time — no cross-feature risk — but each Route still had to construct
+    6-8 permission-gated props just to wire one dropdown. `BaulSettingsMenuContainer`/
+    `ChapterSettingsMenuContainer`/`PersonaSettingsMenuContainer` own the whole menu (trigger,
+    items, modals, permission checks) behind a single entity-object prop (`baul`, or
+    `baulId`+`chapterId`/`persona`).
+  - **A `components/` file whose only remaining job is composing containers gets folded into
+    its Route instead of kept as a separate shell.** `ChaptersView`, `PhotosView`, and
+    `PersonaDetailScreen` used to exist purely to assemble `PageHeader`/`Hero`/`Tabbar` chrome
+    around the containers above. `Route → Component → Container` isn't illegal in a runtime
+    sense — React renders it fine, the app and every test proved that — but it defeats the
+    actual point of `components/`: renderable in isolation from props alone, so its story is a
+    real presentational contract. A file that only ever renders containers already fails that
+    test transitively (its story needs store data and a `MemoryRouter` just to not crash), so
+    keeping it a separate `components/` file bought nothing but an extra hop. `BaulRoute`/
+    `ChapterRoute`/`PersonaDetailRoute` now render that chrome directly — a Route is *never*
+    restricted from importing `containers/` (only `components/` is boundary-checked), so there
+    is no version of this composition that's actually off-limits to a Route. State genuinely
+    shared across the whole screen (`ChapterRoute`'s multi-select mode, needed by its header,
+    Hero, photo grid, FAB, and batch-action bar all at once) stays inline in the Route rather
+    than being forced into one container that would then have to leak it back out to its
+    siblings.
   - **Exception**: a Route may call `api.*` directly, bypassing `store/`/`useCases/`, when the
     result is never cached or shared across routes — there's no state a store would own. This
     covers: blob downloads (`api.photos.download`), one-off share-link creation consumed
@@ -104,8 +116,8 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
     populated (accepting a baúl invite). If a second call site needs the same data, or the data
     must survive navigation, move it to a store instead of adding a second direct caller.
 - **`features/<domain>/containers/*.tsx`** — a 5th peer of `routes/`/`components/`/`useCases/`/
-  `native/`, for a tab or panel that's rendered by another feature's shell component (e.g.
-  `ChaptersView` rendering `PersonasTabContainer`) rather than owning a URL of its own. Unlike
+  `native/`, for a tab or panel that's rendered by another feature's Route (e.g. `BaulRoute`
+  rendering `BaulPersonasTabContainer`) rather than owning a URL of its own. Unlike
   `components/`, it's **not** scoped by the `componentBoundaryRule` ESLint rule — a container
   reads its own store slice and calls its own `useCases/`/`useAsyncAction()` directly, same
   as a Route would. It may call `useNavigate()` itself, but only for navigation that's a

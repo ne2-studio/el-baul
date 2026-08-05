@@ -21,20 +21,20 @@ import { api } from '@/api';
 
 interface ChapterSettingsMenuContainerProps {
   baulId: string;
-  /** null = fotos sueltas virtual chapter — mirrors PhotosView's own discriminator. The
+  /** null = fotos sueltas virtual chapter — mirrors ChapterRoute's own discriminator. The
    * virtual chapter has no settings at all, so the container renders nothing for it. */
   chapterId: string | null;
   chapterName: string;
   photoCount: number;
   recuerdoCount: number;
-  // "Seleccionar fotos" enters PhotosView's own multi-select mode — that state stays owned
-  // by PhotosView (it drives PhotoSwimlanes highlighting), so this is the one callback the
+  // "Seleccionar fotos" enters ChapterRoute's own multi-select mode — that state stays owned
+  // by ChapterRoute (it drives PhotoSwimlanes highlighting), so this is the one callback the
   // container needs from outside instead of self-containing everything.
   onEnterSelectionMode: () => void;
 }
 
 // Self-sufficient "···" menu: owns the cover/rename/delete actions and their modals end to
-// end, so PhotosView (its only caller) doesn't need to know chapter settings exist beyond
+// end, so ChapterRoute (its only caller) doesn't need to know chapter settings exist beyond
 // mounting this in its header's trailing slot. Self-navigates back to the baúl after a
 // successful delete — only needs baulId, nothing route-context-dependent — see
 // docs/architecture/frontend.md's containers/ rule.

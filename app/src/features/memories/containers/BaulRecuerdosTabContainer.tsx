@@ -11,7 +11,7 @@ import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNaviga
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useRecuerdoActions } from './useRecuerdoActions';
 
-interface RecuerdosTabContainerProps {
+interface BaulRecuerdosTabContainerProps {
   baulId: string;
   baulName: string;
   // Reutiliza handleSelectChapter de BaulRoute (compartido con la pestaña de capítulos) en
@@ -26,7 +26,7 @@ interface RecuerdosTabContainerProps {
 // detail screen and to the AI chat itself too — all of it only needs baulId/chapterId,
 // nothing route-context-dependent beyond its own location — see
 // docs/architecture/frontend.md's containers/ rule.
-export function RecuerdosTabContainer({ baulId, baulName, onOpenChapter }: RecuerdosTabContainerProps) {
+export function BaulRecuerdosTabContainer({ baulId, baulName, onOpenChapter }: BaulRecuerdosTabContainerProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { baulRecuerdos } = useRecuerdosStore();

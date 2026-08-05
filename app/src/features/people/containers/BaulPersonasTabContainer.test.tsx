@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Persona } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { PersonasTabContainer } from './PersonasTabContainer';
+import { BaulPersonasTabContainer } from './BaulPersonasTabContainer';
 
 vi.mock('@/features/people/useCases', () => ({
   createPersona: vi.fn(),
@@ -27,14 +27,14 @@ function renderContainer(canCreatePersona = true) {
   return render(
     <MemoryRouter initialEntries={[`/baules/${baulId}`]}>
       <Routes>
-        <Route path="/baules/:baulId" element={<PersonasTabContainer baulId={baulId} canCreatePersona={canCreatePersona} />} />
+        <Route path="/baules/:baulId" element={<BaulPersonasTabContainer baulId={baulId} canCreatePersona={canCreatePersona} />} />
         <Route path="/baules/:baulId/personas/:personaId" element={<div>Ficha de persona</div>} />
       </Routes>
     </MemoryRouter>
   );
 }
 
-describe('PersonasTabContainer', () => {
+describe('BaulPersonasTabContainer', () => {
   beforeEach(() => {
     usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
     useAuthStore.setState({ userProfile: { photoUrl: '', name: '', email: 'me@example.com' } });

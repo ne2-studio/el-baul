@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Recuerdo } from '@/types';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
-import { RecuerdosTabContainer } from './RecuerdosTabContainer';
+import { BaulRecuerdosTabContainer } from './BaulRecuerdosTabContainer';
 
 vi.mock('@/api', () => ({
   api: { recuerdos: { createShareLink: vi.fn() } },
@@ -44,7 +44,7 @@ function renderContainer() {
       <Routes>
         <Route
           path="/baules/:baulId"
-          element={<RecuerdosTabContainer baulId={baulId} baulName="Familia García" />}
+          element={<BaulRecuerdosTabContainer baulId={baulId} baulName="Familia García" />}
         />
         <Route path="/baules/:baulId/personas/:personaId" element={<div>Ficha de persona</div>} />
         <Route path="/baules/:baulId/recordar" element={<div>Chat</div>} />
@@ -55,7 +55,7 @@ function renderContainer() {
   );
 }
 
-describe('RecuerdosTabContainer', () => {
+describe('BaulRecuerdosTabContainer', () => {
   beforeEach(() => {
     useRecuerdosStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {} });
     useAppConfigStore.setState({ chatEnabled: false, sharedLinksEnabled: false });

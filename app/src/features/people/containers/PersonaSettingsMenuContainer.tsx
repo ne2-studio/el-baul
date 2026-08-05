@@ -26,7 +26,7 @@ interface PersonaSettingsMenuContainerProps {
 }
 
 // Self-sufficient "···" menu: owns edit-info/avatar/role/revoke-access end to end, so
-// PersonaDetailScreen (its only caller) doesn't need to know these settings exist beyond
+// PersonaDetailRoute (its only caller) doesn't need to know these settings exist beyond
 // mounting this in its header's trailing slot. Nothing here navigates — every action is an
 // in-place mutation with a toast — see docs/architecture/frontend.md's containers/ rule.
 export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSettingsMenuContainerProps) {
