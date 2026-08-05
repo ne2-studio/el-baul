@@ -2,61 +2,41 @@
 
 Return only a prioritized list of initiatives. Do not modify code, create branches or pull requests, include a generic architecture assessment before the list, or report praise, strengths, or minor stylistic suggestions.
 
-Use this exact structure for every initiative.
+Use this exact structure for every initiative, except Why now, which is conditional (see below). Every field must come from the step named next to it — do not fill a field with a plausible-sounding value that step didn't actually produce; write "none identified" instead.
 
 ## `<rank>. <initiative title>`
 
-**Priority:** Critical | High | Medium | Low
-**Score:** `<calculated priority score>` (Value: `<v>` · Maintenance friction: `<f>` · Delivery difficulty: `<d>`)
-**Confidence:** High | Medium | Low
-**Type:** `<smell id>`
+**Type:** `<smell id>` (Step 2)
+**Priority:** Critical | High | Medium | Low — a qualitative summary of Score, not a separate judgment
+**Score:** `<priority score>` — Value `<v>` (Evidence confidence `<1-5>`) · Friction `<f>` · Difficulty `<d>` (Step 4)
 **Affected area:** `<modules, files, components or capabilities>`
 
-### Evidence
+### Evidence (Step 2)
 
-* `<specific repository observation with file or symbol references>`
+* `<specific repository observation with file or symbol references — including the cost it causes today: what must change together, what tests can't localise, what stays inconsistent. The cost is part of the evidence, not a separate narrative>`
 * `<second supporting observation when available>`
 * `<history, test, metric or defect evidence when available>`
 * `<representative maintenance task trace when available: files opened, searches performed, layers crossed>`
 
-### Current cost
+### Tension and movement (Step 3)
 
-Explain the concrete cost currently caused by the gap — e.g. several files must change for one rule, tests cannot distinguish which decision failed, production behaviour is protected only by mocks, the same concept is interpreted differently, acceptance feedback is too slow for frequent changes, a high-churn module contains unrelated responsibilities.
+**Tension:** `<attribute id>` vs `<attribute id>` — one sentence: why the current structure balances them badly.
+**Improves:** `<attribute id>`, `<attribute id>` — one sentence: why a change here would help.
+**Movement:** `<name, from the smell's candidate movements, or "reasoned independently" if none fit>` — the smallest coherent change. No implementation walkthrough.
+**Costs:** one sentence — what the movement puts under further tension, or the case where it would not yet be justified.
 
-### Tension
+### Safety net (Step 5)
 
-Name the attributes (`attributes.md`) currently competing or being balanced badly — the reason this isn't a free improvement.
-
-### Proposed initiative
-
-Describe the smallest coherent refactoring initiative. Do not provide an implementation walkthrough. Do not prescribe a pattern unless the pattern directly follows from the evidence.
-
-### Objective improvement
-
-List the attributes improved and explain why.
-
-```text
-- Modifiability: ...
-- Consistency: ...
-- Testability: ...
-```
-
-### Trade-off
-
-State what the movement costs — the attribute it puts under further tension, the indirection it adds, or the case where it would not yet be justified.
+**Currently protects it:** `<existing black-box, component, contract, or integration tests covering this specific capability — or "none identified">`
+**Must remain unchanged:** `<...>`
+**Needs adding before the movement:** `<characterisation tests, or "none">`
+**May descend to a smaller component:** `<cases, or "none">`
+**Also surfaces:** `<mock-architecture | insufficient-behavioural-coverage | test-fidelity-mismatch | none>`
 
 ### Validation
 
-Describe how to verify that the initiative succeeded. Prefer measurable before-and-after evidence: affected files per representative change, duplicated rule implementations, acceptance suite runtime, retained black-box paths, focused cases added, dependency edges, mutation score, public surface, repeated setup, production failure visibility.
-
-### Behavioural safety net
-
-State which existing black-box or acceptance tests must remain unchanged, which additional characterisation tests are needed, which cases may descend to a smaller component, and what observable behaviour must remain identical.
-
-### Estimated scope
-
-Small | Medium | Large
+Restate the Evidence bullets above as their expected state after the fix — the same files, the same counts, the same gaps, now resolved. Do not introduce a metric that wasn't already part of the Evidence or Safety net sections.
 
 ### Why now
 
-Explain why this initiative should be addressed before lower-ranked alternatives.
+Include only when overriding the score's ranking — an immediate correctness or security risk, unlocking several blocked initiatives, or preventing imminent architectural lock-in (see `prioritisation.md`). Omit this section when the score already explains the order.
