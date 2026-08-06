@@ -3,6 +3,15 @@ import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Button } from '@/design-system/components/actions/Button';
 
+// `will-change-transform` on every fixed FAB element below works around a WebKit repaint
+// glitch: iOS Safari/WKWebView show/hide their chrome (URL bar, tab bar) as the page scrolls,
+// which changes the effective viewport and forces a relayout of anything positioned with
+// `env(safe-area-inset-bottom)` (our --safe-bottom, used in the `bottom` calc()s below) —
+// without a promoted compositing layer, WebKit briefly drops and repaints the fixed element
+// mid-relayout, which reads as a one-frame flicker/disappear on tap-and-scroll. Promoting the
+// element to its own layer sidesteps the repaint. Harmless no-op on Android/desktop, where
+// --safe-bottom is always 0 and never changes mid-scroll.
+
 interface SimpleFABProps {
   label: string;
   icon?: React.ReactNode;
@@ -15,7 +24,7 @@ export function SimpleFAB({ label, icon, onClick, hidden }: SimpleFABProps) {
   return (
     <Button variant="plain"
       onClick={onClick}
-      className="fixed bottom-[calc(1.5rem_+_var(--safe-bottom))] right-5 z-30 flex items-center gap-2.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 active:scale-95 hover:bg-primary/90 transition-all"
+      className="fixed bottom-[calc(1.5rem_+_var(--safe-bottom))] right-5 z-30 flex items-center gap-2.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 active:scale-95 hover:bg-primary/90 transition-all will-change-transform"
       style={{ boxShadow: '0 4px 20px rgba(198,123,92,0.4)' }}
     >
       {icon ?? <Icon icon={icons.add} aria-hidden />}
@@ -51,7 +60,7 @@ export function ExpandableFAB({ actions, hidden }: ExpandableFABProps) {
       )}
 
       {/* Action items — slide up above the FAB */}
-      <div className="fixed bottom-[calc(5.5rem_+_var(--safe-bottom))] right-5 z-30 flex flex-col items-end gap-3">
+      <div className="fixed bottom-[calc(5.5rem_+_var(--safe-bottom))] right-5 z-30 flex flex-col items-end gap-3 will-change-transform">
         {open && actions.map((action, i) => (
           <Button variant="plain"
             key={i}
@@ -72,7 +81,7 @@ export function ExpandableFAB({ actions, hidden }: ExpandableFABProps) {
       {/* Main FAB button */}
       <Button variant="plain"
         onClick={() => setOpen(v => !v)}
-        className="fixed bottom-[calc(1.5rem_+_var(--safe-bottom))] right-5 z-30 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center active:scale-95 hover:bg-primary/90 transition-all"
+        className="fixed bottom-[calc(1.5rem_+_var(--safe-bottom))] right-5 z-30 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center active:scale-95 hover:bg-primary/90 transition-all will-change-transform"
         style={{ boxShadow: '0 4px 20px rgba(198,123,92,0.4)' }}
         aria-label={open ? 'Cerrar menú' : 'Acciones'}
       >
