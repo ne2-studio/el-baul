@@ -12,6 +12,14 @@ interface BaulScopeGuardOptions {
   // Cada Route bajo /baules/:baulId muestra su propia copia mientras espera — "Cargando..."
   // para pantallas de baúl/capítulo, "Cargando foto..." para los visores.
   loadingLabel?: string;
+  // isLoading de useBaulScope cubre dos cosas distintas: "aún no sabemos si el baúl existe" y
+  // "el baúl ya existe, pero sus capítulos/recuerdos/fotos sueltas todavía se están cargando".
+  // Los callers que necesitan resolver una entidad concreta dentro del baúl antes de poder
+  // renderizar nada (capítulo, foto) sí necesitan esperar a lo segundo — default true. BaulRoute
+  // no: sus pestañas ya leen `chapters[baulId] || []` etc. y toleran datos parciales, así que
+  // bloquear el chrome entero (header + tabbar) mientras llegan solo produce un parpadeo al
+  // cambiar a un baúl que aún no se había abierto esta sesión — pasa `false` para evitarlo.
+  requireFullScope?: boolean;
 }
 
 export type BaulScopeGuardResult =
@@ -27,9 +35,9 @@ export type BaulScopeGuardResult =
 // simple `React.ReactNode | null` no permite ese estrechamiento a través de la llamada.
 export function guardBaulScope(
   { baul, isLoading, refreshFailed, retry }: BaulScope,
-  { loadingLabel = 'Cargando...' }: BaulScopeGuardOptions = {},
+  { loadingLabel = 'Cargando...', requireFullScope = true }: BaulScopeGuardOptions = {},
 ): BaulScopeGuardResult {
-  if (isLoading) {
+  if (isLoading && (requireFullScope || !baul)) {
     return { ready: false, screen: <div className="p-8 text-center">{loadingLabel}</div> };
   }
 

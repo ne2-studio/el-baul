@@ -51,4 +51,27 @@ describe('guardBaulScope', () => {
     expect(guard.ready).toBe(true);
     expect(guard.ready && guard.baul).toBe(baul);
   });
+
+  // Regresión: BaulRoute mostraba un parpadeo de todo el chrome (header + tabbar) al cambiar
+  // a un baúl que aún no se había abierto esta sesión — el guard trataba "aún cargando
+  // capítulos/recuerdos" igual que "aún no sabemos si el baúl existe" y sustituía toda la
+  // pantalla por "Cargando..." un instante.
+  it('reports ready once the baúl itself is known, even while its scope data is still loading, when requireFullScope is false', () => {
+    const guard = guardBaulScope(
+      { baul, isLoading: true, refreshFailed: false, retry: vi.fn() },
+      { requireFullScope: false },
+    );
+
+    expect(guard.ready).toBe(true);
+    expect(guard.ready && guard.baul).toBe(baul);
+  });
+
+  it('still blocks with requireFullScope: false while the baúl itself is not yet known', () => {
+    const guard = guardBaulScope(
+      { baul: undefined, isLoading: true, refreshFailed: false, retry: vi.fn() },
+      { requireFullScope: false },
+    );
+
+    expect(guard.ready).toBe(false);
+  });
 });

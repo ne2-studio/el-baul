@@ -26,7 +26,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Se redirige a la pantalla de inicio de sesión cuando la sesión ha caducado en el servidor.
 - Al ver una foto desde la ficha de una persona, quienes administran el baúl ahora ven las mismas opciones (establecer portada del baúl, retirar foto) que al verla desde un capítulo.
 - Retirar una foto o cambiar su fecha ya actualiza también su aparición en las fichas de las personas etiquetadas en ella.
-- El botón flotante de acción ya no parpadea al hacer scroll en iPhone.
+- El botón flotante de acción ya no parpadea al hacer scroll.
+- Al cambiar a un baúl que no se había abierto en la sesión, ya no parpadea toda la pantalla mientras cargan sus capítulos y recuerdos.
 
 ## [beta-v0.1.2] - 2026-08-04
 
