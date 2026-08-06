@@ -49,11 +49,15 @@ public class ChatContextBuilder(
         // order as chronology and inventing timelines. The photo/chapter it's attached to (if
         // any) is what actually anchors it in time; with neither, or neither dated, it has no
         // date at all rather than a fabricated one.
-        var photosByChapter = new Dictionary<ChapterId, List<Photo>>();
-        foreach (var chapter in chapters)
-            photosByChapter[chapter.Id] = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
-        var loosePhotos = (await photoRepository.GetLooseByBaulIdAsync(baul.Id)).ToList();
-        var photoById = photosByChapter.Values.SelectMany(p => p).Concat(loosePhotos).ToDictionary(p => p.Id);
+        // One query for every active photo in the baúl instead of one GetByChapterIdAsync per
+        // chapter (plus a separate GetLooseByBaulIdAsync) — grouped by chapter afterward.
+        var activePhotos = (await photoRepository.GetActiveByBaulIdAsync(baul.Id)).ToList();
+        var photosByChapter = activePhotos
+            .Where(p => p.ChapterId is not null)
+            .GroupBy(p => p.ChapterId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var loosePhotos = activePhotos.Where(p => p.ChapterId is null).ToList();
+        var photoById = activePhotos.ToDictionary(p => p.Id);
         var chapterDates = photosByChapter.ToDictionary(kv => kv.Key, kv => EarliestDate(kv.Value));
 
         var sb = new StringBuilder();
@@ -98,9 +102,10 @@ public class ChatContextBuilder(
     {
         var chapters = (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToList();
         var personas = (await baulRepository.GetPersonasAsync(baul.Id)).ToList();
-        var photosByChapter = new Dictionary<ChapterId, List<Photo>>();
-        foreach (var chapter in chapters)
-            photosByChapter[chapter.Id] = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
+        var photosByChapter = (await photoRepository.GetActiveByBaulIdAsync(baul.Id))
+            .Where(p => p.ChapterId is not null)
+            .GroupBy(p => p.ChapterId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
         var sb = new StringBuilder();
         AppendHeader(sb, baul, personas, chapters, photosByChapter);

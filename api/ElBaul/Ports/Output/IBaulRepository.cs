@@ -24,6 +24,11 @@ public interface IBaulRepository
     Task<IEnumerable<Persona>> GetPersonasAsync(BaulId baulId);
     Task<IReadOnlyDictionary<BaulId, int>> GetPersonaCountsAsync(IEnumerable<BaulId> baulIds);
     Task<Persona?> GetPersonaByIdAsync(PersonaId personaId);
+
+    /// <summary>Batch-friendly counterpart to GetPersonaByIdAsync — one query for a whole list
+    /// of persona ids instead of one round trip per id (e.g. resolving a photo's tagged
+    /// personas).</summary>
+    Task<IEnumerable<Persona>> GetPersonasByIdsAsync(IEnumerable<PersonaId> personaIds);
     Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId);
     Task AddPersonaAsync(Persona persona);
     Task UpdatePersonaAsync(Persona persona);

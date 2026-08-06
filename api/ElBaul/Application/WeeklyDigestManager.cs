@@ -165,11 +165,18 @@ public class WeeklyDigestManager(
         }
 
         var photos = (await photoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since)).ToList();
-        var photosByChapter = photos.Where(p => p.ChapterId is not null).GroupBy(p => p.ChapterId!.Value);
+        var photosByChapter = photos.Where(p => p.ChapterId is not null).GroupBy(p => p.ChapterId!.Value).ToList();
+
+        // One GetByBaulIdAsync for every chapter this baúl has instead of one GetByIdAsync per
+        // chapter-with-new-photos — this method already runs once per baúl per digest, so a
+        // second per-chapter round trip inside it is an N+1 within an N+1 at digest-sending
+        // scale (every eligible user, every week).
+        var chaptersById = photosByChapter.Count == 0
+            ? new Dictionary<ChapterId, Chapter>()
+            : (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToDictionary(c => c.Id);
         foreach (var group in photosByChapter.OrderByDescending(g => g.Count()))
         {
-            var chapter = await chapterRepository.GetByIdAsync(group.Key);
-            if (chapter is null) continue; // chapter deleted since — don't surface stale content
+            if (!chaptersById.TryGetValue(group.Key, out var chapter)) continue; // chapter deleted since — don't surface stale content
 
             var count = group.Count();
             var label = count == 1

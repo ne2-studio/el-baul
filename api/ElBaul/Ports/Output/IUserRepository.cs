@@ -3,6 +3,12 @@ namespace ElBaul.Ports.Output;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(string id);
+
+    /// <summary>Batch-friendly counterpart to GetByIdAsync — one query for a whole list of ids
+    /// instead of one round trip per id (e.g. PersonaManager.GetPersonasAsync resolving each
+    /// claimed persona's account).</summary>
+    Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<string> ids);
+
     Task<User?> GetByEmailAsync(string email);
 
     /// <summary>

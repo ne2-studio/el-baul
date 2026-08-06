@@ -24,13 +24,12 @@ public class PhotoPersonaTagManager(
             photo.BaulId, userId, AccessLevel.Member, "Photo tagged personas", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
 
-        var personaIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photoId);
-        var dtos = new List<TaggedPersonaDto>();
-        foreach (var personaId in personaIds)
-        {
-            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-            if (persona is not null) dtos.Add(await ToTaggedPersonaDtoAsync(persona));
-        }
+        var personaIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photoId)).ToList();
+        var personasById = (await baulRepository.GetPersonasByIdsAsync(personaIds)).ToDictionary(p => p.Id);
+        // Preserves GetPersonaIdsByPhotoIdAsync's order (and its original "skip if the persona
+        // was since removed" behavior) now that the fetch itself is batched.
+        var personas = personaIds.Select(id => personasById.GetValueOrDefault(id)).OfType<Persona>();
+        var dtos = await ToTaggedPersonaDtosAsync(personas);
 
         return Result.Success<IEnumerable<TaggedPersonaDto>>(dtos);
     }
@@ -120,5 +119,32 @@ public class PhotoPersonaTagManager(
     {
         var avatarUrl = await PersonaAvatarUrlResolver.ResolveAsync(persona, photoRepository, photoStorage);
         return new TaggedPersonaDto(persona.Id.ToString(), persona.Nickname, persona.Name, avatarUrl);
+    }
+
+    // Batch-friendly counterpart to ToTaggedPersonaDtoAsync — one avatar-photo lookup
+    // (IPhotoRepository.GetByIdsAsync) for the whole tagged-personas list instead of one per
+    // persona. Used by GetTaggedPersonasAsync, a pure read; the write paths above still build
+    // their (much smaller, already-validated) response DTOs one persona at a time.
+    private async Task<IReadOnlyList<TaggedPersonaDto>> ToTaggedPersonaDtosAsync(IEnumerable<Persona> personas)
+    {
+        var personaList = personas.ToList();
+        var avatarPhotoIds = personaList
+            .Where(p => p.AvatarPhotoId is not null)
+            .Select(p => p.AvatarPhotoId!.Value)
+            .Distinct()
+            .ToList();
+        var photosById = avatarPhotoIds.Count == 0
+            ? new Dictionary<PhotoId, Photo>()
+            : (await photoRepository.GetByIdsAsync(avatarPhotoIds)).ToDictionary(p => p.Id);
+
+        var dtos = new List<TaggedPersonaDto>(personaList.Count);
+        foreach (var persona in personaList)
+        {
+            var avatarPhoto = persona.AvatarPhotoId is { } photoId ? photosById.GetValueOrDefault(photoId) : null;
+            var avatarUrl = await PersonaAvatarUrlResolver.ResolveAsync(persona, avatarPhoto, photoStorage);
+            dtos.Add(new TaggedPersonaDto(persona.Id.ToString(), persona.Nickname, persona.Name, avatarUrl));
+        }
+
+        return dtos;
     }
 }

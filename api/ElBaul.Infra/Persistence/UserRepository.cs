@@ -9,6 +9,9 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
     public Task<User?> GetByIdAsync(string id) =>
         dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
 
+    public async Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<string> ids) =>
+        await dbContext.Users.AsNoTracking().Where(u => ids.Contains(u.Id)).ToListAsync();
+
     public Task<User?> GetByEmailAsync(string email) =>
         dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
 

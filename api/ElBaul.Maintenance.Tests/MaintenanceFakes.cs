@@ -50,6 +50,7 @@ internal sealed class FailingPhotoRepository : IPhotoRepository
     public Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId) => Task.FromResult<Photo?>(null);
     public Task<IEnumerable<Photo>> GetByChapterIdAsync(ChapterId chapterId) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(BaulId baulId) => Task.FromResult(Enumerable.Empty<Photo>());
+    public Task<IEnumerable<Photo>> GetActiveByBaulIdAsync(BaulId baulId) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetUndatedAsync() => Task.FromResult(Enumerable.Empty<Photo>());

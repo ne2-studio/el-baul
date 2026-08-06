@@ -19,6 +19,12 @@ public class InMemoryUserRepository : IUserRepository
         lock (_lock) return Task.FromResult(_users.GetValueOrDefault(id));
     }
 
+    public Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<string> ids)
+    {
+        var idSet = ids.ToHashSet();
+        lock (_lock) return Task.FromResult(_users.Values.Where(u => idSet.Contains(u.Id)).ToList().AsEnumerable());
+    }
+
     public Task<User?> GetByEmailAsync(string email)
     {
         lock (_lock) return Task.FromResult(_users.Values.FirstOrDefault(u => u.Email == email));

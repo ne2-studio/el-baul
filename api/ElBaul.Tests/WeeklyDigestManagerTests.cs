@@ -181,6 +181,33 @@ public class WeeklyDigestManagerTests
     }
 
     [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldResolveEachChaptersNewPhotoCount_Independently()
+    {
+        // Targets BuildBaulSectionAsync's batched chapter lookup specifically: two chapters
+        // with different numbers of new photos must each get their own name/count in the
+        // resulting block — the exact mistake a broken dictionary lookup would produce is one
+        // chapter's photos being labeled with another chapter's name.
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        var since = _clock.UtcNow().AddDays(-7);
+        var firstChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo uno", 0, null, since.AddDays(-1), since.AddDays(-1));
+        var secondChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo dos", 0, null, since.AddDays(-1), since.AddDays(-1));
+        await _chapterRepository.CreateAsync(firstChapter);
+        await _chapterRepository.CreateAsync(secondChapter);
+
+        for (var i = 0; i < 2; i++)
+            await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(firstChapter.Id), new BaulId(baul.Id), $"one-{i}", null, UserId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(secondChapter.Id), new BaulId(baul.Id), "two-0", null, UserId, _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
+
+        var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewPhotosInChapter && b.Count == 2 && b.Label.Contains("Capítulo uno"));
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewPhotosInChapter && b.Count == 1 && b.Label.Contains("Capítulo dos"));
+    }
+
+    [Fact]
     public async Task SendWeeklyDigestAsync_ShouldExcludeDeletedPhotos()
     {
         SeedUser(UserId);

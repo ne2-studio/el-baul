@@ -37,6 +37,37 @@ public class PhotoPersonaTagManagerTests
     }
 
     [Fact]
+    public async Task GetTaggedPersonasAsync_ShouldResolveEachPersonasAvatar_Independently()
+    {
+        // Targets GetTaggedPersonasAsync's batched persona/avatar-photo lookups specifically:
+        // two tagged personas with different avatar photos must each get their own avatar back
+        // — the exact mistake a broken dictionary lookup in the batching would produce is one
+        // persona's avatar leaking onto another's DTO.
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        var firstAvatarPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "first-avatar-key");
+        var secondAvatarPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "second-avatar-key");
+        var firstPersonaId = new PersonaId(Guid.NewGuid());
+        var secondPersonaId = new PersonaId(Guid.NewGuid());
+        await _fixture.Baules.AddPersonaAsync(new Persona(
+            firstPersonaId, baulId, null, "Primera", BaulRole.Colaborador, _fixture.Clock.UtcNow(), AvatarPhotoId: firstAvatarPhotoId));
+        await _fixture.Baules.AddPersonaAsync(new Persona(
+            secondPersonaId, baulId, null, "Segunda", BaulRole.Colaborador, _fixture.Clock.UtcNow(), AvatarPhotoId: secondAvatarPhotoId));
+
+        var manager = CreateManager(CustodioId);
+        await manager.SetTaggedPersonasAsync(photoId, [firstPersonaId, secondPersonaId]);
+
+        var getResult = await manager.GetTaggedPersonasAsync(photoId);
+
+        Assert.True(getResult.IsSuccess);
+        var dtos = getResult.Value.ToList();
+        var first = dtos.Single(d => d.Nickname == "Primera");
+        Assert.Contains("first-avatar-key", first.AvatarUrl);
+        var second = dtos.Single(d => d.Nickname == "Segunda");
+        Assert.Contains("second-avatar-key", second.AvatarUrl);
+    }
+
+    [Fact]
     public async Task SetTaggedPersonasAsync_ShouldReplaceThePreviousTagSet()
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();

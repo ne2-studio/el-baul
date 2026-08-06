@@ -7,6 +7,11 @@ public interface IPhotoRepository
     Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId);
     Task<IEnumerable<Photo>> GetByChapterIdAsync(ChapterId chapterId);
     Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(BaulId baulId);
+
+    /// <summary>Every active photo in a baúl, chapter-linked and loose alike, in one query —
+    /// used to batch what would otherwise be one GetByChapterIdAsync round trip per chapter
+    /// (e.g. ChatContextBuilder grouping a baúl's photos by chapter for the AI prompt).</summary>
+    Task<IEnumerable<Photo>> GetActiveByBaulIdAsync(BaulId baulId);
     Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since);
     Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit);
     Task<IEnumerable<Photo>> GetUndatedAsync();

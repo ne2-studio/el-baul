@@ -157,6 +157,33 @@ public class BaulInviteLinkManagerTests
     }
 
     [Fact]
+    public async Task GetPreviewAsync_ShouldResolveEachPersonasAvatar_Independently()
+    {
+        // Targets GetPreviewAsync's batched ProjectManyAsync avatar resolution specifically:
+        // two members with different avatar keys must each surface their own avatar, not one
+        // leaking onto the other — the exact mistake a broken dictionary lookup would produce.
+        var baulId = await SeedBaulAsync();
+        await _baules.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, GuestId, "Invitado", BaulRole.Colaborador, Now,
+            AvatarPhotoKey: "first-avatar-key"));
+        const string secondGuestId = "guest-2";
+        _users.Seed(new User(secondGuestId, "guest2@test.com", "Segundo invitado", Now));
+        await _baules.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, secondGuestId, "Segundo invitado", BaulRole.Colaborador, Now,
+            AvatarPhotoKey: "second-avatar-key"));
+
+        var manager = CreateManager(CustodioId);
+        var link = await manager.GetOrCreateAsync(baulId);
+
+        var preview = await manager.GetPreviewAsync(link.Value.Token);
+
+        Assert.True(preview.IsSuccess);
+        Assert.Equal(2, preview.Value.PersonaAvatarUrls.Count);
+        Assert.Contains("https://imgproxy.test/PersonaAvatar/first-avatar-key", preview.Value.PersonaAvatarUrls);
+        Assert.Contains("https://imgproxy.test/PersonaAvatar/second-avatar-key", preview.Value.PersonaAvatarUrls);
+    }
+
+    [Fact]
     public async Task AcceptAsync_ShouldAutoCreatePersona_ForNewJoiner()
     {
         var baulId = await SeedBaulAsync();
@@ -275,6 +302,31 @@ public class BaulInviteLinkManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Empty(_photoStorage.SavedKeys);
+    }
+
+    [Fact]
+    public async Task GetClaimablePersonasAsync_ShouldResolveEachPersonasAvatar_Independently()
+    {
+        // Same batching-isolation concern as GetPreviewAsync above, for the claimable-personas
+        // list: two pending personas with different avatar keys must each keep their own.
+        const string OutsiderId = "outsider-1";
+        var baulId = await SeedBaulAsync();
+        await _baules.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, null, "Primera pendiente", BaulRole.Colaborador, Now,
+            AvatarPhotoKey: "first-pending-key"));
+        await _baules.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, null, "Segunda pendiente", BaulRole.Colaborador, Now,
+            AvatarPhotoKey: "second-pending-key"));
+        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
+
+        var result = await CreateManager(OutsiderId).GetClaimablePersonasAsync(link.Value.Token);
+
+        Assert.True(result.IsSuccess);
+        var claimable = result.Value.ToList();
+        var first = claimable.Single(p => p.Nickname == "Primera pendiente");
+        Assert.Equal("https://imgproxy.test/PersonaAvatar/first-pending-key", first.AvatarUrl);
+        var second = claimable.Single(p => p.Nickname == "Segunda pendiente");
+        Assert.Equal("https://imgproxy.test/PersonaAvatar/second-pending-key", second.AvatarUrl);
     }
 
     [Fact]

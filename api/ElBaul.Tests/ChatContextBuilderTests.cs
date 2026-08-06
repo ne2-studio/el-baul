@@ -149,6 +149,29 @@ public class ChatContextBuilderTests
     }
 
     [Fact]
+    public async Task BuildAsync_ShouldResolveEachChaptersDateRange_FromItsOwnPhotos()
+    {
+        // Targets the batched IPhotoRepository.GetActiveByBaulIdAsync + GroupBy that replaced
+        // one GetByChapterIdAsync call per chapter — two chapters with different photo dates
+        // must each show their own range, the exact mistake a broken group-by would produce.
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        var firstChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Capítulo antiguo", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        var secondChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Capítulo reciente", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        await _chapterRepository.CreateAsync(firstChapter);
+        await _chapterRepository.CreateAsync(secondChapter);
+
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), firstChapter.Id, new BaulId(baulId), "key-old", PhotoDates.Of(2005, 1), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), secondChapter.Id, new BaulId(baulId), "key-new", PhotoDates.Of(2022, 6), CustodioId, _clock.UtcNow()));
+
+        var builder = CreateBuilder();
+        var context = await builder.BuildAsync(baul, "¿Qué capítulos hay?");
+
+        Assert.Contains("- Capítulo antiguo (1 fotos, 2005-01)", context);
+        Assert.Contains("- Capítulo reciente (1 fotos, 2022-06)", context);
+    }
+
+    [Fact]
     public async Task BuildAsync_ShouldShowASingleDate_InTheChapterHeader_WhenAllItsPhotosAgree()
     {
         var baulId = Guid.NewGuid();

@@ -25,16 +25,21 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PersonaDto>>(auth.Error);
         var access = auth.Value;
 
-        var personas = await baulRepository.GetPersonasAsync(baulId);
-        var dtos = new List<PersonaDto>();
+        var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
 
-        foreach (var persona in personas)
-        {
-            var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!) : null;
-            var canEdit = CanEditPersona(persona, userId, access);
-            dtos.Add(await personaDtoProjector.ProjectAsync(persona, user, canEdit));
-        }
+        // One batched user lookup for every claimed persona instead of one round trip each,
+        // plus IPersonaDtoProjector.ProjectManyAsync batching the avatar-photo lookup the same
+        // way — together this turns what used to be up to 2 queries per persona into 2 fixed
+        // queries for the whole list.
+        var claimedUserIds = personas.Where(p => p.IsClaimed).Select(p => p.UserId!).Distinct();
+        var usersById = (await userRepository.GetByIdsAsync(claimedUserIds)).ToDictionary(u => u.Id);
 
+        var items = personas.Select(persona => (
+            Persona: persona,
+            User: persona.IsClaimed ? usersById.GetValueOrDefault(persona.UserId!) : null,
+            CanEdit: CanEditPersona(persona, userId, access)));
+
+        var dtos = await personaDtoProjector.ProjectManyAsync(items);
         return Result.Success<IEnumerable<PersonaDto>>(dtos);
     }
 

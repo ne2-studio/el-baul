@@ -82,14 +82,18 @@ public class BaulInviteLinkManager(
 
         // Up to 4 avatars from real (non-revoked) family members, no name attached — same
         // limited-disclosure trade-off the public preview already makes for previewPhotos.
-        var avatarUrls = new List<string>();
+        // ProjectManyAsync batches the avatar-photo lookup for every candidate persona instead
+        // of one round trip each; only the URL list itself stays capped at 4.
         var personas = await baulRepository.GetPersonasAsync(baul.Id);
-        foreach (var persona in personas.Where(p => p.Role != BaulRole.SinAcceso))
-        {
-            if (avatarUrls.Count >= 4) break;
-            var dto = await personaDtoProjector.ProjectAsync(persona, null, canEdit: false);
-            if (dto.AvatarUrl is { Length: > 0 } avatarUrl) avatarUrls.Add(avatarUrl);
-        }
+        var candidates = personas.Where(p => p.Role != BaulRole.SinAcceso)
+            .Select(p => (Persona: p, User: (User?)null, CanEdit: false));
+        var dtos = await personaDtoProjector.ProjectManyAsync(candidates);
+        var avatarUrls = dtos
+            .Select(d => d.AvatarUrl)
+            .Where(url => url is { Length: > 0 })
+            .Select(url => url!)
+            .Take(4)
+            .ToList();
 
         return new BaulInviteLinkPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, urls, coverUrl, avatarUrls);
     }
@@ -113,16 +117,15 @@ public class BaulInviteLinkManager(
             return Result.Success<IEnumerable<ClaimablePersonaDto>>([]);
 
         var personas = await baulRepository.GetPersonasAsync(baul.Id);
-        var claimable = new List<ClaimablePersonaDto>();
-        foreach (var persona in personas.Where(p => p.IsClaimable))
-        {
-            // Projected with no User and canEdit: false purely to reuse the avatar-URL
-            // resolution logic — only Id/Nickname/Name/AvatarUrl survive into the narrower
-            // DTO below, so nothing else it computes (Email, Biografia, CanEdit) ever leaks
-            // to a caller who isn't a baúl member yet.
-            var dto = await personaDtoProjector.ProjectAsync(persona, null, canEdit: false);
-            claimable.Add(new ClaimablePersonaDto(dto.Id, dto.Nickname, dto.Name, dto.AvatarUrl));
-        }
+        // Projected with no User and canEdit: false purely to reuse the avatar-URL resolution
+        // logic — only Id/Nickname/Name/AvatarUrl survive into the narrower DTO below, so
+        // nothing else it computes (Email, Biografia, CanEdit) ever leaks to a caller who isn't
+        // a baúl member yet. ProjectManyAsync batches the avatar-photo lookup for the whole
+        // claimable list instead of one round trip per persona.
+        var claimableItems = personas.Where(p => p.IsClaimable)
+            .Select(p => (Persona: p, User: (User?)null, CanEdit: false));
+        var dtos = await personaDtoProjector.ProjectManyAsync(claimableItems);
+        var claimable = dtos.Select(dto => new ClaimablePersonaDto(dto.Id, dto.Nickname, dto.Name, dto.AvatarUrl)).ToList();
 
         return Result.Success<IEnumerable<ClaimablePersonaDto>>(claimable);
     }

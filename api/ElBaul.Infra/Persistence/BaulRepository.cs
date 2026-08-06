@@ -59,6 +59,9 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     public Task<Persona?> GetPersonaByIdAsync(PersonaId personaId) =>
         dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.Id == personaId);
 
+    public async Task<IEnumerable<Persona>> GetPersonasByIdsAsync(IEnumerable<PersonaId> personaIds) =>
+        await dbContext.Personas.AsNoTracking().Where(s => personaIds.Contains(s.Id)).ToListAsync();
+
     public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId) =>
         dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.UserId == userId);
 

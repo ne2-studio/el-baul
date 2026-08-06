@@ -77,6 +77,12 @@ public class InMemoryBaulRepository : IBaulRepository
         lock (_lock) return Task.FromResult(_personas.GetValueOrDefault(personaId));
     }
 
+    public Task<IEnumerable<Persona>> GetPersonasByIdsAsync(IEnumerable<PersonaId> personaIds)
+    {
+        var idSet = personaIds.ToHashSet();
+        lock (_lock) return Task.FromResult(_personas.Values.Where(s => idSet.Contains(s.Id)).ToList().AsEnumerable());
+    }
+
     public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId)
     {
         lock (_lock) return Task.FromResult(_personas.Values.FirstOrDefault(s => s.BaulId == baulId && s.UserId == userId));

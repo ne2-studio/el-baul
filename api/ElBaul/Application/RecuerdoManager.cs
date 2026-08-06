@@ -203,13 +203,14 @@ public class RecuerdoManager(
     private async Task<Dictionary<PhotoId, string>> BuildThumbnailUrlsAsync(IEnumerable<Recuerdo> recuerdos)
     {
         var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
+        if (photoIds.Count == 0) return [];
+
+        // One IPhotoRepository.GetByIdsAsync call for every distinct photo in the list instead
+        // of one GetByIdAsync round trip each.
+        var photos = await photoRepository.GetByIdsAsync(photoIds);
         var thumbnailUrls = new Dictionary<PhotoId, string>();
-        foreach (var photoId in photoIds)
-        {
-            var photo = await photoRepository.GetByIdAsync(photoId);
-            if (photo is not null)
-                thumbnailUrls[photoId] = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-        }
+        foreach (var photo in photos)
+            thumbnailUrls[photo.Id] = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
 
         return thumbnailUrls;
     }

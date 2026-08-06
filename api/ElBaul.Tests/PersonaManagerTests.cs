@@ -100,6 +100,40 @@ public class PersonaManagerTests
     }
 
     [Fact]
+    public async Task GetPersonasAsync_ShouldResolveEachPersonasUserAndAvatar_Independently()
+    {
+        // Targets GetPersonasAsync's batched user/avatar lookups specifically: a claimed
+        // persona with an avatar photo, an unclaimed one, and the custodio must each get their
+        // own data back — the exact mistake a broken dictionary lookup in the batching would
+        // produce is one persona's user/avatar leaking onto another's DTO.
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+        var avatarPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "avatar-key");
+        await _fixture.Baules.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, OtherUserId, "Colaborador con avatar", BaulRole.Colaborador,
+            _fixture.Clock.UtcNow(), AvatarPhotoId: avatarPhotoId));
+        await _fixture.AddPendingPersonaAsync(baulId, "Pendiente sin cuenta");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetPersonasAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        var dtos = result.Value.ToList();
+        Assert.Equal(3, dtos.Count);
+
+        var withAvatar = dtos.Single(d => d.Nickname == "Colaborador con avatar");
+        Assert.Equal("other@test.com", withAvatar.Email);
+        Assert.Contains("avatar-key", withAvatar.AvatarUrl);
+
+        var pending = dtos.Single(d => d.Nickname == "Pendiente sin cuenta");
+        Assert.Null(pending.Email);
+        Assert.Null(pending.AvatarUrl);
+
+        var custodio = dtos.Single(d => d.Nickname == "Custodio");
+        Assert.Equal("custodio@test.com", custodio.Email);
+        Assert.Null(custodio.AvatarUrl);
+    }
+
+    [Fact]
     public async Task GetPersonaAsync_ShouldAllowAnyMember_ToViewAnothersFicha()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");

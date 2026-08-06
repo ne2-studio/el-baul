@@ -263,6 +263,38 @@ public class RecuerdoManagerTests
         Assert.Null(withoutPhoto.PhotoThumbnailUrl);
     }
 
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldResolveEachRecuerdosThumbnail_FromItsOwnPhoto()
+    {
+        // Targets BuildThumbnailUrlsAsync's batched IPhotoRepository.GetByIdsAsync lookup
+        // specifically: two recuerdos on two different photos must each get their own photo's
+        // thumbnail — the exact mistake a broken dictionary lookup in the batching would
+        // produce is one recuerdo's thumbnail leaking onto another's DTO.
+        var baulId = Guid.NewGuid();
+        var chapterId = Guid.NewGuid();
+        var firstPhotoId = Guid.NewGuid();
+        var secondPhotoId = Guid.NewGuid();
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 2, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(firstPhotoId), new ChapterId(chapterId), new BaulId(baulId), "first-key", null, CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(secondPhotoId), new ChapterId(chapterId), new BaulId(baulId), "second-key", null, CustodioId, _clock.UtcNow()));
+
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(firstPhotoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "de la primera foto", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), new PhotoId(secondPhotoId), new ChapterId(chapterId), new BaulId(baulId), CustodioId, "de la segunda foto", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetRecuerdosAsync(new ChapterId(chapterId));
+
+        Assert.True(result.IsSuccess);
+        var list = result.Value.ToList();
+
+        var first = list.Single(r => r.Text == "de la primera foto");
+        Assert.Contains("first-key", first.PhotoThumbnailUrl);
+
+        var second = list.Single(r => r.Text == "de la segunda foto");
+        Assert.Contains("second-key", second.PhotoThumbnailUrl);
+    }
+
     // --- Baul-scoped -------------------------------------------------------------------
 
     [Fact]
