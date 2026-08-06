@@ -16,7 +16,9 @@ public class ChapterManagerTests
     private readonly FakePhotoStorage _photoStorage = new();
 
     private ChapterManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<ChapterManager>.Instance, _fixture.Chapters, _fixture.Baules, _fixture.Photos,
+        new(NullLogger<ChapterManager>.Instance, _fixture.Chapters,
+            new InMemoryChapterListReadModel(_fixture.Chapters, _fixture.Photos, _fixture.Recuerdos),
+            _fixture.Baules, _fixture.Photos,
             _fixture.Recuerdos, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
@@ -191,6 +193,43 @@ public class ChapterManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Single().RecuerdoCount);
+    }
+
+    [Fact]
+    public async Task GetByBaulIdAsync_ShouldScopeRecuerdoCountsAndLatestAuthor_PerChapter()
+    {
+        // Targets IChapterListReadModel's grouping specifically: with two chapters each with
+        // their own recuerdos/authors, a chapter must never see another chapter's counts,
+        // latest text, or latest author — the exact mistake a broken GroupBy/dictionary lookup
+        // in the batched read model would produce.
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+        const string secondUserId = "colaborador-2";
+        await _fixture.AddColaboradorAsync(baulId, secondUserId, "Colaboradora");
+
+        var firstChapterId = await _fixture.AddChapterAsync(baulId, "Primero");
+        var secondChapterId = await _fixture.AddChapterAsync(baulId, "Segundo");
+
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(
+            new RecuerdoId(Guid.NewGuid()), null, firstChapterId, baulId, CustodioId, "Del primero", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(
+            new RecuerdoId(Guid.NewGuid()), null, secondChapterId, baulId, secondUserId, "Del segundo", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(
+            new RecuerdoId(Guid.NewGuid()), null, secondChapterId, baulId, secondUserId, "Del segundo, más reciente", _fixture.Clock.UtcNow().AddMinutes(1)));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetByBaulIdAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        var first = result.Value.Single(c => c.Id == firstChapterId.ToString());
+        var second = result.Value.Single(c => c.Id == secondChapterId.ToString());
+
+        Assert.Equal(1, first.RecuerdoCount);
+        Assert.Equal("Del primero", first.LatestRecuerdoText);
+        Assert.Equal("Custodio", first.LatestRecuerdoAuthor);
+
+        Assert.Equal(2, second.RecuerdoCount);
+        Assert.Equal("Del segundo, más reciente", second.LatestRecuerdoText);
+        Assert.Equal("Colaboradora", second.LatestRecuerdoAuthor);
     }
 
     [Fact]

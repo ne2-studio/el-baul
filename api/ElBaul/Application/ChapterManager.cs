@@ -4,11 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application;
 
-using DateRange = (int? MinY, int? MinM, int? MinD, int? MaxY, int? MaxM, int? MaxD, int Undated);
-
 public class ChapterManager(
     ILogger<ChapterManager> logger,
     IChapterRepository chapterRepository,
+    IChapterListReadModel chapterListReadModel,
     IBaulRepository baulRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
@@ -26,10 +25,21 @@ public class ChapterManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapters by baul", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<ChapterDto>>(auth.Error);
 
-        var chapters = await chapterRepository.GetByBaulIdAsync(baulId);
+        // IChapterListReadModel does the heavy lifting (recuerdo counts/latest, photo date
+        // ranges) in a handful of baúl-scoped queries instead of one round trip per chapter;
+        // the only thing still fetched per row here is a batched author lookup and, per row,
+        // a (non-DB) signed-URL computation.
+        var rows = await chapterListReadModel.GetByBaulIdAsync(baulId);
+
+        var authorUserIds = rows
+            .Where(r => r.LatestRecuerdoAuthorUserId is not null)
+            .Select(r => r.LatestRecuerdoAuthorUserId!)
+            .Distinct();
+        var authors = await authorInfoProjector.GetManyAsync(baulId, authorUserIds);
+
         var dtos = new List<ChapterDto>();
-        foreach (var chapter in chapters)
-            dtos.Add(await ToDtoAsync(chapter));
+        foreach (var row in rows)
+            dtos.Add(await ToDtoAsync(row, authors));
 
         // Chronological: dated chapters first (oldest min date first, so the baúl reads like a
         // story), undated-only chapters last.
@@ -59,7 +69,7 @@ public class ChapterManager(
         await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });
 
         logger.LogInformation("Chapter created {BaulId} {ChapterId} {Name}", baulId, chapter.Id, name);
-        return ToDto(chapter, null, null, 0, null, null, EmptyDateRange);
+        return ToDto(chapter, null, null, 0, null, null, ChapterDateRange.Empty);
     }
 
     public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId)
@@ -143,6 +153,10 @@ public class ChapterManager(
         return Result.Success();
     }
 
+    // Single-chapter path — Create/Update/SetCover/Delete each return the one chapter they just
+    // touched, so a per-chapter photos/recuerdos/author lookup here is fine (there's no list to
+    // fan out over). GetByBaulIdAsync uses IChapterListReadModel + ToDtoAsync(ChapterListRow, ...)
+    // below instead, precisely to avoid running this once per chapter in a baúl.
     private async Task<ChapterDto> ToDtoAsync(Chapter chapter)
     {
         var coverUrl = chapter.CoverPhotoKey is { Length: > 0 }
@@ -159,31 +173,40 @@ public class ChapterManager(
             ? null
             : (await authorInfoProjector.GetAsync(chapter.BaulId, latestRecuerdo.UserId)).Nickname;
 
-        var dateRange = ComputeDateRange(photos);
+        var dateRange = ChapterDateRangeCalculator.Compute(photos);
 
         return ToDto(chapter, coverUrl, featuredCoverUrl, recuerdos.Count, latestRecuerdo?.Text, latestAuthor, dateRange);
     }
 
-    private static readonly DateRange EmptyDateRange = (null, null, null, null, null, null, 0);
-
-    private static DateRange ComputeDateRange(IReadOnlyCollection<Photo> photos)
+    // List path — turns an already-batched IChapterListReadModel row plus an already-batched
+    // author map (see GetByBaulIdAsync) into a ChapterDto. The only per-row work left is
+    // resolving cover/featured-cover URLs, which IPhotoStorage computes locally (no DB/network
+    // round trip — see MinioPhotoStorage.GetImageUrl), so it stays cheap per chapter.
+    private async Task<ChapterDto> ToDtoAsync(ChapterListRow row, IReadOnlyDictionary<string, AuthorInfo> authorsByUserId)
     {
-        var dated = photos.Where(p => p.Date is not null).ToList();
-        var undatedCount = photos.Count - dated.Count;
-        if (dated.Count == 0) return (null, null, null, null, null, null, undatedCount);
+        var coverUrl = row.CoverPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(row.CoverPhotoKey, ImagePlacement.ChapterCover)
+            : null;
+        var featuredCoverUrl = row.CoverPhotoKey is { Length: > 0 }
+            ? await photoStorage.GetImageUrl(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured)
+            : null;
 
-        var min = dated.OrderBy(p => p.Date!.Year).ThenBy(p => p.Date!.Month ?? 1).ThenBy(p => p.Date!.Day ?? 1).First();
-        var max = dated.OrderByDescending(p => p.Date!.Year).ThenByDescending(p => p.Date!.Month ?? 1).ThenByDescending(p => p.Date!.Day ?? 1).First();
+        var latestAuthor = row.LatestRecuerdoAuthorUserId is { } userId
+            ? AuthorInfoProjector.Resolve(authorsByUserId, userId).Nickname
+            : null;
 
-        return (min.Date!.Year, min.Date!.Month, min.Date!.Day,
-            max.Date!.Year, max.Date!.Month, max.Date!.Day, undatedCount);
+        return new ChapterDto(
+            row.Id.ToString(), row.BaulId.ToString(), row.Name, row.PhotoCount, coverUrl, featuredCoverUrl,
+            row.CreatedAt, row.UpdatedAt, row.RecuerdoCount, row.LatestRecuerdoText, latestAuthor,
+            row.DateRange.MinYear, row.DateRange.MinMonth, row.DateRange.MinDay,
+            row.DateRange.MaxYear, row.DateRange.MaxMonth, row.DateRange.MaxDay, row.DateRange.UndatedPhotoCount);
     }
 
     private static ChapterDto ToDto(
         Chapter chapter, string? coverUrl, string? featuredCoverUrl, int recuerdoCount,
-        string? latestRecuerdoText, string? latestRecuerdoAuthor, DateRange dateRange) =>
+        string? latestRecuerdoText, string? latestRecuerdoAuthor, ChapterDateRange dateRange) =>
         new(chapter.Id.ToString(), chapter.BaulId.ToString(), chapter.Name,
             chapter.PhotoCount, coverUrl, featuredCoverUrl, chapter.CreatedAt, chapter.UpdatedAt,
             recuerdoCount, latestRecuerdoText, latestRecuerdoAuthor,
-            dateRange.MinY, dateRange.MinM, dateRange.MinD, dateRange.MaxY, dateRange.MaxM, dateRange.MaxD, dateRange.Undated);
+            dateRange.MinYear, dateRange.MinMonth, dateRange.MinDay, dateRange.MaxYear, dateRange.MaxMonth, dateRange.MaxDay, dateRange.UndatedPhotoCount);
 }
