@@ -1,0 +1,110 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Check, ChevronDown, Plus } from 'lucide-react';
+import { Button } from '@/design-system/components/actions/Button';
+import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/design-system/components/ui/dropdown-menu';
+import { cn } from '@/design-system/components/ui/utils';
+import { Baul } from '@/types';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { useUIStore } from '@/store/uiStore';
+import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
+import { getBaulPermissions } from '@/utils/roleUtils';
+
+interface WorkspaceSwitcherContainerProps {
+  activeBaul: Baul;
+}
+
+// Sustituye el título estático de BaulRoute — es el selector de workspace del PRD. Self-
+// sufficient (ver la regla de containers/ en docs/architecture/frontend.md): lee su propia
+// lista de baúles, decide el gating de plan al crear uno nuevo y hace el propio cambio de
+// CurrentBaul + navegación, igual que BaulSettingsMenuContainer hace con sus propias acciones.
+// Las filas del dropdown son deliberadamente discretas (miniatura + nombre + capítulos), no la
+// BaulCard grande de la Home que existía antes — mismo lenguaje visual/compacto que ya usa
+// ShareTargetBaulScreen para elegir baúl al compartir fotos.
+export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherContainerProps) {
+  const navigate = useNavigate();
+  const baules = useBaulesStore((state) => state.baules);
+  const subscription = useAuthStore((state) => state.subscription);
+  const monetizationEnabled = useAppConfigStore((state) => state.monetizationEnabled);
+  const setShowPlanLimitModal = useUIStore((state) => state.setShowPlanLimitModal);
+
+  const handleSwitch = (baul: Baul) => {
+    if (baul.id === activeBaul.id) return;
+    useCurrentBaulStore.getState().setCurrentBaulId(baul.id);
+    navigate(`/baules/${baul.id}`);
+  };
+
+  // Mismo gating que antes tenía BaulesListRoute.handleCreateBaulClick.
+  const handleCreateBaul = () => {
+    if (monetizationEnabled) {
+      const custodianBaules = baules.filter((b) => getBaulPermissions(b).countsAsCustodioForPlan);
+      if (custodianBaules.length >= subscription.baulesLimit) {
+        setShowPlanLimitModal(true);
+        return;
+      }
+    }
+    navigate('/baules/nuevo');
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="plain"
+          className="flex items-center gap-1 -ml-2 px-2 py-1.5 rounded-lg hover:bg-primary/5 max-w-[65vw]"
+          aria-label="Cambiar de baúl"
+        >
+          <span className="text-2xl font-serif text-foreground truncate">{activeBaul.name}</span>
+          <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-72 p-2">
+        {baules.map((baul) => {
+          const isActive = baul.id === activeBaul.id;
+          return (
+            <DropdownMenuItem
+              key={baul.id}
+              onSelect={() => handleSwitch(baul)}
+              className={cn('gap-3 py-2.5 px-2 rounded-xl', isActive && 'bg-primary/10')}
+            >
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0">
+                {baul.coverPhotoUrl ? (
+                  <img src={baul.coverPhotoUrl} alt={baul.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <BaulIcon className="w-4 h-4 text-muted-foreground opacity-40" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-serif text-foreground text-sm leading-tight truncate">{baul.name}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  {baul.chapterCount} {baul.chapterCount === 1 ? 'capítulo' : 'capítulos'}
+                </p>
+              </div>
+              {isActive && <Check className="w-4 h-4 text-primary shrink-0" aria-label="Baúl activo" />}
+            </DropdownMenuItem>
+          );
+        })}
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem onClick={handleCreateBaul} className="gap-3 py-2.5 px-2 rounded-xl">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
+            <Plus className="w-4 h-4" />
+          </div>
+          Crear nuevo baúl
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

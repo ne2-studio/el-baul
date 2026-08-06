@@ -19,7 +19,7 @@ import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
 import { WelcomeRoute } from '../features/auth/routes/WelcomeRoute';
 import { CallbackRoute } from '../features/auth/routes/CallbackRoute';
 import { OnboardingRoute } from '../features/auth/routes/OnboardingRoute';
-import { BaulesListRoute } from '../features/baules/routes/BaulesListRoute';
+import { HomeRedirectRoute } from '../features/baules/routes/HomeRedirectRoute';
 import { CreateBaulRoute } from '../features/baules/routes/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/routes/BaulRoute';
 import { AiChatRoute } from '../features/chat/routes/AiChatRoute';
@@ -143,29 +143,11 @@ function App() {
       baulesUsed: custodianBaules.length
     }));
 
-    // Navigate to appropriate screen. Reads window.location rather than the `location` from
-    // useLocation(): this callback is async, so by the time it resolves, that closure is
-    // stale — e.g. after a fresh OIDC login, CallbackRoute's own navigate('/baules') has
-    // already run by now, but the closed-over `location` here would still read '/callback'
-    // and neither branch below would ever match. window.location always reflects where the
-    // browser actually is right now (BrowserRouter keeps it in sync via the History API).
-    if (currentBaules.length === 0) {
-      if (window.location.pathname === '/baules') {
-        // hasSeenOnboarding is null while unloaded/on a failed profile fetch — treated as
-        // "not seen" so the carousel shows rather than risk silently skipping it forever.
-        const hasSeenOnboarding = useAuthStore.getState().hasSeenOnboarding;
-        navigate(hasSeenOnboarding ? '/baules/nuevo' : '/onboarding');
-      }
-    } else {
-      // /callback is excluded here: CallbackRoute owns navigation away from it, reading
-      // redirectTo from the OIDC state (not a query param, unlike this check).
-      const params = new URLSearchParams(window.location.search);
-      const hasRedirectTo = params.has('redirectTo');
-
-      if (!hasRedirectTo && window.location.pathname === '/') {
-        navigate('/baules', { replace: true });
-      }
-    }
+    // No further navigation here: CallbackRoute/PublicRoute already send an authenticated user
+    // to "/baules", and HomeRedirectRoute (mounted there) owns the actual decision of where
+    // that resolves to (CurrentBaul, first baúl, or onboarding/crear-baúl) — see
+    // resolveHomeDestination. Keeping a single source of truth avoids this effect racing that
+    // route's own resolution with a different criterion.
   };
 
   const handleSignOut = async (): Promise<boolean> => {
@@ -219,7 +201,7 @@ function App() {
         {/* Protected Routes */}
         <Route path="/baules" element={
           <ProtectedRoute>
-            <BaulesListRoute />
+            <HomeRedirectRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/nuevo" element={

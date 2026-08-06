@@ -5,7 +5,8 @@ import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { StickyHeader } from '@/design-system/layouts/StickyHeader';
 
 interface PageHeaderProps {
-  onBack: () => void;
+  /** Requerido salvo que `leading` lo sustituya (solo variante 'row'). */
+  onBack?: () => void;
   /** Por defecto 'Volver' — pásalo p. ej. como 'Cancelar' en flujos de formulario/selección. */
   backLabel?: string;
   backDisabled?: boolean;
@@ -16,17 +17,24 @@ interface PageHeaderProps {
   /** Solo se usa en la variante 'row' — menú desplegable, insignia de selección, etc. */
   trailing?: React.ReactNode;
   /**
+   * Solo se usa en la variante 'row' — sustituye al `BackButton` (p. ej. el selector de
+   * workspace de BaulRoute, una pantalla que ya no tiene "atrás" al que volver). Si se omite,
+   * se muestra el `BackButton` de siempre con `onBack`/`backLabel`/`backDisabled`.
+   */
+  leading?: React.ReactNode;
+  /**
    * 'stacked': botón con texto encima del título — pantallas de creación/formulario.
    * 'inline': botón circular solo-icono junto al título — pantallas de detalle/ajustes.
-   * 'row': botón con texto + slot `trailing`, sin título propio (vive en un `Hero` debajo)
-   *        — pantallas de navegación de contenido con acciones contextuales.
+   * 'row': botón con texto (o `leading`) + slot `trailing`, sin título propio (vive en un
+   *        `Hero` debajo, salvo excepciones como BaulRoute) — pantallas de navegación de
+   *        contenido con acciones contextuales.
    */
   variant: 'stacked' | 'inline' | 'row';
   className?: string;
 }
 
 export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(function PageHeader(
-  { onBack, backLabel = 'Volver', backDisabled, title, titleClassName, subtitle, trailing, variant, className },
+  { onBack, backLabel = 'Volver', backDisabled, title, titleClassName, subtitle, trailing, leading, variant, className },
   ref
 ) {
   if (variant === 'row') {
@@ -34,7 +42,7 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(func
       <StickyHeader ref={ref}>
         <PageContainer className={cn('py-4', className)}>
           <div className="flex items-center justify-between">
-            <BackButton onClick={onBack} label={backLabel} disabled={backDisabled} />
+            {leading ?? <BackButton onClick={onBack!} label={backLabel} disabled={backDisabled} />}
             {trailing}
           </div>
         </PageContainer>
@@ -46,7 +54,7 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(func
     return (
       <StickyHeader ref={ref}>
         <PageContainer className={cn('py-5 flex items-center gap-4', className)}>
-          <BackButton onClick={onBack} disabled={backDisabled} />
+          <BackButton onClick={onBack!} disabled={backDisabled} />
           <div>
             <h1 className={cn('text-3xl text-foreground', titleClassName)}>{title}</h1>
             {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
@@ -59,7 +67,7 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(func
   return (
     <StickyHeader ref={ref}>
       <PageContainer className={cn('py-5', className)}>
-        <BackButton onClick={onBack} label={backLabel} disabled={backDisabled} className="mb-3" />
+        <BackButton onClick={onBack!} label={backLabel} disabled={backDisabled} className="mb-3" />
         <h1 className={cn('text-3xl text-foreground', subtitle && 'mb-1', titleClassName)}>{title}</h1>
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </PageContainer>

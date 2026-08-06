@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CreateBaulForm } from '@/features/baules/components/CreateBaulForm';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { createBaul as storeCreateBaul } from '@/features/baules/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
@@ -34,6 +35,10 @@ export const CreateBaulRoute: React.FC = () => {
       ...prev,
       baulesUsed: prev.baulesUsed + 1
     }));
+
+    // El baúl recién creado es el que el usuario va a usar a continuación — se convierte en el
+    // CurrentBaul para que la app abra ahí la próxima vez, no en el que tuviera activo antes.
+    useCurrentBaulStore.getState().setCurrentBaulId(result.value.id);
 
     navigate(`/baules/${result.value.id}/fotos-sueltas/confirmar`);
 

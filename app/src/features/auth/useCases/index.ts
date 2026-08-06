@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 
 async function loadProfile(): Promise<UserProfile | null> {
   try {
@@ -58,4 +59,5 @@ export function resetAllStores(): void {
   useBaulesStore.getState().reset();
   usePersonasStore.getState().reset();
   useRecuerdosStore.getState().reset();
+  useCurrentBaulStore.getState().reset();
 }

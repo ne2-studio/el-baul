@@ -13,11 +13,13 @@ export async function loginAs(page: Page, userButtonName: 'Admin User' | 'Normal
   await page.waitForURL('**/authorize**', { timeout: 15_000 });
   await page.getByRole('button', { name: userButtonName }).click();
   // Don't just wait for localhost:3000/** — that glob also matches the transient /callback
-  // screen the SPA shows while it's still exchanging the code for a token. A genuinely fresh
-  // identity (zero baúles, never seen onboarding) lands on /onboarding first; one that's
-  // already seen it lands straight on /baules/nuevo.
+  // screen the SPA shows while it's still exchanging the code for a token. There is no "list
+  // of baúles" screen to land on anymore ("/baules" only resolves and redirects further): a
+  // genuinely fresh identity (zero baúles, never seen onboarding) lands on /onboarding first;
+  // one that's already seen it lands on /baules/nuevo; one with baúles already lands directly
+  // inside one of them (/baules/<id>) — its own CurrentBaul or the first one.
   await page.waitForURL(
-    (url) => url.pathname === '/baules' || url.pathname === '/baules/nuevo' || url.pathname === '/onboarding',
+    (url) => /^\/baules\/[^/]+$/.test(url.pathname) || url.pathname === '/baules/nuevo' || url.pathname === '/onboarding',
     { timeout: 15_000 },
   );
 

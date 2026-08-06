@@ -28,9 +28,14 @@ The shared screen template behind every top-level content view: \`PageHeader\` (
 
 ### When to use
 Any screen that browses a piece of family content with more than one section: today
-Baúl (\`ChaptersView.tsx\`), Capítulo (\`PhotosView.tsx\`) and Persona
-(\`PersonaDetailScreen.tsx\`). Reuse it for future top-level content views (e.g. Lugares)
-instead of hand-rolling a new header/hero/tabs combination.
+Capítulo (\`PhotosView.tsx\`) and Persona (\`PersonaDetailScreen.tsx\`). Reuse it for future
+top-level content views (e.g. Lugares) instead of hand-rolling a new header/hero/tabs
+combination.
+
+Baúl (\`BaulRoute.tsx\`) is the one exception: as the app's global workspace, it drops the
+\`Hero\` (no per-baúl title to show) and puts the workspace selector
+(\`WorkspaceSwitcherContainer\`) in the \`PageHeader\`'s \`leading\` slot instead of a back
+button — see "Baúl as workspace" in \`docs/DESIGN.md\`.
 
 ### When NOT to use
 Single-section screens with a title don't need a \`Hero\`/\`Tabbar\` — use \`PageHeader\`

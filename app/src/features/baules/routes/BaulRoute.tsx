@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
+import { UserCircle } from 'lucide-react';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
-import { Hero } from '@/design-system/layouts/Hero';
+import { IconButton } from '@/design-system/components/actions/IconButton';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
@@ -11,9 +12,11 @@ import { BaulChaptersTabContainer } from '@/features/baules/containers/BaulChapt
 import { BaulPersonasTabContainer } from '@/features/people/containers/BaulPersonasTabContainer';
 import { BaulRecuerdosTabContainer } from '@/features/memories/containers/BaulRecuerdosTabContainer';
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
+import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useUIStore } from '@/store/uiStore';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -22,10 +25,12 @@ import { getBaulPermissions } from '@/utils/roleUtils';
 
 type BaulTab = 'capitulos' | 'personas' | 'recuerdos';
 
-// BaulRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las 3 pestañas
-// como containers autosuficientes — no hay un componente "shell" intermedio en components/,
-// porque su único trabajo habría sido recomponer containers, lo cual ya no es presentacional
-// de verdad aunque viva ahí — ver la regla de containers/ en docs/architecture/frontend.md.
+// BaulRoute ensambla el chrome (PageHeader/Tabbar) directamente y compone las 3 pestañas como
+// containers autosuficientes — no hay un componente "shell" intermedio en components/, porque
+// su único trabajo habría sido recomponer containers, lo cual ya no es presentacional de
+// verdad aunque viva ahí — ver la regla de containers/ en docs/architecture/frontend.md.
+// A diferencia de Capítulo/Persona, no lleva Hero: el selector de workspace en el PageHeader
+// ya hace de "título" de la pantalla — ver docs/DESIGN.md, "Content screen composition".
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,6 +43,7 @@ export const BaulRoute: React.FC = () => {
   const { chapters } = useBaulesStore();
   const { personas } = usePersonasStore();
   const { baulRecuerdos } = useRecuerdosStore();
+  const setShowProfileMenu = useUIStore((state) => state.setShowProfileMenu);
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
@@ -64,18 +70,16 @@ export const BaulRoute: React.FC = () => {
       <PageHeader
         ref={headerRef}
         variant="row"
-        onBack={() => navigate('/baules')}
-        trailing={<BaulSettingsMenuContainer baul={baul} />}
+        leading={<WorkspaceSwitcherContainer activeBaul={baul} />}
+        trailing={
+          <div className="flex items-center gap-1">
+            <IconButton aria-label="Abrir menú de cuenta" onClick={() => setShowProfileMenu(true)}>
+              <UserCircle className="w-5 h-5" />
+            </IconButton>
+            <BaulSettingsMenuContainer baul={baul} />
+          </div>
+        }
       />
-
-      <Hero imageUrl={baul.coverPhotoUrl} title={baul.name}>
-        {baul.description && (
-          <p className="text-sm text-white/80 mt-1.5 leading-snug max-w-sm">{baul.description}</p>
-        )}
-        {!baul.description && baulPermissions.canEditBaul && (
-          <p className="text-sm text-white/40 mt-1.5 italic">Sin descripción · edita desde el menú ···</p>
-        )}
-      </Hero>
 
       {/* top es la altura medida del header, no un valor fijo — iOS/WKWebView y
           Android/Chrome WebView renderizan el mismo header a alturas ligeramente distintas. */}

@@ -212,8 +212,8 @@ and separation between distinct sections or screen edges uses 24–32px.
 
 ### Content screen composition
 
-Baúl, Capítulo and Persona all share the same screen template, and any future top-level
-content view (e.g. Lugares) should reuse it rather than inventing a new one:
+Capítulo and Persona share the same screen template, and any future top-level content view
+(e.g. Lugares) should reuse it rather than inventing a new one:
 
 1. **`PageHeader`** (`variant="row"`) — sticky back button plus a `trailing` slot for a
    contextual menu/actions. It has no title of its own; the title lives in the `Hero`
@@ -227,7 +227,25 @@ content view (e.g. Lugares) should reuse it rather than inventing a new one:
    described above.
 
 See `Patterns/Layout/ContentScreen` in Storybook for a live composed example, and
-`ChaptersView.tsx`, `PhotosView.tsx`, `PersonaDetailScreen.tsx` for real usages.
+`PhotosView.tsx`, `PersonaDetailScreen.tsx` for real usages.
+
+**Baúl is the exception**: as the app's global workspace (see "Baúl as workspace" below), its
+top-level screen (`BaulRoute.tsx`) drops the `Hero` — there is no per-baúl title to show, the
+baúl itself is the ambient context. It keeps `PageHeader` (`variant="row"`) and `Tabbar`, but
+the header's `leading` slot carries the workspace selector (`WorkspaceSwitcherContainer`)
+instead of a back button — there is nothing to go "back" to from the workspace's own home.
+
+### Baúl as workspace
+
+The baúl is the app's global context, not a screen the user navigates to and from: the app
+always opens directly in a baúl (the last one used, persisted as `CurrentBaul` — see
+`useCurrentBaulStore`), and switching baúles happens via the workspace selector in
+`BaulRoute`'s header without an intermediate "list of baúles" screen. The selector's dropdown
+(`WorkspaceSwitcherContainer`) lists baúles as compact rows (thumbnail + name + chapter
+count, active one checked) — the same discreet, low-emphasis pattern `ShareTargetBaulScreen`
+already used to pick a destination baúl when sharing photos — not the full-bleed `BaulCard`.
+Chapters (not the baúl itself) are the primary visual content the user browses inside a baúl,
+styled with the emotional card language `BaulCard` pioneered — see `ChapterCard.tsx`.
 
 ## Elevation & Depth
 

@@ -13,6 +13,11 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Cambiado
+
+- La app ya no abre en una lista de baúles: entra directamente en el último baúl usado. Para cambiar de baúl hay un selector en la parte superior de la pantalla, sin necesidad de navegar a otra pantalla.
+- Se eliminó la imagen de cabecera del baúl; las tarjetas de capítulo ahora muestran su propia foto de portada a pantalla completa con el título superpuesto.
+
 ### Arreglado
 
 - El menú de hoja inferior ahora aparece siempre por encima del botón flotante de acción.

@@ -1,10 +1,32 @@
 import { api } from '@/api';
 import { Baul } from '@/types';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { applyCoverUpdate } from '@/store/baulesCacheReconciliation';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { loadPersonas } from '@/features/people/useCases';
 import { loadRemovalRequests } from '@/features/photos/useCases';
+
+// Decide a qué pantalla debe entrar el usuario al autenticarse o al navegar a "/baules": el
+// CurrentBaul persistido (si sigue perteneciéndole) o, si no, el primero de la lista — y lo
+// persiste como nuevo CurrentBaul. Sin baúles, reutiliza la misma decisión onboarding/crear-baúl
+// que ya existía. Único punto de verdad, usado tanto por el arranque de App.tsx como por
+// HomeRedirectRoute, para que ambos apliquen el mismo criterio.
+export function resolveHomeDestination(baules: Baul[]): string {
+  if (baules.length === 0) {
+    // hasSeenOnboarding es null mientras no se ha cargado / tras un fallo del perfil — se
+    // trata como "no visto" para no arriesgarse a saltarse el carrusel silenciosamente.
+    const hasSeenOnboarding = useAuthStore.getState().hasSeenOnboarding;
+    return hasSeenOnboarding ? '/baules/nuevo' : '/onboarding';
+  }
+
+  const { currentBaulId, setCurrentBaulId } = useCurrentBaulStore.getState();
+  const current = currentBaulId ? baules.find((b) => b.id === currentBaulId) : undefined;
+  const target = current ?? baules[0];
+  if (target.id !== currentBaulId) setCurrentBaulId(target.id);
+  return `/baules/${target.id}`;
+}
 
 export async function loadChapters(baulId: string): Promise<void> {
   const chapters = await api.chapters.getAll(baulId);

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
+import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { api } from '@/api';
 import { Button } from '@/design-system/components/actions/Button';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
@@ -24,6 +25,9 @@ export const AcceptBaulInviteRoute: React.FC = () => {
     setIsJoining(true);
     try {
       const persona = await api.baulInvites.accept(token, personaId);
+      // El baúl al que se acaba de unir pasa a ser el CurrentBaul — es el que quiere usar
+      // a continuación, no el que tuviera activo antes de aceptar la invitación.
+      useCurrentBaulStore.getState().setCurrentBaulId(persona.baulId);
       // Pequeño delay para que se vea el estado de carga y sea más natural
       setTimeout(() => {
         navigate(`/baules/${persona.baulId}`);

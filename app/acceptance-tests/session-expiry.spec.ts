@@ -10,9 +10,12 @@ test('a 401 from the API signs the user out locally and redirects to the sign-in
 
   const accessToken = await loginAs(page, 'Admin User');
   const baulName = `Session expiry test baúl ${Date.now()}`;
-  await createBaulViaApi(page, accessToken, baulName);
+  const baulId = await createBaulViaApi(page, accessToken, baulName);
 
-  await page.goto('/baules');
+  // Deep link straight to the seeded baúl — there is no "list of baúles" screen anymore, and
+  // going through "/baules" here would depend on which baúl this admin's CurrentBaul (or first
+  // baúl) happens to resolve to if other tests left it with more than one.
+  await page.goto(`/baules/${baulId}`);
   await expect(page.getByText(baulName)).toBeVisible();
 
   // Every subsequent API call now looks like an expired/invalid session, regardless of which
@@ -27,9 +30,10 @@ test('a 401 from the API signs the user out locally and redirects to the sign-in
 
   await page.reload();
 
-  await page.waitForURL((url) => url.pathname === '/' && url.searchParams.get('redirectTo') === '/baules', {
-    timeout: 15_000,
-  });
+  await page.waitForURL(
+    (url) => url.pathname === '/' && url.searchParams.get('redirectTo') === `/baules/${baulId}`,
+    { timeout: 15_000 },
+  );
   await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible();
 
   // The stale OIDC user must actually be gone — not just visually on the login screen while a

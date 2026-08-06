@@ -9,8 +9,8 @@ import { loadChapters } from '@/features/baules/useCases';
 import { loadLoosePhotos } from '@/features/photos/useCases';
 
 // Cualquier ruta bajo /baules/:baulId depende de que el baúl, sus capítulos y sus fotos
-// sueltas estén en el store. La navegación normal (BaulesListRoute -> BaulRoute) ya los deja
-// precargados, pero un refresco o un deep link aterriza aquí con el store vacío. Este hook
+// sueltas estén en el store. El cambio de baúl desde el selector de workspace no los
+// precarga, y un refresco o un deep link aterriza aquí con el store vacío. Este hook
 // centraliza la misma lógica de auto-recuperación que ya tenía BaulRoute para que el resto de
 // rutas de la cadena (álbum, visor de foto, fotos sueltas) no se queden colgadas en "Cargando...".
 // La interpretación de isLoading/refreshFailed/baul (qué renderizar mientras no está listo)
