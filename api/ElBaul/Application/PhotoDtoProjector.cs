@@ -30,6 +30,20 @@ public class PhotoDtoProjector(
         return dtos;
     }
 
+    public async Task<List<PhotoDto>> ProjectAsync(IEnumerable<PhotoListRow> rows)
+    {
+        var dtos = new List<PhotoDto>();
+        foreach (var row in rows)
+        {
+            var thumbnailUrl = await photoStorage.GetImageUrl(row.StorageKey, ImagePlacement.PhotoGridThumbnail);
+            var fullUrl = await photoStorage.GetImageUrl(row.StorageKey, ImagePlacement.PhotoFull);
+            dtos.Add(new PhotoDto(row.Id.ToString(), row.ChapterId?.ToString(), row.BaulId.ToString(), thumbnailUrl, fullUrl,
+                row.DateYear, row.DateMonth, row.DateDay, row.UploadedBy, row.CreatedAt, row.RecuerdoCount));
+        }
+
+        return dtos;
+    }
+
     private static PhotoDto ToDto(Photo photo, string thumbnailUrl, string fullUrl, int recuerdoCount) =>
         new(photo.Id.ToString(), photo.ChapterId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
             photo.Date?.Year, photo.Date?.Month, photo.Date?.Day, photo.UploadedBy, photo.CreatedAt, recuerdoCount);

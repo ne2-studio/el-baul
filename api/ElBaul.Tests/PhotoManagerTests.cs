@@ -25,8 +25,11 @@ public class PhotoManagerTests
     private PhotoFileService CreatePhotoFileService(IPhotoStorage? photoStorage = null) =>
         new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer());
 
+    private IPhotoListReadModel CreatePhotoListReadModel() =>
+        new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos);
+
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters, _fixture.Baules,
+        new(NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService());
@@ -90,7 +93,7 @@ public class PhotoManagerTests
             .Returns<Task>(_ => throw new InvalidOperationException("storage unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters, _fixture.Baules,
+            NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage));
@@ -111,7 +114,7 @@ public class PhotoManagerTests
             .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters, _fixture.Baules,
+            NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
@@ -135,7 +138,7 @@ public class PhotoManagerTests
             .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters, _fixture.Baules,
+            NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
@@ -189,6 +192,28 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task GetByChapterIdAsync_ShouldResolveEachPhotosRecuerdoCount_Independently()
+    {
+        // Targets IPhotoListReadModel's batched recuerdo-count lookup specifically: two photos
+        // with different recuerdo counts must each keep their own — the exact mistake a broken
+        // dictionary lookup in the batching would produce is one photo's count leaking onto
+        // another's DTO.
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var quietPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "quiet-key");
+        var busyPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "busy-key");
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, CustodioId, "uno", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, CustodioId, "dos", _fixture.Clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetByChapterIdAsync(chapterId);
+
+        Assert.True(result.IsSuccess);
+        var dtos = result.Value.ToList();
+        Assert.Equal(0, dtos.Single(p => p.Id == quietPhotoId.ToString()).RecuerdoCount);
+        Assert.Equal(2, dtos.Single(p => p.Id == busyPhotoId.ToString()).RecuerdoCount);
     }
 
     [Fact]

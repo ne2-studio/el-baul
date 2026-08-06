@@ -7,6 +7,7 @@ namespace ElBaul.Application;
 public class PhotoManager(
     ILogger<PhotoManager> logger,
     IPhotoRepository photoRepository,
+    IPhotoListReadModel photoListReadModel,
     IChapterRepository chapterRepository,
     IBaulRepository baulRepository,
     IIdGenerator idGenerator,
@@ -28,8 +29,8 @@ public class PhotoManager(
             chapter.BaulId, userId, AccessLevel.Member, "Photos by chapter", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var photos = await photoRepository.GetByChapterIdAsync(chapterId);
-        var dtos = await photoDtoProjector.ProjectAsync(photos);
+        var rows = await photoListReadModel.GetByChapterIdAsync(chapterId);
+        var dtos = await photoDtoProjector.ProjectAsync(rows);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -41,8 +42,8 @@ public class PhotoManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photos", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var photos = await photoRepository.GetLooseByBaulIdAsync(baulId);
-        var dtos = await photoDtoProjector.ProjectAsync(photos);
+        var rows = await photoListReadModel.GetLooseByBaulIdAsync(baulId);
+        var dtos = await photoDtoProjector.ProjectAsync(rows);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -62,11 +63,11 @@ public class PhotoManager(
         if (auth.IsFailure) return Result.Failure<PhotoPageDto>(auth.Error);
 
         var clampedTake = Math.Clamp(take, 1, 100);
-        var page = (await photoRepository.GetPageAsync(baulId, chapterId, skip, clampedTake + 1)).ToList();
+        var page = (await photoListReadModel.GetPageAsync(baulId, chapterId, skip, clampedTake + 1)).ToList();
         var hasMore = page.Count > clampedTake;
-        var photos = hasMore ? page.Take(clampedTake).ToList() : page;
+        var rows = hasMore ? page.Take(clampedTake).ToList() : page;
 
-        var dtos = await photoDtoProjector.ProjectAsync(photos);
+        var dtos = await photoDtoProjector.ProjectAsync(rows);
 
         return Result.Success(new PhotoPageDto(dtos, hasMore));
     }
@@ -315,12 +316,8 @@ public class PhotoManager(
         if (persona is null || persona.BaulId != baulId) return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Persona not found"));
 
         var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(personaId);
-        var photos = (await photoRepository.GetByIdsAsync(photoIds))
-            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
-            .OrderByChronology()
-            .ToList();
-
-        var dtos = await photoDtoProjector.ProjectAsync(photos);
+        var rows = await photoListReadModel.GetActiveByIdsAsync(baulId, photoIds);
+        var dtos = await photoDtoProjector.ProjectAsync(rows);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }

@@ -22,6 +22,7 @@ public class RecuerdoManagerTests
 
     private RecuerdoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<RecuerdoManager>.Instance, _chapterRepository, _photoRepository, _recuerdoRepository,
+            new InMemoryRecuerdoListReadModel(_recuerdoRepository, _photoRepository, _chapterRepository),
             _recuerdoEmbeddingRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), _photoStorage,
             new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
@@ -376,6 +377,32 @@ public class RecuerdoManagerTests
         var standaloneRecuerdo = list.Single(r => r.Text == "suelto");
         Assert.Null(standaloneRecuerdo.PhotoId);
         Assert.Null(standaloneRecuerdo.ChapterId);
+    }
+
+    [Fact]
+    public async Task GetRecuerdosAsync_ShouldResolveEachRecuerdosChapterName_FromItsOwnChapter()
+    {
+        // Targets the baúl-scoped listing's per-chapter name resolution specifically: two
+        // recuerdos in two different chapters must each get their own chapter's name — the
+        // exact mistake a broken dictionary lookup in IRecuerdoListReadModel would produce is
+        // one recuerdo's ChapterName leaking onto another's DTO.
+        var baulId = Guid.NewGuid();
+        var firstChapterId = Guid.NewGuid();
+        var secondChapterId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(firstChapterId), new BaulId(baulId), "Capítulo uno", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(secondChapterId), new BaulId(baulId), "Capítulo dos", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(firstChapterId), new BaulId(baulId), CustodioId, "del uno", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(secondChapterId), new BaulId(baulId), CustodioId, "del dos", _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetRecuerdosAsync(new BaulId(baulId));
+
+        Assert.True(result.IsSuccess);
+        var list = result.Value.ToList();
+        Assert.Equal("Capítulo uno", list.Single(r => r.Text == "del uno").ChapterName);
+        Assert.Equal("Capítulo dos", list.Single(r => r.Text == "del dos").ChapterName);
     }
 
     [Fact]

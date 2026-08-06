@@ -24,7 +24,9 @@ public static class ServiceRegistration
         services.AddSingleton<IChapterRepository, InMemoryChapterRepository>();
         services.AddScoped<IChapterListReadModel, InMemoryChapterListReadModel>();
         services.AddSingleton<IPhotoRepository, InMemoryPhotoRepository>();
+        services.AddScoped<IPhotoListReadModel, InMemoryPhotoListReadModel>();
         services.AddSingleton<IRecuerdoRepository, InMemoryRecuerdoRepository>();
+        services.AddScoped<IRecuerdoListReadModel, InMemoryRecuerdoListReadModel>();
         services.AddSingleton<ISharedLinkRepository, InMemorySharedLinkRepository>();
         services.AddSingleton<IBaulInviteLinkRepository, InMemoryBaulInviteLinkRepository>();
         services.AddSingleton<IChatMessageRepository, InMemoryChatMessageRepository>();

@@ -9,6 +9,7 @@ public class RecuerdoManager(
     IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
+    IRecuerdoListReadModel recuerdoListReadModel,
     IRecuerdoEmbeddingRepository recuerdoEmbeddingRepository,
     IIdGenerator idGenerator,
     IClock clock,
@@ -149,31 +150,29 @@ public class RecuerdoManager(
         var auth = await baulAccess.AuthorizeAsync(scope.BaulId, userId, AccessLevel.Member, operationName, authContext);
         if (auth.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(auth.Error);
 
-        var recuerdos = (await FetchRecuerdosAsync(scope)).ToList();
-
-        var thumbnailUrls = includeThumbnails ? await BuildThumbnailUrlsAsync(recuerdos) : null;
-        var chapterNames = chapterNameMode == ChapterNameMode.PerChapter
-            ? (await chapterRepository.GetByBaulIdAsync(scope.BaulId)).ToDictionary(c => c.Id, c => c.Name)
-            : null;
+        // IRecuerdoListReadModel already carries each row's photo storage key and chapter name
+        // (batched), so unlike before there's no separate chapterRepository/photoRepository
+        // round trip needed here beyond the author lookup.
+        var rows = await FetchRowsAsync(scope);
 
         // One batched author lookup for the whole list instead of one per recuerdo — a feed
         // is typically a handful of distinct authors across many entries.
-        var authorsByUserId = await authorInfoProjector.GetManyAsync(scope.BaulId, recuerdos.Select(r => r.UserId).Distinct());
+        var authorsByUserId = await authorInfoProjector.GetManyAsync(scope.BaulId, rows.Select(r => r.UserId).Distinct());
 
         var dtos = new List<RecuerdoDto>();
-        foreach (var recuerdo in recuerdos)
+        foreach (var row in rows)
         {
-            var (nickname, avatarUrl, personaId) = AuthorInfoProjector.Resolve(authorsByUserId, recuerdo.UserId);
-            var thumbnailUrl = thumbnailUrls is not null && recuerdo.PhotoId is { } photoId
-                ? thumbnailUrls.GetValueOrDefault(photoId)
+            var (nickname, avatarUrl, personaId) = AuthorInfoProjector.Resolve(authorsByUserId, row.UserId);
+            var thumbnailUrl = includeThumbnails && row.PhotoStorageKey is { Length: > 0 }
+                ? await photoStorage.GetImageUrl(row.PhotoStorageKey, ImagePlacement.PhotoGridThumbnail)
                 : null;
             var chapterName = chapterNameMode switch
             {
                 ChapterNameMode.Constant => scope.ChapterName,
-                ChapterNameMode.PerChapter when recuerdo.ChapterId is { } chapterId => chapterNames!.GetValueOrDefault(chapterId),
+                ChapterNameMode.PerChapter => row.ChapterName,
                 _ => null
             };
-            dtos.Add(ToDto(recuerdo, nickname, avatarUrl, personaId, recuerdo.UserId == userId, thumbnailUrl, chapterName));
+            dtos.Add(ToDto(row, nickname, avatarUrl, personaId, row.UserId == userId, thumbnailUrl, chapterName));
         }
 
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
@@ -195,25 +194,10 @@ public class RecuerdoManager(
         return ToDto(recuerdo, nickname, avatarUrl, personaId, isOwn: true, photoThumbnailUrl: null, chapterName: scope.ChapterName);
     }
 
-    private Task<IEnumerable<Recuerdo>> FetchRecuerdosAsync(RecuerdoScope scope) =>
-        scope.PhotoId is { } photoId ? recuerdoRepository.GetByPhotoIdAsync(photoId)
-        : scope.ChapterId is { } chapterId ? recuerdoRepository.GetByChapterIdAsync(chapterId)
-        : recuerdoRepository.GetByBaulIdAsync(scope.BaulId);
-
-    private async Task<Dictionary<PhotoId, string>> BuildThumbnailUrlsAsync(IEnumerable<Recuerdo> recuerdos)
-    {
-        var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
-        if (photoIds.Count == 0) return [];
-
-        // One IPhotoRepository.GetByIdsAsync call for every distinct photo in the list instead
-        // of one GetByIdAsync round trip each.
-        var photos = await photoRepository.GetByIdsAsync(photoIds);
-        var thumbnailUrls = new Dictionary<PhotoId, string>();
-        foreach (var photo in photos)
-            thumbnailUrls[photo.Id] = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
-
-        return thumbnailUrls;
-    }
+    private Task<IReadOnlyList<RecuerdoListRow>> FetchRowsAsync(RecuerdoScope scope) =>
+        scope.PhotoId is { } photoId ? recuerdoListReadModel.GetByPhotoIdAsync(photoId)
+        : scope.ChapterId is { } chapterId ? recuerdoListReadModel.GetByChapterIdAsync(chapterId)
+        : recuerdoListReadModel.GetByBaulIdAsync(scope.BaulId);
 
     private async Task<string?> GetPhotoThumbnailUrlAsync(PhotoId? photoId)
     {
@@ -236,4 +220,12 @@ public class RecuerdoManager(
         string? photoThumbnailUrl = null, string? chapterName = null) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
             recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, personaId, recuerdo.ChapterId?.ToString(), chapterName);
+
+    // List path — turns an already-batched IRecuerdoListReadModel row into a RecuerdoDto (see
+    // GetRecuerdosCoreAsync). Mirrors the Recuerdo overload above field for field.
+    private static RecuerdoDto ToDto(
+        RecuerdoListRow row, string userName, string? userAvatar, string? personaId, bool isOwn,
+        string? photoThumbnailUrl, string? chapterName) =>
+        new(row.Id.ToString(), row.PhotoId?.ToString(), row.UserId, row.Text, userName,
+            row.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, personaId, row.ChapterId?.ToString(), chapterName);
 }
