@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { UserCircle } from 'lucide-react';
@@ -45,7 +45,7 @@ export const BaulRoute: React.FC = () => {
   const { personas } = usePersonasStore();
   const { baulRecuerdos } = useRecuerdosStore();
   const setShowProfileMenu = useUIStore((state) => state.setShowProfileMenu);
-  const dismissContributionSuggestion = useUIStore((state) => state.dismissContributionSuggestion);
+  const startContributionSuggestionCooldown = useUIStore((state) => state.startContributionSuggestionCooldown);
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
@@ -53,11 +53,22 @@ export const BaulRoute: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
   // Solo se intenta cuando el punto de entrada es el feed ('recuerdos', el valor por defecto
   // de initialTab — cualquier otra pestaña llega por un state.activeTab explícito, es decir
-  // por navegación directa, no por una entrada nueva al baúl) y no se ha resuelto ya esta
-  // sesión. Se fija una sola vez al montar: cambiar de pestaña después no debe reabrirla.
+  // por navegación directa, no por una entrada nueva al baúl) y el baúl no está en cooldown
+  // (ver uiStore: por baulId, 60 minutos fijos, persistido en localStorage).
   const [showContributionSuggestion, setShowContributionSuggestion] = useState(
-    () => initialTab === 'recuerdos' && !useUIStore.getState().contributionSuggestionDismissed
+    () => initialTab === 'recuerdos' && !!baulId && !useUIStore.getState().isContributionSuggestionOnCooldown(baulId)
   );
+
+  // El selector de workspace navega a `/baules/${otroBaulId}` reutilizando esta misma instancia
+  // de BaulRoute (misma ruta, solo cambia el parámetro) en vez de desmontarla — así que el
+  // useState de arriba, que solo corre al montar, no vuelve a evaluarse al cambiar de baúl. El
+  // cooldown es por baulId, así que cambiar de baúl debe poder proponer una sugerencia nueva
+  // aunque el baúl anterior siga en cooldown.
+  useEffect(() => {
+    if (!baulId) return;
+    setShowContributionSuggestion(initialTab === 'recuerdos' && !useUIStore.getState().isContributionSuggestionOnCooldown(baulId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baulId]);
 
   const baulScope = useBaulScope(baulId);
   const guard = guardBaulScope(baulScope, { loadingLabel: 'Abriendo baúl...' });
@@ -71,7 +82,7 @@ export const BaulRoute: React.FC = () => {
       <ContributionSuggestionContainer
         baulId={baul.id}
         onResolved={() => {
-          dismissContributionSuggestion();
+          startContributionSuggestionCooldown(baul.id);
           setShowContributionSuggestion(false);
         }}
       />

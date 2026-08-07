@@ -98,10 +98,10 @@ describe('Baúl <-> Capítulo: volver retoma la pestaña de origen', () => {
     });
     usePersonasStore.setState({ personas: { [baul.id]: [] } });
     // La recomendación de contribución (ContributionSuggestionContainer) es ajena al
-    // mecanismo de returnTab bajo prueba aquí — se marca como ya resuelta esta sesión para
-    // que BaulRoute muestre el feed directamente, en vez de tener que mockear la llamada de
-    // red que la respalda.
-    useUIStore.setState({ contributionSuggestionDismissed: true });
+    // mecanismo de returnTab bajo prueba aquí — se pone este baúl en cooldown para que
+    // BaulRoute muestre el feed directamente, en vez de tener que mockear la llamada de red
+    // que la respalda.
+    useUIStore.getState().startContributionSuggestionCooldown(baul.id);
   });
 
   it('vuelve a "capítulos" cuando el capítulo se abrió desde esa pestaña', async () => {
