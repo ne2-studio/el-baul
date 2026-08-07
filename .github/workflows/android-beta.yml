@@ -49,8 +49,12 @@ jobs:
 
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             VERSION="${GITHUB_REF_NAME#beta-v}"
+            echo "CHANGELOG_TAG=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
           else
             VERSION="0.0.0-beta.${GITHUB_RUN_NUMBER}"
+            # Manual dispatch off a branch, not a tagged release — there's no "## [beta-vX.Y.Z]"
+            # section for it yet, so fall back to whatever's pending release.
+            echo "CHANGELOG_TAG=unreleased" >> "$GITHUB_ENV"
           fi
 
           echo "ANDROID_VERSION_NAME=$VERSION" >> "$GITHUB_ENV"
@@ -125,14 +129,21 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" \
             > "$RUNNER_TEMP/firebase/service-account.json"
 
+      # Pulls the release notes straight from CHANGELOG.md instead of a generic
+      # commit/build stamp, so testers actually see what changed — see
+      # scripts/android-release-notes. Fails the build if a tagged release wasn't
+      # preceded by renaming CHANGELOG.md's "[No publicado]" to that tag (see the
+      # update-changelog skill), so a beta never ships without release notes.
       - name: Create release notes
         run: |
-          cat > "$RUNNER_TEMP/release-notes.txt" <<EOF
-          El Baúl ${ANDROID_VERSION_NAME}
-
-          Commit: ${GITHUB_SHA}
-          Build: ${GITHUB_RUN_NUMBER}
-          EOF
+          {
+            echo "El Baúl ${ANDROID_VERSION_NAME}"
+            echo
+            ../scripts/android-release-notes "${CHANGELOG_TAG}"
+            echo
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Build: ${GITHUB_RUN_NUMBER}"
+          } > "$RUNNER_TEMP/release-notes.txt"
 
       - name: Install Firebase CLI
         run: npm install --global firebase-tools
