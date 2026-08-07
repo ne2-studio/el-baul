@@ -32,8 +32,31 @@ public class ChatManager(
         "sí la tenías, pídele que profundice en ese recuerdo. " +
         "Responde siempre en español de España.";
 
-    private string BuildSystemInstruction() =>
-        SystemInstruction + $"\n\nHoy es {clock.UtcNow():yyyy-MM-dd}.";
+    // Keeps both the history shown in the UI and the history sent to the model bounded to a
+    // single recent sitting, instead of an ever-growing thread: old chat turns about a baúl that
+    // has since gained new recuerdos/capítulos are more likely to mislead the model (and clutter
+    // the UI) than to help — the baúl content itself, not old chat, is the durable memory store.
+    private const int MaxHistoryMessages = 10;
+    private static readonly TimeSpan MaxHistoryAge = TimeSpan.FromHours(24);
+
+    private IEnumerable<ChatMessage> RecentMessages(IEnumerable<ChatMessage> messages)
+    {
+        var cutoff = clock.UtcNow() - MaxHistoryAge;
+        // messages arrives oldest-first; TakeLast after the cutoff filter keeps that order while
+        // keeping the most recent MaxHistoryMessages of them.
+        return messages.Where(m => m.CreatedAt >= cutoff).TakeLast(MaxHistoryMessages);
+    }
+
+    private string BuildSystemInstruction(Persona? interlocutor)
+    {
+        // Without this, the model sees who wrote past recuerdos but has no way to tell which
+        // family member is on the other end of the current message — it reads as if it doesn't
+        // know who it's talking to.
+        var interlocutorLine = interlocutor is not null
+            ? $"Estás hablando ahora mismo con {interlocutor.Nickname}."
+            : "No se ha podido identificar con certeza a la persona con la que hablas ahora mismo.";
+        return SystemInstruction + $"\n\nHoy es {clock.UtcNow():yyyy-MM-dd}. {interlocutorLine}";
+    }
 
     public async Task<Result<IEnumerable<ChatMessageDto>>> GetMessagesAsync(BaulId baulId)
     {
@@ -45,7 +68,7 @@ public class ChatManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<ChatMessageDto>>(auth.Error);
 
         var messages = await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId);
-        return Result.Success(messages.Select(ToDto));
+        return Result.Success(RecentMessages(messages).Select(ToDto));
     }
 
     public async Task<Result<ChatMessageDto>> SendMessageAsync(BaulId baulId, string text)
@@ -65,8 +88,8 @@ public class ChatManager(
         var userMessage = new ChatMessage(idGenerator.NewId(), baulId, userId, ChatMessageRole.User, text, now);
         await chatMessageRepository.CreateAsync(userMessage);
 
-        var systemPrompt = BuildSystemInstruction() + "\n\n" + await chatContextBuilder.BuildAsync(baul, text);
-        var history = (await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId))
+        var systemPrompt = BuildSystemInstruction(auth.Value.Persona) + "\n\n" + await chatContextBuilder.BuildAsync(baul, text);
+        var history = RecentMessages(await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId))
             .Select(m => new ChatTurn(m.Role.ToApiString(), m.Content));
 
         var replyResult = await aiChatBackend.GetReplyAsync(systemPrompt, history);

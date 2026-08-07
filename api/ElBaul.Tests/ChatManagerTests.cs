@@ -154,6 +154,58 @@ public class ChatManagerTests
     }
 
     [Fact]
+    public async Task SendMessageAsync_ShouldIdentifyTheCurrentUser_InTheSystemPrompt()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia"); // seeds a Custodio persona nicknamed "Custodio"
+
+        var manager = CreateManager(CustodioId);
+        await manager.SendMessageAsync(new BaulId(baulId), "Hola");
+
+        var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
+        Assert.Contains("Estás hablando ahora mismo con Custodio.", systemPrompt);
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_ShouldUseAFallbackLine_WhenTheCurrentUserHasNoPersonaRecord()
+    {
+        var baulId = Guid.NewGuid();
+        var now = _clock.UtcNow();
+        // No AddPersonaAsync call — access is still granted via CustodioId, but there is no
+        // Persona row to read a nickname from.
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, now, now));
+
+        var manager = CreateManager(CustodioId);
+        await manager.SendMessageAsync(new BaulId(baulId), "Hola");
+
+        var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
+        Assert.Contains("No se ha podido identificar con certeza", systemPrompt);
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_ShouldOnlySendRecentHistory_ToTheAiBackend()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var now = _clock.UtcNow();
+        await _chatMessageRepository.CreateAsync(
+            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, "antiguo", now.AddHours(-25)));
+        for (var i = 9; i >= 0; i--)
+        {
+            await _chatMessageRepository.CreateAsync(new ChatMessage(
+                Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, $"reciente-{i}", now.AddMinutes(-i)));
+        }
+
+        var manager = CreateManager(CustodioId);
+        await manager.SendMessageAsync(new BaulId(baulId), "Nuevo mensaje");
+
+        var history = Assert.Single(_aiChatBackend.Calls).History;
+        Assert.Equal(10, history.Count);
+        Assert.DoesNotContain(history, t => t.Content == "antiguo");
+        Assert.Equal("Nuevo mensaje", history[^1].Content);
+    }
+
+    [Fact]
     public async Task SendMessageAsync_ShouldFail_WhenTheAiBackendFails()
     {
         var baulId = Guid.NewGuid();
@@ -187,6 +239,48 @@ public class ChatManagerTests
         Assert.Equal(4, messages.Count);
         Assert.Equal("Primera pregunta", messages[0].Content);
         Assert.Equal("Segunda pregunta", messages[2].Content);
+    }
+
+    [Fact]
+    public async Task GetMessagesAsync_ShouldReturnAtMostTheLast10Messages()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var now = _clock.UtcNow();
+        for (var i = 0; i < 12; i++)
+        {
+            await _chatMessageRepository.CreateAsync(new ChatMessage(
+                Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, $"mensaje-{i}", now.AddMinutes(i)));
+        }
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetMessagesAsync(new BaulId(baulId));
+
+        Assert.True(result.IsSuccess);
+        var messages = result.Value.ToList();
+        Assert.Equal(10, messages.Count);
+        Assert.Equal("mensaje-2", messages[0].Content);
+        Assert.Equal("mensaje-11", messages[^1].Content);
+    }
+
+    [Fact]
+    public async Task GetMessagesAsync_ShouldExcludeMessagesOlderThan24Hours()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var now = _clock.UtcNow();
+        await _chatMessageRepository.CreateAsync(
+            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, "antiguo", now.AddHours(-25)));
+        await _chatMessageRepository.CreateAsync(
+            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, "reciente", now.AddMinutes(-5)));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetMessagesAsync(new BaulId(baulId));
+
+        Assert.True(result.IsSuccess);
+        var messages = result.Value.ToList();
+        Assert.Single(messages);
+        Assert.Equal("reciente", messages[0].Content);
     }
 
     [Fact]
