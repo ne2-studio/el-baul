@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { useUIStore } from '@/store/uiStore';
 import { ContributionSuggestionContainer } from './ContributionSuggestionContainer';
 
 vi.mock('@/api', () => ({
@@ -42,6 +43,7 @@ describe('ContributionSuggestionContainer', () => {
     vi.clearAllMocks();
     usePersonasStore.getState().reset();
     usePersonasStore.setState({ personas: { [baulId]: [persona()] } });
+    useUIStore.setState({ showToast: false, toastMessage: '' });
   });
 
   it('resolves immediately without rendering anything when there is no candidate photo', async () => {
@@ -113,6 +115,7 @@ describe('ContributionSuggestionContainer', () => {
 
     await waitFor(() => expect(setTaggedPersonas).toHaveBeenCalledWith('photo-1', ['p1']));
     expect(onResolved).toHaveBeenCalledTimes(1);
+    expect(useUIStore.getState().toastMessage).toBe('Gracias por ayudar a recordar. Tu familia te lo agradece');
   });
 
   it('resolves on "Ahora no" without saving anything', async () => {

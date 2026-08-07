@@ -60,6 +60,7 @@ export function ContributionSuggestionContainer({ baulId, onResolved }: Contribu
   const handleSave = async () => {
     if (!photo || selectedIds.length === 0) return;
     const result = await run(() => setTaggedPersonas(photo.id, selectedIds), {
+      successMessage: 'Gracias por ayudar a recordar. Tu familia te lo agradece',
       errorMessage: 'No se pudieron guardar las personas etiquetadas',
     });
     if (result.ok) onResolved();
