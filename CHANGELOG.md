@@ -31,6 +31,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Se precargan las fotos de una persona para evitar el parpadeo al abrir su pestaña de Fotos.
 - Se redirige a la pantalla de inicio de sesión cuando la sesión ha caducado en el servidor.
 - Al ver una foto desde la ficha de una persona, quienes administran el baúl ahora ven las mismas opciones (establecer portada del baúl, retirar foto) que al verla desde un capítulo.
+- Al abrir un capítulo, ya no se ve el destello de sus recuerdos apareciendo justo después de que desaparece la pantalla de carga: ahora se precargan junto con las fotos antes de mostrar el contenido.
 - Retirar una foto o cambiar su fecha ya actualiza también su aparición en las fichas de las personas etiquetadas en ella.
 - El botón flotante de acción ya no parpadea al hacer scroll.
 - Al refrescar la página dentro de un baúl, o cambiar a uno que no se había abierto en la sesión, ahora se ve la misma pantalla de "Abriendo baúl..." que al entrar por primera vez, en vez de un texto suelto de "Cargando..." seguido de un instante con el baúl vacío antes de que aparezca su contenido real.

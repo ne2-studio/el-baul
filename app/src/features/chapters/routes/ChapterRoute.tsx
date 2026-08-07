@@ -16,15 +16,15 @@ import { Photo } from '@/types';
 import { formatDateRange } from '@/app/utils/timeUtils';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
+import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { loadChapterRecuerdos } from '@/features/memories/useCases';
 import { loadPersonas } from '@/features/people/useCases';
-import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
+import { useChapterScope } from '@/hooks/useChapterScope';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
@@ -42,9 +42,12 @@ interface LocationState {
 
 // chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
 // (see useBaulesStore's nullable chapterId convention). Real-chapter photos are paginated
-// per-chapter and fetched on demand via loadChapterPhotos; loose photos are already loaded
-// in full by useBaulScope, so no separate fetch/loading state is needed for them. Chapter-only
-// concerns (rename/delete, recuerdos) stay conditional on chapterId being present.
+// per-chapter, and its recuerdos are fetched separately too — both fetched on demand via
+// useChapterScope, which blocks on both together so the chrome and the default Recuerdos tab
+// never paint with one of the two still missing (see that hook for why). Loose photos are
+// already loaded in full by useBaulScope, so no separate fetch/loading state is needed for
+// them. Chapter-only concerns (rename/delete, recuerdos) stay conditional on chapterId being
+// present.
 //
 // ChapterRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las piezas
 // autosuficientes de la pantalla — no hay un componente "shell" intermedio en components/,
@@ -71,8 +74,8 @@ export const ChapterRoute: React.FC = () => {
   const baulScope = useBaulScope(baulId);
   const { chapters, loosePhotos } = baulScope;
   const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
+  const chapterScope = useChapterScope(baulId, chapterId);
 
-  const [photosFailed, setPhotosFailed] = useState(false);
   const [activeTab, setActiveTab] = useState<'recuerdos' | 'fotos'>('recuerdos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
 
@@ -118,28 +121,7 @@ export const ChapterRoute: React.FC = () => {
   };
 
   useEffect(() => {
-    if (auth.isAuthenticated && baulId && chapterId) {
-      loadChapterRecuerdos(baulId, chapterId);
-    }
-  }, [auth.isAuthenticated, baulId, chapterId]);
-
-  const fetchChapterPhotos = async () => {
-    if (!chapterId) return;
-    const result = await run(() => loadChapterPhotos(chapterId), { errorMessage: 'Error al cargar las fotos' });
-    setPhotosFailed(!result.ok);
-  };
-
-  useEffect(() => {
-    if (auth.isAuthenticated && chapterId && !photos[chapterId]) {
-      fetchChapterPhotos();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, chapterId, photos, loadChapterPhotos]);
-
-  useEffect(() => {
     if (auth.isAuthenticated && baulId && !personas[baulId]) {
-      // Distinct key — useAsyncAction.run() shares a default key across unkeyed calls, and
-      // this effect can fire in the same flush as fetchChapterPhotos' unkeyed one above.
       run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'No se pudieron cargar las personas del baúl' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,18 +133,21 @@ export const ChapterRoute: React.FC = () => {
 
   if (chapterId && !chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
-  if (chapterId && !photos[chapterId]) {
-    if (photosFailed) {
-      return (
-        <ErrorScreen
-          title="No se han podido cargar las fotos"
-          message="Comprueba tu conexión e inténtalo de nuevo."
-          actionLabel="Reintentar"
-          onAction={fetchChapterPhotos}
-        />
-      );
+  if (chapterId) {
+    if (chapterScope.isLoading) return <FullScreenLoading message="Cargando capítulo..." />;
+    if (!chapterScope.photos || !chapterScope.chapterRecuerdos) {
+      if (chapterScope.loadFailed) {
+        return (
+          <ErrorScreen
+            title="No se ha podido cargar el capítulo"
+            message="Comprueba tu conexión e inténtalo de nuevo."
+            actionLabel="Reintentar"
+            onAction={chapterScope.retry}
+          />
+        );
+      }
+      return <FullScreenLoading message="Cargando capítulo..." />;
     }
-    return <div className="p-8 text-center">Cargando capítulo...</div>;
   }
 
   const currentPhotos = chapterId ? (photos[chapterId] || []) : (loosePhotos || []);
