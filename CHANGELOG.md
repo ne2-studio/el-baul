@@ -13,6 +13,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+## [beta-v0.2.0] - 2026-08-07
+
 ### Cambiado
 
 - La app ya no abre en una lista de baúles: entra directamente en el último baúl usado. Para cambiar de baúl hay un selector en la parte superior de la pantalla, sin necesidad de navegar a otra pantalla.
@@ -68,27 +70,6 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Seguridad
 
 - Cerrar sesión ahora finaliza realmente la sesión de autenticación, no solo la de la app.
-
-## [beta-v0.1.0] - 2026-07-30
-
-### Cambiado
-
-- El recorte/zoom del avatar de persona se aplica ahora en el servidor de imágenes, con mejor calidad.
-- Crear un baúl o un capítulo ahora se hace desde una ventana modal.
-- Se homogeneizaron los botones de acción de las ventanas modales.
-- El chat ahora tiene en cuenta las fechas de los capítulos para responder mejor.
-
-### Arreglado
-
-- Se ajustó el tamaño del avatar de persona para que se vea más nítido.
-- Se corrigió el color de los iconos al pasar el cursor en los menús desplegables.
-- Los errores de acceso denegado del servidor ya no rompen la pantalla.
-- Los avisos (Toasts) de error muestran ahora el estilo visual correcto.
-- Se restauró el marcador de posición de las personas sin foto.
-
-### Seguridad
-
-- Se resolvieron vulnerabilidades detectadas en dependencias de la aplicación.
 
 ## Versiones anteriores
 
