@@ -245,7 +245,9 @@ always opens directly in a baúl (the last one used, persisted as `CurrentBaul` 
 count, active one checked) — the same discreet, low-emphasis pattern `ShareTargetBaulScreen`
 already used to pick a destination baúl when sharing photos — not the full-bleed `BaulCard`.
 Chapters (not the baúl itself) are the primary visual content the user browses inside a baúl,
-styled with the emotional card language `BaulCard` pioneered — see `ChapterCard.tsx`.
+styled with the same emotional card language `BaulCard` pioneered — same size (`w-full h-52`),
+full-bleed cover photo and gradient, title top-left, icon+count metadata bottom-right — see
+`ChapterCard.tsx`.
 
 ## Elevation & Depth
 

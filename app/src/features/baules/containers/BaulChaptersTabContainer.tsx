@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/design-system/components/actions/Button';
+import { Card } from '@/design-system/components/data-display/Card';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { ExpandableFAB } from '@/design-system/components/actions/FAB';
 import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
@@ -67,7 +67,7 @@ export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChapte
                 {Array.from(groups.entries()).map(([year, yearChapters]) => (
                   <div key={year}>
                     <SwimlaneLabel>{year}</SwimlaneLabel>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {yearChapters.map((chapter) => (
                         <ChapterCard key={chapter.id} chapter={chapter} onClick={() => onSelectChapter(chapter)} />
                       ))}
@@ -78,26 +78,25 @@ export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChapte
             );
           })()}
 
-          {/* Fotos sueltas — capítulo virtual, mismo lenguaje visual (overlay + título sobre
-              la imagen) que ChapterCard, para que el grid se vea consistente. */}
+          {/* Fotos sueltas — capítulo virtual */}
           {looseChapter && (
             <div>
               <SwimlaneLabel>Otras</SwimlaneLabel>
-              <Button variant="plain"
+              <Card
                 onClick={() => navigate(`/baules/${baulId}/fotos-sueltas`)}
-                className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden text-left shadow-sm opacity-80 hover:opacity-100 active:scale-[0.98] transition-all"
+                className="!p-0 overflow-hidden opacity-80 hover:opacity-100 transition-opacity"
               >
-                <div className="absolute inset-0 bg-secondary">
+                {/* Collage cover */}
+                <div className="aspect-[16/10] bg-secondary relative rounded-t-2xl overflow-hidden">
                   <FotosSueltasCollage coverPhotos={looseChapter.coverPhotoUrls} />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <h3 className="font-serif text-white text-lg leading-tight drop-shadow">{looseChapter.name}</h3>
-                  <p className="text-white/85 text-xs mt-0.5 drop-shadow-sm">
+                <div className="p-4 bg-card">
+                  <h3 className="font-medium text-lg text-foreground">{looseChapter.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {looseChapter.photoCount} {looseChapter.photoCount === 1 ? 'foto que aún no pertenece' : 'fotos que aún no pertenecen'} a ningún capítulo
                   </p>
                 </div>
-              </Button>
+              </Card>
             </div>
           )}
         </div>
