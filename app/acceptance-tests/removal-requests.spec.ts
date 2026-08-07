@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { test, expect, type Page, type Browser, type BrowserContext } from '@playwright/test';
-import { loginAs, createBaulViaApi, API_BASE_URL } from './helpers';
+import { loginAs, createBaulViaApi, dismissContributionSuggestionIfShown, API_BASE_URL } from './helpers';
 
 const FIXTURE_PHOTO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/test-photo.png');
 
@@ -35,6 +35,7 @@ async function inviteAndAcceptCollaborator(
   browser: Browser,
 ): Promise<{ guestContext: BrowserContext; guestPage: Page }> {
   await adminPage.goto(`/baules/${baulId}`);
+  await dismissContributionSuggestionIfShown(adminPage);
   await adminPage.getByRole('button', { name: 'Opciones del baúl' }).click();
   await adminPage.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   const linkLocator = adminPage.getByText(/\/invitacion\/baul\//);
@@ -78,6 +79,7 @@ test('submit removal request → approve (photo is removed)', async ({ page, bro
   await guestContext.close();
 
   await page.goto(`/baules/${baulId}`);
+  await dismissContributionSuggestionIfShown(page);
   await page.getByRole('button', { name: 'Opciones del baúl' }).click();
   await page.getByRole('menuitem', { name: 'Solicitudes de eliminación' }).click();
   await page.waitForURL(/\/eliminar-solicitudes\//);
@@ -95,6 +97,7 @@ test('submit removal request → reject (photo is kept)', async ({ page, browser
   await guestContext.close();
 
   await page.goto(`/baules/${baulId}`);
+  await dismissContributionSuggestionIfShown(page);
   await page.getByRole('button', { name: 'Opciones del baúl' }).click();
   await page.getByRole('menuitem', { name: 'Solicitudes de eliminación' }).click();
   await page.waitForURL(/\/eliminar-solicitudes\//);

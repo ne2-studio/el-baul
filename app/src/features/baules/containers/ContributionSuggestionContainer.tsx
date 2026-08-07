@@ -28,17 +28,31 @@ export function ContributionSuggestionContainer({ baulId, onResolved }: Contribu
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { run, isPending } = useAsyncAction();
 
+  // onResolved deliberately isn't a dependency here: BaulRoute passes a fresh inline closure
+  // on every render (it re-renders whenever any of the whole-store subscriptions it reads —
+  // chapters/personas/baulRecuerdos — change, which happens repeatedly right after entering a
+  // baúl while useBaulScope's loads are still settling). A previous version watched `photo` in
+  // a second effect keyed on `[photo, onResolved]`, which re-fired on every one of those
+  // parent re-renders and called onResolved() again each time — each call synchronously
+  // notifies uiStore's listeners, which re-triggers this effect before the resulting re-render
+  // even commits, tripping React's "Maximum update depth exceeded" (#185) safety net. Calling
+  // onResolved() exactly once, straight out of the fetch's own resolution, has no such loop.
   useEffect(() => {
     let cancelled = false;
     api.photos.getUntaggedSuggestion(baulId)
-      .then((result) => { if (!cancelled) setPhoto(result); })
-      .catch(() => { if (!cancelled) setPhoto(null); });
+      .then((result) => {
+        if (cancelled) return;
+        setPhoto(result);
+        if (result === null) onResolved();
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPhoto(null);
+        onResolved();
+      });
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baulId]);
-
-  useEffect(() => {
-    if (photo === null) onResolved();
-  }, [photo, onResolved]);
 
   const toggle = (personaId: string) =>
     setSelectedIds((ids) => (ids.includes(personaId) ? ids.filter((id) => id !== personaId) : [...ids, personaId]));

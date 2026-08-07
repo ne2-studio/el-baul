@@ -31,6 +31,23 @@ export async function loginAs(page: Page, userButtonName: 'Admin User' | 'Normal
   return accessToken as string;
 }
 
+// A fresh navigation to a baúl's feed shows the "help us tag this photo" contribution
+// suggestion (see ContributionSuggestionContainer) whenever that baúl already has an
+// untagged photo — most specs never hit this (they navigate to the baúl before uploading
+// anything), but any that upload a photo first and then land back on `/baules/:baulId` need
+// to get past it before the normal chrome (header, tabs, "Opciones del baúl", …) is there to
+// interact with. Only ever waits a short beat: on every other spec the normal chrome is just
+// already there and this resolves immediately without clicking anything.
+export async function dismissContributionSuggestionIfShown(page: Page): Promise<void> {
+  const skipButton = page.getByRole('button', { name: 'Ahora no →' });
+  try {
+    await skipButton.waitFor({ state: 'visible', timeout: 3_000 });
+    await skipButton.click();
+  } catch {
+    // Nothing to dismiss — either already past it, or this baúl has no untagged photo.
+  }
+}
+
 export async function createBaulViaApi(page: Page, accessToken: string, name: string): Promise<string> {
   const response = await page.request.post(`${API_BASE_URL}/api/baules`, {
     headers: { Authorization: `Bearer ${accessToken}` },

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useEffect, useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -48,6 +49,30 @@ describe('ContributionSuggestionContainer', () => {
     const onResolved = vi.fn();
 
     render(<ContributionSuggestionContainer baulId={baulId} onResolved={onResolved} />);
+
+    await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
+  });
+
+  // Regression for a real crash: BaulRoute passes a brand new inline onResolved closure on
+  // every one of its own renders (it re-renders whenever chapters/personas/baulRecuerdos
+  // change, which happens repeatedly right after entering a baúl while useBaulScope's loads
+  // are still settling). A previous version resolved the no-candidate case from a second
+  // effect keyed on `[photo, onResolved]`, which re-fired on every such parent render and
+  // threw React error #185 ("Maximum update depth exceeded"). This wrapper reproduces that
+  // parent re-render churn to prove the fix doesn't depend on onResolved's identity.
+  it('resolves exactly once even when the parent re-renders repeatedly with a new onResolved closure', async () => {
+    vi.mocked(api.photos.getUntaggedSuggestion).mockResolvedValue(null);
+    const onResolved = vi.fn();
+
+    function ChurningParent() {
+      const [tick, setTick] = useState(0);
+      useEffect(() => {
+        if (tick < 5) setTick((t) => t + 1);
+      }, [tick]);
+      return <ContributionSuggestionContainer baulId={baulId} onResolved={() => onResolved()} />;
+    }
+
+    render(<ChurningParent />);
 
     await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
   });
