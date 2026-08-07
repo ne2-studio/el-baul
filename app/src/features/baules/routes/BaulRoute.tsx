@@ -62,7 +62,11 @@ export const BaulRoute: React.FC = () => {
     setIsLoadingChapterPhotos(true);
     const result = await run(() => loadChapterPhotos(chapter.id), { errorMessage: 'Error al cargar las fotos' });
     setIsLoadingChapterPhotos(false);
-    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${chapter.id}`);
+    // returnTab: para que el botón "Volver" de ChapterRoute pueda reabrir la pestaña desde la
+    // que se entró (recuerdos o capítulos, las dos únicas que llevan aquí) en vez de caer
+    // siempre en la pestaña inicial — mismo mecanismo que ya usan handleSelectPersona en
+    // BaulPersonasTabContainer/BaulRecuerdosTabContainer con PersonaDetailRoute.
+    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { state: { returnTab: activeTab } });
   };
 
   return (

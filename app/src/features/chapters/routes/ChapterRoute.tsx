@@ -32,6 +32,12 @@ interface LocationState {
   // Set by UploadingRoute right after a successful upload — see its comment for why this
   // lives purely in router state instead of a store.
   recentlyUploadedPhotos?: Photo[];
+  // Set by BaulRoute.handleSelectChapter (the "capítulos"/"recuerdos" tabs, the only two that
+  // link here) so "Volver" can reopen the same tab instead of always falling back to the
+  // baúl's initial one — same returnTab mechanism PersonaDetailRoute already uses. Defaults to
+  // 'capitulos' for entry points that don't set it (e.g. a deep link, or the "fotos sueltas"
+  // card in BaulChaptersTabContainer, which only that tab can reach anyway).
+  returnTab?: 'recuerdos' | 'capitulos';
 }
 
 // chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
@@ -50,7 +56,7 @@ interface LocationState {
 export const ChapterRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recentlyUploadedPhotos } = (location.state as LocationState) || {};
+  const { recentlyUploadedPhotos, returnTab = 'capitulos' } = (location.state as LocationState) || {};
   const { baulId, chapterId } = useParams();
   const auth = useAuth();
   const { photos } = useBaulesStore();
@@ -182,7 +188,7 @@ export const ChapterRoute: React.FC = () => {
       <PageHeader
         ref={headerRef}
         variant="row"
-        onBack={selectionMode ? exitSelection : () => navigate(`/baules/${baul.id}`)}
+        onBack={selectionMode ? exitSelection : () => navigate(`/baules/${baul.id}`, { state: { activeTab: returnTab } })}
         backLabel={selectionMode ? 'Cancelar' : 'Volver'}
         trailing={
           selectionMode ? (

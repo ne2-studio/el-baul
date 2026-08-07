@@ -25,6 +25,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 - Al cerrar sesión y volver a entrar, la app ya recuerda el último baúl en el que se estaba y abre directamente en él, en lugar de volver al primero de la lista.
 - En las pantallas con pestañas (baúl, capítulo, ficha de persona), cada pestaña conserva ahora su propio scroll: cambiar de pestaña ya no deja el contenido nuevo a mitad de camino, aparece arriba la primera vez y retoma la posición si ya se había visitado.
+- Al entrar a un capítulo desde la pestaña de Recuerdos o de Capítulos del baúl y volver, ahora se reabre esa misma pestaña en lugar de caer siempre en Recuerdos.
 - El menú de hoja inferior ahora aparece siempre por encima del botón flotante de acción.
 - El aviso (Toast) respeta la zona segura inferior del dispositivo.
 - Se precargan las fotos de una persona para evitar el parpadeo al abrir su pestaña de Fotos.
