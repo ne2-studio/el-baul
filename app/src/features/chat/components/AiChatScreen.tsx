@@ -47,7 +47,7 @@ export function AiChatScreen({
       <PageHeader
         variant="inline"
         onBack={onBack}
-        title="Ayúdame a recordar"
+        title="Recordemos juntos"
         titleClassName="text-2xl"
       />
 

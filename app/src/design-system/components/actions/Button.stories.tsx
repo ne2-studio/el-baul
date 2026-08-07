@@ -96,7 +96,7 @@ export const FullWidth: Story = {
 
 export const WithLeftIcon: Story = {
   args: {
-    children: 'Ayúdame a recordar',
+    children: 'Recordemos juntos',
     variant: 'primary',
     leftIcon: <Sparkles className="h-4 w-4" aria-hidden />,
   },

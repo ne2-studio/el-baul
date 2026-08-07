@@ -20,6 +20,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Cambiado
 
 - En tablet y escritorio, el visor de fotos ahora muestra la foto y los recuerdos en dos columnas en vez de apilados, aprovechando mejor el ancho de la pantalla.
+- El chat con IA pasa a llamarse "Recordemos juntos" y ahora siempre intenta seguir la conversación con una pregunta: si tiene la respuesta, invita a ahondar en el recuerdo; si no la tiene, lo dice y pide esa información a la persona usuaria.
 
 ### Arreglado
 

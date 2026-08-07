@@ -74,7 +74,7 @@ export const ThreeActions: Story = {
       actions={[
         { label: 'Nuevo capítulo', icon: <Plus className="w-4 h-4" />, onClick: () => alert('Nuevo capítulo') },
         { label: 'Subir fotos', icon: <Upload className="w-4 h-4" />, onClick: () => alert('Subir fotos') },
-        { label: 'Ayúdame a recordar', icon: <Sparkles className="w-4 h-4" />, onClick: () => alert('Ayúdame a recordar') },
+        { label: 'Recordemos juntos', icon: <Sparkles className="w-4 h-4" />, onClick: () => alert('Recordemos juntos') },
       ]}
     />
   ),

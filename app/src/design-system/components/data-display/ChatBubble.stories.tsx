@@ -19,7 +19,7 @@ Use for user and assistant messages in chat-like surfaces where message ownershi
 Do not use for toasts, cards, comments outside a conversation, or rich assistant answers that need structured blocks.
 
 ### Typical examples
-The "Ayúdame a recordar" chat thread and future contextual AI conversations.
+The "Recordemos juntos" chat thread and future contextual AI conversations.
 
 ### Common mistakes
 Hard-coding bubble classes in the screen, using the user style for system messages, or placing controls inside the text bubble before the component supports them.

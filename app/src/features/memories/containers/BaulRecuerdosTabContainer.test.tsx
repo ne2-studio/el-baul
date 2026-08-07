@@ -108,7 +108,7 @@ describe('BaulRecuerdosTabContainer', () => {
     useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
 
     renderContainer();
-    await user.click(screen.getByRole('button', { name: /ayúdame a recordar/i }));
+    await user.click(screen.getByRole('button', { name: /recordemos juntos/i }));
 
     expect(screen.getByText('Chat')).toBeInTheDocument();
   });
@@ -118,7 +118,7 @@ describe('BaulRecuerdosTabContainer', () => {
 
     renderContainer();
 
-    expect(screen.queryByRole('button', { name: /ayúdame a recordar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /recordemos juntos/i })).not.toBeInTheDocument();
   });
 
   it('opens a loose photo directly, without loading chapter photos first', async () => {

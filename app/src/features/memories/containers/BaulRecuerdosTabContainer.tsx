@@ -63,7 +63,7 @@ export function BaulRecuerdosTabContainer({ baulId, baulName, onOpenChapter }: B
         onEditRecuerdo={editRecuerdo}
       />
       <SimpleFAB
-        label="Ayúdame a recordar"
+        label="Recordemos juntos"
         icon={<Sparkles className="w-5 h-5" />}
         onClick={() => navigate(`/baules/${baulId}/recordar`)}
         hidden={!chatEnabled}
