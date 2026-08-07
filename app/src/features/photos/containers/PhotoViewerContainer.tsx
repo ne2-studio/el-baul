@@ -37,7 +37,7 @@ export function PhotoViewerContainer({
 }: PhotoViewerContainerProps) {
   const auth = useAuth();
   const navigate = useNavigate();
-  const { run } = useAsyncAction();
+  const { run, isPending } = useAsyncAction();
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
   const { personas, taggedPersonas } = usePersonasStore();
   const { recuerdos } = useRecuerdosStore();
@@ -76,6 +76,7 @@ export function PhotoViewerContainer({
       modals={modals}
       taggedPersonas={taggedPersonas[photo.id] || []}
       recuerdos={recuerdos[photo.id] || []}
+      recuerdosLoading={isPending('recuerdos')}
       onAddRecuerdo={onAddRecuerdo}
       onUserClick={(personaId) => navigate(`/baules/${baulId}/personas/${personaId}`)}
       onShareRecuerdo={sharedLinksEnabled ? onShareRecuerdo : undefined}

@@ -13,6 +13,15 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Cambiado
+
+- En tablet y escritorio, el visor de fotos ahora muestra la foto y los recuerdos en dos columnas en vez de apilados, aprovechando mejor el ancho de la pantalla.
+
+### Arreglado
+
+- La foto en el visor ya no cambia de tamaño según las dimensiones de la imagen ni la cantidad de recuerdos cargados: ahora mide siempre lo mismo.
+- Al abrir una foto, mientras se cargan sus recuerdos se muestra un pequeño indicador de carga en vez de dar a entender por un instante que no tiene ninguno.
+
 ## [beta-v0.2.0] - 2026-08-07
 
 ### Cambiado

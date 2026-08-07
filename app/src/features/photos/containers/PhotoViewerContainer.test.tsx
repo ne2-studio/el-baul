@@ -110,6 +110,19 @@ describe('PhotoViewerContainer', () => {
     expect(loadTaggedPersonas).toHaveBeenCalledWith('photo-2');
   });
 
+  it('shows the recuerdos spinner while they load, then hides it once loaded', async () => {
+    let resolveLoad!: () => void;
+    vi.mocked(loadRecuerdos).mockReturnValue(new Promise((resolve) => { resolveLoad = () => resolve(undefined); }));
+
+    renderContainer();
+
+    expect(await screen.findByLabelText('Cargando recuerdos')).toBeInTheDocument();
+
+    resolveLoad();
+
+    await waitFor(() => expect(screen.queryByLabelText('Cargando recuerdos')).not.toBeInTheDocument());
+  });
+
   it('always offers tag and download, and share only when links are enabled', async () => {
     const user = userEvent.setup();
     renderContainer();

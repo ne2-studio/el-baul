@@ -51,3 +51,19 @@ describe('PhotoViewer keyboard navigation', () => {
     expect(onPhotoChange).toHaveBeenCalledWith(photos[2]);
   });
 });
+
+describe('PhotoViewer recuerdos loading state', () => {
+  it('shows a spinner instead of the empty state while recuerdos are loading', () => {
+    renderViewer({ recuerdos: [], recuerdosLoading: true });
+
+    expect(screen.getByLabelText('Cargando recuerdos')).toBeInTheDocument();
+    expect(screen.queryByText('Sé el primero en añadir un recuerdo')).not.toBeInTheDocument();
+  });
+
+  it('falls back to the empty state once loading finishes with no recuerdos', () => {
+    renderViewer({ recuerdos: [], recuerdosLoading: false });
+
+    expect(screen.queryByLabelText('Cargando recuerdos')).not.toBeInTheDocument();
+    expect(screen.getByText('Sé el primero en añadir un recuerdo')).toBeInTheDocument();
+  });
+});

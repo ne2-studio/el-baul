@@ -98,6 +98,14 @@ export const WithoutRecuerdos: Story = {
   },
 };
 
+export const LoadingRecuerdos: Story = {
+  args: {
+    ...Default.args,
+    recuerdos: [],
+    recuerdosLoading: true,
+  },
+};
+
 export const ReadOnlyCollaborator: Story = {
   args: {
     ...sharedDefaults,

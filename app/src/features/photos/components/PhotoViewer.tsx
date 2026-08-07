@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Photo, Recuerdo, TaggedPersona } from '@/types';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
@@ -27,6 +28,9 @@ interface PhotoViewerProps {
   /** Personas etiquetadas en la foto actualmente mostrada. */
   taggedPersonas?: TaggedPersona[];
   recuerdos?: Recuerdo[];
+  /** Recuerdos aún en vuelo (primera carga tras abrir la foto) — pinta un spinner pequeño en
+   * vez del estado vacío, para no dar a entender por un instante que la foto no tiene ninguno. */
+  recuerdosLoading?: boolean;
   onAddRecuerdo?: (text: string) => void;
   onUserClick?: (personaId: string) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
@@ -54,6 +58,7 @@ export function PhotoViewer({
   modals,
   taggedPersonas = [],
   recuerdos = [],
+  recuerdosLoading = false,
   onAddRecuerdo,
   onUserClick,
   onShareRecuerdo,
@@ -136,72 +141,84 @@ export function PhotoViewer({
           menuItems={menuItems}
         />
 
-        <PhotoStage
-          photoKey={photo.id}
-          src={photo.fullUrl}
-          alt="Foto"
-          direction={direction}
-          hasPrevious={hasPrevious}
-          hasNext={hasNext}
-          onPrevious={handlePrevious}
-          onNext={handleNext}
-        />
-
-        {/* Info & Recuerdos section: el conjunto no supera el 50% de la pantalla; dentro,
-            solo la fecha y la lista hacen scroll propio, mientras el input se queda fijo
-            abajo sin encogerse. */}
-        <div className="flex flex-col max-h-[50%]">
-          <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
-            {/* Date */}
-            {(photo.date || canChangeDate) && (
-              <Button variant="plain"
-                onClick={() => canChangeDate && openDateModal()}
-                disabled={!canChangeDate}
-                className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
-              >
-                {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
-              </Button>
-            )}
-
-            {/* Tagged personas */}
-            {taggedPersonas.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {taggedPersonas.map((persona) => (
-                  <PersonBadge
-                    key={persona.id}
-                    nickname={persona.nickname}
-                    avatarUrl={persona.avatarUrl}
-                    onClick={onUserClick ? () => onUserClick(persona.id) : undefined}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Recuerdos List */}
-            {!hasRecuerdos ? (
-              <div className="text-center">
-                <p className="text-background/50 text-sm mb-2">
-                  Sé el primero en añadir un recuerdo
-                </p>
-              </div>
-            ) : (
-              <RecuerdosList
-                recuerdos={recuerdos}
-                onUserClick={onUserClick}
-                onShareRecuerdo={onShareRecuerdo}
-                onEditRecuerdo={onEditRecuerdo}
-              />
-            )}
+        {/* Cuerpo: en móvil se apila (foto arriba, recuerdos abajo, mitad y mitad); en
+            escritorio pasa a 2 columnas, foto a la izquierda y recuerdos a la derecha
+            ocupando ~1/3. La caja de la foto mide siempre lo mismo — fija, no depende de las
+            dimensiones de la imagen ni de cuántos recuerdos haya cargados — y es la columna
+            de recuerdos la que hace scroll propio dentro de su tamaño también fijo. */}
+        <div className="flex-1 flex flex-col md:flex-row min-h-0">
+          <div className="flex h-1/2 md:h-full md:flex-1 overflow-hidden">
+            <PhotoStage
+              photoKey={photo.id}
+              src={photo.fullUrl}
+              alt="Foto"
+              direction={direction}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+            />
           </div>
 
-          {onAddRecuerdo && (
-            <div className="px-6 pb-6 pt-2 flex-shrink-0">
-              <RecuerdoInput
-                photoId={photo.id}
-                onSubmit={onAddRecuerdo}
-              />
+          {/* Info & Recuerdos section: dentro, solo la fecha y la lista hacen scroll propio,
+              mientras el input se queda fijo abajo sin encogerse. */}
+          <div className="flex flex-col flex-1 min-h-0 md:flex-none md:w-1/3 md:h-full md:border-l md:border-background/15">
+            <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
+              {/* Date */}
+              {(photo.date || canChangeDate) && (
+                <Button variant="plain"
+                  onClick={() => canChangeDate && openDateModal()}
+                  disabled={!canChangeDate}
+                  className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
+                >
+                  {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
+                </Button>
+              )}
+
+              {/* Tagged personas */}
+              {taggedPersonas.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {taggedPersonas.map((persona) => (
+                    <PersonBadge
+                      key={persona.id}
+                      nickname={persona.nickname}
+                      avatarUrl={persona.avatarUrl}
+                      onClick={onUserClick ? () => onUserClick(persona.id) : undefined}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Recuerdos List */}
+              {recuerdosLoading ? (
+                <div className="flex justify-center py-2">
+                  <Loader2 className="w-5 h-5 text-background/40 animate-spin" aria-label="Cargando recuerdos" />
+                </div>
+              ) : !hasRecuerdos ? (
+                <div className="text-center">
+                  <p className="text-background/50 text-sm mb-2">
+                    Sé el primero en añadir un recuerdo
+                  </p>
+                </div>
+              ) : (
+                <RecuerdosList
+                  recuerdos={recuerdos}
+                  onUserClick={onUserClick}
+                  onShareRecuerdo={onShareRecuerdo}
+                  onEditRecuerdo={onEditRecuerdo}
+                />
+              )}
             </div>
-          )}
+
+            {onAddRecuerdo && (
+              <div className="px-6 pb-6 pt-2 flex-shrink-0">
+                <RecuerdoInput
+                  photoId={photo.id}
+                  onSubmit={onAddRecuerdo}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
