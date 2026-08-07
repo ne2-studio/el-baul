@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, type PanInfo } from 'motion/react';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
@@ -31,11 +31,31 @@ const SWIPE_THRESHOLD = 80;
 export function Tabbar({ tabs, active, onChange, top = 0, hideStrip, children }: TabbarProps) {
   const activeIndex = tabs.findIndex((tab) => tab.key === active);
 
+  // Cada pestaña recuerda su propio scroll — sin esto, cambiar de pestaña dejaba el scroll de
+  // la pestaña de origen tal cual, así que la de destino aparecía a mitad de camino en vez de
+  // arriba. Se guarda en el propio gesto de cambio (clic o swipe), el único momento en que
+  // `active` todavía es la pestaña saliente y window.scrollY todavía refleja su posición — un
+  // efecto sobre el cambio de `active` llegaría tarde, después de que React ya haya pintado el
+  // contenido de la nueva pestaña. Vive en memoria del componente, no en localStorage: no hace
+  // falta que sobreviva a un remount (volver a esta pantalla ya reinicia a la pestaña inicial).
+  const scrollPositions = useRef<Record<string, number>>({});
+
+  const switchTab = (key: string) => {
+    scrollPositions.current[active] = window.scrollY;
+    onChange(key);
+  };
+
+  // Retoma el scroll guardado de la pestaña que se acaba de activar — 0 (arriba) la primera
+  // vez que se visita, como pide la UX. Solo cuando cambia `active`, no en cada render.
+  useEffect(() => {
+    window.scrollTo(0, scrollPositions.current[active] ?? 0);
+  }, [active]);
+
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.x < -SWIPE_THRESHOLD && activeIndex < tabs.length - 1) {
-      onChange(tabs[activeIndex + 1].key);
+      switchTab(tabs[activeIndex + 1].key);
     } else if (info.offset.x > SWIPE_THRESHOLD && activeIndex > 0) {
-      onChange(tabs[activeIndex - 1].key);
+      switchTab(tabs[activeIndex - 1].key);
     }
   };
 
@@ -51,7 +71,7 @@ export function Tabbar({ tabs, active, onChange, top = 0, hideStrip, children }:
                   label={tab.label}
                   count={tab.count ?? 0}
                   active={tab.key === active}
-                  onClick={() => onChange(tab.key)}
+                  onClick={() => switchTab(tab.key)}
                 />
               ))}
             </div>
