@@ -17,6 +17,16 @@ vi.mock('@/features/photos/useCases', () => ({
 import { api } from '@/api';
 import { setTaggedPersonas } from '@/features/photos/useCases';
 
+// jsdom no implementa ResizeObserver — lo usa useElementHeight (vía PageHeader) para medir el
+// offset del que depende el sticky de la foto. Sin este stub, montar la pantalla real revienta
+// con "ResizeObserver is not defined", ver mismo stub en BaulChapterReturnTab.test.tsx.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+
 const baulId = 'baul-1';
 
 function persona(overrides: Partial<Persona> = {}): Persona {
