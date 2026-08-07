@@ -1,7 +1,7 @@
 import { Button } from '@/design-system/components/actions/Button';
-import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { ModalActions } from '@/design-system/components/overlays/ModalActions';
+import { PersonaSelectionList } from '@/features/photos/components/PersonaSelectionList';
 import { Persona } from '@/types';
 
 interface TagPersonasModalProps {
@@ -31,28 +31,7 @@ export function TagPersonasModal({
     <BottomSheetModal onCancel={onCancel} backdropOpacity={40}>
       <h2 className="text-lg font-medium text-foreground mb-4">{title}</h2>
       <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
-        {personas.map((persona) => {
-          const isSelected = selectedIds.includes(persona.id);
-          return (
-            <SelectionRow
-              key={persona.id}
-              selected={isSelected}
-              control="checkbox"
-              controlPosition="right"
-              onClick={() => onToggle(persona.id)}
-              disabled={isSubmitting}
-              leading={persona.avatarUrl ? (
-                <img src={persona.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs text-muted-foreground">
-                  {persona.nickname.charAt(0).toUpperCase()}
-                </div>
-              )}
-            >
-              <span className="text-sm text-foreground flex-1">{persona.nickname}</span>
-            </SelectionRow>
-          );
-        })}
+        <PersonaSelectionList personas={personas} selectedIds={selectedIds} onToggle={onToggle} disabled={isSubmitting} />
       </div>
       <ModalActions className="pt-0">
         <Button variant="secondary"

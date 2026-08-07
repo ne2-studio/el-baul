@@ -35,6 +35,16 @@ public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
             .OrderByChronology());
     }
 
+    public async Task<PhotoListRow?> GetUntaggedSuggestionAsync(BaulId baulId)
+    {
+        var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking()
+            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
+            .Where(p => !dbContext.PhotoPersonaTags.Any(t => t.PhotoId == p.Id))
+            .OrderBy(p => p.CreatedAt)
+            .Take(1));
+        return rows.Count > 0 ? rows[0] : null;
+    }
+
     private async Task<IReadOnlyList<PhotoListRow>> BuildRowsAsync(IQueryable<Photo> query)
     {
         var photos = await query.ToListAsync();

@@ -14,6 +14,12 @@ interface UIState {
   setShowProfileMenu: (show: boolean) => void;
   showPlanLimitModal: boolean;
   setShowPlanLimitModal: (show: boolean) => void;
+
+  // Recomendación de contribución (ver ContributionSuggestionContainer): una vez mostrada y
+  // resuelta (guardada u "ahora no"), no debe volver a aparecer el resto de la sesión —
+  // deliberadamente global, no por baúl, para no complicar el MVP con seguimiento por baúl.
+  contributionSuggestionDismissed: boolean;
+  dismissContributionSuggestion: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -35,4 +41,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowProfileMenu: (show) => set({ showProfileMenu: show }),
   showPlanLimitModal: false,
   setShowPlanLimitModal: (show) => set({ showPlanLimitModal: show }),
+
+  contributionSuggestionDismissed: false,
+  dismissContributionSuggestion: () => set({ contributionSuggestionDismissed: true }),
 }));

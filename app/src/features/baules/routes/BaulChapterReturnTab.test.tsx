@@ -10,6 +10,7 @@ import { Baul, Chapter } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { useUIStore } from '@/store/uiStore';
 import { BaulRoute } from './BaulRoute';
 import { ChapterRoute } from '../../chapters/routes/ChapterRoute';
 
@@ -96,6 +97,11 @@ describe('Baúl <-> Capítulo: volver retoma la pestaña de origen', () => {
       chapterRecuerdos: { [chapter.id]: [] },
     });
     usePersonasStore.setState({ personas: { [baul.id]: [] } });
+    // La recomendación de contribución (ContributionSuggestionContainer) es ajena al
+    // mecanismo de returnTab bajo prueba aquí — se marca como ya resuelta esta sesión para
+    // que BaulRoute muestre el feed directamente, en vez de tener que mockear la llamada de
+    // red que la respalda.
+    useUIStore.setState({ contributionSuggestionDismissed: true });
   });
 
   it('vuelve a "capítulos" cuando el capítulo se abrió desde esa pestaña', async () => {

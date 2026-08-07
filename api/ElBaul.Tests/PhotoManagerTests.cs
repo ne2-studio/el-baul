@@ -26,7 +26,7 @@ public class PhotoManagerTests
         new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer());
 
     private IPhotoListReadModel CreatePhotoListReadModel() =>
-        new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos);
+        new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.PhotoPersonaTags);
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
@@ -627,5 +627,94 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task GetUntaggedSuggestionAsync_ShouldReturnNull_WhenBaulHasNoPhotos()
+    {
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
+        var manager = CreateManager(CustodioId);
+
+        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
+    public async Task GetUntaggedSuggestionAsync_ShouldReturnNull_WhenEveryPhotoIsAlreadyTagged()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var personaId = await _fixture.AddColaboradorAsync(baulId, "user-1");
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        await _fixture.PhotoPersonaTags.SetTagsAsync(photoId, baulId, [personaId], _fixture.Clock.UtcNow());
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
+    public async Task GetUntaggedSuggestionAsync_ShouldSkipTaggedPhotos_AndReturnAnUntaggedOne()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var personaId = await _fixture.AddColaboradorAsync(baulId, "user-1");
+        var taggedPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        await _fixture.PhotoPersonaTags.SetTagsAsync(taggedPhotoId, baulId, [personaId], _fixture.Clock.UtcNow());
+        var untaggedPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.Equal(untaggedPhotoId.ToString(), result.Value!.Id);
+    }
+
+    [Fact]
+    public async Task GetUntaggedSuggestionAsync_ShouldReturnTheOldestUntaggedPhoto()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var now = _fixture.Clock.UtcNow();
+        var newerPhoto = Photo.Create(
+            new PhotoId(Guid.NewGuid()), chapterId, baulId, "newer-key", null, CustodioId, now.AddDays(-1));
+        var olderPhoto = Photo.Create(
+            new PhotoId(Guid.NewGuid()), chapterId, baulId, "older-key", null, CustodioId, now.AddDays(-2));
+        await _fixture.Photos.CreateAsync(newerPhoto);
+        await _fixture.Photos.CreateAsync(olderPhoto);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(olderPhoto.Id.ToString(), result.Value!.Id);
+    }
+
+    [Fact]
+    public async Task GetUntaggedSuggestionAsync_ShouldIgnoreDeletedPhotos()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        var manager = CreateManager(CustodioId);
+        await manager.DeleteAsync(photoId, "reason");
+
+        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
+    public async Task GetUntaggedSuggestionAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
+    {
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
+        var manager = CreateManager("stranger");
+
+        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 }

@@ -34,4 +34,9 @@ public interface IPhotoManager
     Task<Result<PhotoDownloadResult>> DownloadAsync(PhotoId photoId);
 
     Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(BaulId baulId, PersonaId personaId);
+
+    /// <summary>The photo behind the "help us tag this photo" contribution suggestion shown on
+    /// entering a baúl's feed — the oldest active photo with no persona tagged yet, or a
+    /// successful null result once none remain.</summary>
+    Task<Result<PhotoDto?>> GetUntaggedSuggestionAsync(BaulId baulId);
 }

@@ -21,6 +21,12 @@ public interface IPhotoListReadModel
     /// exact shape PhotoManager.GetByPersonaIdAsync needs for a persona's tagged photos once
     /// IPhotoPersonaTagRepository has resolved which photo ids to look up.</summary>
     Task<IReadOnlyList<PhotoListRow>> GetActiveByIdsAsync(BaulId baulId, IEnumerable<PhotoId> photoIds);
+
+    /// <summary>The single oldest active photo in a baúl with no persona tagged on it yet, or
+    /// null if none remain — backs the "help us tag this photo" contribution suggestion shown
+    /// on entering a baúl's feed. Oldest-first so the suggestion works through the backlog
+    /// deterministically rather than picking at random.</summary>
+    Task<PhotoListRow?> GetUntaggedSuggestionAsync(BaulId baulId);
 }
 
 public sealed record PhotoListRow(

@@ -322,4 +322,18 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
+    public async Task<Result<PhotoDto?>> GetUntaggedSuggestionAsync(BaulId baulId)
+    {
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Untagged photo suggestion", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<PhotoDto?>(auth.Error);
+
+        var row = await photoListReadModel.GetUntaggedSuggestionAsync(baulId);
+        if (row is null) return Result.Success<PhotoDto?>(null);
+
+        var dtos = await photoDtoProjector.ProjectAsync([row]);
+        return Result.Success<PhotoDto?>(dtos[0]);
+    }
+
 }

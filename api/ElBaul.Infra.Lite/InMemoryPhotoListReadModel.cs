@@ -6,7 +6,8 @@ namespace ElBaul.Infra.Lite;
 // IRecuerdoRepository already hold — not a separately-seeded fake — so BaulFixture-driven tests
 // (and el-baul-api-lite) see this read model reflect whatever a test already seeded through
 // those repositories. Row assembly is shared with PhotoListReadModel via PhotoListRowFactory.
-public class InMemoryPhotoListReadModel(IPhotoRepository photoRepository, IRecuerdoRepository recuerdoRepository)
+public class InMemoryPhotoListReadModel(
+    IPhotoRepository photoRepository, IRecuerdoRepository recuerdoRepository, IPhotoPersonaTagRepository photoPersonaTagRepository)
     : IPhotoListReadModel
 {
     public async Task<IReadOnlyList<PhotoListRow>> GetByChapterIdAsync(ChapterId chapterId) =>
@@ -25,6 +26,21 @@ public class InMemoryPhotoListReadModel(IPhotoRepository photoRepository, IRecue
             .OrderByChronology()
             .ToList();
         return await BuildRowsAsync(photos);
+    }
+
+    public async Task<PhotoListRow?> GetUntaggedSuggestionAsync(BaulId baulId)
+    {
+        var candidates = (await photoRepository.GetActiveByBaulIdAsync(baulId)).OrderBy(p => p.CreatedAt);
+        foreach (var photo in candidates)
+        {
+            var tags = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id);
+            if (!tags.Any())
+            {
+                var rows = await BuildRowsAsync([photo]);
+                return rows.Count > 0 ? rows[0] : null;
+            }
+        }
+        return null;
     }
 
     private async Task<IReadOnlyList<PhotoListRow>> BuildRowsAsync(List<Photo> photos)

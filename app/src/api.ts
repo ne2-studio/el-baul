@@ -290,6 +290,12 @@ export const api = {
     // sustituye el conjunto completo desde el visor de una sola foto.
     addTaggedPersonasBatch: (baulId: string, photoIds: string[], personaIds: string[]) =>
       put<string[]>('/api/photos/tag-batch', { baulId, photoIds, personaIds }),
+    // Foto pendiente de etiquetar que respalda la recomendación de contribución al entrar en
+    // el feed del baúl — null cuando no queda ninguna foto sin etiquetar.
+    getUntaggedSuggestion: async (baulId: string) => {
+      const dto = await get<PhotoDto | null>(`/api/baules/${baulId}/photos/untagged-suggestion`);
+      return dto ? new Photo(dto) : null;
+    },
   },
 
   recuerdos: {

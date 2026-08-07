@@ -9,6 +9,7 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { BaulChaptersTabContainer } from '@/features/baules/containers/BaulChaptersTabContainer';
+import { ContributionSuggestionContainer } from '@/features/baules/containers/ContributionSuggestionContainer';
 import { BaulPersonasTabContainer } from '@/features/people/containers/BaulPersonasTabContainer';
 import { BaulRecuerdosTabContainer } from '@/features/memories/containers/BaulRecuerdosTabContainer';
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
@@ -44,11 +45,19 @@ export const BaulRoute: React.FC = () => {
   const { personas } = usePersonasStore();
   const { baulRecuerdos } = useRecuerdosStore();
   const setShowProfileMenu = useUIStore((state) => state.setShowProfileMenu);
+  const dismissContributionSuggestion = useUIStore((state) => state.dismissContributionSuggestion);
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const initialTab = (location.state as { activeTab?: BaulTab } | null)?.activeTab ?? 'recuerdos';
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
+  // Solo se intenta cuando el punto de entrada es el feed ('recuerdos', el valor por defecto
+  // de initialTab — cualquier otra pestaña llega por un state.activeTab explícito, es decir
+  // por navegación directa, no por una entrada nueva al baúl) y no se ha resuelto ya esta
+  // sesión. Se fija una sola vez al montar: cambiar de pestaña después no debe reabrirla.
+  const [showContributionSuggestion, setShowContributionSuggestion] = useState(
+    () => initialTab === 'recuerdos' && !useUIStore.getState().contributionSuggestionDismissed
+  );
 
   const baulScope = useBaulScope(baulId);
   const guard = guardBaulScope(baulScope, { loadingLabel: 'Abriendo baúl...' });
@@ -56,6 +65,18 @@ export const BaulRoute: React.FC = () => {
   const { baul } = guard;
 
   const baulPermissions = getBaulPermissions(baul);
+
+  if (showContributionSuggestion) {
+    return (
+      <ContributionSuggestionContainer
+        baulId={baul.id}
+        onResolved={() => {
+          dismissContributionSuggestion();
+          setShowContributionSuggestion(false);
+        }}
+      />
+    );
+  }
 
   const handleSelectChapter = async (chapter: { id: string }) => {
     if (!auth.isAuthenticated) return;

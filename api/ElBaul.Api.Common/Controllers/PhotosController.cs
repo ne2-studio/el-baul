@@ -110,6 +110,14 @@ public class PhotosController(
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpGet("baules/{baulId:guid}/photos/untagged-suggestion")]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUntaggedSuggestion(Guid baulId)
+    {
+        var result = await photoManager.GetUntaggedSuggestionAsync(new BaulId(baulId));
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPost("baules/{baulId:guid}/photos/sueltas")]
     [RequestSizeLimit(20_000_000)]
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
