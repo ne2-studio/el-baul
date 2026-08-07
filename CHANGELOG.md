@@ -19,6 +19,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Las tarjetas de capítulo ahora muestran su foto de portada a pantalla completa con el título y las fechas superpuestos, en lugar de aparecer en una cuadrícula con la foto e información por separado.
 - Dentro de un baúl, la pestaña de Recuerdos pasa a ser la primera (y la que se abre por defecto) y la de Capítulos la segunda.
 - La ficha de una persona ahora tiene una pestaña de Recuerdos (la primera, y la que se abre por defecto) con los recuerdos de los que es autora, antes de Biografía y Fotos.
+- Dentro de un capítulo, la pestaña de Recuerdos pasa a ser la primera (y la que se abre por defecto) y la de Fotos la segunda.
 
 ### Arreglado
 

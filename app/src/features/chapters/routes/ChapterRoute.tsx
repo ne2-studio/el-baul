@@ -67,7 +67,7 @@ export const ChapterRoute: React.FC = () => {
   const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
 
   const [photosFailed, setPhotosFailed] = useState(false);
-  const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos'>('fotos');
+  const [activeTab, setActiveTab] = useState<'recuerdos' | 'fotos'>('recuerdos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
 
   // Multi-selection state — compartido entre header, Hero, grid, FAB y la barra de acciones
@@ -218,11 +218,11 @@ export const ChapterRoute: React.FC = () => {
       {apiChapterId !== null ? (
         <Tabbar
           tabs={[
-            { key: 'fotos', label: 'Fotos', count: currentPhotos.length },
             { key: 'recuerdos', label: 'Recuerdos', count: recuerdosCount },
+            { key: 'fotos', label: 'Fotos', count: currentPhotos.length },
           ]}
           active={activeTab}
-          onChange={(key) => setActiveTab(key as 'fotos' | 'recuerdos')}
+          onChange={(key) => setActiveTab(key as 'recuerdos' | 'fotos')}
           top={headerHeight}
           hideStrip={selectionMode}
         >

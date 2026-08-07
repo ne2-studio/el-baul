@@ -20,6 +20,8 @@ test('create baúl → create chapter → upload photo → move photo → delete
 
   await page.getByText(chapter1Name).click();
   await page.waitForURL(/\/capitulos\//);
+  // El capítulo abre en Recuerdos por defecto — el FAB "Subir fotos" solo vive en Fotos.
+  await page.getByRole('button', { name: /Fotos/ }).click();
 
   // Upload: the "Subir fotos" FAB now navigates straight to the upload screen (empty state)
   // instead of opening the native picker itself — the file input only exists there.
@@ -29,6 +31,7 @@ test('create baúl → create chapter → upload photo → move photo → delete
   await page.getByRole('button', { name: 'Guardar recuerdos' }).click();
   await expect(page.getByText(/ya está a salvo/)).toBeVisible({ timeout: 15_000 });
   await page.waitForURL(/\/capitulos\/[^/]+$/);
+  await page.getByRole('button', { name: /Fotos/ }).click();
 
   // Move to chapter 2.
   await page.locator('button:has(img[alt="Foto"])').first().click();
@@ -38,6 +41,7 @@ test('create baúl → create chapter → upload photo → move photo → delete
   await page.getByRole('button', { name: 'Mover aquí' }).click();
   await expect(page.getByText('Foto movida')).toBeVisible({ timeout: 10_000 });
   await page.waitForURL(/\/capitulos\//);
+  await page.getByRole('button', { name: /Fotos/ }).click();
 
   // Delete (now in chapter 2).
   await page.locator('button:has(img[alt="Foto"])').first().click();
