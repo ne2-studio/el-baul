@@ -47,7 +47,7 @@ export const BaulRoute: React.FC = () => {
 
   const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
-  const initialTab = (location.state as { activeTab?: BaulTab } | null)?.activeTab ?? 'capitulos';
+  const initialTab = (location.state as { activeTab?: BaulTab } | null)?.activeTab ?? 'recuerdos';
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
 
   const baulScope = useBaulScope(baulId);
@@ -85,8 +85,8 @@ export const BaulRoute: React.FC = () => {
           Android/Chrome WebView renderizan el mismo header a alturas ligeramente distintas. */}
       <Tabbar
         tabs={[
-          { key: 'capitulos', label: 'Capítulos', count: (chapters[baul.id] || []).length },
           { key: 'recuerdos', label: 'Recuerdos', count: (baulRecuerdos[baul.id] || []).length },
+          { key: 'capitulos', label: 'Capítulos', count: (chapters[baul.id] || []).length },
           { key: 'personas', label: 'Personas', count: (personas[baul.id] || []).length },
         ]}
         active={activeTab}
@@ -94,20 +94,20 @@ export const BaulRoute: React.FC = () => {
         top={headerHeight}
       >
         <PageContainer className="py-6 pb-28">
-          {activeTab === 'capitulos' && (
-            <BaulChaptersTabContainer baulId={baul.id} onSelectChapter={handleSelectChapter} />
-          )}
-
-          {activeTab === 'personas' && (
-            <BaulPersonasTabContainer baulId={baul.id} canCreatePersona={baulPermissions.canCreatePersona} />
-          )}
-
           {activeTab === 'recuerdos' && (
             <BaulRecuerdosTabContainer
               baulId={baul.id}
               baulName={baul.name}
               onOpenChapter={(chapterId) => handleSelectChapter({ id: chapterId })}
             />
+          )}
+
+          {activeTab === 'capitulos' && (
+            <BaulChaptersTabContainer baulId={baul.id} onSelectChapter={handleSelectChapter} />
+          )}
+
+          {activeTab === 'personas' && (
+            <BaulPersonasTabContainer baulId={baul.id} canCreatePersona={baulPermissions.canCreatePersona} />
           )}
         </PageContainer>
       </Tabbar>

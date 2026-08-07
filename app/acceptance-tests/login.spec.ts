@@ -31,7 +31,8 @@ test('user can log in with Google (fake-oidc) and reach their baúl', async ({ p
 
   await expect(page.getByRole('button', { name: 'Cambiar de baúl' })).toBeVisible();
   await expect(page.getByText(baulName)).toBeVisible();
-  await expect(page.getByText('Este baúl está vacío')).toBeVisible();
+  // El baúl abre en Recuerdos por defecto.
+  await expect(page.getByText('Todavía no hay recuerdos')).toBeVisible();
 
   expect(pageErrors, pageErrors.map(String).join('\n')).toEqual([]);
   expect(failedRequests, failedRequests.join('\n')).toEqual([]);
