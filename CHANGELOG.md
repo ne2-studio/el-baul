@@ -27,7 +27,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al ver una foto desde la ficha de una persona, quienes administran el baúl ahora ven las mismas opciones (establecer portada del baúl, retirar foto) que al verla desde un capítulo.
 - Retirar una foto o cambiar su fecha ya actualiza también su aparición en las fichas de las personas etiquetadas en ella.
 - El botón flotante de acción ya no parpadea al hacer scroll.
-- Al cambiar a un baúl que no se había abierto en la sesión, ya no parpadea toda la pantalla mientras cargan sus capítulos y recuerdos.
+- Al refrescar la página dentro de un baúl, o cambiar a uno que no se había abierto en la sesión, ahora se ve la misma pantalla de "Abriendo baúl..." que al entrar por primera vez, en vez de un texto suelto de "Cargando..." seguido de un instante con el baúl vacío antes de que aparezca su contenido real.
 
 ## [beta-v0.1.2] - 2026-08-04
 

@@ -8,6 +8,8 @@ import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { loadChapters } from '@/features/baules/useCases';
 import { loadLoosePhotos } from '@/features/photos/useCases';
 
+type ScopeOutcome = 'failed' | 'not-found' | null;
+
 // Cualquier ruta bajo /baules/:baulId depende de que el baúl, sus capítulos y sus fotos
 // sueltas estén en el store. El cambio de baúl desde el selector de workspace no los
 // precarga, y un refresco o un deep link aterriza aquí con el store vacío. Este hook
@@ -21,52 +23,72 @@ export function useBaulScope(baulId: string | undefined) {
   const { baules, chapters, loosePhotos } = useBaulesStore();
   const { baulRecuerdos } = useRecuerdosStore();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [refreshFailed, setRefreshFailed] = useState(false);
-
   const baul = baules.find(b => b.id === baulId);
+  const hasScope = !!baul && !!baulId && !!chapters[baulId] && !!baulRecuerdos[baulId];
 
-  const attemptRefresh = async () => {
-    setIsLoading(true);
-    const result = await run(() => loadUserData(), {
-      key: 'refresh-baul',
-      errorMessage: 'No se pudo cargar el baúl. Comprueba tu conexión e inténtalo de nuevo.',
-    });
-    setRefreshFailed(!result.ok);
-    setIsLoading(false);
-  };
+  // outcome solo importa mientras hasScope es false, para distinguir "todavía cargando" (null)
+  // de "ya lo hemos intentado y no ha ido bien" (failed/not-found). Se resetea en el propio
+  // render —no en un efecto— en cuanto cambia baulId: BaulRoute no se desmonta al cambiar de
+  // baúl (mismo componente, solo cambia el param), así que un efecto siempre llegaría un frame
+  // tarde y dejaría ver, aunque fuera un instante, el resultado del baúl anterior aplicado al
+  // nuevo. Este es el patrón que React documenta para "ajustar estado cuando cambia una prop"
+  // sin ese hueco.
+  const [outcome, setOutcome] = useState<{ baulId: string | undefined; result: ScopeOutcome }>({
+    baulId,
+    result: null,
+  });
+  const result = outcome.baulId === baulId ? outcome.result : null;
+  if (outcome.baulId !== baulId) {
+    setOutcome({ baulId, result: null });
+  }
 
-  useEffect(() => {
-    async function initBaul() {
-      if (!baulId || !auth.isAuthenticated) return;
+  // Isomorfo a "esta pantalla todavía no tiene nada que enseñar": true mientras el baúl en sí
+  // o su alcance (capítulos/recuerdos/fotos sueltas) no estén en el store y no hayamos
+  // terminado ya de intentarlo. Al derivarse directamente del store en cada render (en vez de
+  // ser un flag que un efecto va actualizando) no hay ningún render intermedio en el que
+  // parezca listo sin estarlo del todo.
+  const isLoading = !!baulId && auth.isAuthenticated && !hasScope && result === null;
+  const refreshFailed = result === 'failed';
 
-      // Si el baúl no está en la lista de baúles, intentamos recargar los datos del usuario
-      if (!baul) {
-        await attemptRefresh();
-        return; // El siguiente renderizado tendrá el baúl (si existe) y se ejecutará el siguiente if
+  const loadScope = async (id: string) => {
+    let currentBaul = useBaulesStore.getState().baules.find(b => b.id === id);
+    if (!currentBaul) {
+      const loadResult = await run(() => loadUserData(), {
+        key: 'refresh-baul',
+        errorMessage: 'No se pudo cargar el baúl. Comprueba tu conexión e inténtalo de nuevo.',
+      });
+      if (!loadResult.ok) {
+        setOutcome({ baulId: id, result: 'failed' });
+        return;
       }
-
-      // Leídos vía getState() (no reactivos) a propósito: ver BaulRoute para el porqué.
-      const { chapters } = useBaulesStore.getState();
-      const { baulRecuerdos } = useRecuerdosStore.getState();
-      const needsChapters = !chapters[baulId];
-      const needsRecuerdos = !baulRecuerdos[baulId];
-
-      if (needsChapters || needsRecuerdos) {
-        setIsLoading(true);
-        await run(() => Promise.all([
-          ...(needsChapters ? [loadChapters(baulId), loadLoosePhotos(baulId)] : []),
-          ...(needsRecuerdos ? [loadBaulRecuerdos(baulId)] : []),
-        ]), {
-          errorMessage: 'Error al cargar los capítulos del baúl',
-        });
-        setIsLoading(false);
+      currentBaul = useBaulesStore.getState().baules.find(b => b.id === id);
+      if (!currentBaul) {
+        setOutcome({ baulId: id, result: 'not-found' });
+        return;
       }
     }
 
-    initBaul();
+    const { chapters } = useBaulesStore.getState();
+    const { baulRecuerdos } = useRecuerdosStore.getState();
+    const needsChapters = !chapters[id];
+    const needsRecuerdos = !baulRecuerdos[id];
+
+    if (needsChapters || needsRecuerdos) {
+      await run(() => Promise.all([
+        ...(needsChapters ? [loadChapters(id), loadLoosePhotos(id)] : []),
+        ...(needsRecuerdos ? [loadBaulRecuerdos(id)] : []),
+      ]), {
+        errorMessage: 'Error al cargar los capítulos del baúl',
+      });
+    }
+    // Sin outcome de éxito explícito: hasScope pasa a true en cuanto los stores se actualizan,
+    // y de ahí sale isLoading=false por sí solo.
+  };
+
+  useEffect(() => {
+    if (isLoading) loadScope(baulId!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baulId, auth.isAuthenticated, baul, loadChapters, loadLoosePhotos, loadBaulRecuerdos]);
+  }, [baulId, isLoading]);
 
   return {
     baul,
@@ -75,6 +97,6 @@ export function useBaulScope(baulId: string | undefined) {
     baulRecuerdos: baulId ? baulRecuerdos[baulId] : undefined,
     isLoading,
     refreshFailed,
-    retry: attemptRefresh,
+    retry: () => { if (baulId) setOutcome({ baulId, result: null }); },
   };
 }

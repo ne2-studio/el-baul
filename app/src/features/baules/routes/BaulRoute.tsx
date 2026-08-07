@@ -51,11 +51,7 @@ export const BaulRoute: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
 
   const baulScope = useBaulScope(baulId);
-  // requireFullScope: false — sus tres pestañas leen `chapters[baulId] || []` (etc.) de sus
-  // propios stores y toleran datos aún no cargados, así que no hay que bloquear el chrome
-  // entero (header + tabbar) mientras llegan: solo esperamos a que el baúl en sí exista. Ver
-  // el porqué en baulScopeGuard.
-  const guard = guardBaulScope(baulScope, { requireFullScope: false });
+  const guard = guardBaulScope(baulScope, { loadingLabel: 'Abriendo baúl...' });
   if (!guard.ready) return guard.screen;
   const { baul } = guard;
 

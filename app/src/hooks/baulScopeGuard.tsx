@@ -1,4 +1,5 @@
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
+import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
 import { Baul } from '@/types';
 
 interface BaulScope {
@@ -9,17 +10,9 @@ interface BaulScope {
 }
 
 interface BaulScopeGuardOptions {
-  // Cada Route bajo /baules/:baulId muestra su propia copia mientras espera — "Cargando..."
-  // para pantallas de baúl/capítulo, "Cargando foto..." para los visores.
+  // Cada Route bajo /baules/:baulId pasa su propio mensaje mientras espera — "Abriendo
+  // baúl..." para BaulRoute, "Cargando foto..." para los visores, etc.
   loadingLabel?: string;
-  // isLoading de useBaulScope cubre dos cosas distintas: "aún no sabemos si el baúl existe" y
-  // "el baúl ya existe, pero sus capítulos/recuerdos/fotos sueltas todavía se están cargando".
-  // Los callers que necesitan resolver una entidad concreta dentro del baúl antes de poder
-  // renderizar nada (capítulo, foto) sí necesitan esperar a lo segundo — default true. BaulRoute
-  // no: sus pestañas ya leen `chapters[baulId] || []` etc. y toleran datos parciales, así que
-  // bloquear el chrome entero (header + tabbar) mientras llegan solo produce un parpadeo al
-  // cambiar a un baúl que aún no se había abierto esta sesión — pasa `false` para evitarlo.
-  requireFullScope?: boolean;
 }
 
 export type BaulScopeGuardResult =
@@ -30,15 +23,19 @@ export type BaulScopeGuardResult =
 
 // Interpreta el contrato de useBaulScope (isLoading / refreshFailed / baul) del mismo modo en
 // las cuatro rutas que dependen de él, para que ninguna reimplemente el guard de
-// carga/error/no-encontrado a mano. Devuelve `{ ready: true, baul }` con `baul` ya estrechado
-// a no-undefined cuando está listo, para que el caller pueda usarlo sin re-comprobar — un
-// simple `React.ReactNode | null` no permite ese estrechamiento a través de la llamada.
+// carga/error/no-encontrado a mano. Un único camino: mientras isLoading sea true (el baúl no
+// se conoce todavía, o se conoce pero sus capítulos/recuerdos/fotos sueltas aún no) se bloquea
+// con una pantalla de carga a página completa — nunca con contenido a medias (tabs vacíos, un
+// "no encontrado" fantasma) ni con un simple texto suelto. Devuelve `{ ready: true, baul }` con
+// `baul` ya estrechado a no-undefined cuando está listo, para que el caller pueda usarlo sin
+// re-comprobar — un simple `React.ReactNode | null` no permite ese estrechamiento a través de
+// la llamada.
 export function guardBaulScope(
   { baul, isLoading, refreshFailed, retry }: BaulScope,
-  { loadingLabel = 'Cargando...', requireFullScope = true }: BaulScopeGuardOptions = {},
+  { loadingLabel = 'Cargando...' }: BaulScopeGuardOptions = {},
 ): BaulScopeGuardResult {
-  if (isLoading && (requireFullScope || !baul)) {
-    return { ready: false, screen: <div className="p-8 text-center">{loadingLabel}</div> };
+  if (isLoading) {
+    return { ready: false, screen: <FullScreenLoading message={loadingLabel} /> };
   }
 
   if (!baul) {
