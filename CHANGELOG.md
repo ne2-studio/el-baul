@@ -23,6 +23,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Arreglado
 
+- Al cerrar sesión y volver a entrar, la app ya recuerda el último baúl en el que se estaba y abre directamente en él, en lugar de volver al primero de la lista.
 - El menú de hoja inferior ahora aparece siempre por encima del botón flotante de acción.
 - El aviso (Toast) respeta la zona segura inferior del dispositivo.
 - Se precargan las fotos de una persona para evitar el parpadeo al abrir su pestaña de Fotos.

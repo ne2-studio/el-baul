@@ -31,21 +31,19 @@ interface CurrentBaulState {
   // features/baules/useCases), no en una lista de baúles.
   currentBaulId: string | null;
   setCurrentBaulId: (baulId: string) => void;
-  reset: () => void;
 }
 
+// A diferencia de los demás stores de dominio, este NO se limpia en resetAllStores() al cerrar
+// sesión: es justo lo contrario de lo que pide, que la app recuerde el último baúl a través de
+// un logout/login. No hay riesgo de filtrado entre cuentas en un dispositivo compartido — los
+// IDs de baúl son globales, así que si el siguiente usuario no tiene acceso a ese baúl,
+// resolveHomeDestination no lo encuentra en su lista y cae al primero suyo; si sí lo tiene
+// (es una persona más del mismo baúl compartido), no es una filtración, ya podía verlo.
 export const useCurrentBaulStore = create<CurrentBaulState>((set) => ({
   currentBaulId: readStoredBaulId(),
 
   setCurrentBaulId: (baulId) => {
     writeStoredBaulId(baulId);
     set({ currentBaulId: baulId });
-  },
-
-  // Llamado desde resetAllStores() al cerrar sesión / perder autenticación — sin esto, el
-  // CurrentBaul de un usuario quedaría filtrado a la siguiente sesión en el mismo dispositivo.
-  reset: () => {
-    writeStoredBaulId(null);
-    set({ currentBaulId: null });
   },
 }));

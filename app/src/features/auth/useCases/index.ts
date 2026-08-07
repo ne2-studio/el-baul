@@ -4,7 +4,6 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 
 async function loadProfile(): Promise<UserProfile | null> {
   try {
@@ -54,10 +53,12 @@ export async function markOnboardingSeen(): Promise<void> {
 
 // Clears every domain store on sign-out / loss of auth. Each store only knows how to
 // reset its own slice; this is the explicit call site that fans that out across all of them.
+// useCurrentBaulStore is deliberately NOT included — it's the user's remembered workspace, not
+// server-derived domain data, and it must survive a sign-out/sign-in so the app reopens where
+// the user left off (see the comment on that store for why this is safe on shared devices).
 export function resetAllStores(): void {
   useAuthStore.getState().reset();
   useBaulesStore.getState().reset();
   usePersonasStore.getState().reset();
   useRecuerdosStore.getState().reset();
-  useCurrentBaulStore.getState().reset();
 }
