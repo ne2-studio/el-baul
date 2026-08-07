@@ -30,17 +30,19 @@ public class InMemoryPhotoListReadModel(
 
     public async Task<PhotoListRow?> GetUntaggedSuggestionAsync(BaulId baulId)
     {
-        var candidates = (await photoRepository.GetActiveByBaulIdAsync(baulId)).OrderBy(p => p.CreatedAt);
-        foreach (var photo in candidates)
+        var untagged = new List<Photo>();
+        foreach (var photo in await photoRepository.GetActiveByBaulIdAsync(baulId))
         {
             var tags = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id);
-            if (!tags.Any())
-            {
-                var rows = await BuildRowsAsync([photo]);
-                return rows.Count > 0 ? rows[0] : null;
-            }
+            if (!tags.Any()) untagged.Add(photo);
         }
-        return null;
+        if (untagged.Count == 0) return null;
+
+        // Random, not the first untagged photo found — matches PhotoListReadModel's
+        // `ORDER BY random()`, so the suggestion varies between visits on both stores.
+        var chosen = untagged[Random.Shared.Next(untagged.Count)];
+        var rows = await BuildRowsAsync([chosen]);
+        return rows.Count > 0 ? rows[0] : null;
     }
 
     private async Task<IReadOnlyList<PhotoListRow>> BuildRowsAsync(List<Photo> photos)

@@ -674,22 +674,33 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task GetUntaggedSuggestionAsync_ShouldReturnTheOldestUntaggedPhoto()
+    public async Task GetUntaggedSuggestionAsync_ShouldVaryAcrossCalls_InsteadOfAlwaysPickingTheSamePhoto()
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var now = _fixture.Clock.UtcNow();
-        var newerPhoto = Photo.Create(
-            new PhotoId(Guid.NewGuid()), chapterId, baulId, "newer-key", null, CustodioId, now.AddDays(-1));
-        var olderPhoto = Photo.Create(
-            new PhotoId(Guid.NewGuid()), chapterId, baulId, "older-key", null, CustodioId, now.AddDays(-2));
-        await _fixture.Photos.CreateAsync(newerPhoto);
-        await _fixture.Photos.CreateAsync(olderPhoto);
+        var photoIds = new List<PhotoId>();
+        for (var i = 0; i < 20; i++)
+        {
+            var photo = Photo.Create(
+                new PhotoId(Guid.NewGuid()), chapterId, baulId, $"key-{i}", null, CustodioId, now.AddDays(-i));
+            await _fixture.Photos.CreateAsync(photo);
+            photoIds.Add(photo.Id);
+        }
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+        var seen = new HashSet<string>();
+        for (var i = 0; i < 30; i++)
+        {
+            var result = await manager.GetUntaggedSuggestionAsync(baulId);
+            Assert.True(result.IsSuccess);
+            Assert.Contains(result.Value!.Id, photoIds.Select(id => id.ToString()));
+            seen.Add(result.Value!.Id);
+        }
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(olderPhoto.Id.ToString(), result.Value!.Id);
+        // With 20 untagged candidates, 30 identical picks in a row would be a ~1-in-20^29 fluke —
+        // this only fails if the suggestion stopped being random (e.g. reverted to always the
+        // oldest/newest photo).
+        Assert.True(seen.Count > 1, "Expected the suggestion to vary across calls, but it never did.");
     }
 
     [Fact]

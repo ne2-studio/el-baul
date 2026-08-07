@@ -26,6 +26,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 - La foto en el visor ya no cambia de tamaño según las dimensiones de la imagen ni la cantidad de recuerdos cargados: ahora mide siempre lo mismo.
 - Al abrir una foto, mientras se cargan sus recuerdos se muestra un pequeño indicador de carga en vez de dar a entender por un instante que no tiene ninguno.
+- La foto sugerida para etiquetar al entrar en un baúl ahora se elige al azar entre las que faltan por etiquetar, en vez de ser siempre la misma (la más antigua).
 
 ## [beta-v0.2.0] - 2026-08-07
 

@@ -37,10 +37,13 @@ public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
 
     public async Task<PhotoListRow?> GetUntaggedSuggestionAsync(BaulId baulId)
     {
+        // OrderBy(EF.Functions.Random()) becomes `ORDER BY random()` on Postgres — the
+        // suggestion should vary between visits instead of always landing on the same
+        // (e.g. oldest) untagged photo, so this can't be an OrderBy on any stored column.
         var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking()
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
             .Where(p => !dbContext.PhotoPersonaTags.Any(t => t.PhotoId == p.Id))
-            .OrderBy(p => p.CreatedAt)
+            .OrderBy(_ => EF.Functions.Random())
             .Take(1));
         return rows.Count > 0 ? rows[0] : null;
     }

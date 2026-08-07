@@ -63,6 +63,14 @@ public class CriticalJourneyTests(ElBaulAcceptanceFixture fixture)
         var photoId = (await ParseJsonAsync(uploadResponse)).GetProperty("id").GetString();
         photoId.Should().NotBeNullOrWhiteSpace();
 
+        // 3b. The untagged-suggestion query orders candidates with EF.Functions.Random(),
+        // which only Npgsql (not the in-memory fixture ElBaul.Tests runs against) needs to
+        // translate — this is the one place that translation actually runs against real
+        // Postgres, so it's worth a dedicated assertion rather than folding into step 4.
+        var untaggedSuggestionResponse = await client.GetAsync($"/api/baules/{baulId}/photos/untagged-suggestion");
+        untaggedSuggestionResponse.StatusCode.Should().Be(HttpStatusCode.OK, await untaggedSuggestionResponse.Content.ReadAsStringAsync());
+        (await ParseJsonAsync(untaggedSuggestionResponse)).GetProperty("id").GetString().Should().Be(photoId);
+
         // 4. Download it back and confirm the actual bytes round-tripped through MinIO —
         // via the raw-download endpoint, not the imgproxy-backed thumbnail/full URLs, so this
         // doesn't depend on imgproxy being part of the stack under test.
