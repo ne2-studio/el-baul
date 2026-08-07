@@ -5,10 +5,13 @@ import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
+import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
 import { RoleBadge } from '@/design-system/components/data-display/Badges';
 import { PersonaSettingsMenuContainer } from '@/features/people/containers/PersonaSettingsMenuContainer';
 import { PersonaBiografiaTabContainer } from '@/features/people/containers/PersonaBiografiaTabContainer';
 import { PersonaFotosTabContainer } from '@/features/people/containers/PersonaFotosTabContainer';
+import { PersonaRecuerdosTabContainer } from '@/features/memories/containers/PersonaRecuerdosTabContainer';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
@@ -24,15 +27,19 @@ export const PersonaDetailRoute: React.FC = () => {
   const { baulId, personaId } = useParams();
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
 
-  const [activeTab, setActiveTab] = useState<'biografia' | 'fotos'>('biografia');
+  const [activeTab, setActiveTab] = useState<'recuerdos' | 'biografia' | 'fotos'>('recuerdos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
 
-  // Bloquea hasta tener tanto la persona como sus fotos, para que el badge de recuento del
-  // Tabbar sea correcto desde el primer render y no haya un hueco de carga al entrar en la
-  // pestaña de fotos — ver docs/architecture/frontend.md y usePersonaScope.
+  // Solo para el badge de recuento del Tabbar — PersonaRecuerdosTabContainer filtra estos
+  // mismos recuerdos por su cuenta.
+  const { baulRecuerdos } = useRecuerdosStore();
+
+  // Bloquea hasta tener la persona, sus fotos y los recuerdos del baúl, para que los badges de
+  // recuento del Tabbar sean correctos desde el primer render y no haya un hueco de carga al
+  // cambiar de pestaña — ver docs/architecture/frontend.md y usePersonaScope.
   const { persona, photos, isLoading, loadFailed, retry } = usePersonaScope(baulId, personaId);
 
-  if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
+  if (isLoading) return <FullScreenLoading message="Abriendo ficha..." />;
 
   if (!baulId || !personaId || !persona) {
     if (loadFailed) {
@@ -86,14 +93,19 @@ export const PersonaDetailRoute: React.FC = () => {
 
       <Tabbar
         tabs={[
+          { key: 'recuerdos', label: 'Recuerdos', count: (baulRecuerdos[baulId] || []).filter((r) => r.personaId === personaId).length },
           { key: 'biografia', label: 'Biografía' },
           { key: 'fotos', label: 'Fotos', count: (photos || []).length },
         ]}
         active={activeTab}
-        onChange={(key) => setActiveTab(key as 'biografia' | 'fotos')}
+        onChange={(key) => setActiveTab(key as 'recuerdos' | 'biografia' | 'fotos')}
         top={headerHeight}
       >
         <PageContainer className="py-8 space-y-6 pb-28">
+          {activeTab === 'recuerdos' && (
+            <PersonaRecuerdosTabContainer baulId={baulId} personaId={personaId} />
+          )}
+
           {activeTab === 'biografia' && (
             <PersonaBiografiaTabContainer baulId={baulId} persona={persona} />
           )}

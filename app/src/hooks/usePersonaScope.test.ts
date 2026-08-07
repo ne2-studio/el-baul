@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 
 vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(() => ({ isAuthenticated: true })),
@@ -13,8 +14,13 @@ vi.mock('@/features/people/useCases', () => ({
   loadPersonaPhotos: vi.fn(),
 }));
 
+vi.mock('@/features/memories/useCases', () => ({
+  loadBaulRecuerdos: vi.fn(),
+}));
+
 import { useAuth } from 'react-oidc-context';
 import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
+import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { usePersonaScope } from './usePersonaScope';
 
 const baulId = 'baul-1';
@@ -28,9 +34,13 @@ function photo(overrides: Partial<Photo> = {}): Photo {
 describe('usePersonaScope', () => {
   beforeEach(() => {
     usePersonasStore.getState().reset();
+    useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(loadPersonas).mockReset().mockResolvedValue(undefined);
     vi.mocked(loadPersonaPhotos).mockReset().mockResolvedValue(undefined);
+    vi.mocked(loadBaulRecuerdos).mockReset().mockImplementation(async (id: string) => {
+      useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [id]: [] } }));
+    });
   });
 
   it('does nothing when baulId or personaId is missing', () => {
@@ -41,13 +51,16 @@ describe('usePersonaScope', () => {
     expect(loadPersonaPhotos).not.toHaveBeenCalled();
   });
 
-  it('loads personas and personaPhotos together when neither is cached', async () => {
-    vi.mocked(loadPersonas).mockImplementation(async () => {
+  it('loads personas, personaPhotos and baúl recuerdos together when none are cached', async () => {
+    // Deferred via a microtask (not a synchronous mock body) so isLoading — now derived
+    // straight from the store — can actually be observed as true before these resolve, same
+    // as a real network call would behave.
+    vi.mocked(loadPersonas).mockImplementation(() => Promise.resolve().then(() => {
       usePersonasStore.setState({ personas: { [baulId]: [persona] } });
-    });
-    vi.mocked(loadPersonaPhotos).mockImplementation(async () => {
+    }));
+    vi.mocked(loadPersonaPhotos).mockImplementation(() => Promise.resolve().then(() => {
       usePersonasStore.setState({ personaPhotos: { [personaId]: [photo()] } });
-    });
+    }));
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
 
@@ -55,6 +68,7 @@ describe('usePersonaScope', () => {
 
     await waitFor(() => expect(loadPersonas).toHaveBeenCalledWith(baulId));
     expect(loadPersonaPhotos).toHaveBeenCalledWith(baulId, personaId);
+    expect(loadBaulRecuerdos).toHaveBeenCalledWith(baulId);
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.persona).toEqual(persona);
@@ -62,17 +76,20 @@ describe('usePersonaScope', () => {
     expect(result.current.loadFailed).toBe(false);
   });
 
-  it('only fetches the piece that is missing', async () => {
+  it('only fetches the pieces that are missing', async () => {
     usePersonasStore.setState({ personas: { [baulId]: [persona] } });
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
 
     renderHook(() => usePersonaScope(baulId, personaId));
 
     await waitFor(() => expect(loadPersonaPhotos).toHaveBeenCalledWith(baulId, personaId));
     expect(loadPersonas).not.toHaveBeenCalled();
+    expect(loadBaulRecuerdos).not.toHaveBeenCalled();
   });
 
-  it('does not refetch anything once both are already cached', async () => {
+  it('does not refetch anything once everything is already cached', async () => {
     usePersonasStore.setState({ personas: { [baulId]: [persona] }, personaPhotos: { [personaId]: [photo()] } });
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
 
@@ -81,6 +98,7 @@ describe('usePersonaScope', () => {
     });
     expect(loadPersonas).not.toHaveBeenCalled();
     expect(loadPersonaPhotos).not.toHaveBeenCalled();
+    expect(loadBaulRecuerdos).not.toHaveBeenCalled();
     expect(result.current.isLoading).toBe(false);
     expect(result.current.persona).toEqual(persona);
   });
