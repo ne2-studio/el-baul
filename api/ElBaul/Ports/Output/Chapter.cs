@@ -8,7 +8,10 @@ public record Chapter
     int PhotoCount,
     string? CoverPhotoKey,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    // "" for chapters created before this field existed — never matches a real user id, so
+    // legacy chapters are simply never excluded as "your own" (e.g. from the weekly digest).
+    string CreatedByUserId = ""
 )
 {
     // CoverPhotoKey follows the same rule everywhere a photo enters or leaves a chapter: the

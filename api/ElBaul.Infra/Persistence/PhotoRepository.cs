@@ -29,9 +29,10 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
             .ToListAsync();
 
-    public async Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since) =>
+    public async Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, string excludingUserId) =>
         await dbContext.Photos.AsNoTracking()
-            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && p.CreatedAt >= since)
+            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && p.CreatedAt >= since
+                && p.UploadedBy != excludingUserId)
             .ToListAsync();
 
     public async Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit) =>

@@ -11,9 +11,9 @@ public class ChapterRepository(ElBaulDbContext dbContext) : IChapterRepository
     public async Task<IEnumerable<Chapter>> GetByBaulIdAsync(BaulId baulId) =>
         await dbContext.Chapters.AsNoTracking().Where(a => a.BaulId == baulId).ToListAsync();
 
-    public async Task<IEnumerable<Chapter>> GetCreatedSinceAsync(BaulId baulId, DateTime since) =>
+    public async Task<IEnumerable<Chapter>> GetCreatedSinceAsync(BaulId baulId, DateTime since, string excludingUserId) =>
         await dbContext.Chapters.AsNoTracking()
-            .Where(a => a.BaulId == baulId && a.CreatedAt >= since)
+            .Where(a => a.BaulId == baulId && a.CreatedAt >= since && a.CreatedByUserId != excludingUserId)
             .ToListAsync();
 
     public async Task CreateAsync(Chapter chapter)

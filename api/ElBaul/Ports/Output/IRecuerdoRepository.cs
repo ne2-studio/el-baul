@@ -21,7 +21,10 @@ public interface IRecuerdoRepository
     /// newest first.</summary>
     Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(BaulId baulId);
 
-    Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since);
+    /// <summary>Recuerdos created since <paramref name="since"/>, excluding ones authored by
+    /// <paramref name="excludingUserId"/> — used by the weekly digest, which has no reason to
+    /// tell a user about their own contributions.</summary>
+    Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, string excludingUserId);
 
     /// <summary>Every recuerdo in the system, unscoped — used only by the one-off backfill
     /// command (see ElBaul.Maintenance/Commands/BackfillRecuerdoEmbeddingsCommand.cs).</summary>

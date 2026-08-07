@@ -16,6 +16,7 @@ public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
         builder.Property(a => a.CoverPhotoKey).HasMaxLength(1000);
         builder.Property(a => a.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(a => a.UpdatedAt).HasColumnType("timestamp with time zone");
+        builder.Property(a => a.CreatedByUserId).IsRequired().HasMaxLength(255).HasDefaultValue("");
 
         builder.HasIndex(a => a.BaulId);
 

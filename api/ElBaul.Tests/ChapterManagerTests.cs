@@ -63,6 +63,19 @@ public class ChapterManagerTests
     }
 
     [Fact]
+    public async Task CreateAsync_ShouldRecordTheCreatingUser()
+    {
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreateAsync(baulId, "Vacaciones");
+
+        Assert.True(result.IsSuccess);
+        var chapter = await _fixture.Chapters.GetByIdAsync(new ChapterId(Guid.Parse(result.Value.Id)));
+        Assert.Equal(CustodioId, chapter!.CreatedByUserId);
+    }
+
+    [Fact]
     public async Task GetByBaulIdAsync_ShouldResolveSignedUrls_ForCoverPhotos()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");

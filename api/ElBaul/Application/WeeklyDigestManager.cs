@@ -125,7 +125,7 @@ public class WeeklyDigestManager(
         var sections = new List<BaulDigestSection>();
         foreach (var baul in baules)
         {
-            var section = await BuildBaulSectionAsync(baul, since, publicUrl);
+            var section = await BuildBaulSectionAsync(baul, since, publicUrl, user.Id);
             if (section is not null) sections.Add(section);
         }
 
@@ -143,12 +143,12 @@ public class WeeklyDigestManager(
             EmailFooterLinksFactory.Build(publicUrl, appConfiguration, clock));
     }
 
-    private async Task<BaulDigestSection?> BuildBaulSectionAsync(Baul baul, DateTime since, string publicUrl)
+    private async Task<BaulDigestSection?> BuildBaulSectionAsync(Baul baul, DateTime since, string publicUrl, string excludingUserId)
     {
         var baulUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}");
         var items = new List<DigestActivityBlock>();
 
-        var newChapters = await chapterRepository.GetCreatedSinceAsync(baul.Id, since);
+        var newChapters = await chapterRepository.GetCreatedSinceAsync(baul.Id, since, excludingUserId);
         foreach (var chapter in newChapters)
         {
             items.Add(new DigestActivityBlock(
@@ -156,7 +156,7 @@ public class WeeklyDigestManager(
                 EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
         }
 
-        var recuerdos = await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since);
+        var recuerdos = await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId);
         var recuerdoCount = recuerdos.Count();
         if (recuerdoCount > 0)
         {
@@ -164,7 +164,7 @@ public class WeeklyDigestManager(
             items.Add(new DigestActivityBlock(DigestBlockKind.NewRecuerdos, label, baulUrl, recuerdoCount));
         }
 
-        var photos = (await photoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since)).ToList();
+        var photos = (await photoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId)).ToList();
         var photosByChapter = photos.Where(p => p.ChapterId is not null).GroupBy(p => p.ChapterId!.Value).ToList();
 
         // One GetByBaulIdAsync for every chapter this baúl has instead of one GetByIdAsync per

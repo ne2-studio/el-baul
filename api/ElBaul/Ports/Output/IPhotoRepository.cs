@@ -12,7 +12,10 @@ public interface IPhotoRepository
     /// used to batch what would otherwise be one GetByChapterIdAsync round trip per chapter
     /// (e.g. ChatContextBuilder grouping a baúl's photos by chapter for the AI prompt).</summary>
     Task<IEnumerable<Photo>> GetActiveByBaulIdAsync(BaulId baulId);
-    Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since);
+    /// <summary>Active photos created since <paramref name="since"/>, excluding ones uploaded by
+    /// <paramref name="excludingUserId"/> — used by the weekly digest, which has no reason to
+    /// tell a user about their own contributions.</summary>
+    Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, string excludingUserId);
     Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit);
     Task<IEnumerable<Photo>> GetUndatedAsync();
 

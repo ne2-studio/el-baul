@@ -63,7 +63,7 @@ public class ChapterManager(
 
         var baul = auth.Value.Baul;
         var now = clock.UtcNow();
-        var chapter = new Chapter(new ChapterId(idGenerator.NewId()), baulId, name, 0, null, now, now);
+        var chapter = new Chapter(new ChapterId(idGenerator.NewId()), baulId, name, 0, null, now, now, userId);
         await chapterRepository.CreateAsync(chapter);
 
         await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });

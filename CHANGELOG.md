@@ -29,6 +29,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - La foto en el visor ya no cambia de tamaño según las dimensiones de la imagen ni la cantidad de recuerdos cargados: ahora mide siempre lo mismo.
 - Al abrir una foto, mientras se cargan sus recuerdos se muestra un pequeño indicador de carga en vez de dar a entender por un instante que no tiene ninguno.
 - La foto sugerida para etiquetar al entrar en un baúl ahora se elige al azar entre las que faltan por etiquetar, en vez de ser siempre la misma (la más antigua).
+- El resumen semanal por email ya no cuenta ni muestra los capítulos, recuerdos y fotos que la propia persona destinataria ha creado, solo las novedades del resto.
 
 ## [beta-v0.2.0] - 2026-08-07
 

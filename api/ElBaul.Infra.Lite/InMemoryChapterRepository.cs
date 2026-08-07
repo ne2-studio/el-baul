@@ -19,9 +19,12 @@ public class InMemoryChapterRepository : IChapterRepository
         lock (_lock) return Task.FromResult(_chapters.Values.Where(a => a.BaulId == baulId).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<Chapter>> GetCreatedSinceAsync(BaulId baulId, DateTime since)
+    public Task<IEnumerable<Chapter>> GetCreatedSinceAsync(BaulId baulId, DateTime since, string excludingUserId)
     {
-        lock (_lock) return Task.FromResult(_chapters.Values.Where(a => a.BaulId == baulId && a.CreatedAt >= since).ToList().AsEnumerable());
+        lock (_lock)
+            return Task.FromResult(_chapters.Values
+                .Where(a => a.BaulId == baulId && a.CreatedAt >= since && a.CreatedByUserId != excludingUserId)
+                .ToList().AsEnumerable());
     }
 
     public Task CreateAsync(Chapter chapter)
