@@ -19,6 +19,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<RecuerdoEmbedding> RecuerdoEmbeddings => Set<RecuerdoEmbedding>();
     public DbSet<SharedLink> SharedLinks => Set<SharedLink>();
     public DbSet<BaulInviteLink> BaulInviteLinks => Set<BaulInviteLink>();
+    public DbSet<PushToken> PushTokens => Set<PushToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -33,6 +33,7 @@ public static class ServiceRegistration
         services.AddSingleton<IChatMessageRepository, InMemoryChatMessageRepository>();
         services.AddSingleton<IRecuerdoEmbeddingRepository, InMemoryRecuerdoEmbeddingRepository>();
         services.AddSingleton<IAdminRepository, InMemoryAdminRepository>();
+        services.AddSingleton<IPushTokenRepository, InMemoryPushTokenRepository>();
         services.AddSingleton<ISentEmailRepository, InMemorySentEmailRepository>();
         services.AddSingleton<IEmailLinkClickRepository, InMemoryEmailLinkClickRepository>();
         services.AddSingleton<IEmailLinkSigner, EmailLinkSigner>();
@@ -40,6 +41,7 @@ public static class ServiceRegistration
 
         services.AddSingleton<IPhotoStorage, LitePhotoStorage>();
         services.AddSingleton<IEmailSender, FakeEmailSender>();
+        services.AddSingleton<IPushNotificationSender, FakePushNotificationSender>();
         services.AddSingleton<IBackgroundJobScheduler, FakeBackgroundJobScheduler>();
         services.AddSingleton<IAiChatBackend, FakeAiChatBackend>();
         services.AddSingleton<IEmbeddingBackend>(_ => new FakeEmbeddingBackend(EmbeddingVocabulary));

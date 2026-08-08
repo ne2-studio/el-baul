@@ -4,13 +4,15 @@ import { NotificationPreferencesScreen } from '@/features/profile/components/Not
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { loadNotificationPreferences, updateNotificationPreferences } from '@/features/profile/useCases';
+import { loadNotificationPreferences, updateNotificationPreferences, enablePushNotifications, disablePushNotifications } from '@/features/profile/useCases';
+import { isPushNotificationsSupported, PushPermissionDeniedError } from '@/features/profile/native/pushNotifications';
 
 export const NotificationPreferencesRoute: React.FC = () => {
   const navigate = useNavigate();
   const { setShowProfileMenu } = useUIStore();
   const { run, isPending } = useAsyncAction();
-  const { weeklyDigestEnabled } = useAuthStore();
+  const { run: runPush, isPending: isPushPending } = useAsyncAction();
+  const { weeklyDigestEnabled, pushNotificationsEnabled } = useAuthStore();
 
   useEffect(() => {
     // No-ops if the session-level bootstrap (features/auth/useCases) has already populated
@@ -28,6 +30,24 @@ export const NotificationPreferencesRoute: React.FC = () => {
     });
   };
 
+  const handleTogglePush = async () => {
+    if (pushNotificationsEnabled) {
+      await runPush(() => disablePushNotifications(), {
+        successMessage: 'Notificaciones push desactivadas',
+        errorMessage: 'No se pudieron desactivar las notificaciones push.',
+      });
+      return;
+    }
+
+    await runPush(() => enablePushNotifications(), {
+      successMessage: 'Notificaciones push activadas',
+      errorMessage: (error) =>
+        error instanceof PushPermissionDeniedError
+          ? 'Activa los permisos de notificaciones desde los ajustes del sistema.'
+          : 'No se pudieron activar las notificaciones push.',
+    });
+  };
+
   if (weeklyDigestEnabled === null) return null;
 
   return (
@@ -39,6 +59,10 @@ export const NotificationPreferencesRoute: React.FC = () => {
       weeklyDigestEnabled={weeklyDigestEnabled}
       onToggle={handleToggle}
       isSaving={isPending()}
+      showPushToggle={isPushNotificationsSupported()}
+      pushNotificationsEnabled={pushNotificationsEnabled}
+      onTogglePush={handleTogglePush}
+      isPushSaving={isPushPending()}
     />
   );
 };

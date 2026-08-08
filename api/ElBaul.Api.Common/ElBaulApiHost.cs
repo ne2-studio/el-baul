@@ -174,6 +174,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IBaulFeedManager, BaulFeedManager>();
         builder.Services.AddScoped<IPhotoPersonaTagManager, PhotoPersonaTagManager>();
         builder.Services.AddScoped<IUserManager, UserManager>();
+        builder.Services.AddScoped<IPushNotificationManager, PushNotificationManager>();
         builder.Services.AddScoped<ISupportManager, SupportManager>();
         builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
         builder.Services.AddScoped<IChatManager, ChatManager>();

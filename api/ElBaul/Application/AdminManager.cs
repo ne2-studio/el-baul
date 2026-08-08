@@ -22,6 +22,7 @@ public class AdminManager(
     ISharedLinkRepository sharedLinkRepository,
     IBaulInviteLinkRepository baulInviteLinkRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
+    IPushTokenRepository pushTokenRepository,
     IPhotoStorage photoStorage,
     IChatContextBuilder chatContextBuilder,
     IClock clock,
@@ -47,8 +48,9 @@ public class AdminManager(
 
         var baules = row.Baules.Select(b =>
             new AdminUserBaulMembershipDto(b.BaulId.ToString(), b.BaulName, b.Role.ToApiString(), b.PersonId.ToString()));
+        var hasPushToken = (await pushTokenRepository.GetTokensForUserAsync(userId)).Any();
 
-        return new AdminUserDetailDto(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, baules);
+        return new AdminUserDetailDto(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, baules, hasPushToken);
     }
 
     public async Task<Result<IEnumerable<AdminBaulListItemDto>>> GetAllBaulesAsync()

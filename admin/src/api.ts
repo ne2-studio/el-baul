@@ -96,4 +96,12 @@ export const api = {
       fetch(`${API_BASE_URL}/api/admin/emails/digest-test/${userId}`, { method: 'POST', headers: getHeaders() })
         .then((res) => handleResponse<void>(res)),
   },
+  pushNotifications: {
+    sendTest: async (userId: string, message: string, deepLink: string | null): Promise<void> =>
+      fetch(`${API_BASE_URL}/api/admin/users/${userId}/push-notifications/test`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ message, deepLink }),
+      }).then((res) => handleResponse<void>(res)),
+  },
 };

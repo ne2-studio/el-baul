@@ -17,6 +17,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 - Al entrar en el feed de un baúl, si hay alguna foto sin personas etiquetadas se pide ayuda para identificar a quién sale antes de mostrar el feed — una única recomendación, opcional ("Ahora no"), que no vuelve a aparecer en ese baúl hasta pasados 60 minutos (pero sí puede aparecer al entrar en otro baúl distinto). La foto se queda fija arriba (con los mismos gestos de zoom del visor de la galería) y "Guardar" fijo abajo, así que solo la lista de personas se mueve al hacer scroll. Al guardar, aparece un aviso de agradecimiento.
 - El feed de un baúl ahora también puede mostrar las fotos subidas, agrupadas en una tarjeta por cada vez que alguien sube varias a la vez: quién las subió, cuántas fotos son, a qué capítulo pertenecen (si corresponde) y una vista previa en miniatura de las primeras cuatro. Al tocar "y X más" se abre una cuadrícula solo con las fotos de esa subida, y al tocar una foto se abre la galería navegando únicamente entre las fotos de esa misma subida.
+- Notificaciones push (Android): en Notificaciones dentro de Cuenta hay un nuevo interruptor "Notificaciones push" que pide permiso al sistema y registra el dispositivo para recibir avisos. Desde el panel de administración, la ficha de cada usuario permite enviarle una notificación push de prueba con un mensaje y un enlace interno opcional al que lleva la app al tocarla.
 
 ### Cambiado
 

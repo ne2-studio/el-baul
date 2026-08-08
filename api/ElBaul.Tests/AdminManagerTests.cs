@@ -17,13 +17,15 @@ public class AdminManagerTests
     private readonly InMemorySharedLinkRepository _sharedLinkRepository = new();
     private readonly InMemoryBaulInviteLinkRepository _baulInviteLinkRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
+    private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly FakeChatContextBuilder _chatContextBuilder = new();
     private readonly StaticClock _clock = new();
 
     private AdminManager CreateManager() => new(
         _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
-        _recuerdoRepository, _sharedLinkRepository, _baulInviteLinkRepository, _photoPersonaTagRepository, _photoStorage, _chatContextBuilder, _clock,
+        _recuerdoRepository, _sharedLinkRepository, _baulInviteLinkRepository, _photoPersonaTagRepository, _pushTokenRepository,
+        _photoStorage, _chatContextBuilder, _clock,
         NullLogger<AdminManager>.Instance);
 
     [Fact]
@@ -80,6 +82,19 @@ public class AdminManagerTests
         Assert.Equal("Familia Pérez", membership.BaulName);
         Assert.Equal("custodio", membership.Role);
         Assert.Equal(personId.ToString(), membership.PersonId);
+        Assert.False(result.Value.HasPushToken);
+    }
+
+    [Fact]
+    public async Task GetUserDetailAsync_ShouldReportHasPushToken_WhenUserHasARegisteredDevice()
+    {
+        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow());
+        _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(user, []);
+        await _pushTokenRepository.UpsertAsync(new PushToken(Guid.NewGuid(), "user-1", "fcm-token", "android", _clock.UtcNow()));
+
+        var result = await CreateManager().GetUserDetailAsync(new UserId("user-1"));
+
+        Assert.True(result.Value.HasPushToken);
     }
 
     [Fact]

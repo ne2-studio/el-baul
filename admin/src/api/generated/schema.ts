@@ -877,6 +877,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/users/{userId}/push-notifications/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SendTestPushNotificationRequest"];
+                    "text/json": components["schemas"]["SendTestPushNotificationRequest"];
+                    "application/*+json": components["schemas"]["SendTestPushNotificationRequest"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/app-config": {
         parameters: {
             query?: never;
@@ -6033,6 +6117,170 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/push-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegisterPushTokenRequest"];
+                    "text/json": components["schemas"]["RegisterPushTokenRequest"];
+                    "application/*+json": components["schemas"]["RegisterPushTokenRequest"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/push-tokens/unregister": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UnregisterPushTokenRequest"];
+                    "text/json": components["schemas"]["UnregisterPushTokenRequest"];
+                    "application/*+json": components["schemas"]["UnregisterPushTokenRequest"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6139,6 +6387,7 @@ export interface components {
             /** Format: date-time */
             lastAccessAt?: string | null;
             baules: components["schemas"]["AdminUserBaulMembershipDto"][];
+            hasPushToken: boolean;
         };
         AdminUserListItemDto: {
             id: string;
@@ -6381,6 +6630,10 @@ export interface components {
             chapterId?: string | null;
             chapterName?: string | null;
         };
+        RegisterPushTokenRequest: {
+            token: string;
+            platform: string;
+        };
         RemovalRequestDto: {
             id: string;
             photoId: string;
@@ -6395,6 +6648,10 @@ export interface components {
         };
         SendChatMessageRequest: {
             text: string;
+        };
+        SendTestPushNotificationRequest: {
+            message: string;
+            deepLink?: string | null;
         };
         SetBaulCoverRequest: {
             photoId: string;
@@ -6431,6 +6688,9 @@ export interface components {
             nickname: string;
             name?: string | null;
             avatarUrl?: string | null;
+        };
+        UnregisterPushTokenRequest: {
+            token: string;
         };
         UpdateBaulRequest: {
             name: string;

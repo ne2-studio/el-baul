@@ -6,6 +6,7 @@ import { PlanLimitModal } from '@/features/profile/components/PlanLimitModal';
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
+import { PushNotificationsHandler } from '@/features/profile/native/PushNotificationsHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
 import { API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
 import { Baul } from '@/types';
@@ -183,6 +184,7 @@ function App() {
     <div className="h-screen w-full bg-[var(--bg-primary)]">
       <ScrollToTop />
       <NativeShareHandler />
+      <PushNotificationsHandler />
 
       {isAccessDenied ? (
         <AccessDeniedScreen onBackToBaules={handleBackToBaules} />

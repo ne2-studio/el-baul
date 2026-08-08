@@ -9,7 +9,7 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/users")]
-public class UsersController(IUserManager userManager) : ControllerBase
+public class UsersController(IUserManager userManager, IPushNotificationManager pushNotificationManager) : ControllerBase
 {
     [HttpGet("me")]
     [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
@@ -33,5 +33,21 @@ public class UsersController(IUserManager userManager) : ControllerBase
     {
         var result = await userManager.MarkOnboardingSeenAsync();
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("me/push-tokens")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> RegisterPushToken([FromBody] RegisterPushTokenRequest request)
+    {
+        var result = await pushNotificationManager.RegisterTokenAsync(request.Token, request.Platform);
+        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("me/push-tokens/unregister")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> UnregisterPushToken([FromBody] UnregisterPushTokenRequest request)
+    {
+        var result = await pushNotificationManager.UnregisterTokenAsync(request.Token);
+        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
     }
 }

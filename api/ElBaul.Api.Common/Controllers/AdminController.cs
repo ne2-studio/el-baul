@@ -15,6 +15,7 @@ public class AdminController(
     IAdminManager adminManager,
     IWelcomeEmailManager welcomeEmailManager,
     IWeeklyDigestManager weeklyDigestManager,
+    IPushNotificationManager pushNotificationManager,
     IConfiguration configuration) : ControllerBase
 {
     [HttpGet("dashboard")]
@@ -112,6 +113,14 @@ public class AdminController(
     public async Task<IActionResult> SendDigestTestEmail(string userId)
     {
         var result = await weeklyDigestManager.SendTestWeeklyDigestAsync(new UserId(userId));
+        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpPost("users/{userId}/push-notifications/test")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SendTestPushNotification(string userId, [FromBody] SendTestPushNotificationRequest request)
+    {
+        var result = await pushNotificationManager.SendTestNotificationAsync(new UserId(userId), request.Message, request.DeepLink);
         return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
     }
 

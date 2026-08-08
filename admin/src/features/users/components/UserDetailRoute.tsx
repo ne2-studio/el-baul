@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, ArrowLeft, Send, Check, Bug, Loader2 } from 'lucide-react';
+import { ExternalLink, ArrowLeft, Send, Check, Bug, Loader2, BellRing } from 'lucide-react';
 import { useUsersStore } from '@/store/useUsersStore';
 import { DataTable } from '@/app/components/DataTable';
 import { AsyncState } from '@/app/components/AsyncState';
@@ -26,6 +26,12 @@ export function UserDetailRoute() {
   const [isDebuggingContext, setIsDebuggingContext] = useState(false);
   const [debugError, setDebugError] = useState<string | null>(null);
 
+  const [pushMessage, setPushMessage] = useState('');
+  const [pushDeepLink, setPushDeepLink] = useState('');
+  const [isSendingPush, setIsSendingPush] = useState(false);
+  const [pushResult, setPushResult] = useState<'success' | 'error' | null>(null);
+  const [pushError, setPushError] = useState<string | null>(null);
+
   useEffect(() => {
     if (userId) {
       fetchUser(userId);
@@ -45,6 +51,22 @@ export function UserDetailRoute() {
       setResults((r) => ({ ...r, [key]: 'error' }));
     } finally {
       setSending((s) => ({ ...s, [key]: false }));
+    }
+  };
+
+  const handleSendTestPush = async () => {
+    if (!userId || !pushMessage.trim()) return;
+    setIsSendingPush(true);
+    setPushResult(null);
+    setPushError(null);
+    try {
+      await api.pushNotifications.sendTest(userId, pushMessage.trim(), pushDeepLink.trim() || null);
+      setPushResult('success');
+    } catch (err) {
+      setPushResult('error');
+      setPushError(err instanceof Error ? err.message : 'No se pudo enviar la notificación.');
+    } finally {
+      setIsSendingPush(false);
     }
   };
 
@@ -227,6 +249,51 @@ export function UserDetailRoute() {
                   {debugContext}
                 </pre>
               )}
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <h3>Notificación push de prueba</h3>
+              <button
+                onClick={handleSendTestPush}
+                disabled={!selectedUser.hasPushToken || !pushMessage.trim() || isSendingPush}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
+              >
+                {isSendingPush ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BellRing className="w-3.5 h-3.5" />}
+                Enviar
+              </button>
+            </div>
+
+            {!selectedUser.hasPushToken && (
+              <p className="text-xs text-muted-foreground mb-4">Este usuario no tiene ningún dispositivo registrado.</p>
+            )}
+
+            <div className="grid gap-4">
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-xs text-muted-foreground">Mensaje</span>
+                <textarea
+                  value={pushMessage}
+                  onChange={(event) => setPushMessage(event.target.value)}
+                  rows={3}
+                  placeholder="Este es un aviso de prueba"
+                  className="w-full resize-y rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                />
+              </label>
+
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-xs text-muted-foreground">Deep link (opcional)</span>
+                <input
+                  type="text"
+                  value={pushDeepLink}
+                  onChange={(event) => setPushDeepLink(event.target.value)}
+                  placeholder="/baules/abc-123"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                />
+              </label>
+
+              {pushResult === 'success' && <p className="text-xs text-muted-foreground">Notificación enviada.</p>}
+              {pushResult === 'error' && <p className="text-sm text-destructive">{pushError}</p>}
             </div>
           </div>
 

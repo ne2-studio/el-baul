@@ -19,6 +19,10 @@ export const Enabled: Story = {
     weeklyDigestEnabled: true,
     onToggle: () => alert('onToggle clicked'),
     isSaving: false,
+    showPushToggle: true,
+    pushNotificationsEnabled: true,
+    onTogglePush: () => alert('onTogglePush clicked'),
+    isPushSaving: false,
   },
 };
 
@@ -26,6 +30,7 @@ export const Disabled: Story = {
   args: {
     ...Enabled.args,
     weeklyDigestEnabled: false,
+    pushNotificationsEnabled: false,
   },
 };
 
@@ -33,5 +38,13 @@ export const Saving: Story = {
   args: {
     ...Enabled.args,
     isSaving: true,
+    isPushSaving: true,
+  },
+};
+
+export const PushNotSupported: Story = {
+  args: {
+    ...Enabled.args,
+    showPushToggle: false,
   },
 };

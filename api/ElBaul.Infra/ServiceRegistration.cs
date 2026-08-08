@@ -2,6 +2,7 @@ using ElBaul.Infra.Chat;
 using ElBaul.Infra.Emails;
 using ElBaul.Infra.Persistence;
 using ElBaul.Infra.PhotoStorage;
+using ElBaul.Infra.PushNotifications;
 using ElBaul.Ports.Output;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +32,7 @@ public static class ServiceRegistration
         services.AddScoped<IPhotoPersonaTagRepository, PhotoPersonaTagRepository>();
         services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<IPushTokenRepository, PushTokenRepository>();
         services.AddScoped<ISentEmailRepository, SentEmailRepository>();
         services.AddScoped<IEmailLinkClickRepository, EmailLinkClickRepository>();
         services.AddSingleton<IEmailLinkSigner, EmailLinkSigner>();
@@ -88,6 +90,17 @@ public static class ServiceRegistration
         else
         {
             services.AddScoped<IEmailSender, LoggingEmailSender>();
+        }
+
+        services.Configure<FirebaseOptions>(configuration.GetSection("Firebase"));
+        if (!string.IsNullOrEmpty(configuration["Firebase:ServiceAccountJson"]))
+        {
+            // Singleton: see FirebasePushNotificationSender's own doc comment.
+            services.AddSingleton<IPushNotificationSender, FirebasePushNotificationSender>();
+        }
+        else
+        {
+            services.AddScoped<IPushNotificationSender, LoggingPushNotificationSender>();
         }
 
         return services;

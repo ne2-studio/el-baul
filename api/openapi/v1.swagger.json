@@ -881,6 +881,90 @@
         }
       }
     },
+    "/api/admin/users/{userId}/push-notifications/test": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendTestPushNotificationRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendTestPushNotificationRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendTestPushNotificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Missing or invalid authentication token."
+          },
+          "403": {
+            "description": "The caller does not have access to this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/app-config": {
       "get": {
         "tags": [
@@ -6962,6 +7046,154 @@
           }
         }
       }
+    },
+    "/api/users/me/push-tokens": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Missing or invalid authentication token."
+          },
+          "403": {
+            "description": "The caller does not have access to this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/push-tokens/unregister": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterPushTokenRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterPushTokenRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterPushTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Missing or invalid authentication token."
+          },
+          "403": {
+            "description": "The caller does not have access to this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7293,6 +7525,7 @@
           "baules",
           "createdAt",
           "email",
+          "hasPushToken",
           "id"
         ],
         "type": "object",
@@ -7321,6 +7554,9 @@
             "items": {
               "$ref": "#/components/schemas/AdminUserBaulMembershipDto"
             }
+          },
+          "hasPushToken": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -8173,6 +8409,22 @@
         },
         "additionalProperties": false
       },
+      "RegisterPushTokenRequest": {
+        "required": [
+          "platform",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "RemovalRequestDto": {
         "required": [
           "baulId",
@@ -8226,6 +8478,22 @@
         "properties": {
           "text": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SendTestPushNotificationRequest": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "deepLink": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -8370,6 +8638,18 @@
           "avatarUrl": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UnregisterPushTokenRequest": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
           }
         },
         "additionalProperties": false

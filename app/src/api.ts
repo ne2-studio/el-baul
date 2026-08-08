@@ -360,6 +360,13 @@ export const api = {
     markOnboardingSeen: async () => new UserProfile(await post<UserProfileDto>('/api/users/me/onboarding-seen')),
   },
 
+  pushNotifications: {
+    register: (token: string, platform: string) =>
+      post<void>('/api/users/me/push-tokens', { token, platform }),
+    unregister: (token: string) =>
+      post<void>('/api/users/me/push-tokens/unregister', { token }),
+  },
+
   appConfig: {
     get: () => get<AppConfigResponse>('/api/app-config'),
   },

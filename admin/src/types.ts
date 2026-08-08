@@ -79,6 +79,7 @@ export class AdminUserDetail {
   createdAt: string;
   lastAccessAt?: string;
   baules: AdminUserBaulMembership[];
+  hasPushToken: boolean;
 
   constructor(data: AdminUserDetailDto) {
     this.id = data.id;
@@ -87,6 +88,7 @@ export class AdminUserDetail {
     this.createdAt = data.createdAt;
     this.lastAccessAt = data.lastAccessAt ?? undefined;
     this.baules = data.baules.map((b) => new AdminUserBaulMembership(b));
+    this.hasPushToken = data.hasPushToken;
   }
 }
 
