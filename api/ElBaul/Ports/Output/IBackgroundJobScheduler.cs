@@ -9,4 +9,5 @@ public interface IBackgroundJobScheduler
 {
     void EnqueueWelcomeEmail(string userId);
     void EnqueueWeeklyDigest(string userId, DateTime since);
+    void EnqueuePushDigest(string userId, DateTime since);
 }

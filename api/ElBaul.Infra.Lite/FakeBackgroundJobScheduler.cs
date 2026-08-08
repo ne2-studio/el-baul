@@ -8,6 +8,7 @@ public class FakeBackgroundJobScheduler : IBackgroundJobScheduler
 
     public List<string> EnqueuedWelcomeEmailUserIds { get; } = [];
     public List<(string UserId, DateTime Since)> EnqueuedWeeklyDigests { get; } = [];
+    public List<(string UserId, DateTime Since)> EnqueuedPushDigests { get; } = [];
 
     // Registered as a Singleton in el-baul-api-lite (see ServiceRegistration), so unlike its
     // use in ElBaul.Tests, this can be hit by genuinely concurrent requests — a bare List.Add
@@ -20,5 +21,10 @@ public class FakeBackgroundJobScheduler : IBackgroundJobScheduler
     public void EnqueueWeeklyDigest(string userId, DateTime since)
     {
         lock (_lock) EnqueuedWeeklyDigests.Add((userId, since));
+    }
+
+    public void EnqueuePushDigest(string userId, DateTime since)
+    {
+        lock (_lock) EnqueuedPushDigests.Add((userId, since));
     }
 }

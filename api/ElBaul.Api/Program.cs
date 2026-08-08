@@ -49,6 +49,10 @@ using (var scope = app.Services.CreateScope())
         "schedule-weekly-digests",
         m => m.ScheduleWeeklyDigestsAsync(),
         Cron.Weekly(DayOfWeek.Sunday, 8)); // Sundays 8am UTC — everyone gets it at the same time
+    recurringJobManager.AddOrUpdate<IPushDigestManager>(
+        "schedule-daily-push-digests",
+        m => m.ScheduleDailyPushDigestsAsync(),
+        Cron.Daily(18)); // 18:00 UTC ≈ evening in Spain (19h CET / 20h CEST) — fixed, no per-user timezone yet
 }
 
 app.MapHangfireDashboard("/hangfire", new DashboardOptions

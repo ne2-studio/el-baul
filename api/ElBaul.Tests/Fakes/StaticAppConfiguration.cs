@@ -16,7 +16,8 @@ public class StaticAppConfiguration(
     bool chatEnabled = true,
     bool chatSuggestionsEnabled = true,
     bool sharedLinksEnabled = true,
-    bool baulFeedEnabled = true)
+    bool baulFeedEnabled = true,
+    bool pushDigestEnabled = true)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -30,4 +31,5 @@ public class StaticAppConfiguration(
     public bool ChatSuggestionsEnabled { get; } = chatSuggestionsEnabled;
     public bool SharedLinksEnabled { get; } = sharedLinksEnabled;
     public bool BaulFeedEnabled { get; } = baulFeedEnabled;
+    public bool PushDigestEnabled { get; } = pushDigestEnabled;
 }

@@ -15,4 +15,8 @@ public interface IPushTokenRepository
     Task DeleteAsync(string userId, string token);
 
     Task<IEnumerable<PushToken>> GetTokensForUserAsync(string userId);
+
+    /// <summary>Distinct owners of at least one registered token — the candidate pool for the
+    /// daily push-digest scheduler (opting into push is just registering a device).</summary>
+    Task<IEnumerable<string>> GetUserIdsWithTokensAsync();
 }

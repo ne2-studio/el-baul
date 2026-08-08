@@ -28,4 +28,7 @@ public class PushTokenRepository(ElBaulDbContext dbContext) : IPushTokenReposito
 
     public async Task<IEnumerable<PushToken>> GetTokensForUserAsync(string userId) =>
         await dbContext.PushTokens.AsNoTracking().Where(t => t.UserId == userId).ToListAsync();
+
+    public async Task<IEnumerable<string>> GetUserIdsWithTokensAsync() =>
+        await dbContext.PushTokens.AsNoTracking().Select(t => t.UserId).Distinct().ToListAsync();
 }

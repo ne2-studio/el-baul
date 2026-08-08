@@ -29,6 +29,12 @@ public interface IUserRepository
 
     Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled);
 
+    /// <summary>
+    /// Advances the daily-push-digest cursor. Only called after a digest actually went out —
+    /// see IPushDigestManager for why silence (no activity) must leave this untouched.
+    /// </summary>
+    Task UpdateLastPushDigestSentAtAsync(string id, DateTime at);
+
     /// <summary>One-way flip, never unset — the onboarding carousel a brand-new signup sees
     /// before creating their first baúl, shown at most once per user.</summary>
     Task MarkOnboardingSeenAsync(string id);

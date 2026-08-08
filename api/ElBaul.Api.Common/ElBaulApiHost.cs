@@ -191,6 +191,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IAdminManager, AdminManager>();
         builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
         builder.Services.AddScoped<IWeeklyDigestManager, WeeklyDigestManager>();
+        builder.Services.AddScoped<IPushDigestManager, PushDigestManager>();
         builder.Services.AddScoped<EmailDeliveryCoordinator>();
 
         var app = builder.Build();

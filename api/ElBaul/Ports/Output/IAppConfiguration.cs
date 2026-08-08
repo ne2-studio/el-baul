@@ -55,4 +55,11 @@ public interface IAppConfiguration
     /// direct calls too, so hiding the UI is not the only protection.
     /// </summary>
     bool BaulFeedEnabled { get; }
+
+    /// <summary>
+    /// Kill switch for the daily push-notification digest — same shape as
+    /// WeeklyDigestEmailsEnabled: the recurring scheduler and the per-user send job both check
+    /// it, so flipping it off mid-batch stops anything still queued too. Defaults to false.
+    /// </summary>
+    bool PushDigestEnabled { get; }
 }

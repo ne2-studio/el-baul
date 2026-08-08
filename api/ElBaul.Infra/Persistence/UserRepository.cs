@@ -31,6 +31,11 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.WeeklyDigestEnabled, enabled));
 
+    public Task UpdateLastPushDigestSentAtAsync(string id, DateTime at) =>
+        dbContext.Users
+            .Where(u => u.Id == id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.LastPushDigestSentAt, at));
+
     public Task MarkOnboardingSeenAsync(string id) =>
         dbContext.Users
             .Where(u => u.Id == id)

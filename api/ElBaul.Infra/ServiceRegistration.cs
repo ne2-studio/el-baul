@@ -38,6 +38,7 @@ public static class ServiceRegistration
         services.AddSingleton<IEmailLinkSigner, EmailLinkSigner>();
         services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
         services.AddScoped<EmailJobs>();
+        services.AddScoped<PushNotificationJobs>();
         services.AddScoped<IAppConfiguration, AppConfiguration>();
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();
         services.AddScoped<IPhotoImageNormalizer, HeicToJpegPhotoImageNormalizer>();

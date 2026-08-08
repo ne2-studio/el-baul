@@ -70,6 +70,18 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
+    public Task UpdateLastPushDigestSentAtAsync(string id, DateTime at)
+    {
+        lock (_lock)
+        {
+            if (_users.TryGetValue(id, out var user))
+            {
+                _users[id] = user with { LastPushDigestSentAt = at };
+            }
+        }
+        return Task.CompletedTask;
+    }
+
     public Task MarkOnboardingSeenAsync(string id)
     {
         lock (_lock)

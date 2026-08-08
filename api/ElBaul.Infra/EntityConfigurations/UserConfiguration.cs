@@ -17,6 +17,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LastAccessAt).HasColumnType("timestamp with time zone");
         builder.Property(u => u.WeeklyDigestEnabled).IsRequired().HasDefaultValue(true);
         builder.Property(u => u.HasSeenOnboarding).IsRequired().HasDefaultValue(false);
+        builder.Property(u => u.LastPushDigestSentAt).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(u => u.Email).IsUnique();
     }

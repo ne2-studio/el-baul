@@ -8,5 +8,6 @@ public record User
     DateTime CreatedAt,
     DateTime? LastAccessAt = null,
     bool WeeklyDigestEnabled = true,
-    bool HasSeenOnboarding = false
+    bool HasSeenOnboarding = false,
+    DateTime? LastPushDigestSentAt = null
 );

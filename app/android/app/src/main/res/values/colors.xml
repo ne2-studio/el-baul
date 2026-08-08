@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Terracotta accent (docs/DESIGN.md's primary color) — tint for the push-notification
+         icon, since ic_stat_notify.xml is a plain white silhouette by convention. -->
+    <color name="push_notification_color">#C67B5C</color>
+</resources>

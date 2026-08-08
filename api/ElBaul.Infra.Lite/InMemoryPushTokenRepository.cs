@@ -35,4 +35,9 @@ public class InMemoryPushTokenRepository : IPushTokenRepository
     {
         lock (_lock) return Task.FromResult(_tokens.Values.Where(t => t.UserId == userId).ToList().AsEnumerable());
     }
+
+    public Task<IEnumerable<string>> GetUserIdsWithTokensAsync()
+    {
+        lock (_lock) return Task.FromResult(_tokens.Values.Select(t => t.UserId).Distinct().ToList().AsEnumerable());
+    }
 }
