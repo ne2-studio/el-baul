@@ -23,7 +23,8 @@ test('share recuerdo from the feed → public landing renders Open Graph metadat
   await createBaulRecuerdoViaApi(page, accessToken, baulId, recuerdoText);
 
   await page.goto(`/baules/${baulId}`);
-  await page.getByRole('button', { name: /Recuerdos/ }).click();
+  // La pestaña de recuerdos del baúl se llama "Historia".
+  await page.getByRole('button', { name: /Historia/ }).click();
   await expect(page.getByText(recuerdoText)).toBeVisible();
 
   await page.getByRole('button', { name: 'Compartir recuerdo' }).click();

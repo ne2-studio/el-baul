@@ -9,7 +9,8 @@ test('create baúl → create chapter → upload photo → move photo → delete
   const accessToken = await loginAs(page, 'Admin User');
   const baulId = await createBaulViaApi(page, accessToken, `Photos test baúl ${Date.now()}`);
   await page.goto(`/baules/${baulId}`);
-  // El baúl abre en Recuerdos por defecto — createChapter() necesita el FAB de Capítulos.
+  // El baúl abre en Historia (la pestaña de recuerdos) por defecto — createChapter() necesita
+  // el FAB de Capítulos.
   await page.getByRole('button', { name: /Capítulos/ }).click();
 
   // Two chapters: the second is the move target below.

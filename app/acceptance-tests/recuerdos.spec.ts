@@ -11,7 +11,9 @@ test('create recuerdo → edit it → open author persona from avatar', async ({
   expect(recuerdo.personaId).toBe(currentPersona.id);
 
   await page.goto(`/baules/${baulId}`);
-  await page.getByRole('button', { name: /Recuerdos/ }).click();
+  // La pestaña de recuerdos del baúl se llama "Historia" (distinto del "Recuerdos" que sigue
+  // usándose dentro de un capítulo o en la ficha de una persona).
+  await page.getByRole('button', { name: /Historia/ }).click();
   await expect(page.getByText(recuerdoText)).toBeVisible();
 
   const editedText = `Recuerdo editado acceptance ${Date.now()}`;

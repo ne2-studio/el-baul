@@ -6,7 +6,8 @@ test('create persona → revoke access while still pending → allow invite agai
   const baulId = await createBaulViaApi(page, accessToken, `Personas test baúl ${Date.now()}`);
   await page.goto(`/baules/${baulId}`);
 
-  await page.getByRole('button', { name: /Personas/ }).click();
+  // La pestaña de personas del baúl se llama "Familia".
+  await page.getByRole('button', { name: /Familia/ }).click();
   await page.getByRole('button', { name: 'Nueva persona' }).click();
   const nickname = `Persona ${Date.now()}`;
   await page.getByPlaceholder('Ej. Abuela, Tío Juan…').fill(nickname);
