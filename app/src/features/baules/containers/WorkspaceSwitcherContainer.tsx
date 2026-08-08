@@ -63,7 +63,7 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
           className="flex items-center gap-1 -ml-2 px-2 py-1.5 rounded-lg hover:bg-primary/5 max-w-[65vw]"
           aria-label="Cambiar de baúl"
         >
-          <span className="text-2xl font-serif text-foreground truncate">{activeBaul.name}</span>
+          <span className="text-xl font-serif text-foreground truncate">{activeBaul.name}</span>
           <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
