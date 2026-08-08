@@ -39,11 +39,12 @@ function getAvatarColor(name: string): string {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
 }
 
-// Shared "who did what, when" first line for feed cards (recuerdos, photo-upload batches) —
-// avatar + author + action text + relative time, all on one row, with a trailing slot for
-// per-card actions. Purely presentational (design-system, no feature/store deps) so features
-// that don't otherwise share code (memories' RecuerdoFeedCard, photos' PhotoBatchCard) render
-// an identical header without depending on each other.
+// Shared "who did what, when" header for feed cards (recuerdos, photo-upload batches) — avatar,
+// author + action text on one line, relative time on its own line below (so a long name/action
+// never fights the timestamp for space and gets truncated), with a trailing slot for per-card
+// actions. Purely presentational (design-system, no feature/store deps) so features that don't
+// otherwise share code (memories' RecuerdoFeedCard, photos' PhotoBatchCard) render an identical
+// header without depending on each other.
 export function FeedCardHeader({ name, avatarUrl, actionText, timestamp, onAvatarClick, trailing }: FeedCardHeaderProps) {
   const canOpenAvatar = !!onAvatarClick;
 
@@ -62,10 +63,12 @@ export function FeedCardHeader({ name, avatarUrl, actionText, timestamp, onAvata
           getInitials(name)
         )}
       </Button>
-      <p className="flex-1 min-w-0 text-sm text-foreground truncate">
-        <span className="font-medium">{name}</span> {actionText}
-      </p>
-      <p className="text-xs text-muted-foreground shrink-0">· {getRelativeTime(new Date(timestamp))}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-foreground truncate">
+          <span className="font-medium">{name}</span> {actionText}
+        </p>
+        <p className="text-xs text-muted-foreground">{getRelativeTime(new Date(timestamp))}</p>
+      </div>
       {trailing}
     </div>
   );

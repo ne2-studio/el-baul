@@ -5,12 +5,12 @@ import userEvent from '@testing-library/user-event';
 import { FeedCardHeader } from '@/design-system/components/data-display/FeedCardHeader';
 
 describe('FeedCardHeader', () => {
-  it('combines name and actionText into one line, with relative time alongside', () => {
+  it('combines name and actionText into one line, with relative time on its own line below', () => {
     render(<FeedCardHeader name="Tita Loli" actionText="dejó un recuerdo" timestamp={new Date().toISOString()} />);
 
     expect(screen.getByText('Tita Loli')).toBeInTheDocument();
     expect(screen.getByText('dejó un recuerdo', { exact: false })).toBeInTheDocument();
-    expect(screen.getByText('· Hoy')).toBeInTheDocument();
+    expect(screen.getByText('Hoy')).toBeInTheDocument();
   });
 
   it('opens the persona when the avatar is clicked and a handler is present', async () => {

@@ -12,7 +12,7 @@ const meta = {
       description: {
         component: `
 ### Purpose
-Shared "who did what, when" first line for feed cards — avatar, author, an action verb phrase, and relative time, all on one row.
+Shared "who did what, when" header for feed cards — avatar, author + action verb phrase on one line, relative time on its own line below.
 
 ### When to use
 The first line of any card in the baúl feed: a recuerdo card ("<nombre> dejó un recuerdo") or a photo-upload-batch card ("<nombre> subió N fotos").
