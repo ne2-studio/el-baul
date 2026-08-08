@@ -1,4 +1,4 @@
-import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulInviteLink, BaulInviteLinkPreview, ClaimablePersona, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona } from './types';
+import { Baul, Chapter, Photo, Recuerdo, Persona, RemovalRequest, BaulInviteLink, BaulInviteLinkPreview, ClaimablePersona, UserProfile, PhotoDate, SupportCategory, ChatMessage, TaggedPersona, FeedItem, feedItemFrom } from './types';
 import { getEnv } from './runtimeConfig';
 import type { components } from './api/generated/schema';
 
@@ -14,6 +14,7 @@ type PersonaDto = ApiSchemas['PersonaDto'];
 type PhotoDto = ApiSchemas['PhotoDto'];
 type PhotoPageDto = ApiSchemas['PhotoPageDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
+type FeedItemDto = ApiSchemas['FeedItemDto'];
 type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
 type SuccessResponse = ApiSchemas['SuccessResponse'];
 type TaggedPersonaDto = ApiSchemas['TaggedPersonaDto'];
@@ -191,6 +192,10 @@ export const api = {
 
     getLoosePhotos: async (baulId: string) =>
       (await get<PhotoDto[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
+    // Recuerdos + photo-upload-batch cards, newest first — the baúl's feed tab behind
+    // Features:BaulFeedEnabled. See useAppConfigStore's baulFeedEnabled.
+    getFeed: async (baulId: string): Promise<FeedItem[]> =>
+      (await get<FeedItemDto[]>(`/api/baules/${baulId}/feed`)).map(feedItemFrom),
     // Every photo tagged with this persona, ordered chronologically (oldest first) —
     // powers the "ficha de persona" photo gallery.
     getPersonaPhotos: async (baulId: string, personaId: string) =>
@@ -238,10 +243,14 @@ export const api = {
     },
     // chapterId null uploads into the baúl's "fotos sueltas" (loose photos) instead of a
     // real chapter — see useBaulesStore's nullable chapterId convention.
-    upload: async (baulId: string, chapterId: string | null, file: File, clientUploadId: string, date?: PhotoDate) => {
+    upload: async (
+      baulId: string, chapterId: string | null, file: File, clientUploadId: string, date?: PhotoDate,
+      uploadBatchId?: string
+    ) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('clientUploadId', clientUploadId);
+      if (uploadBatchId) formData.append('uploadBatchId', uploadBatchId);
       if (date) {
         formData.append('dateYear', String(date.year));
         if (date.month) formData.append('dateMonth', String(date.month));
@@ -296,6 +305,13 @@ export const api = {
       const dto = await get<PhotoDto | null>(`/api/baules/${baulId}/photos/untagged-suggestion`);
       return dto ? new Photo(dto) : null;
     },
+  },
+
+  // One upload batch's own photos (chronologically ascending) — the feed card's "grid"/gallery
+  // scoped view reached from a photo_batch feed item.
+  photoBatches: {
+    getPhotos: async (baulId: string, batchId: string) =>
+      (await get<PhotoDto[]>(`/api/baules/${baulId}/photo-batches/${batchId}/photos`)).map((p) => new Photo(p)),
   },
 
   recuerdos: {

@@ -78,7 +78,8 @@ public class PhotoManager(
         string fileName,
         string contentType,
         PhotoDate? date,
-        ClientUploadId clientUploadId)
+        ClientUploadId clientUploadId,
+        Guid? uploadBatchId = null)
     {
         var userId = currentUserProvider.GetUserId();
         var chapter = await chapterRepository.GetByIdAsync(chapterId);
@@ -92,7 +93,7 @@ public class PhotoManager(
             chapter.BaulId, userId, AccessLevel.Member, "Photo upload", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        return await UploadPhotoAsync(auth.Value.Baul, chapter, content, fileName, contentType, date, clientUploadId, userId);
+        return await UploadPhotoAsync(auth.Value.Baul, chapter, content, fileName, contentType, date, clientUploadId, userId, uploadBatchId);
     }
 
     public async Task<Result<PhotoDto>> UploadToBaulAsync(
@@ -101,14 +102,15 @@ public class PhotoManager(
         string fileName,
         string contentType,
         PhotoDate? date,
-        ClientUploadId clientUploadId)
+        ClientUploadId clientUploadId,
+        Guid? uploadBatchId = null)
     {
         var userId = currentUserProvider.GetUserId();
 
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photo upload", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId);
+        return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId, uploadBatchId);
     }
 
     private async Task<Result<PhotoDto>> UploadPhotoAsync(
@@ -119,7 +121,8 @@ public class PhotoManager(
         string contentType,
         PhotoDate? date,
         ClientUploadId clientUploadId,
-        string userId)
+        string userId,
+        Guid? uploadBatchId = null)
     {
         var chapterId = chapter?.Id;
 
@@ -149,7 +152,7 @@ public class PhotoManager(
 
         var photo = Photo.Create(
             new PhotoId(idGenerator.NewId()), chapterId, baul.Id, storedFile.StorageKey, storedFile.Date, userId, now,
-            clientUploadId, storedFile.SizeBytes);
+            clientUploadId, storedFile.SizeBytes, uploadBatchId);
 
         try
         {

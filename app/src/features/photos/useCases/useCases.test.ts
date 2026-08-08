@@ -22,6 +22,9 @@ vi.mock('@/api', () => ({
       getAll: vi.fn(),
       move: vi.fn(),
     },
+    photoBatches: {
+      getPhotos: vi.fn(),
+    },
   },
 }));
 
@@ -29,7 +32,7 @@ import * as Sentry from '@sentry/react';
 import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { uploadPhotos, uploadPhotosWithChapter, movePhotos, loadRemovalRequests } from './index';
+import { uploadPhotos, uploadPhotosWithChapter, movePhotos, loadRemovalRequests, loadPhotoBatchPhotos } from './index';
 import { UploadItem } from '@/features/photos/uploadFlow';
 import { createChapter } from '@/features/chapters/useCases';
 
@@ -114,8 +117,8 @@ describe('photos useCases uploads', () => {
       const photo1 = newPhoto('photo-1');
       const photo2 = newPhoto('photo-2');
       const items: UploadItem[] = [
-        { clientUploadId: 'c1', file: fakeFile('a.jpg') },
-        { clientUploadId: 'c2', file: fakeFile('b.jpg') },
+        { clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') },
+        { clientUploadId: 'c2', uploadBatchId: 'batch-1', file: fakeFile('b.jpg') },
       ];
 
       vi.mocked(api.photos.upload)
@@ -152,8 +155,8 @@ describe('photos useCases uploads', () => {
 
       const photo1 = newPhoto('photo-1');
       const items: UploadItem[] = [
-        { clientUploadId: 'ok', file: fakeFile('a.jpg') },
-        { clientUploadId: 'fails', file: fakeFile('b.jpg') },
+        { clientUploadId: 'ok', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') },
+        { clientUploadId: 'fails', uploadBatchId: 'batch-1', file: fakeFile('b.jpg') },
       ];
 
       vi.mocked(api.photos.upload)
@@ -182,8 +185,8 @@ describe('photos useCases uploads', () => {
 
       const photo1 = newPhoto('photo-1');
       const items: UploadItem[] = [
-        { clientUploadId: 'unreadable', file: fakeFile('a.jpg', { readable: false }) },
-        { clientUploadId: 'ok', file: fakeFile('b.jpg') },
+        { clientUploadId: 'unreadable', uploadBatchId: 'batch-1', file: fakeFile('a.jpg', { readable: false }) },
+        { clientUploadId: 'ok', uploadBatchId: 'batch-1', file: fakeFile('b.jpg') },
       ];
 
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
@@ -213,7 +216,7 @@ describe('photos useCases uploads', () => {
 
       vi.mocked(api.photos.upload).mockRejectedValue(new Error('boom'));
 
-      await uploadPhotos(baulId, chapterId, [{ clientUploadId: 'c1', file: fakeFile('a.jpg') }]);
+      await uploadPhotos(baulId, chapterId, [{ clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') }]);
 
       expect(api.photos.getAll).not.toHaveBeenCalled();
       expect(useBaulesStore.getState().photos[chapterId]).toBeUndefined();
@@ -230,10 +233,10 @@ describe('photos useCases uploads', () => {
       const photo1 = newPhoto('photo-1');
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
 
-      const results = await uploadPhotos(baulId, null, [{ clientUploadId: 'c1', file: fakeFile('a.jpg') }]);
+      const results = await uploadPhotos(baulId, null, [{ clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') }]);
 
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
-      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined);
+      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined, 'batch-1');
       const state = useBaulesStore.getState();
       expect(state.loosePhotos[baulId]).toEqual([newPhoto('existing'), photo1]);
       expect(state.baules[0].coverPhotoUrl).toBe(photo1.thumbnailUrl);
@@ -250,8 +253,8 @@ describe('photos useCases uploads', () => {
         .mockRejectedValueOnce(new Error('network down'));
 
       const results = await uploadPhotos(baulId, null, [
-        { clientUploadId: 'ok', file: fakeFile('a.jpg') },
-        { clientUploadId: 'fails', file: fakeFile('b.jpg') },
+        { clientUploadId: 'ok', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') },
+        { clientUploadId: 'fails', uploadBatchId: 'batch-1', file: fakeFile('b.jpg') },
       ]);
 
       expect(results).toEqual([
@@ -263,7 +266,7 @@ describe('photos useCases uploads', () => {
   });
 
   describe('uploadPhotosWithChapter', () => {
-    const items: UploadItem[] = [{ clientUploadId: 'c1', file: fakeFile('a.jpg') }];
+    const items: UploadItem[] = [{ clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') }];
 
     it('delegates to uploadPhotos when targeting an existing chapter', async () => {
       useBaulesStore.setState({
@@ -280,7 +283,7 @@ describe('photos useCases uploads', () => {
 
       expect(resolvedChapterId).toBe(chapterId);
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
-      expect(api.photos.upload).toHaveBeenCalledWith(baulId, chapterId, expect.anything(), 'c1', undefined);
+      expect(api.photos.upload).toHaveBeenCalledWith(baulId, chapterId, expect.anything(), 'c1', undefined, 'batch-1');
     });
 
     it('delegates to uploadPhotos with a null chapterId when there is no target chapter', async () => {
@@ -294,7 +297,7 @@ describe('photos useCases uploads', () => {
 
       expect(resolvedChapterId).toBeNull();
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
-      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined);
+      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined, 'batch-1');
     });
   });
 });
@@ -511,5 +514,32 @@ describe('photos useCases loadRemovalRequests', () => {
     await loadRemovalRequests(baulId);
 
     expect(usePersonasStore.getState().removalRequests[baulId]).toEqual([request]);
+  });
+});
+
+describe('photos useCases loadPhotoBatchPhotos', () => {
+  const baulId = 'baul-1';
+  const batchId = 'batch-1';
+
+  beforeEach(() => {
+    useBaulesStore.setState({ photoBatchPhotos: {} });
+    vi.clearAllMocks();
+  });
+
+  it('fetches and caches a batch photos under its batchId, without touching other batches', async () => {
+    const photo = new Photo({
+      id: 'photo-1', baulId, thumbnailUrl: 'thumb', fullUrl: 'full', uploadedBy: 'user-1',
+      createdAt: new Date().toISOString(), recuerdoCount: 0,
+    });
+    useBaulesStore.setState({ photoBatchPhotos: { 'other-batch': [photo] } });
+    vi.mocked(api.photoBatches.getPhotos).mockResolvedValue([photo]);
+
+    await loadPhotoBatchPhotos(baulId, batchId);
+
+    expect(api.photoBatches.getPhotos).toHaveBeenCalledWith(baulId, batchId);
+    expect(useBaulesStore.getState().photoBatchPhotos).toEqual({
+      'other-batch': [photo],
+      [batchId]: [photo],
+    });
   });
 });

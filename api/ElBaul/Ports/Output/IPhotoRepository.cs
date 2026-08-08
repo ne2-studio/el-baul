@@ -25,6 +25,12 @@ public interface IPhotoRepository
     /// PhotoLifecycleService) and their size still counts toward the admin baúl-size total.</summary>
     Task<IEnumerable<Photo>> GetMissingSizeBytesAsync();
 
+    /// <summary>Active photos with no UploadBatchId yet (rows created before the field existed),
+    /// ordered by BaulId/ChapterId/UploadedBy/CreatedAt — the exact order
+    /// backfill-upload-batch-id groups by. Not status-filtered beyond Active: a batch is a feed
+    /// concept, and the feed never shows soft-deleted photos anyway.</summary>
+    Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync();
+
     /// <summary>Active photos in a baúl, optionally scoped to one chapter, ordered chronologically
     /// ascending (dated photos by date, undated photos last, CreatedAt as the final tiebreaker) —
     /// used by the cover photo picker. Callers requesting take+1 can detect whether more pages

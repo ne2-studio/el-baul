@@ -3153,6 +3153,199 @@
         }
       }
     },
+    "/api/baules/{baulId}/feed": {
+      "get": {
+        "tags": [
+          "Baules"
+        ],
+        "parameters": [
+          {
+            "name": "baulId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedItemDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedItemDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication token."
+          },
+          "403": {
+            "description": "The caller does not have access to this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/baules/{baulId}/photo-batches/{batchId}/photos": {
+      "get": {
+        "tags": [
+          "Baules"
+        ],
+        "parameters": [
+          {
+            "name": "baulId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "batchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication token."
+          },
+          "403": {
+            "description": "The caller does not have access to this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/baul-invites/{token}/preview": {
       "get": {
         "tags": [
@@ -4568,6 +4761,10 @@
                   "ClientUploadId": {
                     "type": "string",
                     "format": "uuid"
+                  },
+                  "UploadBatchId": {
+                    "type": "string",
+                    "format": "uuid"
                   }
                 }
               },
@@ -4585,6 +4782,9 @@
                   "style": "form"
                 },
                 "ClientUploadId": {
+                  "style": "form"
+                },
+                "UploadBatchId": {
                   "style": "form"
                 }
               }
@@ -5304,6 +5504,10 @@
                   "ClientUploadId": {
                     "type": "string",
                     "format": "uuid"
+                  },
+                  "UploadBatchId": {
+                    "type": "string",
+                    "format": "uuid"
                   }
                 }
               },
@@ -5321,6 +5525,9 @@
                   "style": "form"
                 },
                 "ClientUploadId": {
+                  "style": "form"
+                },
+                "UploadBatchId": {
                   "style": "form"
                 }
               }
@@ -7146,6 +7353,7 @@
       },
       "AppConfigFeatures": {
         "required": [
+          "baulFeedEnabled",
           "chatEnabled",
           "chatSuggestionsEnabled",
           "monetization",
@@ -7163,6 +7371,9 @@
             "type": "boolean"
           },
           "sharedLinksEnabled": {
+            "type": "boolean"
+          },
+          "baulFeedEnabled": {
             "type": "boolean"
           }
         },
@@ -7610,6 +7821,29 @@
         },
         "additionalProperties": false
       },
+      "FeedItemDto": {
+        "required": [
+          "createdAt",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recuerdo": {
+            "$ref": "#/components/schemas/RecuerdoDto"
+          },
+          "photoBatch": {
+            "$ref": "#/components/schemas/PhotoBatchDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "MovePhotoRequest": {
         "required": [
           "chapterId"
@@ -7694,6 +7928,59 @@
           "avatarCropScale": {
             "type": "number",
             "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PhotoBatchDto": {
+        "required": [
+          "batchId",
+          "createdAt",
+          "photoCount",
+          "previewPhotos",
+          "userId",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "userAvatar": {
+            "type": "string",
+            "nullable": true
+          },
+          "personaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "chapterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "chapterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previewPhotos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoDto"
+            }
           }
         },
         "additionalProperties": false

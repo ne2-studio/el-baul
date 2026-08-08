@@ -21,6 +21,7 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
         var chatEnabled = configuration.GetValue<bool>("Features:ChatEnabled");
         var chatSuggestionsEnabled = configuration.GetValue<bool>("Features:ChatSuggestionsEnabled");
         var sharedLinksEnabled = configuration.GetValue<bool>("Features:SharedLinksEnabled");
+        var baulFeedEnabled = configuration.GetValue<bool>("Features:BaulFeedEnabled");
         var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
         var appUrl = configuration.GetValue<string>("App:PublicUrl");
 
@@ -31,7 +32,8 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
                 monetization = monetizationEnabled,
                 chatEnabled,
                 chatSuggestionsEnabled,
-                sharedLinksEnabled
+                sharedLinksEnabled,
+                baulFeedEnabled
             },
             helpCenterUrl,
             appUrl

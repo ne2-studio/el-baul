@@ -7,6 +7,9 @@ export interface BaulesState {
   chapters: Record<string, Chapter[]>;
   photos: Record<string, Photo[]>;
   loosePhotos: Record<string, Photo[]>;
+  // Keyed by UploadBatchId — a batch's own photos, for the feed card's grid/gallery drill-down.
+  // See features/photos/useCases.loadPhotoBatchPhotos.
+  photoBatchPhotos: Record<string, Photo[]>;
   isLoading: boolean;
 
   reset: () => void;
@@ -31,6 +34,7 @@ export const useBaulesStore = create<BaulesState>((set) => ({
   chapters: {},
   photos: {},
   loosePhotos: {},
+  photoBatchPhotos: {},
   isLoading: true,
 
   reset: () => set({
@@ -38,6 +42,7 @@ export const useBaulesStore = create<BaulesState>((set) => ({
     chapters: {},
     photos: {},
     loosePhotos: {},
+    photoBatchPhotos: {},
     isLoading: true,
   }),
 

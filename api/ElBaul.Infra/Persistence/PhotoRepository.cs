@@ -62,6 +62,12 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Where(p => p.SizeBytes == 0)
             .ToListAsync();
 
+    public async Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync() =>
+        await dbContext.Photos.AsNoTracking()
+            .Where(p => p.UploadBatchId == null && p.Status == PhotoStatus.Active)
+            .OrderBy(p => p.BaulId).ThenBy(p => p.ChapterId).ThenBy(p => p.UploadedBy).ThenBy(p => p.CreatedAt)
+            .ToListAsync();
+
     public async Task CreateAsync(Photo photo)
     {
         dbContext.Photos.Add(photo);

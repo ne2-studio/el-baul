@@ -12,7 +12,8 @@ namespace ElBaul.Api.Controllers;
 [Route("api/baules")]
 public class BaulesController(
     IBaulManager baulManager, IPersonaManager personaManager, IRemovalRequestManager removalRequestManager,
-    IPhotoManager photoManager, IRecuerdoManager recuerdoManager, IBaulInviteLinkManager baulInviteLinkManager)
+    IPhotoManager photoManager, IRecuerdoManager recuerdoManager, IBaulInviteLinkManager baulInviteLinkManager,
+    IBaulFeedManager baulFeedManager)
     : ControllerBase
 {
     [HttpGet]
@@ -234,6 +235,25 @@ public class BaulesController(
             return BadRequest(new { error = "Text is required" });
 
         var result = await recuerdoManager.CreateRecuerdoAsync(new BaulId(baulId), request.Text);
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    // New feed endpoints — additive, behind Features:BaulFeedEnabled (see BaulFeedManager).
+    // GetRecuerdos above stays untouched so the frontend can keep using it while the toggle is
+    // off, without any behavior change to that existing contract.
+    [HttpGet("{baulId:guid}/feed")]
+    [ProducesResponseType(typeof(IEnumerable<FeedItemDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFeed(Guid baulId)
+    {
+        var result = await baulFeedManager.GetFeedAsync(new BaulId(baulId));
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
+    [HttpGet("{baulId:guid}/photo-batches/{batchId:guid}/photos")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPhotoBatchPhotos(Guid baulId, Guid batchId)
+    {
+        var result = await baulFeedManager.GetBatchPhotosAsync(new BaulId(baulId), batchId);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 }

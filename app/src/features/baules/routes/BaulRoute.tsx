@@ -11,12 +11,13 @@ import { useElementHeight } from '@/hooks/useElementHeight';
 import { BaulChaptersTabContainer } from '@/features/baules/containers/BaulChaptersTabContainer';
 import { ContributionSuggestionContainer } from '@/features/baules/containers/ContributionSuggestionContainer';
 import { BaulPersonasTabContainer } from '@/features/people/containers/BaulPersonasTabContainer';
-import { BaulRecuerdosTabContainer } from '@/features/memories/containers/BaulRecuerdosTabContainer';
+import { BaulFeedTabContainer } from '@/features/memories/containers/BaulFeedTabContainer';
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
 import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -43,7 +44,8 @@ export const BaulRoute: React.FC = () => {
   // completos del store.
   const { chapters } = useBaulesStore();
   const { personas } = usePersonasStore();
-  const { baulRecuerdos } = useRecuerdosStore();
+  const { baulRecuerdos, baulFeed } = useRecuerdosStore();
+  const baulFeedEnabled = useAppConfigStore((state) => state.baulFeedEnabled);
   const setShowProfileMenu = useUIStore((state) => state.setShowProfileMenu);
   const startContributionSuggestionCooldown = useUIStore((state) => state.startContributionSuggestionCooldown);
 
@@ -97,7 +99,7 @@ export const BaulRoute: React.FC = () => {
     // returnTab: para que el botón "Volver" de ChapterRoute pueda reabrir la pestaña desde la
     // que se entró (recuerdos o capítulos, las dos únicas que llevan aquí) en vez de caer
     // siempre en la pestaña inicial — mismo mecanismo que ya usan handleSelectPersona en
-    // BaulPersonasTabContainer/BaulRecuerdosTabContainer con PersonaDetailRoute.
+    // BaulPersonasTabContainer/BaulFeedTabContainer con PersonaDetailRoute.
     if (result.ok) navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { state: { returnTab: activeTab } });
   };
 
@@ -121,7 +123,14 @@ export const BaulRoute: React.FC = () => {
           Android/Chrome WebView renderizan el mismo header a alturas ligeramente distintas. */}
       <Tabbar
         tabs={[
-          { key: 'recuerdos', label: 'Recuerdos', count: (baulRecuerdos[baul.id] || []).length },
+          {
+            key: 'recuerdos',
+            label: 'Recuerdos',
+            // Con el toggle activo, cuenta el feed mezclado en cuanto carga; hasta entonces
+            // (y siempre con el toggle apagado) cae en baulRecuerdos, ya precargado por
+            // useBaulScope — así el badge nunca parpadea a 0 mientras el feed nuevo llega.
+            count: (baulFeedEnabled ? baulFeed[baul.id] : undefined)?.length ?? (baulRecuerdos[baul.id] || []).length,
+          },
           { key: 'capitulos', label: 'Capítulos', count: (chapters[baul.id] || []).length },
           { key: 'personas', label: 'Personas', count: (personas[baul.id] || []).length },
         ]}
@@ -131,7 +140,7 @@ export const BaulRoute: React.FC = () => {
       >
         <PageContainer className="py-6 pb-28">
           {activeTab === 'recuerdos' && (
-            <BaulRecuerdosTabContainer
+            <BaulFeedTabContainer
               baulId={baul.id}
               baulName={baul.name}
               onOpenChapter={(chapterId) => handleSelectChapter({ id: chapterId })}

@@ -30,6 +30,7 @@ import { UploadConfirmationRoute } from '../features/photos/routes/UploadConfirm
 import { UploadingRoute } from '../features/photos/routes/UploadingRoute';
 import { UploadErrorRoute } from '../features/photos/routes/UploadErrorRoute';
 import { RemovalRequestsRoute } from '../features/photos/routes/RemovalRequestsRoute';
+import { PhotoBatchGridRoute } from '../features/photos/routes/PhotoBatchGridRoute';
 import { PersonaDetailRoute } from '../features/people/routes/PersonaDetailRoute';
 import { BaulGlobalInvitacionRoute } from '../features/sharing/routes/BaulGlobalInvitacionRoute';
 import { AcceptBaulInviteRoute } from '../features/sharing/routes/AcceptBaulInviteRoute';
@@ -273,6 +274,11 @@ function App() {
         <Route path="/baules/:baulId/fotos-sueltas/error" element={
           <ProtectedRoute>
             <UploadErrorRoute navigate={navigate} />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/subida/:batchId" element={
+          <ProtectedRoute>
+            <PhotoBatchGridRoute />
           </ProtectedRoute>
         } />
         <Route path="/invitacion/baul/:token" element={

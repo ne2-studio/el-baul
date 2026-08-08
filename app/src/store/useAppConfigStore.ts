@@ -12,6 +12,9 @@ interface AppConfigState {
   chatSuggestionsEnabled: boolean;
   // Defaults to false so public sharing UI only appears after the backend enables the rollout.
   sharedLinksEnabled: boolean;
+  // Defaults to false so the feed keeps using the old recuerdos-only endpoint/card data until
+  // the backend explicitly enables it — see docs/architecture "baúl feed" toggle.
+  baulFeedEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -24,6 +27,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   chatEnabled: false,
   chatSuggestionsEnabled: false,
   sharedLinksEnabled: false,
+  baulFeedEnabled: false,
   helpCenterUrl: '',
   appUrl: window.location.origin,
 
@@ -35,6 +39,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         chatEnabled: config.features.chatEnabled,
         chatSuggestionsEnabled: config.features.chatSuggestionsEnabled,
         sharedLinksEnabled: config.features.sharedLinksEnabled ?? false,
+        baulFeedEnabled: config.features.baulFeedEnabled ?? false,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
       });

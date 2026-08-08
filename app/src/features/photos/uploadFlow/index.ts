@@ -12,6 +12,10 @@ export interface SelectedPhoto {
 
 export interface UploadItem {
   clientUploadId: string;
+  // Shared by every UploadItem built from the same uploadItemsFromSelectedPhotos call — one
+  // client action, one batch — unlike clientUploadId, which is unique per photo. Powers the
+  // baúl feed's "N fotos subidas" cards (see IPhotoUploadBatchReadModel on the backend).
+  uploadBatchId: string;
   file: File;
   date?: PhotoDate;
 }
@@ -100,8 +104,13 @@ function photoChapterPath(baulId: string, chapterId: string | null | undefined):
 }
 
 export function uploadItemsFromSelectedPhotos(selectedPhotos: SelectedPhoto[], date: PhotoDate | null): UploadItem[] {
+  // One id per call, shared by every item — this is the single point where a set of picked
+  // photos becomes "one upload action" (see UploadingRoute, the only caller of
+  // uploadPhotosWithChapter/uploadPhotos).
+  const uploadBatchId = crypto.randomUUID();
   return selectedPhotos.map((photo) => ({
     clientUploadId: photo.id,
+    uploadBatchId,
     file: photo.file,
     date: date ?? undefined,
   }));

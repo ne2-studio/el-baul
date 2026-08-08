@@ -47,4 +47,12 @@ public interface IAppConfiguration
     /// and before serving public HTML, so hiding the UI is not the only protection.
     /// </summary>
     bool SharedLinksEnabled { get; }
+
+    /// <summary>
+    /// Global kill switch for the baúl feed (recuerdos + photo-upload-batch cards, the new
+    /// GET /baules/{baulId}/feed and /photo-batches endpoints). Defaults to false — while off,
+    /// the frontend keeps using the old recuerdos-only endpoint and BaulFeedManager rejects
+    /// direct calls too, so hiding the UI is not the only protection.
+    /// </summary>
+    bool BaulFeedEnabled { get; }
 }

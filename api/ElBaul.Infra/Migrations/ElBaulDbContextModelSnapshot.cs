@@ -335,6 +335,9 @@ namespace ElBaul.Infra.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<Guid?>("UploadBatchId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("UploadedBy")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -348,6 +351,8 @@ namespace ElBaul.Infra.Migrations
 
                     b.HasIndex("ClientUploadId")
                         .IsUnique();
+
+                    b.HasIndex("UploadBatchId");
 
                     b.ToTable("Photos", (string)null);
                 });

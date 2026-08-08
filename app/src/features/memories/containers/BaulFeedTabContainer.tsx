@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from 'react-oidc-context';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { Sparkles } from 'lucide-react';
-import { RecuerdosTab } from '@/features/memories/components/RecuerdosTab';
+import { FeedTab } from '@/features/memories/components/FeedTab';
+import { FeedItem, Photo, PhotoBatch } from '@/types';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { loadBaulFeed } from '@/features/memories/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useRecuerdoActions } from './useRecuerdoActions';
 
-interface BaulRecuerdosTabContainerProps {
+interface BaulFeedTabContainerProps {
   baulId: string;
   baulName: string;
   // Reutiliza handleSelectChapter de BaulRoute (compartido con la pestaña de capítulos) en
@@ -20,20 +23,34 @@ interface BaulRecuerdosTabContainerProps {
   onOpenChapter?: (chapterId: string) => void;
 }
 
-// Self-sufficient tab: reads baulRecuerdos itself and owns edit/share via useRecuerdoActions,
-// and opening a photo referenced by a recuerdo (nothing else reuses that flow, so unlike
-// onOpenChapter above it doesn't need to come in as a callback). Navigates to a persona's
-// detail screen and to the AI chat itself too — all of it only needs baulId/chapterId,
-// nothing route-context-dependent beyond its own location — see
-// docs/architecture/frontend.md's containers/ rule.
-export function BaulRecuerdosTabContainer({ baulId, baulName, onOpenChapter }: BaulRecuerdosTabContainerProps) {
+// Self-sufficient tab: with Features:BaulFeedEnabled off, reads baulRecuerdos (already
+// preloaded by useBaulScope for every /baules/:baulId route) and shows recuerdo cards only,
+// against the same GET /baules/{baulId}/recuerdos endpoint as before. With the toggle on, it
+// lazily loads and reads the merged baulFeed instead (recuerdos + photo-upload-batch cards,
+// sorted server-side by BaulFeedManager) — a genuinely new endpoint, not just a client-side
+// filter, per the API-conventions "no breaking changes" rule. Either way FeedTab renders the
+// same FeedItem[] shape, so the toggle only decides which source feeds it.
+export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFeedTabContainerProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { baulRecuerdos } = useRecuerdosStore();
+  const auth = useAuth();
+  const { baulRecuerdos, baulFeed } = useRecuerdosStore();
+  const baulFeedEnabled = useAppConfigStore((state) => state.baulFeedEnabled);
   const chatEnabled = useAppConfigStore((state) => state.chatEnabled);
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
   const { editRecuerdo, shareRecuerdo } = useRecuerdoActions(baulName);
   const { run, isPending } = useAsyncAction();
+
+  useEffect(() => {
+    if (auth.isAuthenticated && baulFeedEnabled && !baulFeed[baulId]) {
+      run(() => loadBaulFeed(baulId), { key: 'baul-feed', errorMessage: 'Error al cargar el feed' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.isAuthenticated, baulFeedEnabled, baulId, baulFeed]);
+
+  const feedItems: FeedItem[] = baulFeedEnabled
+    ? (baulFeed[baulId] || [])
+    : (baulRecuerdos[baulId] || []).map((recuerdo): FeedItem => ({ type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo }));
 
   const handleUserClick = (personaId: string) => {
     navigate(`/baules/${baulId}/personas/${personaId}`, { state: { returnTab: 'recuerdos' } });
@@ -52,15 +69,29 @@ export function BaulRecuerdosTabContainer({ baulId, baulName, onOpenChapter }: B
     if (result.ok) openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/capitulos/${chapterId}`, photoId));
   };
 
+  // A diferencia de una foto de recuerdo (puede vivir en un capítulo cuyas fotos no estén
+  // cargadas todavía), las fotos de un lote siempre se sirven desde su propio endpoint
+  // acotado — no hace falta cargar nada antes de navegar, PhotoBatchViewerRoute las carga él
+  // mismo si hace falta.
+  const handleOpenBatchPhoto = (batch: PhotoBatch, photo: Photo) => {
+    openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/subida/${batch.batchId}`, photo.id));
+  };
+
+  const handleOpenBatchGrid = (batch: PhotoBatch) => {
+    navigate(`/baules/${baulId}/subida/${batch.batchId}`);
+  };
+
   return (
     <>
-      <RecuerdosTab
-        recuerdos={baulRecuerdos[baulId] || []}
+      <FeedTab
+        feedItems={feedItems}
         onOpenChapter={onOpenChapter}
         onOpenPhoto={handleOpenPhoto}
         onUserClick={handleUserClick}
         onShareRecuerdo={sharedLinksEnabled ? shareRecuerdo : undefined}
         onEditRecuerdo={editRecuerdo}
+        onOpenBatchPhoto={handleOpenBatchPhoto}
+        onOpenBatchGrid={handleOpenBatchGrid}
       />
       <SimpleFAB
         label="Recordemos juntos"
@@ -69,6 +100,7 @@ export function BaulRecuerdosTabContainer({ baulId, baulName, onOpenChapter }: B
         hidden={!chatEnabled}
       />
       {isPending() && <BlockingLoadingOverlay message="Cargando fotos..." />}
+      {isPending('baul-feed') && <BlockingLoadingOverlay message="Cargando el feed..." />}
     </>
   );
 }

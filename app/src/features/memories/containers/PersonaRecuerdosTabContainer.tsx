@@ -18,7 +18,7 @@ interface PersonaRecuerdosTabContainerProps {
 // que la persona y sus fotos) por autor — no hay un endpoint dedicado "recuerdos de una
 // persona", el propio Recuerdo ya trae personaId. Sin onUserClick: todos los recuerdos aquí
 // son de la propia persona cuya ficha se está viendo, así que tocar el avatar del autor no
-// llevaría a ningún sitio nuevo. Comparte edición/compartir con BaulRecuerdosTabContainer y
+// llevaría a ningún sitio nuevo. Comparte edición/compartir con BaulFeedTabContainer y
 // ChapterRecuerdosFeedContainer vía useRecuerdoActions — ver ese archivo.
 export function PersonaRecuerdosTabContainer({ baulId, personaId }: PersonaRecuerdosTabContainerProps) {
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ export function PersonaRecuerdosTabContainer({ baulId, personaId }: PersonaRecue
   const handleOpenPhoto = async (photoId: string, chapterId?: string) => {
     // Una foto suelta no tiene chapterId: ya está cargada por loadLoosePhotos (useBaulScope),
     // así que no hace falta cargar nada antes de navegar — mismo patrón que
-    // BaulRecuerdosTabContainer.
+    // BaulFeedTabContainer.
     if (!chapterId) {
       openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/fotos-sueltas`, photoId));
       return;

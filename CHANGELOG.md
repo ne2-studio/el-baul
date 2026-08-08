@@ -16,9 +16,11 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Añadido
 
 - Al entrar en el feed de un baúl, si hay alguna foto sin personas etiquetadas se pide ayuda para identificar a quién sale antes de mostrar el feed — una única recomendación, opcional ("Ahora no"), que no vuelve a aparecer en ese baúl hasta pasados 60 minutos (pero sí puede aparecer al entrar en otro baúl distinto). La foto se queda fija arriba (con los mismos gestos de zoom del visor de la galería) y "Guardar" fijo abajo, así que solo la lista de personas se mueve al hacer scroll. Al guardar, aparece un aviso de agradecimiento.
+- El feed de un baúl ahora también puede mostrar las fotos subidas, agrupadas en una tarjeta por cada vez que alguien sube varias a la vez: quién las subió, cuántas fotos son, a qué capítulo pertenecen (si corresponde) y una vista previa en miniatura de las primeras cuatro. Al tocar "y X más" se abre una cuadrícula solo con las fotos de esa subida, y al tocar una foto se abre la galería navegando únicamente entre las fotos de esa misma subida.
 
 ### Cambiado
 
+- En la tarjeta de un recuerdo dentro del feed de un baúl, quién lo escribió (foto y nombre) y cuándo pasan a la primera línea, antes del propio texto.
 - En tablet y escritorio, el visor de fotos ahora muestra la foto y los recuerdos en dos columnas en vez de apilados, aprovechando mejor el ancho de la pantalla.
 - El chat con IA pasa a llamarse "Recordemos juntos" y ahora siempre intenta seguir la conversación con una pregunta: si la persona usuaria pregunta y hay respuesta, invita a ahondar en el recuerdo; si pregunta y no la hay, lo dice y pide esa información; si simplemente comparte algo sin preguntar, sigue la charla con una pregunta que ayude a recordar más detalles, sin decir que no lo sabe.
 - El chat con IA ahora sabe con quién está hablando, en vez de responder como si no supiera quién eres.

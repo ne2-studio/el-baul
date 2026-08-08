@@ -13,6 +13,8 @@ type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCro
   Partial<Pick<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'>>;
 type PhotoDto = ApiSchemas['PhotoDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
+type PhotoBatchDto = ApiSchemas['PhotoBatchDto'];
+type FeedItemDto = ApiSchemas['FeedItemDto'];
 type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
 type UserProfileDto = ApiSchemas['UserProfileDto'];
 
@@ -172,6 +174,51 @@ export class Recuerdo {
     this.chapterId = data.chapterId ?? undefined;
     this.chapterName = data.chapterName ?? undefined;
   }
+}
+
+// One card in the baúl feed for a single upload action — every photo sharing the same
+// UploadBatchId. Mirrors Recuerdo's authorship shape (Persona nickname/avatar, never the
+// account name — see docs/API-CONVENTIONS.md's "Display names").
+export class PhotoBatch {
+  batchId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  personaId?: string;
+  photoCount: number;
+  chapterId?: string;
+  chapterName?: string;
+  createdAt: string;
+  previewPhotos: Photo[];
+
+  constructor(data: PhotoBatchDto) {
+    this.batchId = data.batchId;
+    this.userId = data.userId;
+    this.userName = data.userName;
+    this.userAvatar = data.userAvatar ?? undefined;
+    this.personaId = data.personaId ?? undefined;
+    this.photoCount = data.photoCount;
+    this.chapterId = data.chapterId ?? undefined;
+    this.chapterName = data.chapterName ?? undefined;
+    this.createdAt = data.createdAt;
+    this.previewPhotos = data.previewPhotos.map((p) => new Photo(p));
+  }
+}
+
+// One entry in the baúl feed — either a Recuerdo or a photo-upload batch, never both. Mirrors
+// FeedItemDto's discriminated shape so callers can switch on `type` instead of checking which
+// nested field is set.
+export type FeedItem =
+  | { type: 'recuerdo'; createdAt: string; recuerdo: Recuerdo }
+  | { type: 'photo_batch'; createdAt: string; photoBatch: PhotoBatch };
+
+export function feedItemFrom(data: FeedItemDto): FeedItem {
+  if (data.type === 'photo_batch' && data.photoBatch) {
+    return { type: 'photo_batch', createdAt: data.createdAt, photoBatch: new PhotoBatch(data.photoBatch) };
+  }
+  // Defaults to 'recuerdo' for any unrecognized type too, matching the backend's only two
+  // real values — an unknown Type would otherwise have no Recuerdo to render.
+  return { type: 'recuerdo', createdAt: data.createdAt, recuerdo: new Recuerdo(data.recuerdo!) };
 }
 
 export class ChatMessage {

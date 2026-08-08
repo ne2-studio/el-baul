@@ -5,6 +5,7 @@ export interface BaulesCacheState {
   chapters: Record<string, Chapter[]>;
   photos: Record<string, Photo[]>;
   loosePhotos: Record<string, Photo[]>;
+  photoBatchPhotos: Record<string, Photo[]>;
 }
 
 export function applyUploadedPhotos(
@@ -137,9 +138,9 @@ export function applyCoverUpdate<T extends { id: string; coverPhotoUrl?: string 
 }
 
 export function removePhotoFromAllCaches(
-  state: Pick<BaulesCacheState, 'photos' | 'loosePhotos'>,
+  state: Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'>,
   photoId: string
-): Pick<BaulesCacheState, 'photos' | 'loosePhotos'> {
+): Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'> {
   const photos = Object.fromEntries(
     Object.entries(state.photos).map(([chapterId, chapterPhotos]) => [
       chapterId,
@@ -152,18 +153,24 @@ export function removePhotoFromAllCaches(
       baulLoosePhotos.filter((photo) => photo.id !== photoId),
     ])
   );
+  const photoBatchPhotos = Object.fromEntries(
+    Object.entries(state.photoBatchPhotos).map(([batchId, batchPhotos]) => [
+      batchId,
+      batchPhotos.filter((photo) => photo.id !== photoId),
+    ])
+  );
 
-  return { photos, loosePhotos };
+  return { photos, loosePhotos, photoBatchPhotos };
 }
 
 // Sibling of removePhotoFromAllCaches for the "update in place" case (e.g. a date change) —
 // same reasoning: the caller (e.g. changePhotoDate, called from either photo viewer) doesn't
-// necessarily know which chapter/loose slice this photo is cached under, so it searches all
-// of them rather than requiring that context.
+// necessarily know which chapter/loose/batch slice this photo is cached under, so it searches
+// all of them rather than requiring that context.
 export function updatePhotoInAllCaches(
-  state: Pick<BaulesCacheState, 'photos' | 'loosePhotos'>,
+  state: Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'>,
   updatedPhoto: Photo
-): Pick<BaulesCacheState, 'photos' | 'loosePhotos'> {
+): Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'> {
   const photos = Object.fromEntries(
     Object.entries(state.photos).map(([chapterId, chapterPhotos]) => [
       chapterId,
@@ -176,8 +183,14 @@ export function updatePhotoInAllCaches(
       baulLoosePhotos.map((photo) => (photo.id === updatedPhoto.id ? updatedPhoto : photo)),
     ])
   );
+  const photoBatchPhotos = Object.fromEntries(
+    Object.entries(state.photoBatchPhotos).map(([batchId, batchPhotos]) => [
+      batchId,
+      batchPhotos.map((photo) => (photo.id === updatedPhoto.id ? updatedPhoto : photo)),
+    ])
+  );
 
-  return { photos, loosePhotos };
+  return { photos, loosePhotos, photoBatchPhotos };
 }
 
 function fillBaulCover(baules: Baul[], baulId: string, thumbnailUrl?: string): Baul[] {

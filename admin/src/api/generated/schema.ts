@@ -2752,6 +2752,171 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/baules/{baulId}/feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FeedItemDto"][];
+                        "application/json": components["schemas"]["FeedItemDto"][];
+                        "text/json": components["schemas"]["FeedItemDto"][];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/baules/{baulId}/photo-batches/{batchId}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                    batchId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PhotoDto"][];
+                        "application/json": components["schemas"]["PhotoDto"][];
+                        "text/json": components["schemas"]["PhotoDto"][];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/baul-invites/{token}/preview": {
         parameters: {
             query?: never;
@@ -3918,6 +4083,8 @@ export interface paths {
                         DateDay?: number;
                         /** Format: uuid */
                         ClientUploadId?: string;
+                        /** Format: uuid */
+                        UploadBatchId?: string;
                     };
                 };
             };
@@ -4517,6 +4684,8 @@ export interface paths {
                         DateDay?: number;
                         /** Format: uuid */
                         ClientUploadId?: string;
+                        /** Format: uuid */
+                        UploadBatchId?: string;
                     };
                 };
             };
@@ -5984,6 +6153,7 @@ export interface components {
             chatEnabled: boolean;
             chatSuggestionsEnabled: boolean;
             sharedLinksEnabled: boolean;
+            baulFeedEnabled: boolean;
         };
         AppConfigResponse: {
             features: components["schemas"]["AppConfigFeatures"];
@@ -6111,6 +6281,13 @@ export interface components {
         ErrorResponse: {
             error: string;
         };
+        FeedItemDto: {
+            type: string;
+            /** Format: date-time */
+            createdAt: string;
+            recuerdo?: components["schemas"]["RecuerdoDto"];
+            photoBatch?: components["schemas"]["PhotoBatchDto"];
+        };
         MovePhotoRequest: {
             chapterId: string;
         };
@@ -6135,6 +6312,20 @@ export interface components {
             avatarCropY: number;
             /** Format: double */
             avatarCropScale: number;
+        };
+        PhotoBatchDto: {
+            batchId: string;
+            userId: string;
+            userName: string;
+            userAvatar?: string | null;
+            personaId?: string | null;
+            /** Format: int32 */
+            photoCount: number;
+            chapterId?: string | null;
+            chapterName?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            previewPhotos: components["schemas"]["PhotoDto"][];
         };
         PhotoDto: {
             id: string;

@@ -9,4 +9,8 @@ public class UploadPhotoRequest
     public int? DateMonth { get; set; }
     public int? DateDay { get; set; }
     public Guid? ClientUploadId { get; set; }
+    // Shared by every photo picked in the same client upload action — unlike ClientUploadId
+    // (a unique idempotency key per photo), several photos legitimately share this value.
+    // Optional: absent for callers uploading a single photo with no batch context.
+    public Guid? UploadBatchId { get; set; }
 }

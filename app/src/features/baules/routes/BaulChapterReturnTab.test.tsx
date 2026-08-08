@@ -41,8 +41,8 @@ vi.mock('@/features/baules/containers/BaulSettingsMenuContainer', () => ({
 vi.mock('@/features/people/containers/BaulPersonasTabContainer', () => ({
   BaulPersonasTabContainer: () => <div>Contenido de Personas</div>,
 }));
-vi.mock('@/features/memories/containers/BaulRecuerdosTabContainer', () => ({
-  BaulRecuerdosTabContainer: ({ onOpenChapter }: { onOpenChapter?: (chapterId: string) => void }) => (
+vi.mock('@/features/memories/containers/BaulFeedTabContainer', () => ({
+  BaulFeedTabContainer: ({ onOpenChapter }: { onOpenChapter?: (chapterId: string) => void }) => (
     <div>
       Contenido de Recuerdos
       <button onClick={() => onOpenChapter?.('chapter-1')}>Abrir capítulo desde recuerdos</button>

@@ -21,6 +21,7 @@ function cacheState(overrides: Partial<BaulesCacheState> = {}): BaulesCacheState
     chapters: {},
     photos: {},
     loosePhotos: {},
+    photoBatchPhotos: {},
     ...overrides,
   };
 }
@@ -186,20 +187,22 @@ describe('baules cache reconciliation', () => {
     ]);
   });
 
-  it('removePhotoFromAllCaches removes a photo wherever it is cached', () => {
+  it('removePhotoFromAllCaches removes a photo wherever it is cached, including upload batches', () => {
     const removed = newPhoto('removed');
     const kept = newPhoto('kept');
 
     const next = removePhotoFromAllCaches({
       photos: { [chapterId]: [removed, kept], other: [removed] },
       loosePhotos: { [baulId]: [removed], otherBaul: [kept] },
+      photoBatchPhotos: { 'batch-1': [removed, kept] },
     }, removed.id);
 
     expect(next.photos).toEqual({ [chapterId]: [kept], other: [] });
     expect(next.loosePhotos).toEqual({ [baulId]: [], otherBaul: [kept] });
+    expect(next.photoBatchPhotos).toEqual({ 'batch-1': [kept] });
   });
 
-  it('updatePhotoInAllCaches updates a photo wherever it is cached', () => {
+  it('updatePhotoInAllCaches updates a photo wherever it is cached, including upload batches', () => {
     const original = newPhoto('photo', { dateYear: 1980 });
     const updated = newPhoto('photo', { dateYear: 1981, dateMonth: 5 });
     const untouched = newPhoto('other');
@@ -207,11 +210,13 @@ describe('baules cache reconciliation', () => {
     const next = updatePhotoInAllCaches({
       photos: { [chapterId]: [original, untouched], other: [original] },
       loosePhotos: { [baulId]: [original], otherBaul: [untouched] },
+      photoBatchPhotos: { 'batch-1': [original, untouched] },
     }, updated);
 
     expect(next.photos[chapterId]).toEqual([updated, untouched]);
     expect(next.photos.other).toEqual([updated]);
     expect(next.loosePhotos[baulId]).toEqual([updated]);
     expect(next.loosePhotos.otherBaul).toEqual([untouched]);
+    expect(next.photoBatchPhotos['batch-1']).toEqual([updated, untouched]);
   });
 });

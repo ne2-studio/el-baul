@@ -75,6 +75,13 @@ export async function loadLoosePhotos(baulId: string): Promise<void> {
   useBaulesStore.setState((state) => ({ loosePhotos: { ...state.loosePhotos, [baulId]: photos } }));
 }
 
+// One upload batch's own photos — backs the feed card's grid/gallery drill-down (see
+// PhotoBatchGridRoute/PhotoBatchViewerRoute).
+export async function loadPhotoBatchPhotos(baulId: string, batchId: string): Promise<void> {
+  const photos = await api.photoBatches.getPhotos(baulId, batchId);
+  useBaulesStore.setState((state) => ({ photoBatchPhotos: { ...state.photoBatchPhotos, [batchId]: photos } }));
+}
+
 export async function uploadPhotos(
   baulId: string,
   chapterId: string | null,
@@ -98,7 +105,8 @@ export async function uploadPhotos(
       continue;
     }
     try {
-      const photo = await api.photos.upload(baulId, chapterId, selected.file, selected.clientUploadId, selected.date);
+      const photo = await api.photos.upload(
+        baulId, chapterId, selected.file, selected.clientUploadId, selected.date, selected.uploadBatchId);
       uploaded.push(photo);
       result = { clientUploadId: selected.clientUploadId, photo };
     } catch (error) {

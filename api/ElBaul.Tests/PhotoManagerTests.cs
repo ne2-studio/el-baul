@@ -57,6 +57,25 @@ public class PhotoManagerTests
         Assert.Equal(1, chapter!.PhotoCount);
     }
 
+    // UploadBatchId isn't part of PhotoDto (it's an internal grouping key, only surfaced
+    // aggregated via IBaulFeedManager), so this reads the persisted Photo back through the
+    // repository rather than the returned DTO.
+    [Fact]
+    public async Task UploadAsync_ShouldPersistUploadBatchId_WhenProvided()
+    {
+        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var manager = CreateManager(CustodioId);
+        var uploadBatchId = Guid.NewGuid();
+
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadAsync(
+            chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()), uploadBatchId);
+
+        Assert.True(result.IsSuccess);
+        var stored = await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
+        Assert.Equal(uploadBatchId, stored!.UploadBatchId);
+    }
+
     [Fact]
     public async Task UploadAsync_ShouldRecordFileSizeInBytes()
     {

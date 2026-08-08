@@ -22,6 +22,7 @@ public static class ServiceRegistration
         services.AddScoped<IChapterListReadModel, ChapterListReadModel>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IPhotoListReadModel, PhotoListReadModel>();
+        services.AddScoped<IPhotoUploadBatchReadModel, PhotoUploadBatchReadModel>();
         services.AddScoped<IRecuerdoRepository, RecuerdoRepository>();
         services.AddScoped<IRecuerdoListReadModel, RecuerdoListReadModel>();
         services.AddScoped<ISharedLinkRepository, SharedLinkRepository>();

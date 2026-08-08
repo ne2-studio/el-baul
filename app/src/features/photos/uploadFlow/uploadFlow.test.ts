@@ -183,10 +183,35 @@ describe('uploadFlow', () => {
     const selectedPhotos = [{ id: 'selected-1', file, preview: 'blob:preview' }];
 
     expect(uploadItemsFromSelectedPhotos(selectedPhotos, { year: 1991, month: 8 })).toEqual([
-      { clientUploadId: 'selected-1', file, date: { year: 1991, month: 8 } },
+      { clientUploadId: 'selected-1', uploadBatchId: expect.any(String), file, date: { year: 1991, month: 8 } },
     ]);
     expect(uploadItemsFromSelectedPhotos(selectedPhotos, null)).toEqual([
-      { clientUploadId: 'selected-1', file, date: undefined },
+      { clientUploadId: 'selected-1', uploadBatchId: expect.any(String), file, date: undefined },
     ]);
+  });
+
+  // Regression coverage for the baúl feed's "upload batch" cards (see
+  // IPhotoUploadBatchReadModel on the backend): every photo picked in the same upload action
+  // must share one uploadBatchId, but two separate actions must not collide. The beforeEach
+  // stub above pins crypto.randomUUID to a single constant (so SelectedPhoto ids stay
+  // deterministic elsewhere), so this test drives it explicitly instead.
+  it('shares one uploadBatchId across every item from the same call, and a fresh one per call', () => {
+    const file = new File(['image-bytes'], 'foto.jpg', { type: 'image/jpeg' });
+    const selectedPhotos = [
+      { id: 'selected-1', file, preview: 'blob:preview-1' },
+      { id: 'selected-2', file, preview: 'blob:preview-2' },
+    ];
+
+    const batch1 = '11111111-1111-1111-1111-111111111111';
+    const batch2 = '22222222-2222-2222-2222-222222222222';
+
+    vi.mocked(crypto.randomUUID).mockReturnValueOnce(batch1);
+    const [first, second] = uploadItemsFromSelectedPhotos(selectedPhotos, null);
+    expect(first.uploadBatchId).toBe(batch1);
+    expect(second.uploadBatchId).toBe(batch1);
+
+    vi.mocked(crypto.randomUUID).mockReturnValueOnce(batch2);
+    const [third] = uploadItemsFromSelectedPhotos(selectedPhotos, null);
+    expect(third.uploadBatchId).toBe(batch2);
   });
 });

@@ -71,10 +71,12 @@ public class BaulFixture
     // "Chapter with active photo": Photo.Create defaults to PhotoStatus.Active.
     public async Task<PhotoId> AddPhotoAsync(
         BaulId baulId, ChapterId? chapterId = null, string storageKey = "key", PhotoDate? date = null,
-        string uploadedBy = DefaultCustodioId, Guid? id = null, Guid? clientUploadId = null, long sizeBytes = 0)
+        string uploadedBy = DefaultCustodioId, Guid? id = null, Guid? clientUploadId = null, long sizeBytes = 0,
+        Guid? uploadBatchId = null, DateTime? createdAt = null)
     {
         var photoId = new PhotoId(id ?? Guid.NewGuid());
-        await Photos.CreateAsync(Photo.Create(photoId, chapterId, baulId, storageKey, date, uploadedBy, Clock.UtcNow(), clientUploadId, sizeBytes));
+        await Photos.CreateAsync(Photo.Create(
+            photoId, chapterId, baulId, storageKey, date, uploadedBy, createdAt ?? Clock.UtcNow(), clientUploadId, sizeBytes, uploadBatchId));
         return photoId;
     }
 }

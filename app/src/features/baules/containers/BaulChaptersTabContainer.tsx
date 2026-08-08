@@ -15,7 +15,7 @@ import { createChapter } from '@/features/chapters/useCases';
 
 interface BaulChaptersTabContainerProps {
   baulId: string;
-  // Compartido con BaulRecuerdosTabContainer's onOpenChapter y con el overlay de pantalla
+  // Compartido con BaulFeedTabContainer's onOpenChapter y con el overlay de pantalla
   // completa "Cargando fotos..." que dispara — se queda como callback de BaulRoute en vez de
   // duplicarse aquí — ver la regla de containers/ en docs/architecture/frontend.md.
   onSelectChapter: (chapter: Chapter) => void;

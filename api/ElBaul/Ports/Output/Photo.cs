@@ -15,7 +15,12 @@ public record Photo
     PhotoStatus Status = PhotoStatus.Active,
     DateTime? DeletedAt = null,
     string? DeletionReason = null,
-    long SizeBytes = 0
+    long SizeBytes = 0,
+    // Shared by every photo uploaded together in one client action — unlike ClientUploadId
+    // (a unique per-photo idempotency key), several photos legitimately share this value.
+    // Powers the baúl feed's "upload batch" cards (see IPhotoUploadBatchReadModel). Null for
+    // photos uploaded before this field existed or with no batch context.
+    Guid? UploadBatchId = null
 )
 {
     // DateYear/Month/Day stay the raw persisted columns — EF Core can't map an optional
@@ -28,9 +33,10 @@ public record Photo
 
     public static Photo Create(
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
-        string uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0) =>
+        string uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
+        Guid? uploadBatchId = null) =>
         new(id, chapterId, baulId, storageKey, date?.Year, date?.Month, date?.Day, uploadedBy, createdAt, clientUploadId,
-            SizeBytes: sizeBytes);
+            SizeBytes: sizeBytes, UploadBatchId: uploadBatchId);
 
     public Photo WithDate(PhotoDate? date) =>
         this with { DateYear = date?.Year, DateMonth = date?.Month, DateDay = date?.Day };

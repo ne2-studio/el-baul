@@ -5,7 +5,7 @@ import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
 
-// Shared by BaulRecuerdosTabContainer, ChapterRecuerdosFeedContainer and
+// Shared by BaulFeedTabContainer, ChapterRecuerdosFeedContainer and
 // PersonaRecuerdosTabContainer — identical logic used to be duplicated verbatim in BaulRoute
 // and ChapterRoute. Not exported outside containers/: it's an implementation detail of those
 // three, not a general-purpose memories API.

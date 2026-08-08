@@ -39,7 +39,7 @@ public class PhotosController(
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(
             new ChapterId(chapterId), stream, request.File.FileName, request.File.ContentType, date,
-            new ClientUploadId(request.ClientUploadId.Value));
+            new ClientUploadId(request.ClientUploadId.Value), request.UploadBatchId);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
@@ -135,7 +135,7 @@ public class PhotosController(
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadToBaulAsync(
             new BaulId(baulId), stream, request.File.FileName, request.File.ContentType, date,
-            new ClientUploadId(request.ClientUploadId.Value));
+            new ClientUploadId(request.ClientUploadId.Value), request.UploadBatchId);
 
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
