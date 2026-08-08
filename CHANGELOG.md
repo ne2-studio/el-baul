@@ -13,6 +13,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+## [beta-v0.3.0] - 2026-08-08
+
 ### Añadido
 
 - Al entrar en el feed de un baúl, si hay alguna foto sin personas etiquetadas se pide ayuda para identificar a quién sale antes de mostrar el feed — una única recomendación, opcional ("Ahora no"), que no vuelve a aparecer en ese baúl hasta pasados 60 minutos (pero sí puede aparecer al entrar en otro baúl distinto). La foto se queda fija arriba (con los mismos gestos de zoom del visor de la galería) y "Guardar" fijo abajo, así que solo la lista de personas se mueve al hacer scroll. Al guardar, aparece un aviso de agradecimiento.
@@ -62,38 +64,6 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - El botón flotante de acción ya no parpadea al hacer scroll.
 - Al refrescar la página dentro de un baúl, o cambiar a uno que no se había abierto en la sesión, ahora se ve la misma pantalla de "Abriendo baúl..." que al entrar por primera vez, en vez de un texto suelto de "Cargando..." seguido de un instante con el baúl vacío antes de que aparezca su contenido real.
 - Lo mismo al refrescar la página dentro de la ficha de una persona: ahora se ve una pantalla de "Abriendo ficha..." completa en vez de un texto suelto de "Cargando..." seguido de un instante con las pestañas vacías.
-
-## [beta-v0.1.2] - 2026-08-04
-
-### Añadido
-
-- Enlace de invitación global y reutilizable para unirse a un baúl.
-- Las personas invitadas ahora pueden reclamar una ficha de persona ya preparada desde el enlace de invitación global.
-- Compatibilidad con iOS.
-- El carrusel de bienvenida se muestra una vez, en el primer inicio de sesión, antes de crear el baúl.
-- Tras subir fotos aparece un carril de "Añadidas recientemente".
-
-### Cambiado
-
-- Subir fotos ahora es una pantalla propia, accesible como punto de entrada de la aplicación.
-- Crear un baúl vuelve a ser una pantalla completa; las personas nuevas aterrizan ahí al entrar por primera vez.
-- La introducción a la app ahora se presenta como una historia, no como un recorrido de funciones.
-- La pantalla de crear baúl continúa la introducción de forma más natural.
-- La introducción para personas invitadas se personaliza con el contenido real del baúl al que se les invita.
-
-### Arreglado
-
-- Las fotos HEIC de iPhone ahora se previsualizan correctamente y se convierten a JPEG al subirlas.
-- Se agrandó la fecha en las tarjetas de capítulo para que se lea mejor.
-- Ya no se reprocesa el enlace de inicio de sesión nativo en cada recarga de la app.
-- Se corrigió un fallo al compartir contenido desde iOS.
-- Los elementos fijos de la interfaz ya no invaden las zonas seguras del dispositivo en iOS.
-- El icono y la pantalla de bienvenida de iOS ahora usan las imágenes reales de El Baúl.
-- Se omite la pantalla de reclamar persona cuando quien invita ya pertenece al baúl.
-
-### Seguridad
-
-- Cerrar sesión ahora finaliza realmente la sesión de autenticación, no solo la de la app.
 
 ## Versiones anteriores
 

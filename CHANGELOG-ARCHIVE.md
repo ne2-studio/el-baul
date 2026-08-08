@@ -4,6 +4,38 @@ Versiones antiguas movidas fuera de [`CHANGELOG.md`](./CHANGELOG.md) para que
 ese archivo se mantenga corto y legible. Ver ese fichero para el formato y
 las versiones recientes.
 
+## [beta-v0.1.2] - 2026-08-04
+
+### Añadido
+
+- Enlace de invitación global y reutilizable para unirse a un baúl.
+- Las personas invitadas ahora pueden reclamar una ficha de persona ya preparada desde el enlace de invitación global.
+- Compatibilidad con iOS.
+- El carrusel de bienvenida se muestra una vez, en el primer inicio de sesión, antes de crear el baúl.
+- Tras subir fotos aparece un carril de "Añadidas recientemente".
+
+### Cambiado
+
+- Subir fotos ahora es una pantalla propia, accesible como punto de entrada de la aplicación.
+- Crear un baúl vuelve a ser una pantalla completa; las personas nuevas aterrizan ahí al entrar por primera vez.
+- La introducción a la app ahora se presenta como una historia, no como un recorrido de funciones.
+- La pantalla de crear baúl continúa la introducción de forma más natural.
+- La introducción para personas invitadas se personaliza con el contenido real del baúl al que se les invita.
+
+### Arreglado
+
+- Las fotos HEIC de iPhone ahora se previsualizan correctamente y se convierten a JPEG al subirlas.
+- Se agrandó la fecha en las tarjetas de capítulo para que se lea mejor.
+- Ya no se reprocesa el enlace de inicio de sesión nativo en cada recarga de la app.
+- Se corrigió un fallo al compartir contenido desde iOS.
+- Los elementos fijos de la interfaz ya no invaden las zonas seguras del dispositivo en iOS.
+- El icono y la pantalla de bienvenida de iOS ahora usan las imágenes reales de El Baúl.
+- Se omite la pantalla de reclamar persona cuando quien invita ya pertenece al baúl.
+
+### Seguridad
+
+- Cerrar sesión ahora finaliza realmente la sesión de autenticación, no solo la de la app.
+
 ## [beta-v0.1.0] - 2026-07-30
 
 ### Cambiado
