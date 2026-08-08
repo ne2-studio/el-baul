@@ -20,6 +20,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Cambiado
 
+- Dentro de un baúl, la pestaña de Recuerdos pasa a llamarse "Historia" y la de Personas pasa a llamarse "Familia".
 - En la tarjeta de un recuerdo dentro del feed de un baúl, quién lo escribió (foto y nombre) y cuándo pasan a la primera línea, antes del propio texto.
 - En tablet y escritorio, el visor de fotos ahora muestra la foto y los recuerdos en dos columnas en vez de apilados, aprovechando mejor el ancho de la pantalla.
 - El chat con IA pasa a llamarse "Recordemos juntos" y ahora siempre intenta seguir la conversación con una pregunta: si la persona usuaria pregunta y hay respuesta, invita a ahondar en el recuerdo; si pregunta y no la hay, lo dice y pide esa información; si simplemente comparte algo sin preguntar, sigue la charla con una pregunta que ayude a recordar más detalles, sin decir que no lo sabe.
