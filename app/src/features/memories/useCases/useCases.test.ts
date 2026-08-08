@@ -16,7 +16,7 @@ vi.mock('@/api', () => ({
 
 import { api } from '@/api';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { addRecuerdo, addChapterRecuerdo, editRecuerdo, loadBaulFeed } from './index';
+import { addRecuerdo, addChapterRecuerdo, editRecuerdo, loadBaulFeed, loadMoreBaulFeed } from './index';
 
 // Regression coverage for a bug where adding a recuerdo from a photo or a chapter never
 // showed up in the baúl-wide "Recuerdos" tab until the baúl page was reloaded: addRecuerdo
@@ -160,21 +160,59 @@ describe('memories useCases recuerdo caches stay in sync', () => {
 describe('memories useCases loadBaulFeed', () => {
   const baulId = 'baul-1';
 
+  function newFeedItem(id: string): FeedItem {
+    const recuerdo = new Recuerdo({
+      id, userId: 'user-1', text: 'hola', userName: 'Pedro', createdAt: new Date().toISOString(), isOwn: false,
+    });
+    return { type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo };
+  }
+
   beforeEach(() => {
-    useRecuerdosStore.setState({ baulFeed: {} });
+    useRecuerdosStore.setState({ baulFeed: {}, baulFeedHasMore: {} });
     vi.clearAllMocks();
   });
 
-  it('fetches and caches the merged feed under its baulId', async () => {
-    const recuerdo = new Recuerdo({
-      id: 'r1', userId: 'user-1', text: 'hola', userName: 'Pedro', createdAt: new Date().toISOString(), isOwn: false,
-    });
-    const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo }];
-    vi.mocked(api.baules.getFeed).mockResolvedValue(feed);
+  it('fetches the first page and caches it under its baulId, along with hasMore', async () => {
+    const feed = [newFeedItem('r1')];
+    vi.mocked(api.baules.getFeed).mockResolvedValue({ feedItems: feed, hasMore: true });
 
     await loadBaulFeed(baulId);
 
-    expect(api.baules.getFeed).toHaveBeenCalledWith(baulId);
+    expect(api.baules.getFeed).toHaveBeenCalledWith(baulId, { skip: 0, take: 20 });
     expect(useRecuerdosStore.getState().baulFeed[baulId]).toEqual(feed);
+    expect(useRecuerdosStore.getState().baulFeedHasMore[baulId]).toBe(true);
+  });
+
+  it('replaces (does not append to) an already-cached feed', async () => {
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [newFeedItem('stale')] } });
+    const feed = [newFeedItem('fresh')];
+    vi.mocked(api.baules.getFeed).mockResolvedValue({ feedItems: feed, hasMore: false });
+
+    await loadBaulFeed(baulId);
+
+    expect(useRecuerdosStore.getState().baulFeed[baulId]).toEqual(feed);
+  });
+
+  describe('loadMoreBaulFeed', () => {
+    it('requests the next page using the current cache length as skip, and appends the result', async () => {
+      const firstPage = [newFeedItem('r1'), newFeedItem('r2')];
+      useRecuerdosStore.setState({ baulFeed: { [baulId]: firstPage }, baulFeedHasMore: { [baulId]: true } });
+      const secondPage = [newFeedItem('r3')];
+      vi.mocked(api.baules.getFeed).mockResolvedValue({ feedItems: secondPage, hasMore: false });
+
+      await loadMoreBaulFeed(baulId);
+
+      expect(api.baules.getFeed).toHaveBeenCalledWith(baulId, { skip: 2, take: 20 });
+      expect(useRecuerdosStore.getState().baulFeed[baulId]).toEqual([...firstPage, ...secondPage]);
+      expect(useRecuerdosStore.getState().baulFeedHasMore[baulId]).toBe(false);
+    });
+
+    it('requests skip 0 when nothing was cached yet', async () => {
+      vi.mocked(api.baules.getFeed).mockResolvedValue({ feedItems: [newFeedItem('r1')], hasMore: false });
+
+      await loadMoreBaulFeed(baulId);
+
+      expect(api.baules.getFeed).toHaveBeenCalledWith(baulId, { skip: 0, take: 20 });
+    });
   });
 });

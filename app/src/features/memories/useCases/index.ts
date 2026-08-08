@@ -60,11 +60,29 @@ export async function addBaulRecuerdo(baulId: string, text: string): Promise<voi
   }));
 }
 
+const FEED_PAGE_SIZE = 20;
+
 // Feed behind Features:BaulFeedEnabled — recuerdos + photo-upload-batch cards, merged and
 // sorted server-side (see BaulFeedManager). loadBaulRecuerdos above stays the toggle-off path.
+// Loads (and replaces) the first page — see loadMoreBaulFeed for subsequent ones.
 export async function loadBaulFeed(baulId: string): Promise<void> {
-  const feed = await api.baules.getFeed(baulId);
-  useRecuerdosStore.setState((state) => ({ baulFeed: { ...state.baulFeed, [baulId]: feed } }));
+  const { feedItems, hasMore } = await api.baules.getFeed(baulId, { skip: 0, take: FEED_PAGE_SIZE });
+  useRecuerdosStore.setState((state) => ({
+    baulFeed: { ...state.baulFeed, [baulId]: feedItems },
+    baulFeedHasMore: { ...state.baulFeedHasMore, [baulId]: hasMore },
+  }));
+}
+
+// Appends the next page after whatever's already cached — skip is derived from the current
+// cache length rather than tracked separately, since baulFeed[baulId] only ever grows via
+// this function or gets reset wholesale by loadBaulFeed (never spliced/reordered in place).
+export async function loadMoreBaulFeed(baulId: string): Promise<void> {
+  const alreadyLoaded = useRecuerdosStore.getState().baulFeed[baulId]?.length ?? 0;
+  const { feedItems, hasMore } = await api.baules.getFeed(baulId, { skip: alreadyLoaded, take: FEED_PAGE_SIZE });
+  useRecuerdosStore.setState((state) => ({
+    baulFeed: { ...state.baulFeed, [baulId]: [...(state.baulFeed[baulId] || []), ...feedItems] },
+    baulFeedHasMore: { ...state.baulFeedHasMore, [baulId]: hasMore },
+  }));
 }
 
 export async function editRecuerdo(recuerdoId: string, text: string): Promise<void> {

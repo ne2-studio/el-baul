@@ -8,7 +8,7 @@ import { FeedTab } from '@/features/memories/components/FeedTab';
 import { FeedItem, Photo, PhotoBatch } from '@/types';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
-import { loadBaulFeed } from '@/features/memories/useCases';
+import { loadBaulFeed, loadMoreBaulFeed } from '@/features/memories/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -34,7 +34,7 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
-  const { baulRecuerdos, baulFeed } = useRecuerdosStore();
+  const { baulRecuerdos, baulFeed, baulFeedHasMore } = useRecuerdosStore();
   const baulFeedEnabled = useAppConfigStore((state) => state.baulFeedEnabled);
   const chatEnabled = useAppConfigStore((state) => state.chatEnabled);
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
@@ -51,6 +51,15 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
   const feedItems: FeedItem[] = baulFeedEnabled
     ? (baulFeed[baulId] || [])
     : (baulRecuerdos[baulId] || []).map((recuerdo): FeedItem => ({ type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo }));
+
+  // Scroll infinito: solo con el toggle activo — la ruta antigua (baulRecuerdos) sigue sin
+  // paginar, como siempre. 'baul-feed-more' es una key propia (distinta de 'baul-feed', la
+  // carga inicial) para que cargar la siguiente página no dispare el overlay a pantalla
+  // completa, solo el spinner en línea al final de la lista (ver FeedTab).
+  const handleLoadMore = () => {
+    if (!baulFeedEnabled || !baulFeedHasMore[baulId]) return;
+    run(() => loadMoreBaulFeed(baulId), { key: 'baul-feed-more', errorMessage: 'Error al cargar más' });
+  };
 
   const handleUserClick = (personaId: string) => {
     navigate(`/baules/${baulId}/personas/${personaId}`, { state: { returnTab: 'recuerdos' } });
@@ -92,6 +101,9 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
         onEditRecuerdo={editRecuerdo}
         onOpenBatchPhoto={handleOpenBatchPhoto}
         onOpenBatchGrid={handleOpenBatchGrid}
+        onLoadMore={baulFeedEnabled ? handleLoadMore : undefined}
+        hasMore={baulFeedEnabled ? (baulFeedHasMore[baulId] ?? false) : false}
+        isLoadingMore={isPending('baul-feed-more')}
       />
       <SimpleFAB
         label="Recordemos juntos"

@@ -2761,7 +2761,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    skip?: number;
+                    take?: number;
+                };
                 header?: never;
                 path: {
                     baulId: string;
@@ -2776,9 +2779,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["FeedItemDto"][];
-                        "application/json": components["schemas"]["FeedItemDto"][];
-                        "text/json": components["schemas"]["FeedItemDto"][];
+                        "text/plain": components["schemas"]["FeedPageDto"];
+                        "application/json": components["schemas"]["FeedPageDto"];
+                        "text/json": components["schemas"]["FeedPageDto"];
                     };
                 };
                 /** @description The request was invalid. */
@@ -6287,6 +6290,10 @@ export interface components {
             createdAt: string;
             recuerdo?: components["schemas"]["RecuerdoDto"];
             photoBatch?: components["schemas"]["PhotoBatchDto"];
+        };
+        FeedPageDto: {
+            items: components["schemas"]["FeedItemDto"][];
+            hasMore: boolean;
         };
         MovePhotoRequest: {
             chapterId: string;

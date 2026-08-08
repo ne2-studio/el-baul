@@ -242,10 +242,10 @@ public class BaulesController(
     // GetRecuerdos above stays untouched so the frontend can keep using it while the toggle is
     // off, without any behavior change to that existing contract.
     [HttpGet("{baulId:guid}/feed")]
-    [ProducesResponseType(typeof(IEnumerable<FeedItemDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetFeed(Guid baulId)
+    [ProducesResponseType(typeof(FeedPageDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFeed(Guid baulId, [FromQuery] int skip = 0, [FromQuery] int take = 20)
     {
-        var result = await baulFeedManager.GetFeedAsync(new BaulId(baulId));
+        var result = await baulFeedManager.GetFeedAsync(new BaulId(baulId), skip, take);
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 

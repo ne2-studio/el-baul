@@ -14,7 +14,7 @@ type PersonaDto = ApiSchemas['PersonaDto'];
 type PhotoDto = ApiSchemas['PhotoDto'];
 type PhotoPageDto = ApiSchemas['PhotoPageDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
-type FeedItemDto = ApiSchemas['FeedItemDto'];
+type FeedPageDto = ApiSchemas['FeedPageDto'];
 type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
 type SuccessResponse = ApiSchemas['SuccessResponse'];
 type TaggedPersonaDto = ApiSchemas['TaggedPersonaDto'];
@@ -192,10 +192,16 @@ export const api = {
 
     getLoosePhotos: async (baulId: string) =>
       (await get<PhotoDto[]>(`/api/baules/${baulId}/photos/sueltas`)).map((p) => new Photo(p)),
-    // Recuerdos + photo-upload-batch cards, newest first — the baúl's feed tab behind
-    // Features:BaulFeedEnabled. See useAppConfigStore's baulFeedEnabled.
-    getFeed: async (baulId: string): Promise<FeedItem[]> =>
-      (await get<FeedItemDto[]>(`/api/baules/${baulId}/feed`)).map(feedItemFrom),
+    // Paginated recuerdos + photo-upload-batch cards, newest first — the baúl's feed tab
+    // behind Features:BaulFeedEnabled. See useAppConfigStore's baulFeedEnabled. Same
+    // skip/take/hasMore shape as photos.getPage.
+    getFeed: async (baulId: string, options: { skip?: number; take?: number } = {}): Promise<{ feedItems: FeedItem[]; hasMore: boolean }> => {
+      const params = new URLSearchParams();
+      params.set('skip', String(options.skip ?? 0));
+      params.set('take', String(options.take ?? 20));
+      const result = await get<FeedPageDto>(`/api/baules/${baulId}/feed?${params}`);
+      return { feedItems: result.items.map(feedItemFrom), hasMore: result.hasMore };
+    },
     // Every photo tagged with this persona, ordered chronologically (oldest first) —
     // powers the "ficha de persona" photo gallery.
     getPersonaPhotos: async (baulId: string, personaId: string) =>

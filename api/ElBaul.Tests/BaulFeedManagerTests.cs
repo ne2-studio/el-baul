@@ -37,7 +37,7 @@ public class BaulFeedManagerTests
         var baulId = await _fixture.CreateBaulAsync();
         var manager = CreateManager(CustodioId, baulFeedEnabled: false);
 
-        var result = await manager.GetFeedAsync(baulId);
+        var result = await manager.GetFeedAsync(baulId, 0, 20);
 
         Assert.True(result.IsFailure);
     }
@@ -48,7 +48,7 @@ public class BaulFeedManagerTests
         var baulId = await _fixture.CreateBaulAsync();
         var manager = CreateManager("stranger");
 
-        var result = await manager.GetFeedAsync(baulId);
+        var result = await manager.GetFeedAsync(baulId, 0, 20);
 
         Assert.True(result.IsFailure);
     }
@@ -71,11 +71,12 @@ public class BaulFeedManagerTests
         Assert.True(recuerdo.IsSuccess);
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetFeedAsync(baulId);
+        var result = await manager.GetFeedAsync(baulId, 0, 20);
 
         Assert.True(result.IsSuccess);
-        var items = result.Value.ToList();
+        var items = result.Value.Items;
         Assert.Equal(2, items.Count);
+        Assert.False(result.Value.HasMore);
         Assert.Equal("recuerdo", items[0].Type);
         Assert.Equal("photo_batch", items[1].Type);
         Assert.Equal(2, items[1].PhotoBatch!.PhotoCount);
@@ -94,12 +95,91 @@ public class BaulFeedManagerTests
         }
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.GetFeedAsync(baulId);
+        var result = await manager.GetFeedAsync(baulId, 0, 20);
 
         Assert.True(result.IsSuccess);
-        var batch = Assert.Single(result.Value).PhotoBatch!;
+        var batch = Assert.Single(result.Value.Items).PhotoBatch!;
         Assert.Equal(6, batch.PhotoCount);
         Assert.Equal(4, batch.PreviewPhotos.Count);
+    }
+
+    [Fact]
+    public async Task GetFeedAsync_ShouldReportHasMore_WhenMoreItemsRemainAfterThisPage()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var recuerdoManager = CreateRecuerdoManager(CustodioId);
+        for (var i = 0; i < 3; i++)
+        {
+            var created = await recuerdoManager.CreateRecuerdoAsync(baulId, $"Recuerdo {i}");
+            Assert.True(created.IsSuccess);
+        }
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetFeedAsync(baulId, 0, 2);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.Items.Count);
+        Assert.True(result.Value.HasMore);
+    }
+
+    [Fact]
+    public async Task GetFeedAsync_ShouldReportNoMore_OnTheLastPage()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var recuerdoManager = CreateRecuerdoManager(CustodioId);
+        for (var i = 0; i < 3; i++)
+        {
+            var created = await recuerdoManager.CreateRecuerdoAsync(baulId, $"Recuerdo {i}");
+            Assert.True(created.IsSuccess);
+        }
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetFeedAsync(baulId, 2, 2);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Items);
+        Assert.False(result.Value.HasMore);
+    }
+
+    [Fact]
+    public async Task GetFeedAsync_ShouldAdvanceThroughDistinctItems_AsSkipIncreases()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var recuerdoManager = CreateRecuerdoManager(CustodioId);
+        for (var i = 0; i < 5; i++)
+        {
+            var created = await recuerdoManager.CreateRecuerdoAsync(baulId, $"Recuerdo {i}");
+            Assert.True(created.IsSuccess);
+        }
+
+        var manager = CreateManager(CustodioId);
+        var firstPage = await manager.GetFeedAsync(baulId, 0, 2);
+        var secondPage = await manager.GetFeedAsync(baulId, 2, 2);
+
+        Assert.True(firstPage.IsSuccess);
+        Assert.True(secondPage.IsSuccess);
+        var firstIds = firstPage.Value.Items.Select(i => i.Recuerdo!.Id).ToHashSet();
+        var secondIds = secondPage.Value.Items.Select(i => i.Recuerdo!.Id).ToHashSet();
+        Assert.Empty(firstIds.Intersect(secondIds));
+    }
+
+    [Fact]
+    public async Task GetFeedAsync_ShouldClampTake_ToAReasonableMaximum()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var recuerdoManager = CreateRecuerdoManager(CustodioId);
+        for (var i = 0; i < 3; i++)
+        {
+            var created = await recuerdoManager.CreateRecuerdoAsync(baulId, $"Recuerdo {i}");
+            Assert.True(created.IsSuccess);
+        }
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetFeedAsync(baulId, 0, 10_000);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value.Items.Count);
+        Assert.False(result.Value.HasMore);
     }
 
     [Fact]

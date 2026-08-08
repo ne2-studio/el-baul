@@ -2,8 +2,10 @@ import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { FeedItem, Photo, PhotoBatch, Recuerdo } from '@/types';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
+import { LoadingSpinner } from '@/design-system/components/feedback/LoadingSpinner';
 import { RecuerdoFeedCard } from '@/features/memories/components/RecuerdoFeedCard';
 import { PhotoBatchCard } from '@/features/photos/components/PhotoBatchCard';
+import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel';
 
 interface FeedTabProps {
   feedItems: FeedItem[];
@@ -17,6 +19,12 @@ interface FeedTabProps {
   onOpenBatchPhoto?: (batch: PhotoBatch, photo: Photo) => void;
   /** Abre la grid propia del lote — solo alcanzable cuando hay más fotos que las del collage. */
   onOpenBatchGrid?: (batch: PhotoBatch) => void;
+  /** Scroll infinito: si se pasa, se pinta un sentinel al final de la lista que dispara esta
+   * función al entrar en el viewport, mientras hasMore sea true — solo tiene sentido con el
+   * toggle activo, ya que la ruta antigua (recuerdos sin paginar) no pasa estas props. */
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
 // El feed del baúl: recuerdos y tarjetas de lote de subida (una por UploadBatchId), mezclados
@@ -24,7 +32,13 @@ interface FeedTabProps {
 // ver BaulFeedTabContainer, el único caller que decide cuál de las dos fuentes usar.
 export function FeedTab({
   feedItems, onOpenChapter, onOpenPhoto, onUserClick, onShareRecuerdo, onEditRecuerdo, onOpenBatchPhoto, onOpenBatchGrid,
+  onLoadMore, hasMore = false, isLoadingMore = false,
 }: FeedTabProps) {
+  // Called unconditionally (rules of hooks) even when pagination isn't wired up — the sentinel
+  // <div> below only renders when onLoadMore/hasMore say so, and the hook is a no-op without a
+  // DOM node attached to its ref.
+  const sentinelRef = useLoadMoreSentinel(onLoadMore ?? (() => {}), feedItems.length);
+
   if (feedItems.length === 0) {
     return (
       <EmptyState
@@ -59,6 +73,17 @@ export function FeedTab({
           />
         )
       ))}
+
+      {onLoadMore && hasMore && (
+        <>
+          <div ref={sentinelRef} className="h-1" />
+          {isLoadingMore && (
+            <div className="flex justify-center py-4">
+              <LoadingSpinner size="sm" />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

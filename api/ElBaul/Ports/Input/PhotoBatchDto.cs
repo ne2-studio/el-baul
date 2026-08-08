@@ -26,3 +26,8 @@ public record FeedItemDto(string Type, DateTime CreatedAt, RecuerdoDto? Recuerdo
     public static FeedItemDto ForRecuerdo(RecuerdoDto recuerdo) => new("recuerdo", recuerdo.CreatedAt, recuerdo, null);
     public static FeedItemDto ForPhotoBatch(PhotoBatchDto photoBatch) => new("photo_batch", photoBatch.CreatedAt, null, photoBatch);
 }
+
+// One page of the baúl feed, newest-first. Same "take+1 to detect more" shape as PhotoPageDto
+// (PhotoManager.GetPageAsync) — callers requesting take+1 items can tell whether more remain
+// without a separate count query.
+public record FeedPageDto(IReadOnlyList<FeedItemDto> Items, bool HasMore);

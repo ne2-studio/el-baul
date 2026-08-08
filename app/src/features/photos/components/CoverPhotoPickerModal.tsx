@@ -5,6 +5,7 @@ import { LoadingSpinner } from '@/design-system/components/feedback/LoadingSpinn
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { Photo } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel';
 
 const PAGE_SIZE = 60;
 
@@ -54,20 +55,9 @@ function useInfinitePhotoPage(fetchPage: CoverPhotoPickerModalProps['fetchPage']
 
 export function CoverPhotoPickerModal({ title, fetchPage, onSelect, onCancel }: CoverPhotoPickerModalProps) {
   const { photos, isLoading, isInitialLoad, loadMore } = useInfinitePhotoPage(fetchPage);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) loadMore();
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-    // isInitialLoad is what makes the sentinel <div> exist in the DOM at all (it's only
-    // rendered once the first page is in) — loadMore alone doesn't change identity between
-    // pages that both have hasMore=true, so without this the observer would never attach.
-  }, [loadMore, isInitialLoad]);
+  // isInitialLoad as remountKey: the sentinel <div> is only rendered once the first page is
+  // in, so the observer needs to (re-)attach once that happens — see useLoadMoreSentinel.
+  const sentinelRef = useLoadMoreSentinel(loadMore, isInitialLoad);
 
   const handleSelect = (photo: Photo) => {
     onSelect(photo);

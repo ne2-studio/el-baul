@@ -67,3 +67,12 @@ export const Empty: Story = {
     feedItems: [],
   },
 };
+
+export const LoadingMore: Story = {
+  args: {
+    ...Default.args,
+    onLoadMore: () => {},
+    hasMore: true,
+    isLoadingMore: true,
+  },
+};

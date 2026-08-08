@@ -1,9 +1,23 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FeedItem, PhotoBatch, Recuerdo } from '@/types';
 import { FeedTab } from '@/features/memories/components/FeedTab';
+
+let triggerIntersection: (isIntersecting: boolean) => void = () => {};
+
+function stubIntersectionObserver() {
+  class TestIntersectionObserver {
+    constructor(callback: IntersectionObserverCallback) {
+      triggerIntersection = (isIntersecting: boolean) =>
+        callback([{ isIntersecting } as IntersectionObserverEntry], this as unknown as IntersectionObserver);
+    }
+    observe = vi.fn();
+    disconnect = vi.fn();
+  }
+  vi.stubGlobal('IntersectionObserver', TestIntersectionObserver);
+}
 
 function newRecuerdo(overrides: Partial<ConstructorParameters<typeof Recuerdo>[0]> = {}): Recuerdo {
   return new Recuerdo({
@@ -86,5 +100,54 @@ describe('FeedTab', () => {
     await user.click(screen.getByRole('button', { name: 'Ver foto' }));
 
     expect(onOpenBatchPhoto).toHaveBeenCalledWith(photoBatch, photoBatch.previewPhotos[0]);
+  });
+
+  describe('infinite scroll', () => {
+    const items: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), recuerdo: newRecuerdo() }];
+
+    beforeEach(() => {
+      // See the equivalent reset in BaulFeedTabContainer.test.tsx: a test whose sentinel
+      // never mounts never constructs a new IntersectionObserver, so without this reset
+      // triggerIntersection could still point at an earlier test's stub.
+      triggerIntersection = () => {};
+    });
+
+    it('calls onLoadMore when the sentinel intersects and hasMore is true', () => {
+      stubIntersectionObserver();
+      const onLoadMore = vi.fn();
+
+      render(<FeedTab feedItems={items} onLoadMore={onLoadMore} hasMore />);
+      act(() => triggerIntersection(true));
+
+      expect(onLoadMore).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not render a sentinel (nothing to intersect) once hasMore is false', () => {
+      stubIntersectionObserver();
+      const onLoadMore = vi.fn();
+
+      render(<FeedTab feedItems={items} onLoadMore={onLoadMore} hasMore={false} />);
+      act(() => triggerIntersection(true));
+
+      expect(onLoadMore).not.toHaveBeenCalled();
+    });
+
+    it('does not render a sentinel when onLoadMore is not provided', () => {
+      const { container } = render(<FeedTab feedItems={items} hasMore />);
+
+      expect(container.querySelector('.h-1')).not.toBeInTheDocument();
+    });
+
+    it('shows the loading indicator while isLoadingMore is true', () => {
+      const { container } = render(<FeedTab feedItems={items} onLoadMore={vi.fn()} hasMore isLoadingMore />);
+
+      expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+    });
+
+    it('does not show the loading indicator while isLoadingMore is false', () => {
+      const { container } = render(<FeedTab feedItems={items} onLoadMore={vi.fn()} hasMore isLoadingMore={false} />);
+
+      expect(container.querySelector('.animate-spin')).not.toBeInTheDocument();
+    });
   });
 });

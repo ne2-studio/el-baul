@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeedItem, Photo, PhotoBatch, Recuerdo } from '@/types';
@@ -21,6 +21,7 @@ vi.mock('@/api', () => ({
 vi.mock('@/features/memories/useCases', () => ({
   editRecuerdo: vi.fn(),
   loadBaulFeed: vi.fn(),
+  loadMoreBaulFeed: vi.fn(),
 }));
 
 vi.mock('@/features/sharing/sharePublicLink', () => ({
@@ -34,9 +35,23 @@ vi.mock('@/features/photos/useCases', () => ({
 import { api } from '@/api';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { loadChapterPhotos } from '@/features/photos/useCases';
-import { loadBaulFeed } from '@/features/memories/useCases';
+import { loadBaulFeed, loadMoreBaulFeed } from '@/features/memories/useCases';
 
 const baulId = 'baul-1';
+
+let triggerIntersection: (isIntersecting: boolean) => void = () => {};
+
+function stubIntersectionObserver() {
+  class TestIntersectionObserver {
+    constructor(callback: IntersectionObserverCallback) {
+      triggerIntersection = (isIntersecting: boolean) =>
+        callback([{ isIntersecting } as IntersectionObserverEntry], this as unknown as IntersectionObserver);
+    }
+    observe = vi.fn();
+    disconnect = vi.fn();
+  }
+  vi.stubGlobal('IntersectionObserver', TestIntersectionObserver);
+}
 
 function recuerdo(overrides: Partial<Recuerdo> = {}): Recuerdo {
   return {
@@ -73,9 +88,14 @@ function renderContainer() {
 
 describe('BaulFeedTabContainer', () => {
   beforeEach(() => {
-    useRecuerdosStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {}, baulFeed: {} });
+    useRecuerdosStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {}, baulFeed: {}, baulFeedHasMore: {} });
     useAppConfigStore.setState({ chatEnabled: false, sharedLinksEnabled: false, baulFeedEnabled: false });
     vi.clearAllMocks();
+    // A test whose sentinel never mounts (no onLoadMore/hasMore) never constructs a new
+    // IntersectionObserver, so without this reset triggerIntersection would still point at
+    // whichever earlier test's stub last constructed one — a leak across tests, not a real
+    // product behavior. Only tests that call stubIntersectionObserver() exercise this at all.
+    triggerIntersection = () => {};
   });
 
   it('renders the recuerdos cached for this baúl', () => {
@@ -240,5 +260,37 @@ describe('BaulFeedTabContainer', () => {
 
       expect(screen.getByText('Visor · lote')).toBeInTheDocument();
     });
+
+    it('loads the next page when the scroll sentinel intersects and hasMore is true', async () => {
+      stubIntersectionObserver();
+      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), recuerdo: recuerdo() }];
+      useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: true } });
+
+      renderContainer();
+      act(() => triggerIntersection(true));
+
+      expect(loadMoreBaulFeed).toHaveBeenCalledWith(baulId);
+    });
+
+    it('does not load more once hasMore is false', async () => {
+      stubIntersectionObserver();
+      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), recuerdo: recuerdo() }];
+      useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: false } });
+
+      renderContainer();
+      act(() => triggerIntersection(true));
+
+      expect(loadMoreBaulFeed).not.toHaveBeenCalled();
+    });
+  });
+
+  it('never offers infinite scroll (no sentinel wired) while the toggle is off', () => {
+    stubIntersectionObserver();
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+
+    renderContainer();
+    act(() => triggerIntersection(true));
+
+    expect(loadMoreBaulFeed).not.toHaveBeenCalled();
   });
 });
