@@ -3,54 +3,54 @@
  * Used in El Baúl to add emotional context to memories
  */
 
-/**
- * Gets relative time string in natural Spanish
- * Examples: "Hoy", "Hace 2 días", "Hace 3 meses", "Hace 2 años"
- */
-export function getRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInSeconds = Math.floor(diffInMs / 1000);
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  const diffInDays = Math.floor(diffInHours / 24);
-  const diffInMonths = Math.floor(diffInDays / 30);
-  const diffInYears = Math.floor(diffInDays / 365);
-
-  // Today
-  if (diffInDays === 0) {
-    return 'Hoy';
-  }
-
-  // Yesterday
-  if (diffInDays === 1) {
-    return 'Ayer';
-  }
-
-  // Days (up to 6 days)
-  if (diffInDays < 7) {
-    return `Hace ${diffInDays} días`;
-  }
-
-  // Weeks (up to 4 weeks)
-  if (diffInDays < 30) {
-    const weeks = Math.floor(diffInDays / 7);
-    return weeks === 1 ? 'Hace una semana' : `Hace ${weeks} semanas`;
-  }
-
-  // Months (up to 11 months)
-  if (diffInMonths < 12) {
-    return diffInMonths === 1 ? 'Hace un mes' : `Hace ${diffInMonths} meses`;
-  }
-
-  // Years
-  return diffInYears === 1 ? 'Hace un año' : `Hace ${diffInYears} años`;
-}
-
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
+
+const MONTH_ABBREVIATIONS = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+];
+
+/**
+ * Gets relative time string in natural Spanish, at a resolution that decays as the event
+ * recedes into the past.
+ *
+ * The feed isn't for auditing exactly when something happened — it's for sensing what's
+ * recently going on in the family. So precision has decreasing value: high in the first
+ * minutes/hours (there's a real difference between "just happened" and "part of today"),
+ * deliberately coarse from "today" onward (nobody needs "hace 17 h" vs "hoy"), and finally an
+ * absolute date once placing the event on the calendar matters more than pinpointing it.
+ *
+ * < 1 min -> ahora            7-13 días -> hace 1 semana
+ * < 1 h   -> hace X min       >= 14 días, same year -> "23 jul"
+ * < 6 h   -> hace X h         other year -> "23 jul 2025"
+ * < 24 h  -> hoy
+ * < 48 h  -> ayer
+ * < 7 días -> hace X días
+ */
+export function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (60 * 1000));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  // Also covers clock skew (diffInMs < 0, i.e. a timestamp slightly in the future).
+  if (diffInMs < 60 * 1000) return 'ahora';
+  if (diffInMinutes < 60) return `hace ${diffInMinutes} min`;
+  if (diffInHours < 6) return `hace ${diffInHours} h`;
+  if (diffInHours < 24) return 'hoy';
+  if (diffInDays === 1) return 'ayer';
+  if (diffInDays < 7) return `hace ${diffInDays} días`;
+  if (diffInDays < 14) return 'hace 1 semana';
+
+  const day = date.getDate();
+  const month = MONTH_ABBREVIATIONS[date.getMonth()];
+  if (date.getFullYear() === now.getFullYear()) return `${day} ${month}`;
+  return `${day} ${month} ${date.getFullYear()}`;
+}
 
 /**
  * Gets formatted date string in Spanish

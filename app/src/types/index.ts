@@ -1,4 +1,4 @@
-import { formatRelativeTime } from '@/utils/timeUtils';
+import { getRelativeTime } from '@/app/utils/timeUtils';
 import type { components } from '@/api/generated/schema';
 
 type ApiSchemas = components['schemas'];
@@ -58,7 +58,7 @@ export class Persona {
     this.nickname = data.nickname;
     this.status = data.status as 'active' | 'pending' | 'sin_acceso';
     this.role = data.role as BaulRole;
-    this.invitedDate = formatRelativeTime(data.invitedDate);
+    this.invitedDate = getRelativeTime(new Date(data.invitedDate));
     this.avatarUrl = data.avatarUrl ?? undefined;
     this.avatarPhotoId = data.avatarPhotoId ?? undefined;
     this.avatarCropX = data.avatarCropX ?? 0.5;
@@ -95,7 +95,7 @@ export class Baul {
     this.description = data.description ?? undefined;
     this.chapterCount = data.chapterCount;
     this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
-    this.lastUpdated = formatRelativeTime(data.updatedAt);
+    this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
     this.isCustodio = data.isCustodio;
     this.role = data.role as BaulRole;
     this.memberCount = data.memberCount;
@@ -122,7 +122,7 @@ export class Chapter {
     this.photoCount = data.photoCount;
     this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
     this.featuredCoverPhotoUrl = data.featuredCoverPhotoUrl ?? undefined;
-    this.lastUpdated = formatRelativeTime(data.updatedAt);
+    this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
     this.recuerdoCount = data.recuerdoCount;
     this.latestRecuerdoText = data.latestRecuerdoText ?? undefined;
     this.latestRecuerdoAuthor = data.latestRecuerdoAuthor ?? undefined;
@@ -254,7 +254,7 @@ export class RemovalRequest {
     this.requesterName = data.requesterName;
     this.requesterEmail = data.requesterEmail;
     this.reason = data.reason ?? '';
-    this.requestDate = formatRelativeTime(data.requestDate);
+    this.requestDate = getRelativeTime(new Date(data.requestDate));
     this.status = data.status as 'pending' | 'approved' | 'rejected';
   }
 }

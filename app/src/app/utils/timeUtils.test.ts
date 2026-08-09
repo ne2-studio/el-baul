@@ -1,5 +1,66 @@
-import { describe, expect, it } from 'vitest';
-import { formatDateRange, formatPartialDate } from './timeUtils';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { formatDateRange, formatPartialDate, getRelativeTime } from './timeUtils';
+
+describe('getRelativeTime', () => {
+  const now = new Date('2026-08-09T12:00:00.000Z');
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const minutesAgo = (n: number) => new Date(now.getTime() - n * 60 * 1000);
+  const hoursAgo = (n: number) => new Date(now.getTime() - n * 60 * 60 * 1000);
+  const daysAgo = (n: number) => new Date(now.getTime() - n * 24 * 60 * 60 * 1000);
+
+  it('returns "ahora" for anything under a minute, including a timestamp slightly in the future', () => {
+    expect(getRelativeTime(minutesAgo(0))).toBe('ahora');
+    expect(getRelativeTime(new Date(now.getTime() + 5000))).toBe('ahora');
+  });
+
+  it('shows minutes up to an hour', () => {
+    expect(getRelativeTime(minutesAgo(1))).toBe('hace 1 min');
+    expect(getRelativeTime(minutesAgo(45))).toBe('hace 45 min');
+  });
+
+  it('shows hours from 1h up to 6h', () => {
+    expect(getRelativeTime(hoursAgo(1))).toBe('hace 1 h');
+    expect(getRelativeTime(hoursAgo(5))).toBe('hace 5 h');
+  });
+
+  it('collapses 6h-24h into "hoy"', () => {
+    expect(getRelativeTime(hoursAgo(6))).toBe('hoy');
+    expect(getRelativeTime(hoursAgo(23))).toBe('hoy');
+  });
+
+  it('collapses 24h-48h into "ayer"', () => {
+    expect(getRelativeTime(hoursAgo(24))).toBe('ayer');
+    expect(getRelativeTime(hoursAgo(47))).toBe('ayer');
+  });
+
+  it('shows days from 2 up to 6', () => {
+    expect(getRelativeTime(daysAgo(2))).toBe('hace 2 días');
+    expect(getRelativeTime(daysAgo(6))).toBe('hace 6 días');
+  });
+
+  it('collapses 7-13 days into "hace 1 semana"', () => {
+    expect(getRelativeTime(daysAgo(7))).toBe('hace 1 semana');
+    expect(getRelativeTime(daysAgo(13))).toBe('hace 1 semana');
+  });
+
+  it('falls back to an absolute "D mes" date from 14 days onward, in the current year', () => {
+    expect(getRelativeTime(daysAgo(14))).toBe('26 jul');
+    expect(getRelativeTime(new Date('2026-01-15T12:00:00.000Z'))).toBe('15 ene');
+  });
+
+  it('includes the year once the date falls outside the current year', () => {
+    expect(getRelativeTime(new Date('2025-07-23T12:00:00.000Z'))).toBe('23 jul 2025');
+  });
+});
 
 describe('formatPartialDate', () => {
   it('formats a full year+month+day date', () => {

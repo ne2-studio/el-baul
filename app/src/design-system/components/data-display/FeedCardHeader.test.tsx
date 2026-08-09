@@ -10,7 +10,7 @@ describe('FeedCardHeader', () => {
 
     expect(screen.getByText('Tita Loli')).toBeInTheDocument();
     expect(screen.getByText('dejó un recuerdo', { exact: false })).toBeInTheDocument();
-    expect(screen.getByText('Hoy')).toBeInTheDocument();
+    expect(screen.getByText('ahora')).toBeInTheDocument();
   });
 
   it('opens the persona when the avatar is clicked and a handler is present', async () => {
