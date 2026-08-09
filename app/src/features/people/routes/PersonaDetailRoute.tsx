@@ -10,14 +10,12 @@ import { RoleBadge } from '@/design-system/components/data-display/Badges';
 import { PersonaSettingsMenuContainer } from '@/features/people/containers/PersonaSettingsMenuContainer';
 import { PersonaBiografiaTabContainer } from '@/features/people/containers/PersonaBiografiaTabContainer';
 import { PersonaFotosTabContainer } from '@/features/people/containers/PersonaFotosTabContainer';
-import { PersonaRecuerdosTabContainer } from '@/features/memories/containers/PersonaRecuerdosTabContainer';
-import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // PersonaDetailRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las
-// pestañas biografía/fotos como containers autosuficientes — no hay un componente "shell"
+// pestañas fotos/biografía como containers autosuficientes — no hay un componente "shell"
 // intermedio en components/, porque su único trabajo habría sido recomponer containers, lo
 // cual ya no es presentacional de verdad aunque viva ahí — ver la regla de containers/ en
 // docs/architecture/frontend.md.
@@ -27,12 +25,8 @@ export const PersonaDetailRoute: React.FC = () => {
   const { baulId, personaId } = useParams();
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
 
-  const [activeTab, setActiveTab] = useState<'recuerdos' | 'biografia' | 'fotos'>('recuerdos');
+  const [activeTab, setActiveTab] = useState<'fotos' | 'biografia'>('fotos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
-
-  // Solo para el badge de recuento del Tabbar — PersonaRecuerdosTabContainer filtra estos
-  // mismos recuerdos por su cuenta.
-  const { baulRecuerdos } = useRecuerdosStore();
 
   // Bloquea hasta tener la persona, sus fotos y los recuerdos del baúl, para que los badges de
   // recuento del Tabbar sean correctos desde el primer render y no haya un hueco de carga al
@@ -93,28 +87,23 @@ export const PersonaDetailRoute: React.FC = () => {
 
       <Tabbar
         tabs={[
-          { key: 'recuerdos', label: 'Recuerdos', count: (baulRecuerdos[baulId] || []).filter((r) => r.personaId === personaId).length },
-          { key: 'biografia', label: 'Biografía' },
           { key: 'fotos', label: 'Fotos', count: (photos || []).length },
+          { key: 'biografia', label: 'Biografía' },
         ]}
         active={activeTab}
-        onChange={(key) => setActiveTab(key as 'recuerdos' | 'biografia' | 'fotos')}
+        onChange={(key) => setActiveTab(key as 'fotos' | 'biografia')}
         top={headerHeight}
       >
         <PageContainer className="py-8 space-y-6 pb-28">
-          {activeTab === 'recuerdos' && (
-            <PersonaRecuerdosTabContainer baulId={baulId} personaId={personaId} />
-          )}
-
-          {activeTab === 'biografia' && (
-            <PersonaBiografiaTabContainer baulId={baulId} persona={persona} />
-          )}
-
           {activeTab === 'fotos' && (
             <PersonaFotosTabContainer
               personaId={personaId}
               onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/personas/${personaId}`, photo.id))}
             />
+          )}
+
+          {activeTab === 'biografia' && (
+            <PersonaBiografiaTabContainer baulId={baulId} persona={persona} />
           )}
         </PageContainer>
       </Tabbar>
