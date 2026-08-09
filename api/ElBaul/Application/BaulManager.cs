@@ -109,9 +109,7 @@ public class BaulManager(
 
     private async Task<BaulDto> ToDtoAsync(Baul baul, bool isCustodio, BaulRole role, int memberCount = 1)
     {
-        var coverUrl = baul.CoverPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(baul.CoverPhotoKey, ImagePlacement.BaulCover)
-            : null;
+        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage);
 
         return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.ChapterCount, coverUrl,
             baul.CreatedAt, baul.UpdatedAt, isCustodio, role.ToApiString(), memberCount);

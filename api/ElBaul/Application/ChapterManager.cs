@@ -159,12 +159,8 @@ public class ChapterManager(
     // below instead, precisely to avoid running this once per chapter in a baúl.
     private async Task<ChapterDto> ToDtoAsync(Chapter chapter)
     {
-        var coverUrl = chapter.CoverPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(chapter.CoverPhotoKey, ImagePlacement.ChapterCover)
-            : null;
-        var featuredCoverUrl = chapter.CoverPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(chapter.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured)
-            : null;
+        var coverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage);
 
         var photos = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
         var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
@@ -184,12 +180,8 @@ public class ChapterManager(
     // round trip — see MinioPhotoStorage.GetImageUrl), so it stays cheap per chapter.
     private async Task<ChapterDto> ToDtoAsync(ChapterListRow row, IReadOnlyDictionary<string, AuthorInfo> authorsByUserId)
     {
-        var coverUrl = row.CoverPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(row.CoverPhotoKey, ImagePlacement.ChapterCover)
-            : null;
-        var featuredCoverUrl = row.CoverPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured)
-            : null;
+        var coverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage);
 
         var latestAuthor = row.LatestRecuerdoAuthorUserId is { } userId
             ? AuthorInfoProjector.Resolve(authorsByUserId, userId).Nickname

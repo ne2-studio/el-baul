@@ -76,9 +76,7 @@ public class BaulInviteLinkManager(
             urls.Add(await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.InvitationPreview));
         }
 
-        var coverUrl = baul.CoverPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(baul.CoverPhotoKey, ImagePlacement.BaulCover)
-            : null;
+        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage);
 
         // Up to 4 avatars from real (non-revoked) family members, no name attached — same
         // limited-disclosure trade-off the public preview already makes for previewPhotos.
