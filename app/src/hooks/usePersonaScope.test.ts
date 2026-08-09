@@ -134,4 +134,48 @@ describe('usePersonaScope', () => {
     expect(loadPersonas).not.toHaveBeenCalled();
     expect(loadPersonaPhotos).not.toHaveBeenCalled();
   });
+
+  // Regression: navigating straight from one persona's ficha to another (same route, only
+  // personaId changes) must not have the new persona's fetch silently dropped because the
+  // previous persona's fetch — for a *different* id — is still in flight.
+  it('fetches the new persona even while the previous persona\'s fetch is still in flight', async () => {
+    const personaA = 'persona-a';
+    const personaB = 'persona-b';
+    let resolveA: () => void = () => {};
+
+    usePersonasStore.setState({
+      personas: { [baulId]: [{ ...persona, id: personaA }, { ...persona, id: personaB }] },
+    });
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
+
+    vi.mocked(loadPersonaPhotos).mockImplementation((_baulId: string, pId: string) => {
+      if (pId === personaA) {
+        return new Promise<void>((resolve) => {
+          resolveA = () => {
+            usePersonasStore.setState((state) => ({ personaPhotos: { ...state.personaPhotos, [personaA]: [photo()] } }));
+            resolve();
+          };
+        });
+      }
+      return Promise.resolve().then(() => {
+        usePersonasStore.setState((state) => ({ personaPhotos: { ...state.personaPhotos, [pId]: [photo()] } }));
+      });
+    });
+
+    const { result, rerender } = renderHook(
+      ({ personaId }: { personaId: string }) => usePersonaScope(baulId, personaId),
+      { initialProps: { personaId: personaA } }
+    );
+
+    expect(result.current.isLoading).toBe(true);
+
+    rerender({ personaId: personaB });
+
+    await waitFor(() => expect(loadPersonaPhotos).toHaveBeenCalledWith(baulId, personaB));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.photos).toEqual([photo()]);
+    expect(result.current.loadFailed).toBe(false);
+
+    resolveA();
+  });
 });

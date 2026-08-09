@@ -51,12 +51,15 @@ describe('useChapterScope', () => {
   });
 
   it('loads photos and recuerdos together when neither is cached, and stays loading until both arrive', async () => {
-    vi.mocked(loadChapterPhotos).mockImplementation(async () => {
+    // Deferred via a microtask (not a synchronous mock body) so isLoading — derived straight
+    // from the store, same as useBaulScope/usePersonaScope — can actually be observed as true
+    // before these resolve, same as a real network call would behave.
+    vi.mocked(loadChapterPhotos).mockImplementation(() => Promise.resolve().then(() => {
       useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: [photo()] } }));
-    });
-    vi.mocked(loadChapterRecuerdos).mockImplementation(async () => {
+    }));
+    vi.mocked(loadChapterRecuerdos).mockImplementation(() => Promise.resolve().then(() => {
       useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: [recuerdo()] } }));
-    });
+    }));
 
     const { result } = renderHook(() => useChapterScope(baulId, chapterId));
 
@@ -125,5 +128,68 @@ describe('useChapterScope', () => {
     });
     expect(loadChapterPhotos).not.toHaveBeenCalled();
     expect(loadChapterRecuerdos).not.toHaveBeenCalled();
+  });
+
+  // Regression: navigating straight from one chapter to another (e.g. BatchPhotoActionsContainer
+  // moving photos and then navigating to the target chapter's URL) keeps ChapterRoute — and this
+  // hook — mounted; only chapterId changes. If chapter A's fetch is still in flight at that
+  // point, its eventual (successful) resolution must not be mistaken for chapter B's.
+  it('never reports "ready" for a chapter whose data was never actually fetched, even when a stale fetch for the previous chapter resolves afterwards', async () => {
+    const chapterA = 'chapter-a';
+    const chapterB = 'chapter-b';
+    let resolveAPhotos: () => void = () => {};
+    let resolveARecuerdos: () => void = () => {};
+
+    vi.mocked(loadChapterPhotos).mockImplementation((id: string) => {
+      if (id === chapterA) {
+        return new Promise<void>((resolve) => {
+          resolveAPhotos = () => {
+            useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterA]: [photo()] } }));
+            resolve();
+          };
+        });
+      }
+      return Promise.resolve().then(() => {
+        useBaulesStore.setState((state) => ({ photos: { ...state.photos, [id]: [photo()] } }));
+      });
+    });
+    vi.mocked(loadChapterRecuerdos).mockImplementation((_baulId: string, id: string) => {
+      if (id === chapterA) {
+        return new Promise<void>((resolve) => {
+          resolveARecuerdos = () => {
+            useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterA]: [] } }));
+            resolve();
+          };
+        });
+      }
+      return Promise.resolve().then(() => {
+        useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [id]: [] } }));
+      });
+    });
+
+    const { result, rerender } = renderHook(
+      ({ chapterId }: { chapterId: string }) => useChapterScope(baulId, chapterId),
+      { initialProps: { chapterId: chapterA } }
+    );
+
+    expect(result.current.isLoading).toBe(true);
+
+    // Navigate to chapter B before chapter A's own fetch has resolved.
+    rerender({ chapterId: chapterB });
+
+    // Chapter A's stale fetch finally resolves successfully.
+    await act(async () => {
+      resolveAPhotos();
+      resolveARecuerdos();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The hook must not claim "ready, no error" for chapter B unless chapter B's own data was
+    // actually fetched — reporting success off the back of chapter A's stale resolution leaves
+    // ChapterRoute's guard stuck showing a full-screen loader forever (isLoading false,
+    // loadFailed false, but photos/chapterRecuerdos still undefined for the chapter on screen).
+    expect(result.current.loadFailed || (!!result.current.photos && !!result.current.chapterRecuerdos)).toBe(true);
   });
 });

@@ -122,4 +122,51 @@ describe('useBaulScope', () => {
     });
     expect(loadUserData).not.toHaveBeenCalled();
   });
+
+  // Regression: switching baúles (e.g. via the workspace selector) while the previous baúl's
+  // chapters/recuerdos fetch is still in flight must not have the new baúl's own fetch
+  // silently dropped because the previous one — for a *different* id — hasn't resolved yet.
+  it('fetches the new baúl even while the previous baúl\'s fetch is still in flight', async () => {
+    const baulA = { id: 'baul-a', name: 'Baúl A', chapterCount: 0 } as Baul;
+    const baulB = { id: 'baul-b', name: 'Baúl B', chapterCount: 0 } as Baul;
+    let resolveA: () => void = () => {};
+
+    useBaulesStore.setState({ baules: [baulA, baulB] });
+    // Resolves immediately for whichever baúl is asked, so hasScope (which also needs
+    // baulRecuerdos, not just chapters) can become true for baulB.
+    vi.mocked(loadBaulRecuerdos).mockImplementation((id: string) => {
+      useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [id]: [] } }));
+      return Promise.resolve();
+    });
+
+    vi.mocked(loadChapters).mockImplementation((id: string) => {
+      if (id === baulA.id) {
+        return new Promise<void>((resolve) => {
+          resolveA = () => {
+            useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulA.id]: [] } }));
+            resolve();
+          };
+        });
+      }
+      return Promise.resolve().then(() => {
+        useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [id]: [] } }));
+      });
+    });
+
+    const { result, rerender } = renderHook(
+      ({ baulId }: { baulId: string }) => useBaulScope(baulId),
+      { initialProps: { baulId: baulA.id } }
+    );
+
+    expect(result.current.isLoading).toBe(true);
+
+    rerender({ baulId: baulB.id });
+
+    await waitFor(() => expect(loadChapters).toHaveBeenCalledWith(baulB.id));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.chapters).toEqual([]);
+    expect(result.current.refreshFailed).toBe(false);
+
+    resolveA();
+  });
 });
