@@ -13,6 +13,7 @@ import "./styles/index.css";
 import { registerSW } from "virtual:pwa-register";
 import { initSentry } from "./sentry";
 import { getEnv } from "./runtimeConfig";
+import { isNativeOidcCallbackUrl } from "./nativeOidcCallback";
 
 initSentry();
 
@@ -45,17 +46,12 @@ const userManager = new UserManager({
 // getLaunchUrl() (ver docs/architecture/native-ios.md): si vuelve a entregarse la misma URL ya
 // consumida, signinCallback simplemente falla (el `code`/`state` ya no son válidos) y se
 // registra el error — no hay recarga de por medio que lo repita en bucle.
+//
+// La decisión de si una URL es realmente este callback vive en isNativeOidcCallbackUrl
+// (nativeOidcCallback.ts), separada de aquí para poder probarla sin Capacitor ni UserManager —
+// esta función es solo el envoltorio con el efecto real.
 async function handleNativeCallback(url: string) {
-  if (!url.startsWith('studio.ne2.elbaul')) {
-    return;
-  }
-
-  const { searchParams } = new URL(url);
-
-  // El logout reutiliza este mismo deep link como post_logout_redirect_uri (ver arriba) pero
-  // sin `code`/`error`: signoutRedirect() ya limpió la sesión local antes de navegar fuera de
-  // la app, así que no hay nada que canjear aquí.
-  if (!searchParams.has('code') && !searchParams.has('error')) {
+  if (!isNativeOidcCallbackUrl(url)) {
     return;
   }
 
