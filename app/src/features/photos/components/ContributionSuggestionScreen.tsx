@@ -13,6 +13,7 @@ interface ContributionSuggestionScreenProps {
   onToggle: (personaId: string) => void;
   onSkip: () => void;
   onSave: () => void;
+  onConfirmNoPersonas: () => void;
   isSubmitting?: boolean;
 }
 
@@ -39,6 +40,7 @@ export function ContributionSuggestionScreen({
   onToggle,
   onSkip,
   onSave,
+  onConfirmNoPersonas,
   isSubmitting = false,
 }: ContributionSuggestionScreenProps) {
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
@@ -85,9 +87,14 @@ export function ContributionSuggestionScreen({
         </div>
       </PageContainer>
 
-      {/* Sticky abajo, mismo patrón que el input de AiChatScreen. */}
+      {/* Sticky abajo, mismo patrón que el input de AiChatScreen. El ghost "No hay nadie en
+          esta foto" es distinto de "Ahora no" del header: "Ahora no" pospone la pregunta,
+          esto la resuelve para siempre (foto sin PhotoPersonaTag pero ya no candidata). */}
       <div className="sticky bottom-0 pb-safe bg-background/80 backdrop-blur-sm border-t border-border">
-        <PageContainer className="py-4">
+        <PageContainer className="py-4 space-y-2">
+          <Button variant="ghost" fullWidth onClick={onConfirmNoPersonas} disabled={isSubmitting}>
+            No hay nadie en esta foto
+          </Button>
           <Button
             variant="primary"
             fullWidth

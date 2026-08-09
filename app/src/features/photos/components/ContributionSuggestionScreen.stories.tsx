@@ -33,6 +33,7 @@ export const Default: Story = {
     onToggle: fn(),
     onSkip: fn(),
     onSave: fn(),
+    onConfirmNoPersonas: fn(),
   },
 };
 
@@ -78,5 +79,8 @@ export const Interactive: Story = {
 
     await userEvent.click(canvas.getByText('Ahora no →'));
     await expect(args.onSkip).toHaveBeenCalled();
+
+    await userEvent.click(canvas.getByText('No hay nadie en esta foto'));
+    await expect(args.onConfirmNoPersonas).toHaveBeenCalled();
   },
 };

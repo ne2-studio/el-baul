@@ -311,6 +311,9 @@ export const api = {
       const dto = await get<PhotoDto | null>(`/api/baules/${baulId}/photos/untagged-suggestion`);
       return dto ? new Photo(dto) : null;
     },
+    // Confirma que no hay nadie en esta foto, para que deje de proponerse en la recomendación
+    // de contribución aunque nunca reciba una etiqueta de persona.
+    confirmNoPersonas: async (photoId: string) => new Photo(await put<PhotoDto>(`/api/photos/${photoId}/no-personas`)),
   },
 
   // One upload batch's own photos (chronologically ascending) — the feed card's "grid"/gallery

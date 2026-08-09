@@ -41,7 +41,7 @@ public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
         // suggestion should vary between visits instead of always landing on the same
         // (e.g. oldest) untagged photo, so this can't be an OrderBy on any stored column.
         var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking()
-            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
+            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && !p.ConfirmedNoPersonas)
             .Where(p => !dbContext.PhotoPersonaTags.Any(t => t.PhotoId == p.Id))
             .OrderBy(_ => EF.Functions.Random())
             .Take(1));

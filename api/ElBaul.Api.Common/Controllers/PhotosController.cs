@@ -118,6 +118,14 @@ public class PhotosController(
         return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
     }
 
+    [HttpPut("photos/{photoId:guid}/no-personas")]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ConfirmNoPersonas(Guid photoId)
+    {
+        var result = await photoManager.ConfirmNoPersonasAsync(new PhotoId(photoId));
+        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+    }
+
     [HttpPost("baules/{baulId:guid}/photos/sueltas")]
     [RequestSizeLimit(20_000_000)]
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]

@@ -20,6 +20,7 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.Property(p => p.DeletedAt).HasColumnType("timestamp with time zone");
         builder.Property(p => p.DeletionReason).HasMaxLength(2000);
         builder.Property(p => p.SizeBytes).HasDefaultValue(0L);
+        builder.Property(p => p.ConfirmedNoPersonas).HasDefaultValue(false);
         builder.Ignore(p => p.Date);
 
         builder.HasIndex(p => p.ChapterId);

@@ -33,6 +33,7 @@ public class InMemoryPhotoListReadModel(
         var untagged = new List<Photo>();
         foreach (var photo in await photoRepository.GetActiveByBaulIdAsync(baulId))
         {
+            if (photo.ConfirmedNoPersonas) continue;
             var tags = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id);
             if (!tags.Any()) untagged.Add(photo);
         }

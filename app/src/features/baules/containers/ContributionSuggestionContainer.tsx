@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/api';
 import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
 import { ContributionSuggestionScreen } from '@/features/photos/components/ContributionSuggestionScreen';
-import { setTaggedPersonas } from '@/features/photos/useCases';
+import { confirmPhotoHasNoPersonas, setTaggedPersonas } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { Photo } from '@/types';
@@ -66,6 +66,15 @@ export function ContributionSuggestionContainer({ baulId, onResolved }: Contribu
     if (result.ok) onResolved();
   };
 
+  const handleConfirmNoPersonas = async () => {
+    if (!photo) return;
+    const result = await run(() => confirmPhotoHasNoPersonas(photo.id), {
+      successMessage: 'Anotado — no volveremos a preguntar por esta foto',
+      errorMessage: 'No se pudo guardar',
+    });
+    if (result.ok) onResolved();
+  };
+
   if (photo === undefined) return <FullScreenLoading message="Abriendo baúl..." />;
   if (photo === null) return null;
 
@@ -77,6 +86,7 @@ export function ContributionSuggestionContainer({ baulId, onResolved }: Contribu
       onToggle={toggle}
       onSkip={onResolved}
       onSave={handleSave}
+      onConfirmNoPersonas={handleConfirmNoPersonas}
       isSubmitting={isPending()}
     />
   );

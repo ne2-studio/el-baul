@@ -64,6 +64,11 @@ public class PhotoPersonaTagManager(
         }
 
         await photoPersonaTagRepository.SetTagsAsync(photoId, photo.BaulId, distinctIds, clock.UtcNow());
+        // A real tag always wins over a stale "confirmed no personas" — someone tagging the
+        // photo later from the viewer should silently undo an earlier (possibly mistaken)
+        // confirmation, with no separate "undo" affordance needed.
+        if (distinctIds.Count > 0 && photo.ConfirmedNoPersonas)
+            await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
         logger.LogInformation("Photo tags updated {BaulId} {PhotoId} {PersonaCount}", photo.BaulId, photoId, personas.Count);
 
         var dtos = new List<TaggedPersonaDto>();
@@ -107,6 +112,9 @@ public class PhotoPersonaTagManager(
             var existingIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photoId);
             var union = existingIds.Concat(distinctPersonaIds).Distinct().ToList();
             await photoPersonaTagRepository.SetTagsAsync(photoId, baulId, union, now);
+            // See SetTaggedPersonasAsync: a real tag always wins over a stale confirmation.
+            if (distinctPersonaIds.Count > 0 && photo.ConfirmedNoPersonas)
+                await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
             updated.Add(photoId.ToString());
         }
 

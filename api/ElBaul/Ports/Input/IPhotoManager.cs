@@ -38,7 +38,12 @@ public interface IPhotoManager
     Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(BaulId baulId, PersonaId personaId);
 
     /// <summary>The photo behind the "help us tag this photo" contribution suggestion shown on
-    /// entering a baúl's feed — the oldest active photo with no persona tagged yet, or a
-    /// successful null result once none remain.</summary>
+    /// entering a baúl's feed — a random active photo with no persona tagged yet and not
+    /// confirmed as having nobody in it, or a successful null result once none remain.</summary>
     Task<Result<PhotoDto?>> GetUntaggedSuggestionAsync(BaulId baulId);
+
+    /// <summary>Confirms nobody appears in this photo, so it stops being proposed by the
+    /// contribution suggestion even though it never received a PhotoPersonaTag. Reversed
+    /// automatically the moment the photo actually gets tagged.</summary>
+    Task<Result<PhotoDto>> ConfirmNoPersonasAsync(PhotoId photoId);
 }

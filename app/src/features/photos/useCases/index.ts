@@ -65,6 +65,13 @@ export async function setTaggedPersonas(photoId: string, personaIds: string[]): 
   usePersonasStore.setState((state) => ({ taggedPersonas: { ...state.taggedPersonas, [photoId]: taggedPersonas } }));
 }
 
+// Sin store que actualizar: a diferencia de setTaggedPersonas, esta acción no produce ningún
+// dato que otra pantalla necesite leer — solo evita que ContributionSuggestionContainer vuelva
+// a proponer esta foto.
+export async function confirmPhotoHasNoPersonas(photoId: string): Promise<void> {
+  await api.photos.confirmNoPersonas(photoId);
+}
+
 export async function loadChapterPhotos(chapterId: string): Promise<void> {
   const photos = await api.photos.getAll(chapterId);
   useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: photos } }));

@@ -747,4 +747,43 @@ public class PhotoManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
     }
+
+    [Fact]
+    public async Task GetUntaggedSuggestionAsync_ShouldIgnorePhotosConfirmedAsHavingNoPersonas()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+
+        var manager = CreateManager(CustodioId);
+        var confirmResult = await manager.ConfirmNoPersonasAsync(photoId);
+        Assert.True(confirmResult.IsSuccess);
+
+        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
+    public async Task ConfirmNoPersonasAsync_ShouldFail_WhenPhotoNotFound()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.ConfirmNoPersonasAsync(new PhotoId(Guid.NewGuid()));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Photo not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task ConfirmNoPersonasAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        var manager = CreateManager("stranger");
+
+        var result = await manager.ConfirmNoPersonasAsync(photoId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+    }
 }

@@ -111,6 +111,23 @@ public class PhotoPersonaTagManagerTests
     }
 
     [Fact]
+    public async Task SetTaggedPersonasAsync_ShouldClearConfirmedNoPersonas_WhenTaggingAPreviouslyConfirmedPhoto()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuelo Antonio");
+        var photo = await _fixture.Photos.GetByIdAsync(photoId);
+        await _fixture.Photos.UpdateAsync(photo!.WithConfirmedNoPersonas(true));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.SetTaggedPersonasAsync(photoId, [personaId]);
+
+        Assert.True(result.IsSuccess);
+        var updatedPhoto = await _fixture.Photos.GetByIdAsync(photoId);
+        Assert.False(updatedPhoto!.ConfirmedNoPersonas);
+    }
+
+    [Fact]
     public async Task AddTaggedPersonasBatchAsync_ShouldTagEveryPhoto_WithTheGivenPersonas()
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
@@ -180,6 +197,23 @@ public class PhotoPersonaTagManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error.Message);
         Assert.Empty(await _fixture.PhotoPersonaTags.GetPersonaIdsByPhotoIdAsync(photoId));
+    }
+
+    [Fact]
+    public async Task AddTaggedPersonasBatchAsync_ShouldClearConfirmedNoPersonas_WhenTaggingAPreviouslyConfirmedPhoto()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuelo Antonio");
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        var photo = await _fixture.Photos.GetByIdAsync(photoId);
+        await _fixture.Photos.UpdateAsync(photo!.WithConfirmedNoPersonas(true));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.AddTaggedPersonasBatchAsync(baulId, [photoId], [personaId]);
+
+        Assert.True(result.IsSuccess);
+        var updatedPhoto = await _fixture.Photos.GetByIdAsync(photoId);
+        Assert.False(updatedPhoto!.ConfirmedNoPersonas);
     }
 
     [Fact]

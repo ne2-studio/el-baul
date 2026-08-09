@@ -325,6 +325,28 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
+    public async Task<Result<PhotoDto>> ConfirmNoPersonasAsync(PhotoId photoId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null)
+        {
+            logger.LogWarning("Photo confirm-no-personas rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
+        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo confirm no personas", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
+
+        var updatedPhoto = photo.WithConfirmedNoPersonas(true);
+        await photoRepository.UpdateAsync(updatedPhoto);
+
+        logger.LogInformation("Photo confirmed as having no personas {BaulId} {PhotoId}", photo.BaulId, photoId);
+
+        return await photoDtoProjector.ProjectAsync(updatedPhoto);
+    }
+
     public async Task<Result<PhotoDto?>> GetUntaggedSuggestionAsync(BaulId baulId)
     {
         var userId = currentUserProvider.GetUserId();

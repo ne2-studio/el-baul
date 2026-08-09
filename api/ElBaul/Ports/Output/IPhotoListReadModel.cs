@@ -22,10 +22,11 @@ public interface IPhotoListReadModel
     /// IPhotoPersonaTagRepository has resolved which photo ids to look up.</summary>
     Task<IReadOnlyList<PhotoListRow>> GetActiveByIdsAsync(BaulId baulId, IEnumerable<PhotoId> photoIds);
 
-    /// <summary>The single oldest active photo in a baúl with no persona tagged on it yet, or
-    /// null if none remain — backs the "help us tag this photo" contribution suggestion shown
-    /// on entering a baúl's feed. Oldest-first so the suggestion works through the backlog
-    /// deterministically rather than picking at random.</summary>
+    /// <summary>A random active photo in a baúl with no persona tagged on it yet and not
+    /// explicitly confirmed as having nobody in it, or null if none remain — backs the "help us
+    /// tag this photo" contribution suggestion shown on entering a baúl's feed. Random rather
+    /// than oldest-first so the suggestion varies between visits instead of always landing on
+    /// the same photo.</summary>
     Task<PhotoListRow?> GetUntaggedSuggestionAsync(BaulId baulId);
 }
 

@@ -20,7 +20,14 @@ public record Photo
     // (a unique per-photo idempotency key), several photos legitimately share this value.
     // Powers the baúl feed's "upload batch" cards (see IPhotoUploadBatchReadModel). Null for
     // photos uploaded before this field existed or with no batch context.
-    Guid? UploadBatchId = null
+    Guid? UploadBatchId = null,
+    // A family member explicitly confirmed nobody is in this photo, so it should stop being
+    // proposed by the "help us tag this photo" contribution suggestion even though it has no
+    // PhotoPersonaTag either — without this, a landscape/document photo would be sorted as a
+    // candidate forever. Reset back to false as a side effect of the photo actually receiving a
+    // tag (SetTaggedPersonasAsync/AddTaggedPersonasBatchAsync), so a later manual tagging always
+    // wins over a stale confirmation.
+    bool ConfirmedNoPersonas = false
 )
 {
     // DateYear/Month/Day stay the raw persisted columns — EF Core can't map an optional
@@ -40,4 +47,7 @@ public record Photo
 
     public Photo WithDate(PhotoDate? date) =>
         this with { DateYear = date?.Year, DateMonth = date?.Month, DateDay = date?.Day };
+
+    public Photo WithConfirmedNoPersonas(bool confirmedNoPersonas) =>
+        this with { ConfirmedNoPersonas = confirmedNoPersonas };
 }
