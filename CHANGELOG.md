@@ -13,6 +13,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+## [beta-v0.3.1] - 2026-08-09
+
 ### Añadido
 
 - Notificaciones push (Android): además de los avisos de prueba, cada día como mucho se envía un aviso con las novedades del baúl (nuevos recuerdos, fotos o capítulos añadidos por otras personas). Si no hay nada nuevo, no se envía nada.
@@ -48,32 +50,6 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - El resumen semanal por email ya no cuenta ni muestra los capítulos, recuerdos y fotos que la propia persona destinataria ha creado, solo las novedades del resto.
 - En las tarjetas del feed de un baúl, la fecha ("hace X") pasa a su propia línea debajo del nombre para que el título ya no se corte.
 - El nombre del baúl en la cabecera se muestra un poco más pequeño para que quepa mejor y no se corte con nombres largos.
-
-## [beta-v0.2.0] - 2026-08-07
-
-### Cambiado
-
-- La app ya no abre en una lista de baúles: entra directamente en el último baúl usado. Para cambiar de baúl hay un selector en la parte superior de la pantalla, sin necesidad de navegar a otra pantalla.
-- Las tarjetas de capítulo ahora muestran su foto de portada a pantalla completa con el título y las fechas superpuestos, en lugar de aparecer en una cuadrícula con la foto e información por separado.
-- Dentro de un baúl, la pestaña de Recuerdos pasa a ser la primera (y la que se abre por defecto) y la de Capítulos la segunda.
-- La ficha de una persona ahora tiene una pestaña de Recuerdos (la primera, y la que se abre por defecto) con los recuerdos de los que es autora, antes de Biografía y Fotos.
-- Dentro de un capítulo, la pestaña de Recuerdos pasa a ser la primera (y la que se abre por defecto) y la de Fotos la segunda.
-
-### Arreglado
-
-- Al cerrar sesión y volver a entrar, la app ya recuerda el último baúl en el que se estaba y abre directamente en él, en lugar de volver al primero de la lista.
-- En las pantallas con pestañas (baúl, capítulo, ficha de persona), cada pestaña conserva ahora su propio scroll: cambiar de pestaña ya no deja el contenido nuevo a mitad de camino, aparece arriba la primera vez y retoma la posición si ya se había visitado.
-- Al entrar a un capítulo desde la pestaña de Recuerdos o de Capítulos del baúl y volver, ahora se reabre esa misma pestaña en lugar de caer siempre en Recuerdos.
-- El menú de hoja inferior ahora aparece siempre por encima del botón flotante de acción.
-- El aviso (Toast) respeta la zona segura inferior del dispositivo.
-- Se precargan las fotos de una persona para evitar el parpadeo al abrir su pestaña de Fotos.
-- Se redirige a la pantalla de inicio de sesión cuando la sesión ha caducado en el servidor.
-- Al ver una foto desde la ficha de una persona, quienes administran el baúl ahora ven las mismas opciones (establecer portada del baúl, retirar foto) que al verla desde un capítulo.
-- Al abrir un capítulo, ya no se ve el destello de sus recuerdos apareciendo justo después de que desaparece la pantalla de carga: ahora se precargan junto con las fotos antes de mostrar el contenido.
-- Retirar una foto o cambiar su fecha ya actualiza también su aparición en las fichas de las personas etiquetadas en ella.
-- El botón flotante de acción ya no parpadea al hacer scroll.
-- Al refrescar la página dentro de un baúl, o cambiar a uno que no se había abierto en la sesión, ahora se ve la misma pantalla de "Abriendo baúl..." que al entrar por primera vez, en vez de un texto suelto de "Cargando..." seguido de un instante con el baúl vacío antes de que aparezca su contenido real.
-- Lo mismo al refrescar la página dentro de la ficha de una persona: ahora se ve una pantalla de "Abriendo ficha..." completa en vez de un texto suelto de "Cargando..." seguido de un instante con las pestañas vacías.
 
 ## Versiones anteriores
 
