@@ -35,6 +35,13 @@ public class InMemoryBaulRepository : IBaulRepository
         }
     }
 
+    public async Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(string userId)
+    {
+        var owned = await GetOwnedByUserIdAsync(userId);
+        var shared = await GetSharedByUserIdAsync(userId);
+        return owned.Concat(shared.Select(a => a.Baul)).DistinctBy(b => b.Id);
+    }
+
     public Task CreateAsync(Baul baul)
     {
         lock (_lock) _baules[baul.Id] = baul;

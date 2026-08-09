@@ -109,9 +109,7 @@ public class PushDigestManager(
 
     private async Task<PushDigestSummary?> BuildSummaryAsync(User user, DateTime since)
     {
-        var owned = await baulRepository.GetOwnedByUserIdAsync(user.Id);
-        var shared = await baulRepository.GetSharedByUserIdAsync(user.Id);
-        var baules = owned.Concat(shared.Select(a => a.Baul)).DistinctBy(b => b.Id).ToList();
+        var baules = (await baulRepository.GetAccessibleByUserIdAsync(user.Id)).ToList();
 
         var activeBaules = new List<Baul>();
         var totalChapters = 0;

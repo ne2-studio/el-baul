@@ -24,6 +24,13 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         return rows.Select(r => new BaulAccess(r.Baul, r.Role));
     }
 
+    public async Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(string userId)
+    {
+        var owned = await GetOwnedByUserIdAsync(userId);
+        var shared = await GetSharedByUserIdAsync(userId);
+        return owned.Concat(shared.Select(a => a.Baul)).DistinctBy(b => b.Id);
+    }
+
     public async Task CreateAsync(Baul baul)
     {
         dbContext.Baules.Add(baul);

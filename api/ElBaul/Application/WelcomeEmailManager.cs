@@ -89,10 +89,7 @@ public class WelcomeEmailManager(
 
     private async Task<WelcomeEmailModel> BuildModelAsync(User user)
     {
-        var owned = await baulRepository.GetOwnedByUserIdAsync(user.Id);
-        var shared = await baulRepository.GetSharedByUserIdAsync(user.Id);
-        var baules = owned.Concat(shared.Select(a => a.Baul))
-            .DistinctBy(b => b.Id)
+        var baules = (await baulRepository.GetAccessibleByUserIdAsync(user.Id))
             .OrderBy(b => b.CreatedAt)
             .ToList();
 
