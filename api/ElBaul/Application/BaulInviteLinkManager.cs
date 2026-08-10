@@ -37,7 +37,7 @@ public class BaulInviteLinkManager(
         // baúl's one active link (see IBaulInviteLinkRepository.CreateAsync) — re-read so we
         // return whichever link actually ended up active, not necessarily `link` itself.
         var active = await baulInviteLinkRepository.GetActiveByBaulIdAsync(baulId) ?? link;
-        logger.LogInformation("Baul invite link created {BaulId} {BaulInviteLinkId}", baulId, active.Id);
+        logger.LogInformation("Baul invite link created {BaulInviteLinkId}", active.Id);
         return ToDto(active);
     }
 
@@ -57,7 +57,7 @@ public class BaulInviteLinkManager(
         await baulInviteLinkRepository.CreateAsync(link);
 
         var active = await baulInviteLinkRepository.GetActiveByBaulIdAsync(baulId) ?? link;
-        logger.LogInformation("Baul invite link regenerated {BaulId} {BaulInviteLinkId}", baulId, active.Id);
+        logger.LogInformation("Baul invite link regenerated {BaulInviteLinkId}", active.Id);
         return ToDto(active);
     }
 

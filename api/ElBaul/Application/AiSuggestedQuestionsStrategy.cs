@@ -33,7 +33,7 @@ public class AiSuggestedQuestionsStrategy(
         var replyResult = await aiChatBackend.GetReplyAsync(prompt, []);
         if (replyResult.IsFailure)
         {
-            logger.LogError("Suggested questions failed {BaulId} {Error}", baul.Id, replyResult.Error);
+            logger.LogError("Suggested questions failed {Error}", replyResult.Error);
             return Result.Failure<IEnumerable<string>>(ApplicationError.ExternalDependencyUnavailable(replyResult.Error));
         }
 

@@ -36,14 +36,14 @@ public class EmailDeliveryCoordinator(
     {
         if (!isEnabled)
         {
-            callerLogger.LogInformation("{SkippedEventName} {UserId} feature disabled", skippedEventName, userId);
+            callerLogger.LogInformation("{SkippedEventName} feature disabled", skippedEventName);
             return;
         }
 
         var user = await userRepository.GetByIdAsync(userId);
         if (user is null)
         {
-            callerLogger.LogWarning("{SkippedEventName} {UserId} user not found", skippedEventName, userId);
+            callerLogger.LogWarning("{SkippedEventName} user not found", skippedEventName);
             return;
         }
 
@@ -52,14 +52,14 @@ public class EmailDeliveryCoordinator(
 
         if (!EmailAddress.TryCreate(user.Email, out _))
         {
-            callerLogger.LogWarning("{SkippedEventName} {UserId} invalid email", skippedEventName, userId);
+            callerLogger.LogWarning("{SkippedEventName} invalid email", skippedEventName);
             return;
         }
 
         var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
         if (blocked.Contains(userId))
         {
-            callerLogger.LogInformation("{SkippedEventName} {UserId} blocked by provider", skippedEventName, userId);
+            callerLogger.LogInformation("{SkippedEventName} blocked by provider", skippedEventName);
             return;
         }
 
@@ -91,7 +91,7 @@ public class EmailDeliveryCoordinator(
         var existing = await sentEmailRepository.GetByDeduplicationKeyAsync(deduplicationKey);
         if (existing is { Status: EmailStatus.Sent })
         {
-            logger.LogInformation("EmailSkipped {Type} {UserId} already sent", type, userId);
+            logger.LogInformation("EmailSkipped {Type} already sent", type);
             return Result.Success();
         }
 
@@ -113,7 +113,7 @@ public class EmailDeliveryCoordinator(
 
             if (!await sentEmailRepository.TryReserveAsync(pending))
             {
-                logger.LogInformation("EmailSkipped {Type} {UserId} raced by another worker", type, userId);
+                logger.LogInformation("EmailSkipped {Type} raced by another worker", type);
                 return Result.Success();
             }
 
@@ -129,7 +129,7 @@ public class EmailDeliveryCoordinator(
         if (sendResult.IsFailure)
         {
             await sentEmailRepository.UpdateAsync(existing with { Status = EmailStatus.Failed, ErrorMessage = sendResult.Error });
-            logger.LogError("EmailFailed {Type} {UserId} {SentEmailId} {Error}", type, userId, existing.Id, sendResult.Error);
+            logger.LogError("EmailFailed {Type} {SentEmailId} {Error}", type, existing.Id, sendResult.Error);
             return Result.Failure(ApplicationError.ExternalDependencyUnavailable(sendResult.Error));
         }
 
@@ -141,7 +141,7 @@ public class EmailDeliveryCoordinator(
             SentAt = clock.UtcNow(),
             ErrorMessage = null // clear a stale error from an earlier failed attempt on this same row
         });
-        logger.LogInformation("EmailSent {Type} {UserId} {SentEmailId}", type, userId, existing.Id);
+        logger.LogInformation("EmailSent {Type} {SentEmailId}", type, existing.Id);
         return Result.Success();
     }
 }

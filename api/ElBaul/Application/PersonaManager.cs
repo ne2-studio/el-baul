@@ -56,7 +56,7 @@ public class PersonaManager(
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
         {
-            logger.LogWarning("Persona detail rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona detail rejected: persona not found {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
@@ -76,7 +76,7 @@ public class PersonaManager(
             new PersonaId(idGenerator.NewId()), baulId, null, nickname, BaulRole.Colaborador, clock.UtcNow());
 
         await baulRepository.AddPersonaAsync(persona);
-        logger.LogInformation("Persona created {BaulId} {PersonaId} {Nickname}", baulId, persona.Id, nickname);
+        logger.LogInformation("Persona created {PersonaId} {Nickname}", persona.Id, nickname);
         return await personaDtoProjector.ProjectAsync(persona, null, canEdit: true);
     }
 
@@ -91,20 +91,20 @@ public class PersonaManager(
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
         {
-            logger.LogWarning("Persona update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona update rejected: persona not found {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
         var canEdit = CanEditPersona(persona, userId, auth.Value);
         if (!canEdit)
         {
-            logger.LogWarning("Persona update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona update rejected: access denied {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.Forbidden("Access denied"));
         }
 
         var updated = persona with { Name = name, Nickname = nickname };
         await baulRepository.UpdatePersonaAsync(updated);
-        logger.LogInformation("Persona updated {BaulId} {PersonaId}", baulId, personaId);
+        logger.LogInformation("Persona updated {PersonaId}", personaId);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, canEdit);
@@ -123,13 +123,13 @@ public class PersonaManager(
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
         {
-            logger.LogWarning("Persona biografia update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona biografia update rejected: persona not found {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
         var updated = persona with { Biografia = biografia };
         await baulRepository.UpdatePersonaAsync(updated);
-        logger.LogInformation("Persona biografia updated {BaulId} {PersonaId}", baulId, personaId);
+        logger.LogInformation("Persona biografia updated {PersonaId}", personaId);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, CanEditPersona(updated, userId, auth.Value));
@@ -157,8 +157,8 @@ public class PersonaManager(
 
             photo = existingPhoto;
             logger.LogInformation(
-                "Duplicate persona avatar upload reused existing loose photo {BaulId} {PersonaId} {PhotoId} {ClientUploadId}",
-                baulId, personaId, photo.Id, clientUploadId);
+                "Duplicate persona avatar upload reused existing loose photo {PersonaId} {PhotoId} {ClientUploadId}",
+                personaId, photo.Id, clientUploadId);
         }
         else
         {
@@ -170,8 +170,8 @@ public class PersonaManager(
             catch (Exception ex)
             {
                 logger.LogError(ex,
-                    "Persona avatar upload failed while saving to storage {BaulId} {PersonaId} {FileName} {ContentType}",
-                    baulId, personaId, fileName, contentType);
+                    "Persona avatar upload failed while saving to storage {PersonaId} {FileName} {ContentType}",
+                    personaId, fileName, contentType);
                 throw;
             }
 
@@ -184,8 +184,8 @@ public class PersonaManager(
             catch (Exception ex)
             {
                 logger.LogError(ex,
-                    "Persona avatar upload failed while persisting photo metadata {BaulId} {PersonaId} {PhotoId} {StorageKey}",
-                    baulId, personaId, photo.Id, storedFile.StorageKey);
+                    "Persona avatar upload failed while persisting photo metadata {PersonaId} {PhotoId} {StorageKey}",
+                    personaId, photo.Id, storedFile.StorageKey);
                 await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
                 throw;
             }
@@ -204,8 +204,8 @@ public class PersonaManager(
         if (photo is null || photo.BaulId != baulId || photo.Status != PhotoStatus.Active)
         {
             logger.LogWarning(
-                "Persona avatar photo selection rejected: photo not found in this baúl {BaulId} {PersonaId} {PhotoId}",
-                baulId, personaId, photoId);
+                "Persona avatar photo selection rejected: photo not found in this baúl {PersonaId} {PhotoId}",
+                personaId, photoId);
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Photo not found"));
         }
 
@@ -222,15 +222,13 @@ public class PersonaManager(
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
         {
-            logger.LogWarning(
-                "Persona role update rejected: persona not found {BaulId} {PersonaId}",
-                baulId, personaId);
+            logger.LogWarning("Persona role update rejected: persona not found {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
         var updated = persona with { Role = role };
         await baulRepository.UpdatePersonaAsync(updated);
-        logger.LogInformation("Persona role updated {BaulId} {PersonaId} {Role}", baulId, personaId, role);
+        logger.LogInformation("Persona role updated {PersonaId} {Role}", personaId, role);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, canEdit: true);
@@ -246,18 +244,18 @@ public class PersonaManager(
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
         {
-            logger.LogWarning("Persona access revocation rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona access revocation rejected: persona not found {PersonaId}", personaId);
             return Result.Failure(ApplicationError.NotFound("Persona not found"));
         }
 
         if (persona.IsCustodioProtected(auth.Value.Baul.CustodioId))
         {
-            logger.LogWarning("Persona access revocation rejected: custodio cannot lose access {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona access revocation rejected: custodio cannot lose access {PersonaId}", personaId);
             return Result.Failure(ApplicationError.Validation("The custodio cannot lose access"));
         }
 
         await baulRepository.UpdatePersonaAsync(persona.Revoke());
-        logger.LogInformation("Persona access revoked {BaulId} {PersonaId}", baulId, personaId);
+        logger.LogInformation("Persona access revoked {PersonaId}", personaId);
         return Result.Success();
     }
 
@@ -275,15 +273,13 @@ public class PersonaManager(
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
         {
-            logger.LogWarning(
-                "Persona avatar update rejected: persona not found {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona avatar update rejected: persona not found {PersonaId}", personaId);
             return Result.Failure<(Persona, BaulAccess, string)>(ApplicationError.NotFound("Persona not found"));
         }
 
         if (!CanEditPersona(persona, userId, auth.Value))
         {
-            logger.LogWarning(
-                "Persona avatar update rejected: access denied {BaulId} {PersonaId}", baulId, personaId);
+            logger.LogWarning("Persona avatar update rejected: access denied {PersonaId}", personaId);
             return Result.Failure<(Persona, BaulAccess, string)>(ApplicationError.Forbidden("Access denied"));
         }
 
@@ -307,8 +303,7 @@ public class PersonaManager(
             AvatarCropScale = crop.Scale
         };
         await baulRepository.UpdatePersonaAsync(updated);
-        logger.LogInformation(
-            "Persona avatar photo updated {BaulId} {PersonaId} {PhotoId}", photo.BaulId, persona.Id, photo.Id);
+        logger.LogInformation("Persona avatar photo updated {PersonaId} {PhotoId}", persona.Id, photo.Id);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, CanEditPersona(updated, userId, access));

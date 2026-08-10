@@ -69,7 +69,7 @@ public class ChapterManager(
 
         await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });
 
-        logger.LogInformation("Chapter created {BaulId} {ChapterId} {Name}", baulId, chapter.Id, name);
+        logger.LogInformation("Chapter created {ChapterId} {Name}", chapter.Id, name);
         return ToDto(chapter, null, null, 0, null, null, ChapterDateRange.Empty);
     }
 
@@ -90,16 +90,14 @@ public class ChapterManager(
         var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null || photo.ChapterId != chapterId)
         {
-            logger.LogWarning(
-                "Chapter cover update rejected: photo not found {BaulId} {ChapterId} {PhotoId}",
-                chapter.BaulId, chapterId, photoId);
+            logger.LogWarning("Chapter cover update rejected: photo not found {PhotoId}", photoId);
             return Result.Failure<ChapterDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var updated = chapter.WithCover(photo, clock.UtcNow());
         await chapterRepository.UpdateAsync(updated);
 
-        logger.LogInformation("Chapter cover updated {BaulId} {ChapterId} {PhotoId}", chapter.BaulId, chapterId, photoId);
+        logger.LogInformation("Chapter cover updated {PhotoId}", photoId);
         return await ToDtoAsync(updated);
     }
 
@@ -120,7 +118,7 @@ public class ChapterManager(
         var updated = chapter with { Name = name, UpdatedAt = clock.UtcNow() };
         await chapterRepository.UpdateAsync(updated);
 
-        logger.LogInformation("Chapter updated {BaulId} {ChapterId} {Name}", chapter.BaulId, chapterId, name);
+        logger.LogInformation("Chapter updated {Name}", name);
         return await ToDtoAsync(updated);
     }
 
@@ -150,7 +148,7 @@ public class ChapterManager(
         await chapterRepository.DeleteAsync(chapterId);
         await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount - 1, UpdatedAt = clock.UtcNow() });
 
-        logger.LogInformation("Chapter deleted {BaulId} {ChapterId}", chapter.BaulId, chapterId);
+        logger.LogInformation("Chapter deleted");
         return Result.Success();
     }
 

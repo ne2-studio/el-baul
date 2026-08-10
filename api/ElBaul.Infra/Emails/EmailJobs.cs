@@ -2,6 +2,7 @@ using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
 using ElBaul.Ports.Shared;
 using Hangfire;
+using Serilog.Context;
 
 namespace ElBaul.Infra.Emails;
 
@@ -14,14 +15,25 @@ namespace ElBaul.Infra.Emails;
 /// Its lock resource is derived from (Type, Method), so it serializes each job type
 /// independently: at most one welcome-email send and one digest send in flight at a time,
 /// instead of all of them firing at once and tripping Resend's rate limit.
+///
+/// Also this job type's own log correlation boundary — the background-job equivalent of
+/// UserLogContextMiddleware, since a Hangfire job has no HTTP request for that middleware to run
+/// against. Every log line for the rest of the job, including from downstream collaborators,
+/// carries {UserId} without WelcomeEmailManager/WeeklyDigestManager threading it through by hand.
 /// </summary>
 public class EmailJobs(IWelcomeEmailManager welcomeEmailManager, IWeeklyDigestManager weeklyDigestManager)
 {
     [DisableConcurrentExecution(timeoutInSeconds: 300)]
-    public Task SendWelcomeEmailAsync(string userId) =>
-        welcomeEmailManager.SendWelcomeEmailAsync(new UserId(userId));
+    public async Task SendWelcomeEmailAsync(string userId)
+    {
+        using (LogContext.PushProperty("UserId", userId))
+            await welcomeEmailManager.SendWelcomeEmailAsync(new UserId(userId));
+    }
 
     [DisableConcurrentExecution(timeoutInSeconds: 300)]
-    public Task SendWeeklyDigestAsync(string userId, DateTime since) =>
-        weeklyDigestManager.SendWeeklyDigestAsync(new UserId(userId), since);
+    public async Task SendWeeklyDigestAsync(string userId, DateTime since)
+    {
+        using (LogContext.PushProperty("UserId", userId))
+            await weeklyDigestManager.SendWeeklyDigestAsync(new UserId(userId), since);
+    }
 }

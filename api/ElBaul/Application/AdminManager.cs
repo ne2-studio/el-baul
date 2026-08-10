@@ -111,7 +111,7 @@ public class AdminManager(
         await baulRepository.DeleteAsync(baulId);
 
         logger.LogWarning(
-            "Baul hard-deleted {BaulId} ({PhotoCount} photos, {PersonaCount} personas)", baulId, photos.Count, personas.Count);
+            "Baul hard-deleted ({PhotoCount} photos, {PersonaCount} personas)", photos.Count, personas.Count);
 
         var storageKeys = photos.Select(p => p.StorageKey)
             .Concat(personas.Where(p => !string.IsNullOrEmpty(p.AvatarPhotoKey)).Select(p => p.AvatarPhotoKey!));
@@ -124,7 +124,7 @@ public class AdminManager(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to clean up storage object after baul hard-delete {BaulId} {StorageKey}", baulId, key);
+                logger.LogWarning(ex, "Failed to clean up storage object after baul hard-delete {StorageKey}", key);
             }
         }
 

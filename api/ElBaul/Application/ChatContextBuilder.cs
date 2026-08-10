@@ -215,8 +215,8 @@ public class ChatContextBuilder(
             else
             {
                 logger.LogWarning(
-                    "Could not embed {Count} recuerdos, ranking with what's already indexed {BaulId} {Error}",
-                    stale.Count, baulId, embedResult.Error);
+                    "Could not embed {Count} recuerdos, ranking with what's already indexed {Error}",
+                    stale.Count, embedResult.Error);
             }
         }
 
@@ -225,7 +225,7 @@ public class ChatContextBuilder(
         {
             // Ranking isn't possible, but the chat turn shouldn't fail just because of that —
             // fall back to the most recent recuerdos instead.
-            logger.LogWarning("Could not embed the query, falling back to most recent recuerdos {BaulId}", baulId);
+            logger.LogWarning("Could not embed the query, falling back to most recent recuerdos");
             return recuerdos.OrderByDescending(r => r.CreatedAt).Take(MaxRelevantRecuerdos).ToList();
         }
 

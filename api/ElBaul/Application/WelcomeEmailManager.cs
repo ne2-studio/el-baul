@@ -58,7 +58,7 @@ public class WelcomeEmailManager(
                 if (user.CreatedAt <= cutoff)
                     return Task.FromResult(true);
 
-                logger.LogInformation("WelcomeEmailSkipped {UserId} not yet eligible", userId);
+                logger.LogInformation("WelcomeEmailSkipped not yet eligible");
                 return Task.FromResult(false);
             },
             getDeduplicationKey: _ => $"welcome:{userId}",

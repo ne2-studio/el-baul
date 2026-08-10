@@ -26,8 +26,8 @@ public class SupportManager(
         if (user is null) return Result.Failure(ApplicationError.NotFound("User not found"));
 
         logger.LogInformation(
-            "Support request received {Category} {UserId} {UserEmail} {TechnicalInfo} {Message}",
-            category, userId, user.Email, technicalInfo, message);
+            "Support request received {Category} {UserEmail} {TechnicalInfo} {Message}",
+            category, user.Email, technicalInfo, message);
 
         var submission = new SupportSubmission(category, message, technicalInfo, userId, user.Email, user.Name);
         var result = await supportBackend.SubmitAsync(submission);

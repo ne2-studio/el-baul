@@ -64,21 +64,21 @@ public class PushDigestManager(
     {
         if (!appConfiguration.PushDigestEnabled)
         {
-            logger.LogInformation("PushDigestSkipped {UserId} feature disabled", userId);
+            logger.LogInformation("PushDigestSkipped feature disabled");
             return;
         }
 
         var user = await userRepository.GetByIdAsync(userId);
         if (user is null)
         {
-            logger.LogWarning("PushDigestSkipped {UserId} user not found", userId);
+            logger.LogWarning("PushDigestSkipped user not found");
             return;
         }
 
         var tokens = (await pushTokenRepository.GetTokensForUserAsync(userId)).ToList();
         if (tokens.Count == 0)
         {
-            logger.LogInformation("PushDigestSkipped {UserId} no registered device", userId);
+            logger.LogInformation("PushDigestSkipped no registered device");
             return;
         }
 
@@ -87,7 +87,7 @@ public class PushDigestManager(
         {
             // Silence is a valid outcome, not a failure — the cursor deliberately stays put so
             // tomorrow's `since` still covers everything back to the last real send.
-            logger.LogInformation("PushDigestSkipped {UserId} no activity since {Since}", userId, since);
+            logger.LogInformation("PushDigestSkipped no activity since {Since}", since);
             return;
         }
 
@@ -99,13 +99,13 @@ public class PushDigestManager(
             if (result.IsSuccess)
                 anySucceeded = true;
             else
-                logger.LogWarning("PushDigestSendFailed {UserId} {Error}", userId, result.Error);
+                logger.LogWarning("PushDigestSendFailed {Error}", result.Error);
         }
 
         if (!anySucceeded) return;
 
         await userRepository.UpdateLastPushDigestSentAtAsync(userId, clock.UtcNow());
-        logger.LogInformation("PushDigestSent {UserId}", userId);
+        logger.LogInformation("PushDigestSent");
     }
 
     private async Task<PushDigestSummary?> BuildSummaryAsync(User user, DateTime since)

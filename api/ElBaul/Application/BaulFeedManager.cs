@@ -24,7 +24,7 @@ public class BaulFeedManager(
     {
         if (!appConfiguration.BaulFeedEnabled)
         {
-            logger.LogWarning("Baul feed rejected: feed is not enabled {BaulId}", baulId);
+            logger.LogWarning("Baul feed rejected: feed is not enabled");
             return Result.Failure<FeedPageDto>(ApplicationError.Validation("Baul feed is not enabled"));
         }
 
@@ -58,7 +58,7 @@ public class BaulFeedManager(
     {
         if (!appConfiguration.BaulFeedEnabled)
         {
-            logger.LogWarning("Photo batch photos rejected: feed is not enabled {BaulId} {BatchId}", baulId, batchId);
+            logger.LogWarning("Photo batch photos rejected: feed is not enabled {BatchId}", batchId);
             return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.Validation("Baul feed is not enabled"));
         }
 
@@ -70,7 +70,7 @@ public class BaulFeedManager(
         var rows = await photoUploadBatchReadModel.GetPhotosByBatchIdAsync(baulId, batchId);
         if (rows.Count == 0)
         {
-            logger.LogWarning("Photo batch photos rejected: batch not found {BaulId} {BatchId}", baulId, batchId);
+            logger.LogWarning("Photo batch photos rejected: batch not found {BatchId}", batchId);
             return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Photo batch not found"));
         }
 

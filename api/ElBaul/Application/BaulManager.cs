@@ -78,14 +78,14 @@ public class BaulManager(
         var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null || photo.BaulId != baulId)
         {
-            logger.LogWarning("Baul cover update rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);
+            logger.LogWarning("Baul cover update rejected: photo not found {PhotoId}", photoId);
             return Result.Failure<BaulDto>(ApplicationError.NotFound("Photo not found"));
         }
 
         var updated = access.Baul.WithCover(photo, clock.UtcNow());
         await baulRepository.UpdateAsync(updated);
 
-        logger.LogInformation("Baul cover updated {BaulId} {PhotoId}", baulId, photoId);
+        logger.LogInformation("Baul cover updated {PhotoId}", photoId);
 
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(updated, access.IsCustodio, access.Role, memberCount);
@@ -102,7 +102,7 @@ public class BaulManager(
         var updated = access.Baul with { Name = name, Description = description, UpdatedAt = clock.UtcNow() };
         await baulRepository.UpdateAsync(updated);
 
-        logger.LogInformation("Baul updated {BaulId} {Name}", baulId, name);
+        logger.LogInformation("Baul updated {Name}", name);
 
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(updated, access.IsCustodio, access.Role, memberCount);

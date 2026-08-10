@@ -46,8 +46,7 @@ public class RemovalRequestManager(
         var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null || photo.BaulId != baulId)
         {
-            logger.LogWarning(
-                "Removal request creation rejected: photo not found {BaulId} {PhotoId}", baulId, photoId);
+            logger.LogWarning("Removal request creation rejected: photo not found {PhotoId}", photoId);
             return Result.Failure<RemovalRequestDto>(ApplicationError.NotFound("Photo not found"));
         }
 
@@ -59,8 +58,7 @@ public class RemovalRequestManager(
             nickname, userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
         await baulRepository.CreateRemovalRequestAsync(request);
-        logger.LogInformation(
-            "Removal request created {BaulId} {PhotoId} {RemovalRequestId}", baulId, photoId, request.Id);
+        logger.LogInformation("Removal request created {PhotoId} {RemovalRequestId}", photoId, request.Id);
 
         var url = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.RemovalRequestThumbnail);
         return ToDto(request, url);
@@ -76,9 +74,7 @@ public class RemovalRequestManager(
         var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
         if (request is null)
         {
-            logger.LogWarning(
-                "Removal request approval rejected: request not found {BaulId} {RemovalRequestId}",
-                baulId, requestId);
+            logger.LogWarning("Removal request approval rejected: request not found {RemovalRequestId}", requestId);
             return Result.Failure(ApplicationError.NotFound("Request not found"));
         }
 
@@ -91,8 +87,8 @@ public class RemovalRequestManager(
         await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
 
         logger.LogInformation(
-            "Removal request approved, photo deleted {BaulId} {PhotoId} {RemovalRequestId} {ChapterId}",
-            baulId, request.PhotoId, requestId, photo?.ChapterId);
+            "Removal request approved, photo deleted {PhotoId} {RemovalRequestId} {ChapterId}",
+            request.PhotoId, requestId, photo?.ChapterId);
 
         return Result.Success();
     }
@@ -105,7 +101,7 @@ public class RemovalRequestManager(
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
         await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
-        logger.LogInformation("Removal request rejected {BaulId} {RemovalRequestId}", baulId, requestId);
+        logger.LogInformation("Removal request rejected {RemovalRequestId}", requestId);
         return Result.Success();
     }
 

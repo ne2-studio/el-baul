@@ -266,6 +266,7 @@ public static class ElBaulApiHost
         app.UseRateLimiter();
         app.UseAuthentication();
         app.UseMiddleware<UserLogContextMiddleware>();
+        app.UseMiddleware<RouteIdLogContextMiddleware>();
         app.UseMiddleware<UserSyncMiddleware>();
         app.UseAuthorization();
 

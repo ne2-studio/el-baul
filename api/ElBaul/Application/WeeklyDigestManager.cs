@@ -66,14 +66,14 @@ public class WeeklyDigestManager(
                 if (user.WeeklyDigestEnabled)
                     return Task.FromResult(true);
 
-                logger.LogInformation("WeeklyDigestSkipped {UserId} digest disabled", userId);
+                logger.LogInformation("WeeklyDigestSkipped digest disabled");
                 return Task.FromResult(false);
             },
             getDeduplicationKey: _ => $"weekly-digest:{userId}:{since:O}",
             renderAsync: async (user, linkBuilder) =>
             {
                 var model = await BuildModelAsync(user, since);
-                LogGenerated(userId, model);
+                LogGenerated(model);
                 return templateRenderer.RenderWeeklyDigest(ApplyTracking(model, linkBuilder));
             });
     }
@@ -104,12 +104,12 @@ public class WeeklyDigestManager(
             });
     }
 
-    private void LogGenerated(string userId, WeeklyDigestEmailModel model)
+    private void LogGenerated(WeeklyDigestEmailModel model)
     {
         if (model.HasActivity)
-            logger.LogInformation("WeeklyDigestGenerated {UserId} {SectionCount}", userId, model.Sections.Count);
+            logger.LogInformation("WeeklyDigestGenerated {SectionCount}", model.Sections.Count);
         else
-            logger.LogInformation("WeeklyDigestEmptyGenerated {UserId}", userId);
+            logger.LogInformation("WeeklyDigestEmptyGenerated");
     }
 
     private async Task<WeeklyDigestEmailModel> BuildModelAsync(User user, DateTime since)

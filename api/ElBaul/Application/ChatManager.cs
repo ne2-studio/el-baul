@@ -76,7 +76,7 @@ public class ChatManager(
     {
         if (!appConfiguration.ChatEnabled)
         {
-            logger.LogWarning("Chat message rejected: chat is not enabled {BaulId}", baulId);
+            logger.LogWarning("Chat message rejected: chat is not enabled");
             return Result.Failure<ChatMessageDto>(ApplicationError.Validation("Chat is not enabled"));
         }
 
@@ -96,7 +96,7 @@ public class ChatManager(
         var replyResult = await aiChatBackend.GetReplyAsync(systemPrompt, history);
         if (replyResult.IsFailure)
         {
-            logger.LogError("Chat reply failed {BaulId} {Error}", baulId, replyResult.Error);
+            logger.LogError("Chat reply failed {Error}", replyResult.Error);
             return Result.Failure<ChatMessageDto>(ApplicationError.ExternalDependencyUnavailable(replyResult.Error));
         }
 
@@ -104,7 +104,7 @@ public class ChatManager(
             idGenerator.NewId(), baulId, userId, ChatMessageRole.Assistant, replyResult.Value, clock.UtcNow());
         await chatMessageRepository.CreateAsync(assistantMessage);
 
-        logger.LogInformation("Chat message answered {BaulId} {ChatMessageId}", baulId, assistantMessage.Id);
+        logger.LogInformation("Chat message answered {ChatMessageId}", assistantMessage.Id);
         return ToDto(assistantMessage);
     }
 
@@ -112,13 +112,13 @@ public class ChatManager(
     {
         if (!appConfiguration.ChatEnabled)
         {
-            logger.LogWarning("Suggested questions rejected: chat is not enabled {BaulId}", baulId);
+            logger.LogWarning("Suggested questions rejected: chat is not enabled");
             return Result.Failure<IEnumerable<string>>(ApplicationError.Validation("Chat is not enabled"));
         }
 
         if (!appConfiguration.ChatSuggestionsEnabled)
         {
-            logger.LogWarning("Suggested questions rejected: chat suggestions are not enabled {BaulId}", baulId);
+            logger.LogWarning("Suggested questions rejected: chat suggestions are not enabled");
             return Result.Failure<IEnumerable<string>>(ApplicationError.Validation("Chat suggestions are not enabled"));
         }
 
@@ -128,7 +128,7 @@ public class ChatManager(
 
         var result = await suggestedQuestionsStrategy.GenerateAsync(auth.Value.Baul);
         if (result.IsFailure)
-            logger.LogError("Suggested questions failed {BaulId} {Error}", baulId, result.Error);
+            logger.LogError("Suggested questions failed {Error}", result.Error);
 
         return result;
     }
