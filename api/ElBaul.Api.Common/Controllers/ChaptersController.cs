@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
     public async Task<IActionResult> GetAll(Guid baulId)
     {
         var result = await chapterManager.GetByBaulIdAsync(new BaulId(baulId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPost]
@@ -25,7 +26,7 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
     public async Task<IActionResult> Create(Guid baulId, [FromBody] CreateChapterRequest request)
     {
         var result = await chapterManager.CreateAsync(new BaulId(baulId), request.Name);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPut("{chapterId:guid}")]
@@ -33,7 +34,7 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
     public async Task<IActionResult> Update(Guid baulId, Guid chapterId, [FromBody] UpdateChapterRequest request)
     {
         var result = await chapterManager.UpdateAsync(new ChapterId(chapterId), request.Name);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpDelete("{chapterId:guid}")]
@@ -41,18 +42,18 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
     public async Task<IActionResult> Delete(Guid baulId, Guid chapterId)
     {
         var result = await chapterManager.DeleteAsync(new ChapterId(chapterId));
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 
     [HttpPut("{chapterId:guid}/cover")]
     [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetCover(Guid baulId, Guid chapterId, [FromBody] SetChapterCoverRequest request)
     {
-        if (!Guid.TryParse(request.PhotoId, out var photoId))
-            return BadRequest(new { error = $"'{request.PhotoId}' is not a valid photo id." });
+        var photoId = PhotoId.Parse(request.PhotoId);
+        if (photoId.IsFailure) return ErrorMapping.ToActionResult(photoId.Error);
 
-        var result = await chapterManager.SetCoverAsync(new ChapterId(chapterId), new PhotoId(photoId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        var result = await chapterManager.SetCoverAsync(new ChapterId(chapterId), photoId.Value);
+        return result.ToActionResult();
     }
 
     [HttpGet("{chapterId:guid}/recuerdos")]
@@ -60,7 +61,7 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
     public async Task<IActionResult> GetRecuerdos(Guid baulId, Guid chapterId)
     {
         var result = await recuerdoManager.GetRecuerdosAsync(new ChapterId(chapterId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPost("{chapterId:guid}/recuerdos")]
@@ -71,6 +72,6 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
             return BadRequest(new { error = "Text is required" });
 
         var result = await recuerdoManager.CreateRecuerdoAsync(new ChapterId(chapterId), request.Text);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 }

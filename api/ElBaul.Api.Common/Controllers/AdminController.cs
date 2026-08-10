@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -41,7 +42,7 @@ public class AdminController(
     public async Task<IActionResult> GetUsers()
     {
         var result = await adminManager.GetAllUsersAsync();
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpGet("users/{userId}")]
@@ -49,7 +50,7 @@ public class AdminController(
     public async Task<IActionResult> GetUser(string userId)
     {
         var result = await adminManager.GetUserDetailAsync(new UserId(userId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpGet("baules")]
@@ -57,7 +58,7 @@ public class AdminController(
     public async Task<IActionResult> GetBaules()
     {
         var result = await adminManager.GetAllBaulesAsync();
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpGet("baules/{baulId:guid}")]
@@ -65,7 +66,7 @@ public class AdminController(
     public async Task<IActionResult> GetBaul(Guid baulId)
     {
         var result = await adminManager.GetBaulDetailAsync(new BaulId(baulId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpDelete("baules/{baulId:guid}")]
@@ -73,7 +74,7 @@ public class AdminController(
     public async Task<IActionResult> DeleteBaul(Guid baulId)
     {
         var result = await adminManager.DeleteBaulAsync(new BaulId(baulId));
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 
     [HttpGet("emails")]
@@ -81,7 +82,7 @@ public class AdminController(
     public async Task<IActionResult> GetEmails()
     {
         var result = await adminManager.GetSentEmailsAsync();
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpGet("users/{userId}/emails")]
@@ -89,7 +90,7 @@ public class AdminController(
     public async Task<IActionResult> GetUserEmails(string userId)
     {
         var result = await adminManager.GetUserSentEmailsAsync(new UserId(userId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPost("users/{userId}/baules/{baulId:guid}/chat-context-debug")]
@@ -97,7 +98,7 @@ public class AdminController(
     public async Task<IActionResult> DebugChatContext(string userId, Guid baulId, [FromBody] DebugChatContextRequest request)
     {
         var result = await adminManager.DebugChatContextAsync(new UserId(userId), new BaulId(baulId), request.Message);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPost("emails/welcome-test/{userId}")]
@@ -105,7 +106,7 @@ public class AdminController(
     public async Task<IActionResult> SendWelcomeTestEmail(string userId)
     {
         var result = await welcomeEmailManager.SendTestWelcomeEmailAsync(new UserId(userId));
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 
     [HttpPost("emails/digest-test/{userId}")]
@@ -113,7 +114,7 @@ public class AdminController(
     public async Task<IActionResult> SendDigestTestEmail(string userId)
     {
         var result = await weeklyDigestManager.SendTestWeeklyDigestAsync(new UserId(userId));
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 
     [HttpPost("users/{userId}/push-notifications/test")]
@@ -121,7 +122,7 @@ public class AdminController(
     public async Task<IActionResult> SendTestPushNotification(string userId, [FromBody] SendTestPushNotificationRequest request)
     {
         var result = await pushNotificationManager.SendTestNotificationAsync(new UserId(userId), request.Message, request.DeepLink);
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 
     private IEnumerable<object> GetExternalLinks()

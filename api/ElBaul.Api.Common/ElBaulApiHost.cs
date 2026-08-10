@@ -7,6 +7,7 @@ using ElBaul.Api.Swagger;
 using ElBaul.Application;
 using ElBaul.Infra;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

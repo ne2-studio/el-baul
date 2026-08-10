@@ -2,6 +2,7 @@ using ElBaul.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using ElBaul.Ports.Shared;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 

@@ -9,42 +9,40 @@ namespace ElBaul.Tests;
 public class PhotoDateTests
 {
     [Fact]
-    public void TryCreate_ShouldReject_YearOutOfRange()
+    public void Parse_ShouldReject_YearOutOfRange()
     {
-        var success = PhotoDate.TryCreate(1500, null, null, out _, out var error);
+        var result = PhotoDate.Parse(1500, null, null);
 
-        Assert.False(success);
-        Assert.NotNull(error);
+        Assert.True(result.IsFailure);
     }
 
     [Fact]
-    public void TryCreate_ShouldReject_DayGivenWithoutMonth()
+    public void Parse_ShouldReject_DayGivenWithoutMonth()
     {
-        var success = PhotoDate.TryCreate(2020, null, 15, out _, out var error);
+        var result = PhotoDate.Parse(2020, null, 15);
 
-        Assert.False(success);
-        Assert.NotNull(error);
+        Assert.True(result.IsFailure);
     }
 
     [Fact]
-    public void TryCreate_ShouldAccept_YearOnly()
+    public void Parse_ShouldAccept_YearOnly()
     {
-        var success = PhotoDate.TryCreate(2020, null, null, out var date, out _);
+        var result = PhotoDate.Parse(2020, null, null);
 
-        Assert.True(success);
-        Assert.Equal(2020, date.Year);
-        Assert.Null(date.Month);
-        Assert.Null(date.Day);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2020, result.Value.Year);
+        Assert.Null(result.Value.Month);
+        Assert.Null(result.Value.Day);
     }
 
     [Fact]
-    public void TryCreate_ShouldAccept_FullDate()
+    public void Parse_ShouldAccept_FullDate()
     {
-        var success = PhotoDate.TryCreate(2020, 6, 15, out var date, out _);
+        var result = PhotoDate.Parse(2020, 6, 15);
 
-        Assert.True(success);
-        Assert.Equal(2020, date.Year);
-        Assert.Equal(6, date.Month);
-        Assert.Equal(15, date.Day);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2020, result.Value.Year);
+        Assert.Equal(6, result.Value.Month);
+        Assert.Equal(15, result.Value.Day);
     }
 }

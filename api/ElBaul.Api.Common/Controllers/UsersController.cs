@@ -1,5 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,7 @@ public class UsersController(IUserManager userManager, IPushNotificationManager 
     public async Task<IActionResult> GetMe()
     {
         var result = await userManager.GetCurrentProfileAsync();
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPut("me/notification-preferences")]
@@ -24,7 +25,7 @@ public class UsersController(IUserManager userManager, IPushNotificationManager 
     public async Task<IActionResult> UpdateNotificationPreferences([FromBody] UpdateNotificationPreferencesRequest request)
     {
         var result = await userManager.UpdateNotificationPreferencesAsync(request.WeeklyDigestEnabled);
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPost("me/onboarding-seen")]
@@ -32,7 +33,7 @@ public class UsersController(IUserManager userManager, IPushNotificationManager 
     public async Task<IActionResult> MarkOnboardingSeen()
     {
         var result = await userManager.MarkOnboardingSeenAsync();
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPost("me/push-tokens")]
@@ -40,7 +41,7 @@ public class UsersController(IUserManager userManager, IPushNotificationManager 
     public async Task<IActionResult> RegisterPushToken([FromBody] RegisterPushTokenRequest request)
     {
         var result = await pushNotificationManager.RegisterTokenAsync(request.Token, request.Platform);
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 
     [HttpPost("me/push-tokens/unregister")]
@@ -48,6 +49,6 @@ public class UsersController(IUserManager userManager, IPushNotificationManager 
     public async Task<IActionResult> UnregisterPushToken([FromBody] UnregisterPushTokenRequest request)
     {
         var result = await pushNotificationManager.UnregisterTokenAsync(request.Token);
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 }

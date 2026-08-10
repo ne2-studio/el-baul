@@ -36,7 +36,7 @@ public record Photo
     // read of the three columns, and the sanctioned way to change them (WithDate/Create)
     // instead of touching DateYear/Month/Day directly.
     public PhotoDate? Date =>
-        DateYear is { } year && PhotoDate.TryCreate(year, DateMonth, DateDay, out var date, out _) ? date : null;
+        DateYear is { } year && PhotoDate.Parse(year, DateMonth, DateDay) is { IsSuccess: true, Value: var date } ? date : null;
 
     public static Photo Create(
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,

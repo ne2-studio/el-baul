@@ -1,4 +1,5 @@
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

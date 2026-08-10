@@ -1,5 +1,6 @@
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using ElBaul.Ports.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application;
@@ -62,11 +63,11 @@ public class PhotoFileService(
     {
         if (explicitDate is not null) return explicitDate;
 
-        // EXIF always yields a full, in-range Y-M-D, so TryCreate can't fail here.
         var extracted = photoDateExtractor.TryExtractDate(content);
-        return extracted is { } e && PhotoDate.TryCreate(e.Year, e.Month, e.Day, out var extractedDate, out _)
-            ? extractedDate
-            : null;
+        if (extracted is not { } e) return null;
+
+        // EXIF always yields a full, in-range Y-M-D, so Parse can't fail here.
+        return PhotoDate.Parse(e.Year, e.Month, e.Day) is { IsSuccess: true, Value: var date } ? date : null;
     }
 }
 

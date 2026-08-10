@@ -1,5 +1,6 @@
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using ElBaul.Ports.Shared;
 using Hangfire;
 
 namespace ElBaul.Infra.Emails;

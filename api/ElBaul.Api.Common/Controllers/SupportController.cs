@@ -1,5 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,6 @@ public class SupportController(ISupportManager supportManager) : ControllerBase
 
         var result = await supportManager.SubmitAsync(request.Category, request.Message, technicalInfo);
 
-        return result.IsSuccess ? Ok(new { success = true }) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(Ok(new { success = true }));
     }
 }

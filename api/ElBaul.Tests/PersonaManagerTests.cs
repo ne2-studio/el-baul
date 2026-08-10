@@ -1,6 +1,7 @@
 using ElBaul.Application;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using ElBaul.Ports.Shared;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;

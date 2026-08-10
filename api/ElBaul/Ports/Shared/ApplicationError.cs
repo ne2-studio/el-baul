@@ -1,4 +1,4 @@
-namespace ElBaul.Ports.Input;
+namespace ElBaul.Ports.Shared;
 
 public enum ApplicationErrorCode
 {

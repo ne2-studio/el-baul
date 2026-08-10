@@ -1,6 +1,7 @@
 using System.Net;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
+using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ public class SharedLinksController(ISharedLinkManager sharedLinkManager) : Contr
     public async Task<IActionResult> CreateForPhoto(Guid photoId)
     {
         var result = await sharedLinkManager.CreateForPhotoAsync(new PhotoId(photoId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [Authorize]
@@ -26,7 +27,7 @@ public class SharedLinksController(ISharedLinkManager sharedLinkManager) : Contr
     public async Task<IActionResult> CreateForRecuerdo(Guid recuerdoId)
     {
         var result = await sharedLinkManager.CreateForRecuerdoAsync(new RecuerdoId(recuerdoId));
-        return result.IsSuccess ? Ok(result.Value) : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult();
     }
 
     [Authorize]
@@ -35,7 +36,7 @@ public class SharedLinksController(ISharedLinkManager sharedLinkManager) : Contr
     public async Task<IActionResult> Revoke(string token)
     {
         var result = await sharedLinkManager.RevokeAsync(token);
-        return result.IsSuccess ? NoContent() : ErrorMapping.ToActionResult(result.Error);
+        return result.ToActionResult(NoContent());
     }
 
     [AllowAnonymous]

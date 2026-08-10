@@ -345,8 +345,8 @@ public class PhotoManagerTests
     public async Task GetPageAsync_ShouldReturnBaulWidePhotos_InChronologicalOrder_WithUndatedLast()
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
-        PhotoDate.TryCreate(2019, 6, 1, out var earlyDate, out _);
-        PhotoDate.TryCreate(2020, 1, 1, out var laterDate, out _);
+        var earlyDate = PhotoDates.Of(2019, 6, 1);
+        var laterDate = PhotoDates.Of(2020, 1, 1);
 
         // Created out of chronological order to prove the manager sorts, rather than
         // happening to preserve insertion order.

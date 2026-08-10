@@ -2,6 +2,7 @@ using ElBaul.Api;
 using ElBaul.Api.Common;
 using ElBaul.Infra;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Shared;
 using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.PostgreSql;

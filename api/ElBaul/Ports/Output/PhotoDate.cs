@@ -1,10 +1,14 @@
+using ElBaul.Ports.Shared;
+
 namespace ElBaul.Ports.Output;
 
 // A photo's capture date, which is often only partially known (year alone, or year+month) —
 // Month/Day are independently optional, but Year is always present once there's a date at all
 // (a photo with no date at all is a null PhotoDate, not a PhotoDate with everything null).
-// TryCreate is the single place the "day requires a month" invariant and the valid ranges are
-// checked, replacing the copy of that logic that used to live in PhotoManager.ValidateDate.
+// Parse is the single place the "day requires a month" invariant and the valid ranges are
+// checked, replacing the copy of that logic that used to live in PhotoManager.ValidateDate — the
+// same Result<T>-returning shape as AvatarCrop.Create and the Ids.Parse family, so every value
+// object at the HTTP boundary is validated the same way.
 //
 // A reference-type record, not a struct: Photo.Date needs to be optional, and EF Core's
 // ComplexProperty mapping only supports optional (nullable) complex properties for reference
@@ -23,20 +27,15 @@ public record PhotoDate
         Day = day;
     }
 
-    public static bool TryCreate(int year, int? month, int? day, out PhotoDate date, out string? error)
+    public static Result<PhotoDate> Parse(int year, int? month, int? day)
     {
-        error = Validate(year, month, day);
-        if (error is not null)
-        {
-            date = null!;
-            return false;
-        }
-
-        date = new PhotoDate(year, month, day);
-        return true;
+        var error = Validate(year, month, day);
+        return error is null
+            ? Result.Success(new PhotoDate(year, month, day))
+            : Result.Failure<PhotoDate>(ApplicationError.Validation(error));
     }
 
-    public static string? Validate(int year, int? month, int? day)
+    private static string? Validate(int year, int? month, int? day)
     {
         if (year < 1800 || year > DateTime.UtcNow.Year + 1) return "Year is out of range";
         if (month is < 1 or > 12) return "Month is out of range";
