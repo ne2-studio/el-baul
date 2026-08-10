@@ -16,8 +16,11 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
     {
         var users = await dbContext.Users.CountAsync();
         var baules = await dbContext.Baules.CountAsync();
-        var photos = await dbContext.Photos.CountAsync();
-        var photosToday = await dbContext.Photos.CountAsync(p => p.CreatedAt >= todayUtcStart);
+        // Active-only, same rule every other Photos query in the codebase applies (see
+        // PhotoRepository/PhotoListReadModel) — a soft-deleted photo's row survives the delete,
+        // but it shouldn't inflate the count an admin reads as "how many photos exist".
+        var photos = await dbContext.Photos.CountAsync(p => p.Status == PhotoStatus.Active);
+        var photosToday = await dbContext.Photos.CountAsync(p => p.Status == PhotoStatus.Active && p.CreatedAt >= todayUtcStart);
 
         return new AdminDashboardCounts(users, baules, photos, photosToday);
     }
@@ -67,7 +70,9 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
 
+        // Active-only — see GetDashboardCountsAsync's comment.
         var photoCounts = await dbContext.Photos
+            .Where(p => p.Status == PhotoStatus.Active)
             .GroupBy(p => p.BaulId)
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
@@ -106,8 +111,12 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
         var chapters = await dbContext.Chapters.AsNoTracking().Where(a => a.BaulId == baulId).ToListAsync();
 
-        var photoCount = await dbContext.Photos.CountAsync(p => p.BaulId == baulId);
+        // Active-only — see GetDashboardCountsAsync's comment.
+        var photoCount = await dbContext.Photos.CountAsync(p => p.BaulId == baulId && p.Status == PhotoStatus.Active);
 
+        // Deliberately not Active-only, unlike photoCount above: a soft-deleted photo's file is
+        // still in storage (see API-CONVENTIONS.md), so it still counts toward the baúl's actual
+        // storage usage.
         var totalSizeBytes = await dbContext.Photos.Where(p => p.BaulId == baulId).SumAsync(p => p.SizeBytes);
 
         var recuerdoCount = await dbContext.Recuerdos.CountAsync(r => r.BaulId == baulId);

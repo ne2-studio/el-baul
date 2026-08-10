@@ -105,6 +105,44 @@ public class AdminAggregationTests(ElBaulAcceptanceFixture fixture)
         claimedGuestPersona.GetProperty("linkedUserName").GetString().Should().Be("Second Acceptance Test User");
     }
 
+    // Regression coverage for the count-includes-soft-deleted-photos bug: AdminRepository's photo
+    // counts (dashboard, per-baúl list, baúl detail) used to run with no PhotoStatus.Active filter
+    // — the only place in the persistence layer that didn't — so a deleted photo's row, which
+    // survives the soft delete, kept inflating every one of these numbers. totalSizeBytes is the
+    // deliberate exception: the object stays in storage after a soft delete, so it should (and
+    // still does) count toward it.
+    [Fact]
+    public async Task GetDashboard_GetBaules_and_GetBaulDetail_exclude_soft_deleted_photos_from_photo_counts()
+    {
+        using var tokenClient = fixture.CreateOidcTokenClient();
+        using var adminClient = await CreateAuthenticatedClientAsync(tokenClient, ElBaulAcceptanceFixture.OidcAdminUserKey);
+
+        var baulId = await CreateBaulAsync(adminClient, "Baúl de fotos borradas");
+        var chapterId = await CreateChapterAsync(adminClient, baulId, "Capítulo de fotos borradas");
+
+        await UploadPhotoAsync(adminClient, chapterId, "kept.jpg");
+        var deletedPhotoId = await UploadPhotoAsync(adminClient, chapterId, "deleted.jpg");
+
+        var dashboardBefore = await GetJsonAsync(adminClient, "/api/admin/dashboard");
+        var totalPhotosBefore = dashboardBefore.GetProperty("totalPhotos").GetInt32();
+
+        await DeletePhotoAsync(adminClient, deletedPhotoId);
+
+        var dashboardAfter = await GetJsonAsync(adminClient, "/api/admin/dashboard");
+        dashboardAfter.GetProperty("totalPhotos").GetInt32().Should().Be(totalPhotosBefore - 1,
+            "the deleted photo's row survives the soft delete and must not still be counted");
+
+        var baules = await GetJsonAsync(adminClient, "/api/admin/baules");
+        var baulRow = baules.EnumerateArray().Single(b => b.GetProperty("id").GetString() == baulId);
+        baulRow.GetProperty("photoCount").GetInt32().Should().Be(1, "only the kept photo is still active");
+
+        var baulDetail = await GetJsonAsync(adminClient, $"/api/admin/baules/{baulId}");
+        var stats = baulDetail.GetProperty("stats");
+        stats.GetProperty("photos").GetInt32().Should().Be(1);
+        stats.GetProperty("totalSizeBytes").GetInt64().Should().Be(2 * SampleJpegBytes.Length,
+            "unlike photoCount, totalSizeBytes counts the deleted photo too — its file is still in storage");
+    }
+
     private async Task<HttpClient> CreateAuthenticatedClientAsync(FakeOidcTokenClient tokenClient, string userKey)
     {
         var accessToken = await tokenClient.GetAccessTokenAsync(userKey);
@@ -127,7 +165,7 @@ public class AdminAggregationTests(ElBaulAcceptanceFixture fixture)
         return (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
     }
 
-    private static async Task UploadPhotoAsync(HttpClient client, string chapterId, string fileName)
+    private static async Task<string> UploadPhotoAsync(HttpClient client, string chapterId, string fileName)
     {
         using var multipart = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent(SampleJpegBytes);
@@ -136,6 +174,17 @@ public class AdminAggregationTests(ElBaulAcceptanceFixture fixture)
         multipart.Add(new StringContent(Guid.NewGuid().ToString()), "ClientUploadId");
 
         var response = await client.PostAsync($"/api/chapters/{chapterId}/photos", multipart);
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        return (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
+    }
+
+    private static async Task DeletePhotoAsync(HttpClient client, string photoId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/photos/{photoId}")
+        {
+            Content = JsonContent.Create(new { reason = (string?)null })
+        };
+        var response = await client.SendAsync(request);
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
     }
 
