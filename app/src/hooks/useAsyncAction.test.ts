@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { ApiError } from '@/api';
 import { useAsyncAction } from './useAsyncAction';
+
+vi.mock('@sentry/react', () => ({
+  captureException: vi.fn(),
+}));
+
+import * as Sentry from '@sentry/react';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -96,5 +103,26 @@ describe('useAsyncAction concurrency', () => {
 
     const second = await act(() => result.current.run(() => Promise.resolve('two'), { key: 'reused' }));
     expect(second).toEqual({ ok: true, value: 'two' });
+  });
+});
+
+describe('useAsyncAction error reporting', () => {
+  it('reports the thrown error to Sentry on failure', async () => {
+    const { result } = renderHook(() => useAsyncAction());
+    const error = new Error('boom');
+
+    const outcome = await act(() => result.current.run(() => Promise.reject(error)));
+
+    expect(outcome).toEqual({ ok: false, error });
+    expect(Sentry.captureException).toHaveBeenCalledWith(error);
+  });
+
+  it('still reports 401/403 errors to Sentry even though the toast is suppressed', async () => {
+    const { result } = renderHook(() => useAsyncAction());
+    const error = new ApiError(403, 'forbidden', null);
+
+    await act(() => result.current.run(() => Promise.reject(error)));
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(error);
   });
 });

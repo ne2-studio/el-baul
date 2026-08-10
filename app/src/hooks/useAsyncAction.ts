@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import * as Sentry from '@sentry/react';
 import { isForbiddenError, isUnauthorizedError } from '@/api';
 import { useUIStore } from '@/store/uiStore';
 
@@ -41,6 +42,11 @@ export function useAsyncAction() {
         return { ok: true, value };
       } catch (error) {
         console.error(error);
+        // Every call site funnels through this one catch, so this is the single place that
+        // gives production visibility into nearly all frontend failures. Reported unconditionally
+        // (even 401/403, which are still useful signal) — call sites with their own
+        // Sentry.captureException (upload/share flows) tag extra context there before it bubbles here.
+        Sentry.captureException(error);
         // 401 is handled globally (App.tsx redirects to login), not per-call-site — showing
         // this toast too would just flash a confusing "something went wrong" right before it.
         if (!isForbiddenError(error) && !isUnauthorizedError(error)) {
