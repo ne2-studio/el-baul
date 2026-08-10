@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UploadConfirmationScreen } from '@/features/photos/components/UploadConfirmationScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useUIStore } from '@/store/uiStore';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 
@@ -12,10 +13,11 @@ export const UploadConfirmationRoute: React.FC = () => {
   const { baulId, chapterId } = useParams();
   const location = useLocation();
   const { baules, chapters, loosePhotos } = useBaulesStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   const showToastMessage = useUIStore(state => state.showToastMessage);
   const baul = baules.find(b => b.id === baulId);
   const existingChapters = chapters[baulId!] || [];
-  const looseChapterPhotos = loosePhotos[baulId!] || [];
+  const looseChapterPhotos = hydratePhotos(loosePhotos[baulId!], photosById) || [];
   const { currentChapter, basePath, destination } = baulId
     ? resolvePhotoRouteContext({ baulId, chapterId, chapters: existingChapters, loosePhotos: looseChapterPhotos })
     : { currentChapter: undefined, basePath: '', destination: { type: 'none' as const } };

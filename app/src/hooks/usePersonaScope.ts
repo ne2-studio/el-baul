@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
@@ -24,6 +25,7 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
   const auth = useAuth();
   const { run } = useAsyncAction();
   const { personas, personaPhotos } = usePersonasStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   const { baulRecuerdos } = useRecuerdosStore();
 
   const persona = (baulId ? personas[baulId] : undefined)?.find((p) => p.id === personaId);
@@ -75,7 +77,7 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
 
   return {
     persona,
-    photos: personaId ? personaPhotos[personaId] : undefined,
+    photos: personaId ? hydratePhotos(personaPhotos[personaId], photosById) : undefined,
     isLoading,
     loadFailed,
     retry: () => {

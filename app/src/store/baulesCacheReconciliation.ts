@@ -1,11 +1,13 @@
 import { Baul, Chapter, Photo } from '@/types';
 
+// photos/loosePhotos/photoBatchPhotos hold photo ids, not Photo objects — see usePhotosStore
+// for why (it's the canonical source for a photo's own fields; these are membership lists).
 export interface BaulesCacheState {
   baules: Baul[];
   chapters: Record<string, Chapter[]>;
-  photos: Record<string, Photo[]>;
-  loosePhotos: Record<string, Photo[]>;
-  photoBatchPhotos: Record<string, Photo[]>;
+  photos: Record<string, string[]>;
+  loosePhotos: Record<string, string[]>;
+  photoBatchPhotos: Record<string, string[]>;
 }
 
 export function applyUploadedPhotos(
@@ -35,7 +37,7 @@ export function applyUploadedPhotos(
     return {
       photos: {
         ...state.photos,
-        [chapterId]: photosForChapter ?? state.photos[chapterId] ?? [],
+        [chapterId]: photosForChapter ? photosForChapter.map((photo) => photo.id) : (state.photos[chapterId] ?? []),
       },
       chapters: {
         ...state.chapters,
@@ -49,7 +51,7 @@ export function applyUploadedPhotos(
   return {
     loosePhotos: {
       ...state.loosePhotos,
-      [baulId]: [...(state.loosePhotos[baulId] || []), ...uploaded],
+      [baulId]: [...(state.loosePhotos[baulId] || []), ...uploaded.map((photo) => photo.id)],
     },
     baules: fillBaulCover(state.baules, baulId, firstThumbnail),
     chapters: state.chapters,
@@ -70,9 +72,9 @@ export function applyMovedPhotos(
 ): Pick<BaulesCacheState, 'chapters' | 'photos' | 'loosePhotos'> {
   const { baulId, sourceChapterId, targetChapterId, movedPhotoIds, targetPhotos, chaptersForBaul } = params;
   const movedIds = new Set(movedPhotoIds);
-  const sourcePhotos = sourceChapterId ? (state.photos[sourceChapterId] || []) : (state.loosePhotos[baulId] || []);
-  const movedCount = sourcePhotos.filter((photo) => movedIds.has(photo.id)).length;
-  const remainingSourcePhotos = sourcePhotos.filter((photo) => !movedIds.has(photo.id));
+  const sourcePhotoIds = sourceChapterId ? (state.photos[sourceChapterId] || []) : (state.loosePhotos[baulId] || []);
+  const movedCount = sourcePhotoIds.filter((id) => movedIds.has(id)).length;
+  const remainingSourcePhotoIds = sourcePhotoIds.filter((id) => !movedIds.has(id));
   const chapters = chaptersForBaul ?? (state.chapters[baulId] || []).map((chapter) => {
     if (sourceChapterId && chapter.id === sourceChapterId) {
       return { ...chapter, photoCount: Math.max(0, chapter.photoCount - movedCount) };
@@ -90,41 +92,15 @@ export function applyMovedPhotos(
   return {
     photos: {
       ...state.photos,
-      ...(sourceChapterId ? { [sourceChapterId]: remainingSourcePhotos } : {}),
-      [targetChapterId]: targetPhotos,
+      ...(sourceChapterId ? { [sourceChapterId]: remainingSourcePhotoIds } : {}),
+      [targetChapterId]: targetPhotos.map((photo) => photo.id),
     },
     loosePhotos: sourceChapterId
       ? state.loosePhotos
-      : { ...state.loosePhotos, [baulId]: remainingSourcePhotos },
+      : { ...state.loosePhotos, [baulId]: remainingSourcePhotoIds },
     chapters: {
       ...state.chapters,
       [baulId]: chapters,
-    },
-  };
-}
-
-export function applyPhotoDateUpdate(
-  state: BaulesCacheState,
-  params: { baulId: string; chapterId: string | null; updatedPhotos: Photo[] }
-): Pick<BaulesCacheState, 'photos' | 'loosePhotos'> {
-  const { baulId, chapterId, updatedPhotos } = params;
-  const updatedById = new Map(updatedPhotos.map((photo) => [photo.id, photo]));
-
-  if (chapterId) {
-    return {
-      photos: {
-        ...state.photos,
-        [chapterId]: (state.photos[chapterId] || []).map((photo) => updatedById.get(photo.id) || photo),
-      },
-      loosePhotos: state.loosePhotos,
-    };
-  }
-
-  return {
-    photos: state.photos,
-    loosePhotos: {
-      ...state.loosePhotos,
-      [baulId]: (state.loosePhotos[baulId] || []).map((photo) => updatedById.get(photo.id) || photo),
     },
   };
 }
@@ -135,62 +111,6 @@ export function applyCoverUpdate<T extends { id: string; coverPhotoUrl?: string 
   coverPhotoUrl: string
 ): T[] {
   return items.map((item) => (item.id === itemId ? { ...item, coverPhotoUrl } : item));
-}
-
-export function removePhotoFromAllCaches(
-  state: Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'>,
-  photoId: string
-): Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'> {
-  const photos = Object.fromEntries(
-    Object.entries(state.photos).map(([chapterId, chapterPhotos]) => [
-      chapterId,
-      chapterPhotos.filter((photo) => photo.id !== photoId),
-    ])
-  );
-  const loosePhotos = Object.fromEntries(
-    Object.entries(state.loosePhotos).map(([baulId, baulLoosePhotos]) => [
-      baulId,
-      baulLoosePhotos.filter((photo) => photo.id !== photoId),
-    ])
-  );
-  const photoBatchPhotos = Object.fromEntries(
-    Object.entries(state.photoBatchPhotos).map(([batchId, batchPhotos]) => [
-      batchId,
-      batchPhotos.filter((photo) => photo.id !== photoId),
-    ])
-  );
-
-  return { photos, loosePhotos, photoBatchPhotos };
-}
-
-// Sibling of removePhotoFromAllCaches for the "update in place" case (e.g. a date change) —
-// same reasoning: the caller (e.g. changePhotoDate, called from either photo viewer) doesn't
-// necessarily know which chapter/loose/batch slice this photo is cached under, so it searches
-// all of them rather than requiring that context.
-export function updatePhotoInAllCaches(
-  state: Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'>,
-  updatedPhoto: Photo
-): Pick<BaulesCacheState, 'photos' | 'loosePhotos' | 'photoBatchPhotos'> {
-  const photos = Object.fromEntries(
-    Object.entries(state.photos).map(([chapterId, chapterPhotos]) => [
-      chapterId,
-      chapterPhotos.map((photo) => (photo.id === updatedPhoto.id ? updatedPhoto : photo)),
-    ])
-  );
-  const loosePhotos = Object.fromEntries(
-    Object.entries(state.loosePhotos).map(([baulId, baulLoosePhotos]) => [
-      baulId,
-      baulLoosePhotos.map((photo) => (photo.id === updatedPhoto.id ? updatedPhoto : photo)),
-    ])
-  );
-  const photoBatchPhotos = Object.fromEntries(
-    Object.entries(state.photoBatchPhotos).map(([batchId, batchPhotos]) => [
-      batchId,
-      batchPhotos.map((photo) => (photo.id === updatedPhoto.id ? updatedPhoto : photo)),
-    ])
-  );
-
-  return { photos, loosePhotos, photoBatchPhotos };
 }
 
 function fillBaulCover(baules: Baul[], baulId: string, thumbnailUrl?: string): Baul[] {

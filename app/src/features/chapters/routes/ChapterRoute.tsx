@@ -19,6 +19,7 @@ import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadPersonas } from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -63,6 +64,7 @@ export const ChapterRoute: React.FC = () => {
   const { baulId, chapterId } = useParams();
   const auth = useAuth();
   const { photos } = useBaulesStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   // Solo para el badge de recuento del Tabbar y el modal de borrado — ChapterRecuerdosFeedContainer
   // lee los datos completos él mismo.
   const { chapterRecuerdos } = useRecuerdosStore();
@@ -150,7 +152,7 @@ export const ChapterRoute: React.FC = () => {
     }
   }
 
-  const currentPhotos = chapterId ? (photos[chapterId] || []) : (loosePhotos || []);
+  const currentPhotos = chapterId ? (hydratePhotos(photos[chapterId], photosById) || []) : (loosePhotos || []);
   const { currentChapter, basePath, apiChapterId } = resolvePhotoRouteContext({
     baulId: baul.id,
     chapterId,

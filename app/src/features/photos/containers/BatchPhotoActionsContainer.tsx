@@ -42,7 +42,7 @@ export function BatchPhotoActionsContainer({
   };
 
   const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
-    const result = await run(() => changePhotoDateBatch(baulId, chapterId, photoIds, date), {
+    const result = await run(() => changePhotoDateBatch(baulId, photoIds, date), {
       successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
       errorMessage: 'Error al cambiar la fecha',
     });

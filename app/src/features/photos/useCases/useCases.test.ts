@@ -11,6 +11,8 @@ vi.mock('@/api', () => ({
     baules: {
       setCover: vi.fn(),
       getRemovalRequests: vi.fn(),
+      approveRemovalRequest: vi.fn(),
+      rejectRemovalRequest: vi.fn(),
     },
     chapters: {
       create: vi.fn(),
@@ -21,6 +23,8 @@ vi.mock('@/api', () => ({
       upload: vi.fn(),
       getAll: vi.fn(),
       move: vi.fn(),
+      delete: vi.fn(),
+      changeDate: vi.fn(),
     },
     photoBatches: {
       getPhotos: vi.fn(),
@@ -32,7 +36,17 @@ import * as Sentry from '@sentry/react';
 import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { uploadPhotos, uploadPhotosWithChapter, movePhotos, loadRemovalRequests, loadPhotoBatchPhotos } from './index';
+import { usePhotosStore } from '@/store/usePhotosStore';
+import {
+  uploadPhotos,
+  uploadPhotosWithChapter,
+  movePhotos,
+  loadRemovalRequests,
+  loadPhotoBatchPhotos,
+  deletePhoto,
+  changePhotoDate,
+  removePhoto,
+} from './index';
 import { UploadItem } from '@/features/photos/uploadFlow';
 import { createChapter } from '@/features/chapters/useCases';
 
@@ -104,6 +118,7 @@ describe('photos useCases uploads', () => {
 
   beforeEach(() => {
     useBaulesStore.setState({ baules: [], chapters: {}, photos: {}, loosePhotos: {}, isLoading: false });
+    usePhotosStore.setState({ photosById: {} });
     vi.clearAllMocks();
   });
 
@@ -141,10 +156,11 @@ describe('photos useCases uploads', () => {
       expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
 
       const state = useBaulesStore.getState();
-      expect(state.photos[chapterId]).toEqual([photo1, photo2]);
+      expect(state.photos[chapterId]).toEqual([photo1.id, photo2.id]);
       expect(state.chapters[baulId][0].photoCount).toBe(2);
       expect(state.chapters[baulId][0].coverPhotoUrl).toBe(photo1.thumbnailUrl);
       expect(state.baules[0].coverPhotoUrl).toBe(photo1.thumbnailUrl);
+      expect(usePhotosStore.getState().photosById).toEqual({ [photo1.id]: photo1, [photo2.id]: photo2 });
     });
 
     it('keeps a per-file failure from aborting the rest, and still reconciles from the server', async () => {
@@ -174,7 +190,7 @@ describe('photos useCases uploads', () => {
         { clientUploadId: 'fails', error: 'network down' },
       ]);
       expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), { tags: { phase: 'upload-request' } });
-      expect(useBaulesStore.getState().photos[chapterId]).toEqual([photo1]);
+      expect(useBaulesStore.getState().photos[chapterId]).toEqual([photo1.id]);
     });
 
     it('tags unreadable files separately, never calls the upload API for them, and still uploads the rest', async () => {
@@ -225,10 +241,12 @@ describe('photos useCases uploads', () => {
 
   describe('uploadPhotos (loose, chapterId null)', () => {
     it('appends uploaded photos to loosePhotos and fills in the baúl cover, without touching chapters', async () => {
+      const existing = newPhoto('existing');
       useBaulesStore.setState({
         baules: [newBaul()],
-        loosePhotos: { [baulId]: [newPhoto('existing')] },
+        loosePhotos: { [baulId]: [existing.id] },
       });
+      usePhotosStore.getState().upsertPhotos([existing]);
 
       const photo1 = newPhoto('photo-1');
       vi.mocked(api.photos.upload).mockResolvedValueOnce(photo1);
@@ -238,7 +256,7 @@ describe('photos useCases uploads', () => {
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined, 'batch-1');
       const state = useBaulesStore.getState();
-      expect(state.loosePhotos[baulId]).toEqual([newPhoto('existing'), photo1]);
+      expect(state.loosePhotos[baulId]).toEqual([existing.id, photo1.id]);
       expect(state.baules[0].coverPhotoUrl).toBe(photo1.thumbnailUrl);
       expect(state.chapters[baulId]).toBeUndefined();
       expect(api.photos.getAll).not.toHaveBeenCalled();
@@ -261,7 +279,7 @@ describe('photos useCases uploads', () => {
         { clientUploadId: 'ok', photo: photo1 },
         { clientUploadId: 'fails', error: 'network down' },
       ]);
-      expect(useBaulesStore.getState().loosePhotos[baulId]).toEqual([photo1]);
+      expect(useBaulesStore.getState().loosePhotos[baulId]).toEqual([photo1.id]);
     });
   });
 
@@ -344,6 +362,7 @@ describe('photos useCases movePhotos', () => {
 
   beforeEach(() => {
     useBaulesStore.setState({ baules: [], chapters: {}, photos: {}, loosePhotos: {}, isLoading: false });
+    usePhotosStore.setState({ photosById: {} });
     vi.clearAllMocks();
   });
 
@@ -357,8 +376,9 @@ describe('photos useCases movePhotos', () => {
           newChapter(targetChapterId, { photoCount: 0 }),
         ],
       },
-      photos: { [sourceChapterId]: [photoA, photoB] },
+      photos: { [sourceChapterId]: [photoA.id, photoB.id] },
     });
+    usePhotosStore.getState().upsertPhotos([photoA, photoB]);
 
     vi.mocked(api.photos.move)
       .mockResolvedValueOnce(photoA)
@@ -379,8 +399,8 @@ describe('photos useCases movePhotos', () => {
     expect(api.photos.getAll).toHaveBeenCalledWith(targetChapterId);
 
     const state = useBaulesStore.getState();
-    expect(state.photos[sourceChapterId]).toEqual([photoB]);
-    expect(state.photos[targetChapterId]).toEqual([photoA]);
+    expect(state.photos[sourceChapterId]).toEqual([photoB.id]);
+    expect(state.photos[targetChapterId]).toEqual([photoA.id]);
 
     const chapters = state.chapters[baulId];
     expect(chapters.find((c) => c.id === sourceChapterId)?.photoCount).toBe(1);
@@ -394,8 +414,9 @@ describe('photos useCases movePhotos', () => {
     const photoB = newPhoto('photo-b');
     useBaulesStore.setState({
       chapters: { [baulId]: [newChapter(sourceChapterId, { photoCount: 2 })] },
-      photos: { [sourceChapterId]: [photoA, photoB] },
+      photos: { [sourceChapterId]: [photoA.id, photoB.id] },
     });
+    usePhotosStore.getState().upsertPhotos([photoA, photoB]);
 
     vi.mocked(api.photos.move).mockRejectedValue(new Error('boom'));
 
@@ -404,7 +425,7 @@ describe('photos useCases movePhotos', () => {
     ).rejects.toThrow('No se pudo mover ninguna de las 2 fotos');
 
     expect(api.photos.getAll).not.toHaveBeenCalled();
-    expect(useBaulesStore.getState().photos[sourceChapterId]).toEqual([photoA, photoB]);
+    expect(useBaulesStore.getState().photos[sourceChapterId]).toEqual([photoA.id, photoB.id]);
   });
 
   it('reconciles loosePhotos instead of a chapter cache when moving out of fotos sueltas', async () => {
@@ -412,8 +433,9 @@ describe('photos useCases movePhotos', () => {
     const photoB = newPhoto('photo-b');
     useBaulesStore.setState({
       chapters: { [baulId]: [newChapter(targetChapterId, { photoCount: 0 })] },
-      loosePhotos: { [baulId]: [photoA, photoB] },
+      loosePhotos: { [baulId]: [photoA.id, photoB.id] },
     });
+    usePhotosStore.getState().upsertPhotos([photoA, photoB]);
 
     vi.mocked(api.photos.move).mockResolvedValue(photoA);
     vi.mocked(api.photos.getAll).mockResolvedValue([photoA]);
@@ -424,8 +446,8 @@ describe('photos useCases movePhotos', () => {
     await movePhotos(baulId, null, [photoA.id], targetChapterId);
 
     const state = useBaulesStore.getState();
-    expect(state.loosePhotos[baulId]).toEqual([photoB]);
-    expect(state.photos[targetChapterId]).toEqual([photoA]);
+    expect(state.loosePhotos[baulId]).toEqual([photoB.id]);
+    expect(state.photos[targetChapterId]).toEqual([photoA.id]);
     expect(state.chapters[baulId].find((c) => c.id === targetChapterId)?.photoCount).toBe(1);
   });
 
@@ -458,8 +480,9 @@ describe('photos useCases movePhotos', () => {
         }),
       ],
       chapters: { [baulId]: [] },
-      loosePhotos: { [baulId]: [photoA] },
+      loosePhotos: { [baulId]: [photoA.id] },
     });
+    usePhotosStore.getState().upsertPhotos([photoA]);
 
     vi.mocked(api.chapters.create).mockResolvedValue(createdChapter);
     vi.mocked(api.photos.move).mockResolvedValue(photoA);
@@ -523,23 +546,114 @@ describe('photos useCases loadPhotoBatchPhotos', () => {
 
   beforeEach(() => {
     useBaulesStore.setState({ photoBatchPhotos: {} });
+    usePhotosStore.setState({ photosById: {} });
     vi.clearAllMocks();
   });
 
-  it('fetches and caches a batch photos under its batchId, without touching other batches', async () => {
+  it('fetches and caches a batch photo ids under its batchId, without touching other batches', async () => {
     const photo = new Photo({
       id: 'photo-1', baulId, thumbnailUrl: 'thumb', fullUrl: 'full', uploadedBy: 'user-1',
       createdAt: new Date().toISOString(), recuerdoCount: 0,
     });
-    useBaulesStore.setState({ photoBatchPhotos: { 'other-batch': [photo] } });
+    const otherPhoto = new Photo({
+      id: 'other-photo', baulId, thumbnailUrl: 'thumb2', fullUrl: 'full2', uploadedBy: 'user-1',
+      createdAt: new Date().toISOString(), recuerdoCount: 0,
+    });
+    useBaulesStore.setState({ photoBatchPhotos: { 'other-batch': [otherPhoto.id] } });
+    usePhotosStore.getState().upsertPhotos([otherPhoto]);
     vi.mocked(api.photoBatches.getPhotos).mockResolvedValue([photo]);
 
     await loadPhotoBatchPhotos(baulId, batchId);
 
     expect(api.photoBatches.getPhotos).toHaveBeenCalledWith(baulId, batchId);
     expect(useBaulesStore.getState().photoBatchPhotos).toEqual({
-      'other-batch': [photo],
-      [batchId]: [photo],
+      'other-batch': [otherPhoto.id],
+      [batchId]: [photo.id],
     });
+    expect(usePhotosStore.getState().photosById[photo.id]).toEqual(photo);
+  });
+});
+
+// Regression coverage for the photo cache ownership fix: deletePhoto/changePhotoDate/removePhoto
+// used to fan out across useBaulesStore.removePhotoFromCaches/updatePhotoInCaches *and*
+// usePersonasStore's equivalents, each scanning every cached collection for the photo id. They
+// now make a single write to usePhotosStore instead — this suite pins that down directly
+// (previously these three functions were only exercised indirectly through container tests with
+// useCases mocked out, so the fan-out-vs-single-write behavior itself had no test of its own).
+describe('photos useCases deletePhoto/changePhotoDate/removePhoto', () => {
+  const baulId = 'baul-1';
+  const photoId = 'photo-1';
+
+  function newChapter(overrides: Partial<ConstructorParameters<typeof Chapter>[0]> = {}): Chapter {
+    const now = new Date().toISOString();
+    return new Chapter({
+      id: 'chapter-1',
+      baulId,
+      name: 'Capítulo',
+      photoCount: 1,
+      createdAt: now,
+      updatedAt: now,
+      recuerdoCount: 0,
+      undatedPhotoCount: 0,
+      ...overrides,
+    });
+  }
+
+  function newPhoto(overrides: Partial<ConstructorParameters<typeof Photo>[0]> = {}): Photo {
+    return new Photo({
+      id: photoId,
+      baulId,
+      thumbnailUrl: 'thumb',
+      fullUrl: 'full',
+      uploadedBy: 'user-1',
+      createdAt: new Date().toISOString(),
+      recuerdoCount: 0,
+      ...overrides,
+    });
+  }
+
+  beforeEach(() => {
+    useBaulesStore.setState({ chapters: {}, photos: {}, loosePhotos: {}, photoBatchPhotos: {} });
+    usePersonasStore.setState({ removalRequests: {}, personaPhotos: {} });
+    usePhotosStore.setState({ photosById: {} });
+    vi.clearAllMocks();
+  });
+
+  it('deletePhoto removes the photo from usePhotosStore and refetches chapters', async () => {
+    usePhotosStore.getState().upsertPhotos([newPhoto()]);
+    vi.mocked(api.chapters.getAll).mockResolvedValue([newChapter({ photoCount: 0 })]);
+
+    await deletePhoto(baulId, photoId, 'blurry');
+
+    expect(api.photos.delete).toHaveBeenCalledWith(photoId, 'blurry');
+    expect(usePhotosStore.getState().photosById[photoId]).toBeUndefined();
+    expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
+    expect(useBaulesStore.getState().chapters[baulId][0].photoCount).toBe(0);
+  });
+
+  it('changePhotoDate upserts the updated photo into usePhotosStore and refetches chapters', async () => {
+    const updated = newPhoto({ dateYear: 1990, dateMonth: 6, dateDay: 1 });
+    usePhotosStore.getState().upsertPhotos([newPhoto()]);
+    vi.mocked(api.photos.changeDate).mockResolvedValue(updated);
+    vi.mocked(api.chapters.getAll).mockResolvedValue([newChapter()]);
+
+    await changePhotoDate(baulId, photoId, { year: 1990, month: 6, day: 1 });
+
+    expect(usePhotosStore.getState().photosById[photoId]).toEqual(updated);
+    expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
+  });
+
+  it('removePhoto approves the removal request, removes the photo from usePhotosStore, and drops the request', async () => {
+    const requestId = 'request-1';
+    usePhotosStore.getState().upsertPhotos([newPhoto()]);
+    usePersonasStore.setState({
+      removalRequests: { [baulId]: [{ id: requestId } as never, { id: 'other-request' } as never] },
+    });
+
+    await removePhoto(baulId, requestId, photoId);
+
+    expect(api.baules.approveRemovalRequest).toHaveBeenCalledWith(baulId, requestId);
+    expect(usePhotosStore.getState().photosById[photoId]).toBeUndefined();
+    expect(usePersonasStore.getState().removalRequests[baulId]).toEqual([{ id: 'other-request' }]);
   });
 });

@@ -4,6 +4,7 @@ import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 
 interface PersonaFotosTabContainerProps {
   personaId: string;
@@ -18,7 +19,8 @@ interface PersonaFotosTabContainerProps {
 // useBaulScope — ver la regla de containers/ en docs/architecture/frontend.md.
 export function PersonaFotosTabContainer({ personaId, onSelectPhoto }: PersonaFotosTabContainerProps) {
   const { personaPhotos } = usePersonasStore();
-  const photos = personaPhotos[personaId] || [];
+  const photosById = usePhotosStore((state) => state.photosById);
+  const photos = hydratePhotos(personaPhotos[personaId], photosById) || [];
 
   if (photos.length === 0) {
     return (

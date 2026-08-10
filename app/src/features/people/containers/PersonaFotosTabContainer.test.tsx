@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 import { PersonaFotosTabContainer } from './PersonaFotosTabContainer';
 
 const personaId = 'p1';
@@ -15,6 +16,7 @@ function photo(overrides: Partial<Photo> = {}): Photo {
 describe('PersonaFotosTabContainer', () => {
   beforeEach(() => {
     usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    usePhotosStore.getState().reset();
   });
 
   it('renders the empty state when there are no photos', () => {
@@ -34,7 +36,8 @@ describe('PersonaFotosTabContainer', () => {
   it('renders the photos and calls onSelectPhoto on click', async () => {
     const user = userEvent.setup();
     const onSelectPhoto = vi.fn();
-    usePersonasStore.setState({ personaPhotos: { [personaId]: [photo()] } });
+    usePhotosStore.getState().upsertPhotos([photo()]);
+    usePersonasStore.setState({ personaPhotos: { [personaId]: [photo().id] } });
 
     render(<PersonaFotosTabContainer personaId={personaId} onSelectPhoto={onSelectPhoto} />);
     await user.click(screen.getByAltText('Foto'));

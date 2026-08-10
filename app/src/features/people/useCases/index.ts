@@ -1,6 +1,7 @@
 import { AvatarCrop, api } from '@/api';
 import { BaulRole, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 
 // Its only caller is PersonasTabContainer (features/people/containers) — moved here from
 // features/baules/useCases when that container took over the baúl's Personas tab.
@@ -18,7 +19,10 @@ export async function loadPersonas(baulId: string): Promise<void> {
 
 export async function loadPersonaPhotos(baulId: string, personaId: string): Promise<void> {
   const photos = await api.baules.getPersonaPhotos(baulId, personaId);
-  usePersonasStore.setState((state) => ({ personaPhotos: { ...state.personaPhotos, [personaId]: photos } }));
+  usePhotosStore.getState().upsertPhotos(photos);
+  usePersonasStore.setState((state) => ({
+    personaPhotos: { ...state.personaPhotos, [personaId]: photos.map((photo) => photo.id) },
+  }));
 }
 
 export async function updatePersona(baulId: string, personaId: string, name: string, nickname: string): Promise<void> {
@@ -54,9 +58,10 @@ export async function uploadPersonaAvatar(baulId: string, personaId: string, fil
 
 export async function setPersonaAvatarPhoto(baulId: string, personaId: string, photo: Photo, crop: AvatarCrop): Promise<void> {
   const updated = await api.baules.setPersonaAvatarPhoto(baulId, personaId, photo.id, crop);
+  usePhotosStore.getState().upsertPhotos([photo]);
   usePersonasStore.setState((state) => {
-    const currentPhotos = state.personaPhotos[personaId] || [];
-    const hasPhoto = currentPhotos.some((p) => p.id === photo.id);
+    const currentPhotoIds = state.personaPhotos[personaId] || [];
+    const hasPhoto = currentPhotoIds.includes(photo.id);
     return {
       personas: {
         ...state.personas,
@@ -64,7 +69,7 @@ export async function setPersonaAvatarPhoto(baulId: string, personaId: string, p
       },
       personaPhotos: hasPhoto
         ? state.personaPhotos
-        : { ...state.personaPhotos, [personaId]: [photo, ...currentPhotos] },
+        : { ...state.personaPhotos, [personaId]: [photo.id, ...currentPhotoIds] },
     };
   });
 }

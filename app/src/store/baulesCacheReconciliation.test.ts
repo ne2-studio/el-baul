@@ -3,10 +3,7 @@ import { Baul, Chapter, Photo } from '@/types';
 import {
   applyCoverUpdate,
   applyMovedPhotos,
-  applyPhotoDateUpdate,
   applyUploadedPhotos,
-  removePhotoFromAllCaches,
-  updatePhotoInAllCaches,
   type BaulesCacheState,
 } from './baulesCacheReconciliation';
 
@@ -71,7 +68,7 @@ function newPhoto(id: string, overrides: Partial<ConstructorParameters<typeof Ph
 
 describe('baules cache reconciliation', () => {
   describe('applyUploadedPhotos', () => {
-    it('replaces the chapter photo cache and fills unset baúl/chapter covers', () => {
+    it('replaces the chapter photo id cache and fills unset baúl/chapter covers', () => {
       const photo1 = newPhoto('photo-1');
       const photo2 = newPhoto('photo-2');
       const state = cacheState({
@@ -86,31 +83,43 @@ describe('baules cache reconciliation', () => {
         photosForChapter: [photo1, photo2],
       });
 
-      expect(next.photos[chapterId]).toEqual([photo1, photo2]);
+      expect(next.photos[chapterId]).toEqual([photo1.id, photo2.id]);
       expect(next.chapters[baulId][0].photoCount).toBe(2);
       expect(next.chapters[baulId][0].coverPhotoUrl).toBe(photo1.thumbnailUrl);
       expect(next.baules[0].coverPhotoUrl).toBe(photo1.thumbnailUrl);
     });
 
-    it('appends loose uploads without touching chapters', () => {
-      const existing = newPhoto('existing');
+    it('keeps the existing chapter photo ids when no refetched list is given', () => {
+      const photo1 = newPhoto('photo-1');
+      const state = cacheState({
+        baules: [newBaul()],
+        chapters: { [baulId]: [newChapter(chapterId, { photoCount: 0 })] },
+        photos: { [chapterId]: ['already-there'] },
+      });
+
+      const next = applyUploadedPhotos(state, { baulId, chapterId, uploaded: [photo1] });
+
+      expect(next.photos[chapterId]).toEqual(['already-there']);
+    });
+
+    it('appends loose upload ids without touching chapters', () => {
       const uploaded = newPhoto('uploaded');
       const state = cacheState({
         baules: [newBaul()],
         chapters: { [baulId]: [newChapter(chapterId)] },
-        loosePhotos: { [baulId]: [existing] },
+        loosePhotos: { [baulId]: ['existing'] },
       });
 
       const next = applyUploadedPhotos(state, { baulId, chapterId: null, uploaded: [uploaded] });
 
-      expect(next.loosePhotos[baulId]).toEqual([existing, uploaded]);
+      expect(next.loosePhotos[baulId]).toEqual(['existing', uploaded.id]);
       expect(next.chapters).toBe(state.chapters);
       expect(next.baules[0].coverPhotoUrl).toBe(uploaded.thumbnailUrl);
     });
   });
 
   describe('applyMovedPhotos', () => {
-    it('removes moved photos from a source chapter and reconciles the target from server photos', () => {
+    it('removes moved photo ids from a source chapter and reconciles the target from server photos', () => {
       const moved = newPhoto('moved');
       const failed = newPhoto('failed');
       const targetPhotos = [moved, newPhoto('already-target')];
@@ -121,7 +130,7 @@ describe('baules cache reconciliation', () => {
             newChapter(targetChapterId, { photoCount: 0 }),
           ],
         },
-        photos: { [sourceChapterId]: [moved, failed] },
+        photos: { [sourceChapterId]: [moved.id, failed.id] },
       });
 
       const next = applyMovedPhotos(state, {
@@ -132,19 +141,19 @@ describe('baules cache reconciliation', () => {
         targetPhotos,
       });
 
-      expect(next.photos[sourceChapterId]).toEqual([failed]);
-      expect(next.photos[targetChapterId]).toEqual(targetPhotos);
+      expect(next.photos[sourceChapterId]).toEqual([failed.id]);
+      expect(next.photos[targetChapterId]).toEqual(targetPhotos.map((photo) => photo.id));
       expect(next.chapters[baulId].find((chapter) => chapter.id === sourceChapterId)?.photoCount).toBe(1);
       expect(next.chapters[baulId].find((chapter) => chapter.id === targetChapterId)?.photoCount).toBe(2);
       expect(next.chapters[baulId].find((chapter) => chapter.id === targetChapterId)?.coverPhotoUrl).toBe(moved.thumbnailUrl);
     });
 
-    it('removes moved photos from loose photos when the source is virtual', () => {
+    it('removes moved photo ids from loose photos when the source is virtual', () => {
       const moved = newPhoto('moved');
       const remaining = newPhoto('remaining');
       const state = cacheState({
         chapters: { [baulId]: [newChapter(targetChapterId)] },
-        loosePhotos: { [baulId]: [moved, remaining] },
+        loosePhotos: { [baulId]: [moved.id, remaining.id] },
       });
 
       const next = applyMovedPhotos(state, {
@@ -155,26 +164,9 @@ describe('baules cache reconciliation', () => {
         targetPhotos: [moved],
       });
 
-      expect(next.loosePhotos[baulId]).toEqual([remaining]);
-      expect(next.photos[targetChapterId]).toEqual([moved]);
+      expect(next.loosePhotos[baulId]).toEqual([remaining.id]);
+      expect(next.photos[targetChapterId]).toEqual([moved.id]);
     });
-  });
-
-  it('applyPhotoDateUpdate replaces matching photos in chapter and loose caches', () => {
-    const original = newPhoto('photo', { dateYear: 1980 });
-    const updated = newPhoto('photo', { dateYear: 1981, dateMonth: 5 });
-
-    expect(applyPhotoDateUpdate(cacheState({ photos: { [chapterId]: [original] } }), {
-      baulId,
-      chapterId,
-      updatedPhotos: [updated],
-    }).photos[chapterId][0].date).toEqual({ year: 1981, month: 5 });
-
-    expect(applyPhotoDateUpdate(cacheState({ loosePhotos: { [baulId]: [original] } }), {
-      baulId,
-      chapterId: null,
-      updatedPhotos: [updated],
-    }).loosePhotos[baulId][0].date).toEqual({ year: 1981, month: 5 });
   });
 
   it('applyCoverUpdate changes only the requested entity', () => {
@@ -185,38 +177,5 @@ describe('baules cache reconciliation', () => {
       first,
       { ...second, coverPhotoUrl: 'new' },
     ]);
-  });
-
-  it('removePhotoFromAllCaches removes a photo wherever it is cached, including upload batches', () => {
-    const removed = newPhoto('removed');
-    const kept = newPhoto('kept');
-
-    const next = removePhotoFromAllCaches({
-      photos: { [chapterId]: [removed, kept], other: [removed] },
-      loosePhotos: { [baulId]: [removed], otherBaul: [kept] },
-      photoBatchPhotos: { 'batch-1': [removed, kept] },
-    }, removed.id);
-
-    expect(next.photos).toEqual({ [chapterId]: [kept], other: [] });
-    expect(next.loosePhotos).toEqual({ [baulId]: [], otherBaul: [kept] });
-    expect(next.photoBatchPhotos).toEqual({ 'batch-1': [kept] });
-  });
-
-  it('updatePhotoInAllCaches updates a photo wherever it is cached, including upload batches', () => {
-    const original = newPhoto('photo', { dateYear: 1980 });
-    const updated = newPhoto('photo', { dateYear: 1981, dateMonth: 5 });
-    const untouched = newPhoto('other');
-
-    const next = updatePhotoInAllCaches({
-      photos: { [chapterId]: [original, untouched], other: [original] },
-      loosePhotos: { [baulId]: [original], otherBaul: [untouched] },
-      photoBatchPhotos: { 'batch-1': [original, untouched] },
-    }, updated);
-
-    expect(next.photos[chapterId]).toEqual([updated, untouched]);
-    expect(next.photos.other).toEqual([updated]);
-    expect(next.loosePhotos[baulId]).toEqual([updated]);
-    expect(next.loosePhotos.otherBaul).toEqual([untouched]);
-    expect(next.photoBatchPhotos['batch-1']).toEqual([updated, untouched]);
   });
 });

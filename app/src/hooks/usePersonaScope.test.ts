@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 
 vi.mock('react-oidc-context', () => ({
@@ -31,9 +32,19 @@ function photo(overrides: Partial<Photo> = {}): Photo {
   return { id: 'photo-1', thumbnailUrl: '/thumb.jpg', fullUrl: '/full.jpg', recuerdoCount: 0, ...overrides } as Photo;
 }
 
+// Seeds both halves of the normalized photo cache: the persona's id list (usePersonasStore) and
+// the canonical objects it resolves against (usePhotosStore) — see usePhotosStore.hydratePhotos.
+function seedPersonaPhotos(forPersonaId: string, photos: Photo[]): void {
+  usePhotosStore.getState().upsertPhotos(photos);
+  usePersonasStore.setState((state) => ({
+    personaPhotos: { ...state.personaPhotos, [forPersonaId]: photos.map((p) => p.id) },
+  }));
+}
+
 describe('usePersonaScope', () => {
   beforeEach(() => {
     usePersonasStore.getState().reset();
+    usePhotosStore.getState().reset();
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(loadPersonas).mockReset().mockResolvedValue(undefined);
@@ -59,7 +70,7 @@ describe('usePersonaScope', () => {
       usePersonasStore.setState({ personas: { [baulId]: [persona] } });
     }));
     vi.mocked(loadPersonaPhotos).mockImplementation(() => Promise.resolve().then(() => {
-      usePersonasStore.setState({ personaPhotos: { [personaId]: [photo()] } });
+      seedPersonaPhotos(personaId, [photo()]);
     }));
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
@@ -88,7 +99,8 @@ describe('usePersonaScope', () => {
   });
 
   it('does not refetch anything once everything is already cached', async () => {
-    usePersonasStore.setState({ personas: { [baulId]: [persona] }, personaPhotos: { [personaId]: [photo()] } });
+    usePersonasStore.setState({ personas: { [baulId]: [persona] } });
+    seedPersonaPhotos(personaId, [photo()]);
     useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
@@ -113,7 +125,7 @@ describe('usePersonaScope', () => {
     expect(result.current.isLoading).toBe(false);
 
     vi.mocked(loadPersonaPhotos).mockImplementationOnce(async () => {
-      usePersonasStore.setState({ personaPhotos: { [personaId]: [photo()] } });
+      seedPersonaPhotos(personaId, [photo()]);
     });
 
     await act(async () => {
@@ -152,13 +164,13 @@ describe('usePersonaScope', () => {
       if (pId === personaA) {
         return new Promise<void>((resolve) => {
           resolveA = () => {
-            usePersonasStore.setState((state) => ({ personaPhotos: { ...state.personaPhotos, [personaA]: [photo()] } }));
+            seedPersonaPhotos(personaA, [photo()]);
             resolve();
           };
         });
       }
       return Promise.resolve().then(() => {
-        usePersonasStore.setState((state) => ({ personaPhotos: { ...state.personaPhotos, [pId]: [photo()] } }));
+        seedPersonaPhotos(pId, [photo()]);
       });
     });
 

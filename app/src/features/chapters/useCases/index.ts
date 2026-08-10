@@ -2,8 +2,9 @@ import { api } from '@/api';
 import { Chapter, PhotoDate } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 import { clearChapterRecuerdos } from '@/features/memories/useCases';
-import { applyCoverUpdate, applyPhotoDateUpdate } from '@/store/baulesCacheReconciliation';
+import { applyCoverUpdate } from '@/store/baulesCacheReconciliation';
 
 // No hay estado que actualizar: la cuadrícula de fotos no muestra chips de personas
 // etiquetadas (solo el visor de una foto lo hace, vía taggedPersonas).
@@ -22,12 +23,11 @@ export async function createChapter(baulId: string, name: string): Promise<Chapt
 
 export async function changePhotoDateBatch(
   baulId: string,
-  chapterId: string | null,
   photoIds: string[],
   date: PhotoDate
 ): Promise<void> {
   const updated = await api.photos.changeDateBatch(photoIds, date);
-  useBaulesStore.setState((state) => applyPhotoDateUpdate(state, { baulId, chapterId, updatedPhotos: updated }));
+  usePhotosStore.getState().upsertPhotos(updated);
 
   const chapters = await api.chapters.getAll(baulId);
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
@@ -88,8 +88,9 @@ export async function deleteChapter(baulId: string, chapterId: string): Promise<
     api.baules.getLoosePhotos(baulId),
     api.recuerdos.getAllByBaul(baulId),
   ]);
+  usePhotosStore.getState().upsertPhotos(loosePhotos);
   useBaulesStore.setState((state) => ({
-    loosePhotos: { ...state.loosePhotos, [baulId]: loosePhotos },
+    loosePhotos: { ...state.loosePhotos, [baulId]: loosePhotos.map((photo) => photo.id) },
   }));
   useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [baulId]: baulRecuerdos } }));
 }

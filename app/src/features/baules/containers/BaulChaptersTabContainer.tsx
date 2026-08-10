@@ -10,6 +10,7 @@ import { ChapterCard } from '@/features/baules/components/ChapterCard';
 import { makeLooseChapterView } from '@/features/baules/components/looseChapterView';
 import { Chapter } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { createChapter } from '@/features/chapters/useCases';
 
@@ -26,11 +27,12 @@ interface BaulChaptersTabContainerProps {
 export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChaptersTabContainerProps) {
   const navigate = useNavigate();
   const { chapters, loosePhotos } = useBaulesStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   const { run, isPending } = useAsyncAction();
   const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
 
   const baulChapters = chapters[baulId] || [];
-  const baulLoosePhotos = loosePhotos[baulId] || [];
+  const baulLoosePhotos = hydratePhotos(loosePhotos[baulId], photosById) || [];
   const looseChapter = makeLooseChapterView(baulLoosePhotos);
 
   const handleCreateChapter = async (name: string) => {

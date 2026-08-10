@@ -3,6 +3,7 @@ import { api } from '@/api';
 import { Photo, PhotoDate } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 import { PhotoUploadDestination, UploadItem, UploadItemResult } from '@/features/photos/uploadFlow';
 import {
   applyMovedPhotos,
@@ -35,8 +36,7 @@ export async function loadRemovalRequests(baulId: string): Promise<void> {
 
 export async function removePhoto(baulId: string, requestId: string, photoId: string): Promise<void> {
   await api.baules.approveRemovalRequest(baulId, requestId);
-  useBaulesStore.getState().removePhotoFromCaches(photoId);
-  usePersonasStore.getState().removePhotoFromCaches(photoId);
+  usePhotosStore.getState().removePhoto(photoId);
   usePersonasStore.setState((state) => ({
     removalRequests: {
       ...state.removalRequests,
@@ -74,19 +74,22 @@ export async function confirmPhotoHasNoPersonas(photoId: string): Promise<void> 
 
 export async function loadChapterPhotos(chapterId: string): Promise<void> {
   const photos = await api.photos.getAll(chapterId);
-  useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: photos } }));
+  usePhotosStore.getState().upsertPhotos(photos);
+  useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: photos.map((photo) => photo.id) } }));
 }
 
 export async function loadLoosePhotos(baulId: string): Promise<void> {
   const photos = await api.baules.getLoosePhotos(baulId);
-  useBaulesStore.setState((state) => ({ loosePhotos: { ...state.loosePhotos, [baulId]: photos } }));
+  usePhotosStore.getState().upsertPhotos(photos);
+  useBaulesStore.setState((state) => ({ loosePhotos: { ...state.loosePhotos, [baulId]: photos.map((photo) => photo.id) } }));
 }
 
 // One upload batch's own photos — backs the feed card's grid/gallery drill-down (see
 // PhotoBatchGridRoute/PhotoBatchViewerRoute).
 export async function loadPhotoBatchPhotos(baulId: string, batchId: string): Promise<void> {
   const photos = await api.photoBatches.getPhotos(baulId, batchId);
-  useBaulesStore.setState((state) => ({ photoBatchPhotos: { ...state.photoBatchPhotos, [batchId]: photos } }));
+  usePhotosStore.getState().upsertPhotos(photos);
+  useBaulesStore.setState((state) => ({ photoBatchPhotos: { ...state.photoBatchPhotos, [batchId]: photos.map((photo) => photo.id) } }));
 }
 
 export async function uploadPhotos(
@@ -125,6 +128,7 @@ export async function uploadPhotos(
   }
 
   if (uploaded.length > 0) {
+    usePhotosStore.getState().upsertPhotos(uploaded);
     if (chapterId) {
       // Re-fetch the chapter's full photo list from the server rather than appending
       // client-side — the chapter may not have been loaded into the store yet (e.g.
@@ -140,6 +144,7 @@ export async function uploadPhotos(
         api.photos.getAll(chapterId),
         api.chapters.getAll(baulId),
       ]);
+      usePhotosStore.getState().upsertPhotos(photosForChapter);
       useBaulesStore.setState((state) => applyUploadedPhotos(state, { baulId, chapterId, uploaded, photosForChapter, chaptersForBaul }));
     } else {
       useBaulesStore.setState((state) => applyUploadedPhotos(state, { baulId, chapterId, uploaded }));
@@ -203,6 +208,7 @@ export async function movePhotos(
     api.chapters.getAll(baulId),
   ]);
 
+  usePhotosStore.getState().upsertPhotos(targetPhotos);
   useBaulesStore.setState((state) => applyMovedPhotos(state, {
     baulId,
     sourceChapterId,
@@ -218,15 +224,15 @@ export async function movePhotos(
 }
 
 // Sin chapterId: quien llama (cualquiera de los dos visores de fotos) no necesariamente sabe
-// bajo qué capítulo/foto suelta está cacheada esta foto, así que se invalidan ambas cachés
-// (baúles y personas) allá donde estén, sin arrastrar el "origen". Los capítulos se
-// refrescan siempre — puede que la foto perteneciera a uno y sus metadatos agregados
-// (fecha, portada, contadores) hayan cambiado.
+// bajo qué capítulo/foto suelta está cacheada esta foto, pero ya no hace falta que lo sepa —
+// borrarla de usePhotosStore es suficiente, cualquier lista de ids que la referenciase deja de
+// resolverla la próxima vez que se hidrate (ver hydratePhotos). Los capítulos se refrescan
+// siempre — puede que la foto perteneciera a uno y sus metadatos agregados (fecha, portada,
+// contadores) hayan cambiado.
 export async function deletePhoto(baulId: string, photoId: string, reason?: string): Promise<void> {
   await api.photos.delete(photoId, reason);
 
-  useBaulesStore.getState().removePhotoFromCaches(photoId);
-  usePersonasStore.getState().removePhotoFromCaches(photoId);
+  usePhotosStore.getState().removePhoto(photoId);
 
   const chapters = await api.chapters.getAll(baulId);
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
@@ -234,8 +240,7 @@ export async function deletePhoto(baulId: string, photoId: string, reason?: stri
 
 export async function changePhotoDate(baulId: string, photoId: string, date: PhotoDate): Promise<void> {
   const updated = await api.photos.changeDate(photoId, date);
-  useBaulesStore.getState().updatePhotoInCaches(updated);
-  usePersonasStore.getState().updatePhotoInCaches(updated);
+  usePhotosStore.getState().upsertPhotos([updated]);
 
   const chapters = await api.chapters.getAll(baulId);
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));

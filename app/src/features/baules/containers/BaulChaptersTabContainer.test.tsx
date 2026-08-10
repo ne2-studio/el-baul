@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chapter, Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 import { BaulChaptersTabContainer } from './BaulChaptersTabContainer';
 
 vi.mock('@/features/chapters/useCases', () => ({
@@ -40,6 +41,7 @@ function renderContainer(onSelectChapter = vi.fn()) {
 describe('BaulChaptersTabContainer', () => {
   beforeEach(() => {
     useBaulesStore.getState().reset();
+    usePhotosStore.getState().reset();
     vi.clearAllMocks();
   });
 
@@ -63,7 +65,8 @@ describe('BaulChaptersTabContainer', () => {
   it('renders the loose-photos card and navigates on click', async () => {
     const user = userEvent.setup();
     const loosePhoto = { id: 'lp1', thumbnailUrl: '/lp1-thumb.jpg' } as Photo;
-    useBaulesStore.setState({ loosePhotos: { [baulId]: [loosePhoto] } });
+    usePhotosStore.getState().upsertPhotos([loosePhoto]);
+    useBaulesStore.setState({ loosePhotos: { [baulId]: [loosePhoto.id] } });
 
     renderContainer();
     await user.click(screen.getByText('Fotos sueltas'));

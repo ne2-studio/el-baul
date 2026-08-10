@@ -5,6 +5,7 @@ import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerCo
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { loadPersonas } from '@/features/people/useCases';
 import { loadPhotoBatchPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -31,6 +32,7 @@ export const PhotoBatchViewerRoute: React.FC = () => {
 
   const { photoBatchPhotos } = useBaulesStore();
   const { personas } = usePersonasStore();
+  const photosById = usePhotosStore((state) => state.photosById);
 
   const baulScope = useBaulScope(baulId);
 
@@ -62,7 +64,7 @@ export const PhotoBatchViewerRoute: React.FC = () => {
 
   if (!batchId) return <div className="p-8 text-center">No se ha encontrado la subida.</div>;
 
-  const photos = photoBatchPhotos[batchId];
+  const photos = hydratePhotos(photoBatchPhotos[batchId], photosById);
   if (!photos) {
     if (photosFailed) {
       return (

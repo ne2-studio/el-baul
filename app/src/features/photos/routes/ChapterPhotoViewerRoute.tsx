@@ -4,6 +4,7 @@ import { ChapterPhotoViewerContainer } from '@/features/chapters/containers/Chap
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { loadPersonas } from '@/features/people/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAuth } from 'react-oidc-context';
@@ -34,6 +35,7 @@ export const ChapterPhotoViewerRoute: React.FC = () => {
 
   const { photos: chapterPhotosById } = useBaulesStore();
   const { personas } = usePersonasStore();
+  const photosById = usePhotosStore((state) => state.photosById);
 
   const baulScope = useBaulScope(baulId);
   const { chapters, loosePhotos } = baulScope;
@@ -81,7 +83,7 @@ export const ChapterPhotoViewerRoute: React.FC = () => {
     return <div className="p-8 text-center">Cargando foto...</div>;
   }
 
-  const photos = chapterId ? (chapterPhotosById[chapterId] || []) : (loosePhotos || []);
+  const photos = chapterId ? (hydratePhotos(chapterPhotosById[chapterId], photosById) || []) : (loosePhotos || []);
   const photo = photos.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 

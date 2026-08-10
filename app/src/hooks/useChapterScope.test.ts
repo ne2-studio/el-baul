@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Photo, Recuerdo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 
 vi.mock('react-oidc-context', () => ({
@@ -33,9 +34,19 @@ function recuerdo(overrides: Partial<Recuerdo> = {}): Recuerdo {
   return { id: 'recuerdo-1', text: 'Hola', createdAt: '2026-01-01', ...overrides } as Recuerdo;
 }
 
+// Seeds both halves of the normalized photo cache: the chapter's id list (useBaulesStore) and
+// the canonical objects it resolves against (usePhotosStore) — see usePhotosStore.hydratePhotos.
+function seedChapterPhotos(forChapterId: string, photos: Photo[]): void {
+  usePhotosStore.getState().upsertPhotos(photos);
+  useBaulesStore.setState((state) => ({
+    photos: { ...state.photos, [forChapterId]: photos.map((p) => p.id) },
+  }));
+}
+
 describe('useChapterScope', () => {
   beforeEach(() => {
     useBaulesStore.getState().reset();
+    usePhotosStore.getState().reset();
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(loadChapterPhotos).mockReset().mockResolvedValue(undefined);
@@ -55,7 +66,7 @@ describe('useChapterScope', () => {
     // from the store, same as useBaulScope/usePersonaScope — can actually be observed as true
     // before these resolve, same as a real network call would behave.
     vi.mocked(loadChapterPhotos).mockImplementation(() => Promise.resolve().then(() => {
-      useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: [photo()] } }));
+      seedChapterPhotos(chapterId, [photo()]);
     }));
     vi.mocked(loadChapterRecuerdos).mockImplementation(() => Promise.resolve().then(() => {
       useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: [recuerdo()] } }));
@@ -75,7 +86,7 @@ describe('useChapterScope', () => {
   });
 
   it('only fetches the piece that is missing', async () => {
-    useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: [photo()] } }));
+    seedChapterPhotos(chapterId, [photo()]);
 
     renderHook(() => useChapterScope(baulId, chapterId));
 
@@ -84,7 +95,7 @@ describe('useChapterScope', () => {
   });
 
   it('does not refetch anything once both are already cached', async () => {
-    useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: [photo()] } }));
+    seedChapterPhotos(chapterId, [photo()]);
     useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: [] } }));
 
     const { result } = renderHook(() => useChapterScope(baulId, chapterId));
@@ -100,7 +111,7 @@ describe('useChapterScope', () => {
 
   it('surfaces loadFailed when the fetch fails, and retry can recover', async () => {
     vi.mocked(loadChapterRecuerdos).mockRejectedValueOnce(new Error('network down'));
-    useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterId]: [photo()] } }));
+    seedChapterPhotos(chapterId, [photo()]);
 
     const { result } = renderHook(() => useChapterScope(baulId, chapterId));
 
@@ -144,13 +155,13 @@ describe('useChapterScope', () => {
       if (id === chapterA) {
         return new Promise<void>((resolve) => {
           resolveAPhotos = () => {
-            useBaulesStore.setState((state) => ({ photos: { ...state.photos, [chapterA]: [photo()] } }));
+            seedChapterPhotos(chapterA, [photo()]);
             resolve();
           };
         });
       }
       return Promise.resolve().then(() => {
-        useBaulesStore.setState((state) => ({ photos: { ...state.photos, [id]: [photo()] } }));
+        seedChapterPhotos(id, [photo()]);
       });
     });
     vi.mocked(loadChapterRecuerdos).mockImplementation((_baulId: string, id: string) => {

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { loadChapterRecuerdos } from '@/features/memories/useCases';
@@ -20,6 +21,7 @@ export function useChapterScope(baulId: string | undefined, chapterId: string | 
   const auth = useAuth();
   const { run } = useAsyncAction();
   const { photos } = useBaulesStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   const { chapterRecuerdos } = useRecuerdosStore();
 
   const hasScope = !!chapterId && !!photos[chapterId] && !!chapterRecuerdos[chapterId];
@@ -59,7 +61,7 @@ export function useChapterScope(baulId: string | undefined, chapterId: string | 
   }, [baulId, chapterId, isLoading]);
 
   return {
-    photos: chapterId ? photos[chapterId] : undefined,
+    photos: chapterId ? hydratePhotos(photos[chapterId], photosById) : undefined,
     chapterRecuerdos: chapterId ? chapterRecuerdos[chapterId] : undefined,
     isLoading,
     loadFailed,

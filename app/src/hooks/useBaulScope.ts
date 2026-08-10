@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { loadUserData } from '@/features/auth/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -22,6 +23,7 @@ export function useBaulScope(baulId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
   const { baules, chapters, loosePhotos } = useBaulesStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   const { baulRecuerdos } = useRecuerdosStore();
 
   const baul = baules.find(b => b.id === baulId);
@@ -87,7 +89,7 @@ export function useBaulScope(baulId: string | undefined) {
   return {
     baul,
     chapters: baulId ? chapters[baulId] : undefined,
-    loosePhotos: baulId ? loosePhotos[baulId] : undefined,
+    loosePhotos: baulId ? hydratePhotos(loosePhotos[baulId], photosById) : undefined,
     baulRecuerdos: baulId ? baulRecuerdos[baulId] : undefined,
     isLoading,
     refreshFailed,

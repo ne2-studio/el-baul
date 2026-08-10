@@ -10,6 +10,7 @@ import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { loadPhotoBatchPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
@@ -24,10 +25,11 @@ export const PhotoBatchGridRoute: React.FC = () => {
   const { baulId, batchId } = useParams();
   const auth = useAuth();
   const { photoBatchPhotos } = useBaulesStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   const { run } = useAsyncAction();
   const [loadFailed, setLoadFailed] = useState(false);
 
-  const photos = batchId ? photoBatchPhotos[batchId] : undefined;
+  const photos = batchId ? hydratePhotos(photoBatchPhotos[batchId], photosById) : undefined;
 
   const fetchPhotos = async () => {
     if (!baulId || !batchId) return;

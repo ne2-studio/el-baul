@@ -17,6 +17,7 @@ import { BaulRole, Persona, Photo } from '@/types';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { updatePersona, uploadPersonaAvatar, setPersonaAvatarPhoto, updateUserRole, revokeAccess } from '@/features/people/useCases';
 
@@ -32,6 +33,7 @@ interface PersonaSettingsMenuContainerProps {
 export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSettingsMenuContainerProps) {
   const { baules } = useBaulesStore();
   const { personaPhotos } = usePersonasStore();
+  const photosById = usePhotosStore((state) => state.photosById);
   const { run, isPending } = useAsyncAction();
   const currentBaulRole = baules.find((b) => b.id === baulId)?.role;
   const permissions = getPersonaPermissions({ currentBaulRole, persona });
@@ -157,7 +159,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       {showAvatarPicker && (
         <PersonaAvatarPickerModal
           personaName={persona.nickname}
-          taggedPhotos={personaPhotos[persona.id] || []}
+          taggedPhotos={hydratePhotos(personaPhotos[persona.id], photosById) || []}
           fetchPage={(skip, take) => api.photos.getPage(baulId, { skip, take })}
           onSelectExisting={handleSetAvatarPhoto}
           onUploadNew={handleUploadAvatar}

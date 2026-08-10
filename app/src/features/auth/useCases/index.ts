@@ -3,6 +3,7 @@ import { UserProfile } from '@/types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 
 async function loadProfile(): Promise<UserProfile | null> {
@@ -60,5 +61,6 @@ export function resetAllStores(): void {
   useAuthStore.getState().reset();
   useBaulesStore.getState().reset();
   usePersonasStore.getState().reset();
+  usePhotosStore.getState().reset();
   useRecuerdosStore.getState().reset();
 }
