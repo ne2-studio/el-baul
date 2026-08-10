@@ -6599,6 +6599,7 @@ export interface components {
             text: string;
         };
         CreateRemovalRequestRequest: {
+            /** Format: uuid */
             photoId: string;
             reason?: string | null;
         };
@@ -6627,6 +6628,7 @@ export interface components {
             hasMore: boolean;
         };
         MovePhotoRequest: {
+            /** Format: uuid */
             chapterId: string;
         };
         PersonaDto: {
@@ -6736,12 +6738,15 @@ export interface components {
             deepLink?: string | null;
         };
         SetBaulCoverRequest: {
+            /** Format: uuid */
             photoId: string;
         };
         SetChapterCoverRequest: {
+            /** Format: uuid */
             photoId: string;
         };
         SetPersonaAvatarPhotoRequest: {
+            /** Format: uuid */
             photoId: string;
             /** Format: double */
             cropX: number;
@@ -6761,6 +6766,7 @@ export interface components {
             success: boolean;
         };
         TagPhotosBatchRequest: {
+            /** Format: uuid */
             baulId: string;
             photoIds: string[];
             personaIds: string[];

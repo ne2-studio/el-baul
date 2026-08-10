@@ -1,7 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -63,17 +62,17 @@ public class AdminController(
 
     [HttpGet("baules/{baulId:guid}")]
     [ProducesResponseType(typeof(AdminBaulDetailDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetBaul(Guid baulId)
+    public async Task<IActionResult> GetBaul(BaulId baulId)
     {
-        var result = await adminManager.GetBaulDetailAsync(new BaulId(baulId));
+        var result = await adminManager.GetBaulDetailAsync(baulId);
         return result.ToActionResult();
     }
 
     [HttpDelete("baules/{baulId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteBaul(Guid baulId)
+    public async Task<IActionResult> DeleteBaul(BaulId baulId)
     {
-        var result = await adminManager.DeleteBaulAsync(new BaulId(baulId));
+        var result = await adminManager.DeleteBaulAsync(baulId);
         return result.ToActionResult(NoContent());
     }
 
@@ -95,9 +94,9 @@ public class AdminController(
 
     [HttpPost("users/{userId}/baules/{baulId:guid}/chat-context-debug")]
     [ProducesResponseType(typeof(AdminChatContextDebugDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> DebugChatContext(string userId, Guid baulId, [FromBody] DebugChatContextRequest request)
+    public async Task<IActionResult> DebugChatContext(string userId, BaulId baulId, [FromBody] DebugChatContextRequest request)
     {
-        var result = await adminManager.DebugChatContextAsync(new UserId(userId), new BaulId(baulId), request.Message);
+        var result = await adminManager.DebugChatContextAsync(new UserId(userId), baulId, request.Message);
         return result.ToActionResult();
     }
 

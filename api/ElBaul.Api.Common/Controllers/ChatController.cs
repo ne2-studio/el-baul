@@ -1,7 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,30 +15,30 @@ public class ChatController(IChatManager chatManager) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ChatMessageDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMessages(Guid baulId)
+    public async Task<IActionResult> GetMessages(BaulId baulId)
     {
-        var result = await chatManager.GetMessagesAsync(new BaulId(baulId));
+        var result = await chatManager.GetMessagesAsync(baulId);
         return result.ToActionResult();
     }
 
     [HttpPost]
     [EnableRateLimiting("ChatLimiter")]
     [ProducesResponseType(typeof(ChatMessageDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> SendMessage(Guid baulId, [FromBody] SendChatMessageRequest request)
+    public async Task<IActionResult> SendMessage(BaulId baulId, [FromBody] SendChatMessageRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await chatManager.SendMessageAsync(new BaulId(baulId), request.Text);
+        var result = await chatManager.SendMessageAsync(baulId, request.Text);
         return result.ToActionResult();
     }
 
     [HttpGet("suggestions")]
     [EnableRateLimiting("ChatLimiter")]
     [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetSuggestedQuestions(Guid baulId)
+    public async Task<IActionResult> GetSuggestedQuestions(BaulId baulId)
     {
-        var result = await chatManager.GetSuggestedQuestionsAsync(new BaulId(baulId));
+        var result = await chatManager.GetSuggestedQuestionsAsync(baulId);
         return result.ToActionResult();
     }
 }

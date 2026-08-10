@@ -1,7 +1,6 @@
 using System.Net;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,18 +14,18 @@ public class SharedLinksController(ISharedLinkManager sharedLinkManager) : Contr
     [Authorize]
     [HttpPost("/api/photos/{photoId:guid}/share")]
     [ProducesResponseType(typeof(CreateSharedLinkResult), StatusCodes.Status200OK)]
-    public async Task<IActionResult> CreateForPhoto(Guid photoId)
+    public async Task<IActionResult> CreateForPhoto(PhotoId photoId)
     {
-        var result = await sharedLinkManager.CreateForPhotoAsync(new PhotoId(photoId));
+        var result = await sharedLinkManager.CreateForPhotoAsync(photoId);
         return result.ToActionResult();
     }
 
     [Authorize]
     [HttpPost("/api/recuerdos/{recuerdoId:guid}/share")]
     [ProducesResponseType(typeof(CreateSharedLinkResult), StatusCodes.Status200OK)]
-    public async Task<IActionResult> CreateForRecuerdo(Guid recuerdoId)
+    public async Task<IActionResult> CreateForRecuerdo(RecuerdoId recuerdoId)
     {
-        var result = await sharedLinkManager.CreateForRecuerdoAsync(new RecuerdoId(recuerdoId));
+        var result = await sharedLinkManager.CreateForRecuerdoAsync(recuerdoId);
         return result.ToActionResult();
     }
 

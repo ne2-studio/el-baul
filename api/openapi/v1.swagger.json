@@ -7848,7 +7848,8 @@
           "photoIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           },
           "year": {
@@ -8090,7 +8091,8 @@
         "type": "object",
         "properties": {
           "photoId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "reason": {
             "type": "string",
@@ -8198,7 +8200,8 @@
         "type": "object",
         "properties": {
           "chapterId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -8588,7 +8591,8 @@
         "type": "object",
         "properties": {
           "photoId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -8600,7 +8604,8 @@
         "type": "object",
         "properties": {
           "photoId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -8615,7 +8620,8 @@
         "type": "object",
         "properties": {
           "photoId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "cropX": {
             "type": "number",
@@ -8641,7 +8647,8 @@
           "personaIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         },
@@ -8684,18 +8691,21 @@
         "type": "object",
         "properties": {
           "baulId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "photoIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           },
           "personaIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         },

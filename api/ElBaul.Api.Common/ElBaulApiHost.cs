@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using ElBaul.Api;
 using ElBaul.Api.Logging;
@@ -7,10 +9,13 @@ using ElBaul.Api.Swagger;
 using ElBaul.Application;
 using ElBaul.Infra;
 using ElBaul.Ports.Input;
+using ElBaul.Ports.Output;
 using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +24,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace ElBaul.Api.Common;
 
@@ -36,8 +42,30 @@ public static class ElBaulApiHost
 {
     public static WebApplication Build(WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers();
+        RegisterIdTypeConverters();
+
+        builder.Services.AddControllers()
+            .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new IdJsonConverterFactory()));
         builder.Services.AddEndpointsApiExplorer();
+
+        // Keeps every 400 in the one { "error": "..." } shape API-CONVENTIONS.md documents —
+        // whether it's a hand-checked Application-layer Validation error going through
+        // ErrorMapping, or an id/primitive value ASP.NET itself couldn't bind (IdTypeConverter,
+        // IdJsonConverter, or a plain Guid?/int query/route value) — instead of letting the
+        // latter fall through to [ApiController]'s default ValidationProblemDetails body.
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.InvalidModelStateResponseFactory = context =>
+            {
+                var message = context.ModelState.Values
+                    .SelectMany(entry => entry.Errors)
+                    .Select(ExtractMessage)
+                    .FirstOrDefault(text => !string.IsNullOrEmpty(text))
+                    ?? "The request was invalid.";
+
+                return ErrorMapping.ToActionResult(ApplicationError.Validation(message));
+            };
+        });
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo
@@ -49,6 +77,20 @@ public static class ElBaulApiHost
             c.SupportNonNullableReferenceTypes();
             c.SchemaFilter<RequireNonNullablePropertiesSchemaFilter>();
             c.OperationFilter<DefaultResponseTypesOperationFilter>();
+
+            // Every IParsableId<T> id (de)serializes as a plain string — see IdJsonConverter —
+            // so it must document as one too, the same "string, format: uuid" shape a route Guid
+            // already gets by default. Without this, Swashbuckle would introspect the struct's
+            // own Value property and document `{ "value": "..." }`, which no client ever sends.
+            MapIdSchema<BaulId>(c);
+            MapIdSchema<ChapterId>(c);
+            MapIdSchema<PhotoId>(c);
+            MapIdSchema<PersonaId>(c);
+            MapIdSchema<RecuerdoId>(c);
+            MapIdSchema<SharedLinkId>(c);
+            MapIdSchema<BaulInviteLinkId>(c);
+            MapIdSchema<RemovalRequestId>(c);
+            MapIdSchema<ClientUploadId>(c);
         });
         builder.Services.AddCors();
 
@@ -235,6 +277,64 @@ public static class ElBaulApiHost
             .Produces<HealthResponse>(StatusCodes.Status200OK);
 
         return app;
+    }
+
+    private static readonly Lock IdTypeConverterRegistrationLock = new();
+    private static bool _idTypeConvertersRegistered;
+
+    // TypeDescriptor.AddAttributes, not a [TypeConverter] attribute on the id structs themselves
+    // — see IdTypeConverter's own doc comment for why. Guarded against running twice: this runs
+    // once per call to Build(), and HttpArchitectureRulesTests calls it more than once per test
+    // process; TypeDescriptor's registration is process-wide and re-adding the same attribute
+    // repeatedly would just layer redundant (harmless but pointless) converters.
+    private static void RegisterIdTypeConverters()
+    {
+        lock (IdTypeConverterRegistrationLock)
+        {
+            if (_idTypeConvertersRegistered) return;
+            _idTypeConvertersRegistered = true;
+
+            RegisterIdTypeConverter<BaulId>();
+            RegisterIdTypeConverter<ChapterId>();
+            RegisterIdTypeConverter<PhotoId>();
+            RegisterIdTypeConverter<PersonaId>();
+            RegisterIdTypeConverter<RecuerdoId>();
+            RegisterIdTypeConverter<SharedLinkId>();
+            RegisterIdTypeConverter<BaulInviteLinkId>();
+            RegisterIdTypeConverter<RemovalRequestId>();
+            RegisterIdTypeConverter<ClientUploadId>();
+        }
+    }
+
+    private static void RegisterIdTypeConverter<TId>() where TId : struct, IParsableId<TId> =>
+        TypeDescriptor.AddAttributes(typeof(TId), new TypeConverterAttribute(typeof(IdTypeConverter<TId>)));
+
+    private static void MapIdSchema<TId>(SwaggerGenOptions options) where TId : struct, IParsableId<TId> =>
+        options.MapType<TId>(() => new OpenApiSchema { Type = "string", Format = "uuid" });
+
+    // Prefers a JsonException's own message over ModelError.ErrorMessage when one is attached —
+    // this is a partial mitigation, not a full fix. Both binding paths a bad id can take
+    // (IdTypeConverter for a route/query value, IdJsonConverter for a [FromBody] property) end
+    // up going through one of ASP.NET's own canned DefaultModelBindingMessageProvider templates
+    // ("The value 'x' is not valid.", or "The request field is required." when a [FromBody]
+    // property's converter exception fails the whole body read) rather than surfacing the
+    // converter's own "'x' is not a valid <id>" message — by design: ASP.NET does not trust an
+    // arbitrary IModelBinder/TypeConverter/JsonConverter's exception message to be safe to show
+    // a client. So a malformed id still reaches the client as a generic but correctly-shaped
+    // { "error": "..." } — see IdBindingTests (api/acceptance-tests) for what's actually
+    // observable. Getting the specific per-id message all the way to the response body would
+    // need replacing SimpleTypeModelBinder/SystemTextJsonInputFormatter's own exception handling
+    // rather than working within ApiBehaviorOptions — not done here; this factory's job is the
+    // shape guarantee (never ASP.NET's default ValidationProblemDetails), which holds either way.
+    private static string? ExtractMessage(ModelError error) =>
+        FindJsonExceptionMessage(error.Exception)
+        ?? (string.IsNullOrEmpty(error.ErrorMessage) ? null : error.ErrorMessage);
+
+    private static string? FindJsonExceptionMessage(Exception? exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+            if (current is JsonException) return current.Message;
+        return null;
     }
 }
 

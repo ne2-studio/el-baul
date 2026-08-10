@@ -1,3 +1,5 @@
+using ElBaul.Ports.Output;
+
 namespace ElBaul.Api.Models;
 
-public record SetBaulCoverRequest(string PhotoId);
+public record SetBaulCoverRequest(PhotoId PhotoId);

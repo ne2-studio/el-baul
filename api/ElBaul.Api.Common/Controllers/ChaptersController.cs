@@ -1,7 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Ports.Input;
 using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,63 +14,60 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
 {
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ChapterDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(Guid baulId)
+    public async Task<IActionResult> GetAll(BaulId baulId)
     {
-        var result = await chapterManager.GetByBaulIdAsync(new BaulId(baulId));
+        var result = await chapterManager.GetByBaulIdAsync(baulId);
         return result.ToActionResult();
     }
 
     [HttpPost]
     [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Create(Guid baulId, [FromBody] CreateChapterRequest request)
+    public async Task<IActionResult> Create(BaulId baulId, [FromBody] CreateChapterRequest request)
     {
-        var result = await chapterManager.CreateAsync(new BaulId(baulId), request.Name);
+        var result = await chapterManager.CreateAsync(baulId, request.Name);
         return result.ToActionResult();
     }
 
     [HttpPut("{chapterId:guid}")]
     [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Update(Guid baulId, Guid chapterId, [FromBody] UpdateChapterRequest request)
+    public async Task<IActionResult> Update(BaulId baulId, ChapterId chapterId, [FromBody] UpdateChapterRequest request)
     {
-        var result = await chapterManager.UpdateAsync(new ChapterId(chapterId), request.Name);
+        var result = await chapterManager.UpdateAsync(chapterId, request.Name);
         return result.ToActionResult();
     }
 
     [HttpDelete("{chapterId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Delete(Guid baulId, Guid chapterId)
+    public async Task<IActionResult> Delete(BaulId baulId, ChapterId chapterId)
     {
-        var result = await chapterManager.DeleteAsync(new ChapterId(chapterId));
+        var result = await chapterManager.DeleteAsync(chapterId);
         return result.ToActionResult(NoContent());
     }
 
     [HttpPut("{chapterId:guid}/cover")]
     [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> SetCover(Guid baulId, Guid chapterId, [FromBody] SetChapterCoverRequest request)
+    public async Task<IActionResult> SetCover(BaulId baulId, ChapterId chapterId, [FromBody] SetChapterCoverRequest request)
     {
-        var photoId = PhotoId.Parse(request.PhotoId);
-        if (photoId.IsFailure) return ErrorMapping.ToActionResult(photoId.Error);
-
-        var result = await chapterManager.SetCoverAsync(new ChapterId(chapterId), photoId.Value);
+        var result = await chapterManager.SetCoverAsync(chapterId, request.PhotoId);
         return result.ToActionResult();
     }
 
     [HttpGet("{chapterId:guid}/recuerdos")]
     [ProducesResponseType(typeof(IEnumerable<RecuerdoDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetRecuerdos(Guid baulId, Guid chapterId)
+    public async Task<IActionResult> GetRecuerdos(BaulId baulId, ChapterId chapterId)
     {
-        var result = await recuerdoManager.GetRecuerdosAsync(new ChapterId(chapterId));
+        var result = await recuerdoManager.GetRecuerdosAsync(chapterId);
         return result.ToActionResult();
     }
 
     [HttpPost("{chapterId:guid}/recuerdos")]
     [ProducesResponseType(typeof(RecuerdoDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> CreateRecuerdo(Guid baulId, Guid chapterId, [FromBody] CreateRecuerdoRequest request)
+    public async Task<IActionResult> CreateRecuerdo(BaulId baulId, ChapterId chapterId, [FromBody] CreateRecuerdoRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Text))
             return BadRequest(new { error = "Text is required" });
 
-        var result = await recuerdoManager.CreateRecuerdoAsync(new ChapterId(chapterId), request.Text);
+        var result = await recuerdoManager.CreateRecuerdoAsync(chapterId, request.Text);
         return result.ToActionResult();
     }
 }

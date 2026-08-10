@@ -1,3 +1,5 @@
+using ElBaul.Ports.Output;
+
 namespace ElBaul.Api.Models;
 
-public record TagPhotosBatchRequest(string BaulId, List<string> PhotoIds, List<string> PersonaIds);
+public record TagPhotosBatchRequest(BaulId BaulId, List<PhotoId> PhotoIds, List<PersonaId> PersonaIds);

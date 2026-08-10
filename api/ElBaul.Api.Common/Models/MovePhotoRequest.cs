@@ -1,3 +1,5 @@
+using ElBaul.Ports.Output;
+
 namespace ElBaul.Api.Models;
 
-public record MovePhotoRequest(string ChapterId);
+public record MovePhotoRequest(ChapterId ChapterId);

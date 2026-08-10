@@ -20,56 +20,68 @@ internal static class IdParsing
             : Result.Failure<TId>(ApplicationError.Validation($"'{raw}' is not a valid {typeName}."));
 }
 
-public readonly record struct BaulId(Guid Value)
+// Implemented by every id struct below so ElBaul.Api.Common can bind route/query/form/JSON-body
+// values to these types directly (IdJsonConverter, IdTypeConverter — both registered from
+// ElBaulApiHost, not referenced from here) through the exact same Parse rule their manual
+// Result<T>-returning callers already use. Deliberately just a marker interface plus a static
+// Parse — nothing in this file references JSON, HTTP, or ASP.NET Core, so this project's "no
+// ASP.NET Core" rule (see docs/architecture/backend.md) stays intact; all of that wiring lives
+// in the host project instead.
+public interface IParsableId<TSelf> where TSelf : struct, IParsableId<TSelf>
+{
+    static abstract Result<TSelf> Parse(string? raw);
+}
+
+public readonly record struct BaulId(Guid Value) : IParsableId<BaulId>
 {
     public static implicit operator Guid(BaulId id) => id.Value;
     public override string ToString() => Value.ToString();
     public static Result<BaulId> Parse(string? raw) => IdParsing.Parse(raw, v => new BaulId(v), "baúl id");
 }
 
-public readonly record struct ChapterId(Guid Value)
+public readonly record struct ChapterId(Guid Value) : IParsableId<ChapterId>
 {
     public static implicit operator Guid(ChapterId id) => id.Value;
     public override string ToString() => Value.ToString();
     public static Result<ChapterId> Parse(string? raw) => IdParsing.Parse(raw, v => new ChapterId(v), "chapter id");
 }
 
-public readonly record struct PhotoId(Guid Value)
+public readonly record struct PhotoId(Guid Value) : IParsableId<PhotoId>
 {
     public static implicit operator Guid(PhotoId id) => id.Value;
     public override string ToString() => Value.ToString();
     public static Result<PhotoId> Parse(string? raw) => IdParsing.Parse(raw, v => new PhotoId(v), "photo id");
 }
 
-public readonly record struct PersonaId(Guid Value)
+public readonly record struct PersonaId(Guid Value) : IParsableId<PersonaId>
 {
     public static implicit operator Guid(PersonaId id) => id.Value;
     public override string ToString() => Value.ToString();
     public static Result<PersonaId> Parse(string? raw) => IdParsing.Parse(raw, v => new PersonaId(v), "persona id");
 }
 
-public readonly record struct RecuerdoId(Guid Value)
+public readonly record struct RecuerdoId(Guid Value) : IParsableId<RecuerdoId>
 {
     public static implicit operator Guid(RecuerdoId id) => id.Value;
     public override string ToString() => Value.ToString();
     public static Result<RecuerdoId> Parse(string? raw) => IdParsing.Parse(raw, v => new RecuerdoId(v), "recuerdo id");
 }
 
-public readonly record struct SharedLinkId(Guid Value)
+public readonly record struct SharedLinkId(Guid Value) : IParsableId<SharedLinkId>
 {
     public static implicit operator Guid(SharedLinkId id) => id.Value;
     public override string ToString() => Value.ToString();
     public static Result<SharedLinkId> Parse(string? raw) => IdParsing.Parse(raw, v => new SharedLinkId(v), "shared link id");
 }
 
-public readonly record struct BaulInviteLinkId(Guid Value)
+public readonly record struct BaulInviteLinkId(Guid Value) : IParsableId<BaulInviteLinkId>
 {
     public static implicit operator Guid(BaulInviteLinkId id) => id.Value;
     public override string ToString() => Value.ToString();
     public static Result<BaulInviteLinkId> Parse(string? raw) => IdParsing.Parse(raw, v => new BaulInviteLinkId(v), "baúl invite link id");
 }
 
-public readonly record struct RemovalRequestId(Guid Value)
+public readonly record struct RemovalRequestId(Guid Value) : IParsableId<RemovalRequestId>
 {
     public static implicit operator Guid(RemovalRequestId id) => id.Value;
     public override string ToString() => Value.ToString();
@@ -79,7 +91,7 @@ public readonly record struct RemovalRequestId(Guid Value)
 // A client-generated idempotency token for a photo upload — deliberately its own type rather
 // than reusing PhotoId, since it identifies the upload *attempt*, not the resulting photo (see
 // IPhotoRepository.GetByClientUploadIdAsync, used to detect and no-op a retried upload).
-public readonly record struct ClientUploadId(Guid Value)
+public readonly record struct ClientUploadId(Guid Value) : IParsableId<ClientUploadId>
 {
     public static implicit operator Guid(ClientUploadId id) => id.Value;
     public override string ToString() => Value.ToString();

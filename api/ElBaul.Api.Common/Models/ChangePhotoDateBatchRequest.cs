@@ -1,3 +1,5 @@
+using ElBaul.Ports.Output;
+
 namespace ElBaul.Api.Models;
 
-public record ChangePhotoDateBatchRequest(List<string> PhotoIds, int Year, int? Month, int? Day);
+public record ChangePhotoDateBatchRequest(List<PhotoId> PhotoIds, int Year, int? Month, int? Day);
