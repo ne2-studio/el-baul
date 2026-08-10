@@ -76,9 +76,6 @@ public class EmailDeliveryCoordinator(
         }
     }
 
-    public static string BuildRedirectUrl(string publicUrl, string path) =>
-        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
-
     public async Task<Result> SendAsync(
         string userId,
         string recipientEmail,

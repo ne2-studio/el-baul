@@ -72,9 +72,9 @@ public class WeeklyDigestManager(
             getDeduplicationKey: _ => $"weekly-digest:{userId}:{since:O}",
             renderAsync: async (user, linkBuilder) =>
             {
-                var model = await BuildModelAsync(user, since);
+                var model = await BuildModelAsync(user, since, linkBuilder);
                 LogGenerated(model);
-                return templateRenderer.RenderWeeklyDigest(ApplyTracking(model, linkBuilder));
+                return templateRenderer.RenderWeeklyDigest(model);
             });
     }
 
@@ -98,8 +98,8 @@ public class WeeklyDigestManager(
             activitySince: since, activityUntil: until,
             renderAsync: async linkBuilder =>
             {
-                var model = await BuildModelAsync(user, since);
-                var rendered = templateRenderer.RenderWeeklyDigest(ApplyTracking(model, linkBuilder));
+                var model = await BuildModelAsync(user, since, linkBuilder);
+                var rendered = templateRenderer.RenderWeeklyDigest(model);
                 return rendered with { Subject = $"[TEST] {rendered.Subject}" };
             });
     }
@@ -112,7 +112,7 @@ public class WeeklyDigestManager(
             logger.LogInformation("WeeklyDigestEmptyGenerated");
     }
 
-    private async Task<WeeklyDigestEmailModel> BuildModelAsync(User user, DateTime since)
+    private async Task<WeeklyDigestEmailModel> BuildModelAsync(User user, DateTime since, TrackedLinkBuilder linkBuilder)
     {
         var baules = (await baulRepository.GetAccessibleByUserIdAsync(user.Id))
             .OrderBy(b => b.Name)
@@ -123,7 +123,7 @@ public class WeeklyDigestManager(
         var sections = new List<BaulDigestSection>();
         foreach (var baul in baules)
         {
-            var section = await BuildBaulSectionAsync(baul, since, publicUrl, user.Id);
+            var section = await BuildBaulSectionAsync(baul, since, publicUrl, user.Id, linkBuilder);
             if (section is not null) sections.Add(section);
         }
 
@@ -131,19 +131,20 @@ public class WeeklyDigestManager(
         var hasActivity = sections.Count > 0;
 
         var targetPath = hasBaules ? $"/baules/{baules[0].Id}" : "/baules/nuevo";
-        var ctaUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, targetPath);
+        var ctaUrl = linkBuilder.TrackRedirect("primary-cta", publicUrl, targetPath);
         var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
 
-        var notificationSettingsUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, "/configuracion/notificaciones");
+        var notificationSettingsUrl = linkBuilder.TrackRedirect("notification-settings", publicUrl, "/configuracion/notificaciones");
 
         return new WeeklyDigestEmailModel(
             user.Name ?? user.Email, hasBaules, hasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
-            EmailFooterLinksFactory.Build(publicUrl, appConfiguration, clock));
+            EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder));
     }
 
-    private async Task<BaulDigestSection?> BuildBaulSectionAsync(Baul baul, DateTime since, string publicUrl, string excludingUserId)
+    private async Task<BaulDigestSection?> BuildBaulSectionAsync(
+        Baul baul, DateTime since, string publicUrl, string excludingUserId, TrackedLinkBuilder linkBuilder)
     {
-        var baulUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}");
+        var baulUrl = linkBuilder.TrackRedirect(DigestBlockKind.NewRecuerdos.ToString(), publicUrl, $"/baules/{baul.Id}");
         var items = new List<DigestActivityBlock>();
 
         var newChapters = await chapterRepository.GetCreatedSinceAsync(baul.Id, since, excludingUserId);
@@ -151,7 +152,7 @@ public class WeeklyDigestManager(
         {
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewChapter, $"Nuevo capítulo: “{chapter.Name}”",
-                EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
+                linkBuilder.TrackRedirect(DigestBlockKind.NewChapter.ToString(), publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
         }
 
         var recuerdos = await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId);
@@ -182,7 +183,7 @@ public class WeeklyDigestManager(
                 : $"{count} fotos nuevas en “{chapter.Name}”";
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewPhotosInChapter, label,
-                EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), count));
+                linkBuilder.TrackRedirect(DigestBlockKind.NewPhotosInChapter.ToString(), publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), count));
         }
 
         var looseCount = photos.Count(p => p.ChapterId is null);
@@ -191,7 +192,7 @@ public class WeeklyDigestManager(
             var label = looseCount == 1 ? "1 foto nueva sin organizar" : $"{looseCount} fotos nuevas sin organizar";
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewLoosePhotos, label,
-                EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, $"/baules/{baul.Id}/fotos-sueltas"), looseCount));
+                linkBuilder.TrackRedirect(DigestBlockKind.NewLoosePhotos.ToString(), publicUrl, $"/baules/{baul.Id}/fotos-sueltas"), looseCount));
         }
 
         if (items.Count == 0) return null;
@@ -218,24 +219,5 @@ public class WeeklyDigestManager(
         }
 
         return overflow.Count == 1 ? "Y 1 novedad más." : $"Y {overflow.Count} novedades más.";
-    }
-
-    private static WeeklyDigestEmailModel ApplyTracking(WeeklyDigestEmailModel model, TrackedLinkBuilder linkBuilder)
-    {
-        var trackedSections = model.Sections.Select(section =>
-        {
-            var trackedBlocks = section.Blocks
-                .Select(block => block with { DeepLinkUrl = linkBuilder.Track(block.Kind.ToString(), block.DeepLinkUrl) })
-                .ToList();
-            return section with { Blocks = trackedBlocks };
-        }).ToList();
-
-        return model with
-        {
-            PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl),
-            NotificationSettingsUrl = linkBuilder.Track("notification-settings", model.NotificationSettingsUrl),
-            Sections = trackedSections,
-            Footer = EmailFooterLinksFactory.Track(model.Footer, linkBuilder)
-        };
     }
 }

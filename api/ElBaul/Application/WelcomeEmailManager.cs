@@ -63,7 +63,7 @@ public class WelcomeEmailManager(
             },
             getDeduplicationKey: _ => $"welcome:{userId}",
             renderAsync: async (user, linkBuilder) =>
-                templateRenderer.RenderWelcome(ApplyTracking(await BuildModelAsync(user), linkBuilder)));
+                templateRenderer.RenderWelcome(await BuildModelAsync(user, linkBuilder)));
     }
 
     public async Task<Result> SendTestWelcomeEmailAsync(UserId sourceUserId)
@@ -82,13 +82,13 @@ public class WelcomeEmailManager(
             activitySince: null, activityUntil: null,
             renderAsync: async linkBuilder =>
             {
-                var model = ApplyTracking(await BuildModelAsync(user), linkBuilder);
+                var model = await BuildModelAsync(user, linkBuilder);
                 var rendered = templateRenderer.RenderWelcome(model);
                 return rendered with { Subject = $"[TEST] {rendered.Subject}" };
             });
     }
 
-    private async Task<WelcomeEmailModel> BuildModelAsync(User user)
+    private async Task<WelcomeEmailModel> BuildModelAsync(User user, TrackedLinkBuilder linkBuilder)
     {
         var baules = (await baulRepository.GetAccessibleByUserIdAsync(user.Id))
             .OrderBy(b => b.CreatedAt)
@@ -98,9 +98,9 @@ public class WelcomeEmailManager(
         var hasBaules = baules.Count > 0;
 
         var targetPath = hasBaules ? $"/baules/{baules[0].Id}" : "/baules/nuevo";
-        var ctaUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, targetPath);
+        var ctaUrl = linkBuilder.TrackRedirect("primary-cta", publicUrl, targetPath);
         var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
-        var notificationSettingsUrl = EmailDeliveryCoordinator.BuildRedirectUrl(publicUrl, "/configuracion/notificaciones");
+        var notificationSettingsUrl = linkBuilder.TrackRedirect("notification-settings", publicUrl, "/configuracion/notificaciones");
 
         return new WelcomeEmailModel(
             user.Name ?? user.Email,
@@ -109,14 +109,6 @@ public class WelcomeEmailManager(
             ctaUrl,
             ctaLabel,
             notificationSettingsUrl,
-            EmailFooterLinksFactory.Build(publicUrl, appConfiguration, clock));
+            EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder));
     }
-
-    private static WelcomeEmailModel ApplyTracking(WelcomeEmailModel model, TrackedLinkBuilder linkBuilder) =>
-        model with
-        {
-            PrimaryCtaUrl = linkBuilder.Track("primary-cta", model.PrimaryCtaUrl),
-            NotificationSettingsUrl = linkBuilder.Track("notification-settings", model.NotificationSettingsUrl),
-            Footer = EmailFooterLinksFactory.Track(model.Footer, linkBuilder)
-        };
 }

@@ -18,4 +18,17 @@ public class TrackedLinkBuilder(string apiPublicUrl, IEmailLinkSigner signer, Gu
         var token = signer.CreateToken(sentEmailId, linkKey, destinationUrl);
         return $"{_apiPublicUrl}/email/click/{token}";
     }
+
+    /// <summary>
+    /// Builds a deep link into the app (publicUrl/?redirectTo=path) and tracks it in the same
+    /// step — the one-call counterpart to what every *EmailManager used to do by hand: build an
+    /// untracked redirect URL while composing its model, then walk the model a second time to
+    /// call Track on each field. Collapsing both into one call means a link can no longer be
+    /// added to a model without also being tracked.
+    /// </summary>
+    public string TrackRedirect(string linkKey, string publicUrl, string path) =>
+        Track(linkKey, BuildRedirectUrl(publicUrl, path));
+
+    private static string BuildRedirectUrl(string publicUrl, string path) =>
+        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
 }
