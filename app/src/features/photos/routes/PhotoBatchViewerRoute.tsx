@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerContainer';
+import { ChapterPhotoViewerContainer } from '@/features/chapters/containers/ChapterPhotoViewerContainer';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
@@ -18,9 +18,11 @@ import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photo
 // on the feed card (backgroundLocation is the feed, so closing returns there) or from
 // PhotoBatchGridRoute (backgroundLocation is the grid, so closing returns there instead) —
 // same overlay mechanism every other photo viewer entry point uses, see
-// features/photos/viewerNavigation. Mounts the universal PhotoViewerContainer directly, like
-// PersonaPhotoViewerRoute: a batch has no chapter to move photos into or set as cover, so none
-// of ChapterPhotoViewerContainer's extras apply here.
+// features/photos/viewerNavigation. Mounts ChapterPhotoViewerContainer like
+// ChapterPhotoViewerRoute does: a batch's photos do belong to a chapter (Photo.chapterId,
+// same field every other photo carries) even though the route itself is scoped by batchId
+// rather than chapterId, so "mover a otro capítulo"/"portada del capítulo" apply here too —
+// derived per-photo since a batch's own chapterId isn't otherwise available on this route.
 export const PhotoBatchViewerRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,6 +37,7 @@ export const PhotoBatchViewerRoute: React.FC = () => {
   const photosById = usePhotosStore((state) => state.photosById);
 
   const baulScope = useBaulScope(baulId);
+  const { chapters } = baulScope;
 
   const [photosFailed, setPhotosFailed] = useState(false);
 
@@ -86,13 +89,21 @@ export const PhotoBatchViewerRoute: React.FC = () => {
   const baulPermissions = getBaulPermissions(baul);
   const closeViewer = () => closePhotoViewer(navigate, backgroundLocation, basePath);
 
+  // null (no undefined) por el mismo contrato que apiChapterId en el resto de visores: "fotos
+  // sueltas" es un scope de mover válido, solo que sin portada de capítulo.
+  const apiChapterId = photo.chapterId ?? null;
+  const currentChapter = apiChapterId ? chapters?.find((c) => c.id === apiChapterId) : undefined;
+
   return (
-    <PhotoViewerContainer
+    <ChapterPhotoViewerContainer
       photo={photo}
       photos={photos}
       baulId={baul.id}
       baulName={baul.name}
       isAdmin={baulPermissions.isAdmin}
+      apiChapterId={apiChapterId}
+      allChapters={chapters || []}
+      currentChapter={currentChapter}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
     />

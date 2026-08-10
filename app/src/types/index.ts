@@ -138,6 +138,11 @@ export class Photo {
   fullUrl: string;
   date?: PhotoDate;
   recuerdoCount: number;
+  /** undefined = fotos sueltas. Presente en todo PhotoDto ya sea que la foto llegue por su
+   * capítulo, sus fotos sueltas, o (como el visor de un lote de subida) escapada de ambos
+   * contextos — ver PhotoBatchViewerRoute, el único caller que lo necesita para saber a qué
+   * capítulo pertenece una foto sin que la ruta se lo diga. */
+  chapterId?: string;
 
   constructor(data: PhotoDto) {
     this.id = data.id;
@@ -145,6 +150,7 @@ export class Photo {
     this.fullUrl = data.fullUrl;
     this.date = photoDateFrom(data.dateYear, data.dateMonth, data.dateDay);
     this.recuerdoCount = data.recuerdoCount;
+    this.chapterId = data.chapterId ?? undefined;
   }
 }
 
