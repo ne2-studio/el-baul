@@ -8,7 +8,8 @@ Choose the smallest test that can detect the failure.
 | Backend infra-layer logic (URL building, middleware) | `api/ElBaul.Infra.Tests` |
 | Backend controller/authorization concerns | `api/ElBaul.Api.Tests` |
 | Backend maintenance command logic | `api/ElBaul.Maintenance.Tests` |
-| Backend domain model, persistence, or public API contract | + `api/acceptance-tests` |
+| Backend repository/adapter behavior only a real Postgres can catch (EF query translation, FK-Restrict ordering) | `api/ElBaul.Infra.PersistenceTests` |
+| Backend domain model or public API contract | + `api/acceptance-tests` |
 | Frontend pure logic (mappers, formatters, reducers, use cases) | Vitest, `environment: 'node'` (default) |
 | Frontend component/hook behavior | Vitest + jsdom + React Testing Library |
 | Frontend isolated Storybook contracts | Storybook Vitest addon, Vitest browser mode, Playwright Chromium |
@@ -23,6 +24,7 @@ Run verification from the repository root through `./scripts/verify`:
 | Command | Coverage |
 |---|---|
 | `./scripts/verify backend` | Restore, Release build, and Release `--no-build` tests for `api/ElBaul.slnx` |
+| `./scripts/verify backend-persistence` | `api/ElBaul.Infra.PersistenceTests` against a real, migrated Postgres (Testcontainers) |
 | `./scripts/verify backend-acceptance` | Fresh real backend Docker image + `api/acceptance-tests` |
 | `./scripts/verify frontend` | Consumer app TypeScript check + ESLint + Vitest unit/component tests + Storybook executable specs |
 | `./scripts/verify admin` | Admin TypeScript check + Vitest |
@@ -53,14 +55,28 @@ Run verification from the repository root through `./scripts/verify`:
   fake-first convention as `ElBaul.Tests`: use `ElBaul.Infra.Lite`'s `InMemory*Repository`
   implementations for stateful ports and small test-local fakes for deterministic storage,
   clocks, extractors, or provider failures.
+- **`ElBaul.Infra.PersistenceTests`** — a separate project, excluded from `ElBaul.slnx` since it
+  needs a running Docker daemon that `./scripts/verify backend` deliberately doesn't require.
+  Runs the real EF repository/adapter classes directly through their port interfaces
+  (`IAdminRepository`, `IBaulRepository`, ...) against one real, migrated Postgres container
+  (Testcontainers), reset to empty between tests. Deliberately **not** a second `ElBaul.Tests`:
+  it exists only for the narrow class of bug an in-memory fake structurally cannot reproduce —
+  EF query translation into SQL (`GroupBy`/`Join`/`Distinct`/computed properties that don't
+  translate) and real Postgres FK-Restrict ordering. Most repository logic should stay covered
+  by `ElBaul.Tests`' fakes; add a test here only when you can name the real-Postgres-only
+  behavior a fake would let through.
+
+  Run with `./scripts/verify backend-persistence`. See
+  `api/ElBaul.Infra.PersistenceTests/README.md`.
 - **`api/acceptance-tests/`** — a separate solution (excluded from `ElBaul.slnx` — plain
   `dotnet test` does not run it). Black-box acceptance tests for the *built Docker image*, run
   via Testcontainers against a real Postgres + MinIO + fake-oidc stack: no `ProjectReference` to
   anything above, no shared fixtures/DTOs. Runs in CI right after `docker build`, before the
-  image is pushed. Run it for any change to the domain model, persistence, or the public API
-  contract — the unit suites mostly run against hand-written fakes and can't catch an EF model
-  that fails to build against a real Postgres, or a wire-format regression a DTO recompiled
-  against itself can't reveal.
+  image is pushed. Run it for any change to the domain model or the public API contract — the
+  unit suites mostly run against hand-written fakes and can't catch an EF model that fails to
+  build against a real Postgres, or a wire-format regression a DTO recompiled against itself
+  can't reveal. It is not the place to cover a repository's own query logic or FK-ordering
+  behavior — see `ElBaul.Infra.PersistenceTests` above for that.
 
   Run with `./scripts/verify backend-acceptance`.
 

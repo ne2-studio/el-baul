@@ -17,6 +17,7 @@ Options:
 
 Commands:
   backend               Build and test the .NET backend solution in Release.
+  backend-persistence   Run EF repository/adapter tests against a real, migrated Postgres.
   backend-acceptance    Run acceptance-tests against the real backend image.
   frontend              Run app type checks, a production build, unit/component tests, and Storybook specs.
   admin                 Run admin type checks and unit/component tests.
@@ -144,6 +145,16 @@ backend() {
   else
     run dotnet test "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-build
   fi
+}
+
+backend_persistence() {
+  need dotnet
+  need docker
+
+  # Deliberately not part of ElBaul.slnx (see the project's own .csproj comment) — this is the
+  # one backend command besides backend-acceptance that needs a running Docker daemon, so it
+  # stays a separate opt-in command instead of silently becoming a `backend` requirement.
+  run dotnet test "$ROOT_DIR/api/ElBaul.Infra.PersistenceTests/ElBaul.Infra.PersistenceTests.csproj"
 }
 
 backend_acceptance() {
@@ -299,6 +310,7 @@ e2e() {
 
 all() {
   backend
+  backend_persistence
   backend_acceptance
   frontend
   admin
@@ -348,6 +360,7 @@ done
 
 case "$command" in
   backend) backend ;;
+  backend-persistence) backend_persistence ;;
   backend-acceptance) backend_acceptance ;;
   frontend) frontend ;;
   admin) admin ;;

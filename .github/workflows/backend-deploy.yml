@@ -44,6 +44,12 @@ jobs:
           target-directory: api/coverage/report
           artifact-name: backend-coverage-report
 
+      # Excluded from ElBaul.slnx (needs a real Postgres via Testcontainers), so it isn't part
+      # of the "Build/test backend" step above. Runs against source before the image build
+      # below, not against the packaged image — cheaper to fail here than after docker build.
+      - name: Backend persistence tests
+        run: ./scripts/verify backend-persistence
+
       - name: Package backend image
         uses: ./.github/actions/docker-build-image
         with:
