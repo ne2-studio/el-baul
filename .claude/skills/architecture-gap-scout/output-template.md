@@ -7,8 +7,10 @@ Use this exact structure for every initiative, except Why now, which is conditio
 ## `<rank>. <initiative title>`
 
 **Type:** `<smell id>` (Step 2)
-**Priority:** Critical | High | Medium | Low — a qualitative summary of Score, not a separate judgment
-**Score:** `<priority score>` — Value `<v>` (Evidence confidence `<1-5>`) · Friction `<f>` · Difficulty `<d>` (Step 4)
+**Priority:** Critical | High | Medium | Low — a qualitative summary of Architectural importance, not a separate judgment
+**Importance:** `<architectural importance>/30` — Consequence `<1-5>` · Reach `<1-5>` · Frequency `<1-5>` · Structural leverage `<1-5>` (Step 4)
+**Confidence:** `<High|Medium|Low> (<1-5>/5)` (Step 4)
+**Effort:** `<1-5>` · **Regression risk:** `<1-5>` (Step 4)
 **Affected area:** `<modules, files, components or capabilities>`
 
 ### Evidence (Step 2)
@@ -39,4 +41,4 @@ Restate the Evidence bullets above as their expected state after the fix — the
 
 ### Why now
 
-Include only when overriding the score's ranking — an immediate correctness or security risk, unlocking several blocked initiatives, or preventing imminent architectural lock-in (see `prioritisation.md`). Omit this section when the score already explains the order.
+Include only when overriding the Architectural importance ranking — an immediate correctness or security risk, unlocking several higher-importance initiatives, or preventing imminent architectural lock-in (see `prioritisation.md`). Omit this section when Importance already explains the order.

@@ -120,9 +120,11 @@ For each candidate confirmed in Step 2:
 2. name which attributes a change could improve;
 3. if a movement is worth proposing, draw it from the smell's candidate movements, or reason one independently when none fit (Principle 3), and name its trade-off — what it costs, not only what it buys.
 
+Before moving on, check whether several candidates confirmed in Step 2 are plausibly explained by the same underlying architectural gap. When they are, do not carry them forward as separate initiatives: investigate and name the shared structural cause, and treat each individual candidate as evidence for it rather than as its own competing initiative. Prefer one initiative that repairs a boundary over several initiatives that each remove one symptom of the same missing boundary — `prioritisation.md` explains why this matters more than any scoring weight.
+
 ## Step 4: Prioritise and select
 
-Score every candidate using `prioritisation.md` (Value, Maintenance friction, Delivery difficulty → Priority score). Weight high-churn, business-critical areas more heavily; a stable, rarely-changed area can still be worth selecting when active code repeatedly pays a cognitive or context cost to cross it — `prioritisation.md`'s Maintenance friction dimension is built for exactly this case (see `context-scattering`, `excessive-module-surface` in `smells/structural.md`).
+Score every candidate using `prioritisation.md` (Architectural importance, from Consequence, Reach, Frequency and Structural leverage; plus Confidence, Effort, and Regression risk as separate, non-multiplying fields). Weight high-churn, business-critical areas more heavily; a stable, rarely-changed area can still be worth selecting when active code repeatedly pays a cognitive or context cost to cross it — `prioritisation.md`'s Reach and Consequence dimensions are built for exactly this case, fed by the representative maintenance-task trace (see `context-scattering`, `excessive-module-surface` in `smells/structural.md`).
 
 Select only candidates that pass the gate below. Prefer five strong initiatives over twenty weak ones; merge candidates that represent the same underlying pressure rather than reporting one coherent refactor as several.
 

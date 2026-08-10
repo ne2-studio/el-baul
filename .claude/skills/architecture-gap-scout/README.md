@@ -15,7 +15,7 @@ It is deliberately read-only:
 * `attributes.md`: the quality attribute catalogue — the single source of truth for attribute names, referenced by id from every smell.
 * `smells/`: recurring architectural pressures, grouped by category, extensible independently of `SKILL.md`.
 * `smells/README.md`: the smell/evidence/tension/movement/decision model, and instructions for authoring smells.
-* `prioritisation.md`: the Value / Maintenance friction / Delivery difficulty scoring model.
+* `prioritisation.md`: the Architectural importance scoring model (Consequence, Reach, Frequency, Structural leverage), plus Confidence, Effort, and Regression risk as separate decision-support fields.
 * `output-template.md`: the exact structure every reported initiative must follow.
 * `templates/smell-entry.md`: starting point for adding a new smell.
 
