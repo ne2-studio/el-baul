@@ -34,7 +34,7 @@ public class WelcomeEmailManager(
 
         foreach (var user in candidates)
         {
-            if (alreadySent.Contains(user.Id) || blocked.Contains(user.Id) || !EmailAddress.TryCreate(user.Email, out _))
+            if (alreadySent.Contains(user.Id) || blocked.Contains(user.Id) || EmailAddress.Create(user.Email).IsFailure)
                 continue;
 
             backgroundJobScheduler.EnqueueWelcomeEmail(user.Id);

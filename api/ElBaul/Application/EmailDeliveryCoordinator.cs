@@ -50,7 +50,7 @@ public class EmailDeliveryCoordinator(
         if (!await isEligibleAsync(user))
             return;
 
-        if (!EmailAddress.TryCreate(user.Email, out _))
+        if (EmailAddress.Create(user.Email).IsFailure)
         {
             callerLogger.LogWarning("{SkippedEventName} invalid email", skippedEventName);
             return;

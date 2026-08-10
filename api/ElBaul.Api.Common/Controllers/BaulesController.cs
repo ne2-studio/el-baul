@@ -155,10 +155,10 @@ public class BaulesController(
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePersonaRole(BaulId baulId, PersonaId personaId, [FromBody] UpdateRoleRequest request)
     {
-        if (!BaulRoleParser.TryParse(request.Role, out var role))
-            return BadRequest(new { error = "Invalid role" });
+        var role = BaulRoleParser.Parse(request.Role);
+        if (role.IsFailure) return ErrorMapping.ToActionResult(role.Error);
 
-        var result = await personaManager.UpdatePersonaRoleAsync(baulId, personaId, role);
+        var result = await personaManager.UpdatePersonaRoleAsync(baulId, personaId, role.Value);
         return result.ToActionResult();
     }
 

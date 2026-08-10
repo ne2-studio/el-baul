@@ -38,7 +38,7 @@ public class WeeklyDigestManager(
 
         foreach (var user in candidates)
         {
-            if (blocked.Contains(user.Id) || !EmailAddress.TryCreate(user.Email, out _))
+            if (blocked.Contains(user.Id) || EmailAddress.Create(user.Email).IsFailure)
                 continue;
 
             var hasLastSent = lastSentByUser.TryGetValue(user.Id, out var lastSent);

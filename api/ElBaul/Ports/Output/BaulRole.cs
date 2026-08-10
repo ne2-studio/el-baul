@@ -1,3 +1,5 @@
+using ElBaul.Ports.Shared;
+
 namespace ElBaul.Ports.Output;
 
 public enum BaulRole
@@ -12,14 +14,12 @@ public enum BaulRole
 // role string into the enum before it crosses the IPersonaManager input-port boundary.
 public static class BaulRoleParser
 {
-    public static bool TryParse(string value, out BaulRole role)
-    {
-        switch (value.ToLowerInvariant())
+    public static Result<BaulRole> Parse(string value) =>
+        value.ToLowerInvariant() switch
         {
-            case "colaborador": role = BaulRole.Colaborador; return true;
-            case "administrador": role = BaulRole.Administrador; return true;
-            case "custodio": role = BaulRole.Custodio; return true;
-            default: role = default; return false;
-        }
-    }
+            "colaborador" => Result.Success(BaulRole.Colaborador),
+            "administrador" => Result.Success(BaulRole.Administrador),
+            "custodio" => Result.Success(BaulRole.Custodio),
+            _ => Result.Failure<BaulRole>(ApplicationError.Validation($"'{value}' is not a valid role."))
+        };
 }
