@@ -87,37 +87,60 @@ public class PhotoPersonaTagManager(
 
         // The persona set is shared by every photo in the batch (they all come from the same
         // baúl-scoped grid), so it's validated once up front rather than per photo — unlike
-        // photo validity below, which tolerates individual failures.
+        // photo validity below, which tolerates individual failures. Batched: one query for
+        // every persona in the request instead of one GetPersonaByIdAsync round trip each.
         var distinctPersonaIds = personaIds.Distinct().ToList();
+        var personasById = (await baulRepository.GetPersonasByIdsAsync(distinctPersonaIds)).ToDictionary(p => p.Id);
         foreach (var personaId in distinctPersonaIds)
         {
-            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-            if (persona is null || persona.BaulId != baulId)
+            if (!personasById.TryGetValue(personaId, out var persona) || persona.BaulId != baulId)
             {
                 logger.LogWarning("Batch photo tagging rejected: persona not found in this baúl {BaulId} {PersonaId}", baulId, personaId);
                 return Result.Failure<IEnumerable<string>>(ApplicationError.NotFound("Persona not found"));
             }
         }
 
-        var now = clock.UtcNow();
+        // Batched: one query for every photo in the request (IPhotoRepository.GetByIdsAsync,
+        // the same pattern ToTaggedPersonaDtosAsync below already uses for avatar lookups)
+        // instead of one GetByIdAsync per photo, plus one query for all of their existing tags
+        // instead of one GetPersonaIdsByPhotoIdAsync per photo. A batch this endpoint's own UI
+        // invites making large (select many photos in the grid, tag several people at once) had
+        // no cap and no batching, so its query count used to scale directly with selection size.
+        var photoIdList = photoIds.ToList();
+        var photosById = (await photoRepository.GetByIdsAsync(photoIdList.Distinct()))
+            .Where(p => p.BaulId == baulId)
+            .ToDictionary(p => p.Id);
+        var existingTagsByPhotoId = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdsAsync(photosById.Keys);
+
+        var tagsByPhotoId = new Dictionary<PhotoId, IReadOnlyList<PersonaId>>();
+        var confirmedNoPersonasToClear = new List<Photo>();
         var updated = new List<string>();
-        foreach (var photoId in photoIds)
+
+        foreach (var photoId in photoIdList)
         {
-            var photo = await photoRepository.GetByIdAsync(photoId);
-            if (photo is null || photo.BaulId != baulId)
+            if (!photosById.TryGetValue(photoId, out var photo))
             {
                 logger.LogWarning("Skipping photo in batch tagging: not found in this baúl {BaulId} {PhotoId}", baulId, photoId);
                 continue;
             }
 
-            var existingIds = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photoId);
-            var union = existingIds.Concat(distinctPersonaIds).Distinct().ToList();
-            await photoPersonaTagRepository.SetTagsAsync(photoId, baulId, union, now);
-            // See SetTaggedPersonasAsync: a real tag always wins over a stale confirmation.
-            if (distinctPersonaIds.Count > 0 && photo.ConfirmedNoPersonas)
-                await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
+            if (!tagsByPhotoId.ContainsKey(photoId))
+            {
+                var existingIds = existingTagsByPhotoId.GetValueOrDefault(photoId, []);
+                tagsByPhotoId[photoId] = existingIds.Concat(distinctPersonaIds).Distinct().ToList();
+
+                // See SetTaggedPersonasAsync: a real tag always wins over a stale confirmation.
+                if (distinctPersonaIds.Count > 0 && photo.ConfirmedNoPersonas)
+                    confirmedNoPersonasToClear.Add(photo);
+            }
+
             updated.Add(photoId.ToString());
         }
+
+        var now = clock.UtcNow();
+        await photoPersonaTagRepository.SetTagsForManyAsync(baulId, tagsByPhotoId, now);
+        foreach (var photo in confirmedNoPersonasToClear)
+            await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
 
         logger.LogInformation(
             "Batch photo tagging completed {BaulId} {PhotoCount} {PersonaCount}", baulId, updated.Count, distinctPersonaIds.Count);
