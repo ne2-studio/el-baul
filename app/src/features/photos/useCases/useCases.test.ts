@@ -25,6 +25,7 @@ vi.mock('@/api', () => ({
       move: vi.fn(),
       delete: vi.fn(),
       changeDate: vi.fn(),
+      clearDate: vi.fn(),
     },
     photoBatches: {
       getPhotos: vi.fn(),
@@ -45,6 +46,7 @@ import {
   loadPhotoBatchPhotos,
   deletePhoto,
   changePhotoDate,
+  clearPhotoDate,
   removePhoto,
 } from './index';
 import { UploadItem } from '@/features/photos/uploadFlow';
@@ -639,6 +641,19 @@ describe('photos useCases deletePhoto/changePhotoDate/removePhoto', () => {
 
     await changePhotoDate(baulId, photoId, { year: 1990, month: 6, day: 1 });
 
+    expect(usePhotosStore.getState().photosById[photoId]).toEqual(updated);
+    expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
+  });
+
+  it('clearPhotoDate upserts the updated photo into usePhotosStore and refetches chapters', async () => {
+    const updated = newPhoto();
+    usePhotosStore.getState().upsertPhotos([newPhoto({ dateYear: 1990, dateMonth: 6, dateDay: 1 })]);
+    vi.mocked(api.photos.clearDate).mockResolvedValue(updated);
+    vi.mocked(api.chapters.getAll).mockResolvedValue([newChapter()]);
+
+    await clearPhotoDate(baulId, photoId);
+
+    expect(api.photos.clearDate).toHaveBeenCalledWith(photoId);
     expect(usePhotosStore.getState().photosById[photoId]).toEqual(updated);
     expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
   });

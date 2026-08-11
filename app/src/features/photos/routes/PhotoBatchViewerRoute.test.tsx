@@ -25,16 +25,12 @@ vi.mock('@/features/photos/useCases', () => ({
   submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
   deletePhoto: vi.fn().mockResolvedValue(undefined),
   changePhotoDate: vi.fn().mockResolvedValue(undefined),
+  clearPhotoDate: vi.fn().mockResolvedValue(undefined),
   movePhotos: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/baules/useCases', () => ({
   loadChapters: vi.fn().mockResolvedValue(undefined),
-  setBaulCover: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/chapters/useCases', () => ({
-  setChapterCover: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/api', () => ({
@@ -105,10 +101,9 @@ describe('PhotoBatchViewerRoute', () => {
     await openMenu(user);
 
     expect(screen.getByText('Mover a otro capítulo')).toBeInTheDocument();
-    expect(screen.getByText('Establecer como portada del capítulo')).toBeInTheDocument();
   });
 
-  it('still offers "Mover a otro capítulo" (but not chapter-cover) for a batch photo with no chapter', async () => {
+  it('still offers "Mover a otro capítulo" for a batch photo with no chapter', async () => {
     const looseBatchPhoto = new Photo({
       id: 'photo-2', chapterId: null, baulId: 'baul-1', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg',
       uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0,
@@ -127,6 +122,5 @@ describe('PhotoBatchViewerRoute', () => {
     await openMenu(user);
 
     expect(screen.getByText('Mover a otro capítulo')).toBeInTheDocument();
-    expect(screen.queryByText('Establecer como portada del capítulo')).not.toBeInTheDocument();
   });
 });

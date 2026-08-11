@@ -26,15 +26,8 @@ vi.mock('@/features/photos/useCases', () => ({
   submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
   deletePhoto: vi.fn().mockResolvedValue(undefined),
   changePhotoDate: vi.fn().mockResolvedValue(undefined),
+  clearPhotoDate: vi.fn().mockResolvedValue(undefined),
   movePhotos: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/baules/useCases', () => ({
-  setBaulCover: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/chapters/useCases', () => ({
-  setChapterCover: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/api', () => ({
@@ -54,7 +47,6 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
 }));
 
 import { movePhotos } from '@/features/photos/useCases';
-import { setChapterCover } from '@/features/chapters/useCases';
 
 const photos: Photo[] = [
   { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0 },
@@ -105,21 +97,19 @@ describe('ChapterPhotoViewerContainer', () => {
     useAppConfigStore.setState({ sharedLinksEnabled: false });
   });
 
-  it('offers chapter-cover and move only when inside a real chapter', async () => {
+  it('offers move when inside a real chapter', async () => {
     const user = userEvent.setup();
     renderContainer();
     await openMenu(user);
 
-    expect(screen.getByText('Establecer como portada del capítulo')).toBeInTheDocument();
     expect(screen.getByText('Mover a otro capítulo')).toBeInTheDocument();
   });
 
-  it('hides chapter-cover for the virtual "fotos sueltas" chapter, but still offers move', async () => {
+  it('still offers move for the virtual "fotos sueltas" chapter', async () => {
     const user = userEvent.setup();
     renderContainer({ apiChapterId: null, currentChapter: undefined });
     await openMenu(user);
 
-    expect(screen.queryByText('Establecer como portada del capítulo')).not.toBeInTheDocument();
     expect(screen.getByText('Mover a otro capítulo')).toBeInTheDocument();
   });
 
@@ -129,16 +119,6 @@ describe('ChapterPhotoViewerContainer', () => {
     await openMenu(user);
 
     expect(screen.queryByText('Mover a otro capítulo')).not.toBeInTheDocument();
-  });
-
-  it('sets the chapter cover', async () => {
-    const user = userEvent.setup();
-    vi.mocked(setChapterCover).mockResolvedValue(undefined);
-    renderContainer();
-    await openMenu(user);
-    await user.click(screen.getByText('Establecer como portada del capítulo'));
-
-    expect(setChapterCover).toHaveBeenCalledWith('baul-1', 'c1', 'photo-2', '/photo-2-thumb.jpg');
   });
 
   it('moves the photo and self-navigates to the target chapter', async () => {
@@ -154,7 +134,7 @@ describe('ChapterPhotoViewerContainer', () => {
     expect(await screen.findByText('Vista del capítulo')).toBeInTheDocument();
   });
 
-  it('keeps destructive actions last even with both chapter extras merged in', async () => {
+  it('keeps destructive actions last even with the chapter extra merged in', async () => {
     const user = userEvent.setup();
     renderContainer({ isAdmin: true });
     await openMenu(user);

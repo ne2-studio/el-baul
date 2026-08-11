@@ -561,6 +561,30 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task ClearDateAsync_ShouldClearPhotoDate()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, date: PhotoDates.Of(2020, 5, 12));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.ClearDateAsync(photoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.DateYear);
+        Assert.Null(result.Value.DateMonth);
+        Assert.Null(result.Value.DateDay);
+    }
+
+    [Fact]
+    public async Task ClearDateAsync_ShouldFail_WhenPhotoNotFound()
+    {
+        var manager = CreateManager(CustodioId);
+        var result = await manager.ClearDateAsync(new PhotoId(Guid.NewGuid()));
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
     public async Task DownloadAsync_ShouldReturnOriginalContentAndFileName()
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();

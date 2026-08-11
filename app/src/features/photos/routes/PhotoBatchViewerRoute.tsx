@@ -21,8 +21,8 @@ import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photo
 // features/photos/viewerNavigation. Mounts ChapterPhotoViewerContainer like
 // ChapterPhotoViewerRoute does: a batch's photos do belong to a chapter (Photo.chapterId,
 // same field every other photo carries) even though the route itself is scoped by batchId
-// rather than chapterId, so "mover a otro capítulo"/"portada del capítulo" apply here too —
-// derived per-photo since a batch's own chapterId isn't otherwise available on this route.
+// rather than chapterId, so "mover a otro capítulo" applies here too — derived per-photo
+// since a batch's own chapterId isn't otherwise available on this route.
 export const PhotoBatchViewerRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();

@@ -245,3 +245,11 @@ export async function changePhotoDate(baulId: string, photoId: string, date: Pho
   const chapters = await api.chapters.getAll(baulId);
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
 }
+
+export async function clearPhotoDate(baulId: string, photoId: string): Promise<void> {
+  const updated = await api.photos.clearDate(photoId);
+  usePhotosStore.getState().upsertPhotos([updated]);
+
+  const chapters = await api.chapters.getAll(baulId);
+  useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
+}

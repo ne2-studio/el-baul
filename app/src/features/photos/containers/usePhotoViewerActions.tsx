@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { Download, Calendar, Flag, Trash2, Tag, Share2 } from 'lucide-react';
-import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
+import { Download, Calendar, CalendarOff, Flag, Trash2, Tag, Share2 } from 'lucide-react';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
+import { ConfirmActionModal } from '@/design-system/patterns/forms/ConfirmActionModal';
 import { DeletePhotoModal } from '@/features/photos/components/DeletePhotoModal';
 import { RemovalRequestModal } from '@/features/photos/components/RemovalRequestModal';
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
@@ -10,8 +10,7 @@ import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHea
 import { Persona, Photo, PhotoDate, Recuerdo, TaggedPersona } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
-import { submitRemovalRequest, setTaggedPersonas, deletePhoto, changePhotoDate } from '@/features/photos/useCases';
-import { setBaulCover } from '@/features/baules/useCases';
+import { submitRemovalRequest, setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
 import { addRecuerdo as addRecuerdoUseCase, editRecuerdo as editRecuerdoUseCase } from '@/features/memories/useCases';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
@@ -34,10 +33,10 @@ interface UsePhotoViewerActionsOptions {
 
 interface UsePhotoViewerActionsResult {
   /** Construye el array final de items del menú "···". `extraItems` son las acciones que
-   * solo tienen sentido para quien nos monta (p.ej. mover de capítulo, portada de capítulo —
-   * exclusivas de ChapterPhotoViewerContainer, que no conoce esta hook en absoluto). Se
-   * intercalan antes de las acciones destructivas, que van siempre al final sin importar qué
-   * se les pase — así ningún caller puede romper ese orden por accidente. */
+   * solo tienen sentido para quien nos monta (p.ej. mover de capítulo — exclusiva de
+   * ChapterPhotoViewerContainer, que no conoce esta hook en absoluto). Se intercalan antes de
+   * las acciones destructivas, que van siempre al final sin importar qué se les pase — así
+   * ningún caller puede romper ese orden por accidente. */
   buildMenuItems: (extraItems?: PhotoViewerMenuItem[]) => PhotoViewerMenuItem[];
   canChangeDate: boolean;
   openDateModal: () => void;
@@ -48,10 +47,10 @@ interface UsePhotoViewerActionsResult {
 }
 
 // Acciones "···" del visor de fotos, más añadir/editar/compartir recuerdo (antes duplicadas
-// en cada XxxPhotoViewerRoute) — todo en un único sitio, sin saber nada de capítulos: mover y
-// portada de capítulo viven en ChapterPhotoViewerContainer, un nivel por encima, y se
-// intercalan vía buildMenuItems. Ni PhotoViewer (puro) ni PhotoViewerContainer (universal)
-// importan store/useCases/router para nada de esto.
+// en cada XxxPhotoViewerRoute) — todo en un único sitio, sin saber nada de capítulos: mover
+// vive en ChapterPhotoViewerContainer, un nivel por encima, y se intercala vía buildMenuItems.
+// Ni PhotoViewer (puro) ni PhotoViewerContainer (universal) importan store/useCases/router
+// para nada de esto.
 export function usePhotoViewerActions({
   baulId, baulName, photo, isAdmin, sharedLinksEnabled, baulPersonas = [], taggedPersonas = [], onDeleted,
 }: UsePhotoViewerActionsOptions): UsePhotoViewerActionsResult {
@@ -61,11 +60,13 @@ export function usePhotoViewerActions({
 
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
+  const [showClearDateModal, setShowClearDateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
   const [isSubmittingRemoval, setIsSubmittingRemoval] = useState(false);
   const [isSubmittingDate, setIsSubmittingDate] = useState(false);
+  const [isClearingDate, setIsClearingDate] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
   const [isSubmittingTags, setIsSubmittingTags] = useState(false);
 
@@ -113,13 +114,6 @@ export function usePhotoViewerActions({
     });
   };
 
-  const handleSetBaulCover = () => {
-    run(() => setBaulCover(baulId, photo.id, photo.thumbnailUrl), {
-      successMessage: 'Portada del baúl actualizada',
-      errorMessage: 'Error al establecer la portada',
-    });
-  };
-
   const handleDateSubmit = async (date: PhotoDate) => {
     setIsSubmittingDate(true);
     const result = await run(() => changePhotoDate(baulId, photo.id, date), {
@@ -128,6 +122,16 @@ export function usePhotoViewerActions({
     });
     setIsSubmittingDate(false);
     if (result.ok) setShowDateModal(false);
+  };
+
+  const handleClearDateConfirm = async () => {
+    setIsClearingDate(true);
+    const result = await run(() => clearPhotoDate(baulId, photo.id), {
+      successMessage: 'Fecha borrada',
+      errorMessage: 'Error al borrar la fecha',
+    });
+    setIsClearingDate(false);
+    if (result.ok) setShowClearDateModal(false);
   };
 
   const handleDeleteSubmit = async (reason: string) => {
@@ -189,11 +193,14 @@ export function usePhotoViewerActions({
       items.push({ key: 'share', label: 'Compartir foto', icon: Share2, onSelect: handleSharePhoto });
     }
     items.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: handleDownloadPhoto });
-    if (isAdmin) {
-      items.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', icon: BaulIcon, onSelect: handleSetBaulCover });
-    }
     items.push(...extraItems);
     items.push({ key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => setShowDateModal(true) });
+    if (photo.date) {
+      // Variant por defecto (no destructiva) a propósito: aunque borra la fecha, no debe
+      // competir en protagonismo visual con "Retirar foto", la única acción realmente
+      // destructiva de este menú.
+      items.push({ key: 'clear-date', label: 'Borrar fecha', icon: CalendarOff, onSelect: () => setShowClearDateModal(true) });
+    }
     // Destructivas siempre al final, sin importar qué extras se hayan intercalado arriba.
     if (!isAdmin) {
       items.push({ key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => setShowRemovalModal(true) });
@@ -221,6 +228,19 @@ export function usePhotoViewerActions({
           onConfirm={handleDateSubmit}
           isSubmitting={isSubmittingDate}
           initialValue={photo.date}
+        />
+      )}
+
+      {showClearDateModal && (
+        <ConfirmActionModal
+          title="Borrar fecha de la foto"
+          tone="plain"
+          description="La foto dejará de tener una fecha asignada. Podrás añadir una nueva más adelante."
+          confirmLabel="Sí, borrar fecha"
+          confirmVariant="primary"
+          onCancel={() => setShowClearDateModal(false)}
+          onConfirm={handleClearDateConfirm}
+          isSubmitting={isClearingDate}
         />
       )}
 

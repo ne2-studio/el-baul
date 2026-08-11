@@ -289,6 +289,28 @@ public class PhotoManager(
         return await photoDtoProjector.ProjectAsync(updatedPhoto);
     }
 
+    public async Task<Result<PhotoDto>> ClearDateAsync(PhotoId photoId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null)
+        {
+            logger.LogWarning("Photo date clear rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
+        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Photo date clear", new { photo.BaulId, PhotoId = photoId });
+        if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
+
+        var updatedPhoto = photo.WithDate(null);
+        await photoRepository.UpdateAsync(updatedPhoto);
+
+        logger.LogInformation("Photo date cleared {BaulId} {PhotoId}", photo.BaulId, photoId);
+
+        return await photoDtoProjector.ProjectAsync(updatedPhoto);
+    }
+
     // Deliberately not wrapped in IUnitOfWork.ExecuteInTransactionAsync despite looping over
     // N writes — unlike every transactional method in this codebase, this one is intentionally
     // best-effort: a photo that fails validation (not found, access denied) is logged and

@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Download, BookImage, FolderInput, Calendar, Flag, Trash2, Tag, Share2 } from 'lucide-react';
-import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
+import { Download, FolderInput, Calendar, CalendarOff, Flag, Trash2, Tag, Share2 } from 'lucide-react';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
 import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { Photo, Recuerdo } from '@/types';
@@ -40,13 +39,10 @@ function menuItems(isAdmin: boolean): PhotoViewerMenuItem[] {
     { key: 'share', label: 'Compartir foto', icon: Share2, onSelect: () => alert('Compartir foto') },
     { key: 'download', label: 'Descargar foto original', icon: Download, onSelect: () => alert('Descargar foto original') },
   ];
-  if (isAdmin) {
-    items.push({ key: 'baul-cover', label: 'Establecer como portada del baúl', icon: BaulIcon, onSelect: () => alert('Portada del baúl') });
-  }
   items.push(
-    { key: 'chapter-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => alert('Portada del capítulo') },
     { key: 'move', label: 'Mover a otro capítulo', icon: FolderInput, onSelect: () => alert('Mover a otro capítulo') },
     { key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => alert('Cambiar fecha') },
+    { key: 'clear-date', label: 'Borrar fecha', icon: CalendarOff, onSelect: () => alert('Borrar fecha') },
   );
   if (!isAdmin) {
     items.push({ key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => alert('Solicitar retirada') });

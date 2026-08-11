@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { BookImage, Calendar, FolderInput, Trash2 } from 'lucide-react';
+import { Calendar, CalendarOff, FolderInput, Trash2 } from 'lucide-react';
 import { PhotoViewerHeader } from '@/features/photos/components/PhotoViewerHeader';
 
 const meta = {
@@ -27,9 +27,9 @@ export const WithActions: Story = {
     totalCount: 12,
     onClose: () => alert('onClose clicked'),
     menuItems: [
-      { key: 'chapter-cover', label: 'Establecer como portada del capítulo', icon: BookImage, onSelect: () => alert('Establecer como portada del capítulo clicked') },
       { key: 'move', label: 'Mover a otro capítulo', icon: FolderInput, onSelect: () => alert('Mover a otro capítulo clicked') },
       { key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => alert('Cambiar fecha clicked') },
+      { key: 'clear-date', label: 'Borrar fecha', icon: CalendarOff, onSelect: () => alert('Borrar fecha clicked') },
     ],
   },
 };

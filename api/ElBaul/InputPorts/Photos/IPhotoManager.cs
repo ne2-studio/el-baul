@@ -34,6 +34,10 @@ public interface IPhotoManager
     Task<Result<PhotoDto>> ChangeDateAsync(PhotoId photoId, PhotoDate date);
     Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<PhotoId> photoIds, PhotoDate date);
 
+    /// <summary>Clears a photo's date back to unknown — the counterpart to ChangeDateAsync for
+    /// when the family realizes the date they had wasn't right, without knowing a replacement.</summary>
+    Task<Result<PhotoDto>> ClearDateAsync(PhotoId photoId);
+
     Task<Result<PhotoDownloadResult>> DownloadAsync(PhotoId photoId);
 
     Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(BaulId baulId, PersonaId personaId);

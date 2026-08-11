@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookImage, FolderInput } from 'lucide-react';
+import { FolderInput } from 'lucide-react';
 import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerContainer';
 import { MoveModal } from '@/features/photos/components/MoveModal';
 import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { Chapter, Photo } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { movePhotos } from '@/features/photos/useCases';
-import { setChapterCover } from '@/features/chapters/useCases';
 
 interface ChapterPhotoViewerContainerProps {
   photo: Photo;
@@ -16,7 +15,7 @@ interface ChapterPhotoViewerContainerProps {
   baulName: string;
   isAdmin?: boolean;
   /** null = la foto no pertenece a ningún capítulo (fotos sueltas) — sigue siendo un scope
-   * válido para mover, solo que sin "portada del capítulo". */
+   * válido para mover. */
   apiChapterId: string | null;
   allChapters: Chapter[];
   currentChapter?: Chapter;
@@ -24,13 +23,12 @@ interface ChapterPhotoViewerContainerProps {
   onPhotoChange: (photo: Photo) => void;
 }
 
-// Envuelve el PhotoViewerContainer universal añadiendo las dos únicas acciones que sí
-// necesitan saber "en qué capítulo estoy": mover a otro capítulo y portada de capítulo. Se
-// inyectan como extraMenuItems — ver usePhotoViewerActions.buildMenuItems para la garantía
-// de que las acciones destructivas siguen yendo siempre al final. Navega ella misma tras un
-// movimiento con éxito: solo necesita baulId + el id del capítulo destino, ambos ya
-// conocidos, así que no hace falta que la Route se lo inyecte (ver docs/architecture/
-// frontend.md, regla de navegación de containers/).
+// Envuelve el PhotoViewerContainer universal añadiendo la única acción que sí necesita saber
+// "en qué capítulo estoy": mover a otro capítulo. Se inyecta como extraMenuItems — ver
+// usePhotoViewerActions.buildMenuItems para la garantía de que las acciones destructivas
+// siguen yendo siempre al final. Navega ella misma tras un movimiento con éxito: solo necesita
+// baulId + el id del capítulo destino, ambos ya conocidos, así que no hace falta que la Route
+// se lo inyecte (ver docs/architecture/frontend.md, regla de navegación de containers/).
 export function ChapterPhotoViewerContainer({
   photo, photos, baulId, baulName, isAdmin, apiChapterId, allChapters, currentChapter, onClose, onPhotoChange,
 }: ChapterPhotoViewerContainerProps) {
@@ -41,14 +39,6 @@ export function ChapterPhotoViewerContainer({
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
 
   const moveableChapters = allChapters.filter((chapter) => chapter.id !== currentChapter?.id);
-
-  const handleSetChapterCover = () => {
-    if (!apiChapterId) return;
-    run(() => setChapterCover(baulId, apiChapterId, photo.id, photo.thumbnailUrl), {
-      successMessage: 'Portada del capítulo actualizada',
-      errorMessage: 'Error al establecer la portada',
-    });
-  };
 
   const handleMoveSubmit = async () => {
     if (!moveTargetId) return;
@@ -67,14 +57,6 @@ export function ChapterPhotoViewerContainer({
   };
 
   const extraMenuItems: PhotoViewerMenuItem[] = [];
-  if (apiChapterId !== null) {
-    extraMenuItems.push({
-      key: 'chapter-cover',
-      label: 'Establecer como portada del capítulo',
-      icon: BookImage,
-      onSelect: handleSetChapterCover,
-    });
-  }
   if (moveableChapters.length > 0) {
     extraMenuItems.push({
       key: 'move',

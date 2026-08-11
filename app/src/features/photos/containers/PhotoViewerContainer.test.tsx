@@ -26,10 +26,7 @@ vi.mock('@/features/photos/useCases', () => ({
   submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
   deletePhoto: vi.fn().mockResolvedValue(undefined),
   changePhotoDate: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/baules/useCases', () => ({
-  setBaulCover: vi.fn().mockResolvedValue(undefined),
+  clearPhotoDate: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/api', () => ({
@@ -49,8 +46,7 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
 }));
 
 import { loadRecuerdos, addRecuerdo } from '@/features/memories/useCases';
-import { loadTaggedPersonas, setTaggedPersonas, submitRemovalRequest, deletePhoto, changePhotoDate } from '@/features/photos/useCases';
-import { setBaulCover } from '@/features/baules/useCases';
+import { loadTaggedPersonas, setTaggedPersonas, submitRemovalRequest, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 
@@ -140,22 +136,36 @@ describe('PhotoViewerContainer', () => {
 
     expect(screen.getByText('Cambiar fecha')).toBeInTheDocument();
     expect(screen.getByText('Solicitar retirada')).toBeInTheDocument();
-    expect(screen.queryByText('Establecer como portada del baúl')).not.toBeInTheDocument();
     expect(screen.queryByText('Retirar foto')).not.toBeInTheDocument();
   });
 
-  it('offers baúl-cover and delete (instead of removal-request) for an admin', async () => {
+  it('offers delete (instead of removal-request) for an admin', async () => {
     const user = userEvent.setup();
-    vi.mocked(setBaulCover).mockResolvedValue(undefined);
     renderContainer({ isAdmin: true });
     await openMenu(user);
 
-    expect(screen.getByText('Establecer como portada del baúl')).toBeInTheDocument();
     expect(screen.getByText('Retirar foto')).toBeInTheDocument();
     expect(screen.queryByText('Solicitar retirada')).not.toBeInTheDocument();
+  });
 
-    await user.click(screen.getByText('Establecer como portada del baúl'));
-    expect(setBaulCover).toHaveBeenCalledWith('baul-1', 'photo-2', '/photo-2-thumb.jpg');
+  it('does not offer "Borrar fecha" for a photo with no date', async () => {
+    const user = userEvent.setup();
+    renderContainer();
+    await openMenu(user);
+
+    expect(screen.queryByText('Borrar fecha')).not.toBeInTheDocument();
+  });
+
+  it('offers "Borrar fecha" for a photo with a date, and clears it on confirm', async () => {
+    const user = userEvent.setup();
+    vi.mocked(clearPhotoDate).mockResolvedValue(undefined);
+    const datedPhoto = { ...photos[1], date: { year: 2020, month: 5, day: 1 } };
+    renderContainer({ photo: datedPhoto });
+    await openMenu(user);
+    await user.click(screen.getByText('Borrar fecha'));
+    await user.click(screen.getByRole('button', { name: 'Sí, borrar fecha' }));
+
+    expect(clearPhotoDate).toHaveBeenCalledWith('baul-1', 'photo-2');
   });
 
   it('deletes the photo as an admin and closes the viewer', async () => {

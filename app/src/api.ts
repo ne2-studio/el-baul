@@ -280,6 +280,8 @@ export const api = {
       new Photo(await put<PhotoDto>(`/api/photos/${photoId}/date`, date)),
     changeDateBatch: async (photoIds: string[], date: PhotoDate) =>
       (await put<PhotoDto[]>('/api/photos/date-batch', { photoIds, ...date })).map((p) => new Photo(p)),
+    clearDate: async (photoId: string) =>
+      new Photo(await del<PhotoDto>(`/api/photos/${photoId}/date`)),
     download: async (photoId: string): Promise<{ blob: Blob; fileName: string }> => {
       const response = await fetch(`${API_BASE}/api/photos/${photoId}/download`, { headers: authHeaders() });
       if (!response.ok) {
