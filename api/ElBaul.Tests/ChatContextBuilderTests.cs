@@ -4,18 +4,16 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
-using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
-using Microsoft.Extensions.Logging.Abstractions;
 
 using ElBaul.Domain;
 namespace ElBaul.Tests;
 
-// RAG-ranking behavior in isolation from ChatManager's orchestration — see
-// ChatContextBuilderApprovalTests for full-text snapshots of the prompt this builds.
+// Prompt assembly behavior in isolation from ChatManager's orchestration — see
+// RelevantRecuerdoSelectorTests for RAG ranking and ChatContextBuilderApprovalTests for
+// full-text snapshots of the prompt this builds.
 public class ChatContextBuilderTests
 {
     private const string CustodioId = "custodio-1";
@@ -23,13 +21,12 @@ public class ChatContextBuilderTests
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
-    private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly StaticClock _clock = new();
+    private readonly FakeRelevantRecuerdoSelector _relevantRecuerdoSelector = new();
 
-    private ChatContextBuilder CreateBuilder(IEmbeddingBackend? embeddingBackend = null) =>
-        new(NullLogger<ChatContextBuilder>.Instance, _baulRepository, _chapterRepository, _recuerdoRepository,
-            _recuerdoEmbeddingRepository, _photoRepository, embeddingBackend ?? new FakeEmbeddingBackend([]), _clock);
+    private ChatContextBuilder CreateBuilder() =>
+        new(_baulRepository, _chapterRepository, _recuerdoRepository, _photoRepository, _relevantRecuerdoSelector);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name)
     {
@@ -55,49 +52,25 @@ public class ChatContextBuilderTests
     }
 
     [Fact]
-    public async Task BuildAsync_ShouldOnlyIncludeTheMostRelevantRecuerdos_WhenThereAreManyOfThem()
+    public async Task BuildAsync_ShouldOnlyFormatTheRecuerdos_SelectedForTheQuery()
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var embeddingBackend = new FakeEmbeddingBackend(["asturias", "relleno"]);
 
-        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Fuimos de viaje a Asturias en verano", _clock.UtcNow()));
+        var selected = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Fuimos de viaje a Asturias en verano", _clock.UtcNow());
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), selected);
         for (var i = 0; i < 25; i++)
         {
             _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), $"Recuerdo de relleno numero {i}", _clock.UtcNow()));
         }
+        _relevantRecuerdoSelector.NextResult = [selected];
 
-        var builder = CreateBuilder(embeddingBackend);
+        var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, "¿Qué sabemos del viaje a Asturias?");
 
         Assert.Contains("Fuimos de viaje a Asturias en verano", context);
         Assert.Contains("recuerdos en total en el baúl", context);
-
-        var includedFillerCount = Enumerable.Range(0, 25).Count(i => context.Contains($"Recuerdo de relleno numero {i}"));
-        Assert.True(includedFillerCount < 25, "Some filler recuerdos should have been left out of the prompt");
-    }
-
-    [Fact]
-    public async Task BuildAsync_ShouldFallBackToMostRecentRecuerdos_WhenEmbeddingTheQueryFails()
-    {
-        var baulId = Guid.NewGuid();
-        var baul = await SeedBaulAsync(baulId, "Familia");
-        var embeddingBackend = new FakeEmbeddingBackend([])
-        {
-            NextEmbedResult = Result.Failure<float[]>(ApplicationError.ExternalDependencyUnavailable("Embedding backend unavailable"))
-        };
-
-        var mostRecent = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "El más reciente", _clock.UtcNow());
-        _recuerdoRepository.SeedForBaul(new BaulId(baulId), mostRecent);
-        for (var i = 0; i < 25; i++)
-        {
-            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), $"Recuerdo antiguo {i}", _clock.UtcNow().AddDays(-i - 1)));
-        }
-
-        var builder = CreateBuilder(embeddingBackend);
-        var context = await builder.BuildAsync(baul, "¿Qué sabemos de la familia?");
-
-        Assert.Contains("El más reciente", context);
+        Assert.DoesNotContain("Recuerdo de relleno numero 0", context);
     }
 
     [Fact]
@@ -266,5 +239,13 @@ public class ChatContextBuilderTests
         Assert.Contains("- Boda de Ana (5 fotos)", summary);
         Assert.DoesNotContain("Un recuerdo que no debería aparecer", summary);
         Assert.DoesNotContain("Recuerdos", summary);
+    }
+
+    private class FakeRelevantRecuerdoSelector : IRelevantRecuerdoSelector
+    {
+        public List<Recuerdo>? NextResult { get; set; }
+
+        public Task<List<Recuerdo>> SelectAsync(BaulId baulId, List<Recuerdo> recuerdos, string query) =>
+            Task.FromResult(NextResult ?? recuerdos);
     }
 }

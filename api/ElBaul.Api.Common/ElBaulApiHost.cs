@@ -246,6 +246,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IUserManager, UserManager>();
         builder.Services.AddScoped<IPushNotificationManager, PushNotificationManager>();
         builder.Services.AddScoped<ISupportManager, SupportManager>();
+        builder.Services.AddScoped<IRelevantRecuerdoSelector, RelevantRecuerdoSelector>();
         builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
         builder.Services.AddScoped<IChatManager, ChatManager>();
         builder.Services.AddScoped<ISharedLinkManager, SharedLinkManager>();

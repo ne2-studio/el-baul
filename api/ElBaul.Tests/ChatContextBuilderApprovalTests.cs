@@ -34,8 +34,9 @@ public class ChatContextBuilderApprovalTests
     private readonly StaticClock _clock = new();
 
     private ChatContextBuilder CreateBuilder(IEmbeddingBackend? embeddingBackend = null) =>
-        new(NullLogger<ChatContextBuilder>.Instance, _baulRepository, _chapterRepository, _recuerdoRepository,
-            _recuerdoEmbeddingRepository, _photoRepository, embeddingBackend ?? new FakeEmbeddingBackend([]), _clock);
+        new(_baulRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
+            new RelevantRecuerdoSelector(NullLogger<RelevantRecuerdoSelector>.Instance, _recuerdoEmbeddingRepository,
+                embeddingBackend ?? new FakeEmbeddingBackend([]), _clock));
 
     [Fact]
     public async Task BuildAsync_WithChaptersPersonasAndRecuerdos()
