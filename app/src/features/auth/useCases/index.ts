@@ -5,6 +5,7 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useChatStore } from '@/store/useChatStore';
 
 async function loadProfile(): Promise<UserProfile | null> {
   try {
@@ -63,4 +64,5 @@ export function resetAllStores(): void {
   usePersonasStore.getState().reset();
   usePhotosStore.getState().reset();
   useRecuerdosStore.getState().reset();
+  useChatStore.getState().reset();
 }

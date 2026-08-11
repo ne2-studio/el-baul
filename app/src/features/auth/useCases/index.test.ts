@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
+import { useChatStore } from '@/store/useChatStore';
 import { Photo } from '@/types';
 
 describe('resetAllStores', () => {
@@ -15,6 +16,7 @@ describe('resetAllStores', () => {
   it('clears domain stores but keeps the remembered current baúl', () => {
     useAuthStore.getState().setUserProfile({ photoUrl: '', name: 'Ana', email: 'ana@example.com' });
     useBaulesStore.setState({ baules: [{ id: 'baul-1' } as never] });
+    useChatStore.setState({ activeBaulId: 'baul-1', messages: [{ id: 'message-1' } as never] });
     usePhotosStore.getState().upsertPhotos([new Photo({
       id: 'photo-1', baulId: 'baul-1', thumbnailUrl: 'thumb', fullUrl: 'full',
       uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0,
@@ -25,6 +27,7 @@ describe('resetAllStores', () => {
 
     expect(useAuthStore.getState().userProfile).toEqual({ photoUrl: '', name: '', email: '' });
     expect(useBaulesStore.getState().baules).toEqual([]);
+    expect(useChatStore.getState().messages).toEqual([]);
     expect(usePhotosStore.getState().photosById).toEqual({});
     // El workspace recordado sobrevive a un cierre de sesión — ver comentario en
     // useCurrentBaulStore.ts: la app debe reabrir en el último baúl usado tras volver a

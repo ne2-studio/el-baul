@@ -5,19 +5,15 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatMessage } from '@/types';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { useChatStore } from '@/store/useChatStore';
 import { AiChatRoute } from './AiChatRoute';
 
-vi.mock('@/api', () => ({
-  api: {
-    chat: {
-      getMessages: vi.fn(),
-      sendMessage: vi.fn(),
-      getSuggestedQuestions: vi.fn(),
-    },
-  },
+vi.mock('@/features/chat/useCases', () => ({
+  loadChatConversation: vi.fn(),
+  sendChatMessage: vi.fn(),
 }));
 
-import { api } from '@/api';
+import { loadChatConversation, sendChatMessage } from '@/features/chat/useCases';
 
 // jsdom doesn't implement scrollIntoView — AiChatScreen (rendered by this route) calls it
 // on every message-count change to keep the conversation scrolled to the bottom.
@@ -49,94 +45,56 @@ function renderRoute(initialEntries: string[] = [`/baules/${baulId}/recordar`]) 
 describe('AiChatRoute', () => {
   beforeEach(() => {
     useAppConfigStore.setState({ chatSuggestionsEnabled: false });
+    useChatStore.getState().reset();
     vi.clearAllMocks();
-    vi.mocked(api.chat.getMessages).mockResolvedValue([]);
-    vi.mocked(api.chat.getSuggestedQuestions).mockResolvedValue([]);
   });
 
-  it('loads and renders the existing conversation for this baúl', async () => {
-    vi.mocked(api.chat.getMessages).mockResolvedValue([
-      message({ id: 'm1', role: 'user', content: '¿Cuándo nació la abuela?' }),
-      message({ id: 'm2', role: 'assistant', content: 'En 1945.' }),
-    ]);
+  it('loads the conversation for this baúl through the chat use case', async () => {
+    renderRoute();
+
+    await waitFor(() => expect(loadChatConversation).toHaveBeenCalledWith(baulId, {
+      suggestionsEnabled: false,
+    }));
+  });
+
+  it('passes the starter-suggestions feature flag into the chat use case', async () => {
+    useAppConfigStore.setState({ chatSuggestionsEnabled: true });
 
     renderRoute();
 
-    expect(await screen.findByText('¿Cuándo nació la abuela?')).toBeInTheDocument();
+    await waitFor(() => expect(loadChatConversation).toHaveBeenCalledWith(baulId, {
+      suggestionsEnabled: true,
+    }));
+  });
+
+  it('renders chat state owned by the feature boundary', () => {
+    useChatStore.setState({
+      activeBaulId: baulId,
+      messages: [
+        message({ id: 'm1', role: 'user', content: '¿Cuándo nació la abuela?' }),
+        message({ id: 'm2', role: 'assistant', content: 'En 1945.' }),
+      ],
+    });
+
+    renderRoute();
+
+    expect(screen.getByText('¿Cuándo nació la abuela?')).toBeInTheDocument();
     expect(screen.getByText('En 1945.')).toBeInTheDocument();
-    expect(api.chat.getMessages).toHaveBeenCalledWith(baulId);
   });
 
-  it('fetches starter suggestions when the history is empty and the feature is enabled', async () => {
-    useAppConfigStore.setState({ chatSuggestionsEnabled: true });
-    vi.mocked(api.chat.getSuggestedQuestions).mockResolvedValue(['¿Quién es esta persona?']);
-
-    renderRoute();
-
-    expect(await screen.findByRole('button', { name: '¿Quién es esta persona?' })).toBeInTheDocument();
-    expect(api.chat.getSuggestedQuestions).toHaveBeenCalledWith(baulId);
-  });
-
-  it('does not fetch suggestions when the feature is disabled', async () => {
-    useAppConfigStore.setState({ chatSuggestionsEnabled: false });
-
-    renderRoute();
-    await waitFor(() => expect(api.chat.getMessages).toHaveBeenCalled());
-
-    expect(api.chat.getSuggestedQuestions).not.toHaveBeenCalled();
-  });
-
-  it('does not fetch suggestions when there is already history, even with the feature enabled', async () => {
-    useAppConfigStore.setState({ chatSuggestionsEnabled: true });
-    vi.mocked(api.chat.getMessages).mockResolvedValue([message()]);
-
-    renderRoute();
-    await waitFor(() => expect(api.chat.getMessages).toHaveBeenCalled());
-
-    expect(api.chat.getSuggestedQuestions).not.toHaveBeenCalled();
-  });
-
-  it('shows an error state when the history fails to load', async () => {
-    vi.mocked(api.chat.getMessages).mockRejectedValue(new Error('network'));
-
-    renderRoute();
-
-    expect(await screen.findByText(/No hemos podido obtener una respuesta/i)).toBeInTheDocument();
-  });
-
-  it('sends a message and appends both the outgoing text and the reply', async () => {
+  it('sends messages through the chat use case with the current baúl id', async () => {
     const user = userEvent.setup();
-    vi.mocked(api.chat.sendMessage).mockResolvedValue(
-      message({ id: 'reply-1', role: 'assistant', content: 'En 1945.' })
-    );
 
     renderRoute();
-    await waitFor(() => expect(api.chat.getMessages).toHaveBeenCalled());
 
     await user.type(screen.getByRole('textbox'), '¿Cuándo nació la abuela?{Enter}');
 
-    expect(await screen.findByText('¿Cuándo nació la abuela?')).toBeInTheDocument();
-    expect(await screen.findByText('En 1945.')).toBeInTheDocument();
-    expect(api.chat.sendMessage).toHaveBeenCalledWith(baulId, '¿Cuándo nació la abuela?');
-  });
-
-  it('shows an error and keeps the outgoing message when sending fails', async () => {
-    const user = userEvent.setup();
-    vi.mocked(api.chat.sendMessage).mockRejectedValue(new Error('network'));
-
-    renderRoute();
-    await waitFor(() => expect(api.chat.getMessages).toHaveBeenCalled());
-
-    await user.type(screen.getByRole('textbox'), '¿Cuándo nació la abuela?{Enter}');
-
-    expect(await screen.findByText('¿Cuándo nació la abuela?')).toBeInTheDocument();
-    expect(await screen.findByText(/No hemos podido obtener una respuesta/i)).toBeInTheDocument();
+    expect(sendChatMessage).toHaveBeenCalledWith(baulId, '¿Cuándo nació la abuela?');
   });
 
   it('navigates back when the back button is clicked', async () => {
     const user = userEvent.setup();
     renderRoute([`/baules/${baulId}`, `/baules/${baulId}/recordar`]);
-    await waitFor(() => expect(api.chat.getMessages).toHaveBeenCalled());
 
     await user.click(screen.getByRole('button', { name: 'Volver' }));
 
