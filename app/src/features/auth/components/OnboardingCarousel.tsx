@@ -18,7 +18,7 @@ interface OnboardingCarouselProps {
   onSkip: () => void;
 }
 
-function ScatteredMemoriesIllustration() {
+export function ScatteredMemoriesIllustration() {
   const scattered = [
     { Icon: MessageCircle, x: -64, y: -40 },
     { Icon: ImageIcon, x: 64, y: -40 },
@@ -51,7 +51,7 @@ function ScatteredMemoriesIllustration() {
   );
 }
 
-function SharedSpaceIllustration() {
+export function SharedSpaceIllustration() {
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-6">
@@ -79,7 +79,7 @@ function SharedSpaceIllustration() {
   );
 }
 
-function GrowingMemoryIllustration() {
+export function GrowingMemoryIllustration() {
   const items = [
     { Icon: ImageIcon, x: -60, y: -46 },
     { Icon: Video, x: 60, y: -46 },
@@ -128,48 +128,6 @@ export function TrunkReadyIllustration() {
       </motion.div>
     </div>
   );
-}
-
-export interface OnboardingFinalStepContent {
-  title: string;
-  description: string;
-  ctaLabel: string;
-}
-
-// Title/description for the first three screens — shared with the invite-personalized variant
-// (OnboardingInvitePreviewSteps.tsx), which reuses this exact copy and only swaps the
-// illustration for one built from the invited baúl's real photos/personas.
-export const introStepsCopy: { title: string; description: string }[] = [
-  {
-    title: 'Los recuerdos importantes acaban perdiéndose',
-    description: 'Fotos en WhatsApp, vídeos en móviles antiguos, historias que solo recuerda una persona.'
-  },
-  {
-    title: 'Por eso existe un Baúl',
-    description: 'Un espacio compartido y seguro donde toda la familia guarda fotos, vídeos y recuerdos en un mismo lugar.'
-  },
-  {
-    title: 'Cada recuerdo hace crecer la historia',
-    description: 'Cada uno añade sus fotos, vídeos y recuerdos. Así, el Baúl se convierte en la memoria de toda la familia.'
-  }
-];
-
-export function buildOnboardingSteps(finalStep: OnboardingFinalStepContent): OnboardingStep[] {
-  const illustrations = [
-    <ScatteredMemoriesIllustration key="scattered" />,
-    <SharedSpaceIllustration key="shared" />,
-    <GrowingMemoryIllustration key="growing" />
-  ];
-
-  return [
-    ...introStepsCopy.map((copy, i) => ({ ...copy, illustration: illustrations[i] })),
-    {
-      title: finalStep.title,
-      description: finalStep.description,
-      illustration: <TrunkReadyIllustration />,
-      ctaLabel: finalStep.ctaLabel
-    }
-  ];
 }
 
 export function OnboardingCarousel({

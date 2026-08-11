@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { OnboardingCarousel, buildOnboardingSteps } from '@/features/auth/components/OnboardingCarousel';
+import { OnboardingCarousel } from '@/features/auth/components/OnboardingCarousel';
+import { buildOnboardingSteps } from '@/features/auth/components/OnboardingSteps';
 import { buildInvitePreviewSteps } from '@/features/auth/components/OnboardingInvitePreviewSteps';
 import { markOnboardingSeen } from '@/features/auth/useCases';
 import { useAuth } from 'react-oidc-context';

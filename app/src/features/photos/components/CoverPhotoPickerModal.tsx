@@ -41,7 +41,6 @@ function useInfinitePhotoPage(fetchPage: CoverPhotoPickerModalProps['fetchPage']
       setIsInitialLoad(false);
       loadingRef.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchPage, hasMore]);
 
   useEffect(() => {

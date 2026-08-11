@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Icon, type IconSize } from '@/design-system/foundations/icons/Icon';
+import { Icon } from '@/design-system/foundations/icons/Icon';
+import type { IconSize } from '@/design-system/foundations/icons/iconSizes';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Button } from '@/design-system/components/actions/Button';
 

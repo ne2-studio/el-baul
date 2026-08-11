@@ -27,14 +27,6 @@ vi.mock('@/features/auth/useCases', () => ({
 }));
 
 vi.mock('@/features/auth/components/OnboardingCarousel', () => ({
-  buildOnboardingSteps: vi.fn((finalStep) => [
-    {
-      title: finalStep.title,
-      description: finalStep.description,
-      ctaLabel: finalStep.ctaLabel,
-      illustration: null,
-    },
-  ]),
   OnboardingCarousel: ({
     steps,
     onComplete,
@@ -51,6 +43,17 @@ vi.mock('@/features/auth/components/OnboardingCarousel', () => ({
       <button type="button" onClick={onSkip}>Saltar</button>
     </main>
   ),
+}));
+
+vi.mock('@/features/auth/components/OnboardingSteps', () => ({
+  buildOnboardingSteps: vi.fn((finalStep) => [
+    {
+      title: finalStep.title,
+      description: finalStep.description,
+      ctaLabel: finalStep.ctaLabel,
+      illustration: null,
+    },
+  ]),
 }));
 
 vi.mock('@/features/auth/components/OnboardingInvitePreviewSteps', () => ({

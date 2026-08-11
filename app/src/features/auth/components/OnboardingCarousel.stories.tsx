@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { OnboardingCarousel, buildOnboardingSteps } from '@/features/auth/components/OnboardingCarousel';
+import { OnboardingCarousel } from '@/features/auth/components/OnboardingCarousel';
+import { buildOnboardingSteps } from '@/features/auth/components/OnboardingSteps';
 
 const meta = {
   title: 'Screens/Onboarding/Carousel',

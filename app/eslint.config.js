@@ -58,5 +58,11 @@ export default tseslint.config(
   {
     files: ['src/features/*/components/**/*.{ts,tsx}'],
     rules: componentBoundaryRule,
+  },
+  {
+    files: ['.storybook/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   }
 );

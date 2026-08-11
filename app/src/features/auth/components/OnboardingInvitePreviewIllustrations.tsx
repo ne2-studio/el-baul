@@ -1,17 +1,12 @@
 import { HardDrive, Image as ImageIcon, MessageCircle, Smartphone, Users } from 'lucide-react';
 import { motion } from 'motion/react';
-import { BaulInviteLinkPreview } from '@/types';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
-import {
-  introStepsCopy,
-  OnboardingStep,
-  TrunkReadyIllustration
-} from '@/features/auth/components/OnboardingCarousel';
+import { TrunkReadyIllustration } from '@/features/auth/components/OnboardingCarousel';
 
 // Up to 3 real photo thumbnails, fanned and overlapping. Reused as both the "settled" state of
 // the scattered-icons animation (screen 1) and the cover fallback (screen 4) — a baúl with fewer
 // than 3 photos just renders fewer slots instead of leaving a gap.
-function PhotoStack({ photos, startDelay = 0 }: { photos: string[]; startDelay?: number }) {
+export function PhotoStack({ photos, startDelay = 0 }: { photos: string[]; startDelay?: number }) {
   const slots = photos.slice(0, 3);
   const offsets = [-16, 0, 16];
   const rotations = [-6, 0, 6];
@@ -34,7 +29,7 @@ function PhotoStack({ photos, startDelay = 0 }: { photos: string[]; startDelay?:
   );
 }
 
-function InvitePreviewPhotosIllustration({ photos }: { photos: string[] }) {
+export function InvitePreviewPhotosIllustration({ photos }: { photos: string[] }) {
   const scattered = [
     { Icon: MessageCircle, x: -64, y: -40 },
     { Icon: ImageIcon, x: 64, y: -40 },
@@ -71,7 +66,7 @@ function InvitePreviewPhotosIllustration({ photos }: { photos: string[] }) {
   );
 }
 
-function InvitePeopleIllustration({ avatarUrls }: { avatarUrls: string[] }) {
+export function InvitePeopleIllustration({ avatarUrls }: { avatarUrls: string[] }) {
   const slots = [avatarUrls[0], avatarUrls[1], avatarUrls[2]];
 
   return (
@@ -105,7 +100,7 @@ function InvitePeopleIllustration({ avatarUrls }: { avatarUrls: string[] }) {
   );
 }
 
-function InviteMemoryTimelineIllustration({ photos }: { photos: string[] }) {
+export function InviteMemoryTimelineIllustration({ photos }: { photos: string[] }) {
   const slots = [photos[0], photos[1], photos[2]];
 
   return (
@@ -130,7 +125,13 @@ function InviteMemoryTimelineIllustration({ photos }: { photos: string[] }) {
   );
 }
 
-function InviteCoverIllustration({ coverPhotoUrl, fallbackPhotos }: { coverPhotoUrl?: string; fallbackPhotos: string[] }) {
+export function InviteCoverIllustration({
+  coverPhotoUrl,
+  fallbackPhotos
+}: {
+  coverPhotoUrl?: string;
+  fallbackPhotos: string[];
+}) {
   if (coverPhotoUrl) {
     return (
       <div className="flex justify-center">
@@ -153,24 +154,4 @@ function InviteCoverIllustration({ coverPhotoUrl, fallbackPhotos }: { coverPhoto
       <PhotoStack photos={fallbackPhotos} />
     </div>
   );
-}
-
-export function buildInvitePreviewSteps(preview: BaulInviteLinkPreview): OnboardingStep[] {
-  const illustrations = [
-    <InvitePreviewPhotosIllustration key="photos" photos={preview.previewPhotos} />,
-    <InvitePeopleIllustration key="people" avatarUrls={preview.personaAvatarUrls} />,
-    <InviteMemoryTimelineIllustration key="timeline" photos={preview.previewPhotos} />
-  ];
-
-  return [
-    ...introStepsCopy.map((copy, i) => ({ ...copy, illustration: illustrations[i] })),
-    {
-      title: preview.name,
-      description: 'Te han invitado a formar parte de este Baúl.',
-      illustration: (
-        <InviteCoverIllustration coverPhotoUrl={preview.coverPhotoUrl} fallbackPhotos={preview.previewPhotos} />
-      ),
-      ctaLabel: 'Entrar al Baúl'
-    }
-  ];
 }
