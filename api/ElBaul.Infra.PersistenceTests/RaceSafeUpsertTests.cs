@@ -9,15 +9,15 @@ using ElBaul.Domain;
 namespace ElBaul.Infra.PersistenceTests;
 
 /// <summary>
-/// UserRepository.UpsertAsync, BaulInviteLinkRepository.CreateAsync and EmailLinkClickRepository.
-/// RegisterSignedClickAsync each resolve a concurrent-insert race with a native
-/// <c>INSERT ... ON CONFLICT</c> instead of a caught <c>DbUpdateException</c> — a real unique
-/// constraint (and, for BaulInviteLinks, a partial index with a predicate) is exactly the kind of
-/// behavior ElBaul.Infra.Lite's in-memory fakes cannot reproduce, since they enforce no
-/// uniqueness at all. These tests simulate the race deterministically — seed the "winning" row
-/// directly, then call the method under test — rather than with real concurrent threads, which
-/// would make the outcome non-deterministic without proving anything an ON CONFLICT clause
-/// doesn't already guarantee. See README.md.
+/// UserRepository.UpsertAsync, BaulInviteLinkRepository.CreateAsync, EmailLinkClickRepository.
+/// RegisterSignedClickAsync and SentEmailRepository.TryReserveAsync each resolve a
+/// concurrent-insert race with a native <c>INSERT ... ON CONFLICT</c> instead of a caught
+/// <c>DbUpdateException</c> — a real unique constraint (and, for BaulInviteLinks, a partial index
+/// with a predicate) is exactly the kind of behavior ElBaul.Infra.Lite's in-memory fakes cannot
+/// reproduce, since they enforce no uniqueness at all. These tests simulate the race
+/// deterministically — seed the "winning" row directly, then call the method under test — rather
+/// than with real concurrent threads, which would make the outcome non-deterministic without
+/// proving anything an ON CONFLICT clause doesn't already guarantee. See README.md.
 /// </summary>
 [Collection(PersistenceTestCollection.Name)]
 public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(fixture)
@@ -131,5 +131,31 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         stored.ClickCount.Should().Be(2, "the losing insert must fall back to RegisterClickAsync's increment, not be dropped silently");
         stored.FirstClickedAt.Should().Be(firstClickedAt);
         stored.LastClickedAt.Should().Be(secondClickedAt);
+    }
+
+    [Fact]
+    public async Task SentEmailRepository_TryReserveAsync_a_losing_reservation_for_the_same_deduplication_key_is_rejected()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var users = new UserRepository(dbContext);
+        var sentEmails = new SentEmailRepository(dbContext);
+
+        var user = new User(new UserId("race-reserve-user"), "reserve@example.com", "Usuario", DateTime.UtcNow);
+        await users.UpsertAsync(user);
+
+        var winner = new SentEmail(Guid.NewGuid(), user.Id, EmailType.Welcome, "Asunto", user.Email,
+            "v1", "es", EmailStatus.Pending, "dedup-key-reserve-race", DateTime.UtcNow);
+        (await sentEmails.TryReserveAsync(winner)).Should().BeTrue();
+
+        // Simulates a second, concurrent Hangfire worker retrying the same job — same
+        // DeduplicationKey, different row.
+        var loser = new SentEmail(Guid.NewGuid(), user.Id, EmailType.Welcome, "Asunto", user.Email,
+            "v1", "es", EmailStatus.Pending, "dedup-key-reserve-race", DateTime.UtcNow);
+        (await sentEmails.TryReserveAsync(loser)).Should().BeFalse(
+            "the DeduplicationKey conflict is absorbed by ON CONFLICT DO NOTHING and reported via the return value, not an exception");
+
+        var stored = await sentEmails.GetByDeduplicationKeyAsync("dedup-key-reserve-race");
+        stored.Should().NotBeNull();
+        stored.Id.Should().Be(winner.Id, "the losing reservation must not overwrite or duplicate the winner's row");
     }
 }

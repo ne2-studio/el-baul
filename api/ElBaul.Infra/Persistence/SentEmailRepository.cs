@@ -3,7 +3,6 @@ using ElBaul.Domain;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace ElBaul.Infra.Persistence;
 
@@ -12,29 +11,31 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
     public Task<SentEmail?> GetByDeduplicationKeyAsync(string deduplicationKey) =>
         dbContext.SentEmails.AsNoTracking().FirstOrDefaultAsync(e => e.DeduplicationKey == deduplicationKey);
 
+    // Native upsert (ON CONFLICT DO NOTHING) rather than INSERT + catch(UniqueViolation) — same
+    // rationale as UserRepository.UpsertAsync: a caught DbUpdateException doesn't leave the
+    // underlying Postgres transaction any more usable than an uncaught one would (a failed
+    // statement aborts the whole transaction until rollback, .NET-level catch or not), and this
+    // was never wrapped in IUnitOfWork.ExecuteInTransactionAsync for the separate reason
+    // documented on EmailDeliveryCoordinator.SendAsync (needs an immediate commit to act as a
+    // cross-process lock between concurrent Hangfire workers). As a side effect, this also drops
+    // the entity from the change tracker entirely instead of having to explicitly detach it.
     public async Task<bool> TryReserveAsync(SentEmail pendingEmail)
     {
-        dbContext.SentEmails.Add(pendingEmail);
-        try
-        {
-            await dbContext.SaveChangesAsync();
-            return true;
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-        {
-            // Another worker (or an earlier run of the same recurring job) already reserved
-            // this DeduplicationKey — detach so this request-scoped context doesn't keep
-            // retrying the same failed insert on a later SaveChangesAsync.
-            return false;
-        }
-        finally
-        {
-            // SentEmail is a record: WelcomeEmailManager tracks state via `existing with
-            // {...}` (a new instance per transition, Pending -> Sending -> Sent/Failed) and
-            // calls UpdateAsync for each — detach here so a later Update() with a different
-            // instance for the same Id doesn't collide with this one still being tracked.
-            dbContext.Entry(pendingEmail).State = EntityState.Detached;
-        }
+        var inserted = await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "SentEmails" ("Id", "UserId", "Type", "Subject", "RecipientEmail", "TemplateVersion", "Locale", "Status", "DeduplicationKey", "CreatedAt", "ActivitySince", "ActivityUntil")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
+            ON CONFLICT ("DeduplicationKey") DO NOTHING
+            """,
+            pendingEmail.Id, pendingEmail.UserId.Value, pendingEmail.Type.ToString(), pendingEmail.Subject,
+            pendingEmail.RecipientEmail, pendingEmail.TemplateVersion, pendingEmail.Locale, pendingEmail.Status.ToString(),
+            pendingEmail.DeduplicationKey, pendingEmail.CreatedAt,
+            // Null-forgiving: both are legitimately nullable columns, Npgsql binds a null object
+            // as SQL NULL correctly — this only silences the analyzer's blanket non-null
+            // expectation for `params object[]`.
+            pendingEmail.ActivitySince!, pendingEmail.ActivityUntil!);
+
+        return inserted == 1;
     }
 
     public async Task UpdateAsync(SentEmail email)
