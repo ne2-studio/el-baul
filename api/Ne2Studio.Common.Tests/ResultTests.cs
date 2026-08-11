@@ -1,8 +1,7 @@
-using Ne2Studio.Common;
-namespace ElBaul.Tests;
+namespace Ne2Studio.Common.Tests;
 
 // Bind/Map/Traverse are what let independent Result-returning steps (id parsing, value-object
-// construction) compose without a manual IsFailure check after each one — see
+// construction) compose without a manual IsFailure check after each one — see ElBaul's
 // PhotosController.TagBatch and BaulesController.SetPersonaAvatarPhoto for real call sites.
 public class ResultTests
 {

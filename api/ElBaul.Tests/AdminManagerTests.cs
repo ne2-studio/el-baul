@@ -57,7 +57,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetAllUsersAsync_ShouldMapEachRow()
     {
-        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow(), _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow(), _clock.UtcNow());
         _adminRepository.Users.Add(new AdminUserRow(user, BaulCount: 2));
 
         var result = await CreateManager().GetAllUsersAsync();
@@ -80,10 +80,10 @@ public class AdminManagerTests
     [Fact]
     public async Task GetUserDetailAsync_ShouldMapBaulesWithPersonIdAndRole()
     {
-        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
         var baulId = Guid.NewGuid();
         var personId = Guid.NewGuid();
-        _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(
+        _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(
             user, [new AdminUserBaulRow(new BaulId(baulId), "Familia Pérez", BaulRole.Custodio, new PersonaId(personId))]);
 
         var result = await CreateManager().GetUserDetailAsync(new UserId("user-1"));
@@ -99,9 +99,9 @@ public class AdminManagerTests
     [Fact]
     public async Task GetUserDetailAsync_ShouldReportHasPushToken_WhenUserHasARegisteredDevice()
     {
-        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow());
-        _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(user, []);
-        await _pushTokenRepository.UpsertAsync(new PushToken(Guid.NewGuid(), "user-1", "fcm-token", "android", _clock.UtcNow()));
+        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
+        _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(user, []);
+        await _pushTokenRepository.UpsertAsync(new PushToken(Guid.NewGuid(), new UserId("user-1"), "fcm-token", "android", _clock.UtcNow()));
 
         var result = await CreateManager().GetUserDetailAsync(new UserId("user-1"));
 
@@ -111,7 +111,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetAllBaulesAsync_ShouldMapEachRow()
     {
-        var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
         _adminRepository.Baules.Add(new AdminBaulRow(baul, "Custodio Uno", MemberCount: 3, LinkedUserCount: 2, PhotoCount: 10, ChapterCount: 1));
 
         var result = await CreateManager().GetAllBaulesAsync();
@@ -127,11 +127,11 @@ public class AdminManagerTests
     [Fact]
     public async Task GetUserSentEmailsAsync_ShouldReturnOnlyThatUsersEmails_MostRecentFirst()
     {
-        var older = new SentEmail(Guid.NewGuid(), "user-1", EmailType.Welcome, "s", "user@example.com",
+        var older = new SentEmail(Guid.NewGuid(), new UserId("user-1"), EmailType.Welcome, "s", "user@example.com",
             "welcome-v1", "es-ES", EmailStatus.Sent, "welcome:user-1", _clock.UtcNow().AddDays(-1));
-        var newer = new SentEmail(Guid.NewGuid(), "user-1", EmailType.WeeklyDigest, "s", "user@example.com",
+        var newer = new SentEmail(Guid.NewGuid(), new UserId("user-1"), EmailType.WeeklyDigest, "s", "user@example.com",
             "weekly-digest-v1", "es-ES", EmailStatus.Sent, "weekly-digest:user-1:x", _clock.UtcNow());
-        var otherUser = new SentEmail(Guid.NewGuid(), "user-2", EmailType.Welcome, "s", "other@example.com",
+        var otherUser = new SentEmail(Guid.NewGuid(), new UserId("user-2"), EmailType.Welcome, "s", "other@example.com",
             "welcome-v1", "es-ES", EmailStatus.Sent, "welcome:user-2", _clock.UtcNow());
         await _sentEmailRepository.TryReserveAsync(older);
         await _sentEmailRepository.TryReserveAsync(newer);
@@ -146,11 +146,11 @@ public class AdminManagerTests
     [Fact]
     public async Task DebugChatContextAsync_ShouldBuildContext_WhenUserBelongsToBaul()
     {
-        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
         var baulId = new BaulId(Guid.NewGuid());
-        var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
-        _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(
+        _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(
             user, [new AdminUserBaulRow(baulId, "Familia Pérez", BaulRole.Custodio, new PersonaId(Guid.NewGuid()))]);
         _chatContextBuilder.Context = "contexto debug";
 
@@ -167,8 +167,8 @@ public class AdminManagerTests
     [Fact]
     public async Task DebugChatContextAsync_ShouldFail_WhenBaulDoesNotBelongToUser()
     {
-        var user = new User("user-1", "user@test.local", "Test User", _clock.UtcNow());
-        _adminRepository.UserDetails["user-1"] = new AdminUserDetailRow(user, []);
+        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
+        _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(user, []);
 
         var result = await CreateManager().DebugChatContextAsync(new UserId("user-1"), new BaulId(Guid.NewGuid()), "mensaje");
 
@@ -189,15 +189,15 @@ public class AdminManagerTests
     public async Task GetBaulDetailAsync_ShouldMergePersonasAndChaptersAndStats()
     {
         var baulId = Guid.NewGuid();
-        var baul = new Baul(new BaulId(baulId), "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
-        var linkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), "user-1", "Abuela", BaulRole.Custodio, _clock.UtcNow());
+        var baul = new Baul(new BaulId(baulId), "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        var linkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-1"), "Abuela", BaulRole.Custodio, _clock.UtcNow());
         var unlinkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
 
         _adminRepository.BaulDetails[new BaulId(baulId)] = new AdminBaulDetailRow(
             baul,
             [linkedPersona, unlinkedPersona],
-            new Dictionary<string, string> { ["user-1"] = "Abuela Real Name" },
+            new Dictionary<UserId, string> { [new UserId("user-1")] = "Abuela Real Name" },
             [chapter],
             PhotoCount: 5,
             RecuerdoCount: 8,
@@ -231,21 +231,21 @@ public class AdminManagerTests
     public async Task DeleteBaulAsync_ShouldRemoveEverythingInTheBaulAndCleanUpStorage()
     {
         var baulId = new BaulId(Guid.NewGuid());
-        var baul = new Baul(baulId, "Familia Pérez", null, "custodio-1", ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
 
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baulId, "Verano 2020", 1, null, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
         var photo = Photo.Create(
-            new PhotoId(Guid.NewGuid()), chapter.Id, baulId, "photos/one.jpg", null, "custodio-1", _clock.UtcNow());
+            new PhotoId(Guid.NewGuid()), chapter.Id, baulId, "photos/one.jpg", null, new UserId("custodio-1"), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
 
-        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baulId, "custodio-1", "Qué buen día", _clock.UtcNow());
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baulId, new UserId("custodio-1"), "Qué buen día", _clock.UtcNow());
         await _recuerdoRepository.CreateAsync(recuerdo);
 
         var persona = new Persona(
-            new PersonaId(Guid.NewGuid()), baulId, "custodio-1", "Abuela", BaulRole.Custodio, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
+            new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Custodio, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
         await _baulRepository.AddPersonaAsync(persona);
 
         await _photoPersonaTagRepository.SetTagsAsync(photo.Id, baulId, [persona.Id], _clock.UtcNow());

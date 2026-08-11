@@ -18,7 +18,7 @@ public class BackfillRecuerdoBaulIdCommandTests
         var photoId = new PhotoId(Guid.NewGuid());
         var recuerdoRepository = new InMemoryRecuerdoRepository();
         var photoRepository = new InMemoryPhotoRepository();
-        await photoRepository.CreateAsync(Photo.Create(photoId, null, baulId, "photos/one.jpg", null, "user-1", DateTime.UtcNow));
+        await photoRepository.CreateAsync(Photo.Create(photoId, null, baulId, "photos/one.jpg", null, new UserId("user-1"), DateTime.UtcNow));
         var recuerdo = await CreateCandidateAsync(recuerdoRepository, photoId, null);
 
         var command = new BackfillRecuerdoBaulIdCommand(
@@ -94,7 +94,7 @@ public class BackfillRecuerdoBaulIdCommandTests
         ChapterId? chapterId)
     {
         var recuerdo = new Recuerdo(
-            new RecuerdoId(Guid.NewGuid()), photoId, chapterId, default, "user-1", "Texto", DateTime.UtcNow);
+            new RecuerdoId(Guid.NewGuid()), photoId, chapterId, default, new UserId("user-1"), "Texto", DateTime.UtcNow);
         await repository.CreateAsync(recuerdo);
         return recuerdo;
     }

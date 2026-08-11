@@ -52,9 +52,9 @@ public class ChatManagerTests
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
     {
         var now = _clock.UtcNow();
-        var baul = new Baul(new BaulId(baulId), name, null, custodioId, 0, now, now);
+        var baul = new Baul(new BaulId(baulId), name, null, new UserId(custodioId), 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), custodioId, "Custodio", BaulRole.Custodio, now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Custodio, now));
         return baul;
     }
 
@@ -124,7 +124,7 @@ public class ChatManagerTests
         Assert.Equal("assistant", result.Value.Role);
         Assert.Equal("El abuelo Antonio nació en Asturias.", result.Value.Content);
 
-        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(new BaulId(baulId), CustodioId)).ToList();
+        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(new BaulId(baulId), new UserId(CustodioId))).ToList();
         Assert.Equal(2, history.Count);
         Assert.Equal(ChatMessageRole.User, history[0].Role);
         Assert.Equal("¿Qué sabemos del abuelo Antonio?", history[0].Content);
@@ -180,7 +180,7 @@ public class ChatManagerTests
         var now = _clock.UtcNow();
         // No AddPersonaAsync call — access is still granted via CustodioId, but there is no
         // Persona row to read a nickname from.
-        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, now, now));
+        await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, new UserId(CustodioId), 0, now, now));
 
         var manager = CreateManager(CustodioId);
         await manager.SendMessageAsync(new BaulId(baulId), "Hola");
@@ -196,11 +196,11 @@ public class ChatManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var now = _clock.UtcNow();
         await _chatMessageRepository.CreateAsync(
-            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, "antiguo", now.AddHours(-25)));
+            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), new UserId(CustodioId), ChatMessageRole.User, "antiguo", now.AddHours(-25)));
         for (var i = 9; i >= 0; i--)
         {
             await _chatMessageRepository.CreateAsync(new ChatMessage(
-                Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, $"reciente-{i}", now.AddMinutes(-i)));
+                Guid.NewGuid(), new BaulId(baulId), new UserId(CustodioId), ChatMessageRole.User, $"reciente-{i}", now.AddMinutes(-i)));
         }
 
         var manager = CreateManager(CustodioId);
@@ -226,7 +226,7 @@ public class ChatManagerTests
         Assert.Equal("Chat is not configured.", result.Error.Message);
 
         // The user's message is still saved even though the reply failed — nothing is lost.
-        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(new BaulId(baulId), CustodioId)).ToList();
+        var history = (await _chatMessageRepository.GetByBaulAndUserAsync(new BaulId(baulId), new UserId(CustodioId))).ToList();
         Assert.Single(history);
     }
 
@@ -257,7 +257,7 @@ public class ChatManagerTests
         for (var i = 0; i < 12; i++)
         {
             await _chatMessageRepository.CreateAsync(new ChatMessage(
-                Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, $"mensaje-{i}", now.AddMinutes(i)));
+                Guid.NewGuid(), new BaulId(baulId), new UserId(CustodioId), ChatMessageRole.User, $"mensaje-{i}", now.AddMinutes(i)));
         }
 
         var manager = CreateManager(CustodioId);
@@ -277,9 +277,9 @@ public class ChatManagerTests
         await SeedBaulAsync(baulId, "Familia");
         var now = _clock.UtcNow();
         await _chatMessageRepository.CreateAsync(
-            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, "antiguo", now.AddHours(-25)));
+            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), new UserId(CustodioId), ChatMessageRole.User, "antiguo", now.AddHours(-25)));
         await _chatMessageRepository.CreateAsync(
-            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), CustodioId, ChatMessageRole.User, "reciente", now.AddMinutes(-5)));
+            new ChatMessage(Guid.NewGuid(), new BaulId(baulId), new UserId(CustodioId), ChatMessageRole.User, "reciente", now.AddMinutes(-5)));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetMessagesAsync(new BaulId(baulId));

@@ -23,7 +23,7 @@ public class PhotoDtoProjectorTests
     [Fact]
     public async Task ProjectAsync_ShouldBuildStorageUrls_ForGridAndFullPlacements()
     {
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null, UserId, _clock.UtcNow());
+        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null, new UserId(UserId), _clock.UtcNow());
 
         var dto = await CreateProjector().ProjectAsync(photo);
 
@@ -35,11 +35,11 @@ public class PhotoDtoProjectorTests
     public async Task ProjectAsync_ShouldIncludeRecuerdoCounts_PerPhoto()
     {
         var baulId = new BaulId(Guid.NewGuid());
-        var countedPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "counted-key", null, UserId, _clock.UtcNow());
-        var emptyPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "empty-key", null, UserId, _clock.UtcNow());
-        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), countedPhoto.Id, null, baulId, UserId, "uno", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), countedPhoto.Id, null, baulId, UserId, "dos", _clock.UtcNow()));
-        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, baulId, UserId, "suelto", _clock.UtcNow()));
+        var countedPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "counted-key", null, new UserId(UserId), _clock.UtcNow());
+        var emptyPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "empty-key", null, new UserId(UserId), _clock.UtcNow());
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), countedPhoto.Id, null, baulId, new UserId(UserId), "uno", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), countedPhoto.Id, null, baulId, new UserId(UserId), "dos", _clock.UtcNow()));
+        await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, baulId, new UserId(UserId), "suelto", _clock.UtcNow()));
 
         var dtos = await CreateProjector().ProjectAsync([countedPhoto, emptyPhoto]);
 

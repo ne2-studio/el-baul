@@ -23,7 +23,7 @@ public class StaticSuggestedQuestionsStrategyTests
     private async Task<Baul> SeedBaulAsync(Guid baulId)
     {
         var now = _clock.UtcNow();
-        var baul = new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, now, now);
+        var baul = new Baul(new BaulId(baulId), "Familia", null, new UserId(CustodioId), 0, now, now);
         await _baulRepository.CreateAsync(baul);
         return baul;
     }
@@ -46,7 +46,7 @@ public class StaticSuggestedQuestionsStrategyTests
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId);
         var now = _clock.UtcNow();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), CustodioId, "Abuelo Antonio", BaulRole.Custodio, now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Abuelo Antonio", BaulRole.Custodio, now));
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano en Asturias", 3, null, now, now));
 
         var strategy = CreateStrategy();

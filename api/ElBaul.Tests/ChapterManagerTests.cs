@@ -205,8 +205,8 @@ public class ChapterManagerTests
         // Photo-attached recuerdo, plus a chapter-level one with no photo at all — both
         // must count (this used to only count recuerdos joined through the chapter's
         // currently-active photos, silently dropping photo-less ones).
-        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photoId, chapterId, baulId, CustodioId, "con foto", _fixture.Clock.UtcNow()));
-        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, chapterId, baulId, CustodioId, "sin foto", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photoId, chapterId, baulId, new UserId(CustodioId), "con foto", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, chapterId, baulId, new UserId(CustodioId), "sin foto", _fixture.Clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -224,17 +224,17 @@ public class ChapterManagerTests
         // in the batched read model would produce.
         var baulId = await _fixture.CreateBaulAsync("Familia");
         const string secondUserId = "colaborador-2";
-        await _fixture.AddColaboradorAsync(baulId, secondUserId, "Colaboradora");
+        await _fixture.AddColaboradorAsync(baulId, new UserId(secondUserId), "Colaboradora");
 
         var firstChapterId = await _fixture.AddChapterAsync(baulId, "Primero");
         var secondChapterId = await _fixture.AddChapterAsync(baulId, "Segundo");
 
         await _fixture.Recuerdos.CreateAsync(new Recuerdo(
-            new RecuerdoId(Guid.NewGuid()), null, firstChapterId, baulId, CustodioId, "Del primero", _fixture.Clock.UtcNow()));
+            new RecuerdoId(Guid.NewGuid()), null, firstChapterId, baulId, new UserId(CustodioId), "Del primero", _fixture.Clock.UtcNow()));
         await _fixture.Recuerdos.CreateAsync(new Recuerdo(
-            new RecuerdoId(Guid.NewGuid()), null, secondChapterId, baulId, secondUserId, "Del segundo", _fixture.Clock.UtcNow()));
+            new RecuerdoId(Guid.NewGuid()), null, secondChapterId, baulId, new UserId(secondUserId), "Del segundo", _fixture.Clock.UtcNow()));
         await _fixture.Recuerdos.CreateAsync(new Recuerdo(
-            new RecuerdoId(Guid.NewGuid()), null, secondChapterId, baulId, secondUserId, "Del segundo, más reciente", _fixture.Clock.UtcNow().AddMinutes(1)));
+            new RecuerdoId(Guid.NewGuid()), null, secondChapterId, baulId, new UserId(secondUserId), "Del segundo, más reciente", _fixture.Clock.UtcNow().AddMinutes(1)));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -298,8 +298,8 @@ public class ChapterManagerTests
         var baulId = await _fixture.CreateBaulAsync("Familia", chapterCount: 1);
         var chapterId = await _fixture.AddChapterAsync(baulId, "Chapter", photoCount: 1);
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
-        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photoId, chapterId, baulId, CustodioId, "con foto", _fixture.Clock.UtcNow()));
-        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, chapterId, baulId, CustodioId, "sin foto", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photoId, chapterId, baulId, new UserId(CustodioId), "con foto", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, chapterId, baulId, new UserId(CustodioId), "sin foto", _fixture.Clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.DeleteAsync(chapterId);

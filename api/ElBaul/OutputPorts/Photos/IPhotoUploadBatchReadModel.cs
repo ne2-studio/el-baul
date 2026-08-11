@@ -23,7 +23,7 @@ public interface IPhotoUploadBatchReadModel
 
 public sealed record PhotoUploadBatchRow(
     Guid BatchId,
-    string UploadedBy,
+    UserId UploadedBy,
     ChapterId? ChapterId,
     string? ChapterName,
     DateTime CreatedAt,

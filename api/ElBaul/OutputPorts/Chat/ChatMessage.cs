@@ -11,7 +11,7 @@ public record ChatMessage
 (
     Guid Id,
     BaulId BaulId,
-    string UserId,
+    UserId UserId,
     ChatMessageRole Role,
     string Content,
     DateTime CreatedAt

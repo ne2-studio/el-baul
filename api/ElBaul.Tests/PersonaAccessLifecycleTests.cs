@@ -17,7 +17,7 @@ public class PersonaAccessLifecycleTests
     private static readonly BaulId TestBaulId = new(Guid.NewGuid());
 
     private static Persona MakePersona(BaulRole role, string? userId, string? name = null) =>
-        new(new PersonaId(Guid.NewGuid()), TestBaulId, userId, "Nick", role, DateTime.UtcNow, Name: name);
+        new(new PersonaId(Guid.NewGuid()), TestBaulId, userId is null ? null : new UserId(userId), "Nick", role, DateTime.UtcNow, Name: name);
 
     // --- AccessStatus ---
 
@@ -78,7 +78,7 @@ public class PersonaAccessLifecycleTests
     {
         var persona = MakePersona(BaulRole.Colaborador, userId: null);
 
-        var accepted = persona.AcceptInvite(OwnerUserId, "Fallback Name");
+        var accepted = persona.AcceptInvite(new UserId(OwnerUserId), "Fallback Name");
 
         Assert.Equal(OwnerUserId, accepted.UserId);
         Assert.Equal(PersonaAccessStatus.Active, accepted.AccessStatus);
@@ -90,7 +90,7 @@ public class PersonaAccessLifecycleTests
     {
         var persona = MakePersona(BaulRole.Colaborador, userId: null, name: "Admin-set name");
 
-        var accepted = persona.AcceptInvite(OwnerUserId, "Fallback Name");
+        var accepted = persona.AcceptInvite(new UserId(OwnerUserId), "Fallback Name");
 
         Assert.Equal("Admin-set name", accepted.Name);
     }
@@ -129,7 +129,7 @@ public class PersonaAccessLifecycleTests
     {
         var persona = MakePersona(BaulRole.Custodio, CustodioUserId);
 
-        Assert.True(persona.IsCustodioProtected(CustodioUserId));
+        Assert.True(persona.IsCustodioProtected(new UserId(CustodioUserId)));
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class PersonaAccessLifecycleTests
         // it must still be protected from revocation.
         var persona = MakePersona(BaulRole.Administrador, CustodioUserId);
 
-        Assert.True(persona.IsCustodioProtected(CustodioUserId));
+        Assert.True(persona.IsCustodioProtected(new UserId(CustodioUserId)));
     }
 
     [Fact]
@@ -147,6 +147,6 @@ public class PersonaAccessLifecycleTests
     {
         var persona = MakePersona(BaulRole.Colaborador, OwnerUserId);
 
-        Assert.False(persona.IsCustodioProtected(CustodioUserId));
+        Assert.False(persona.IsCustodioProtected(new UserId(CustodioUserId)));
     }
 }

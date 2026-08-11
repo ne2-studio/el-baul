@@ -16,7 +16,7 @@ public interface IPhotoRepository
     /// <summary>Active photos created since <paramref name="since"/>, excluding ones uploaded by
     /// <paramref name="excludingUserId"/> — used by the weekly digest, which has no reason to
     /// tell a user about their own contributions.</summary>
-    Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, string excludingUserId);
+    Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, UserId excludingUserId);
     Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit);
     Task<IEnumerable<Photo>> GetUndatedAsync();
 

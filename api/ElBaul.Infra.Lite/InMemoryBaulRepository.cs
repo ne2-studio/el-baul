@@ -21,12 +21,12 @@ public class InMemoryBaulRepository : IBaulRepository
         lock (_lock) return Task.FromResult(_baules.GetValueOrDefault(id));
     }
 
-    public Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(string userId)
+    public Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(UserId userId)
     {
         lock (_lock) return Task.FromResult(_baules.Values.Where(b => b.CustodioId == userId).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(string userId)
+    public Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(UserId userId)
     {
         lock (_lock)
         {
@@ -39,7 +39,7 @@ public class InMemoryBaulRepository : IBaulRepository
         }
     }
 
-    public async Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(string userId)
+    public async Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(UserId userId)
     {
         var owned = await GetOwnedByUserIdAsync(userId);
         var shared = await GetSharedByUserIdAsync(userId);
@@ -94,7 +94,7 @@ public class InMemoryBaulRepository : IBaulRepository
         lock (_lock) return Task.FromResult(_personas.Values.Where(s => idSet.Contains(s.Id)).ToList().AsEnumerable());
     }
 
-    public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId)
+    public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, UserId userId)
     {
         lock (_lock) return Task.FromResult(_personas.Values.FirstOrDefault(s => s.BaulId == baulId && s.UserId == userId));
     }

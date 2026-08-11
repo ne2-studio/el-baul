@@ -32,7 +32,7 @@ public class AiSuggestedQuestionsStrategyTests
     private async Task<Baul> SeedBaulAsync(Guid baulId)
     {
         var now = _clock.UtcNow();
-        var baul = new Baul(new BaulId(baulId), "Familia", null, CustodioId, 0, now, now);
+        var baul = new Baul(new BaulId(baulId), "Familia", null, new UserId(CustodioId), 0, now, now);
         await _baulRepository.CreateAsync(baul);
         return baul;
     }

@@ -11,7 +11,7 @@ public class InMemoryChatMessageRepository : IChatMessageRepository
     private readonly List<ChatMessage> _messages = [];
     private readonly Lock _lock = new();
 
-    public Task<IEnumerable<ChatMessage>> GetByBaulAndUserAsync(BaulId baulId, string userId)
+    public Task<IEnumerable<ChatMessage>> GetByBaulAndUserAsync(BaulId baulId, UserId userId)
     {
         lock (_lock) return Task.FromResult(_messages.Where(m => m.BaulId == baulId && m.UserId == userId).OrderBy(m => m.CreatedAt).ToList().AsEnumerable());
     }

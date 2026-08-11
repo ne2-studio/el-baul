@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Users;
 namespace ElBaul.Infra.Lite;
@@ -21,7 +22,7 @@ public class InMemoryPushTokenRepository : IPushTokenRepository
         return Task.CompletedTask;
     }
 
-    public Task DeleteAsync(string userId, string token)
+    public Task DeleteAsync(UserId userId, string token)
     {
         lock (_lock)
         {
@@ -31,12 +32,12 @@ public class InMemoryPushTokenRepository : IPushTokenRepository
         return Task.CompletedTask;
     }
 
-    public Task<IEnumerable<PushToken>> GetTokensForUserAsync(string userId)
+    public Task<IEnumerable<PushToken>> GetTokensForUserAsync(UserId userId)
     {
         lock (_lock) return Task.FromResult(_tokens.Values.Where(t => t.UserId == userId).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<string>> GetUserIdsWithTokensAsync()
+    public Task<IEnumerable<UserId>> GetUserIdsWithTokensAsync()
     {
         lock (_lock) return Task.FromResult(_tokens.Values.Select(t => t.UserId).Distinct().ToList().AsEnumerable());
     }

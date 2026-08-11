@@ -24,7 +24,7 @@ public class AuthorInfoProjectorTests
     private async Task<BaulId> SeedBaulAsync()
     {
         var baulId = new BaulId(Guid.NewGuid());
-        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, CustodioId, 0, Now, Now));
+        await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, new UserId(CustodioId), 0, Now, Now));
         return baulId;
     }
 
@@ -33,9 +33,9 @@ public class AuthorInfoProjectorTests
     {
         var baulId = await SeedBaulAsync();
         var personaId = new PersonaId(Guid.NewGuid());
-        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, CustodioId, "Tito Recuerdos", BaulRole.Custodio, Now));
+        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, new UserId(CustodioId), "Tito Recuerdos", BaulRole.Custodio, Now));
 
-        var author = await CreateProjector().GetAsync(baulId, CustodioId);
+        var author = await CreateProjector().GetAsync(baulId, new UserId(CustodioId));
 
         Assert.Equal("Tito Recuerdos", author.Nickname);
         Assert.Equal(personaId.ToString(), author.PersonaId);
@@ -46,7 +46,7 @@ public class AuthorInfoProjectorTests
     {
         var baulId = await SeedBaulAsync();
 
-        var author = await CreateProjector().GetAsync(baulId, "unknown-user");
+        var author = await CreateProjector().GetAsync(baulId, new UserId("unknown-user"));
 
         Assert.Equal("Usuario", author.Nickname);
         Assert.Null(author.PersonaId);
@@ -58,9 +58,9 @@ public class AuthorInfoProjectorTests
     {
         var baulId = await SeedBaulAsync();
         await _baulRepository.AddPersonaAsync(new Persona(
-            new PersonaId(Guid.NewGuid()), baulId, CustodioId, "Custodio", BaulRole.Custodio, Now, AvatarPhotoKey: "avatar-key"));
+            new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Custodio, Now, AvatarPhotoKey: "avatar-key"));
 
-        var author = await CreateProjector().GetAsync(baulId, CustodioId);
+        var author = await CreateProjector().GetAsync(baulId, new UserId(CustodioId));
 
         Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", author.AvatarUrl);
     }
@@ -71,13 +71,13 @@ public class AuthorInfoProjectorTests
         var baulId = await SeedBaulAsync();
         const string author1 = "author-1";
         const string author2 = "author-2";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, author1, "Ana", BaulRole.Colaborador, Now));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, author2, "Beto", BaulRole.Colaborador, Now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(author1), "Ana", BaulRole.Colaborador, Now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(author2), "Beto", BaulRole.Colaborador, Now));
 
-        var authors = await CreateProjector().GetManyAsync(baulId, [author1, author1, author1, author2]);
+        var authors = await CreateProjector().GetManyAsync(baulId, [new UserId(author1), new UserId(author1), new UserId(author1), new UserId(author2)]);
 
-        Assert.Equal("Ana", authors[author1].Nickname);
-        Assert.Equal("Beto", authors[author2].Nickname);
+        Assert.Equal("Ana", authors[new UserId(author1)].Nickname);
+        Assert.Equal("Beto", authors[new UserId(author2)].Nickname);
     }
 
     [Fact]
@@ -85,10 +85,10 @@ public class AuthorInfoProjectorTests
     {
         var baulId = await SeedBaulAsync();
 
-        var authors = await CreateProjector().GetManyAsync(baulId, ["unknown-user"]);
+        var authors = await CreateProjector().GetManyAsync(baulId, [new UserId("unknown-user")]);
 
-        Assert.False(authors.ContainsKey("unknown-user"));
-        var resolved = AuthorInfoProjector.Resolve(authors, "unknown-user");
+        Assert.False(authors.ContainsKey(new UserId("unknown-user")));
+        var resolved = AuthorInfoProjector.Resolve(authors, new UserId("unknown-user"));
         Assert.Equal("Usuario", resolved.Nickname);
     }
 
@@ -97,12 +97,12 @@ public class AuthorInfoProjectorTests
     {
         var baulId = await SeedBaulAsync();
         var photoId = new PhotoId(Guid.NewGuid());
-        await _photoRepository.CreateAsync(Photo.Create(photoId, null, baulId, "photo-key", null, CustodioId, Now));
+        await _photoRepository.CreateAsync(Photo.Create(photoId, null, baulId, "photo-key", null, new UserId(CustodioId), Now));
         await _baulRepository.AddPersonaAsync(new Persona(
-            new PersonaId(Guid.NewGuid()), baulId, CustodioId, "Custodio", BaulRole.Custodio, Now, AvatarPhotoId: photoId));
+            new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Custodio, Now, AvatarPhotoId: photoId));
 
-        var authors = await CreateProjector().GetManyAsync(baulId, [CustodioId]);
+        var authors = await CreateProjector().GetManyAsync(baulId, [new UserId(CustodioId)]);
 
-        Assert.Equal("https://imgproxy.test/PersonaAvatar/photo-key", authors[CustodioId].AvatarUrl);
+        Assert.Equal("https://imgproxy.test/PersonaAvatar/photo-key", authors[new UserId(CustodioId)].AvatarUrl);
     }
 }

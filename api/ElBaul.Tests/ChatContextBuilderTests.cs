@@ -34,9 +34,9 @@ public class ChatContextBuilderTests
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name)
     {
         var now = _clock.UtcNow();
-        var baul = new Baul(new BaulId(baulId), name, null, CustodioId, 0, now, now);
+        var baul = new Baul(new BaulId(baulId), name, null, new UserId(CustodioId), 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), CustodioId, "Custodio", BaulRole.Custodio, now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Custodio, now));
         return baul;
     }
 
@@ -45,7 +45,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Fuimos a Asturias en verano", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Fuimos a Asturias en verano", _clock.UtcNow()));
 
         var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, "¿Cuándo fue el viaje a Asturias?");
@@ -61,10 +61,10 @@ public class ChatContextBuilderTests
         var baul = await SeedBaulAsync(baulId, "Familia");
         var embeddingBackend = new FakeEmbeddingBackend(["asturias", "relleno"]);
 
-        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Fuimos de viaje a Asturias en verano", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Fuimos de viaje a Asturias en verano", _clock.UtcNow()));
         for (var i = 0; i < 25; i++)
         {
-            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, $"Recuerdo de relleno numero {i}", _clock.UtcNow()));
+            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), $"Recuerdo de relleno numero {i}", _clock.UtcNow()));
         }
 
         var builder = CreateBuilder(embeddingBackend);
@@ -87,11 +87,11 @@ public class ChatContextBuilderTests
             NextEmbedResult = Result.Failure<float[]>(ApplicationError.ExternalDependencyUnavailable("Embedding backend unavailable"))
         };
 
-        var mostRecent = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "El más reciente", _clock.UtcNow());
+        var mostRecent = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "El más reciente", _clock.UtcNow());
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), mostRecent);
         for (var i = 0; i < 25; i++)
         {
-            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, $"Recuerdo antiguo {i}", _clock.UtcNow().AddDays(-i - 1)));
+            _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), $"Recuerdo antiguo {i}", _clock.UtcNow().AddDays(-i - 1)));
         }
 
         var builder = CreateBuilder(embeddingBackend);
@@ -106,9 +106,9 @@ public class ChatContextBuilderTests
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
 
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "key", PhotoDates.Of(1998, 6, 15), CustodioId, _clock.UtcNow());
+        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "key", PhotoDates.Of(1998, 6, 15), new UserId(CustodioId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
-        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, null, new BaulId(baulId), CustodioId, "Aquí sopló el abuelo las velas", _clock.UtcNow());
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, null, new BaulId(baulId), new UserId(CustodioId), "Aquí sopló el abuelo las velas", _clock.UtcNow());
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), recuerdo);
 
         var builder = CreateBuilder();
@@ -126,10 +126,10 @@ public class ChatContextBuilderTests
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, null, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 5), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 5), new UserId(CustodioId), _clock.UtcNow()));
 
-        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, chapter.Id, new BaulId(baulId), CustodioId, "Qué boda tan bonita", _clock.UtcNow());
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, chapter.Id, new BaulId(baulId), new UserId(CustodioId), "Qué boda tan bonita", _clock.UtcNow());
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), recuerdo);
 
         var builder = CreateBuilder();
@@ -146,8 +146,8 @@ public class ChatContextBuilderTests
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, null, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 5), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 5), new UserId(CustodioId), _clock.UtcNow()));
 
         var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, "¿Cuándo fue la boda de Ana?");
@@ -168,8 +168,8 @@ public class ChatContextBuilderTests
         await _chapterRepository.CreateAsync(firstChapter);
         await _chapterRepository.CreateAsync(secondChapter);
 
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), firstChapter.Id, new BaulId(baulId), "key-old", PhotoDates.Of(2005, 1), CustodioId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), secondChapter.Id, new BaulId(baulId), "key-new", PhotoDates.Of(2022, 6), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), firstChapter.Id, new BaulId(baulId), "key-old", PhotoDates.Of(2005, 1), new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), secondChapter.Id, new BaulId(baulId), "key-new", PhotoDates.Of(2022, 6), new UserId(CustodioId), _clock.UtcNow()));
 
         var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, "¿Qué capítulos hay?");
@@ -185,7 +185,7 @@ public class ChatContextBuilderTests
         var baul = await SeedBaulAsync(baulId, "Familia");
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Cumple de Marta", 1, null, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2015, 3, 20), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2015, 3, 20), new UserId(CustodioId), _clock.UtcNow()));
 
         var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, "¿Cuándo fue el cumple de Marta?");
@@ -214,7 +214,7 @@ public class ChatContextBuilderTests
         var baul = await SeedBaulAsync(baulId, "Familia");
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 1, null, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 5), CustodioId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 5), new UserId(CustodioId), _clock.UtcNow()));
 
         var builder = CreateBuilder();
         var summary = await builder.BuildSummaryAsync(baul);
@@ -227,7 +227,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Un recuerdo suelto sin fecha", _clock.UtcNow());
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Un recuerdo suelto sin fecha", _clock.UtcNow());
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), recuerdo);
 
         var builder = CreateBuilder();
@@ -256,7 +256,7 @@ public class ChatContextBuilderTests
         var baul = await SeedBaulAsync(baulId, "Familia");
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
-        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "Un recuerdo que no debería aparecer", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Un recuerdo que no debería aparecer", _clock.UtcNow()));
 
         var builder = CreateBuilder();
         var summary = await builder.BuildSummaryAsync(baul);

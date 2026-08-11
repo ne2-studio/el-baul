@@ -61,10 +61,10 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             NullLogger<AdminManager>.Instance);
 
         var custodioId = "custodio-hard-delete";
-        await users.UpsertAsync(new User(custodioId, "custodio-hard-delete@example.com", "Custodio", DateTime.UtcNow));
+        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-hard-delete@example.com", "Custodio", DateTime.UtcNow));
 
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Baúl a borrar por completo", Description: null,
-            custodioId, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
+            new UserId(custodioId), ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
         await baules.CreateAsync(baul);
 
         // 1. Baúl, chapter, photo, recuerdo — the ordinary content chain.
@@ -73,11 +73,11 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         await chapters.CreateAsync(chapter);
 
         var photo = new Photo(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/to-delete.jpg",
-            DateYear: null, DateMonth: null, DateDay: null, custodioId, DateTime.UtcNow);
+            DateYear: null, DateMonth: null, DateDay: null, new UserId(custodioId), DateTime.UtcNow);
         await photos.CreateAsync(photo);
 
         await recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baul.Id,
-            custodioId, "Un recuerdo que también se borra", DateTime.UtcNow));
+            new UserId(custodioId), "Un recuerdo que también se borra", DateTime.UtcNow));
 
         // 2. A second, non-custodio persona tagged on the photo — the sharpest case:
         // PhotoPersonaTag has a Restrict FK to *both* Photo and Persona, so it's the one row
@@ -93,7 +93,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         // deliberately not exercised here since AdminManager unconditionally calls
         // sharedLinkRepository.DeleteByBaulIdAsync regardless, it just has nothing to delete).
         await inviteLinks.CreateAsync(new BaulInviteLink(new BaulInviteLinkId(Guid.NewGuid()), "test-token",
-            baul.Id, custodioId, DateTime.UtcNow));
+            baul.Id, new UserId(custodioId), DateTime.UtcNow));
 
         // 4. A pending removal request — Cascade at the DB level, but AdminManager deletes it
         // explicitly anyway (see its own doc comment) so behavior doesn't depend on which

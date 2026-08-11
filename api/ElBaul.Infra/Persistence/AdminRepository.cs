@@ -36,7 +36,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         // can't translate a C#-only computed property, only the raw column check it wraps.
         var baulCounts = await dbContext.Personas
             .Where(su => su.UserId != null)
-            .GroupBy(su => su.UserId!)
+            .GroupBy(su => su.UserId!.Value)
             .Select(g => new { UserId = g.Key, Count = g.Select(su => su.BaulId).Distinct().Count() })
             .ToDictionaryAsync(x => x.UserId, x => x.Count);
 
@@ -45,7 +45,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         return users.Select(u => new AdminUserRow(u, baulCounts.GetValueOrDefault(u.Id)));
     }
 
-    public async Task<AdminUserDetailRow?> GetUserDetailAsync(string userId)
+    public async Task<AdminUserDetailRow?> GetUserDetailAsync(UserId userId)
     {
         var user = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return null;
@@ -109,7 +109,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
 
         var personas = await dbContext.Personas.AsNoTracking().Where(su => su.BaulId == baulId).ToListAsync();
 
-        var linkedUserIds = personas.Where(su => su.IsClaimed).Select(su => su.UserId!).Distinct().ToList();
+        var linkedUserIds = personas.Where(su => su.IsClaimed).Select(su => su.UserId!.Value).Distinct().ToList();
         var linkedUserNames = await dbContext.Users.AsNoTracking()
             .Where(u => linkedUserIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.Name ?? u.Email);

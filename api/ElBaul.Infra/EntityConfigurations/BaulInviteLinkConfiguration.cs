@@ -15,7 +15,7 @@ public class BaulInviteLinkConfiguration : IEntityTypeConfiguration<BaulInviteLi
         builder.Property(s => s.Id).HasConversion(IdValueConverters.BaulInviteLinkId);
         builder.Property(s => s.Token).IsRequired().HasMaxLength(160);
         builder.Property(s => s.BaulId).HasConversion(IdValueConverters.BaulId);
-        builder.Property(s => s.CreatedBy).IsRequired().HasMaxLength(255);
+        builder.Property(s => s.CreatedBy).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(s => s.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(s => s.RevokedAt).HasColumnType("timestamp with time zone");
         builder.Ignore(s => s.IsRevoked);

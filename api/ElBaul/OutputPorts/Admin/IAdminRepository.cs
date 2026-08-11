@@ -11,7 +11,7 @@ public interface IAdminRepository
 {
     Task<AdminDashboardCounts> GetDashboardCountsAsync(DateTime todayUtcStart);
     Task<IEnumerable<AdminUserRow>> GetAllUsersAsync();
-    Task<AdminUserDetailRow?> GetUserDetailAsync(string userId);
+    Task<AdminUserDetailRow?> GetUserDetailAsync(UserId userId);
     Task<IEnumerable<AdminBaulRow>> GetAllBaulesAsync();
     Task<AdminBaulDetailRow?> GetBaulDetailAsync(BaulId baulId);
 }

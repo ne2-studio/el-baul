@@ -22,7 +22,7 @@ public enum AccessLevel { Member, Admin }
 
 public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger)
 {
-    public async Task<BaulAccess> GetAsync(Baul baul, string userId)
+    public async Task<BaulAccess> GetAsync(Baul baul, UserId userId)
     {
         var persona = await baulRepository.GetPersonaByUserIdAsync(baul.Id, userId);
         return new BaulAccess(baul, baul.CustodioId == userId, persona);
@@ -32,7 +32,7 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
     // unauthorized" sequence every manager needs before acting on a baúl-scoped resource.
     // `operation` and `logContext` feed a single, uniform log line on either failure.
     public async Task<Result<BaulAccess>> AuthorizeAsync(
-        BaulId baulId, string userId, AccessLevel level, string operation, object logContext)
+        BaulId baulId, UserId userId, AccessLevel level, string operation, object logContext)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null)
@@ -45,7 +45,7 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
     }
 
     public async Task<Result<BaulAccess>> AuthorizeAsync(
-        Baul baul, string userId, AccessLevel level, string operation, object logContext)
+        Baul baul, UserId userId, AccessLevel level, string operation, object logContext)
     {
         var access = await GetAsync(baul, userId);
         var authorized = level == AccessLevel.Admin ? access.IsAdmin : access.IsMember;

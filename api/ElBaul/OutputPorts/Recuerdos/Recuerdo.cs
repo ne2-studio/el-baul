@@ -7,7 +7,7 @@ public record Recuerdo
     PhotoId? PhotoId,
     ChapterId? ChapterId,
     BaulId BaulId,
-    string UserId,
+    UserId UserId,
     string Text,
     DateTime CreatedAt
 );

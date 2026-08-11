@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Users;
 namespace ElBaul.Infra.Lite;
 
@@ -10,15 +11,15 @@ namespace ElBaul.Infra.Lite;
 // IEnumerable would otherwise enumerate the live dictionary outside the lock.
 public class InMemoryUserRepository : IUserRepository
 {
-    private readonly Dictionary<string, User> _users = new();
+    private readonly Dictionary<UserId, User> _users = new();
     private readonly Lock _lock = new();
 
-    public Task<User?> GetByIdAsync(string id)
+    public Task<User?> GetByIdAsync(UserId id)
     {
         lock (_lock) return Task.FromResult(_users.GetValueOrDefault(id));
     }
 
-    public Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<string> ids)
+    public Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<UserId> ids)
     {
         var idSet = ids.ToHashSet();
         lock (_lock) return Task.FromResult(_users.Values.Where(u => idSet.Contains(u.Id)).ToList().AsEnumerable());
@@ -45,7 +46,7 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public Task UpdateLastAccessAsync(string id, DateTime at)
+    public Task UpdateLastAccessAsync(UserId id, DateTime at)
     {
         lock (_lock)
         {
@@ -57,7 +58,7 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled)
+    public Task UpdateWeeklyDigestEnabledAsync(UserId id, bool enabled)
     {
         lock (_lock)
         {
@@ -69,7 +70,7 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public Task UpdateLastPushDigestSentAtAsync(string id, DateTime at)
+    public Task UpdateLastPushDigestSentAtAsync(UserId id, DateTime at)
     {
         lock (_lock)
         {
@@ -81,7 +82,7 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public Task MarkOnboardingSeenAsync(string id)
+    public Task MarkOnboardingSeenAsync(UserId id)
     {
         lock (_lock)
         {

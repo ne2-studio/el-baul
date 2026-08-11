@@ -90,7 +90,7 @@ public class BackfillRecuerdoEmbeddingsCommandTests
     }
 
     private static Recuerdo CreateRecuerdo(string text) =>
-        new(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(Guid.NewGuid()), "user-1", text, Now);
+        new(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(Guid.NewGuid()), new UserId("user-1"), text, Now);
 
     private sealed class RecordingEmbeddingBackend(string modelId) : IEmbeddingBackend
     {

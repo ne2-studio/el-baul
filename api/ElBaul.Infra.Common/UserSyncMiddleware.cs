@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using Microsoft.AspNetCore.Http;
@@ -33,16 +34,17 @@ public class UserSyncMiddleware(RequestDelegate next)
         if (context.User.Identity?.IsAuthenticated == true)
         {
             var sub = context.User.FindFirstValue("sub") ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var existing = sub is not null ? await userRepository.GetByIdAsync(sub) : null;
+            var userId = sub is not null ? new UserId(sub) : (UserId?)null;
+            var existing = userId is not null ? await userRepository.GetByIdAsync(userId.Value) : null;
 
-            if (sub is not null && (existing is null || string.IsNullOrEmpty(existing.Email)))
+            if (userId is not null && (existing is null || string.IsNullOrEmpty(existing.Email)))
             {
                 if (BearerTokenExtractor.Extract(context.Request) is { } accessToken)
                 {
                     var userInfo = await userInfoClient.GetUserInfoAsync(accessToken);
                     if (userInfo is not null)
                     {
-                        await userRepository.UpsertAsync(new User(sub, userInfo.Email, userInfo.Name, clock.UtcNow()));
+                        await userRepository.UpsertAsync(new User(userId.Value, userInfo.Email, userInfo.Name, clock.UtcNow()));
                     }
                     else
                     {
@@ -51,12 +53,12 @@ public class UserSyncMiddleware(RequestDelegate next)
                 }
             }
 
-            if (sub is not null)
+            if (userId is not null)
             {
                 var now = clock.UtcNow();
                 if (existing?.LastAccessAt is null || now - existing.LastAccessAt.Value > LastAccessThrottle)
                 {
-                    await userRepository.UpdateLastAccessAsync(sub, now);
+                    await userRepository.UpdateLastAccessAsync(userId.Value, now);
                 }
             }
         }

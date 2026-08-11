@@ -43,12 +43,12 @@ public class PersonaManager(
         // plus IPersonaDtoProjector.ProjectManyAsync batching the avatar-photo lookup the same
         // way — together this turns what used to be up to 2 queries per persona into 2 fixed
         // queries for the whole list.
-        var claimedUserIds = personas.Where(p => p.IsClaimed).Select(p => p.UserId!).Distinct();
+        var claimedUserIds = personas.Where(p => p.IsClaimed).Select(p => p.UserId!.Value).Distinct();
         var usersById = (await userRepository.GetByIdsAsync(claimedUserIds)).ToDictionary(u => u.Id);
 
         var items = personas.Select(persona => (
             Persona: persona,
-            User: persona.IsClaimed ? usersById.GetValueOrDefault(persona.UserId!) : null,
+            User: persona.IsClaimed ? usersById.GetValueOrDefault(persona.UserId!.Value) : null,
             CanEdit: CanEditPersona(persona, userId, access)));
 
         var dtos = await personaDtoProjector.ProjectManyAsync(items);
@@ -72,7 +72,7 @@ public class PersonaManager(
         }
 
         var canEdit = CanEditPersona(persona, userId, access);
-        var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!) : null;
+        var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!.Value) : null;
         return await personaDtoProjector.ProjectAsync(persona, user, canEdit);
     }
 
@@ -117,7 +117,7 @@ public class PersonaManager(
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona updated {PersonaId}", personaId);
 
-        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!.Value) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, canEdit);
     }
 
@@ -142,7 +142,7 @@ public class PersonaManager(
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona biografia updated {PersonaId}", personaId);
 
-        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!.Value) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, CanEditPersona(updated, userId, auth.Value));
     }
 
@@ -251,7 +251,7 @@ public class PersonaManager(
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona role updated {PersonaId} {Role}", personaId, role);
 
-        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!.Value) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, canEdit: true);
     }
 
@@ -280,34 +280,34 @@ public class PersonaManager(
         return Result.Success();
     }
 
-    private static bool CanEditPersona(Persona target, string callerUserId, BaulAccess callerAccess) =>
+    private static bool CanEditPersona(Persona target, UserId callerUserId, BaulAccess callerAccess) =>
         callerAccess.IsAdmin || (target.AccessStatus == PersonaAccessStatus.Active && target.UserId == callerUserId);
 
-    private async Task<Result<(Persona Persona, BaulAccess Access, string UserId)>> AuthorizePersonaAvatarChangeAsync(BaulId baulId, PersonaId personaId)
+    private async Task<Result<(Persona Persona, BaulAccess Access, UserId UserId)>> AuthorizePersonaAvatarChangeAsync(BaulId baulId, PersonaId personaId)
     {
         var userId = currentUserProvider.GetUserId();
 
         var auth = await baulAccess.AuthorizeAsync(
             baulId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
-        if (auth.IsFailure) return Result.Failure<(Persona, BaulAccess, string)>(auth.Error);
+        if (auth.IsFailure) return Result.Failure<(Persona, BaulAccess, UserId)>(auth.Error);
 
         var persona = await baulRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
         {
             logger.LogWarning("Persona avatar update rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<(Persona, BaulAccess, string)>(ApplicationError.NotFound("Persona not found"));
+            return Result.Failure<(Persona, BaulAccess, UserId)>(ApplicationError.NotFound("Persona not found"));
         }
 
         if (!CanEditPersona(persona, userId, auth.Value))
         {
             logger.LogWarning("Persona avatar update rejected: access denied {PersonaId}", personaId);
-            return Result.Failure<(Persona, BaulAccess, string)>(ApplicationError.Forbidden("Access denied"));
+            return Result.Failure<(Persona, BaulAccess, UserId)>(ApplicationError.Forbidden("Access denied"));
         }
 
         return (persona, auth.Value, userId);
     }
 
-    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAccess access, string userId, Photo photo, AvatarCrop crop)
+    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAccess access, UserId userId, Photo photo, AvatarCrop crop)
     {
         var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
         if (!existingIds.Contains(persona.Id))
@@ -326,7 +326,7 @@ public class PersonaManager(
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona avatar photo updated {PersonaId} {PhotoId}", persona.Id, photo.Id);
 
-        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!) : null;
+        var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!.Value) : null;
         return await personaDtoProjector.ProjectAsync(updated, user, CanEditPersona(updated, userId, access));
     }
 }

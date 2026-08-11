@@ -31,7 +31,7 @@ public class PushNotificationManagerTests
         var result = await manager.RegisterTokenAsync("device-token", "android");
 
         Assert.True(result.IsSuccess);
-        var tokens = await _pushTokenRepository.GetTokensForUserAsync(UserId);
+        var tokens = await _pushTokenRepository.GetTokensForUserAsync(new UserId(UserId));
         var token = Assert.Single(tokens);
         Assert.Equal("device-token", token.Token);
         Assert.Equal("android", token.Platform);
@@ -46,8 +46,8 @@ public class PushNotificationManagerTests
         var result = await CreateManager(UserId).RegisterTokenAsync("device-token", "ios");
 
         Assert.True(result.IsSuccess);
-        Assert.Empty(await _pushTokenRepository.GetTokensForUserAsync(OtherUserId));
-        var token = Assert.Single(await _pushTokenRepository.GetTokensForUserAsync(UserId));
+        Assert.Empty(await _pushTokenRepository.GetTokensForUserAsync(new UserId(OtherUserId)));
+        var token = Assert.Single(await _pushTokenRepository.GetTokensForUserAsync(new UserId(UserId)));
         Assert.Equal("ios", token.Platform);
     }
 
@@ -59,7 +59,7 @@ public class PushNotificationManagerTests
         var result = await CreateManager(UserId).UnregisterTokenAsync("device-token");
 
         Assert.True(result.IsSuccess);
-        Assert.Empty(await _pushTokenRepository.GetTokensForUserAsync(UserId));
+        Assert.Empty(await _pushTokenRepository.GetTokensForUserAsync(new UserId(UserId)));
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class PushNotificationManagerTests
         var result = await CreateManager(UserId).UnregisterTokenAsync("device-token");
 
         Assert.True(result.IsSuccess);
-        Assert.Single(await _pushTokenRepository.GetTokensForUserAsync(OtherUserId));
+        Assert.Single(await _pushTokenRepository.GetTokensForUserAsync(new UserId(OtherUserId)));
     }
 
     [Fact]

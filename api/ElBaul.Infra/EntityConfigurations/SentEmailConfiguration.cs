@@ -11,7 +11,7 @@ public class SentEmailConfiguration : IEntityTypeConfiguration<SentEmail>
     {
         builder.ToTable("SentEmails");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.UserId).IsRequired().HasMaxLength(255);
+        builder.Property(e => e.UserId).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(e => e.Type).HasConversion<string>().HasMaxLength(30);
         builder.Property(e => e.Subject).IsRequired().HasMaxLength(500);
         builder.Property(e => e.RecipientEmail).IsRequired().HasMaxLength(320);

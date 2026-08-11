@@ -12,8 +12,8 @@ namespace ElBaul.OutputPorts.Bauls;
 public interface IBaulRepository
 {
     Task<Baul?> GetByIdAsync(BaulId id);
-    Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(string userId);
-    Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(string userId);
+    Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(UserId userId);
+    Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(UserId userId);
 
     /// <summary>Every baúl this user can currently see — owned (custodio) or shared (any
     /// active membership role), deduplicated by id. The one place this merge rule lives; see
@@ -21,7 +21,7 @@ public interface IBaulRepository
     /// GetAllForCurrentUserAsync still calls GetOwnedByUserIdAsync/GetSharedByUserIdAsync
     /// directly instead, since it needs each baúl's role/isCustodio, which this collapses
     /// away.</summary>
-    Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(string userId);
+    Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(UserId userId);
 
     Task CreateAsync(Baul baul);
     Task UpdateAsync(Baul baul);
@@ -41,7 +41,7 @@ public interface IBaulRepository
     /// of persona ids instead of one round trip per id (e.g. resolving a photo's tagged
     /// personas).</summary>
     Task<IEnumerable<Persona>> GetPersonasByIdsAsync(IEnumerable<PersonaId> personaIds);
-    Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId);
+    Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, UserId userId);
     Task AddPersonaAsync(Persona persona);
     Task UpdatePersonaAsync(Persona persona);
     Task RemovePersonaAsync(BaulId baulId, PersonaId personaId);

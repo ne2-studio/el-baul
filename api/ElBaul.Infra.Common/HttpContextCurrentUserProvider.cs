@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using Microsoft.AspNetCore.Http;
@@ -10,14 +11,14 @@ namespace ElBaul.Infra;
 /// </summary>
 public class HttpContextCurrentUserProvider(IHttpContextAccessor httpContextAccessor) : ICurrentUserProvider
 {
-    public string GetUserId()
+    public UserId GetUserId()
     {
         var user = httpContextAccessor.HttpContext?.User
             ?? throw new InvalidOperationException("No HTTP context is available to resolve the current user.");
 
         var userId = user.FindFirstValue("sub") ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        return userId ?? throw new InvalidOperationException("The current user token has no 'sub' claim.");
+        return new UserId(userId ?? throw new InvalidOperationException("The current user token has no 'sub' claim."));
     }
 
     public string? GetAccessToken() =>

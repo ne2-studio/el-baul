@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
@@ -22,14 +23,14 @@ public class PushTokenRepository(ElBaulDbContext dbContext) : IPushTokenReposito
         await dbContext.SaveChangesAsync();
     }
 
-    public Task DeleteAsync(string userId, string token) =>
+    public Task DeleteAsync(UserId userId, string token) =>
         dbContext.PushTokens
             .Where(t => t.UserId == userId && t.Token == token)
             .ExecuteDeleteAsync();
 
-    public async Task<IEnumerable<PushToken>> GetTokensForUserAsync(string userId) =>
+    public async Task<IEnumerable<PushToken>> GetTokensForUserAsync(UserId userId) =>
         await dbContext.PushTokens.AsNoTracking().Where(t => t.UserId == userId).ToListAsync();
 
-    public async Task<IEnumerable<string>> GetUserIdsWithTokensAsync() =>
+    public async Task<IEnumerable<UserId>> GetUserIdsWithTokensAsync() =>
         await dbContext.PushTokens.AsNoTracking().Select(t => t.UserId).Distinct().ToListAsync();
 }

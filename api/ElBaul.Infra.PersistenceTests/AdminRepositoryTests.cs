@@ -139,18 +139,18 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
             "unlike PhotoCount, TotalSizeBytes counts the deleted photo too — its file is still in storage");
     }
 
-    private static User NewUser(string id) => new(id, $"{id}@example.com", id, DateTime.UtcNow);
+    private static User NewUser(string id) => new(new UserId(id), $"{id}@example.com", id, DateTime.UtcNow);
 
     private static Baul NewBaul(string custodioId, string name) =>
-        new(new BaulId(Guid.NewGuid()), name, Description: null, custodioId, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
+        new(new BaulId(Guid.NewGuid()), name, Description: null, new UserId(custodioId), ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
 
     private static Persona NewPersona(BaulId baulId, string? userId, string nickname, BaulRole role) =>
-        new(new PersonaId(Guid.NewGuid()), baulId, userId, nickname, role, DateTime.UtcNow);
+        new(new PersonaId(Guid.NewGuid()), baulId, userId is null ? null : new UserId(userId), nickname, role, DateTime.UtcNow);
 
     private static Chapter NewChapter(BaulId baulId, string name) =>
         new(new ChapterId(Guid.NewGuid()), baulId, name, PhotoCount: 0, CoverPhotoKey: null, DateTime.UtcNow, DateTime.UtcNow);
 
     private static Photo NewPhoto(BaulId baulId, ChapterId chapterId, string uploadedBy, long sizeBytes) =>
         new(new PhotoId(Guid.NewGuid()), chapterId, baulId, $"photos/{Guid.NewGuid()}.jpg",
-            DateYear: null, DateMonth: null, DateDay: null, uploadedBy, DateTime.UtcNow, SizeBytes: sizeBytes);
+            DateYear: null, DateMonth: null, DateDay: null, new UserId(uploadedBy), DateTime.UtcNow, SizeBytes: sizeBytes);
 }

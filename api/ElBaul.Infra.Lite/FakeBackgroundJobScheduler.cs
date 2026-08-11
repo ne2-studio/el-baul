@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 namespace ElBaul.Infra.Lite;
@@ -6,24 +7,24 @@ public class FakeBackgroundJobScheduler : IBackgroundJobScheduler
 {
     private readonly Lock _lock = new();
 
-    public List<string> EnqueuedWelcomeEmailUserIds { get; } = [];
-    public List<(string UserId, DateTime Since)> EnqueuedWeeklyDigests { get; } = [];
-    public List<(string UserId, DateTime Since)> EnqueuedPushDigests { get; } = [];
+    public List<UserId> EnqueuedWelcomeEmailUserIds { get; } = [];
+    public List<(UserId UserId, DateTime Since)> EnqueuedWeeklyDigests { get; } = [];
+    public List<(UserId UserId, DateTime Since)> EnqueuedPushDigests { get; } = [];
 
     // Registered as a Singleton in el-baul-api-lite (see ServiceRegistration), so unlike its
     // use in ElBaul.Tests, this can be hit by genuinely concurrent requests — a bare List.Add
     // is not safe under concurrent writers.
-    public void EnqueueWelcomeEmail(string userId)
+    public void EnqueueWelcomeEmail(UserId userId)
     {
         lock (_lock) EnqueuedWelcomeEmailUserIds.Add(userId);
     }
 
-    public void EnqueueWeeklyDigest(string userId, DateTime since)
+    public void EnqueueWeeklyDigest(UserId userId, DateTime since)
     {
         lock (_lock) EnqueuedWeeklyDigests.Add((userId, since));
     }
 
-    public void EnqueuePushDigest(string userId, DateTime since)
+    public void EnqueuePushDigest(UserId userId, DateTime since)
     {
         lock (_lock) EnqueuedPushDigests.Add((userId, since));
     }

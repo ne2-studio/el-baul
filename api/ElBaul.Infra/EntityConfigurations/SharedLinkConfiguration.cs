@@ -20,7 +20,7 @@ public class SharedLinkConfiguration : IEntityTypeConfiguration<SharedLink>
         builder.Property(s => s.ContentType).HasConversion<string>().HasMaxLength(20);
         builder.Property(s => s.PhotoId).HasConversion(IdValueConverters.PhotoId);
         builder.Property(s => s.RecuerdoId).HasConversion(IdValueConverters.RecuerdoId);
-        builder.Property(s => s.CreatedBy).IsRequired().HasMaxLength(255);
+        builder.Property(s => s.CreatedBy).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(s => s.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(s => s.RevokedAt).HasColumnType("timestamp with time zone");
         builder.Ignore(s => s.IsRevoked);

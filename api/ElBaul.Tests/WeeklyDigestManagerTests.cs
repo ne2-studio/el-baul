@@ -54,21 +54,21 @@ public class WeeklyDigestManagerTests
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
     {
-        var user = new User(id, email, "Usuaria", _clock.UtcNow().AddDays(-30), WeeklyDigestEnabled: digestEnabled);
+        var user = new User(new UserIdVo(id), email, "Usuaria", _clock.UtcNow().AddDays(-30), WeeklyDigestEnabled: digestEnabled);
         _userRepository.Seed(user);
         return user;
     }
 
     private Baul SeedOwnedBaul(string userId, string name = "Familia Pardal")
     {
-        var baul = new Baul(new BaulId(Guid.NewGuid()), name, null, userId, 0, _clock.UtcNow().AddDays(-30), _clock.UtcNow());
+        var baul = new Baul(new BaulId(Guid.NewGuid()), name, null, new UserIdVo(userId), 0, _clock.UtcNow().AddDays(-30), _clock.UtcNow());
         _baulRepository.CreateAsync(baul).GetAwaiter().GetResult();
         return baul;
     }
 
     private void SeedSentDigest(string userId, DateTime sentAt, EmailStatus status = EmailStatus.Sent) =>
         _sentEmailRepository.TryReserveAsync(new SentEmail(
-            Guid.NewGuid(), userId, EmailType.WeeklyDigest, "Resumen semanal de tus baúles", "user@example.com",
+            Guid.NewGuid(), new UserIdVo(userId), EmailType.WeeklyDigest, "Resumen semanal de tus baúles", "user@example.com",
             "weekly-digest-v1", "es-ES", status, $"weekly-digest:{userId}:{sentAt:O}", _clock.UtcNow(),
             SentAt: status == EmailStatus.Sent ? sentAt : null)).GetAwaiter().GetResult();
 
@@ -180,8 +180,8 @@ public class WeeklyDigestManagerTests
         await _chapterRepository.CreateAsync(chapter);
 
         for (var i = 0; i < 3; i++)
-            await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapter.Id), new BaulId(baul.Id), $"key-{i}", null, OtherUserId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, OtherUserId, _clock.UtcNow()));
+            await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapter.Id), new BaulId(baul.Id), $"key-{i}", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
@@ -207,8 +207,8 @@ public class WeeklyDigestManagerTests
         await _chapterRepository.CreateAsync(secondChapter);
 
         for (var i = 0; i < 2; i++)
-            await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(firstChapter.Id), new BaulId(baul.Id), $"one-{i}", null, OtherUserId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(secondChapter.Id), new BaulId(baul.Id), "two-0", null, OtherUserId, _clock.UtcNow()));
+            await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(firstChapter.Id), new BaulId(baul.Id), $"one-{i}", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(secondChapter.Id), new BaulId(baul.Id), "two-0", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
@@ -224,7 +224,7 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "deleted-1", null, UserId, _clock.UtcNow())
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "deleted-1", null, new UserIdVo(UserId), _clock.UtcNow())
             with { Status = PhotoStatus.Deleted, DeletedAt = _clock.UtcNow(), DeletionReason = "test" });
 
         var manager = CreateManager();
@@ -239,8 +239,8 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Un recuerdo bonito", _clock.UtcNow()));
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Otro más", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Un recuerdo bonito", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Otro más", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
@@ -261,7 +261,7 @@ public class WeeklyDigestManagerTests
         {
             var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), $"Capítulo {i}", 0, null, since.AddDays(-1), since.AddDays(-1));
             await _chapterRepository.CreateAsync(chapter);
-            await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapter.Id), new BaulId(baul.Id), $"key-{i}", null, OtherUserId, _clock.UtcNow()));
+            await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapter.Id), new BaulId(baul.Id), $"key-{i}", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
         }
 
         var manager = CreateManager();
@@ -309,7 +309,7 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), UserId, "Mío", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(UserId), "Mío", _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
@@ -323,8 +323,8 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), UserId, "Mío", _clock.UtcNow()));
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Ajeno", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(UserId), "Mío", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Ajeno", _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
@@ -339,7 +339,7 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "own-1", null, UserId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "own-1", null, new UserIdVo(UserId), _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
@@ -353,8 +353,8 @@ public class WeeklyDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "own-1", null, UserId, _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "other-1", null, OtherUserId, _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "own-1", null, new UserIdVo(UserId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "other-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
@@ -388,7 +388,7 @@ public class WeeklyDigestManagerTests
         var baul = SeedOwnedBaul(owner.Id, "Baúl compartido");
         var since = _clock.UtcNow().AddDays(-7);
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo", 0, null, since.AddDays(1), since.AddDays(1)));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), new UserIdVo(UserId), "Yo", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);

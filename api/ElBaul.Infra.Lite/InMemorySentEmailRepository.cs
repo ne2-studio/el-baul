@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Users;
 namespace ElBaul.Infra.Lite;
@@ -34,7 +35,7 @@ public class InMemorySentEmailRepository : ISentEmailRepository
         return Task.CompletedTask;
     }
 
-    public Task<HashSet<string>> GetUserIdsWithSentEmailAsync(EmailType type)
+    public Task<HashSet<UserId>> GetUserIdsWithSentEmailAsync(EmailType type)
     {
         lock (_lock)
         {
@@ -45,7 +46,7 @@ public class InMemorySentEmailRepository : ISentEmailRepository
         }
     }
 
-    public Task<HashSet<string>> GetUserIdsWithBlockedStatusAsync()
+    public Task<HashSet<UserId>> GetUserIdsWithBlockedStatusAsync()
     {
         lock (_lock)
         {
@@ -61,12 +62,12 @@ public class InMemorySentEmailRepository : ISentEmailRepository
         lock (_lock) return Task.FromResult(_emails.Values.OrderByDescending(e => e.CreatedAt).Take(limit).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<SentEmail>> GetByUserIdAsync(string userId)
+    public Task<IEnumerable<SentEmail>> GetByUserIdAsync(UserId userId)
     {
         lock (_lock) return Task.FromResult(_emails.Values.Where(e => e.UserId == userId).OrderByDescending(e => e.CreatedAt).ToList().AsEnumerable());
     }
 
-    public Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type)
+    public Task<DateTime?> GetLatestSentAtAsync(UserId userId, EmailType type)
     {
         lock (_lock)
         {
@@ -78,7 +79,7 @@ public class InMemorySentEmailRepository : ISentEmailRepository
         }
     }
 
-    public Task<Dictionary<string, DateTime>> GetLatestSentAtByTypeAsync(EmailType type)
+    public Task<Dictionary<UserId, DateTime>> GetLatestSentAtByTypeAsync(EmailType type)
     {
         lock (_lock)
         {

@@ -6,6 +6,7 @@ using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class SupportManagerTests
@@ -19,7 +20,7 @@ public class SupportManagerTests
         new(NullLogger<SupportManager>.Instance, _userRepository, _supportBackend, new StaticCurrentUserProvider(UserId));
 
     private void SeedUser() =>
-        _userRepository.Seed(new User(UserId, "user@example.com", "Usuaria", DateTime.UtcNow));
+        _userRepository.Seed(new User(new UserId(UserId), "user@example.com", "Usuaria", DateTime.UtcNow));
 
     [Fact]
     public async Task SubmitAsync_ShouldSucceed_ForValidCategoryAndMessage()

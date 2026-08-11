@@ -1,6 +1,7 @@
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Admin;
 /// <summary>
 /// The backoffice baúl detail screen. Personas doubles as both "miembros" and "personas"
@@ -12,7 +13,7 @@ namespace ElBaul.OutputPorts.Admin;
 public record AdminBaulDetailRow(
     Baul Baul,
     IEnumerable<Persona> Personas,
-    IReadOnlyDictionary<string, string> LinkedUserNames,
+    IReadOnlyDictionary<UserId, string> LinkedUserNames,
     IEnumerable<Chapter> Chapters,
     int PhotoCount,
     int RecuerdoCount,

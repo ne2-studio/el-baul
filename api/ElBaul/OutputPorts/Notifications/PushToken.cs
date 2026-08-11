@@ -1,8 +1,9 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Notifications;
 public record PushToken
 (
     Guid Id,
-    string UserId,
+    UserId UserId,
     string Token,
     string Platform,
     DateTime CreatedAt

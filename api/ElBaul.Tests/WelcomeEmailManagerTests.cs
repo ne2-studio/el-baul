@@ -46,7 +46,7 @@ public class WelcomeEmailManagerTests
 
     private User SeedUser(string id, DateTime createdAt, string email = "user@example.com")
     {
-        var user = new User(id, email, "Usuaria", createdAt);
+        var user = new User(new UserIdVo(id), email, "Usuaria", createdAt);
         _userRepository.Seed(user);
         return user;
     }
@@ -61,7 +61,7 @@ public class WelcomeEmailManagerTests
 
         await manager.SchedulePendingWelcomeEmailsAsync();
 
-        Assert.Contains(UserId, _jobScheduler.EnqueuedWelcomeEmailUserIds);
+        Assert.Contains(new UserIdVo(UserId), _jobScheduler.EnqueuedWelcomeEmailUserIds);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class WelcomeEmailManagerTests
 
         await manager.SchedulePendingWelcomeEmailsAsync();
 
-        Assert.DoesNotContain(UserId, _jobScheduler.EnqueuedWelcomeEmailUserIds);
+        Assert.DoesNotContain(new UserIdVo(UserId), _jobScheduler.EnqueuedWelcomeEmailUserIds);
     }
 
     [Fact]
@@ -80,13 +80,13 @@ public class WelcomeEmailManagerTests
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         await _sentEmailRepository.TryReserveAsync(new SentEmail(
-            Guid.NewGuid(), UserId, EmailType.Welcome, "Bienvenido a El Baúl", "user@example.com",
+            Guid.NewGuid(), new UserIdVo(UserId), EmailType.Welcome, "Bienvenido a El Baúl", "user@example.com",
             "welcome-v1", "es-ES", EmailStatus.Sent, $"welcome:{UserId}", _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SchedulePendingWelcomeEmailsAsync();
 
-        Assert.DoesNotContain(UserId, _jobScheduler.EnqueuedWelcomeEmailUserIds);
+        Assert.DoesNotContain(new UserIdVo(UserId), _jobScheduler.EnqueuedWelcomeEmailUserIds);
     }
 
     [Fact]
@@ -97,14 +97,14 @@ public class WelcomeEmailManagerTests
         // Hangfire's own bounded automatic-retry attempts run out.
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         await _sentEmailRepository.TryReserveAsync(new SentEmail(
-            Guid.NewGuid(), UserId, EmailType.Welcome, "Bienvenido a El Baúl", "user@example.com",
+            Guid.NewGuid(), new UserIdVo(UserId), EmailType.Welcome, "Bienvenido a El Baúl", "user@example.com",
             "welcome-v1", "es-ES", EmailStatus.Failed, $"welcome:{UserId}", _clock.UtcNow(),
             ErrorMessage: "Resend returned TooManyRequests"));
         var manager = CreateManager();
 
         await manager.SchedulePendingWelcomeEmailsAsync();
 
-        Assert.Contains(UserId, _jobScheduler.EnqueuedWelcomeEmailUserIds);
+        Assert.Contains(new UserIdVo(UserId), _jobScheduler.EnqueuedWelcomeEmailUserIds);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class WelcomeEmailManagerTests
 
         await manager.SchedulePendingWelcomeEmailsAsync();
 
-        Assert.DoesNotContain(UserId, _jobScheduler.EnqueuedWelcomeEmailUserIds);
+        Assert.DoesNotContain(new UserIdVo(UserId), _jobScheduler.EnqueuedWelcomeEmailUserIds);
     }
 
     [Fact]
@@ -123,13 +123,13 @@ public class WelcomeEmailManagerTests
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         await _sentEmailRepository.TryReserveAsync(new SentEmail(
-            Guid.NewGuid(), UserId, EmailType.Welcome, "s", "user@example.com",
+            Guid.NewGuid(), new UserIdVo(UserId), EmailType.Welcome, "s", "user@example.com",
             "welcome-v1", "es-ES", EmailStatus.Bounced, "welcome:some-other-attempt", _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SchedulePendingWelcomeEmailsAsync();
 
-        Assert.DoesNotContain(UserId, _jobScheduler.EnqueuedWelcomeEmailUserIds);
+        Assert.DoesNotContain(new UserIdVo(UserId), _jobScheduler.EnqueuedWelcomeEmailUserIds);
     }
 
     // --- Sending / content variants ------------------------------------------------
@@ -152,7 +152,7 @@ public class WelcomeEmailManagerTests
     public async Task SendWelcomeEmailAsync_ShouldUseTheBaulesVariant_ForAUserWithBaules()
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
-        var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Pardal", null, UserId, 0, _clock.UtcNow(), _clock.UtcNow());
+        var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Pardal", null, new UserIdVo(UserId), 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
         var manager = CreateManager();
 
@@ -172,7 +172,7 @@ public class WelcomeEmailManagerTests
         var custodio = SeedUser("custodio-1", _clock.UtcNow().AddHours(-10));
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Jimena", null, custodio.Id, 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), UserId, "Yo", BaulRole.Colaborador, _clock.UtcNow()));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), new UserIdVo(UserId), "Yo", BaulRole.Colaborador, _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
@@ -200,7 +200,7 @@ public class WelcomeEmailManagerTests
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
         await _sentEmailRepository.TryReserveAsync(new SentEmail(
-            Guid.NewGuid(), UserId, EmailType.Welcome, "Bienvenido a El Baúl", "user@example.com",
+            Guid.NewGuid(), new UserIdVo(UserId), EmailType.Welcome, "Bienvenido a El Baúl", "user@example.com",
             "welcome-v1", "es-ES", EmailStatus.Sent, $"welcome:{UserId}", _clock.UtcNow()));
         var manager = CreateManager();
 
@@ -212,7 +212,7 @@ public class WelcomeEmailManagerTests
     [Fact]
     public async Task TryReserveAsync_ShouldRejectASecondReservation_ForTheSameDeduplicationKey()
     {
-        var first = new SentEmail(Guid.NewGuid(), UserId, EmailType.Welcome, "s", "user@example.com",
+        var first = new SentEmail(Guid.NewGuid(), new UserIdVo(UserId), EmailType.Welcome, "s", "user@example.com",
             "welcome-v1", "es-ES", EmailStatus.Pending, $"welcome:{UserId}", _clock.UtcNow());
         var second = first with { Id = Guid.NewGuid() };
 
@@ -296,7 +296,7 @@ public class WelcomeEmailManagerTests
 
         await manager.SendTestWelcomeEmailAsync(new UserIdVo(UserId));
 
-        Assert.DoesNotContain(UserId, await _sentEmailRepository.GetUserIdsWithSentEmailAsync(EmailType.Welcome));
+        Assert.DoesNotContain(new UserIdVo(UserId), await _sentEmailRepository.GetUserIdsWithSentEmailAsync(EmailType.Welcome));
     }
 
     [Fact]

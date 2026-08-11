@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using Microsoft.AspNetCore.Http;
@@ -39,21 +40,21 @@ public class UserSyncMiddlewareTests
     public async Task InvokeAsync_ShouldCreateUser_ViaUserInfoEndpoint_WhenUserIsNew()
     {
         var context = BuildContext("user-1", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync("user-1").Returns((User?)null);
+        _userRepository.GetByIdAsync(new UserId("user-1")).Returns((User?)null);
         _userInfoClient.GetUserInfoAsync("the-access-token").Returns(new UserInfo("fetched@test.local", "Fetched Name"));
 
         await InvokeAsync(context);
 
         await _userInfoClient.Received(1).GetUserInfoAsync("the-access-token");
         await _userRepository.Received(1).UpsertAsync(Arg.Is<User>(u =>
-            u.Id == "user-1" && u.Email == "fetched@test.local" && u.Name == "Fetched Name"));
+            u.Id == new UserId("user-1") && u.Email == "fetched@test.local" && u.Name == "Fetched Name"));
     }
 
     [Fact]
     public async Task InvokeAsync_ShouldSkipEntirely_WhenUserAlreadyExists_WithAnEmail()
     {
         var context = BuildContext("user-1", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync("user-1").Returns(new User("user-1", "already@test.local", "Already Synced", DateTime.UtcNow));
+        _userRepository.GetByIdAsync(new UserId("user-1")).Returns(new User(new UserId("user-1"), "already@test.local", "Already Synced", DateTime.UtcNow));
 
         await InvokeAsync(context);
 
@@ -68,21 +69,21 @@ public class UserSyncMiddlewareTests
         // userinfo call failed, or the row predates this sync flow) — without this,
         // such a user would never get synced since a row already exists for its "sub".
         var context = BuildContext("user-2", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync("user-2").Returns(new User("user-2", "", null, DateTime.UtcNow));
+        _userRepository.GetByIdAsync(new UserId("user-2")).Returns(new User(new UserId("user-2"), "", null, DateTime.UtcNow));
         _userInfoClient.GetUserInfoAsync("the-access-token").Returns(new UserInfo("resynced@test.local", "Resynced Name"));
 
         await InvokeAsync(context);
 
         await _userInfoClient.Received(1).GetUserInfoAsync("the-access-token");
         await _userRepository.Received(1).UpsertAsync(Arg.Is<User>(u =>
-            u.Id == "user-2" && u.Email == "resynced@test.local" && u.Name == "Resynced Name"));
+            u.Id == new UserId("user-2") && u.Email == "resynced@test.local" && u.Name == "Resynced Name"));
     }
 
     [Fact]
     public async Task InvokeAsync_ShouldSkipSync_WhenUserInfoEndpointReturnsNull()
     {
         var context = BuildContext("user-3", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync("user-3").Returns((User?)null);
+        _userRepository.GetByIdAsync(new UserId("user-3")).Returns((User?)null);
         _userInfoClient.GetUserInfoAsync("the-access-token").Returns((UserInfo?)null);
 
         await InvokeAsync(context);
@@ -94,7 +95,7 @@ public class UserSyncMiddlewareTests
     public async Task InvokeAsync_ShouldSkipSync_WhenRequestHasNoBearerToken()
     {
         var context = BuildContext("user-4");
-        _userRepository.GetByIdAsync("user-4").Returns((User?)null);
+        _userRepository.GetByIdAsync(new UserId("user-4")).Returns((User?)null);
 
         await InvokeAsync(context);
 
@@ -106,11 +107,11 @@ public class UserSyncMiddlewareTests
     public async Task InvokeAsync_ShouldUpdateLastAccessAt_WhenNeverSetBefore()
     {
         var context = BuildContext("user-5", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync("user-5").Returns(new User("user-5", "already@test.local", "Already Synced", DateTime.UtcNow, LastAccessAt: null));
+        _userRepository.GetByIdAsync(new UserId("user-5")).Returns(new User(new UserId("user-5"), "already@test.local", "Already Synced", DateTime.UtcNow, LastAccessAt: null));
 
         await InvokeAsync(context);
 
-        await _userRepository.Received(1).UpdateLastAccessAsync("user-5", _clock.UtcNow());
+        await _userRepository.Received(1).UpdateLastAccessAsync(new UserId("user-5"), _clock.UtcNow());
     }
 
     [Fact]
@@ -118,11 +119,11 @@ public class UserSyncMiddlewareTests
     {
         var context = BuildContext("user-6", bearerToken: "the-access-token");
         var recentAccess = _clock.UtcNow().AddMinutes(-5);
-        _userRepository.GetByIdAsync("user-6").Returns(new User("user-6", "already@test.local", "Already Synced", DateTime.UtcNow, recentAccess));
+        _userRepository.GetByIdAsync(new UserId("user-6")).Returns(new User(new UserId("user-6"), "already@test.local", "Already Synced", DateTime.UtcNow, recentAccess));
 
         await InvokeAsync(context);
 
-        await _userRepository.DidNotReceive().UpdateLastAccessAsync(Arg.Any<string>(), Arg.Any<DateTime>());
+        await _userRepository.DidNotReceive().UpdateLastAccessAsync(Arg.Any<UserId>(), Arg.Any<DateTime>());
     }
 
     [Fact]
@@ -130,11 +131,11 @@ public class UserSyncMiddlewareTests
     {
         var context = BuildContext("user-7", bearerToken: "the-access-token");
         var staleAccess = _clock.UtcNow().AddMinutes(-20);
-        _userRepository.GetByIdAsync("user-7").Returns(new User("user-7", "already@test.local", "Already Synced", DateTime.UtcNow, staleAccess));
+        _userRepository.GetByIdAsync(new UserId("user-7")).Returns(new User(new UserId("user-7"), "already@test.local", "Already Synced", DateTime.UtcNow, staleAccess));
 
         await InvokeAsync(context);
 
-        await _userRepository.Received(1).UpdateLastAccessAsync("user-7", _clock.UtcNow());
+        await _userRepository.Received(1).UpdateLastAccessAsync(new UserId("user-7"), _clock.UtcNow());
     }
 
     [Fact]
@@ -144,7 +145,7 @@ public class UserSyncMiddlewareTests
 
         await InvokeAsync(context);
 
-        await _userRepository.DidNotReceive().GetByIdAsync(Arg.Any<string>());
+        await _userRepository.DidNotReceive().GetByIdAsync(Arg.Any<UserId>());
         await _userRepository.DidNotReceive().UpsertAsync(Arg.Any<User>());
     }
 }

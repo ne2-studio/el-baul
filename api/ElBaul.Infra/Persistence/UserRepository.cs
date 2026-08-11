@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -6,10 +7,10 @@ namespace ElBaul.Infra.Persistence;
 
 public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
 {
-    public Task<User?> GetByIdAsync(string id) =>
+    public Task<User?> GetByIdAsync(UserId id) =>
         dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
 
-    public async Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<string> ids) =>
+    public async Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<UserId> ids) =>
         await dbContext.Users.AsNoTracking().Where(u => ids.Contains(u.Id)).ToListAsync();
 
     public Task<User?> GetByEmailAsync(string email) =>
@@ -21,22 +22,22 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
     public async Task<IEnumerable<User>> GetUsersWithDigestEnabledAsync() =>
         await dbContext.Users.AsNoTracking().Where(u => u.WeeklyDigestEnabled).ToListAsync();
 
-    public Task UpdateLastAccessAsync(string id, DateTime at) =>
+    public Task UpdateLastAccessAsync(UserId id, DateTime at) =>
         dbContext.Users
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.LastAccessAt, at));
 
-    public Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled) =>
+    public Task UpdateWeeklyDigestEnabledAsync(UserId id, bool enabled) =>
         dbContext.Users
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.WeeklyDigestEnabled, enabled));
 
-    public Task UpdateLastPushDigestSentAtAsync(string id, DateTime at) =>
+    public Task UpdateLastPushDigestSentAtAsync(UserId id, DateTime at) =>
         dbContext.Users
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.LastPushDigestSentAt, at));
 
-    public Task MarkOnboardingSeenAsync(string id) =>
+    public Task MarkOnboardingSeenAsync(UserId id) =>
         dbContext.Users
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.HasSeenOnboarding, true));

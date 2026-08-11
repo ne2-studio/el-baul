@@ -39,7 +39,7 @@ public sealed record PhotoListRow(
     int? DateYear,
     int? DateMonth,
     int? DateDay,
-    string UploadedBy,
+    UserId UploadedBy,
     DateTime CreatedAt,
     int RecuerdoCount
 );

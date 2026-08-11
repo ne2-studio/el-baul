@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Notifications;
 public enum EmailType
 {
@@ -20,7 +21,7 @@ public enum EmailStatus
 
 public record SentEmail(
     Guid Id,
-    string UserId,
+    UserId UserId,
     EmailType Type,
     string Subject,
     string RecipientEmail,

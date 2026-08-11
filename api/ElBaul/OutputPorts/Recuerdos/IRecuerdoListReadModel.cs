@@ -32,7 +32,7 @@ public sealed record RecuerdoListRow(
     PhotoId? PhotoId,
     ChapterId? ChapterId,
     BaulId BaulId,
-    string UserId,
+    UserId UserId,
     string Text,
     DateTime CreatedAt,
     string? PhotoStorageKey,

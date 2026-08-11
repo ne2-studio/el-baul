@@ -11,7 +11,7 @@ public record Persona
 (
     PersonaId Id,
     BaulId BaulId,
-    string? UserId,
+    UserId? UserId,
     string Nickname,
     BaulRole Role,
     DateTime InvitedDate,
@@ -41,14 +41,14 @@ public record Persona
     // The custodio's own access can never be revoked — RemovePersonaAsync checks this before
     // calling Revoke(), whether the target row is itself Custodio-stamped or merely belongs to
     // the baúl's custodio account.
-    public bool IsCustodioProtected(string custodioUserId) =>
+    public bool IsCustodioProtected(UserId custodioUserId) =>
         Role == BaulRole.Custodio || UserId == custodioUserId;
 
     // Links a Pending Persona to an authenticated account claiming to be that family member —
     // called from BaulInviteLinkManager.AcceptAsync once the caller picks this row from the
     // claimable list. Name is only backfilled, never overwritten, so an admin-provided name
     // always wins.
-    public Persona AcceptInvite(string userId, string? fallbackName) =>
+    public Persona AcceptInvite(UserId userId, string? fallbackName) =>
         this with { UserId = userId, Name = Name ?? fallbackName };
 
     // The only way a Persona reaches Revoked — clears the account link alongside the role so

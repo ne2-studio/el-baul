@@ -46,20 +46,20 @@ public class PushDigestManagerTests
 
     private User SeedUser(string id, DateTime? lastPushDigestSentAt = null, string email = "user@example.com")
     {
-        var user = new User(id, email, "Usuaria", _clock.UtcNow().AddDays(-30), LastPushDigestSentAt: lastPushDigestSentAt);
+        var user = new User(new UserIdVo(id), email, "Usuaria", _clock.UtcNow().AddDays(-30), LastPushDigestSentAt: lastPushDigestSentAt);
         _userRepository.Seed(user);
         return user;
     }
 
     private Baul SeedOwnedBaul(string userId, string name = "Familia Pardal")
     {
-        var baul = new Baul(new BaulId(Guid.NewGuid()), name, null, userId, 0, _clock.UtcNow().AddDays(-30), _clock.UtcNow());
+        var baul = new Baul(new BaulId(Guid.NewGuid()), name, null, new UserIdVo(userId), 0, _clock.UtcNow().AddDays(-30), _clock.UtcNow());
         _baulRepository.CreateAsync(baul).GetAwaiter().GetResult();
         return baul;
     }
 
     private void SeedToken(string userId, string token = "token-1") =>
-        _pushTokenRepository.UpsertAsync(new PushToken(Guid.NewGuid(), userId, token, "android", _clock.UtcNow())).GetAwaiter().GetResult();
+        _pushTokenRepository.UpsertAsync(new PushToken(Guid.NewGuid(), new UserIdVo(userId), token, "android", _clock.UtcNow())).GetAwaiter().GetResult();
 
     // --- Scheduling ----------------------------------------------------------------
 
@@ -157,7 +157,7 @@ public class PushDigestManagerTests
     {
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Un recuerdo", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Un recuerdo", _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
@@ -171,7 +171,7 @@ public class PushDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Un recuerdo", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Un recuerdo", _clock.UtcNow()));
         var manager = CreateManager(new StaticAppConfiguration(pushDigestEnabled: false));
 
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
@@ -188,9 +188,9 @@ public class PushDigestManagerTests
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId);
         var since = _clock.UtcNow().AddDays(-1);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Uno", _clock.UtcNow()));
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Dos", _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, OtherUserId, _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Dos", _clock.UtcNow()));
+        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Verano", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager();
@@ -212,8 +212,8 @@ public class PushDigestManagerTests
         var secondBaul = SeedOwnedBaul(UserId, "Dos");
         SeedToken(UserId);
         var since = _clock.UtcNow().AddDays(-1);
-        _recuerdoRepository.SeedForBaul(firstBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(firstBaul.Id), OtherUserId, "Uno", _clock.UtcNow()));
-        _recuerdoRepository.SeedForBaul(secondBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(secondBaul.Id), OtherUserId, "Dos", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(firstBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(firstBaul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(secondBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(secondBaul.Id), new UserIdVo(OtherUserId), "Dos", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), since);
@@ -230,7 +230,7 @@ public class PushDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), UserId, "Mío", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(UserId), "Mío", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
@@ -245,7 +245,7 @@ public class PushDigestManagerTests
         var owner = SeedUser("owner-1", email: "owner@example.com");
         var baul = SeedOwnedBaul(owner.Id, "Baúl ajeno");
         SeedToken(UserId);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Recuerdo", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Recuerdo", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
@@ -262,7 +262,7 @@ public class PushDigestManagerTests
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId, "token-a");
         SeedToken(UserId, "token-b");
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Recuerdo", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Recuerdo", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
@@ -278,12 +278,12 @@ public class PushDigestManagerTests
         SeedUser(UserId);
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Recuerdo", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Recuerdo", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
 
-        var user = await _userRepository.GetByIdAsync(UserId);
+        var user = await _userRepository.GetByIdAsync(new UserIdVo(UserId));
         Assert.Equal(_clock.UtcNow(), user!.LastPushDigestSentAt);
     }
 
@@ -297,7 +297,7 @@ public class PushDigestManagerTests
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
 
-        var user = await _userRepository.GetByIdAsync(UserId);
+        var user = await _userRepository.GetByIdAsync(new UserIdVo(UserId));
         Assert.Equal(_clock.UtcNow().AddDays(-5), user!.LastPushDigestSentAt);
     }
 
@@ -307,13 +307,13 @@ public class PushDigestManagerTests
         SeedUser(UserId, lastPushDigestSentAt: _clock.UtcNow().AddDays(-5));
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId);
-        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Recuerdo", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Recuerdo", _clock.UtcNow()));
         _pushNotificationSender.NextResult = Result.Failure(ApplicationError.ExternalDependencyUnavailable("boom"));
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
 
-        var user = await _userRepository.GetByIdAsync(UserId);
+        var user = await _userRepository.GetByIdAsync(new UserIdVo(UserId));
         Assert.Equal(_clock.UtcNow().AddDays(-5), user!.LastPushDigestSentAt);
     }
 }

@@ -17,7 +17,7 @@ public class InMemoryAdminRepository : IAdminRepository
     public DateTime? LastRequestedTodayUtcStart { get; private set; }
 
     public List<AdminUserRow> Users { get; } = [];
-    public Dictionary<string, AdminUserDetailRow> UserDetails { get; } = new();
+    public Dictionary<UserId, AdminUserDetailRow> UserDetails { get; } = new();
 
     public List<AdminBaulRow> Baules { get; } = [];
     public Dictionary<BaulId, AdminBaulDetailRow> BaulDetails { get; } = new();
@@ -36,7 +36,7 @@ public class InMemoryAdminRepository : IAdminRepository
         lock (_lock) return Task.FromResult<IEnumerable<AdminUserRow>>(Users.ToList());
     }
 
-    public Task<AdminUserDetailRow?> GetUserDetailAsync(string userId)
+    public Task<AdminUserDetailRow?> GetUserDetailAsync(UserId userId)
     {
         lock (_lock) return Task.FromResult(UserDetails.GetValueOrDefault(userId));
     }

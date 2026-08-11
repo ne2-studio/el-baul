@@ -80,7 +80,7 @@ public class EmailDeliveryCoordinator(
     }
 
     public async Task<Result> SendAsync(
-        string userId,
+        UserId userId,
         string recipientEmail,
         string deduplicationKey,
         EmailType type,

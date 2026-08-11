@@ -1,12 +1,13 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Users;
 public interface IUserRepository
 {
-    Task<User?> GetByIdAsync(string id);
+    Task<User?> GetByIdAsync(UserId id);
 
     /// <summary>Batch-friendly counterpart to GetByIdAsync — one query for a whole list of ids
     /// instead of one round trip per id (e.g. PersonaManager.GetPersonasAsync resolving each
     /// claimed persona's account).</summary>
-    Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<string> ids);
+    Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<UserId> ids);
 
     Task<User?> GetByEmailAsync(string email);
 
@@ -24,19 +25,19 @@ public interface IUserRepository
     /// authenticated request (throttled), so this is a targeted column write, not a
     /// full-entity load/save.
     /// </summary>
-    Task UpdateLastAccessAsync(string id, DateTime at);
+    Task UpdateLastAccessAsync(UserId id, DateTime at);
 
-    Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled);
+    Task UpdateWeeklyDigestEnabledAsync(UserId id, bool enabled);
 
     /// <summary>
     /// Advances the daily-push-digest cursor. Only called after a digest actually went out —
     /// see IPushDigestManager for why silence (no activity) must leave this untouched.
     /// </summary>
-    Task UpdateLastPushDigestSentAtAsync(string id, DateTime at);
+    Task UpdateLastPushDigestSentAtAsync(UserId id, DateTime at);
 
     /// <summary>One-way flip, never unset — the onboarding carousel a brand-new signup sees
     /// before creating their first baúl, shown at most once per user.</summary>
-    Task MarkOnboardingSeenAsync(string id);
+    Task MarkOnboardingSeenAsync(UserId id);
 
     /// <summary>
     /// Inserts the user if new, or updates email/name if already present.

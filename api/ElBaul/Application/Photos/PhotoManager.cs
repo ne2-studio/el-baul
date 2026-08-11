@@ -129,7 +129,7 @@ public class PhotoManager(
         string contentType,
         PhotoDate? date,
         ClientUploadId clientUploadId,
-        string userId,
+        UserId userId,
         Guid? uploadBatchId = null)
     {
         var chapterId = chapter?.Id;

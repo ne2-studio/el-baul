@@ -35,8 +35,8 @@ public class BaulFixture
     {
         var baulId = new BaulId(id ?? Guid.NewGuid());
         var created = createdAt ?? Clock.UtcNow();
-        await Baules.CreateAsync(new Baul(baulId, name, description, custodioId, chapterCount, created, created));
-        await Baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, custodioId, "Custodio", BaulRole.Custodio, created));
+        await Baules.CreateAsync(new Baul(baulId, name, description, new UserId(custodioId), chapterCount, created, created));
+        await Baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(custodioId), "Custodio", BaulRole.Custodio, created));
         return baulId;
     }
 
@@ -52,7 +52,7 @@ public class BaulFixture
         BaulId baulId, string? userId, string nickname, BaulRole role = BaulRole.Colaborador, Guid? id = null)
     {
         var personaId = new PersonaId(id ?? Guid.NewGuid());
-        await Baules.AddPersonaAsync(new Persona(personaId, baulId, userId, nickname, role, Clock.UtcNow()));
+        await Baules.AddPersonaAsync(new Persona(personaId, baulId, userId is null ? null : new UserId(userId), nickname, role, Clock.UtcNow()));
         return personaId;
     }
 
@@ -82,7 +82,7 @@ public class BaulFixture
     {
         var photoId = new PhotoId(id ?? Guid.NewGuid());
         await Photos.CreateAsync(Photo.Create(
-            photoId, chapterId, baulId, storageKey, date, uploadedBy, createdAt ?? Clock.UtcNow(), clientUploadId, sizeBytes, uploadBatchId));
+            photoId, chapterId, baulId, storageKey, date, new UserId(uploadedBy), createdAt ?? Clock.UtcNow(), clientUploadId, sizeBytes, uploadBatchId));
         return photoId;
     }
 }

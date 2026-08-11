@@ -27,6 +27,6 @@ public sealed record ChapterListRow(
     DateTime UpdatedAt,
     int RecuerdoCount,
     string? LatestRecuerdoText,
-    string? LatestRecuerdoAuthorUserId,
+    UserId? LatestRecuerdoAuthorUserId,
     ChapterDateRange DateRange
 );

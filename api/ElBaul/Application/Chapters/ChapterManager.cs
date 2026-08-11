@@ -43,7 +43,7 @@ public class ChapterManager(
 
         var authorUserIds = rows
             .Where(r => r.LatestRecuerdoAuthorUserId is not null)
-            .Select(r => r.LatestRecuerdoAuthorUserId!)
+            .Select(r => r.LatestRecuerdoAuthorUserId!.Value)
             .Distinct();
         var authors = await authorInfoProjector.GetManyAsync(baulId, authorUserIds);
 
@@ -186,7 +186,7 @@ public class ChapterManager(
     // author map (see GetByBaulIdAsync) into a ChapterDto. The only per-row work left is
     // resolving cover/featured-cover URLs, which IPhotoStorage computes locally (no DB/network
     // round trip — see MinioPhotoStorage.GetImageUrl), so it stays cheap per chapter.
-    private async Task<ChapterDto> ToDtoAsync(ChapterListRow row, IReadOnlyDictionary<string, AuthorInfo> authorsByUserId)
+    private async Task<ChapterDto> ToDtoAsync(ChapterListRow row, IReadOnlyDictionary<UserId, AuthorInfo> authorsByUserId)
     {
         var coverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage);
         var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage);

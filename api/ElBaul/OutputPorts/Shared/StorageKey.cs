@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Shared;
 // The object-storage key a photo or persona avatar is saved under. Two related but distinct
 // shapes exist ("{userId}/{guid}-{fileName}" for photos, "personas/{personaId}/{guid}-
@@ -12,7 +13,7 @@ public readonly record struct StorageKey
 
     private StorageKey(string value) => Value = value;
 
-    public static StorageKey ForPhoto(string userId, Guid id, string fileName) =>
+    public static StorageKey ForPhoto(UserId userId, Guid id, string fileName) =>
         new($"{userId}/{id}-{fileName}");
 
     public static StorageKey ForPersonaAvatar(Guid personaId, Guid id, string fileName) =>

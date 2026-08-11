@@ -10,7 +10,7 @@ public record Photo
     int? DateYear,
     int? DateMonth,
     int? DateDay,
-    string UploadedBy,
+    UserId UploadedBy,
     DateTime CreatedAt,
     Guid? ClientUploadId = null,
     PhotoStatus Status = PhotoStatus.Active,
@@ -41,7 +41,7 @@ public record Photo
 
     public static Photo Create(
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
-        string uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
+        UserId uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
         Guid? uploadBatchId = null) =>
         new(id, chapterId, baulId, storageKey, date?.Year, date?.Month, date?.Day, uploadedBy, createdAt, clientUploadId,
             SizeBytes: sizeBytes, UploadBatchId: uploadBatchId);

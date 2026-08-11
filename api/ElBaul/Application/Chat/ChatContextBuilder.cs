@@ -46,7 +46,7 @@ public class ChatContextBuilder(
         var personas = (await baulRepository.GetPersonasAsync(baul.Id)).ToList();
         var nicknamesByUserId = personas
             .Where(s => s.IsClaimed)
-            .ToDictionary(s => s.UserId!, s => s.Nickname);
+            .ToDictionary(s => s.UserId!.Value, s => s.Nickname);
         var recuerdos = (await recuerdoRepository.GetByBaulIdAsync(baul.Id)).ToList();
         var relevantRecuerdos = await FindRelevantRecuerdosAsync(baul.Id, recuerdos, query);
 

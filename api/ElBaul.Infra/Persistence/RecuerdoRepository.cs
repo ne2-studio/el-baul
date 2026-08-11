@@ -35,7 +35,7 @@ public class RecuerdoRepository(ElBaulDbContext dbContext) : IRecuerdoRepository
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-    public async Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, string excludingUserId) =>
+    public async Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, UserId excludingUserId) =>
         await dbContext.Recuerdos.AsNoTracking()
             .Where(r => r.BaulId == baulId && r.CreatedAt >= since && r.UserId != excludingUserId)
             .ToListAsync();

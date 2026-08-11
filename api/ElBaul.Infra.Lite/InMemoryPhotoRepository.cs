@@ -44,7 +44,7 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, string excludingUserId)
+    public Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, UserId excludingUserId)
     {
         lock (_lock)
             return Task.FromResult(_photos.Values
@@ -73,7 +73,7 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock)
             return Task.FromResult(_photos.Values
                 .Where(p => p.UploadBatchId == null && p.Status == PhotoStatus.Active)
-                .OrderBy(p => p.BaulId.Value).ThenBy(p => p.ChapterId?.Value).ThenBy(p => p.UploadedBy).ThenBy(p => p.CreatedAt)
+                .OrderBy(p => p.BaulId.Value).ThenBy(p => p.ChapterId?.Value).ThenBy(p => p.UploadedBy.Value).ThenBy(p => p.CreatedAt)
                 .ToList().AsEnumerable());
     }
 

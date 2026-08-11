@@ -11,7 +11,7 @@ public class PushTokenConfiguration : IEntityTypeConfiguration<PushToken>
     {
         builder.ToTable("PushTokens");
         builder.HasKey(t => t.Id);
-        builder.Property(t => t.UserId).IsRequired().HasMaxLength(255);
+        builder.Property(t => t.UserId).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(t => t.Token).IsRequired().HasMaxLength(400);
         builder.Property(t => t.Platform).IsRequired().HasMaxLength(50);
         builder.Property(t => t.CreatedAt).HasColumnType("timestamp with time zone");

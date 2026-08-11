@@ -18,7 +18,7 @@ public class RecuerdoConfiguration : IEntityTypeConfiguration<Recuerdo>
         builder.Property(r => r.PhotoId).HasConversion(IdValueConverters.PhotoId);
         builder.Property(r => r.ChapterId).HasConversion(IdValueConverters.ChapterId);
         builder.Property(r => r.BaulId).HasConversion(IdValueConverters.BaulId);
-        builder.Property(r => r.UserId).IsRequired().HasMaxLength(255);
+        builder.Property(r => r.UserId).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(r => r.Text).IsRequired().HasMaxLength(4000);
         builder.Property(r => r.CreatedAt).HasColumnType("timestamp with time zone");
 

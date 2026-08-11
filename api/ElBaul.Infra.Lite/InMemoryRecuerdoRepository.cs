@@ -42,7 +42,7 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
         lock (_lock) return Task.FromResult(_recuerdos.Where(r => r.BaulId == baulId).OrderByDescending(r => r.CreatedAt).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, string excludingUserId)
+    public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, UserId excludingUserId)
     {
         lock (_lock)
             return Task.FromResult(_recuerdos

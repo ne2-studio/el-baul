@@ -15,7 +15,7 @@ public class PhotoFileService(
     IPhotoImageNormalizer photoImageNormalizer)
 {
     public async Task<StoredPhotoFile> SaveForUploadAsync(
-        string userId,
+        UserId userId,
         string fileName,
         string contentType,
         Stream content,

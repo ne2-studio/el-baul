@@ -79,7 +79,7 @@ public class BackfillUploadBatchIdCommandTests
         var repository = new InMemoryPhotoRepository();
         var existingBatchId = Guid.NewGuid();
         var alreadyBatched = Photo.Create(
-            new PhotoId(Guid.NewGuid()), ChapterId, BaulId, "key", null, "user-1", Base, uploadBatchId: existingBatchId);
+            new PhotoId(Guid.NewGuid()), ChapterId, BaulId, "key", null, new UserId("user-1"), Base, uploadBatchId: existingBatchId);
         await repository.CreateAsync(alreadyBatched);
 
         var command = new BackfillUploadBatchIdCommand(repository, NullLogger<BackfillUploadBatchIdCommand>.Instance);
@@ -108,7 +108,7 @@ public class BackfillUploadBatchIdCommandTests
     private static async Task<Photo> CreatePhotoAsync(
         InMemoryPhotoRepository repository, DateTime createdAt, string uploadedBy = "user-1")
     {
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), ChapterId, BaulId, "key", null, uploadedBy, createdAt);
+        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), ChapterId, BaulId, "key", null, new UserId(uploadedBy), createdAt);
         await repository.CreateAsync(photo);
         return photo;
     }

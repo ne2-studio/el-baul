@@ -232,8 +232,8 @@ public class PhotoManagerTests
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var quietPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "quiet-key");
         var busyPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "busy-key");
-        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, CustodioId, "uno", _fixture.Clock.UtcNow()));
-        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, CustodioId, "dos", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, new UserId(CustodioId), "uno", _fixture.Clock.UtcNow()));
+        await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, new UserId(CustodioId), "dos", _fixture.Clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByChapterIdAsync(chapterId);
@@ -710,7 +710,7 @@ public class PhotoManagerTests
         for (var i = 0; i < 20; i++)
         {
             var photo = Photo.Create(
-                new PhotoId(Guid.NewGuid()), chapterId, baulId, $"key-{i}", null, CustodioId, now.AddDays(-i));
+                new PhotoId(Guid.NewGuid()), chapterId, baulId, $"key-{i}", null, new UserId(CustodioId), now.AddDays(-i));
             await _fixture.Photos.CreateAsync(photo);
             photoIds.Add(photo.Id);
         }

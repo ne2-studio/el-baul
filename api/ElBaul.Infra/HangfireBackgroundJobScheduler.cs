@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.Infra.Emails;
 using ElBaul.Infra.PushNotifications;
 using ElBaul.InputPorts.Notifications;
@@ -11,12 +12,12 @@ public class HangfireBackgroundJobScheduler(IBackgroundJobClient backgroundJobCl
     // Enqueues EmailJobs/PushNotificationJobs (Infra), not IWelcomeEmailManager/
     // IWeeklyDigestManager/IPushDigestManager (Core) directly — see EmailJobs.cs for why:
     // that's where [DisableConcurrentExecution] actually lives.
-    public void EnqueueWelcomeEmail(string userId) =>
+    public void EnqueueWelcomeEmail(UserId userId) =>
         backgroundJobClient.Enqueue<EmailJobs>(j => j.SendWelcomeEmailAsync(userId));
 
-    public void EnqueueWeeklyDigest(string userId, DateTime since) =>
+    public void EnqueueWeeklyDigest(UserId userId, DateTime since) =>
         backgroundJobClient.Enqueue<EmailJobs>(j => j.SendWeeklyDigestAsync(userId, since));
 
-    public void EnqueuePushDigest(string userId, DateTime since) =>
+    public void EnqueuePushDigest(UserId userId, DateTime since) =>
         backgroundJobClient.Enqueue<PushNotificationJobs>(j => j.SendPushDigestAsync(userId, since));
 }

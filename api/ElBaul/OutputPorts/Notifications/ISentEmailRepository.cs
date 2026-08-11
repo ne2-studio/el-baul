@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Notifications;
 public interface ISentEmailRepository
 {
@@ -20,23 +21,23 @@ public interface ISentEmailRepository
     /// scheduler again — Hangfire's own automatic retry is the only thing that would still
     /// pick them up, and only for a bounded number of attempts.
     /// </summary>
-    Task<HashSet<string>> GetUserIdsWithSentEmailAsync(EmailType type);
+    Task<HashSet<UserId>> GetUserIdsWithSentEmailAsync(EmailType type);
 
     /// <summary>
     /// Users with a Bounced/Complained SentEmail in their history. Always empty until
     /// Resend webhook processing exists (a later phase) — the eligibility filter is wired
     /// up now so nothing needs to change there when it does.
     /// </summary>
-    Task<HashSet<string>> GetUserIdsWithBlockedStatusAsync();
+    Task<HashSet<UserId>> GetUserIdsWithBlockedStatusAsync();
 
     Task<IEnumerable<SentEmail>> GetRecentAsync(int limit);
 
     /// <summary>Every email ever sent/attempted for one user, most recent first — the admin's per-user history.</summary>
-    Task<IEnumerable<SentEmail>> GetByUserIdAsync(string userId);
+    Task<IEnumerable<SentEmail>> GetByUserIdAsync(UserId userId);
 
     /// <summary>SentAt of the most recent successfully-Sent email of the given type for one user (null if none).</summary>
-    Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type);
+    Task<DateTime?> GetLatestSentAtAsync(UserId userId, EmailType type);
 
     /// <summary>Bulk version of GetLatestSentAtAsync, for the digest scheduler's candidate pool.</summary>
-    Task<Dictionary<string, DateTime>> GetLatestSentAtByTypeAsync(EmailType type);
+    Task<Dictionary<UserId, DateTime>> GetLatestSentAtByTypeAsync(EmailType type);
 }

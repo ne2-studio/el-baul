@@ -62,7 +62,7 @@ public class BackfillSizeBytesCommandTests
     {
         var photo = Photo.Create(
             new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photos/one.jpg", null,
-            "user-1", DateTime.UtcNow);
+            new UserId("user-1"), DateTime.UtcNow);
         await repository.CreateAsync(photo);
         return photo;
     }

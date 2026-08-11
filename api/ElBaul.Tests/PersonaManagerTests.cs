@@ -27,8 +27,8 @@ public class PersonaManagerTests
 
     public PersonaManagerTests()
     {
-        _fixture.Users.Seed(new User(CustodioId, "custodio@test.com", "Custodio", _fixture.Clock.UtcNow()));
-        _fixture.Users.Seed(new User(OtherUserId, "other@test.com", "Other", _fixture.Clock.UtcNow()));
+        _fixture.Users.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", _fixture.Clock.UtcNow()));
+        _fixture.Users.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", _fixture.Clock.UtcNow()));
     }
 
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
@@ -117,7 +117,7 @@ public class PersonaManagerTests
         var baulId = await _fixture.CreateBaulAsync("Familia");
         var avatarPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "avatar-key");
         await _fixture.Baules.AddPersonaAsync(new Persona(
-            new PersonaId(Guid.NewGuid()), baulId, OtherUserId, "Colaborador con avatar", BaulRole.Colaborador,
+            new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Colaborador con avatar", BaulRole.Colaborador,
             _fixture.Clock.UtcNow(), AvatarPhotoId: avatarPhotoId));
         await _fixture.AddPendingPersonaAsync(baulId, "Pendiente sin cuenta");
 
@@ -235,7 +235,7 @@ public class PersonaManagerTests
     public async Task UpdatePersonaRoleAsync_ShouldRejectChangingTheCustodioOwnRole()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
-        var custodioPersona = (await _fixture.Baules.GetPersonaByUserIdAsync(baulId, CustodioId))!;
+        var custodioPersona = (await _fixture.Baules.GetPersonaByUserIdAsync(baulId, new UserId(CustodioId)))!;
 
         var manager = CreateManager(CustodioId);
         var result = await manager.UpdatePersonaRoleAsync(baulId, custodioPersona.Id, BaulRole.Colaborador);
@@ -383,7 +383,7 @@ public class PersonaManagerTests
     public async Task RemovePersonaAsync_ShouldRejectCustodio()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
-        var custodioPersona = (await _fixture.Baules.GetPersonaByUserIdAsync(baulId, CustodioId))!;
+        var custodioPersona = (await _fixture.Baules.GetPersonaByUserIdAsync(baulId, new UserId(CustodioId)))!;
 
         var manager = CreateManager(CustodioId);
         var result = await manager.RemovePersonaAsync(baulId, custodioPersona.Id);

@@ -13,10 +13,10 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     public Task<Baul?> GetByIdAsync(BaulId id) =>
         dbContext.Baules.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
 
-    public async Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(string userId) =>
+    public async Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(UserId userId) =>
         await dbContext.Baules.AsNoTracking().Where(b => b.CustodioId == userId).ToListAsync();
 
-    public async Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(string userId)
+    public async Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(UserId userId)
     {
         // Role == Custodio is excluded here: the custodian's own baules are already
         // surfaced via GetOwnedByUserIdAsync, and now that custodians also have a
@@ -29,7 +29,7 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         return rows.Select(r => new BaulAccess(r.Baul, r.Role));
     }
 
-    public async Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(string userId)
+    public async Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(UserId userId)
     {
         var owned = await GetOwnedByUserIdAsync(userId);
         var shared = await GetSharedByUserIdAsync(userId);
@@ -74,7 +74,7 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     public async Task<IEnumerable<Persona>> GetPersonasByIdsAsync(IEnumerable<PersonaId> personaIds) =>
         await dbContext.Personas.AsNoTracking().Where(s => personaIds.Contains(s.Id)).ToListAsync();
 
-    public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, string userId) =>
+    public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, UserId userId) =>
         dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.UserId == userId);
 
     public async Task AddPersonaAsync(Persona persona)

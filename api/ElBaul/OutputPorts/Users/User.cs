@@ -1,7 +1,8 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Users;
 public record User
 (
-    string Id,
+    UserId Id,
     string Email,
     string? Name,
     DateTime CreatedAt,

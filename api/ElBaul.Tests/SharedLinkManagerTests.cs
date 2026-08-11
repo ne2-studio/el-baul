@@ -49,7 +49,7 @@ public class SharedLinkManagerTests
     public async Task GetLandingAsync_ShouldExposeOnlySharedPhotoAndRecuerdo()
     {
         var photo = await SeedPhotoAsync();
-        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, photo.ChapterId, photo.BaulId, "user-1", "Un recuerdo familiar", Now);
+        var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, photo.ChapterId, photo.BaulId, new UserId("user-1"), "Un recuerdo familiar", Now);
         await _recuerdos.CreateAsync(recuerdo);
         var manager = CreateManager();
         var created = await manager.CreateForRecuerdoAsync(recuerdo.Id);
@@ -97,9 +97,9 @@ public class SharedLinkManagerTests
     {
         var baulId = new BaulId(Guid.NewGuid());
         var chapterId = new ChapterId(Guid.NewGuid());
-        await _baules.CreateAsync(new Baul(baulId, "Familia Pérez", null, "user-1", 1, Now, Now));
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, "user-1", "Pedro", BaulRole.Custodio, Now));
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "photo-key", null, "user-1", Now);
+        await _baules.CreateAsync(new Baul(baulId, "Familia Pérez", null, new UserId("user-1"), 1, Now, Now));
+        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Custodio, Now));
+        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "photo-key", null, new UserId("user-1"), Now);
         await _photos.CreateAsync(photo);
         return photo;
     }

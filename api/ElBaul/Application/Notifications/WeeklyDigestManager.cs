@@ -150,7 +150,7 @@ public class WeeklyDigestManager(
     }
 
     private async Task<BaulDigestSection?> BuildBaulSectionAsync(
-        Baul baul, DateTime since, string publicUrl, string excludingUserId, TrackedLinkBuilder linkBuilder)
+        Baul baul, DateTime since, string publicUrl, UserId excludingUserId, TrackedLinkBuilder linkBuilder)
     {
         var baulUrl = linkBuilder.TrackRedirect(DigestBlockKind.NewRecuerdos.ToString(), publicUrl, $"/baules/{baul.Id}");
         var items = new List<DigestActivityBlock>();

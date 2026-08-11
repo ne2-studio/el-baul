@@ -1,4 +1,5 @@
 using ElBaul.Application.Notifications;
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +44,7 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
         dbContext.Entry(email).State = EntityState.Detached;
     }
 
-    public async Task<HashSet<string>> GetUserIdsWithSentEmailAsync(EmailType type) =>
+    public async Task<HashSet<UserId>> GetUserIdsWithSentEmailAsync(EmailType type) =>
         (await dbContext.SentEmails.AsNoTracking()
             .Where(e => e.Type == type && (e.Status == EmailStatus.Sent || e.Status == EmailStatus.Delivered))
             .Select(e => e.UserId)
@@ -51,7 +52,7 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
             .ToListAsync())
         .ToHashSet();
 
-    public async Task<HashSet<string>> GetUserIdsWithBlockedStatusAsync() =>
+    public async Task<HashSet<UserId>> GetUserIdsWithBlockedStatusAsync() =>
         (await dbContext.SentEmails.AsNoTracking()
             .Where(e => e.Status == EmailStatus.Bounced || e.Status == EmailStatus.Complained)
             .Select(e => e.UserId)
@@ -65,20 +66,20 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
             .Take(limit)
             .ToListAsync();
 
-    public async Task<IEnumerable<SentEmail>> GetByUserIdAsync(string userId) =>
+    public async Task<IEnumerable<SentEmail>> GetByUserIdAsync(UserId userId) =>
         await dbContext.SentEmails.AsNoTracking()
             .Where(e => e.UserId == userId)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
 
-    public async Task<DateTime?> GetLatestSentAtAsync(string userId, EmailType type) =>
+    public async Task<DateTime?> GetLatestSentAtAsync(UserId userId, EmailType type) =>
         await dbContext.SentEmails.AsNoTracking()
             .Where(e => e.UserId == userId && e.Type == type && e.Status == EmailStatus.Sent)
             .OrderByDescending(e => e.SentAt)
             .Select(e => e.SentAt)
             .FirstOrDefaultAsync();
 
-    public async Task<Dictionary<string, DateTime>> GetLatestSentAtByTypeAsync(EmailType type) =>
+    public async Task<Dictionary<UserId, DateTime>> GetLatestSentAtByTypeAsync(EmailType type) =>
         await dbContext.SentEmails.AsNoTracking()
             .Where(e => e.Type == type && e.Status == EmailStatus.Sent && e.SentAt != null)
             .GroupBy(e => e.UserId)

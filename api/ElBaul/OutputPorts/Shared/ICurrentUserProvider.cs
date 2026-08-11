@@ -1,7 +1,8 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Shared;
 public interface ICurrentUserProvider
 {
-    string GetUserId();
+    UserId GetUserId();
 
     /// <summary>
     /// The caller's raw bearer access token, if the current request carries one — used only

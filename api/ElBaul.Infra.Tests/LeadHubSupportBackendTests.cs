@@ -1,4 +1,5 @@
 using System.Net;
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Support;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -14,7 +15,7 @@ public class LeadHubSupportBackendTests
     private const string SubmitPath = "/api/forms/el-baul-ayuda/submit";
 
     private static readonly SupportSubmission Submission =
-        new("Bug", "Se ha caído la app", "Mozilla/5.0", "user-1", "user@example.com", "Usuaria");
+        new("Bug", "Se ha caído la app", "Mozilla/5.0", new UserId("user-1"), "user@example.com", "Usuaria");
 
     private static IConfiguration BuildConfiguration(string? submitUrl) =>
         new ConfigurationBuilder()

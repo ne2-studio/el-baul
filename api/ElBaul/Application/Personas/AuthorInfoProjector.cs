@@ -27,7 +27,7 @@ public class AuthorInfoProjector(IBaulRepository baulRepository, IPhotoRepositor
 {
     private static readonly AuthorInfo Fallback = new("Usuario", null, null);
 
-    public async Task<AuthorInfo> GetAsync(BaulId baulId, string userId)
+    public async Task<AuthorInfo> GetAsync(BaulId baulId, UserId userId)
     {
         var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
         if (persona is null) return Fallback;
@@ -36,22 +36,22 @@ public class AuthorInfoProjector(IBaulRepository baulRepository, IPhotoRepositor
         return new AuthorInfo(persona.Nickname, avatarUrl, persona.Id.ToString());
     }
 
-    public async Task<IReadOnlyDictionary<string, AuthorInfo>> GetManyAsync(BaulId baulId, IEnumerable<string> userIds)
+    public async Task<IReadOnlyDictionary<UserId, AuthorInfo>> GetManyAsync(BaulId baulId, IEnumerable<UserId> userIds)
     {
         var wanted = userIds.ToHashSet();
-        var personas = (await baulRepository.GetPersonasAsync(baulId)).Where(p => p.UserId is not null && wanted.Contains(p.UserId)).ToList();
+        var personas = (await baulRepository.GetPersonasAsync(baulId)).Where(p => p.UserId is not null && wanted.Contains(p.UserId.Value)).ToList();
 
         var avatarPhotoIds = personas.Where(p => p.AvatarPhotoId is not null).Select(p => p.AvatarPhotoId!.Value).Distinct().ToList();
         var photosById = avatarPhotoIds.Count == 0
             ? new Dictionary<PhotoId, Photo>()
             : (await photoRepository.GetByIdsAsync(avatarPhotoIds)).ToDictionary(p => p.Id);
 
-        var result = new Dictionary<string, AuthorInfo>();
+        var result = new Dictionary<UserId, AuthorInfo>();
         foreach (var persona in personas)
         {
             var avatarPhoto = persona.AvatarPhotoId is { } photoId ? photosById.GetValueOrDefault(photoId) : null;
             var avatarUrl = await PersonaAvatarUrlResolver.ResolveAsync(persona, avatarPhoto, photoStorage);
-            result[persona.UserId!] = new AuthorInfo(persona.Nickname, avatarUrl, persona.Id.ToString());
+            result[persona.UserId!.Value] = new AuthorInfo(persona.Nickname, avatarUrl, persona.Id.ToString());
         }
 
         return result;
@@ -60,6 +60,6 @@ public class AuthorInfoProjector(IBaulRepository baulRepository, IPhotoRepositor
     // Looks up an already-batched author map, falling back to "Usuario" for a userId GetManyAsync
     // didn't resolve a Persona for — mirrors GetAsync's fallback so callers get the same
     // observable result regardless of which path they took to get there.
-    public static AuthorInfo Resolve(IReadOnlyDictionary<string, AuthorInfo> authorsByUserId, string userId) =>
+    public static AuthorInfo Resolve(IReadOnlyDictionary<UserId, AuthorInfo> authorsByUserId, UserId userId) =>
         authorsByUserId.GetValueOrDefault(userId, Fallback);
 }

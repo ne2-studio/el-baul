@@ -6,7 +6,7 @@ public record BaulInviteLink
     BaulInviteLinkId Id,
     string Token,
     BaulId BaulId,
-    string CreatedBy,
+    UserId CreatedBy,
     DateTime CreatedAt,
     DateTime? RevokedAt = null
 )

@@ -15,7 +15,7 @@ public record SharedLink
     SharedLinkContentType ContentType,
     PhotoId? PhotoId,
     RecuerdoId? RecuerdoId,
-    string CreatedBy,
+    UserId CreatedBy,
     DateTime CreatedAt,
     DateTime? RevokedAt = null
 )

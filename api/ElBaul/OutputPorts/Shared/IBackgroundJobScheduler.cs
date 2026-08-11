@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Shared;
 /// <summary>
 /// Fan-out for per-user background work (Hangfire in Infra). Kept as its own port so the
@@ -6,7 +7,7 @@ namespace ElBaul.OutputPorts.Shared;
 /// </summary>
 public interface IBackgroundJobScheduler
 {
-    void EnqueueWelcomeEmail(string userId);
-    void EnqueueWeeklyDigest(string userId, DateTime since);
-    void EnqueuePushDigest(string userId, DateTime since);
+    void EnqueueWelcomeEmail(UserId userId);
+    void EnqueueWeeklyDigest(UserId userId, DateTime since);
+    void EnqueuePushDigest(UserId userId, DateTime since);
 }

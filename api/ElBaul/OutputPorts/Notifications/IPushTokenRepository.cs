@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Notifications;
 public interface IPushTokenRepository
 {
@@ -11,11 +12,11 @@ public interface IPushTokenRepository
     Task UpsertAsync(PushToken token);
 
     /// <summary>No-op if the token doesn't exist or belongs to a different user.</summary>
-    Task DeleteAsync(string userId, string token);
+    Task DeleteAsync(UserId userId, string token);
 
-    Task<IEnumerable<PushToken>> GetTokensForUserAsync(string userId);
+    Task<IEnumerable<PushToken>> GetTokensForUserAsync(UserId userId);
 
     /// <summary>Distinct owners of at least one registered token — the candidate pool for the
     /// daily push-digest scheduler (opting into push is just registering a device).</summary>
-    Task<IEnumerable<string>> GetUserIdsWithTokensAsync();
+    Task<IEnumerable<UserId>> GetUserIdsWithTokensAsync();
 }

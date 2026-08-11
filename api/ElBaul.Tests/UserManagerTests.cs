@@ -4,6 +4,7 @@ using ElBaul.OutputPorts.Users;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class UserManagerTests
@@ -15,7 +16,7 @@ public class UserManagerTests
     private UserManager CreateManager() => new(_userRepository, new StaticCurrentUserProvider(UserId));
 
     private void SeedUser(bool weeklyDigestEnabled = true) =>
-        _userRepository.Seed(new User(UserId, "user@example.com", "Usuaria", DateTime.UtcNow, WeeklyDigestEnabled: weeklyDigestEnabled));
+        _userRepository.Seed(new User(new UserId(UserId), "user@example.com", "Usuaria", DateTime.UtcNow, WeeklyDigestEnabled: weeklyDigestEnabled));
 
     [Fact]
     public async Task GetCurrentProfileAsync_ShouldIncludeWeeklyDigestEnabled()
@@ -40,7 +41,7 @@ public class UserManagerTests
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.WeeklyDigestEnabled);
 
-        var persisted = await _userRepository.GetByIdAsync(UserId);
+        var persisted = await _userRepository.GetByIdAsync(new UserId(UserId));
         Assert.False(persisted!.WeeklyDigestEnabled);
     }
 
@@ -65,7 +66,7 @@ public class UserManagerTests
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.HasSeenOnboarding);
 
-        var persisted = await _userRepository.GetByIdAsync(UserId);
+        var persisted = await _userRepository.GetByIdAsync(new UserId(UserId));
         Assert.True(persisted!.HasSeenOnboarding);
     }
 

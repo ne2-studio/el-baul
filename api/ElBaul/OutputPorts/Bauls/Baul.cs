@@ -7,7 +7,7 @@ public record Baul
     BaulId Id,
     string Name,
     string? Description,
-    string CustodioId,
+    UserId CustodioId,
     int ChapterCount,
     DateTime CreatedAt,
     DateTime UpdatedAt,

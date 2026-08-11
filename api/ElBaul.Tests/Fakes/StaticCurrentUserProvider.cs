@@ -1,8 +1,9 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Shared;
 namespace ElBaul.Tests.Fakes;
 
 public class StaticCurrentUserProvider(string userId, string? accessToken = null) : ICurrentUserProvider
 {
-    public string GetUserId() => userId;
+    public UserId GetUserId() => new(userId);
     public string? GetAccessToken() => accessToken;
 }

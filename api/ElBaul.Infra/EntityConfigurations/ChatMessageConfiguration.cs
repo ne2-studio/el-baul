@@ -14,7 +14,7 @@ public class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMessage>
         builder.ToTable("ChatMessages");
         builder.HasKey(m => m.Id);
         builder.Property(m => m.BaulId).HasConversion(IdValueConverters.BaulId);
-        builder.Property(m => m.UserId).IsRequired().HasMaxLength(255);
+        builder.Property(m => m.UserId).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(m => m.Role).HasConversion<string>().IsRequired().HasMaxLength(20);
         // Unbounded text, not HasMaxLength(4000) like Recuerdo — that limit fits a person typing,
         // not a model reply, which can easily run longer and would otherwise fail to insert.
