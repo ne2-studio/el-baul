@@ -235,6 +235,16 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
         }
 
+        // Custodio isn't a role this endpoint can grant or take away: granting it to another
+        // persona would let any admin mint a second "owner", and touching the actual custodio's
+        // own row would let one strip their own protected status. Ownership only ever moves via
+        // Baul.CustodioId, which this endpoint doesn't touch — see BaulAccess.IsCustodio.
+        if (role == BaulRole.Custodio || persona.IsCustodioProtected(auth.Value.Baul.CustodioId))
+        {
+            logger.LogWarning("Persona role update rejected: custodio role cannot be granted or changed {PersonaId}", personaId);
+            return Result.Failure<PersonaDto>(ApplicationError.Validation("The custodio role cannot be changed"));
+        }
+
         var updated = persona with { Role = role };
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona role updated {PersonaId} {Role}", personaId, role);

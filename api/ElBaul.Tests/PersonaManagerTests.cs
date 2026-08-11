@@ -215,6 +215,38 @@ public class PersonaManagerTests
     }
 
     [Fact]
+    public async Task UpdatePersonaRoleAsync_ShouldRejectGrantingCustodioToAnotherPersona()
+    {
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+        var personaId = await _fixture.AddColaboradorAsync(baulId, OtherUserId, "Otro");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdatePersonaRoleAsync(baulId, personaId, BaulRole.Custodio);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("The custodio role cannot be changed", result.Error.Message);
+
+        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        Assert.Equal(BaulRole.Colaborador, persona!.Role);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaRoleAsync_ShouldRejectChangingTheCustodioOwnRole()
+    {
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+        var custodioPersona = (await _fixture.Baules.GetPersonaByUserIdAsync(baulId, CustodioId))!;
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdatePersonaRoleAsync(baulId, custodioPersona.Id, BaulRole.Colaborador);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("The custodio role cannot be changed", result.Error.Message);
+
+        var persona = await _fixture.Baules.GetPersonaByIdAsync(custodioPersona.Id);
+        Assert.Equal(BaulRole.Custodio, persona!.Role);
+    }
+
+    [Fact]
     public async Task UpdatePersonaBiografiaAsync_ShouldSaveTheBiografia()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
