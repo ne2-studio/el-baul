@@ -42,9 +42,12 @@ public class PushDigestManagerTests
     private PushDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<PushDigestManager>.Instance,
         _userRepository, _pushTokenRepository, _pushNotificationSender,
-        new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-        _chapterRepository, _photoRepository, _recuerdoRepository,
+        CreateDigestActivityPolicy(),
         _jobScheduler, appConfiguration, _clock);
+
+    private DigestActivityPolicy CreateDigestActivityPolicy() => new(
+        new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+        _chapterRepository, _photoRepository, _recuerdoRepository);
 
     private User SeedUser(string id, DateTime? lastPushDigestSentAt = null, string email = "user@example.com")
     {

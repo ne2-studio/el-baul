@@ -46,13 +46,16 @@ public class WeeklyDigestManagerTests
 
     private WeeklyDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WeeklyDigestManager>.Instance,
-        _userRepository, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-        _chapterRepository, _photoRepository, _recuerdoRepository, _sentEmailRepository,
+        _userRepository, CreateDigestActivityPolicy(), _sentEmailRepository,
         _templateRenderer,
         new EmailDeliveryCoordinator(
             _userRepository, _sentEmailRepository, _emailLinkSigner, _emailSender, appConfiguration, _clock,
             new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance),
         _jobScheduler, appConfiguration, _currentUserProvider, _clock);
+
+    private DigestActivityPolicy CreateDigestActivityPolicy() => new(
+        new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+        _chapterRepository, _photoRepository, _recuerdoRepository);
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
     {

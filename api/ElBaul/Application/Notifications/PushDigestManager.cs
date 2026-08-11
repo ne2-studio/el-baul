@@ -1,11 +1,6 @@
 using ElBaul.Application.Notifications;
-using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Notifications;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 
@@ -29,10 +24,7 @@ public class PushDigestManager(
     IUserRepository userRepository,
     IPushTokenRepository pushTokenRepository,
     IPushNotificationSender pushNotificationSender,
-    BaulAccessService baulAccess,
-    IChapterRepository chapterRepository,
-    IPhotoRepository photoRepository,
-    IRecuerdoRepository recuerdoRepository,
+    DigestActivityPolicy digestActivityPolicy,
     IBackgroundJobScheduler backgroundJobScheduler,
     IAppConfiguration appConfiguration,
     IClock clock) : IPushDigestManager
@@ -118,40 +110,22 @@ public class PushDigestManager(
 
     private async Task<PushDigestSummary?> BuildSummaryAsync(User user, DateTime since)
     {
-        var baules = (await baulAccess.GetAccessibleAsync(user.Id))
-            .Select(access => access.Baul)
-            .ToList();
-
-        var activeBaules = new List<Baul>();
-        var totalChapters = 0;
-        var totalRecuerdos = 0;
-        var totalPhotos = 0;
-
-        foreach (var baul in baules)
-        {
-            var chapters = (await chapterRepository.GetCreatedSinceAsync(baul.Id, since, user.Id)).Count();
-            var recuerdos = (await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, user.Id)).Count();
-            var photos = (await photoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, user.Id)).Count();
-            if (chapters + recuerdos + photos == 0) continue;
-
-            activeBaules.Add(baul);
-            totalChapters += chapters;
-            totalRecuerdos += recuerdos;
-            totalPhotos += photos;
-        }
-
-        if (activeBaules.Count == 0) return null;
+        var activity = await digestActivityPolicy.CollectAsync(user, since);
+        if (!activity.HasActivity) return null;
 
         var parts = new List<string>();
-        if (totalRecuerdos > 0) parts.Add(totalRecuerdos == 1 ? "1 recuerdo nuevo" : $"{totalRecuerdos} recuerdos nuevos");
-        if (totalPhotos > 0) parts.Add(totalPhotos == 1 ? "1 foto nueva" : $"{totalPhotos} fotos nuevas");
-        if (totalChapters > 0) parts.Add(totalChapters == 1 ? "1 capítulo nuevo" : $"{totalChapters} capítulos nuevos");
+        if (activity.TotalRecuerdos > 0)
+            parts.Add(activity.TotalRecuerdos == 1 ? "1 recuerdo nuevo" : $"{activity.TotalRecuerdos} recuerdos nuevos");
+        if (activity.TotalPhotos > 0)
+            parts.Add(activity.TotalPhotos == 1 ? "1 foto nueva" : $"{activity.TotalPhotos} fotos nuevas");
+        if (activity.TotalChapters > 0)
+            parts.Add(activity.TotalChapters == 1 ? "1 capítulo nuevo" : $"{activity.TotalChapters} capítulos nuevos");
 
-        var title = activeBaules.Count == 1 ? "Hay novedades en tu baúl" : "Hay novedades en tus baúles";
+        var title = activity.ActiveBaules.Count == 1 ? "Hay novedades en tu baúl" : "Hay novedades en tus baúles";
         var body = JoinSpanishList(parts);
         // Only deep-link straight to the feed when exactly one baúl has news — with several,
         // the app's own "opens in the last used baúl" default is a reasonable landing spot.
-        var deepLink = activeBaules.Count == 1 ? $"/baules/{activeBaules[0].Id}" : null;
+        var deepLink = activity.ActiveBaules.Count == 1 ? $"/baules/{activity.ActiveBaules[0].Baul.Id}" : null;
 
         return new PushDigestSummary(title, body, deepLink);
     }

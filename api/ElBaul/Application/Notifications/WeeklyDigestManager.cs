@@ -1,11 +1,6 @@
 using ElBaul.Application.Notifications;
-using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Notifications;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using Ne2Studio.Common;
@@ -17,10 +12,7 @@ namespace ElBaul.Application.Notifications;
 public class WeeklyDigestManager(
     ILogger<WeeklyDigestManager> logger,
     IUserRepository userRepository,
-    BaulAccessService baulAccess,
-    IChapterRepository chapterRepository,
-    IPhotoRepository photoRepository,
-    IRecuerdoRepository recuerdoRepository,
+    DigestActivityPolicy digestActivityPolicy,
     ISentEmailRepository sentEmailRepository,
     IEmailTemplateRenderer templateRenderer,
     EmailDeliveryCoordinator deliveryCoordinator,
@@ -124,71 +116,52 @@ public class WeeklyDigestManager(
 
     private async Task<WeeklyDigestEmailModel> BuildModelAsync(User user, DateTime since, TrackedLinkBuilder linkBuilder)
     {
-        var baules = (await baulAccess.GetAccessibleAsync(user.Id))
-            .Select(access => access.Baul)
-            .OrderBy(b => b.Name)
-            .ToList();
-
+        var activity = await digestActivityPolicy.CollectAsync(user, since);
         var publicUrl = appConfiguration.PublicUrl.TrimEnd('/');
 
         var sections = new List<BaulDigestSection>();
-        foreach (var baul in baules)
+        foreach (var baulActivity in activity.ActiveBaules)
         {
-            var section = await BuildBaulSectionAsync(baul, since, publicUrl, user.Id, linkBuilder);
+            var section = BuildBaulSection(baulActivity, publicUrl, linkBuilder);
             if (section is not null) sections.Add(section);
         }
 
-        var hasBaules = baules.Count > 0;
-        var hasActivity = sections.Count > 0;
-
-        var targetPath = hasBaules ? $"/baules/{baules[0].Id}" : "/baules/nuevo";
+        var targetPath = activity.HasBaules ? $"/baules/{activity.AccessibleBaules[0].Id}" : "/baules/nuevo";
         var ctaUrl = linkBuilder.TrackRedirect("primary-cta", publicUrl, targetPath);
-        var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
+        var ctaLabel = activity.HasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
 
         var notificationSettingsUrl = linkBuilder.TrackRedirect("notification-settings", publicUrl, "/configuracion/notificaciones");
 
         return new WeeklyDigestEmailModel(
-            user.Name ?? user.Email, hasBaules, hasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
+            user.Name ?? user.Email, activity.HasBaules, activity.HasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
             EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder));
     }
 
-    private async Task<BaulDigestSection?> BuildBaulSectionAsync(
-        Baul baul, DateTime since, string publicUrl, UserId excludingUserId, TrackedLinkBuilder linkBuilder)
+    private static BaulDigestSection? BuildBaulSection(
+        BaulDigestActivity activity, string publicUrl, TrackedLinkBuilder linkBuilder)
     {
+        var baul = activity.Baul;
         var baulUrl = linkBuilder.TrackRedirect(DigestBlockKind.NewRecuerdos.ToString(), publicUrl, $"/baules/{baul.Id}");
         var items = new List<DigestActivityBlock>();
 
-        var newChapters = await chapterRepository.GetCreatedSinceAsync(baul.Id, since, excludingUserId);
-        foreach (var chapter in newChapters)
+        foreach (var chapter in activity.NewChapters)
         {
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewChapter, $"Nuevo capítulo: “{chapter.Name}”",
                 linkBuilder.TrackRedirect(DigestBlockKind.NewChapter.ToString(), publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
         }
 
-        var recuerdos = await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId);
-        var recuerdoCount = recuerdos.Count();
+        var recuerdoCount = activity.NewRecuerdoCount;
         if (recuerdoCount > 0)
         {
             var label = recuerdoCount == 1 ? "1 recuerdo nuevo" : $"{recuerdoCount} recuerdos nuevos";
             items.Add(new DigestActivityBlock(DigestBlockKind.NewRecuerdos, label, baulUrl, recuerdoCount));
         }
 
-        var photos = (await photoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId)).ToList();
-        var photosByChapter = photos.Where(p => p.ChapterId is not null).GroupBy(p => p.ChapterId!.Value).ToList();
-
-        // One GetByBaulIdAsync for every chapter this baúl has instead of one GetByIdAsync per
-        // chapter-with-new-photos — this method already runs once per baúl per digest, so a
-        // second per-chapter round trip inside it is an N+1 within an N+1 at digest-sending
-        // scale (every eligible user, every week).
-        var chaptersById = photosByChapter.Count == 0
-            ? new Dictionary<ChapterId, Chapter>()
-            : (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToDictionary(c => c.Id);
-        foreach (var group in photosByChapter.OrderByDescending(g => g.Count()))
+        foreach (var chapterActivity in activity.NewPhotosByChapter)
         {
-            if (!chaptersById.TryGetValue(group.Key, out var chapter)) continue; // chapter deleted since — don't surface stale content
-
-            var count = group.Count();
+            var chapter = chapterActivity.Chapter;
+            var count = chapterActivity.Count;
             var label = count == 1
                 ? $"1 foto nueva en “{chapter.Name}”"
                 : $"{count} fotos nuevas en “{chapter.Name}”";
@@ -197,7 +170,7 @@ public class WeeklyDigestManager(
                 linkBuilder.TrackRedirect(DigestBlockKind.NewPhotosInChapter.ToString(), publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), count));
         }
 
-        var looseCount = photos.Count(p => p.ChapterId is null);
+        var looseCount = activity.NewLoosePhotoCount;
         if (looseCount > 0)
         {
             var label = looseCount == 1 ? "1 foto nueva sin organizar" : $"{looseCount} fotos nuevas sin organizar";
