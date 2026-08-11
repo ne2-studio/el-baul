@@ -11,6 +11,7 @@ using ElBaul.OutputPorts.Shared;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -37,8 +38,8 @@ public class PhotoManagerTests
     private IPhotoListReadModel CreatePhotoListReadModel() =>
         new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.PhotoPersonaTags);
 
-    private PhotoManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
+    private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null) =>
+        new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(),
@@ -224,6 +225,19 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task GetByChapterIdAsync_ShouldLogWarning_WhenChapterDoesNotExist()
+    {
+        var logger = new CapturingLogger<PhotoManager>();
+        var chapterId = new ChapterId(Guid.NewGuid());
+        var manager = CreateManager(CustodioId, logger: logger);
+
+        await manager.GetByChapterIdAsync(chapterId);
+
+        var warning = Assert.Single(logger.Entries, entry => entry.Level == LogLevel.Warning);
+        Assert.Equal($"Photos by chapter rejected: chapter not found {chapterId}", warning.Message);
     }
 
     [Fact]
@@ -822,5 +836,22 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) =>
+            Entries.Add((logLevel, formatter(state, exception)));
     }
 }

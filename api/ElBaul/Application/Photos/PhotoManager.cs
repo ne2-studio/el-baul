@@ -1,4 +1,5 @@
 using ElBaul.Application.Bauls;
+using ElBaul.Application;
 using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Photos;
 using ElBaul.OutputPorts.Bauls;
@@ -31,8 +32,14 @@ public class PhotoManager(
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
     {
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(chapterId);
-        if (chapter is null) return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Chapter not found"));
+        var chapterResult = await EntityLookup.ResolveAsync(
+            () => chapterRepository.GetByIdAsync(chapterId),
+            logger,
+            "Photos by chapter rejected: chapter not found {ChapterId}",
+            "Chapter not found",
+            chapterId);
+        if (chapterResult.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(chapterResult.Error);
+        var chapter = chapterResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Photos by chapter", new { chapter.BaulId, ChapterId = chapterId });
@@ -63,8 +70,15 @@ public class PhotoManager(
 
         if (chapterId is { } wantedChapterId)
         {
-            var chapter = await chapterRepository.GetByIdAsync(wantedChapterId);
-            if (chapter is null || chapter.BaulId != baulId) return Result.Failure<PhotoPageDto>(ApplicationError.NotFound("Chapter not found"));
+            var chapterResult = await EntityLookup.ResolveAsync(
+                () => chapterRepository.GetByIdAsync(wantedChapterId),
+                chapter => chapter.BaulId == baulId,
+                logger,
+                "Photo page rejected: chapter not found {BaulId} {ChapterId}",
+                "Chapter not found",
+                baulId,
+                wantedChapterId);
+            if (chapterResult.IsFailure) return Result.Failure<PhotoPageDto>(chapterResult.Error);
         }
 
         var auth = await baulAccess.AuthorizeAsync(
@@ -91,12 +105,14 @@ public class PhotoManager(
         Guid? uploadBatchId = null)
     {
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(chapterId);
-        if (chapter is null)
-        {
-            logger.LogWarning("Photo upload rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Chapter not found"));
-        }
+        var chapterResult = await EntityLookup.ResolveAsync(
+            () => chapterRepository.GetByIdAsync(chapterId),
+            logger,
+            "Photo upload rejected: chapter not found {ChapterId}",
+            "Chapter not found",
+            chapterId);
+        if (chapterResult.IsFailure) return Result.Failure<PhotoDto>(chapterResult.Error);
+        var chapter = chapterResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Photo upload", new { chapter.BaulId, ChapterId = chapterId });
@@ -193,25 +209,30 @@ public class PhotoManager(
     public async Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId)
     {
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null)
-        {
-            logger.LogWarning("Photo move rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            logger,
+            "Photo move rejected: photo not found {PhotoId}",
+            "Photo not found",
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure<PhotoDto>(photoResult.Error);
+        var photo = photoResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo move", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        var targetChapter = await chapterRepository.GetByIdAsync(targetChapterId);
-        if (targetChapter is null || targetChapter.BaulId != photo.BaulId)
-        {
-            logger.LogWarning(
-                "Photo move rejected: target chapter not found {BaulId} {PhotoId} {TargetChapterId}",
-                photo.BaulId, photoId, targetChapterId);
-            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Target chapter not found"));
-        }
+        var targetChapterResult = await EntityLookup.ResolveAsync(
+            () => chapterRepository.GetByIdAsync(targetChapterId),
+            targetChapter => targetChapter.BaulId == photo.BaulId,
+            logger,
+            "Photo move rejected: target chapter not found {BaulId} {PhotoId} {TargetChapterId}",
+            "Target chapter not found",
+            photo.BaulId,
+            photoId,
+            targetChapterId);
+        if (targetChapterResult.IsFailure) return Result.Failure<PhotoDto>(targetChapterResult.Error);
+        var targetChapter = targetChapterResult.Value;
 
         if (photo.ChapterId == targetChapterId)
         {
@@ -244,12 +265,14 @@ public class PhotoManager(
     public async Task<Result> DeleteAsync(PhotoId photoId, string? reason)
     {
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null)
-        {
-            logger.LogWarning("Photo delete rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            logger,
+            "Photo delete rejected: photo not found {PhotoId}",
+            "Photo not found",
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure(photoResult.Error);
+        var photo = photoResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Admin, "Photo delete", new { photo.BaulId, PhotoId = photoId });
@@ -270,12 +293,14 @@ public class PhotoManager(
     public async Task<Result<PhotoDto>> ChangeDateAsync(PhotoId photoId, PhotoDate date)
     {
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null)
-        {
-            logger.LogWarning("Photo date change rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            logger,
+            "Photo date change rejected: photo not found {PhotoId}",
+            "Photo not found",
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure<PhotoDto>(photoResult.Error);
+        var photo = photoResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo date change", new { photo.BaulId, PhotoId = photoId });
@@ -292,12 +317,14 @@ public class PhotoManager(
     public async Task<Result<PhotoDto>> ClearDateAsync(PhotoId photoId)
     {
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null)
-        {
-            logger.LogWarning("Photo date clear rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            logger,
+            "Photo date clear rejected: photo not found {PhotoId}",
+            "Photo not found",
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure<PhotoDto>(photoResult.Error);
+        var photo = photoResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo date clear", new { photo.BaulId, PhotoId = photoId });
@@ -340,12 +367,14 @@ public class PhotoManager(
     public async Task<Result<PhotoDownloadResult>> DownloadAsync(PhotoId photoId)
     {
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null)
-        {
-            logger.LogWarning("Photo download rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDownloadResult>(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            logger,
+            "Photo download rejected: photo not found {PhotoId}",
+            "Photo not found",
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure<PhotoDownloadResult>(photoResult.Error);
+        var photo = photoResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo download", new { photo.BaulId, PhotoId = photoId });
@@ -361,8 +390,15 @@ public class PhotoManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Photos by persona", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId) return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Persona not found"));
+        var personaResult = await EntityLookup.ResolveAsync(
+            () => baulRepository.GetPersonaByIdAsync(personaId),
+            persona => persona.BaulId == baulId,
+            logger,
+            "Photos by persona rejected: persona not found {BaulId} {PersonaId}",
+            "Persona not found",
+            baulId,
+            personaId);
+        if (personaResult.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(personaResult.Error);
 
         var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(personaId);
         var rows = await photoListReadModel.GetActiveByIdsAsync(baulId, photoIds);
@@ -374,12 +410,14 @@ public class PhotoManager(
     public async Task<Result<PhotoDto>> ConfirmNoPersonasAsync(PhotoId photoId)
     {
         var userId = currentUserProvider.GetUserId();
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null)
-        {
-            logger.LogWarning("Photo confirm-no-personas rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<PhotoDto>(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            logger,
+            "Photo confirm-no-personas rejected: photo not found {PhotoId}",
+            "Photo not found",
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure<PhotoDto>(photoResult.Error);
+        var photo = photoResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             photo.BaulId, userId, AccessLevel.Member, "Photo confirm no personas", new { photo.BaulId, PhotoId = photoId });

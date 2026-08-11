@@ -1,4 +1,5 @@
 using ElBaul.Application.Bauls;
+using ElBaul.Application;
 using ElBaul.Application.Chapters;
 using ElBaul.Application.Personas;
 using ElBaul.InputPorts.Chapters;
@@ -92,23 +93,28 @@ public class ChapterManager(
     public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId)
     {
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(chapterId);
-        if (chapter is null)
-        {
-            logger.LogWarning("Chapter cover update rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Chapter not found"));
-        }
+        var chapterResult = await EntityLookup.ResolveAsync(
+            () => chapterRepository.GetByIdAsync(chapterId),
+            logger,
+            "Chapter cover update rejected: chapter not found {ChapterId}",
+            "Chapter not found",
+            chapterId);
+        if (chapterResult.IsFailure) return Result.Failure<ChapterDto>(chapterResult.Error);
+        var chapter = chapterResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Chapter cover update", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null || photo.ChapterId != chapterId)
-        {
-            logger.LogWarning("Chapter cover update rejected: photo not found {PhotoId}", photoId);
-            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            photo => photo.ChapterId == chapterId,
+            logger,
+            "Chapter cover update rejected: photo not found {PhotoId}",
+            "Photo not found",
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure<ChapterDto>(photoResult.Error);
+        var photo = photoResult.Value;
 
         var updated = chapter.WithCover(photo, clock.UtcNow());
         await chapterRepository.UpdateAsync(updated);
@@ -120,12 +126,14 @@ public class ChapterManager(
     public async Task<Result<ChapterDto>> UpdateAsync(ChapterId chapterId, string name)
     {
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(chapterId);
-        if (chapter is null)
-        {
-            logger.LogWarning("Chapter update rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Chapter not found"));
-        }
+        var chapterResult = await EntityLookup.ResolveAsync(
+            () => chapterRepository.GetByIdAsync(chapterId),
+            logger,
+            "Chapter update rejected: chapter not found {ChapterId}",
+            "Chapter not found",
+            chapterId);
+        if (chapterResult.IsFailure) return Result.Failure<ChapterDto>(chapterResult.Error);
+        var chapter = chapterResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Member, "Chapter update", new { chapter.BaulId, ChapterId = chapterId });
@@ -141,12 +149,14 @@ public class ChapterManager(
     public async Task<Result> DeleteAsync(ChapterId chapterId)
     {
         var userId = currentUserProvider.GetUserId();
-        var chapter = await chapterRepository.GetByIdAsync(chapterId);
-        if (chapter is null)
-        {
-            logger.LogWarning("Chapter delete rejected: chapter not found {ChapterId}", chapterId);
-            return Result.Failure(ApplicationError.NotFound("Chapter not found"));
-        }
+        var chapterResult = await EntityLookup.ResolveAsync(
+            () => chapterRepository.GetByIdAsync(chapterId),
+            logger,
+            "Chapter delete rejected: chapter not found {ChapterId}",
+            "Chapter not found",
+            chapterId);
+        if (chapterResult.IsFailure) return Result.Failure(chapterResult.Error);
+        var chapter = chapterResult.Value;
 
         var auth = await baulAccess.AuthorizeAsync(
             chapter.BaulId, userId, AccessLevel.Admin, "Chapter delete", new { chapter.BaulId, ChapterId = chapterId });

@@ -1,4 +1,5 @@
 using ElBaul.Application.Bauls;
+using ElBaul.Application;
 using ElBaul.Application.Personas;
 using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Personas;
@@ -65,12 +66,15 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
         var access = auth.Value;
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId)
-        {
-            logger.LogWarning("Persona detail rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
-        }
+        var personaResult = await EntityLookup.ResolveAsync(
+            () => baulRepository.GetPersonaByIdAsync(personaId),
+            persona => persona.BaulId == baulId,
+            logger,
+            "Persona detail rejected: persona not found {PersonaId}",
+            "Persona not found",
+            personaId);
+        if (personaResult.IsFailure) return Result.Failure<PersonaDto>(personaResult.Error);
+        var persona = personaResult.Value;
 
         var canEdit = CanEditPersona(persona, userId, access);
         var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!.Value) : null;
@@ -100,12 +104,15 @@ public class PersonaManager(
             baulId, userId, AccessLevel.Member, "Persona update", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId)
-        {
-            logger.LogWarning("Persona update rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
-        }
+        var personaResult = await EntityLookup.ResolveAsync(
+            () => baulRepository.GetPersonaByIdAsync(personaId),
+            persona => persona.BaulId == baulId,
+            logger,
+            "Persona update rejected: persona not found {PersonaId}",
+            "Persona not found",
+            personaId);
+        if (personaResult.IsFailure) return Result.Failure<PersonaDto>(personaResult.Error);
+        var persona = personaResult.Value;
 
         var canEdit = CanEditPersona(persona, userId, auth.Value);
         if (!canEdit)
@@ -132,12 +139,15 @@ public class PersonaManager(
             baulId, userId, AccessLevel.Member, "Persona biografia update", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId)
-        {
-            logger.LogWarning("Persona biografia update rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
-        }
+        var personaResult = await EntityLookup.ResolveAsync(
+            () => baulRepository.GetPersonaByIdAsync(personaId),
+            persona => persona.BaulId == baulId,
+            logger,
+            "Persona biografia update rejected: persona not found {PersonaId}",
+            "Persona not found",
+            personaId);
+        if (personaResult.IsFailure) return Result.Failure<PersonaDto>(personaResult.Error);
+        var persona = personaResult.Value;
 
         var updated = persona with { Biografia = biografia };
         await baulRepository.UpdatePersonaAsync(updated);
@@ -218,14 +228,16 @@ public class PersonaManager(
         if (context.IsFailure) return Result.Failure<PersonaDto>(context.Error);
         var (persona, access, userId) = context.Value;
 
-        var photo = await photoRepository.GetByIdAsync(photoId);
-        if (photo is null || photo.BaulId != baulId || photo.Status != PhotoStatus.Active)
-        {
-            logger.LogWarning(
-                "Persona avatar photo selection rejected: photo not found in this baúl {PersonaId} {PhotoId}",
-                personaId, photoId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Photo not found"));
-        }
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(photoId),
+            photo => photo.BaulId == baulId && photo.Status == PhotoStatus.Active,
+            logger,
+            "Persona avatar photo selection rejected: photo not found in this baúl {PersonaId} {PhotoId}",
+            "Photo not found",
+            personaId,
+            photoId);
+        if (photoResult.IsFailure) return Result.Failure<PersonaDto>(photoResult.Error);
+        var photo = photoResult.Value;
 
         return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);
     }
@@ -237,12 +249,15 @@ public class PersonaManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona role update", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId)
-        {
-            logger.LogWarning("Persona role update rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<PersonaDto>(ApplicationError.NotFound("Persona not found"));
-        }
+        var personaResult = await EntityLookup.ResolveAsync(
+            () => baulRepository.GetPersonaByIdAsync(personaId),
+            persona => persona.BaulId == baulId,
+            logger,
+            "Persona role update rejected: persona not found {PersonaId}",
+            "Persona not found",
+            personaId);
+        if (personaResult.IsFailure) return Result.Failure<PersonaDto>(personaResult.Error);
+        var persona = personaResult.Value;
 
         // Custody isn't a role this endpoint can grant or take away — it can't even be asked
         // for, since BaulRole has no Custodio value (see BaulRole.cs). Touching the actual
@@ -269,12 +284,15 @@ public class PersonaManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona removal", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId)
-        {
-            logger.LogWarning("Persona access revocation rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure(ApplicationError.NotFound("Persona not found"));
-        }
+        var personaResult = await EntityLookup.ResolveAsync(
+            () => baulRepository.GetPersonaByIdAsync(personaId),
+            persona => persona.BaulId == baulId,
+            logger,
+            "Persona access revocation rejected: persona not found {PersonaId}",
+            "Persona not found",
+            personaId);
+        if (personaResult.IsFailure) return Result.Failure(personaResult.Error);
+        var persona = personaResult.Value;
 
         if (persona.IsCustodioProtected(auth.Value.Baul.CustodioId))
         {
@@ -298,12 +316,15 @@ public class PersonaManager(
             baulId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
         if (auth.IsFailure) return Result.Failure<(Persona, BaulAccess, UserId)>(auth.Error);
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
-        if (persona is null || persona.BaulId != baulId)
-        {
-            logger.LogWarning("Persona avatar update rejected: persona not found {PersonaId}", personaId);
-            return Result.Failure<(Persona, BaulAccess, UserId)>(ApplicationError.NotFound("Persona not found"));
-        }
+        var personaResult = await EntityLookup.ResolveAsync(
+            () => baulRepository.GetPersonaByIdAsync(personaId),
+            persona => persona.BaulId == baulId,
+            logger,
+            "Persona avatar update rejected: persona not found {PersonaId}",
+            "Persona not found",
+            personaId);
+        if (personaResult.IsFailure) return Result.Failure<(Persona, BaulAccess, UserId)>(personaResult.Error);
+        var persona = personaResult.Value;
 
         if (!CanEditPersona(persona, userId, auth.Value))
         {
