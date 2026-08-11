@@ -15,18 +15,9 @@ export const Default: Story = {
   args: {
     onClose: () => alert('onClose clicked'),
     onNavigateToProfile: () => alert('onNavigateToProfile clicked'),
-    onNavigateToSubscription: () => alert('onNavigateToSubscription clicked'),
     onNavigateToNotifications: () => alert('onNavigateToNotifications clicked'),
     onNavigateToHelp: () => alert('onNavigateToHelp clicked'),
     onSignOut: () => alert('onSignOut clicked'),
-    monetizationEnabled: true,
-  },
-};
-
-export const WithoutMonetization: Story = {
-  args: {
-    ...Default.args,
-    monetizationEnabled: false,
   },
 };
 

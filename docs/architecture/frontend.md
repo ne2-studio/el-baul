@@ -36,7 +36,7 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
   only state, `reset()`, and (rarely) a cross-store setter with no `api.*` call of its own, like
   `useBaulesStore.removePhotoFromCaches`. `uiStore` and `useAppConfigStore` are the deliberate
   exceptions — cross-cutting state with no real orchestration to extract, same category as the
-  auth-session slice of `useAuthStore` (`isAuthenticated`, `userProfile`, `subscription`).
+  auth-session slice of `useAuthStore` (`isAuthenticated`, `userProfile`, `hasSeenOnboarding`).
   - **Ownership when a store is consumed by several features** (most domain stores are — e.g.
     `useBaulesStore` backs `baules`, `chapters`, `photos` and `sharing` routes): a use case lives
     in the feature that is its only caller. When several features call it with the exact same

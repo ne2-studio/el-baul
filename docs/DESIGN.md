@@ -297,7 +297,7 @@ the same rounded treatment as buttons. Labels sit above the field in `body-sm`; 
 text sits below in `caption`, muted.
 
 ### Badges / Chips
-Small, filled pills used for status and metadata (roles, plan tier, counts). Default
+Small, filled pills used for status and metadata (roles, counts). Default
 variant uses the primary color; secondary/outline variants use the muted beige or a
 transparent background with a hairline border for lower-emphasis tags.
 

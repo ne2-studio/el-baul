@@ -1,13 +1,5 @@
 import { create } from 'zustand';
-import { Subscription } from '@/types';
 import { getStoredPushToken } from '@/features/profile/native/pushNotifications';
-
-const defaultSubscription: Subscription = {
-  currentPlan: 'gratuito',
-  baulesUsed: 0,
-  baulesLimit: 2,
-  storagePerBaulGB: 10,
-};
 
 export interface AuthState {
   // Auth-derived state. The raw access token itself lives only in api.ts.
@@ -23,14 +15,12 @@ export interface AuthState {
   // post-login redirect, so a profile-load failure shows the onboarding carousel again rather
   // than risk skipping it for a user who's never actually seen it.
   hasSeenOnboarding: boolean | null;
-  subscription: Subscription;
 
   setAuthenticated: (value: boolean) => void;
   setUserProfile: (profile: { photoUrl: string; name: string; email: string }) => void;
   setWeeklyDigestEnabled: (value: boolean) => void;
   setPushNotificationsEnabled: (value: boolean) => void;
   setHasSeenOnboarding: (value: boolean) => void;
-  setSubscription: (subscription: Subscription | ((prev: Subscription) => Subscription)) => void;
   reset: () => void;
 }
 
@@ -41,7 +31,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   weeklyDigestEnabled: null,
   pushNotificationsEnabled: getStoredPushToken() !== null,
   hasSeenOnboarding: null,
-  subscription: defaultSubscription,
 
   setAuthenticated: (value) => set({ isAuthenticated: value }),
 
@@ -53,15 +42,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setHasSeenOnboarding: (value) => set({ hasSeenOnboarding: value }),
 
-  setSubscription: (subscriptionOrFn) => set((state) => ({
-    subscription: typeof subscriptionOrFn === 'function' ? subscriptionOrFn(state.subscription) : subscriptionOrFn,
-  })),
-
   reset: () => set({
     isAuthenticated: false,
     userProfile: { photoUrl: '', name: '', email: '' },
     weeklyDigestEnabled: null,
     hasSeenOnboarding: null,
-    subscription: defaultSubscription,
   }),
 }));

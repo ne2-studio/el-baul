@@ -2,10 +2,8 @@ import { create } from 'zustand';
 import { api } from '@/api';
 
 interface AppConfigState {
-  // Defaults to false so paywall hints never flash before the config loads.
-  monetizationEnabled: boolean;
-  // Same reasoning as monetizationEnabled — false until the config loads, so the "Ayúdame a
-  // recordar" FAB never flashes visible while the feature is still globally off.
+  // Defaults to false until the config loads, so the "Ayúdame a recordar" FAB never flashes
+  // visible while the feature is still globally off.
   chatEnabled: boolean;
   // Defaults to false so the chat never flashes starter suggestions or calls the suggestions
   // endpoint unless the backend explicitly opts into that experiment.
@@ -23,7 +21,6 @@ interface AppConfigState {
 }
 
 export const useAppConfigStore = create<AppConfigState>((set) => ({
-  monetizationEnabled: false,
   chatEnabled: false,
   chatSuggestionsEnabled: false,
   sharedLinksEnabled: false,
@@ -35,7 +32,6 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
     try {
       const config = await api.appConfig.get();
       set({
-        monetizationEnabled: config.features.monetization,
         chatEnabled: config.features.chatEnabled,
         chatSuggestionsEnabled: config.features.chatSuggestionsEnabled,
         sharedLinksEnabled: config.features.sharedLinksEnabled ?? false,

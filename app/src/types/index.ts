@@ -324,12 +324,3 @@ export class UserProfile {
     this.hasSeenOnboarding = data.hasSeenOnboarding;
   }
 }
-
-export type PlanType = 'gratuito' | 'familiar' | 'premium';
-
-export interface Subscription {
-  currentPlan: PlanType;
-  baulesUsed: number;
-  baulesLimit: number;
-  storagePerBaulGB: number;
-}

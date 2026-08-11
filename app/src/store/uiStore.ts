@@ -36,8 +36,6 @@ interface UIState {
   // Modals state
   showProfileMenu: boolean;
   setShowProfileMenu: (show: boolean) => void;
-  showPlanLimitModal: boolean;
-  setShowPlanLimitModal: (show: boolean) => void;
 
   // Recomendación de contribución (ver ContributionSuggestionContainer): una vez mostrada y
   // resuelta (guardada u "ahora no"), no debe volver a proponerse en ESE baúl durante el
@@ -65,8 +63,6 @@ export const useUIStore = create<UIState>((set) => ({
   // Modals
   showProfileMenu: false,
   setShowProfileMenu: (show) => set({ showProfileMenu: show }),
-  showPlanLimitModal: false,
-  setShowPlanLimitModal: (show) => set({ showPlanLimitModal: show }),
 
   isContributionSuggestionOnCooldown: (baulId) => {
     const dismissedAt = readContributionSuggestionCooldowns()[baulId];

@@ -6483,7 +6483,6 @@ export interface components {
             baulCount: number;
         };
         AppConfigFeatures: {
-            monetization: boolean;
             chatEnabled: boolean;
             chatSuggestionsEnabled: boolean;
             sharedLinksEnabled: boolean;

@@ -1,26 +1,22 @@
-import { X, User, CreditCard, LogOut, Loader2, HelpCircle, Bell } from 'lucide-react';
+import { X, User, LogOut, Loader2, HelpCircle, Bell } from 'lucide-react';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import { ActionListItem } from '@/design-system/components/data-display/ActionListItem';
 
 interface ProfileMenuModalProps {
   onClose: () => void;
   onNavigateToProfile: () => void;
-  onNavigateToSubscription: () => void;
   onNavigateToNotifications: () => void;
   onNavigateToHelp: () => void;
   onSignOut: () => void;
-  monetizationEnabled?: boolean;
   isSigningOut?: boolean;
 }
 
 export function ProfileMenuModal({
   onClose,
   onNavigateToProfile,
-  onNavigateToSubscription,
   onNavigateToNotifications,
   onNavigateToHelp,
   onSignOut,
-  monetizationEnabled,
   isSigningOut = false,
 }: ProfileMenuModalProps) {
   return (
@@ -66,16 +62,6 @@ export function ProfileMenuModal({
             title="Mi perfil"
             description="Información de tu cuenta"
           />
-
-          {monetizationEnabled && (
-            <ActionListItem
-              onClick={onNavigateToSubscription}
-              className="mt-2"
-              icon={<CreditCard className="w-5 h-5" />}
-              title="Mi suscripción"
-              description="Plan y espacio disponible"
-            />
-          )}
 
           <ActionListItem
             onClick={onNavigateToNotifications}

@@ -46,7 +46,6 @@ function sized(Inner: () => any) {
 }
 
 export const Default = /* Default */ sized(compose(S, "Default"));
-export const WithoutMonetization = /* Without Monetization */ sized(compose(S, "WithoutMonetization"));
 export const SigningOut = /* Signing Out */ sized(compose(S, "SigningOut"));
 export const AccountMenuBottomSheetMobile = /* Account Menu Bottom Sheet Mobile */ sized(compose(S, "AccountMenuBottomSheetMobile"));
 export const AccountMenuNarrowBottomSheet = /* Account Menu Narrow Bottom Sheet */ sized(compose(S, "AccountMenuNarrowBottomSheet"));

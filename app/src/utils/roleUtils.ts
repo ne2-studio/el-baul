@@ -3,7 +3,6 @@ import { Baul, BaulRole, Persona } from '../types';
 export interface BaulPermissions {
   isAdmin: boolean;
   isCustodio: boolean;
-  countsAsCustodioForPlan: boolean;
   canCreatePersona: boolean;
   canManageBaulInvite: boolean;
   canEditBaul: boolean;
@@ -58,10 +57,6 @@ export function getBaulPermissions(baul?: Pick<Baul, 'role'>): BaulPermissions {
   return {
     isAdmin,
     isCustodio,
-    // Only the actual custodio counts against the family's plan limit — administradores and
-    // colaboradores never do, same underlying fact as isCustodio now that both are derived
-    // from role.
-    countsAsCustodioForPlan: isCustodio,
     canCreatePersona: isAdmin,
     canManageBaulInvite: isAdmin,
     canEditBaul: isAdmin,

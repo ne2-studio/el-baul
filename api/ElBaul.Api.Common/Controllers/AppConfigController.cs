@@ -17,7 +17,6 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
     [ProducesResponseType(typeof(AppConfigResponse), StatusCodes.Status200OK)]
     public IActionResult Get()
     {
-        var monetizationEnabled = configuration.GetValue<bool>("Features:MonetizationEnabled");
         var chatEnabled = configuration.GetValue<bool>("Features:ChatEnabled");
         var chatSuggestionsEnabled = configuration.GetValue<bool>("Features:ChatSuggestionsEnabled");
         var sharedLinksEnabled = configuration.GetValue<bool>("Features:SharedLinksEnabled");
@@ -29,7 +28,6 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
         {
             features = new
             {
-                monetization = monetizationEnabled,
                 chatEnabled,
                 chatSuggestionsEnabled,
                 sharedLinksEnabled,

@@ -6,4 +6,4 @@ namespace ElBaul.Api.Models;
 public record AppConfigResponse(AppConfigFeatures Features, string? HelpCenterUrl, string? AppUrl);
 
 public record AppConfigFeatures(
-    bool Monetization, bool ChatEnabled, bool ChatSuggestionsEnabled, bool SharedLinksEnabled, bool BaulFeedEnabled);
+    bool ChatEnabled, bool ChatSuggestionsEnabled, bool SharedLinksEnabled, bool BaulFeedEnabled);

@@ -13,11 +13,7 @@ import {
 import { cn } from '@/design-system/components/ui/utils';
 import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { useAuthStore } from '@/store/useAuthStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
-import { useUIStore } from '@/store/uiStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
-import { getBaulPermissions } from '@/utils/roleUtils';
 
 interface WorkspaceSwitcherContainerProps {
   activeBaul: Baul;
@@ -25,17 +21,14 @@ interface WorkspaceSwitcherContainerProps {
 
 // Sustituye el título estático de BaulRoute — es el selector de workspace del PRD. Self-
 // sufficient (ver la regla de containers/ en docs/architecture/frontend.md): lee su propia
-// lista de baúles, decide el gating de plan al crear uno nuevo y hace el propio cambio de
-// CurrentBaul + navegación, igual que BaulSettingsMenuContainer hace con sus propias acciones.
-// Las filas del dropdown son deliberadamente discretas (miniatura + nombre + capítulos), no la
-// BaulCard grande de la Home que existía antes — mismo lenguaje visual/compacto que ya usa
-// ShareTargetBaulScreen para elegir baúl al compartir fotos.
+// lista de baúles y hace el propio cambio de CurrentBaul + navegación, igual que
+// BaulSettingsMenuContainer hace con sus propias acciones. Las filas del dropdown son
+// deliberadamente discretas (miniatura + nombre + capítulos), no la BaulCard grande de la Home
+// que existía antes — mismo lenguaje visual/compacto que ya usa ShareTargetBaulScreen para
+// elegir baúl al compartir fotos.
 export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherContainerProps) {
   const navigate = useNavigate();
   const baules = useBaulesStore((state) => state.baules);
-  const subscription = useAuthStore((state) => state.subscription);
-  const monetizationEnabled = useAppConfigStore((state) => state.monetizationEnabled);
-  const setShowPlanLimitModal = useUIStore((state) => state.setShowPlanLimitModal);
 
   const handleSwitch = (baul: Baul) => {
     if (baul.id === activeBaul.id) return;
@@ -43,15 +36,7 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
     navigate(`/baules/${baul.id}`);
   };
 
-  // Mismo gating que antes tenía BaulesListRoute.handleCreateBaulClick.
   const handleCreateBaul = () => {
-    if (monetizationEnabled) {
-      const custodianBaules = baules.filter((b) => getBaulPermissions(b).countsAsCustodioForPlan);
-      if (custodianBaules.length >= subscription.baulesLimit) {
-        setShowPlanLimitModal(true);
-        return;
-      }
-    }
     navigate('/baules/nuevo');
   };
 

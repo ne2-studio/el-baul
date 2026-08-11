@@ -2,16 +2,13 @@ import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal';
-import { PlanLimitModal } from '@/features/profile/components/PlanLimitModal';
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
 import { PushNotificationsHandler } from '@/features/profile/native/PushNotificationsHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
 import { API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
-import { Baul } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { getBaulPermissions } from '@/utils/roleUtils';
 
 // Auth and Route Guards
 import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
@@ -38,9 +35,6 @@ import { AcceptBaulInviteRoute } from '../features/sharing/routes/AcceptBaulInvi
 import { SelectBaulForShareRoute } from '../features/sharing/routes/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/routes/ProfileRoute';
 import { NotificationPreferencesRoute } from '../features/profile/routes/NotificationPreferencesRoute';
-import { SubscriptionRoute } from '../features/profile/routes/SubscriptionRoute';
-import { PlanSelectionRoute } from '../features/profile/routes/PlanSelectionRoute';
-import { PaymentRoute } from '../features/profile/routes/PaymentRoute';
 import { HelpSupportRoute } from '../features/support/routes/HelpSupportRoute';
 import { SupportFormRoute } from '../features/support/routes/SupportFormRoute';
 import { photoViewerRoutes } from '../features/photos/viewerNavigation/routes';
@@ -48,7 +42,6 @@ import { getBackgroundLocation } from '../features/photos/viewerNavigation';
 
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { useBaulesStore } from '../store/useBaulesStore';
 import { useAppConfigStore } from '../store/useAppConfigStore';
 import { loadUserData, resetAllStores } from '@/features/auth/useCases';
 
@@ -57,7 +50,6 @@ function App() {
   const location = useLocation();
   const auth = useAuth();
   const [isAccessDenied, setIsAccessDenied] = React.useState(false);
-  const monetizationEnabled = useAppConfigStore(state => state.monetizationEnabled);
   const {
     showToast,
     toastMessage,
@@ -65,15 +57,9 @@ function App() {
     hideToast,
     showProfileMenu,
     setShowProfileMenu,
-    showPlanLimitModal,
-    setShowPlanLimitModal
   } = useUIStore();
 
-  const {
-    subscription,
-    setSubscription,
-    setAuthenticated,
-  } = useAuthStore();
+  const { setAuthenticated } = useAuthStore();
 
   const { run, isPending } = useAsyncAction();
 
@@ -135,15 +121,6 @@ function App() {
       errorMessage: 'No se pudieron cargar tus baúles. Comprueba tu conexión e inténtalo de nuevo.',
     });
     if (!result.ok) return;
-
-    const currentBaules = useBaulesStore.getState().baules;
-
-    // Update subscription usage
-    const custodianBaules = currentBaules.filter((b: Baul) => getBaulPermissions(b).isCustodio);
-    setSubscription(prev => ({
-      ...prev,
-      baulesUsed: custodianBaules.length
-    }));
 
     // No further navigation here: CallbackRoute/PublicRoute already send an authenticated user
     // to "/baules", and HomeRedirectRoute (mounted there) owns the actual decision of where
@@ -312,21 +289,6 @@ function App() {
             <NotificationPreferencesRoute />
           </ProtectedRoute>
         } />
-        <Route path="/suscripcion" element={
-          <ProtectedRoute>
-            <SubscriptionRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/planes" element={
-          <ProtectedRoute>
-            <PlanSelectionRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/pago" element={
-          <ProtectedRoute>
-            <PaymentRoute />
-          </ProtectedRoute>
-        } />
         <Route path="/ayuda" element={
           <ProtectedRoute>
             <HelpSupportRoute />
@@ -365,15 +327,10 @@ function App() {
       {/* Profile Menu Modal */}
       {showProfileMenu && (
         <ProfileMenuModal
-          monetizationEnabled={monetizationEnabled}
           onClose={() => setShowProfileMenu(false)}
           onNavigateToProfile={() => {
             setShowProfileMenu(false);
             navigate('/perfil');
-          }}
-          onNavigateToSubscription={() => {
-            setShowProfileMenu(false);
-            navigate('/suscripcion');
           }}
           onNavigateToNotifications={() => {
             setShowProfileMenu(false);
@@ -388,19 +345,6 @@ function App() {
             if (signedOut) setShowProfileMenu(false);
           }}
           isSigningOut={isPending('signOut')}
-        />
-      )}
-
-      {/* Plan Limit Modal */}
-      {showPlanLimitModal && (
-        <PlanLimitModal
-          baulesUsed={subscription.baulesUsed}
-          baulesLimit={subscription.baulesLimit}
-          onClose={() => setShowPlanLimitModal(false)}
-          onUpgradePlan={() => {
-            setShowPlanLimitModal(false);
-            navigate('/planes');
-          }}
         />
       )}
 

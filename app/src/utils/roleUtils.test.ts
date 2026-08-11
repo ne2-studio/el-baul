@@ -65,14 +65,6 @@ describe('roleUtils baul permissions', () => {
     expect(getBaulPermissions({ role: 'administrador' }).canRequestBaulDeletion).toBe(false);
     expect(getBaulPermissions({ role: 'custodio' }).canRequestBaulDeletion).toBe(true);
   });
-
-  it('only the custodio role counts towards the plan limit', () => {
-    expect(getBaulPermissions({ role: 'custodio' }).countsAsCustodioForPlan).toBe(true);
-    expect(getBaulPermissions({ role: 'administrador' }).countsAsCustodioForPlan).toBe(false);
-    expect(getBaulPermissions({ role: 'colaborador' }).countsAsCustodioForPlan).toBe(false);
-    expect(getBaulPermissions({ role: 'sin_acceso' }).countsAsCustodioForPlan).toBe(false);
-    expect(getBaulPermissions().countsAsCustodioForPlan).toBe(false);
-  });
 });
 
 describe('roleUtils persona permissions', () => {

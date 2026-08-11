@@ -17,7 +17,7 @@ Storybook title: `Components/<Name>`. That one bucket mixed:
 - Components that are deeply tied to El Baúl's domain and import its types directly
   (`PhotoViewer`, `NuevaPersonaModal`, `ManageAccessModal` import `Photo`, `Persona`,
   `BaulRole`).
-- Full route screens (`PersonaDetailScreen`, `MiSuscripcionScreen`, `InvitacionScreen`).
+- Full route screens (`PersonaDetailScreen`, `NotificationPreferencesScreen`, `InvitacionScreen`).
 
 With everything alphabetized under one label, there was no way to tell — from the sidebar
 alone — what's safely reusable UI kit versus what's load-bearing on El Baúl's domain model.
@@ -57,7 +57,7 @@ products.
    yet — see Consequences.
 5. **Features** — components that implement a concrete El Baúl capability and speak the
    vocabulary of a domain area. Grouped by domain area: `Baules`, `Chapters`, `People`,
-   `Photos`, `Memories` (Recuerdos), `Sharing`, `Subscription`, `Profile`.
+   `Photos`, `Memories` (Recuerdos), `Sharing`, `Profile`.
 6. **Screens** — full route pages assembled from Layouts + Features + Components.
 
 **Litmus test** for Components vs. Patterns vs. Features: does this component represent a

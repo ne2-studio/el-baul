@@ -7684,14 +7684,10 @@
           "baulFeedEnabled",
           "chatEnabled",
           "chatSuggestionsEnabled",
-          "monetization",
           "sharedLinksEnabled"
         ],
         "type": "object",
         "properties": {
-          "monetization": {
-            "type": "boolean"
-          },
           "chatEnabled": {
             "type": "boolean"
           },

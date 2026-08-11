@@ -17,7 +17,7 @@ function suggestBaulName(userFullName: string): string {
 export const CreateBaulRoute: React.FC = () => {
   const navigate = useNavigate();
   const auth = useAuth();
-  const { userProfile, setSubscription } = useAuthStore();
+  const { userProfile } = useAuthStore();
   const { baules } = useBaulesStore();
   const { showToastMessage } = useUIStore();
   const { run, isPending } = useAsyncAction();
@@ -30,11 +30,6 @@ export const CreateBaulRoute: React.FC = () => {
       errorMessage: 'Error al crear el baúl',
     });
     if (!result.ok) return;
-
-    setSubscription(prev => ({
-      ...prev,
-      baulesUsed: prev.baulesUsed + 1
-    }));
 
     // El baúl recién creado es el que el usuario va a usar a continuación — se convierte en el
     // CurrentBaul para que la app abra ahí la próxima vez, no en el que tuviera activo antes.
