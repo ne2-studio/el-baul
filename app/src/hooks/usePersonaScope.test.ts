@@ -190,4 +190,43 @@ describe('usePersonaScope', () => {
 
     resolveA();
   });
+
+  it('ignores a failed fetch for the previous persona after navigating to a loaded one', async () => {
+    const personaA = 'persona-a';
+    const personaB = 'persona-b';
+    let rejectA: (error: Error) => void = () => {};
+
+    usePersonasStore.setState({
+      personas: { [baulId]: [{ ...persona, id: personaA }, { ...persona, id: personaB }] },
+    });
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
+    vi.mocked(loadPersonaPhotos).mockImplementation((_baulId: string, pId: string) => {
+      if (pId === personaA) {
+        return new Promise<void>((_resolve, reject) => {
+          rejectA = reject;
+        });
+      }
+      return Promise.resolve().then(() => {
+        seedPersonaPhotos(pId, [photo({ id: `photo-${pId}` })]);
+      });
+    });
+
+    const { result, rerender } = renderHook(
+      ({ personaId }: { personaId: string }) => usePersonaScope(baulId, personaId),
+      { initialProps: { personaId: personaA } }
+    );
+
+    rerender({ personaId: personaB });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      rejectA(new Error('old persona failed'));
+      await Promise.resolve();
+    });
+
+    expect(result.current.persona?.id).toBe(personaB);
+    expect(result.current.photos).toEqual([photo({ id: `photo-${personaB}` })]);
+    expect(result.current.loadFailed).toBe(false);
+  });
 });

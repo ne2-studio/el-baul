@@ -203,4 +203,44 @@ describe('useChapterScope', () => {
     // loadFailed false, but photos/chapterRecuerdos still undefined for the chapter on screen).
     expect(result.current.loadFailed || (!!result.current.photos && !!result.current.chapterRecuerdos)).toBe(true);
   });
+
+  it('ignores a failed fetch for the previous chapter after navigating to a loaded one', async () => {
+    const chapterA = 'chapter-a';
+    const chapterB = 'chapter-b';
+    let rejectA: (error: Error) => void = () => {};
+
+    vi.mocked(loadChapterPhotos).mockImplementation((id: string) => {
+      if (id === chapterA) {
+        return new Promise<void>((_resolve, reject) => {
+          rejectA = reject;
+        });
+      }
+      return Promise.resolve().then(() => {
+        seedChapterPhotos(id, [photo({ id: `photo-${id}` })]);
+      });
+    });
+    vi.mocked(loadChapterRecuerdos).mockImplementation((_baulId: string, id: string) => Promise.resolve().then(() => {
+      useRecuerdosStore.setState((state) => ({
+        chapterRecuerdos: { ...state.chapterRecuerdos, [id]: [recuerdo({ id: `recuerdo-${id}` })] },
+      }));
+    }));
+
+    const { result, rerender } = renderHook(
+      ({ chapterId }: { chapterId: string }) => useChapterScope(baulId, chapterId),
+      { initialProps: { chapterId: chapterA } }
+    );
+
+    rerender({ chapterId: chapterB });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      rejectA(new Error('old chapter failed'));
+      await Promise.resolve();
+    });
+
+    expect(result.current.photos).toEqual([photo({ id: `photo-${chapterB}` })]);
+    expect(result.current.chapterRecuerdos).toEqual([recuerdo({ id: `recuerdo-${chapterB}` })]);
+    expect(result.current.loadFailed).toBe(false);
+  });
 });

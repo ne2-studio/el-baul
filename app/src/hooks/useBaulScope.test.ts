@@ -169,4 +169,44 @@ describe('useBaulScope', () => {
 
     resolveA();
   });
+
+  it('ignores a failed fetch for the previous baúl after navigating to a loaded one', async () => {
+    const baulA = { id: 'baul-a', name: 'Baúl A', chapterCount: 0 } as Baul;
+    const baulB = { id: 'baul-b', name: 'Baúl B', chapterCount: 0 } as Baul;
+    let rejectA: (error: Error) => void = () => {};
+
+    useBaulesStore.setState({ baules: [baulA, baulB] });
+    vi.mocked(loadBaulRecuerdos).mockImplementation((id: string) => {
+      useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [id]: [] } }));
+      return Promise.resolve();
+    });
+    vi.mocked(loadChapters).mockImplementation((id: string) => {
+      if (id === baulA.id) {
+        return new Promise<void>((_resolve, reject) => {
+          rejectA = reject;
+        });
+      }
+      return Promise.resolve().then(() => {
+        useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [id]: [] } }));
+      });
+    });
+
+    const { result, rerender } = renderHook(
+      ({ baulId }: { baulId: string }) => useBaulScope(baulId),
+      { initialProps: { baulId: baulA.id } }
+    );
+
+    rerender({ baulId: baulB.id });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      rejectA(new Error('old baúl failed'));
+      await Promise.resolve();
+    });
+
+    expect(result.current.baul).toEqual(baulB);
+    expect(result.current.refreshFailed).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+  });
 });
