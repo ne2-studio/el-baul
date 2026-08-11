@@ -33,7 +33,7 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
         aria-label="Buscar capítulo"
         className="mb-3"
       />
-      <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
+      <div className="space-y-2 mb-6 h-64 overflow-y-auto pr-2">
         {filteredChapters.length === 0 ? (
           <p className="text-sm text-muted-foreground px-1 py-2">No se encontraron capítulos.</p>
         ) : (

@@ -36,6 +36,31 @@ describe('MoveModal', () => {
     expect(screen.queryByText('Boda de Marta y Iván')).not.toBeInTheDocument();
   });
 
+  it('keeps the list container a fixed height, with room between rows and the scrollbar, regardless of filtering', async () => {
+    const user = userEvent.setup();
+    render(
+      <MoveModal
+        title="Mover a otro capítulo"
+        chapters={chapters}
+        selectedId=""
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    const list = screen.getByText('Navidad en familia').closest('div.overflow-y-auto') as HTMLElement;
+    expect(list).toHaveClass('h-64');
+    expect(list).not.toHaveClass('max-h-64');
+    expect(list).toHaveClass('pr-2');
+
+    await user.type(screen.getByLabelText('Buscar capítulo'), 'portu');
+
+    // Filtering only changes which rows render, never the container itself.
+    expect(list).toHaveClass('h-64');
+    expect(list).toHaveClass('pr-2');
+  });
+
   it('shows a message when no chapter matches the search', async () => {
     const user = userEvent.setup();
     render(
