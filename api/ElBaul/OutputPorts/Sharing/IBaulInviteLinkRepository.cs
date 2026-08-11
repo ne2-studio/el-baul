@@ -9,10 +9,11 @@ public interface IBaulInviteLinkRepository
     /// <summary>
     /// Inserts the link. A partial unique index guarantees at most one active
     /// (RevokedAt IS NULL) row per baúl — if two callers race to create the first link for a
-    /// baúl, the loser's insert is silently dropped (mirrors UserRepository.UpsertAsync): the
-    /// row exists now, by whichever caller won, which is all this method promises. Callers
-    /// that need the actual active link afterwards should re-read with
-    /// GetActiveByBaulIdAsync rather than assume the instance they passed in was persisted.
+    /// baúl, the loser's insert is a no-op (ON CONFLICT DO NOTHING, mirrors
+    /// UserRepository.UpsertAsync's native upsert): the row exists now, by whichever caller
+    /// won, which is all this method promises. Callers that need the actual active link
+    /// afterwards should re-read with GetActiveByBaulIdAsync rather than assume the instance
+    /// they passed in was persisted.
     /// </summary>
     Task CreateAsync(BaulInviteLink link);
 

@@ -32,13 +32,17 @@ public class BaulInviteLinkManager(
 {
     // GetOrCreateAsync and RegenerateAsync are deliberately NOT wrapped in
     // IUnitOfWork.ExecuteInTransactionAsync, unlike every other multi-write method in this
-    // codebase (see that port's doc comment). Both rely on CreateAsync's commit landing
-    // immediately so a concurrent caller's INSERT can lose the race against Postgres' unique
-    // partial index and throw right there — and on the re-read a few lines down seeing
-    // whichever transaction actually won, which requires that winner's write to already be
-    // committed, not just staged inside an ambient transaction of this request's own. Wrapping
-    // this in a transaction wouldn't make it more correct, it would silently break the race
-    // detection this method is built around.
+    // codebase (see that port's doc comment). BaulInviteLinkRepository.CreateAsync resolves the
+    // race with an `INSERT ... ON CONFLICT DO NOTHING` rather than a caught exception, so it's
+    // not the ON CONFLICT statement itself that needs to stay out of a transaction. The reason is
+    // the re-read a few lines down: it has to observe whichever *other, concurrent request*
+    // actually won the race, and that only works if the winner's own INSERT already committed —
+    // an ambient transaction spanning this whole method would hold this request's own writes
+    // uncommitted until CommitAsync at the very end, which is irrelevant to seeing another
+    // request's commit (this is a genuinely different concern from "can a transaction see its
+    // own writes", which it always can — see ChatManager.SendMessageAsync's comment for that
+    // distinction). Each call committing on its own, right after CreateAsync, is what makes the
+    // re-read meaningful.
     public async Task<Result<BaulInviteLinkDto>> GetOrCreateAsync(BaulId baulId)
     {
         var userId = currentUserProvider.GetUserId();

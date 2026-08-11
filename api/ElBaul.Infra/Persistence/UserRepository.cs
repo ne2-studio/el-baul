@@ -1,7 +1,6 @@
 using ElBaul.Domain;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace ElBaul.Infra.Persistence;
 
@@ -43,39 +42,41 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.HasSeenOnboarding, true));
 
     // Deliberately not migrated to stage-only + IUnitOfWork.SaveChangesAsync (unlike most other
-    // repositories' Create/Update methods) — the immediate SaveChangesAsync below is what turns
-    // a lost race into a caught DbUpdateException at the exact call site prepared to swallow it.
-    // Deferring the commit to a caller-controlled unit of work would move that exception
-    // somewhere this method has no way to catch it.
-    public async Task UpsertAsync(User user)
-    {
-        var existing = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
-        if (existing is null)
-        {
-            dbContext.Users.Add(user);
-            try
-            {
-                await dbContext.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-            {
-                // UserSyncMiddleware calls this for every request from a not-yet-synced
-                // user, and a single page load routinely fires several authenticated
-                // requests in parallel — for a brand-new user, more than one can land
-                // here between our SELECT and INSERT. The row exists now (by whichever
-                // request won), which is all this method promises, so there's nothing
-                // left to do — except detach: dbContext is request-scoped, and a failed
-                // insert stays tracked as Added, so anything else that calls
-                // SaveChangesAsync later in the same request (e.g. BaulRepository.
-                // CreateAsync, sharing this context) would otherwise try to re-insert
-                // this same row and hit the identical 500 again.
-                dbContext.Entry(user).State = EntityState.Detached;
-            }
-        }
-        else
-        {
-            dbContext.Entry(existing).CurrentValues.SetValues(user with { CreatedAt = existing.CreatedAt });
-            await dbContext.SaveChangesAsync();
-        }
-    }
+    // repositories' Create/Update methods), and not expressed as a SELECT-then-branch against
+    // the change tracker either. UserSyncMiddleware calls this for every request from a
+    // not-yet-synced user, and a single page load routinely fires several authenticated requests
+    // in parallel — for a brand-new user, more than one can land here concurrently. A SELECT
+    // first and an `if (existing is null)` branch second is exactly the race window: two
+    // requests can both see "no row" and both attempt the INSERT.
+    //
+    // A native upsert closes that window by asking Postgres to resolve the conflict as part of
+    // the same statement instead of asking C# to notice it happened. This also sidesteps a real
+    // trap the previous try/catch version had: catching a UniqueViolation here does NOT mean the
+    // underlying Postgres transaction is fine to keep using — a failed statement inside an
+    // explicit transaction poisons the whole transaction (SQLSTATE 25P02) until it rolls back,
+    // .NET-level catch or not. That's incompatible with this method ever running inside
+    // IUnitOfWork.ExecuteInTransactionAsync, which is exactly why it's excluded from it (see
+    // that port's doc comment) — a plain `INSERT ... ON CONFLICT` never raises that error in the
+    // first place, so it doesn't have this problem regardless of whether it's ever wrapped.
+    public async Task UpsertAsync(User user) =>
+        await dbContext.Database.ExecuteSqlRawAsync(
+            // "CreatedAt" is deliberately absent from the DO UPDATE SET list below — on
+            // conflict the row's original creation time survives untouched, matching the
+            // previous `existing with { CreatedAt = existing.CreatedAt }` behavior.
+            """
+            INSERT INTO "Users" ("Id", "Email", "Name", "CreatedAt", "LastAccessAt", "WeeklyDigestEnabled", "HasSeenOnboarding", "LastPushDigestSentAt")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})
+            ON CONFLICT ("Id") DO UPDATE SET
+                "Email" = EXCLUDED."Email",
+                "Name" = EXCLUDED."Name",
+                "LastAccessAt" = EXCLUDED."LastAccessAt",
+                "WeeklyDigestEnabled" = EXCLUDED."WeeklyDigestEnabled",
+                "HasSeenOnboarding" = EXCLUDED."HasSeenOnboarding",
+                "LastPushDigestSentAt" = EXCLUDED."LastPushDigestSentAt"
+            """,
+            // Null-forgiving below: Name/LastAccessAt/LastPushDigestSentAt are legitimately
+            // nullable columns — Npgsql binds a null object as SQL NULL correctly, this is only
+            // silencing the analyzer's blanket non-null expectation for `params object[]`.
+            user.Id.Value, user.Email, user.Name!, user.CreatedAt, user.LastAccessAt!,
+            user.WeeklyDigestEnabled, user.HasSeenOnboarding, user.LastPushDigestSentAt!);
 }

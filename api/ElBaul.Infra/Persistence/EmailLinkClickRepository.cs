@@ -1,6 +1,5 @@
 using ElBaul.OutputPorts.Notifications;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace ElBaul.Infra.Persistence;
 
@@ -35,9 +34,9 @@ public class EmailLinkClickRepository(ElBaulDbContext dbContext) : IEmailLinkCli
     }
 
     // Deliberately not migrated to stage-only + IUnitOfWork.SaveChangesAsync, same reasoning as
-    // UserRepository.UpsertAsync — the catch block below depends on this SaveChangesAsync
-    // committing immediately so a lost race against a concurrent click on the same link surfaces
-    // right here as a catchable DbUpdateException, not later inside some caller's unit of work.
+    // UserRepository.UpsertAsync — see that method's doc comment for why a native upsert (here,
+    // ON CONFLICT DO NOTHING) replaces a SELECT-then-INSERT race entirely, instead of relying on
+    // catching the UniqueViolation it would otherwise raise.
     public async Task RegisterSignedClickAsync(string token, Guid sentEmailId, string linkKey, string destinationUrl, DateTime clickedAt)
     {
         var existing = await dbContext.EmailLinkClicks.FirstOrDefaultAsync(e => e.Token == token);
@@ -47,19 +46,19 @@ public class EmailLinkClickRepository(ElBaulDbContext dbContext) : IEmailLinkCli
             return;
         }
 
-        dbContext.EmailLinkClicks.Add(new EmailLinkClick(
-            token, sentEmailId, linkKey, destinationUrl, clickedAt, clickedAt, clickedAt, ClickCount: 1));
+        var inserted = await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "EmailLinkClicks" ("Token", "SentEmailId", "LinkKey", "DestinationUrl", "CreatedAt", "FirstClickedAt", "LastClickedAt", "ClickCount")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {4}, {4}, 1)
+            ON CONFLICT ("Token") DO NOTHING
+            """,
+            token, sentEmailId, linkKey, destinationUrl, clickedAt);
 
-        try
-        {
-            await dbContext.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        if (inserted == 0)
         {
             // Lost a race with a concurrent click on the same link — the token is deterministic
             // per (SentEmail, linkKey), so a simultaneous click on the same link can beat us to
-            // the insert. Detach our losing copy and fall back to updating the winner's row.
-            dbContext.Entry(dbContext.EmailLinkClicks.Local.Single(e => e.Token == token)).State = EntityState.Detached;
+            // the insert. Fall back to updating the winner's row instead.
             await RegisterClickAsync(token, clickedAt);
             return;
         }

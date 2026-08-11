@@ -94,10 +94,13 @@ public class ChatManager(
         var now = clock.UtcNow();
         var userMessage = new ChatMessage(idGenerator.NewId(), baulId, userId, ChatMessageRole.User, text, now);
         // Deliberately not wrapped in IUnitOfWork.ExecuteInTransactionAsync with the assistant
-        // reply below (see that port's doc comment) — the re-read a few lines down needs this
-        // message to already be committed, not just staged, so the AI's context includes the
-        // message the user just sent. Wrapping both writes in one transaction would silently
-        // hide the user's own message from the reply it's supposed to be answering.
+        // reply below (see that port's doc comment) — NOT because the re-read a few lines down
+        // wouldn't see this message otherwise (a transaction always sees its own prior writes;
+        // that part would work fine either way). The real reason: the LLM call sits between the
+        // two writes and can take several seconds, and a real DB transaction must never be held
+        // open across slow external I/O like that — it ties up a connection and any locks it
+        // holds for the duration. Two independent commits, with the LLM call in between holding
+        // no transaction at all, is the correct shape here, not a workaround.
         await chatMessageRepository.CreateAsync(userMessage);
 
         var systemPrompt = BuildSystemInstruction(auth.Value.Persona) + "\n\n" + await chatContextBuilder.BuildAsync(baul, text);

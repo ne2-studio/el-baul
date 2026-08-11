@@ -1,7 +1,6 @@
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
@@ -14,23 +13,25 @@ public class BaulInviteLinkRepository(ElBaulDbContext dbContext) : IBaulInviteLi
     public Task<BaulInviteLink?> GetByTokenAsync(string token) =>
         dbContext.BaulInviteLinks.AsNoTracking().FirstOrDefaultAsync(l => l.Token == token);
 
-    public async Task CreateAsync(BaulInviteLink link)
-    {
-        dbContext.BaulInviteLinks.Add(link);
-        try
-        {
-            await dbContext.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-        {
-            // Lost a race against another concurrent GetOrCreate/Regenerate for the same
-            // baúl — the partial unique index on (BaulId) WHERE RevokedAt IS NULL means an
-            // active link already exists now, by whichever caller won. That satisfies this
-            // method's contract just as well, so there's nothing left to do but detach (see
-            // UserRepository.UpsertAsync for the identical rationale/pattern).
-            dbContext.Entry(link).State = EntityState.Detached;
-        }
-    }
+    // ON CONFLICT targets the partial unique index by its exact predicate (BaulInviteLinkConfiguration),
+    // so it only absorbs a lost race on that index — a Token collision (a second, independent
+    // unique index) still isn't matched by this conflict target and raises normally, exactly as
+    // a caller inserting a bad row should expect. A try/catch on any UniqueViolation, as this
+    // used to be, couldn't tell those two apart and silently swallowed both.
+    //
+    // Callers that need the actual active link afterwards re-read with GetActiveByBaulIdAsync
+    // (see IBaulInviteLinkRepository.CreateAsync) rather than assume this insert won.
+    public async Task CreateAsync(BaulInviteLink link) =>
+        await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "BaulInviteLinks" ("Id", "Token", "BaulId", "CreatedBy", "CreatedAt", "RevokedAt")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5})
+            ON CONFLICT ("BaulId") WHERE "RevokedAt" IS NULL DO NOTHING
+            """,
+            // Null-forgiving: RevokedAt is always null on a freshly created link (see the
+            // BaulInviteLink record's constructor), Npgsql binds it as SQL NULL correctly — this
+            // only silences the analyzer's blanket non-null expectation for `params object[]`.
+            link.Id.Value, link.Token, link.BaulId.Value, link.CreatedBy.Value, link.CreatedAt, link.RevokedAt!);
 
     public async Task UpdateAsync(BaulInviteLink link)
     {
