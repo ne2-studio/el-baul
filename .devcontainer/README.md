@@ -103,15 +103,12 @@ Canonical verification commands supported by the current script are:
 ./scripts/verify backend
 ./scripts/verify backend-acceptance
 ./scripts/verify frontend
-./scripts/verify admin
 ./scripts/verify frontend-acceptance
+./scripts/verify admin
 ./scripts/verify admin-acceptance
 ./scripts/verify e2e
 ./scripts/verify all
 ```
-
-The `.claude/skills/verify` text still mentions older `*-unit` aliases; the executable
-`scripts/verify` file is the current source of truth.
 
 ## Deliberate Exclusions
 

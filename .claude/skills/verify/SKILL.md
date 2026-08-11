@@ -30,15 +30,15 @@ relevant risk lacks evidence. A correct-looking diff is not evidence.
 
 | Risk introduced | Minimum evidence | Canonical command | Escalate to real infrastructure when | Manual verification is appropriate when |
 |---|---|---|---|---|
-| Domain or application logic | Unit test around the changed rule, success and relevant failure path | `./scripts/verify backend-unit` | The rule depends on database translation, storage, auth tokens, hosted services, or container config | The behavior is operationally observable but not automatable yet; add a test first if practical |
-| Persistence and EF | Unit coverage for business intent plus acceptance coverage against real Postgres | `./scripts/verify backend-unit` and `./scripts/verify backend-acceptance` | Entities, EF configuration, queries, value converters, indexes, transactions, or raw SQL changed | Rarely; use only to inspect live data after automated coverage exists |
+| Domain or application logic | Unit test around the changed rule, success and relevant failure path | `./scripts/verify backend` | The rule depends on database translation, storage, auth tokens, hosted services, or container config | The behavior is operationally observable but not automatable yet; add a test first if practical |
+| Persistence and EF | Unit coverage for business intent plus acceptance coverage against real Postgres | `./scripts/verify backend` and `./scripts/verify backend-acceptance` | Entities, EF configuration, queries, value converters, indexes, transactions, or raw SQL changed | Rarely; use only to inspect live data after automated coverage exists |
 | Migrations | Migration review plus acceptance coverage applying the built API against real Postgres | `./scripts/verify backend-acceptance` | Always for added, changed, or removed migrations | Only to inspect schema/data after migration if the risk is not captured by tests |
-| HTTP contract or serialization | API/controller/unit coverage or black-box acceptance asserting status, headers, auth, and JSON shape | `./scripts/verify backend-unit`; add `./scripts/verify backend-acceptance` for public contract changes | The built image, auth, middleware, serialization settings, or client compatibility matters | To inspect an endpoint manually after automated contract assertions exist |
+| HTTP contract or serialization | API/controller/unit coverage or black-box acceptance asserting status, headers, auth, and JSON shape | `./scripts/verify backend`; add `./scripts/verify backend-acceptance` for public contract changes | The built image, auth, middleware, serialization settings, or client compatibility matters | To inspect an endpoint manually after automated contract assertions exist |
 | Infrastructure, CI, and environment | Test or smoke proving changed wrappers, env vars, image startup, health, and service connectivity | The affected `./scripts/verify ...` command; use `./scripts/verify backend-acceptance` or `./scripts/verify e2e` for real services | Dockerfile, compose, workflow, verification script, env contract, service wiring, MinIO, imgproxy, OIDC, or startup changed | To read logs, health endpoints, or external service behavior in the live stack |
-| Frontend behavior | Vitest/component test or acceptance spec asserting the user-visible state transition | `./scripts/verify frontend-unit`; add `./scripts/verify frontend-acceptance` for covered app journeys | The behavior depends on built frontend image, routing, auth, API-lite wiring, or browser-only behavior | To explore an uncovered UI path after adding feasible assertions |
+| Frontend behavior | Vitest/component test or acceptance spec asserting the user-visible state transition | `./scripts/verify frontend`; add `./scripts/verify frontend-acceptance` for covered app journeys | The behavior depends on built frontend image, routing, auth, API-lite wiring, or browser-only behavior | To explore an uncovered UI path after adding feasible assertions |
 | Visual behavior | Automated functional assertions plus inspected screenshot or visual artifact | Relevant unit/acceptance command for the behavior | The visual result depends on browser layout, real media, imgproxy, build output, or responsive rendering | Required for intentional visual/layout changes; screenshots complement assertions, they do not replace them |
 | Full-stack wiring | Smoke through login and changed integration point against real compose stack | `./scripts/verify e2e` | API/app/imgproxy/OIDC/Postgres/MinIO compose wiring or production image interaction changed | To diagnose failures or inspect the changed path in the live stack |
-| Application maintenance commands | Behavior tests for dry-run/apply/idempotency and real integration when persistence/storage/provider effects matter | `./scripts/verify backend-unit`; add live command execution via `run` when needed | The command touches real persistence, storage, external providers, deploy-order behavior, or idempotency guarantees | To run dry-run/apply/dry-run in the live container and inspect resulting records or files |
+| Application maintenance commands | Behavior tests for dry-run/apply/idempotency and real integration when persistence/storage/provider effects matter | `./scripts/verify backend`; add live command execution via `run` when needed | The command touches real persistence, storage, external providers, deploy-order behavior, or idempotency guarantees | To run dry-run/apply/dry-run in the live container and inspect resulting records or files |
 
 When persistence matters, act, reload from the durable store, and assert again.
 
@@ -47,11 +47,12 @@ When persistence matters, act, reload from the durable store, and assert again.
 Run only through `./scripts/verify` unless diagnosing a failing canonical command:
 
 ```bash
-./scripts/verify backend-unit
+./scripts/verify backend
 ./scripts/verify backend-acceptance
-./scripts/verify frontend-unit
-./scripts/verify admin-unit
+./scripts/verify frontend
 ./scripts/verify frontend-acceptance
+./scripts/verify admin
+./scripts/verify admin-acceptance
 ./scripts/verify e2e
 ./scripts/verify all
 ```
