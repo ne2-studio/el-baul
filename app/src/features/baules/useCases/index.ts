@@ -8,24 +8,59 @@ import { getBaulPermissions } from '@/utils/roleUtils';
 import { loadPersonas } from '@/features/people/useCases';
 import { loadRemovalRequests } from '@/features/photos/useCases';
 
+interface HomeDestinationInput {
+  baulIds: string[];
+  currentBaulId: string | null;
+  hasSeenOnboarding: boolean | null;
+}
+
+interface HomeDestinationDecision {
+  destination: string;
+  currentBaulId: string | null;
+}
+
+export function decideHomeDestination({
+  baulIds,
+  currentBaulId,
+  hasSeenOnboarding,
+}: HomeDestinationInput): HomeDestinationDecision {
+  if (baulIds.length === 0) {
+    // hasSeenOnboarding es null mientras no se ha cargado / tras un fallo del perfil — se
+    // trata como "no visto" para no arriesgarse a saltarse el carrusel silenciosamente.
+    return {
+      destination: hasSeenOnboarding ? '/baules/nuevo' : '/onboarding',
+      currentBaulId: null,
+    };
+  }
+
+  const targetBaulId = currentBaulId && baulIds.includes(currentBaulId)
+    ? currentBaulId
+    : baulIds[0];
+
+  return {
+    destination: `/baules/${targetBaulId}`,
+    currentBaulId: targetBaulId,
+  };
+}
+
 // Decide a qué pantalla debe entrar el usuario al autenticarse o al navegar a "/baules": el
 // CurrentBaul persistido (si sigue perteneciéndole) o, si no, el primero de la lista — y lo
 // persiste como nuevo CurrentBaul. Sin baúles, reutiliza la misma decisión onboarding/crear-baúl
 // que ya existía. Único punto de verdad, usado tanto por el arranque de App.tsx como por
 // HomeRedirectRoute, para que ambos apliquen el mismo criterio.
 export function resolveHomeDestination(baules: Baul[]): string {
-  if (baules.length === 0) {
-    // hasSeenOnboarding es null mientras no se ha cargado / tras un fallo del perfil — se
-    // trata como "no visto" para no arriesgarse a saltarse el carrusel silenciosamente.
-    const hasSeenOnboarding = useAuthStore.getState().hasSeenOnboarding;
-    return hasSeenOnboarding ? '/baules/nuevo' : '/onboarding';
+  const { currentBaulId, setCurrentBaulId } = useCurrentBaulStore.getState();
+  const decision = decideHomeDestination({
+    baulIds: baules.map((baul) => baul.id),
+    currentBaulId,
+    hasSeenOnboarding: useAuthStore.getState().hasSeenOnboarding,
+  });
+
+  if (decision.currentBaulId && decision.currentBaulId !== currentBaulId) {
+    setCurrentBaulId(decision.currentBaulId);
   }
 
-  const { currentBaulId, setCurrentBaulId } = useCurrentBaulStore.getState();
-  const current = currentBaulId ? baules.find((b) => b.id === currentBaulId) : undefined;
-  const target = current ?? baules[0];
-  if (target.id !== currentBaulId) setCurrentBaulId(target.id);
-  return `/baules/${target.id}`;
+  return decision.destination;
 }
 
 export async function loadChapters(baulId: string): Promise<void> {

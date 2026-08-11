@@ -11,7 +11,86 @@ vi.mock('@/api', () => ({
 
 import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { setBaulCover } from './index';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
+import { decideHomeDestination, resolveHomeDestination, setBaulCover } from './index';
+
+describe('baules useCases decideHomeDestination', () => {
+  it.each([
+    { hasSeenOnboarding: false, expected: '/onboarding' },
+    { hasSeenOnboarding: null, expected: '/onboarding' },
+    { hasSeenOnboarding: true, expected: '/baules/nuevo' },
+  ])('sends users without baúles to $expected when hasSeenOnboarding is $hasSeenOnboarding', ({ hasSeenOnboarding, expected }) => {
+    expect(decideHomeDestination({
+      baulIds: [],
+      currentBaulId: null,
+      hasSeenOnboarding,
+    })).toEqual({
+      destination: expected,
+      currentBaulId: null,
+    });
+  });
+
+  it('keeps the remembered baúl when it is still available', () => {
+    expect(decideHomeDestination({
+      baulIds: ['baul-1', 'baul-2'],
+      currentBaulId: 'baul-2',
+      hasSeenOnboarding: true,
+    })).toEqual({
+      destination: '/baules/baul-2',
+      currentBaulId: 'baul-2',
+    });
+  });
+
+  it.each([
+    { currentBaulId: null },
+    { currentBaulId: 'baul-from-another-account' },
+  ])('falls back to the first baúl when currentBaulId is $currentBaulId', ({ currentBaulId }) => {
+    expect(decideHomeDestination({
+      baulIds: ['baul-1', 'baul-2'],
+      currentBaulId,
+      hasSeenOnboarding: false,
+    })).toEqual({
+      destination: '/baules/baul-1',
+      currentBaulId: 'baul-1',
+    });
+  });
+});
+
+describe('baules useCases resolveHomeDestination', () => {
+  function newBaul(id: string): Baul {
+    const now = new Date().toISOString();
+    return new Baul({
+      id,
+      name: 'Baúl',
+      chapterCount: 1,
+      createdAt: now,
+      updatedAt: now,
+      role: 'administrador',
+      isCustodio: true,
+      memberCount: 1,
+    });
+  }
+
+  beforeEach(() => {
+    useAuthStore.getState().reset();
+    useCurrentBaulStore.setState({ currentBaulId: null });
+  });
+
+  it('persists the resolved current baúl when the remembered one is missing', () => {
+    const destination = resolveHomeDestination([newBaul('baul-1'), newBaul('baul-2')]);
+
+    expect(destination).toBe('/baules/baul-1');
+    expect(useCurrentBaulStore.getState().currentBaulId).toBe('baul-1');
+  });
+
+  it('uses hasSeenOnboarding from auth state for users without baúles', () => {
+    useAuthStore.getState().setHasSeenOnboarding(true);
+
+    expect(resolveHomeDestination([])).toBe('/baules/nuevo');
+    expect(useCurrentBaulStore.getState().currentBaulId).toBeNull();
+  });
+});
 
 // Regression coverage for the optimistic-update/rollback pairing in setBaulCover: applies the
 // caller-provided thumbnail immediately for instant feedback, then either confirms it with the
