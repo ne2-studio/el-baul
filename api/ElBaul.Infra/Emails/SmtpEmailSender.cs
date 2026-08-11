@@ -1,6 +1,6 @@
 using System.Net.Mail;
-using CSharpFunctionalExtensions;
 using ElBaul.OutputPorts.Notifications;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -40,7 +40,7 @@ public class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpEmailSen
         catch (SmtpException ex)
         {
             logger.LogError(ex, "SMTP send failed {To} {Host}:{Port}", message.To, options.Value.Host, options.Value.Port);
-            return Result.Failure<EmailSendResult>("Failed to send email via SMTP");
+            return Result.Failure<EmailSendResult>(ApplicationError.ExternalDependencyUnavailable("Failed to send email via SMTP"));
         }
     }
 }

@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Notifications;
@@ -226,7 +225,7 @@ public class WelcomeEmailManagerTests
     public async Task SendWelcomeEmailAsync_ShouldRetryUsingTheSameRow_AfterATransientFailure()
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
-        _emailSender.NextResult = CSharpFunctionalExtensions.Result.Failure<EmailSendResult>("Resend is down");
+        _emailSender.NextResult = Result.Failure<EmailSendResult>(ApplicationError.ExternalDependencyUnavailable("Resend is down"));
         var manager = CreateManager();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync(new UserIdVo(UserId)));
@@ -261,7 +260,7 @@ public class WelcomeEmailManagerTests
         SeedUser("healthy-user", _clock.UtcNow().AddHours(-3), email: "healthy@example.com");
         var manager = CreateManager();
 
-        _emailSender.NextResult = CSharpFunctionalExtensions.Result.Failure<EmailSendResult>("boom");
+        _emailSender.NextResult = Result.Failure<EmailSendResult>(ApplicationError.ExternalDependencyUnavailable("boom"));
         await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync(new UserIdVo("failing-user")));
 
         _emailSender.NextResult = new EmailSendResult("ok-message-id");

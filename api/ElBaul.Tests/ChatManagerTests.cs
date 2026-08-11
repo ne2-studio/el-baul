@@ -215,7 +215,7 @@ public class ChatManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        _aiChatBackend.NextResult = CSharpFunctionalExtensions.Result.Failure<string>("Chat is not configured.");
+        _aiChatBackend.NextResult = Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable("Chat is not configured."));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SendMessageAsync(new BaulId(baulId), "Hola");

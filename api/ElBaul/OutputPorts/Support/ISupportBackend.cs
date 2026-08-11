@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+using ElBaul.Shared;
 
 namespace ElBaul.OutputPorts.Support;
 // Secondary port for wherever support requests actually end up (currently LeadHub,

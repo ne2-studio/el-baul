@@ -101,7 +101,7 @@ public class ChatManager(
         if (replyResult.IsFailure)
         {
             logger.LogError("Chat reply failed {Error}", replyResult.Error);
-            return Result.Failure<ChatMessageDto>(ApplicationError.ExternalDependencyUnavailable(replyResult.Error));
+            return Result.Failure<ChatMessageDto>(replyResult.Error);
         }
 
         var assistantMessage = new ChatMessage(

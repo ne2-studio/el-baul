@@ -1,5 +1,5 @@
-using CSharpFunctionalExtensions;
 using ElBaul.OutputPorts.Notifications;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Infra.Emails;

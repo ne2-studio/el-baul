@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using CSharpFunctionalExtensions;
 using ElBaul.OutputPorts.Chat;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -21,7 +21,7 @@ public class OpenAiChatBackend(HttpClient httpClient, IOptions<OpenAiOptions> op
         if (string.IsNullOrEmpty(options.Value.ApiKey))
         {
             logger.LogWarning("OpenAi:ApiKey is not configured; cannot get a chat reply");
-            return Result.Failure<string>("Chat is not configured.");
+            return Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable("Chat is not configured."));
         }
 
         var messages = new List<OpenAiMessage> { new("system", systemPrompt) };
@@ -42,7 +42,7 @@ public class OpenAiChatBackend(HttpClient httpClient, IOptions<OpenAiOptions> op
             {
                 var body = await response.Content.ReadAsStringAsync();
                 logger.LogError("OpenAI chat completion failed {StatusCode} {Body}", response.StatusCode, body);
-                return Result.Failure<string>($"OpenAI returned {response.StatusCode}");
+                return Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable($"OpenAI returned {response.StatusCode}"));
             }
 
             var payload = await response.Content.ReadFromJsonAsync<OpenAiResponse>();
@@ -50,7 +50,7 @@ public class OpenAiChatBackend(HttpClient httpClient, IOptions<OpenAiOptions> op
             if (string.IsNullOrEmpty(reply))
             {
                 logger.LogError("OpenAI response contained no reply");
-                return Result.Failure<string>("OpenAI response contained no reply");
+                return Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable("OpenAI response contained no reply"));
             }
 
             return reply;
@@ -58,12 +58,12 @@ public class OpenAiChatBackend(HttpClient httpClient, IOptions<OpenAiOptions> op
         catch (HttpRequestException ex)
         {
             logger.LogError(ex, "OpenAI chat completion failed");
-            return Result.Failure<string>("Failed to get a reply from the AI.");
+            return Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable("Failed to get a reply from the AI."));
         }
         catch (JsonException ex)
         {
             logger.LogError(ex, "OpenAI chat completion returned a malformed response body");
-            return Result.Failure<string>("OpenAI response contained no reply");
+            return Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable("OpenAI response contained no reply"));
         }
     }
 }

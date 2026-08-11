@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
@@ -307,7 +306,7 @@ public class PushDigestManagerTests
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId);
         _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Recuerdo", _clock.UtcNow()));
-        _pushNotificationSender.NextResult = CSharpFunctionalExtensions.Result.Failure("boom");
+        _pushNotificationSender.NextResult = Result.Failure(ApplicationError.ExternalDependencyUnavailable("boom"));
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));

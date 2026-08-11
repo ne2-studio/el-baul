@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Application.Support;
 using ElBaul.OutputPorts.Users;
 using ElBaul.Shared;
@@ -103,7 +102,7 @@ public class SupportManagerTests
     {
         SeedUser();
         var manager = CreateManager();
-        _supportBackend.NextResult = CSharpFunctionalExtensions.Result.Failure("boom");
+        _supportBackend.NextResult = Result.Failure(ApplicationError.ExternalDependencyUnavailable("boom"));
 
         var result = await manager.SubmitAsync("Bug", "Mensaje", null);
 

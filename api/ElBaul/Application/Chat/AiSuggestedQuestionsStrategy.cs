@@ -35,7 +35,7 @@ public class AiSuggestedQuestionsStrategy(
         if (replyResult.IsFailure)
         {
             logger.LogError("Suggested questions failed {Error}", replyResult.Error);
-            return Result.Failure<IEnumerable<string>>(ApplicationError.ExternalDependencyUnavailable(replyResult.Error));
+            return Result.Failure<IEnumerable<string>>(replyResult.Error);
         }
 
         return Result.Success(ParseQuestions(replyResult.Value));

@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-using CSharpFunctionalExtensions;
 using ElBaul.OutputPorts.Notifications;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -41,14 +41,14 @@ public class ResendEmailSender(HttpClient httpClient, IOptions<ResendOptions> op
             {
                 var body = await response.Content.ReadAsStringAsync();
                 logger.LogError("Resend send failed {StatusCode} {To} {Body}", response.StatusCode, message.To, body);
-                return Result.Failure<EmailSendResult>($"Resend returned {response.StatusCode}");
+                return Result.Failure<EmailSendResult>(ApplicationError.ExternalDependencyUnavailable($"Resend returned {response.StatusCode}"));
             }
 
             var payload = await response.Content.ReadFromJsonAsync<ResendResponse>();
             if (payload is null || string.IsNullOrEmpty(payload.Id))
             {
                 logger.LogError("Resend response missing message id {To}", message.To);
-                return Result.Failure<EmailSendResult>("Resend response missing message id");
+                return Result.Failure<EmailSendResult>(ApplicationError.ExternalDependencyUnavailable("Resend response missing message id"));
             }
 
             return new EmailSendResult(payload.Id);
@@ -56,7 +56,7 @@ public class ResendEmailSender(HttpClient httpClient, IOptions<ResendOptions> op
         catch (HttpRequestException ex)
         {
             logger.LogError(ex, "Resend send failed {To}", message.To);
-            return Result.Failure<EmailSendResult>("Failed to send email");
+            return Result.Failure<EmailSendResult>(ApplicationError.ExternalDependencyUnavailable("Failed to send email"));
         }
     }
 }

@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
@@ -83,7 +82,7 @@ public class ChatContextBuilderTests
         var baul = await SeedBaulAsync(baulId, "Familia");
         var embeddingBackend = new FakeEmbeddingBackend([])
         {
-            NextEmbedResult = CSharpFunctionalExtensions.Result.Failure<float[]>("Embedding backend unavailable")
+            NextEmbedResult = Result.Failure<float[]>(ApplicationError.ExternalDependencyUnavailable("Embedding backend unavailable"))
         };
 
         var mostRecent = new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), CustodioId, "El más reciente", _clock.UtcNow());

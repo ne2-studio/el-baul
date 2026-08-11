@@ -40,7 +40,7 @@ public class PushNotificationManager(
             var notification = new PushNotificationMessage(pushToken.Token, TestNotificationTitle, message, deepLink);
             var result = await pushNotificationSender.SendAsync(notification);
             if (result.IsFailure)
-                return Result.Failure(ApplicationError.ExternalDependencyUnavailable(result.Error));
+                return result;
         }
 
         return Result.Success();

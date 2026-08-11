@@ -1,6 +1,6 @@
-using CSharpFunctionalExtensions;
 using ElBaul.OutputPorts.Support;
 using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -21,7 +21,7 @@ public class LeadHubSupportBackend(HttpClient httpClient, IConfiguration configu
         if (string.IsNullOrEmpty(submitUrl))
         {
             logger.LogWarning("Support:LeadHub:SubmitUrl is not configured; cannot submit support request");
-            return Result.Failure("Support backend is not configured.");
+            return Result.Failure(ApplicationError.ExternalDependencyUnavailable("Support backend is not configured."));
         }
 
         using var content = new MultipartFormDataContent
@@ -43,7 +43,7 @@ public class LeadHubSupportBackend(HttpClient httpClient, IConfiguration configu
                 logger.LogError(
                     "LeadHub support submission failed {StatusCode} {Category} {UserId}",
                     response.StatusCode, submission.Category, submission.UserId);
-                return Result.Failure("Failed to submit support request.");
+                return Result.Failure(ApplicationError.ExternalDependencyUnavailable("Failed to submit support request."));
             }
 
             return Result.Success();
@@ -51,7 +51,7 @@ public class LeadHubSupportBackend(HttpClient httpClient, IConfiguration configu
         catch (HttpRequestException ex)
         {
             logger.LogError(ex, "LeadHub support submission failed {Category} {UserId}", submission.Category, submission.UserId);
-            return Result.Failure("Failed to submit support request.");
+            return Result.Failure(ApplicationError.ExternalDependencyUnavailable("Failed to submit support request."));
         }
     }
 }

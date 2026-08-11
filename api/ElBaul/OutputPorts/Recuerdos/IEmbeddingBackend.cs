@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+using ElBaul.Shared;
 
 namespace ElBaul.OutputPorts.Recuerdos;
 // Secondary port for whichever embedding provider turns recuerdo/query text into vectors

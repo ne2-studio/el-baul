@@ -32,9 +32,6 @@ public class SupportManager(
             category, user.Email, technicalInfo, message);
 
         var submission = new SupportSubmission(category, message, technicalInfo, userId, user.Email, user.Name);
-        var result = await supportBackend.SubmitAsync(submission);
-        return result.IsSuccess
-            ? Result.Success()
-            : Result.Failure(ApplicationError.ExternalDependencyUnavailable(result.Error));
+        return await supportBackend.SubmitAsync(submission);
     }
 }

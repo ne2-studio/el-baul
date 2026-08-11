@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Users;
@@ -113,7 +112,7 @@ public class PushNotificationManagerTests
         await setupManager.RegisterTokenAsync("token-c", "android");
         var sender = Substitute.For<IPushNotificationSender>();
         sender.SendAsync(Arg.Any<PushNotificationMessage>())
-            .Returns(CSharpFunctionalExtensions.Result.Success(), CSharpFunctionalExtensions.Result.Failure("device unreachable"));
+            .Returns(Result.Success(), Result.Failure(ApplicationError.ExternalDependencyUnavailable("device unreachable")));
         var manager = new PushNotificationManager(
             _pushTokenRepository, sender, new StaticCurrentUserProvider(UserId),
             new StaticIdGenerator(GeneratedTokenId), new StaticClock());

@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+using ElBaul.Shared;
 
 namespace ElBaul.OutputPorts.Notifications;
 public record EmailMessage(string To, string Subject, string Html, string PlainText);

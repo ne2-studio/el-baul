@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using CSharpFunctionalExtensions;
 using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -28,7 +28,7 @@ public class OpenAiEmbeddingBackend(HttpClient httpClient, IOptions<OpenAiOption
         if (string.IsNullOrEmpty(options.Value.ApiKey))
         {
             logger.LogWarning("OpenAi:ApiKey is not configured; cannot get embeddings");
-            return Result.Failure<IReadOnlyList<float[]>>("Chat is not configured.");
+            return Result.Failure<IReadOnlyList<float[]>>(ApplicationError.ExternalDependencyUnavailable("Chat is not configured."));
         }
 
         var request = new OpenAiEmbeddingRequest(options.Value.EmbeddingModel, texts.ToArray());
@@ -46,14 +46,14 @@ public class OpenAiEmbeddingBackend(HttpClient httpClient, IOptions<OpenAiOption
             {
                 var body = await response.Content.ReadAsStringAsync();
                 logger.LogError("OpenAI embeddings request failed {StatusCode} {Body}", response.StatusCode, body);
-                return Result.Failure<IReadOnlyList<float[]>>($"OpenAI returned {response.StatusCode}");
+                return Result.Failure<IReadOnlyList<float[]>>(ApplicationError.ExternalDependencyUnavailable($"OpenAI returned {response.StatusCode}"));
             }
 
             var payload = await response.Content.ReadFromJsonAsync<OpenAiEmbeddingResponse>();
             if (payload is null || payload.Data.Length != texts.Count)
             {
                 logger.LogError("OpenAI embeddings response had an unexpected shape");
-                return Result.Failure<IReadOnlyList<float[]>>("OpenAI embeddings response had an unexpected shape");
+                return Result.Failure<IReadOnlyList<float[]>>(ApplicationError.ExternalDependencyUnavailable("OpenAI embeddings response had an unexpected shape"));
             }
 
             // The API guarantees results in request order via Index, but sort explicitly
@@ -64,12 +64,12 @@ public class OpenAiEmbeddingBackend(HttpClient httpClient, IOptions<OpenAiOption
         catch (HttpRequestException ex)
         {
             logger.LogError(ex, "OpenAI embeddings request failed");
-            return Result.Failure<IReadOnlyList<float[]>>("Failed to get embeddings from the AI.");
+            return Result.Failure<IReadOnlyList<float[]>>(ApplicationError.ExternalDependencyUnavailable("Failed to get embeddings from the AI."));
         }
         catch (JsonException ex)
         {
             logger.LogError(ex, "OpenAI embeddings response had a malformed body");
-            return Result.Failure<IReadOnlyList<float[]>>("OpenAI embeddings response had an unexpected shape");
+            return Result.Failure<IReadOnlyList<float[]>>(ApplicationError.ExternalDependencyUnavailable("OpenAI embeddings response had an unexpected shape"));
         }
     }
 }

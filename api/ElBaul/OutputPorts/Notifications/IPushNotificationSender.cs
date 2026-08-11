@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+using ElBaul.Shared;
 
 namespace ElBaul.OutputPorts.Notifications;
 public record PushNotificationMessage(string Token, string Title, string Body, string? DeepLink);

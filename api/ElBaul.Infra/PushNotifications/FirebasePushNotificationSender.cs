@@ -1,5 +1,5 @@
-using CSharpFunctionalExtensions;
 using ElBaul.OutputPorts.Notifications;
+using ElBaul.Shared;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
@@ -55,7 +55,7 @@ public class FirebasePushNotificationSender : IPushNotificationSender
         catch (FirebaseMessagingException ex)
         {
             _logger.LogError(ex, "Firebase push send failed {Token} {ErrorCode}", message.Token, ex.MessagingErrorCode);
-            return Result.Failure($"Firebase returned {ex.MessagingErrorCode}");
+            return Result.Failure(ApplicationError.ExternalDependencyUnavailable($"Firebase returned {ex.MessagingErrorCode}"));
         }
     }
 }

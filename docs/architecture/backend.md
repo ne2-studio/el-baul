@@ -26,9 +26,10 @@ ElBaul.Maintenance ───┘                                           │
 - **`ElBaul`** — domain/use-case core: `Application/` (one manager class per aggregate root,
   implementing its input port), `Ports/Input/` (use-case interfaces + DTOs), `Ports/Output/`
   (everything the core needs from the outside world — repositories, `IClock`, `IIdGenerator`,
-  `ICurrentUserProvider`, `IPhotoStorage`, etc.). References only `CSharpFunctionalExtensions`
-  and `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB driver, no ORM.**
-  Fully unit-testable in isolation.
+  `ICurrentUserProvider`, `IPhotoStorage`, etc.). Every fallible operation — use cases and output
+  ports alike — returns `Shared.Result`/`Result<T>`, the one outcome vocabulary for the whole
+  core. References only `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB
+  driver, no ORM.** Fully unit-testable in isolation.
 - **`ElBaul.Api` / `ElBaul.Api.Lite`** — thin `Program.cs` per image: register that image's own
   infrastructure, call the shared host bootstrap, then handle whatever's genuinely
   infra-specific (migrations/Hangfire dashboard for the real image; nothing extra for Lite).

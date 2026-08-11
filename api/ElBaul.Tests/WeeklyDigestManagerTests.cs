@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;

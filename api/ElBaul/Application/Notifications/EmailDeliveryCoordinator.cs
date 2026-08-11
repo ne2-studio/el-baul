@@ -126,9 +126,9 @@ public class EmailDeliveryCoordinator(
 
         if (sendResult.IsFailure)
         {
-            await sentEmailRepository.UpdateAsync(existing with { Status = EmailStatus.Failed, ErrorMessage = sendResult.Error });
+            await sentEmailRepository.UpdateAsync(existing with { Status = EmailStatus.Failed, ErrorMessage = sendResult.Error.Message });
             logger.LogError("EmailFailed {Type} {SentEmailId} {Error}", type, existing.Id, sendResult.Error);
-            return Result.Failure(ApplicationError.ExternalDependencyUnavailable(sendResult.Error));
+            return Result.Failure(sendResult.Error);
         }
 
         await sentEmailRepository.UpdateAsync(existing with

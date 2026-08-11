@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.Shared;
@@ -72,7 +71,7 @@ public class AiSuggestedQuestionsStrategyTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId);
-        _aiChatBackend.NextResult = CSharpFunctionalExtensions.Result.Failure<string>("Chat is not configured.");
+        _aiChatBackend.NextResult = Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable("Chat is not configured."));
 
         var strategy = CreateStrategy();
         var result = await strategy.GenerateAsync(baul);
