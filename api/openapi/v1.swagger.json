@@ -7732,7 +7732,6 @@
           "chapterCount",
           "createdAt",
           "id",
-          "isCustodio",
           "memberCount",
           "name",
           "role",
@@ -7765,9 +7764,6 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "isCustodio": {
-            "type": "boolean"
           },
           "role": {
             "type": "string"

@@ -25,7 +25,7 @@ import { revokeAccess, updatePersona } from '@/features/people/useCases';
 const baulId = 'baul-1';
 
 function baul(role: Baul['role']): Baul {
-  return { id: baulId, name: 'Familia García', chapterCount: 1, isCustodio: role === 'custodio', role } as Baul;
+  return { id: baulId, name: 'Familia García', chapterCount: 1, role } as Baul;
 }
 
 function persona(overrides: Partial<Persona> = {}): Persona {

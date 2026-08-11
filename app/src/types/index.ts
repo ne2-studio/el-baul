@@ -85,7 +85,6 @@ export class Baul {
   chapterCount: number;
   coverPhotoUrl?: string;
   lastUpdated: string;
-  isCustodio?: boolean;
   role?: BaulRole;
   memberCount?: number;
 
@@ -96,7 +95,6 @@ export class Baul {
     this.chapterCount = data.chapterCount;
     this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
     this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
-    this.isCustodio = data.isCustodio;
     this.role = data.role as BaulRole;
     this.memberCount = data.memberCount;
   }

@@ -30,7 +30,6 @@ describe('baules useCases setBaulCover', () => {
       chapterCount: 1,
       createdAt: now,
       updatedAt: now,
-      isCustodio: true,
       role: 'custodio',
       memberCount: 1,
       ...overrides,

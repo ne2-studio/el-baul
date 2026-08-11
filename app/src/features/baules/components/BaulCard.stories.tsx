@@ -19,7 +19,7 @@ const baseBaul: Baul = {
   chapterCount: 4,
   coverPhotoUrl: storybookPhotos.familyCover,
   lastUpdated: 'hace 2 días',
-  isCustodio: true,
+  role: 'custodio',
   memberCount: 5,
 } as Baul;
 
@@ -35,7 +35,6 @@ export const Colaborador: Story = {
     ...Default.args,
     baul: {
       ...baseBaul,
-      isCustodio: false,
       role: 'colaborador',
     } as Baul,
   },
@@ -59,7 +58,6 @@ export const MissingMetadata: Story = {
       name: 'Baúl sin portada ni descripción',
       chapterCount: 0,
       lastUpdated: '',
-      isCustodio: false,
       role: 'colaborador',
     } as Baul,
   },

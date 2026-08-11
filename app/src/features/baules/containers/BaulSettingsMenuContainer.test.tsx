@@ -24,7 +24,7 @@ import { renameBaul } from '@/features/baules/useCases';
 function baul(overrides: Partial<Baul> = {}): Baul {
   return {
     id: 'baul-1', name: 'Familia García', chapterCount: 3, lastUpdated: 'hace 2 días',
-    isCustodio: true, role: 'custodio', ...overrides,
+    role: 'custodio', ...overrides,
   } as Baul;
 }
 
@@ -47,7 +47,7 @@ describe('BaulSettingsMenuContainer', () => {
   });
 
   it('renders nothing for a role with no baúl-settings permissions', () => {
-    renderContainer(baul({ isCustodio: false, role: 'colaborador' }));
+    renderContainer(baul({ role: 'colaborador' }));
 
     expect(screen.queryByRole('button', { name: 'Opciones del baúl' })).not.toBeInTheDocument();
   });

@@ -6505,7 +6505,6 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
-            isCustodio: boolean;
             role: string;
             /** Format: int32 */
             memberCount: number;

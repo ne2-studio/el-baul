@@ -8,7 +8,6 @@ public record BaulDto
     string? CoverPhotoUrl,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    bool IsCustodio,
     string Role,
     int MemberCount
 );

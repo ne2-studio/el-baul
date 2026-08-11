@@ -61,15 +61,16 @@ describe('roleUtils baul permissions', () => {
     expect(isAdminRole(role)).toBe(expected.isAdmin);
   });
 
-  it('lets the backend isCustodio flag override role for custodian-only actions', () => {
-    expect(getBaulPermissions({ role: 'administrador', isCustodio: true }).canRequestBaulDeletion).toBe(true);
-    expect(getBaulPermissions({ role: 'custodio', isCustodio: false }).canRequestBaulDeletion).toBe(false);
+  it('derives isCustodio purely from role, since the backend only ever reports role', () => {
+    expect(getBaulPermissions({ role: 'administrador' }).canRequestBaulDeletion).toBe(false);
+    expect(getBaulPermissions({ role: 'custodio' }).canRequestBaulDeletion).toBe(true);
   });
 
-  it('keeps the existing plan-limit fallback for loaded baules without isCustodio', () => {
-    expect(getBaulPermissions({ role: 'colaborador' }).countsAsCustodioForPlan).toBe(true);
+  it('only the custodio role counts towards the plan limit', () => {
+    expect(getBaulPermissions({ role: 'custodio' }).countsAsCustodioForPlan).toBe(true);
+    expect(getBaulPermissions({ role: 'administrador' }).countsAsCustodioForPlan).toBe(false);
+    expect(getBaulPermissions({ role: 'colaborador' }).countsAsCustodioForPlan).toBe(false);
     expect(getBaulPermissions({ role: 'sin_acceso' }).countsAsCustodioForPlan).toBe(false);
-    expect(getBaulPermissions({ role: 'colaborador', isCustodio: false }).countsAsCustodioForPlan).toBe(false);
     expect(getBaulPermissions().countsAsCustodioForPlan).toBe(false);
   });
 });

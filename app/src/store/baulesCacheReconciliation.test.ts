@@ -31,7 +31,6 @@ function newBaul(overrides: Partial<ConstructorParameters<typeof Baul>[0]> = {})
     chapterCount: 1,
     createdAt: now,
     updatedAt: now,
-    isCustodio: true,
     role: 'custodio',
     memberCount: 1,
     ...overrides,

@@ -56,7 +56,6 @@ public class BaulManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Familia", result.Value.Name);
-        Assert.True(result.Value.IsCustodio);
         Assert.Equal("custodio", result.Value.Role);
     }
 
@@ -95,7 +94,6 @@ public class BaulManagerTests
         var result = await manager.GetByIdAsync(new BaulId(baulId));
 
         Assert.True(result.IsSuccess);
-        Assert.False(result.Value.IsCustodio);
         Assert.Equal("colaborador", result.Value.Role);
     }
 

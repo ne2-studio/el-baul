@@ -51,14 +51,17 @@ function isCustodioRole(role?: BaulRole): boolean {
   return role === 'custodio';
 }
 
-export function getBaulPermissions(baul?: Pick<Baul, 'role' | 'isCustodio'>): BaulPermissions {
+export function getBaulPermissions(baul?: Pick<Baul, 'role'>): BaulPermissions {
   const isAdmin = isAdminRole(baul?.role);
-  const isCustodio = baul?.isCustodio ?? isCustodioRole(baul?.role);
+  const isCustodio = isCustodioRole(baul?.role);
 
   return {
     isAdmin,
     isCustodio,
-    countsAsCustodioForPlan: baul ? baul.isCustodio !== false && baul.role !== 'sin_acceso' : false,
+    // Only the actual custodio counts against the family's plan limit — administradores and
+    // colaboradores never do, same underlying fact as isCustodio now that both are derived
+    // from role.
+    countsAsCustodioForPlan: isCustodio,
     canCreatePersona: isAdmin,
     canManageBaulInvite: isAdmin,
     canEditBaul: isAdmin,
