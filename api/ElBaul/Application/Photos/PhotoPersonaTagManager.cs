@@ -98,7 +98,7 @@ public class PhotoPersonaTagManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Batch photo tagging", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Batch photo tagging");
         if (auth.IsFailure) return Result.Failure<IEnumerable<string>>(auth.Error);
 
         // The persona set is shared by every photo in the batch (they all come from the same

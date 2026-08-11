@@ -34,6 +34,8 @@ public enum AccessLevel { Member, Admin }
 
 public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger)
 {
+    private static readonly object EmptyLogContext = new { };
+
     public async Task<IReadOnlyList<AccessibleBaul>> GetAccessibleAsync(UserId userId)
     {
         var owned = await baulRepository.GetOwnedByUserIdAsync(userId);
@@ -54,10 +56,11 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
 
     // Consolidates the "load the baúl → fail if missing → check membership/role → fail if
     // unauthorized" sequence every manager needs before acting on a baúl-scoped resource.
-    // `operation` and `logContext` feed a single, uniform log line on either failure.
+    // `operation` and optional `logContext` feed a single, uniform log line on either failure.
     public async Task<Result<BaulAccess>> AuthorizeAsync(
-        BaulId baulId, UserId userId, AccessLevel level, string operation, object logContext)
+        BaulId baulId, UserId userId, AccessLevel level, string operation, object? logContext = null)
     {
+        logContext ??= EmptyLogContext;
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null)
         {
@@ -69,8 +72,9 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
     }
 
     public async Task<Result<BaulAccess>> AuthorizeAsync(
-        Baul baul, UserId userId, AccessLevel level, string operation, object logContext)
+        Baul baul, UserId userId, AccessLevel level, string operation, object? logContext = null)
     {
+        logContext ??= EmptyLogContext;
         var access = await GetAsync(baul, userId);
         var authorized = level == AccessLevel.Admin ? access.IsAdmin : access.IsMember;
         if (!authorized)

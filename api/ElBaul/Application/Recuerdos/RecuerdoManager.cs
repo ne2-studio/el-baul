@@ -41,8 +41,8 @@ public class RecuerdoManager(
 
     public Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(BaulId baulId) =>
         GetRecuerdosCoreAsync(
-            new RecuerdoScope(baulId, null, null, null), "Baul recuerdos", new { BaulId = baulId },
-            includeThumbnails: true, ChapterNameMode.PerChapter);
+            new RecuerdoScope(baulId, null, null, null), "Baul recuerdos",
+            includeThumbnails: true, chapterNameMode: ChapterNameMode.PerChapter);
 
     public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(ChapterId chapterId)
     {
@@ -50,8 +50,8 @@ public class RecuerdoManager(
         if (scope.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(scope.Error);
 
         return await GetRecuerdosCoreAsync(
-            scope.Value, "Chapter recuerdos", new { scope.Value.BaulId, ChapterId = chapterId },
-            includeThumbnails: true, ChapterNameMode.Constant);
+            scope.Value, "Chapter recuerdos", includeThumbnails: true, chapterNameMode: ChapterNameMode.Constant,
+            new { scope.Value.BaulId, ChapterId = chapterId });
     }
 
     public async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosAsync(PhotoId photoId)
@@ -60,12 +60,12 @@ public class RecuerdoManager(
         if (scope.IsFailure) return Result.Failure<IEnumerable<RecuerdoDto>>(scope.Error);
 
         return await GetRecuerdosCoreAsync(
-            scope.Value, "Photo recuerdos", new { scope.Value.BaulId, PhotoId = photoId },
-            includeThumbnails: false, ChapterNameMode.None);
+            scope.Value, "Photo recuerdos", includeThumbnails: false, chapterNameMode: ChapterNameMode.None,
+            new { scope.Value.BaulId, PhotoId = photoId });
     }
 
     public Task<Result<RecuerdoDto>> CreateRecuerdoAsync(BaulId baulId, string text) =>
-        CreateRecuerdoCoreAsync(new RecuerdoScope(baulId, null, null, null), text, "Recuerdo creation", new { BaulId = baulId });
+        CreateRecuerdoCoreAsync(new RecuerdoScope(baulId, null, null, null), text, "Recuerdo creation");
 
     public async Task<Result<RecuerdoDto>> CreateRecuerdoAsync(ChapterId chapterId, string text)
     {
@@ -164,7 +164,7 @@ public class RecuerdoManager(
     // single rule now instead of three near-identical copies.
 
     private async Task<Result<IEnumerable<RecuerdoDto>>> GetRecuerdosCoreAsync(
-        RecuerdoScope scope, string operationName, object authContext, bool includeThumbnails, ChapterNameMode chapterNameMode)
+        RecuerdoScope scope, string operationName, bool includeThumbnails, ChapterNameMode chapterNameMode, object? authContext = null)
     {
         var userId = currentUserProvider.GetUserId();
         var auth = await baulAccess.AuthorizeAsync(scope.BaulId, userId, AccessLevel.Member, operationName, authContext);
@@ -198,7 +198,7 @@ public class RecuerdoManager(
         return Result.Success<IEnumerable<RecuerdoDto>>(dtos);
     }
 
-    private async Task<Result<RecuerdoDto>> CreateRecuerdoCoreAsync(RecuerdoScope scope, string text, string operationName, object authContext)
+    private async Task<Result<RecuerdoDto>> CreateRecuerdoCoreAsync(RecuerdoScope scope, string text, string operationName, object? authContext = null)
     {
         var userId = currentUserProvider.GetUserId();
         var auth = await baulAccess.AuthorizeAsync(scope.BaulId, userId, AccessLevel.Member, operationName, authContext);

@@ -46,7 +46,7 @@ public class BaulInviteLinkManager(
     public async Task<Result<BaulInviteLinkDto>> GetOrCreateAsync(BaulId baulId)
     {
         var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul invite link get-or-create", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul invite link get-or-create");
         if (auth.IsFailure) return Result.Failure<BaulInviteLinkDto>(auth.Error);
 
         var existing = await baulInviteLinkRepository.GetActiveByBaulIdAsync(baulId);
@@ -67,7 +67,7 @@ public class BaulInviteLinkManager(
     public async Task<Result<BaulInviteLinkDto>> RegenerateAsync(BaulId baulId)
     {
         var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul invite link regenerate", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul invite link regenerate");
         if (auth.IsFailure) return Result.Failure<BaulInviteLinkDto>(auth.Error);
 
         var current = await baulInviteLinkRepository.GetActiveByBaulIdAsync(baulId);

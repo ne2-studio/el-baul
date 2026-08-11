@@ -39,7 +39,7 @@ public class BaulFeedManager(
         }
 
         var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Baul feed", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Baul feed");
         if (auth.IsFailure) return Result.Failure<FeedPageDto>(auth.Error);
 
         var recuerdos = await recuerdoManager.GetRecuerdosAsync(baulId);

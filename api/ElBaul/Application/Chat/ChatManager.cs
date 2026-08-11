@@ -71,7 +71,7 @@ public class ChatManager(
             return Result.Failure<IEnumerable<ChatMessageDto>>(ApplicationError.Validation("Chat is not enabled"));
 
         var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chat messages", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chat messages");
         if (auth.IsFailure) return Result.Failure<IEnumerable<ChatMessageDto>>(auth.Error);
 
         var messages = await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId);
@@ -87,7 +87,7 @@ public class ChatManager(
         }
 
         var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chat message", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chat message");
         if (auth.IsFailure) return Result.Failure<ChatMessageDto>(auth.Error);
         var baul = auth.Value.Baul;
 
@@ -137,7 +137,7 @@ public class ChatManager(
         }
 
         var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Suggested questions", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Suggested questions");
         if (auth.IsFailure) return Result.Failure<IEnumerable<string>>(auth.Error);
 
         var result = await suggestedQuestionsStrategy.GenerateAsync(auth.Value.Baul);

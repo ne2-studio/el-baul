@@ -30,7 +30,7 @@ public class RemovalRequestManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal requests", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal requests");
         if (auth.IsFailure) return Result.Failure<IEnumerable<RemovalRequestDto>>(auth.Error);
 
         var requests = await baulRepository.GetRemovalRequestsAsync(baulId);
@@ -48,7 +48,7 @@ public class RemovalRequestManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Removal request creation", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Removal request creation");
         if (auth.IsFailure) return Result.Failure<RemovalRequestDto>(auth.Error);
         var access = auth.Value;
 
@@ -77,7 +77,7 @@ public class RemovalRequestManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request approval", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request approval");
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
         var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
@@ -114,7 +114,7 @@ public class RemovalRequestManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request rejection", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request rejection");
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
         var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);

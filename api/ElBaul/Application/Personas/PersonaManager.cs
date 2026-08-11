@@ -35,7 +35,7 @@ public class PersonaManager(
     {
         var userId = currentUserProvider.GetUserId();
         var auth = await baulAccess.AuthorizeAsync(
-            baulId, userId, AccessLevel.Member, "Personas list", new { BaulId = baulId });
+            baulId, userId, AccessLevel.Member, "Personas list");
         if (auth.IsFailure) return Result.Failure<IEnumerable<PersonaDto>>(auth.Error);
         var access = auth.Value;
 
@@ -84,7 +84,7 @@ public class PersonaManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona creation", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona creation");
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var persona = new Persona(
@@ -214,7 +214,7 @@ public class PersonaManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona role update", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona role update");
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
@@ -248,7 +248,7 @@ public class PersonaManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona removal", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Persona removal");
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(

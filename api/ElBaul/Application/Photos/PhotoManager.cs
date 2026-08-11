@@ -54,7 +54,7 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photos", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photos");
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var rows = await photoListReadModel.GetLooseByBaulIdAsync(baulId);
@@ -131,7 +131,7 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photo upload", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photo upload");
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
         return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId, uploadBatchId);
@@ -397,7 +397,7 @@ public class PhotoManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Untagged photo suggestion", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Untagged photo suggestion");
         if (auth.IsFailure) return Result.Failure<PhotoDto?>(auth.Error);
 
         var row = await photoListReadModel.GetUntaggedSuggestionAsync(baulId);

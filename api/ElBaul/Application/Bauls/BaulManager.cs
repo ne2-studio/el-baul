@@ -70,7 +70,7 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Baul detail", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Baul detail");
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 
@@ -82,7 +82,7 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul cover update", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul cover update");
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 
@@ -106,7 +106,7 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul update", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Baul update");
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 

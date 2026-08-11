@@ -34,7 +34,7 @@ public class ChapterManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapters by baul", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapters by baul");
         if (auth.IsFailure) return Result.Failure<IEnumerable<ChapterDto>>(auth.Error);
 
         // IChapterListReadModel does the heavy lifting (recuerdo counts/latest, photo date
@@ -70,7 +70,7 @@ public class ChapterManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapter creation", new { BaulId = baulId });
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapter creation");
         if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
         var baul = auth.Value.Baul;
