@@ -70,7 +70,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         await users.UpsertAsync(custodio);
         await users.UpsertAsync(guest);
 
-        var baul = NewBaul(custodio.Id, "Baúl de agregación");
+        var baul = NewBaul(custodio.Id, "Baúl de agregación", chapterCount: 1);
         await baules.CreateAsync(baul);
 
         // Three Personas, only two claimed — the custodio, the guest (claimed), and one
@@ -90,7 +90,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         baulRow.MemberCount.Should().Be(3, "custodio + guest colaborador + the unclaimed persona");
         baulRow.LinkedUserCount.Should().Be(2, "only the custodio and the guest are claimed");
         baulRow.PhotoCount.Should().Be(1);
-        baulRow.ChapterCount.Should().Be(1);
+        baulRow.ChapterCount.Should().Be(1, "the baúl list publishes Baul.ChapterCount instead of recomputing a second count from Chapters");
 
         var detail = await admin.GetBaulDetailAsync(baul.Id);
         detail!.Personas.Should().HaveCount(3);
@@ -141,8 +141,8 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
 
     private static User NewUser(string id) => new(new UserId(id), $"{id}@example.com", id, DateTime.UtcNow);
 
-    private static Baul NewBaul(string custodioId, string name) =>
-        new(new BaulId(Guid.NewGuid()), name, Description: null, new UserId(custodioId), ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
+    private static Baul NewBaul(string custodioId, string name, int chapterCount = 0) =>
+        new(new BaulId(Guid.NewGuid()), name, Description: null, new UserId(custodioId), ChapterCount: chapterCount, DateTime.UtcNow, DateTime.UtcNow);
 
     private static Persona NewPersona(BaulId baulId, string? userId, string nickname, BaulRole role) =>
         new(new PersonaId(Guid.NewGuid()), baulId, userId is null ? null : new UserId(userId), nickname, role, DateTime.UtcNow);

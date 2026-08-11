@@ -82,11 +82,6 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             .Select(g => new { BaulId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BaulId, x => x.Count);
 
-        var chapterCounts = await dbContext.Chapters
-            .GroupBy(a => a.BaulId)
-            .Select(g => new { BaulId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.BaulId, x => x.Count);
-
         var baules = await dbContext.Baules.AsNoTracking().OrderByDescending(b => b.CreatedAt).ToListAsync();
         var custodioIds = baules.Select(b => b.CustodioId).Distinct().ToList();
         var custodioNames = await dbContext.Users.AsNoTracking()
@@ -99,7 +94,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             memberCounts.GetValueOrDefault(b.Id),
             linkedUserCounts.GetValueOrDefault(b.Id),
             photoCounts.GetValueOrDefault(b.Id),
-            chapterCounts.GetValueOrDefault(b.Id)));
+            b.ChapterCount));
     }
 
     public async Task<AdminBaulDetailRow?> GetBaulDetailAsync(BaulId baulId)
