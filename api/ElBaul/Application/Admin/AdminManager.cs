@@ -64,7 +64,7 @@ public class AdminManager(
         if (row is null) return Result.Failure<AdminUserDetailDto>(ApplicationError.NotFound("User not found"));
 
         var baules = row.Baules.Select(b =>
-            new AdminUserBaulMembershipDto(b.BaulId.ToString(), b.BaulName, b.Role.ToApiString(), b.PersonId.ToString()));
+            new AdminUserBaulMembershipDto(b.BaulId.ToString(), b.BaulName, b.Role.ToApiString(), b.IsCustodio, b.PersonId.ToString()));
         var hasPushToken = (await pushTokenRepository.GetTokensForUserAsync(userId)).Any();
 
         return new AdminUserDetailDto(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, baules, hasPushToken);
@@ -86,6 +86,7 @@ public class AdminManager(
             su.Nickname,
             su.Name,
             su.Role.ToApiString(),
+            su.UserId == row.Baul.CustodioId,
             su.UserId?.ToString(),
             su.IsClaimed ? row.LinkedUserNames.GetValueOrDefault(su.UserId!.Value) : null));
 

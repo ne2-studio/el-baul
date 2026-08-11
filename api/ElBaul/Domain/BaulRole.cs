@@ -1,15 +1,20 @@
 using Ne2Studio.Common;
 namespace ElBaul.Domain;
+// Custodio is deliberately not a member of this enum — it's not a permission level, it's the
+// baúl's singular legal-custody relationship (see Baul.CustodioId / Baul.IsCustodio). A role
+// enum member here would let this ever be assigned/changed like a permission, which is exactly
+// the state authorization should never allow. See BaulAccessService for how custody and role
+// combine into IsAdmin/IsMember.
 public enum BaulRole
 {
     Colaborador,
     Administrador,
-    Custodio,
     SinAcceso
 }
 
 // Wire-string <-> BaulRole, public (unlike DtoMapping) so the Presentation layer can parse a
-// role string into the enum before it crosses the IPersonaManager input-port boundary.
+// role string into the enum before it crosses the IPersonaManager input-port boundary. "custodio"
+// is intentionally not accepted here — it's never a role a caller can assign, see BaulRole above.
 public static class BaulRoleParser
 {
     public static Result<BaulRole> Parse(string value) =>
@@ -17,7 +22,6 @@ public static class BaulRoleParser
         {
             "colaborador" => Result.Success(BaulRole.Colaborador),
             "administrador" => Result.Success(BaulRole.Administrador),
-            "custodio" => Result.Success(BaulRole.Custodio),
             _ => Result.Failure<BaulRole>(ApplicationError.Validation($"'{value}' is not a valid role."))
         };
 }

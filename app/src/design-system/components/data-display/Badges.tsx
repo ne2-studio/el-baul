@@ -71,11 +71,14 @@ export function PersonBadge({ nickname, avatarUrl, onClick, className }: PersonB
 
 interface RoleBadgeProps {
   role: BaulRole;
+  /** True for the baúl's custodio — a legal-custody relationship, not a role value (see
+   * BaulRole in types/index.ts), so it overrides the role label rather than being one. */
+  isCustodio?: boolean;
   tone?: 'default' | 'onImage';
   className?: string;
 }
 
-export function RoleBadge({ role, tone = 'default', className }: RoleBadgeProps) {
+export function RoleBadge({ role, isCustodio = false, tone = 'default', className }: RoleBadgeProps) {
   return (
     <span
       className={cn(
@@ -84,7 +87,7 @@ export function RoleBadge({ role, tone = 'default', className }: RoleBadgeProps)
         className,
       )}
     >
-      {getRoleDisplayName(role)}
+      {isCustodio ? 'Custodio' : getRoleDisplayName(role)}
     </span>
   );
 }

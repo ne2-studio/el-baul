@@ -30,8 +30,10 @@ public class InMemoryBaulRepository : IBaulRepository
     {
         lock (_lock)
         {
+            // The custodian's own baules are excluded here (Baul.CustodioId == userId): see
+            // BaulRepository.GetSharedByUserIdAsync for why.
             var result = _personas.Values
-                .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio && s.Role != BaulRole.SinAcceso)
+                .Where(s => s.UserId == userId && s.Role != BaulRole.SinAcceso && _baules[s.BaulId].CustodioId != userId)
                 .Select(s => new BaulAccess(_baules[s.BaulId], s.Role))
                 .ToList();
 

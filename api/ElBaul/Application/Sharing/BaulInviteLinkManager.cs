@@ -109,7 +109,7 @@ public class BaulInviteLinkManager(
         var personas = await baulRepository.GetPersonasAsync(baul.Id);
         var candidates = personas.Where(p => p.Role != BaulRole.SinAcceso)
             .Select(p => (Persona: p, User: (User?)null, CanEdit: false));
-        var dtos = await personaDtoProjector.ProjectManyAsync(candidates);
+        var dtos = await personaDtoProjector.ProjectManyAsync(candidates, baul.CustodioId);
         var avatarUrls = dtos
             .Select(d => d.AvatarUrl)
             .Where(url => url is { Length: > 0 })
@@ -146,7 +146,7 @@ public class BaulInviteLinkManager(
         // claimable list instead of one round trip per persona.
         var claimableItems = personas.Where(p => p.IsClaimable)
             .Select(p => (Persona: p, User: (User?)null, CanEdit: false));
-        var dtos = await personaDtoProjector.ProjectManyAsync(claimableItems);
+        var dtos = await personaDtoProjector.ProjectManyAsync(claimableItems, baul.CustodioId);
         var claimable = dtos.Select(dto => new ClaimablePersonaDto(dto.Id, dto.Nickname, dto.Name, dto.AvatarUrl)).ToList();
 
         return Result.Success<IEnumerable<ClaimablePersonaDto>>(claimable);
@@ -179,7 +179,7 @@ public class BaulInviteLinkManager(
             // Already an active member — including the custodio, who always has a Persona
             // row (see BaulManager.CreateAsync). Joining again via the global link is a
             // no-op, not an error or a duplicate Persona.
-            return await personaDtoProjector.ProjectAsync(access.Persona, user, canEdit: true);
+            return await personaDtoProjector.ProjectAsync(access.Persona, user, canEdit: true, baul.CustodioId);
         }
 
         if (personaId is { } claimId)
@@ -196,7 +196,7 @@ public class BaulInviteLinkManager(
             await baulRepository.UpdatePersonaAsync(claimed);
             logger.LogInformation("Global invite accepted, existing persona claimed {BaulId} {PersonaId}", link.BaulId, claimed.Id);
 
-            return await personaDtoProjector.ProjectAsync(claimed, user, canEdit: true);
+            return await personaDtoProjector.ProjectAsync(claimed, user, canEdit: true, baul.CustodioId);
         }
 
         var persona = new Persona(
@@ -207,7 +207,7 @@ public class BaulInviteLinkManager(
 
         persona = await TryImportAvatarAsync(persona);
 
-        return await personaDtoProjector.ProjectAsync(persona, user, canEdit: true);
+        return await personaDtoProjector.ProjectAsync(persona, user, canEdit: true, baul.CustodioId);
     }
 
     private async Task<Persona> TryImportAvatarAsync(Persona persona)

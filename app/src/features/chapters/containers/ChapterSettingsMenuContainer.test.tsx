@@ -23,7 +23,7 @@ const baulId = 'baul-1';
 const chapterId = 'chapter-1';
 
 function baul(overrides: Partial<Baul> = {}): Baul {
-  return { id: baulId, name: 'Familia García', chapterCount: 1, role: 'custodio', ...overrides } as Baul;
+  return { id: baulId, name: 'Familia García', chapterCount: 1, role: 'administrador', isCustodio: true, ...overrides } as Baul;
 }
 
 function renderContainer(props: Partial<React.ComponentProps<typeof ChapterSettingsMenuContainer>> = {}) {
@@ -110,7 +110,7 @@ describe('ChapterSettingsMenuContainer', () => {
 
   it('hides the delete option for a non-admin', async () => {
     const user = userEvent.setup();
-    useBaulesStore.setState({ baules: [baul({ role: 'colaborador' })] });
+    useBaulesStore.setState({ baules: [baul({ role: 'colaborador', isCustodio: false })] });
 
     renderContainer();
     await user.click(screen.getByRole('button', { name: 'Opciones del capítulo' }));

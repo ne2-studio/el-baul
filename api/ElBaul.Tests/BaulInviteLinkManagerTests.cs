@@ -39,7 +39,7 @@ public class BaulInviteLinkManagerTests
     {
         var baulId = new BaulId(Guid.NewGuid());
         await _baules.CreateAsync(new Baul(baulId, "Familia Pérez", null, new UserId(CustodioId), 0, Now, Now));
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Custodio, Now));
+        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Administrador, Now));
         return baulId;
     }
 
@@ -235,7 +235,8 @@ public class BaulInviteLinkManagerTests
         var result = await manager.AcceptAsync(link.Value.Token);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("custodio", result.Value.Role);
+        Assert.Equal("administrador", result.Value.Role);
+        Assert.True(result.Value.IsCustodio);
         var personas = await _baules.GetPersonasAsync(baulId);
         Assert.Single(personas);
     }

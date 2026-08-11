@@ -14,6 +14,12 @@ public record Baul
     string? CoverPhotoKey = null
 )
 {
+    // The single interpretation of "is this user the baúl's custodio" — a legal-custody
+    // relationship, singular and non-transferable except via an explicit ownership change, not a
+    // permission level. Callers should ask this instead of re-deriving it from CustodioId
+    // equality by hand; see BaulRole.cs for why Custodio isn't a role.
+    public bool IsCustodio(UserId userId) => CustodioId == userId;
+
     // Same cover-photo rule as Chapter (see Chapter.WithPhotoAdded/WithPhotoRemoved/WithCover):
     // first photo in becomes the cover, only the current cover is ever cleared.
     public Baul WithPhotoAdded(Photo photo, DateTime updatedAt) =>

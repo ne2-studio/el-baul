@@ -42,7 +42,7 @@ describe('people useCases load failures are not swallowed', () => {
       baulId,
       nickname: 'Abu',
       status: 'active',
-      role: 'colaborador',
+      role: 'colaborador', isCustodio: false,
       invitedDate: new Date().toISOString(),
       canEdit: true,
     });
@@ -64,11 +64,11 @@ describe('createPersona', () => {
 
   it('appends the created persona to the baúl\'s cached list', async () => {
     const existing = new Persona({
-      id: 'p1', baulId, nickname: 'Abu', status: 'active', role: 'colaborador',
+      id: 'p1', baulId, nickname: 'Abu', status: 'active', role: 'colaborador', isCustodio: false,
       invitedDate: new Date().toISOString(), canEdit: true,
     });
     const created = new Persona({
-      id: 'p2', baulId, nickname: 'Tío Juan', status: 'active', role: 'colaborador',
+      id: 'p2', baulId, nickname: 'Tío Juan', status: 'active', role: 'colaborador', isCustodio: false,
       invitedDate: new Date().toISOString(), canEdit: true,
     });
     usePersonasStore.setState({ personas: { [baulId]: [existing] } });
@@ -96,7 +96,7 @@ describe('setPersonaAvatarPhoto', () => {
       baulId,
       nickname: 'Abu',
       status: 'active',
-      role: 'colaborador',
+      role: 'colaborador', isCustodio: false,
       invitedDate: new Date().toISOString(),
       canEdit: true,
     });
@@ -105,7 +105,7 @@ describe('setPersonaAvatarPhoto', () => {
       baulId,
       nickname: 'Abu',
       status: 'active',
-      role: 'colaborador',
+      role: 'colaborador', isCustodio: false,
       invitedDate: new Date().toISOString(),
       canEdit: true,
       avatarPhotoId: 'photo-1',
@@ -133,7 +133,7 @@ describe('setPersonaAvatarPhoto', () => {
 
   it('does not duplicate the photo id in the cache when it is already there', async () => {
     const updated = new Persona({
-      id: 'p1', baulId, nickname: 'Abu', status: 'active', role: 'colaborador',
+      id: 'p1', baulId, nickname: 'Abu', status: 'active', role: 'colaborador', isCustodio: false,
       invitedDate: new Date().toISOString(), canEdit: true, avatarPhotoId: 'photo-1',
     });
     const photo = { id: 'photo-1', thumbnailUrl: 'thumb', fullUrl: 'full', recuerdoCount: 0 };

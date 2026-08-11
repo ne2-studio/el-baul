@@ -76,7 +76,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         // Three Personas, only two claimed — the custodio, the guest (claimed), and one
         // pre-provisioned row nobody has claimed yet: the exact shape AdminRepository's own
         // comments warn about (Persona.IsClaimed can't be used in the server-side Where).
-        await baules.AddPersonaAsync(NewPersona(baul.Id, custodio.Id, "Custodio", BaulRole.Custodio));
+        await baules.AddPersonaAsync(NewPersona(baul.Id, custodio.Id, "Custodio", BaulRole.Administrador));
         var claimedGuest = NewPersona(baul.Id, guest.Id, "Invitado", BaulRole.Colaborador);
         await baules.AddPersonaAsync(claimedGuest);
         await baules.AddPersonaAsync(NewPersona(baul.Id, userId: null, "Sin reclamar", BaulRole.Colaborador));

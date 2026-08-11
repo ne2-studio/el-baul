@@ -3,7 +3,6 @@ import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Persona } from '@/types';
 import { Card } from '@/design-system/components/data-display/Card';
-import { getBaulPermissions } from '@/utils/roleUtils';
 
 interface PersonaCardProps {
   persona: Persona;
@@ -20,7 +19,7 @@ export function PersonaCard({ persona, onClick, isMe = false, muted = false }: P
       <div className={`aspect-square bg-secondary flex items-center justify-center overflow-hidden ${muted ? 'opacity-70 grayscale' : ''}`}>
         {persona.avatarUrl ? (
           <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" />
-        ) : getBaulPermissions({ role: persona.role }).isCustodio ? (
+        ) : persona.isCustodio ? (
           <Icon icon={icons.crown} className="w-10 h-10 text-primary opacity-60" strokeWidth={1.5} aria-hidden />
         ) : (
           <Icon icon={icons.user} className="w-10 h-10 text-muted-foreground opacity-40" strokeWidth={1.5} aria-hidden />

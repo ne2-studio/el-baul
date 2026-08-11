@@ -18,6 +18,7 @@ const persona: Persona = {
   nickname: 'Abuela',
   status: 'active',
   role: 'colaborador',
+  isCustodio: false,
   invitedDate: 'hace 2 meses',
 };
 

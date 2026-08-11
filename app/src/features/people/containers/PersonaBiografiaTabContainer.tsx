@@ -23,8 +23,12 @@ export function PersonaBiografiaTabContainer({ baulId, persona }: PersonaBiograf
   const { run, isPending } = useAsyncAction();
   const [isEditingBiografia, setIsEditingBiografia] = useState(false);
 
-  const currentBaulRole = baules.find((b) => b.id === baulId)?.role;
-  const canEditBiografia = getPersonaPermissions({ currentBaulRole, persona }).canEditPersonaBiography;
+  const currentBaul = baules.find((b) => b.id === baulId);
+  const canEditBiografia = getPersonaPermissions({
+    currentBaulRole: currentBaul?.role,
+    currentIsCustodio: currentBaul?.isCustodio,
+    persona,
+  }).canEditPersonaBiography;
 
   const handleSaveBiografia = async (biografia: string) => {
     const result = await run(() => updatePersonaBiografia(baulId, persona.id, biografia), {

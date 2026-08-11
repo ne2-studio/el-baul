@@ -29,31 +29,31 @@ public class BaulAccessTests
     // --- BaulAccess record: pure combinatorics, no service involved ---
 
     [Theory]
-    [InlineData(BaulRole.Colaborador, false)]
-    [InlineData(BaulRole.Administrador, true)]
-    [InlineData(BaulRole.Custodio, true)] // a Persona row can itself be stamped Custodio (the baúl owner's own row)
-    public void IsAdmin_ShouldFollowPersonaRole_ForNonCustodioMember(BaulRole role, bool expectedIsAdmin)
+    [InlineData(BaulRole.Colaborador, false, "colaborador")]
+    [InlineData(BaulRole.Administrador, true, "administrador")]
+    public void IsAdmin_ShouldFollowPersonaRole_ForNonCustodioMember(BaulRole role, bool expectedIsAdmin, string expectedRoleApiString)
     {
         var access = new BaulAccess(TestBaul, IsCustodio: false, MakePersona(role));
 
         Assert.True(access.IsMember);
         Assert.Equal(expectedIsAdmin, access.IsAdmin);
-        Assert.Equal(role, access.Role);
+        Assert.Equal(expectedRoleApiString, access.RoleApiString);
     }
 
     [Theory]
     [InlineData(BaulRole.Colaborador)]
     [InlineData(BaulRole.Administrador)]
-    [InlineData(BaulRole.Custodio)]
     public void IsCustodio_ShouldGrantMemberAndAdmin_RegardlessOfAnyPersonaRole(BaulRole personaRole)
     {
         // The custodio flag comes from Baul.CustodioId, independent of whatever Persona row
-        // (if any) that same user happens to also have — it must always win.
+        // (if any) that same user happens to also have — it must always win. There's no
+        // Custodio Persona.Role to also try here (see BaulRole.cs) — IsCustodio is the only
+        // signal for custody.
         var access = new BaulAccess(TestBaul, IsCustodio: true, MakePersona(personaRole));
 
         Assert.True(access.IsMember);
         Assert.True(access.IsAdmin);
-        Assert.Equal(BaulRole.Custodio, access.Role);
+        Assert.Equal("administrador", access.RoleApiString);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class BaulAccessTests
 
         Assert.True(access.IsMember);
         Assert.True(access.IsAdmin);
-        Assert.Equal(BaulRole.Custodio, access.Role);
+        Assert.Equal("administrador", access.RoleApiString);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class BaulAccessTests
 
         Assert.False(access.IsMember);
         Assert.False(access.IsAdmin);
-        Assert.Equal(BaulRole.SinAcceso, access.Role);
+        Assert.Equal("sin_acceso", access.RoleApiString);
     }
 
     // --- BaulAccessService.GetAsync: derives IsCustodio from Baul.CustodioId and attaches
@@ -107,7 +107,7 @@ public class BaulAccessTests
         // Custodians get a real Persona row too (created by BaulManager.CreateAsync) — GetAsync
         // must surface it rather than short-circuit to null once IsCustodio is already known.
         var repo = Substitute.For<IBaulRepository>();
-        var custodioPersona = MakePersona(BaulRole.Custodio, TestBaul.CustodioId);
+        var custodioPersona = MakePersona(BaulRole.Administrador, TestBaul.CustodioId);
         repo.GetPersonaByUserIdAsync(TestBaul.Id, TestBaul.CustodioId).Returns(custodioPersona);
         var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
 

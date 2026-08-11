@@ -15,7 +15,14 @@ public sealed record BaulAccess(Baul Baul, bool IsCustodio, Persona? Persona)
 {
     public bool IsMember => IsCustodio || (Persona is not null && Persona.AccessStatus != PersonaAccessStatus.Revoked);
     public bool IsAdmin => IsCustodio || (Persona?.Role.IsAdmin() ?? false);
-    public BaulRole Role => IsCustodio ? BaulRole.Custodio : Persona!.Role;
+
+    // The caller's assignable permission tier, as a wire string — distinct from custody (see
+    // BaulRole.cs and BaulDto.IsCustodio). The custodio's own Persona row is always
+    // Administrador (BaulManager.CreateAsync creates it that way, and PersonaManager blocks
+    // ever changing it), so this never needs to special-case IsCustodio to stay correct — but
+    // spelling it out here keeps that business rule explicit instead of leaning on data staying
+    // as expected.
+    public string RoleApiString => IsCustodio ? "administrador" : Persona!.Role.ToApiString();
 }
 
 public enum AccessLevel { Member, Admin }
@@ -25,7 +32,7 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
     public async Task<BaulAccess> GetAsync(Baul baul, UserId userId)
     {
         var persona = await baulRepository.GetPersonaByUserIdAsync(baul.Id, userId);
-        return new BaulAccess(baul, baul.CustodioId == userId, persona);
+        return new BaulAccess(baul, baul.IsCustodio(userId), persona);
     }
 
     // Consolidates the "load the baúl → fail if missing → check membership/role → fail if

@@ -38,11 +38,11 @@ public record Persona
     // cares about the claim capability itself, not the wider status tri-state.
     public bool IsClaimable => AccessStatus == PersonaAccessStatus.Pending;
 
-    // The custodio's own access can never be revoked — RemovePersonaAsync checks this before
-    // calling Revoke(), whether the target row is itself Custodio-stamped or merely belongs to
-    // the baúl's custodio account.
-    public bool IsCustodioProtected(UserId custodioUserId) =>
-        Role == BaulRole.Custodio || UserId == custodioUserId;
+    // The custodio's own access can never be revoked — RemovePersonaAsync and
+    // UpdatePersonaRoleAsync check this before touching a row. Custody lives solely on
+    // Baul.CustodioId (see BaulRole.cs for why it isn't a Role value), so this is a single
+    // comparison, not a fallback across two signals.
+    public bool IsCustodioProtected(UserId custodioUserId) => UserId == custodioUserId;
 
     // Links a Pending Persona to an authenticated account claiming to be that family member —
     // called from BaulInviteLinkManager.AcceptAsync once the caller picks this row from the

@@ -43,7 +43,7 @@ public class ChatContextBuilderApprovalTests
         var baulId = Guid.NewGuid();
         var baul = new Baul(new BaulId(baulId), "Viajes de la familia", "Los viajes que hicimos juntos", new UserId(CustodioId), 1, BaseDate, BaseDate);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Papá", BaulRole.Custodio, BaseDate, Name: "Antonio"));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Papá", BaulRole.Administrador, BaseDate, Name: "Antonio"));
         await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-2"), "Mamá", BaulRole.Colaborador, BaseDate));
 
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, BaseDate, BaseDate);
@@ -79,7 +79,7 @@ public class ChatContextBuilderApprovalTests
         var baulId = Guid.NewGuid();
         var baul = new Baul(new BaulId(baulId), "Familia", null, new UserId(CustodioId), 0, BaseDate, BaseDate);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Custodio, BaseDate));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, BaseDate));
 
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Fuimos de viaje a Asturias en verano", BaseDate));
         for (var i = 0; i < 25; i++)

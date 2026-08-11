@@ -19,7 +19,8 @@ const baseBaul: Baul = {
   chapterCount: 4,
   coverPhotoUrl: storybookPhotos.familyCover,
   lastUpdated: 'hace 2 días',
-  role: 'custodio',
+  role: 'administrador',
+  isCustodio: true,
   memberCount: 5,
 } as Baul;
 
@@ -36,6 +37,7 @@ export const Colaborador: Story = {
     baul: {
       ...baseBaul,
       role: 'colaborador',
+      isCustodio: false,
     } as Baul,
   },
 };

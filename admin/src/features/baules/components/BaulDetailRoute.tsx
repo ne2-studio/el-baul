@@ -90,7 +90,7 @@ export function BaulDetailRoute() {
               emptyMessage="Este baúl no tiene personas todavía."
               columns={[
                 { header: 'Nombre / Apodo', render: (p) => p.name || p.nickname },
-                { header: 'Rol', render: (p) => p.role },
+                { header: 'Rol', render: (p) => (p.isCustodio ? 'Custodio' : p.role) },
                 { header: 'PersonId', render: (p) => <span className="font-mono text-xs">{p.personId}</span> },
                 {
                   header: 'Usuario vinculado',

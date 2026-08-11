@@ -215,21 +215,10 @@ public class PersonaManagerTests
         Assert.Equal(BaulRole.Colaborador, persona!.Role);
     }
 
-    [Fact]
-    public async Task UpdatePersonaRoleAsync_ShouldRejectGrantingCustodioToAnotherPersona()
-    {
-        var baulId = await _fixture.CreateBaulAsync("Familia");
-        var personaId = await _fixture.AddColaboradorAsync(baulId, OtherUserId, "Otro");
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.UpdatePersonaRoleAsync(baulId, personaId, BaulRole.Custodio);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal("The custodio role cannot be changed", result.Error.Message);
-
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
-        Assert.Equal(BaulRole.Colaborador, persona!.Role);
-    }
+    // There used to be a test here for rejecting BaulRole.Custodio as a grantable role — now
+    // impossible to even express, since Custodio isn't a BaulRole member (see BaulRole.cs).
+    // UpdatePersonaRoleAsync_ShouldRejectChangingTheCustodioOwnRole below still covers the one
+    // remaining case IsCustodioProtected guards against.
 
     [Fact]
     public async Task UpdatePersonaRoleAsync_ShouldRejectChangingTheCustodioOwnRole()
@@ -244,7 +233,7 @@ public class PersonaManagerTests
         Assert.Equal("The custodio role cannot be changed", result.Error.Message);
 
         var persona = await _fixture.Baules.GetPersonaByIdAsync(custodioPersona.Id);
-        Assert.Equal(BaulRole.Custodio, persona!.Role);
+        Assert.Equal(BaulRole.Administrador, persona!.Role);
     }
 
     [Fact]

@@ -36,7 +36,7 @@ public class ChatContextBuilderTests
         var now = _clock.UtcNow();
         var baul = new Baul(new BaulId(baulId), name, null, new UserId(CustodioId), 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Custodio, now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, now));
         return baul;
     }
 

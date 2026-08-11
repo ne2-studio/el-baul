@@ -5,7 +5,8 @@ import { getBaulPermissions, getPersonaPermissions, isAdminRole } from '@/utils/
 describe('roleUtils baul permissions', () => {
   it.each([
     {
-      role: 'custodio' as BaulRole,
+      role: 'administrador' as BaulRole,
+      isCustodio: true,
       expected: {
         isAdmin: true,
         isCustodio: true,
@@ -19,6 +20,7 @@ describe('roleUtils baul permissions', () => {
     },
     {
       role: 'administrador' as BaulRole,
+      isCustodio: false,
       expected: {
         isAdmin: true,
         isCustodio: false,
@@ -32,6 +34,7 @@ describe('roleUtils baul permissions', () => {
     },
     {
       role: 'colaborador' as BaulRole,
+      isCustodio: false,
       expected: {
         isAdmin: false,
         isCustodio: false,
@@ -45,6 +48,7 @@ describe('roleUtils baul permissions', () => {
     },
     {
       role: 'sin_acceso' as BaulRole,
+      isCustodio: false,
       expected: {
         isAdmin: false,
         isCustodio: false,
@@ -56,21 +60,30 @@ describe('roleUtils baul permissions', () => {
         canDeleteChapter: false,
       },
     },
-  ])('maps $role to baul capabilities', ({ role, expected }) => {
-    expect(getBaulPermissions({ role })).toMatchObject(expected);
-    expect(isAdminRole(role)).toBe(expected.isAdmin);
+  ])('maps $role/isCustodio=$isCustodio to baul capabilities', ({ role, isCustodio, expected }) => {
+    expect(getBaulPermissions({ role, isCustodio })).toMatchObject(expected);
+    expect(isAdminRole(role)).toBe(role === 'administrador');
   });
 
-  it('derives isCustodio purely from role, since the backend only ever reports role', () => {
-    expect(getBaulPermissions({ role: 'administrador' }).canRequestBaulDeletion).toBe(false);
-    expect(getBaulPermissions({ role: 'custodio' }).canRequestBaulDeletion).toBe(true);
+  // Custodio isn't a BaulRole value (see types/index.ts) — it's the caller's own separate
+  // isCustodio flag, independent of role, and it must win even over a non-admin role (the
+  // custodio's own Persona row is always Administrador in practice, but this asserts the rule
+  // holds regardless).
+  it('lets isCustodio grant admin/custodio capabilities regardless of role', () => {
+    expect(getBaulPermissions({ role: 'colaborador', isCustodio: true })).toMatchObject({
+      isAdmin: true,
+      isCustodio: true,
+      canRequestBaulDeletion: true,
+    });
+    expect(getBaulPermissions({ role: 'administrador', isCustodio: false }).canRequestBaulDeletion).toBe(false);
   });
 });
 
 describe('roleUtils persona permissions', () => {
-  function persona(overrides: Partial<Pick<Persona, 'role' | 'status' | 'canEdit'>> = {}) {
+  function persona(overrides: Partial<Pick<Persona, 'role' | 'isCustodio' | 'status' | 'canEdit'>> = {}) {
     return {
       role: 'colaborador' as BaulRole,
+      isCustodio: false,
       status: 'active' as const,
       canEdit: false,
       ...overrides,
@@ -79,7 +92,8 @@ describe('roleUtils persona permissions', () => {
 
   it.each([
     {
-      currentBaulRole: 'custodio' as BaulRole,
+      currentBaulRole: 'administrador' as BaulRole,
+      currentIsCustodio: true,
       target: persona({ role: 'colaborador', status: 'active' }),
       expected: {
         canManagePersona: true,
@@ -90,6 +104,7 @@ describe('roleUtils persona permissions', () => {
     },
     {
       currentBaulRole: 'administrador' as BaulRole,
+      currentIsCustodio: false,
       target: persona({ role: 'colaborador', status: 'pending' }),
       expected: {
         canManagePersona: true,
@@ -100,7 +115,8 @@ describe('roleUtils persona permissions', () => {
     },
     {
       currentBaulRole: 'administrador' as BaulRole,
-      target: persona({ role: 'custodio', status: 'active' }),
+      currentIsCustodio: false,
+      target: persona({ role: 'administrador', isCustodio: true, status: 'active' }),
       expected: {
         canManagePersona: false,
         canChangePersonaRole: false,
@@ -110,6 +126,7 @@ describe('roleUtils persona permissions', () => {
     },
     {
       currentBaulRole: 'administrador' as BaulRole,
+      currentIsCustodio: false,
       target: persona({ role: 'sin_acceso', status: 'sin_acceso' }),
       expected: {
         canManagePersona: true,
@@ -120,6 +137,7 @@ describe('roleUtils persona permissions', () => {
     },
     {
       currentBaulRole: 'colaborador' as BaulRole,
+      currentIsCustodio: false,
       target: persona({ role: 'colaborador', status: 'active' }),
       expected: {
         canManagePersona: false,
@@ -128,8 +146,8 @@ describe('roleUtils persona permissions', () => {
         canRestorePersonaAccess: false,
       },
     },
-  ])('maps current $currentBaulRole and target persona to manage capabilities', ({ currentBaulRole, target, expected }) => {
-    expect(getPersonaPermissions({ currentBaulRole, persona: target })).toMatchObject(expected);
+  ])('maps current $currentBaulRole (isCustodio=$currentIsCustodio) and target persona to manage capabilities', ({ currentBaulRole, currentIsCustodio, target, expected }) => {
+    expect(getPersonaPermissions({ currentBaulRole, currentIsCustodio, persona: target })).toMatchObject(expected);
   });
 
   it('keeps identity self-edit capabilities tied to backend canEdit', () => {
@@ -138,7 +156,11 @@ describe('roleUtils persona permissions', () => {
       canUploadPersonaAvatar: true,
     });
 
-    expect(getPersonaPermissions({ currentBaulRole: 'custodio', persona: persona({ canEdit: false }) })).toMatchObject({
+    expect(getPersonaPermissions({
+      currentBaulRole: 'administrador',
+      currentIsCustodio: true,
+      persona: persona({ canEdit: false }),
+    })).toMatchObject({
       canEditPersonaInfo: false,
       canUploadPersonaAvatar: false,
     });

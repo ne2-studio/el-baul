@@ -7,6 +7,7 @@ public record PersonaDto
     string? Name,
     string Nickname,
     string Role,
+    bool IsCustodio,
     string Status,
     DateTime InvitedDate,
     string BaulId,

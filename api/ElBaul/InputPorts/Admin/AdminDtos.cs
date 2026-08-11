@@ -5,12 +5,12 @@ namespace ElBaul.InputPorts.Admin;
 // (this project) never references IConfiguration.
 public record AdminDashboardCountsDto(int RegisteredUsers, int TotalBaules, int TotalPhotos, int PhotosUploadedToday);
 
-public record AdminUserBaulMembershipDto(string BaulId, string BaulName, string Role, string PersonId);
+public record AdminUserBaulMembershipDto(string BaulId, string BaulName, string Role, bool IsCustodio, string PersonId);
 public record AdminUserListItemDto(string Id, string Email, string? Name, DateTime CreatedAt, DateTime? LastAccessAt, int BaulCount);
 public record AdminUserDetailDto(string Id, string Email, string? Name, DateTime CreatedAt, DateTime? LastAccessAt, IEnumerable<AdminUserBaulMembershipDto> Baules, bool HasPushToken);
 
 public record AdminBaulListItemDto(string Id, string Name, string CustodioName, int MemberCount, int LinkedUserCount, int PhotoCount, int ChapterCount, DateTime CreatedAt);
-public record AdminBaulPersonaDto(string PersonId, string Nickname, string? Name, string Role, string? LinkedUserId, string? LinkedUserName);
+public record AdminBaulPersonaDto(string PersonId, string Nickname, string? Name, string Role, bool IsCustodio, string? LinkedUserId, string? LinkedUserName);
 public record AdminBaulChapterDto(string Id, string Name, int PhotoCount);
 public record AdminBaulStatsDto(int Photos, int Recuerdos, int Personas, int Chapters, long TotalSizeBytes);
 public record AdminBaulDetailDto(

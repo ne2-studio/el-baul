@@ -181,7 +181,7 @@ export function UserDetailRoute() {
                     </button>
                   ),
                 },
-                { header: 'Rol', render: (b) => b.role },
+                { header: 'Rol', render: (b) => (b.isCustodio ? 'Custodio' : b.role) },
                 { header: 'Persona asociada', render: (b) => <span className="font-mono text-xs">{b.personId}</span> },
                 {
                   header: '',

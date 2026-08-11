@@ -27,7 +27,7 @@ describe('BaulCard', () => {
   });
 
   it('shows the Custodio badge when the baúl counts as custodio for the plan', () => {
-    render(<BaulCard baul={newBaul({ role: 'custodio' })} onClick={vi.fn()} />);
+    render(<BaulCard baul={newBaul({ role: 'administrador', isCustodio: true })} onClick={vi.fn()} />);
 
     expect(screen.getByText('Custodio')).toBeInTheDocument();
   });

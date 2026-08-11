@@ -54,7 +54,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
             .AsNoTracking()
             .Where(su => su.UserId == userId)
             .Join(dbContext.Baules.AsNoTracking(), su => su.BaulId, b => b.Id,
-                (su, b) => new AdminUserBaulRow(b.Id, b.Name, su.Role, su.Id))
+                (su, b) => new AdminUserBaulRow(b.Id, b.Name, su.Role, su.Id, su.UserId == b.CustodioId))
             .ToListAsync();
 
         return new AdminUserDetailRow(user, baules);

@@ -125,18 +125,10 @@ public class PersonaAccessLifecycleTests
     // --- IsCustodioProtected ---
 
     [Fact]
-    public void IsCustodioProtected_ShouldBeTrue_ForARowStampedCustodio()
+    public void IsCustodioProtected_ShouldBeTrue_WhenUserIdMatchesTheBaulsCustodio()
     {
-        var persona = MakePersona(BaulRole.Custodio, CustodioUserId);
-
-        Assert.True(persona.IsCustodioProtected(new UserId(CustodioUserId)));
-    }
-
-    [Fact]
-    public void IsCustodioProtected_ShouldBeTrue_WhenUserIdMatchesTheBaulsCustodio_EvenWithoutCustodioRole()
-    {
-        // Defensive: even if a non-Custodio-role row somehow carries the custodio's UserId,
-        // it must still be protected from revocation.
+        // Custody lives solely on Baul.CustodioId (see BaulRole.cs) — the Persona row's own
+        // Role plays no part in this, regardless of what it happens to be.
         var persona = MakePersona(BaulRole.Administrador, CustodioUserId);
 
         Assert.True(persona.IsCustodioProtected(new UserId(CustodioUserId)));

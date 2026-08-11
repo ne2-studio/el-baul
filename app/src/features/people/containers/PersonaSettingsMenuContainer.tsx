@@ -35,8 +35,8 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
   const { personaPhotos } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const { run, isPending } = useAsyncAction();
-  const currentBaulRole = baules.find((b) => b.id === baulId)?.role;
-  const permissions = getPersonaPermissions({ currentBaulRole, persona });
+  const currentBaul = baules.find((b) => b.id === baulId);
+  const permissions = getPersonaPermissions({ currentBaulRole: currentBaul?.role, currentIsCustodio: currentBaul?.isCustodio, persona });
 
   const [showEditInfoModal, setShowEditInfoModal] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);

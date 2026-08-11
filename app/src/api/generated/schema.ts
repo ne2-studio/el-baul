@@ -6405,6 +6405,7 @@ export interface components {
             nickname: string;
             name?: string | null;
             role: string;
+            isCustodio: boolean;
             linkedUserId?: string | null;
             linkedUserName?: string | null;
         };
@@ -6458,6 +6459,7 @@ export interface components {
             baulId: string;
             baulName: string;
             role: string;
+            isCustodio: boolean;
             personId: string;
         };
         AdminUserDetailDto: {
@@ -6505,6 +6507,7 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             role: string;
+            isCustodio: boolean;
             /** Format: int32 */
             memberCount: number;
         };
@@ -6636,6 +6639,7 @@ export interface components {
             name?: string | null;
             nickname: string;
             role: string;
+            isCustodio: boolean;
             status: string;
             /** Format: date-time */
             invitedDate: string;

@@ -46,7 +46,7 @@ public class StaticSuggestedQuestionsStrategyTests
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId);
         var now = _clock.UtcNow();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Abuelo Antonio", BaulRole.Custodio, now));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Abuelo Antonio", BaulRole.Administrador, now));
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano en Asturias", 3, null, now, now));
 
         var strategy = CreateStrategy();

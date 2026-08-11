@@ -18,12 +18,14 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
 
     public async Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(UserId userId)
     {
-        // Role == Custodio is excluded here: the custodian's own baules are already
-        // surfaced via GetOwnedByUserIdAsync, and now that custodians also have a
-        // real Personas row, without this filter their own baul would be listed twice.
+        // The custodian's own baules are excluded here (Baul.CustodioId == userId): they're
+        // already surfaced via GetOwnedByUserIdAsync, and custodians also have a real Personas
+        // row, so without this filter their own baul would be listed twice. Custodio isn't a
+        // Role value to filter on — see BaulRole.cs.
         var rows = await dbContext.Personas.AsNoTracking()
-            .Where(s => s.UserId == userId && s.Role != BaulRole.Custodio && s.Role != BaulRole.SinAcceso)
+            .Where(s => s.UserId == userId && s.Role != BaulRole.SinAcceso)
             .Join(dbContext.Baules.AsNoTracking(), s => s.BaulId, b => b.Id, (s, b) => new { Baul = b, s.Role })
+            .Where(x => x.Baul.CustodioId != userId)
             .ToListAsync();
 
         return rows.Select(r => new BaulAccess(r.Baul, r.Role));

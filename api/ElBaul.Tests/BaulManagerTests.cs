@@ -44,7 +44,7 @@ public class BaulManagerTests
         var created = createdAt ?? _clock.UtcNow();
         var baul = new Baul(new BaulId(baulId), name, description, new UserId(custodioId), 0, created, updatedAt ?? created);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Custodio, created));
+        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
         return baul;
     }
 
@@ -57,7 +57,8 @@ public class BaulManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Familia", result.Value.Name);
-        Assert.Equal("custodio", result.Value.Role);
+        Assert.Equal("administrador", result.Value.Role);
+        Assert.True(result.Value.IsCustodio);
     }
 
     [Fact]

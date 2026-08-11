@@ -84,14 +84,15 @@ public class AdminManagerTests
         var baulId = Guid.NewGuid();
         var personId = Guid.NewGuid();
         _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(
-            user, [new AdminUserBaulRow(new BaulId(baulId), "Familia Pérez", BaulRole.Custodio, new PersonaId(personId))]);
+            user, [new AdminUserBaulRow(new BaulId(baulId), "Familia Pérez", BaulRole.Administrador, new PersonaId(personId), IsCustodio: true)]);
 
         var result = await CreateManager().GetUserDetailAsync(new UserId("user-1"));
 
         var membership = Assert.Single(result.Value.Baules);
         Assert.Equal(baulId.ToString(), membership.BaulId);
         Assert.Equal("Familia Pérez", membership.BaulName);
-        Assert.Equal("custodio", membership.Role);
+        Assert.Equal("administrador", membership.Role);
+        Assert.True(membership.IsCustodio);
         Assert.Equal(personId.ToString(), membership.PersonId);
         Assert.False(result.Value.HasPushToken);
     }
@@ -151,7 +152,7 @@ public class AdminManagerTests
         var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
         _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(
-            user, [new AdminUserBaulRow(baulId, "Familia Pérez", BaulRole.Custodio, new PersonaId(Guid.NewGuid()))]);
+            user, [new AdminUserBaulRow(baulId, "Familia Pérez", BaulRole.Administrador, new PersonaId(Guid.NewGuid()), IsCustodio: true)]);
         _chatContextBuilder.Context = "contexto debug";
 
         var result = await CreateManager().DebugChatContextAsync(new UserId("user-1"), baulId, "mensaje");
@@ -190,7 +191,7 @@ public class AdminManagerTests
     {
         var baulId = Guid.NewGuid();
         var baul = new Baul(new BaulId(baulId), "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
-        var linkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-1"), "Abuela", BaulRole.Custodio, _clock.UtcNow());
+        var linkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow());
         var unlinkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
 
@@ -245,7 +246,7 @@ public class AdminManagerTests
         await _recuerdoRepository.CreateAsync(recuerdo);
 
         var persona = new Persona(
-            new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Custodio, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
+            new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
         await _baulRepository.AddPersonaAsync(persona);
 
         await _photoPersonaTagRepository.SetTagsAsync(photo.Id, baulId, [persona.Id], _clock.UtcNow());

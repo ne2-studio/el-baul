@@ -24,7 +24,6 @@ export interface PersonaPermissions {
 
 export function getRoleDisplayName(role: BaulRole): string {
   const roleNames: Record<BaulRole, string> = {
-    custodio: 'Custodio',
     administrador: 'Administrador',
     colaborador: 'Colaborador',
     sin_acceso: 'Sin acceso'
@@ -34,7 +33,6 @@ export function getRoleDisplayName(role: BaulRole): string {
 
 export function getRoleDescription(role: BaulRole): string {
   const descriptions: Record<BaulRole, string> = {
-    custodio: 'Gestiona el baúl',
     administrador: 'Gestiona el baúl, igual que el custodio',
     colaborador: 'Puede añadir fotos',
     sin_acceso: 'Forma parte de la historia, sin acceso al baúl'
@@ -43,16 +41,12 @@ export function getRoleDescription(role: BaulRole): string {
 }
 
 export function isAdminRole(role?: BaulRole): boolean {
-  return role === 'custodio' || role === 'administrador';
+  return role === 'administrador';
 }
 
-function isCustodioRole(role?: BaulRole): boolean {
-  return role === 'custodio';
-}
-
-export function getBaulPermissions(baul?: Pick<Baul, 'role'>): BaulPermissions {
-  const isAdmin = isAdminRole(baul?.role);
-  const isCustodio = isCustodioRole(baul?.role);
+export function getBaulPermissions(baul?: Pick<Baul, 'role' | 'isCustodio'>): BaulPermissions {
+  const isCustodio = baul?.isCustodio ?? false;
+  const isAdmin = isCustodio || isAdminRole(baul?.role);
 
   return {
     isAdmin,
@@ -69,18 +63,22 @@ export function getBaulPermissions(baul?: Pick<Baul, 'role'>): BaulPermissions {
 
 export function getPersonaPermissions({
   currentBaulRole,
+  currentIsCustodio,
   persona,
 }: {
   currentBaulRole?: BaulRole;
-  persona: Pick<Persona, 'role' | 'status' | 'canEdit'>;
+  currentIsCustodio?: boolean;
+  persona: Pick<Persona, 'role' | 'status' | 'canEdit' | 'isCustodio'>;
 }): PersonaPermissions {
-  const currentBaulPermissions = getBaulPermissions({ role: currentBaulRole });
+  const currentBaulPermissions = getBaulPermissions({ role: currentBaulRole, isCustodio: currentIsCustodio });
   const canEditOwnPersona = persona.canEdit ?? false;
   // Biografía is shared, wiki-like family content: any member of the baúl can write it for any
   // persona, unlike name/nickname/avatar which stay tied to identity-edit permission.
   const canEditAnyBiography = currentBaulRole !== undefined && currentBaulRole !== 'sin_acceso';
   const hasNoAccess = persona.role === 'sin_acceso' || persona.status === 'sin_acceso';
-  const canManagePersona = currentBaulPermissions.isAdmin && !isCustodioRole(persona.role);
+  // The custodio's own row is never manageable by another admin — it's protected server-side
+  // too, see Persona.IsCustodioProtected.
+  const canManagePersona = currentBaulPermissions.isAdmin && !persona.isCustodio;
   const isPending = persona.status === 'pending';
 
   return {

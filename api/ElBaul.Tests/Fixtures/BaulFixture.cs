@@ -36,7 +36,7 @@ public class BaulFixture
         var baulId = new BaulId(id ?? Guid.NewGuid());
         var created = createdAt ?? Clock.UtcNow();
         await Baules.CreateAsync(new Baul(baulId, name, description, new UserId(custodioId), chapterCount, created, created));
-        await Baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(custodioId), "Custodio", BaulRole.Custodio, created));
+        await Baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
         return baulId;
     }
 

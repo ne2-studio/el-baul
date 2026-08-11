@@ -49,7 +49,8 @@ export function BaulCard({ baul, onClick }: BaulCardProps) {
       {/* Bottom-left: role badge */}
       <div className="absolute bottom-4 left-4">
         <RoleBadge
-          role={permissions.isCustodio ? 'custodio' : (baul.role ?? 'colaborador')}
+          role={baul.role ?? 'colaborador'}
+          isCustodio={permissions.isCustodio}
           tone="onImage"
           className="bg-black/35 backdrop-blur-sm"
         />

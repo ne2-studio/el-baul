@@ -9,5 +9,6 @@ public record BaulDto
     DateTime CreatedAt,
     DateTime UpdatedAt,
     string Role,
+    bool IsCustodio,
     int MemberCount
 );

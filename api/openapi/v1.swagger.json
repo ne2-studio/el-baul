@@ -7398,6 +7398,7 @@
       },
       "AdminBaulPersonaDto": {
         "required": [
+          "isCustodio",
           "nickname",
           "personId",
           "role"
@@ -7416,6 +7417,9 @@
           },
           "role": {
             "type": "string"
+          },
+          "isCustodio": {
+            "type": "boolean"
           },
           "linkedUserId": {
             "type": "string",
@@ -7583,6 +7587,7 @@
         "required": [
           "baulId",
           "baulName",
+          "isCustodio",
           "personId",
           "role"
         ],
@@ -7596,6 +7601,9 @@
           },
           "role": {
             "type": "string"
+          },
+          "isCustodio": {
+            "type": "boolean"
           },
           "personId": {
             "type": "string"
@@ -7728,6 +7736,7 @@
           "chapterCount",
           "createdAt",
           "id",
+          "isCustodio",
           "memberCount",
           "name",
           "role",
@@ -7763,6 +7772,9 @@
           },
           "role": {
             "type": "string"
+          },
+          "isCustodio": {
+            "type": "boolean"
           },
           "memberCount": {
             "type": "integer",
@@ -8207,6 +8219,7 @@
           "canEdit",
           "id",
           "invitedDate",
+          "isCustodio",
           "nickname",
           "role",
           "status"
@@ -8233,6 +8246,9 @@
           },
           "role": {
             "type": "string"
+          },
+          "isCustodio": {
+            "type": "boolean"
           },
           "status": {
             "type": "string"

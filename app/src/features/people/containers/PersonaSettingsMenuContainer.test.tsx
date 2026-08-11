@@ -93,7 +93,7 @@ describe('PersonaSettingsMenuContainer', () => {
 
   it('hides manage-access actions for a custodio persona', async () => {
     const user = userEvent.setup();
-    renderContainer(persona({ role: 'custodio' }));
+    renderContainer(persona({ isCustodio: true }));
 
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
 

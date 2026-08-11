@@ -36,9 +36,9 @@ public class BaulManager(
 
         var dtos = new List<BaulDto>();
         foreach (var b in ownedList)
-            dtos.Add(await ToDtoAsync(b, BaulRole.Custodio, sharedCounts.GetValueOrDefault(b.Id)));
+            dtos.Add(await ToDtoAsync(b, "administrador", isCustodio: true, sharedCounts.GetValueOrDefault(b.Id)));
         foreach (var a in sharedList)
-            dtos.Add(await ToDtoAsync(a.Baul, a.Role, sharedCounts.GetValueOrDefault(a.Baul.Id)));
+            dtos.Add(await ToDtoAsync(a.Baul, a.Role.ToApiString(), isCustodio: false, sharedCounts.GetValueOrDefault(a.Baul.Id)));
 
         return Result.Success<IEnumerable<BaulDto>>(dtos.OrderByDescending(d => d.UpdatedAt).ToList());
     }
@@ -50,9 +50,12 @@ public class BaulManager(
 
         var baul = new Baul(new BaulId(idGenerator.NewId()), name, description, userId, 0, now, now);
         var user = await userRepository.GetByIdAsync(userId);
+        // The custodian's own Persona.Role is just Administrador — their real authority comes
+        // from Baul.CustodioId (see BaulRole.cs), this only needs to be a sensible value for
+        // anywhere Persona rows are listed/edited generically.
         var custodianPersona = new Persona(
             new PersonaId(idGenerator.NewId()), baul.Id, userId, user?.Name ?? user?.Email ?? "Custodio",
-            BaulRole.Custodio, now, Name: user?.Name);
+            BaulRole.Administrador, now, Name: user?.Name);
 
         // Both writes commit together — a Baul with no Custodio persona (or vice versa) is not
         // a state either half of the app can make sense of.
@@ -64,7 +67,7 @@ public class BaulManager(
         });
 
         logger.LogInformation("Baul created {BaulId} {Name}", baul.Id, name);
-        return await ToDtoAsync(baul, BaulRole.Custodio);
+        return await ToDtoAsync(baul, "administrador", isCustodio: true);
     }
 
     public async Task<Result<BaulDto>> GetByIdAsync(BaulId baulId)
@@ -76,7 +79,7 @@ public class BaulManager(
         var access = auth.Value;
 
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
-        return await ToDtoAsync(access.Baul, access.Role, memberCount);
+        return await ToDtoAsync(access.Baul, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
     public async Task<Result<BaulDto>> SetCoverAsync(BaulId baulId, PhotoId photoId)
@@ -100,7 +103,7 @@ public class BaulManager(
         logger.LogInformation("Baul cover updated {PhotoId}", photoId);
 
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
-        return await ToDtoAsync(updated, access.Role, memberCount);
+        return await ToDtoAsync(updated, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
     public async Task<Result<BaulDto>> UpdateAsync(BaulId baulId, string name, string? description)
@@ -117,15 +120,15 @@ public class BaulManager(
         logger.LogInformation("Baul updated {Name}", name);
 
         var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
-        return await ToDtoAsync(updated, access.Role, memberCount);
+        return await ToDtoAsync(updated, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
-    private async Task<BaulDto> ToDtoAsync(Baul baul, BaulRole role, int memberCount = 1)
+    private async Task<BaulDto> ToDtoAsync(Baul baul, string role, bool isCustodio, int memberCount = 1)
     {
         var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage);
 
         return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.ChapterCount, coverUrl,
-            baul.CreatedAt, baul.UpdatedAt, role.ToApiString(), memberCount);
+            baul.CreatedAt, baul.UpdatedAt, role, isCustodio, memberCount);
     }
 
 }

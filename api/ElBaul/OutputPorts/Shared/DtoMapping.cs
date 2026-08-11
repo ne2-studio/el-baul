@@ -15,12 +15,14 @@ internal static class DtoMapping
     {
         BaulRole.Colaborador => "colaborador",
         BaulRole.Administrador => "administrador",
-        BaulRole.Custodio => "custodio",
         BaulRole.SinAcceso => "sin_acceso",
         _ => throw new ArgumentOutOfRangeException(nameof(role))
     };
 
-    public static bool IsAdmin(this BaulRole role) => role is BaulRole.Custodio or BaulRole.Administrador;
+    // Custody itself confers admin rights but isn't a BaulRole value — see BaulRole.cs. Callers
+    // that need "is this user an admin of the baúl" should ask BaulAccess.IsAdmin, which ORs
+    // IsCustodio in; this only ever sees a persona's own assignable role.
+    public static bool IsAdmin(this BaulRole role) => role is BaulRole.Administrador;
 
     public static string ToApiString(this PersonaAccessStatus status) => status switch
     {

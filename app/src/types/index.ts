@@ -18,7 +18,10 @@ type FeedItemDto = ApiSchemas['FeedItemDto'];
 type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
 type UserProfileDto = ApiSchemas['UserProfileDto'];
 
-export type BaulRole = 'custodio' | 'administrador' | 'colaborador' | 'sin_acceso';
+// Custodio isn't a role — it's the baúl's singular legal-custody relationship, carried
+// separately as `isCustodio` on Baul/Persona (see roleUtils.ts). A BaulRole value is always an
+// assignable permission tier.
+export type BaulRole = 'administrador' | 'colaborador' | 'sin_acceso';
 
 export type SupportCategory = 'Support' | 'Bug' | 'Suggestion' | 'BaulDeletion';
 
@@ -41,6 +44,7 @@ export class Persona {
   nickname: string;
   status: 'active' | 'pending' | 'sin_acceso';
   role: BaulRole;
+  isCustodio: boolean;
   invitedDate: string;
   avatarUrl?: string;
   avatarPhotoId?: string;
@@ -58,6 +62,7 @@ export class Persona {
     this.nickname = data.nickname;
     this.status = data.status as 'active' | 'pending' | 'sin_acceso';
     this.role = data.role as BaulRole;
+    this.isCustodio = data.isCustodio;
     this.invitedDate = getRelativeTime(new Date(data.invitedDate));
     this.avatarUrl = data.avatarUrl ?? undefined;
     this.avatarPhotoId = data.avatarPhotoId ?? undefined;
@@ -86,6 +91,7 @@ export class Baul {
   coverPhotoUrl?: string;
   lastUpdated: string;
   role?: BaulRole;
+  isCustodio?: boolean;
   memberCount?: number;
 
   constructor(data: BaulDto) {
@@ -96,6 +102,7 @@ export class Baul {
     this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
     this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
     this.role = data.role as BaulRole;
+    this.isCustodio = data.isCustodio;
     this.memberCount = data.memberCount;
   }
 }

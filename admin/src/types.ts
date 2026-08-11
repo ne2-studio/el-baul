@@ -62,12 +62,14 @@ export class AdminUserBaulMembership {
   baulId: string;
   baulName: string;
   role: string;
+  isCustodio: boolean;
   personId: string;
 
   constructor(data: AdminUserBaulMembershipDto) {
     this.baulId = data.baulId;
     this.baulName = data.baulName;
     this.role = data.role;
+    this.isCustodio = data.isCustodio;
     this.personId = data.personId;
   }
 }
@@ -155,6 +157,7 @@ export class AdminBaulPersona {
   nickname: string;
   name?: string;
   role: string;
+  isCustodio: boolean;
   linkedUserId?: string;
   linkedUserName?: string;
 
@@ -163,6 +166,7 @@ export class AdminBaulPersona {
     this.nickname = data.nickname;
     this.name = data.name ?? undefined;
     this.role = data.role;
+    this.isCustodio = data.isCustodio;
     this.linkedUserId = data.linkedUserId ?? undefined;
     this.linkedUserName = data.linkedUserName ?? undefined;
   }
