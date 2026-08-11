@@ -6,6 +6,14 @@ describe('isNativeOidcCallbackUrl', () => {
     expect(isNativeOidcCallbackUrl('https://el-baul.app/callback?code=abc')).toBe(false);
   });
 
+  it('ignores a URL with a lookalike native deep-link scheme', () => {
+    expect(isNativeOidcCallbackUrl('studio.ne2.elbaul.evil://callback?code=abc')).toBe(false);
+  });
+
+  it('ignores a malformed URL', () => {
+    expect(isNativeOidcCallbackUrl('studio.ne2.elbaul')).toBe(false);
+  });
+
   it('recognizes a successful sign-in callback (carries a code)', () => {
     expect(isNativeOidcCallbackUrl('studio.ne2.elbaul://callback?code=abc&state=xyz')).toBe(true);
   });
