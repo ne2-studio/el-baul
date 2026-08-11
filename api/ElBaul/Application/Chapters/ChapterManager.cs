@@ -26,7 +26,8 @@ public class ChapterManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
-    AuthorInfoProjector authorInfoProjector) : IChapterManager
+    AuthorInfoProjector authorInfoProjector,
+    IUnitOfWork unitOfWork) : IChapterManager
 {
     public async Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(BaulId baulId)
     {
@@ -74,9 +75,15 @@ public class ChapterManager(
         var baul = auth.Value.Baul;
         var now = clock.UtcNow();
         var chapter = new Chapter(new ChapterId(idGenerator.NewId()), baulId, name, 0, null, now, now, userId);
-        await chapterRepository.CreateAsync(chapter);
 
-        await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });
+        // Both writes commit together — a chapter that isn't reflected in its baúl's
+        // ChapterCount is an inconsistency the frontend has no way to reconcile.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await chapterRepository.CreateAsync(chapter);
+            await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });
+            return Result.Success();
+        });
 
         logger.LogInformation("Chapter created {ChapterId} {Name}", chapter.Id, name);
         return ToDto(chapter, null, null, 0, null, null, ChapterDateRange.Empty);
@@ -147,15 +154,24 @@ public class ChapterManager(
         var baul = auth.Value.Baul;
 
         var photos = await photoRepository.GetByChapterIdAsync(chapterId);
-        foreach (var photo in photos)
-            await photoRepository.UpdateAsync(photo with { ChapterId = null });
-
         var recuerdos = await recuerdoRepository.GetByChapterIdAsync(chapterId);
-        foreach (var recuerdo in recuerdos)
-            await recuerdoRepository.UpdateAsync(recuerdo with { ChapterId = null });
 
-        await chapterRepository.DeleteAsync(chapterId);
-        await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount - 1, UpdatedAt = clock.UtcNow() });
+        // Orphaning photos/recuerdos, deleting the chapter (ExecuteDeleteAsync — bypasses the
+        // change tracker, see IUnitOfWork's doc comment) and decrementing the baúl's
+        // ChapterCount commit together — a failure partway used to leave photos/recuerdos
+        // pointing at a chapter that either still exists half-updated or is already gone.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            foreach (var photo in photos)
+                await photoRepository.UpdateAsync(photo with { ChapterId = null });
+
+            foreach (var recuerdo in recuerdos)
+                await recuerdoRepository.UpdateAsync(recuerdo with { ChapterId = null });
+
+            await chapterRepository.DeleteAsync(chapterId);
+            await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount - 1, UpdatedAt = clock.UtcNow() });
+            return Result.Success();
+        });
 
         logger.LogInformation("Chapter deleted");
         return Result.Success();

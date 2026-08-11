@@ -30,6 +30,10 @@ public static class ServiceRegistration
         // Singleton, not Scoped: with no database behind them, these dictionaries *are* the
         // storage — they need to survive across requests, which is what Postgres/MinIO do for
         // the real adapters.
+        // Scoped, not Singleton, unlike the InMemory* repositories below — it holds no state of
+        // its own (see FakeUnitOfWork's doc comment), so its lifetime doesn't matter, but Scoped
+        // matches every other stateless port implementation here (IClock, IIdGenerator, …).
+        services.AddScoped<IUnitOfWork, FakeUnitOfWork>();
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         services.AddSingleton<IBaulRepository, InMemoryBaulRepository>();
         services.AddSingleton<IChapterRepository, InMemoryChapterRepository>();

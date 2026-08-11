@@ -5,6 +5,7 @@ using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 
+using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -22,7 +23,7 @@ public class PhotoPersonaTagManagerTests
     private PhotoPersonaTagManager CreateManager(string currentUserId) =>
         new(NullLogger<PhotoPersonaTagManager>.Instance, _fixture.Photos, _fixture.Baules, _photoStorage, _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags);
+            _fixture.PhotoPersonaTags, new FakeUnitOfWork());
 
     [Fact]
     public async Task SetTaggedPersonasAsync_ShouldTagPersonas_ThenGetTaggedPersonasAsync_ShouldReturnThem()

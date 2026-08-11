@@ -25,7 +25,7 @@ public class BaulFeedManagerTests
             new InMemoryRecuerdoEmbeddingRepository(), new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), _photoStorage,
             new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage));
+            new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage), new FakeUnitOfWork());
 
     private BaulFeedManager CreateManager(string currentUserId, bool baulFeedEnabled = true) =>
         new(NullLogger<BaulFeedManager>.Instance, CreateRecuerdoManager(currentUserId),

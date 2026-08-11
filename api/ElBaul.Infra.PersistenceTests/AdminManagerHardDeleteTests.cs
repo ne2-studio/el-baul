@@ -58,7 +58,8 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             Substitute.For<IPhotoStorage>(),
             Substitute.For<IChatContextBuilder>(),
             new FixedClock(),
-            NullLogger<AdminManager>.Instance);
+            NullLogger<AdminManager>.Instance,
+            new UnitOfWork(dbContext));
 
         var custodioId = "custodio-hard-delete";
         await users.UpsertAsync(new User(new UserId(custodioId), "custodio-hard-delete@example.com", "Custodio", DateTime.UtcNow));
@@ -117,5 +118,77 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
 
         // 6. The baúl itself is genuinely gone, not just reported as deleted.
         (await baules.GetByIdAsync(baul.Id)).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteBaulAsync_rollsBackEveryPriorDelete_WhenALaterStepFails()
+    {
+        // Only DeleteBaulAsync's ExecuteInTransactionAsync wrap makes this true — before it,
+        // each ExecuteDeleteAsync call committed on its own, so a failure on the 6th of 9 calls
+        // (chapters, here) left the first 5 permanently deleted. This is the regression this
+        // test exists to catch: a real Postgres transaction, not ElBaul.Infra.Lite's in-memory
+        // repositories (which have nothing to roll back — see IUnitOfWork's own doc comment).
+        await using var dbContext = Fixture.CreateDbContext();
+        var users = new UserRepository(dbContext);
+        var baules = new BaulRepository(dbContext);
+        var chapters = new ChapterRepository(dbContext);
+        var photos = new PhotoRepository(dbContext);
+        var recuerdos = new RecuerdoRepository(dbContext);
+        var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
+
+        var admin = new AdminManager(
+            new AdminRepository(dbContext),
+            new SentEmailRepository(dbContext),
+            baules,
+            new ThrowingChapterRepository(chapters), // fails on step 6 (DeleteByBaulIdAsync)
+            photos,
+            recuerdos,
+            new SharedLinkRepository(dbContext),
+            new BaulInviteLinkRepository(dbContext),
+            photoPersonaTags,
+            new PushTokenRepository(dbContext),
+            Substitute.For<IPhotoStorage>(),
+            Substitute.For<IChatContextBuilder>(),
+            new FixedClock(),
+            NullLogger<AdminManager>.Instance,
+            new UnitOfWork(dbContext));
+
+        var custodioId = "custodio-hard-delete-rollback";
+        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-rollback@example.com", "Custodio", DateTime.UtcNow));
+
+        var baul = new Baul(new BaulId(Guid.NewGuid()), "Baúl cuyo borrado falla a mitad", Description: null,
+            new UserId(custodioId), ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
+        await baules.CreateAsync(baul);
+
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baul.Id, "Capítulo",
+            PhotoCount: 0, CoverPhotoKey: null, DateTime.UtcNow, DateTime.UtcNow);
+        await chapters.CreateAsync(chapter);
+
+        var photo = new Photo(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/rollback.jpg",
+            DateYear: null, DateMonth: null, DateDay: null, new UserId(custodioId), DateTime.UtcNow);
+        await photos.CreateAsync(photo);
+
+        await recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baul.Id,
+            new UserId(custodioId), "Recuerdo que no debería sobrevivir en un estado a medias", DateTime.UtcNow));
+
+        var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, UserId: null, "Persona",
+            BaulRole.Colaborador, DateTime.UtcNow);
+        await baules.AddPersonaAsync(persona);
+        await photoPersonaTags.SetTagsAsync(photo.Id, baul.Id, [persona.Id], DateTime.UtcNow);
+
+        dbContext.ChangeTracker.Clear();
+
+        // Act — steps 1-5 (tags, shared links, invite links, recuerdos, photos) run and stage
+        // their ExecuteDeleteAsync calls inside the still-open transaction before step 6 throws.
+        await Assert.ThrowsAsync<InvalidOperationException>(() => admin.DeleteBaulAsync(baul.Id));
+
+        // Assert — every row from steps 1-5, not just the chapter that actually failed, is
+        // still there. A test that only checked the chapter wouldn't distinguish "the
+        // transaction rolled back" from "the failure just happened before that call ran".
+        (await photoPersonaTags.GetPersonaIdsByPhotoIdAsync(photo.Id)).Should().ContainSingle();
+        (await recuerdos.GetByChapterIdAsync(chapter.Id)).Should().ContainSingle();
+        (await photos.GetByIdAsync(photo.Id)).Should().NotBeNull();
+        (await chapters.GetByIdAsync(chapter.Id)).Should().NotBeNull();
+        (await baules.GetByIdAsync(baul.Id)).Should().NotBeNull();
     }
 }

@@ -30,6 +30,15 @@ public class BaulInviteLinkManager(
     BaulAccessService baulAccess,
     IPersonaDtoProjector personaDtoProjector) : IBaulInviteLinkManager
 {
+    // GetOrCreateAsync and RegenerateAsync are deliberately NOT wrapped in
+    // IUnitOfWork.ExecuteInTransactionAsync, unlike every other multi-write method in this
+    // codebase (see that port's doc comment). Both rely on CreateAsync's commit landing
+    // immediately so a concurrent caller's INSERT can lose the race against Postgres' unique
+    // partial index and throw right there — and on the re-read a few lines down seeing
+    // whichever transaction actually won, which requires that winner's write to already be
+    // committed, not just staged inside an ambient transaction of this request's own. Wrapping
+    // this in a transaction wouldn't make it more correct, it would silently break the race
+    // detection this method is built around.
     public async Task<Result<BaulInviteLinkDto>> GetOrCreateAsync(BaulId baulId)
     {
         var userId = currentUserProvider.GetUserId();
@@ -50,6 +59,7 @@ public class BaulInviteLinkManager(
         return ToDto(active);
     }
 
+    // Same reasoning as GetOrCreateAsync above — not wrapped in a transaction on purpose.
     public async Task<Result<BaulInviteLinkDto>> RegenerateAsync(BaulId baulId)
     {
         var userId = currentUserProvider.GetUserId();

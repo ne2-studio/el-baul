@@ -19,7 +19,8 @@ public class BaulManager(
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess) : IBaulManager
+    BaulAccessService baulAccess,
+    IUnitOfWork unitOfWork) : IBaulManager
 {
     public async Task<Result<IEnumerable<BaulDto>>> GetAllForCurrentUserAsync()
     {
@@ -48,13 +49,19 @@ public class BaulManager(
         var now = clock.UtcNow();
 
         var baul = new Baul(new BaulId(idGenerator.NewId()), name, description, userId, 0, now, now);
-        await baulRepository.CreateAsync(baul);
-
         var user = await userRepository.GetByIdAsync(userId);
         var custodianPersona = new Persona(
             new PersonaId(idGenerator.NewId()), baul.Id, userId, user?.Name ?? user?.Email ?? "Custodio",
             BaulRole.Custodio, now, Name: user?.Name);
-        await baulRepository.AddPersonaAsync(custodianPersona);
+
+        // Both writes commit together — a Baul with no Custodio persona (or vice versa) is not
+        // a state either half of the app can make sense of.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await baulRepository.CreateAsync(baul);
+            await baulRepository.AddPersonaAsync(custodianPersona);
+            return Result.Success();
+        });
 
         logger.LogInformation("Baul created {BaulId} {Name}", baul.Id, name);
         return await ToDtoAsync(baul, BaulRole.Custodio);

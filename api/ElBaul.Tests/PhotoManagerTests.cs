@@ -41,14 +41,15 @@ public class PhotoManagerTests
         new(NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(),
+            new FakeUnitOfWork());
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
     // (it's a photo listing method), but tests need to tag photos first to exercise it.
     private PhotoPersonaTagManager CreateTagManager(string currentUserId) =>
         new(NullLogger<PhotoPersonaTagManager>.Instance, _fixture.Photos, _fixture.Baules, _photoStorage, _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags);
+            _fixture.PhotoPersonaTags, new FakeUnitOfWork());
 
     [Fact]
     public async Task UploadAsync_ShouldSaveFile_AndIncrementChapterPhotoCount()
@@ -124,7 +125,8 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage));
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage),
+            new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -145,7 +147,8 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(),
+            new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -169,7 +172,8 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService());
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(),
+            new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(

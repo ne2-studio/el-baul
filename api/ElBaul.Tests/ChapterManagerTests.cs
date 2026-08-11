@@ -29,7 +29,7 @@ public class ChapterManagerTests
             _fixture.Recuerdos, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage));
+            new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage), new FakeUnitOfWork());
 
     [Fact]
     public async Task CreateAsync_ShouldIncrementBaulChapterCount()

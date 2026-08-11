@@ -21,7 +21,8 @@ public class PhotoPersonaTagManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
-    IPhotoPersonaTagRepository photoPersonaTagRepository) : IPhotoPersonaTagManager
+    IPhotoPersonaTagRepository photoPersonaTagRepository,
+    IUnitOfWork unitOfWork) : IPhotoPersonaTagManager
 {
     public async Task<Result<IEnumerable<TaggedPersonaDto>>> GetTaggedPersonasAsync(PhotoId photoId)
     {
@@ -72,12 +73,19 @@ public class PhotoPersonaTagManager(
             personas.Add(persona);
         }
 
-        await photoPersonaTagRepository.SetTagsAsync(photoId, photo.BaulId, distinctIds, clock.UtcNow());
-        // A real tag always wins over a stale "confirmed no personas" — someone tagging the
-        // photo later from the viewer should silently undo an earlier (possibly mistaken)
-        // confirmation, with no separate "undo" affordance needed.
-        if (distinctIds.Count > 0 && photo.ConfirmedNoPersonas)
-            await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
+        // SetTagsAsync bulk-deletes the photo's old tags via ExecuteDeleteAsync (bypasses the
+        // change tracker, see IUnitOfWork's doc comment) before re-inserting the new set, so
+        // only an ambient transaction makes it atomic with the ConfirmedNoPersonas clear below.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await photoPersonaTagRepository.SetTagsAsync(photoId, photo.BaulId, distinctIds, clock.UtcNow());
+            // A real tag always wins over a stale "confirmed no personas" — someone tagging the
+            // photo later from the viewer should silently undo an earlier (possibly mistaken)
+            // confirmation, with no separate "undo" affordance needed.
+            if (distinctIds.Count > 0 && photo.ConfirmedNoPersonas)
+                await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
+            return Result.Success();
+        });
         logger.LogInformation("Photo tags updated {BaulId} {PhotoId} {PersonaCount}", photo.BaulId, photoId, personas.Count);
 
         var dtos = new List<TaggedPersonaDto>();
@@ -146,9 +154,17 @@ public class PhotoPersonaTagManager(
         }
 
         var now = clock.UtcNow();
-        await photoPersonaTagRepository.SetTagsForManyAsync(baulId, tagsByPhotoId, now);
-        foreach (var photo in confirmedNoPersonasToClear)
-            await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
+
+        // Same reasoning as SetTaggedPersonasAsync — SetTagsForManyAsync bulk-deletes via
+        // ExecuteDeleteAsync, so only an ambient transaction makes it atomic with the
+        // ConfirmedNoPersonas clears below.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await photoPersonaTagRepository.SetTagsForManyAsync(baulId, tagsByPhotoId, now);
+            foreach (var photo in confirmedNoPersonasToClear)
+                await photoRepository.UpdateAsync(photo.WithConfirmedNoPersonas(false));
+            return Result.Success();
+        });
 
         logger.LogInformation(
             "Batch photo tagging completed {BaulId} {PhotoCount} {PersonaCount}", baulId, updated.Count, distinctPersonaIds.Count);

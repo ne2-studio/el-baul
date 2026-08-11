@@ -34,6 +34,10 @@ public class EmailLinkClickRepository(ElBaulDbContext dbContext) : IEmailLinkCli
         }
     }
 
+    // Deliberately not migrated to stage-only + IUnitOfWork.SaveChangesAsync, same reasoning as
+    // UserRepository.UpsertAsync — the catch block below depends on this SaveChangesAsync
+    // committing immediately so a lost race against a concurrent click on the same link surfaces
+    // right here as a catchable DbUpdateException, not later inside some caller's unit of work.
     public async Task RegisterSignedClickAsync(string token, Guid sentEmailId, string linkKey, string destinationUrl, DateTime clickedAt)
     {
         var existing = await dbContext.EmailLinkClicks.FirstOrDefaultAsync(e => e.Token == token);

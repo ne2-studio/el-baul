@@ -42,6 +42,11 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.HasSeenOnboarding, true));
 
+    // Deliberately not migrated to stage-only + IUnitOfWork.SaveChangesAsync (unlike most other
+    // repositories' Create/Update methods) — the immediate SaveChangesAsync below is what turns
+    // a lost race into a caught DbUpdateException at the exact call site prepared to swallow it.
+    // Deferring the commit to a caller-controlled unit of work would move that exception
+    // somewhere this method has no way to catch it.
     public async Task UpsertAsync(User user)
     {
         var existing = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == user.Id);

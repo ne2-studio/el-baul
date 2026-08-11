@@ -23,7 +23,8 @@ public class RemovalRequestManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
-    PhotoLifecycleService photoLifecycle) : IRemovalRequestManager
+    PhotoLifecycleService photoLifecycle,
+    IUnitOfWork unitOfWork) : IRemovalRequestManager
 {
     public async Task<Result<IEnumerable<RemovalRequestDto>>> GetRemovalRequestsAsync(BaulId baulId)
     {
@@ -87,12 +88,20 @@ public class RemovalRequestManager(
         }
 
         var photo = await photoRepository.GetByIdAsync(request.PhotoId);
-        if (photo is not null)
-        {
-            await photoLifecycle.SoftDeleteAsync(photo, request.Reason);
-        }
 
-        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+        // Soft-deleting the photo and consuming the request commit together — a request
+        // approved twice (because a failure between the two steps left it pending) would
+        // soft-delete an already-deleted photo's chapter/baúl cover a second time.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            if (photo is not null)
+            {
+                await photoLifecycle.SoftDeleteAsync(photo, request.Reason);
+            }
+
+            await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+            return Result.Success();
+        });
 
         logger.LogInformation(
             "Removal request approved, photo deleted {PhotoId} {RemovalRequestId} {ChapterId}",

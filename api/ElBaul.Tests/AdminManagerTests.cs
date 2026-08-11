@@ -37,7 +37,7 @@ public class AdminManagerTests
         _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
         _recuerdoRepository, _sharedLinkRepository, _baulInviteLinkRepository, _photoPersonaTagRepository, _pushTokenRepository,
         _photoStorage, _chatContextBuilder, _clock,
-        NullLogger<AdminManager>.Instance);
+        NullLogger<AdminManager>.Instance, new FakeUnitOfWork());
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()

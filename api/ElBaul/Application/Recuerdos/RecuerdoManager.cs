@@ -26,7 +26,8 @@ public class RecuerdoManager(
     ICurrentUserProvider currentUserProvider,
     IPhotoStorage photoStorage,
     BaulAccessService baulAccess,
-    AuthorInfoProjector authorInfoProjector) : IRecuerdoManager
+    AuthorInfoProjector authorInfoProjector,
+    IUnitOfWork unitOfWork) : IRecuerdoManager
 {
     // The one internal shape every scoped entry point resolves down to before the shared
     // create/query logic runs — BaulId is always known, ChapterId/PhotoId follow the Photo >
@@ -100,8 +101,17 @@ public class RecuerdoManager(
             return Result.Failure<RecuerdoDto>(ApplicationError.Forbidden("Only the author can edit this recuerdo"));
 
         var updated = recuerdo with { Text = text.Trim() };
-        await recuerdoRepository.UpdateAsync(updated);
-        await recuerdoEmbeddingRepository.DeleteAsync(recuerdoId);
+
+        // Both commit together — DeleteAsync bulk-deletes the stale embedding via
+        // ExecuteDeleteAsync (bypasses the change tracker, see IUnitOfWork's doc comment), so
+        // only an ambient transaction makes it atomic with the text update. An edited recuerdo
+        // stuck with its old embedding would silently rank/search on stale text.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await recuerdoRepository.UpdateAsync(updated);
+            await recuerdoEmbeddingRepository.DeleteAsync(recuerdoId);
+            return Result.Success();
+        });
 
         var (nickname, avatarUrl, personaId) = await authorInfoProjector.GetAsync(updated.BaulId, updated.UserId);
         var photoThumbnailUrl = await GetPhotoThumbnailUrlAsync(updated.PhotoId);

@@ -42,7 +42,8 @@ public class AdminManager(
     IPhotoStorage photoStorage,
     IChatContextBuilder chatContextBuilder,
     IClock clock,
-    ILogger<AdminManager> logger) : IAdminManager
+    ILogger<AdminManager> logger,
+    IUnitOfWork unitOfWork) : IAdminManager
 {
     public async Task<Result<AdminDashboardCountsDto>> GetDashboardCountsAsync()
     {
@@ -115,15 +116,25 @@ public class AdminManager(
         var photos = (await photoRepository.GetAllByBaulIdAsync(baulId)).ToList();
         var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
 
-        await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
-        await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
-        await baulInviteLinkRepository.DeleteByBaulIdAsync(baulId);
-        await recuerdoRepository.DeleteByBaulIdAsync(baulId);
-        await photoRepository.DeleteByBaulIdAsync(baulId);
-        await chapterRepository.DeleteByBaulIdAsync(baulId);
-        await baulRepository.RemoveAllPersonasAsync(baulId);
-        await baulRepository.DeleteAllRemovalRequestsAsync(baulId);
-        await baulRepository.DeleteAsync(baulId);
+        // All 8 deletes commit together — every one of them is an ExecuteDeleteAsync call
+        // (bypasses the change tracker, see IUnitOfWork's doc comment), so before this each
+        // one committed on its own: a failure partway left the baúl partially destroyed with
+        // no way to roll back. See this method's own doc comment for why the order matters
+        // (real Postgres Restrict foreign keys) — the transaction changes nothing about that,
+        // it only makes "all 8 or none" true instead of "whichever ran before the failure".
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
+            await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
+            await baulInviteLinkRepository.DeleteByBaulIdAsync(baulId);
+            await recuerdoRepository.DeleteByBaulIdAsync(baulId);
+            await photoRepository.DeleteByBaulIdAsync(baulId);
+            await chapterRepository.DeleteByBaulIdAsync(baulId);
+            await baulRepository.RemoveAllPersonasAsync(baulId);
+            await baulRepository.DeleteAllRemovalRequestsAsync(baulId);
+            await baulRepository.DeleteAsync(baulId);
+            return Result.Success();
+        });
 
         logger.LogWarning(
             "Baul hard-deleted ({PhotoCount} photos, {PersonaCount} personas)", photos.Count, personas.Count);

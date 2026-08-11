@@ -28,6 +28,7 @@ public static class ServiceRegistration
         services.AddDbContext<ElBaulDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBaulRepository, BaulRepository>();
         services.AddScoped<IChapterRepository, ChapterRepository>();

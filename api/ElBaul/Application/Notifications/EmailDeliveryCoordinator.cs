@@ -79,6 +79,15 @@ public class EmailDeliveryCoordinator(
         }
     }
 
+    // Deliberately not wrapped in IUnitOfWork.ExecuteInTransactionAsync (see that port's doc
+    // comment), and for two independent reasons, not just one:
+    // - TryReserveAsync's INSERT needs to commit immediately so it acts as a cross-process lock
+    //   — concurrent Hangfire workers retrying the same job race on the same unique
+    //   DeduplicationKey, and only an already-committed row makes the loser back off instead of
+    //   also sending.
+    // - emailSender.SendAsync below is a real, irreversible external effect (an email actually
+    //   leaves the building). It must never sit inside a transaction that could still roll back
+    //   — there is no "undo" for an email already delivered to a real inbox.
     public async Task<Result> SendAsync(
         UserId userId,
         string recipientEmail,

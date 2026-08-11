@@ -36,7 +36,7 @@ public class RecuerdoManagerTests
             _recuerdoEmbeddingRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), _photoStorage,
             new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(_baulRepository, _photoRepository, _photoStorage));
+            new AuthorInfoProjector(_baulRepository, _photoRepository, _photoStorage), new FakeUnitOfWork());
 
     private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
     {

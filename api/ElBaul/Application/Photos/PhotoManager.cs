@@ -25,7 +25,8 @@ public class PhotoManager(
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     PhotoLifecycleService photoLifecycle,
     IPhotoDtoProjector photoDtoProjector,
-    PhotoFileService photoFileService) : IPhotoManager
+    PhotoFileService photoFileService,
+    IUnitOfWork unitOfWork) : IPhotoManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
     {
@@ -164,26 +165,23 @@ public class PhotoManager(
 
         try
         {
-            await photoRepository.CreateAsync(photo);
+            // One transaction: a photo row that exists without its chapter/baul cover having
+            // been updated (or vice versa) is exactly the partial-write state this port exists
+            // to prevent. If this throws, the photo row itself never lands either, so the
+            // now-orphaned storage object below always needs cleaning up on failure.
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await photoRepository.CreateAsync(photo);
+                await photoLifecycle.AddAsync(photo, chapter, baul, now);
+                return Result.Success();
+            });
         }
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Photo upload failed while persisting metadata {BaulId} {ChapterId} {PhotoId} {StorageKey}",
+                "Photo upload failed while persisting photo/chapter/baul state {BaulId} {ChapterId} {PhotoId} {StorageKey}",
                 baul.Id, chapterId, photo.Id, storedFile.StorageKey);
             await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
-            throw;
-        }
-
-        try
-        {
-            await photoLifecycle.AddAsync(photo, chapter, baul, now);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Photo upload failed while updating chapter/baul cover {BaulId} {ChapterId} {PhotoId} {StorageKey}",
-                baul.Id, chapterId, photo.Id, storedFile.StorageKey);
             throw;
         }
 
@@ -229,7 +227,12 @@ public class PhotoManager(
             sourceChapter = await chapterRepository.GetByIdAsync(sourceChapterId);
         }
 
-        var updatedPhoto = await photoLifecycle.MoveAsync(photo, sourceChapter, targetChapter);
+        // Source-chapter removal, photo reassignment and target-chapter addition commit
+        // together — a photo whose ChapterId points somewhere its PhotoCount doesn't reflect
+        // is exactly the partial-write state this port exists to prevent.
+        var moveResult = await unitOfWork.ExecuteInTransactionAsync(async () =>
+            Result.Success(await photoLifecycle.MoveAsync(photo, sourceChapter, targetChapter)));
+        var updatedPhoto = moveResult.Value;
 
         logger.LogInformation(
             "Photo moved {BaulId} {PhotoId} {SourceChapterId} {TargetChapterId}",
@@ -252,7 +255,13 @@ public class PhotoManager(
             photo.BaulId, userId, AccessLevel.Admin, "Photo delete", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        await photoLifecycle.SoftDeleteAsync(photo, reason);
+        // Photo status, source-chapter removal and baúl cover clearing commit together — see
+        // PhotoLifecycleService.SoftDeleteAsync for what it touches.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await photoLifecycle.SoftDeleteAsync(photo, reason);
+            return Result.Success();
+        });
 
         logger.LogInformation("Photo deleted {BaulId} {PhotoId}", photo.BaulId, photoId);
         return Result.Success();
@@ -280,6 +289,13 @@ public class PhotoManager(
         return await photoDtoProjector.ProjectAsync(updatedPhoto);
     }
 
+    // Deliberately not wrapped in IUnitOfWork.ExecuteInTransactionAsync despite looping over
+    // N writes — unlike every transactional method in this codebase, this one is intentionally
+    // best-effort: a photo that fails validation (not found, access denied) is logged and
+    // skipped, not treated as a reason to abort the rest of the batch. Wrapping this loop in a
+    // transaction would flip that semantic — ExecuteInTransactionAsync rolls back the whole
+    // operation on any Result.Failure, which here would turn "skip the one bad photo" into
+    // "discard every date change in the batch because of one bad photo".
     public async Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<PhotoId> photoIds, PhotoDate date)
     {
         var updated = new List<PhotoDto>();

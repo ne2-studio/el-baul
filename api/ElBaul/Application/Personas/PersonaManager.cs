@@ -27,7 +27,8 @@ public class PersonaManager(
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     PhotoFileService photoFileService,
-    IPersonaDtoProjector personaDtoProjector) : IPersonaManager
+    IPersonaDtoProjector personaDtoProjector,
+    IUnitOfWork unitOfWork) : IPersonaManager
 {
     public async Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(BaulId baulId)
     {
@@ -189,8 +190,14 @@ public class PersonaManager(
             photo = Photo.Create(new PhotoId(idGenerator.NewId()), null, baulId, storedFile.StorageKey, storedFile.Date, userId, clock.UtcNow(), clientUploadId);
             try
             {
-                await photoRepository.CreateAsync(photo);
-                await baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(photo, clock.UtcNow()));
+                // Both writes commit together — see PhotoManager.UploadPhotoAsync for the same
+                // pattern and why a partial write here needs the same storage cleanup below.
+                await unitOfWork.ExecuteInTransactionAsync(async () =>
+                {
+                    await photoRepository.CreateAsync(photo);
+                    await baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(photo, clock.UtcNow()));
+                    return Result.Success();
+                });
             }
             catch (Exception ex)
             {
@@ -310,10 +317,6 @@ public class PersonaManager(
     private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAccess access, UserId userId, Photo photo, AvatarCrop crop)
     {
         var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
-        if (!existingIds.Contains(persona.Id))
-        {
-            await photoPersonaTagRepository.SetTagsAsync(photo.Id, photo.BaulId, existingIds.Append(persona.Id), clock.UtcNow());
-        }
 
         var updated = persona with
         {
@@ -323,7 +326,21 @@ public class PersonaManager(
             AvatarCropY = crop.Y,
             AvatarCropScale = crop.Scale
         };
-        await baulRepository.UpdatePersonaAsync(updated);
+
+        // Tagging the persona into their own new avatar photo and assigning the avatar commit
+        // together — SetTagsAsync bulk-deletes/reinserts via ExecuteDeleteAsync (bypasses the
+        // change tracker, see IUnitOfWork's doc comment), so only an ambient transaction makes
+        // it atomic with the persona update.
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            if (!existingIds.Contains(persona.Id))
+            {
+                await photoPersonaTagRepository.SetTagsAsync(photo.Id, photo.BaulId, existingIds.Append(persona.Id), clock.UtcNow());
+            }
+
+            await baulRepository.UpdatePersonaAsync(updated);
+            return Result.Success();
+        });
         logger.LogInformation("Persona avatar photo updated {PersonaId} {PhotoId}", persona.Id, photo.Id);
 
         var user = updated.IsClaimed ? await userRepository.GetByIdAsync(updated.UserId!.Value) : null;
