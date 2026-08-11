@@ -36,7 +36,10 @@ public class PersonaManagerTests
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags,
-            new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer()),
+            new PhotoUploadWorkflow(
+                NullLogger<PhotoUploadWorkflow>.Instance, _fixture.Photos,
+                new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer()),
+                new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork()),
             new PersonaDtoProjector(_fixture.Photos, _photoStorage, _fixture.Users), new FakeUnitOfWork());
 
     [Fact]
@@ -307,6 +310,7 @@ public class PersonaManagerTests
         var photo = await _fixture.Photos.GetByIdAsync(new PhotoId(photoId));
         Assert.NotNull(photo);
         Assert.Null(photo!.ChapterId);
+        Assert.Equal(3, photo.SizeBytes);
         Assert.Contains(personaId, await _fixture.PhotoPersonaTags.GetPersonaIdsByPhotoIdAsync(new PhotoId(photoId)));
     }
 

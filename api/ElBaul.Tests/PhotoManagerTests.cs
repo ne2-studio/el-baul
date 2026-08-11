@@ -35,14 +35,17 @@ public class PhotoManagerTests
     private PhotoFileService CreatePhotoFileService(IPhotoStorage? photoStorage = null) =>
         new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer());
 
+    private PhotoUploadWorkflow CreatePhotoUploadWorkflow(IPhotoRepository? photoRepository = null, IPhotoStorage? photoStorage = null, Guid? nextId = null) =>
+        new(NullLogger<PhotoUploadWorkflow>.Instance, photoRepository ?? _fixture.Photos, CreatePhotoFileService(photoStorage),
+            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
+
     private IPhotoListReadModel CreatePhotoListReadModel() =>
         new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.PhotoPersonaTags);
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null) =>
         new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
-            new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(nextId: nextId),
             new FakeUnitOfWork());
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
@@ -124,9 +127,8 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
-            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage),
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -146,9 +148,8 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
-            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository),
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -171,9 +172,8 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
-            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository),
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);

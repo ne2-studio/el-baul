@@ -19,14 +19,13 @@ public class PhotoManager(
     IPhotoListReadModel photoListReadModel,
     IChapterRepository chapterRepository,
     IBaulRepository baulRepository,
-    IIdGenerator idGenerator,
-    IClock clock,
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     PhotoLifecycleService photoLifecycle,
     IPhotoDtoProjector photoDtoProjector,
     PhotoFileService photoFileService,
+    PhotoUploadWorkflow photoUploadWorkflow,
     IUnitOfWork unitOfWork) : IPhotoManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
@@ -160,46 +159,9 @@ public class PhotoManager(
             return Result.Success(await photoDtoProjector.ProjectAsync(existingPhoto));
         }
 
-        var now = clock.UtcNow();
-        StoredPhotoFile storedFile;
-
-        try
-        {
-            storedFile = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, date);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Photo upload failed while saving to storage {BaulId} {ChapterId} {FileName} {ContentType}",
-                baul.Id, chapterId, fileName, contentType);
-            throw;
-        }
-
-        var photo = Photo.Create(
-            new PhotoId(idGenerator.NewId()), chapterId, baul.Id, storedFile.StorageKey, storedFile.Date, userId, now,
-            clientUploadId, storedFile.SizeBytes, uploadBatchId);
-
-        try
-        {
-            // One transaction: a photo row that exists without its chapter/baul cover having
-            // been updated (or vice versa) is exactly the partial-write state this port exists
-            // to prevent. If this throws, the photo row itself never lands either, so the
-            // now-orphaned storage object below always needs cleaning up on failure.
-            await unitOfWork.ExecuteInTransactionAsync(async () =>
-            {
-                await photoRepository.CreateAsync(photo);
-                await photoLifecycle.AddAsync(photo, chapter, baul, now);
-                return Result.Success();
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Photo upload failed while persisting photo/chapter/baul state {BaulId} {ChapterId} {PhotoId} {StorageKey}",
-                baul.Id, chapterId, photo.Id, storedFile.StorageKey);
-            await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
-            throw;
-        }
+        var photo = await photoUploadWorkflow.CreatePhotoAsync(
+            baul.Id, chapterId, userId, content, fileName, contentType, date, clientUploadId, uploadBatchId,
+            (createdPhoto, now) => photoLifecycle.AddAsync(createdPhoto, chapter, baul, now));
 
         logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", baul.Id, chapterId, photo.Id);
 

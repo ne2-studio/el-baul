@@ -27,7 +27,7 @@ public class PersonaManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
-    PhotoFileService photoFileService,
+    PhotoUploadWorkflow photoUploadWorkflow,
     IPersonaDtoProjector personaDtoProjector,
     IUnitOfWork unitOfWork) : IPersonaManager
 {
@@ -181,39 +181,10 @@ public class PersonaManager(
         }
         else
         {
-            StoredPhotoFile storedFile;
-            try
-            {
-                storedFile = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, explicitDate: null);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex,
-                    "Persona avatar upload failed while saving to storage {PersonaId} {FileName} {ContentType}",
-                    personaId, fileName, contentType);
-                throw;
-            }
-
-            photo = Photo.Create(new PhotoId(idGenerator.NewId()), null, baulId, storedFile.StorageKey, storedFile.Date, userId, clock.UtcNow(), clientUploadId);
-            try
-            {
-                // Both writes commit together — see PhotoManager.UploadPhotoAsync for the same
-                // pattern and why a partial write here needs the same storage cleanup below.
-                await unitOfWork.ExecuteInTransactionAsync(async () =>
-                {
-                    await photoRepository.CreateAsync(photo);
-                    await baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(photo, clock.UtcNow()));
-                    return Result.Success();
-                });
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex,
-                    "Persona avatar upload failed while persisting photo metadata {PersonaId} {PhotoId} {StorageKey}",
-                    personaId, photo.Id, storedFile.StorageKey);
-                await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
-                throw;
-            }
+            photo = await photoUploadWorkflow.CreatePhotoAsync(
+                baulId, chapterId: null, userId, content, fileName, contentType, explicitDate: null,
+                clientUploadId, uploadBatchId: null,
+                (createdPhoto, now) => baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(createdPhoto, now)));
         }
 
         return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);
