@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Personas;
@@ -50,6 +51,28 @@ public record Persona
     // always wins.
     public Persona AcceptInvite(UserId userId, string? fallbackName) =>
         this with { UserId = userId, Name = Name ?? fallbackName };
+
+    public Persona WithIdentity(string? name, string nickname) =>
+        this with { Name = name, Nickname = nickname };
+
+    public Persona WithBiografia(string? biografia) =>
+        this with { Biografia = biografia };
+
+    public Persona WithRole(BaulRole role) =>
+        this with { Role = role };
+
+    public Persona WithImportedAvatar(string avatarPhotoKey) =>
+        this with { AvatarPhotoKey = avatarPhotoKey };
+
+    public Persona WithAvatarPhoto(Photo photo, decimal cropX, decimal cropY, decimal cropScale) =>
+        this with
+        {
+            AvatarPhotoKey = null,
+            AvatarPhotoId = photo.Id,
+            AvatarCropX = cropX,
+            AvatarCropY = cropY,
+            AvatarCropScale = cropScale
+        };
 
     // The only way a Persona reaches Revoked — clears the account link alongside the role so
     // the two never drift out of sync (see PersonaAccessStatus).

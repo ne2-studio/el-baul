@@ -51,4 +51,18 @@ public record Photo
 
     public Photo WithConfirmedNoPersonas(bool confirmedNoPersonas) =>
         this with { ConfirmedNoPersonas = confirmedNoPersonas };
+
+    public Photo InChapter(ChapterId chapterId) =>
+        this with { ChapterId = chapterId };
+
+    public Photo WithoutChapter() =>
+        this with { ChapterId = null };
+
+    public Photo MarkDeleted(string? reason, DateTime deletedAt) =>
+        this with
+        {
+            Status = PhotoStatus.Deleted,
+            DeletedAt = deletedAt,
+            DeletionReason = reason
+        };
 }

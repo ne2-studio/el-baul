@@ -100,7 +100,7 @@ public class RecuerdoManager(
         if (recuerdo.UserId != userId)
             return Result.Failure<RecuerdoDto>(ApplicationError.Forbidden("Only the author can edit this recuerdo"));
 
-        var updated = recuerdo with { Text = text.Trim() };
+        var updated = recuerdo.WithText(text);
 
         // Both commit together — DeleteAsync bulk-deletes the stale embedding via
         // ExecuteDeleteAsync (bypasses the change tracker, see IUnitOfWork's doc comment), so

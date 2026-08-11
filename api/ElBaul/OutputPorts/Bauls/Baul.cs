@@ -26,6 +26,9 @@ public record Baul
     public Baul WithChapterRemoved(DateTime updatedAt) =>
         this with { ChapterCount = ChapterCount - 1, UpdatedAt = updatedAt };
 
+    public Baul WithDetails(string name, string? description, DateTime updatedAt) =>
+        this with { Name = name, Description = description, UpdatedAt = updatedAt };
+
     // Same cover-photo rule as Chapter (see Chapter.WithPhotoAdded/WithPhotoRemoved/WithCover):
     // first photo in becomes the cover, only the current cover is ever cleared.
     public Baul WithPhotoAdded(Photo photo, DateTime updatedAt) =>

@@ -25,7 +25,7 @@ public class UserManager(
         if (user is null) return Result.Failure<UserProfileDto>(ApplicationError.NotFound("User not found"));
 
         await userRepository.UpdateWeeklyDigestEnabledAsync(userId, weeklyDigestEnabled);
-        return ToDto(user with { WeeklyDigestEnabled = weeklyDigestEnabled });
+        return ToDto(user.WithWeeklyDigestEnabled(weeklyDigestEnabled));
     }
 
     public async Task<Result<UserProfileDto>> MarkOnboardingSeenAsync()
@@ -35,7 +35,7 @@ public class UserManager(
         if (user is null) return Result.Failure<UserProfileDto>(ApplicationError.NotFound("User not found"));
 
         await userRepository.MarkOnboardingSeenAsync(userId);
-        return ToDto(user with { HasSeenOnboarding = true });
+        return ToDto(user.WithOnboardingSeen());
     }
 
     private static UserProfileDto ToDto(User user) =>

@@ -29,7 +29,7 @@ public class PhotoLifecycleService(
             await chapterRepository.UpdateAsync(sourceChapter.WithPhotoRemoved(photo, now));
         }
 
-        var updatedPhoto = photo with { ChapterId = targetChapter.Id };
+        var updatedPhoto = photo.InChapter(targetChapter.Id);
         await photoRepository.UpdateAsync(updatedPhoto);
 
         await chapterRepository.UpdateAsync(targetChapter.WithPhotoAdded(photo, now));
@@ -42,12 +42,7 @@ public class PhotoLifecycleService(
         if (photo.Status == PhotoStatus.Deleted) return;
 
         var now = clock.UtcNow();
-        var updatedPhoto = photo with
-        {
-            Status = PhotoStatus.Deleted,
-            DeletedAt = now,
-            DeletionReason = reason
-        };
+        var updatedPhoto = photo.MarkDeleted(reason, now);
         await photoRepository.UpdateAsync(updatedPhoto);
 
         if (photo.ChapterId is { } chapterId)

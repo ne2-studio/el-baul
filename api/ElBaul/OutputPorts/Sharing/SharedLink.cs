@@ -21,4 +21,7 @@ public record SharedLink
 )
 {
     public bool IsRevoked => RevokedAt is not null;
+
+    public SharedLink Revoke(DateTime revokedAt) =>
+        this with { RevokedAt = revokedAt };
 }

@@ -10,4 +10,11 @@ public record Recuerdo
     UserId UserId,
     string Text,
     DateTime CreatedAt
-);
+)
+{
+    public Recuerdo WithText(string text) =>
+        this with { Text = text.Trim() };
+
+    public Recuerdo WithoutChapter() =>
+        this with { ChapterId = null };
+}

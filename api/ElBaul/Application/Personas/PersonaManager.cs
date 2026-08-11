@@ -120,7 +120,7 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>(ApplicationError.Forbidden("Access denied"));
         }
 
-        var updated = persona with { Name = name, Nickname = nickname };
+        var updated = persona.WithIdentity(name, nickname);
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona updated {PersonaId}", personaId);
 
@@ -147,7 +147,7 @@ public class PersonaManager(
         if (personaResult.IsFailure) return Result.Failure<PersonaDto>(personaResult.Error);
         var persona = personaResult.Value;
 
-        var updated = persona with { Biografia = biografia };
+        var updated = persona.WithBiografia(biografia);
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona biografia updated {PersonaId}", personaId);
 
@@ -266,7 +266,7 @@ public class PersonaManager(
             return Result.Failure<PersonaDto>(ApplicationError.Validation("The custodio role cannot be changed"));
         }
 
-        var updated = persona with { Role = role };
+        var updated = persona.WithRole(role);
         await baulRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona role updated {PersonaId} {Role}", personaId, role);
 
@@ -335,14 +335,7 @@ public class PersonaManager(
     {
         var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
 
-        var updated = persona with
-        {
-            AvatarPhotoKey = null,
-            AvatarPhotoId = photo.Id,
-            AvatarCropX = crop.X,
-            AvatarCropY = crop.Y,
-            AvatarCropScale = crop.Scale
-        };
+        var updated = persona.WithAvatarPhoto(photo, crop.X, crop.Y, crop.Scale);
 
         // Tagging the persona into their own new avatar photo and assigning the avatar commit
         // together — SetTagsAsync bulk-deletes/reinserts via ExecuteDeleteAsync (bypasses the

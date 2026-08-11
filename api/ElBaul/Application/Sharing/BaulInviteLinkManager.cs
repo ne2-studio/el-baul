@@ -73,7 +73,7 @@ public class BaulInviteLinkManager(
         var current = await baulInviteLinkRepository.GetActiveByBaulIdAsync(baulId);
         if (current is not null)
         {
-            await baulInviteLinkRepository.UpdateAsync(current with { RevokedAt = clock.UtcNow() });
+            await baulInviteLinkRepository.UpdateAsync(current.Revoke(clock.UtcNow()));
         }
 
         var link = new BaulInviteLink(new BaulInviteLinkId(idGenerator.NewId()), TokenGenerator.NewToken(idGenerator), baulId, userId, clock.UtcNow());
@@ -226,7 +226,7 @@ public class BaulInviteLinkManager(
             var key = StorageKey.ForPersonaAvatar(persona.Id, idGenerator.NewId(), "avatar.jpg");
             await photoStorage.SaveAsync(key, new MemoryStream(bytes), "image/jpeg");
 
-            var updated = persona with { AvatarPhotoKey = key };
+            var updated = persona.WithImportedAvatar(key);
             await baulRepository.UpdatePersonaAsync(updated);
             return updated;
         }

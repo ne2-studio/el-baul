@@ -110,7 +110,7 @@ public class BaulManager(
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 
-        var updated = access.Baul with { Name = name, Description = description, UpdatedAt = clock.UtcNow() };
+        var updated = access.Baul.WithDetails(name, description, clock.UtcNow());
         await baulRepository.UpdateAsync(updated);
 
         logger.LogInformation("Baul updated {Name}", name);

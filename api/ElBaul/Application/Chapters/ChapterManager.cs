@@ -139,7 +139,7 @@ public class ChapterManager(
             chapter.BaulId, userId, AccessLevel.Member, "Chapter update", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
 
-        var updated = chapter with { Name = name, UpdatedAt = clock.UtcNow() };
+        var updated = chapter.WithName(name, clock.UtcNow());
         await chapterRepository.UpdateAsync(updated);
 
         logger.LogInformation("Chapter updated {Name}", name);
@@ -173,10 +173,10 @@ public class ChapterManager(
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
             foreach (var photo in photos)
-                await photoRepository.UpdateAsync(photo with { ChapterId = null });
+                await photoRepository.UpdateAsync(photo.WithoutChapter());
 
             foreach (var recuerdo in recuerdos)
-                await recuerdoRepository.UpdateAsync(recuerdo with { ChapterId = null });
+                await recuerdoRepository.UpdateAsync(recuerdo.WithoutChapter());
 
             await chapterRepository.DeleteAsync(chapterId);
             await baulRepository.UpdateAsync(baul.WithChapterRemoved(clock.UtcNow()));

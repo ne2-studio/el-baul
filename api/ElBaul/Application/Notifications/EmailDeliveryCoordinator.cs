@@ -131,7 +131,7 @@ public class EmailDeliveryCoordinator(
             existing = pending;
         }
 
-        existing = existing with { Status = EmailStatus.Sending, SendAttemptedAt = clock.UtcNow() };
+        existing = existing.MarkSending(clock.UtcNow());
         await sentEmailRepository.UpdateAsync(existing);
 
         var sendResult = await emailSender.SendAsync(
@@ -139,19 +139,12 @@ public class EmailDeliveryCoordinator(
 
         if (sendResult.IsFailure)
         {
-            await sentEmailRepository.UpdateAsync(existing with { Status = EmailStatus.Failed, ErrorMessage = sendResult.Error.Message });
+            await sentEmailRepository.UpdateAsync(existing.MarkFailed(sendResult.Error.Message));
             logger.LogError("EmailFailed {Type} {SentEmailId} {Error}", type, existing.Id, sendResult.Error);
             return Result.Failure(sendResult.Error);
         }
 
-        await sentEmailRepository.UpdateAsync(existing with
-        {
-            Status = EmailStatus.Sent,
-            Provider = "Resend",
-            ProviderMessageId = sendResult.Value.ProviderMessageId,
-            SentAt = clock.UtcNow(),
-            ErrorMessage = null // clear a stale error from an earlier failed attempt on this same row
-        });
+        await sentEmailRepository.UpdateAsync(existing.MarkSent("Resend", sendResult.Value.ProviderMessageId, clock.UtcNow()));
         logger.LogInformation("EmailSent {Type} {SentEmailId}", type, existing.Id);
         return Result.Success();
     }

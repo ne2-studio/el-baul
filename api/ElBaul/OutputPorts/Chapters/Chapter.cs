@@ -36,6 +36,9 @@ public record Chapter
             UpdatedAt = updatedAt
         };
 
+    public Chapter WithName(string name, DateTime updatedAt) =>
+        this with { Name = name, UpdatedAt = updatedAt };
+
     public Chapter WithCover(Photo photo, DateTime updatedAt) =>
         this with { CoverPhotoKey = photo.StorageKey, UpdatedAt = updatedAt };
 }

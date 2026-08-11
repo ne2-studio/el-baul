@@ -12,4 +12,7 @@ public record BaulInviteLink
 )
 {
     public bool IsRevoked => RevokedAt is not null;
+
+    public BaulInviteLink Revoke(DateTime revokedAt) =>
+        this with { RevokedAt = revokedAt };
 }

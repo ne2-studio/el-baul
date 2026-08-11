@@ -122,7 +122,7 @@ public class SharedLinkManager(
         var auth = await baulAccess.AuthorizeAsync(sharedLink.BaulId, userId, AccessLevel.Admin, "Shared link revoke", new { sharedLink.BaulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        await sharedLinkRepository.UpdateAsync(sharedLink with { RevokedAt = clock.UtcNow() });
+        await sharedLinkRepository.UpdateAsync(sharedLink.Revoke(clock.UtcNow()));
         logger.LogInformation("Shared link revoked {BaulId} {SharedLinkId}", sharedLink.BaulId, sharedLink.Id);
         return Result.Success();
     }
