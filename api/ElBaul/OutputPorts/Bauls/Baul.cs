@@ -20,6 +20,12 @@ public record Baul
     // equality by hand; see BaulRole.cs for why Custodio isn't a role.
     public bool IsCustodio(UserId userId) => CustodioId == userId;
 
+    public Baul WithChapterAdded(DateTime updatedAt) =>
+        this with { ChapterCount = ChapterCount + 1, UpdatedAt = updatedAt };
+
+    public Baul WithChapterRemoved(DateTime updatedAt) =>
+        this with { ChapterCount = ChapterCount - 1, UpdatedAt = updatedAt };
+
     // Same cover-photo rule as Chapter (see Chapter.WithPhotoAdded/WithPhotoRemoved/WithCover):
     // first photo in becomes the cover, only the current cover is ever cleared.
     public Baul WithPhotoAdded(Photo photo, DateTime updatedAt) =>

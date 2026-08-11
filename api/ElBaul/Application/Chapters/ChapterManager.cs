@@ -82,7 +82,7 @@ public class ChapterManager(
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
             await chapterRepository.CreateAsync(chapter);
-            await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });
+            await baulRepository.UpdateAsync(baul.WithChapterAdded(now));
             return Result.Success();
         });
 
@@ -179,7 +179,7 @@ public class ChapterManager(
                 await recuerdoRepository.UpdateAsync(recuerdo with { ChapterId = null });
 
             await chapterRepository.DeleteAsync(chapterId);
-            await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount - 1, UpdatedAt = clock.UtcNow() });
+            await baulRepository.UpdateAsync(baul.WithChapterRemoved(clock.UtcNow()));
             return Result.Success();
         });
 
