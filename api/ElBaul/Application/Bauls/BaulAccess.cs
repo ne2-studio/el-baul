@@ -25,10 +25,27 @@ public sealed record BaulAccess(Baul Baul, bool IsCustodio, Persona? Persona)
     public string RoleApiString => IsCustodio ? "administrador" : Persona!.Role.ToApiString();
 }
 
+public sealed record AccessibleBaul(Baul Baul, bool IsCustodio, BaulRole Role)
+{
+    public string RoleApiString => Role.ToApiString();
+}
+
 public enum AccessLevel { Member, Admin }
 
 public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger)
 {
+    public async Task<IReadOnlyList<AccessibleBaul>> GetAccessibleAsync(UserId userId)
+    {
+        var owned = await baulRepository.GetOwnedByUserIdAsync(userId);
+        var shared = await baulRepository.GetSharedByUserIdAsync(userId);
+
+        return owned
+            .Select(baul => new AccessibleBaul(baul, IsCustodio: true, BaulRole.Administrador))
+            .Concat(shared.Select(access => new AccessibleBaul(access.Baul, IsCustodio: false, access.Role)))
+            .DistinctBy(access => access.Baul.Id)
+            .ToList();
+    }
+
     public async Task<BaulAccess> GetAsync(Baul baul, UserId userId)
     {
         var persona = await baulRepository.GetPersonaByUserIdAsync(baul.Id, userId);

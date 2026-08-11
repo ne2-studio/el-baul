@@ -15,14 +15,6 @@ public interface IBaulRepository
     Task<IEnumerable<Baul>> GetOwnedByUserIdAsync(UserId userId);
     Task<IEnumerable<BaulAccess>> GetSharedByUserIdAsync(UserId userId);
 
-    /// <summary>Every baúl this user can currently see — owned (custodio) or shared (any
-    /// active membership role), deduplicated by id. The one place this merge rule lives; see
-    /// WelcomeEmailManager/WeeklyDigestManager/PushDigestManager. BaulManager.
-    /// GetAllForCurrentUserAsync still calls GetOwnedByUserIdAsync/GetSharedByUserIdAsync
-    /// directly instead, since it needs each baúl's role/isCustodio, which this collapses
-    /// away.</summary>
-    Task<IEnumerable<Baul>> GetAccessibleByUserIdAsync(UserId userId);
-
     Task CreateAsync(Baul baul);
     Task UpdateAsync(Baul baul);
 

@@ -1,4 +1,5 @@
 using ElBaul.Application.Notifications;
+using ElBaul.Application.Bauls;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
@@ -41,7 +42,7 @@ public class WelcomeEmailManagerTests
 
     private WelcomeEmailManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WelcomeEmailManager>.Instance,
-        _userRepository, _baulRepository, _sentEmailRepository,
+        _userRepository, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance), _sentEmailRepository,
         _templateRenderer, CreateCoordinator(), _jobScheduler, appConfiguration, _currentUserProvider, _clock);
 
     private User SeedUser(string id, DateTime createdAt, string email = "user@example.com")

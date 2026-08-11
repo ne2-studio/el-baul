@@ -1,4 +1,5 @@
 using ElBaul.Application.Notifications;
+using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Notifications;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
@@ -28,7 +29,7 @@ public class PushDigestManager(
     IUserRepository userRepository,
     IPushTokenRepository pushTokenRepository,
     IPushNotificationSender pushNotificationSender,
-    IBaulRepository baulRepository,
+    BaulAccessService baulAccess,
     IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
@@ -117,7 +118,9 @@ public class PushDigestManager(
 
     private async Task<PushDigestSummary?> BuildSummaryAsync(User user, DateTime since)
     {
-        var baules = (await baulRepository.GetAccessibleByUserIdAsync(user.Id)).ToList();
+        var baules = (await baulAccess.GetAccessibleAsync(user.Id))
+            .Select(access => access.Baul)
+            .ToList();
 
         var activeBaules = new List<Baul>();
         var totalChapters = 0;

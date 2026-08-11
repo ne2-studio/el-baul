@@ -1,4 +1,5 @@
 using ElBaul.Application.Notifications;
+using ElBaul.Application.Bauls;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Notifications;
@@ -45,7 +46,8 @@ public class WeeklyDigestManagerTests
 
     private WeeklyDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WeeklyDigestManager>.Instance,
-        _userRepository, _baulRepository, _chapterRepository, _photoRepository, _recuerdoRepository, _sentEmailRepository,
+        _userRepository, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+        _chapterRepository, _photoRepository, _recuerdoRepository, _sentEmailRepository,
         _templateRenderer,
         new EmailDeliveryCoordinator(
             _userRepository, _sentEmailRepository, _emailLinkSigner, _emailSender, appConfiguration, _clock,

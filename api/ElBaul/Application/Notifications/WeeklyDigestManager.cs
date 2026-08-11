@@ -1,4 +1,5 @@
 using ElBaul.Application.Notifications;
+using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Notifications;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
@@ -16,7 +17,7 @@ namespace ElBaul.Application.Notifications;
 public class WeeklyDigestManager(
     ILogger<WeeklyDigestManager> logger,
     IUserRepository userRepository,
-    IBaulRepository baulRepository,
+    BaulAccessService baulAccess,
     IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
@@ -122,7 +123,8 @@ public class WeeklyDigestManager(
 
     private async Task<WeeklyDigestEmailModel> BuildModelAsync(User user, DateTime since, TrackedLinkBuilder linkBuilder)
     {
-        var baules = (await baulRepository.GetAccessibleByUserIdAsync(user.Id))
+        var baules = (await baulAccess.GetAccessibleAsync(user.Id))
+            .Select(access => access.Baul)
             .OrderBy(b => b.Name)
             .ToList();
 

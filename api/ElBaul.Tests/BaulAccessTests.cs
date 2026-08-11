@@ -133,6 +133,72 @@ public class BaulAccessTests
         Assert.False(access.IsAdmin);
     }
 
+    // --- BaulAccessService.GetAccessibleAsync: the list-level visibility rule ---
+
+    [Fact]
+    public async Task GetAccessibleAsync_ShouldReturnEmpty_WhenUserHasNoBaules()
+    {
+        var userId = new UserId(OtherUserId);
+        var repo = Substitute.For<IBaulRepository>();
+        repo.GetOwnedByUserIdAsync(userId).Returns([]);
+        repo.GetSharedByUserIdAsync(userId).Returns([]);
+        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+
+        var accesses = await service.GetAccessibleAsync(userId);
+
+        Assert.Empty(accesses);
+    }
+
+    [Fact]
+    public async Task GetAccessibleAsync_ShouldReturnOwnedBaulesAsCustodioAdministrador()
+    {
+        var userId = TestBaul.CustodioId;
+        var repo = Substitute.For<IBaulRepository>();
+        repo.GetOwnedByUserIdAsync(userId).Returns([TestBaul]);
+        repo.GetSharedByUserIdAsync(userId).Returns([]);
+        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+
+        var access = Assert.Single(await service.GetAccessibleAsync(userId));
+
+        Assert.Equal(TestBaul.Id, access.Baul.Id);
+        Assert.True(access.IsCustodio);
+        Assert.Equal("administrador", access.RoleApiString);
+    }
+
+    [Fact]
+    public async Task GetAccessibleAsync_ShouldReturnSharedBaulesWithTheirRole()
+    {
+        var userId = new UserId(OtherUserId);
+        var repo = Substitute.For<IBaulRepository>();
+        repo.GetOwnedByUserIdAsync(userId).Returns([]);
+        repo.GetSharedByUserIdAsync(userId).Returns(
+            [new ElBaul.OutputPorts.Bauls.BaulAccess(TestBaul, BaulRole.Colaborador)]);
+        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+
+        var access = Assert.Single(await service.GetAccessibleAsync(userId));
+
+        Assert.Equal(TestBaul.Id, access.Baul.Id);
+        Assert.False(access.IsCustodio);
+        Assert.Equal("colaborador", access.RoleApiString);
+    }
+
+    [Fact]
+    public async Task GetAccessibleAsync_ShouldDeduplicateOverlappingOwnedAndSharedBaules()
+    {
+        var userId = TestBaul.CustodioId;
+        var repo = Substitute.For<IBaulRepository>();
+        repo.GetOwnedByUserIdAsync(userId).Returns([TestBaul]);
+        repo.GetSharedByUserIdAsync(userId).Returns(
+            [new ElBaul.OutputPorts.Bauls.BaulAccess(TestBaul, BaulRole.Colaborador)]);
+        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+
+        var access = Assert.Single(await service.GetAccessibleAsync(userId));
+
+        Assert.Equal(TestBaul.Id, access.Baul.Id);
+        Assert.True(access.IsCustodio);
+        Assert.Equal("administrador", access.RoleApiString);
+    }
+
     // --- BaulAccessService.AuthorizeAsync: the resolve -> authorize -> log sequence ---
 
     [Fact]

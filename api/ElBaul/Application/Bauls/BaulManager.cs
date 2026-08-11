@@ -26,19 +26,15 @@ public class BaulManager(
     {
         var userId = currentUserProvider.GetUserId();
 
-        var owned = await baulRepository.GetOwnedByUserIdAsync(userId);
-        var shared = await baulRepository.GetSharedByUserIdAsync(userId);
-        var ownedList = owned.ToList();
-        var sharedList = shared.ToList();
+        var accesses = await baulAccess.GetAccessibleAsync(userId);
 
-        var allBaulIds = ownedList.Select(b => b.Id).Concat(sharedList.Select(a => a.Baul.Id));
-        var sharedCounts = await baulRepository.GetPersonaCountsAsync(allBaulIds);
+        var sharedCounts = await baulRepository.GetPersonaCountsAsync(accesses.Select(a => a.Baul.Id));
 
         var dtos = new List<BaulDto>();
-        foreach (var b in ownedList)
-            dtos.Add(await ToDtoAsync(b, "administrador", isCustodio: true, sharedCounts.GetValueOrDefault(b.Id)));
-        foreach (var a in sharedList)
-            dtos.Add(await ToDtoAsync(a.Baul, a.Role.ToApiString(), isCustodio: false, sharedCounts.GetValueOrDefault(a.Baul.Id)));
+        foreach (var access in accesses)
+            dtos.Add(await ToDtoAsync(
+                access.Baul, access.RoleApiString, access.IsCustodio,
+                sharedCounts.GetValueOrDefault(access.Baul.Id)));
 
         return Result.Success<IEnumerable<BaulDto>>(dtos.OrderByDescending(d => d.UpdatedAt).ToList());
     }

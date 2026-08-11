@@ -1,4 +1,5 @@
 using ElBaul.Application.Notifications;
+using ElBaul.Application.Bauls;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Notifications;
@@ -41,7 +42,8 @@ public class PushDigestManagerTests
     private PushDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<PushDigestManager>.Instance,
         _userRepository, _pushTokenRepository, _pushNotificationSender,
-        _baulRepository, _chapterRepository, _photoRepository, _recuerdoRepository,
+        new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+        _chapterRepository, _photoRepository, _recuerdoRepository,
         _jobScheduler, appConfiguration, _clock);
 
     private User SeedUser(string id, DateTime? lastPushDigestSentAt = null, string email = "user@example.com")

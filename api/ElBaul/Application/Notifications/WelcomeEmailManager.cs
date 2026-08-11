@@ -1,6 +1,6 @@
 using ElBaul.Application.Notifications;
+using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Notifications;
-using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
@@ -13,7 +13,7 @@ namespace ElBaul.Application.Notifications;
 public class WelcomeEmailManager(
     ILogger<WelcomeEmailManager> logger,
     IUserRepository userRepository,
-    IBaulRepository baulRepository,
+    BaulAccessService baulAccess,
     ISentEmailRepository sentEmailRepository,
     IEmailTemplateRenderer templateRenderer,
     EmailDeliveryCoordinator deliveryCoordinator,
@@ -95,7 +95,8 @@ public class WelcomeEmailManager(
 
     private async Task<WelcomeEmailModel> BuildModelAsync(User user, TrackedLinkBuilder linkBuilder)
     {
-        var baules = (await baulRepository.GetAccessibleByUserIdAsync(user.Id))
+        var baules = (await baulAccess.GetAccessibleAsync(user.Id))
+            .Select(access => access.Baul)
             .OrderBy(b => b.CreatedAt)
             .ToList();
 
