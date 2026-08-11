@@ -37,7 +37,7 @@ public class PersonaManagerTests
             new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags,
             new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer()),
-            new PersonaDtoProjector(_fixture.Photos, _photoStorage), new FakeUnitOfWork());
+            new PersonaDtoProjector(_fixture.Photos, _photoStorage, _fixture.Users), new FakeUnitOfWork());
 
     [Fact]
     public async Task CreatePersonaAsync_ShouldDenyAccess_WhenCallerIsNotAdmin()

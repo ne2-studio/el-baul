@@ -50,7 +50,7 @@ public class BaulInviteLinkManagerTests
             new FakeUserInfoClient(userInfo), pictureFetcher ?? new FakeProfilePictureFetcher(),
             new StaticIdGenerator(Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId, accessToken),
             _configuration, new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance),
-            new PersonaDtoProjector(_photos, _photoStorage));
+            new PersonaDtoProjector(_photos, _photoStorage, _users));
 
     [Fact]
     public async Task GetOrCreateAsync_ShouldDenyAccess_WhenCallerIsNotAdmin()

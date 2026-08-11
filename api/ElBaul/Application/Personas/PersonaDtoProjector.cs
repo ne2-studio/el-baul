@@ -9,9 +9,16 @@ using ElBaul.OutputPorts.Users;
 namespace ElBaul.Application.Personas;
 public class PersonaDtoProjector(
     IPhotoRepository photoRepository,
-    IPhotoStorage photoStorage) : IPersonaDtoProjector
+    IPhotoStorage photoStorage,
+    IUserRepository userRepository) : IPersonaDtoProjector
 {
-    public async Task<PersonaDto> ProjectAsync(Persona persona, User? user, bool canEdit, UserId custodioId)
+    public async Task<PersonaDto> ProjectAsync(Persona persona, bool canEdit, UserId custodioId)
+    {
+        var user = persona.IsClaimed ? await userRepository.GetByIdAsync(persona.UserId!.Value) : null;
+        return await ProjectWithResolvedUserAsync(persona, user, canEdit, custodioId);
+    }
+
+    public async Task<PersonaDto> ProjectWithResolvedUserAsync(Persona persona, User? user, bool canEdit, UserId custodioId)
     {
         var avatarUrl = await PersonaAvatarUrlResolver.ResolveAsync(persona, photoRepository, photoStorage);
         return BuildDto(persona, user, canEdit, avatarUrl, custodioId);

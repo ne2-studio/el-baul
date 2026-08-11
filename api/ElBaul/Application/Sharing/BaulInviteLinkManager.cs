@@ -179,7 +179,7 @@ public class BaulInviteLinkManager(
             // Already an active member — including the custodio, who always has a Persona
             // row (see BaulManager.CreateAsync). Joining again via the global link is a
             // no-op, not an error or a duplicate Persona.
-            return await personaDtoProjector.ProjectAsync(access.Persona, user, canEdit: true, baul.CustodioId);
+            return await personaDtoProjector.ProjectWithResolvedUserAsync(access.Persona, user, canEdit: true, baul.CustodioId);
         }
 
         if (personaId is { } claimId)
@@ -196,7 +196,7 @@ public class BaulInviteLinkManager(
             await baulRepository.UpdatePersonaAsync(claimed);
             logger.LogInformation("Global invite accepted, existing persona claimed {BaulId} {PersonaId}", link.BaulId, claimed.Id);
 
-            return await personaDtoProjector.ProjectAsync(claimed, user, canEdit: true, baul.CustodioId);
+            return await personaDtoProjector.ProjectWithResolvedUserAsync(claimed, user, canEdit: true, baul.CustodioId);
         }
 
         var persona = new Persona(
@@ -207,7 +207,7 @@ public class BaulInviteLinkManager(
 
         persona = await TryImportAvatarAsync(persona);
 
-        return await personaDtoProjector.ProjectAsync(persona, user, canEdit: true, baul.CustodioId);
+        return await personaDtoProjector.ProjectWithResolvedUserAsync(persona, user, canEdit: true, baul.CustodioId);
     }
 
     private async Task<Persona> TryImportAvatarAsync(Persona persona)
