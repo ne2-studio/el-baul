@@ -3,6 +3,7 @@ using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
 
 /// <summary>

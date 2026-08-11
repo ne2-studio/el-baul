@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Bauls;
 /// <summary>
 /// A baul shared with a user, paired with the role that access grants them.

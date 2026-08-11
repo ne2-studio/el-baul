@@ -8,12 +8,13 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class RecuerdoManagerTests

@@ -7,6 +7,7 @@ using ElBaul.OutputPorts.Users;
 
 using ElBaul.Tests.Fakes;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class PhotoDtoProjectorTests

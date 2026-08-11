@@ -1,5 +1,5 @@
 using System.Net.Mail;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 namespace ElBaul.OutputPorts.Shared;
 // A syntactically valid email address, worth being a VO for the behavior (Create), not just
 // the label: it's the single place "is this address well-formed enough to send to" is decided,

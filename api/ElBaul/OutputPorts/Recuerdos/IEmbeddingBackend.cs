@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.OutputPorts.Recuerdos;
 // Secondary port for whichever embedding provider turns recuerdo/query text into vectors

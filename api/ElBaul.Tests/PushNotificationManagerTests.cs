@@ -1,12 +1,13 @@
 using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using NSubstitute;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class PushNotificationManagerTests

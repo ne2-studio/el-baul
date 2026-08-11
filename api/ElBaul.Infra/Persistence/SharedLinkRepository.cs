@@ -2,6 +2,7 @@ using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using Microsoft.EntityFrameworkCore;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
 
 public class SharedLinkRepository(ElBaulDbContext dbContext) : ISharedLinkRepository

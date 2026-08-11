@@ -1,4 +1,4 @@
-namespace ElBaul.Shared;
+namespace Ne2Studio.Common;
 public enum ApplicationErrorCode
 {
     Validation,
@@ -23,4 +23,3 @@ public readonly record struct ApplicationError(ApplicationErrorCode Code, string
 
     public override string ToString() => Message;
 }
-

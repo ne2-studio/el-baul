@@ -1,6 +1,5 @@
 using ElBaul.InputPorts.Users;
-using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 namespace ElBaul.InputPorts.Users;
 public interface IUserManager
 {

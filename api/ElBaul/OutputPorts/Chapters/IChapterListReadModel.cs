@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Chapters;
 /// <summary>
 /// Read-only projection of a baúl's chapters for listing — recuerdo count, latest recuerdo, and

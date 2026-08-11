@@ -1,4 +1,4 @@
-namespace ElBaul.Shared;
+namespace Ne2Studio.Common;
 public readonly record struct Result
 {
     private readonly ApplicationError _error;

@@ -3,6 +3,7 @@ using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Users;
+using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 
 // See InMemoryUserRepository.cs for why every method here locks and materializes query

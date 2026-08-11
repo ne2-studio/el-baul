@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.OutputPorts.Chat;
 public record ChatTurn(string Role, string Content);

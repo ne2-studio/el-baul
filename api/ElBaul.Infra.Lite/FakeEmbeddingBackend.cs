@@ -1,6 +1,6 @@
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 namespace ElBaul.Infra.Lite;
 
 // Deterministic, no real OpenAI call: each text is embedded as a bag-of-words vector over a

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
+using ElBaul.Domain;
 namespace ElBaul.Api.Controllers;
 
 [Authorize(Policy = "AdminOnly")]

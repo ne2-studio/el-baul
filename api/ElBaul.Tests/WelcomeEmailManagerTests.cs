@@ -4,15 +4,16 @@ using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 // The class below has a `UserId` string constant (the fixture's test user), which shadows the
-// ElBaul.OutputPorts.Users.UserId VO type by name — this alias is how the VO gets referenced at all.
-using UserIdVo = ElBaul.OutputPorts.Users.UserId;
+// ElBaul.Domain.UserId VO type by name — this alias is how the VO gets referenced at all.
+using UserIdVo = ElBaul.Domain.UserId;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class WelcomeEmailManagerTests

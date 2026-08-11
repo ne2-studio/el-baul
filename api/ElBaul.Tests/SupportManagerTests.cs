@@ -1,6 +1,6 @@
 using ElBaul.Application.Support;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

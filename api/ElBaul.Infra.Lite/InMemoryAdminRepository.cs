@@ -1,5 +1,6 @@
 using ElBaul.OutputPorts.Admin;
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 
 // Users/Baules/UserDetails/BaulDetails are public and directly mutable — nothing in

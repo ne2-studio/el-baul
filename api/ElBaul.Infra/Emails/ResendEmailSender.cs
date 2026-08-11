@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

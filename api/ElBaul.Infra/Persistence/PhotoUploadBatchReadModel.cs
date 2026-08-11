@@ -2,6 +2,7 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
 
 /// <summary>See IPhotoUploadBatchReadModel's doc comment for why this exists. Fetches every

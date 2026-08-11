@@ -2,9 +2,10 @@ using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using ElBaul.Domain;
 namespace ElBaul.Maintenance.Tests;
 
 public class BackfillRecuerdoEmbeddingsCommandTests

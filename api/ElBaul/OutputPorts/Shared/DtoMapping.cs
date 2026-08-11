@@ -2,6 +2,7 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Sharing;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Shared;
 /// <summary>
 /// Enum <-> wire-string conversions. The strings match the frontend's existing

@@ -1,7 +1,6 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Photos;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Photos;
 public interface IPhotoManager

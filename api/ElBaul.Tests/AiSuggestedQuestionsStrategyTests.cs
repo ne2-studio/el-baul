@@ -1,13 +1,14 @@
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using NSubstitute;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class AiSuggestedQuestionsStrategyTests

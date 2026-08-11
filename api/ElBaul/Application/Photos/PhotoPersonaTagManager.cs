@@ -7,10 +7,11 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Photos;
 public class PhotoPersonaTagManager(
     ILogger<PhotoPersonaTagManager> logger,

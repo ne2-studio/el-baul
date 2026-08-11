@@ -2,6 +2,7 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
 
 public class ChapterRepository(ElBaulDbContext dbContext) : IChapterRepository

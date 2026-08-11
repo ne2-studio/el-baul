@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElBaul.Api;

@@ -3,6 +3,7 @@ using ElBaul.OutputPorts.Sharing;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
 
 public class BaulInviteLinkRepository(ElBaulDbContext dbContext) : IBaulInviteLinkRepository

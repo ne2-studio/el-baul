@@ -1,7 +1,6 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Chapters;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Chapters;
 public interface IChapterManager

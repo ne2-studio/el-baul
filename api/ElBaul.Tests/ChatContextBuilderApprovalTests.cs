@@ -11,6 +11,7 @@ using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 using static VerifyXunit.Verifier;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 /// <summary>

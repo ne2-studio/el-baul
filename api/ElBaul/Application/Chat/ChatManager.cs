@@ -6,9 +6,10 @@ using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Chat;
 public class ChatManager(
     ILogger<ChatManager> logger,

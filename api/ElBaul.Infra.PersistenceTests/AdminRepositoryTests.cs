@@ -8,6 +8,7 @@ using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using FluentAssertions;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.PersistenceTests;
 
 /// <summary>

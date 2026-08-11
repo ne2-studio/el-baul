@@ -13,6 +13,7 @@ using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class PersonaManagerTests

@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chat;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 

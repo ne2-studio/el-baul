@@ -5,13 +5,14 @@ using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 // Orchestration only — access checks, message persistence, prompt composition, AI-backend

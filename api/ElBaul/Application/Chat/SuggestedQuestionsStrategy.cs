@@ -1,7 +1,7 @@
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.Application.Chat;
 // Own seam so the AI-backed alternative (AiSuggestedQuestionsStrategy) and this default can be

@@ -5,6 +5,7 @@ using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
 
 public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository

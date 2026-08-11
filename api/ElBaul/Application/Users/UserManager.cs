@@ -2,7 +2,7 @@ using ElBaul.Application.Users;
 using ElBaul.InputPorts.Users;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.Application.Users;
 public class UserManager(

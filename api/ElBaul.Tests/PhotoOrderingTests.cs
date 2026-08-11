@@ -3,6 +3,7 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.Tests.Fakes;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 // PhotoOrdering has two hand-written overloads (IQueryable for EF, IEnumerable for the

@@ -2,6 +2,7 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.EntityConfigurations;
 
 // One converter per strongly-typed id, reused across every EntityTypeConfiguration that has an

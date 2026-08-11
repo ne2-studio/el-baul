@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Users;
+namespace ElBaul.Domain;
 // Wraps the OIDC `sub` claim backing User.Id. Unlike BaulId/PhotoId/etc. this isn't a
 // Guid — OIDC subject ids aren't guaranteed GUID-shaped (see docs/architecture/backend.md) —
 // and it's deliberately unvalidated: the claim is opaque, so there's nothing to check beyond

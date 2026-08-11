@@ -1,8 +1,5 @@
-using ElBaul.Application.Photos;
-using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
-namespace ElBaul.OutputPorts.Photos;
+using Ne2Studio.Common;
+namespace ElBaul.Domain;
 // A photo's capture date, which is often only partially known (year alone, or year+month) —
 // Month/Day are independently optional, but Year is always present once there's a date at all
 // (a photo with no date at all is a null PhotoDate, not a PhotoDate with everything null).

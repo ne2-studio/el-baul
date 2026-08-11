@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.OutputPorts.Support;
 // Secondary port for wherever support requests actually end up (currently LeadHub,

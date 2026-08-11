@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Photos;
 /// <summary>
 /// Read-only projection of photo-upload batches (photos sharing the same UploadBatchId) — the

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+using ElBaul.Domain;
 namespace ElBaul.Api.Controllers;
 
 [Authorize]

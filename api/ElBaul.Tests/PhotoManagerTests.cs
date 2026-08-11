@@ -14,6 +14,7 @@ using ElBaul.Tests.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class PhotoManagerTests

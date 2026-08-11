@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using BaulAccess = ElBaul.Application.Bauls.BaulAccess;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 // Focused coverage of the baúl-role authorization decision itself: the BaulAccess record's

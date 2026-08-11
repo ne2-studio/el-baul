@@ -8,6 +8,7 @@ using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using ElBaul.Domain;
 namespace ElBaul.Application.Chat;
 // Own seam so RAG-ranking bugs and prompt-shaping bugs don't have to share ChatManager's
 // file (or its 12 other constructor dependencies) — see ChatManager.SendMessageAsync.

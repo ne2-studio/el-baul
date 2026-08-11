@@ -1,7 +1,6 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Bauls;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Bauls;
 public interface IBaulManager

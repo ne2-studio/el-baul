@@ -5,6 +5,7 @@ using ElBaul.OutputPorts.Shared;
 
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Photos;
 public class PhotoFileService(
     ILogger<PhotoFileService> logger,

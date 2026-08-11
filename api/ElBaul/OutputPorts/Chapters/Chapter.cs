@@ -1,5 +1,6 @@
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Chapters;
 public record Chapter
 (

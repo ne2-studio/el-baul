@@ -11,4 +11,5 @@
   <Project Path="ElBaul.Maintenance.Tests/ElBaul.Maintenance.Tests.csproj" />
   <Project Path="ElBaul.Tests/ElBaul.Tests.csproj" />
   <Project Path="ElBaul/ElBaul.csproj" />
+  <Project Path="Ne2Studio.Common/Ne2Studio.Common.csproj" />
 </Solution>

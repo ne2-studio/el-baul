@@ -1,5 +1,5 @@
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using ElBaul.Domain;
+using Ne2Studio.Common;
 
 namespace ElBaul.Tests;
 

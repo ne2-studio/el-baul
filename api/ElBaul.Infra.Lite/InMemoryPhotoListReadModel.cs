@@ -1,6 +1,7 @@
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 
 // Computes IPhotoListReadModel's rows over the same in-memory stores IPhotoRepository/

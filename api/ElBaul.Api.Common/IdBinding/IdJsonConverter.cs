@@ -1,7 +1,8 @@
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using ElBaul.Domain;
 namespace ElBaul.Api;
 
 /// <summary>JSON (de)serializes an IParsableId&lt;T&gt; id straight to/from its wire string —

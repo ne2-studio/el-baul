@@ -1,8 +1,7 @@
-using ElBaul.Application.Photos;
+using ElBaul.Domain;
 using ElBaul.InputPorts.Feed;
 using ElBaul.InputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Feed;
 public interface IBaulFeedManager

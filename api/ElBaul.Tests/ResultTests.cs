@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using Ne2Studio.Common;
 namespace ElBaul.Tests;
 
 // Bind/Map/Traverse are what let independent Result-returning steps (id parsing, value-object

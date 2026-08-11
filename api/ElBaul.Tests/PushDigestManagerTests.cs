@@ -6,15 +6,16 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 // See WeeklyDigestManagerTests for why this alias exists — UserId (the string constant below)
-// shadows the ElBaul.OutputPorts.Users.UserId VO type by name.
-using UserIdVo = ElBaul.OutputPorts.Users.UserId;
+// shadows the ElBaul.Domain.UserId VO type by name.
+using UserIdVo = ElBaul.Domain.UserId;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class PushDigestManagerTests

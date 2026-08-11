@@ -2,6 +2,7 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 
 // Computes IRecuerdoListReadModel's rows over the same in-memory stores IRecuerdoRepository/

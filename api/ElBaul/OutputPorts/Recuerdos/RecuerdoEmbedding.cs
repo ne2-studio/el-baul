@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Recuerdos;
 public record RecuerdoEmbedding
 (

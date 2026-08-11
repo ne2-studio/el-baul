@@ -1,6 +1,6 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Notifications;
-using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Notifications;
 public interface IWelcomeEmailManager

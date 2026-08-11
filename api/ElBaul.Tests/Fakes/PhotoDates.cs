@@ -1,5 +1,6 @@
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
+using Ne2Studio.Common;
+using ElBaul.Domain;
 namespace ElBaul.Tests.Fakes;
 
 // Test-only convenience over PhotoDate.Parse, for building known-valid dates inline in

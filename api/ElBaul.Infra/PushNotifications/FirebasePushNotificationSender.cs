@@ -1,5 +1,5 @@
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;

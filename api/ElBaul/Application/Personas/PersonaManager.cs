@@ -7,13 +7,14 @@ using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 // Disambiguates from OutputPorts.Bauls.BaulAccess (the "baúl + role" DTO from
 // IBaulRepository.GetSharedForUserAsync) — this file means the authorization-check type
 // returned by BaulAccessService.AuthorizeAsync.
 using BaulAccess = ElBaul.Application.Bauls.BaulAccess;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Personas;
 public class PersonaManager(
     ILogger<PersonaManager> logger,

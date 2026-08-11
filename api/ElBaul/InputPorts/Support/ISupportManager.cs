@@ -1,5 +1,5 @@
 using ElBaul.InputPorts.Support;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 namespace ElBaul.InputPorts.Support;
 public interface ISupportManager
 {

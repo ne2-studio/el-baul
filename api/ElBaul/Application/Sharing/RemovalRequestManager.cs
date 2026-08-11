@@ -8,9 +8,10 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Sharing;
 public class RemovalRequestManager(
     ILogger<RemovalRequestManager> logger,

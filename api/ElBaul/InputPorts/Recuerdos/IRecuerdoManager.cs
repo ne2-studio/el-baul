@@ -1,9 +1,8 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Bauls;
 using ElBaul.InputPorts.Chapters;
 using ElBaul.InputPorts.Recuerdos;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Recuerdos;
 // Every recuerdo (comment) read/write operation lives here regardless of scope — baúl-wide,

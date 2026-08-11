@@ -30,7 +30,7 @@ using ElBaul.InputPorts.Users;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using System.ComponentModel;
 using System.Security.Claims;
 using System.Text.Json;
@@ -51,6 +51,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
+using ElBaul.Domain;
 namespace ElBaul.Api.Common;
 
 /// <summary>

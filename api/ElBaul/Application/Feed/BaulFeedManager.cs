@@ -9,10 +9,11 @@ using ElBaul.InputPorts.Recuerdos;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Feed;
 // Merges IRecuerdoManager's recuerdo listing with IPhotoUploadBatchReadModel's photo-upload
 // batches into one newest-first feed. Deliberately thin: it reuses RecuerdoManager's own

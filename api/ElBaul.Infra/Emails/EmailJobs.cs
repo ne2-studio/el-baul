@@ -5,6 +5,7 @@ using ElBaul.OutputPorts.Users;
 using Hangfire;
 using Serilog.Context;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Emails;
 
 /// <summary>

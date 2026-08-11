@@ -1,5 +1,5 @@
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 namespace ElBaul.Infra.Lite;
 
 public class FakeEmailSender : IEmailSender

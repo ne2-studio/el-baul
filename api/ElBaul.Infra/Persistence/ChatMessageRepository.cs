@@ -3,6 +3,7 @@ using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.Persistence;
 
 public class ChatMessageRepository(ElBaulDbContext dbContext) : IChatMessageRepository

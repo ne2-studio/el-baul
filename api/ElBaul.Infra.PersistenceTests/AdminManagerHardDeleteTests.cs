@@ -15,6 +15,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
+using ElBaul.Domain;
 namespace ElBaul.Infra.PersistenceTests;
 
 /// <summary>

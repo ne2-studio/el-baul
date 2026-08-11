@@ -2,10 +2,11 @@ using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Notifications;
 /// <summary>
 /// Shared reserve -> render -> send -> persist orchestration for every outbound email type

@@ -4,6 +4,7 @@ using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Maintenance.Commands;
 
 /// <summary>

@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 using ElBaul.OutputPorts.Photos;
 using Microsoft.Extensions.Logging;
 

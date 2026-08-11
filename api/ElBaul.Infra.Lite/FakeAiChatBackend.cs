@@ -1,5 +1,5 @@
 using ElBaul.OutputPorts.Chat;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 namespace ElBaul.Infra.Lite;
 
 public class FakeAiChatBackend : IAiChatBackend

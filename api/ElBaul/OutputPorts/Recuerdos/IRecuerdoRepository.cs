@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Recuerdos;
 /// <summary>Minimal shape of a recuerdo still missing BaulId — used only by the one-off
 /// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoBaulIdCommand.cs). Recuerdo.BaulId is a

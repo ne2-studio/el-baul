@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.OutputPorts.Notifications;
 public record EmailMessage(string To, string Subject, string Html, string PlainText);

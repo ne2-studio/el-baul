@@ -1,6 +1,6 @@
 using System.Net.Mail;
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

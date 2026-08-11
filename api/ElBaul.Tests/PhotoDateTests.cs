@@ -1,6 +1,4 @@
-using ElBaul.Application.Photos;
-using ElBaul.InputPorts.Photos;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 // This validation used to be exercised indirectly through PhotoManager.UploadAsync/ChangeDateAsync,

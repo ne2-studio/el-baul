@@ -1,8 +1,6 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Personas;
 public interface IPersonaManager

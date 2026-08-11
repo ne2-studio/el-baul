@@ -10,6 +10,7 @@ using ElBaul.OutputPorts.Users;
 
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Notifications;
 /// <summary>
 /// Daily, aggregated, silence-by-default: at most one push per user per day, only sent when

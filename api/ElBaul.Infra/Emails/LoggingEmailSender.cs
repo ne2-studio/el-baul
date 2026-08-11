@@ -1,5 +1,5 @@
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Infra.Emails;

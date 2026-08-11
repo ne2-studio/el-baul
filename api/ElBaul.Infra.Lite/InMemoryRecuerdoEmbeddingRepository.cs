@@ -1,5 +1,6 @@
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 
 // See InMemoryUserRepository.cs for why every method here locks and materializes query

@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Photos;
 /// <summary>
 /// Read-only projection of photo listing rows (chapter grid, loose photos, the paginated baúl

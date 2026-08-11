@@ -1,7 +1,6 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Admin;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Admin;
 public interface IAdminManager

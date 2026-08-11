@@ -1,6 +1,6 @@
+using ElBaul.Domain;
 using ElBaul.InputPorts.Chat;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Chat;
 public interface IChatManager

@@ -2,10 +2,11 @@ using ElBaul.Application.Bauls;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
+using ElBaul.Domain;
 namespace ElBaul.Application.Bauls;
 // The single interpretation of "does this user belong to this baúl / are they an
 // admin of it" — every manager asks BaulAccessService instead of re-deriving the

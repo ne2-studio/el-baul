@@ -4,6 +4,7 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using ElBaul.Domain;
 namespace ElBaul.Maintenance.Tests;
 
 public class BackfillExifDatesCommandTests

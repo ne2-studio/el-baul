@@ -1,5 +1,5 @@
-using ElBaul.Shared;
-namespace ElBaul.OutputPorts.Shared;
+using Ne2Studio.Common;
+namespace ElBaul.Domain;
 // Strongly-typed entity ids. Conversion to the underlying Guid is implicit (safe: it only
 // ever narrows information), but construction from a Guid is explicit-only — an implicit
 // Guid -> BaulId conversion would let two mismatched raw-Guid locals be swapped at a call site

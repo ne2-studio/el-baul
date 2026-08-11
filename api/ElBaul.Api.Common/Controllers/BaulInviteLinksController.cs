@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
+using ElBaul.Domain;
 namespace ElBaul.Api.Controllers;
 
 [ApiController]

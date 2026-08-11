@@ -7,6 +7,7 @@ using ElBaul.OutputPorts.Shared;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class StaticSuggestedQuestionsStrategyTests

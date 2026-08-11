@@ -1,7 +1,5 @@
-using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.Shared;
-namespace ElBaul.OutputPorts.Bauls;
+using Ne2Studio.Common;
+namespace ElBaul.Domain;
 public enum BaulRole
 {
     Colaborador,

@@ -7,6 +7,7 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.Tests.Fakes;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests.Fixtures;
 
 // Builds common baúl/persona/chapter/photo graphs against the same in-memory repositories a

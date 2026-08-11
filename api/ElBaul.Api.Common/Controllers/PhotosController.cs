@@ -4,12 +4,13 @@ using ElBaul.InputPorts.Photos;
 using ElBaul.InputPorts.Recuerdos;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+using ElBaul.Domain;
 namespace ElBaul.Api.Controllers;
 
 [Authorize]

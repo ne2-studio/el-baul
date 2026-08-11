@@ -1,6 +1,7 @@
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Bauls;
 /// <summary>
 /// Owns the Baul aggregate and its baul-scoped child collections (sharing,

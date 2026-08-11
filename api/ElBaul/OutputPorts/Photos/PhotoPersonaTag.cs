@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Shared;
+using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Photos;
 // A plain join, not its own aggregate — no identity beyond the (PhotoId, PersonaId) pair.
 // BaulId is redundant with Photo.BaulId/Persona.BaulId but stored directly anyway, mirroring

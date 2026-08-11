@@ -1,6 +1,7 @@
 using ElBaul.OutputPorts.Shared;
 using Microsoft.AspNetCore.Http;
 
+using ElBaul.Domain;
 namespace ElBaul.Api.Models;
 
 public class UploadPhotoRequest

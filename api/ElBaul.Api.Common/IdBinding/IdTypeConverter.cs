@@ -1,7 +1,8 @@
 using ElBaul.OutputPorts.Shared;
-using ElBaul.Shared;
+using Ne2Studio.Common;
 using System.ComponentModel;
 using System.Globalization;
+using ElBaul.Domain;
 namespace ElBaul.Api;
 
 /// <summary>Lets ASP.NET Core's SimpleTypeModelBinder bind a route/query/form string straight to
