@@ -12,6 +12,7 @@ using ElBaul.OutputPorts.Users;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
+using Ne2Studio.Common;
 
 using ElBaul.Domain;
 namespace ElBaul.Tests;
@@ -156,5 +157,19 @@ public class RemovalRequestManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Null(await _baulRepository.GetRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId)));
+    }
+
+    [Fact]
+    public async Task RejectRemovalRequestAsync_ShouldReturnNotFound_WhenRequestDoesNotExist()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.RejectRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(Guid.NewGuid()));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ApplicationErrorCode.NotFound, result.Error.Code);
+        Assert.Equal("Request not found", result.Error.Message);
     }
 }

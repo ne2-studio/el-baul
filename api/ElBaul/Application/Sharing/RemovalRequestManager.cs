@@ -117,6 +117,13 @@ public class RemovalRequestManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request rejection", new { BaulId = baulId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
+        var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
+        if (request is null)
+        {
+            logger.LogWarning("Removal request rejection rejected: request not found {RemovalRequestId}", requestId);
+            return Result.Failure(ApplicationError.NotFound("Request not found"));
+        }
+
         await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
         logger.LogInformation("Removal request rejected {RemovalRequestId}", requestId);
         return Result.Success();
