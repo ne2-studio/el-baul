@@ -28,16 +28,28 @@ public class AdminManagerTests
     private readonly InMemorySharedLinkRepository _sharedLinkRepository = new();
     private readonly InMemoryBaulInviteLinkRepository _baulInviteLinkRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
+    private readonly IAdminBaulDeletionRepository _baulDeletionRepository;
     private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly FakeChatContextBuilder _chatContextBuilder = new();
     private readonly StaticClock _clock = new();
 
+    public AdminManagerTests()
+    {
+        _baulDeletionRepository = new InMemoryAdminBaulDeletionRepository(
+            _baulRepository,
+            _chapterRepository,
+            _photoRepository,
+            _recuerdoRepository,
+            _sharedLinkRepository,
+            _baulInviteLinkRepository,
+            _photoPersonaTagRepository,
+            new FakeUnitOfWork());
+    }
+
     private AdminManager CreateManager() => new(
-        _adminRepository, _sentEmailRepository, _baulRepository, _chapterRepository, _photoRepository,
-        _recuerdoRepository, _sharedLinkRepository, _baulInviteLinkRepository, _photoPersonaTagRepository, _pushTokenRepository,
-        _photoStorage, _chatContextBuilder, _clock,
-        NullLogger<AdminManager>.Instance, new FakeUnitOfWork());
+        _adminRepository, _baulDeletionRepository, _sentEmailRepository, _baulRepository, _pushTokenRepository,
+        _photoStorage, _chatContextBuilder, _clock, NullLogger<AdminManager>.Instance);
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()

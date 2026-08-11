@@ -6,13 +6,9 @@ using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Admin;
 using ElBaul.OutputPorts.Admin;
 using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Users;
 using Ne2Studio.Common;
 
@@ -30,20 +26,14 @@ namespace ElBaul.Application.Admin;
 /// </summary>
 public class AdminManager(
     IAdminRepository adminRepository,
+    IAdminBaulDeletionRepository baulDeletionRepository,
     ISentEmailRepository sentEmailRepository,
     IBaulRepository baulRepository,
-    IChapterRepository chapterRepository,
-    IPhotoRepository photoRepository,
-    IRecuerdoRepository recuerdoRepository,
-    ISharedLinkRepository sharedLinkRepository,
-    IBaulInviteLinkRepository baulInviteLinkRepository,
-    IPhotoPersonaTagRepository photoPersonaTagRepository,
     IPushTokenRepository pushTokenRepository,
     IPhotoStorage photoStorage,
     IChatContextBuilder chatContextBuilder,
     IClock clock,
-    ILogger<AdminManager> logger,
-    IUnitOfWork unitOfWork) : IAdminManager
+    ILogger<AdminManager> logger) : IAdminManager
 {
     public async Task<Result<AdminDashboardCountsDto>> GetDashboardCountsAsync()
     {
@@ -97,53 +87,16 @@ public class AdminManager(
         return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, chapters, stats);
     }
 
-    /// <summary>
-    /// Hard-deletes a baúl and everything in it: recuerdos, photo-persona tags, photos (incl.
-    /// soft-deleted ones and their storage blobs), chapters, personas, and pending removal
-    /// requests. Deletion order matters — Photo/Recuerdo/PhotoPersonaTag have Restrict FKs to
-    /// Baul (or, for PhotoPersonaTag, to Photo and Persona — see PhotoConfiguration/
-    /// RecuerdoConfiguration/PhotoPersonaTagConfiguration) specifically to avoid
-    /// multiple-cascade-path errors, so those rows must be gone before the Baul row itself can
-    /// go — PhotoPersonaTag first, since it references both Photo and Persona. Chapters/
-    /// Personas/RemovalRequests do cascade at the DB level, but are deleted explicitly anyway
-    /// so behavior doesn't depend on which backend (Postgres vs. the in-memory Lite
-    /// repositories) is running.
-    /// </summary>
     public async Task<Result> DeleteBaulAsync(BaulId baulId)
     {
-        var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return Result.Failure(ApplicationError.NotFound("Baul not found"));
-
-        var photos = (await photoRepository.GetAllByBaulIdAsync(baulId)).ToList();
-        var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
-
-        // All 8 deletes commit together — every one of them is an ExecuteDeleteAsync call
-        // (bypasses the change tracker, see IUnitOfWork's doc comment), so before this each
-        // one committed on its own: a failure partway left the baúl partially destroyed with
-        // no way to roll back. See this method's own doc comment for why the order matters
-        // (real Postgres Restrict foreign keys) — the transaction changes nothing about that,
-        // it only makes "all 8 or none" true instead of "whichever ran before the failure".
-        await unitOfWork.ExecuteInTransactionAsync(async () =>
-        {
-            await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
-            await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
-            await baulInviteLinkRepository.DeleteByBaulIdAsync(baulId);
-            await recuerdoRepository.DeleteByBaulIdAsync(baulId);
-            await photoRepository.DeleteByBaulIdAsync(baulId);
-            await chapterRepository.DeleteByBaulIdAsync(baulId);
-            await baulRepository.RemoveAllPersonasAsync(baulId);
-            await baulRepository.DeleteAllRemovalRequestsAsync(baulId);
-            await baulRepository.DeleteAsync(baulId);
-            return Result.Success();
-        });
+        var deletedStorageObjects = await baulDeletionRepository.DeleteBaulGraphAsync(baulId);
+        if (deletedStorageObjects is null) return Result.Failure(ApplicationError.NotFound("Baul not found"));
 
         logger.LogWarning(
-            "Baul hard-deleted ({PhotoCount} photos, {PersonaCount} personas)", photos.Count, personas.Count);
+            "Baul hard-deleted ({PhotoCount} photos, {PersonaAvatarCount} persona avatars)",
+            deletedStorageObjects.PhotoStorageKeys.Count, deletedStorageObjects.PersonaAvatarStorageKeys.Count);
 
-        var storageKeys = photos.Select(p => p.StorageKey)
-            .Concat(personas.Where(p => !string.IsNullOrEmpty(p.AvatarPhotoKey)).Select(p => p.AvatarPhotoKey!));
-
-        foreach (var key in storageKeys)
+        foreach (var key in deletedStorageObjects.AllKeys)
         {
             try
             {

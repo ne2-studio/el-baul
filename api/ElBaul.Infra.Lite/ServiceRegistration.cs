@@ -48,6 +48,7 @@ public static class ServiceRegistration
         services.AddSingleton<IChatMessageRepository, InMemoryChatMessageRepository>();
         services.AddSingleton<IRecuerdoEmbeddingRepository, InMemoryRecuerdoEmbeddingRepository>();
         services.AddSingleton<IAdminRepository, InMemoryAdminRepository>();
+        services.AddScoped<IAdminBaulDeletionRepository, InMemoryAdminBaulDeletionRepository>();
         services.AddSingleton<IPushTokenRepository, InMemoryPushTokenRepository>();
         services.AddSingleton<ISentEmailRepository, InMemorySentEmailRepository>();
         services.AddSingleton<IEmailLinkClickRepository, InMemoryEmailLinkClickRepository>();

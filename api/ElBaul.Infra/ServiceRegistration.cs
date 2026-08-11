@@ -44,6 +44,7 @@ public static class ServiceRegistration
         services.AddScoped<IPhotoPersonaTagRepository, PhotoPersonaTagRepository>();
         services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<IAdminBaulDeletionRepository, AdminBaulDeletionRepository>();
         services.AddScoped<IPushTokenRepository, PushTokenRepository>();
         services.AddScoped<ISentEmailRepository, SentEmailRepository>();
         services.AddScoped<IEmailLinkClickRepository, EmailLinkClickRepository>();

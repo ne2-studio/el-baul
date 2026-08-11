@@ -19,8 +19,8 @@ using ElBaul.Domain;
 namespace ElBaul.Infra.PersistenceTests;
 
 /// <summary>
-/// AdminManager.DeleteBaulAsync hard-deletes a baúl with 8+ repository calls in a specific,
-/// hand-maintained order (see its own doc comment) to satisfy real Postgres Restrict foreign
+/// AdminBaulDeletionRepository hard-deletes a baúl with 8+ repository calls in a specific,
+/// hand-maintained order to satisfy real Postgres Restrict foreign
 /// keys — sharpest case: PhotoPersonaTag, which has a Restrict FK to *both* Photo and Persona
 /// (see PhotoPersonaTagConfiguration). ElBaul.Tests covers this against ElBaul.Infra.Lite's
 /// in-memory fakes, which enforce no referential integrity at all, so a reordering that would
@@ -42,9 +42,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
         var inviteLinks = new BaulInviteLinkRepository(dbContext);
 
-        var admin = new AdminManager(
-            new AdminRepository(dbContext),
-            new SentEmailRepository(dbContext),
+        var deletion = new AdminBaulDeletionRepository(
             baules,
             chapters,
             photos,
@@ -52,14 +50,20 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             new SharedLinkRepository(dbContext),
             inviteLinks,
             photoPersonaTags,
+            new UnitOfWork(dbContext));
+
+        var admin = new AdminManager(
+            new AdminRepository(dbContext),
+            deletion,
+            new SentEmailRepository(dbContext),
+            baules,
             new PushTokenRepository(dbContext),
-            // Nothing in DeleteBaulAsync's FK-ordering logic depends on these two — they only
+            // Nothing in DeleteBaulAsync's storage cleanup depends on these two — they only
             // get exercised for real in ElBaul.Tests/AdminManagerTests.
             Substitute.For<IPhotoStorage>(),
             Substitute.For<IChatContextBuilder>(),
             new FixedClock(),
-            NullLogger<AdminManager>.Instance,
-            new UnitOfWork(dbContext));
+            NullLogger<AdminManager>.Instance);
 
         var custodioId = "custodio-hard-delete";
         await users.UpsertAsync(new User(new UserId(custodioId), "custodio-hard-delete@example.com", "Custodio", DateTime.UtcNow));
@@ -82,8 +86,8 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
 
         // 2. A second, non-custodio persona tagged on the photo — the sharpest case:
         // PhotoPersonaTag has a Restrict FK to *both* Photo and Persona, so it's the one row
-        // that must be gone before either of those two deletions can succeed. Getting
-        // AdminManager's deletion order wrong around this specific entity is exactly the bug
+        // that must be gone before either of those two deletions can succeed. Getting the
+        // infrastructure deletion order wrong around this specific entity is exactly the bug
         // class an in-memory fake can't catch.
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, UserId: null, "Tía a borrar",
             BaulRole.Colaborador, DateTime.UtcNow);
@@ -91,12 +95,12 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         await photoPersonaTags.SetTagsAsync(photo.Id, baul.Id, [persona.Id], DateTime.UtcNow);
 
         // 3. A baúl invite link — a Restrict FK straight to Baul itself (like SharedLink,
-        // deliberately not exercised here since AdminManager unconditionally calls
+        // deliberately not exercised here since the deletion repository unconditionally calls
         // sharedLinkRepository.DeleteByBaulIdAsync regardless, it just has nothing to delete).
         await inviteLinks.CreateAsync(new BaulInviteLink(new BaulInviteLinkId(Guid.NewGuid()), "test-token",
             baul.Id, new UserId(custodioId), DateTime.UtcNow));
 
-        // 4. A pending removal request — Cascade at the DB level, but AdminManager deletes it
+        // 4. A pending removal request — Cascade at the DB level, but the deletion repository deletes it
         // explicitly anyway (see its own doc comment) so behavior doesn't depend on which
         // backend is running; included so this test covers every entity type that comment
         // names, not just the two Restrict-FK cases above.
@@ -106,12 +110,12 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
 
         // A fresh HTTP request would get its own scoped DbContext; this test reuses one across
         // setup and the act step below, so it clears the change tracker itself first — otherwise
-        // AdminManager's own GetByIdAsync/GetAllByBaulIdAsync reads would just return the
+        // the deletion repository's own GetByIdAsync/GetAllByBaulIdAsync reads would just return the
         // instances setup already tracked, without truly exercising a query against Postgres.
         dbContext.ChangeTracker.Clear();
 
         // 5. Hard-delete the whole baúl. Success here — not an unhandled Postgres foreign-key
-        // violation — is the direct proof that AdminManager's hand-maintained deletion order is
+        // violation — is the direct proof that the infrastructure deletion order is
         // still correct against the real schema, for every child entity type it names.
         var result = await admin.DeleteBaulAsync(baul.Id);
         result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error.Message : string.Empty);
@@ -123,7 +127,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
     [Fact]
     public async Task DeleteBaulAsync_rollsBackEveryPriorDelete_WhenALaterStepFails()
     {
-        // Only DeleteBaulAsync's ExecuteInTransactionAsync wrap makes this true — before it,
+        // Only the deletion repository's ExecuteInTransactionAsync wrap makes this true — before it,
         // each ExecuteDeleteAsync call committed on its own, so a failure on the 6th of 9 calls
         // (chapters, here) left the first 5 permanently deleted. This is the regression this
         // test exists to catch: a real Postgres transaction, not ElBaul.Infra.Lite's in-memory
@@ -136,9 +140,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var recuerdos = new RecuerdoRepository(dbContext);
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
 
-        var admin = new AdminManager(
-            new AdminRepository(dbContext),
-            new SentEmailRepository(dbContext),
+        var deletion = new AdminBaulDeletionRepository(
             baules,
             new ThrowingChapterRepository(chapters), // fails on step 6 (DeleteByBaulIdAsync)
             photos,
@@ -146,12 +148,18 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             new SharedLinkRepository(dbContext),
             new BaulInviteLinkRepository(dbContext),
             photoPersonaTags,
+            new UnitOfWork(dbContext));
+
+        var admin = new AdminManager(
+            new AdminRepository(dbContext),
+            deletion,
+            new SentEmailRepository(dbContext),
+            baules,
             new PushTokenRepository(dbContext),
             Substitute.For<IPhotoStorage>(),
             Substitute.For<IChatContextBuilder>(),
             new FixedClock(),
-            NullLogger<AdminManager>.Instance,
-            new UnitOfWork(dbContext));
+            NullLogger<AdminManager>.Instance);
 
         var custodioId = "custodio-hard-delete-rollback";
         await users.UpsertAsync(new User(new UserId(custodioId), "custodio-rollback@example.com", "Custodio", DateTime.UtcNow));

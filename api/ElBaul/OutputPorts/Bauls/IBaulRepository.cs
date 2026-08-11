@@ -21,7 +21,8 @@ public interface IBaulRepository
     /// <summary>Hard-deletes the Baul row itself. Callers must first clear every child
     /// collection (Chapters, Personas, RemovalRequests, and — via IPhotoRepository/
     /// IRecuerdoRepository — Photos/Recuerdos) since the in-memory (Lite) backend has no real
-    /// FK cascade to fall back on; see AdminManager.DeleteBaulAsync for the full sequence.</summary>
+    /// FK cascade to fall back on; admin callers should use IAdminBaulDeletionRepository for
+    /// the full sequence.</summary>
     Task DeleteAsync(BaulId id);
 
     // Sharing

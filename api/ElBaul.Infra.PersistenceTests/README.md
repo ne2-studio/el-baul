@@ -20,8 +20,8 @@ because it isn't running SQL against a real relational engine at all:
   computed property (`Persona.IsClaimed`) that EF simply cannot translate. A fake backed by
   `List<T>.Where(...)` runs that same C# predicate happily — it can't fail the way the real
   adapter can, so it can't catch a regression here.
-- **Real foreign-key behavior.** An `Application/` method that issues several repository calls
-  in a specific order to satisfy Postgres `Restrict` FKs (see `AdminManager.DeleteBaulAsync`).
+- **Real foreign-key behavior.** An infrastructure deletion adapter that issues several
+  repository calls in a specific order to satisfy Postgres `Restrict` FKs.
   The in-memory fakes enforce no referential integrity at all, so a reordering that would raise
   a live FK violation — or silently orphan a row — passes there unnoticed.
 
@@ -54,7 +54,7 @@ This project calls the real adapter directly, so a failure here points at the ad
   actually shares the fixture and serializes these tests against the one container; xunit does
   not reliably honor a `[Collection]` attribute inherited from `PersistenceTestBase` alone.
 - Tests construct the real repository/manager classes directly (`new AdminRepository(dbContext)`,
-  `new AdminManager(...)`), wiring in other real repositories for setup and only substituting
+  `new AdminBaulDeletionRepository(...)`, `new AdminManager(...)`), wiring in other real repositories for setup and only substituting
   (via NSubstitute) the collaborators that have nothing to do with Postgres — storage, chat
   context, the clock — mirroring `ElBaul.Tests`' own "NSubstitute for narrow seams" convention.
 
