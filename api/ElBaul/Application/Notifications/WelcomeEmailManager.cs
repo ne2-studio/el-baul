@@ -35,16 +35,15 @@ public class WelcomeEmailManager(
         var cutoff = clock.UtcNow() - EligibilityDelay;
         var candidates = await userRepository.GetUsersRegisteredBeforeAsync(cutoff);
         var alreadySent = await sentEmailRepository.GetUserIdsWithSentEmailAsync(EmailType.Welcome);
-        var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
 
-        foreach (var user in candidates)
-        {
-            if (alreadySent.Contains(user.Id) || blocked.Contains(user.Id) || EmailAddress.Create(user.Email).IsFailure)
-                continue;
-
-            backgroundJobScheduler.EnqueueWelcomeEmail(user.Id);
-            logger.LogInformation("WelcomeEmailScheduled {UserId}", user.Id);
-        }
+        await deliveryCoordinator.ScheduleEligibleUsersAsync(
+            candidates,
+            user => !alreadySent.Contains(user.Id),
+            user =>
+            {
+                backgroundJobScheduler.EnqueueWelcomeEmail(user.Id);
+                logger.LogInformation("WelcomeEmailScheduled {UserId}", user.Id);
+            });
     }
 
     public async Task SendWelcomeEmailAsync(UserId userId)

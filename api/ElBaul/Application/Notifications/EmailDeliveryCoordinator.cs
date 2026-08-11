@@ -25,6 +25,25 @@ public class EmailDeliveryCoordinator(
     IIdGenerator idGenerator,
     ILogger<EmailDeliveryCoordinator> logger)
 {
+    public async Task ScheduleEligibleUsersAsync(
+        IEnumerable<User> candidates,
+        Func<User, bool> isEligible,
+        Action<User> schedule)
+    {
+        var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
+
+        foreach (var user in candidates)
+        {
+            if (blocked.Contains(user.Id) || EmailAddress.Create(user.Email).IsFailure)
+                continue;
+
+            if (!isEligible(user))
+                continue;
+
+            schedule(user);
+        }
+    }
+
     public async Task SendToEligibleUserAsync(
         UserId userId,
         bool isEnabled,

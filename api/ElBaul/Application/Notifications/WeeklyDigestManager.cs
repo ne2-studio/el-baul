@@ -42,22 +42,23 @@ public class WeeklyDigestManager(
 
         var candidates = await userRepository.GetUsersWithDigestEnabledAsync();
         var lastSentByUser = await sentEmailRepository.GetLatestSentAtByTypeAsync(EmailType.WeeklyDigest);
-        var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
         var now = clock.UtcNow();
 
-        foreach (var user in candidates)
-        {
-            if (blocked.Contains(user.Id) || EmailAddress.Create(user.Email).IsFailure)
-                continue;
-
-            var hasLastSent = lastSentByUser.TryGetValue(user.Id, out var lastSent);
-            if (hasLastSent && now - lastSent < DigestInterval)
-                continue;
-
-            var since = hasLastSent ? lastSent : now - DigestInterval;
-            backgroundJobScheduler.EnqueueWeeklyDigest(user.Id, since);
-            logger.LogInformation("WeeklyDigestScheduled {UserId} {Since}", user.Id, since);
-        }
+        await deliveryCoordinator.ScheduleEligibleUsersAsync(
+            candidates,
+            user =>
+            {
+                var hasLastSent = lastSentByUser.TryGetValue(user.Id, out var lastSent);
+                return !hasLastSent || now - lastSent >= DigestInterval;
+            },
+            user =>
+            {
+                var since = lastSentByUser.TryGetValue(user.Id, out var lastSent)
+                    ? lastSent
+                    : now - DigestInterval;
+                backgroundJobScheduler.EnqueueWeeklyDigest(user.Id, since);
+                logger.LogInformation("WeeklyDigestScheduled {UserId} {Since}", user.Id, since);
+            });
     }
 
     public async Task SendWeeklyDigestAsync(UserId userId, DateTime since)
