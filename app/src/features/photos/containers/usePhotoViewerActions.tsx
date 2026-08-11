@@ -220,6 +220,7 @@ export function usePhotoViewerActions({
           onCancel={() => setShowDateModal(false)}
           onConfirm={handleDateSubmit}
           isSubmitting={isSubmittingDate}
+          initialValue={photo.date}
         />
       )}
 

@@ -64,3 +64,26 @@ export const Submitting: Story = {
     isSubmitting: true,
   },
 };
+
+// Reproduces: editing the date of a photo that already has one must pre-fill the picker with
+// that date, not force the user to retype it from scratch.
+export const Prefilled: Story = {
+  args: {
+    title: 'Cambiar fecha de la foto',
+    initialValue: { year: 2021, month: 8, day: 3 },
+    onCancel: fn(),
+    onConfirm: fn(),
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+
+    await expect(body.getByLabelText(/Año/)).toHaveValue(2021);
+    await expect(body.getByLabelText('Mes')).toHaveValue('8');
+    await expect(body.getByLabelText('Día')).toHaveValue(3);
+
+    const confirmButton = body.getByRole('button', { name: 'Confirmar' });
+    await expect(confirmButton).toBeEnabled();
+    await userEvent.click(confirmButton);
+    await expect(args.onConfirm).toHaveBeenCalledWith({ year: 2021, month: 8, day: 3 });
+  },
+};
