@@ -1,8 +1,13 @@
-using ElBaul.Application;
+using ElBaul.Application.Bauls;
+using ElBaul.Application.Personas;
+using ElBaul.Application.Sharing;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Shared;
 using ElBaul.Infra.Lite;
-using ElBaul.Ports.Input;
-using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
+
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 

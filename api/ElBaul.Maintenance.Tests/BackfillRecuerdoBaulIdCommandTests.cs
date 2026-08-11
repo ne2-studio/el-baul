@@ -1,6 +1,9 @@
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ElBaul.Maintenance.Tests;

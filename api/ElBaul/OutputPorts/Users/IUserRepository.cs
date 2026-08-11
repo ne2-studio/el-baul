@@ -1,0 +1,47 @@
+namespace ElBaul.OutputPorts.Users;
+public interface IUserRepository
+{
+    Task<User?> GetByIdAsync(string id);
+
+    /// <summary>Batch-friendly counterpart to GetByIdAsync — one query for a whole list of ids
+    /// instead of one round trip per id (e.g. PersonaManager.GetPersonasAsync resolving each
+    /// claimed persona's account).</summary>
+    Task<IEnumerable<User>> GetByIdsAsync(IEnumerable<string> ids);
+
+    Task<User?> GetByEmailAsync(string email);
+
+    /// <summary>
+    /// Users registered before the given cutoff — the candidate pool for the welcome-email
+    /// scheduler, which filters further by welcome-history and blocked status.
+    /// </summary>
+    Task<IEnumerable<User>> GetUsersRegisteredBeforeAsync(DateTime cutoff);
+
+    /// <summary>The candidate pool for the weekly-digest scheduler.</summary>
+    Task<IEnumerable<User>> GetUsersWithDigestEnabledAsync();
+
+    /// <summary>
+    /// Updates just the LastAccessAt column. Called from UserSyncMiddleware on every
+    /// authenticated request (throttled), so this is a targeted column write, not a
+    /// full-entity load/save.
+    /// </summary>
+    Task UpdateLastAccessAsync(string id, DateTime at);
+
+    Task UpdateWeeklyDigestEnabledAsync(string id, bool enabled);
+
+    /// <summary>
+    /// Advances the daily-push-digest cursor. Only called after a digest actually went out —
+    /// see IPushDigestManager for why silence (no activity) must leave this untouched.
+    /// </summary>
+    Task UpdateLastPushDigestSentAtAsync(string id, DateTime at);
+
+    /// <summary>One-way flip, never unset — the onboarding carousel a brand-new signup sees
+    /// before creating their first baúl, shown at most once per user.</summary>
+    Task MarkOnboardingSeenAsync(string id);
+
+    /// <summary>
+    /// Inserts the user if new, or updates email/name if already present.
+    /// Called by the JIT sync middleware the first time a given "sub" is seen, since
+    /// OIDC provides no admin API to look up users by email ahead of time.
+    /// </summary>
+    Task UpsertAsync(User user);
+}

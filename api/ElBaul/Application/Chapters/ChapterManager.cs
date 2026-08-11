@@ -1,0 +1,210 @@
+using ElBaul.Application.Bauls;
+using ElBaul.Application.Chapters;
+using ElBaul.Application.Personas;
+using ElBaul.InputPorts.Chapters;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
+using Microsoft.Extensions.Logging;
+
+namespace ElBaul.Application.Chapters;
+public class ChapterManager(
+    ILogger<ChapterManager> logger,
+    IChapterRepository chapterRepository,
+    IChapterListReadModel chapterListReadModel,
+    IBaulRepository baulRepository,
+    IPhotoRepository photoRepository,
+    IRecuerdoRepository recuerdoRepository,
+    IPhotoStorage photoStorage,
+    IIdGenerator idGenerator,
+    IClock clock,
+    ICurrentUserProvider currentUserProvider,
+    BaulAccessService baulAccess,
+    AuthorInfoProjector authorInfoProjector) : IChapterManager
+{
+    public async Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(BaulId baulId)
+    {
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapters by baul", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<ChapterDto>>(auth.Error);
+
+        // IChapterListReadModel does the heavy lifting (recuerdo counts/latest, photo date
+        // ranges) in a handful of baúl-scoped queries instead of one round trip per chapter;
+        // the only thing still fetched per row here is a batched author lookup and, per row,
+        // a (non-DB) signed-URL computation.
+        var rows = await chapterListReadModel.GetByBaulIdAsync(baulId);
+
+        var authorUserIds = rows
+            .Where(r => r.LatestRecuerdoAuthorUserId is not null)
+            .Select(r => r.LatestRecuerdoAuthorUserId!)
+            .Distinct();
+        var authors = await authorInfoProjector.GetManyAsync(baulId, authorUserIds);
+
+        var dtos = new List<ChapterDto>();
+        foreach (var row in rows)
+            dtos.Add(await ToDtoAsync(row, authors));
+
+        // Chronological: dated chapters first (oldest min date first, so the baúl reads like a
+        // story), undated-only chapters last.
+        var sorted = dtos
+            .OrderByDescending(d => d.MinDateYear.HasValue)
+            .ThenBy(d => d.MinDateYear ?? int.MinValue)
+            .ThenBy(d => d.MinDateMonth ?? 1)
+            .ThenBy(d => d.MinDateDay ?? 1)
+            .ThenBy(d => d.UpdatedAt)
+            .ToList();
+
+        return Result.Success<IEnumerable<ChapterDto>>(sorted);
+    }
+
+    public async Task<Result<ChapterDto>> CreateAsync(BaulId baulId, string name)
+    {
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Chapter creation", new { BaulId = baulId });
+        if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
+
+        var baul = auth.Value.Baul;
+        var now = clock.UtcNow();
+        var chapter = new Chapter(new ChapterId(idGenerator.NewId()), baulId, name, 0, null, now, now, userId);
+        await chapterRepository.CreateAsync(chapter);
+
+        await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount + 1, UpdatedAt = now });
+
+        logger.LogInformation("Chapter created {ChapterId} {Name}", chapter.Id, name);
+        return ToDto(chapter, null, null, 0, null, null, ChapterDateRange.Empty);
+    }
+
+    public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
+        if (chapter is null)
+        {
+            logger.LogWarning("Chapter cover update rejected: chapter not found {ChapterId}", chapterId);
+            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Chapter not found"));
+        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Chapter cover update", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
+
+        var photo = await photoRepository.GetByIdAsync(photoId);
+        if (photo is null || photo.ChapterId != chapterId)
+        {
+            logger.LogWarning("Chapter cover update rejected: photo not found {PhotoId}", photoId);
+            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Photo not found"));
+        }
+
+        var updated = chapter.WithCover(photo, clock.UtcNow());
+        await chapterRepository.UpdateAsync(updated);
+
+        logger.LogInformation("Chapter cover updated {PhotoId}", photoId);
+        return await ToDtoAsync(updated);
+    }
+
+    public async Task<Result<ChapterDto>> UpdateAsync(ChapterId chapterId, string name)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
+        if (chapter is null)
+        {
+            logger.LogWarning("Chapter update rejected: chapter not found {ChapterId}", chapterId);
+            return Result.Failure<ChapterDto>(ApplicationError.NotFound("Chapter not found"));
+        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Member, "Chapter update", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure<ChapterDto>(auth.Error);
+
+        var updated = chapter with { Name = name, UpdatedAt = clock.UtcNow() };
+        await chapterRepository.UpdateAsync(updated);
+
+        logger.LogInformation("Chapter updated {Name}", name);
+        return await ToDtoAsync(updated);
+    }
+
+    public async Task<Result> DeleteAsync(ChapterId chapterId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var chapter = await chapterRepository.GetByIdAsync(chapterId);
+        if (chapter is null)
+        {
+            logger.LogWarning("Chapter delete rejected: chapter not found {ChapterId}", chapterId);
+            return Result.Failure(ApplicationError.NotFound("Chapter not found"));
+        }
+
+        var auth = await baulAccess.AuthorizeAsync(
+            chapter.BaulId, userId, AccessLevel.Admin, "Chapter delete", new { chapter.BaulId, ChapterId = chapterId });
+        if (auth.IsFailure) return Result.Failure(auth.Error);
+        var baul = auth.Value.Baul;
+
+        var photos = await photoRepository.GetByChapterIdAsync(chapterId);
+        foreach (var photo in photos)
+            await photoRepository.UpdateAsync(photo with { ChapterId = null });
+
+        var recuerdos = await recuerdoRepository.GetByChapterIdAsync(chapterId);
+        foreach (var recuerdo in recuerdos)
+            await recuerdoRepository.UpdateAsync(recuerdo with { ChapterId = null });
+
+        await chapterRepository.DeleteAsync(chapterId);
+        await baulRepository.UpdateAsync(baul with { ChapterCount = baul.ChapterCount - 1, UpdatedAt = clock.UtcNow() });
+
+        logger.LogInformation("Chapter deleted");
+        return Result.Success();
+    }
+
+    // Single-chapter path — Create/Update/SetCover/Delete each return the one chapter they just
+    // touched, so a per-chapter photos/recuerdos/author lookup here is fine (there's no list to
+    // fan out over). GetByBaulIdAsync uses IChapterListReadModel + ToDtoAsync(ChapterListRow, ...)
+    // below instead, precisely to avoid running this once per chapter in a baúl.
+    private async Task<ChapterDto> ToDtoAsync(Chapter chapter)
+    {
+        var coverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage);
+
+        var photos = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
+        var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
+        var latestRecuerdo = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+        var latestAuthor = latestRecuerdo is null
+            ? null
+            : (await authorInfoProjector.GetAsync(chapter.BaulId, latestRecuerdo.UserId)).Nickname;
+
+        var dateRange = ChapterDateRangeCalculator.Compute(photos);
+
+        return ToDto(chapter, coverUrl, featuredCoverUrl, recuerdos.Count, latestRecuerdo?.Text, latestAuthor, dateRange);
+    }
+
+    // List path — turns an already-batched IChapterListReadModel row plus an already-batched
+    // author map (see GetByBaulIdAsync) into a ChapterDto. The only per-row work left is
+    // resolving cover/featured-cover URLs, which IPhotoStorage computes locally (no DB/network
+    // round trip — see MinioPhotoStorage.GetImageUrl), so it stays cheap per chapter.
+    private async Task<ChapterDto> ToDtoAsync(ChapterListRow row, IReadOnlyDictionary<string, AuthorInfo> authorsByUserId)
+    {
+        var coverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage);
+
+        var latestAuthor = row.LatestRecuerdoAuthorUserId is { } userId
+            ? AuthorInfoProjector.Resolve(authorsByUserId, userId).Nickname
+            : null;
+
+        return new ChapterDto(
+            row.Id.ToString(), row.BaulId.ToString(), row.Name, row.PhotoCount, coverUrl, featuredCoverUrl,
+            row.CreatedAt, row.UpdatedAt, row.RecuerdoCount, row.LatestRecuerdoText, latestAuthor,
+            row.DateRange.MinYear, row.DateRange.MinMonth, row.DateRange.MinDay,
+            row.DateRange.MaxYear, row.DateRange.MaxMonth, row.DateRange.MaxDay, row.DateRange.UndatedPhotoCount);
+    }
+
+    private static ChapterDto ToDto(
+        Chapter chapter, string? coverUrl, string? featuredCoverUrl, int recuerdoCount,
+        string? latestRecuerdoText, string? latestRecuerdoAuthor, ChapterDateRange dateRange) =>
+        new(chapter.Id.ToString(), chapter.BaulId.ToString(), chapter.Name,
+            chapter.PhotoCount, coverUrl, featuredCoverUrl, chapter.CreatedAt, chapter.UpdatedAt,
+            recuerdoCount, latestRecuerdoText, latestRecuerdoAuthor,
+            dateRange.MinYear, dateRange.MinMonth, dateRange.MinDay, dateRange.MaxYear, dateRange.MaxMonth, dateRange.MaxDay, dateRange.UndatedPhotoCount);
+}

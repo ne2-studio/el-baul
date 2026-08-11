@@ -1,4 +1,7 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Maintenance.Commands;

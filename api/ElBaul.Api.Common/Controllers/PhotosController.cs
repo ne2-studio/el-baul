@@ -1,7 +1,10 @@
 using ElBaul.Api.Models;
-using ElBaul.Ports.Input;
-using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
+using ElBaul.InputPorts.Personas;
+using ElBaul.InputPorts.Photos;
+using ElBaul.InputPorts.Recuerdos;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.Shared;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

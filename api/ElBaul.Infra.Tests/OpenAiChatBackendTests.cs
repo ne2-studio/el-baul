@@ -1,6 +1,6 @@
 using System.Net;
 using ElBaul.Infra.Chat;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Chat;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;

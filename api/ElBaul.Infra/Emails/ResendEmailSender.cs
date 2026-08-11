@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using CSharpFunctionalExtensions;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Notifications;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

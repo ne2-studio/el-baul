@@ -1,5 +1,10 @@
 using ElBaul.Infra.Lite;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Bauls;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.Shared;
 using ElBaul.Tests.Fakes;
 
 namespace ElBaul.Tests.Fixtures;

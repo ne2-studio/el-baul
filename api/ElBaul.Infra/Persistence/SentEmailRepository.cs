@@ -1,4 +1,6 @@
-using ElBaul.Ports.Output;
+using ElBaul.Application.Notifications;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

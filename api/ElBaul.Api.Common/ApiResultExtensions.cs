@@ -1,4 +1,4 @@
-using ElBaul.Ports.Shared;
+using ElBaul.Shared;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElBaul.Api;

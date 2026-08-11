@@ -1,5 +1,4 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Notifications;
 namespace ElBaul.Tests.Fakes;
 
 // A real IEmailLinkSigner needs a configured HMAC key; tests only care that CreateToken/TryDecode

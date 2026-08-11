@@ -1,6 +1,5 @@
 using ElBaul.Infra.PhotoStorage;
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Photos;
 namespace ElBaul.Infra.Tests;
 
 public class ImgproxyUrlBuilderTests

@@ -1,4 +1,8 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Sharing;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra.Persistence;

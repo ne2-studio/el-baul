@@ -1,5 +1,4 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Photos;
 namespace ElBaul.Infra.Lite;
 
 public class FakePhotoDateExtractor : IPhotoDateExtractor

@@ -1,5 +1,15 @@
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Admin;
+using ElBaul.Application.Chat;
+using ElBaul.OutputPorts.Admin;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;

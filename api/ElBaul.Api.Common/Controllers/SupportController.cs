@@ -1,6 +1,6 @@
 using ElBaul.Api.Models;
-using ElBaul.Ports.Input;
-using ElBaul.Ports.Shared;
+using ElBaul.InputPorts.Support;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

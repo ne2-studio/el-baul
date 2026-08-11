@@ -1,5 +1,6 @@
 using System.Security.Claims;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using Microsoft.AspNetCore.Http;
 
 namespace ElBaul.Infra;

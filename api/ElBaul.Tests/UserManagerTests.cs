@@ -1,5 +1,6 @@
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Users;
+using ElBaul.OutputPorts.Users;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 

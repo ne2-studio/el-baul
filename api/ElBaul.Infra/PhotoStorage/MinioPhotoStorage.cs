@@ -2,7 +2,7 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Photos;
 using Microsoft.Extensions.Options;
 
 namespace ElBaul.Infra.PhotoStorage;

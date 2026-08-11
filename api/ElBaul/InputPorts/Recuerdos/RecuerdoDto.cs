@@ -1,0 +1,16 @@
+namespace ElBaul.InputPorts.Recuerdos;
+public record RecuerdoDto
+(
+    string Id,
+    string? PhotoId,
+    string UserId,
+    string Text,
+    string UserName,
+    DateTime CreatedAt,
+    bool IsOwn,
+    string? PhotoThumbnailUrl = null,
+    string? UserAvatar = null,
+    string? PersonaId = null,
+    string? ChapterId = null,
+    string? ChapterName = null
+);

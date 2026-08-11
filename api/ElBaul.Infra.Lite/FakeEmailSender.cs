@@ -1,6 +1,5 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Notifications;
 namespace ElBaul.Infra.Lite;
 
 public class FakeEmailSender : IEmailSender

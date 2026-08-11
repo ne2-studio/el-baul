@@ -1,12 +1,19 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Notifications;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 // See WeeklyDigestManagerTests for why this alias exists — UserId (the string constant below)
-// shadows the ElBaul.Ports.Output.UserId VO type by name.
-using UserIdVo = ElBaul.Ports.Output.UserId;
+// shadows the ElBaul.OutputPorts.Users.UserId VO type by name.
+using UserIdVo = ElBaul.OutputPorts.Users.UserId;
 
 namespace ElBaul.Tests;
 
@@ -300,7 +307,7 @@ public class PushDigestManagerTests
         var baul = SeedOwnedBaul(UserId);
         SeedToken(UserId);
         _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), OtherUserId, "Recuerdo", _clock.UtcNow()));
-        _pushNotificationSender.NextResult = Result.Failure("boom");
+        _pushNotificationSender.NextResult = CSharpFunctionalExtensions.Result.Failure("boom");
 
         var manager = CreateManager();
         await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));

@@ -1,5 +1,8 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Sharing;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 namespace ElBaul.Infra.Lite;
 
 // See InMemoryUserRepository.cs for why every method here locks and materializes query

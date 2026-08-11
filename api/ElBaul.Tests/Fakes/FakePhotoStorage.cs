@@ -1,5 +1,4 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Photos;
 namespace ElBaul.Tests.Fakes;
 
 public class FakePhotoStorage : IPhotoStorage

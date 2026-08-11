@@ -1,5 +1,5 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Photos;
+using ElBaul.Shared;
 namespace ElBaul.Tests.Fakes;
 
 // Test-only convenience over PhotoDate.Parse, for building known-valid dates inline in

@@ -1,4 +1,12 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Chat;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Sharing;
+using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra;

@@ -1,4 +1,5 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.Shared;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ElBaul.Infra.EntityConfigurations;

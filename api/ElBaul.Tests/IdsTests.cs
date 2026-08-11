@@ -1,5 +1,4 @@
-using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
+using ElBaul.Shared;
 
 namespace ElBaul.Tests;
 

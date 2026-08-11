@@ -1,4 +1,4 @@
-using ElBaul.Ports.Output;
+using ElBaul.Shared;
 using Microsoft.AspNetCore.Http;
 
 namespace ElBaul.Api.Models;

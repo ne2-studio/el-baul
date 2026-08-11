@@ -1,5 +1,6 @@
 using ElBaul.Api.Controllers;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.Shared;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 

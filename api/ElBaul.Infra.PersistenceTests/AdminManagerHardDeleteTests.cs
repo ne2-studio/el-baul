@@ -1,7 +1,16 @@
-using ElBaul.Application;
+using ElBaul.Application.Admin;
+using ElBaul.Application.Chat;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Sharing;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using ElBaul.Infra.PersistenceTests.Fakes;
 using ElBaul.Infra.Persistence;
-using ElBaul.Ports.Output;
+
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;

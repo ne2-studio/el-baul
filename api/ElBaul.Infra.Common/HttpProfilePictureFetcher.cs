@@ -1,4 +1,4 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Personas;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Infra;

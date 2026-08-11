@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Infra.PhotoStorage;

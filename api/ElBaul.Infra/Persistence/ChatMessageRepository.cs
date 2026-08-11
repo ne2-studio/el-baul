@@ -1,4 +1,6 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Chat;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra.Persistence;

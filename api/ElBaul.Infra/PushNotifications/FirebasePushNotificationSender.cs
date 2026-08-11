@@ -1,5 +1,5 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Notifications;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;

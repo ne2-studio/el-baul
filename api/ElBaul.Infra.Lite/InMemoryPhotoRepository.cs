@@ -1,5 +1,5 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Photos;
+using ElBaul.Shared;
 namespace ElBaul.Infra.Lite;
 
 // See InMemoryUserRepository.cs for why every method here locks and materializes query

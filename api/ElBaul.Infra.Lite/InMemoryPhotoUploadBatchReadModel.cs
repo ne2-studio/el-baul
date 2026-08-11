@@ -1,5 +1,7 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Shared;
 namespace ElBaul.Infra.Lite;
 
 // Computes IPhotoUploadBatchReadModel's rows over the same in-memory stores IPhotoRepository/

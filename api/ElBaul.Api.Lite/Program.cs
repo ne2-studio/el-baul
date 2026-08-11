@@ -1,6 +1,6 @@
 using ElBaul.Api.Common;
 using ElBaul.Infra.Lite;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Photos;
 using Serilog;
 
 // Bootstrap logger: catches startup failures before configuration is available.

@@ -1,5 +1,5 @@
 using System.Net;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Support;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;

@@ -1,6 +1,6 @@
 using System.Net.Mail;
 using CSharpFunctionalExtensions;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Notifications;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

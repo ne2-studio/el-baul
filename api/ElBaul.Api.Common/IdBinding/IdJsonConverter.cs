@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ElBaul.Ports.Output;
-
+using ElBaul.Shared;
 namespace ElBaul.Api;
 
 /// <summary>JSON (de)serializes an IParsableId&lt;T&gt; id straight to/from its wire string —

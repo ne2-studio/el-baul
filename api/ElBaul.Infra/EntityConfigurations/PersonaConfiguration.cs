@@ -1,4 +1,8 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

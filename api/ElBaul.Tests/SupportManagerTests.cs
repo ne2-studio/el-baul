@@ -1,6 +1,8 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Support;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -101,7 +103,7 @@ public class SupportManagerTests
     {
         SeedUser();
         var manager = CreateManager();
-        _supportBackend.NextResult = Result.Failure("boom");
+        _supportBackend.NextResult = CSharpFunctionalExtensions.Result.Failure("boom");
 
         var result = await manager.SubmitAsync("Bug", "Mensaje", null);
 

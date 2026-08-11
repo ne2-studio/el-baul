@@ -1,7 +1,11 @@
-using ElBaul.Application;
-using ElBaul.Ports.Input;
-using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
+using ElBaul.Application.Bauls;
+using ElBaul.Application.Chat;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chat;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;

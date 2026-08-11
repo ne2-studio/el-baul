@@ -1,12 +1,17 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Notifications;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 // The class below has a `UserId` string constant (the fixture's test user), which shadows the
-// ElBaul.Ports.Output.UserId VO type by name — this alias is how the VO gets referenced at all.
-using UserIdVo = ElBaul.Ports.Output.UserId;
+// ElBaul.OutputPorts.Users.UserId VO type by name — this alias is how the VO gets referenced at all.
+using UserIdVo = ElBaul.OutputPorts.Users.UserId;
 
 namespace ElBaul.Tests;
 
@@ -221,7 +226,7 @@ public class WelcomeEmailManagerTests
     public async Task SendWelcomeEmailAsync_ShouldRetryUsingTheSameRow_AfterATransientFailure()
     {
         SeedUser(UserId, _clock.UtcNow().AddHours(-3));
-        _emailSender.NextResult = Result.Failure<EmailSendResult>("Resend is down");
+        _emailSender.NextResult = CSharpFunctionalExtensions.Result.Failure<EmailSendResult>("Resend is down");
         var manager = CreateManager();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync(new UserIdVo(UserId)));
@@ -256,7 +261,7 @@ public class WelcomeEmailManagerTests
         SeedUser("healthy-user", _clock.UtcNow().AddHours(-3), email: "healthy@example.com");
         var manager = CreateManager();
 
-        _emailSender.NextResult = Result.Failure<EmailSendResult>("boom");
+        _emailSender.NextResult = CSharpFunctionalExtensions.Result.Failure<EmailSendResult>("boom");
         await Assert.ThrowsAsync<InvalidOperationException>(() => manager.SendWelcomeEmailAsync(new UserIdVo("failing-user")));
 
         _emailSender.NextResult = new EmailSendResult("ok-message-id");

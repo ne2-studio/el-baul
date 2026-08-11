@@ -1,5 +1,5 @@
 using ElBaul.Infra.Emails;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Notifications;
 using static VerifyXunit.Verifier;
 
 namespace ElBaul.Infra.Tests;

@@ -1,5 +1,11 @@
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Bauls;
+using ElBaul.Application.Feed;
+using ElBaul.Application.Personas;
+using ElBaul.Application.Photos;
+using ElBaul.Application.Recuerdos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;

@@ -1,6 +1,5 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Chat;
 namespace ElBaul.Infra.Lite;
 
 public class FakeAiChatBackend : IAiChatBackend

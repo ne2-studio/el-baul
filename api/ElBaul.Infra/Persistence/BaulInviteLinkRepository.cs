@@ -1,4 +1,5 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Sharing;
+using ElBaul.Shared;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

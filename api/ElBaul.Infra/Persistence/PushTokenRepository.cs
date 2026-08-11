@@ -1,4 +1,5 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra.Persistence;

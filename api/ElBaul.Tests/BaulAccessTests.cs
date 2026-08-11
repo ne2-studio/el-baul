@@ -1,8 +1,12 @@
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Bauls;
+using ElBaul.Application.Personas;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.Shared;
+
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using BaulAccess = ElBaul.Application.BaulAccess;
+using BaulAccess = ElBaul.Application.Bauls.BaulAccess;
 
 namespace ElBaul.Tests;
 

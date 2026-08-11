@@ -1,6 +1,6 @@
-using ElBaul.Ports.Input;
-using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
+using ElBaul.InputPorts.Notifications;
+using ElBaul.OutputPorts.Users;
+
 using Hangfire;
 using Serilog.Context;
 

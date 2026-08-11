@@ -1,6 +1,6 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Ports.Output;
-
+using ElBaul.Application.Chat;
+using ElBaul.OutputPorts.Recuerdos;
 namespace ElBaul.Infra.Lite;
 
 // Deterministic, no real OpenAI call: each text is embedded as a bag-of-words vector over a

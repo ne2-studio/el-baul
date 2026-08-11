@@ -1,8 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Photos;
 namespace ElBaul.Infra.PhotoStorage;
 
 /// <summary>

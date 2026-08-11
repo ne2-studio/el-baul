@@ -1,5 +1,5 @@
-using ElBaul.Ports.Output;
-
+using ElBaul.OutputPorts.Photos;
+using ElBaul.Shared;
 namespace ElBaul.Maintenance.Tests;
 
 internal sealed class InMemoryMaintenancePhotoStorage : IPhotoStorage

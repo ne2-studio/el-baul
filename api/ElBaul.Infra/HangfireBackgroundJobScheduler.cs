@@ -1,6 +1,7 @@
 using ElBaul.Infra.Emails;
 using ElBaul.Infra.PushNotifications;
-using ElBaul.Ports.Output;
+using ElBaul.InputPorts.Notifications;
+using ElBaul.Shared;
 using Hangfire;
 
 namespace ElBaul.Infra;

@@ -1,6 +1,11 @@
-using ElBaul.Application;
+using ElBaul.Application.Photos;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using ElBaul.Infra.Lite;
-using ElBaul.Ports.Output;
+
 using ElBaul.Tests.Fakes;
 
 namespace ElBaul.Tests;

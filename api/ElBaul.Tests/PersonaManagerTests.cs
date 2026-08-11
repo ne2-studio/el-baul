@@ -1,7 +1,13 @@
-using ElBaul.Application;
-using ElBaul.Ports.Input;
-using ElBaul.Ports.Output;
-using ElBaul.Ports.Shared;
+using ElBaul.Application.Bauls;
+using ElBaul.Application.Personas;
+using ElBaul.Application.Photos;
+using ElBaul.InputPorts.Personas;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;

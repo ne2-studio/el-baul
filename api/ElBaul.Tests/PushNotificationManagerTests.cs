@@ -1,6 +1,9 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Notifications;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using NSubstitute;
@@ -110,7 +113,7 @@ public class PushNotificationManagerTests
         await setupManager.RegisterTokenAsync("token-c", "android");
         var sender = Substitute.For<IPushNotificationSender>();
         sender.SendAsync(Arg.Any<PushNotificationMessage>())
-            .Returns(Result.Success(), Result.Failure("device unreachable"));
+            .Returns(CSharpFunctionalExtensions.Result.Success(), CSharpFunctionalExtensions.Result.Failure("device unreachable"));
         var manager = new PushNotificationManager(
             _pushTokenRepository, sender, new StaticCurrentUserProvider(UserId),
             new StaticIdGenerator(GeneratedTokenId), new StaticClock());

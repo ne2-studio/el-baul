@@ -1,12 +1,20 @@
 using CSharpFunctionalExtensions;
-using ElBaul.Application;
-using ElBaul.Ports.Output;
+using ElBaul.Application.Notifications;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
+
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 // The class below has a `UserId` string constant (the fixture's test user), which shadows the
-// ElBaul.Ports.Output.UserId VO type by name — this alias is how the VO gets referenced at all.
-using UserIdVo = ElBaul.Ports.Output.UserId;
+// ElBaul.OutputPorts.Users.UserId VO type by name — this alias is how the VO gets referenced at all.
+using UserIdVo = ElBaul.OutputPorts.Users.UserId;
 
 namespace ElBaul.Tests;
 

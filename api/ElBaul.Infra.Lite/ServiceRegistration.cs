@@ -1,4 +1,15 @@
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Admin;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Chat;
+using ElBaul.OutputPorts.Notifications;
+using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Sharing;
+using ElBaul.OutputPorts.Support;
+using ElBaul.OutputPorts.Users;
+using ElBaul.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

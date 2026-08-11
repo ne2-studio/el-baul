@@ -1,7 +1,8 @@
 using CSharpFunctionalExtensions;
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
-using ElBaul.Ports.Output;
+using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Shared;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ElBaul.Maintenance.Tests;
@@ -46,7 +47,7 @@ public class BackfillRecuerdoEmbeddingsCommandTests
         ]);
         var embeddingBackend = new RecordingEmbeddingBackend("model-v2")
         {
-            NextResult = Result.Success<IReadOnlyList<float[]>>([[0.1f], [0.2f]])
+            NextResult = CSharpFunctionalExtensions.Result.Success<IReadOnlyList<float[]>>([[0.1f], [0.2f]])
         };
 
         var command = new BackfillRecuerdoEmbeddingsCommand(
@@ -74,7 +75,7 @@ public class BackfillRecuerdoEmbeddingsCommandTests
         await recuerdoRepository.CreateAsync(CreateRecuerdo("No se puede embeber"));
         var embeddingBackend = new RecordingEmbeddingBackend("model-v1")
         {
-            NextResult = Result.Failure<IReadOnlyList<float[]>>("provider failed")
+            NextResult = CSharpFunctionalExtensions.Result.Failure<IReadOnlyList<float[]>>("provider failed")
         };
 
         var command = new BackfillRecuerdoEmbeddingsCommand(
@@ -94,15 +95,15 @@ public class BackfillRecuerdoEmbeddingsCommandTests
     {
         public string ModelId { get; } = modelId;
         public List<IReadOnlyList<string>> RequestedBatches { get; } = [];
-        public Result<IReadOnlyList<float[]>>? NextResult { get; init; }
+        public CSharpFunctionalExtensions.Result<IReadOnlyList<float[]>>? NextResult { get; init; }
 
-        public Task<Result<float[]>> EmbedAsync(string text) =>
-            Task.FromResult(Result.Success(new[] { 1f }));
+        public Task<CSharpFunctionalExtensions.Result<float[]>> EmbedAsync(string text) =>
+            Task.FromResult(CSharpFunctionalExtensions.Result.Success(new[] { 1f }));
 
-        public Task<Result<IReadOnlyList<float[]>>> EmbedManyAsync(IReadOnlyList<string> texts)
+        public Task<CSharpFunctionalExtensions.Result<IReadOnlyList<float[]>>> EmbedManyAsync(IReadOnlyList<string> texts)
         {
             RequestedBatches.Add(texts.ToList());
-            return Task.FromResult(NextResult ?? Result.Success<IReadOnlyList<float[]>>(
+            return Task.FromResult(NextResult ?? CSharpFunctionalExtensions.Result.Success<IReadOnlyList<float[]>>(
                 texts.Select((_, index) => new[] { (float)index }).ToList()));
         }
     }
