@@ -2,7 +2,7 @@ using ElBaul.Application.Photos;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.Application.Photos;
 public class PhotoLifecycleService(
     IPhotoRepository photoRepository,

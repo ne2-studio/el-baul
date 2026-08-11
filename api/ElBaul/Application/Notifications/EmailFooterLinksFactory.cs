@@ -1,6 +1,6 @@
 using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.Application.Notifications;
 /// <summary>
 /// Builds the footer links (help center, privacy policy, contact support) shared by every

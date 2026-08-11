@@ -1,7 +1,7 @@
 using ElBaul.Application.Chapters;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra.Persistence;

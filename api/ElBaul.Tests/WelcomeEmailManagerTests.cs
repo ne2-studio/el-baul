@@ -2,6 +2,7 @@ using ElBaul.Application.Notifications;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using ElBaul.Shared;
 

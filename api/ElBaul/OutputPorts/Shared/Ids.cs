@@ -1,7 +1,5 @@
-using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
 using ElBaul.Shared;
-namespace ElBaul.Shared;
+namespace ElBaul.OutputPorts.Shared;
 // Strongly-typed entity ids. Conversion to the underlying Guid is implicit (safe: it only
 // ever narrows information), but construction from a Guid is explicit-only — an implicit
 // Guid -> BaulId conversion would let two mismatched raw-Guid locals be swapped at a call site

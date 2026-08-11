@@ -1,7 +1,7 @@
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.Infra.Lite;
 
 // Computes IChapterListReadModel's per-chapter aggregates over the same in-memory stores

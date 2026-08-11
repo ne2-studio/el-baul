@@ -1,5 +1,6 @@
 using ElBaul.InputPorts.Chapters;
 using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 namespace ElBaul.InputPorts.Chapters;

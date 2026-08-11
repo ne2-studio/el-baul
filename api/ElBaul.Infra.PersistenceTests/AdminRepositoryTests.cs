@@ -4,8 +4,8 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
 using FluentAssertions;
 
 namespace ElBaul.Infra.PersistenceTests;

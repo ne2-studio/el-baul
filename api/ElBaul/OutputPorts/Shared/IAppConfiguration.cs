@@ -1,4 +1,4 @@
-namespace ElBaul.Shared;
+namespace ElBaul.OutputPorts.Shared;
 /// <summary>
 /// The handful of plain config values the Application layer needs (e.g. to build canonical
 /// deep links). Core never references IConfiguration directly — everything config-shaped

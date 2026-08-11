@@ -1,5 +1,5 @@
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
-using ElBaul.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra.Persistence;

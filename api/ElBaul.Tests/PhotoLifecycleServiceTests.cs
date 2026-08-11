@@ -1,10 +1,10 @@
 using ElBaul.Application.Photos;
+using ElBaul.Infra.Lite;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
-using ElBaul.Infra.Lite;
 
 using ElBaul.Tests.Fakes;
 

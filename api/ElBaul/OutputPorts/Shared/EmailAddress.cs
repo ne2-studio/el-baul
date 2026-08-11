@@ -1,10 +1,6 @@
 using System.Net.Mail;
-using ElBaul.Application.Notifications;
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Sharing;
-using ElBaul.OutputPorts.Users;
 using ElBaul.Shared;
-namespace ElBaul.Shared;
+namespace ElBaul.OutputPorts.Shared;
 // A syntactically valid email address, worth being a VO for the behavior (Create), not just
 // the label: it's the single place "is this address well-formed enough to send to" is decided,
 // replacing the copy-pasted IsValidEmail in WelcomeEmailManager/WeeklyDigestManager. Deliberately

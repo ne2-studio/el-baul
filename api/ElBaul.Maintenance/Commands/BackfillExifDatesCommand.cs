@@ -1,5 +1,4 @@
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Maintenance.Commands;

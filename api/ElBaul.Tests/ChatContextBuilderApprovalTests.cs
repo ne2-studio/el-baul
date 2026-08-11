@@ -4,7 +4,7 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

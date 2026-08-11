@@ -1,13 +1,13 @@
-using System.Text;
-using Microsoft.Extensions.Logging;
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
+using Microsoft.Extensions.Logging;
+using System.Text;
 namespace ElBaul.Application.Chat;
 // Own seam so RAG-ranking bugs and prompt-shaping bugs don't have to share ChatManager's
 // file (or its 12 other constructor dependencies) — see ChatManager.SendMessageAsync.

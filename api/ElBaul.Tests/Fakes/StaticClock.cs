@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.Tests.Fakes;
 
 public class StaticClock : IClock

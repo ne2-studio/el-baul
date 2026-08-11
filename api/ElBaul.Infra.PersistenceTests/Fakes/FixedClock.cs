@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.Infra.PersistenceTests.Fakes;
 
 // Mirrors ElBaul.Tests/Fakes/StaticClock.cs — this project has no ProjectReference to

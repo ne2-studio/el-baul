@@ -1,5 +1,5 @@
 using ElBaul.OutputPorts.Bauls;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.OutputPorts.Personas;
 // The three observable phases of a Persona's access: invited but unclaimed, claimed by an
 // account, or revoked. Derived from (Role, UserId) rather than stored, because BaulRoleParser

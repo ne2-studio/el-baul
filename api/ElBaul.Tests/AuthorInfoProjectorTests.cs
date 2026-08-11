@@ -1,9 +1,9 @@
 using ElBaul.Application.Personas;
+using ElBaul.Infra.Lite;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
-using ElBaul.Infra.Lite;
+using ElBaul.OutputPorts.Shared;
 
 using ElBaul.Tests.Fakes;
 

@@ -7,7 +7,7 @@ using ElBaul.InputPorts.Photos;
 using ElBaul.InputPorts.Recuerdos;
 using ElBaul.InputPorts.Sharing;
 using ElBaul.OutputPorts.Bauls;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

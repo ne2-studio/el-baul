@@ -5,8 +5,8 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
 
 using Microsoft.Extensions.Logging;
 

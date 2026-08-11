@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using ElBaul.Application.Bauls;
 using ElBaul.Application.Photos;
 using ElBaul.Application.Sharing;
@@ -6,9 +5,11 @@ using ElBaul.InputPorts.Sharing;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Users;
 using ElBaul.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application.Sharing;
 public class RemovalRequestManager(

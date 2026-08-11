@@ -1,12 +1,13 @@
-using Microsoft.Extensions.Logging;
 using ElBaul.Application.Bauls;
 using ElBaul.Application.Chat;
 using ElBaul.InputPorts.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using ElBaul.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Application.Chat;
 public class ChatManager(

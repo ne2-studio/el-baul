@@ -1,7 +1,5 @@
 using System.Text;
-using ElBaul.Application.Sharing;
-using ElBaul.Shared;
-namespace ElBaul.Shared;
+namespace ElBaul.OutputPorts.Shared;
 /// <summary>
 /// Opaque, unguessable public link tokens — shared by SharedLinkManager and
 /// BaulInviteLinkManager, the two places that hand out a token-bearer public URL.

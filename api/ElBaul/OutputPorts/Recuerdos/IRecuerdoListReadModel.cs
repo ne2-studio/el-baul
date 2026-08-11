@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.OutputPorts.Recuerdos;
 /// <summary>
 /// Read-only projection of recuerdo feed rows (a baúl's whole wall, one chapter's, one photo's)

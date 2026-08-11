@@ -1,4 +1,5 @@
 using ElBaul.InputPorts.Admin;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using ElBaul.Shared;
 

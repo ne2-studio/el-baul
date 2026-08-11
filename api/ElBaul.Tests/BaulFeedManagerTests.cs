@@ -4,7 +4,6 @@ using ElBaul.Application.Personas;
 using ElBaul.Application.Photos;
 using ElBaul.Application.Recuerdos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.Shared;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

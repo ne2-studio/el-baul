@@ -1,5 +1,6 @@
 using ElBaul.InputPorts.Bauls;
 using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 namespace ElBaul.InputPorts.Bauls;

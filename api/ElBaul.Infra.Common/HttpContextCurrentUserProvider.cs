@@ -1,7 +1,7 @@
-using System.Security.Claims;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace ElBaul.Infra;
 

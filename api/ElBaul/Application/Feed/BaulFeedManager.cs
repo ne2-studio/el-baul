@@ -8,6 +8,7 @@ using ElBaul.InputPorts.Photos;
 using ElBaul.InputPorts.Recuerdos;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 using Microsoft.Extensions.Logging;

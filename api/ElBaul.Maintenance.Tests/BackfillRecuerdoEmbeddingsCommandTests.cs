@@ -1,6 +1,7 @@
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
 using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 using Microsoft.Extensions.Logging.Abstractions;
 

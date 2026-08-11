@@ -1,7 +1,7 @@
 using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Photos;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 
 using Microsoft.Extensions.Logging;
 

@@ -1,4 +1,4 @@
-namespace ElBaul.Shared;
+namespace ElBaul.OutputPorts.Shared;
 public interface ICurrentUserProvider
 {
     string GetUserId();

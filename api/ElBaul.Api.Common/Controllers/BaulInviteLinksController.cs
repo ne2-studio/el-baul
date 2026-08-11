@@ -1,7 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.InputPorts.Personas;
 using ElBaul.InputPorts.Sharing;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

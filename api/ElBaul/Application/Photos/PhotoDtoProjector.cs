@@ -2,7 +2,6 @@ using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Photos;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.Shared;
 
 namespace ElBaul.Application.Photos;
 public class PhotoDtoProjector(

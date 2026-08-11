@@ -1,6 +1,7 @@
 using ElBaul.Application.Bauls;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 using Microsoft.Extensions.Logging;

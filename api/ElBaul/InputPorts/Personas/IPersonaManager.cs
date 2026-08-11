@@ -1,6 +1,7 @@
 using ElBaul.InputPorts.Personas;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 namespace ElBaul.InputPorts.Personas;

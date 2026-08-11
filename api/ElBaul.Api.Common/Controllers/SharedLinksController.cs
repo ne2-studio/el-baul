@@ -1,6 +1,6 @@
-using System.Net;
 using ElBaul.InputPorts.Sharing;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
+using System.Net;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

@@ -2,6 +2,7 @@ using ElBaul.InputPorts.Bauls;
 using ElBaul.InputPorts.Chapters;
 using ElBaul.InputPorts.Recuerdos;
 using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 namespace ElBaul.InputPorts.Recuerdos;

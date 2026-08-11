@@ -1,5 +1,6 @@
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 using ElBaul.Infra.Lite;

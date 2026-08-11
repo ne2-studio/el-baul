@@ -1,4 +1,4 @@
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 namespace ElBaul.OutputPorts.Admin;
 /// <summary>
 /// Cross-aggregate, unscoped read queries for the backoffice — dashboard KPIs and the

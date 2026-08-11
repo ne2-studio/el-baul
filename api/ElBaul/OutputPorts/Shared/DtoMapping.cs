@@ -2,9 +2,7 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Sharing;
-using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
-namespace ElBaul.Shared;
+namespace ElBaul.OutputPorts.Shared;
 /// <summary>
 /// Enum <-> wire-string conversions. The strings match the frontend's existing
 /// TypeScript union types exactly (lowercase role/status) so the DTOs are drop-in

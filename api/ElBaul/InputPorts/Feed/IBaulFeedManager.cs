@@ -1,6 +1,7 @@
 using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Feed;
 using ElBaul.InputPorts.Photos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.Shared;
 
 namespace ElBaul.InputPorts.Feed;

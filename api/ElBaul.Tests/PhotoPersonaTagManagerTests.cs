@@ -3,7 +3,7 @@ using ElBaul.Application.Photos;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
+using ElBaul.OutputPorts.Shared;
 
 using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;

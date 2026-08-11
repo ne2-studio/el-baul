@@ -2,7 +2,6 @@ using ElBaul.Application.Personas;
 using ElBaul.Application.Photos;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
 namespace ElBaul.Application.Personas;
 /// <summary>
 /// The single interpretation of "what is this persona's avatar URL": the linked photo wins

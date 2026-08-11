@@ -1,10 +1,5 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Chapters;
-using ElBaul.Application.Personas;
-using ElBaul.Application.Sharing;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.Shared;
-namespace ElBaul.Shared;
+namespace ElBaul.OutputPorts.Shared;
 /// <summary>
 /// The single interpretation of "what is this cover photo's URL": an empty/null storage key
 /// means no cover; a real key resolves through IPhotoStorage for the given placement. Mirrors

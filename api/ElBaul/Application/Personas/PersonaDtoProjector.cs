@@ -2,8 +2,8 @@ using ElBaul.Application.Personas;
 using ElBaul.InputPorts.Personas;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
-using ElBaul.Shared;
 
 namespace ElBaul.Application.Personas;
 public class PersonaDtoProjector(
