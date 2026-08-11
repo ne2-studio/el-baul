@@ -53,3 +53,15 @@ export const Interactive: Story = {
     );
   },
 };
+
+export const ManyChapters: Story = {
+  args: {
+    ...Default.args,
+    chapters: [
+      ...chapters,
+      { id: '4', name: 'Boda de Marta y Iván', photoCount: 120, lastUpdated: 'hace 1 semana', recuerdoCount: 0, undatedPhotoCount: 0 },
+      { id: '5', name: 'Viaje a Portugal', photoCount: 25, lastUpdated: 'hace 2 semanas', recuerdoCount: 0, undatedPhotoCount: 0 },
+      { id: '6', name: 'Navidad en familia', photoCount: 60, lastUpdated: 'hace 1 mes', recuerdoCount: 0, undatedPhotoCount: 0 },
+    ],
+  },
+};
