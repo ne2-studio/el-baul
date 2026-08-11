@@ -4,7 +4,10 @@ import { SelectionRow } from '@/design-system/components/data-display/SelectionR
 import { Input } from '@/design-system/components/forms/Input';
 import { Select } from '@/design-system/components/forms/Select';
 
-const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const MONTHS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
 
 export interface PartialDatePickerProps {
   /** Seed value, e.g. an EXIF pre-fill. Read once on mount — pass a different `key` to re-seed later. */
@@ -76,32 +79,9 @@ export function PartialDatePicker({
       {!unknown && (
         <div>
           <p className="text-xs text-muted-foreground mb-3">El año es obligatorio. El mes y el día son opcionales.</p>
+          {/* Día - Mes - Año: orden natural en español. Mes lleva el nombre completo, así que
+              necesita más ancho que los otros dos, que comparten el mismo. */}
           <div className="flex gap-3">
-            <div className="flex-[2]">
-              <label htmlFor={yearInputId} className="text-xs text-muted-foreground mb-1 block">Año *</label>
-              <Input
-                id={yearInputId}
-                type="number"
-                placeholder="2022"
-                value={year}
-                onChange={handleYearChange}
-                inputClassName="bg-card px-3 py-2.5 text-sm"
-              />
-            </div>
-            <div className="flex-1">
-              <Select
-                id={monthSelectId}
-                label="Mes"
-                labelClassName="text-xs text-muted-foreground mb-1"
-                value={month}
-                onChange={handleMonthChange}
-                options={[
-                  { value: '', label: '—' },
-                  ...MONTHS.map((m, i) => ({ value: String(i + 1), label: m })),
-                ]}
-                className="bg-card px-3 py-2.5 text-sm"
-              />
-            </div>
             <div className="flex-1">
               <label htmlFor={dayInputId} className="text-xs text-muted-foreground mb-1 block">Día</label>
               <Input
@@ -112,7 +92,29 @@ export function PartialDatePicker({
                 max={31}
                 value={day}
                 onChange={handleDayChange}
-                inputClassName="bg-card px-3 py-2.5 text-sm"
+              />
+            </div>
+            <div className="flex-[2]">
+              <Select
+                id={monthSelectId}
+                label="Mes"
+                labelClassName="text-xs text-muted-foreground mb-1"
+                value={month}
+                onChange={handleMonthChange}
+                options={[
+                  { value: '', label: '—' },
+                  ...MONTHS.map((m, i) => ({ value: String(i + 1), label: m })),
+                ]}
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor={yearInputId} className="text-xs text-muted-foreground mb-1 block">Año *</label>
+              <Input
+                id={yearInputId}
+                type="number"
+                placeholder="2022"
+                value={year}
+                onChange={handleYearChange}
               />
             </div>
           </div>
