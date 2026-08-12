@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_ID="$(date -u +%Y%m%d%H%M%S)-$$"
 
 created_images=()
+capture_tmp_files=()
 build_images=1
 
 usage() {
@@ -34,6 +35,7 @@ Environment:
   KEEP_VERIFY_IMAGES=1   Keep images built by this script.
   VERIFY_COVERAGE=1      Run coverage variants for fast unit checks.
   VERIFY_NPM_CI=1        Force npm ci before Node checks.
+  VERIFY_VERBOSE=1       Stream every command's output live instead of only on failure.
 EOF
 }
 
@@ -73,16 +75,49 @@ require_ports_available() {
   done
 }
 
+# Runs a command, printing only its label and a one-line ok/FAILED result.
+# Full output is shown live under VERIFY_VERBOSE=1, and always on failure —
+# never swallowed, only deferred.
+run_capture() {
+  local label="$1"
+  shift
+  log "$label"
+
+  if [[ "${VERIFY_VERBOSE:-}" == "1" ]]; then
+    "$@"
+    return 0
+  fi
+
+  local tmp status start end
+  tmp="$(mktemp "${TMPDIR:-/tmp}/verify-XXXXXX.log")"
+  capture_tmp_files+=("$tmp")
+  start=$(date +%s)
+  if "$@" >"$tmp" 2>&1; then
+    status=0
+  else
+    status=$?
+  fi
+  end=$(date +%s)
+
+  if [[ $status -eq 0 ]]; then
+    printf '    ok (%ss)\n' "$((end - start))"
+    rm -f "$tmp"
+  else
+    printf '    FAILED (%ss, exit %s) — output:\n\n' "$((end - start))" "$status"
+    cat "$tmp"
+    rm -f "$tmp"
+    die "command failed: $label (rerun with VERIFY_VERBOSE=1 to stream live)"
+  fi
+}
+
 run() {
-  log "$*"
-  "$@"
+  run_capture "$*" "$@"
 }
 
 run_in() {
   local dir="$1"
   shift
-  log "($dir) $*"
-  (cd "$ROOT_DIR/$dir" && "$@")
+  run_capture "($dir) $*" env -C "$ROOT_DIR/$dir" "$@"
 }
 
 ensure_root() {
@@ -123,6 +158,10 @@ require_image() {
 cleanup() {
   local status=$?
   set +e
+
+  if [[ ${#capture_tmp_files[@]} -gt 0 ]]; then
+    rm -f "${capture_tmp_files[@]}"
+  fi
 
   if [[ "${KEEP_VERIFY_IMAGES:-}" != "1" && ${#created_images[@]} -gt 0 ]]; then
     for image in "${created_images[@]}"; do
