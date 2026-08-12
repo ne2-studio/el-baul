@@ -57,6 +57,8 @@ export function usePhotoViewerActions({
   const auth = useAuth();
   const { run } = useAsyncAction();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
+  const hasRequestedRemoval = useUIStore((state) => state.hasRequestedPhotoRemoval(photo.id));
+  const markPhotoRemovalRequested = useUIStore((state) => state.markPhotoRemovalRequested);
 
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
@@ -154,7 +156,10 @@ export function usePhotoViewerActions({
       errorMessage: 'Error al enviar la solicitud',
     });
     setIsSubmittingRemoval(false);
-    if (result.ok) setShowRemovalModal(false);
+    if (result.ok) {
+      setShowRemovalModal(false);
+      markPhotoRemovalRequested(photo.id);
+    }
   };
 
   const handleAddRecuerdo = (text: string) => {
@@ -203,7 +208,9 @@ export function usePhotoViewerActions({
     }
     // Destructivas siempre al final, sin importar qué extras se hayan intercalado arriba.
     if (!isAdmin) {
-      items.push({ key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => setShowRemovalModal(true) });
+      items.push(hasRequestedRemoval
+        ? { key: 'removal', label: 'Ya has solicitado la retirada', icon: Flag, onSelect: () => {}, disabled: true }
+        : { key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => setShowRemovalModal(true) });
     }
     if (isAdmin) {
       items.push({ key: 'delete', label: 'Borrar foto', icon: Trash2, onSelect: () => setShowDeleteModal(true), variant: 'destructive' });

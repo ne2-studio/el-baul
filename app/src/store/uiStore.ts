@@ -25,6 +25,27 @@ function writeContributionSuggestionCooldowns(cooldowns: Record<string, number>)
   }
 }
 
+const REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY = 'elbaul.removalRequestedPhotoIds';
+
+// Mismo motivo que readContributionSuggestionCooldowns: fail-open, nunca romper la app por
+// localStorage en modo privado o con cuota llena.
+function readRemovalRequestedPhotoIds(): string[] {
+  try {
+    const raw = localStorage.getItem(REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRemovalRequestedPhotoIds(ids: string[]): void {
+  try {
+    localStorage.setItem(REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // ver comentario de readRemovalRequestedPhotoIds
+  }
+}
+
 const HAS_LAUNCHED_APP_STORAGE_KEY = 'elbaul.hasLaunchedApp';
 
 // Se calcula una sola vez, al cargar este módulo (arranque de la app) — no en cada mount de
@@ -69,9 +90,19 @@ interface UIState {
   // IS_FIRST_APP_LAUNCH arriba) — BaulRoute lo usa junto al cooldown para no proponer la
   // recomendación de contribución antes de que la persona haya visto el resto de la app.
   isFirstAppLaunch: boolean;
+
+  // Fotos para las que este dispositivo ya ha enviado una solicitud de retirada (ver
+  // usePhotoViewerActions). Cliente-only, nunca en backend: leer el estado de una solicitud
+  // (GET /removal-requests) exige AccessLevel.Admin, así que un colaborador normal no tiene
+  // otra forma de saber si ya solicitó la retirada de una foto concreta. Persistido en
+  // localStorage para sobrevivir a recargar/cerrar la app, pero no se limpia nunca — si el
+  // custodio rechaza la solicitud, hoy no hay forma de volver a habilitar el botón desde aquí.
+  removalRequestedPhotoIds: string[];
+  hasRequestedPhotoRemoval: (photoId: string) => boolean;
+  markPhotoRemovalRequested: (photoId: string) => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
+export const useUIStore = create<UIState>((set, get) => ({
   // Toast
   showToast: false,
   toastMessage: '',
@@ -105,4 +136,13 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   isFirstAppLaunch: IS_FIRST_APP_LAUNCH,
+
+  removalRequestedPhotoIds: readRemovalRequestedPhotoIds(),
+  hasRequestedPhotoRemoval: (photoId) => get().removalRequestedPhotoIds.includes(photoId),
+  markPhotoRemovalRequested: (photoId) => {
+    if (get().removalRequestedPhotoIds.includes(photoId)) return;
+    const ids = [...get().removalRequestedPhotoIds, photoId];
+    writeRemovalRequestedPhotoIds(ids);
+    set({ removalRequestedPhotoIds: ids });
+  },
 }));

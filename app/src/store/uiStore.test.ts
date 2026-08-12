@@ -75,3 +75,40 @@ describe('uiStore — isFirstAppLaunch', () => {
     expect(secondLoad.getState().isFirstAppLaunch).toBe(false);
   });
 });
+
+describe('uiStore — retirada de fotos ya solicitada', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('una foto sin solicitud previa no cuenta como ya solicitada', () => {
+    expect(useUIStore.getState().hasRequestedPhotoRemoval('photo-1')).toBe(false);
+  });
+
+  it('marcar una foto la deja como ya solicitada', () => {
+    useUIStore.getState().markPhotoRemovalRequested('photo-1');
+
+    expect(useUIStore.getState().hasRequestedPhotoRemoval('photo-1')).toBe(true);
+  });
+
+  it('marcar una foto no afecta a otra', () => {
+    useUIStore.getState().markPhotoRemovalRequested('photo-1');
+
+    expect(useUIStore.getState().hasRequestedPhotoRemoval('photo-2')).toBe(false);
+  });
+
+  it('sobrevive a un "reinicio" — el estado se lee de localStorage, no de memoria en proceso', () => {
+    useUIStore.getState().markPhotoRemovalRequested('photo-1');
+
+    vi.resetModules();
+
+    expect(useUIStore.getState().hasRequestedPhotoRemoval('photo-1')).toBe(true);
+  });
+
+  it('marcar dos veces la misma foto no duplica la entrada', () => {
+    useUIStore.getState().markPhotoRemovalRequested('photo-1');
+    useUIStore.getState().markPhotoRemovalRequested('photo-1');
+
+    expect(useUIStore.getState().removalRequestedPhotoIds).toEqual(['photo-1']);
+  });
+});

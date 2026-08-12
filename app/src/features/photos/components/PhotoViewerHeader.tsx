@@ -10,6 +10,7 @@ export interface PhotoViewerMenuItem {
   icon: React.ComponentType<{ className?: string }>;
   onSelect: () => void;
   variant?: 'default' | 'destructive';
+  disabled?: boolean;
 }
 
 interface PhotoViewerHeaderProps {
@@ -58,6 +59,7 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
                 {menuItems.map((item, index) => (
                   <React.Fragment key={item.key}>
                     <Button variant="plain"
+                      disabled={item.disabled}
                       onClick={() => {
                         setShowMenu(false);
                         item.onSelect();

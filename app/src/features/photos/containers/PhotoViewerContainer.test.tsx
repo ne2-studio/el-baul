@@ -8,6 +8,7 @@ import { Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { useUIStore } from '@/store/uiStore';
 import { PhotoViewerContainer } from './PhotoViewerContainer';
 
 vi.mock('react-oidc-context', () => ({
@@ -90,9 +91,11 @@ async function openMenu(user: ReturnType<typeof userEvent.setup>) {
 describe('PhotoViewerContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     usePersonasStore.setState({ personas: {}, taggedPersonas: {}, personaPhotos: {}, removalRequests: {} });
     useRecuerdosStore.setState({ recuerdos: {} });
     useAppConfigStore.setState({ sharedLinksEnabled: false });
+    useUIStore.setState({ removalRequestedPhotoIds: [] });
     vi.mocked(loadRecuerdos).mockResolvedValue(undefined);
     vi.mocked(loadTaggedPersonas).mockResolvedValue(undefined);
   });
@@ -204,6 +207,31 @@ describe('PhotoViewerContainer', () => {
     await user.click(screen.getByRole('button', { name: /enviar solicitud/i }));
 
     expect(submitRemovalRequest).toHaveBeenCalledWith('baul-1', photos[1], 'No me gusta');
+  });
+
+  it('disables the removal-request item, relabeled, once already requested for this photo', async () => {
+    const user = userEvent.setup();
+    vi.mocked(submitRemovalRequest).mockResolvedValue(undefined);
+    renderContainer({ isAdmin: false });
+    await openMenu(user);
+    await user.click(screen.getByText('Solicitar retirada'));
+    await user.type(screen.getByPlaceholderText(/cuéntanos/i), 'No me gusta');
+    await user.click(screen.getByRole('button', { name: /enviar solicitud/i }));
+
+    await openMenu(user);
+    const removalItem = screen.getByRole('button', { name: 'Ya has solicitado la retirada' });
+    expect(removalItem).toBeDisabled();
+    expect(screen.queryByText('Solicitar retirada')).not.toBeInTheDocument();
+  });
+
+  it('shows the removal request as already-requested from a previous session, without submitting again', async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().markPhotoRemovalRequested('photo-2');
+    renderContainer({ isAdmin: false });
+    await openMenu(user);
+
+    expect(screen.getByRole('button', { name: 'Ya has solicitado la retirada' })).toBeDisabled();
+    expect(submitRemovalRequest).not.toHaveBeenCalled();
   });
 
   it('tags personas', async () => {
