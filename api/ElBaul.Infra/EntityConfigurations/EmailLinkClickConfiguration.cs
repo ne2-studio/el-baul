@@ -10,7 +10,11 @@ public class EmailLinkClickConfiguration : IEntityTypeConfiguration<EmailLinkCli
     {
         builder.ToTable("EmailLinkClicks");
         builder.HasKey(e => e.Token);
-        builder.Property(e => e.Token).HasMaxLength(64);
+        // Signed tokens (IEmailLinkSigner) are self-contained — they base64-encode a JSON payload
+        // that embeds the full DestinationUrl (up to 2000 chars, see below) plus LinkKey and
+        // SentEmailId — so this has to comfortably outsize DestinationUrl's own max length, not
+        // just the legacy plain-Guid tokens (36 chars) minted before that scheme existed.
+        builder.Property(e => e.Token).HasMaxLength(4000);
         builder.Property(e => e.LinkKey).IsRequired().HasMaxLength(100);
         builder.Property(e => e.DestinationUrl).IsRequired().HasMaxLength(2000);
         builder.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone");
