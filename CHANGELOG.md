@@ -26,6 +26,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Las pestañas Historia, Capítulos y Familia del baúl ya no muestran un número de recuento — no aportaba información útil.
 - Las notificaciones push diarias ya no avisan de actividad que ya habías visto en el feed de un baúl concreto (el resumen semanal por email sigue incluyéndola, como recopilatorio que es).
 - La recomendación de "¿nos ayudas con esta foto?" ya no aparece la primera vez que abres la app, ni al entrar desde una notificación push o desde un enlace de email.
+- El botón para eliminar una foto ahora se llama "Borrar foto" en vez de "Retirar foto", para que quede más claro qué hace.
 
 ### Arreglado
 
@@ -33,6 +34,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Editar un recuerdo desde el visor de fotos ya no descuadra el diseño al abrir el teclado en móvil: ahora se edita en una ventana aparte.
 - El selector de baúl (y el resto de menús desplegables) ya no se quedaba con el foco visualmente atascado en el botón tras pinchar fuera para cerrarlo — antes hacía falta pinchar fuera dos veces.
 - El texto de las filas del selector de baúl aparecía en negro al pasar el ratón por encima, en vez de en blanco como el resto de menús desplegables.
+- La lista de solicitudes de retirada de fotos ocupaba todo el ancho de la pantalla en ordenador, en vez de mantener el mismo ancho que el resto de páginas.
 
 ## [beta-v0.3.2] - 2026-08-12
 

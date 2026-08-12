@@ -6,11 +6,11 @@ interface DeletePhotoModalProps {
   isSubmitting?: boolean;
 }
 
-// Modal de confirmación para retirar una foto del baúl (irreversible).
+// Modal de confirmación para borrar una foto del baúl (irreversible).
 export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: DeletePhotoModalProps) {
   return (
     <ConfirmActionModal
-      title="Retirar esta foto"
+      title="Borrar esta foto"
       description={
         <>
           <span className="font-semibold">Atención:</span> Esta foto dejará de estar disponible para todos los
@@ -22,7 +22,7 @@ export function DeletePhotoModal({ onCancel, onConfirm, isSubmitting = false }: 
         placeholder: '¿Por qué se retira esta foto?',
         variant: 'destructive',
       }}
-      confirmLabel="Sí, retirar foto"
+      confirmLabel="Sí, borrar foto"
       backdropOpacity={60}
       onCancel={onCancel}
       onConfirm={(reason) => onConfirm(reason!)}

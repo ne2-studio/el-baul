@@ -137,8 +137,8 @@ export function usePhotoViewerActions({
   const handleDeleteSubmit = async (reason: string) => {
     setIsDeletingPhoto(true);
     const result = await run(() => deletePhoto(baulId, photo.id, reason), {
-      successMessage: 'La foto ha sido retirada',
-      errorMessage: 'Error al retirar la foto',
+      successMessage: 'La foto ha sido borrada',
+      errorMessage: 'Error al borrar la foto',
     });
     setIsDeletingPhoto(false);
     if (result.ok) {
@@ -197,7 +197,7 @@ export function usePhotoViewerActions({
     items.push({ key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => setShowDateModal(true) });
     if (photo.date) {
       // Variant por defecto (no destructiva) a propósito: aunque borra la fecha, no debe
-      // competir en protagonismo visual con "Retirar foto", la única acción realmente
+      // competir en protagonismo visual con "Borrar foto", la única acción realmente
       // destructiva de este menú.
       items.push({ key: 'clear-date', label: 'Borrar fecha', icon: CalendarOff, onSelect: () => setShowClearDateModal(true) });
     }
@@ -206,7 +206,7 @@ export function usePhotoViewerActions({
       items.push({ key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => setShowRemovalModal(true) });
     }
     if (isAdmin) {
-      items.push({ key: 'delete', label: 'Retirar foto', icon: Trash2, onSelect: () => setShowDeleteModal(true), variant: 'destructive' });
+      items.push({ key: 'delete', label: 'Borrar foto', icon: Trash2, onSelect: () => setShowDeleteModal(true), variant: 'destructive' });
     }
     return items;
   };

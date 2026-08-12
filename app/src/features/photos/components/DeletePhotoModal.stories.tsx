@@ -21,7 +21,7 @@ export const Default: Story = {
     // comment) instead of rendering inside canvasElement.
     const body = within(document.body);
     const reasonInput = body.getByLabelText('Motivo de la retirada');
-    const confirmButton = body.getByRole('button', { name: 'Sí, retirar foto' });
+    const confirmButton = body.getByRole('button', { name: 'Sí, borrar foto' });
 
     await waitFor(() => expect(reasonInput).toHaveFocus());
     await expect(confirmButton).toBeDisabled();

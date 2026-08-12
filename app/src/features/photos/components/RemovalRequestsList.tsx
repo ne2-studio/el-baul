@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
+import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 
 export interface RemovalRequest {
@@ -58,7 +59,7 @@ export function RemovalRequestsList({
       />
 
       {/* Content */}
-      <div className="p-4">
+      <PageContainer className="p-4">
         {pendingRequests.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground font-serif text-lg italic">
@@ -121,7 +122,7 @@ export function RemovalRequestsList({
                         isLoading={isBusy && busy?.action === 'remove'}
                         className="bg-red-600 hover:bg-red-700 text-white border-red-600"
                       >
-                        Retirar foto
+                        Borrar foto
                       </Button>
                     </div>
                   </div>
@@ -130,7 +131,7 @@ export function RemovalRequestsList({
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }

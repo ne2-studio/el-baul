@@ -136,7 +136,7 @@ describe('PhotoViewerContainer', () => {
 
     expect(screen.getByText('Cambiar fecha')).toBeInTheDocument();
     expect(screen.getByText('Solicitar retirada')).toBeInTheDocument();
-    expect(screen.queryByText('Retirar foto')).not.toBeInTheDocument();
+    expect(screen.queryByText('Borrar foto')).not.toBeInTheDocument();
   });
 
   it('offers delete (instead of removal-request) for an admin', async () => {
@@ -144,7 +144,7 @@ describe('PhotoViewerContainer', () => {
     renderContainer({ isAdmin: true });
     await openMenu(user);
 
-    expect(screen.getByText('Retirar foto')).toBeInTheDocument();
+    expect(screen.getByText('Borrar foto')).toBeInTheDocument();
     expect(screen.queryByText('Solicitar retirada')).not.toBeInTheDocument();
   });
 
@@ -174,9 +174,9 @@ describe('PhotoViewerContainer', () => {
     const onClose = vi.fn();
     renderContainer({ isAdmin: true, onClose });
     await openMenu(user);
-    await user.click(screen.getByText('Retirar foto'));
+    await user.click(screen.getByText('Borrar foto'));
     await user.type(screen.getByPlaceholderText(/por qué se retira/i), 'Duplicada');
-    await user.click(screen.getByRole('button', { name: /sí, retirar foto/i }));
+    await user.click(screen.getByRole('button', { name: /sí, borrar foto/i }));
 
     expect(deletePhoto).toHaveBeenCalledWith('baul-1', 'photo-2', 'Duplicada');
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -263,7 +263,7 @@ describe('PhotoViewerContainer', () => {
     await openMenu(user);
 
     const moveItem = screen.getByText('Mover a otro capítulo');
-    const deleteItem = screen.getByText('Retirar foto');
+    const deleteItem = screen.getByText('Borrar foto');
     // DOCUMENT_POSITION_FOLLOWING (4): moveItem comes before deleteItem in the DOM.
     expect(moveItem.compareDocumentPosition(deleteItem) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

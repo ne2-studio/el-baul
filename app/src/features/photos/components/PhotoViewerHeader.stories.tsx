@@ -41,7 +41,7 @@ export const WithDestructiveAction: Story = {
     onClose: () => alert('onClose clicked'),
     menuItems: [
       { key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => alert('Cambiar fecha clicked') },
-      { key: 'delete', label: 'Retirar foto', icon: Trash2, onSelect: () => alert('Retirar foto clicked'), variant: 'destructive' },
+      { key: 'delete', label: 'Borrar foto', icon: Trash2, onSelect: () => alert('Borrar foto clicked'), variant: 'destructive' },
     ],
   },
 };

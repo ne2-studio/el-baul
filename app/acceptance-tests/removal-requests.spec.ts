@@ -10,7 +10,7 @@ const FIXTURE_PHOTO = path.resolve(path.dirname(fileURLToPath(import.meta.url)),
 // Needs two identities, same reason as personas.spec.ts's global-invite-link join step:
 // submitting a removal request is only possible for a non-admin member (PhotoViewer.tsx only
 // shows "Solicitar retirada" when !isAdmin), and the baúl's creator/custodian is always admin
-// on their own baúl — they can never see that option, only the direct "Retirar foto" delete.
+// on their own baúl — they can never see that option, only the direct "Borrar foto" delete.
 
 async function uploadLoosePhotoViaApi(page: Page, accessToken: string, baulId: string): Promise<string> {
   const response = await page.request.post(`${API_BASE_URL}/api/baules/${baulId}/photos/sueltas`, {
@@ -83,7 +83,7 @@ test('submit removal request → approve (photo is removed)', async ({ page, bro
   await page.getByRole('button', { name: 'Opciones del baúl' }).click();
   await page.getByRole('menuitem', { name: 'Solicitudes de eliminación' }).click();
   await page.waitForURL(/\/eliminar-solicitudes\//);
-  await page.getByRole('button', { name: 'Retirar foto' }).click();
+  await page.getByRole('button', { name: 'Borrar foto' }).click();
   await expect(page.getByText('La foto ha sido eliminada')).toBeVisible({ timeout: 10_000 });
 });
 

@@ -140,7 +140,7 @@ describe('ChapterPhotoViewerContainer', () => {
     await openMenu(user);
 
     const moveItem = screen.getByText('Mover a otro capítulo');
-    const deleteItem = screen.getByText('Retirar foto');
+    const deleteItem = screen.getByText('Borrar foto');
     // DOCUMENT_POSITION_FOLLOWING (4): moveItem comes before deleteItem in the DOM.
     expect(moveItem.compareDocumentPosition(deleteItem) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

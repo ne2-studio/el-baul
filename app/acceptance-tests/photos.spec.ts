@@ -47,10 +47,10 @@ test('create baúl → create chapter → upload photo → move photo → delete
   // Delete (now in chapter 2).
   await page.locator('button:has(img[alt="Foto"])').first().click();
   await page.getByRole('button', { name: 'Más opciones' }).click();
-  await page.getByRole('button', { name: 'Retirar foto' }).click();
+  await page.getByRole('button', { name: 'Borrar foto' }).click();
   await page.getByRole('textbox', { name: 'Motivo de la retirada' }).fill('E2E test cleanup');
-  await page.getByRole('button', { name: 'Sí, retirar foto' }).click();
-  await expect(page.getByText('La foto ha sido retirada')).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: 'Sí, borrar foto' }).click();
+  await expect(page.getByText('La foto ha sido borrada')).toBeVisible({ timeout: 10_000 });
 });
 
 async function createChapter(page: import('@playwright/test').Page, name: string) {

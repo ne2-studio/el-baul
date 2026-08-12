@@ -72,20 +72,20 @@ export const Default: Story = {
 
 export const WithReason: Story = {
   args: {
-    title: 'Retirar esta foto',
+    title: 'Borrar esta foto',
     description: 'Esta foto dejará de estar disponible para todos los miembros del baúl.',
     reason: {
       label: 'Motivo de la retirada',
       placeholder: '¿Por qué se retira esta foto?',
       variant: 'destructive',
     },
-    confirmLabel: 'Sí, retirar foto',
+    confirmLabel: 'Sí, borrar foto',
     onCancel: fn(),
     onConfirm: fn(),
   },
   play: async ({ args }) => {
     const body = within(document.body);
-    const confirmButton = body.getByRole('button', { name: 'Sí, retirar foto' });
+    const confirmButton = body.getByRole('button', { name: 'Sí, borrar foto' });
     const reasonInput = body.getByLabelText('Motivo de la retirada');
 
     await expect(confirmButton).toBeDisabled();

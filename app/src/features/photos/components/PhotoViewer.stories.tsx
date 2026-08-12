@@ -48,7 +48,7 @@ function menuItems(isAdmin: boolean): PhotoViewerMenuItem[] {
     items.push({ key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => alert('Solicitar retirada') });
   }
   if (isAdmin) {
-    items.push({ key: 'delete', label: 'Retirar foto', icon: Trash2, onSelect: () => alert('Retirar foto'), variant: 'destructive' });
+    items.push({ key: 'delete', label: 'Borrar foto', icon: Trash2, onSelect: () => alert('Borrar foto'), variant: 'destructive' });
   }
   return items;
 }
