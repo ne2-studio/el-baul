@@ -19,6 +19,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Nueva tarjeta en el feed cuando se crea un capítulo.
 - Si entras desde el navegador de un móvil Android, un aviso te ofrece abrir o descargar la app.
 - El logo de El Baúl aparece ahora en la cabecera de todos los emails (bienvenida y resumen semanal).
+- Al elegir foto de portada de un capítulo o de un baúl, ahora puedes recortarla (zoom y centrado horizontal/vertical), igual que ya podías hacer con la foto de perfil.
 
 ### Cambiado
 

@@ -51,7 +51,10 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
     [ProducesResponseType(typeof(ChapterDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetCover(BaulId baulId, ChapterId chapterId, [FromBody] SetChapterCoverRequest request)
     {
-        var result = await chapterManager.SetCoverAsync(chapterId, request.PhotoId);
+        var crop = PhotoCrop.Create(request.CropX, request.CropY, request.CropScale);
+        if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
+
+        var result = await chapterManager.SetCoverAsync(chapterId, request.PhotoId, crop.Value);
         return result.ToActionResult();
     }
 

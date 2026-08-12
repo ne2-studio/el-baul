@@ -292,7 +292,7 @@ public class PersonaManagerTests
         var photoId = Guid.NewGuid();
         var manager = CreateManager(CustodioId, photoId);
         using var content = new MemoryStream([1, 2, 3]);
-        var crop = new AvatarCrop(0.25m, 0.75m, 1.8m);
+        var crop = new PhotoCrop(0.25m, 0.75m, 1.8m);
         var result = await manager.UpdatePersonaAvatarAsync(
             baulId, personaId, content, "avatar.jpg", "image/jpeg", crop, new ClientUploadId(Guid.NewGuid()));
 
@@ -323,7 +323,7 @@ public class PersonaManagerTests
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetPersonaAvatarPhotoAsync(
-            baulId, personaId, photoId, new AvatarCrop(0.4m, 0.6m, 2m));
+            baulId, personaId, photoId, new PhotoCrop(0.4m, 0.6m, 2m));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(photoId.ToString(), result.Value.AvatarPhotoId);
@@ -343,7 +343,7 @@ public class PersonaManagerTests
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetPersonaAvatarPhotoAsync(
-            baulId, personaId, foreignPhotoId, new AvatarCrop(0.5m, 0.5m, 1m));
+            baulId, personaId, foreignPhotoId, new PhotoCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);

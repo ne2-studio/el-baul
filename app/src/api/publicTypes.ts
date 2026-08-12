@@ -1,9 +1,5 @@
 import type { JsonResponse } from './contract';
 
-export interface AvatarCrop {
-  x: number;
-  y: number;
-  scale: number;
-}
+export type { PhotoCrop } from '../types';
 
 export type SharedLinkResponse = JsonResponse<'/api/photos/{photoId}/share', 'post'>;

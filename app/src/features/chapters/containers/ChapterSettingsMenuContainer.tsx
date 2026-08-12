@@ -17,7 +17,7 @@ import { getBaulPermissions } from '@/utils/roleUtils';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { renameChapter, deleteChapter, setChapterCover } from '@/features/chapters/useCases';
-import { api } from '@/api';
+import { PhotoCrop, api } from '@/api';
 
 interface ChapterSettingsMenuContainerProps {
   baulId: string;
@@ -60,8 +60,8 @@ export function ChapterSettingsMenuContainer({
     if (result.ok) setShowEditModal(false);
   };
 
-  const handleSetChapterCover = (photo: Photo) => {
-    run(() => setChapterCover(baulId, chapterId, photo.id, photo.thumbnailUrl), {
+  const handleSetChapterCover = (photo: Photo, crop: PhotoCrop) => {
+    run(() => setChapterCover(baulId, chapterId, photo.id, crop, photo.thumbnailUrl), {
       successMessage: 'Portada del capítulo actualizada',
       errorMessage: 'Error al establecer la portada',
     });

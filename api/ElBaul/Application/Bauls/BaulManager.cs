@@ -78,7 +78,7 @@ public class BaulManager(
         return await ToDtoAsync(access.Baul, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
-    public async Task<Result<BaulDto>> SetCoverAsync(BaulId baulId, PhotoId photoId)
+    public async Task<Result<BaulDto>> SetCoverAsync(BaulId baulId, PhotoId photoId, PhotoCrop crop)
     {
         var userId = currentUserProvider.GetUserId();
 
@@ -93,7 +93,7 @@ public class BaulManager(
             return Result.Failure<BaulDto>(ApplicationError.NotFound("Photo not found"));
         }
 
-        var updated = access.Baul.WithCover(photo, clock.UtcNow());
+        var updated = access.Baul.WithCover(photo, crop.X, crop.Y, crop.Scale, clock.UtcNow());
         await baulRepository.UpdateAsync(updated);
 
         logger.LogInformation("Baul cover updated {PhotoId}", photoId);
@@ -121,10 +121,12 @@ public class BaulManager(
 
     private async Task<BaulDto> ToDtoAsync(Baul baul, string role, bool isCustodio, int memberCount = 1)
     {
-        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage);
+        var crop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
+        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage, crop);
 
         return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.ChapterCount, coverUrl,
-            baul.CreatedAt, baul.UpdatedAt, role, isCustodio, memberCount);
+            baul.CreatedAt, baul.UpdatedAt, role, isCustodio, memberCount,
+            baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
     }
 
 }

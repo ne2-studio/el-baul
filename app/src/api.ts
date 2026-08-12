@@ -11,7 +11,7 @@ export {
   isUnauthorizedError,
   setAccessToken,
 } from './api/http';
-export type { AvatarCrop } from './api/publicTypes';
+export type { PhotoCrop } from './api/publicTypes';
 
 import { appConfigApi } from './api/resources/appConfig';
 import { baulInvitesApi } from './api/resources/baulInvites';

@@ -9,8 +9,8 @@ namespace ElBaul.OutputPorts.Shared;
 /// </summary>
 public static class CoverUrlResolver
 {
-    public static async Task<string?> ResolveAsync(string? coverPhotoKey, ImagePlacement placement, IPhotoStorage photoStorage) =>
+    public static async Task<string?> ResolveAsync(string? coverPhotoKey, ImagePlacement placement, IPhotoStorage photoStorage, ImageCrop? crop = null) =>
         coverPhotoKey is { Length: > 0 }
-            ? await photoStorage.GetImageUrl(coverPhotoKey, placement)
+            ? await photoStorage.GetImageUrl(coverPhotoKey, placement, crop)
             : null;
 }

@@ -1,4 +1,6 @@
 using ElBaul.Domain;
+using ElBaul.OutputPorts.Bauls;
+using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
@@ -55,6 +57,46 @@ public class DomainEntityUpdateTests
         Assert.Equal(0.2m, updated.AvatarCropX);
         Assert.Equal(0.3m, updated.AvatarCropY);
         Assert.Equal(1.4m, updated.AvatarCropScale);
+    }
+
+    [Fact]
+    public void Chapter_WithCover_StoresCropAlongsideTheCoverPhotoKey()
+    {
+        var chapter = new Chapter(
+            new ChapterId(Guid.NewGuid()), new BaulId(Guid.NewGuid()), "Vacaciones", 0, null,
+            new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
+        var photo = Photo.Create(
+            new PhotoId(Guid.NewGuid()), chapter.Id, chapter.BaulId, "photos/cover.jpg", null,
+            new UserId("user-1"), chapter.CreatedAt);
+        var updatedAt = new DateTime(2026, 1, 2, 10, 0, 0, DateTimeKind.Utc);
+
+        var updated = chapter.WithCover(photo, cropX: 0.2m, cropY: 0.3m, cropScale: 1.4m, updatedAt);
+
+        Assert.Equal(photo.StorageKey, updated.CoverPhotoKey);
+        Assert.Equal(0.2m, updated.CoverCropX);
+        Assert.Equal(0.3m, updated.CoverCropY);
+        Assert.Equal(1.4m, updated.CoverCropScale);
+        Assert.Equal(updatedAt, updated.UpdatedAt);
+    }
+
+    [Fact]
+    public void Baul_WithCover_StoresCropAlongsideTheCoverPhotoKey()
+    {
+        var baul = new Baul(
+            new BaulId(Guid.NewGuid()), "Familia", null, new UserId("user-1"), 0,
+            new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
+        var photo = Photo.Create(
+            new PhotoId(Guid.NewGuid()), null, baul.Id, "photos/cover.jpg", null,
+            new UserId("user-1"), baul.CreatedAt);
+        var updatedAt = new DateTime(2026, 1, 2, 10, 0, 0, DateTimeKind.Utc);
+
+        var updated = baul.WithCover(photo, cropX: 0.2m, cropY: 0.3m, cropScale: 1.4m, updatedAt);
+
+        Assert.Equal(photo.StorageKey, updated.CoverPhotoKey);
+        Assert.Equal(0.2m, updated.CoverCropX);
+        Assert.Equal(0.3m, updated.CoverCropY);
+        Assert.Equal(1.4m, updated.CoverCropScale);
+        Assert.Equal(updatedAt, updated.UpdatedAt);
     }
 
     [Fact]

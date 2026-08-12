@@ -5,7 +5,7 @@ namespace ElBaul.Domain;
 // (a photo with no date at all is a null PhotoDate, not a PhotoDate with everything null).
 // Parse is the single place the "day requires a month" invariant and the valid ranges are
 // checked, replacing the copy of that logic that used to live in PhotoManager.ValidateDate — the
-// same Result<T>-returning shape as AvatarCrop.Create and the Ids.Parse family, so every value
+// same Result<T>-returning shape as PhotoCrop.Create and the Ids.Parse family, so every value
 // object at the HTTP boundary is validated the same way.
 //
 // A reference-type record, not a struct: Photo.Date needs to be optional, and EF Core's

@@ -11,7 +11,10 @@ public record Baul
     int ChapterCount,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    string? CoverPhotoKey = null
+    string? CoverPhotoKey = null,
+    decimal CoverCropX = 0.5m,
+    decimal CoverCropY = 0.5m,
+    decimal CoverCropScale = 1m
 )
 {
     // The single interpretation of "is this user the baúl's custodio" — a legal-custody
@@ -45,6 +48,13 @@ public record Baul
             UpdatedAt = updatedAt
         };
 
-    public Baul WithCover(Photo photo, DateTime updatedAt) =>
-        this with { CoverPhotoKey = photo.StorageKey, UpdatedAt = updatedAt };
+    public Baul WithCover(Photo photo, decimal cropX, decimal cropY, decimal cropScale, DateTime updatedAt) =>
+        this with
+        {
+            CoverPhotoKey = photo.StorageKey,
+            CoverCropX = cropX,
+            CoverCropY = cropY,
+            CoverCropScale = cropScale,
+            UpdatedAt = updatedAt
+        };
 }

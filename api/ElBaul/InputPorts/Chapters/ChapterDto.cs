@@ -18,5 +18,8 @@ public record ChapterDto
     int? MaxDateYear,
     int? MaxDateMonth,
     int? MaxDateDay,
-    int UndatedPhotoCount
+    int UndatedPhotoCount,
+    decimal CoverCropX,
+    decimal CoverCropY,
+    decimal CoverCropScale
 );

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Photo } from '@/types';
 import { CoverPhotoPickerModal } from './CoverPhotoPickerModal';
@@ -72,5 +72,40 @@ describe('CoverPhotoPickerModal pagination', () => {
     render(<CoverPhotoPickerModal title="Elegir portada" fetchPage={fetchPage} onSelect={vi.fn()} onCancel={vi.fn()} />);
 
     expect(await screen.findByText('Todavía no hay fotos aquí')).toBeInTheDocument();
+  });
+});
+
+describe('CoverPhotoPickerModal crop step', () => {
+  it('moves to the crop step on photo pick, then reports the chosen photo and crop on save', async () => {
+    const photos = makePhotos('a', 1);
+    const fetchPage = vi.fn().mockResolvedValue({ photos, hasMore: false });
+    const onSelect = vi.fn();
+    const onCancel = vi.fn();
+
+    render(<CoverPhotoPickerModal title="Elegir portada" fetchPage={fetchPage} onSelect={onSelect} onCancel={onCancel} />);
+
+    const photoButton = await screen.findByAltText('Foto');
+    fireEvent.click(photoButton);
+
+    const saveButton = await screen.findByRole('button', { name: 'Guardar portada' });
+    fireEvent.click(saveButton);
+
+    expect(onSelect).toHaveBeenCalledWith(photos[0], { x: 0.5, y: 0.5, scale: 1 });
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it('lets the back chevron return from the crop step to the picker grid', async () => {
+    const photos = makePhotos('a', 1);
+    const fetchPage = vi.fn().mockResolvedValue({ photos, hasMore: false });
+
+    render(<CoverPhotoPickerModal title="Elegir portada" fetchPage={fetchPage} onSelect={vi.fn()} onCancel={vi.fn()} />);
+
+    const photoButton = await screen.findByAltText('Foto');
+    fireEvent.click(photoButton);
+    await screen.findByRole('button', { name: 'Guardar portada' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Volver' }));
+
+    expect(await screen.findAllByAltText('Foto')).toHaveLength(1);
   });
 });

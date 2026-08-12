@@ -1,22 +1,22 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ImageIcon, Loader2, Upload, X } from 'lucide-react';
-import { AvatarCrop } from '@/api';
+import { PhotoCrop } from '@/api';
 import { Button } from '@/design-system/components/actions/Button';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { LoadingSpinner } from '@/design-system/components/feedback/LoadingSpinner';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
+import { DEFAULT_PHOTO_CROP, PhotoCropStep } from '@/design-system/patterns/media/PhotoCropStep';
 import { Photo } from '@/types';
 
 const PAGE_SIZE = 60;
-const DEFAULT_CROP: AvatarCrop = { x: 0.5, y: 0.5, scale: 1 };
 
 interface PersonaAvatarPickerModalProps {
   personaName: string;
   taggedPhotos: Photo[];
   fetchPage: (skip: number, take: number) => Promise<{ photos: Photo[]; hasMore: boolean }>;
-  onSelectExisting: (photo: Photo, crop: AvatarCrop) => void;
-  onUploadNew: (file: File, crop: AvatarCrop) => void;
+  onSelectExisting: (photo: Photo, crop: PhotoCrop) => void;
+  onUploadNew: (file: File, crop: PhotoCrop) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
@@ -53,16 +53,6 @@ function PhotoPickGrid({
       ))}
     </div>
   );
-}
-
-function avatarCropStyle(crop: AvatarCrop): React.CSSProperties {
-  const x = `${crop.x * 100}%`;
-  const y = `${crop.y * 100}%`;
-  return {
-    objectPosition: `${x} ${y}`,
-    transform: `scale(${crop.scale})`,
-    transformOrigin: `${x} ${y}`,
-  };
 }
 
 function useInfinitePhotoPage(fetchPage: PersonaAvatarPickerModalProps['fetchPage']) {
@@ -109,7 +99,7 @@ export function PersonaAvatarPickerModal({
   const { photos, isLoading, isInitialLoad, loadMore } = useInfinitePhotoPage(fetchPage);
   const [step, setStep] = useState<PickerStep>('pick');
   const [source, setSource] = useState<AvatarSource | null>(null);
-  const [crop, setCrop] = useState<AvatarCrop>(DEFAULT_CROP);
+  const [crop, setCrop] = useState<PhotoCrop>(DEFAULT_PHOTO_CROP);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -134,14 +124,14 @@ export function PersonaAvatarPickerModal({
 
   const choosePhoto = (photo: Photo) => {
     setSource({ kind: 'photo', photo, url: photo.fullUrl });
-    setCrop(DEFAULT_CROP);
+    setCrop(DEFAULT_PHOTO_CROP);
     setStep('crop');
   };
 
   const chooseFile = (file: File) => {
     if (source?.kind === 'file') URL.revokeObjectURL(source.url);
     setSource({ kind: 'file', file, url: URL.createObjectURL(file) });
-    setCrop(DEFAULT_CROP);
+    setCrop(DEFAULT_PHOTO_CROP);
     setStep('crop');
   };
 
@@ -197,54 +187,7 @@ export function PersonaAvatarPickerModal({
     >
       {step === 'crop' && source ? (
         <div key="crop" className="space-y-4 animate-step-in">
-          <div className="mx-auto aspect-square w-56 max-w-full overflow-hidden rounded-full bg-secondary">
-            <img
-              src={source.url}
-              alt=""
-              className="h-full w-full object-cover"
-              style={avatarCropStyle(crop)}
-              draggable={false}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-foreground">
-              Zoom
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="0.05"
-                value={crop.scale}
-                onChange={(event) => setCrop((current) => ({ ...current, scale: Number(event.target.value) }))}
-                className="mt-2 w-full accent-primary"
-              />
-            </label>
-            <label className="block text-sm font-medium text-foreground">
-              Horizontal
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={crop.x}
-                onChange={(event) => setCrop((current) => ({ ...current, x: Number(event.target.value) }))}
-                className="mt-2 w-full accent-primary"
-              />
-            </label>
-            <label className="block text-sm font-medium text-foreground">
-              Vertical
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={crop.y}
-                onChange={(event) => setCrop((current) => ({ ...current, y: Number(event.target.value) }))}
-                className="mt-2 w-full accent-primary"
-              />
-            </label>
-          </div>
+          <PhotoCropStep src={source.url} alt="" crop={crop} onChange={setCrop} shape="circle" />
 
           <Button variant="primary" onClick={save} disabled={isSubmitting} className="w-full flex items-center justify-center gap-2">
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}

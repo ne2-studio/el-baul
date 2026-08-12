@@ -49,7 +49,7 @@ describe('chapters useCases setChapterCover', () => {
     let resolveSetCover!: (chapter: Chapter) => void;
     vi.mocked(api.chapters.setCover).mockReturnValue(new Promise((resolve) => { resolveSetCover = resolve; }));
 
-    const promise = setChapterCover(baulId, chapterId, photoId, 'optimistic-thumb');
+    const promise = setChapterCover(baulId, chapterId, photoId, { x: 0.5, y: 0.5, scale: 1 }, 'optimistic-thumb');
     expect(useBaulesStore.getState().chapters[baulId][0].coverPhotoUrl).toBe('optimistic-thumb');
 
     const serverChapter = newChapter({ coverPhotoUrl: 'server-thumb' });
@@ -66,7 +66,7 @@ describe('chapters useCases setChapterCover', () => {
     vi.mocked(api.chapters.setCover).mockRejectedValue(new Error('server rejected cover'));
 
     await expect(
-      setChapterCover(baulId, chapterId, photoId, 'optimistic-thumb')
+      setChapterCover(baulId, chapterId, photoId, { x: 0.5, y: 0.5, scale: 1 }, 'optimistic-thumb')
     ).rejects.toThrow('server rejected cover');
 
     expect(useBaulesStore.getState().chapters[baulId][0]).toBe(original);

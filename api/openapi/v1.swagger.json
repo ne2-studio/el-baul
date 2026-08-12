@@ -7942,6 +7942,9 @@
       "BaulDto": {
         "required": [
           "chapterCount",
+          "coverCropScale",
+          "coverCropX",
+          "coverCropY",
           "createdAt",
           "id",
           "isCustodio",
@@ -7987,6 +7990,18 @@
           "memberCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "coverCropX": {
+            "type": "number",
+            "format": "double"
+          },
+          "coverCropY": {
+            "type": "number",
+            "format": "double"
+          },
+          "coverCropScale": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -8148,6 +8163,9 @@
       "ChapterDto": {
         "required": [
           "baulId",
+          "coverCropScale",
+          "coverCropX",
+          "coverCropY",
           "createdAt",
           "id",
           "name",
@@ -8232,6 +8250,18 @@
           "undatedPhotoCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "coverCropX": {
+            "type": "number",
+            "format": "double"
+          },
+          "coverCropY": {
+            "type": "number",
+            "format": "double"
+          },
+          "coverCropScale": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -8850,6 +8880,9 @@
       },
       "SetBaulCoverRequest": {
         "required": [
+          "cropScale",
+          "cropX",
+          "cropY",
           "photoId"
         ],
         "type": "object",
@@ -8857,12 +8890,27 @@
           "photoId": {
             "type": "string",
             "format": "uuid"
+          },
+          "cropX": {
+            "type": "number",
+            "format": "double"
+          },
+          "cropY": {
+            "type": "number",
+            "format": "double"
+          },
+          "cropScale": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
       },
       "SetChapterCoverRequest": {
         "required": [
+          "cropScale",
+          "cropX",
+          "cropY",
           "photoId"
         ],
         "type": "object",
@@ -8870,6 +8918,18 @@
           "photoId": {
             "type": "string",
             "format": "uuid"
+          },
+          "cropX": {
+            "type": "number",
+            "format": "double"
+          },
+          "cropY": {
+            "type": "number",
+            "format": "double"
+          },
+          "cropScale": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

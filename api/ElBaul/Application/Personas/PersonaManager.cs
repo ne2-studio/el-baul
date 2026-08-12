@@ -160,7 +160,7 @@ public class PersonaManager(
         Stream content,
         string fileName,
         string contentType,
-        AvatarCrop crop,
+        PhotoCrop crop,
         ClientUploadId clientUploadId)
     {
         var context = await AuthorizePersonaAvatarChangeAsync(baulId, personaId);
@@ -190,7 +190,7 @@ public class PersonaManager(
         return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);
     }
 
-    public async Task<Result<PersonaDto>> SetPersonaAvatarPhotoAsync(BaulId baulId, PersonaId personaId, PhotoId photoId, AvatarCrop crop)
+    public async Task<Result<PersonaDto>> SetPersonaAvatarPhotoAsync(BaulId baulId, PersonaId personaId, PhotoId photoId, PhotoCrop crop)
     {
         var context = await AuthorizePersonaAvatarChangeAsync(baulId, personaId);
         if (context.IsFailure) return Result.Failure<PersonaDto>(context.Error);
@@ -302,7 +302,7 @@ public class PersonaManager(
         return (persona, auth.Value, userId);
     }
 
-    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAccess access, UserId userId, Photo photo, AvatarCrop crop)
+    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAccess access, UserId userId, Photo photo, PhotoCrop crop)
     {
         var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
 

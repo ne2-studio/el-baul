@@ -45,7 +45,13 @@ export const Default: Story = {
     await expect(photoButtons[0]).toBeInTheDocument();
 
     await userEvent.click(photoButtons[0]);
-    await expect(args.onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'photo-0' }));
+    const saveButton = await body.findByRole('button', { name: 'Guardar portada' });
+    await userEvent.click(saveButton);
+
+    await expect(args.onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'photo-0' }),
+      { x: 0.5, y: 0.5, scale: 1 }
+    );
     await expect(args.onCancel).toHaveBeenCalled();
   },
 };

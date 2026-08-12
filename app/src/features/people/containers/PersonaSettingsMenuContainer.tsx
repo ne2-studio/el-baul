@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/design-system/components/ui/dropdown-menu';
-import { AvatarCrop, api } from '@/api';
+import { PhotoCrop, api } from '@/api';
 import { BaulRole, Persona, Photo } from '@/types';
 import { getPersonaPermissions } from '@/utils/roleUtils';
 import { useBaulesStore } from '@/store/useBaulesStore';
@@ -54,7 +54,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
     if (result.ok) setShowEditInfoModal(false);
   };
 
-  const handleUploadAvatar = (file: File, crop: AvatarCrop) => {
+  const handleUploadAvatar = (file: File, crop: PhotoCrop) => {
     run(() => uploadPersonaAvatar(baulId, persona.id, file, crop), {
       key: 'avatar',
       successMessage: 'Foto de perfil actualizada',
@@ -64,7 +64,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
     });
   };
 
-  const handleSetAvatarPhoto = (photo: Photo, crop: AvatarCrop) => {
+  const handleSetAvatarPhoto = (photo: Photo, crop: PhotoCrop) => {
     run(() => setPersonaAvatarPhoto(baulId, persona.id, photo, crop), {
       key: 'avatar',
       successMessage: 'Foto de perfil actualizada',

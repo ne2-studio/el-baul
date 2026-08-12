@@ -6708,6 +6708,12 @@ export interface components {
             isCustodio: boolean;
             /** Format: int32 */
             memberCount: number;
+            /** Format: double */
+            coverCropX: number;
+            /** Format: double */
+            coverCropY: number;
+            /** Format: double */
+            coverCropScale: number;
         };
         BaulInviteLinkDto: {
             token: string;
@@ -6781,6 +6787,12 @@ export interface components {
             maxDateDay?: number | null;
             /** Format: int32 */
             undatedPhotoCount: number;
+            /** Format: double */
+            coverCropX: number;
+            /** Format: double */
+            coverCropY: number;
+            /** Format: double */
+            coverCropScale: number;
         };
         ChatMessageDto: {
             id: string;
@@ -6953,10 +6965,22 @@ export interface components {
         SetBaulCoverRequest: {
             /** Format: uuid */
             photoId: string;
+            /** Format: double */
+            cropX: number;
+            /** Format: double */
+            cropY: number;
+            /** Format: double */
+            cropScale: number;
         };
         SetChapterCoverRequest: {
             /** Format: uuid */
             photoId: string;
+            /** Format: double */
+            cropX: number;
+            /** Format: double */
+            cropY: number;
+            /** Format: double */
+            cropScale: number;
         };
         SetPersonaAvatarPhotoRequest: {
             /** Format: uuid */

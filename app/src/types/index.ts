@@ -2,11 +2,15 @@ import { getRelativeTime } from '@/app/utils/timeUtils';
 import type { components } from '@/api/generated/schema';
 
 type ApiSchemas = components['schemas'];
-type BaulDto = ApiSchemas['BaulDto'];
+type RawBaulDto = ApiSchemas['BaulDto'];
+type BaulDto = Omit<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'> &
+  Partial<Pick<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'>>;
 type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
 type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
 type ClaimablePersonaDto = ApiSchemas['ClaimablePersonaDto'];
-type ChapterDto = ApiSchemas['ChapterDto'];
+type RawChapterDto = ApiSchemas['ChapterDto'];
+type ChapterDto = Omit<RawChapterDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'> &
+  Partial<Pick<RawChapterDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'>>;
 type ChatMessageDto = ApiSchemas['ChatMessageDto'];
 type RawPersonaDto = ApiSchemas['PersonaDto'];
 type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'> &
@@ -30,6 +34,16 @@ export interface PhotoDate {
   year: number;
   month?: number;
   day?: number;
+}
+
+// A user-chosen focal point (x/y, fraction of the source image) plus zoom (scale) — how a
+// persona's avatar or a chapter/baúl's cover photo should be framed. Lives here (not
+// api/publicTypes.ts) so design-system components (e.g. PhotoCropStep) can depend on it without
+// depending on the api layer — see docs/architecture/frontend.md's design-system boundary.
+export interface PhotoCrop {
+  x: number;
+  y: number;
+  scale: number;
 }
 
 function photoDateFrom(year?: number | null, month?: number | null, day?: number | null): PhotoDate | undefined {
@@ -90,6 +104,9 @@ export class Baul {
   description?: string;
   chapterCount: number;
   coverPhotoUrl?: string;
+  coverCropX?: number;
+  coverCropY?: number;
+  coverCropScale?: number;
   lastUpdated: string;
   role?: BaulRole;
   isCustodio?: boolean;
@@ -101,6 +118,9 @@ export class Baul {
     this.description = data.description ?? undefined;
     this.chapterCount = data.chapterCount;
     this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
+    this.coverCropX = data.coverCropX ?? 0.5;
+    this.coverCropY = data.coverCropY ?? 0.5;
+    this.coverCropScale = data.coverCropScale ?? 1;
     this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
     this.role = data.role as BaulRole;
     this.isCustodio = data.isCustodio;
@@ -114,6 +134,9 @@ export class Chapter {
   photoCount: number;
   coverPhotoUrl?: string;
   featuredCoverPhotoUrl?: string;
+  coverCropX?: number;
+  coverCropY?: number;
+  coverCropScale?: number;
   lastUpdated: string;
   recuerdoCount: number;
   latestRecuerdoText?: string;
@@ -128,6 +151,9 @@ export class Chapter {
     this.photoCount = data.photoCount;
     this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
     this.featuredCoverPhotoUrl = data.featuredCoverPhotoUrl ?? undefined;
+    this.coverCropX = data.coverCropX ?? 0.5;
+    this.coverCropY = data.coverCropY ?? 0.5;
+    this.coverCropScale = data.coverCropScale ?? 1;
     this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
     this.recuerdoCount = data.recuerdoCount;
     this.latestRecuerdoText = data.latestRecuerdoText ?? undefined;

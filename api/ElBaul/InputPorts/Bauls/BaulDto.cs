@@ -10,5 +10,8 @@ public record BaulDto
     DateTime UpdatedAt,
     string Role,
     bool IsCustodio,
-    int MemberCount
+    int MemberCount,
+    decimal CoverCropX,
+    decimal CoverCropY,
+    decimal CoverCropScale
 );

@@ -103,13 +103,19 @@ public class ChapterManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, "photo-key");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, photoId);
+        var result = await manager.SetCoverAsync(chapterId, photoId, new PhotoCrop(0.25m, 0.75m, 1.8m));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
+        Assert.Equal(0.25m, result.Value.CoverCropX);
+        Assert.Equal(0.75m, result.Value.CoverCropY);
+        Assert.Equal(1.8m, result.Value.CoverCropScale);
 
         var chapter = await _fixture.Chapters.GetByIdAsync(chapterId);
         Assert.Equal("photo-key", chapter!.CoverPhotoKey);
+        Assert.Equal(0.25m, chapter.CoverCropX);
+        Assert.Equal(0.75m, chapter.CoverCropY);
+        Assert.Equal(1.8m, chapter.CoverCropScale);
     }
 
     [Fact]
@@ -122,7 +128,7 @@ public class ChapterManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, "photo-key", uploadedBy: colaboradorId);
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.SetCoverAsync(chapterId, photoId);
+        var result = await manager.SetCoverAsync(chapterId, photoId, new PhotoCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsSuccess);
     }
@@ -134,7 +140,7 @@ public class ChapterManagerTests
         var chapterId = await _fixture.AddChapterAsync(baulId, "Chapter");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, new PhotoId(Guid.NewGuid()));
+        var result = await manager.SetCoverAsync(chapterId, new PhotoId(Guid.NewGuid()), new PhotoCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
@@ -149,7 +155,7 @@ public class ChapterManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, otherChapterId, "photo-key");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, photoId);
+        var result = await manager.SetCoverAsync(chapterId, photoId, new PhotoCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);

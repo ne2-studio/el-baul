@@ -1,4 +1,4 @@
-import { api } from '@/api';
+import { PhotoCrop, api } from '@/api';
 import { Chapter, PhotoDate } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
@@ -37,6 +37,7 @@ export async function setChapterCover(
   baulId: string,
   chapterId: string,
   photoId: string,
+  crop: PhotoCrop,
   optimisticThumbnailUrl?: string
 ): Promise<void> {
   const previous = useBaulesStore.getState().chapters[baulId] || [];
@@ -49,7 +50,7 @@ export async function setChapterCover(
     }));
   }
   try {
-    const updated = await api.chapters.setCover(baulId, chapterId, photoId);
+    const updated = await api.chapters.setCover(baulId, chapterId, photoId, crop);
     useBaulesStore.setState((state) => ({
       chapters: {
         ...state.chapters,

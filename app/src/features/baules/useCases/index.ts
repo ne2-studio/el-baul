@@ -1,4 +1,4 @@
-import { api } from '@/api';
+import { PhotoCrop, api } from '@/api';
 import { Baul } from '@/types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
@@ -85,13 +85,15 @@ export async function createBaul(name: string, description: string): Promise<Bau
 // (mismo criterio que ya usa uploadPhotos al rellenar coverPhotoUrl con thumbnailUrl)
 // para que el menú de "establecer portada" dé feedback instantáneo en vez de quedarse
 // mudo hasta que responda el servidor. Si la petición falla, se revierte al snapshot previo.
-export async function setBaulCover(baulId: string, photoId: string, optimisticThumbnailUrl?: string): Promise<void> {
+export async function setBaulCover(
+  baulId: string, photoId: string, crop: PhotoCrop, optimisticThumbnailUrl?: string
+): Promise<void> {
   const previous = useBaulesStore.getState().baules;
   if (optimisticThumbnailUrl) {
     useBaulesStore.setState((state) => ({ baules: applyCoverUpdate(state.baules, baulId, optimisticThumbnailUrl) }));
   }
   try {
-    const updated = await api.baules.setCover(baulId, photoId);
+    const updated = await api.baules.setCover(baulId, photoId, crop);
     useBaulesStore.setState((state) => ({ baules: state.baules.map((b) => (b.id === baulId ? updated : b)) }));
   } catch (error) {
     useBaulesStore.setState({ baules: previous });

@@ -15,9 +15,10 @@ photo bytes back out over HTTP itself:
   in `imgproxy/presets.conf`, and HMAC-signs the path with a shared key/salt. An optional
   `ImageCrop` (focal point + zoom) is appended as `gravity:fp` (focal point) and, when zoomed in,
   `crop` (relative pre-crop around that point) processing options on top of the preset — used for
-  persona avatars so the user-chosen crop is resampled by imgproxy against the original
-  resolution, instead of a client-side CSS `transform: scale()`. Not imgproxy's `zoom` option:
-  that's Pro-only and silently no-ops on the OSS build this repo runs (see `ImgproxyUrlBuilder`).
+  persona avatars and chapter/baúl covers so the user-chosen crop is resampled by imgproxy
+  against the original resolution, instead of a client-side CSS `transform: scale()`. Not
+  imgproxy's `zoom` option: that's Pro-only and silently no-ops on the OSS build this repo runs
+  (see `ImgproxyUrlBuilder`).
 - imgproxy is the *only* component that ever reads from MinIO — it holds its own S3 credentials
   and fetches originals directly over the internal Docker network. `IMGPROXY_ONLY_PRESETS` is
   **off**, so arbitrary processing options (like the crop override above) are accepted; the

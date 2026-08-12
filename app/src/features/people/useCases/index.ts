@@ -1,4 +1,4 @@
-import { AvatarCrop, api } from '@/api';
+import { PhotoCrop, api } from '@/api';
 import { BaulRole, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
@@ -45,7 +45,7 @@ export async function updatePersonaBiografia(baulId: string, personaId: string, 
   }));
 }
 
-export async function uploadPersonaAvatar(baulId: string, personaId: string, file: File, crop: AvatarCrop): Promise<void> {
+export async function uploadPersonaAvatar(baulId: string, personaId: string, file: File, crop: PhotoCrop): Promise<void> {
   const updated = await api.baules.uploadPersonaAvatar(baulId, personaId, file, crop);
   usePersonasStore.setState((state) => ({
     personas: {
@@ -56,7 +56,7 @@ export async function uploadPersonaAvatar(baulId: string, personaId: string, fil
   loadPersonaPhotos(baulId, personaId).catch(() => undefined);
 }
 
-export async function setPersonaAvatarPhoto(baulId: string, personaId: string, photo: Photo, crop: AvatarCrop): Promise<void> {
+export async function setPersonaAvatarPhoto(baulId: string, personaId: string, photo: Photo, crop: PhotoCrop): Promise<void> {
   const updated = await api.baules.setPersonaAvatarPhoto(baulId, personaId, photo.id, crop);
   usePhotosStore.getState().upsertPhotos([photo]);
   usePersonasStore.setState((state) => {

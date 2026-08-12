@@ -109,13 +109,19 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.25m, 0.75m, 1.8m));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
+        Assert.Equal(0.25m, result.Value.CoverCropX);
+        Assert.Equal(0.75m, result.Value.CoverCropY);
+        Assert.Equal(1.8m, result.Value.CoverCropScale);
 
         var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
         Assert.Equal("photo-key", baul!.CoverPhotoKey);
+        Assert.Equal(0.25m, baul.CoverCropX);
+        Assert.Equal(0.75m, baul.CoverCropY);
+        Assert.Equal(1.8m, baul.CoverCropScale);
     }
 
     [Fact]
@@ -128,7 +134,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -141,7 +147,7 @@ public class BaulManagerTests
         await SeedBaulAsync(baulId, "Familia");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(Guid.NewGuid()));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(Guid.NewGuid()), new PhotoCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
@@ -159,7 +165,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(otherBaulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);

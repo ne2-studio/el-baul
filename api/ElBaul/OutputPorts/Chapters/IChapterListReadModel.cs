@@ -28,5 +28,8 @@ public sealed record ChapterListRow(
     int RecuerdoCount,
     string? LatestRecuerdoText,
     UserId? LatestRecuerdoAuthorUserId,
-    ChapterDateRange DateRange
+    ChapterDateRange DateRange,
+    decimal CoverCropX,
+    decimal CoverCropY,
+    decimal CoverCropScale
 );

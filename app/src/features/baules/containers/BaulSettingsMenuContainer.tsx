@@ -19,7 +19,7 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { renameBaul, setBaulCover } from '@/features/baules/useCases';
-import { api } from '@/api';
+import { PhotoCrop, api } from '@/api';
 
 interface BaulSettingsMenuContainerProps {
   baul: Baul;
@@ -55,8 +55,8 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
     if (result.ok) setShowEditModal(false);
   };
 
-  const handleSetBaulCover = (photo: Photo) => {
-    run(() => setBaulCover(baul.id, photo.id, photo.thumbnailUrl), {
+  const handleSetBaulCover = (photo: Photo, crop: PhotoCrop) => {
+    run(() => setBaulCover(baul.id, photo.id, crop, photo.thumbnailUrl), {
       successMessage: 'Portada del baúl actualizada',
       errorMessage: 'Error al establecer la portada',
     });

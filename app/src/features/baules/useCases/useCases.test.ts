@@ -127,7 +127,7 @@ describe('baules useCases setBaulCover', () => {
     let resolveSetCover!: (baul: Baul) => void;
     vi.mocked(api.baules.setCover).mockReturnValue(new Promise((resolve) => { resolveSetCover = resolve; }));
 
-    const promise = setBaulCover(baulId, photoId, 'optimistic-thumb');
+    const promise = setBaulCover(baulId, photoId, { x: 0.5, y: 0.5, scale: 1 }, 'optimistic-thumb');
     expect(useBaulesStore.getState().baules[0].coverPhotoUrl).toBe('optimistic-thumb');
 
     const serverBaul = newBaul({ coverPhotoUrl: 'server-thumb' });
@@ -144,7 +144,7 @@ describe('baules useCases setBaulCover', () => {
     vi.mocked(api.baules.setCover).mockRejectedValue(new Error('server rejected cover'));
 
     await expect(
-      setBaulCover(baulId, photoId, 'optimistic-thumb')
+      setBaulCover(baulId, photoId, { x: 0.5, y: 0.5, scale: 1 }, 'optimistic-thumb')
     ).rejects.toThrow('server rejected cover');
 
     expect(useBaulesStore.getState().baules[0]).toBe(original);

@@ -100,7 +100,8 @@ public class BaulInviteLinkManager(
             urls.Add(await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.InvitationPreview));
         }
 
-        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage);
+        var coverCrop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
+        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage, coverCrop);
 
         // Up to 4 avatars from real (non-revoked) family members, no name attached — same
         // limited-disclosure trade-off the public preview already makes for previewPhotos.
@@ -129,7 +130,8 @@ public class BaulInviteLinkManager(
         var baul = await baulRepository.GetByIdAsync(link.BaulId);
         if (baul is null) return Result.Failure<BaulInviteLinkLandingDto>(ApplicationError.NotFound("Baul not found"));
 
-        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage);
+        var coverCrop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
+        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage, coverCrop);
         var title = $"Invitación a {baul.Name}";
         var description = string.IsNullOrWhiteSpace(baul.Description)
             ? $"Te han invitado a unirte al baúl familiar {baul.Name}."

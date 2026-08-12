@@ -90,7 +90,7 @@ public class ChapterManager(
         return ToDto(chapter, null, null, 0, null, null, ChapterDateRange.Empty);
     }
 
-    public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId)
+    public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId, PhotoCrop crop)
     {
         var userId = currentUserProvider.GetUserId();
         var chapterResult = await EntityLookup.ResolveAsync(
@@ -116,7 +116,7 @@ public class ChapterManager(
         if (photoResult.IsFailure) return Result.Failure<ChapterDto>(photoResult.Error);
         var photo = photoResult.Value;
 
-        var updated = chapter.WithCover(photo, clock.UtcNow());
+        var updated = chapter.WithCover(photo, crop.X, crop.Y, crop.Scale, clock.UtcNow());
         await chapterRepository.UpdateAsync(updated);
 
         logger.LogInformation("Chapter cover updated {PhotoId}", photoId);
@@ -193,8 +193,9 @@ public class ChapterManager(
     // below instead, precisely to avoid running this once per chapter in a baúl.
     private async Task<ChapterDto> ToDtoAsync(Chapter chapter)
     {
-        var coverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage);
-        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage);
+        var crop = new ImageCrop(chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
+        var coverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage, crop);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
 
         var photos = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
         var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
@@ -214,8 +215,9 @@ public class ChapterManager(
     // round trip — see MinioPhotoStorage.GetImageUrl), so it stays cheap per chapter.
     private async Task<ChapterDto> ToDtoAsync(ChapterListRow row, IReadOnlyDictionary<UserId, AuthorInfo> authorsByUserId)
     {
-        var coverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage);
-        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage);
+        var crop = new ImageCrop(row.CoverCropX, row.CoverCropY, row.CoverCropScale);
+        var coverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage, crop);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
 
         var latestAuthor = row.LatestRecuerdoAuthorUserId is { } userId
             ? AuthorInfoProjector.Resolve(authorsByUserId, userId).Nickname
@@ -225,7 +227,8 @@ public class ChapterManager(
             row.Id.ToString(), row.BaulId.ToString(), row.Name, row.PhotoCount, coverUrl, featuredCoverUrl,
             row.CreatedAt, row.UpdatedAt, row.RecuerdoCount, row.LatestRecuerdoText, latestAuthor,
             row.DateRange.MinYear, row.DateRange.MinMonth, row.DateRange.MinDay,
-            row.DateRange.MaxYear, row.DateRange.MaxMonth, row.DateRange.MaxDay, row.DateRange.UndatedPhotoCount);
+            row.DateRange.MaxYear, row.DateRange.MaxMonth, row.DateRange.MaxDay, row.DateRange.UndatedPhotoCount,
+            row.CoverCropX, row.CoverCropY, row.CoverCropScale);
     }
 
     private static ChapterDto ToDto(
@@ -234,5 +237,6 @@ public class ChapterManager(
         new(chapter.Id.ToString(), chapter.BaulId.ToString(), chapter.Name,
             chapter.PhotoCount, coverUrl, featuredCoverUrl, chapter.CreatedAt, chapter.UpdatedAt,
             recuerdoCount, latestRecuerdoText, latestRecuerdoAuthor,
-            dateRange.MinYear, dateRange.MinMonth, dateRange.MinDay, dateRange.MaxYear, dateRange.MaxMonth, dateRange.MaxDay, dateRange.UndatedPhotoCount);
+            dateRange.MinYear, dateRange.MinMonth, dateRange.MinDay, dateRange.MaxYear, dateRange.MaxMonth, dateRange.MaxDay, dateRange.UndatedPhotoCount,
+            chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
 }

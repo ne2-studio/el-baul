@@ -53,7 +53,10 @@ public class BaulesController(
     [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetCover(BaulId baulId, [FromBody] SetBaulCoverRequest request)
     {
-        var result = await baulManager.SetCoverAsync(baulId, request.PhotoId);
+        var crop = PhotoCrop.Create(request.CropX, request.CropY, request.CropScale);
+        if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
+
+        var result = await baulManager.SetCoverAsync(baulId, request.PhotoId, crop.Value);
         return result.ToActionResult();
     }
 
@@ -130,7 +133,7 @@ public class BaulesController(
         if (request.File is null || request.File.Length == 0)
             return BadRequest(new { error = "No file provided" });
 
-        var crop = AvatarCrop.Create(request.CropX, request.CropY, request.CropScale);
+        var crop = PhotoCrop.Create(request.CropX, request.CropY, request.CropScale);
         if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
 
         // A missing/invalid client-generated idempotency token falls back to a fresh one rather
@@ -152,7 +155,7 @@ public class BaulesController(
     public async Task<IActionResult> SetPersonaAvatarPhoto(
         BaulId baulId, PersonaId personaId, [FromBody] SetPersonaAvatarPhotoRequest request)
     {
-        var crop = AvatarCrop.Create(request.CropX, request.CropY, request.CropScale);
+        var crop = PhotoCrop.Create(request.CropX, request.CropY, request.CropScale);
         if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
 
         var result = await personaManager.SetPersonaAvatarPhotoAsync(baulId, personaId, request.PhotoId, crop.Value);

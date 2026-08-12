@@ -1,4 +1,4 @@
-import { Chapter } from '../../types';
+import { Chapter, PhotoCrop } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { del, get, post, put } from '../http';
 
@@ -15,8 +15,10 @@ export const chaptersApi = {
   getAll: async (baulId: string) => (await get<JsonResponse<typeof BAUL_CHAPTERS, 'get'>>(chaptersPath(baulId))).map((a) => new Chapter(a)),
   create: async (baulId: string, name: string) =>
     new Chapter(await post<ChapterDto>(chaptersPath(baulId), { name } satisfies JsonRequest<typeof BAUL_CHAPTERS, 'post'>)),
-  setCover: async (baulId: string, chapterId: string, photoId: string) =>
-    new Chapter(await put<ChapterDto>(path(CHAPTER_COVER, { baulId, chapterId }), { photoId } satisfies JsonRequest<typeof CHAPTER_COVER, 'put'>)),
+  setCover: async (baulId: string, chapterId: string, photoId: string, crop: PhotoCrop) =>
+    new Chapter(await put<ChapterDto>(path(CHAPTER_COVER, { baulId, chapterId }), {
+      photoId, cropX: crop.x, cropY: crop.y, cropScale: crop.scale,
+    } satisfies JsonRequest<typeof CHAPTER_COVER, 'put'>)),
   update: async (baulId: string, chapterId: string, name: string) =>
     new Chapter(await put<ChapterDto>(chapterPath(baulId, chapterId), { name } satisfies JsonRequest<typeof BAUL_CHAPTER, 'put'>)),
   delete: (baulId: string, chapterId: string) => del<void>(chapterPath(baulId, chapterId)),

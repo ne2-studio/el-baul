@@ -1,7 +1,7 @@
 import { Baul, BaulInviteLink, FeedItem, Persona, Photo, RemovalRequest, feedItemFrom } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { API_BASE, apiFetch, authHeaders, get, handleResponse, post, put, del } from '../http';
-import type { AvatarCrop } from '../publicTypes';
+import type { PhotoCrop } from '../publicTypes';
 
 const BAULES = '/api/baules' satisfies PathTemplate;
 const BAUL = '/api/baules/{baulId}' satisfies PathTemplate;
@@ -35,8 +35,10 @@ export const baulesApi = {
   create: async (name: string, description?: string) =>
     new Baul(await post<BaulDto>(BAULES, { name, description } satisfies JsonRequest<typeof BAULES, 'post'>)),
   getById: async (id: string) => new Baul(await get<BaulDto>(baulPath(id))),
-  setCover: async (baulId: string, photoId: string) =>
-    new Baul(await put<BaulDto>(path(BAUL_COVER, { baulId }), { photoId } satisfies JsonRequest<typeof BAUL_COVER, 'put'>)),
+  setCover: async (baulId: string, photoId: string, crop: PhotoCrop) =>
+    new Baul(await put<BaulDto>(path(BAUL_COVER, { baulId }), {
+      photoId, cropX: crop.x, cropY: crop.y, cropScale: crop.scale,
+    } satisfies JsonRequest<typeof BAUL_COVER, 'put'>)),
   update: async (baulId: string, name: string, description?: string) =>
     new Baul(await put<BaulDto>(baulPath(baulId), { name, description } satisfies JsonRequest<typeof BAUL, 'put'>)),
 
@@ -49,7 +51,7 @@ export const baulesApi = {
     new Persona(await put<PersonaDto>(personaPath(baulId, personaId), { name, nickname } satisfies JsonRequest<typeof BAUL_PERSONA, 'put'>)),
   updatePersonaBiografia: async (baulId: string, personaId: string, biografia: string) =>
     new Persona(await put<PersonaDto>(path(PERSONA_BIOGRAFIA, { baulId, personaId }), { biografia } satisfies JsonRequest<typeof PERSONA_BIOGRAFIA, 'put'>)),
-  uploadPersonaAvatar: async (baulId: string, personaId: string, file: File, crop: AvatarCrop) => {
+  uploadPersonaAvatar: async (baulId: string, personaId: string, file: File, crop: PhotoCrop) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('cropX', String(crop.x));
@@ -65,7 +67,7 @@ export const baulesApi = {
 
     return new Persona(await handleResponse<PersonaDto>(response));
   },
-  setPersonaAvatarPhoto: async (baulId: string, personaId: string, photoId: string, crop: AvatarCrop) =>
+  setPersonaAvatarPhoto: async (baulId: string, personaId: string, photoId: string, crop: PhotoCrop) =>
     new Persona(await put<PersonaDto>(path(PERSONA_AVATAR, { baulId, personaId }), {
       photoId,
       cropX: crop.x,

@@ -13,7 +13,10 @@ public record Chapter
     DateTime UpdatedAt,
     // "" for chapters created before this field existed — never matches a real user id, so
     // legacy chapters are simply never excluded as "your own" (e.g. from the weekly digest).
-    string CreatedByUserId = ""
+    string CreatedByUserId = "",
+    decimal CoverCropX = 0.5m,
+    decimal CoverCropY = 0.5m,
+    decimal CoverCropScale = 1m
 )
 {
     // CoverPhotoKey follows the same rule everywhere a photo enters or leaves a chapter: the
@@ -39,6 +42,13 @@ public record Chapter
     public Chapter WithName(string name, DateTime updatedAt) =>
         this with { Name = name, UpdatedAt = updatedAt };
 
-    public Chapter WithCover(Photo photo, DateTime updatedAt) =>
-        this with { CoverPhotoKey = photo.StorageKey, UpdatedAt = updatedAt };
+    public Chapter WithCover(Photo photo, decimal cropX, decimal cropY, decimal cropScale, DateTime updatedAt) =>
+        this with
+        {
+            CoverPhotoKey = photo.StorageKey,
+            CoverCropX = cropX,
+            CoverCropY = cropY,
+            CoverCropScale = cropScale,
+            UpdatedAt = updatedAt
+        };
 }
