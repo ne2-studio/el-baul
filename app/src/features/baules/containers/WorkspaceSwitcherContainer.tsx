@@ -59,7 +59,7 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
             <DropdownMenuItem
               key={baul.id}
               onSelect={() => handleSwitch(baul)}
-              className={cn('gap-3 py-2.5 px-2 rounded-xl', isActive && 'bg-primary/10')}
+              className={cn('group gap-3 py-2.5 px-2 rounded-xl', isActive && 'bg-primary/10')}
             >
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0">
                 {baul.coverPhotoUrl ? (
@@ -71,8 +71,10 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-serif text-foreground text-sm leading-tight truncate">{baul.name}</p>
-                <p className="text-muted-foreground text-xs mt-0.5">
+                <p className="font-serif text-foreground group-focus:text-accent-foreground text-sm leading-tight truncate">
+                  {baul.name}
+                </p>
+                <p className="text-muted-foreground group-focus:text-accent-foreground text-xs mt-0.5">
                   {baul.chapterCount} {baul.chapterCount === 1 ? 'capítulo' : 'capítulos'}
                 </p>
               </div>

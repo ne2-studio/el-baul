@@ -35,13 +35,33 @@ function DropdownMenuTrigger({
 function DropdownMenuContent({
   className,
   sideOffset = 4,
+  onPointerDownOutside,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+  // Radix always returns DOM focus to the trigger when the menu closes — including when it's
+  // dismissed by clicking outside — and that programmatic refocus still satisfies the browser's
+  // :focus-visible heuristic, so the trigger is left showing its focus ring until a second
+  // outside click actually blurs it. Skip the refocus only for that outside-pointer dismissal;
+  // keyboard closes (Escape, selecting an item) still return focus to the trigger as expected.
+  const closedByOutsidePointerRef = React.useRef(false);
+
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
+        onPointerDownOutside={(event) => {
+          closedByOutsidePointerRef.current = true;
+          onPointerDownOutside?.(event);
+        }}
+        onCloseAutoFocus={(event) => {
+          if (closedByOutsidePointerRef.current) {
+            event.preventDefault();
+          }
+          closedByOutsidePointerRef.current = false;
+          onCloseAutoFocus?.(event);
+        }}
         className={cn(
           "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
           className,

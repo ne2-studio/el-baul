@@ -119,13 +119,30 @@ export const ChapterActions: Story = {
 
     const menu = body.getByRole('menu');
     await expect(menu).toHaveAttribute('data-state', 'open');
-    await expect(body.getByRole('menuitem', { name: /Cambiar portada/ })).toBeInTheDocument();
+    const changeCoverItem = body.getByRole('menuitem', { name: /Cambiar portada/ });
+    await expect(changeCoverItem).toBeInTheDocument();
     await expect(body.getByRole('menuitem', { name: /Mover fotos/ })).toHaveAttribute('aria-disabled', 'true');
     await expect(body.getByRole('menuitem', { name: /Eliminar capítulo/ })).toHaveAttribute('data-variant', 'destructive');
+
+    // Regression: hovered items must show white text via the inherited accent-foreground
+    // color, not a child-level color override.
+    await userEvent.hover(changeCoverItem);
+    await waitFor(() => expect(getComputedStyle(changeCoverItem).color).toBe('rgb(255, 255, 255)'));
 
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(menu).toHaveAttribute('data-state', 'closed'));
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    // Regression: dismissing by clicking outside must not leave the trigger looking focused —
+    // Radix returns DOM focus to it on close, and that programmatic refocus alone used to
+    // satisfy the browser's :focus-visible heuristic, so the ring stuck around until a *second*
+    // outside click actually blurred it (see DropdownMenuContent's onCloseAutoFocus).
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(body.getByRole('menu')).toHaveAttribute('data-state', 'open'));
+    await userEvent.click(document.body);
+    await waitFor(() => expect(body.queryByRole('menu')).not.toBeInTheDocument());
+    await expect(trigger).not.toHaveFocus();
 
     trigger.focus();
     await expect(trigger).toHaveFocus();
