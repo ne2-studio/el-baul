@@ -36,4 +36,8 @@
     <ProjectReference Include="..\ElBaul.Infra\ElBaul.Infra.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\ElBaul.ReadModelContractTests\ListReadModelContractScenarios.cs" Link="ReadModelContractTests\ListReadModelContractScenarios.cs" />
+  </ItemGroup>
+
 </Project>
