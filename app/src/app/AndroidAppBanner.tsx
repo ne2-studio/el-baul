@@ -8,7 +8,7 @@ import {
   dismissAndroidAppBanner,
   isAndroidAppBannerDismissed,
   isAndroidWebBrowser,
-} from './androidAppBanner';
+} from './androidAppBannerUtils';
 
 // Calculado una sola vez al cargar el módulo: navigator.userAgent y la plataforma de Capacitor
 // no cambian durante la vida de la pestaña, así que no hace falta recomputarlo en cada render.

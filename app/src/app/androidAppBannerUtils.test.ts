@@ -11,7 +11,7 @@ import {
   dismissAndroidAppBanner,
   isAndroidAppBannerDismissed,
   isAndroidWebBrowser,
-} from './androidAppBanner';
+} from './androidAppBannerUtils';
 
 const ANDROID_UA =
   'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Mobile Safari/537.36';
