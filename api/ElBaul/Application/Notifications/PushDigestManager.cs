@@ -1,5 +1,6 @@
 using ElBaul.Application.Notifications;
 using ElBaul.InputPorts.Notifications;
+using ElBaul.OutputPorts.Feed;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
@@ -25,6 +26,7 @@ public class PushDigestManager(
     IPushTokenRepository pushTokenRepository,
     IPushNotificationSender pushNotificationSender,
     DigestActivityPolicy digestActivityPolicy,
+    IBaulFeedCursorRepository feedCursorRepository,
     IBackgroundJobScheduler backgroundJobScheduler,
     IAppConfiguration appConfiguration,
     IClock clock) : IPushDigestManager
@@ -110,7 +112,11 @@ public class PushDigestManager(
 
     private async Task<PushDigestSummary?> BuildSummaryAsync(User user, DateTime since)
     {
-        var activity = await digestActivityPolicy.CollectAsync(user, since);
+        // One query for every baúl this user has a seen-cursor for, not one per baúl — see
+        // IBaulFeedCursorRepository.GetAllForUserAsync's doc comment.
+        var cursors = await feedCursorRepository.GetAllForUserAsync(user.Id);
+        var activity = await digestActivityPolicy.CollectAsync(
+            user, since, baulId => cursors.TryGetValue(baulId, out var seenAt) ? seenAt : DateTime.MinValue);
         if (!activity.HasActivity) return null;
 
         var parts = new List<string>();

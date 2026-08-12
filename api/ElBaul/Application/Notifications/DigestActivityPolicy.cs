@@ -19,7 +19,11 @@ public class DigestActivityPolicy(
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository)
 {
-    public async Task<DigestActivitySummary> CollectAsync(User user, DateTime since)
+    /// <summary>sinceFloor, when given, raises `since` per baúl — e.g. the push digest uses it to
+    /// clamp each baúl's window to the caller's own BaulFeedCursor, so activity already seen
+    /// in-app never gets pushed again. Left null for the weekly email digest, which is a recap
+    /// and deliberately shows everything since its own cursor regardless of what was seen in-app.</summary>
+    public async Task<DigestActivitySummary> CollectAsync(User user, DateTime since, Func<BaulId, DateTime>? sinceFloor = null)
     {
         var baules = (await baulAccess.GetAccessibleAsync(user.Id))
             .Select(access => access.Baul)
@@ -29,13 +33,16 @@ public class DigestActivityPolicy(
         var activeBaules = new List<BaulDigestActivity>();
         foreach (var baul in baules)
         {
-            var activity = await CollectBaulAsync(baul, since, user.Id);
+            var effectiveSince = sinceFloor is null ? since : Max(since, sinceFloor(baul.Id));
+            var activity = await CollectBaulAsync(baul, effectiveSince, user.Id);
             if (activity.HasActivity)
                 activeBaules.Add(activity);
         }
 
         return new DigestActivitySummary(baules, activeBaules);
     }
+
+    private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
 
     private async Task<BaulDigestActivity> CollectBaulAsync(Baul baul, DateTime since, UserId excludingUserId)
     {

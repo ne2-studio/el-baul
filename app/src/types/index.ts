@@ -14,6 +14,7 @@ type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCro
 type PhotoDto = ApiSchemas['PhotoDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
 type PhotoBatchDto = ApiSchemas['PhotoBatchDto'];
+type ChapterCreatedFeedDto = ApiSchemas['ChapterCreatedFeedDto'];
 type FeedItemDto = ApiSchemas['FeedItemDto'];
 type RemovalRequestDto = ApiSchemas['RemovalRequestDto'];
 type UserProfileDto = ApiSchemas['UserProfileDto'];
@@ -216,20 +217,50 @@ export class PhotoBatch {
   }
 }
 
-// One entry in the baúl feed — either a Recuerdo or a photo-upload batch, never both. Mirrors
-// FeedItemDto's discriminated shape so callers can switch on `type` instead of checking which
-// nested field is set.
+// One card in the baúl feed announcing a chapter's creation. Mirrors PhotoBatch's authorship
+// shape (Persona nickname/avatar, never the account name).
+export class ChapterCreatedFeed {
+  chapterId: string;
+  name: string;
+  coverPhotoUrl?: string;
+  createdAt: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  personaId?: string;
+
+  constructor(data: ChapterCreatedFeedDto) {
+    this.chapterId = data.chapterId;
+    this.name = data.name;
+    this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
+    this.createdAt = data.createdAt;
+    this.userId = data.userId;
+    this.userName = data.userName;
+    this.userAvatar = data.userAvatar ?? undefined;
+    this.personaId = data.personaId ?? undefined;
+  }
+}
+
+// One entry in the baúl feed — a Recuerdo, a photo-upload batch or a chapter-created event,
+// never more than one. Mirrors FeedItemDto's discriminated shape so callers can switch on
+// `type` instead of checking which nested field is set. isNew marks activity since the
+// caller's last visit to this baúl — see BaulFeedManager.GetFeedAsync's doc comment.
 export type FeedItem =
-  | { type: 'recuerdo'; createdAt: string; recuerdo: Recuerdo }
-  | { type: 'photo_batch'; createdAt: string; photoBatch: PhotoBatch };
+  | { type: 'recuerdo'; createdAt: string; isNew: boolean; recuerdo: Recuerdo }
+  | { type: 'photo_batch'; createdAt: string; isNew: boolean; photoBatch: PhotoBatch }
+  | { type: 'chapter_created'; createdAt: string; isNew: boolean; chapterCreated: ChapterCreatedFeed };
 
 export function feedItemFrom(data: FeedItemDto): FeedItem {
+  const isNew = data.isNew ?? false;
   if (data.type === 'photo_batch' && data.photoBatch) {
-    return { type: 'photo_batch', createdAt: data.createdAt, photoBatch: new PhotoBatch(data.photoBatch) };
+    return { type: 'photo_batch', createdAt: data.createdAt, isNew, photoBatch: new PhotoBatch(data.photoBatch) };
   }
-  // Defaults to 'recuerdo' for any unrecognized type too, matching the backend's only two
-  // real values — an unknown Type would otherwise have no Recuerdo to render.
-  return { type: 'recuerdo', createdAt: data.createdAt, recuerdo: new Recuerdo(data.recuerdo!) };
+  if (data.type === 'chapter_created' && data.chapterCreated) {
+    return { type: 'chapter_created', createdAt: data.createdAt, isNew, chapterCreated: new ChapterCreatedFeed(data.chapterCreated) };
+  }
+  // Defaults to 'recuerdo' for any unrecognized type too, matching the backend's fallback
+  // shape — an unknown Type would otherwise have no Recuerdo to render.
+  return { type: 'recuerdo', createdAt: data.createdAt, isNew, recuerdo: new Recuerdo(data.recuerdo!) };
 }
 
 export class ChatMessage {

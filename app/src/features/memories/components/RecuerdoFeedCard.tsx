@@ -2,8 +2,9 @@ import React from 'react';
 import { ImageIcon, Pencil, Share2 } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
-import { ChapterBadge } from '@/design-system/components/data-display/Badges';
+import { ChapterBadge, NewDot } from '@/design-system/components/data-display/Badges';
 import { FeedCardHeader } from '@/design-system/components/data-display/FeedCardHeader';
+import { cn } from '@/design-system/components/ui/utils';
 import { RecuerdoEditForm } from '@/features/memories/components/RecuerdoEditForm';
 
 interface RecuerdoFeedCardProps {
@@ -16,10 +17,14 @@ interface RecuerdoFeedCardProps {
   /** false cuando la card ya se muestra dentro del propio capítulo al que pertenece el
    * recuerdo, para no repetir un badge que enlazaría al sitio en el que ya estás. */
   showChapterBadge?: boolean;
+  /** Actividad desde la última visita a este baúl — pinta un hint visual sutil (ver
+   * FeedItem.isNew). Ausente fuera del feed unificado del baúl. */
+  isNew?: boolean;
 }
 
 export function RecuerdoFeedCard({
   recuerdo, onUserClick, onPhotoClick, onChapterClick, onShareRecuerdo, onEditRecuerdo, showChapterBadge = true,
+  isNew = false,
 }: RecuerdoFeedCardProps) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -40,7 +45,11 @@ export function RecuerdoFeedCard({
   };
 
   return (
-    <div className="bg-card border border-border/60 rounded-2xl p-5">
+    <div className={cn(
+      'relative rounded-2xl p-5 border',
+      isNew ? 'bg-primary/5 border-primary/20' : 'bg-card border-border/60',
+    )}>
+      {isNew && <NewDot className="absolute top-4 right-4" />}
       <FeedCardHeader
         name={userName}
         avatarUrl={recuerdo.userAvatar}

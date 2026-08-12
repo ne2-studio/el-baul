@@ -104,3 +104,9 @@ export function CounterBadge({ count, className }: CounterBadgeProps) {
     </span>
   );
 }
+
+// "This is new" marker for feed cards not yet seen by the caller (see FeedItem.isNew) — a
+// dot-only sibling of CounterBadge, which always carries a number.
+export function NewDot({ className }: { className?: string }) {
+  return <span aria-hidden className={cn('block h-2 w-2 rounded-full bg-primary', className)} />;
+}

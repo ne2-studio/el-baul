@@ -118,7 +118,7 @@ describe('memories useCases recuerdo caches stay in sync', () => {
       batchId: 'batch-1', userId: 'user-1', userName: 'Ana', photoCount: 1,
       createdAt: new Date(0).toISOString(), previewPhotos: [],
     });
-    const existingBatch: FeedItem = { type: 'photo_batch', createdAt: batch.createdAt, photoBatch: batch };
+    const existingBatch: FeedItem = { type: 'photo_batch', createdAt: batch.createdAt, isNew: false, photoBatch: batch };
     useRecuerdosStore.setState({ baulFeed: { [baulId]: [existingBatch] } });
 
     const created = newRecuerdo('new', { photoId });
@@ -128,7 +128,7 @@ describe('memories useCases recuerdo caches stay in sync', () => {
 
     const feed = useRecuerdosStore.getState().baulFeed[baulId];
     expect(feed).toHaveLength(2);
-    expect(feed[0]).toEqual({ type: 'recuerdo', createdAt: created.createdAt, recuerdo: created });
+    expect(feed[0]).toEqual({ type: 'recuerdo', createdAt: created.createdAt, isNew: false, recuerdo: created });
     expect(feed[1]).toBe(existingBatch);
   });
 
@@ -143,7 +143,7 @@ describe('memories useCases recuerdo caches stay in sync', () => {
 
   it('editRecuerdo patches the recuerdo item inside a cached baulFeed too', async () => {
     const original = newRecuerdo('r1', { text: 'texto original' });
-    const feedItem: FeedItem = { type: 'recuerdo', createdAt: original.createdAt, recuerdo: original };
+    const feedItem: FeedItem = { type: 'recuerdo', createdAt: original.createdAt, isNew: false, recuerdo: original };
     useRecuerdosStore.setState({ baulFeed: { [baulId]: [feedItem] } });
 
     const updated = newRecuerdo('r1', { text: 'texto editado' });
@@ -164,7 +164,7 @@ describe('memories useCases loadBaulFeed', () => {
     const recuerdo = new Recuerdo({
       id, userId: 'user-1', text: 'hola', userName: 'Pedro', createdAt: new Date().toISOString(), isOwn: false,
     });
-    return { type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo };
+    return { type: 'recuerdo', createdAt: recuerdo.createdAt, isNew: false, recuerdo };
   }
 
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FeedTab } from '@/features/memories/components/FeedTab';
-import { FeedItem, PhotoBatch, Recuerdo } from '@/types';
+import { ChapterCreatedFeed, FeedItem, PhotoBatch, Recuerdo } from '@/types';
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
@@ -15,6 +15,7 @@ type Story = StoryObj<typeof meta>;
 const recuerdoItem: FeedItem = {
   type: 'recuerdo',
   createdAt: '2024-07-16T10:00:00Z',
+  isNew: false,
   recuerdo: {
     id: '1',
     text: '¡Qué día tan bonito! No me acordaba de que hacía tanto calor ese verano.',
@@ -27,6 +28,7 @@ const recuerdoItem: FeedItem = {
 const photoBatchItem: FeedItem = {
   type: 'photo_batch',
   createdAt: '2024-07-15T10:00:00Z',
+  isNew: false,
   photoBatch: new PhotoBatch({
     batchId: 'batch-1',
     userId: 'user-1',
@@ -40,6 +42,21 @@ const photoBatchItem: FeedItem = {
       { id: 'p1', baulId: 'b1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, uploadedBy: 'user-1', createdAt: '2024-07-15T10:00:00Z', recuerdoCount: 0 },
       { id: 'p2', baulId: 'b1', thumbnailUrl: storybookPhotos.people, fullUrl: storybookPhotos.people, uploadedBy: 'user-1', createdAt: '2024-07-15T10:00:00Z', recuerdoCount: 0 },
     ],
+  }),
+};
+
+const chapterCreatedItem: FeedItem = {
+  type: 'chapter_created',
+  createdAt: '2024-07-17T09:00:00Z',
+  isNew: true,
+  chapterCreated: new ChapterCreatedFeed({
+    chapterId: 'c2',
+    name: 'Vacaciones en la playa',
+    coverPhotoUrl: storybookPhotos.beach,
+    createdAt: '2024-07-17T09:00:00Z',
+    userId: 'user-2',
+    userName: 'Tita Loli',
+    personaId: 'p2',
   }),
 };
 
@@ -74,5 +91,14 @@ export const LoadingMore: Story = {
     onLoadMore: () => {},
     hasMore: true,
     isLoadingMore: true,
+  },
+};
+
+// Nueva actividad desde la última visita — la card del capítulo (isNew) se separa del resto
+// del feed (ya visto) con la cabecera "Nueva actividad" y el separador "Ya estás al día".
+export const WithNewActivity: Story = {
+  args: {
+    ...Default.args,
+    feedItems: [chapterCreatedItem, photoBatchItem, recuerdoItem],
   },
 };

@@ -33,6 +33,7 @@ public class PushDigestManagerTests
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
+    private readonly InMemoryBaulFeedCursorRepository _feedCursorRepository = new();
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
     private readonly StaticAppConfiguration _appConfiguration = new();
     private readonly StaticClock _clock = new();
@@ -42,7 +43,7 @@ public class PushDigestManagerTests
     private PushDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<PushDigestManager>.Instance,
         _userRepository, _pushTokenRepository, _pushNotificationSender,
-        CreateDigestActivityPolicy(),
+        CreateDigestActivityPolicy(), _feedCursorRepository,
         _jobScheduler, appConfiguration, _clock);
 
     private DigestActivityPolicy CreateDigestActivityPolicy() => new(
@@ -320,5 +321,63 @@ public class PushDigestManagerTests
 
         var user = await _userRepository.GetByIdAsync(new UserIdVo(UserId));
         Assert.Equal(_clock.UtcNow().AddDays(-5), user!.LastPushDigestSentAt);
+    }
+
+    // --- Per-baúl cutoff: activity already seen in-app never gets pushed ---------------
+
+    [Fact]
+    public async Task SendPushDigestAsync_ShouldExcludeActivity_AlreadySeenInAppForThatBaul()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedToken(UserId);
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Recuerdo", _clock.UtcNow()));
+        // The user opened this baúl's feed strictly after the recuerdo was created —
+        // BaulFeedManager would have advanced the cursor past it at that point. GetCreatedSince*
+        // is inclusive (>=), same as every other digest cursor in this codebase, so the floor
+        // must be strictly later than the activity to exclude it, not merely equal to it.
+        await _feedCursorRepository.UpsertAsync(new UserIdVo(UserId), baul.Id, _clock.UtcNow().AddSeconds(1));
+
+        var manager = CreateManager();
+        await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
+
+        Assert.Empty(_pushNotificationSender.SentMessages);
+    }
+
+    [Fact]
+    public async Task SendPushDigestAsync_ShouldIncludeActivity_CreatedAfterLastSeenInAppForThatBaul()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedToken(UserId);
+        // The user last opened this baúl well before the digest window even starts — the global
+        // `since` should still be the binding floor, not this stale in-app cursor.
+        await _feedCursorRepository.UpsertAsync(new UserIdVo(UserId), baul.Id, _clock.UtcNow().AddDays(-10));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Recuerdo", _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
+
+        var message = Assert.Single(_pushNotificationSender.SentMessages);
+        Assert.Contains("1 recuerdo nuevo", message.Body);
+    }
+
+    [Fact]
+    public async Task SendPushDigestAsync_ShouldOnlyClampTheBaul_TheCursorBelongsTo()
+    {
+        SeedUser(UserId);
+        var seenBaul = SeedOwnedBaul(UserId, "Visto");
+        var unseenBaul = SeedOwnedBaul(UserId, "No visto");
+        SeedToken(UserId);
+        _recuerdoRepository.SeedForBaul(seenBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(seenBaul.Id), new UserIdVo(OtherUserId), "Visto", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(unseenBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(unseenBaul.Id), new UserIdVo(OtherUserId), "No visto", _clock.UtcNow()));
+        await _feedCursorRepository.UpsertAsync(new UserIdVo(UserId), seenBaul.Id, _clock.UtcNow().AddSeconds(1));
+
+        var manager = CreateManager();
+        await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
+
+        var message = Assert.Single(_pushNotificationSender.SentMessages);
+        Assert.Equal($"/baules/{unseenBaul.Id}", message.DeepLink);
+        Assert.Contains("1 recuerdo nuevo", message.Body);
     }
 }

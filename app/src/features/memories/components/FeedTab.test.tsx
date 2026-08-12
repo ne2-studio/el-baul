@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FeedItem, PhotoBatch, Recuerdo } from '@/types';
+import { ChapterCreatedFeed, FeedItem, PhotoBatch, Recuerdo } from '@/types';
 import { FeedTab } from '@/features/memories/components/FeedTab';
 
 let triggerIntersection: (isIntersecting: boolean) => void = () => {};
@@ -47,7 +47,7 @@ describe('FeedTab', () => {
 
   it('renders a recuerdo card for a recuerdo item', () => {
     const recuerdo = newRecuerdo({ text: 'Qué buen día' });
-    const items: FeedItem[] = [{ type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo }];
+    const items: FeedItem[] = [{ type: 'recuerdo', createdAt: recuerdo.createdAt, isNew: false, recuerdo }];
 
     render(<FeedTab feedItems={items} />);
 
@@ -56,7 +56,7 @@ describe('FeedTab', () => {
 
   it('renders a photo-batch card for a photo_batch item', () => {
     const photoBatch = newPhotoBatch();
-    const items: FeedItem[] = [{ type: 'photo_batch', createdAt: photoBatch.createdAt, photoBatch }];
+    const items: FeedItem[] = [{ type: 'photo_batch', createdAt: photoBatch.createdAt, isNew: false, photoBatch }];
 
     render(<FeedTab feedItems={items} />);
 
@@ -68,8 +68,8 @@ describe('FeedTab', () => {
     const recuerdo = newRecuerdo({ text: 'Recuerdo reciente' });
     const photoBatch = newPhotoBatch();
     const items: FeedItem[] = [
-      { type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo },
-      { type: 'photo_batch', createdAt: photoBatch.createdAt, photoBatch },
+      { type: 'recuerdo', createdAt: recuerdo.createdAt, isNew: false, recuerdo },
+      { type: 'photo_batch', createdAt: photoBatch.createdAt, isNew: false, photoBatch },
     ];
 
     render(<FeedTab feedItems={items} />);
@@ -78,11 +78,62 @@ describe('FeedTab', () => {
     expect(cards.map((el) => el.textContent)).toEqual(['Recuerdo reciente', 'Tita Loli']);
   });
 
+  it('renders a chapter card for a chapter_created item', () => {
+    const items: FeedItem[] = [{
+      type: 'chapter_created',
+      createdAt: new Date().toISOString(),
+      isNew: false,
+      chapterCreated: new ChapterCreatedFeed({
+        chapterId: 'c1', name: 'Verano 2020', createdAt: new Date().toISOString(),
+        userId: 'user-1', userName: 'Tita Loli',
+      }),
+    }];
+
+    render(<FeedTab feedItems={items} />);
+
+    expect(screen.getByText('Tita Loli')).toBeInTheDocument();
+    expect(screen.getByText('Verano 2020')).toBeInTheDocument();
+  });
+
+  describe('new vs seen swimlanes', () => {
+    it('shows no section headers when nothing is new', () => {
+      const items: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: newRecuerdo() }];
+
+      render(<FeedTab feedItems={items} />);
+
+      expect(screen.queryByText('Nueva actividad')).not.toBeInTheDocument();
+      expect(screen.queryByText('Ya estás al día')).not.toBeInTheDocument();
+    });
+
+    it('shows only the "Nueva actividad" header when every item is new', () => {
+      const items: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: true, recuerdo: newRecuerdo() }];
+
+      render(<FeedTab feedItems={items} />);
+
+      expect(screen.getByText('Nueva actividad')).toBeInTheDocument();
+      expect(screen.queryByText('Ya estás al día')).not.toBeInTheDocument();
+    });
+
+    it('shows both headers, splitting new items (first) from seen ones', () => {
+      const newRec = newRecuerdo({ id: 'new', text: 'Recuerdo nuevo' });
+      const seenRec = newRecuerdo({ id: 'seen', text: 'Recuerdo visto' });
+      const items: FeedItem[] = [
+        { type: 'recuerdo', createdAt: newRec.createdAt, isNew: true, recuerdo: newRec },
+        { type: 'recuerdo', createdAt: seenRec.createdAt, isNew: false, recuerdo: seenRec },
+      ];
+
+      render(<FeedTab feedItems={items} />);
+
+      const labels = screen.getAllByText(/Recuerdo nuevo|Nueva actividad|Ya estás al día|Recuerdo visto/);
+      expect(labels.map((el) => el.textContent)).toEqual(['Nueva actividad', 'Recuerdo nuevo', 'Ya estás al día', 'Recuerdo visto']);
+    });
+  });
+
   it('opens the batch grid via onOpenBatchGrid when there are more photos than the preview', async () => {
     const user = userEvent.setup();
     const onOpenBatchGrid = vi.fn();
     const photoBatch = newPhotoBatch({ photoCount: 10 });
-    const items: FeedItem[] = [{ type: 'photo_batch', createdAt: photoBatch.createdAt, photoBatch }];
+    const items: FeedItem[] = [{ type: 'photo_batch', createdAt: photoBatch.createdAt, isNew: false, photoBatch }];
 
     render(<FeedTab feedItems={items} onOpenBatchGrid={onOpenBatchGrid} />);
     await user.click(screen.getByRole('button', { name: /más/ }));
@@ -94,7 +145,7 @@ describe('FeedTab', () => {
     const user = userEvent.setup();
     const onOpenBatchPhoto = vi.fn();
     const photoBatch = newPhotoBatch();
-    const items: FeedItem[] = [{ type: 'photo_batch', createdAt: photoBatch.createdAt, photoBatch }];
+    const items: FeedItem[] = [{ type: 'photo_batch', createdAt: photoBatch.createdAt, isNew: false, photoBatch }];
 
     render(<FeedTab feedItems={items} onOpenBatchPhoto={onOpenBatchPhoto} />);
     await user.click(screen.getByRole('button', { name: 'Ver foto' }));
@@ -103,7 +154,7 @@ describe('FeedTab', () => {
   });
 
   describe('infinite scroll', () => {
-    const items: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), recuerdo: newRecuerdo() }];
+    const items: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: newRecuerdo() }];
 
     beforeEach(() => {
       // See the equivalent reset in BaulFeedTabContainer.test.tsx: a test whose sentinel

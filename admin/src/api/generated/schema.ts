@@ -6670,6 +6670,17 @@ export interface components {
             /** Format: int32 */
             day?: number | null;
         };
+        ChapterCreatedFeedDto: {
+            chapterId: string;
+            name: string;
+            coverPhotoUrl?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            userId: string;
+            userName: string;
+            userAvatar?: string | null;
+            personaId?: string | null;
+        };
         ChapterDto: {
             id: string;
             baulId: string;
@@ -6751,6 +6762,8 @@ export interface components {
             createdAt: string;
             recuerdo?: components["schemas"]["RecuerdoDto"];
             photoBatch?: components["schemas"]["PhotoBatchDto"];
+            chapterCreated?: components["schemas"]["ChapterCreatedFeedDto"];
+            isNew: boolean;
         };
         FeedPageDto: {
             items: components["schemas"]["FeedItemDto"][];

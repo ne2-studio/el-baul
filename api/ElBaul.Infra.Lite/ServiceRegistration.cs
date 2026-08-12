@@ -3,6 +3,7 @@ using ElBaul.OutputPorts.Analytics;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Chat;
+using ElBaul.OutputPorts.Feed;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
@@ -52,6 +53,7 @@ public static class ServiceRegistration
         services.AddSingleton<IAdminRepository, InMemoryAdminRepository>();
         services.AddScoped<IAdminBaulDeletionRepository, InMemoryAdminBaulDeletionRepository>();
         services.AddSingleton<IPushTokenRepository, InMemoryPushTokenRepository>();
+        services.AddSingleton<IBaulFeedCursorRepository, InMemoryBaulFeedCursorRepository>();
         services.AddSingleton<ISentEmailRepository, InMemorySentEmailRepository>();
         services.AddSingleton<IEmailLinkClickRepository, InMemoryEmailLinkClickRepository>();
         services.AddSingleton<IEmailLinkSigner, EmailLinkSigner>();

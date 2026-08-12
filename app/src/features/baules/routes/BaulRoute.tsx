@@ -14,10 +14,6 @@ import { BaulPersonasTabContainer } from '@/features/people/containers/BaulPerso
 import { BaulFeedTabContainer } from '@/features/memories/containers/BaulFeedTabContainer';
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
 import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
-import { useBaulesStore } from '@/store/useBaulesStore';
-import { usePersonasStore } from '@/store/usePersonasStore';
-import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -40,12 +36,6 @@ export const BaulRoute: React.FC = () => {
   const auth = useAuth();
   const { run } = useAsyncAction();
 
-  // Solo para los badges de recuento del Tabbar — cada tab container lee sus propios datos
-  // completos del store.
-  const { chapters } = useBaulesStore();
-  const { personas } = usePersonasStore();
-  const { baulRecuerdos, baulFeed } = useRecuerdosStore();
-  const baulFeedEnabled = useAppConfigStore((state) => state.baulFeedEnabled);
   const setShowProfileMenu = useUIStore((state) => state.setShowProfileMenu);
   const startContributionSuggestionCooldown = useUIStore((state) => state.startContributionSuggestionCooldown);
 
@@ -128,15 +118,13 @@ export const BaulRoute: React.FC = () => {
             // "Historia" solo aquí, en la Tabbar del baúl — el resto de la app (capítulo,
             // ficha de persona) sigue llamando "Recuerdos" a su propia pestaña de recuerdos;
             // el key interno tampoco cambia (routing/returnTab siguen usando 'recuerdos').
+            // Sin badge de recuento — un número aquí no comunica nada útil; el feed ya
+            // distingue lo nuevo con su propia swimlane (ver FeedTab).
             label: 'Historia',
-            // Con el toggle activo, cuenta el feed mezclado en cuanto carga; hasta entonces
-            // (y siempre con el toggle apagado) cae en baulRecuerdos, ya precargado por
-            // useBaulScope — así el badge nunca parpadea a 0 mientras el feed nuevo llega.
-            count: (baulFeedEnabled ? baulFeed[baul.id] : undefined)?.length ?? (baulRecuerdos[baul.id] || []).length,
           },
-          { key: 'capitulos', label: 'Capítulos', count: (chapters[baul.id] || []).length },
+          { key: 'capitulos', label: 'Capítulos' },
           // "Familia" solo aquí, en la Tabbar del baúl — mismo motivo que "Historia" arriba.
-          { key: 'personas', label: 'Familia', count: (personas[baul.id] || []).length },
+          { key: 'personas', label: 'Familia' },
         ]}
         active={activeTab}
         onChange={(key) => setActiveTab(key as BaulTab)}

@@ -207,8 +207,8 @@ describe('BaulFeedTabContainer', () => {
 
     it('renders both recuerdo and photo-batch cards from the merged feed', () => {
       const feed: FeedItem[] = [
-        { type: 'recuerdo', createdAt: new Date().toISOString(), recuerdo: recuerdo({ text: 'Un recuerdo del feed' }) },
-        { type: 'photo_batch', createdAt: new Date().toISOString(), photoBatch: photoBatch({ userName: 'Tita Loli', photoCount: 6 }) },
+        { type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo({ text: 'Un recuerdo del feed' }) },
+        { type: 'photo_batch', createdAt: new Date().toISOString(), isNew: false, photoBatch: photoBatch({ userName: 'Tita Loli', photoCount: 6 }) },
       ];
       useRecuerdosStore.setState({ baulFeed: { [baulId]: feed } });
 
@@ -224,6 +224,7 @@ describe('BaulFeedTabContainer', () => {
       const feed: FeedItem[] = [{
         type: 'photo_batch',
         createdAt: new Date().toISOString(),
+        isNew: false,
         photoBatch: photoBatch({
           batchId: 'batch-42',
           photoCount: 10,
@@ -245,6 +246,7 @@ describe('BaulFeedTabContainer', () => {
       const feed: FeedItem[] = [{
         type: 'photo_batch',
         createdAt: new Date().toISOString(),
+        isNew: false,
         photoBatch: photoBatch({
           batchId: 'batch-42',
           photoCount: 1,
@@ -263,7 +265,7 @@ describe('BaulFeedTabContainer', () => {
 
     it('loads the next page when the scroll sentinel intersects and hasMore is true', async () => {
       stubIntersectionObserver();
-      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), recuerdo: recuerdo() }];
+      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo() }];
       useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: true } });
 
       renderContainer();
@@ -274,7 +276,7 @@ describe('BaulFeedTabContainer', () => {
 
     it('does not load more once hasMore is false', async () => {
       stubIntersectionObserver();
-      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), recuerdo: recuerdo() }];
+      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo() }];
       useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: false } });
 
       renderContainer();

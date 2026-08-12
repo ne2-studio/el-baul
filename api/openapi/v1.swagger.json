@@ -8029,6 +8029,47 @@
         },
         "additionalProperties": false
       },
+      "ChapterCreatedFeedDto": {
+        "required": [
+          "chapterId",
+          "createdAt",
+          "name",
+          "userId",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "chapterId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "coverPhotoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "userAvatar": {
+            "type": "string",
+            "nullable": true
+          },
+          "personaId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ChapterDto": {
         "required": [
           "baulId",
@@ -8291,6 +8332,7 @@
       "FeedItemDto": {
         "required": [
           "createdAt",
+          "isNew",
           "type"
         ],
         "type": "object",
@@ -8307,6 +8349,12 @@
           },
           "photoBatch": {
             "$ref": "#/components/schemas/PhotoBatchDto"
+          },
+          "chapterCreated": {
+            "$ref": "#/components/schemas/ChapterCreatedFeedDto"
+          },
+          "isNew": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

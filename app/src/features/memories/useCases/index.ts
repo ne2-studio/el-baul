@@ -7,7 +7,9 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 // prepending (rather than re-sorting against the feed's photo-batch items too) is correct.
 function prependToBaulFeed(baulFeed: Record<string, FeedItem[]>, baulId: string, recuerdo: Recuerdo): Record<string, FeedItem[]> {
   if (!baulFeed[baulId]) return baulFeed;
-  return { ...baulFeed, [baulId]: [{ type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo }, ...baulFeed[baulId]] };
+  // isNew: false — this is the caller's own recuerdo, prepended optimistically while they're
+  // already looking at the feed, not "activity since your last visit" from someone else.
+  return { ...baulFeed, [baulId]: [{ type: 'recuerdo', createdAt: recuerdo.createdAt, isNew: false, recuerdo }, ...baulFeed[baulId]] };
 }
 
 export async function loadRecuerdos(photoId: string): Promise<void> {

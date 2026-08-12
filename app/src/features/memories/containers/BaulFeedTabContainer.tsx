@@ -48,9 +48,10 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, baulFeedEnabled, baulId, baulFeed]);
 
+  // isNew: false — the toggle-off fallback has no seen-cursor concept, so nothing is "new".
   const feedItems: FeedItem[] = baulFeedEnabled
     ? (baulFeed[baulId] || [])
-    : (baulRecuerdos[baulId] || []).map((recuerdo): FeedItem => ({ type: 'recuerdo', createdAt: recuerdo.createdAt, recuerdo }));
+    : (baulRecuerdos[baulId] || []).map((recuerdo): FeedItem => ({ type: 'recuerdo', createdAt: recuerdo.createdAt, isNew: false, recuerdo }));
 
   // Scroll infinito: solo con el toggle activo — la ruta antigua (baulRecuerdos) sigue sin
   // paginar, como siempre. 'baul-feed-more' es una key propia (distinta de 'baul-feed', la
