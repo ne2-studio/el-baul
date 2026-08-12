@@ -49,3 +49,29 @@ describe('uiStore — cooldown de la recomendación de contribución', () => {
     expect(useUIStore.getState().isContributionSuggestionOnCooldown('baul-1')).toBe(false);
   });
 });
+
+describe('uiStore — isFirstAppLaunch', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  // isFirstAppLaunch se calcula una sola vez al importar el módulo (ver comentario en
+  // uiStore.ts), así que para observar los dos casos hay que forzar una re-importación con
+  // vi.resetModules() en vez de reusar la referencia ya cacheada de useUIStore.
+  it('es true la primera vez que se carga el módulo, sin marca previa en localStorage', async () => {
+    vi.resetModules();
+    const { useUIStore: freshUIStore } = await import('./uiStore');
+
+    expect(freshUIStore.getState().isFirstAppLaunch).toBe(true);
+  });
+
+  it('deja la marca en localStorage para que la siguiente carga ya no sea "primera vez"', async () => {
+    vi.resetModules();
+    await import('./uiStore');
+
+    vi.resetModules();
+    const { useUIStore: secondLoad } = await import('./uiStore');
+
+    expect(secondLoad.getState().isFirstAppLaunch).toBe(false);
+  });
+});

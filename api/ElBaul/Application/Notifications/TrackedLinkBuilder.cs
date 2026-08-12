@@ -37,5 +37,13 @@ public class TrackedLinkBuilder(string apiPublicUrl, IEmailLinkSigner signer, Gu
         $"{_apiPublicUrl}/email/open/{signer.CreateOpenToken(sentEmailId)}.gif";
 
     private static string BuildRedirectUrl(string publicUrl, string path) =>
-        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
+        $"{publicUrl}/?redirectTo={Uri.EscapeDataString(WithEmailEntrySource(path))}";
+
+    // Marca el destino como llegada por email — el frontend (utils/entrySource.ts) lo usa en
+    // BaulRoute para no proponer la recomendación de contribución justo al entrar desde un
+    // email. Viaja dentro de `path`, que a su vez viaja dentro de `redirectTo`, así que
+    // sobrevive intacto todo el ida-y-vuelta de login sin que ningún paso intermedio (OIDC
+    // state, CallbackRoute, PublicRoute) tenga que conocerlo.
+    private static string WithEmailEntrySource(string path) =>
+        path.Contains('?') ? $"{path}&entry=email" : $"{path}?entry=email";
 }

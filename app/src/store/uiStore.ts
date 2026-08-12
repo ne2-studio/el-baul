@@ -25,6 +25,26 @@ function writeContributionSuggestionCooldowns(cooldowns: Record<string, number>)
   }
 }
 
+const HAS_LAUNCHED_APP_STORAGE_KEY = 'elbaul.hasLaunchedApp';
+
+// Se calcula una sola vez, al cargar este módulo (arranque de la app) — no en cada mount de
+// BaulRoute, porque BaulRoute vuelve a leer/decidir en un efecto cada vez que cambia de baúl
+// (ver BaulRoute.tsx) y una función que se pudiera llamar más de una vez marcaría "ya lanzada"
+// a mitad de la primerísima sesión, dejando el segundo baúl visitado con un resultado
+// distinto al primero. Al ser un `const` de módulo, todo el que importe el store durante esta
+// carga de página ve el mismo valor.
+const IS_FIRST_APP_LAUNCH = (() => {
+  try {
+    if (localStorage.getItem(HAS_LAUNCHED_APP_STORAGE_KEY)) return false;
+    localStorage.setItem(HAS_LAUNCHED_APP_STORAGE_KEY, '1');
+    return true;
+  } catch {
+    // modo privado o cuota llena: no podemos saber si es la primera vez, así que no bloqueamos
+    // la sugerencia — mismo criterio "fail open" que readContributionSuggestionCooldowns.
+    return false;
+  }
+})();
+
 interface UIState {
   // Toast state
   showToast: boolean;
@@ -44,6 +64,11 @@ interface UIState {
   // reabrir la app) pero nunca en backend: es un throttle de cliente, no un estado de dominio.
   isContributionSuggestionOnCooldown: (baulId: string) => boolean;
   startContributionSuggestionCooldown: (baulId: string) => void;
+
+  // Verdadero solo durante la primerísima sesión de este navegador/dispositivo (ver
+  // IS_FIRST_APP_LAUNCH arriba) — BaulRoute lo usa junto al cooldown para no proponer la
+  // recomendación de contribución antes de que la persona haya visto el resto de la app.
+  isFirstAppLaunch: boolean;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -78,4 +103,6 @@ export const useUIStore = create<UIState>((set) => ({
     cooldowns[baulId] = Date.now();
     writeContributionSuggestionCooldowns(cooldowns);
   },
+
+  isFirstAppLaunch: IS_FIRST_APP_LAUNCH,
 }));

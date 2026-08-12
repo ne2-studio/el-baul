@@ -15,6 +15,7 @@ import { BaulFeedTabContainer } from '@/features/memories/containers/BaulFeedTab
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
 import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
 import { useUIStore } from '@/store/uiStore';
+import { getEntrySource } from '@/utils/entrySource';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -45,10 +46,19 @@ export const BaulRoute: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
   // Solo se intenta cuando el punto de entrada es el feed ('recuerdos', el valor por defecto
   // de initialTab — cualquier otra pestaña llega por un state.activeTab explícito, es decir
-  // por navegación directa, no por una entrada nueva al baúl) y el baúl no está en cooldown
-  // (ver uiStore: por baulId, 60 minutos fijos, persistido en localStorage).
+  // por navegación directa, no por una entrada nueva al baúl), el baúl no está en cooldown
+  // (ver uiStore: por baulId, 60 minutos fijos, persistido en localStorage), no es la
+  // primerísima sesión en la app (isFirstAppLaunch: la persona aún no ha visto cómo funciona
+  // el resto de la app) y la navegación no viene de una notificación push ni de un email (ver
+  // utils/entrySource): en ambos casos la persona llega con una intención propia (ver una
+  // foto o capítulo concreto) y no toca interrumpirla con esto.
+  const canShowContributionSuggestion = () =>
+    initialTab === 'recuerdos' &&
+    !useUIStore.getState().isContributionSuggestionOnCooldown(baulId ?? '') &&
+    !useUIStore.getState().isFirstAppLaunch &&
+    !getEntrySource(location.search);
   const [showContributionSuggestion, setShowContributionSuggestion] = useState(
-    () => initialTab === 'recuerdos' && !!baulId && !useUIStore.getState().isContributionSuggestionOnCooldown(baulId)
+    () => !!baulId && canShowContributionSuggestion()
   );
 
   // El selector de workspace navega a `/baules/${otroBaulId}` reutilizando esta misma instancia
@@ -58,7 +68,7 @@ export const BaulRoute: React.FC = () => {
   // aunque el baúl anterior siga en cooldown.
   useEffect(() => {
     if (!baulId) return;
-    setShowContributionSuggestion(initialTab === 'recuerdos' && !useUIStore.getState().isContributionSuggestionOnCooldown(baulId));
+    setShowContributionSuggestion(canShowContributionSuggestion());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baulId]);
 
