@@ -8,6 +8,7 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public string PublicUrl => configuration["App:PublicUrl"] ?? "";
     public string ApiPublicUrl => configuration["Api:PublicUrl"] ?? "";
     public string AdminTestEmailRecipient => configuration["Resend:AdminTestRecipient"] ?? "";
+    public string FunctionalTimeZoneId => configuration["Analytics:FunctionalTimeZoneId"] ?? "Europe/Madrid";
     public string HelpCenterUrl => configuration["Support:HelpCenterUrl"] ?? "";
     public string PrivacyPolicyUrl => configuration["Legal:PrivacyPolicyUrl"] ?? "";
 

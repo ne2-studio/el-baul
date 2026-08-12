@@ -1,9 +1,11 @@
 using ElBaul.Infra.Chat;
 using ElBaul.Infra.Emails;
+using ElBaul.Infra.Analytics;
 using ElBaul.Infra.Persistence;
 using ElBaul.Infra.PhotoStorage;
 using ElBaul.Infra.PushNotifications;
 using ElBaul.OutputPorts.Admin;
+using ElBaul.OutputPorts.Analytics;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Chat;
@@ -29,6 +31,7 @@ public static class ServiceRegistration
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUserBaulActivityDailyAggregator, UserBaulActivityDailyAggregator>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBaulRepository, BaulRepository>();
         services.AddScoped<IChapterRepository, ChapterRepository>();

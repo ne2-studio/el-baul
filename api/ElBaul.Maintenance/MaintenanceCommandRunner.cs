@@ -66,6 +66,7 @@ public static class MaintenanceCommandRunner
         builder.Host.UseSerilog();
 
         builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddSingleton(new MaintenanceCommandArguments(args.Skip(1).Where(arg => arg != "--dry-run").ToArray()));
         foreach (var (name, type) in Commands.Value)
         {
             builder.Services.AddKeyedScoped(typeof(IMaintenanceCommand), name, type);

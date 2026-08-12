@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Admin;
+using ElBaul.OutputPorts.Analytics;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Chat;
@@ -34,6 +35,7 @@ public static class ServiceRegistration
         // its own (see FakeUnitOfWork's doc comment), so its lifetime doesn't matter, but Scoped
         // matches every other stateless port implementation here (IClock, IIdGenerator, …).
         services.AddScoped<IUnitOfWork, FakeUnitOfWork>();
+        services.AddSingleton<IUserBaulActivityDailyAggregator, NoOpUserBaulActivityDailyAggregator>();
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         services.AddSingleton<IBaulRepository, InMemoryBaulRepository>();
         services.AddSingleton<IChapterRepository, InMemoryChapterRepository>();
@@ -83,4 +85,9 @@ public static class ServiceRegistration
 
         return services;
     }
+}
+
+internal sealed class NoOpUserBaulActivityDailyAggregator : IUserBaulActivityDailyAggregator
+{
+    public Task AggregateForDateAsync(DateOnly date) => Task.CompletedTask;
 }

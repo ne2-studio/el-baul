@@ -3,6 +3,7 @@ using ElBaul.Api.Models;
 using ElBaul.Api.Swagger;
 using ElBaul.Api;
 using ElBaul.Application.Admin;
+using ElBaul.Application.Analytics;
 using ElBaul.Application.Bauls;
 using ElBaul.Application.Chapters;
 using ElBaul.Application.Chat;
@@ -16,6 +17,7 @@ using ElBaul.Application.Support;
 using ElBaul.Application.Users;
 using ElBaul.Infra;
 using ElBaul.InputPorts.Admin;
+using ElBaul.InputPorts.Analytics;
 using ElBaul.InputPorts.Bauls;
 using ElBaul.InputPorts.Chapters;
 using ElBaul.InputPorts.Chat;
@@ -260,6 +262,7 @@ public static class ElBaulApiHost
         else
             builder.Services.AddScoped<ISuggestedQuestionsStrategy, StaticSuggestedQuestionsStrategy>();
         builder.Services.AddScoped<IAdminManager, AdminManager>();
+        builder.Services.AddScoped<IDailyUserBaulActivityAggregationJob, DailyUserBaulActivityAggregationJob>();
         builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
         builder.Services.AddScoped<DigestActivityPolicy>();
         builder.Services.AddScoped<IWeeklyDigestManager, WeeklyDigestManager>();

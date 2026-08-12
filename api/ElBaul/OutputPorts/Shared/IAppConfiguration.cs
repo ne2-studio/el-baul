@@ -9,6 +9,7 @@ public interface IAppConfiguration
     string PublicUrl { get; }
     string ApiPublicUrl { get; }
     string AdminTestEmailRecipient { get; }
+    string FunctionalTimeZoneId { get; }
 
     /// <summary>
     /// External marketing/support site links reused in the transactional-email footer

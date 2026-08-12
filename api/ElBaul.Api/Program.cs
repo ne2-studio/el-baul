@@ -1,6 +1,7 @@
 using ElBaul.Api;
 using ElBaul.Api.Common;
 using ElBaul.Infra;
+using ElBaul.InputPorts.Analytics;
 using ElBaul.InputPorts.Notifications;
 using ElBaul.OutputPorts.Photos;
 
@@ -55,6 +56,10 @@ using (var scope = app.Services.CreateScope())
         "schedule-daily-push-digests",
         m => m.ScheduleDailyPushDigestsAsync(),
         Cron.Daily(18)); // 18:00 UTC ≈ evening in Spain (19h CET / 20h CEST) — fixed, no per-user timezone yet
+    recurringJobManager.AddOrUpdate<IDailyUserBaulActivityAggregationJob>(
+        "aggregate-user-baul-activity-daily",
+        m => m.AggregateYesterdayAsync(),
+        Cron.Daily(2)); // 02:00 UTC, after the functional day in Europe/Madrid has completed
 }
 
 app.MapHangfireDashboard("/hangfire", new DashboardOptions

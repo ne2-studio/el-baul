@@ -22,6 +22,7 @@ public class StaticAppConfiguration(
     public string PublicUrl { get; } = publicUrl;
     public string ApiPublicUrl { get; } = apiPublicUrl;
     public string AdminTestEmailRecipient { get; } = adminTestEmailRecipient;
+    public string FunctionalTimeZoneId { get; } = "Europe/Madrid";
     public string HelpCenterUrl { get; } = helpCenterUrl;
     public string PrivacyPolicyUrl { get; } = privacyPolicyUrl;
     public bool WelcomeEmailsEnabled { get; } = welcomeEmailsEnabled;
