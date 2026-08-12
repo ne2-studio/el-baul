@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Image, MessageSquare, Users, BookOpen, HardDrive, Trash2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Image, MessageSquare, Users, BookOpen, HardDrive, Trash2 } from 'lucide-react';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { DataTable } from '@/app/components/DataTable';
 import { StatCard } from '@/app/components/StatCard';
 import { ConfirmDeleteBaulModal } from '@/app/components/ConfirmDeleteBaulModal';
 import { AsyncState } from '@/app/components/AsyncState';
 import { formatDate, formatBytes } from '@/utils/format';
+import { buildBaulLogsUrl } from '@/utils/logs';
 import type { AdminBaulPersona } from '@/types';
 
 export function BaulDetailRoute() {
@@ -52,13 +53,24 @@ export function BaulDetailRoute() {
               <h2 className="truncate">{selectedBaul.name}</h2>
               <p className="text-muted-foreground text-sm mt-1">Creado el {formatDate(selectedBaul.createdAt)}</p>
             </div>
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm shrink-0 self-start"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Eliminar baúl
-            </button>
+            <div className="flex items-center gap-3 shrink-0 self-start">
+              <a
+                href={buildBaulLogsUrl(selectedBaul.id)}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-sm"
+              >
+                Ver logs
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Eliminar baúl
+              </button>
+            </div>
           </div>
 
           {showDeleteModal && (

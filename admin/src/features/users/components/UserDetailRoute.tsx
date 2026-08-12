@@ -6,6 +6,7 @@ import { DataTable } from '@/app/components/DataTable';
 import { AsyncState } from '@/app/components/AsyncState';
 import { formatDate } from '@/utils/format';
 import { EMAIL_TYPE_LABELS, EMAIL_STATUS_LABELS } from '@/utils/emailLabels';
+import { buildUserLogsUrl } from '@/utils/logs';
 import { api } from '@/api';
 import type { AdminSentEmail, AdminUserBaulMembership } from '@/types';
 import { getEnv } from '@/runtimeConfig';
@@ -143,6 +144,15 @@ export function UserDetailRoute() {
                 )}
                 {results.digest === 'error' && <p className="text-xs text-destructive">No se pudo enviar.</p>}
               </div>
+              <a
+                href={buildUserLogsUrl(selectedUser.id)}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-sm shrink-0"
+              >
+                Ver logs
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
               <a
                 href={`https://auth.ne2.studio/users/${selectedUser.id}`}
                 target="_blank"
