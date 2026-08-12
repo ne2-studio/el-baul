@@ -17,6 +17,8 @@ Anonymous exceptions:
 
 - `GET /api/baul-invites/{token}/preview` — public, rate-limited; used for the global baúl
   invite link before the recipient has signed in.
+- `GET /invitacion/baul/{token}` — public, rate-limited; invite landing HTML with Open Graph
+  metadata for link previews.
 - `GET /api/app-config` — public feature flags/URLs the frontend needs before login.
 - `GET /email/click/{token}` — clicked from an email client, never carries auth.
 - `GET /s/{token}` — public shared photo/recuerdo landing with Open Graph metadata.
@@ -54,7 +56,7 @@ and cannot accept or preview invitation links.
 ## Invitations
 
 The only way to grow a baúl's membership is the **global invite link**: one reusable,
-regenerable link per baúl (`GET /api/baules/{baulId}/invite-link`,
+regenerable public landing per baúl (`GET /api/baules/{baulId}/invite-link`,
 `POST /api/baules/{baulId}/invite-link/regenerate`, both custodio/administrador-only), with no
 expiry and no usage limit. Anyone who opens it (`GET /api/baul-invites/{token}/preview`,
 public) can accept it (`POST /api/baul-invites/{token}/accept`, optional `personaId` in the

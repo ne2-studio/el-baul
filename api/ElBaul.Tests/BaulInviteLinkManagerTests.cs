@@ -27,7 +27,9 @@ public class BaulInviteLinkManagerTests
     private readonly InMemoryUserRepository _users = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
-    private readonly StaticAppConfiguration _configuration = new(publicUrl: "https://app.el-baul.test");
+    private readonly StaticAppConfiguration _configuration = new(
+        publicUrl: "https://app.el-baul.test",
+        apiPublicUrl: "https://api.el-baul.test");
 
     public BaulInviteLinkManagerTests()
     {
@@ -72,7 +74,7 @@ public class BaulInviteLinkManagerTests
         var result = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal($"https://app.el-baul.test/invitacion/baul/{result.Value.Token}", result.Value.Url);
+        Assert.Equal($"https://api.el-baul.test/invitacion/baul/{result.Value.Token}", result.Value.Url);
         Assert.NotNull(await _links.GetActiveByBaulIdAsync(baulId));
     }
 
@@ -162,6 +164,25 @@ public class BaulInviteLinkManagerTests
         Assert.True(preview.IsSuccess);
         Assert.Equal("https://imgproxy.test/BaulCover/cover-key", preview.Value.CoverPhotoUrl);
         Assert.Equal(["https://imgproxy.test/PersonaAvatar/avatar-key"], preview.Value.PersonaAvatarUrls);
+    }
+
+    [Fact]
+    public async Task GetLandingAsync_ShouldUseBaulCoverAsOpenGraphImage()
+    {
+        var baulId = await SeedBaulAsync();
+        var baul = await _baules.GetByIdAsync(baulId);
+        var coverPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, null, null, new UserId(CustodioId), Now);
+        await _baules.UpdateAsync(baul!.WithCover(coverPhoto, Now));
+
+        var manager = CreateManager(CustodioId);
+        var link = await manager.GetOrCreateAsync(baulId);
+
+        var landing = await manager.GetLandingAsync(link.Value.Token);
+
+        Assert.True(landing.IsSuccess);
+        Assert.Equal("Invitación a Familia Pérez", landing.Value.Title);
+        Assert.Equal("https://imgproxy.test/BaulCover/cover-key", landing.Value.ImageUrl);
+        Assert.Equal($"https://app.el-baul.test/invitacion/baul/{link.Value.Token}", landing.Value.AppUrl);
     }
 
     [Fact]

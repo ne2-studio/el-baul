@@ -120,6 +120,25 @@ public class BaulInviteLinkManager(
         return new BaulInviteLinkPreviewDto(baul.Id.ToString(), baul.Name, baul.Description, urls, coverUrl, avatarUrls);
     }
 
+    public async Task<Result<BaulInviteLinkLandingDto>> GetLandingAsync(string token)
+    {
+        var link = await baulInviteLinkRepository.GetByTokenAsync(token);
+        if (link is null || link.IsRevoked)
+            return Result.Failure<BaulInviteLinkLandingDto>(ApplicationError.NotFound("Invitation not found"));
+
+        var baul = await baulRepository.GetByIdAsync(link.BaulId);
+        if (baul is null) return Result.Failure<BaulInviteLinkLandingDto>(ApplicationError.NotFound("Baul not found"));
+
+        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage);
+        var title = $"Invitación a {baul.Name}";
+        var description = string.IsNullOrWhiteSpace(baul.Description)
+            ? $"Te han invitado a unirte al baúl familiar {baul.Name}."
+            : baul.Description;
+
+        return Result.Success(new BaulInviteLinkLandingDto(
+            title, description, coverUrl, BuildAppUrl(link.Token), baul.Name));
+    }
+
     public async Task<Result<IEnumerable<ClaimablePersonaDto>>> GetClaimablePersonasAsync(string token)
     {
         var link = await baulInviteLinkRepository.GetByTokenAsync(token);
@@ -242,5 +261,8 @@ public class BaulInviteLinkManager(
         new(link.Token, BuildPublicUrl(link.Token), link.CreatedAt);
 
     private string BuildPublicUrl(string token) =>
+        $"{appConfiguration.ApiPublicUrl.TrimEnd('/')}/invitacion/baul/{Uri.EscapeDataString(token)}";
+
+    private string BuildAppUrl(string token) =>
         $"{appConfiguration.PublicUrl.TrimEnd('/')}/invitacion/baul/{Uri.EscapeDataString(token)}";
 }
