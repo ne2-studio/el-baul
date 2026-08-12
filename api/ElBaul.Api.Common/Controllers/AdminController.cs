@@ -36,6 +36,8 @@ public class AdminController(
             counts.TotalBaules,
             counts.TotalPhotos,
             counts.PhotosUploadedToday,
+            counts.EmailsSentLast30Days,
+            counts.EmailsOpenedLast30Days,
             externalLinks = GetExternalLinks()
         });
     }

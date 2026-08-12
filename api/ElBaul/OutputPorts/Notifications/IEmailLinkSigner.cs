@@ -12,6 +12,17 @@ public interface IEmailLinkSigner
 
     /// <summary>Returns null if the token is malformed, not one of ours, or fails signature verification.</summary>
     EmailLinkTokenPayload? TryDecode(string token);
+
+    /// <summary>
+    /// Same signed-token primitive as CreateToken, but for the open-tracking pixel: a pixel has
+    /// exactly one URL per email (no linkKey/destinationUrl to carry), so the payload is just the
+    /// owning SentEmail's id. Uses a distinct token prefix from CreateToken so a click token can't
+    /// be replayed at the open endpoint, or vice versa.
+    /// </summary>
+    string CreateOpenToken(Guid sentEmailId);
+
+    /// <summary>Returns null if the token is malformed, not one of ours, or fails signature verification.</summary>
+    Guid? TryDecodeOpenToken(string token);
 }
 
 public record EmailLinkTokenPayload(Guid SentEmailId, string LinkKey, string DestinationUrl);

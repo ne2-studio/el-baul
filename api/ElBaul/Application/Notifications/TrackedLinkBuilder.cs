@@ -28,6 +28,14 @@ public class TrackedLinkBuilder(string apiPublicUrl, IEmailLinkSigner signer, Gu
     public string TrackRedirect(string linkKey, string publicUrl, string path) =>
         Track(linkKey, BuildRedirectUrl(publicUrl, path));
 
+    /// <summary>
+    /// Builds the absolute /email/open/{token}.gif URL for this email's tracking pixel — the
+    /// same self-contained-token approach as Track, but the token only carries the SentEmail id
+    /// (a pixel has exactly one URL per email, unlike links which have one per linkKey).
+    /// </summary>
+    public string BuildOpenPixelUrl() =>
+        $"{_apiPublicUrl}/email/open/{signer.CreateOpenToken(sentEmailId)}.gif";
+
     private static string BuildRedirectUrl(string publicUrl, string path) =>
         $"{publicUrl}/?redirectTo={Uri.EscapeDataString(path)}";
 }

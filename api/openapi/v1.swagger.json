@@ -4733,6 +4733,58 @@
         }
       }
     },
+    "/email/open/{token}.gif": {
+      "get": {
+        "tags": [
+          "EmailOpen"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/email/click/{token}": {
       "get": {
         "tags": [
@@ -7620,6 +7672,8 @@
       },
       "AdminDashboardResponse": {
         "required": [
+          "emailsOpenedLast30Days",
+          "emailsSentLast30Days",
           "externalLinks",
           "photosUploadedToday",
           "registeredUsers",
@@ -7641,6 +7695,14 @@
             "format": "int32"
           },
           "photosUploadedToday": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailsSentLast30Days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailsOpenedLast30Days": {
             "type": "integer",
             "format": "int32"
           },
@@ -7709,6 +7771,11 @@
             "nullable": true
           },
           "firstClickedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "firstOpenedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true

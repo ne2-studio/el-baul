@@ -13,7 +13,7 @@ public class InMemoryAdminRepository : IAdminRepository
 {
     private readonly Lock _lock = new();
 
-    public AdminDashboardCounts DashboardCounts { get; set; } = new(0, 0, 0, 0);
+    public AdminDashboardCounts DashboardCounts { get; set; } = new(0, 0, 0, 0, 0, 0);
     public DateTime? LastRequestedTodayUtcStart { get; private set; }
 
     public List<AdminUserRow> Users { get; } = [];

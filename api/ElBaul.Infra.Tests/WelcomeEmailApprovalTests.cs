@@ -15,6 +15,7 @@ public class WelcomeEmailApprovalTests
 {
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
+    private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
 
     private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
@@ -28,7 +29,8 @@ public class WelcomeEmailApprovalTests
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
             PrimaryCtaLabel: "Añadir un recuerdo",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
-            Footer: TestFooter);
+            Footer: TestFooter,
+            PixelUrl: TestPixelUrl);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -43,7 +45,8 @@ public class WelcomeEmailApprovalTests
             PrimaryCtaUrl: "https://el-baul.test/baules/nuevo",
             PrimaryCtaLabel: "Crear mi primer baúl",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
-            Footer: TestFooter);
+            Footer: TestFooter,
+            PixelUrl: TestPixelUrl);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -59,7 +62,8 @@ public class WelcomeEmailApprovalTests
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
             PrimaryCtaLabel: "Añadir un recuerdo",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
-            Footer: TestFooter);
+            Footer: TestFooter,
+            PixelUrl: TestPixelUrl);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -74,7 +78,8 @@ public class WelcomeEmailApprovalTests
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
             PrimaryCtaLabel: "Añadir un recuerdo",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
-            Footer: TestFooter);
+            Footer: TestFooter,
+            PixelUrl: TestPixelUrl);
 
         return Verify(_renderer.RenderWelcome(model));
     }

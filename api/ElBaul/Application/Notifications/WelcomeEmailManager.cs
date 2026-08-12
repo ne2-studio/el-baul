@@ -114,6 +114,7 @@ public class WelcomeEmailManager(
             ctaUrl,
             ctaLabel,
             notificationSettingsUrl,
-            EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder));
+            EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder),
+            linkBuilder.BuildOpenPixelUrl());
     }
 }

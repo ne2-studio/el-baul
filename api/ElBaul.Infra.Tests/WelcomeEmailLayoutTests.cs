@@ -11,6 +11,7 @@ public class WelcomeEmailLayoutTests
 {
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
+    private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
 
     private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
@@ -19,7 +20,7 @@ public class WelcomeEmailLayoutTests
     {
         var model = new WelcomeEmailModel(
             "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter);
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -33,12 +34,25 @@ public class WelcomeEmailLayoutTests
     {
         var model = new WelcomeEmailModel(
             "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter);
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
 
         var result = _renderer.RenderWelcome(model);
 
         Assert.Contains("Conserva la historia de tu familia.", result.Html);
         Assert.Contains(TestFooter.HelpCenterUrl, result.Html);
         Assert.Contains("Conserva la historia de tu familia.", result.PlainText);
+    }
+
+    [Fact]
+    public void RenderWelcome_ShouldAlwaysIncludeTheOpenTrackingPixel()
+    {
+        var model = new WelcomeEmailModel(
+            "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
+
+        var result = _renderer.RenderWelcome(model);
+
+        Assert.Contains($"<img src=\"{TestPixelUrl}\"", result.Html);
+        Assert.DoesNotContain(TestPixelUrl, result.PlainText);
     }
 }

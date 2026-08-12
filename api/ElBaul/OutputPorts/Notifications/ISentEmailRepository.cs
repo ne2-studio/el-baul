@@ -14,6 +14,13 @@ public interface ISentEmailRepository
     Task UpdateAsync(SentEmail email);
 
     /// <summary>
+    /// Stamps FirstOpenedAt the first time the tracking pixel fires for this email; a no-op if
+    /// it's already set. One atomic guarded update — unlike EmailLinkClicks there's no separate
+    /// row to lazily create, the SentEmails row already exists by send time.
+    /// </summary>
+    Task RegisterOpenAsync(Guid sentEmailId, DateTime openedAt);
+
+    /// <summary>
     /// Users with a *successfully* Sent (or later, Delivered) email of the given type — used
     /// as the welcome-email scheduler's "already handled, don't retry" filter. Must not count
     /// Pending/Sending/Failed rows, or a user whose only attempt failed (e.g. a transient

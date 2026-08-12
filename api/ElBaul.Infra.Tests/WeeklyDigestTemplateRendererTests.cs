@@ -7,13 +7,14 @@ public class WeeklyDigestTemplateRendererTests
 {
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
+    private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
 
     private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
     private static WeeklyDigestEmailModel EmptyModel(bool hasBaules) => new(
         UserName: "Pedro", HasBaules: hasBaules, HasActivity: false, Sections: [],
         PrimaryCtaUrl: "https://el-baul.test/cta", PrimaryCtaLabel: "Añadir un recuerdo",
-        NotificationSettingsUrl: "https://el-baul.test/perfil", Footer: TestFooter);
+        NotificationSettingsUrl: "https://el-baul.test/perfil", Footer: TestFooter, PixelUrl: TestPixelUrl);
 
     [Fact]
     public void RenderWeeklyDigest_ShouldReportTemplateVersionLocaleAndFixedSubject()
@@ -61,7 +62,7 @@ public class WeeklyDigestTemplateRendererTests
                 OverflowSummary: "Y 15 fotos nuevas en 3 capítulos más.")
         };
         var model = new WeeklyDigestEmailModel(
-            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter);
+            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
 
         var result = _renderer.RenderWeeklyDigest(model);
         var decodedHtml = WebUtility.HtmlDecode(result.Html);
@@ -87,7 +88,7 @@ public class WeeklyDigestTemplateRendererTests
                 OverflowSummary: null)
         };
         var model = new WeeklyDigestEmailModel(
-            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter);
+            "Pedro", true, true, sections, "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
 
         var result = _renderer.RenderWeeklyDigest(model);
 

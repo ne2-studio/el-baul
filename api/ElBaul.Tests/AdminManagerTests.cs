@@ -54,7 +54,8 @@ public class AdminManagerTests
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()
     {
-        _adminRepository.DashboardCounts = new AdminDashboardCounts(Users: 3, Baules: 2, Photos: 40, PhotosToday: 5);
+        _adminRepository.DashboardCounts = new AdminDashboardCounts(
+            Users: 3, Baules: 2, Photos: 40, PhotosToday: 5, EmailsSentLast30Days: 12, EmailsOpenedLast30Days: 7);
 
         var result = await CreateManager().GetDashboardCountsAsync();
 
@@ -63,6 +64,8 @@ public class AdminManagerTests
         Assert.Equal(2, result.Value.TotalBaules);
         Assert.Equal(40, result.Value.TotalPhotos);
         Assert.Equal(5, result.Value.PhotosUploadedToday);
+        Assert.Equal(12, result.Value.EmailsSentLast30Days);
+        Assert.Equal(7, result.Value.EmailsOpenedLast30Days);
         Assert.Equal(_clock.UtcNow().Date, _adminRepository.LastRequestedTodayUtcStart);
     }
 

@@ -1,4 +1,5 @@
 using ElBaul.OutputPorts.Admin;
+using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
@@ -27,7 +28,16 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         var photos = await dbContext.Photos.CountAsync(p => p.Status == PhotoStatus.Active);
         var photosToday = await dbContext.Photos.CountAsync(p => p.Status == PhotoStatus.Active && p.CreatedAt >= todayUtcStart);
 
-        return new AdminDashboardCounts(users, baules, photos, photosToday);
+        // Real (non-Test*) transactional emails only — an admin-triggered test send isn't a
+        // signal of user engagement, so it shouldn't move the open rate the PM reads here.
+        var recentEmails = dbContext.SentEmails.Where(e =>
+            e.Status == EmailStatus.Sent &&
+            e.SentAt >= todayUtcStart.AddDays(-30) &&
+            (e.Type == EmailType.Welcome || e.Type == EmailType.WeeklyDigest));
+        var emailsSent = await recentEmails.CountAsync();
+        var emailsOpened = await recentEmails.CountAsync(e => e.FirstOpenedAt != null);
+
+        return new AdminDashboardCounts(users, baules, photos, photosToday, emailsSent, emailsOpened);
     }
 
     public async Task<IEnumerable<AdminUserRow>> GetAllUsersAsync()

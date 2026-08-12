@@ -39,7 +39,9 @@ public class AdminManager(
     {
         var todayUtcStart = clock.UtcNow().Date;
         var counts = await adminRepository.GetDashboardCountsAsync(todayUtcStart);
-        return new AdminDashboardCountsDto(counts.Users, counts.Baules, counts.Photos, counts.PhotosToday);
+        return new AdminDashboardCountsDto(
+            counts.Users, counts.Baules, counts.Photos, counts.PhotosToday,
+            counts.EmailsSentLast30Days, counts.EmailsOpenedLast30Days);
     }
 
     public async Task<Result<IEnumerable<AdminUserListItemDto>>> GetAllUsersAsync()
@@ -142,7 +144,7 @@ public class AdminManager(
 
     private static AdminSentEmailDto ToDto(SentEmail email) =>
         new(email.Id.ToString(), email.UserId, email.Type.ToString(), email.Subject, email.RecipientEmail,
-            email.Status.ToString(), email.CreatedAt, email.SentAt, email.FirstClickedAt);
+            email.Status.ToString(), email.CreatedAt, email.SentAt, email.FirstClickedAt, email.FirstOpenedAt);
 
     private static AdminUserListItemDto ToDto(AdminUserRow row) =>
         new(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);

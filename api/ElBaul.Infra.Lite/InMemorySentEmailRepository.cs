@@ -35,6 +35,19 @@ public class InMemorySentEmailRepository : ISentEmailRepository
         return Task.CompletedTask;
     }
 
+    public Task RegisterOpenAsync(Guid sentEmailId, DateTime openedAt)
+    {
+        lock (_lock)
+        {
+            if (_emails.TryGetValue(sentEmailId, out var email) && email.FirstOpenedAt is null)
+            {
+                _emails[sentEmailId] = email with { FirstOpenedAt = openedAt };
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task<HashSet<UserId>> GetUserIdsWithSentEmailAsync(EmailType type)
     {
         lock (_lock)

@@ -37,7 +37,8 @@ public record SentEmail(
     string? ErrorMessage = null,
     DateTime? ActivitySince = null,
     DateTime? ActivityUntil = null,
-    DateTime? FirstClickedAt = null)
+    DateTime? FirstClickedAt = null,
+    DateTime? FirstOpenedAt = null)
 {
     public SentEmail MarkSending(DateTime sendAttemptedAt) =>
         this with { Status = EmailStatus.Sending, SendAttemptedAt = sendAttemptedAt };

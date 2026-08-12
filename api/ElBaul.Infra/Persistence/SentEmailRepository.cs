@@ -45,6 +45,11 @@ public class SentEmailRepository(ElBaulDbContext dbContext) : ISentEmailReposito
         dbContext.Entry(email).State = EntityState.Detached;
     }
 
+    public Task RegisterOpenAsync(Guid sentEmailId, DateTime openedAt) =>
+        dbContext.SentEmails
+            .Where(e => e.Id == sentEmailId && e.FirstOpenedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(e => e.FirstOpenedAt, openedAt));
+
     public async Task<HashSet<UserId>> GetUserIdsWithSentEmailAsync(EmailType type) =>
         (await dbContext.SentEmails.AsNoTracking()
             .Where(e => e.Type == type && (e.Status == EmailStatus.Sent || e.Status == EmailStatus.Delivered))

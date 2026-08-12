@@ -19,4 +19,5 @@ public record WeeklyDigestEmailModel(
     string PrimaryCtaUrl,
     string PrimaryCtaLabel,
     string NotificationSettingsUrl,
-    EmailFooterLinks Footer);
+    EmailFooterLinks Footer,
+    string PixelUrl);

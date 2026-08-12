@@ -16,4 +16,14 @@ public class FakeEmailLinkSigner : IEmailLinkSigner
 
         return new EmailLinkTokenPayload(sentEmailId, Uri.UnescapeDataString(parts[1]), Uri.UnescapeDataString(parts[2]));
     }
+
+    public string CreateOpenToken(Guid sentEmailId) => $"open|{sentEmailId}";
+
+    public Guid? TryDecodeOpenToken(string token)
+    {
+        var parts = token.Split('|', 2);
+        if (parts.Length != 2 || parts[0] != "open" || !Guid.TryParse(parts[1], out var sentEmailId)) return null;
+
+        return sentEmailId;
+    }
 }

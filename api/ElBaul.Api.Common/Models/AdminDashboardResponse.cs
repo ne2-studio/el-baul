@@ -8,4 +8,6 @@ public record AdminDashboardResponse(
     int TotalBaules,
     int TotalPhotos,
     int PhotosUploadedToday,
+    int EmailsSentLast30Days,
+    int EmailsOpenedLast30Days,
     IReadOnlyList<AdminExternalLinkDto> ExternalLinks);

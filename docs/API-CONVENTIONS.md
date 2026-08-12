@@ -21,6 +21,8 @@ Anonymous exceptions:
   metadata for link previews.
 - `GET /api/app-config` — public feature flags/URLs the frontend needs before login.
 - `GET /email/click/{token}` — clicked from an email client, never carries auth.
+- `GET /email/open/{token}.gif` — the open-tracking pixel loaded by the recipient's email
+  client, never carries auth.
 - `GET /s/{token}` — public shared photo/recuerdo landing with Open Graph metadata.
 - `GET /health` — liveness check.
 

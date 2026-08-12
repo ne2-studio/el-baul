@@ -13,10 +13,14 @@ namespace ElBaul.Infra;
 /// (those never contain a dot), so EmailTrackingController can keep resolving already-delivered
 /// emails via the old DB-lookup path without a migration or a dual-write period. Shared between
 /// el-baul-api and el-baul-api-lite (no Postgres/EF dependency), same as GuidIdGenerator/SystemClock.
+/// Open-pixel tokens (CreateOpenToken/TryDecodeOpenToken) reuse the same key and HMAC/base64url
+/// machinery under an "o1." prefix instead — a distinct prefix so a click token can never decode
+/// as an open token or vice versa, even though both are signed with the same key.
 /// </summary>
 public class EmailLinkSigner(IConfiguration configuration) : IEmailLinkSigner
 {
     private const string Prefix = "v1.";
+    private const string OpenPrefix = "o1.";
     private readonly byte[] _key = Convert.FromHexString(configuration["EmailLinkSigning:Key"] ?? "");
 
     public string CreateToken(Guid sentEmailId, string linkKey, string destinationUrl)
@@ -28,26 +32,7 @@ public class EmailLinkSigner(IConfiguration configuration) : IEmailLinkSigner
 
     public EmailLinkTokenPayload? TryDecode(string token)
     {
-        if (!token.StartsWith(Prefix, StringComparison.Ordinal)) return null;
-
-        var rest = token.AsSpan(Prefix.Length);
-        var separatorIndex = rest.IndexOf('.');
-        if (separatorIndex < 0) return null;
-
-        byte[] payloadBytes, signatureBytes;
-        try
-        {
-            payloadBytes = Base64UrlDecode(rest[..separatorIndex].ToString());
-            signatureBytes = Base64UrlDecode(rest[(separatorIndex + 1)..].ToString());
-        }
-        catch (FormatException)
-        {
-            return null;
-        }
-
-        var expectedSignature = Sign(payloadBytes);
-        if (signatureBytes.Length != expectedSignature.Length) return null;
-        if (!CryptographicOperations.FixedTimeEquals(signatureBytes, expectedSignature)) return null;
+        if (!TryUnwrap(token, Prefix, out var payloadBytes)) return null;
 
         try
         {
@@ -58,6 +43,53 @@ public class EmailLinkSigner(IConfiguration configuration) : IEmailLinkSigner
         {
             return null;
         }
+    }
+
+    public string CreateOpenToken(Guid sentEmailId)
+    {
+        var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(new OpenTokenPayload(sentEmailId));
+        var signatureBytes = Sign(payloadBytes);
+        return $"{OpenPrefix}{Base64UrlEncode(payloadBytes)}.{Base64UrlEncode(signatureBytes)}";
+    }
+
+    public Guid? TryDecodeOpenToken(string token)
+    {
+        if (!TryUnwrap(token, OpenPrefix, out var payloadBytes)) return null;
+
+        try
+        {
+            var payload = JsonSerializer.Deserialize<OpenTokenPayload>(payloadBytes);
+            return payload?.SentEmailId;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private bool TryUnwrap(string token, string prefix, out byte[] payloadBytes)
+    {
+        payloadBytes = [];
+        if (!token.StartsWith(prefix, StringComparison.Ordinal)) return false;
+
+        var rest = token.AsSpan(prefix.Length);
+        var separatorIndex = rest.IndexOf('.');
+        if (separatorIndex < 0) return false;
+
+        byte[] signatureBytes;
+        try
+        {
+            payloadBytes = Base64UrlDecode(rest[..separatorIndex].ToString());
+            signatureBytes = Base64UrlDecode(rest[(separatorIndex + 1)..].ToString());
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        var expectedSignature = Sign(payloadBytes);
+        if (signatureBytes.Length != expectedSignature.Length) return false;
+        return CryptographicOperations.FixedTimeEquals(signatureBytes, expectedSignature);
     }
 
     private byte[] Sign(byte[] payloadBytes)
@@ -82,4 +114,6 @@ public class EmailLinkSigner(IConfiguration configuration) : IEmailLinkSigner
         [property: JsonPropertyName("e")] Guid SentEmailId,
         [property: JsonPropertyName("k")] string LinkKey,
         [property: JsonPropertyName("u")] string DestinationUrl);
+
+    private record OpenTokenPayload([property: JsonPropertyName("e")] Guid SentEmailId);
 }

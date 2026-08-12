@@ -29,6 +29,8 @@ export class DashboardKpis {
   totalBaules: number;
   totalPhotos: number;
   photosUploadedToday: number;
+  emailsSentLast30Days: number;
+  emailsOpenedLast30Days: number;
   externalLinks: ExternalLink[];
 
   constructor(data: AdminDashboardResponse) {
@@ -36,6 +38,8 @@ export class DashboardKpis {
     this.totalBaules = data.totalBaules;
     this.totalPhotos = data.totalPhotos;
     this.photosUploadedToday = data.photosUploadedToday;
+    this.emailsSentLast30Days = data.emailsSentLast30Days;
+    this.emailsOpenedLast30Days = data.emailsOpenedLast30Days;
     this.externalLinks = data.externalLinks.map((l) => new ExternalLink(l));
   }
 }
@@ -104,6 +108,7 @@ export class AdminSentEmail {
   createdAt: string;
   sentAt?: string;
   firstClickedAt?: string;
+  firstOpenedAt?: string;
 
   constructor(data: AdminSentEmailDto) {
     this.id = data.id;
@@ -115,6 +120,7 @@ export class AdminSentEmail {
     this.createdAt = data.createdAt;
     this.sentAt = data.sentAt ?? undefined;
     this.firstClickedAt = data.firstClickedAt ?? undefined;
+    this.firstOpenedAt = data.firstOpenedAt ?? undefined;
   }
 }
 

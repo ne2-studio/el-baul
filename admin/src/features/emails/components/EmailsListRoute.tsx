@@ -30,6 +30,10 @@ export function EmailsListRoute() {
               { header: 'Asunto', render: (e) => e.subject },
               { header: 'Estado', render: (e) => EMAIL_STATUS_LABELS[e.status] ?? e.status },
               {
+                header: 'Abierto',
+                render: (e) => (e.firstOpenedAt ? <Check className="w-4 h-4 text-primary" /> : null),
+              },
+              {
                 header: 'Clic',
                 render: (e) => (e.firstClickedAt ? <Check className="w-4 h-4 text-primary" /> : null),
               },
