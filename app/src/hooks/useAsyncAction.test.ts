@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { ApiError } from '@/api';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiConnectionError, ApiError } from '@/api';
 import { useAsyncAction } from './useAsyncAction';
 
 vi.mock('@sentry/react', () => ({
@@ -9,6 +9,10 @@ vi.mock('@sentry/react', () => ({
 }));
 
 import * as Sentry from '@sentry/react';
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -124,5 +128,15 @@ describe('useAsyncAction error reporting', () => {
     await act(() => result.current.run(() => Promise.reject(error)));
 
     expect(Sentry.captureException).toHaveBeenCalledWith(error);
+  });
+
+  it('does not report normalized connectivity failures to Sentry', async () => {
+    const { result } = renderHook(() => useAsyncAction());
+    const error = new ApiConnectionError(new TypeError('Failed to fetch'));
+
+    const outcome = await act(() => result.current.run(() => Promise.reject(error)));
+
+    expect(outcome).toEqual({ ok: false, error });
+    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,6 @@
 import { Baul, BaulInviteLink, FeedItem, Persona, Photo, RemovalRequest, feedItemFrom } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
-import { API_BASE, authHeaders, get, handleResponse, post, put, del } from '../http';
+import { API_BASE, apiFetch, authHeaders, get, handleResponse, post, put, del } from '../http';
 import type { AvatarCrop } from '../publicTypes';
 
 const BAULES = '/api/baules' satisfies PathTemplate;
@@ -57,7 +57,7 @@ export const baulesApi = {
     formData.append('cropScale', String(crop.scale));
     formData.append('clientUploadId', crypto.randomUUID());
 
-    const response = await fetch(`${API_BASE}${path(PERSONA_AVATAR, { baulId, personaId })}`, {
+    const response = await apiFetch(`${API_BASE}${path(PERSONA_AVATAR, { baulId, personaId })}`, {
       method: 'POST',
       headers: authHeaders(),
       body: formData,

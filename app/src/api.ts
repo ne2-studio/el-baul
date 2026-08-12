@@ -1,9 +1,12 @@
 export {
   API_BASE,
+  API_CONNECTIVITY_LOST_EVENT,
   API_FORBIDDEN_EVENT,
   API_UNAUTHORIZED_EVENT,
+  ApiConnectionError,
   ApiError,
   isApiErrorWithStatus,
+  isApiConnectionError,
   isForbiddenError,
   isUnauthorizedError,
   setAccessToken,

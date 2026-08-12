@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { isForbiddenError, isUnauthorizedError } from '@/api';
+import { isApiConnectionError, isForbiddenError, isUnauthorizedError } from '@/api/http';
 import { useUIStore } from '@/store/uiStore';
 
 const DEFAULT_KEY = '__default__';
@@ -42,6 +42,10 @@ export function useAsyncAction() {
         return { ok: true, value };
       } catch (error) {
         console.error(error);
+        if (isApiConnectionError(error)) {
+          return { ok: false, error };
+        }
+
         // Every call site funnels through this one catch, so this is the single place that
         // gives production visibility into nearly all frontend failures. Reported unconditionally
         // (even 401/403, which are still useful signal) — call sites with their own

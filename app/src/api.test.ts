@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { API_BASE, API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, ApiError, api } from '@/api';
+import { API_BASE, API_CONNECTIVITY_LOST_EVENT, API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, ApiConnectionError, ApiError, api } from '@/api';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -46,6 +46,17 @@ describe('api error handling', () => {
 
     expect(onUnauthorized).toHaveBeenCalledOnce();
     window.removeEventListener(API_UNAUTHORIZED_EVENT, onUnauthorized);
+  });
+
+  it('normalizes fetch connectivity failures and emits a connectivity lost event', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+    const onConnectivityLost = vi.fn();
+    window.addEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
+
+    await expect(api.baules.getAll()).rejects.toBeInstanceOf(ApiConnectionError);
+
+    expect(onConnectivityLost).toHaveBeenCalledOnce();
+    window.removeEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
   });
 });
 

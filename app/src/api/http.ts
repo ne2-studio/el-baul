@@ -3,6 +3,7 @@ import { getEnv } from '../runtimeConfig';
 export const API_BASE = getEnv('VITE_API_URL');
 export const API_FORBIDDEN_EVENT = 'elbaul:api-forbidden';
 export const API_UNAUTHORIZED_EVENT = 'elbaul:api-unauthorized';
+export const API_CONNECTIVITY_LOST_EVENT = 'elbaul:api-connectivity-lost';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -16,8 +17,22 @@ export class ApiError extends Error {
   }
 }
 
+export class ApiConnectionError extends Error {
+  readonly cause: unknown;
+
+  constructor(cause: unknown) {
+    super('No se pudo conectar con la API');
+    this.name = 'ApiConnectionError';
+    this.cause = cause;
+  }
+}
+
 export function isApiErrorWithStatus(error: unknown, status: number): error is ApiError {
   return error instanceof ApiError && error.status === status;
+}
+
+export function isApiConnectionError(error: unknown): error is ApiConnectionError {
+  return error instanceof ApiConnectionError;
 }
 
 export function isForbiddenError(error: unknown): boolean {
@@ -40,6 +55,32 @@ export function authHeaders(): Record<string, string> {
 
 function jsonHeaders(): Record<string, string> {
   return { 'Content-Type': 'application/json', ...authHeaders() };
+}
+
+function isFetchConnectivityError(error: unknown): boolean {
+  if (!(error instanceof TypeError)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('failed to fetch') ||
+    message.includes('networkerror') ||
+    message.includes('load failed')
+  );
+}
+
+export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    if (!isFetchConnectivityError(error)) throw error;
+
+    const connectionError = new ApiConnectionError(error);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(API_CONNECTIVITY_LOST_EVENT, { detail: { error: connectionError } }));
+    }
+
+    throw connectionError;
+  }
 }
 
 export async function handleResponse<T>(response: Response): Promise<T> {
@@ -68,12 +109,12 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export async function get<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
+  const response = await apiFetch(`${API_BASE}${path}`, { headers: authHeaders() });
   return handleResponse<T>(response);
 }
 
 export async function post<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await apiFetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: jsonHeaders(),
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -82,7 +123,7 @@ export async function post<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export async function put<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await apiFetch(`${API_BASE}${path}`, {
     method: 'PUT',
     headers: jsonHeaders(),
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -91,7 +132,7 @@ export async function put<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export async function del<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await apiFetch(`${API_BASE}${path}`, {
     method: 'DELETE',
     headers: body !== undefined ? jsonHeaders() : authHeaders(),
     body: body !== undefined ? JSON.stringify(body) : undefined,

@@ -4,10 +4,11 @@ import { useAuth } from 'react-oidc-context';
 import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal';
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
+import { ConnectivityLostScreen } from '@/design-system/components/feedback/ConnectivityLostScreen';
 import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
 import { PushNotificationsHandler } from '@/features/profile/native/PushNotificationsHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
-import { API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
+import { API_CONNECTIVITY_LOST_EVENT, API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 // Auth and Route Guards
@@ -50,6 +51,7 @@ function App() {
   const location = useLocation();
   const auth = useAuth();
   const [isAccessDenied, setIsAccessDenied] = React.useState(false);
+  const [isConnectivityLost, setIsConnectivityLost] = React.useState(false);
   const {
     showToast,
     toastMessage,
@@ -82,6 +84,12 @@ function App() {
     const handleForbidden = () => setIsAccessDenied(true);
     window.addEventListener(API_FORBIDDEN_EVENT, handleForbidden);
     return () => window.removeEventListener(API_FORBIDDEN_EVENT, handleForbidden);
+  }, []);
+
+  useEffect(() => {
+    const handleConnectivityLost = () => setIsConnectivityLost(true);
+    window.addEventListener(API_CONNECTIVITY_LOST_EVENT, handleConnectivityLost);
+    return () => window.removeEventListener(API_CONNECTIVITY_LOST_EVENT, handleConnectivityLost);
   }, []);
 
   // A 401 means the API rejected the access token we sent (expired/invalid session) — the
@@ -356,6 +364,7 @@ function App() {
           onClose={hideToast}
         />
       )}
+      {isConnectivityLost && <ConnectivityLostScreen />}
     </div>
   );
 }

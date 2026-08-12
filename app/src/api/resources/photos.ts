@@ -1,7 +1,7 @@
 import { Photo, PhotoDate } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { toTaggedPersona } from '../mappers';
-import { API_BASE, authHeaders, del, get, handleResponse, post, put } from '../http';
+import { API_BASE, apiFetch, authHeaders, del, get, handleResponse, post, put } from '../http';
 import type { SharedLinkResponse } from '../publicTypes';
 
 const CHAPTER_PHOTOS = '/api/chapters/{chapterId}/photos' satisfies PathTemplate;
@@ -49,7 +49,7 @@ export const photosApi = {
     }
 
     const uploadPath = chapterId ? path(CHAPTER_PHOTOS, { chapterId }) : path(LOOSE_PHOTOS, { baulId });
-    const response = await fetch(`${API_BASE}${uploadPath}`, {
+    const response = await apiFetch(`${API_BASE}${uploadPath}`, {
       method: 'POST',
       headers: authHeaders(),
       body: formData,
@@ -67,7 +67,7 @@ export const photosApi = {
     (await put<JsonResponse<typeof PHOTO_DATE_BATCH, 'put'>>(PHOTO_DATE_BATCH, { photoIds, ...date } satisfies JsonRequest<typeof PHOTO_DATE_BATCH, 'put'>)).map((p) => new Photo(p)),
   clearDate: async (photoId: string) => new Photo(await del<JsonResponse<typeof PHOTO_DATE, 'delete'>>(path(PHOTO_DATE, { photoId }))),
   download: async (photoId: string): Promise<{ blob: Blob; fileName: string }> => {
-    const response = await fetch(`${API_BASE}${path(PHOTO_DOWNLOAD, { photoId })}`, { headers: authHeaders() });
+    const response = await apiFetch(`${API_BASE}${path(PHOTO_DOWNLOAD, { photoId })}`, { headers: authHeaders() });
     if (!response.ok) await handleResponse<never>(response);
 
     const disposition = response.headers.get('Content-Disposition') || '';
