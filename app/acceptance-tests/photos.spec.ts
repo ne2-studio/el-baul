@@ -29,7 +29,7 @@ test('create baúl → create chapter → upload photo → move photo → delete
   await page.getByRole('button', { name: 'Subir fotos' }).click();
   await page.waitForURL(/\/confirmar/);
   await page.locator('input[type="file"]').setInputFiles(FIXTURE_PHOTO);
-  await page.getByRole('button', { name: 'Guardar recuerdos' }).click();
+  await page.getByRole('button', { name: 'Subir fotos' }).click();
   await expect(page.getByText(/ya está a salvo/)).toBeVisible({ timeout: 15_000 });
   await page.waitForURL(/\/capitulos\/[^/]+$/);
   await page.getByRole('button', { name: /Fotos/ }).click();

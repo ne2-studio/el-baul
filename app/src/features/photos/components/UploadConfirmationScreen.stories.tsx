@@ -35,7 +35,7 @@ export const Empty: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText('Sube tus fotos')).toBeInTheDocument();
-    await expect(canvas.queryByRole('button', { name: 'Guardar recuerdos' })).not.toBeInTheDocument();
+    await expect(canvas.queryByRole('button', { name: 'Subir fotos' })).not.toBeInTheDocument();
   },
 };
 
@@ -50,13 +50,13 @@ export const WithSelectedPhotos: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText('3 fotos seleccionadas')).toBeInTheDocument();
-    await expect(canvas.getByRole('button', { name: 'Guardar recuerdos' })).toBeEnabled();
+    await expect(canvas.getByRole('button', { name: 'Subir fotos' })).toBeEnabled();
 
     await userEvent.hover(canvas.getAllByAltText('Preview')[0]);
     await userEvent.click(canvas.getAllByRole('button', { name: 'Quitar foto' })[0]);
     await expect(canvas.getByText('2 fotos seleccionadas')).toBeInTheDocument();
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Guardar recuerdos' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Subir fotos' }));
     await expect(args.onUpload).toHaveBeenCalledWith([selectedPhotos[1], selectedPhotos[2]]);
   },
 };

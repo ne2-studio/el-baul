@@ -138,7 +138,7 @@ export function UploadConfirmationScreen({
 
             <div className="space-y-3">
               <Button variant="primary" fullWidth onClick={handleConfirm}>
-                Guardar recuerdos
+                Subir fotos
               </Button>
               <Button variant="ghost" fullWidth onClick={onBack}>
                 Cancelar
