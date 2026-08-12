@@ -104,6 +104,13 @@ for the full rationale.
   modal dismissal, form validation/submission, selector state, destructive confirmation, and
   other isolated component/pattern contracts. These tests run before any frontend Docker image is
   built; a render, interaction, assertion, or browser-mode failure blocks merge/deploy.
+
+  Full run takes ~2 minutes (93 files) since it boots one Chromium instance per suite run. For
+  local iteration, `npm --prefix app run test:storybook:changed` (`vitest --changed`) runs only
+  the stories affected by uncommitted changes via the module graph — seconds instead of minutes.
+  It's a dev-loop convenience only: `./scripts/verify frontend` (full `test:storybook`) is still
+  the canonical command and the only one that counts as verification evidence — CI always runs
+  the full suite, unfiltered.
 - **`app/acceptance-tests/`** (`./scripts/verify frontend-acceptance`) — behavioral-regression Playwright against the built
   frontend image + `el-baul-api-lite` (see [`../operations/api-lite.md`](../operations/api-lite.md)),
   no real Postgres/MinIO/imgproxy to boot. Covers photo upload/move/delete, the global baúl

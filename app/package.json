@@ -15,6 +15,7 @@
     "test:watch": "vitest --project=unit",
     "test:coverage": "vitest run --project=unit --coverage",
     "test:storybook": "vitest --project=storybook --run --maxWorkers=1",
+    "test:storybook:changed": "vitest --project=storybook --run --changed",
     "test:acceptance": "playwright test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
