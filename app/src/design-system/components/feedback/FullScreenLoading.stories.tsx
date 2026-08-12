@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
 
 const meta = {
-  title: 'Design System/Feedback/FullScreenLoading',
+  title: 'Components/Feedback/FullScreenLoading',
   component: FullScreenLoading,
   tags: ['autodocs'],
   parameters: {
