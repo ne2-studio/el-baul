@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Pencil, Share2 } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
-import { RecuerdoEditForm } from '@/features/memories/components/RecuerdoEditForm';
+import { RecuerdoEditModal } from '@/features/memories/components/RecuerdoEditModal';
 
 interface RecuerdoCardProps {
   recuerdo: Recuerdo;
@@ -93,16 +93,6 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
           </Button>
 
           <div className="flex-1 min-w-0">
-            {isEditing ? (
-              <RecuerdoEditForm
-                initialText={recuerdo.text}
-                tone="dark"
-                isSaving={isSaving}
-                onCancel={() => setIsEditing(false)}
-                onSave={handleSave}
-              />
-            ) : (
-              <>
             {/* Texto del recuerdo con truncado y fade */}
             <div className="relative">
               <motion.p
@@ -164,10 +154,17 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
                 )}
               </div>
             </div>
-              </>
-            )}
           </div>
         </div>
+
+        {isEditing && (
+          <RecuerdoEditModal
+            initialText={recuerdo.text}
+            isSaving={isSaving}
+            onCancel={() => setIsEditing(false)}
+            onSave={handleSave}
+          />
+        )}
       </motion.div>
     );
   }

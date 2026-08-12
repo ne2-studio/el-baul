@@ -4,13 +4,12 @@ import { Input } from '@/design-system/components/forms/Input';
 
 interface RecuerdoEditFormProps {
   initialText: string;
-  tone?: 'light' | 'dark';
   isSaving?: boolean;
   onCancel: () => void;
   onSave: (text: string) => void;
 }
 
-export function RecuerdoEditForm({ initialText, tone = 'light', isSaving = false, onCancel, onSave }: RecuerdoEditFormProps) {
+export function RecuerdoEditForm({ initialText, isSaving = false, onCancel, onSave }: RecuerdoEditFormProps) {
   const [text, setText] = useState(initialText);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const trimmed = text.trim();
@@ -20,6 +19,15 @@ export function RecuerdoEditForm({ initialText, tone = 'light', isSaving = false
     inputRef.current?.focus();
     inputRef.current?.select();
   }, []);
+
+  // Auto-resize al contenido, igual que RecuerdoInput — con un rows fijo, un texto corto se
+  // veía dentro de una caja de 4 líneas con el resto en blanco.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [text]);
 
   const handleSubmit = () => {
     if (canSave) onSave(trimmed);
@@ -31,19 +39,20 @@ export function RecuerdoEditForm({ initialText, tone = 'light', isSaving = false
         inputRef={inputRef}
         value={text}
         onChange={setText}
-        rows={4}
+        rows={1}
         aria-label="Contenido del recuerdo"
         multiline
-        variant={tone === 'dark' ? 'inlineDark' : 'support'}
-        inputClassName={tone === 'light' ? 'min-h-0 text-sm placeholder:text-muted-foreground/60' : undefined}
+        variant="support"
+        inputClassName="min-h-0 text-sm placeholder:text-muted-foreground/60"
+        style={{ minHeight: '48px', maxHeight: '200px' }}
       />
       <div className="flex gap-2 justify-end">
         <Button
           type="button"
-          variant={tone === 'dark' ? 'plain' : 'secondary'}
+          variant="secondary"
           onClick={onCancel}
           disabled={isSaving}
-          className={tone === 'dark' ? 'px-3 py-2 rounded-xl text-sm text-background/70 hover:bg-background/10' : 'px-3 py-2 rounded-xl text-sm'}
+          className="px-3 py-2 rounded-xl text-sm"
         >
           Cancelar
         </Button>
