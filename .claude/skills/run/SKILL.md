@@ -1,6 +1,7 @@
 ---
 name: run
 description: "Provides a known, stable local El Baul environment. Use when asked to run, start, inspect, screenshot, or manually exercise the app or API."
+model: haiku
 ---
 
 ## Goal

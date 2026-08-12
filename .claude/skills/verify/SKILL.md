@@ -1,6 +1,7 @@
 ---
 name: verify
 description: "Selects and runs risk-based verification for El Baul changes. Use before considering implementation work complete."
+model: haiku
 ---
 
 ## Goal

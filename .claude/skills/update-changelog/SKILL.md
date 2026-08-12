@@ -1,6 +1,7 @@
 ---
 name: update-changelog
 description: "Reminds an agent to update CHANGELOG.md before committing a user-facing change. Use before every commit."
+model: haiku
 ---
 
 ## Goal
