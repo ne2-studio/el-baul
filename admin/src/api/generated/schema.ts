@@ -6685,11 +6685,13 @@ export interface components {
             chatSuggestionsEnabled: boolean;
             sharedLinksEnabled: boolean;
             baulFeedEnabled: boolean;
+            androidAppBannerEnabled: boolean;
         };
         AppConfigResponse: {
             features: components["schemas"]["AppConfigFeatures"];
             helpCenterUrl?: string | null;
             appUrl?: string | null;
+            googlePlayUrl?: string | null;
         };
         BaulDto: {
             id: string;

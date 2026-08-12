@@ -26,6 +26,14 @@ that calls them) — not before:
   left to do.
 - `npm run android:build` (in `app/`) builds with a separate `.env.android` and runs
   `cap sync android`.
+- `app/AndroidAppBanner.tsx` (mounted globally in `App.tsx`, gated by
+  `Features:AndroidAppBannerEnabled` from `/api/app-config`) offers to open/install the app when
+  the *webapp* is loaded from an Android browser. It reuses the existing OIDC callback
+  intent-filter (`studio.ne2.elbaul://callback`, see above) as an `intent://` link with
+  `S.browser_fallback_url` pointing at Google Play — deliberately, to avoid adding a second
+  scheme/host or a verified Android App Link (`assetlinks.json`) just for this. Opening the app
+  this way is harmless: `isNativeOidcCallbackUrl` only treats the deep link as a real sign-in
+  callback when `code`/`error` is present in the query, which this link never sets.
 
 See [`native-ios.md`](native-ios.md) for the iOS counterpart and [`deployment.md`](deployment.md)
 for the Android CI workflow.

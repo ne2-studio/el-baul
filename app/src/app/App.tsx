@@ -8,6 +8,7 @@ import { ConnectivityLostScreen } from '@/design-system/components/feedback/Conn
 import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
 import { PushNotificationsHandler } from '@/features/profile/native/PushNotificationsHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
+import { AndroidAppBanner } from '@/app/AndroidAppBanner';
 import { API_CONNECTIVITY_LOST_EVENT, API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
@@ -170,6 +171,7 @@ function App() {
       <ScrollToTop />
       <NativeShareHandler />
       <PushNotificationsHandler />
+      <AndroidAppBanner />
 
       {isAccessDenied ? (
         <AccessDeniedScreen onBackToBaules={handleBackToBaules} />

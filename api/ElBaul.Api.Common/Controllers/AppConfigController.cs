@@ -21,8 +21,10 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
         var chatSuggestionsEnabled = configuration.GetValue<bool>("Features:ChatSuggestionsEnabled");
         var sharedLinksEnabled = configuration.GetValue<bool>("Features:SharedLinksEnabled");
         var baulFeedEnabled = configuration.GetValue<bool>("Features:BaulFeedEnabled");
+        var androidAppBannerEnabled = configuration.GetValue<bool>("Features:AndroidAppBannerEnabled");
         var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
         var appUrl = configuration.GetValue<string>("App:PublicUrl");
+        var googlePlayUrl = configuration.GetValue<string>("App:GooglePlayUrl");
 
         return Ok(new
         {
@@ -31,10 +33,12 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
                 chatEnabled,
                 chatSuggestionsEnabled,
                 sharedLinksEnabled,
-                baulFeedEnabled
+                baulFeedEnabled,
+                androidAppBannerEnabled
             },
             helpCenterUrl,
-            appUrl
+            appUrl,
+            googlePlayUrl
         });
     }
 }

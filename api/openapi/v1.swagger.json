@@ -7889,6 +7889,7 @@
       },
       "AppConfigFeatures": {
         "required": [
+          "androidAppBannerEnabled",
           "baulFeedEnabled",
           "chatEnabled",
           "chatSuggestionsEnabled",
@@ -7906,6 +7907,9 @@
             "type": "boolean"
           },
           "baulFeedEnabled": {
+            "type": "boolean"
+          },
+          "androidAppBannerEnabled": {
             "type": "boolean"
           }
         },
@@ -7925,6 +7929,10 @@
             "nullable": true
           },
           "appUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "googlePlayUrl": {
             "type": "string",
             "nullable": true
           }

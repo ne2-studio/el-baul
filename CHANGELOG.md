@@ -17,6 +17,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 - El feed del baúl ahora separa "Nueva actividad" desde tu última visita de lo que ya habías visto, y marca esas tarjetas con un hint visual. Cada baúl lleva su propio marcador de última visita.
 - Nueva tarjeta en el feed cuando se crea un capítulo.
+- Si entras desde el navegador de un móvil Android, un aviso te ofrece abrir o descargar la app.
 
 ### Cambiado
 
