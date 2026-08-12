@@ -5,7 +5,7 @@ interface InputProps {
   label?: string;
   placeholder?: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, event?: React.ChangeEvent<HTMLInputElement>) => void;
   type?: 'text' | 'email' | 'password' | 'number';
   helperText?: string;
   multiline?: boolean;
@@ -95,7 +95,7 @@ export function Input({
           ref={inputRef as React.Ref<HTMLInputElement>}
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value, e)}
           onFocus={onFocus as React.FocusEventHandler<HTMLInputElement>}
           onBlur={onBlur as React.FocusEventHandler<HTMLInputElement>}
           onKeyDown={onKeyDown as React.KeyboardEventHandler<HTMLInputElement>}

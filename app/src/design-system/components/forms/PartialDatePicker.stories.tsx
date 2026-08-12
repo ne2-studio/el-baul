@@ -95,3 +95,28 @@ export const Interactive: Story = {
     await expect(canvas.queryByLabelText(/Año/)).not.toBeInTheDocument();
   },
 };
+
+export const YearStepperFromEmpty: Story = {
+  args: {
+    onChange: () => alert('onChange clicked'),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const yearInput = canvas.getByLabelText(/Año/) as HTMLInputElement;
+
+    // Regression guard: the browser's own stepping algorithm treats an empty number
+    // input as 0, so a naive fix would land on 1/-1 instead of a real year. Simulated
+    // here via the same primitives the browser uses internally (stepUp() + an `input`
+    // event without inputType) because synthetic keyboard events don't trigger the
+    // browser's native spinner logic in this test environment.
+    yearInput.stepUp();
+    yearInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await expect(yearInput.value).toBe(String(new Date().getFullYear()));
+
+    await userEvent.clear(yearInput);
+    // Typing must still work untouched, including years starting with the digits the
+    // spinner fix special-cases ("1").
+    await userEvent.type(yearInput, '1985');
+    await expect(yearInput.value).toBe('1985');
+  },
+};

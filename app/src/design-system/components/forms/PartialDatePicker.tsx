@@ -54,7 +54,17 @@ export function PartialDatePicker({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (initialValue || initialUnknown) emit(year, month, day, unknown); }, []);
 
-  const handleYearChange = (v: string) => { setYear(v); emit(v, month, day, unknown); };
+  const handleYearChange = (v: string, event?: React.ChangeEvent<HTMLInputElement>) => {
+    // The browser's number spinner (arrows/keyboard) treats an empty field as 0, so
+    // the first click/press lands on 1 or -1 instead of a real year. `inputType` is only
+    // set by the browser for actual text edits (typing/pasting), not for stepper
+    // interactions, so this narrows the fix to that case without touching manual typing.
+    const isStepperJump = year === '' && (v === '1' || v === '-1')
+      && event && !(event.nativeEvent as InputEvent).inputType;
+    const next = isStepperJump ? String(new Date().getFullYear()) : v;
+    setYear(next);
+    emit(next, month, day, unknown);
+  };
   const handleMonthChange = (v: string) => { setMonth(v); emit(year, v, day, unknown); };
   const handleDayChange = (v: string) => { setDay(v); emit(year, month, v, unknown); };
   const handleUnknownToggle = () => {
