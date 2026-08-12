@@ -4,6 +4,7 @@ using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Users;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;
 namespace ElBaul.Infra.PersistenceTests;
@@ -41,6 +42,27 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         stored.Email.Should().Be("second@example.com", "ON CONFLICT DO UPDATE applies the second call's data");
         stored.Name.Should().Be("Segundo nombre");
         stored.CreatedAt.Should().Be(originalCreatedAt, "CreatedAt is excluded from the DO UPDATE SET list on purpose");
+    }
+
+    [Fact]
+    public async Task UserRepository_UpsertAsync_parallel_first_syncs_for_the_same_user_do_not_trip_the_email_unique_index()
+    {
+        var userId = new UserId("parallel-sync-user");
+        var createdAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var writes = Enumerable.Range(0, 8).Select(async i =>
+        {
+            await using var dbContext = Fixture.CreateDbContext();
+            var users = new UserRepository(dbContext);
+            await users.UpsertAsync(new User(userId, "parallel-sync@example.com", $"Nombre {i}", createdAt.AddSeconds(i)));
+        });
+
+        await FluentActions.Awaiting(() => Task.WhenAll(writes)).Should().NotThrowAsync(
+            "the email advisory lock serializes first-time UserSyncMiddleware requests before the unique Email index is checked");
+
+        await using var assertionContext = Fixture.CreateDbContext();
+        (await assertionContext.Users.CountAsync(u => u.Id == userId)).Should().Be(1);
+        (await assertionContext.Users.CountAsync(u => u.Email == "parallel-sync@example.com")).Should().Be(1);
     }
 
     [Fact]

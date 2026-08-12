@@ -49,16 +49,18 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
     // first and an `if (existing is null)` branch second is exactly the race window: two
     // requests can both see "no row" and both attempt the INSERT.
     //
-    // A native upsert closes that window by asking Postgres to resolve the conflict as part of
-    // the same statement instead of asking C# to notice it happened. This also sidesteps a real
-    // trap the previous try/catch version had: catching a UniqueViolation here does NOT mean the
-    // underlying Postgres transaction is fine to keep using — a failed statement inside an
-    // explicit transaction poisons the whole transaction (SQLSTATE 25P02) until it rolls back,
-    // .NET-level catch or not. That's incompatible with this method ever running inside
-    // IUnitOfWork.ExecuteInTransactionAsync, which is exactly why it's excluded from it (see
-    // that port's doc comment) — a plain `INSERT ... ON CONFLICT` never raises that error in the
-    // first place, so it doesn't have this problem regardless of whether it's ever wrapped.
-    public async Task UpsertAsync(User user) =>
+    // Postgres only absorbs conflicts for the constraint named in ON CONFLICT. Concurrent
+    // inserts for the same OIDC user can trip the unique Email index before the Id conflict path
+    // wins. The transaction-scoped advisory lock serializes contenders for the same email, then
+    // the native upsert keeps Id as the actual identity conflict target.
+    public async Task UpsertAsync(User user)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            """SELECT pg_advisory_xact_lock(hashtextextended({0}, 0));""",
+            user.Email);
+
         await dbContext.Database.ExecuteSqlRawAsync(
             // "CreatedAt" is deliberately absent from the DO UPDATE SET list below — on
             // conflict the row's original creation time survives untouched, matching the
@@ -79,4 +81,7 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
             // silencing the analyzer's blanket non-null expectation for `params object[]`.
             user.Id.Value, user.Email, user.Name!, user.CreatedAt, user.LastAccessAt!,
             user.WeeklyDigestEnabled, user.HasSeenOnboarding, user.LastPushDigestSentAt!);
+
+        await transaction.CommitAsync();
+    }
 }
