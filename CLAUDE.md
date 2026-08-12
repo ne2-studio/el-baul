@@ -9,6 +9,7 @@ Monorepo, three independently deployable services, **no shared code between them
 api/         ASP.NET Core backend
 app/         End-user React application
 app/android/ Capacitor Android shell
+app/ios/     Capacitor iPhone shell
 admin/       Internal administration React application
 e2e-tests/   Whole-repo Playwright e2e suite
 
@@ -19,20 +20,6 @@ Read the relevant docs before making architectural, cross-service or UI changes.
 docs/ARCHITECTURE.md
 docs/API-CONVENTIONS.md
 docs/DESIGN.md
-
-## API contract changes
-
-If backend DTOs or controllers change the HTTP contract, run:
-
-1. `./scripts/openapi accept-contract`
-2. `./scripts/openapi generate-types`
-3. `./scripts/verify backend`
-4. `./scripts/verify frontend`
-5. `./scripts/verify admin`
-
-## Environment
-
-Console commands run in WSL2 — always use Linux command syntax, never PowerShell/cmd.
 
 ## Before finishing a task
 
