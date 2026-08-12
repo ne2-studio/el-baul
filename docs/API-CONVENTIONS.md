@@ -95,7 +95,9 @@ person can show up with a different display name in different baúles.
 
 There's no generated HTTP client between `api/` and `app`/`admin` yet. The backend DTOs and
 controllers remain the source of truth; `app/src/api/generated/schema.ts` and
-`admin/src/api/generated/schema.ts` are generated raw TypeScript contract types, while
+`admin/src/api/generated/schema.ts` are generated raw TypeScript contract types. The app's
+HTTP facade stays at `app/src/api.ts`, with resource adapters under `app/src/api/resources/`
+typing route templates, JSON bodies and responses from generated `paths` where practical.
 `app/src/types/index.ts` and `admin/src/types.ts` keep the UI/domain adapter classes.
 
 The reviewed OpenAPI contract snapshot lives at `api/openapi/v1.swagger.json` and is checked
