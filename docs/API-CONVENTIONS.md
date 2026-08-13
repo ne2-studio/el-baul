@@ -30,6 +30,11 @@ Anonymous exceptions:
 - `GET /api/tv-sessions/{token}` — public, rate-limited; Modo TV's temporary read-only session
   content (baúl name + every photo's date/chapter/tagged people/latest recuerdo). The token
   itself is the only credential — the TV never authenticates as a user.
+- `POST /api/tv-pairings` — public, rate-limited; the TV's landing page creates a pairing
+  before showing its QR code.
+- `GET /api/tv-pairings/{code}` — public, rate-limited; the TV polls this while it waits for a
+  phone to scan the QR code and claim it (`POST /api/tv-pairings/{code}/claim`, authenticated)
+  into a real TV session.
 - `GET /health` — liveness check.
 
 ## Errors

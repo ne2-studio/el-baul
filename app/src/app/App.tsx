@@ -34,6 +34,8 @@ import { RemovalRequestsRoute } from '../features/photos/routes/RemovalRequestsR
 import { PhotoBatchGridRoute } from '../features/photos/routes/PhotoBatchGridRoute';
 import { PersonaDetailRoute } from '../features/people/routes/PersonaDetailRoute';
 import { BaulGlobalInvitacionRoute } from '../features/sharing/routes/BaulGlobalInvitacionRoute';
+import { TvLandingRoute } from '../features/tv/routes/TvLandingRoute';
+import { TvPairingRoute } from '../features/tv/routes/TvPairingRoute';
 import { TvSessionRoute } from '../features/tv/routes/TvSessionRoute';
 import { AcceptBaulInviteRoute } from '../features/sharing/routes/AcceptBaulInviteRoute';
 import { SelectBaulForShareRoute } from '../features/sharing/routes/SelectBaulForShareRoute';
@@ -279,6 +281,14 @@ function App() {
         } />
         <Route path="/invitacion/baul/:token" element={
           <BaulGlobalInvitacionRoute />
+        } />
+        <Route path="/tv" element={
+          <TvLandingRoute />
+        } />
+        <Route path="/tv/vincular/:code" element={
+          <ProtectedRoute>
+            <TvPairingRoute />
+          </ProtectedRoute>
         } />
         <Route path="/tv/:token" element={
           <TvSessionRoute />

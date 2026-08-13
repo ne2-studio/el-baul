@@ -35,6 +35,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<ChatMemory> ChatMemories => Set<ChatMemory>();
     public DbSet<ChatMemoryEmbedding> ChatMemoryEmbeddings => Set<ChatMemoryEmbedding>();
     public DbSet<TvSession> TvSessions => Set<TvSession>();
+    public DbSet<TvPairing> TvPairings => Set<TvPairing>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

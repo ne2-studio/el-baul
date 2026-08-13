@@ -48,6 +48,7 @@ public static class ServiceRegistration
         services.AddScoped<ISharedLinkRepository, SharedLinkRepository>();
         services.AddScoped<IBaulInviteLinkRepository, BaulInviteLinkRepository>();
         services.AddScoped<ITvSessionRepository, TvSessionRepository>();
+        services.AddScoped<ITvPairingRepository, TvPairingRepository>();
         services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
         services.AddScoped<IPhotoPersonaTagRepository, PhotoPersonaTagRepository>();
         services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();

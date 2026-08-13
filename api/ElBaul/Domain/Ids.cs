@@ -86,6 +86,13 @@ public readonly record struct TvSessionId(Guid Value) : IParsableId<TvSessionId>
     public static Result<TvSessionId> Parse(string? raw) => IdParsing.Parse(raw, v => new TvSessionId(v), "TV session id");
 }
 
+public readonly record struct TvPairingId(Guid Value) : IParsableId<TvPairingId>
+{
+    public static implicit operator Guid(TvPairingId id) => id.Value;
+    public override string ToString() => Value.ToString();
+    public static Result<TvPairingId> Parse(string? raw) => IdParsing.Parse(raw, v => new TvPairingId(v), "TV pairing id");
+}
+
 public readonly record struct RemovalRequestId(Guid Value) : IParsableId<RemovalRequestId>
 {
     public static implicit operator Guid(RemovalRequestId id) => id.Value;

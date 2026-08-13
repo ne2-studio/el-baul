@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, ImageIcon, Link2, MonitorPlay, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Bell, ImageIcon, Link2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import { CounterBadge } from '@/design-system/components/data-display/Badges';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { InviteFamilyModal } from '@/features/sharing/components/InviteFamilyModal';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
-import { TvSessionModal } from '@/features/tv/components/TvSessionModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +16,6 @@ import {
 import { Baul, Photo } from '@/types';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { renameBaul, setBaulCover } from '@/features/baules/useCases';
@@ -35,7 +33,6 @@ interface BaulSettingsMenuContainerProps {
 export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerProps) {
   const navigate = useNavigate();
   const { removalRequests } = usePersonasStore();
-  const tvModeEnabled = useAppConfigStore((state) => state.tvModeEnabled);
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   const { run, isPending } = useAsyncAction();
   const permissions = getBaulPermissions(baul);
@@ -44,15 +41,11 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
   const [showInviteFamilyModal, setShowInviteFamilyModal] = useState(false);
-  const [showTvSessionModal, setShowTvSessionModal] = useState(false);
 
   const canManageInvite = permissions.canManageBaulInvite;
   const canEditInfo = permissions.canEditBaul;
   const canSetCover = permissions.canSetBaulCover;
   const canReviewRemovalRequests = pendingRemovalRequestsCount > 0;
-  // No role gate, unlike the other entries here — every member with access to the baúl can
-  // start Modo TV, same as any other baúl action (see docs/API-CONVENTIONS.md: no read-only role).
-  const canViewInTv = tvModeEnabled;
 
   const handleSaveBaulInfo = async (name: string, description: string) => {
     const result = await run(() => renameBaul(baul.id, name, description), {
@@ -69,7 +62,7 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
     });
   };
 
-  if (!canManageInvite && !canEditInfo && !canSetCover && !canReviewRemovalRequests && !permissions.canRequestBaulDeletion && !canViewInTv) {
+  if (!canManageInvite && !canEditInfo && !canSetCover && !canReviewRemovalRequests && !permissions.canRequestBaulDeletion) {
     return null;
   }
 
@@ -82,15 +75,6 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
           </IconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          {canViewInTv && (
-            <DropdownMenuItem onClick={() => setShowTvSessionModal(true)}>
-              <MonitorPlay className="w-4 h-4 mr-2" />
-              Ver en TV
-            </DropdownMenuItem>
-          )}
-
-          {canViewInTv && canManageInvite && <DropdownMenuSeparator />}
-
           {canManageInvite && (
             <DropdownMenuItem onClick={() => setShowInviteFamilyModal(true)}>
               <Link2 className="w-4 h-4 mr-2" />
@@ -141,15 +125,6 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
           fetchLink={() => api.baules.getInviteLink(baul.id)}
           onRegenerate={() => api.baules.regenerateInviteLink(baul.id)}
           onCancel={() => setShowInviteFamilyModal(false)}
-          onToast={showToastMessage}
-        />
-      )}
-
-      {showTvSessionModal && (
-        <TvSessionModal
-          onCreate={() => api.tvSessions.create(baul.id)}
-          onCancelSession={(token) => api.tvSessions.cancel(token)}
-          onClose={() => setShowTvSessionModal(false)}
           onToast={showToastMessage}
         />
       )}

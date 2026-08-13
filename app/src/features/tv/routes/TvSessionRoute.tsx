@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Clock, Loader2 } from 'lucide-react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
+import { TvScreen } from '@/features/tv/components/TvScreen';
 import { formatPartialDate } from '@/app/utils/timeUtils';
 import { api } from '@/api';
 import { TvPhoto, TvSessionContent } from '@/types';
@@ -12,10 +13,11 @@ type ScreenState =
   | { status: 'empty'; baulName: string }
   | { status: 'ready'; content: TvSessionContent };
 
-// Modo TV's TV-side screen: full-bleed, dark, read-only, no shared app chrome — deliberately
-// not a responsive reuse of the mobile app (see docs PRD "Modo TV"). Anonymous by design: the
-// token in the URL is the only credential, so this route sits outside ProtectedRoute/PublicRoute
-// entirely (same pattern as BaulGlobalInvitacionRoute for the public invite landing).
+// Modo TV's actual viewing screen: full-bleed, dark, read-only — deliberately not a responsive
+// reuse of the mobile app (see docs PRD "Modo TV"). The TV only ever lands here by being
+// redirected from TvLandingRoute once its QR code gets claimed; the token in the URL is the
+// only credential, so this route sits outside ProtectedRoute/PublicRoute entirely (same pattern
+// as BaulGlobalInvitacionRoute for the public invite landing).
 export function TvSessionRoute() {
   const { token } = useParams<{ token: string }>();
   const [screen, setScreen] = useState<ScreenState>({ status: 'loading' });
@@ -151,14 +153,6 @@ function TvContextOverlay({ photo }: { photo: TvPhoto }) {
           "{photo.quote}"{photo.quoteAuthor && <> — {photo.quoteAuthor}</>}
         </p>
       )}
-    </div>
-  );
-}
-
-function TvScreen({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 bg-foreground flex flex-col items-center justify-center gap-4 px-10">
-      {children}
     </div>
   );
 }

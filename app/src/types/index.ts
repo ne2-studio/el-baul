@@ -21,6 +21,8 @@ type RecuerdoDto = ApiSchemas['RecuerdoDto'];
 type CreateTvSessionResultDto = ApiSchemas['CreateTvSessionResult'];
 type TvPhotoDto = ApiSchemas['TvPhotoDto'];
 type TvSessionContentDto = ApiSchemas['TvSessionContentDto'];
+type CreateTvPairingResultDto = ApiSchemas['CreateTvPairingResult'];
+type TvPairingStatusDto = ApiSchemas['TvPairingStatusDto'];
 type PhotoBatchDto = ApiSchemas['PhotoBatchDto'];
 type ChapterCreatedFeedDto = ApiSchemas['ChapterCreatedFeedDto'];
 type FeedItemDto = ApiSchemas['FeedItemDto'];
@@ -395,6 +397,30 @@ export class TvSessionContent {
   constructor(data: TvSessionContentDto) {
     this.baulName = data.baulName;
     this.photos = data.photos.map((p) => new TvPhoto(p));
+  }
+}
+
+// The TV's own handshake state — see docs PRD "Modo TV" and TvLandingRoute. ClaimUrl is what
+// the QR code encodes; the TV never shows it as text, only as the code itself.
+export class TvPairing {
+  code: string;
+  claimUrl: string;
+  expiresAt: string;
+
+  constructor(data: CreateTvPairingResultDto) {
+    this.code = data.code;
+    this.claimUrl = data.claimUrl;
+    this.expiresAt = data.expiresAt;
+  }
+}
+
+export class TvPairingStatus {
+  claimed: boolean;
+  sessionToken?: string;
+
+  constructor(data: TvPairingStatusDto) {
+    this.claimed = data.claimed;
+    this.sessionToken = data.sessionToken ?? undefined;
   }
 }
 

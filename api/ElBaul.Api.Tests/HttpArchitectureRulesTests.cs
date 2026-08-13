@@ -28,6 +28,8 @@ public class HttpArchitectureRulesTests
         new("GET", "/invitacion/baul/{token}"),
         new("GET", "/s/{token}"),
         new("GET", "/api/tv-sessions/{token}"),
+        new("POST", "/api/tv-pairings"),
+        new("GET", "/api/tv-pairings/{code}"),
         new("GET", "/health")
     ];
 
