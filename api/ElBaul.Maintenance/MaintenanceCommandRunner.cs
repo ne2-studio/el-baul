@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using System.Reflection;
+using ElBaul.Application.Chat;
+using ElBaul.Application.Memories;
+using ElBaul.InputPorts.Memories;
 using ElBaul.Infra;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,6 +69,16 @@ public static class MaintenanceCommandRunner
         builder.Host.UseSerilog();
 
         builder.Services.AddInfrastructure(builder.Configuration);
+
+        // Application-layer managers aren't part of AddInfrastructure (they live in
+        // ElBaul.Api.Common's manager DI graph, which this project deliberately never
+        // references — see docs/architecture/backend.md). Register here, one by one, only the
+        // managers a command actually needs; BackfillChatMemoriesCommand needs the real
+        // IChatMemoryExtractionManager (and the IRelevantChatMemorySelector it depends on) so
+        // it replays extraction through the exact same path the live app uses.
+        builder.Services.AddScoped<IRelevantChatMemorySelector, RelevantChatMemorySelector>();
+        builder.Services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
+
         builder.Services.AddSingleton(new MaintenanceCommandArguments(args.Skip(1).Where(arg => arg != "--dry-run").ToArray()));
         foreach (var (name, type) in Commands.Value)
         {
