@@ -57,6 +57,7 @@ export const Default = /* Default */ compose(S, "Default");
 export const FirstPhoto = /* First Photo */ compose(S, "FirstPhoto");
 export const LastPhoto = /* Last Photo */ compose(S, "LastPhoto");
 export const WithoutRecuerdos = /* Without Recuerdos */ compose(S, "WithoutRecuerdos");
+export const LoadingRecuerdos = /* Loading Recuerdos */ compose(S, "LoadingRecuerdos");
 export const ReadOnlyCollaborator = /* Read Only Collaborator */ compose(S, "ReadOnlyCollaborator");
 export const PhotoViewerMobileStack = /* Photo Viewer Mobile Stack */ compose(S, "PhotoViewerMobileStack");
 export const PhotoViewerDesktopSideNavigation = /* Photo Viewer Desktop Side Navigation */ compose(S, "PhotoViewerDesktopSideNavigation");

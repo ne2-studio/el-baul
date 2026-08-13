@@ -67,3 +67,17 @@ export const Interactive = function Render() {
     </div>
   );
 };
+
+// `YearStepperFromEmpty`'s `play` is a regression guard for the year
+// stepper-from-empty bug: it ends with the year field at "1985" (typed after
+// a stepUp()) and day/month still blank. No wrapper text, so
+// `initialValue={{ year: 1985 }}` reaches the identical rendered end state
+// directly — no interaction replay needed.
+export const YearStepperFromEmpty = function Render() {
+  return (
+    <PartialDatePicker
+      initialValue={{ year: 1985 } as PhotoDate}
+      onChange={() => {}}
+    />
+  );
+};

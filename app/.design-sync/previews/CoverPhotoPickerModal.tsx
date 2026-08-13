@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as S from "@ds-stories/src/features/photos/components/DeletePhotoModal.stories";
+import * as S from "@ds-stories/src/features/photos/components/CoverPhotoPickerModal.stories";
 
 function compose(S: any, key: string) {
   const meta: any = S.default ?? {};
@@ -38,36 +38,41 @@ function compose(S: any, key: string) {
 }
 
 // The story's `Default` export's true rendered state (what the real
-// storybook screenshot shows) is produced by its `play` function: it types
-// '  Aparece una persona que no quiere salir  ' into the "Motivo de la
-// retirada" textarea, which enables the (otherwise disabled) "Sí, retirar
-// foto" button. The compiled-preview harness never runs `play`, so composing
-// the story as-is renders the pre-play blank/disabled state instead.
-// DeletePhotoModal keeps `reason` as internal component state with no prop
-// to seed it, so we reach the identical end state through the real
-// component by replaying the same interaction `userEvent.type` performs:
-// set the textarea's value via the native setter (bypassing React's tracked
-// value so the subsequent `input` event is seen as a real change) and
-// dispatch a bubbling `input` event, which the component's own onChange
-// picks up exactly as a real keystroke would.
+// storybook screenshot shows) is produced by its `play` function: it clicks
+// the first photo thumbnail, which transitions the modal from the "pick a
+// photo" grid step to the "adjust cover" (zoom/position) step — THAT is what
+// the reference screenshot shows, not the initial grid. The compiled-preview
+// harness never runs `play`, so composing the story as-is renders the
+// pre-play grid step instead. `step` is internal component state with no
+// prop to seed it, so we reach the identical end state through the real
+// component by replaying the same click: find the first photo thumbnail
+// button (the story's own `getAllByRole('button', {name:'Foto'})` target)
+// and dispatch a real click on it — a plain `<button>`, so a native `.click()`
+// (unlike Radix triggers) is enough, no PointerEvent needed.
 const DefaultBase = compose(S, "Default");
 export const Default = function Render() {
   const ref = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    // BottomSheetModal now portals its content to document.body (it no
-    // longer renders in place), so the textarea is NOT a descendant of
-    // `ref.current` — query the document instead. (2026-08-13: confirmed via
-    // manual capture that this silently no-opped after a BottomSheetModal
-    // refactor, leaving the preview on the pre-play blank/disabled state.)
-    const textarea = document.querySelector<HTMLTextAreaElement>('textarea');
-    if (!textarea) return;
-    const setValue = Object.getOwnPropertyDescriptor(
-      window.HTMLTextAreaElement.prototype,
-      'value'
-    )?.set;
-    setValue?.call(textarea, '  Aparece una persona que no quiere salir  ');
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    // `fetchPage` resolves asynchronously — the photo grid isn't there yet
+    // on mount (still showing the loading spinner), so poll for the first
+    // thumbnail instead of querying once. BottomSheetModal portals its
+    // content to document.body (it doesn't render in place), so query the
+    // document, not this wrapper div.
+    let cancelled = false;
+    const tryClick = () => {
+      if (cancelled) return;
+      const img = document.querySelector<HTMLImageElement>('img[alt="Foto"]');
+      const button = img?.closest('button');
+      if (button) { button.click(); return; }
+      setTimeout(tryClick, 50);
+    };
+    tryClick();
+    return () => { cancelled = true; };
   }, []);
   return React.createElement('div', { ref }, React.createElement(DefaultBase));
 };
-export const Submitting = /* Submitting */ compose(S, "Submitting");
+export const Empty = /* Empty */ compose(S, "Empty");
+export const Loading = /* Loading */ compose(S, "Loading");
+export const CoverPickerSheetMobileGrid = /* CoverPickerSheetMobileGrid */ compose(S, "CoverPickerSheetMobileGrid");
+export const CoverPickerNarrowOverflowGrid = /* CoverPickerNarrowOverflowGrid */ compose(S, "CoverPickerNarrowOverflowGrid");
+export const CoverPickerDesktopDrawerGrid = /* CoverPickerDesktopDrawerGrid */ compose(S, "CoverPickerDesktopDrawerGrid");
