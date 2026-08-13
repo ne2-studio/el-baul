@@ -3,6 +3,29 @@ using ElBaul.OutputPorts.Shared;
 using ElBaul.Domain;
 namespace ElBaul.Maintenance.Tests;
 
+// Only the members BackfillChatMemoriesCommandTests actually needs vary; everything else gets
+// a harmless placeholder value, same shape as ElBaul.Tests.Fakes.StaticAppConfiguration but
+// local to this project (ElBaul.Maintenance.Tests doesn't reference ElBaul.Tests).
+internal sealed class StaticAppConfiguration(bool chatMemoryEnabled = true) : IAppConfiguration
+{
+    public string PublicUrl => "https://el-baul.test";
+    public string ApiPublicUrl => "https://api.el-baul.test";
+    public string AdminTestEmailRecipient => "admin@el-baul.test";
+    public string FunctionalTimeZoneId => "Europe/Madrid";
+    public string HelpCenterUrl => "https://el-baul-web.test/ayuda";
+    public string PrivacyPolicyUrl => "https://el-baul-web.test/legal/privacy-policy/";
+    public bool WelcomeEmailsEnabled => true;
+    public bool WeeklyDigestEmailsEnabled => true;
+    public bool ChatEnabled => true;
+    public bool ChatSuggestionsEnabled => true;
+    public bool SharedLinksEnabled => true;
+    public bool BaulFeedEnabled => true;
+    public bool PushDigestEnabled => true;
+    public bool ChatMemoryEnabled { get; } = chatMemoryEnabled;
+    public int ChatMemoryRetrievalLimit => 5;
+    public bool TvModeEnabled => true;
+}
+
 internal sealed class InMemoryMaintenancePhotoStorage : IPhotoStorage
 {
     private readonly Dictionary<string, byte[]> _objects = new();

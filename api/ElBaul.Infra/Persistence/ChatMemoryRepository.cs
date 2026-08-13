@@ -14,6 +14,9 @@ public class ChatMemoryRepository(ElBaulDbContext dbContext) : IChatMemoryReposi
     public Task<ChatMemory?> GetByIdAsync(ChatMemoryId chatMemoryId) =>
         dbContext.ChatMemories.AsNoTracking().FirstOrDefaultAsync(m => m.Id == chatMemoryId);
 
+    public async Task<IEnumerable<ChatMemory>> GetAllAsync() =>
+        await dbContext.ChatMemories.AsNoTracking().ToListAsync();
+
     public async Task CreateAsync(ChatMemory memory)
     {
         dbContext.ChatMemories.Add(memory);

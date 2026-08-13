@@ -14,6 +14,11 @@ public class InMemoryChatMessageRepository : IChatMessageRepository
         lock (_lock) return Task.FromResult(_messages.Where(m => m.BaulId == baulId && m.UserId == userId).OrderBy(m => m.CreatedAt).ToList().AsEnumerable());
     }
 
+    public Task<IEnumerable<ChatMessage>> GetAllAsync()
+    {
+        lock (_lock) return Task.FromResult(_messages.ToList().AsEnumerable());
+    }
+
     public Task CreateAsync(ChatMessage message)
     {
         lock (_lock) _messages.Add(message);

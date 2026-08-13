@@ -6,5 +6,9 @@ public interface IChatMessageRepository
     /// this is both the history shown in the UI and the history sent to the model.</summary>
     Task<IEnumerable<ChatMessage>> GetByBaulAndUserAsync(BaulId baulId, UserId userId);
 
+    /// <summary>Every chat message in the system, unscoped — used only by the one-off backfill
+    /// command (see ElBaul.Maintenance/Commands/BackfillChatMemoriesCommand.cs).</summary>
+    Task<IEnumerable<ChatMessage>> GetAllAsync();
+
     Task CreateAsync(ChatMessage message);
 }
