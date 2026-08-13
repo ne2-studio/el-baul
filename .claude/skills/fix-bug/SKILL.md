@@ -1,6 +1,7 @@
 ---
 name: fix-bug
 description: "Reproduces a reported bug, captures it with a failing regression test, fixes it, and verifies the original scenario."
+disable-model-invocation: true
 ---
 
 ## Goal
