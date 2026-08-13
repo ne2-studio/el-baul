@@ -49,6 +49,17 @@ public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
         return rows.Count > 0 ? rows[0] : null;
     }
 
+    public async Task<PhotoListRow?> GetMemorySuggestionAsync(BaulId baulId)
+    {
+        // Same `ORDER BY random()` reasoning as GetUntaggedSuggestionAsync above.
+        var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking()
+            .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
+            .Where(p => !dbContext.Recuerdos.Any(r => r.PhotoId == p.Id))
+            .OrderBy(_ => EF.Functions.Random())
+            .Take(1));
+        return rows.Count > 0 ? rows[0] : null;
+    }
+
     private async Task<IReadOnlyList<PhotoListRow>> BuildRowsAsync(IQueryable<Photo> query)
     {
         var photos = await query.ToListAsync();

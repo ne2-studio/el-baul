@@ -47,6 +47,23 @@ public class InMemoryPhotoListReadModel(
         return rows.Count > 0 ? rows[0] : null;
     }
 
+    public async Task<PhotoListRow?> GetMemorySuggestionAsync(BaulId baulId)
+    {
+        var withoutMemory = new List<Photo>();
+        foreach (var photo in await photoRepository.GetActiveByBaulIdAsync(baulId))
+        {
+            var recuerdos = await recuerdoRepository.GetByPhotoIdAsync(photo.Id);
+            if (!recuerdos.Any()) withoutMemory.Add(photo);
+        }
+        if (withoutMemory.Count == 0) return null;
+
+        // Random, not the first candidate found — matches PhotoListReadModel's
+        // `ORDER BY random()`, so the suggestion varies between visits on both stores.
+        var chosen = withoutMemory[Random.Shared.Next(withoutMemory.Count)];
+        var rows = await BuildRowsAsync([chosen]);
+        return rows.Count > 0 ? rows[0] : null;
+    }
+
     private async Task<IReadOnlyList<PhotoListRow>> BuildRowsAsync(List<Photo> photos)
     {
         if (photos.Count == 0) return [];

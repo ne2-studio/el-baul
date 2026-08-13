@@ -109,6 +109,28 @@ public static class ListReadModelContractScenarios
         Assert.Equal(candidate.Id, row.Id);
     }
 
+    public static async Task Photo_list_memory_suggestion_excludes_photos_with_a_recuerdo_deleted_and_other_baul(IListReadModelContractStore store)
+    {
+        var baulId = B(25);
+        var otherBaulId = B(26);
+        await SeedBaulAsync(store, baulId);
+        await SeedBaulAsync(store, otherBaulId);
+
+        var candidate = NewPhoto(P(25), baulId, chapterId: null, "candidate", T0, null);
+        var withRecuerdo = NewPhoto(P(26), baulId, chapterId: null, "with-recuerdo", T0, null);
+        var deleted = NewPhoto(P(27), baulId, chapterId: null, "deleted", T0, null).MarkDeleted("contract", T0);
+        var other = NewPhoto(P(28), otherBaulId, chapterId: null, "other", T0, null);
+
+        foreach (var photo in new[] { candidate, withRecuerdo, deleted, other })
+            await store.AddPhotoAsync(photo);
+        await store.AddRecuerdoAsync(NewRecuerdo(R(25), baulId, withRecuerdo.Id, chapterId: null, "ya escrito", T0));
+
+        var row = await store.PhotoLists.GetMemorySuggestionAsync(baulId);
+
+        Assert.NotNull(row);
+        Assert.Equal(candidate.Id, row.Id);
+    }
+
     public static async Task Chapter_list_aggregates_active_photos_recuerdos_latest_and_date_range(IListReadModelContractStore store)
     {
         var baulId = B(30);

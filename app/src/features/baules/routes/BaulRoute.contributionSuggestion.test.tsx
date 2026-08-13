@@ -11,6 +11,7 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { BaulRoute } from './BaulRoute';
 
 vi.mock('react-oidc-context', () => ({
@@ -33,6 +34,9 @@ vi.mock('@/features/baules/containers/BaulSettingsMenuContainer', () => ({
 }));
 vi.mock('@/features/baules/containers/ContributionSuggestionContainer', () => ({
   ContributionSuggestionContainer: () => <div>Sugerencia de contribución</div>,
+}));
+vi.mock('@/features/baules/containers/WriteMemorySuggestionContainer', () => ({
+  WriteMemorySuggestionContainer: () => <div>Sugerencia de recuerdo</div>,
 }));
 vi.mock('@/features/memories/containers/BaulFeedTabContainer', () => ({
   BaulFeedTabContainer: () => <div>Contenido de Recuerdos</div>,
@@ -69,14 +73,26 @@ describe('BaulRoute — cuándo se suprime la recomendación de contribución', 
     usePersonasStore.setState({ personas: { [baul.id]: [] } });
     // Caso base: nada en cooldown y no es la primera sesión — así cada test solo aísla la
     // condición que le interesa (isFirstAppLaunch o entrySource) en vez de arrastrar el estado
-    // que dejó el test anterior.
+    // que dejó el test anterior. writeMemorySuggestionRatio a 0 fuerza siempre la rama
+    // "etiqueta personas" — la elección aleatoria entre las dos recomendaciones tiene sus
+    // propios tests más abajo, que sí varían el ratio.
     useUIStore.setState({ isFirstAppLaunch: false });
+    useAppConfigStore.setState({ writeMemorySuggestionRatio: 0 });
   });
 
   it('se propone en una entrada normal (sin cooldown, sin ser la primera sesión)', async () => {
     renderAt(`/baules/${baul.id}`);
 
     expect(await screen.findByText('Sugerencia de contribución')).toBeInTheDocument();
+  });
+
+  it('propone "escribe un recuerdo" en vez de "etiqueta personas" cuando el ratio fuerza esa rama', async () => {
+    useAppConfigStore.setState({ writeMemorySuggestionRatio: 1 });
+
+    renderAt(`/baules/${baul.id}`);
+
+    expect(await screen.findByText('Sugerencia de recuerdo')).toBeInTheDocument();
+    expect(screen.queryByText('Sugerencia de contribución')).not.toBeInTheDocument();
   });
 
   it('se suprime en la primerísima sesión de la app', async () => {

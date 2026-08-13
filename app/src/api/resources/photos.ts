@@ -16,6 +16,7 @@ const PHOTO_SHARE = '/api/photos/{photoId}/share' satisfies PathTemplate;
 const PHOTO_PERSONAS = '/api/photos/{photoId}/personas' satisfies PathTemplate;
 const PHOTO_TAG_BATCH = '/api/photos/tag-batch' satisfies PathTemplate;
 const UNTAGGED_SUGGESTION = '/api/baules/{baulId}/photos/untagged-suggestion' satisfies PathTemplate;
+const MEMORY_SUGGESTION = '/api/baules/{baulId}/photos/memory-suggestion' satisfies PathTemplate;
 const PHOTO_NO_PERSONAS = '/api/photos/{photoId}/no-personas' satisfies PathTemplate;
 
 type PhotoDto = JsonResponse<typeof PHOTO_CHAPTER, 'put'>;
@@ -87,6 +88,10 @@ export const photosApi = {
     put<JsonResponse<typeof PHOTO_TAG_BATCH, 'put'>>(PHOTO_TAG_BATCH, { baulId, photoIds, personaIds } satisfies JsonRequest<typeof PHOTO_TAG_BATCH, 'put'>),
   getUntaggedSuggestion: async (baulId: string) => {
     const dto = await get<JsonResponse<typeof UNTAGGED_SUGGESTION, 'get'>>(path(UNTAGGED_SUGGESTION, { baulId }));
+    return dto ? new Photo(dto) : null;
+  },
+  getMemorySuggestion: async (baulId: string) => {
+    const dto = await get<JsonResponse<typeof MEMORY_SUGGESTION, 'get'>>(path(MEMORY_SUGGESTION, { baulId }));
     return dto ? new Photo(dto) : null;
   },
   confirmNoPersonas: async (photoId: string) => new Photo(await put<JsonResponse<typeof PHOTO_NO_PERSONAS, 'put'>>(path(PHOTO_NO_PERSONAS, { photoId }))),

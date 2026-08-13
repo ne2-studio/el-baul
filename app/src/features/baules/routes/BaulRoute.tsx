@@ -10,11 +10,13 @@ import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { BaulChaptersTabContainer } from '@/features/baules/containers/BaulChaptersTabContainer';
 import { ContributionSuggestionContainer } from '@/features/baules/containers/ContributionSuggestionContainer';
+import { WriteMemorySuggestionContainer } from '@/features/baules/containers/WriteMemorySuggestionContainer';
 import { BaulPersonasTabContainer } from '@/features/people/containers/BaulPersonasTabContainer';
 import { BaulFeedTabContainer } from '@/features/memories/containers/BaulFeedTabContainer';
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
 import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
 import { useUIStore } from '@/store/uiStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { getEntrySource } from '@/utils/entrySource';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -47,7 +49,8 @@ export const BaulRoute: React.FC = () => {
   // Solo se intenta cuando el punto de entrada es el feed ('recuerdos', el valor por defecto
   // de initialTab — cualquier otra pestaña llega por un state.activeTab explícito, es decir
   // por navegación directa, no por una entrada nueva al baúl), el baúl no está en cooldown
-  // (ver uiStore: por baulId, 60 minutos fijos, persistido en localStorage), no es la
+  // (ver uiStore: por baulId, persistido en localStorage, duración configurable vía appsettings
+  // — ver useAppConfigStore.contributionSuggestionCooldownMinutes), no es la
   // primerísima sesión en la app (isFirstAppLaunch: la persona aún no ha visto cómo funciona
   // el resto de la app) y la navegación no viene de una notificación push ni de un email (ver
   // utils/entrySource): en ambos casos la persona llega con una intención propia (ver una
@@ -57,8 +60,16 @@ export const BaulRoute: React.FC = () => {
     !useUIStore.getState().isContributionSuggestionOnCooldown(baulId ?? '') &&
     !useUIStore.getState().isFirstAppLaunch &&
     !getEntrySource(location.search);
-  const [showContributionSuggestion, setShowContributionSuggestion] = useState(
-    () => !!baulId && canShowContributionSuggestion()
+  // Decide entre las dos recomendaciones de contribución cada vez que se propone una: "escribe
+  // un recuerdo" con probabilidad writeMemorySuggestionRatio (20% por defecto, configurable vía
+  // appsettings — ver useAppConfigStore), "etiqueta personas" el resto. Elegido una sola vez por
+  // aparición (no en cada render) para que la pantalla no cambie de tipo sola a media decisión.
+  const pickContributionSuggestionType = (): 'tag' | 'memory' | null => {
+    if (!canShowContributionSuggestion()) return null;
+    return Math.random() < useAppConfigStore.getState().writeMemorySuggestionRatio ? 'memory' : 'tag';
+  };
+  const [contributionSuggestionType, setContributionSuggestionType] = useState<'tag' | 'memory' | null>(
+    () => (baulId ? pickContributionSuggestionType() : null)
   );
 
   // El selector de workspace navega a `/baules/${otroBaulId}` reutilizando esta misma instancia
@@ -68,7 +79,7 @@ export const BaulRoute: React.FC = () => {
   // aunque el baúl anterior siga en cooldown.
   useEffect(() => {
     if (!baulId) return;
-    setShowContributionSuggestion(canShowContributionSuggestion());
+    setContributionSuggestionType(pickContributionSuggestionType());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baulId]);
 
@@ -79,16 +90,17 @@ export const BaulRoute: React.FC = () => {
 
   const baulPermissions = getBaulPermissions(baul);
 
-  if (showContributionSuggestion) {
-    return (
-      <ContributionSuggestionContainer
-        baulId={baul.id}
-        onResolved={() => {
-          startContributionSuggestionCooldown(baul.id);
-          setShowContributionSuggestion(false);
-        }}
-      />
-    );
+  const resolveContributionSuggestion = () => {
+    startContributionSuggestionCooldown(baul.id);
+    setContributionSuggestionType(null);
+  };
+
+  if (contributionSuggestionType === 'tag') {
+    return <ContributionSuggestionContainer baulId={baul.id} onResolved={resolveContributionSuggestion} />;
+  }
+
+  if (contributionSuggestionType === 'memory') {
+    return <WriteMemorySuggestionContainer baulId={baul.id} onResolved={resolveContributionSuggestion} />;
   }
 
   const handleSelectChapter = async (chapter: { id: string }) => {

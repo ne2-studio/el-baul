@@ -35,6 +35,13 @@ public class ListReadModelContractTests(PostgresFixture fixture) : PersistenceTe
     }
 
     [Fact]
+    public async Task Photo_list_memory_suggestion_excludes_photos_with_a_recuerdo_deleted_and_other_baul()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        await ListReadModelContractScenarios.Photo_list_memory_suggestion_excludes_photos_with_a_recuerdo_deleted_and_other_baul(new EfStore(dbContext));
+    }
+
+    [Fact]
     public async Task Chapter_list_aggregates_active_photos_recuerdos_latest_and_date_range()
     {
         await using var dbContext = Fixture.CreateDbContext();

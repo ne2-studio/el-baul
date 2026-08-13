@@ -28,6 +28,13 @@ public interface IPhotoListReadModel
     /// than oldest-first so the suggestion varies between visits instead of always landing on
     /// the same photo.</summary>
     Task<PhotoListRow?> GetUntaggedSuggestionAsync(BaulId baulId);
+
+    /// <summary>A random active photo in a baúl with no recuerdo written on it yet, or null if
+    /// none remain — backs the "write a memory" contribution suggestion, the alternative to
+    /// GetUntaggedSuggestionAsync shown on entering a baúl's feed (see ContributionSuggestion
+    /// appsettings for the split between the two). Random for the same reason as
+    /// GetUntaggedSuggestionAsync.</summary>
+    Task<PhotoListRow?> GetMemorySuggestionAsync(BaulId baulId);
 }
 
 public sealed record PhotoListRow(

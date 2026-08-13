@@ -118,6 +118,14 @@ public class PhotosController(
         return result.ToActionResult();
     }
 
+    [HttpGet("baules/{baulId:guid}/photos/memory-suggestion")]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMemorySuggestion(BaulId baulId)
+    {
+        var result = await photoManager.GetMemorySuggestionAsync(baulId);
+        return result.ToActionResult();
+    }
+
     [HttpPut("photos/{photoId:guid}/no-personas")]
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ConfirmNoPersonas(PhotoId photoId)

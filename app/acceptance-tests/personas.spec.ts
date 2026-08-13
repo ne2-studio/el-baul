@@ -101,7 +101,7 @@ test('joining via the global invite link → change role → revoke access → a
   await page.getByRole('button', { name: 'Opciones de la persona' }).click();
   await page.getByRole('menuitem', { name: 'Gestionar acceso' }).click();
   await page.getByRole('combobox').selectOption('administrador');
-  await page.getByRole('button', { name: 'Cerrar' }).click();
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
   await page.getByRole('button', { name: 'Opciones de la persona' }).click();
   await page.getByRole('menuitem', { name: 'Revocar acceso' }).click();

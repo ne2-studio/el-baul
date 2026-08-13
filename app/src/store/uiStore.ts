@@ -1,9 +1,14 @@
 import { create } from 'zustand';
 import type { ToastVariant } from '@/design-system/components/feedback/Toast';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 const CONTRIBUTION_SUGGESTION_COOLDOWN_STORAGE_KEY = 'elbaul.contributionSuggestionCooldowns';
-// Fijo en cliente a propósito (no viene del backend ni es configurable): 60 minutos.
-const CONTRIBUTION_SUGGESTION_COOLDOWN_MS = 60 * 60 * 1000;
+// Configurable vía appsettings (ver useAppConfigStore.contributionSuggestionCooldownMinutes) en
+// vez de fijo, para poder acortarlo en pruebas — se lee en cada llamada, no una vez al cargar el
+// módulo, así un fetchAppConfig() posterior (la config tarda en llegar del backend) sí se aplica.
+function contributionSuggestionCooldownMs(): number {
+  return useAppConfigStore.getState().contributionSuggestionCooldownMinutes * 60 * 1000;
+}
 
 // try/catch en ambos lados, mismo motivo que useCurrentBaulStore: modo privado o cuota de
 // localStorage llena no debe romper la app — en el peor caso se pierde la persistencia entre
@@ -122,14 +127,15 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   isContributionSuggestionOnCooldown: (baulId) => {
     const dismissedAt = readContributionSuggestionCooldowns()[baulId];
-    return dismissedAt !== undefined && Date.now() - dismissedAt < CONTRIBUTION_SUGGESTION_COOLDOWN_MS;
+    return dismissedAt !== undefined && Date.now() - dismissedAt < contributionSuggestionCooldownMs();
   },
   startContributionSuggestionCooldown: (baulId) => {
     const cooldowns = readContributionSuggestionCooldowns();
+    const cooldownMs = contributionSuggestionCooldownMs();
     // Aprovecha la escritura para descartar entradas ya caducadas — sin esto, un baúl visitado
     // una vez se queda en localStorage para siempre.
     for (const [id, dismissedAt] of Object.entries(cooldowns)) {
-      if (Date.now() - dismissedAt >= CONTRIBUTION_SUGGESTION_COOLDOWN_MS) delete cooldowns[id];
+      if (Date.now() - dismissedAt >= cooldownMs) delete cooldowns[id];
     }
     cooldowns[baulId] = Date.now();
     writeContributionSuggestionCooldowns(cooldowns);

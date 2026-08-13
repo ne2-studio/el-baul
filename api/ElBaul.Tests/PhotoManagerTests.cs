@@ -860,6 +860,61 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task GetMemorySuggestionAsync_ShouldReturnNull_WhenBaulHasNoPhotos()
+    {
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
+        var manager = CreateManager(CustodioId);
+
+        var result = await manager.GetMemorySuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
+    public async Task GetMemorySuggestionAsync_ShouldSkipPhotosWithARecuerdo_AndReturnOneWithout()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var withMemoryId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        await _fixture.Recuerdos.CreateAsync(
+            new Recuerdo(new RecuerdoId(Guid.NewGuid()), withMemoryId, chapterId, baulId, new UserId(CustodioId), "ya escrito", _fixture.Clock.UtcNow()));
+        var withoutMemoryId = await _fixture.AddPhotoAsync(baulId, chapterId);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetMemorySuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.Equal(withoutMemoryId.ToString(), result.Value!.Id);
+    }
+
+    [Fact]
+    public async Task GetMemorySuggestionAsync_ShouldIgnoreDeletedPhotos()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        var manager = CreateManager(CustodioId);
+        await manager.DeleteAsync(photoId, "reason");
+
+        var result = await manager.GetMemorySuggestionAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
+    public async Task GetMemorySuggestionAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
+    {
+        var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
+        var manager = CreateManager("stranger");
+
+        var result = await manager.GetMemorySuggestionAsync(baulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
     public async Task ConfirmNoPersonasAsync_ShouldFail_WhenPhotoNotFound()
     {
         var manager = CreateManager(CustodioId);

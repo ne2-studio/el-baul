@@ -25,6 +25,11 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
         var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
         var appUrl = configuration.GetValue<string>("App:PublicUrl");
         var googlePlayUrl = configuration.GetValue<string>("App:GooglePlayUrl");
+        // Defaults match the values this feature shipped with (60 min cooldown, 20% chance of
+        // "write a memory" over "tag people") — configurable here purely so testing can shrink
+        // the cooldown/skew the ratio without a deploy, see AppConfigResponse.
+        var contributionSuggestionCooldownMinutes = configuration.GetValue("Features:ContributionSuggestionCooldownMinutes", 60);
+        var writeMemorySuggestionRatio = configuration.GetValue("Features:WriteMemorySuggestionRatio", 0.2);
 
         return Ok(new
         {
@@ -38,7 +43,9 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
             },
             helpCenterUrl,
             appUrl,
-            googlePlayUrl
+            googlePlayUrl,
+            contributionSuggestionCooldownMinutes,
+            writeMemorySuggestionRatio
         });
     }
 }

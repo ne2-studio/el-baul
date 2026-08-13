@@ -46,6 +46,11 @@ public interface IPhotoManager
     /// confirmed as having nobody in it, or a successful null result once none remain.</summary>
     Task<Result<PhotoDto?>> GetUntaggedSuggestionAsync(BaulId baulId);
 
+    /// <summary>The photo behind the "write a memory" contribution suggestion, the alternative
+    /// to GetUntaggedSuggestionAsync shown on entering a baúl's feed — a random active photo
+    /// with no recuerdo written yet, or a successful null result once none remain.</summary>
+    Task<Result<PhotoDto?>> GetMemorySuggestionAsync(BaulId baulId);
+
     /// <summary>Confirms nobody appears in this photo, so it stops being proposed by the
     /// contribution suggestion even though it never received a PhotoPersonaTag. Reversed
     /// automatically the moment the photo actually gets tagged.</summary>

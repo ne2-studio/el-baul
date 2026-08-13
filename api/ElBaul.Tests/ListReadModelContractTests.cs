@@ -24,6 +24,10 @@ public class ListReadModelContractTests
         ListReadModelContractScenarios.Photo_list_untagged_suggestion_excludes_tagged_confirmed_deleted_and_other_baul(new LiteStore());
 
     [Fact]
+    public Task Photo_list_memory_suggestion_excludes_photos_with_a_recuerdo_deleted_and_other_baul() =>
+        ListReadModelContractScenarios.Photo_list_memory_suggestion_excludes_photos_with_a_recuerdo_deleted_and_other_baul(new LiteStore());
+
+    [Fact]
     public Task Chapter_list_aggregates_active_photos_recuerdos_latest_and_date_range() =>
         ListReadModelContractScenarios.Chapter_list_aggregates_active_photos_recuerdos_latest_and_date_range(new LiteStore());
 

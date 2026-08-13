@@ -417,4 +417,18 @@ public class PhotoManager(
         return Result.Success<PhotoDto?>(dtos[0]);
     }
 
+    public async Task<Result<PhotoDto?>> GetMemorySuggestionAsync(BaulId baulId)
+    {
+        var userId = currentUserProvider.GetUserId();
+
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Memory photo suggestion");
+        if (auth.IsFailure) return Result.Failure<PhotoDto?>(auth.Error);
+
+        var row = await photoListReadModel.GetMemorySuggestionAsync(baulId);
+        if (row is null) return Result.Success<PhotoDto?>(null);
+
+        var dtos = await photoDtoProjector.ProjectAsync([row], auth.Value.IsAdmin, userId);
+        return Result.Success<PhotoDto?>(dtos[0]);
+    }
+
 }
