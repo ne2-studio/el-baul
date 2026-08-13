@@ -28,7 +28,18 @@
       "Bash(git diff *)",
       "Bash(git log *)",
       "Bash(git show *)",
-      "Bash(lsof -ti* -sTCP:LISTEN)"
+      "Bash(lsof -ti* -sTCP:LISTEN)",
+      "Bash(ls*)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(rg *)",
+      "Bash(pwd)",
+      "Bash(wc *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(./scripts/run-env *)",
+      "Bash(./scripts/verify *)"
     ]
   }
 }
