@@ -15,11 +15,12 @@ namespace ElBaul.Api.Controllers;
 /// valid or not: a broken image icon in an email would be worse than a silently-skipped write,
 /// and this must never let a client distinguish a valid token from an invalid one.
 ///
-/// Gmail (and some other providers) prefetch images server-side as soon as the email is
-/// delivered, before any human opens it — that request carries a recognizable User-Agent
-/// (GoogleImageProxy) which is filtered out below so it doesn't count as a real open. Apple
-/// Mail Privacy Protection has no distinguishing signal and is a known, accepted gap: filtering
-/// it would risk dropping genuine fast-opens too.
+/// Every provider that server-side-prefetches images (Gmail's GoogleImageProxy, Yahoo's
+/// YahooMailProxy, Apple Mail Privacy Protection, ...) counts as an open here. None of them
+/// carry a signal that reliably distinguishes a prefetch from a human opening the email, so
+/// filtering only the ones with a recognizable User-Agent just skewed opens towards non-Gmail/
+/// Yahoo recipients without actually fixing the underlying imprecision. Opens are best treated
+/// as a directional signal, the same caveat every ESP (Mailchimp, ConvertKit, ...) ships with.
 /// </summary>
 [AllowAnonymous]
 [ApiController]
@@ -34,14 +35,12 @@ public class EmailOpenController(
     private static readonly byte[] PixelBytes = Convert.FromBase64String(
         "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==");
 
-    private static readonly string[] KnownProxyUserAgentFragments = ["GoogleImageProxy", "YahooMailProxy"];
-
     [HttpGet("{token}.gif")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Open(string token)
     {
         var sentEmailId = emailLinkSigner.TryDecodeOpenToken(token);
-        if (sentEmailId is not null && !IsKnownProxyUserAgent(Request.Headers.UserAgent.ToString()))
+        if (sentEmailId is not null)
         {
             await sentEmailRepository.RegisterOpenAsync(sentEmailId.Value, clock.UtcNow());
         }
@@ -49,7 +48,4 @@ public class EmailOpenController(
         Response.Headers[HeaderNames.CacheControl] = "no-store";
         return File(PixelBytes, "image/gif");
     }
-
-    private static bool IsKnownProxyUserAgent(string userAgent) =>
-        KnownProxyUserAgentFragments.Any(fragment => userAgent.Contains(fragment, StringComparison.OrdinalIgnoreCase));
 }
