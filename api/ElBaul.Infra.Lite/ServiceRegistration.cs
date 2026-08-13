@@ -12,6 +12,7 @@ using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Support;
+using ElBaul.OutputPorts.TvMode;
 using ElBaul.OutputPorts.Users;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,7 @@ public static class ServiceRegistration
         services.AddScoped<IRecuerdoListReadModel, InMemoryRecuerdoListReadModel>();
         services.AddSingleton<ISharedLinkRepository, InMemorySharedLinkRepository>();
         services.AddSingleton<IBaulInviteLinkRepository, InMemoryBaulInviteLinkRepository>();
+        services.AddSingleton<ITvSessionRepository, InMemoryTvSessionRepository>();
         services.AddSingleton<IChatMessageRepository, InMemoryChatMessageRepository>();
         services.AddSingleton<IRecuerdoEmbeddingRepository, InMemoryRecuerdoEmbeddingRepository>();
         services.AddSingleton<IChatMemoryRepository, InMemoryChatMemoryRepository>();

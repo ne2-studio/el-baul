@@ -8,6 +8,7 @@ using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Sharing;
+using ElBaul.OutputPorts.TvMode;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,6 +34,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<BaulFeedCursor> BaulFeedCursors => Set<BaulFeedCursor>();
     public DbSet<ChatMemory> ChatMemories => Set<ChatMemory>();
     public DbSet<ChatMemoryEmbedding> ChatMemoryEmbeddings => Set<ChatMemoryEmbedding>();
+    public DbSet<TvSession> TvSessions => Set<TvSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

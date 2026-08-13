@@ -19,6 +19,9 @@ interface AppConfigState {
   // Defaults to false so the "Gestionar memoria" chat menu entry never flashes visible before
   // the backend confirms the rollout is on.
   chatMemoryEnabled: boolean;
+  // Defaults to false so the "Ver en TV" menu entry never flashes visible before the backend
+  // confirms Modo TV's rollout is on — see docs PRD "Modo TV".
+  tvModeEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -47,6 +50,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   baulFeedEnabled: false,
   androidAppBannerEnabled: false,
   chatMemoryEnabled: false,
+  tvModeEnabled: false,
   helpCenterUrl: '',
   appUrl: window.location.origin,
   googlePlayUrl: '',
@@ -63,6 +67,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         baulFeedEnabled: config.features.baulFeedEnabled ?? false,
         androidAppBannerEnabled: config.features.androidAppBannerEnabled ?? false,
         chatMemoryEnabled: config.features.chatMemoryEnabled ?? false,
+        tvModeEnabled: config.features.tvModeEnabled ?? false,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
         googlePlayUrl: config.googlePlayUrl ?? '',

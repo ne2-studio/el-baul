@@ -24,6 +24,9 @@ Anonymous exceptions:
 - `GET /email/open/{token}.gif` — the open-tracking pixel loaded by the recipient's email
   client, never carries auth.
 - `GET /s/{token}` — public shared photo/recuerdo landing with Open Graph metadata.
+- `GET /api/tv-sessions/{token}` — public, rate-limited; Modo TV's temporary read-only session
+  content (baúl name + every photo's date/chapter/tagged people/latest recuerdo). The token
+  itself is the only credential — the TV never authenticates as a user.
 - `GET /health` — liveness check.
 
 ## Errors

@@ -14,6 +14,7 @@ using ElBaul.Application.Photos;
 using ElBaul.Application.Recuerdos;
 using ElBaul.Application.Sharing;
 using ElBaul.Application.Support;
+using ElBaul.Application.TvMode;
 using ElBaul.Application.Users;
 using ElBaul.Infra;
 using ElBaul.InputPorts.Admin;
@@ -29,6 +30,7 @@ using ElBaul.InputPorts.Photos;
 using ElBaul.InputPorts.Recuerdos;
 using ElBaul.InputPorts.Sharing;
 using ElBaul.InputPorts.Support;
+using ElBaul.InputPorts.TvMode;
 using ElBaul.InputPorts.Users;
 using Ne2Studio.Common;
 using System.ComponentModel;
@@ -253,6 +255,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
         builder.Services.AddScoped<ISharedLinkManager, SharedLinkManager>();
         builder.Services.AddScoped<IBaulInviteLinkManager, BaulInviteLinkManager>();
+        builder.Services.AddScoped<ITvSessionManager, TvSessionManager>();
 
         // "Ai" costs a real AI call every time the chat opens with no history and can fail;
         // "Static" (the default) is deterministic templates filled from the baúl's own

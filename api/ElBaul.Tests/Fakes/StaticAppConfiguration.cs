@@ -18,7 +18,8 @@ public class StaticAppConfiguration(
     bool baulFeedEnabled = true,
     bool pushDigestEnabled = true,
     bool chatMemoryEnabled = true,
-    int chatMemoryRetrievalLimit = 5)
+    int chatMemoryRetrievalLimit = 5,
+    bool tvModeEnabled = true)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -36,4 +37,5 @@ public class StaticAppConfiguration(
     public bool PushDigestEnabled { get; } = pushDigestEnabled;
     public bool ChatMemoryEnabled { get; } = chatMemoryEnabled;
     public int ChatMemoryRetrievalLimit { get; } = chatMemoryRetrievalLimit;
+    public bool TvModeEnabled { get; } = tvModeEnabled;
 }

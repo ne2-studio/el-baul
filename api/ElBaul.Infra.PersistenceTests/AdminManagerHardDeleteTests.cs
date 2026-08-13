@@ -48,6 +48,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             recuerdos,
             new SharedLinkRepository(dbContext),
             inviteLinks,
+            new TvSessionRepository(dbContext),
             photoPersonaTags,
             new UnitOfWork(dbContext));
 
@@ -146,6 +147,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             recuerdos,
             new SharedLinkRepository(dbContext),
             new BaulInviteLinkRepository(dbContext),
+            new TvSessionRepository(dbContext),
             photoPersonaTags,
             new UnitOfWork(dbContext));
 

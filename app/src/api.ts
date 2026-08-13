@@ -25,6 +25,7 @@ import { pushNotificationsApi, usersApi } from './api/resources/users';
 import { recuerdosApi } from './api/resources/recuerdos';
 import { sharedLinksApi } from './api/resources/sharedLinks';
 import { supportApi } from './api/resources/support';
+import { tvSessionsApi } from './api/resources/tvSessions';
 
 export const api = {
   baules: baulesApi,
@@ -33,6 +34,7 @@ export const api = {
   photoBatches: photoBatchesApi,
   recuerdos: recuerdosApi,
   sharedLinks: sharedLinksApi,
+  tvSessions: tvSessionsApi,
   baulInvites: baulInvitesApi,
   users: usersApi,
   pushNotifications: pushNotificationsApi,

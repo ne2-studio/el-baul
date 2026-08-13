@@ -5,6 +5,7 @@ using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
+using ElBaul.OutputPorts.TvMode;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;
@@ -17,6 +18,7 @@ public class InMemoryAdminBaulDeletionRepository(
     IRecuerdoRepository recuerdoRepository,
     ISharedLinkRepository sharedLinkRepository,
     IBaulInviteLinkRepository baulInviteLinkRepository,
+    ITvSessionRepository tvSessionRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IUnitOfWork unitOfWork)
     : IAdminBaulDeletionRepository
@@ -37,6 +39,7 @@ public class InMemoryAdminBaulDeletionRepository(
             await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
             await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
             await baulInviteLinkRepository.DeleteByBaulIdAsync(baulId);
+            await tvSessionRepository.DeleteByBaulIdAsync(baulId);
             await recuerdoRepository.DeleteByBaulIdAsync(baulId);
             await photoRepository.DeleteByBaulIdAsync(baulId);
             await chapterRepository.DeleteByBaulIdAsync(baulId);

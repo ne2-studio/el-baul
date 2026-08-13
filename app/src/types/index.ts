@@ -18,6 +18,9 @@ type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCro
   Partial<Pick<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'>>;
 type PhotoDto = ApiSchemas['PhotoDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
+type CreateTvSessionResultDto = ApiSchemas['CreateTvSessionResult'];
+type TvPhotoDto = ApiSchemas['TvPhotoDto'];
+type TvSessionContentDto = ApiSchemas['TvSessionContentDto'];
 type PhotoBatchDto = ApiSchemas['PhotoBatchDto'];
 type ChapterCreatedFeedDto = ApiSchemas['ChapterCreatedFeedDto'];
 type FeedItemDto = ApiSchemas['FeedItemDto'];
@@ -347,6 +350,51 @@ export class RemovalRequest {
     this.reason = data.reason ?? '';
     this.requestDate = getRelativeTime(new Date(data.requestDate));
     this.status = data.status as 'pending' | 'approved' | 'rejected';
+  }
+}
+
+export class TvSession {
+  token: string;
+  url: string;
+  expiresAt: string;
+
+  constructor(data: CreateTvSessionResultDto) {
+    this.token = data.token;
+    this.url = data.url;
+    this.expiresAt = data.expiresAt;
+  }
+}
+
+// One photo as shown on the TV screen — already flattened server-side (chapter name, tagged
+// persona nicknames, latest recuerdo as the "quote") so the anonymous TV client never makes a
+// second call per photo. See docs PRD "Modo TV".
+export class TvPhoto {
+  id: string;
+  imageUrl: string;
+  date?: PhotoDate;
+  chapterName?: string;
+  personaNames: string[];
+  quote?: string;
+  quoteAuthor?: string;
+
+  constructor(data: TvPhotoDto) {
+    this.id = data.id;
+    this.imageUrl = data.imageUrl;
+    this.date = photoDateFrom(data.dateYear, data.dateMonth, data.dateDay);
+    this.chapterName = data.chapterName ?? undefined;
+    this.personaNames = data.personaNames;
+    this.quote = data.quote ?? undefined;
+    this.quoteAuthor = data.quoteAuthor ?? undefined;
+  }
+}
+
+export class TvSessionContent {
+  baulName: string;
+  photos: TvPhoto[];
+
+  constructor(data: TvSessionContentDto) {
+    this.baulName = data.baulName;
+    this.photos = data.photos.map((p) => new TvPhoto(p));
   }
 }
 

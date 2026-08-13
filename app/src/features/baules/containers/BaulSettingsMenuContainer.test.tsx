@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Baul } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { BaulSettingsMenuContainer } from './BaulSettingsMenuContainer';
 
 vi.mock('@/features/baules/useCases', () => ({
@@ -16,10 +17,12 @@ vi.mock('@/api', () => ({
   api: {
     baules: { getInviteLink: vi.fn(), regenerateInviteLink: vi.fn() },
     photos: { getPage: vi.fn() },
+    tvSessions: { create: vi.fn(), cancel: vi.fn() },
   },
 }));
 
 import { renameBaul } from '@/features/baules/useCases';
+import { api } from '@/api';
 
 function baul(overrides: Partial<Baul> = {}): Baul {
   return {
@@ -43,6 +46,7 @@ function renderContainer(b: Baul) {
 describe('BaulSettingsMenuContainer', () => {
   beforeEach(() => {
     usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    useAppConfigStore.setState({ tvModeEnabled: false });
     vi.clearAllMocks();
   });
 
@@ -50,6 +54,21 @@ describe('BaulSettingsMenuContainer', () => {
     renderContainer(baul({ role: 'colaborador', isCustodio: false }));
 
     expect(screen.queryByRole('button', { name: 'Opciones del baúl' })).not.toBeInTheDocument();
+  });
+
+  it('shows "Ver en TV" for any member once Modo TV is enabled, even with no other permission', async () => {
+    const user = userEvent.setup();
+    useAppConfigStore.setState({ tvModeEnabled: true });
+    vi.mocked(api.tvSessions.create).mockResolvedValue({
+      token: 'x7k9', url: 'https://app.el-baul.test/tv/x7k9', expiresAt: new Date().toISOString(),
+    } as never);
+
+    renderContainer(baul({ role: 'colaborador', isCustodio: false }));
+    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(await screen.findByText('Ver en TV'));
+
+    expect(api.tvSessions.create).toHaveBeenCalledWith('baul-1');
+    expect(await screen.findByText('app.el-baul.test/tv/x7k9')).toBeInTheDocument();
   });
 
   it('shows the menu trigger for a custodio', () => {

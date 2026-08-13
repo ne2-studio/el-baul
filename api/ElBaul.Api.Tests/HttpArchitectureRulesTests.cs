@@ -26,6 +26,7 @@ public class HttpArchitectureRulesTests
         new("GET", "/email/open/{token}.gif"),
         new("GET", "/invitacion/baul/{token}"),
         new("GET", "/s/{token}"),
+        new("GET", "/api/tv-sessions/{token}"),
         new("GET", "/health")
     ];
 

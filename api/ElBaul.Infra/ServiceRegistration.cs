@@ -19,6 +19,7 @@ using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Support;
+using ElBaul.OutputPorts.TvMode;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +47,7 @@ public static class ServiceRegistration
         services.AddScoped<IRecuerdoListReadModel, RecuerdoListReadModel>();
         services.AddScoped<ISharedLinkRepository, SharedLinkRepository>();
         services.AddScoped<IBaulInviteLinkRepository, BaulInviteLinkRepository>();
+        services.AddScoped<ITvSessionRepository, TvSessionRepository>();
         services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
         services.AddScoped<IPhotoPersonaTagRepository, PhotoPersonaTagRepository>();
         services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();

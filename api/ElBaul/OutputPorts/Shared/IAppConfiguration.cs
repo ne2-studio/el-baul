@@ -79,4 +79,11 @@ public interface IAppConfiguration
     /// a private const) since the PRD calls for it to be tunable without a deploy.
     /// </summary>
     int ChatMemoryRetrievalLimit { get; }
+
+    /// <summary>
+    /// Kill switch for Modo TV (temporary read-only TV sessions). The backend checks it before
+    /// creating a session and before serving its content, same "not just hiding the UI" shape
+    /// as SharedLinksEnabled. Defaults to false.
+    /// </summary>
+    bool TvModeEnabled { get; }
 }
