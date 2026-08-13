@@ -34,7 +34,8 @@ public class PersonaManagerTests
             _fixture.PhotoPersonaTags,
             new PhotoUploadWorkflow(
                 NullLogger<PhotoUploadWorkflow>.Instance, _fixture.Photos,
-                new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer()),
+                new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor,
+                    new FakePhotoImageNormalizer(), new FakeImageProcessor(), new ImagePolicy()),
                 new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork()),
             new PersonaDtoProjector(_fixture.Photos, _photoStorage, _fixture.Users), new FakeUnitOfWork());
 

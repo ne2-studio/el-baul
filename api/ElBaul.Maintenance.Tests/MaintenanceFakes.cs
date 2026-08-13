@@ -1,3 +1,4 @@
+using ElBaul.Infra.Lite;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using ElBaul.Domain;
@@ -80,6 +81,8 @@ internal sealed class FailingPhotoRepository : IPhotoRepository
     public Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetUndatedAsync() => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetMissingSizeBytesAsync() => Task.FromResult(Enumerable.Empty<Photo>());
+    public Task<IEnumerable<Photo>> GetMissingDimensionsAsync() => Task.FromResult(Enumerable.Empty<Photo>());
+    public Task<IEnumerable<Photo>> GetOversizedAsync(int maxLongEdge) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync() => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId) => Task.FromResult(Enumerable.Empty<Photo>());
@@ -92,4 +95,72 @@ internal sealed class FailingPhotoRepository : IPhotoRepository
 internal sealed class FixedClock(DateTime now) : IClock
 {
     public DateTime UtcNow() => now;
+}
+
+/// <summary>Test-local IImageProcessor double for BackfillNormalizePhotosCommandTests — maps
+/// each seeded key's stored bytes to a canned ImageMetadata, so a test controls exactly what
+/// "the actual stored asset" looks like independently of what's persisted on the Photo row
+/// (the distinction the command's own idempotency/self-heal behavior depends on).</summary>
+internal sealed class StubImageProcessor : IImageProcessor
+{
+    private readonly Dictionary<byte[], ImageMetadata?> _metadataByContent = new();
+    private readonly HashSet<byte[]> _throwOnNormalize = new();
+
+    public void Seed(byte[] content, ImageMetadata? metadata) => _metadataByContent[content] = metadata;
+
+    public void ThrowOnNormalize(byte[] content) => _throwOnNormalize.Add(content);
+
+    public Task<ImageMetadata?> IdentifyAsync(Stream content)
+    {
+        var bytes = ToBytes(content);
+        var match = _metadataByContent.Keys.FirstOrDefault(k => k.SequenceEqual(bytes));
+        return Task.FromResult(match is null ? null : _metadataByContent[match]);
+    }
+
+    public Task<NormalizedImage> NormalizeAsync(Stream content, int maxLongEdge)
+    {
+        var bytes = ToBytes(content);
+        if (_throwOnNormalize.Any(k => k.SequenceEqual(bytes)))
+            throw new InvalidOperationException("simulated normalization failure");
+
+        // Deterministic stand-in for a real resize: halves both dimensions, well under any
+        // maxLongEdge these tests use, and shrinks the byte payload so "bytes saved" is
+        // observable without needing a real codec.
+        return Task.FromResult(new NormalizedImage(
+            new MemoryStream(bytes.Take(Math.Max(1, bytes.Length / 2)).ToArray()), "image/jpeg", maxLongEdge / 2, maxLongEdge / 2,
+            Math.Max(1, bytes.LongLength / 2)));
+    }
+
+    private static byte[] ToBytes(Stream content)
+    {
+        using var buffer = new MemoryStream();
+        content.CopyTo(buffer);
+        return buffer.ToArray();
+    }
+}
+
+internal sealed class UpdateFailsPhotoRepository(InMemoryPhotoRepository inner) : IPhotoRepository
+{
+    public Task<Photo?> GetByIdAsync(PhotoId id) => inner.GetByIdAsync(id);
+    public Task<IEnumerable<Photo>> GetByIdsAsync(IEnumerable<PhotoId> ids) => inner.GetByIdsAsync(ids);
+    public Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId) => inner.GetByClientUploadIdAsync(clientUploadId);
+    public Task<IEnumerable<Photo>> GetByChapterIdAsync(ChapterId chapterId) => inner.GetByChapterIdAsync(chapterId);
+    public Task<IEnumerable<Photo>> GetAllByChapterIdAsync(ChapterId chapterId) => inner.GetAllByChapterIdAsync(chapterId);
+    public Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(BaulId baulId) => inner.GetLooseByBaulIdAsync(baulId);
+    public Task<IEnumerable<Photo>> GetActiveByBaulIdAsync(BaulId baulId) => inner.GetActiveByBaulIdAsync(baulId);
+    public Task<IEnumerable<Photo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, UserId excludingUserId) =>
+        inner.GetCreatedSinceByBaulIdAsync(baulId, since, excludingUserId);
+    public Task<IEnumerable<Photo>> GetPreviewPhotosAsync(BaulId baulId, int limit) => inner.GetPreviewPhotosAsync(baulId, limit);
+    public Task<IEnumerable<Photo>> GetUndatedAsync() => inner.GetUndatedAsync();
+    public Task<IEnumerable<Photo>> GetMissingSizeBytesAsync() => inner.GetMissingSizeBytesAsync();
+    public Task<IEnumerable<Photo>> GetMissingDimensionsAsync() => inner.GetMissingDimensionsAsync();
+    public Task<IEnumerable<Photo>> GetOversizedAsync(int maxLongEdge) => inner.GetOversizedAsync(maxLongEdge);
+    public Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync() => inner.GetMissingUploadBatchIdAsync();
+    public Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take) =>
+        inner.GetPageAsync(baulId, chapterId, skip, take);
+    public Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId) => inner.GetAllByBaulIdAsync(baulId);
+    public Task CreateAsync(Photo photo) => inner.CreateAsync(photo);
+    public Task UpdateAsync(Photo photo) => throw new InvalidOperationException("database unavailable");
+    public Task DeleteAsync(PhotoId id) => inner.DeleteAsync(id);
+    public Task DeleteByBaulIdAsync(BaulId baulId) => inner.DeleteByBaulIdAsync(baulId);
 }

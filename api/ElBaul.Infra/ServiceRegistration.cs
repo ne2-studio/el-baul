@@ -1,3 +1,4 @@
+using ElBaul.Application.Photos;
 using ElBaul.Infra.Chat;
 using ElBaul.Infra.Emails;
 using ElBaul.Infra.Analytics;
@@ -68,6 +69,16 @@ public static class ServiceRegistration
         services.AddScoped<IAppConfiguration, AppConfiguration>();
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();
         services.AddScoped<IPhotoImageNormalizer, HeicToJpegPhotoImageNormalizer>();
+
+        // Bound from config with ImagePolicy's own defaults as fallback, so an unconfigured
+        // environment still enforces sane limits rather than silently having none.
+        services.AddSingleton(new ImagePolicy(
+            configuration.GetValue("ImagePolicy:MaxStoredLongEdge", ImagePolicy.DefaultMaxStoredLongEdge),
+            configuration.GetValue("ImagePolicy:MaxUploadBytes", ImagePolicy.DefaultMaxUploadBytes),
+            configuration.GetValue("ImagePolicy:MaxUploadMegapixels", ImagePolicy.DefaultMaxUploadMegapixels)));
+        // Singleton: see VipsImageProcessor's own doc comment (shares one concurrency throttle
+        // process-wide, holds no per-request state).
+        services.AddSingleton<IImageProcessor, VipsImageProcessor>();
 
         services.AddScoped<IIdGenerator, GuidIdGenerator>();
         services.AddScoped<IClock, SystemClock>();

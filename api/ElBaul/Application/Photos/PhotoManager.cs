@@ -158,9 +158,11 @@ public class PhotoManager(
             return Result.Success(await photoDtoProjector.ProjectAsync(existingPhoto, isAdmin, userId));
         }
 
-        var photo = await photoUploadWorkflow.CreatePhotoAsync(
+        var photoResult = await photoUploadWorkflow.CreatePhotoAsync(
             baul.Id, chapterId, userId, content, fileName, contentType, date, clientUploadId, uploadBatchId,
             (createdPhoto, now) => photoLifecycle.AddAsync(createdPhoto, chapter, baul, now));
+        if (photoResult.IsFailure) return Result.Failure<PhotoDto>(photoResult.Error);
+        var photo = photoResult.Value;
 
         logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", baul.Id, chapterId, photo.Id);
 

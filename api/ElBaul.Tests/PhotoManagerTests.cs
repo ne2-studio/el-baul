@@ -28,7 +28,8 @@ public class PhotoManagerTests
         new(photoStorage ?? _photoStorage, _fixture.Recuerdos, _fixture.Clock);
 
     private PhotoFileService CreatePhotoFileService(IPhotoStorage? photoStorage = null) =>
-        new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer());
+        new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor,
+            new FakePhotoImageNormalizer(), new FakeImageProcessor(), new ImagePolicy());
 
     private PhotoUploadWorkflow CreatePhotoUploadWorkflow(IPhotoRepository? photoRepository = null, IPhotoStorage? photoStorage = null, Guid? nextId = null) =>
         new(NullLogger<PhotoUploadWorkflow>.Instance, photoRepository ?? _fixture.Photos, CreatePhotoFileService(photoStorage),

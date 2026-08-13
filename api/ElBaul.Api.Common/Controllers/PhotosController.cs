@@ -27,7 +27,10 @@ public class PhotosController(
     }
 
     [HttpPost("chapters/{chapterId:guid}/photos")]
-    [RequestSizeLimit(20_000_000)]
+    // Kept in sync manually with ImagePolicy.DefaultMaxUploadBytes (ElBaul/Application/Photos/ImagePolicy.cs)
+    // — controllers can't reference Application types (see docs/architecture/backend.md), and this
+    // attribute needs a compile-time constant, so it can't reference that type either.
+    [RequestSizeLimit(25_000_000)]
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Upload(ChapterId chapterId, [FromForm] UploadPhotoRequest request)
     {
@@ -135,7 +138,10 @@ public class PhotosController(
     }
 
     [HttpPost("baules/{baulId:guid}/photos/sueltas")]
-    [RequestSizeLimit(20_000_000)]
+    // Kept in sync manually with ImagePolicy.DefaultMaxUploadBytes (ElBaul/Application/Photos/ImagePolicy.cs)
+    // — controllers can't reference Application types (see docs/architecture/backend.md), and this
+    // attribute needs a compile-time constant, so it can't reference that type either.
+    [RequestSizeLimit(25_000_000)]
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UploadLoose(BaulId baulId, [FromForm] UploadPhotoRequest request)
     {

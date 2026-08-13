@@ -34,6 +34,19 @@ public interface IPhotoRepository
     /// PhotoLifecycleService) and their size still counts toward the admin baúl-size total.</summary>
     Task<IEnumerable<Photo>> GetMissingSizeBytesAsync();
 
+    /// <summary>Photos with no recorded dimensions yet (Width == 0 — the default for rows
+    /// created before this field existed) — used by the backfill-photo-metadata maintenance
+    /// command. Not status-filtered, same rationale as GetMissingSizeBytesAsync.</summary>
+    Task<IEnumerable<Photo>> GetMissingDimensionsAsync();
+
+    /// <summary>Photos whose recorded dimensions currently violate ImagePolicy's
+    /// MaxStoredLongEdge — used by the backfill-normalize-photos maintenance command to find
+    /// normalization candidates. Filtered by the *recorded* Width/Height, not SizeBytes — the
+    /// command itself re-checks the actual stored asset before normalizing, since a row backfilled
+    /// via backfill-photo-metadata is the source of truth this depends on. Not status-filtered,
+    /// same rationale as GetMissingSizeBytesAsync.</summary>
+    Task<IEnumerable<Photo>> GetOversizedAsync(int maxLongEdge);
+
     /// <summary>Active photos with no UploadBatchId yet (rows created before the field existed),
     /// ordered by BaulId/ChapterId/UploadedBy/CreatedAt — the exact order
     /// backfill-upload-batch-id groups by. Not status-filtered beyond Active: a batch is a feed

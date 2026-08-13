@@ -72,6 +72,19 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.SizeBytes == 0).ToList().AsEnumerable());
     }
 
+    public Task<IEnumerable<Photo>> GetMissingDimensionsAsync()
+    {
+        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.Width == 0).ToList().AsEnumerable());
+    }
+
+    public Task<IEnumerable<Photo>> GetOversizedAsync(int maxLongEdge)
+    {
+        lock (_lock)
+            return Task.FromResult(_photos.Values
+                .Where(p => p.Width > maxLongEdge || p.Height > maxLongEdge)
+                .ToList().AsEnumerable());
+    }
+
     public Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync()
     {
         lock (_lock)

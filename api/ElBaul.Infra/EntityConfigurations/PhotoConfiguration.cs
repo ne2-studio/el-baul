@@ -23,6 +23,8 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.Property(p => p.DeletionReason).HasMaxLength(2000);
         builder.Property(p => p.SizeBytes).HasDefaultValue(0L);
         builder.Property(p => p.ConfirmedNoPersonas).HasDefaultValue(false);
+        builder.Property(p => p.Width).HasDefaultValue(0);
+        builder.Property(p => p.Height).HasDefaultValue(0);
         builder.Ignore(p => p.Date);
 
         builder.HasIndex(p => p.ChapterId);

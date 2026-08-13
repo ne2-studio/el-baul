@@ -14,7 +14,7 @@ public class PhotoUploadWorkflow(
     IClock clock,
     IUnitOfWork unitOfWork)
 {
-    public async Task<Photo> CreatePhotoAsync(
+    public async Task<Result<Photo>> CreatePhotoAsync(
         BaulId baulId,
         ChapterId? chapterId,
         UserId userId,
@@ -26,10 +26,10 @@ public class PhotoUploadWorkflow(
         Guid? uploadBatchId,
         Func<Photo, DateTime, Task> persistRelatedStateAsync)
     {
-        StoredPhotoFile storedFile;
+        Result<StoredPhotoFile> storedFileResult;
         try
         {
-            storedFile = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, explicitDate);
+            storedFileResult = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, explicitDate);
         }
         catch (Exception ex)
         {
@@ -39,10 +39,17 @@ public class PhotoUploadWorkflow(
             throw;
         }
 
+        // Rejected by ImagePolicy (oversized file, resolution over the hard limit, or not a
+        // valid image) — an expected validation outcome, not a storage/infra failure, so it
+        // never touched storage and there's nothing to compensate for.
+        if (storedFileResult.IsFailure) return Result.Failure<Photo>(storedFileResult.Error);
+        var storedFile = storedFileResult.Value;
+
         var now = clock.UtcNow();
         var photo = Photo.Create(
             new PhotoId(idGenerator.NewId()), chapterId, baulId, storedFile.StorageKey, storedFile.Date, userId, now,
-            clientUploadId, storedFile.SizeBytes, uploadBatchId);
+            clientUploadId, storedFile.SizeBytes, uploadBatchId, storedFile.Width, storedFile.Height,
+            storedFile.OriginalWidth, storedFile.OriginalHeight, storedFile.OriginalSizeBytes);
 
         try
         {
@@ -64,6 +71,6 @@ public class PhotoUploadWorkflow(
             throw;
         }
 
-        return photo;
+        return Result.Success(photo);
     }
 }

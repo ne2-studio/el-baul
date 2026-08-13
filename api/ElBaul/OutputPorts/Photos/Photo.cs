@@ -27,9 +27,25 @@ public record Photo
     // candidate forever. Reset back to false as a side effect of the photo actually receiving a
     // tag (SetTaggedPersonasAsync/AddTaggedPersonasBatchAsync), so a later manual tagging always
     // wins over a stale confirmation.
-    bool ConfirmedNoPersonas = false
+    bool ConfirmedNoPersonas = false,
+    // Dimensions/size of the asset as it actually sits in storage today — for a photo uploaded
+    // before this field existed, 0 until backfill-photo-metadata fills it in (see
+    // ImagePolicy/BackfillPhotoMetadataCommand). Never the *display* orientation — raw pixel
+    // dimensions of the stored bytes.
+    int Width = 0,
+    int Height = 0,
+    // Set only when the stored asset is a normalized (downscaled) version of what the user
+    // uploaded — the pre-normalization dimensions/size, for measuring normalization's storage
+    // impact later (see docs/.backlog ticket 010). Null means the stored bytes are exactly what
+    // was uploaded, byte for byte.
+    int? OriginalWidth = null,
+    int? OriginalHeight = null,
+    long? OriginalSizeBytes = null
 )
 {
+    public bool WasResized => OriginalWidth is not null;
+
+
     // DateYear/Month/Day stay the raw persisted columns — EF Core can't map an optional
     // (nullable) complex/owned type (see https://github.com/dotnet/efcore/issues/31376, hit
     // when this was tried), so PhotoDate lives only on the domain side: a single validated
@@ -41,9 +57,11 @@ public record Photo
     public static Photo Create(
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
         UserId uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
-        Guid? uploadBatchId = null) =>
+        Guid? uploadBatchId = null, int width = 0, int height = 0,
+        int? originalWidth = null, int? originalHeight = null, long? originalSizeBytes = null) =>
         new(id, chapterId, baulId, storageKey, date?.Year, date?.Month, date?.Day, uploadedBy, createdAt, clientUploadId,
-            SizeBytes: sizeBytes, UploadBatchId: uploadBatchId);
+            SizeBytes: sizeBytes, UploadBatchId: uploadBatchId, Width: width, Height: height,
+            OriginalWidth: originalWidth, OriginalHeight: originalHeight, OriginalSizeBytes: originalSizeBytes);
 
     public Photo WithDate(PhotoDate? date) =>
         this with { DateYear = date?.Year, DateMonth = date?.Month, DateDay = date?.Day };
@@ -56,6 +74,27 @@ public record Photo
 
     public Photo WithoutChapter() =>
         this with { ChapterId = null };
+
+    /// <summary>Records dimensions/size read off the stored asset without changing what's
+    /// stored — used by backfill-photo-metadata for photos that predate these columns.</summary>
+    public Photo WithMetadata(int width, int height, long sizeBytes) =>
+        this with { Width = width, Height = height, SizeBytes = sizeBytes };
+
+    /// <summary>Records that the stored asset was just replaced by a downscaled version —
+    /// captures the pre-normalization dimensions/size into Original* before overwriting
+    /// Width/Height/SizeBytes with the new asset's. Used by both the upload pipeline
+    /// (PhotoFileService) and backfill-normalize-photos, so the two can never disagree on what
+    /// "normalized" means to persist.</summary>
+    public Photo Normalized(int width, int height, long sizeBytes) =>
+        this with
+        {
+            OriginalWidth = Width,
+            OriginalHeight = Height,
+            OriginalSizeBytes = SizeBytes,
+            Width = width,
+            Height = height,
+            SizeBytes = sizeBytes
+        };
 
     public Photo MarkDeleted(string? reason, DateTime deletedAt) =>
         this with

@@ -179,10 +179,12 @@ public class PersonaManager(
         }
         else
         {
-            photo = await photoUploadWorkflow.CreatePhotoAsync(
+            var photoResult = await photoUploadWorkflow.CreatePhotoAsync(
                 baulId, chapterId: null, userId, content, fileName, contentType, explicitDate: null,
                 clientUploadId, uploadBatchId: null,
                 (createdPhoto, now) => baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(createdPhoto, now)));
+            if (photoResult.IsFailure) return Result.Failure<PersonaDto>(photoResult.Error);
+            photo = photoResult.Value;
         }
 
         return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);

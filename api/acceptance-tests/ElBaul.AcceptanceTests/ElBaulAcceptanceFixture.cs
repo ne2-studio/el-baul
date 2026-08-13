@@ -61,6 +61,11 @@ public sealed class ElBaulAcceptanceFixture : IAsyncLifetime
         ["Storage__AccessKey"] = MinioAccessKey,
         ["Storage__SecretKey"] = MinioSecretKey,
         ["Storage__BucketName"] = MinioBucketName,
+        // A small, test-only stored-resolution limit — PhotoNormalizationTests uploads a real
+        // (if tiny) JPEG bigger than this to exercise the real upload -> normalize -> store
+        // pipeline end to end without needing an actual multi-megapixel fixture. Every other
+        // acceptance test's photo fixture is a 1x1 JPEG, well under this either way.
+        ["ImagePolicy__MaxStoredLongEdge"] = "64",
         // Observable from the outside via GET /api/app-config's "appUrl" — used by
         // SmokeTests to prove env vars actually reach the running process, not just that
         // the container starts.

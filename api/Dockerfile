@@ -26,7 +26,10 @@ WORKDIR /app
 # imagemagick-heic pulls in libheif, giving `magick` HEIC/HEIF decode support; imagemagick-jpeg
 # is the JPEG delegate, needed separately since Alpine splits format support into subpackages.
 # Both used by HeicToJpegPhotoImageNormalizer to re-encode iPhone photos to JPEG at upload time.
-RUN apk add --no-cache imagemagick imagemagick-heic imagemagick-jpeg
+# vips is the native libvips shared library NetVips (ElBaul.Infra's managed NetVips package)
+# links against at runtime — used by VipsImageProcessor to enforce the stored-image resolution
+# policy (see docs/architecture/infrastructure.md).
+RUN apk add --no-cache imagemagick imagemagick-heic imagemagick-jpeg vips
 
 COPY --from=build /app/publish .
 

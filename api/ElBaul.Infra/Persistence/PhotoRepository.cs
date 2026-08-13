@@ -66,6 +66,16 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Where(p => p.SizeBytes == 0)
             .ToListAsync();
 
+    public async Task<IEnumerable<Photo>> GetMissingDimensionsAsync() =>
+        await dbContext.Photos.AsNoTracking()
+            .Where(p => p.Width == 0)
+            .ToListAsync();
+
+    public async Task<IEnumerable<Photo>> GetOversizedAsync(int maxLongEdge) =>
+        await dbContext.Photos.AsNoTracking()
+            .Where(p => p.Width > maxLongEdge || p.Height > maxLongEdge)
+            .ToListAsync();
+
     public async Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync() =>
         await dbContext.Photos.AsNoTracking()
             .Where(p => p.UploadBatchId == null && p.Status == PhotoStatus.Active)

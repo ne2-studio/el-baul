@@ -1,3 +1,4 @@
+using ElBaul.Application.Photos;
 using ElBaul.OutputPorts.Admin;
 using ElBaul.OutputPorts.Analytics;
 using ElBaul.OutputPorts.Bauls;
@@ -76,6 +77,10 @@ public static class ServiceRegistration
         services.AddSingleton<IEmailTemplateRenderer, FakeEmailTemplateRenderer>();
         services.AddSingleton<IPhotoDateExtractor, FakePhotoDateExtractor>();
         services.AddSingleton<IPhotoImageNormalizer, FakePhotoImageNormalizer>();
+        // Defaults only — el-baul-api-lite has no need to exercise non-default ImagePolicy
+        // limits, and FakeImageProcessor never rejects/resizes for the tiny fixtures it's fed.
+        services.AddSingleton(new ImagePolicy());
+        services.AddSingleton<IImageProcessor, FakeImageProcessor>();
 
         // These five are the real (ElBaul.Infra.Common) implementations, not fakes — none of
         // them touch Postgres/S3/Hangfire, and the whole point of sharing them is that
