@@ -21,7 +21,6 @@ interface UsePhotoViewerActionsOptions {
   baulId: string;
   baulName: string;
   photo: Photo;
-  isAdmin?: boolean;
   sharedLinksEnabled: boolean;
   baulPersonas?: Persona[];
   taggedPersonas?: TaggedPersona[];
@@ -52,7 +51,7 @@ interface UsePhotoViewerActionsResult {
 // Ni PhotoViewer (puro) ni PhotoViewerContainer (universal) importan store/useCases/router
 // para nada de esto.
 export function usePhotoViewerActions({
-  baulId, baulName, photo, isAdmin, sharedLinksEnabled, baulPersonas = [], taggedPersonas = [], onDeleted,
+  baulId, baulName, photo, sharedLinksEnabled, baulPersonas = [], taggedPersonas = [], onDeleted,
 }: UsePhotoViewerActionsOptions): UsePhotoViewerActionsResult {
   const auth = useAuth();
   const { run } = useAsyncAction();
@@ -207,12 +206,15 @@ export function usePhotoViewerActions({
       items.push({ key: 'clear-date', label: 'Borrar fecha', icon: CalendarOff, onSelect: () => setShowClearDateModal(true) });
     }
     // Destructivas siempre al final, sin importar qué extras se hayan intercalado arriba.
-    if (!isAdmin) {
+    // canDelete/canRequestRemoval vienen calculadas por el backend (nunca ambas a true) — ver
+    // PhotoDto/PhotoDeletePolicy. El frontend solo pinta lo que el backend ya decidió, sin
+    // reconstruir aquí la regla de admin/propietario/ventana de gracia.
+    if (photo.canRequestRemoval) {
       items.push(hasRequestedRemoval
         ? { key: 'removal', label: 'Ya has solicitado la retirada', icon: Flag, onSelect: () => {}, disabled: true }
         : { key: 'removal', label: 'Solicitar retirada', icon: Flag, onSelect: () => setShowRemovalModal(true) });
     }
-    if (isAdmin) {
+    if (photo.canDelete) {
       items.push({ key: 'delete', label: 'Borrar foto', icon: Trash2, onSelect: () => setShowDeleteModal(true), variant: 'destructive' });
     }
     return items;

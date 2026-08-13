@@ -17,7 +17,6 @@ interface PhotoViewerContainerProps {
   photos: Photo[];
   baulId: string;
   baulName: string;
-  isAdmin?: boolean;
   /** Contexto de ruta (backgroundLocation/basePath) — se queda del lado de la Route. */
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
@@ -33,7 +32,7 @@ interface PhotoViewerContainerProps {
 // chapterId — si alguna acción lo necesita, quien nos monta la inyecta vía extraMenuItems
 // (ver ChapterPhotoViewerContainer).
 export function PhotoViewerContainer({
-  photo, photos, baulId, baulName, isAdmin, onClose, onPhotoChange, extraMenuItems,
+  photo, photos, baulId, baulName, onClose, onPhotoChange, extraMenuItems,
 }: PhotoViewerContainerProps) {
   const auth = useAuth();
   const navigate = useNavigate();
@@ -57,7 +56,6 @@ export function PhotoViewerContainer({
     baulId,
     baulName,
     photo,
-    isAdmin,
     sharedLinksEnabled,
     baulPersonas: personas[baulId] || [],
     taggedPersonas: taggedPersonas[photo.id] || [],

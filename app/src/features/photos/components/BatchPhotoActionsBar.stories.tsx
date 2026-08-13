@@ -18,12 +18,16 @@ const photos: Photo[] = [
     thumbnailUrl: storybookPhotos.beach,
     fullUrl: storybookPhotos.beach,
     recuerdoCount: 0,
+    canDelete: false,
+    canRequestRemoval: true,
   },
   {
     id: 'p2',
     thumbnailUrl: storybookPhotos.album,
     fullUrl: storybookPhotos.album,
     recuerdoCount: 0,
+    canDelete: false,
+    canRequestRemoval: true,
   },
 ];
 

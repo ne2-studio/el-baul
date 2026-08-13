@@ -13,7 +13,6 @@ interface ChapterPhotoViewerContainerProps {
   photos: Photo[];
   baulId: string;
   baulName: string;
-  isAdmin?: boolean;
   /** null = la foto no pertenece a ningún capítulo (fotos sueltas) — sigue siendo un scope
    * válido para mover. */
   apiChapterId: string | null;
@@ -30,7 +29,7 @@ interface ChapterPhotoViewerContainerProps {
 // baulId + el id del capítulo destino, ambos ya conocidos, así que no hace falta que la Route
 // se lo inyecte (ver docs/architecture/frontend.md, regla de navegación de containers/).
 export function ChapterPhotoViewerContainer({
-  photo, photos, baulId, baulName, isAdmin, apiChapterId, allChapters, currentChapter, onClose, onPhotoChange,
+  photo, photos, baulId, baulName, apiChapterId, allChapters, currentChapter, onClose, onPhotoChange,
 }: ChapterPhotoViewerContainerProps) {
   const navigate = useNavigate();
   const { run } = useAsyncAction();
@@ -73,7 +72,6 @@ export function ChapterPhotoViewerContainer({
         photos={photos}
         baulId={baulId}
         baulName={baulName}
-        isAdmin={isAdmin}
         onClose={onClose}
         onPhotoChange={onPhotoChange}
         extraMenuItems={extraMenuItems}

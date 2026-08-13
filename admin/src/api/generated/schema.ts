@@ -6909,6 +6909,8 @@ export interface components {
             createdAt: string;
             /** Format: int32 */
             recuerdoCount: number;
+            canDelete: boolean;
+            canRequestRemoval: boolean;
         };
         PhotoPageDto: {
             items: components["schemas"]["PhotoDto"][];

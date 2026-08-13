@@ -49,7 +49,7 @@ public class BaulFeedManager(
         var recuerdos = await recuerdoManager.GetRecuerdosAsync(baulId);
         if (recuerdos.IsFailure) return Result.Failure<FeedPageDto>(recuerdos.Error);
 
-        var batches = await BuildPhotoBatchDtosAsync(baulId);
+        var batches = await BuildPhotoBatchDtosAsync(baulId, auth.Value.IsAdmin, userId);
         var chapterItems = await BuildChapterCreatedItemsAsync(baulId);
 
         // Both sources are cheap in-process work (row counts a family archive never grows huge
@@ -115,11 +115,11 @@ public class BaulFeedManager(
             return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Photo batch not found"));
         }
 
-        var dtos = await photoDtoProjector.ProjectAsync(rows);
+        var dtos = await photoDtoProjector.ProjectAsync(rows, auth.Value.IsAdmin, userId);
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
-    private async Task<List<PhotoBatchDto>> BuildPhotoBatchDtosAsync(BaulId baulId)
+    private async Task<List<PhotoBatchDto>> BuildPhotoBatchDtosAsync(BaulId baulId, bool isAdmin, UserId currentUserId)
     {
         var rows = await photoUploadBatchReadModel.GetByBaulIdAsync(baulId);
         if (rows.Count == 0) return [];
@@ -130,7 +130,7 @@ public class BaulFeedManager(
         foreach (var row in rows)
         {
             var (nickname, avatarUrl, personaId) = AuthorInfoProjector.Resolve(authorsByUserId, row.UploadedBy);
-            var previewDtos = await photoDtoProjector.ProjectAsync(row.PreviewPhotos);
+            var previewDtos = await photoDtoProjector.ProjectAsync(row.PreviewPhotos, isAdmin, currentUserId);
             dtos.Add(new PhotoBatchDto(
                 row.BatchId.ToString(), row.UploadedBy, nickname, avatarUrl, personaId, row.PhotoCount,
                 row.ChapterId?.ToString(), row.ChapterName, row.CreatedAt, previewDtos));

@@ -119,6 +119,8 @@ describe('setPersonaAvatarPhoto', () => {
       thumbnailUrl: 'thumb',
       fullUrl: 'full',
       recuerdoCount: 0,
+      canDelete: false,
+      canRequestRemoval: true,
     };
     usePersonasStore.setState({ personas: { [baulId]: [previous] }, personaPhotos: { p1: [] } });
     vi.mocked(api.baules.setPersonaAvatarPhoto).mockResolvedValue(updated);
@@ -136,7 +138,7 @@ describe('setPersonaAvatarPhoto', () => {
       id: 'p1', baulId, nickname: 'Abu', status: 'active', role: 'colaborador', isCustodio: false,
       invitedDate: new Date().toISOString(), canEdit: true, avatarPhotoId: 'photo-1',
     });
-    const photo = { id: 'photo-1', thumbnailUrl: 'thumb', fullUrl: 'full', recuerdoCount: 0 };
+    const photo = { id: 'photo-1', thumbnailUrl: 'thumb', fullUrl: 'full', recuerdoCount: 0, canDelete: false, canRequestRemoval: true };
     usePersonasStore.setState({
       personas: { [baulId]: [updated] },
       personaPhotos: { p1: ['photo-1', 'photo-2'] },

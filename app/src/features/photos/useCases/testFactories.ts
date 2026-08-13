@@ -64,6 +64,8 @@ export function newPhoto(
     uploadedBy: 'user-1',
     createdAt: new Date().toISOString(),
     recuerdoCount: 0,
+    canDelete: false,
+    canRequestRemoval: true,
     ...overrides,
   });
 }

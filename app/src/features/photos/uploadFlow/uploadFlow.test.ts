@@ -159,7 +159,7 @@ describe('uploadFlow', () => {
       baulId: 'baul-1',
       chapterId: undefined,
       chapters: [],
-      loosePhotos: [{ id: 'photo-1', thumbnailUrl: 'thumb-1', fullUrl: 'full-1', recuerdoCount: 0 }],
+      loosePhotos: [{ id: 'photo-1', thumbnailUrl: 'thumb-1', fullUrl: 'full-1', recuerdoCount: 0, canDelete: false, canRequestRemoval: true }],
     });
 
     expect(context).toMatchObject({

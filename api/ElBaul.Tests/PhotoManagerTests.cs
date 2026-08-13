@@ -25,7 +25,7 @@ public class PhotoManagerTests
         new(photoRepository ?? _fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Clock);
 
     private PhotoDtoProjector CreatePhotoDtoProjector(IPhotoStorage? photoStorage = null) =>
-        new(photoStorage ?? _photoStorage, _fixture.Recuerdos);
+        new(photoStorage ?? _photoStorage, _fixture.Recuerdos, _fixture.Clock);
 
     private PhotoFileService CreatePhotoFileService(IPhotoStorage? photoStorage = null) =>
         new(NullLogger<PhotoFileService>.Instance, photoStorage ?? _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor, new FakePhotoImageNormalizer());
@@ -40,7 +40,7 @@ public class PhotoManagerTests
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null) =>
         new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(nextId: nextId),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(nextId: nextId), _fixture.Clock,
             new FakeUnitOfWork());
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
@@ -123,7 +123,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage), _fixture.Clock,
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -144,7 +144,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -168,7 +168,7 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository),
+            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -332,6 +332,55 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldAllow_ForNonAdminOwnerDeletingRecentOwnUpload()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        const string colaboradorId = "colaborador-1";
+        await _fixture.AddColaboradorAsync(baulId, colaboradorId);
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: colaboradorId, createdAt: _fixture.Clock.UtcNow());
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.DeleteAsync(photoId, "me he equivocado");
+
+        Assert.True(result.IsSuccess);
+        var photo = await _fixture.Photos.GetByIdAsync(photoId);
+        Assert.Equal(PhotoStatus.Deleted, photo!.Status);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDenyAccess_ForNonAdminOwnerPastGracePeriod()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        const string colaboradorId = "colaborador-1";
+        await _fixture.AddColaboradorAsync(baulId, colaboradorId);
+        var uploadedAt = _fixture.Clock.UtcNow() - PhotoDeletePolicy.OwnPhotoGracePeriod;
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: colaboradorId, createdAt: uploadedAt);
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.DeleteAsync(photoId, "reason");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+        var photo = await _fixture.Photos.GetByIdAsync(photoId);
+        Assert.Equal(PhotoStatus.Active, photo!.Status);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDenyAccess_ForNonAdminDeletingSomeoneElsesRecentUpload()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        const string colaboradorId = "colaborador-1";
+        await _fixture.AddColaboradorAsync(baulId, colaboradorId);
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: CustodioId, createdAt: _fixture.Clock.UtcNow());
+
+        var manager = CreateManager(colaboradorId);
+        var result = await manager.DeleteAsync(photoId, "reason");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
     }
 
     [Fact]

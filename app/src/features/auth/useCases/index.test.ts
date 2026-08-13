@@ -20,6 +20,7 @@ describe('resetAllStores', () => {
     usePhotosStore.getState().upsertPhotos([new Photo({
       id: 'photo-1', baulId: 'baul-1', thumbnailUrl: 'thumb', fullUrl: 'full',
       uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0,
+      canDelete: false, canRequestRemoval: true,
     })]);
     useCurrentBaulStore.getState().setCurrentBaulId('baul-1');
 

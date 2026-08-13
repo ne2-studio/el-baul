@@ -32,7 +32,7 @@ public class BaulFeedManagerTests
     private BaulFeedManager CreateManager(string currentUserId, bool baulFeedEnabled = true) =>
         new(NullLogger<BaulFeedManager>.Instance, CreateRecuerdoManager(currentUserId),
             new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
-            new PhotoDtoProjector(_photoStorage, _fixture.Recuerdos),
+            new PhotoDtoProjector(_photoStorage, _fixture.Recuerdos, _fixture.Clock),
             new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage),
             _fixture.Chapters, _photoStorage, _feedCursors,
             new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled),

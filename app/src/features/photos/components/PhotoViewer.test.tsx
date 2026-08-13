@@ -6,9 +6,9 @@ import { Photo } from '@/types';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
 
 const photos: Photo[] = [
-  { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0 },
-  { id: 'photo-2', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg', recuerdoCount: 0 },
-  { id: 'photo-3', thumbnailUrl: '/photo-3-thumb.jpg', fullUrl: '/photo-3.jpg', recuerdoCount: 0 },
+  { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: 'photo-2', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: 'photo-3', thumbnailUrl: '/photo-3-thumb.jpg', fullUrl: '/photo-3.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
 ];
 
 function renderViewer(overrides: Partial<ComponentProps<typeof PhotoViewer>> = {}) {

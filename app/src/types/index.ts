@@ -175,6 +175,12 @@ export class Photo {
    * contextos — ver PhotoBatchViewerRoute, el único caller que lo necesita para saber a qué
    * capítulo pertenece una foto sin que la ruta se lo diga. */
   chapterId?: string;
+  /** Backend-computed, mutually exclusive: nunca ambos true. El backend es quien decide si el
+   * llamante es admin, es el autor de la foto y sigue dentro de la ventana de gracia — ver
+   * docs/API-CONVENTIONS.md. El frontend nunca debe re-derivar esta regla, solo pintar el botón
+   * que corresponda. */
+  canDelete: boolean;
+  canRequestRemoval: boolean;
 
   constructor(data: PhotoDto) {
     this.id = data.id;
@@ -183,6 +189,8 @@ export class Photo {
     this.date = photoDateFrom(data.dateYear, data.dateMonth, data.dateDay);
     this.recuerdoCount = data.recuerdoCount;
     this.chapterId = data.chapterId ?? undefined;
+    this.canDelete = data.canDelete;
+    this.canRequestRemoval = data.canRequestRemoval;
   }
 }
 

@@ -11,7 +11,6 @@ import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
-import { getBaulPermissions } from '@/utils/roleUtils';
 import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
@@ -87,7 +86,6 @@ export const ChapterPhotoViewerRoute: React.FC = () => {
   const photo = photos.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 
-  const baulPermissions = getBaulPermissions(baul);
   const { currentChapter, basePath, apiChapterId } = resolvePhotoRouteContext({
     baulId: baul.id,
     chapterId,
@@ -103,7 +101,6 @@ export const ChapterPhotoViewerRoute: React.FC = () => {
       photos={photos}
       baulId={baul.id}
       baulName={baul.name}
-      isAdmin={baulPermissions.isAdmin}
       apiChapterId={apiChapterId}
       allChapters={chapters || []}
       currentChapter={currentChapter}

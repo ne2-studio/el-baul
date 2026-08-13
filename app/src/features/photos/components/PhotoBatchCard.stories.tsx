@@ -13,7 +13,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 function previewPhoto(id: string, thumbnailUrl: string) {
-  return { id, baulId: 'baul-1', thumbnailUrl, fullUrl: thumbnailUrl, uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0 };
+  return {
+    id, baulId: 'baul-1', thumbnailUrl, fullUrl: thumbnailUrl, uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0,
+    canDelete: false, canRequestRemoval: true,
+  };
 }
 
 const fourPreviews = [

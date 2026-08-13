@@ -229,7 +229,7 @@ describe('BaulFeedTabContainer', () => {
           batchId: 'batch-42',
           photoCount: 10,
           previewPhotos: [
-            new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0 }),
+            new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true }),
           ],
         }),
       }];
@@ -251,7 +251,7 @@ describe('BaulFeedTabContainer', () => {
           batchId: 'batch-42',
           photoCount: 1,
           previewPhotos: [
-            new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0 }),
+            new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true }),
           ],
         }),
       }];

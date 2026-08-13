@@ -10,6 +10,8 @@ function makePhotos(prefix: string, count: number): Photo[] {
     thumbnailUrl: `/${prefix}-${i}-thumb.jpg`,
     fullUrl: `/${prefix}-${i}.jpg`,
     recuerdoCount: 0,
+    canDelete: false,
+    canRequestRemoval: true,
   }));
 }
 

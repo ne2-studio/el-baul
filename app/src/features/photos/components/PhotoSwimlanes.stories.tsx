@@ -14,11 +14,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const photos: Photo[] = [
-  { id: '1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, date: { year: 2024, month: 7, day: 15 }, recuerdoCount: 0 },
-  { id: '2', thumbnailUrl: storybookPhotos.album, fullUrl: storybookPhotos.album, date: { year: 2024, month: 7, day: 20 }, recuerdoCount: 0 },
-  { id: '3', thumbnailUrl: storybookPhotos.sunset, fullUrl: storybookPhotos.sunset, date: { year: 2024, month: 12 }, recuerdoCount: 0 },
-  { id: '4', thumbnailUrl: storybookPhotos.people, fullUrl: storybookPhotos.people, date: { year: 2023 }, recuerdoCount: 0 },
-  { id: '5', thumbnailUrl: storybookPhotos.landscape, fullUrl: storybookPhotos.landscape, recuerdoCount: 0 },
+  { id: '1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, date: { year: 2024, month: 7, day: 15 }, recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: '2', thumbnailUrl: storybookPhotos.album, fullUrl: storybookPhotos.album, date: { year: 2024, month: 7, day: 20 }, recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: '3', thumbnailUrl: storybookPhotos.sunset, fullUrl: storybookPhotos.sunset, date: { year: 2024, month: 12 }, recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: '4', thumbnailUrl: storybookPhotos.people, fullUrl: storybookPhotos.people, date: { year: 2023 }, recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: '5', thumbnailUrl: storybookPhotos.landscape, fullUrl: storybookPhotos.landscape, recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
 ];
 
 export const Default: Story = {

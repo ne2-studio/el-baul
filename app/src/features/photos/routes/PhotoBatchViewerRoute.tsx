@@ -11,7 +11,6 @@ import { loadPhotoBatchPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
-import { getBaulPermissions } from '@/utils/roleUtils';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // Gallery scoped to one photo-upload batch — reached either directly from a collage thumbnail
@@ -86,7 +85,6 @@ export const PhotoBatchViewerRoute: React.FC = () => {
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 
   const basePath = `/baules/${baul.id}/subida/${batchId}`;
-  const baulPermissions = getBaulPermissions(baul);
   const closeViewer = () => closePhotoViewer(navigate, backgroundLocation, basePath);
 
   // null (no undefined) por el mismo contrato que apiChapterId en el resto de visores: "fotos
@@ -100,7 +98,6 @@ export const PhotoBatchViewerRoute: React.FC = () => {
       photos={photos}
       baulId={baul.id}
       baulName={baul.name}
-      isAdmin={baulPermissions.isAdmin}
       apiChapterId={apiChapterId}
       allChapters={chapters || []}
       currentChapter={currentChapter}

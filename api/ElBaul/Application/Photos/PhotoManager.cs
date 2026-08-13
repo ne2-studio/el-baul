@@ -23,6 +23,7 @@ public class PhotoManager(
     IPhotoDtoProjector photoDtoProjector,
     PhotoFileService photoFileService,
     PhotoUploadWorkflow photoUploadWorkflow,
+    IClock clock,
     IUnitOfWork unitOfWork) : IPhotoManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
@@ -42,7 +43,7 @@ public class PhotoManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var rows = await photoListReadModel.GetByChapterIdAsync(chapterId);
-        var dtos = await photoDtoProjector.ProjectAsync(rows);
+        var dtos = await photoDtoProjector.ProjectAsync(rows, auth.Value.IsAdmin, userId);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -55,7 +56,7 @@ public class PhotoManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var rows = await photoListReadModel.GetLooseByBaulIdAsync(baulId);
-        var dtos = await photoDtoProjector.ProjectAsync(rows);
+        var dtos = await photoDtoProjector.ProjectAsync(rows, auth.Value.IsAdmin, userId);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -86,7 +87,7 @@ public class PhotoManager(
         var hasMore = page.Count > clampedTake;
         var rows = hasMore ? page.Take(clampedTake).ToList() : page;
 
-        var dtos = await photoDtoProjector.ProjectAsync(rows);
+        var dtos = await photoDtoProjector.ProjectAsync(rows, auth.Value.IsAdmin, userId);
 
         return Result.Success(new PhotoPageDto(dtos, hasMore));
     }
@@ -114,7 +115,7 @@ public class PhotoManager(
             chapter.BaulId, userId, AccessLevel.Member, "Photo upload", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        return await UploadPhotoAsync(auth.Value.Baul, chapter, content, fileName, contentType, date, clientUploadId, userId, uploadBatchId);
+        return await UploadPhotoAsync(auth.Value.Baul, chapter, content, fileName, contentType, date, clientUploadId, userId, auth.Value.IsAdmin, uploadBatchId);
     }
 
     public async Task<Result<PhotoDto>> UploadToBaulAsync(
@@ -131,7 +132,7 @@ public class PhotoManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photo upload");
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId, uploadBatchId);
+        return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId, auth.Value.IsAdmin, uploadBatchId);
     }
 
     private async Task<Result<PhotoDto>> UploadPhotoAsync(
@@ -143,6 +144,7 @@ public class PhotoManager(
         PhotoDate? date,
         ClientUploadId clientUploadId,
         UserId userId,
+        bool isAdmin,
         Guid? uploadBatchId = null)
     {
         var chapterId = chapter?.Id;
@@ -153,7 +155,7 @@ public class PhotoManager(
             logger.LogInformation(
                 "Duplicate photo upload ignored {BaulId} {ChapterId} {ClientUploadId} {PhotoId}",
                 baul.Id, chapterId, clientUploadId, existingPhoto.Id);
-            return Result.Success(await photoDtoProjector.ProjectAsync(existingPhoto));
+            return Result.Success(await photoDtoProjector.ProjectAsync(existingPhoto, isAdmin, userId));
         }
 
         var photo = await photoUploadWorkflow.CreatePhotoAsync(
@@ -162,7 +164,7 @@ public class PhotoManager(
 
         logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", baul.Id, chapterId, photo.Id);
 
-        return await photoDtoProjector.ProjectAsync(photo);
+        return await photoDtoProjector.ProjectAsync(photo, isAdmin, userId);
     }
 
     public async Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId)
@@ -218,7 +220,7 @@ public class PhotoManager(
             "Photo moved {BaulId} {PhotoId} {SourceChapterId} {TargetChapterId}",
             photo.BaulId, photoId, photo.ChapterId, targetChapterId);
 
-        return await photoDtoProjector.ProjectAsync(updatedPhoto);
+        return await photoDtoProjector.ProjectAsync(updatedPhoto, auth.Value.IsAdmin, userId);
     }
 
     public async Task<Result> DeleteAsync(PhotoId photoId, string? reason)
@@ -233,9 +235,20 @@ public class PhotoManager(
         if (photoResult.IsFailure) return Result.Failure(photoResult.Error);
         var photo = photoResult.Value;
 
+        // Member-level, not Admin-only: PhotoDeletePolicy below is the actual gate — an
+        // administrador/custodio can always delete, anyone else only within the grace period on
+        // their own upload. Kept in lockstep with PhotoDtoProjector's CanDelete flag so the menu
+        // option the frontend showed is always backed by a request the backend will accept.
         var auth = await baulAccess.AuthorizeAsync(
-            photo.BaulId, userId, AccessLevel.Admin, "Photo delete", new { photo.BaulId, PhotoId = photoId });
+            photo.BaulId, userId, AccessLevel.Member, "Photo delete", new { photo.BaulId, PhotoId = photoId });
         if (auth.IsFailure) return Result.Failure(auth.Error);
+
+        if (!PhotoDeletePolicy.CanDelete(photo, userId, auth.Value.IsAdmin, clock.UtcNow()))
+        {
+            logger.LogWarning(
+                "Photo delete rejected: access denied {@Context}", new { photo.BaulId, PhotoId = photoId });
+            return Result.Failure(ApplicationError.Forbidden("Access denied"));
+        }
 
         // Photo status, source-chapter removal and baúl cover clearing commit together — see
         // PhotoLifecycleService.SoftDeleteAsync for what it touches.
@@ -270,7 +283,7 @@ public class PhotoManager(
 
         logger.LogInformation("Photo date changed {BaulId} {PhotoId}", photo.BaulId, photoId);
 
-        return await photoDtoProjector.ProjectAsync(updatedPhoto);
+        return await photoDtoProjector.ProjectAsync(updatedPhoto, auth.Value.IsAdmin, userId);
     }
 
     public async Task<Result<PhotoDto>> ClearDateAsync(PhotoId photoId)
@@ -294,7 +307,7 @@ public class PhotoManager(
 
         logger.LogInformation("Photo date cleared {BaulId} {PhotoId}", photo.BaulId, photoId);
 
-        return await photoDtoProjector.ProjectAsync(updatedPhoto);
+        return await photoDtoProjector.ProjectAsync(updatedPhoto, auth.Value.IsAdmin, userId);
     }
 
     // Deliberately not wrapped in IUnitOfWork.ExecuteInTransactionAsync despite looping over
@@ -361,7 +374,7 @@ public class PhotoManager(
 
         var photoIds = await photoPersonaTagRepository.GetPhotoIdsByPersonaIdAsync(personaId);
         var rows = await photoListReadModel.GetActiveByIdsAsync(baulId, photoIds);
-        var dtos = await photoDtoProjector.ProjectAsync(rows);
+        var dtos = await photoDtoProjector.ProjectAsync(rows, auth.Value.IsAdmin, userId);
 
         return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
@@ -387,7 +400,7 @@ public class PhotoManager(
 
         logger.LogInformation("Photo confirmed as having no personas {BaulId} {PhotoId}", photo.BaulId, photoId);
 
-        return await photoDtoProjector.ProjectAsync(updatedPhoto);
+        return await photoDtoProjector.ProjectAsync(updatedPhoto, auth.Value.IsAdmin, userId);
     }
 
     public async Task<Result<PhotoDto?>> GetUntaggedSuggestionAsync(BaulId baulId)
@@ -400,7 +413,7 @@ public class PhotoManager(
         var row = await photoListReadModel.GetUntaggedSuggestionAsync(baulId);
         if (row is null) return Result.Success<PhotoDto?>(null);
 
-        var dtos = await photoDtoProjector.ProjectAsync([row]);
+        var dtos = await photoDtoProjector.ProjectAsync([row], auth.Value.IsAdmin, userId);
         return Result.Success<PhotoDto?>(dtos[0]);
     }
 

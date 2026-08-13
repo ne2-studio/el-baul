@@ -5,8 +5,8 @@ import userEvent from '@testing-library/user-event';
 import { Photo } from '@/types';
 import { PersonaAvatarPickerModal } from './PersonaAvatarPickerModal';
 
-const taggedPhoto: Photo = { id: 'tagged', thumbnailUrl: '/tagged-thumb.jpg', fullUrl: '/tagged.jpg', recuerdoCount: 0 };
-const otherPhoto: Photo = { id: 'other', thumbnailUrl: '/other-thumb.jpg', fullUrl: '/other.jpg', recuerdoCount: 0 };
+const taggedPhoto: Photo = { id: 'tagged', thumbnailUrl: '/tagged-thumb.jpg', fullUrl: '/tagged.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true };
+const otherPhoto: Photo = { id: 'other', thumbnailUrl: '/other-thumb.jpg', fullUrl: '/other.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true };
 
 beforeEach(() => {
   class TestIntersectionObserver {

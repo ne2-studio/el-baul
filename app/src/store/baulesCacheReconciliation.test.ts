@@ -62,6 +62,8 @@ function newPhoto(id: string, overrides: Partial<ConstructorParameters<typeof Ph
     uploadedBy: 'user-1',
     createdAt: new Date().toISOString(),
     recuerdoCount: 0,
+    canDelete: false,
+    canRequestRemoval: true,
     ...overrides,
   });
 }

@@ -51,9 +51,12 @@ import { loadTaggedPersonas, setTaggedPersonas, submitRemovalRequest, deletePhot
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 
+// canDelete/canRequestRemoval son calculadas por el backend (ver PhotoDto) — aquí se fijan
+// explícitamente por test para simular lo que el backend habría decidido, nunca re-derivadas de
+// un isAdmin local.
 const photos: Photo[] = [
-  { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0 },
-  { id: 'photo-2', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg', recuerdoCount: 0 },
+  { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: 'photo-2', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
 ];
 
 const baulPersonas: Persona[] = [
@@ -134,7 +137,7 @@ describe('PhotoViewerContainer', () => {
 
   it('offers date change, and removal-request, universally with no chapter scope at all', async () => {
     const user = userEvent.setup();
-    renderContainer({ isAdmin: false });
+    renderContainer();
     await openMenu(user);
 
     expect(screen.getByText('Cambiar fecha')).toBeInTheDocument();
@@ -142,9 +145,9 @@ describe('PhotoViewerContainer', () => {
     expect(screen.queryByText('Borrar foto')).not.toBeInTheDocument();
   });
 
-  it('offers delete (instead of removal-request) for an admin', async () => {
+  it('offers delete (instead of removal-request) when the backend grants canDelete', async () => {
     const user = userEvent.setup();
-    renderContainer({ isAdmin: true });
+    renderContainer({ photo: { ...photos[1], canDelete: true, canRequestRemoval: false } });
     await openMenu(user);
 
     expect(screen.getByText('Borrar foto')).toBeInTheDocument();
@@ -171,11 +174,11 @@ describe('PhotoViewerContainer', () => {
     expect(clearPhotoDate).toHaveBeenCalledWith('baul-1', 'photo-2');
   });
 
-  it('deletes the photo as an admin and closes the viewer', async () => {
+  it('deletes the photo when canDelete is granted, and closes the viewer', async () => {
     const user = userEvent.setup();
     vi.mocked(deletePhoto).mockResolvedValue(undefined);
     const onClose = vi.fn();
-    renderContainer({ isAdmin: true, onClose });
+    renderContainer({ photo: { ...photos[1], canDelete: true, canRequestRemoval: false }, onClose });
     await openMenu(user);
     await user.click(screen.getByText('Borrar foto'));
     await user.type(screen.getByPlaceholderText(/por qué se retira/i), 'Duplicada');
@@ -197,10 +200,10 @@ describe('PhotoViewerContainer', () => {
     expect(changePhotoDate).toHaveBeenCalledWith('baul-1', 'photo-2', expect.objectContaining({ year: 2020 }));
   });
 
-  it('submits a removal request as a non-admin', async () => {
+  it('submits a removal request when canRequestRemoval is granted', async () => {
     const user = userEvent.setup();
     vi.mocked(submitRemovalRequest).mockResolvedValue(undefined);
-    renderContainer({ isAdmin: false });
+    renderContainer();
     await openMenu(user);
     await user.click(screen.getByText('Solicitar retirada'));
     await user.type(screen.getByPlaceholderText(/cuéntanos/i), 'No me gusta');
@@ -212,7 +215,7 @@ describe('PhotoViewerContainer', () => {
   it('disables the removal-request item, relabeled, once already requested for this photo', async () => {
     const user = userEvent.setup();
     vi.mocked(submitRemovalRequest).mockResolvedValue(undefined);
-    renderContainer({ isAdmin: false });
+    renderContainer();
     await openMenu(user);
     await user.click(screen.getByText('Solicitar retirada'));
     await user.type(screen.getByPlaceholderText(/cuéntanos/i), 'No me gusta');
@@ -227,7 +230,7 @@ describe('PhotoViewerContainer', () => {
   it('shows the removal request as already-requested from a previous session, without submitting again', async () => {
     const user = userEvent.setup();
     useUIStore.getState().markPhotoRemovalRequested('photo-2');
-    renderContainer({ isAdmin: false });
+    renderContainer();
     await openMenu(user);
 
     expect(screen.getByRole('button', { name: 'Ya has solicitado la retirada' })).toBeDisabled();
@@ -285,7 +288,7 @@ describe('PhotoViewerContainer', () => {
   it('merges extraMenuItems in, but keeps the destructive action last regardless', async () => {
     const user = userEvent.setup();
     renderContainer({
-      isAdmin: true,
+      photo: { ...photos[1], canDelete: true, canRequestRemoval: false },
       extraMenuItems: [{ key: 'move', label: 'Mover a otro capítulo', icon: () => null, onSelect: vi.fn() }],
     });
     await openMenu(user);

@@ -19,9 +19,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const photos: Photo[] = [
-  { id: '1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, recuerdoCount: 0 },
-  { id: '2', thumbnailUrl: storybookPhotos.album, fullUrl: storybookPhotos.album, date: { year: 2024, month: 7, day: 15 }, recuerdoCount: 2 },
-  { id: '3', thumbnailUrl: storybookPhotos.sunset, fullUrl: storybookPhotos.sunset, recuerdoCount: 0 },
+  { id: '1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: '2', thumbnailUrl: storybookPhotos.album, fullUrl: storybookPhotos.album, date: { year: 2024, month: 7, day: 15 }, recuerdoCount: 2, canDelete: false, canRequestRemoval: true },
+  { id: '3', thumbnailUrl: storybookPhotos.sunset, fullUrl: storybookPhotos.sunset, recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
 ];
 
 const recuerdos: Recuerdo[] = [

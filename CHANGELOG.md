@@ -20,6 +20,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Si entras desde el navegador de un móvil Android, un aviso te ofrece abrir o descargar la app.
 - El logo de El Baúl aparece ahora en la cabecera de todos los emails (bienvenida y resumen semanal).
 - Al elegir foto de portada de un capítulo o de un baúl, ahora puedes recortarla (zoom y centrado horizontal/vertical), igual que ya podías hacer con la foto de perfil.
+- Ahora puedes borrar tú mismo una foto que hayas subido, durante la primera hora tras subirla, por si te equivocas al subirla.
 
 ### Cambiado
 

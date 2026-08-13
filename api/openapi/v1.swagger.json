@@ -8632,6 +8632,8 @@
       "PhotoDto": {
         "required": [
           "baulId",
+          "canDelete",
+          "canRequestRemoval",
           "createdAt",
           "fullUrl",
           "id",
@@ -8682,6 +8684,12 @@
           "recuerdoCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "canDelete": {
+            "type": "boolean"
+          },
+          "canRequestRemoval": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

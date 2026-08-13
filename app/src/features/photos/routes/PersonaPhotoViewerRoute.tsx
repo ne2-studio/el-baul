@@ -5,7 +5,6 @@ import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { usePersonaScope } from '@/hooks/usePersonaScope';
-import { getBaulPermissions } from '@/utils/roleUtils';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // Variante de ChapterPhotoViewerRoute que recorre las fotos etiquetadas de una persona
@@ -54,7 +53,6 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
   const photo = photos.find(p => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 
-  const baulPermissions = getBaulPermissions(baul);
   const basePath = `/baules/${baul.id}/personas/${personaId}`;
 
   const closeViewer = () => closePhotoViewer(navigate, backgroundLocation, basePath);
@@ -65,7 +63,6 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
       photos={photos}
       baulId={baul.id}
       baulName={baul.name}
-      isAdmin={baulPermissions.isAdmin}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
     />

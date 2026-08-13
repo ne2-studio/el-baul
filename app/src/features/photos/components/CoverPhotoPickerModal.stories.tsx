@@ -13,6 +13,8 @@ function makePhotos(count: number, offset = 0): Photo[] {
     thumbnailUrl: fixturePhotos[(offset + i) % fixturePhotos.length],
     fullUrl: fixturePhotos[(offset + i) % fixturePhotos.length],
     recuerdoCount: 0,
+    canDelete: false,
+    canRequestRemoval: true,
   }));
 }
 

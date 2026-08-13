@@ -49,8 +49,8 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
 import { movePhotos } from '@/features/photos/useCases';
 
 const photos: Photo[] = [
-  { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0 },
-  { id: 'photo-2', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg', recuerdoCount: 0 },
+  { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+  { id: 'photo-2', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
 ];
 
 const chapters: Chapter[] = [
@@ -136,7 +136,7 @@ describe('ChapterPhotoViewerContainer', () => {
 
   it('keeps destructive actions last even with the chapter extra merged in', async () => {
     const user = userEvent.setup();
-    renderContainer({ isAdmin: true });
+    renderContainer({ photo: { ...photos[1], canDelete: true, canRequestRemoval: false } });
     await openMenu(user);
 
     const moveItem = screen.getByText('Mover a otro capítulo');
