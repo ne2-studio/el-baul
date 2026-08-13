@@ -1,6 +1,5 @@
 using ElBaul.Domain;
 using ElBaul.InputPorts.Personas;
-using ElBaul.InputPorts.Sharing;
 using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Sharing;

@@ -1,5 +1,3 @@
-using ElBaul.OutputPorts.Photos;
-using Ne2Studio.Common;
 using ElBaul.Domain;
 namespace ElBaul.Tests.Fakes;
 

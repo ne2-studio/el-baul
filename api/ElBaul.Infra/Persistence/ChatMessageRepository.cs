@@ -1,6 +1,4 @@
 using ElBaul.OutputPorts.Chat;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

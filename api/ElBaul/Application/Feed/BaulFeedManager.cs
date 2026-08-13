@@ -1,12 +1,9 @@
 using ElBaul.Application.Bauls;
-using ElBaul.Application.Feed;
 using ElBaul.Application.Personas;
 using ElBaul.Application.Photos;
-using ElBaul.Application.Recuerdos;
 using ElBaul.InputPorts.Feed;
 using ElBaul.InputPorts.Photos;
 using ElBaul.InputPorts.Recuerdos;
-using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Feed;
 using ElBaul.OutputPorts.Photos;

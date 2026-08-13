@@ -1,5 +1,4 @@
 using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
 using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Bauls;

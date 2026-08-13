@@ -1,10 +1,8 @@
 using ElBaul.Infra.Persistence;
-using ElBaul.Application.Photos;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Users;
 using FluentAssertions;
 

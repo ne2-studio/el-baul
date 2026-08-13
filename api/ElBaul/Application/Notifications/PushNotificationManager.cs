@@ -1,8 +1,6 @@
-using ElBaul.Application.Notifications;
 using ElBaul.InputPorts.Notifications;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;

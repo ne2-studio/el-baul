@@ -1,4 +1,3 @@
-using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Photos;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;

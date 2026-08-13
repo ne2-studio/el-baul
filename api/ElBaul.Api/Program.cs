@@ -3,10 +3,8 @@ using ElBaul.Api.Common;
 using ElBaul.Infra;
 using ElBaul.InputPorts.Analytics;
 using ElBaul.InputPorts.Notifications;
-using ElBaul.OutputPorts.Photos;
 
 using Hangfire;
-using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 using Serilog;

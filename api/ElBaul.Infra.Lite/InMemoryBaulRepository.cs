@@ -1,8 +1,6 @@
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Shared;
 using ElBaul.OutputPorts.Sharing;
-using ElBaul.OutputPorts.Users;
 using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 

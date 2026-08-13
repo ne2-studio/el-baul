@@ -6,7 +6,6 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
 using Ne2Studio.Common;
 
 using ElBaul.Tests.Fakes;

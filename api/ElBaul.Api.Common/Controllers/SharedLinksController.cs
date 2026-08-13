@@ -1,5 +1,4 @@
 using ElBaul.InputPorts.Sharing;
-using ElBaul.OutputPorts.Shared;
 using System.Net;
 
 using Microsoft.AspNetCore.Authorization;

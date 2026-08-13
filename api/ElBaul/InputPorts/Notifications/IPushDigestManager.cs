@@ -1,5 +1,4 @@
 using ElBaul.Domain;
-using ElBaul.InputPorts.Notifications;
 namespace ElBaul.InputPorts.Notifications;
 /// <summary>
 /// One push per user per day, at most, and only when there is something to report — see

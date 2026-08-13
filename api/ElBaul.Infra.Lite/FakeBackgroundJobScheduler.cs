@@ -1,6 +1,5 @@
 using ElBaul.Domain;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
 namespace ElBaul.Infra.Lite;
 
 public class FakeBackgroundJobScheduler : IBackgroundJobScheduler

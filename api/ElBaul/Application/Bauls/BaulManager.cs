@@ -1,4 +1,3 @@
-using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Bauls;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;

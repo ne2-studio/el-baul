@@ -1,5 +1,4 @@
 using ElBaul.Domain;
-using ElBaul.InputPorts.Chat;
 using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Chat;

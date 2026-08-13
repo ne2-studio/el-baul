@@ -1,7 +1,5 @@
-using ElBaul.Application.Chapters;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

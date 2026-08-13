@@ -1,6 +1,4 @@
 using ElBaul.Application.Bauls;
-using ElBaul.Application;
-using ElBaul.Application.Chapters;
 using ElBaul.Application.Personas;
 using ElBaul.InputPorts.Chapters;
 using ElBaul.OutputPorts.Bauls;
@@ -8,7 +6,6 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;

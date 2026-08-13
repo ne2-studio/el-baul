@@ -1,4 +1,3 @@
-using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using Ne2Studio.Common;

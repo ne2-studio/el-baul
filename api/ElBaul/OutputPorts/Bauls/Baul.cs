@@ -1,5 +1,4 @@
 using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
 using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Bauls;
 public record Baul

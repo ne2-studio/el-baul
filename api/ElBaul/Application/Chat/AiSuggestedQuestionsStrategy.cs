@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chat;
 using Ne2Studio.Common;

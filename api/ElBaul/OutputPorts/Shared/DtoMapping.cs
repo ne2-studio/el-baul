@@ -1,4 +1,3 @@
-using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Sharing;

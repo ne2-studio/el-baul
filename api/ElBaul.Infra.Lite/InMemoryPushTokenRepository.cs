@@ -1,6 +1,5 @@
 using ElBaul.Domain;
 using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Users;
 namespace ElBaul.Infra.Lite;
 
 // Registered as a Singleton (see ServiceRegistration.AddLiteInfrastructure) so state survives

@@ -1,4 +1,3 @@
-using ElBaul.OutputPorts.Shared;
 using ElBaul.Domain;
 namespace ElBaul.OutputPorts.Sharing;
 public interface IBaulInviteLinkRepository

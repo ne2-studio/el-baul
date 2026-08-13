@@ -1,6 +1,5 @@
 using ElBaul.Application.Bauls;
 using ElBaul.Application.Personas;
-using ElBaul.Application.Sharing;
 using ElBaul.InputPorts.Personas;
 using ElBaul.InputPorts.Sharing;
 using ElBaul.OutputPorts.Bauls;

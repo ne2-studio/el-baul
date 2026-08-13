@@ -3,7 +3,6 @@ using ElBaul.Maintenance.Commands;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using ElBaul.Domain;

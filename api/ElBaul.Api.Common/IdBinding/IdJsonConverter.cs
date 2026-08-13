@@ -1,5 +1,3 @@
-using ElBaul.OutputPorts.Shared;
-using Ne2Studio.Common;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using ElBaul.Domain;

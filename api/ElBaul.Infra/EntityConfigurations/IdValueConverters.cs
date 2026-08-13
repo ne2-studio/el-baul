@@ -1,5 +1,3 @@
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 using ElBaul.Domain;

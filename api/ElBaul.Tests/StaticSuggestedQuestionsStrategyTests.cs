@@ -2,7 +2,6 @@ using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Shared;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

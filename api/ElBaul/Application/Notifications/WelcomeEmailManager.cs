@@ -1,4 +1,3 @@
-using ElBaul.Application.Notifications;
 using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Notifications;
 using ElBaul.OutputPorts.Notifications;

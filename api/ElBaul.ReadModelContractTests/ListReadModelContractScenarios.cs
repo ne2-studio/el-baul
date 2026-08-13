@@ -3,7 +3,6 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
 
 using ElBaul.Domain;
 namespace ElBaul.ReadModelContractTests;

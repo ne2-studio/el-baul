@@ -1,7 +1,4 @@
 using ElBaul.Domain;
-using ElBaul.InputPorts.Bauls;
-using ElBaul.InputPorts.Chapters;
-using ElBaul.InputPorts.Recuerdos;
 using Ne2Studio.Common;
 
 namespace ElBaul.InputPorts.Recuerdos;

@@ -1,6 +1,4 @@
-using ElBaul.Application.Photos;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
 using ElBaul.Tests.Fakes;
 
 using ElBaul.Domain;

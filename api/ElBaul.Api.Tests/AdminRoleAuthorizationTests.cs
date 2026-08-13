@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using ElBaul.Api;
 
 namespace ElBaul.Api.Tests;
 

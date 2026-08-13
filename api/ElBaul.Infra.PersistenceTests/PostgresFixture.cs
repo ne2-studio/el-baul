@@ -1,4 +1,3 @@
-using ElBaul.Infra;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 

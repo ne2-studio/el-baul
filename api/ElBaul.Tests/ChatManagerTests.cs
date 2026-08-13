@@ -4,7 +4,6 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
 using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;

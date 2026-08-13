@@ -1,4 +1,3 @@
-using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Recuerdos;
 using Ne2Studio.Common;
 namespace ElBaul.Infra.Lite;

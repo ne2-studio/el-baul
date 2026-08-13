@@ -1,5 +1,3 @@
-using ElBaul.Application.Personas;
-using ElBaul.Application.Photos;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 namespace ElBaul.Application.Personas;

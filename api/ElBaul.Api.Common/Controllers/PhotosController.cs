@@ -2,8 +2,6 @@ using ElBaul.Api.Models;
 using ElBaul.InputPorts.Personas;
 using ElBaul.InputPorts.Photos;
 using ElBaul.InputPorts.Recuerdos;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
 using Ne2Studio.Common;
 
 using Microsoft.AspNetCore.Authorization;

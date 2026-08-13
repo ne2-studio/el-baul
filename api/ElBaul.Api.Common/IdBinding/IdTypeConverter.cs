@@ -1,5 +1,3 @@
-using ElBaul.OutputPorts.Shared;
-using Ne2Studio.Common;
 using System.ComponentModel;
 using System.Globalization;
 using ElBaul.Domain;

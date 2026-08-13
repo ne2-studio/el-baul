@@ -1,4 +1,3 @@
-using ElBaul.Infra;
 using Microsoft.Extensions.Configuration;
 
 namespace ElBaul.Infra.Tests;

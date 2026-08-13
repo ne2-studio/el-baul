@@ -3,7 +3,6 @@ using ElBaul.Application.Feed;
 using ElBaul.Application.Personas;
 using ElBaul.Application.Photos;
 using ElBaul.Application.Recuerdos;
-using ElBaul.OutputPorts.Recuerdos;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

@@ -1,4 +1,3 @@
-using ElBaul.OutputPorts.Shared;
 using Microsoft.AspNetCore.Http;
 
 using ElBaul.Domain;

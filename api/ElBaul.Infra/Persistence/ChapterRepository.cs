@@ -1,5 +1,4 @@
 using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Shared;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

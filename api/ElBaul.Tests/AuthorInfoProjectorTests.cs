@@ -3,7 +3,6 @@ using ElBaul.Infra.Lite;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
 
 using ElBaul.Tests.Fakes;
 
