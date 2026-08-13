@@ -1,6 +1,6 @@
 using System.Net.Mail;
 using Ne2Studio.Common;
-namespace ElBaul.OutputPorts.Shared;
+namespace ElBaul.Application.Notifications;
 // A syntactically valid email address, worth being a VO for the behavior (Create), not just
 // the label: it's the single place "is this address well-formed enough to send to" is decided,
 // replacing the copy-pasted IsValidEmail in WelcomeEmailManager/WeeklyDigestManager. Deliberately
@@ -8,7 +8,7 @@ namespace ElBaul.OutputPorts.Shared;
 // populated from external, unvalidated sources (OIDC UserInfo claims via UserSyncMiddleware) and
 // forcing them through this constructor would turn a malformed upstream claim into a hard
 // failure to materialize the User row, instead of the current "just don't send them mail" outcome.
-public readonly record struct EmailAddress
+internal readonly record struct EmailAddress
 {
     public string Value { get; }
 
