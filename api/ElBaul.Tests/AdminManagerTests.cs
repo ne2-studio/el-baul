@@ -278,6 +278,70 @@ public class AdminManagerTests
         Assert.Contains("avatars/abuela.jpg", _photoStorage.DeletedKeys);
     }
 
+    [Fact]
+    public async Task UnlinkPersonaAsync_ShouldClearUserId_AndKeepRoleClaimableAgain()
+    {
+        var baulId = new BaulId(Guid.NewGuid());
+        var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
+        await _baulRepository.CreateAsync(baul);
+        var persona = new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
+        await _baulRepository.AddPersonaAsync(persona);
+
+        var result = await CreateManager().UnlinkPersonaAsync(baulId, persona.Id);
+
+        Assert.True(result.IsSuccess);
+        var updated = await _baulRepository.GetPersonaByIdAsync(persona.Id);
+        Assert.Null(updated!.UserId);
+        Assert.False(updated.IsClaimed);
+        Assert.True(updated.IsClaimable);
+        Assert.Equal(PersonaAccessStatus.Pending, updated.AccessStatus);
+    }
+
+    [Fact]
+    public async Task UnlinkPersonaAsync_ShouldFail_WhenPersonaNotFound()
+    {
+        var baulId = new BaulId(Guid.NewGuid());
+        var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
+        await _baulRepository.CreateAsync(baul);
+
+        var result = await CreateManager().UnlinkPersonaAsync(baulId, new PersonaId(Guid.NewGuid()));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Persona not found", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task UnlinkPersonaAsync_ShouldFail_WhenPersonaIsNotLinked()
+    {
+        var baulId = new BaulId(Guid.NewGuid());
+        var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
+        await _baulRepository.CreateAsync(baul);
+        var persona = new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
+        await _baulRepository.AddPersonaAsync(persona);
+
+        var result = await CreateManager().UnlinkPersonaAsync(baulId, persona.Id);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Persona is not linked to a user", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task UnlinkPersonaAsync_ShouldFail_WhenPersonaIsTheCustodio()
+    {
+        var baulId = new BaulId(Guid.NewGuid());
+        var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
+        await _baulRepository.CreateAsync(baul);
+        var persona = new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow());
+        await _baulRepository.AddPersonaAsync(persona);
+
+        var result = await CreateManager().UnlinkPersonaAsync(baulId, persona.Id);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("The custodio cannot be unlinked", result.Error.Message);
+    }
+
     private class FakeChatContextBuilder : IChatContextBuilder
     {
         public string Context { get; set; } = "";

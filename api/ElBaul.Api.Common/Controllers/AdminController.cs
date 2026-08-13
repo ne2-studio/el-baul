@@ -104,6 +104,14 @@ public class AdminController(
         return result.ToActionResult();
     }
 
+    [HttpPost("baules/{baulId:guid}/personas/{personaId:guid}/unlink")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> UnlinkPersona(BaulId baulId, PersonaId personaId)
+    {
+        var result = await adminManager.UnlinkPersonaAsync(baulId, personaId);
+        return result.ToActionResult(NoContent());
+    }
+
     [HttpPost("emails/welcome-test/{userId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SendWelcomeTestEmail(string userId)

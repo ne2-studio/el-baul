@@ -13,4 +13,5 @@ public interface IAdminManager
     Task<Result<IEnumerable<AdminSentEmailDto>>> GetSentEmailsAsync();
     Task<Result<IEnumerable<AdminSentEmailDto>>> GetUserSentEmailsAsync(UserId userId);
     Task<Result<AdminChatContextDebugDto>> DebugChatContextAsync(UserId userId, BaulId baulId, string message);
+    Task<Result> UnlinkPersonaAsync(BaulId baulId, PersonaId personaId);
 }

@@ -83,6 +83,11 @@ export const api = {
       fetch(`${API_BASE_URL}/api/admin/baules/${id}`, { method: 'DELETE', headers: getHeaders() }).then((res) =>
         handleResponse<void>(res)
       ),
+    unlinkPersona: async (baulId: string, personaId: string): Promise<void> =>
+      fetch(`${API_BASE_URL}/api/admin/baules/${baulId}/personas/${personaId}/unlink`, {
+        method: 'POST',
+        headers: getHeaders(),
+      }).then((res) => handleResponse<void>(res)),
   },
   emails: {
     getAll: async (): Promise<AdminSentEmail[]> =>

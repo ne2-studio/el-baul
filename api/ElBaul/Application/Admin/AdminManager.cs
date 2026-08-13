@@ -120,6 +120,30 @@ public class AdminManager(
         return Result.Success(emails.Select(ToDto));
     }
 
+    // Admin-only unlink: frees a Persona from the account that claimed it (without revoking
+    // access, unlike PersonaManager.RemovePersonaAsync) so it can be claimed again by the right
+    // account. Sits here rather than on PersonaManager because it's gated by the AdminOnly
+    // backoffice policy, not baúl-level admin/custodio membership.
+    public async Task<Result> UnlinkPersonaAsync(BaulId baulId, PersonaId personaId)
+    {
+        var baul = await baulRepository.GetByIdAsync(baulId);
+        if (baul is null) return Result.Failure(ApplicationError.NotFound("Baul not found"));
+
+        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        if (persona is null || persona.BaulId != baulId)
+            return Result.Failure(ApplicationError.NotFound("Persona not found"));
+
+        if (!persona.IsClaimed)
+            return Result.Failure(ApplicationError.Validation("Persona is not linked to a user"));
+
+        if (persona.IsCustodioProtected(baul.CustodioId))
+            return Result.Failure(ApplicationError.Validation("The custodio cannot be unlinked"));
+
+        await baulRepository.UpdatePersonaAsync(persona.Unlink());
+        logger.LogInformation("Persona unlinked from user by admin {PersonaId}", personaId);
+        return Result.Success();
+    }
+
     public async Task<Result<AdminChatContextDebugDto>> DebugChatContextAsync(UserId userId, BaulId baulId, string message)
     {
         if (string.IsNullOrWhiteSpace(message))

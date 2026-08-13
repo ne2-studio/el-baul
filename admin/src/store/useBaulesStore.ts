@@ -12,6 +12,7 @@ interface BaulesStore {
   fetchBaules: () => Promise<void>;
   fetchBaul: (id: string) => Promise<void>;
   deleteBaul: (id: string) => Promise<void>;
+  unlinkPersona: (baulId: string, personaId: string) => Promise<void>;
 }
 
 export const useBaulesStore = create<BaulesStore>((set) => ({
@@ -38,5 +39,10 @@ export const useBaulesStore = create<BaulesStore>((set) => ({
   deleteBaul: async (id) => {
     await api.baules.delete(id);
     set({ selectedBaul: null });
+  },
+
+  unlinkPersona: async (baulId, personaId) => {
+    await api.baules.unlinkPersona(baulId, personaId);
+    set({ selectedBaul: await api.baules.getById(baulId) });
   },
 }));

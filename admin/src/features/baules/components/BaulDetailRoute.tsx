@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Image, MessageSquare, Users, BookOpen, HardDrive, Trash2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Image, MessageSquare, Users, BookOpen, HardDrive, Trash2, Unlink } from 'lucide-react';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { DataTable } from '@/app/components/DataTable';
 import { StatCard } from '@/app/components/StatCard';
 import { ConfirmDeleteBaulModal } from '@/app/components/ConfirmDeleteBaulModal';
+import { ConfirmUnlinkPersonaModal } from '@/app/components/ConfirmUnlinkPersonaModal';
 import { AsyncState } from '@/app/components/AsyncState';
 import { formatDate, formatBytes } from '@/utils/format';
 import { buildBaulLogsUrl } from '@/utils/logs';
@@ -12,12 +13,16 @@ import type { AdminBaulPersona } from '@/types';
 
 export function BaulDetailRoute() {
   const { baulId } = useParams<{ baulId: string }>();
-  const { selectedBaul, isLoading, error, fetchBaul, deleteBaul } = useBaulesStore();
+  const { selectedBaul, isLoading, error, fetchBaul, deleteBaul, unlinkPersona } = useBaulesStore();
   const navigate = useNavigate();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [personaToUnlink, setPersonaToUnlink] = useState<AdminBaulPersona | null>(null);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+  const [unlinkError, setUnlinkError] = useState<string | null>(null);
 
   useEffect(() => {
     if (baulId) fetchBaul(baulId);
@@ -33,6 +38,20 @@ export function BaulDetailRoute() {
     } catch (err) {
       setDeleteError((err as Error).message);
       setIsDeleting(false);
+    }
+  };
+
+  const handleUnlink = async () => {
+    if (!baulId || !personaToUnlink) return;
+    setIsUnlinking(true);
+    setUnlinkError(null);
+    try {
+      await unlinkPersona(baulId, personaToUnlink.personId);
+      setPersonaToUnlink(null);
+    } catch (err) {
+      setUnlinkError((err as Error).message);
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
@@ -86,6 +105,17 @@ export function BaulDetailRoute() {
             />
           )}
 
+          {personaToUnlink && (
+            <ConfirmUnlinkPersonaModal
+              personaLabel={personaToUnlink.name || personaToUnlink.nickname}
+              linkedUserLabel={personaToUnlink.linkedUserName || personaToUnlink.linkedUserId || ''}
+              isSubmitting={isUnlinking}
+              error={unlinkError}
+              onCancel={() => setPersonaToUnlink(null)}
+              onConfirm={handleUnlink}
+            />
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <StatCard label="Fotos" value={selectedBaul.stats.photos} icon={Image} />
             <StatCard label="Recuerdos" value={selectedBaul.stats.recuerdos} icon={MessageSquare} />
@@ -114,6 +144,22 @@ export function BaulDetailRoute() {
                     ) : (
                       <span className="text-muted-foreground">Sin cuenta</span>
                     ),
+                },
+                {
+                  header: '',
+                  render: (p) =>
+                    p.linkedUserId && !p.isCustodio ? (
+                      <button
+                        onClick={() => {
+                          setUnlinkError(null);
+                          setPersonaToUnlink(p);
+                        }}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+                      >
+                        <Unlink className="w-3.5 h-3.5" />
+                        Desvincular
+                      </button>
+                    ) : null,
                 },
               ]}
             />

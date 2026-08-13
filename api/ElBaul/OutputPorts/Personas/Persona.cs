@@ -75,4 +75,10 @@ public record Persona
     // The only way a Persona reaches Revoked — clears the account link alongside the role so
     // the two never drift out of sync (see PersonaAccessStatus).
     public Persona Revoke() => this with { UserId = null, Role = BaulRole.SinAcceso };
+
+    // Admin-only escape hatch for accounts that ended up claiming the wrong Persona (e.g. a
+    // family member with several email addresses who created duplicate Personas in the same
+    // baúl). Unlike Revoke, this keeps Role as-is, so AccessStatus falls back to Pending — the
+    // row becomes claimable again by another account instead of turning into sin_acceso.
+    public Persona Unlink() => this with { UserId = null };
 }
