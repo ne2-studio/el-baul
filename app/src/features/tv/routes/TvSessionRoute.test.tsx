@@ -2,6 +2,7 @@
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TvSessionRoute } from './TvSessionRoute';
 import { api } from '@/api';
@@ -110,5 +111,23 @@ describe('TvSessionRoute', () => {
     expect(await screen.findByText('Verano en la playa')).toBeInTheDocument();
     expect(screen.getByText('Rosa · Marta')).toBeInTheDocument();
     expect(screen.getByText('"Aprendiste a nadar" — Marta')).toBeInTheDocument();
+  });
+
+  it('navigates between photos and toggles context by clicking the screen zones', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.tvSessions.getContent).mockResolvedValue(buildContent());
+
+    renderRoute();
+    await screen.findByText('1 / 2');
+
+    await user.click(screen.getByRole('button', { name: 'Foto siguiente' }));
+    expect(await screen.findByText('2 / 2')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Foto anterior' }));
+    expect(await screen.findByText('1 / 2')).toBeInTheDocument();
+
+    expect(screen.queryByText('Verano en la playa')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Mostrar información' }));
+    expect(await screen.findByText('Verano en la playa')).toBeInTheDocument();
   });
 });

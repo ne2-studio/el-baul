@@ -50,9 +50,10 @@ export function TvSessionRoute() {
     setCurrentIndex((index) => Math.min(photoCount - 1, index + 1));
   }, [photoCount]);
 
-  // D-pad/keyboard navigation — ArrowLeft/ArrowRight to move, Enter/OK to toggle context. Back
-  // is left to the TV browser's own remote handling (no in-app history to pop): see PRD's "Back
-  // Salir" note.
+  // D-pad/keyboard navigation — ArrowLeft/ArrowRight to move, Enter/OK to toggle context. Some
+  // TVs drive a virtual mouse instead of D-pad focus, so click zones below cover the same
+  // actions. Back is left to the TV browser's own remote handling (no in-app history to pop):
+  // see PRD's "Back Salir" note.
   useEffect(() => {
     if (screen.status !== 'ready') return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -114,6 +115,29 @@ export function TvSessionRoute() {
       />
 
       <p className="absolute top-4 left-5 text-sm font-semibold text-white/85">{screen.content.baulName}</p>
+
+      {/* Click zones for TVs whose remotes drive a virtual mouse instead of D-pad focus: left/right
+          25% strips page through photos, the central 50% toggles the context overlay. */}
+      <div className="absolute inset-0 flex">
+        <button
+          type="button"
+          aria-label="Foto anterior"
+          className="w-1/4 h-full cursor-default"
+          onClick={goToPrevious}
+        />
+        <button
+          type="button"
+          aria-label={showContext ? 'Ocultar información' : 'Mostrar información'}
+          className="w-1/2 h-full cursor-default"
+          onClick={() => setShowContext((visible) => !visible)}
+        />
+        <button
+          type="button"
+          aria-label="Foto siguiente"
+          className="w-1/4 h-full cursor-default"
+          onClick={goToNext}
+        />
+      </div>
 
       {currentIndex > 0 && (
         <div className="absolute inset-y-0 left-3 flex items-center">
