@@ -7,14 +7,20 @@ RUN_ID="$(date -u +%Y%m%d%H%M%S)-$$"
 created_images=()
 capture_tmp_files=()
 build_images=1
+changed_mode=0
 
 usage() {
   cat <<'EOF'
 Usage: ./scripts/verify [options] <command>
 
 Options:
-  --build-images       Build images needed by acceptance commands. Default.
-  --skip-image-build   Reuse already-built images for acceptance commands.
+  --changed             Reduce verification to checks affected by the current diff where
+                         the underlying runner supports a reliable selection. Checks without
+                         reliable incremental selection still run in full. Not used by CI —
+                         a development-time speed optimization, not a substitute for full
+                         verification.
+  --build-images        Build images needed by acceptance commands. Default.
+  --skip-image-build    Reuse already-built images for acceptance commands.
 
 Commands:
   backend               Build and test the .NET backend solution in Release.
@@ -174,8 +180,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# dotnet has no reliable native equivalent to `--changed`: no built-in way to map a set of
+# changed files to the test projects they affect without either a fragile custom heuristic
+# (regex over ProjectReference graphs, no InternalsVisibleTo/source-generator awareness) or a
+# real Test Impact Analysis system. Both are out of scope for this iteration, so `--changed`
+# intentionally still runs the full backend suites — false negatives here would be worse than
+# the time saved.
+warn_backend_changed_runs_full() {
+  local command="$1"
+  [[ "$changed_mode" == "1" ]] || return 0
+  log "--changed: no reliable affected-project selection for dotnet test; running $command in full"
+}
+
 backend() {
   need dotnet
+  warn_backend_changed_runs_full backend
   run dotnet restore "$ROOT_DIR/api/ElBaul.slnx"
   run dotnet build "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-restore
 
@@ -189,6 +208,7 @@ backend() {
 backend_persistence() {
   need dotnet
   need docker
+  warn_backend_changed_runs_full backend-persistence
 
   # Deliberately not part of ElBaul.slnx (see the project's own .csproj comment) — this is the
   # one backend command besides backend-acceptance that needs a running Docker daemon, so it
@@ -199,6 +219,7 @@ backend_persistence() {
 backend_acceptance() {
   need dotnet
   need docker
+  warn_backend_changed_runs_full backend-acceptance
   local image="${BACKEND_IMAGE:-el-baul-api:verify-$RUN_ID}"
 
   if [[ "$build_images" == "1" ]]; then
@@ -220,6 +241,8 @@ frontend_unit_package() {
   if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
     run_in "$dir" npm run test:coverage
     write_node_coverage_summary "$dir"
+  elif [[ "$changed_mode" == "1" ]]; then
+    run_in "$dir" npm run test:changed
   else
     run_in "$dir" npm test
   fi
@@ -273,6 +296,7 @@ NODE
 frontend() {
   need npm
   ensure_npm_deps app
+  # typecheck/lint/build are cheap and global; not worth making incremental.
   run_in app npm run typecheck
   run_in app npm run lint
   run_in app npm run build
@@ -280,12 +304,18 @@ frontend() {
   if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
     run_in app npm run test:coverage
     write_node_coverage_summary app
+  elif [[ "$changed_mode" == "1" ]]; then
+    run_in app npm run test:changed
   else
     run_in app npm test
   fi
 
   run_in app npx playwright install chromium
-  run_in app npm run test:storybook
+  if [[ "$changed_mode" == "1" ]]; then
+    run_in app npm run test:storybook:changed
+  else
+    run_in app npm run test:storybook
+  fi
 }
 
 admin() {
@@ -312,7 +342,9 @@ frontend_acceptance() {
   fi
 
   run_in app npx playwright install chromium
-  run_in app env APP_IMAGE="$app_image" API_LITE_IMAGE="$api_lite_image" npm run test:acceptance
+  local acceptance_script="test:acceptance"
+  [[ "$changed_mode" == "1" ]] && acceptance_script="test:acceptance:changed"
+  run_in app env APP_IMAGE="$app_image" API_LITE_IMAGE="$api_lite_image" npm run "$acceptance_script"
 }
 
 admin_acceptance() {
@@ -334,13 +366,17 @@ admin_acceptance() {
   fi
 
   run_in admin npx playwright install chromium
-  run_in admin env ADMIN_IMAGE="$admin_image" API_LITE_IMAGE="$api_lite_image" npm run test:acceptance
+  local acceptance_script="test:acceptance"
+  [[ "$changed_mode" == "1" ]] && acceptance_script="test:acceptance:changed"
+  run_in admin env ADMIN_IMAGE="$admin_image" API_LITE_IMAGE="$api_lite_image" npm run "$acceptance_script"
 }
 
 e2e() {
   need npm
   need docker
 
+  # Whole-stack smoke test, deliberately not made incremental under --changed: it exists to
+  # catch full-stack wiring issues that per-service selection could miss.
   ensure_npm_deps e2e-tests
   run_in e2e-tests npx playwright install chromium
   run_in e2e-tests npm run typecheck
@@ -363,6 +399,10 @@ ensure_root
 command=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --changed)
+      changed_mode=1
+      shift
+      ;;
     --build-images|--rebuild-images)
       build_images=1
       shift

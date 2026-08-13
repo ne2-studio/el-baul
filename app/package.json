@@ -13,10 +13,12 @@
     "sentry:upload-sourcemaps": "sentry-cli sourcemaps upload --org pedro-pardal --project el-baul dist",
     "test": "vitest run --project=unit",
     "test:watch": "vitest --project=unit",
+    "test:changed": "vitest run --project=unit --changed",
     "test:coverage": "vitest run --project=unit --coverage",
     "test:storybook": "vitest --project=storybook --run --maxWorkers=1",
     "test:storybook:changed": "vitest --project=storybook --run --changed",
     "test:acceptance": "playwright test",
+    "test:acceptance:changed": "playwright test --only-changed",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

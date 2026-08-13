@@ -45,7 +45,30 @@ When persistence matters, act, reload from the durable store, and assert again.
 
 ## Canonical commands
 
-Run only through `./scripts/verify` unless diagnosing a failing canonical command:
+Run only through `./scripts/verify` unless diagnosing a failing canonical command.
+Prefer `--changed` for feedback during development — it narrows each selected
+command to the checks affected by the current diff where the underlying runner
+supports that reliably (Vitest, Storybook, Playwright); checks without a
+reliable incremental selection (dotnet test, e2e) still run in full under
+`--changed`. Pick the smallest command(s) that cover the changed areas, or use
+`./scripts/verify --changed all` when changes span several areas:
+
+```bash
+./scripts/verify --changed backend
+./scripts/verify --changed backend-acceptance
+./scripts/verify --changed frontend
+./scripts/verify --changed frontend-acceptance
+./scripts/verify --changed admin
+./scripts/verify --changed admin-acceptance
+./scripts/verify --changed e2e
+./scripts/verify --changed all
+```
+
+`--changed` is a feedback-speed optimization, not equivalent to full-suite
+evidence — it does not replace running the plain (non-`--changed`) command
+when confidence, not speed, is what a risk requires (e.g. before declaring a
+migration or public contract change verified). The plain commands remain
+available and are what CI runs:
 
 ```bash
 ./scripts/verify backend
