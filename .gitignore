@@ -1,6 +1,7 @@
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 .run/
+.backlog/
 
 # Generated Google Play store listing assets (screenshots, featured graphic) — regenerable
 # from store-assets/fixtures/ + store-assets/scripts/, not meant to live in git history.
