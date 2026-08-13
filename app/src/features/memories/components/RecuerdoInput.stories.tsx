@@ -20,10 +20,10 @@ Use when the user is looking at a photo and can add a short memory without leavi
 Do not use for long-form editing, modal forms or feed-level memory creation; those flows need larger text areas and explicit save/cancel actions.
 
 ### Typical examples
-Adding "qué recuerdas de este momento" while browsing a single photo.
+Adding "qué recuerdas de este momento" while browsing a single photo (\`theme="dark"\`, the default, for the photo viewer overlay) or on a normal light page like \`WriteMemorySuggestionScreen\` (\`theme="light"\`).
 
 ### Common mistakes
-Recreating the dark textarea ad hoc, showing a persistent send button before there is text, or submitting on Enter while the text area is empty.
+Recreating the textarea ad hoc, showing a persistent send button before there is text, submitting on Enter while the text area is empty, or leaving \`theme\` at its dark default on a light background — the text and border end up light-on-light and effectively invisible.
 `,
       },
     },
@@ -38,4 +38,13 @@ export const Default: Story = {
     photoId: 'photo-1',
     onSubmit: (text) => alert(`onSubmit clicked: ${text}`),
   },
+};
+
+export const Light: Story = {
+  args: {
+    photoId: 'photo-1',
+    onSubmit: (text) => alert(`onSubmit clicked: ${text}`),
+    theme: 'light',
+  },
+  decorators: [(Story) => <div className="bg-background p-8"><Story /></div>],
 };

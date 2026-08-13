@@ -10,7 +10,7 @@ interface InputProps {
   helperText?: string;
   multiline?: boolean;
   rows?: number;
-  variant?: 'default' | 'modal' | 'support' | 'destructive' | 'inlineDark' | 'photoViewerMemory';
+  variant?: 'default' | 'modal' | 'support' | 'destructive' | 'inlineDark' | 'photoViewerMemory' | 'photoViewerMemoryLight';
   id?: string;
   min?: number;
   max?: number;
@@ -59,6 +59,9 @@ export function Input({
     destructive: 'w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40 placeholder:text-muted-foreground disabled:opacity-60',
     inlineDark: 'w-full rounded-2xl px-4 py-3 text-sm leading-relaxed resize-none outline-none border focus:ring-2 focus:ring-ring bg-background/10 border-background/15 text-background placeholder:text-background/40 disabled:opacity-50',
     photoViewerMemory: 'w-full bg-transparent px-4 py-3 text-sm leading-relaxed text-background placeholder:text-background/50 resize-none focus:outline-none disabled:opacity-50',
+    // Mismo layout que photoViewerMemory pero con colores para fondo claro (fuera del visor de
+    // fotos): RecuerdoInput con theme="light", ver WriteMemorySuggestionScreen.
+    photoViewerMemoryLight: 'w-full bg-transparent px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground resize-none focus:outline-none disabled:opacity-50',
   };
 
   const baseStyles = inputVariantStyles[variant];

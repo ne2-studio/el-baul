@@ -9,6 +9,10 @@ interface RecuerdoInputProps {
   onSubmit: (text: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  // 'dark' (por defecto) para overlays sobre foto como PhotoViewer; 'light' para contextos con
+  // fondo normal de página como WriteMemorySuggestionScreen — sin esto el texto y el borde
+  // quedan en tonos claros sobre claro, invisibles.
+  theme?: 'dark' | 'light';
 }
 
 // Prompts rotativos para guiar la reflexión
@@ -20,7 +24,7 @@ const PROMPTS = [
   '¿Qué pasó justo antes o después?'
 ];
 
-export function RecuerdoInput({ photoId, onSubmit, onFocus, onBlur }: RecuerdoInputProps) {
+export function RecuerdoInput({ photoId, onSubmit, onFocus, onBlur, theme = 'dark' }: RecuerdoInputProps) {
   const [text, setText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
@@ -86,10 +90,10 @@ export function RecuerdoInput({ photoId, onSubmit, onFocus, onBlur }: RecuerdoIn
         animate={{
           backgroundColor: isFocused
             ? 'rgba(198, 123, 92, 0.12)'
-            : 'rgba(255, 255, 255, 0.10)',
+            : theme === 'light' ? 'rgba(58, 50, 48, 0.03)' : 'rgba(255, 255, 255, 0.10)',
           borderColor: isFocused
             ? 'rgba(198, 123, 92, 0.3)'
-            : 'rgba(255, 255, 255, 0.15)'
+            : theme === 'light' ? 'rgba(58, 50, 48, 0.12)' : 'rgba(255, 255, 255, 0.15)'
         }}
         transition={{ duration: 0.2 }}
         className="rounded-2xl overflow-hidden border relative flex items-end"
@@ -98,7 +102,7 @@ export function RecuerdoInput({ photoId, onSubmit, onFocus, onBlur }: RecuerdoIn
         <Input
           inputRef={inputRef}
           multiline
-          variant="photoViewerMemory"
+          variant={theme === 'light' ? 'photoViewerMemoryLight' : 'photoViewerMemory'}
           value={text}
           onChange={setText}
           onFocus={handleFocus}

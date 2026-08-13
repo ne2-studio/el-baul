@@ -59,7 +59,7 @@ export function WriteMemorySuggestionScreen({ photo, onSkip, onSave, isSubmittin
       <PageContainer className="py-6">
         <h2 className="text-base font-medium text-foreground mb-3">Cuéntanos algo sobre esta foto</h2>
 
-        <RecuerdoInput photoId={photo.id} onSubmit={onSave} />
+        <RecuerdoInput photoId={photo.id} onSubmit={onSave} theme="light" />
       </PageContainer>
     </div>
   );
