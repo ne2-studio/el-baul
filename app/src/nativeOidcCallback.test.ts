@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isNativeOidcCallbackUrl } from './nativeOidcCallback';
+import { isNativeAppLinkUrl, isNativeOidcCallbackUrl } from './nativeOidcCallback';
 
 describe('isNativeOidcCallbackUrl', () => {
   it('ignores a URL that does not use the native deep-link scheme', () => {
@@ -28,5 +28,23 @@ describe('isNativeOidcCallbackUrl', () => {
 
   it('ignores a matching scheme with only unrelated params', () => {
     expect(isNativeOidcCallbackUrl('studio.ne2.elbaul://callback?state=xyz')).toBe(false);
+  });
+});
+
+describe('isNativeAppLinkUrl', () => {
+  it('recognizes an https App Link', () => {
+    expect(isNativeAppLinkUrl('https://app-prod.el-baul.ne2.studio/?redirectTo=%2Fbaules')).toBe(true);
+  });
+
+  it('recognizes an http App Link', () => {
+    expect(isNativeAppLinkUrl('http://localhost:3000/?redirectTo=%2Fbaules')).toBe(true);
+  });
+
+  it('ignores the native OIDC callback scheme', () => {
+    expect(isNativeAppLinkUrl('studio.ne2.elbaul://callback?code=abc')).toBe(false);
+  });
+
+  it('ignores a malformed URL', () => {
+    expect(isNativeAppLinkUrl('not a url')).toBe(false);
   });
 });

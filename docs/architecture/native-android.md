@@ -31,9 +31,29 @@ that calls them) — not before:
   the *webapp* is loaded from an Android browser. It reuses the existing OIDC callback
   intent-filter (`studio.ne2.elbaul://callback`, see above) as an `intent://` link with
   `S.browser_fallback_url` pointing at Google Play — deliberately, to avoid adding a second
-  scheme/host or a verified Android App Link (`assetlinks.json`) just for this. Opening the app
-  this way is harmless: `isNativeOidcCallbackUrl` only treats the deep link as a real sign-in
-  callback when `code`/`error` is present in the query, which this link never sets.
+  scheme/host just for this. Opening the app this way is harmless: `isNativeOidcCallbackUrl` only
+  treats the deep link as a real sign-in callback when `code`/`error` is present in the query,
+  which this link never sets.
+- Email links (`TrackedLinkBuilder` in the API) *do* need a verified Android App Link, since they
+  arrive as a plain `https://` URL in someone's inbox, never through this app's own UI: a second
+  `intent-filter` in `AndroidManifest.xml`, `android:autoVerify="true"` on the app's own domain
+  (`app-prod.el-baul.ne2.studio` — the one `TrackedLinkBuilder.BuildRedirectUrl` already redirects
+  a tracked link's 302 to, not the API's tracking domain; Android verifies App Links against the
+  URL a browser navigates *to*, including after a redirect, not just the one first tapped, so one
+  verified domain covers the whole email-click round trip with no change needed on the API side).
+  Verification needs `app/public/.well-known/assetlinks.json` served from that domain with the
+  release signing certificate's SHA-256 fingerprint (`keytool -list -v -keystore
+  app/android/el-baul-release.jks -alias <ANDROID_KEY_ALIAS>`, password/alias in the
+  `ANDROID_KEYSTORE_PASSWORD`/`ANDROID_KEY_ALIAS` CI secrets — see `android-beta.yml`; if a
+  different release key is ever cut, that fingerprint has to be updated too) — without a matching
+  fingerprint there, Android just fails verification silently and falls back to opening the link
+  in the browser. On the JS side, `main.tsx` doesn't reuse
+  `isNativeOidcCallbackUrl` for these: `isNativeAppLinkUrl` (`nativeOidcCallback.ts`) recognizes
+  any `http(s)` URL delivered via `appUrlOpen`/`getLaunchUrl` — safe to do without checking the
+  host again, since Android only ever hands back the one domain declared above — and feeds its
+  `pathname`+`search` to `window.location.assign`, which the WebView interprets as a normal
+  in-app navigation to `/?redirectTo=...` (the same query param `AuthGuards.tsx` already reads on
+  the web flow).
 
 See [`native-ios.md`](native-ios.md) for the iOS counterpart and [`deployment.md`](deployment.md)
 for the Android CI workflow.

@@ -13,7 +13,7 @@ import "./styles/index.css";
 import { registerSW } from "virtual:pwa-register";
 import { initSentry } from "./sentry";
 import { getEnv } from "./runtimeConfig";
-import { isNativeOidcCallbackUrl } from "./nativeOidcCallback";
+import { isNativeAppLinkUrl, isNativeOidcCallbackUrl } from "./nativeOidcCallback";
 
 initSentry();
 
@@ -62,6 +62,21 @@ async function handleNativeCallback(url: string) {
   }
 }
 
+// Un link de email (App Link/Universal Link) llega aquí como una URL http(s) normal, nunca
+// cargada por la WebView — Capacitor solo entrega el intent, no navega. pathname+search es la
+// misma ruta interna que la web ya sabe interpretar (p.ej. /?redirectTo=..., ver AuthGuards.tsx),
+// así que basta con dárselo a la WebView como si fuera una navegación local. Si esto corre antes
+// de createRoot (arranque en frío vía getLaunchUrl), simplemente fija la ruta con la que React
+// monta; si la app ya estaba abierta, provoca una recarga completa pero sobre el bundle local.
+function handleNativeAppLink(url: string) {
+  if (!isNativeAppLinkUrl(url)) {
+    return;
+  }
+
+  const parsedUrl = new URL(url);
+  window.location.assign(parsedUrl.pathname + parsedUrl.search);
+}
+
 async function configureNativeDeepLinks() {
   if (!isNative) {
     return;
@@ -69,6 +84,7 @@ async function configureNativeDeepLinks() {
 
   // App abierta mientras ya estaba ejecutándose.
   await CapacitorApp.addListener("appUrlOpen", ({ url }) => {
+    handleNativeAppLink(url);
     void handleNativeCallback(url);
   });
 
@@ -78,6 +94,7 @@ async function configureNativeDeepLinks() {
   const launchUrl = await CapacitorApp.getLaunchUrl();
 
   if (launchUrl?.url) {
+    handleNativeAppLink(launchUrl.url);
     await handleNativeCallback(launchUrl.url);
   }
 }

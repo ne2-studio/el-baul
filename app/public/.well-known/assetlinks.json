@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "studio.ne2.elbaul",
+      "sha256_cert_fingerprints": [
+        "31:2C:28:5C:8D:22:91:33:48:4B:ED:EB:56:C9:80:66:7F:D5:AF:B5:0D:C4:B1:D4:FE:23:D4:EB:7E:21:3A:8B"
+      ]
+    }
+  }
+]

@@ -24,3 +24,17 @@ export function isNativeOidcCallbackUrl(url: string): boolean {
   const { searchParams } = parsedUrl;
   return searchParams.has('code') || searchParams.has('error');
 }
+
+// Los links de email (TrackedLinkBuilder en la API) apuntan a app-prod.el-baul.ne2.studio, el
+// único host https declarado como Android App Link (AndroidManifest.xml + assetlinks.json) e
+// iOS Universal Link — así que cualquier URL http(s) que llegue aquí vía appUrlOpen solo puede
+// venir de ese host verificado, sin falta de comprobarlo de nuevo en JS. main.tsx la trata como
+// una ruta interna: navega la WebView a pathname+search en vez de tratarla como el callback OIDC.
+export function isNativeAppLinkUrl(url: string): boolean {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}

@@ -45,6 +45,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Las flechas del campo de año (al añadir una fecha) empezaban a contar desde 0 en vez de partir de un año real.
 - Si ya habías solicitado la retirada de una foto, el menú volvía a ofrecer "Solicitar retirada" como si nada — ahora aparece deshabilitado con el texto "Ya has solicitado la retirada".
 - Borrar un capítulo daba error si tenía alguna foto ya borrada con personas etiquetadas.
+- En Android, los enlaces de los emails ya abren la app instalada en vez de siempre el navegador.
 
 ## [beta-v0.3.2] - 2026-08-12
 

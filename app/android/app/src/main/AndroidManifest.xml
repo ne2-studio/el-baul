@@ -34,6 +34,27 @@
                     android:host="callback" />
             </intent-filter>
 
+            <!--
+                Android App Link para los links de email (TrackedLinkBuilder en la API):
+                api-prod redirige un 302 de /email/click/{token} a app-prod/?redirectTo=..., y es
+                esa navegación de redirección la que Android verifica contra assetlinks.json
+                (app/public/.well-known/assetlinks.json) — no hace falta un segundo intent-filter
+                para el dominio de la API. android:autoVerify sin un assetlinks.json con el
+                fingerprint real solo hace que Android desista de la verificación y caiga al
+                navegador, así que esto es inofensivo hasta que se rellene el fingerprint (ver
+                docs/architecture/native-android.md).
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="app-prod.el-baul.ne2.studio" />
+            </intent-filter>
+
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
