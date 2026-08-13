@@ -6,104 +6,68 @@ model: haiku
 
 ## Goal
 
-Verify the smallest evidence set that covers every risk introduced by the diff.
-Do not run every suite by default, and do not call a change verified while any
-relevant risk lacks evidence. A correct-looking diff is not evidence.
+Cover every risk the diff introduces with the smallest evidence set. A
+correct-looking diff is not evidence; an unverified risk means not done.
 
-## Required workflow
+## Workflow
 
 1. Inspect the diff, including tests and docs.
-2. Identify the observable behavior changed: user behavior, API contract, data
-   shape, persistence effect, command effect, runtime wiring, or visual output.
-3. Classify the introduced risks with the matrix below.
-4. Select the necessary checks. Prefer the narrowest automated test that can
-   fail for the risk.
-5. Add or extend tests when a reasonably automatable manual check would be the
-   only evidence.
-6. Run the repository's canonical verification commands from the repo root.
-7. Use the `run` skill only when a live environment is required for browser,
-   API, persistence, storage, container, or command verification. Do not start
-   servers manually when `run` provides the environment.
-8. Report evidence and gaps. If any risk remains unverified, the work is not
-   done.
+2. Identify the observable behavior changed (user behavior, API contract,
+   data shape, persistence, command effect, runtime wiring, visual output).
+3. Classify risks with the matrix below and pick the narrowest checks that
+   cover them, adding tests where a manual check would otherwise be the only
+   evidence.
+4. Run the matching `./scripts/verify` commands from the repo root, with
+   `--changed` by default — drop it only when a risk needs full-suite
+   confidence (migrations, public contract changes, or anything CI-equivalent).
+5. Use the `run` skill for anything needing a live environment (browser, API,
+   persistence, storage, containers). Don't start servers manually.
+6. Report evidence and gaps; nothing is done while a risk is unverified.
 
 ## Risk matrix
 
-| Risk introduced | Minimum evidence | Canonical command | Escalate to real infrastructure when | Manual verification is appropriate when |
-|---|---|---|---|---|
-| Domain or application logic | Unit test around the changed rule, success and relevant failure path | `./scripts/verify backend` | The rule depends on database translation, storage, auth tokens, hosted services, or container config | The behavior is operationally observable but not automatable yet; add a test first if practical |
-| Persistence and EF | Unit coverage for business intent plus acceptance coverage against real Postgres | `./scripts/verify backend` and `./scripts/verify backend-acceptance` | Entities, EF configuration, queries, value converters, indexes, transactions, or raw SQL changed | Rarely; use only to inspect live data after automated coverage exists |
-| Migrations | Migration review plus acceptance coverage applying the built API against real Postgres | `./scripts/verify backend-acceptance` | Always for added, changed, or removed migrations | Only to inspect schema/data after migration if the risk is not captured by tests |
-| HTTP contract or serialization | API/controller/unit coverage or black-box acceptance asserting status, headers, auth, and JSON shape | `./scripts/verify backend`; add `./scripts/verify backend-acceptance` for public contract changes | The built image, auth, middleware, serialization settings, or client compatibility matters | To inspect an endpoint manually after automated contract assertions exist |
-| Infrastructure, CI, and environment | Test or smoke proving changed wrappers, env vars, image startup, health, and service connectivity | The affected `./scripts/verify ...` command; use `./scripts/verify backend-acceptance` or `./scripts/verify e2e` for real services | Dockerfile, compose, workflow, verification script, env contract, service wiring, MinIO, imgproxy, OIDC, or startup changed | To read logs, health endpoints, or external service behavior in the live stack |
-| Frontend behavior | Vitest/component test or acceptance spec asserting the user-visible state transition | `./scripts/verify frontend`; add `./scripts/verify frontend-acceptance` for covered app journeys | The behavior depends on built frontend image, routing, auth, API-lite wiring, or browser-only behavior | To explore an uncovered UI path after adding feasible assertions |
-| Visual behavior | Automated functional assertions plus inspected screenshot or visual artifact | Relevant unit/acceptance command for the behavior | The visual result depends on browser layout, real media, imgproxy, build output, or responsive rendering | Required for intentional visual/layout changes; screenshots complement assertions, they do not replace them |
-| Full-stack wiring | Smoke through login and changed integration point against real compose stack | `./scripts/verify e2e` | API/app/imgproxy/OIDC/Postgres/MinIO compose wiring or production image interaction changed | To diagnose failures or inspect the changed path in the live stack |
-| Application maintenance commands | Behavior tests for dry-run/apply/idempotency and real integration when persistence/storage/provider effects matter | `./scripts/verify backend`; add live command execution via `run` when needed | The command touches real persistence, storage, external providers, deploy-order behavior, or idempotency guarantees | To run dry-run/apply/dry-run in the live container and inspect resulting records or files |
+| Risk | Evidence | Command | Escalate to real infra when |
+|---|---|---|---|
+| Domain/application logic | Unit test: success + failure path | `backend` | Touches DB translation, storage, auth tokens, hosted services, container config |
+| Persistence and EF | Unit + acceptance against real Postgres | `backend` + `backend-acceptance` | Entities, EF config, queries, converters, indexes, transactions, raw SQL changed |
+| Migrations | Review + acceptance applying built API against real Postgres | `backend-acceptance` | Always |
+| HTTP contract/serialization | Controller/unit or black-box acceptance on status/headers/auth/JSON shape | `backend`; add `backend-acceptance` for public contracts | Built image, auth, middleware, serialization, client compat |
+| Infra/CI/environment | Test or smoke proving wrappers, env vars, startup, health, connectivity | affected command; `backend-acceptance`/`e2e` for real services | Dockerfile, compose, workflow, env contract, service wiring changed |
+| Frontend behavior | Vitest/component or acceptance spec on the user-visible transition | `frontend`; add `frontend-acceptance` for covered journeys | Built frontend image, routing, auth, API-lite wiring, browser-only behavior |
+| Visual behavior | Functional assertions + inspected screenshot | command for the behavior | Browser layout, real media, imgproxy, build output, responsive rendering |
+| Full-stack wiring | Smoke through login + changed integration point on real compose | `e2e` | API/app/imgproxy/OIDC/Postgres/MinIO wiring or prod image interaction changed |
+| Maintenance commands | Dry-run/apply/idempotency tests | `backend`; add live run via `run` when persistence/storage/provider effects matter | Real persistence, storage, external providers, deploy order, idempotency |
 
-When persistence matters, act, reload from the durable store, and assert again.
+When persistence matters: act, reload from the durable store, assert again.
 
-## Canonical commands
+## Commands
 
-Run only through `./scripts/verify` unless diagnosing a failing canonical command.
-Prefer `--changed` for feedback during development — it narrows each selected
-command to the checks affected by the current diff where the underlying runner
-supports that reliably (Vitest, Storybook, Playwright); checks without a
-reliable incremental selection (dotnet test, e2e) still run in full under
-`--changed`. Pick the smallest command(s) that cover the changed areas, or use
-`./scripts/verify --changed all` when changes span several areas:
+Run only through `./scripts/verify`. Pick the smallest command(s) for the
+changed areas, or `all` when changes span several. Add `--changed` for
+day-to-day feedback. Drop `--changed` — i.e. run the plain command — when
+a risk needs full-suite confidence; plain commands are also what CI runs.
 
-```bash
-./scripts/verify --changed backend
-./scripts/verify --changed backend-acceptance
-./scripts/verify --changed frontend
-./scripts/verify --changed frontend-acceptance
-./scripts/verify --changed admin
-./scripts/verify --changed admin-acceptance
-./scripts/verify --changed e2e
-./scripts/verify --changed all
+```
+backend  backend-persistence  backend-acceptance  frontend  frontend-acceptance  admin  admin-acceptance  e2e  all
 ```
 
-`--changed` is a feedback-speed optimization, not equivalent to full-suite
-evidence — it does not replace running the plain (non-`--changed`) command
-when confidence, not speed, is what a risk requires (e.g. before declaring a
-migration or public contract change verified). The plain commands remain
-available and are what CI runs:
+`docs/architecture/testing.md` documents what each suite covers.
 
-```bash
-./scripts/verify backend
-./scripts/verify backend-acceptance
-./scripts/verify frontend
-./scripts/verify frontend-acceptance
-./scripts/verify admin
-./scripts/verify admin-acceptance
-./scripts/verify e2e
-./scripts/verify all
-```
+## Browser and live verification
 
-`docs/architecture/testing.md` documents what each suite covers. Do not duplicate
-or bypass script internals here.
-
-## Browser and live verification rules
-
-- Use `run` when a live stack, logged-in browser, bearer token, real storage, or
-  container command is needed. Use the URL/environment it returns.
-- Prefer automated tests over manual Playwright driving. Do not use manual
-  Playwright as the routine substitute for writing a test.
-- For browser verification, attach listeners before acting: client console
-  errors, page errors, and unexpected HTTP/network failures fail verification.
-- Do not globally ignore imgproxy errors. Treat unexpected failures from any
-  service as verification failures unless the scenario intentionally tests an
-  error path.
-- Visual changes require actual visual inspection at relevant viewports.
-  Screenshots are evidence for appearance only after they are inspected; they
-  do not replace functional assertions.
-- Purely internal changes do not need image tests unless they affect a critical
-  user journey or visible output.
+- Use `run` for a live stack, logged-in browser, bearer token, real storage,
+  or container command; use the URL/environment it returns.
+- Prefer automated tests over manual Playwright driving.
+- Attach listeners before acting: console errors, page errors, and unexpected
+  network failures fail verification.
+- Don't ignore imgproxy or other service errors unless the scenario
+  intentionally tests an error path.
+- Visual changes need actual inspection at relevant viewports; screenshots
+  complement functional assertions, they don't replace them.
+- Purely internal changes don't need image tests unless they affect a
+  critical user journey or visible output.
 
 ## Verification result
-
-End every verification report in this shape:
 
 ```markdown
 ## Verification result
@@ -126,5 +90,5 @@ End every verification report in this shape:
 - None
 ```
 
-If `Unverified risks` is not `None`, state the missing evidence and continue
-until it is resolved or explicitly blocked.
+If `Unverified risks` isn't `None`, state the missing evidence and continue
+until resolved or explicitly blocked.
