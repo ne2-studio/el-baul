@@ -134,7 +134,8 @@ public class WeeklyDigestManager(
         return new WeeklyDigestEmailModel(
             user.Name ?? user.Email, activity.HasBaules, activity.HasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
             EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder),
-            linkBuilder.BuildOpenPixelUrl());
+            linkBuilder.BuildOpenPixelUrl(),
+            linkBuilder.BuildLogoUrl());
     }
 
     private static BaulDigestSection? BuildBaulSection(

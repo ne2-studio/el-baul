@@ -7,6 +7,7 @@ public class WelcomeEmailTemplateRendererTests
 {
     private const string NotificationSettingsUrl = "https://el-baul.test/perfil";
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
+    private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
 
@@ -23,7 +24,8 @@ public class WelcomeEmailTemplateRendererTests
             PrimaryCtaLabel: "Añadir un recuerdo",
             NotificationSettingsUrl: NotificationSettingsUrl,
             Footer: TestFooter,
-            PixelUrl: TestPixelUrl);
+            PixelUrl: TestPixelUrl,
+            LogoUrl: TestLogoUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -37,7 +39,7 @@ public class WelcomeEmailTemplateRendererTests
     public void RenderWelcome_ShouldTruncateVeryLongBaulNames()
     {
         var longName = new string('a', 500);
-        var model = new WelcomeEmailModel("Pedro", [longName], true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl);
+        var model = new WelcomeEmailModel("Pedro", [longName], true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -48,7 +50,7 @@ public class WelcomeEmailTemplateRendererTests
     [Fact]
     public void RenderWelcome_ShouldSupportUnicodeAndEmoji()
     {
-        var model = new WelcomeEmailModel("José 🎉", ["Verano en Salobreña 🏖️"], true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl);
+        var model = new WelcomeEmailModel("José 🎉", ["Verano en Salobreña 🏖️"], true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -63,7 +65,7 @@ public class WelcomeEmailTemplateRendererTests
     [Fact]
     public void RenderWelcome_ShouldUseTheGivenCtaUrlAndLabel_ForUsersWithBaules()
     {
-        var model = new WelcomeEmailModel("Pedro", ["Familia Pardal"], true, "https://el-baul.test/baules/abc", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl);
+        var model = new WelcomeEmailModel("Pedro", ["Familia Pardal"], true, "https://el-baul.test/baules/abc", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -75,7 +77,7 @@ public class WelcomeEmailTemplateRendererTests
     [Fact]
     public void RenderWelcome_ShouldUseTheGivenCtaUrlAndLabel_ForUsersWithoutBaules()
     {
-        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Crear mi primer baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl);
+        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Crear mi primer baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -88,7 +90,7 @@ public class WelcomeEmailTemplateRendererTests
     public void RenderWelcome_ShouldSummarizeBaulesBeyondTheListedLimit()
     {
         var names = Enumerable.Range(1, 8).Select(i => $"Baúl {i}").ToList();
-        var model = new WelcomeEmailModel("Pedro", names, true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl);
+        var model = new WelcomeEmailModel("Pedro", names, true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -98,7 +100,7 @@ public class WelcomeEmailTemplateRendererTests
     [Fact]
     public void RenderWelcome_ShouldReportTemplateVersionAndLocale()
     {
-        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Crear mi primer baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl);
+        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Crear mi primer baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWelcome(model);
 

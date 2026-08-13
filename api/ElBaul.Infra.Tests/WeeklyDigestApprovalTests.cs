@@ -15,6 +15,7 @@ public class WeeklyDigestApprovalTests
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
+    private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
 
     private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
@@ -42,7 +43,8 @@ public class WeeklyDigestApprovalTests
             PrimaryCtaLabel: "Añadir un recuerdo",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
             Footer: TestFooter,
-            PixelUrl: TestPixelUrl);
+            PixelUrl: TestPixelUrl,
+            LogoUrl: TestLogoUrl);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }
@@ -59,7 +61,8 @@ public class WeeklyDigestApprovalTests
             PrimaryCtaLabel: "Añadir un recuerdo",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
             Footer: TestFooter,
-            PixelUrl: TestPixelUrl);
+            PixelUrl: TestPixelUrl,
+            LogoUrl: TestLogoUrl);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }
@@ -76,7 +79,8 @@ public class WeeklyDigestApprovalTests
             PrimaryCtaLabel: "Crear mi primer baúl",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
             Footer: TestFooter,
-            PixelUrl: TestPixelUrl);
+            PixelUrl: TestPixelUrl,
+            LogoUrl: TestLogoUrl);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }
@@ -99,7 +103,8 @@ public class WeeklyDigestApprovalTests
             PrimaryCtaLabel: "Añadir un recuerdo",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
             Footer: TestFooter,
-            PixelUrl: TestPixelUrl);
+            PixelUrl: TestPixelUrl,
+            LogoUrl: TestLogoUrl);
 
         return Verify(_renderer.RenderWeeklyDigest(model));
     }

@@ -12,6 +12,7 @@ public class WeeklyDigestLayoutTests
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
+    private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
 
     private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
@@ -20,7 +21,7 @@ public class WeeklyDigestLayoutTests
     {
         var model = new WeeklyDigestEmailModel(
             "Pedro", false, false, [], "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWeeklyDigest(model);
 
@@ -34,7 +35,7 @@ public class WeeklyDigestLayoutTests
     {
         var model = new WeeklyDigestEmailModel(
             "Pedro", false, false, [], "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWeeklyDigest(model);
 
@@ -48,7 +49,7 @@ public class WeeklyDigestLayoutTests
     {
         var model = new WeeklyDigestEmailModel(
             "Pedro", false, false, [], "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl);
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl);
 
         var result = _renderer.RenderWeeklyDigest(model);
 

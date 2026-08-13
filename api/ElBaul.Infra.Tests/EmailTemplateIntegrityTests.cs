@@ -14,6 +14,7 @@ public class EmailTemplateIntegrityTests
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
+    private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
 
     [Fact]
     public void Constructing_ShouldParseEveryEmbeddedTemplate_WithoutErrors()
@@ -47,7 +48,7 @@ public class EmailTemplateIntegrityTests
     {
         "WelcomeEmail" => new WelcomeEmailModel(
             "Pedro", ["Familia Pardal"], true, "https://el-baul.test/cta", "Añadir un recuerdo",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl),
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl),
         "WeeklyDigestEmail" => new WeeklyDigestEmailModel(
             "Pedro", true, true,
             [
@@ -55,7 +56,7 @@ public class EmailTemplateIntegrityTests
                     [new DigestActivityBlock(DigestBlockKind.NewChapter, "Nuevo capítulo", "https://el-baul.test/capitulos/1", 1)],
                     OverflowSummary: "Y 1 novedad más.")
             ],
-            "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter, TestPixelUrl),
+            "https://el-baul.test/cta", "Añadir un recuerdo", "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl),
         _ => throw new ArgumentOutOfRangeException(nameof(template))
     };
 }

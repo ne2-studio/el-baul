@@ -35,6 +35,13 @@ public class TrackedLinkBuilder(string apiPublicUrl, IEmailLinkSigner signer, Gu
     public string BuildOpenPixelUrl() =>
         $"{_apiPublicUrl}/email/open/{signer.CreateOpenToken(sentEmailId)}.gif";
 
+    /// <summary>
+    /// Absolute URL for the masthead logo served by EmailAssetsController. Unlike the tracking
+    /// links above, it's static and untokenized — every email points at the same URL — so it
+    /// doesn't need signing, just the API's public base.
+    /// </summary>
+    public string BuildLogoUrl() => $"{_apiPublicUrl}/email/assets/logo.png";
+
     private static string BuildRedirectUrl(string publicUrl, string path) =>
         $"{publicUrl}/?redirectTo={Uri.EscapeDataString(WithEmailEntrySource(path))}";
 

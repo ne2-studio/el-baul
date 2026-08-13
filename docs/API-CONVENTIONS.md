@@ -23,6 +23,9 @@ Anonymous exceptions:
 - `GET /email/click/{token}` — clicked from an email client, never carries auth.
 - `GET /email/open/{token}.gif` — the open-tracking pixel loaded by the recipient's email
   client, never carries auth.
+- `GET /email/assets/logo.png` — the masthead logo loaded by the recipient's email client,
+  never carries auth. Served as a real URL (not embedded as a `data:` URI) because several
+  major email clients/providers strip or refuse to render inline base64 images.
 - `GET /s/{token}` — public shared photo/recuerdo landing with Open Graph metadata.
 - `GET /api/tv-sessions/{token}` — public, rate-limited; Modo TV's temporary read-only session
   content (baúl name + every photo's date/chapter/tagged people/latest recuerdo). The token

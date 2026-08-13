@@ -20,7 +20,8 @@ public record WelcomeEmailModel(
     string PrimaryCtaLabel,
     string NotificationSettingsUrl,
     EmailFooterLinks Footer,
-    string PixelUrl);
+    string PixelUrl,
+    string LogoUrl);
 
 /// <summary>
 /// Turns an email content model into subject/HTML/plain-text — kept separate from
