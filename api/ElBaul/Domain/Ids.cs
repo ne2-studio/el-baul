@@ -86,6 +86,13 @@ public readonly record struct RemovalRequestId(Guid Value) : IParsableId<Removal
     public static Result<RemovalRequestId> Parse(string? raw) => IdParsing.Parse(raw, v => new RemovalRequestId(v), "removal request id");
 }
 
+public readonly record struct ChatMemoryId(Guid Value) : IParsableId<ChatMemoryId>
+{
+    public static implicit operator Guid(ChatMemoryId id) => id.Value;
+    public override string ToString() => Value.ToString();
+    public static Result<ChatMemoryId> Parse(string? raw) => IdParsing.Parse(raw, v => new ChatMemoryId(v), "chat memory id");
+}
+
 // A client-generated idempotency token for a photo upload — deliberately its own type rather
 // than reusing PhotoId, since it identifies the upload *attempt*, not the resulting photo (see
 // IPhotoRepository.GetByClientUploadIdAsync, used to detect and no-op a retried upload).

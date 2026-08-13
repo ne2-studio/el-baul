@@ -14,7 +14,8 @@ interface PageHeaderProps {
   titleClassName?: string;
   /** No se usa en la variante 'row' (no tiene título propio). */
   subtitle?: React.ReactNode;
-  /** Solo se usa en la variante 'row' — menú desplegable, insignia de selección, etc. */
+  /** Menú desplegable, insignia de selección, etc. En 'row' sustituye el layout entero; en
+   * 'inline' se añade al lado derecho del título sin alterar el resto. No se usa en 'stacked'. */
   trailing?: React.ReactNode;
   /**
    * Solo se usa en la variante 'row' — sustituye al `BackButton` (p. ej. el selector de
@@ -55,10 +56,11 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(func
       <StickyHeader ref={ref}>
         <PageContainer className={cn('py-5 flex items-center gap-4', className)}>
           <BackButton onClick={onBack!} disabled={backDisabled} />
-          <div>
+          <div className="flex-1">
             <h1 className={cn('text-3xl text-foreground', titleClassName)}>{title}</h1>
             {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
           </div>
+          {trailing}
         </PageContainer>
       </StickyHeader>
     );

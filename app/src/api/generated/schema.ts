@@ -4168,6 +4168,242 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/baules/{baulId}/chat/memories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChatMemoryDto"][];
+                        "application/json": components["schemas"]["ChatMemoryDto"][];
+                        "text/json": components["schemas"]["ChatMemoryDto"][];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat-memories/{chatMemoryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chatMemoryId: components["schemas"]["ChatMemoryId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateChatMemoryRequest"];
+                    "text/json": components["schemas"]["UpdateChatMemoryRequest"];
+                    "application/*+json": components["schemas"]["UpdateChatMemoryRequest"];
+                };
+            };
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChatMemoryDto"];
+                        "application/json": components["schemas"]["ChatMemoryDto"];
+                        "text/json": components["schemas"]["ChatMemoryDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chatMemoryId: components["schemas"]["ChatMemoryId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SuccessResponse"];
+                        "application/json": components["schemas"]["SuccessResponse"];
+                        "text/json": components["schemas"]["SuccessResponse"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/email/open/{token}.gif": {
         parameters: {
             query?: never;
@@ -6847,6 +7083,7 @@ export interface components {
             sharedLinksEnabled: boolean;
             baulFeedEnabled: boolean;
             androidAppBannerEnabled: boolean;
+            chatMemoryEnabled: boolean;
         };
         AppConfigResponse: {
             features: components["schemas"]["AppConfigFeatures"];
@@ -6958,6 +7195,18 @@ export interface components {
             coverCropY: number;
             /** Format: double */
             coverCropScale: number;
+        };
+        ChatMemoryDto: {
+            id: string;
+            content: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ChatMemoryId: {
+            /** Format: uuid */
+            value: string;
         };
         ChatMessageDto: {
             id: string;
@@ -7190,6 +7439,9 @@ export interface components {
         };
         UpdateChapterRequest: {
             name: string;
+        };
+        UpdateChatMemoryRequest: {
+            content: string;
         };
         UpdateNotificationPreferencesRequest: {
             weeklyDigestEnabled: boolean;

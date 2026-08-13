@@ -12,6 +12,7 @@ type RawChapterDto = ApiSchemas['ChapterDto'];
 type ChapterDto = Omit<RawChapterDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'> &
   Partial<Pick<RawChapterDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'>>;
 type ChatMessageDto = ApiSchemas['ChatMessageDto'];
+type ChatMemoryDto = ApiSchemas['ChatMemoryDto'];
 type RawPersonaDto = ApiSchemas['PersonaDto'];
 type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'> &
   Partial<Pick<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'>>;
@@ -308,6 +309,20 @@ export class ChatMessage {
     this.role = data.role as 'user' | 'assistant';
     this.content = data.content;
     this.createdAt = data.createdAt;
+  }
+}
+
+export class ChatMemory {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+
+  constructor(data: ChatMemoryDto) {
+    this.id = data.id;
+    this.content = data.content;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
   }
 }
 

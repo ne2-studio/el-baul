@@ -16,7 +16,9 @@ public class StaticAppConfiguration(
     bool chatSuggestionsEnabled = true,
     bool sharedLinksEnabled = true,
     bool baulFeedEnabled = true,
-    bool pushDigestEnabled = true)
+    bool pushDigestEnabled = true,
+    bool chatMemoryEnabled = true,
+    int chatMemoryRetrievalLimit = 5)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -32,4 +34,6 @@ public class StaticAppConfiguration(
     public bool SharedLinksEnabled { get; } = sharedLinksEnabled;
     public bool BaulFeedEnabled { get; } = baulFeedEnabled;
     public bool PushDigestEnabled { get; } = pushDigestEnabled;
+    public bool ChatMemoryEnabled { get; } = chatMemoryEnabled;
+    public int ChatMemoryRetrievalLimit { get; } = chatMemoryRetrievalLimit;
 }

@@ -62,4 +62,21 @@ public interface IAppConfiguration
     /// it, so flipping it off mid-batch stops anything still queued too. Defaults to false.
     /// </summary>
     bool PushDigestEnabled { get; }
+
+    /// <summary>
+    /// Kill switch for the personal chat memory feature (extraction, retrieval, and the
+    /// "Gestionar memoria" management endpoints). Checked server-side by ChatMemoryManager and
+    /// ChatMemoryExtractionManager, not just used to hide the frontend menu entry — while off,
+    /// no new memories are extracted and none are retrieved into chat context. Defaults to
+    /// false, same rollout shape as ChatEnabled.
+    /// </summary>
+    bool ChatMemoryEnabled { get; }
+
+    /// <summary>
+    /// How many of a user's memories RelevantChatMemorySelector retrieves per chat turn (and
+    /// offers the extractor as dedup/update context) — kept small and configurable, same
+    /// reasoning as RelevantRecuerdoSelector.MaxRelevantRecuerdos but exposed here (rather than
+    /// a private const) since the PRD calls for it to be tunable without a deploy.
+    /// </summary>
+    int ChatMemoryRetrievalLimit { get; }
 }

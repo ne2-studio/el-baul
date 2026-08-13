@@ -18,7 +18,8 @@ public class ChatManager(
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
     IChatContextBuilder chatContextBuilder,
-    ISuggestedQuestionsStrategy suggestedQuestionsStrategy) : IChatManager
+    ISuggestedQuestionsStrategy suggestedQuestionsStrategy,
+    IBackgroundJobScheduler backgroundJobScheduler) : IChatManager
 {
     // Fixed instruction, not user-editable in this walking skeleton — HU-01 only, no writing
     // assistance, no persona, no tools. The baúl content is appended verbatim below it.
@@ -100,7 +101,13 @@ public class ChatManager(
         // no transaction at all, is the correct shape here, not a workaround.
         await chatMessageRepository.CreateAsync(userMessage);
 
-        var systemPrompt = BuildSystemInstruction(auth.Value.Persona) + "\n\n" + await chatContextBuilder.BuildAsync(baul, text);
+        // Fire-and-forget from this request's point of view: extraction runs as its own
+        // Hangfire job (see ChatMemoryExtractionManager), never awaited here, so a slow or
+        // failing extractor never delays or fails this chat turn's reply.
+        if (appConfiguration.ChatMemoryEnabled)
+            backgroundJobScheduler.EnqueueChatMemoryExtraction(baulId, userId, userMessage.Id, text);
+
+        var systemPrompt = BuildSystemInstruction(auth.Value.Persona) + "\n\n" + await chatContextBuilder.BuildAsync(baul, userId, text);
         var history = RecentMessages(await chatMessageRepository.GetByBaulAndUserAsync(baulId, userId))
             .Select(m => new ChatTurn(m.Role.ToApiString(), m.Content));
 

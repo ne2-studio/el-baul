@@ -191,6 +191,73 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("BaulFeedCursors", (string)null);
                 });
 
+            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BaulId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SourceMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("BaulId", "UserId");
+
+                    b.ToTable("ChatMemories", (string)null);
+                });
+
+            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemoryEmbedding", b =>
+                {
+                    b.Property<Guid>("ChatMemoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BaulId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.PrimitiveCollection<float[]>("Vector")
+                        .IsRequired()
+                        .HasColumnType("real[]");
+
+                    b.HasKey("ChatMemoryId");
+
+                    b.HasIndex("BaulId", "UserId");
+
+                    b.ToTable("ChatMemoryEmbeddings", (string)null);
+                });
+
             modelBuilder.Entity("ElBaul.OutputPorts.Notifications.EmailLinkClick", b =>
                 {
                     b.Property<string>("Token")
@@ -811,6 +878,30 @@ namespace ElBaul.Infra.Migrations
                     b.HasOne("ElBaul.OutputPorts.Users.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemory", b =>
+                {
+                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                        .WithMany()
+                        .HasForeignKey("BaulId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemoryEmbedding", b =>
+                {
+                    b.HasOne("ElBaul.OutputPorts.Memories.ChatMemory", null)
+                        .WithOne()
+                        .HasForeignKey("ElBaul.OutputPorts.Memories.ChatMemoryEmbedding", "ChatMemoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

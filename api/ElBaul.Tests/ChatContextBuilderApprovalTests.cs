@@ -24,17 +24,24 @@ public class ChatContextBuilderApprovalTests
     private const string CustodioId = "custodio-1";
     private static readonly DateTime BaseDate = new(2024, 3, 15);
 
+    private static readonly UserId CurrentUserId = new(CustodioId);
+
     private readonly InMemoryBaulRepository _baulRepository = new();
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
+    private readonly InMemoryChatMemoryRepository _chatMemoryRepository = new();
+    private readonly InMemoryChatMemoryEmbeddingRepository _chatMemoryEmbeddingRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly StaticClock _clock = new();
 
     private ChatContextBuilder CreateBuilder(IEmbeddingBackend? embeddingBackend = null) =>
         new(_baulRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
             new RelevantRecuerdoSelector(NullLogger<RelevantRecuerdoSelector>.Instance, _recuerdoEmbeddingRepository,
-                embeddingBackend ?? new FakeEmbeddingBackend([]), _clock));
+                embeddingBackend ?? new FakeEmbeddingBackend([]), _clock),
+            new RelevantChatMemorySelector(NullLogger<RelevantChatMemorySelector>.Instance, _chatMemoryRepository,
+                _chatMemoryEmbeddingRepository, embeddingBackend ?? new FakeEmbeddingBackend([]), new StaticAppConfiguration()),
+            new StaticAppConfiguration());
 
     [Fact]
     public async Task BuildAsync_WithChaptersPersonasAndRecuerdos()
@@ -54,7 +61,7 @@ public class ChatContextBuilderApprovalTests
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId("user-2"), "El abuelo cantaba en las bodas", BaseDate.AddDays(-5)));
 
         var builder = CreateBuilder();
-        var context = await builder.BuildAsync(baul, "¿Cuándo fue el viaje a Asturias?");
+        var context = await builder.BuildAsync(baul, CurrentUserId, "¿Cuándo fue el viaje a Asturias?");
 
         await Verify(context);
     }
@@ -67,7 +74,7 @@ public class ChatContextBuilderApprovalTests
         await _baulRepository.CreateAsync(baul);
 
         var builder = CreateBuilder();
-        var context = await builder.BuildAsync(baul, "¿Qué hay en este baúl?");
+        var context = await builder.BuildAsync(baul, CurrentUserId, "¿Qué hay en este baúl?");
 
         await Verify(context);
     }
@@ -88,7 +95,7 @@ public class ChatContextBuilderApprovalTests
 
         var embeddingBackend = new FakeEmbeddingBackend(["asturias", "relleno"]);
         var builder = CreateBuilder(embeddingBackend);
-        var context = await builder.BuildAsync(baul, "¿Qué sabemos del viaje a Asturias?");
+        var context = await builder.BuildAsync(baul, CurrentUserId, "¿Qué sabemos del viaje a Asturias?");
 
         await Verify(context);
     }

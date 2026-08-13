@@ -23,6 +23,7 @@ import { HomeRedirectRoute } from '../features/baules/routes/HomeRedirectRoute';
 import { CreateBaulRoute } from '../features/baules/routes/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/routes/BaulRoute';
 import { AiChatRoute } from '../features/chat/routes/AiChatRoute';
+import { ChatMemoriesRoute } from '../features/chat/routes/ChatMemoriesRoute';
 import { RequestBaulDeletionRoute } from '../features/baules/routes/RequestBaulDeletionRoute';
 import { CreateChapterModalRoute } from '../features/chapters/routes/CreateChapterModalRoute';
 import { ChapterRoute } from '../features/chapters/routes/ChapterRoute';
@@ -208,6 +209,11 @@ function App() {
         <Route path="/baules/:baulId/recordar" element={
           <ProtectedRoute>
             <AiChatRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/recordar/memoria" element={
+          <ProtectedRoute>
+            <ChatMemoriesRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/personas/:personaId" element={

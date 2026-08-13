@@ -16,6 +16,9 @@ interface AppConfigState {
   // Defaults to false so the "download the app" overlay (AndroidAppBanner) never flashes
   // visible before the backend confirms the rollout is on.
   androidAppBannerEnabled: boolean;
+  // Defaults to false so the "Gestionar memoria" chat menu entry never flashes visible before
+  // the backend confirms the rollout is on.
+  chatMemoryEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -43,6 +46,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   sharedLinksEnabled: false,
   baulFeedEnabled: false,
   androidAppBannerEnabled: false,
+  chatMemoryEnabled: false,
   helpCenterUrl: '',
   appUrl: window.location.origin,
   googlePlayUrl: '',
@@ -58,6 +62,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         sharedLinksEnabled: config.features.sharedLinksEnabled ?? false,
         baulFeedEnabled: config.features.baulFeedEnabled ?? false,
         androidAppBannerEnabled: config.features.androidAppBannerEnabled ?? false,
+        chatMemoryEnabled: config.features.chatMemoryEnabled ?? false,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
         googlePlayUrl: config.googlePlayUrl ?? '',

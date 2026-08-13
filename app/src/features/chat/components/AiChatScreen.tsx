@@ -16,6 +16,8 @@ interface AiChatScreenProps {
   isLoadingSuggestions: boolean;
   onBack: () => void;
   onSend: (text: string) => void;
+  /** Menú "···" del chat (p. ej. "Gestionar memoria") — omitido cuando no hay nada que mostrar. */
+  menu?: React.ReactNode;
 }
 
 export function AiChatScreen({
@@ -27,6 +29,7 @@ export function AiChatScreen({
   isLoadingSuggestions,
   onBack,
   onSend,
+  menu,
 }: AiChatScreenProps) {
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -49,6 +52,7 @@ export function AiChatScreen({
         onBack={onBack}
         title="Recordemos juntos"
         titleClassName="text-2xl"
+        trailing={menu}
       />
 
       {/* Messages */}

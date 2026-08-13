@@ -22,6 +22,7 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
         var sharedLinksEnabled = configuration.GetValue<bool>("Features:SharedLinksEnabled");
         var baulFeedEnabled = configuration.GetValue<bool>("Features:BaulFeedEnabled");
         var androidAppBannerEnabled = configuration.GetValue<bool>("Features:AndroidAppBannerEnabled");
+        var chatMemoryEnabled = configuration.GetValue<bool>("Features:ChatMemoryEnabled");
         var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
         var appUrl = configuration.GetValue<string>("App:PublicUrl");
         var googlePlayUrl = configuration.GetValue<string>("App:GooglePlayUrl");
@@ -39,7 +40,8 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
                 chatSuggestionsEnabled,
                 sharedLinksEnabled,
                 baulFeedEnabled,
-                androidAppBannerEnabled
+                androidAppBannerEnabled,
+                chatMemoryEnabled
             },
             helpCenterUrl,
             appUrl,

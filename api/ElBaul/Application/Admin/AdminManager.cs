@@ -157,7 +157,7 @@ public class AdminManager(
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure<AdminChatContextDebugDto>(ApplicationError.NotFound("Baul not found"));
 
-        var context = await chatContextBuilder.BuildAsync(baul, message);
+        var context = await chatContextBuilder.BuildAsync(baul, userId, message);
         return new AdminChatContextDebugDto(baul.Id.ToString(), message, context);
     }
 

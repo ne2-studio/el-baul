@@ -4,6 +4,7 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Feed;
+using ElBaul.OutputPorts.Memories;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
@@ -50,6 +51,8 @@ public static class ServiceRegistration
         services.AddSingleton<IBaulInviteLinkRepository, InMemoryBaulInviteLinkRepository>();
         services.AddSingleton<IChatMessageRepository, InMemoryChatMessageRepository>();
         services.AddSingleton<IRecuerdoEmbeddingRepository, InMemoryRecuerdoEmbeddingRepository>();
+        services.AddSingleton<IChatMemoryRepository, InMemoryChatMemoryRepository>();
+        services.AddSingleton<IChatMemoryEmbeddingRepository, InMemoryChatMemoryEmbeddingRepository>();
         services.AddSingleton<IAdminRepository, InMemoryAdminRepository>();
         services.AddScoped<IAdminBaulDeletionRepository, InMemoryAdminBaulDeletionRepository>();
         services.AddSingleton<IPushTokenRepository, InMemoryPushTokenRepository>();
@@ -65,6 +68,7 @@ public static class ServiceRegistration
         services.AddSingleton<IBackgroundJobScheduler, FakeBackgroundJobScheduler>();
         services.AddSingleton<IAiChatBackend, FakeAiChatBackend>();
         services.AddSingleton<IEmbeddingBackend>(_ => new FakeEmbeddingBackend(EmbeddingVocabulary));
+        services.AddSingleton<IChatMemoryExtractionBackend, FakeChatMemoryExtractionBackend>();
         services.AddSingleton<ISupportBackend, FakeSupportBackend>();
         services.AddSingleton<IEmailTemplateRenderer, FakeEmailTemplateRenderer>();
         services.AddSingleton<IPhotoDateExtractor, FakePhotoDateExtractor>();

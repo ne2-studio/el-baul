@@ -1,6 +1,7 @@
 using ElBaul.Infra.Chat;
 using ElBaul.Infra.Emails;
 using ElBaul.Infra.Analytics;
+using ElBaul.Infra.Memories;
 using ElBaul.Infra.Persistence;
 using ElBaul.Infra.PhotoStorage;
 using ElBaul.Infra.PushNotifications;
@@ -10,6 +11,7 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Feed;
+using ElBaul.OutputPorts.Memories;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
@@ -47,6 +49,8 @@ public static class ServiceRegistration
         services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
         services.AddScoped<IPhotoPersonaTagRepository, PhotoPersonaTagRepository>();
         services.AddScoped<IRecuerdoEmbeddingRepository, RecuerdoEmbeddingRepository>();
+        services.AddScoped<IChatMemoryRepository, ChatMemoryRepository>();
+        services.AddScoped<IChatMemoryEmbeddingRepository, ChatMemoryEmbeddingRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<IAdminBaulDeletionRepository, AdminBaulDeletionRepository>();
         services.AddScoped<IPushTokenRepository, PushTokenRepository>();
@@ -57,6 +61,7 @@ public static class ServiceRegistration
         services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
         services.AddScoped<EmailJobs>();
         services.AddScoped<PushNotificationJobs>();
+        services.AddScoped<ChatMemoryExtractionJobs>();
         services.AddScoped<IAppConfiguration, AppConfiguration>();
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();
         services.AddScoped<IPhotoImageNormalizer, HeicToJpegPhotoImageNormalizer>();
@@ -78,6 +83,7 @@ public static class ServiceRegistration
         services.Configure<OpenAiOptions>(configuration.GetSection("OpenAi"));
         services.AddHttpClient<IAiChatBackend, OpenAiChatBackend>();
         services.AddHttpClient<IEmbeddingBackend, OpenAiEmbeddingBackend>();
+        services.AddHttpClient<IChatMemoryExtractionBackend, OpenAiChatMemoryExtractionBackend>();
 
         // Singleton: wraps a single AmazonS3Client, which the AWS SDK documents as
         // thread-safe and designed for reuse/connection pooling across requests —

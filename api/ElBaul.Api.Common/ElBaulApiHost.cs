@@ -7,6 +7,7 @@ using ElBaul.Application.Bauls;
 using ElBaul.Application.Chapters;
 using ElBaul.Application.Chat;
 using ElBaul.Application.Feed;
+using ElBaul.Application.Memories;
 using ElBaul.Application.Notifications;
 using ElBaul.Application.Personas;
 using ElBaul.Application.Photos;
@@ -21,6 +22,7 @@ using ElBaul.InputPorts.Bauls;
 using ElBaul.InputPorts.Chapters;
 using ElBaul.InputPorts.Chat;
 using ElBaul.InputPorts.Feed;
+using ElBaul.InputPorts.Memories;
 using ElBaul.InputPorts.Notifications;
 using ElBaul.InputPorts.Personas;
 using ElBaul.InputPorts.Photos;
@@ -244,8 +246,11 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IPushNotificationManager, PushNotificationManager>();
         builder.Services.AddScoped<ISupportManager, SupportManager>();
         builder.Services.AddScoped<IRelevantRecuerdoSelector, RelevantRecuerdoSelector>();
+        builder.Services.AddScoped<IRelevantChatMemorySelector, RelevantChatMemorySelector>();
         builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
         builder.Services.AddScoped<IChatManager, ChatManager>();
+        builder.Services.AddScoped<IChatMemoryManager, ChatMemoryManager>();
+        builder.Services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
         builder.Services.AddScoped<ISharedLinkManager, SharedLinkManager>();
         builder.Services.AddScoped<IBaulInviteLinkManager, BaulInviteLinkManager>();
 
@@ -331,6 +336,7 @@ public static class ElBaulApiHost
             RegisterIdTypeConverter<BaulInviteLinkId>();
             RegisterIdTypeConverter<RemovalRequestId>();
             RegisterIdTypeConverter<ClientUploadId>();
+            RegisterIdTypeConverter<ChatMemoryId>();
         }
     }
 

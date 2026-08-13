@@ -2,6 +2,7 @@ using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Feed;
+using ElBaul.OutputPorts.Memories;
 using ElBaul.OutputPorts.Notifications;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
@@ -30,6 +31,8 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<BaulInviteLink> BaulInviteLinks => Set<BaulInviteLink>();
     public DbSet<PushToken> PushTokens => Set<PushToken>();
     public DbSet<BaulFeedCursor> BaulFeedCursors => Set<BaulFeedCursor>();
+    public DbSet<ChatMemory> ChatMemories => Set<ChatMemory>();
+    public DbSet<ChatMemoryEmbedding> ChatMemoryEmbeddings => Set<ChatMemoryEmbedding>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

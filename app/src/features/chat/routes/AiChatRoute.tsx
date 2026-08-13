@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AiChatScreen } from '@/features/chat/components/AiChatScreen';
+import { ChatMenuContainer } from '@/features/chat/containers/ChatMenuContainer';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useChatStore } from '@/store/useChatStore';
 import { loadChatConversation, sendChatMessage } from '@/features/chat/useCases';
@@ -41,6 +42,7 @@ export const AiChatRoute: React.FC = () => {
       isLoadingSuggestions={isCurrentBaul && isLoadingSuggestions}
       onBack={() => navigate(-1)}
       onSend={handleSend}
+      menu={baulId ? <ChatMenuContainer baulId={baulId} /> : undefined}
     />
   );
 };

@@ -34,9 +34,11 @@ public class ChatManagerTests
     private readonly IChatContextBuilder _chatContextBuilder = Substitute.For<IChatContextBuilder>();
     private readonly ISuggestedQuestionsStrategy _suggestedQuestionsStrategy = Substitute.For<ISuggestedQuestionsStrategy>();
 
+    private readonly FakeBackgroundJobScheduler _backgroundJobScheduler = new();
+
     public ChatManagerTests()
     {
-        _chatContextBuilder.BuildAsync(Arg.Any<Baul>(), Arg.Any<string>()).Returns(StubbedContext);
+        _chatContextBuilder.BuildAsync(Arg.Any<Baul>(), Arg.Any<UserId>(), Arg.Any<string>()).Returns(StubbedContext);
         _suggestedQuestionsStrategy.GenerateAsync(Arg.Any<Baul>())
             .Returns(Result.Success<IEnumerable<string>>(["¿Pregunta de prueba?"]));
     }
@@ -46,7 +48,7 @@ public class ChatManagerTests
         new(NullLogger<ChatManager>.Instance, _chatMessageRepository, _aiChatBackend,
             appConfiguration ?? new StaticAppConfiguration(), new StaticIdGenerator(nextId ?? Guid.NewGuid()),
             _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            _chatContextBuilder, _suggestedQuestionsStrategy);
+            _chatContextBuilder, _suggestedQuestionsStrategy, _backgroundJobScheduler);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
     {
@@ -154,7 +156,7 @@ public class ChatManagerTests
         var manager = CreateManager(CustodioId);
         await manager.SendMessageAsync(new BaulId(baulId), "¿Qué sabemos del viaje a Asturias?");
 
-        await _chatContextBuilder.Received(1).BuildAsync(baul, "¿Qué sabemos del viaje a Asturias?");
+        await _chatContextBuilder.Received(1).BuildAsync(baul, new UserId(CustodioId), "¿Qué sabemos del viaje a Asturias?");
         var systemPrompt = Assert.Single(_aiChatBackend.Calls).SystemPrompt;
         Assert.Contains(StubbedContext, systemPrompt);
     }
@@ -209,6 +211,49 @@ public class ChatManagerTests
         Assert.Equal(10, history.Count);
         Assert.DoesNotContain(history, t => t.Content == "antiguo");
         Assert.Equal("Nuevo mensaje", history[^1].Content);
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_ShouldEnqueueMemoryExtraction_WhenChatMemoryIsEnabled()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var manager = CreateManager(CustodioId, appConfiguration: new StaticAppConfiguration(chatMemoryEnabled: true));
+
+        await manager.SendMessageAsync(new BaulId(baulId), "Mi abuelo Manuel trabajó en una fábrica de muebles.");
+
+        var enqueued = Assert.Single(_backgroundJobScheduler.EnqueuedChatMemoryExtractions);
+        Assert.Equal(baulId, enqueued.BaulId.Value);
+        Assert.Equal(CustodioId, enqueued.UserId.Value);
+        Assert.Equal("Mi abuelo Manuel trabajó en una fábrica de muebles.", enqueued.Text);
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_ShouldNotEnqueueMemoryExtraction_WhenChatMemoryIsDisabled()
+    {
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        var manager = CreateManager(CustodioId, appConfiguration: new StaticAppConfiguration(chatMemoryEnabled: false));
+
+        await manager.SendMessageAsync(new BaulId(baulId), "Hola");
+
+        Assert.Empty(_backgroundJobScheduler.EnqueuedChatMemoryExtractions);
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_ShouldStillReply_WhenMemoryExtractionEnqueueingIsUnaffectedByAiFailure()
+    {
+        // Extraction is enqueued right after the user's message is persisted, independently of
+        // whatever the AI backend does next — this pins that ordering/independence down.
+        var baulId = Guid.NewGuid();
+        await SeedBaulAsync(baulId, "Familia");
+        _aiChatBackend.NextResult = Result.Failure<string>(ApplicationError.ExternalDependencyUnavailable("Chat is not configured."));
+        var manager = CreateManager(CustodioId, appConfiguration: new StaticAppConfiguration(chatMemoryEnabled: true));
+
+        var result = await manager.SendMessageAsync(new BaulId(baulId), "Hola");
+
+        Assert.True(result.IsFailure);
+        Assert.Single(_backgroundJobScheduler.EnqueuedChatMemoryExtractions);
     }
 
     [Fact]

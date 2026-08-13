@@ -1,5 +1,6 @@
 using ElBaul.Domain;
 using ElBaul.Infra.Emails;
+using ElBaul.Infra.Memories;
 using ElBaul.Infra.PushNotifications;
 using ElBaul.OutputPorts.Shared;
 using Hangfire;
@@ -19,4 +20,10 @@ public class HangfireBackgroundJobScheduler(IBackgroundJobClient backgroundJobCl
 
     public void EnqueuePushDigest(UserId userId, DateTime since) =>
         backgroundJobClient.Enqueue<PushNotificationJobs>(j => j.SendPushDigestAsync(userId, since));
+
+    // Primitive parameters (Guid/string), not BaulId/UserId — Hangfire serializes job arguments
+    // to JSON for storage, same reasoning as EmailJobs taking a bare userId string instead of
+    // UserId.
+    public void EnqueueChatMemoryExtraction(BaulId baulId, UserId userId, Guid sourceMessageId, string text) =>
+        backgroundJobClient.Enqueue<ChatMemoryExtractionJobs>(j => j.ExtractAsync(baulId.Value, userId.Value, sourceMessageId, text));
 }

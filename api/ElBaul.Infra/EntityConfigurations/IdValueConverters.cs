@@ -16,6 +16,7 @@ internal static class IdValueConverters
     public static readonly ValueConverter<SharedLinkId, Guid> SharedLinkId = new(id => id.Value, v => new SharedLinkId(v));
     public static readonly ValueConverter<BaulInviteLinkId, Guid> BaulInviteLinkId = new(id => id.Value, v => new BaulInviteLinkId(v));
     public static readonly ValueConverter<RemovalRequestId, Guid> RemovalRequestId = new(id => id.Value, v => new RemovalRequestId(v));
+    public static readonly ValueConverter<ChatMemoryId, Guid> ChatMemoryId = new(id => id.Value, v => new ChatMemoryId(v));
 
     // UserId wraps the opaque OIDC "sub" claim (string, not Guid) — see ElBaul.Domain.UserId.
     public static readonly ValueConverter<UserId, string> UserId = new(id => id.Value, v => new UserId(v));

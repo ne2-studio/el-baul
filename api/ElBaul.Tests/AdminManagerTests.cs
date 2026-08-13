@@ -346,11 +346,13 @@ public class AdminManagerTests
     {
         public string Context { get; set; } = "";
         public Baul? LastBaul { get; private set; }
+        public UserId? LastUserId { get; private set; }
         public string? LastQuery { get; private set; }
 
-        public Task<string> BuildAsync(Baul baul, string query)
+        public Task<string> BuildAsync(Baul baul, UserId userId, string query)
         {
             LastBaul = baul;
+            LastUserId = userId;
             LastQuery = query;
             return Task.FromResult(Context);
         }

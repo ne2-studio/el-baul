@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '@/api';
 import { useChatStore } from '@/store/useChatStore';
-import { ChatMessage } from '@/types';
-import { loadChatConversation, sendChatMessage } from './index';
+import { useChatMemoriesStore } from '@/store/useChatMemoriesStore';
+import { ChatMemory, ChatMessage } from '@/types';
+import {
+  deleteChatMemory,
+  loadChatConversation,
+  loadChatMemories,
+  sendChatMessage,
+  updateChatMemory,
+} from './index';
 
 vi.mock('@/api', () => ({
   api: {
@@ -10,6 +17,11 @@ vi.mock('@/api', () => ({
       getMessages: vi.fn(),
       sendMessage: vi.fn(),
       getSuggestedQuestions: vi.fn(),
+    },
+    chatMemories: {
+      getAll: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
   },
 }));
@@ -22,6 +34,18 @@ function message(overrides: Partial<ChatMessage> = {}): ChatMessage {
     role: 'user',
     content: 'Hola',
     createdAt: new Date().toISOString(),
+    ...overrides,
+  });
+}
+
+const memoryTimestamp = new Date().toISOString();
+
+function memory(overrides: Partial<ChatMemory> = {}): ChatMemory {
+  return new ChatMemory({
+    id: 'mem-1',
+    content: 'El abuelo Manuel trabajó en Muebles López.',
+    createdAt: memoryTimestamp,
+    updatedAt: memoryTimestamp,
     ...overrides,
   });
 }
@@ -87,5 +111,74 @@ describe('chat useCases', () => {
     expect(useChatStore.getState().messages.map((m) => m.content)).toEqual(['¿Cuándo nació la abuela?']);
     expect(useChatStore.getState().hasError).toBe(true);
     expect(useChatStore.getState().isSending).toBe(false);
+  });
+});
+
+describe('chat memories useCases', () => {
+  beforeEach(() => {
+    useChatMemoriesStore.getState().reset();
+    vi.clearAllMocks();
+  });
+
+  it('loads memories for the baúl', async () => {
+    vi.mocked(api.chatMemories.getAll).mockResolvedValue([memory()]);
+
+    await loadChatMemories(baulId);
+
+    expect(useChatMemoriesStore.getState().baulId).toBe(baulId);
+    expect(useChatMemoriesStore.getState().memories).toEqual([memory()]);
+    expect(useChatMemoriesStore.getState().isLoading).toBe(false);
+    expect(useChatMemoriesStore.getState().hasError).toBe(false);
+  });
+
+  it('marks an error when loading memories fails', async () => {
+    vi.mocked(api.chatMemories.getAll).mockRejectedValue(new Error('network'));
+
+    await loadChatMemories(baulId);
+
+    expect(useChatMemoriesStore.getState().hasError).toBe(true);
+    expect(useChatMemoriesStore.getState().isLoading).toBe(false);
+  });
+
+  it('updates a memory in place and regenerates its embedding server-side', async () => {
+    useChatMemoriesStore.setState({ baulId, memories: [memory()] });
+    const updated = memory({ content: 'El abuelo Manuel trabajó 30 años en Muebles López.' });
+    vi.mocked(api.chatMemories.update).mockResolvedValue(updated);
+
+    const ok = await updateChatMemory(baulId, 'mem-1', 'El abuelo Manuel trabajó 30 años en Muebles López.');
+
+    expect(ok).toBe(true);
+    expect(useChatMemoriesStore.getState().memories).toEqual([updated]);
+    expect(api.chatMemories.update).toHaveBeenCalledWith('mem-1', 'El abuelo Manuel trabajó 30 años en Muebles López.');
+  });
+
+  it('returns false and leaves the memory untouched when updating fails', async () => {
+    useChatMemoriesStore.setState({ baulId, memories: [memory()] });
+    vi.mocked(api.chatMemories.update).mockRejectedValue(new Error('network'));
+
+    const ok = await updateChatMemory(baulId, 'mem-1', 'texto nuevo');
+
+    expect(ok).toBe(false);
+    expect(useChatMemoriesStore.getState().memories).toEqual([memory()]);
+  });
+
+  it('removes a deleted memory from the list', async () => {
+    useChatMemoriesStore.setState({ baulId, memories: [memory()] });
+    vi.mocked(api.chatMemories.delete).mockResolvedValue({ success: true });
+
+    const ok = await deleteChatMemory(baulId, 'mem-1');
+
+    expect(ok).toBe(true);
+    expect(useChatMemoriesStore.getState().memories).toEqual([]);
+  });
+
+  it('returns false and keeps the memory when deleting fails', async () => {
+    useChatMemoriesStore.setState({ baulId, memories: [memory()] });
+    vi.mocked(api.chatMemories.delete).mockRejectedValue(new Error('network'));
+
+    const ok = await deleteChatMemory(baulId, 'mem-1');
+
+    expect(ok).toBe(false);
+    expect(useChatMemoriesStore.getState().memories).toEqual([memory()]);
   });
 });

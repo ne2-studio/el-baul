@@ -1,5 +1,6 @@
 import { api } from '@/api';
 import { useChatStore } from '@/store/useChatStore';
+import { useChatMemoriesStore } from '@/store/useChatMemoriesStore';
 import { ChatMessage } from '@/types';
 
 interface LoadChatConversationOptions {
@@ -86,5 +87,52 @@ export async function sendChatMessage(baulId: string, text: string): Promise<voi
     if (isActiveBaul(baulId)) {
       useChatStore.setState({ isSending: false });
     }
+  }
+}
+
+function isActiveMemoriesBaul(baulId: string): boolean {
+  return useChatMemoriesStore.getState().baulId === baulId;
+}
+
+export async function loadChatMemories(baulId: string): Promise<void> {
+  useChatMemoriesStore.setState({ baulId, memories: [], isLoading: true, hasError: false });
+
+  try {
+    const memories = await api.chatMemories.getAll(baulId);
+    if (isActiveMemoriesBaul(baulId)) {
+      useChatMemoriesStore.setState({ memories, isLoading: false });
+    }
+  } catch {
+    if (isActiveMemoriesBaul(baulId)) {
+      useChatMemoriesStore.setState({ hasError: true, isLoading: false });
+    }
+  }
+}
+
+export async function updateChatMemory(baulId: string, chatMemoryId: string, content: string): Promise<boolean> {
+  try {
+    const updated = await api.chatMemories.update(chatMemoryId, content);
+    if (isActiveMemoriesBaul(baulId)) {
+      useChatMemoriesStore.setState((state) => ({
+        memories: state.memories.map((memory) => (memory.id === chatMemoryId ? updated : memory)),
+      }));
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteChatMemory(baulId: string, chatMemoryId: string): Promise<boolean> {
+  try {
+    await api.chatMemories.delete(chatMemoryId);
+    if (isActiveMemoriesBaul(baulId)) {
+      useChatMemoriesStore.setState((state) => ({
+        memories: state.memories.filter((memory) => memory.id !== chatMemoryId),
+      }));
+    }
+    return true;
+  } catch {
+    return false;
   }
 }

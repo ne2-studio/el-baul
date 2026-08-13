@@ -3,6 +3,7 @@ using ElBaul.OutputPorts.Chapters;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.OutputPorts.Shared;
 using System.Text;
 using ElBaul.Domain;
 namespace ElBaul.Application.Chat;
@@ -10,10 +11,11 @@ namespace ElBaul.Application.Chat;
 // file (or its 12 other constructor dependencies) — see ChatManager.SendMessageAsync.
 public interface IChatContextBuilder
 {
-    Task<string> BuildAsync(Baul baul, string query);
+    Task<string> BuildAsync(Baul baul, UserId userId, string query);
 
     // No query to rank recuerdos against yet (used for starter-question suggestions, before the
     // user has asked anything) — just the baúl/personas/chapters header, recuerdos omitted.
+    // No personal memories either, for the same reason: nothing to rank them against.
     Task<string> BuildSummaryAsync(Baul baul);
 }
 
@@ -22,12 +24,14 @@ public class ChatContextBuilder(
     IChapterRepository chapterRepository,
     IRecuerdoRepository recuerdoRepository,
     IPhotoRepository photoRepository,
-    IRelevantRecuerdoSelector relevantRecuerdoSelector) : IChatContextBuilder
+    IRelevantRecuerdoSelector relevantRecuerdoSelector,
+    IRelevantChatMemorySelector relevantChatMemorySelector,
+    IAppConfiguration appConfiguration) : IChatContextBuilder
 {
     // Volcado en texto plano del contenido del baúl relevante para la pregunta. Baúl, personas
     // y capítulos entran siempre (listas pequeñas, acotadas por el tamaño de la familia); los
     // recuerdos se acotan a los más similares a la pregunta en RelevantRecuerdoSelector.
-    public async Task<string> BuildAsync(Baul baul, string query)
+    public async Task<string> BuildAsync(Baul baul, UserId userId, string query)
     {
         var chapters = (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToList();
         var chapterNames = chapters.ToDictionary(a => a.Id, a => a.Name);
@@ -55,6 +59,25 @@ public class ChatContextBuilder(
         var chapterDates = photosByChapter.ToDictionary(kv => kv.Key, kv => EarliestDate(kv.Value));
 
         var sb = new StringBuilder();
+
+        // Kept in its own section, ranked and fetched independently from recuerdos below (see
+        // RelevantChatMemorySelector) — a personal memory must never compete for a ranking slot
+        // against baúl content, and must never appear here at all while the feature is off.
+        if (appConfiguration.ChatMemoryEnabled)
+        {
+            var memories = await relevantChatMemorySelector.SelectAsync(baul.Id, userId, query);
+            if (memories.Count > 0)
+            {
+                // Deliberately not called "recuerdos" here — that word is reserved for baúl
+                // content (Recuerdo entries, formatted below) and reusing it for this section
+                // would blur a distinction the model needs to keep straight.
+                sb.AppendLine("Información personal aprendida en conversaciones anteriores con este usuario (uso interno, no es contenido del baúl):");
+                foreach (var memory in memories)
+                    sb.AppendLine($"- {memory.Content}");
+                sb.AppendLine();
+            }
+        }
+
         AppendHeader(sb, baul, personas, chapters, photosByChapter);
 
         sb.AppendLine();

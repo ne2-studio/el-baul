@@ -22,6 +22,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al elegir foto de portada de un capítulo o de un baúl, ahora puedes recortarla (zoom y centrado horizontal/vertical), igual que ya podías hacer con la foto de perfil.
 - Ahora puedes borrar tú mismo una foto que hayas subido, durante la primera hora tras subirla, por si te equivocas al subirla.
 - Nueva recomendación de contribución "escribe un recuerdo": al abrir un baúl, a veces te propone una foto al azar y te anima a contar qué recuerdas de ese momento, como alternativa a "¿nos ayudas con esta foto?".
+- El chat ahora aprende en silencio información relevante que le cuentas (personas, apodos, historias familiares) y la recuerda en conversaciones futuras dentro del mismo baúl. Desde el menú del chat puedes entrar en "Gestionar memoria" para ver, corregir o eliminar lo que recuerda de ti.
 
 ### Cambiado
 
