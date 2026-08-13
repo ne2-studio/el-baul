@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
@@ -43,6 +43,9 @@ function seedPersonaPhotos(forPersonaId: string, photos: Photo[]): void {
 
 describe('usePersonaScope', () => {
   beforeEach(() => {
+    // React logs errors thrown/rejected inside effects to console.error even when the
+    // hook handles them correctly (see loadFailed tests below) — silence the noise.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     usePersonasStore.getState().reset();
     usePhotosStore.getState().reset();
     useRecuerdosStore.getState().reset();
@@ -52,6 +55,10 @@ describe('usePersonaScope', () => {
     vi.mocked(loadBaulRecuerdos).mockReset().mockImplementation(async (id: string) => {
       useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [id]: [] } }));
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('does nothing when baulId or personaId is missing', () => {

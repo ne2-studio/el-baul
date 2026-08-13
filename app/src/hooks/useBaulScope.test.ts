@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
@@ -36,6 +36,9 @@ const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 0 } as Baul;
 
 describe('useBaulScope', () => {
   beforeEach(() => {
+    // React logs errors thrown/rejected inside effects to console.error even when the
+    // hook handles them correctly (see refreshFailed tests below) — silence the noise.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     useBaulesStore.getState().reset();
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
@@ -43,6 +46,10 @@ describe('useBaulScope', () => {
     vi.mocked(loadBaulRecuerdos).mockClear().mockResolvedValue(undefined);
     vi.mocked(loadChapters).mockClear().mockResolvedValue(undefined);
     vi.mocked(loadLoosePhotos).mockClear().mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('does nothing when there is no baulId', () => {

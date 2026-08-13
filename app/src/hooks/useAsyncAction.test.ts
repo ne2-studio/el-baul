@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiConnectionError, ApiError } from '@/api';
 import { useAsyncAction } from './useAsyncAction';
 
@@ -111,6 +111,15 @@ describe('useAsyncAction concurrency', () => {
 });
 
 describe('useAsyncAction error reporting', () => {
+  // useAsyncAction also logs the caught error to console.error — silence the noise.
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('reports the thrown error to Sentry on failure', async () => {
     const { result } = renderHook(() => useAsyncAction());
     const error = new Error('boom');

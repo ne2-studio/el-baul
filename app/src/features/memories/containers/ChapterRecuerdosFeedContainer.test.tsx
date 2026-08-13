@@ -2,7 +2,7 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Recuerdo } from '@/types';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -66,6 +66,12 @@ describe('ChapterRecuerdosFeedContainer', () => {
     useAppConfigStore.setState({ chatEnabled: false, sharedLinksEnabled: false });
     useUIStore.setState({ showToast: false, toastMessage: '' });
     vi.clearAllMocks();
+    // The container logs the caught error to console.error before toasting — silence the noise.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('renders the recuerdos cached for this chapter', () => {

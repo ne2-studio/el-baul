@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Recuerdo } from '@/types';
 import { useUIStore } from '@/store/uiStore';
 
@@ -29,6 +29,12 @@ describe('useRecuerdoActions', () => {
   beforeEach(() => {
     useUIStore.setState({ showToast: false, toastMessage: '' });
     vi.clearAllMocks();
+    // The hook logs the caught error to console.error before toasting — silence the noise.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('editRecuerdo calls the use case and returns true on success', async () => {

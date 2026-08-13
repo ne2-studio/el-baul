@@ -3,7 +3,7 @@ import React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BaulGlobalInvitacionRoute } from './BaulGlobalInvitacionRoute';
 import { api } from '@/api';
 import { useAuth } from 'react-oidc-context';
@@ -40,6 +40,8 @@ function renderRoute() {
 describe('BaulGlobalInvitacionRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The route logs the caught error to console.error before showing the fallback — silence the noise.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(api.baulInvites.getPreview).mockResolvedValue({
       baulId: 'baul-1',
@@ -47,6 +49,10 @@ describe('BaulGlobalInvitacionRoute', () => {
       previewPhotos: [],
       personaAvatarUrls: [],
     } as BaulInviteLinkPreview);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('sends authenticated users straight to the accept route', async () => {

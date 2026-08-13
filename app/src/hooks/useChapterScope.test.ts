@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Photo, Recuerdo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
@@ -45,12 +45,19 @@ function seedChapterPhotos(forChapterId: string, photos: Photo[]): void {
 
 describe('useChapterScope', () => {
   beforeEach(() => {
+    // React logs errors thrown/rejected inside effects to console.error even when the
+    // hook handles them correctly (see loadFailed tests below) — silence the noise.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     useBaulesStore.getState().reset();
     usePhotosStore.getState().reset();
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(loadChapterPhotos).mockReset().mockResolvedValue(undefined);
     vi.mocked(loadChapterRecuerdos).mockReset().mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('does nothing when baulId or chapterId is missing', () => {

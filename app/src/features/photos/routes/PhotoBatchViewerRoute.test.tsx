@@ -36,7 +36,7 @@ vi.mock('@/features/baules/useCases', () => ({
 vi.mock('@/api', () => ({
   api: {
     photos: { download: vi.fn(), createShareLink: vi.fn() },
-    recuerdos: { createShareLink: vi.fn() },
+    recuerdos: { getAll: vi.fn().mockResolvedValue([]), createShareLink: vi.fn() },
   },
   isForbiddenError: () => false,
   isUnauthorizedError: () => false,
