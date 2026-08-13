@@ -33,6 +33,11 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.ChapterId == chapterId && p.Status == PhotoStatus.Active).ToList().AsEnumerable());
     }
 
+    public Task<IEnumerable<Photo>> GetAllByChapterIdAsync(ChapterId chapterId)
+    {
+        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.ChapterId == chapterId).ToList().AsEnumerable());
+    }
+
     public Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(BaulId baulId)
     {
         lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.ChapterId == null && p.Status == PhotoStatus.Active).ToList().AsEnumerable());

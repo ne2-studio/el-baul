@@ -160,7 +160,10 @@ public class ChapterManager(
         if (auth.IsFailure) return Result.Failure(auth.Error);
         var baul = auth.Value.Baul;
 
-        var photos = await photoRepository.GetByChapterIdAsync(chapterId);
+        // All photos, not just active ones: Photo.ChapterId is a Cascade FK, so a soft-deleted
+        // photo left pointing at the chapter would be cascade-deleted by Postgres itself and
+        // then blocked by the Restrict FK from PhotoPersonaTags (see GetAllByChapterIdAsync).
+        var photos = await photoRepository.GetAllByChapterIdAsync(chapterId);
         var recuerdos = await recuerdoRepository.GetByChapterIdAsync(chapterId);
 
         // Orphaning photos/recuerdos, deleting the chapter (ExecuteDeleteAsync — bypasses the

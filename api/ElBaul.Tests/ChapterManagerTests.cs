@@ -323,6 +323,29 @@ public class ChapterManagerTests
     }
 
     [Fact]
+    public async Task DeleteAsync_ShouldLoosenSoftDeletedPhotos_NotJustActiveOnes()
+    {
+        // Regression test: Photo.ChapterId is a Cascade FK, so a soft-deleted photo left
+        // pointing at a deleted chapter would be cascade-deleted by Postgres itself instead of
+        // orphaned — and then rejected by the Restrict FK from PhotoPersonaTags if it had any
+        // (see IPhotoRepository.GetAllByChapterIdAsync).
+        var baulId = await _fixture.CreateBaulAsync("Familia", chapterCount: 1);
+        var chapterId = await _fixture.AddChapterAsync(baulId, "Chapter", photoCount: 1);
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
+        var photo = await _fixture.Photos.GetByIdAsync(photoId);
+        await _fixture.Photos.UpdateAsync(photo!.MarkDeleted("test", _fixture.Clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteAsync(chapterId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(await _fixture.Chapters.GetByIdAsync(chapterId));
+
+        var deletedPhoto = await _fixture.Photos.GetByIdAsync(photoId);
+        Assert.Null(deletedPhoto!.ChapterId);
+    }
+
+    [Fact]
     public async Task DeleteAsync_ShouldDenyAccess_ForColaboradorRole()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia", chapterCount: 1);

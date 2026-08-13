@@ -20,6 +20,9 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Where(p => p.ChapterId == chapterId && p.Status == PhotoStatus.Active)
             .ToListAsync();
 
+    public async Task<IEnumerable<Photo>> GetAllByChapterIdAsync(ChapterId chapterId) =>
+        await dbContext.Photos.AsNoTracking().Where(p => p.ChapterId == chapterId).ToListAsync();
+
     public async Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(BaulId baulId) =>
         await dbContext.Photos.AsNoTracking()
             .Where(p => p.BaulId == baulId && p.ChapterId == null && p.Status == PhotoStatus.Active)

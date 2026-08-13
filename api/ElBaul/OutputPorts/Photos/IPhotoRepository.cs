@@ -6,6 +6,15 @@ public interface IPhotoRepository
     Task<IEnumerable<Photo>> GetByIdsAsync(IEnumerable<PhotoId> ids);
     Task<Photo?> GetByClientUploadIdAsync(Guid clientUploadId);
     Task<IEnumerable<Photo>> GetByChapterIdAsync(ChapterId chapterId);
+
+    /// <summary>Every photo in a chapter regardless of status (including soft-deleted) — used
+    /// by chapter deletion, which must orphan every photo still pointing at the chapter before
+    /// deleting it. Photo.ChapterId is a Cascade FK, so any photo left pointing at a deleted
+    /// chapter (soft-deleted ones are skipped by the Active-only GetByChapterIdAsync) would be
+    /// cascade-deleted by Postgres itself and then blocked by the Restrict FK from
+    /// PhotoPersonaTags.</summary>
+    Task<IEnumerable<Photo>> GetAllByChapterIdAsync(ChapterId chapterId);
+
     Task<IEnumerable<Photo>> GetLooseByBaulIdAsync(BaulId baulId);
 
     /// <summary>Every active photo in a baúl, chapter-linked and loose alike, in one query —
