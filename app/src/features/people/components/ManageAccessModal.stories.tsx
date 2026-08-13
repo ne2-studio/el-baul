@@ -13,7 +13,7 @@ type Story = StoryObj<typeof meta>;
 export const Colaborador: Story = {
   args: {
     role: 'colaborador',
-    onChangeRole: () => alert('onChangeRole clicked'),
+    onSave: () => alert('onSave clicked'),
     onCancel: () => alert('onCancel clicked'),
   },
 };

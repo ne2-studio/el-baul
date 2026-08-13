@@ -74,11 +74,12 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
     });
   };
 
-  const handleChangeRole = (role: BaulRole) => {
-    run(() => updateUserRole(baulId, persona.id, role), {
+  const handleChangeRole = async (role: BaulRole) => {
+    const result = await run(() => updateUserRole(baulId, persona.id, role), {
       key: 'role',
       errorMessage: 'Error al actualizar el rol',
     });
+    if (result.ok) setShowManageAccessModal(false);
   };
 
   const handleConfirmRevoke = async () => {
@@ -171,8 +172,9 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       {showManageAccessModal && (
         <ManageAccessModal
           role={persona.role}
-          onChangeRole={handleChangeRole}
+          onSave={handleChangeRole}
           onCancel={() => setShowManageAccessModal(false)}
+          isSubmitting={isPending('role')}
         />
       )}
 
