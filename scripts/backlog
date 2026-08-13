@@ -17,16 +17,19 @@ Commands:
   add [file]     Add a ticket to the queue. Reads from <file> if given, else
                   from stdin. First line becomes the slug.
   list            List queued/done/failed tickets.
-  run             Start the orchestrator (tmux session with a worker pane
+  run [--yolo]    Start the orchestrator (tmux session with a worker pane
                   and a watcher pane) and attach to it. Safe to detach
                   (Ctrl-b d) and reattach later with:
                     tmux attach -t backlog
+                  --yolo runs claude with --dangerously-skip-permissions:
+                  no prompts at all, including git commit/push. Only use it
+                  when you're comfortable leaving it fully unattended.
   stop            Kill the orchestrator tmux session.
 
 Each ticket runs in its own fresh `claude` session (the work-ticket skill).
 git commit/push are not in the permission allow-list, so they always prompt
 for approval — forward it to your phone with Remote Control (/rc) before
-running `run`.
+running `run` (unless you passed --yolo).
 EOF
 }
 
@@ -78,6 +81,9 @@ cmd_list() {
 
 # Runs inside the worker tmux pane. Processes the queue sequentially.
 _worker() {
+  local yolo=0
+  [[ "${1:-}" == "--yolo" ]] && yolo=1
+
   ensure_dirs
   cd "$ROOT_DIR"
   shopt -s nullglob
@@ -86,6 +92,8 @@ _worker() {
     echo "Backlog vacío."
     return 0
   fi
+  local claude_flags=()
+  (( yolo )) && claude_flags+=(--dangerously-skip-permissions)
   for file in "${files[@]}"; do
     rm -f "$SIGNAL_FILE"
     echo
@@ -94,7 +102,7 @@ _worker() {
     echo "=================================================="
     local prompt
     prompt="$(printf '/work-ticket\n\nTicket file: %s\n\n%s' "$file" "$(cat "$file")")"
-    claude "$prompt" || true
+    claude "${claude_flags[@]}" "$prompt" || true
 
     if [[ -f "$SIGNAL_FILE" ]]; then
       local status
@@ -137,16 +145,29 @@ _watcher() {
 }
 
 cmd_run() {
+  local yolo=0
+  case "${1:-}" in
+    --yolo) yolo=1 ;;
+    "") ;;
+    *) echo "Opción desconocida: $1" >&2; usage; exit 1 ;;
+  esac
+
   ensure_dirs
   if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
     echo "Ya hay una sesión '$TMUX_SESSION' corriendo. Conectando..."
     exec tmux attach -t "$TMUX_SESSION"
   fi
-  tmux new-session -d -s "$TMUX_SESSION" -n main "$0 __worker"
+  local worker_cmd=("$0" __worker)
+  (( yolo )) && worker_cmd+=(--yolo)
+  tmux new-session -d -s "$TMUX_SESSION" -n main "${worker_cmd[@]}"
   tmux split-window -t "${TMUX_SESSION}:0" -v -l 3 "$0 __watcher"
   tmux select-pane -t "${TMUX_SESSION}:0.0"
   echo "Orquestador arrancado en tmux '$TMUX_SESSION'."
-  echo "Recuerda tener /rc activo en la sesión de Claude para aprobar commit/push desde el móvil."
+  if (( yolo )); then
+    echo "--yolo activo: claude corre con --dangerously-skip-permissions, sin prompts."
+  else
+    echo "Recuerda tener /rc activo en la sesión de Claude para aprobar commit/push desde el móvil."
+  fi
   exec tmux attach -t "$TMUX_SESSION"
 }
 
@@ -157,9 +178,9 @@ cmd_stop() {
 case "${1:-}" in
   add) shift; cmd_add "$@" ;;
   list) cmd_list ;;
-  run) cmd_run ;;
+  run) shift; cmd_run "$@" ;;
   stop) cmd_stop ;;
-  __worker) _worker ;;
+  __worker) shift; _worker "$@" ;;
   __watcher) _watcher ;;
   -h|--help|"") usage ;;
   *) echo "Comando desconocido: $1" >&2; usage; exit 1 ;;
