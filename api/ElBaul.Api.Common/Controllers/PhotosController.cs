@@ -97,6 +97,14 @@ public class PhotosController(
         return result.ToActionResult();
     }
 
+    [HttpDelete("photos/date-batch")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ClearDateBatch([FromBody] ClearPhotoDateBatchRequest request)
+    {
+        var result = await photoManager.ClearDateBatchAsync(request.PhotoIds);
+        return result.ToActionResult();
+    }
+
     [HttpGet("baules/{baulId:guid}/photos")]
     [ProducesResponseType(typeof(PhotoPageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPage(BaulId baulId, [FromQuery] ChapterId? chapterId, [FromQuery] int skip = 0, [FromQuery] int take = 60)

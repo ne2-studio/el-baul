@@ -33,6 +33,11 @@ public interface IPhotoManager
     /// when the family realizes the date they had wasn't right, without knowing a replacement.</summary>
     Task<Result<PhotoDto>> ClearDateAsync(PhotoId photoId);
 
+    /// <summary>Batch counterpart to ClearDateAsync, for clearing the date of a multi-selection
+    /// of photos at once — see ChangeDateBatchAsync for the best-effort skip-and-log semantics
+    /// this mirrors.</summary>
+    Task<Result<IEnumerable<PhotoDto>>> ClearDateBatchAsync(IEnumerable<PhotoId> photoIds);
+
     /// <summary>Confirms nobody appears in this photo, so it stops being proposed by the
     /// contribution suggestion even though it never received a PhotoPersonaTag. Reversed
     /// automatically the moment the photo actually gets tagged.</summary>

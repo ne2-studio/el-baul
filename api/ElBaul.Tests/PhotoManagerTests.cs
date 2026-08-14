@@ -698,6 +698,25 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task ClearDateBatchAsync_ShouldClearAllValidPhotos_AndSkipInaccessibleOnes()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var ownPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "key-1", date: PhotoDates.Of(2018, 3));
+
+        var otherBaulId = await _fixture.CreateBaulAsync("Otro", "someone-else");
+        var foreignPhotoId = await _fixture.AddPhotoAsync(
+            otherBaulId, storageKey: "key-2", uploadedBy: "someone-else", date: PhotoDates.Of(2018, 3));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.ClearDateBatchAsync([ownPhotoId, foreignPhotoId]);
+
+        Assert.True(result.IsSuccess);
+        var updated = Assert.Single(result.Value);
+        Assert.Equal(ownPhotoId.ToString(), updated.Id);
+        Assert.Null(updated.DateYear);
+    }
+
+    [Fact]
     public async Task GetByPersonaIdAsync_ShouldReturnTaggedPhotos_OrderedChronologically()
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();

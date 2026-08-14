@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Calendar, FolderInput, Plus, Tag } from 'lucide-react';
+import { Calendar, CalendarOff, FolderInput, Plus, Tag } from 'lucide-react';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { MoveModal } from '@/features/photos/components/MoveModal';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
+import { ConfirmActionModal } from '@/design-system/patterns/forms/ConfirmActionModal';
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
 import { BatchOperationProgress, BatchOperationItem } from '@/design-system/components/feedback/BatchOperationProgress';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
@@ -21,6 +22,7 @@ interface BatchPhotoActionsBarProps {
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => Promise<void>;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
+  onBatchClearDate?: (photoIds: string[]) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
   onBatchTagPersonas?: (photoIds: string[], personaIds: string[]) => Promise<boolean>;
   onDone: () => void;
@@ -31,19 +33,25 @@ interface BatchPhotoActionsBarProps {
 // selección del padre; se mantiene como prop en vez de desmontar el componente para
 // no perder el patrón de gating explícito que tenía PhotosView antes de la extracción.
 export function BatchPhotoActionsBar({
-  active, photos, selectedIds, moveableChapters, personas = [], onBatchMove, onBatchChangeDate, onBatchCreateChapter,
-  onBatchTagPersonas, onDone,
+  active, photos, selectedIds, moveableChapters, personas = [], onBatchMove, onBatchChangeDate, onBatchClearDate,
+  onBatchCreateChapter, onBatchTagPersonas, onDone,
 }: BatchPhotoActionsBarProps) {
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
   const [moveItems, setMoveItems] = useState<BatchOperationItem[] | null>(null);
   const [showDateModal, setShowDateModal] = useState(false);
   const [isDateSubmitting, setIsDateSubmitting] = useState(false);
+  const [showClearDateModal, setShowClearDateModal] = useState(false);
+  const [isClearingDate, setIsClearingDate] = useState(false);
   const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagPersonaIds, setTagPersonaIds] = useState<string[]>([]);
   const [isTaggingSubmitting, setIsTaggingSubmitting] = useState(false);
+
+  // Solo se ofrece si alguna de las fotos seleccionadas tiene fecha — igual que el menú de
+  // una sola foto, que oculta "Borrar fecha" cuando photo.date es null (usePhotoViewerActions).
+  const selectedHaveDate = photos.some((p) => selectedIds.has(p.id) && p.date);
 
   const handleMoveSubmit = async () => {
     if (!moveTargetId || !onBatchMove) return;
@@ -82,6 +90,17 @@ export function BatchPhotoActionsBar({
     }
   };
 
+  const handleClearDateConfirm = async () => {
+    if (!onBatchClearDate) return;
+    setIsClearingDate(true);
+    const ok = await onBatchClearDate(Array.from(selectedIds));
+    setIsClearingDate(false);
+    if (ok) {
+      setShowClearDateModal(false);
+      onDone();
+    }
+  };
+
   const handleCreateChapterSave = async (name: string) => {
     if (!onBatchCreateChapter) return;
     setIsCreatingChapter(true);
@@ -112,7 +131,8 @@ export function BatchPhotoActionsBar({
 
   return (
     <>
-      {active && selectedIds.size > 0 && (onBatchChangeDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas) && (
+      {active && selectedIds.size > 0 &&
+        (onBatchChangeDate || onBatchClearDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 pb-safe">
           {/* w-max en el contenedor interno evita que los botones se compriman: con muchas
               acciones el PageContainer hace scroll lateral en vez de aplastar la barra. */}
@@ -124,6 +144,14 @@ export function BatchPhotoActionsBar({
                   icon={<Calendar aria-hidden />}
                 >
                   Cambiar fecha
+                </ActionBarButton>
+              )}
+              {onBatchClearDate && selectedHaveDate && (
+                <ActionBarButton
+                  onClick={() => setShowClearDateModal(true)}
+                  icon={<CalendarOff aria-hidden />}
+                >
+                  Borrar fecha
                 </ActionBarButton>
               )}
               {moveableChapters.length > 0 && (
@@ -161,6 +189,19 @@ export function BatchPhotoActionsBar({
           onCancel={() => setShowDateModal(false)}
           onConfirm={handleDateSubmit}
           isSubmitting={isDateSubmitting}
+        />
+      )}
+
+      {showClearDateModal && (
+        <ConfirmActionModal
+          title={`Borrar fecha · ${selectedIds.size} ${selectedIds.size === 1 ? 'foto' : 'fotos'}`}
+          tone="plain"
+          description="Las fotos seleccionadas dejarán de tener una fecha asignada. Podrás añadir una nueva más adelante."
+          confirmLabel="Sí, borrar fecha"
+          confirmVariant="primary"
+          onCancel={() => setShowClearDateModal(false)}
+          onConfirm={handleClearDateConfirm}
+          isSubmitting={isClearingDate}
         />
       )}
 

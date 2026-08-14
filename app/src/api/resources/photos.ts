@@ -67,6 +67,8 @@ export const photosApi = {
   changeDateBatch: async (photoIds: string[], date: PhotoDate) =>
     (await put<JsonResponse<typeof PHOTO_DATE_BATCH, 'put'>>(PHOTO_DATE_BATCH, { photoIds, ...date } satisfies JsonRequest<typeof PHOTO_DATE_BATCH, 'put'>)).map((p) => new Photo(p)),
   clearDate: async (photoId: string) => new Photo(await del<JsonResponse<typeof PHOTO_DATE, 'delete'>>(path(PHOTO_DATE, { photoId }))),
+  clearDateBatch: async (photoIds: string[]) =>
+    (await del<JsonResponse<typeof PHOTO_DATE_BATCH, 'delete'>>(PHOTO_DATE_BATCH, { photoIds } satisfies JsonRequest<typeof PHOTO_DATE_BATCH, 'delete'>)).map((p) => new Photo(p)),
   download: async (photoId: string): Promise<{ blob: Blob; fileName: string }> => {
     const response = await apiFetch(`${API_BASE}${path(PHOTO_DOWNLOAD, { photoId })}`, { headers: authHeaders() });
     if (!response.ok) await handleResponse<never>(response);

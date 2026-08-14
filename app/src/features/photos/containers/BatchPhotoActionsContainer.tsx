@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { movePhotos } from '@/features/photos/useCases';
-import { addTaggedPersonasBatch, changePhotoDateBatch, createChapter } from '@/features/chapters/useCases';
+import { addTaggedPersonasBatch, changePhotoDateBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Chapter, Photo, PhotoDate } from '@/types';
 
@@ -49,6 +49,14 @@ export function BatchPhotoActionsContainer({
     return result.ok;
   };
 
+  const handleBatchClearDate = async (photoIds: string[]): Promise<boolean> => {
+    const result = await run(() => clearPhotoDateBatch(baulId, photoIds), {
+      successMessage: `Fecha borrada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
+      errorMessage: 'Error al borrar la fecha',
+    });
+    return result.ok;
+  };
+
   const handleBatchCreateChapter = async (photoIds: string[], name: string): Promise<boolean> => {
     const result = await run(
       async () => {
@@ -82,6 +90,7 @@ export function BatchPhotoActionsContainer({
       personas={personas[baulId] || []}
       onBatchMove={handleBatchMove}
       onBatchChangeDate={handleBatchChangeDate}
+      onBatchClearDate={handleBatchClearDate}
       onBatchCreateChapter={chapterId === null ? handleBatchCreateChapter : undefined}
       onBatchTagPersonas={handleBatchTagPersonas}
       onDone={onDone}

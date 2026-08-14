@@ -268,6 +268,26 @@ public class PhotoManager(
         return Result.Success<IEnumerable<PhotoDto>>(updated);
     }
 
+    // Same best-effort skip-and-log semantics as ChangeDateBatchAsync above — see its comment.
+    public async Task<Result<IEnumerable<PhotoDto>>> ClearDateBatchAsync(IEnumerable<PhotoId> photoIds)
+    {
+        var updated = new List<PhotoDto>();
+        foreach (var photoId in photoIds)
+        {
+            var result = await ClearDateAsync(photoId);
+            if (result.IsSuccess)
+            {
+                updated.Add(result.Value);
+            }
+            else
+            {
+                logger.LogWarning("Skipping photo in batch date clear {PhotoId}: {Error}", photoId, result.Error);
+            }
+        }
+
+        return Result.Success<IEnumerable<PhotoDto>>(updated);
+    }
+
     public async Task<Result<PhotoDto>> ConfirmNoPersonasAsync(PhotoId photoId)
     {
         var userId = currentUserProvider.GetUserId();

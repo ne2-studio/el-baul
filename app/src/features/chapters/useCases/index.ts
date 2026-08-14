@@ -33,6 +33,14 @@ export async function changePhotoDateBatch(
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
 }
 
+export async function clearPhotoDateBatch(baulId: string, photoIds: string[]): Promise<void> {
+  const updated = await api.photos.clearDateBatch(photoIds);
+  usePhotosStore.getState().upsertPhotos(updated);
+
+  const chapters = await api.chapters.getAll(baulId);
+  useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
+}
+
 export async function setChapterCover(
   baulId: string,
   chapterId: string,

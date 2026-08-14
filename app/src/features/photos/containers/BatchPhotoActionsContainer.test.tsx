@@ -14,14 +14,15 @@ vi.mock('@/features/photos/useCases', () => ({
 vi.mock('@/features/chapters/useCases', () => ({
   addTaggedPersonasBatch: vi.fn(),
   changePhotoDateBatch: vi.fn(),
+  clearPhotoDateBatch: vi.fn(),
   createChapter: vi.fn(),
 }));
 
 import { movePhotos } from '@/features/photos/useCases';
-import { addTaggedPersonasBatch, createChapter } from '@/features/chapters/useCases';
+import { addTaggedPersonasBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 
 const baulId = 'baul-1';
-const photos = [{ id: 'photo-1', thumbnailUrl: 't1' }] as Photo[];
+const photos = [{ id: 'photo-1', thumbnailUrl: 't1', date: { year: 2020 } }] as Photo[];
 const persona = { id: 'p1', baulId, nickname: 'Abuela Rosa' } as Persona;
 const chapters = [{ id: 'c2', name: 'Navidad' }] as Chapter[];
 
@@ -75,6 +76,17 @@ describe('BatchPhotoActionsContainer', () => {
     await user.click(screen.getByRole('button', { name: /guardar/i }));
 
     expect(addTaggedPersonasBatch).toHaveBeenCalledWith(baulId, ['photo-1'], ['p1']);
+  });
+
+  it('clears the date of the selected photos', async () => {
+    const user = userEvent.setup();
+    vi.mocked(clearPhotoDateBatch).mockResolvedValue(undefined);
+
+    renderContainer('chapter-1');
+    await user.click(screen.getByRole('button', { name: /borrar fecha/i }));
+    await user.click(screen.getByRole('button', { name: /sí, borrar fecha/i }));
+
+    expect(clearPhotoDateBatch).toHaveBeenCalledWith(baulId, ['photo-1']);
   });
 
   it('creates a chapter from the selection, moves the photos into it, and navigates there', async () => {
