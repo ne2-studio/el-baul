@@ -32,9 +32,6 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build/test restore dependencies
-        run: dotnet restore api/ElBaul.slnx
-
       - name: Build/test backend
         run: VERIFY_COVERAGE=1 ./scripts/verify backend
 
