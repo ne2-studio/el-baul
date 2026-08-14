@@ -211,8 +211,8 @@ export const ChapterRoute: React.FC = () => {
       {apiChapterId !== null ? (
         <Tabbar
           tabs={[
-            { key: 'recuerdos', label: 'Recuerdos', count: recuerdosCount },
-            { key: 'fotos', label: 'Fotos', count: currentPhotos.length },
+            { key: 'recuerdos', label: 'Recuerdos' },
+            { key: 'fotos', label: 'Fotos' },
           ]}
           active={activeTab}
           onChange={(key) => setActiveTab(key as 'recuerdos' | 'fotos')}
