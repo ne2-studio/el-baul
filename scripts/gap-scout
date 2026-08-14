@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+LABEL="gap-scout"
+ALLOWED_TOOLS="Bash(gh issue list *) Bash(gh issue create *) Bash(gh issue view *)"
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/gap-scout <command>
+
+Commands:
+  scan <app|api|both>   Run the architecture-gap-scout skill over the given
+                          scope(s), file each new initiative as a GitHub issue
+                          (label "gap-scout"), skipping anything that
+                          duplicates an already-filed issue (open or closed).
+                          Read-only over the code; only creates GitHub issues.
+                          Safe to run unattended, e.g. from cron/systemd timer.
+
+Filed issues are not queued for execution by themselves. Review one, and if
+you want it done, add the "backlog" label — that hands it to
+./scripts/backlog's existing worker, same as any other ticket. Leaving it
+unlabeled (or closing it) means "not now"; it won't be re-filed verbatim on
+the next scan.
+
+Requires `gh` authenticated against this repo.
+EOF
+}
+
+ensure_labels() {
+  gh label create "$LABEL" --color "5319E7" \
+    --description "Architecture initiative proposed by gap-scout, pending approval" >/dev/null 2>&1 || true
+}
+
+_scan_one() {
+  local scope="$1"
+  local prompt
+  prompt="$(printf '/gap-scout-runner\n\nScope: %s\n' "$scope")"
+  echo
+  echo "=================================================="
+  echo "gap-scout: $scope"
+  echo "=================================================="
+  claude -p "$prompt" --allowed-tools "$ALLOWED_TOOLS" || true
+}
+
+cmd_scan() {
+  local target="${1:-}"
+  case "$target" in
+    app) ;;
+    api) ;;
+    both) ;;
+    *) echo "Uso: ./scripts/gap-scout scan <app|api|both>" >&2; exit 1 ;;
+  esac
+
+  ensure_labels
+  case "$target" in
+    app) _scan_one "app/" ;;
+    api) _scan_one "api/" ;;
+    both) _scan_one "app/"; _scan_one "api/" ;;
+  esac
+}
+
+case "${1:-}" in
+  scan) shift; cmd_scan "$@" ;;
+  -h|--help|"") usage ;;
+  *) echo "Comando desconocido: $1" >&2; usage; exit 1 ;;
+esac
