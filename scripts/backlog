@@ -2,50 +2,58 @@
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
 BACKLOG_DIR="$ROOT_DIR/.backlog"
-QUEUE_DIR="$BACKLOG_DIR/queue"
-DONE_DIR="$BACKLOG_DIR/done"
-FAILED_DIR="$BACKLOG_DIR/failed"
 SIGNAL_FILE="$BACKLOG_DIR/.signal"
 TMUX_SESSION="backlog"
+QUEUE_LABEL="backlog"
+FAILED_LABEL="backlog:failed"
 
 usage() {
   cat <<'EOF'
 Usage: ./scripts/backlog <command>
 
 Commands:
-  add [file]     Add a ticket to the queue. Reads from <file> if given, else
-                  from stdin. First line becomes the slug.
-  list            List queued/done/failed tickets.
-  run [--yolo]    Start the orchestrator (tmux session with a worker pane
-                  and a watcher pane) and attach to it. Safe to detach
-                  (Ctrl-b d) and reattach later with:
-                    tmux attach -t backlog
-                  --yolo runs claude with --dangerously-skip-permissions:
-                  no prompts at all, including git commit/push. Only use it
-                  when you're comfortable leaving it fully unattended.
-  stop            Kill the orchestrator tmux session.
+  add [file]        Create a GitHub issue and add it to the queue (label
+                      "backlog"). Reads from <file> if given, else from
+                      stdin. First line becomes the issue title.
+  list               List queued/done/failed tickets (GitHub issues).
+  requeue <number>   Move a failed/blocked issue back into the queue.
+  run [--yolo]       Start the orchestrator (tmux session with a worker pane
+                      and a watcher pane) and attach to it. Safe to detach
+                      (Ctrl-b d) and reattach later with:
+                        tmux attach -t backlog
+                      --yolo runs claude with --dangerously-skip-permissions:
+                      no prompts at all, including git commit/push. Only use it
+                      when you're comfortable leaving it fully unattended.
+  stop               Kill the orchestrator tmux session.
+
+Tickets live as GitHub issues on this repo, not on the local filesystem:
+  queued   open issue,   label "backlog"
+  done     closed issue, label "backlog"
+  failed   open issue,   label "backlog:failed"
 
 Each ticket runs in its own fresh `claude` session (the work-ticket skill).
 git commit/push are not in the permission allow-list, so they always prompt
 for approval — forward it to your phone with Remote Control (/rc) before
-running `run` (unless you passed --yolo).
+running `run` (unless you passed --yolo). Requires `gh` authenticated
+against this repo.
 EOF
 }
 
 ensure_dirs() {
-  mkdir -p "$QUEUE_DIR" "$DONE_DIR" "$FAILED_DIR"
+  mkdir -p "$BACKLOG_DIR"
 }
 
-slugify() {
-  iconv -t ascii//TRANSLIT 2>/dev/null <<<"$1" \
-    | tr '[:upper:]' '[:lower:]' \
-    | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' \
-    | cut -c1-50
+ensure_labels() {
+  gh label create "$QUEUE_LABEL" --color "0E8A16" \
+    --description "Backlog ticket queued for ./scripts/backlog" >/dev/null 2>&1 || true
+  gh label create "$FAILED_LABEL" --color "B60205" \
+    --description "Backlog ticket blocked, needs review before requeuing" >/dev/null 2>&1 || true
 }
 
 cmd_add() {
-  ensure_dirs
+  ensure_labels
   local content
   if [[ "${1:-}" ]]; then
     content="$(cat "$1")"
@@ -54,29 +62,33 @@ cmd_add() {
   fi
   [[ -n "$content" ]] || { echo "Ticket vacío, no se ha añadido." >&2; exit 1; }
 
-  local title slug next n file
+  local title body
   title="$(head -n1 <<<"$content" | sed -E 's/^#+\s*//')"
-  slug="$(slugify "$title")"
-  [[ -n "$slug" ]] || slug="ticket"
-  next=1
-  for f in "$QUEUE_DIR"/*.md "$DONE_DIR"/*.md "$FAILED_DIR"/*.md; do
-    [[ -e "$f" ]] || continue
-    n="$(basename "$f" | grep -oE '^[0-9]+' || true)"
-    [[ -n "$n" ]] && (( 10#$n >= next )) && next=$(( 10#$n + 1 ))
-  done
-  file="$QUEUE_DIR/$(printf '%03d' "$next")-$slug.md"
-  printf '%s\n' "$content" > "$file"
-  echo "Añadido: $file"
+  [[ -n "$title" ]] || { echo "El ticket no tiene título (primera línea vacía)." >&2; exit 1; }
+  body="$(tail -n +2 <<<"$content" | sed -E '/./,$!d')"
+
+  local url
+  url="$(gh issue create --label "$QUEUE_LABEL" --title "$title" --body "${body:-$title}")"
+  echo "Añadido: $url"
 }
 
 cmd_list() {
-  ensure_dirs
   echo "En cola:"
-  ls -1 "$QUEUE_DIR" 2>/dev/null | sed 's/^/  /' || true
+  gh issue list --label "$QUEUE_LABEL" --state open \
+    --json number,title --jq '.[] | "  #\(.number)  \(.title)"'
   echo "Hechos:"
-  ls -1 "$DONE_DIR" 2>/dev/null | sed 's/^/  /' || true
+  gh issue list --label "$QUEUE_LABEL" --state closed \
+    --json number,title --jq '.[] | "  #\(.number)  \(.title)"'
   echo "Fallidos/bloqueados:"
-  ls -1 "$FAILED_DIR" 2>/dev/null | sed 's/^/  /' || true
+  gh issue list --label "$FAILED_LABEL" --state open \
+    --json number,title --jq '.[] | "  #\(.number)  \(.title)"'
+}
+
+cmd_requeue() {
+  local n="${1:-}"
+  [[ "$n" =~ ^[0-9]+$ ]] || { echo "Uso: ./scripts/backlog requeue <número-de-issue>" >&2; exit 1; }
+  gh issue edit "$n" --remove-label "$FAILED_LABEL" --add-label "$QUEUE_LABEL" >/dev/null
+  echo "Reencolado: #$n"
 }
 
 # Runs inside the worker tmux pane. Processes the queue sequentially.
@@ -85,50 +97,67 @@ _worker() {
   [[ "${1:-}" == "--yolo" ]] && yolo=1
 
   ensure_dirs
-  cd "$ROOT_DIR"
-  shopt -s nullglob
-  local files=("$QUEUE_DIR"/*.md)
-  if (( ${#files[@]} == 0 )); then
+  local issues
+  issues="$(gh issue list --label "$QUEUE_LABEL" --state open --json number --jq '.[].number' | sort -n)"
+  if [[ -z "$issues" ]]; then
     echo "Backlog vacío."
     return 0
   fi
   local claude_flags=()
   (( yolo )) && claude_flags+=(--dangerously-skip-permissions)
-  for file in "${files[@]}"; do
+
+  local n title body url seen=0 total=0
+  total="$(wc -l <<<"$issues")"
+  while IFS= read -r n; do
+    [[ -n "$n" ]] || continue
+    # Otro proceso pudo haber reencolado/movido el issue entre tanto; re-verifica.
+    if ! gh issue view "$n" --json state,labels \
+        --jq 'select(.state=="OPEN" and (.labels|map(.name)|any(.=="'"$QUEUE_LABEL"'")))' \
+        | grep -q .; then
+      continue
+    fi
+
     rm -f "$SIGNAL_FILE"
+    title="$(gh issue view "$n" --json title --jq .title)"
+    body="$(gh issue view "$n" --json body --jq '.body // ""')"
+    url="$(gh issue view "$n" --json url --jq .url)"
+
+    seen=$(( seen + 1 ))
     echo
     echo "=================================================="
-    echo "Ticket: $(basename "$file")"
+    echo "Ticket: #$n $title"
     echo "=================================================="
     local prompt
-    prompt="$(printf '/work-ticket\n\nTicket file: %s\n\n%s' "$file" "$(cat "$file")")"
+    prompt="$(printf '/work-ticket\n\nGitHub issue: #%s (%s)\n\n%s\n\n%s' "$n" "$url" "$title" "$body")"
     claude "${claude_flags[@]}" "$prompt" || true
 
     if [[ -f "$SIGNAL_FILE" ]]; then
-      local status
+      local status reason
       status="$(sed -n 's/^status=//p' "$SIGNAL_FILE" | head -n1)"
+      reason="$(sed -n 's/^reason=//p' "$SIGNAL_FILE" | head -n1)"
       case "$status" in
         done)
-          mv "$file" "$DONE_DIR/"
-          echo "-> hecho: $(basename "$file")"
+          gh issue close "$n" --comment "Completado por ./scripts/backlog run." >/dev/null
+          echo "-> hecho: #$n"
           ;;
         blocked)
-          mv "$file" "$FAILED_DIR/"
-          echo "-> bloqueado: $(basename "$file"). Revisa y vuelve a encolar si procede."
+          gh issue edit "$n" --remove-label "$QUEUE_LABEL" --add-label "$FAILED_LABEL" >/dev/null
+          gh issue comment "$n" --body "Bloqueado por ./scripts/backlog run.${reason:+ Motivo: $reason}" >/dev/null
+          echo "-> bloqueado: #$n. Revisa y usa 'requeue $n' si procede."
           ;;
         *)
-          echo "-> señal desconocida ('$status'), dejo el ticket en cola para revisión manual."
+          echo "-> señal desconocida ('$status'), dejo #$n en cola para revisión manual."
           break
           ;;
       esac
       rm -f "$SIGNAL_FILE"
     else
-      echo "-> la sesión terminó sin señal (salida manual/crash). Dejo el ticket en cola y paro."
+      echo "-> la sesión terminó sin señal (salida manual/crash). Dejo #$n en cola y paro."
       break
     fi
-  done
+  done <<<"$issues"
   echo
-  echo "Cola procesada. Quedan: ${#files[@]} tickets vistos."
+  echo "Cola procesada. Vistos: $seen/$total tickets."
 }
 
 # Runs inside the watcher tmux pane. Injects /exit into the worker pane once
@@ -153,6 +182,7 @@ cmd_run() {
   esac
 
   ensure_dirs
+  ensure_labels
   if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
     echo "Ya hay una sesión '$TMUX_SESSION' corriendo. Conectando..."
     exec tmux attach -t "$TMUX_SESSION"
@@ -178,6 +208,7 @@ cmd_stop() {
 case "${1:-}" in
   add) shift; cmd_add "$@" ;;
   list) cmd_list ;;
+  requeue) shift; cmd_requeue "$@" ;;
   run) shift; cmd_run "$@" ;;
   stop) cmd_stop ;;
   __worker) shift; _worker "$@" ;;
