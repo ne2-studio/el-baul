@@ -161,13 +161,14 @@ _process_queue() {
       reason="$(sed -n 's/^reason=//p' "$SIGNAL_FILE" | head -n1)"
       case "$status" in
         done)
-          gh issue close "$n" --comment "Completado por ./scripts/backlog run." >/dev/null
+          # El skill ya ha dejado el resumen como comentario en el issue.
+          gh issue close "$n" >/dev/null
           echo "-> hecho: #$n"
           ;;
         blocked)
+          # El skill ya ha dejado el motivo como comentario en el issue.
           gh issue edit "$n" --remove-label "$QUEUE_LABEL" --add-label "$FAILED_LABEL" >/dev/null
-          gh issue comment "$n" --body "Bloqueado por ./scripts/backlog run.${reason:+ Motivo: $reason}" >/dev/null
-          echo "-> bloqueado: #$n. Revisa y usa 'requeue $n' si procede."
+          echo "-> bloqueado: #$n${reason:+ ($reason)}. Revisa y usa 'requeue $n' si procede."
           ;;
         *)
           echo "-> señal desconocida ('$status'), dejo #$n en cola para revisión manual."

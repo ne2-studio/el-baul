@@ -61,9 +61,26 @@ evidence (mirroring the `verify` skill's report shape). Then run the commit and 
 If Pedro rejects or requests changes, address them and repeat this step. Never leave
 `main` in a state where the working tree has verified-but-uncommitted changes when you
 finish the turn — either it's committed and pushed, or you've signaled `blocked` (step
-5) explaining why.
+6) explaining why.
 
-### 5. Signal completion
+### 5. Report back to the issue
+
+The ticket's GitHub issue number is given in the prompt (`GitHub issue: #<n> (<url>)`).
+Post your final feedback message there as a comment, so the outcome is visible on the
+issue itself, not just in a session Pedro may never open:
+
+```bash
+gh issue comment <n> --body "<final feedback message>"
+```
+
+- On success: the same summary you gave Pedro before committing (what changed, why,
+  verification evidence), plus the commit SHA(s).
+- If blocked: the explanation of why, exactly as given in your final message.
+
+Post this before signaling completion (step 6). If the comment fails to post (network,
+permissions), don't let that block the signal — note it and move on.
+
+### 6. Signal completion
 
 This is the last thing you do, and only after the turn's final message. The orchestrator
 cannot tell you're done any other way — a session cannot end itself.
