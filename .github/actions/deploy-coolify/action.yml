@@ -1,5 +1,5 @@
 name: Deploy with Coolify
-description: Trigger a Coolify deployment webhook and verify the deployed service comes back healthy.
+description: Trigger a Coolify deployment webhook, wait for it to finish, and verify the deployed service comes back healthy.
 
 inputs:
   webhook:
@@ -9,39 +9,94 @@ inputs:
     description: Coolify API token.
     required: true
   health-url:
-    description: URL polled after triggering the deploy until it responds healthy.
+    description: URL polled after the Coolify deployment finishes, until it responds healthy.
     required: true
   health-match:
     description: Optional substring the health response body must contain, in addition to a 2xx status.
     required: false
     default: ''
-  timeout-seconds:
-    description: Max seconds to wait for health-url to become healthy before failing the job.
+  deploy-timeout-seconds:
+    description: Max seconds to wait for the Coolify deployment itself to reach a final status.
+    required: false
+    default: '600'
+  health-timeout-seconds:
+    description: Max seconds to wait for health-url to become healthy once the deployment has finished.
     required: false
     default: '300'
-  interval-seconds:
-    description: Seconds to wait between health checks.
+  poll-interval-seconds:
+    description: Seconds to wait between polls, both for deployment status and health checks.
     required: false
     default: '5'
 
 runs:
   using: composite
   steps:
+    # /deploy queues a build and returns immediately — it doesn't mean the new container is
+    # live yet. Its response carries a deployment_uuid per queued resource, which is what lets
+    # us track this specific deployment instead of racing against whatever was already running.
     - name: Trigger Coolify deploy
+      id: trigger
       shell: bash
       run: |
-        curl -f -sS -X GET "${{ inputs.webhook }}" \
-          -H "Authorization: Bearer ${{ inputs.token }}"
+        set -euo pipefail
+        response=$(curl -f -sS -X GET "${{ inputs.webhook }}" \
+          -H "Authorization: Bearer ${{ inputs.token }}")
+        echo "$response"
 
-    # Coolify's webhook just queues the build; it doesn't report back when the new container
-    # is actually live. Polling the service's own health-url is what tells us the deploy really
-    # succeeded (build + container start + app boot), without depending on Coolify's internal
-    # deployment-status API.
+        deployment_uuid=$(echo "$response" | jq -r '.deployments[0].deployment_uuid // empty')
+        if [[ -z "$deployment_uuid" ]]; then
+          echo "::error::Coolify response carried no deployment_uuid, cannot track this deployment"
+          exit 1
+        fi
+        echo "deployment-uuid=$deployment_uuid" >> "$GITHUB_OUTPUT"
+
+    # Poll this specific deployment_uuid until Coolify reports it finished — this is what
+    # closes the race against the previous deployment's container still answering health-url.
+    - name: Wait for Coolify deployment to finish
+      shell: bash
+      run: |
+        set -euo pipefail
+        origin=$(echo "${{ inputs.webhook }}" | sed -E 's#^(https?://[^/]+).*#\1#')
+        deployment_uuid="${{ steps.trigger.outputs.deployment-uuid }}"
+        deadline=$(( $(date +%s) + ${{ inputs.deploy-timeout-seconds }} ))
+
+        while true; do
+          status=$(curl -f -sS "$origin/api/v1/deployments/$deployment_uuid" \
+            -H "Authorization: Bearer ${{ inputs.token }}" | jq -r '.status // empty')
+
+          case "$status" in
+            finished)
+              echo "Coolify deployment finished: $deployment_uuid"
+              break
+              ;;
+            failed|cancelled-by-user)
+              echo "::error::Coolify deployment $status: $deployment_uuid"
+              exit 1
+              ;;
+            queued|in_progress)
+              echo "Deployment status: $status, waiting..."
+              ;;
+            *)
+              echo "Unexpected/empty deployment status ('$status'), retrying..."
+              ;;
+          esac
+
+          if (( $(date +%s) >= deadline )); then
+            echo "::error::Coolify deployment did not reach a final status within ${{ inputs.deploy-timeout-seconds }}s: $deployment_uuid"
+            exit 1
+          fi
+
+          sleep "${{ inputs.poll-interval-seconds }}"
+        done
+
+    # Coolify reporting "finished" means the build/rollout succeeded — it doesn't guarantee the
+    # app actually boots and serves traffic (bad env vars, failed migration, crash loop). This
+    # is the final, real signal.
     - name: Wait for deployment to become healthy
       shell: bash
       run: |
         set -euo pipefail
-        deadline=$(( $(date +%s) + ${{ inputs.timeout-seconds }} ))
+        deadline=$(( $(date +%s) + ${{ inputs.health-timeout-seconds }} ))
         health_url="${{ inputs.health-url }}"
         match="${{ inputs.health-match }}"
 
@@ -57,9 +112,9 @@ runs:
           fi
 
           if (( $(date +%s) >= deadline )); then
-            echo "::error::Deployment did not become healthy within ${{ inputs.timeout-seconds }}s: $health_url"
+            echo "::error::Deployment did not become healthy within ${{ inputs.health-timeout-seconds }}s: $health_url"
             exit 1
           fi
 
-          sleep "${{ inputs.interval-seconds }}"
+          sleep "${{ inputs.poll-interval-seconds }}"
         done
