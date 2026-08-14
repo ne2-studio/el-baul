@@ -43,7 +43,7 @@ jobs:
           java-version: '21'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       # No signing config yet, so this is a debug build for now — just enough to get an
       # installable artifact out of CI. Release signing is a follow-up.
