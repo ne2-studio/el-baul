@@ -5,12 +5,16 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/imgproxy-deploy.yml'
+      - '.github/workflows/imgproxy-cicd.yml'
       - 'imgproxy/**'
 
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: imgproxy-cicd-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-imgproxy
@@ -27,11 +31,20 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAME }}:latest
           context: imgproxy
+          cache-scope: imgproxy
+
+      - name: Scan imgproxy image
+        uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
 
       - name: Release imgproxy image
         uses: ./.github/actions/release-ghcr-image
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.IMAGE_NAME }}
+          context: imgproxy
+          cache-scope: imgproxy
+          sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
 

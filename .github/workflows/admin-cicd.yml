@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/admin-deploy.yml'
+      - '.github/workflows/admin-cicd.yml'
       - 'admin/**'
       # Admin acceptance runs el-baul-api-lite next to the admin image, so changes to the lite
       # stack can break this pipeline even when admin/ itself still builds.
@@ -21,6 +21,10 @@ on:
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: admin-cicd-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-admin
@@ -70,6 +74,12 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAME }}:latest
           context: admin
+          cache-scope: admin-app
+
+      - name: Scan admin image
+        uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
 
       - name: Package acceptance API image
         uses: ./.github/actions/docker-build-image
@@ -77,6 +87,7 @@ jobs:
           image: el-baul-api-lite:ci
           context: api
           dockerfile: api/ElBaul.Api.Lite/Dockerfile
+          cache-scope: admin-api-lite
 
       - name: Verify packaged admin
         env:
@@ -96,7 +107,10 @@ jobs:
       - name: Release admin image
         uses: ./.github/actions/release-ghcr-image
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.IMAGE_NAME }}
+          context: admin
+          cache-scope: admin-app
+          sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
 

@@ -5,13 +5,17 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/storybook-deploy.yml'
+      - '.github/workflows/storybook-cicd.yml'
       - 'app/**'
       - 'storybook/**'
 
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: storybook-cicd-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-storybook
@@ -45,11 +49,21 @@ jobs:
           image: ${{ env.IMAGE_NAME }}:latest
           context: .
           dockerfile: storybook/Dockerfile
+          cache-scope: storybook
+
+      - name: Scan Storybook image
+        uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
 
       - name: Release Storybook image
         uses: ./.github/actions/release-ghcr-image
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.IMAGE_NAME }}
+          context: .
+          dockerfile: storybook/Dockerfile
+          cache-scope: storybook
+          sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
 

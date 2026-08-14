@@ -1,5 +1,5 @@
 name: Build Docker image
-description: Build a Docker image, optionally using a custom Dockerfile.
+description: Build a Docker image, loading it into the local daemon, using the GitHub Actions cache.
 
 inputs:
   image:
@@ -12,15 +12,23 @@ inputs:
     description: Optional Dockerfile path.
     required: false
     default: ""
+  cache-scope:
+    description: Cache scope key. Keeps unrelated images from colliding in the shared GHA cache.
+    required: true
 
 runs:
   using: composite
   steps:
+    - name: Set up Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Build image
-      shell: bash
-      run: |
-        if [[ -n "${{ inputs.dockerfile }}" ]]; then
-          docker build -f "${{ inputs.dockerfile }}" -t "${{ inputs.image }}" "${{ inputs.context }}"
-        else
-          docker build -t "${{ inputs.image }}" "${{ inputs.context }}"
-        fi
+      uses: docker/build-push-action@v6
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
+        tags: ${{ inputs.image }}
+        load: true
+        push: false
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,mode=max,scope=${{ inputs.cache-scope }}

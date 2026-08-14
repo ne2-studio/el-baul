@@ -1,13 +1,13 @@
 # Deployment (CI/CD)
 
 - **Per-service workflows**: four independent, path-filtered GitHub Actions workflows —
-  `backend-deploy.yml` (`api/**`), `frontend-deploy.yml` (`app/**`), `imgproxy-deploy.yml`
-  (`imgproxy/**`), `storybook-deploy.yml` (`app/**`, `storybook/**`) — each triggered only by
+  `backend-cicd.yml` (`api/**`), `frontend-cicd.yml` (`app/**`), `imgproxy-cicd.yml`
+  (`imgproxy/**`), `storybook-cicd.yml` (`app/**`, `storybook/**`) — each triggered only by
   pushes to `main` touching its own paths. All four: build → build a Docker image → push to GHCR
   → trigger a Coolify deploy webhook.
-- **Image-gated deploys**: `backend-deploy.yml` and `frontend-deploy.yml` gate the push on
+- **Image-gated deploys**: `backend-cicd.yml` and `frontend-cicd.yml` gate the push on
   tests run against the freshly built image itself, not just a unit-test run — see
-  [`testing.md`](testing.md) for what each runs. `imgproxy-deploy.yml`/`storybook-deploy.yml`
+  [`testing.md`](testing.md) for what each runs. `imgproxy-cicd.yml`/`storybook-cicd.yml`
   currently have no equivalent gate. The frontend workflow additionally extracts `dist/` from
   the built image and uploads sourcemaps to Sentry — a step that needs Node/npm, not the image.
 - **E2E smoke tests**: `e2e-nightly.yml` runs the whole-repo `/e2e-tests/` suite on a nightly

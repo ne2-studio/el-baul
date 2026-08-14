@@ -115,7 +115,7 @@ for the full rationale.
   frontend image + `el-baul-api-lite` (see [`../operations/api-lite.md`](../operations/api-lite.md)),
   no real Postgres/MinIO/imgproxy to boot. Covers photo upload/move/delete, the global baúl
   invite link, persona role-change/revoke, and removal-request submit/approve/reject. Gates
-  `frontend-deploy.yml`. Some flows need a second identity (a second browser context logged in
+  `frontend-cicd.yml`. Some flows need a second identity (a second browser context logged in
   as a different fake-oidc user) to join a baúl as a genuinely different account, and only
   shows "submit removal request" to a non-admin member.
   Keep these after Docker image build: unlike Storybook specs, they validate the packaged app,
@@ -124,7 +124,7 @@ for the full rationale.
 - **`admin/acceptance-tests/`** (`./scripts/verify admin-acceptance`) — Playwright against the
   built admin image + the same `el-baul-api-lite` stack. It intentionally starts with a narrow
   surface: unauthenticated redirect to fake-oidc, admin login, and navigating to `/dashboard`.
-  Gates `admin-deploy.yml`.
+  Gates `admin-cicd.yml`.
 
 ## Whole-system
 

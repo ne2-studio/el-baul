@@ -73,7 +73,7 @@ directly — no extra configuration needed on a normal local Docker Desktop/Engi
 
 ## Running in CI
 
-`.github/workflows/backend-deploy.yml` runs `./scripts/verify backend-acceptance` before
+`.github/workflows/backend-cicd.yml` runs `./scripts/verify backend-acceptance` before
 `docker push` — the image these tests exercise is the exact one about to be pushed and
 deployed, freshly built in the runner's local Docker daemon, never pulled from a registry.
 A failure here blocks the push (and therefore the Coolify deploy trigger after it).

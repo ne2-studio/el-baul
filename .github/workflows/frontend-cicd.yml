@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/frontend-deploy.yml'
+      - '.github/workflows/frontend-cicd.yml'
       - 'app/**'
       - 'docker-compose.lite.yml'
       - 'scripts/**'
@@ -22,6 +22,10 @@ on:
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: frontend-cicd-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-app
@@ -68,6 +72,12 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAME }}:latest
           context: app
+          cache-scope: frontend-app
+
+      - name: Scan frontend image
+        uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
 
       - name: Package acceptance API image
         uses: ./.github/actions/docker-build-image
@@ -75,6 +85,7 @@ jobs:
           image: el-baul-api-lite:ci
           context: api
           dockerfile: api/ElBaul.Api.Lite/Dockerfile
+          cache-scope: frontend-api-lite
 
       - name: Verify packaged frontend
         env:
@@ -94,7 +105,10 @@ jobs:
       - name: Release frontend image
         uses: ./.github/actions/release-ghcr-image
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.IMAGE_NAME }}
+          context: app
+          cache-scope: frontend-app
+          sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
 

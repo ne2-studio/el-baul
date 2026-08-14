@@ -5,13 +5,17 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/backend-deploy.yml'
+      - '.github/workflows/backend-cicd.yml'
       - 'api/**'
       - 'scripts/**'
 
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: backend-cicd-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-api
@@ -55,6 +59,12 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAME }}:latest
           context: api
+          cache-scope: backend-api
+
+      - name: Scan backend image
+        uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
 
       - name: Verify packaged backend
         env:
@@ -65,7 +75,10 @@ jobs:
       - name: Release backend image
         uses: ./.github/actions/release-ghcr-image
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.IMAGE_NAME }}
+          context: api
+          cache-scope: backend-api
+          sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
