@@ -442,8 +442,8 @@ case "$command" in
   backend-persistence) backend_persistence ;;
   backend-acceptance) backend_acceptance ;;
   frontend) frontend ;;
-  admin) admin ;;
   frontend-acceptance) frontend_acceptance ;;
+  admin) admin ;;
   admin-acceptance) admin_acceptance ;;
   e2e) e2e ;;
   all) all ;;
