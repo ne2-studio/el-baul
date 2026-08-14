@@ -85,7 +85,7 @@ jobs:
           image: el-baul-api-lite:ci
           context: api
           dockerfile: api/ElBaul.Api.Lite/Dockerfile
-          cache-scope: frontend-api-lite
+          cache-scope: api-lite
 
       - name: Verify packaged frontend
         env:

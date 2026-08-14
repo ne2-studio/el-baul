@@ -87,7 +87,7 @@ jobs:
           image: el-baul-api-lite:ci
           context: api
           dockerfile: api/ElBaul.Api.Lite/Dockerfile
-          cache-scope: admin-api-lite
+          cache-scope: api-lite
 
       - name: Verify packaged admin
         env:
