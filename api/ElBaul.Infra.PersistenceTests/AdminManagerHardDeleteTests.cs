@@ -2,6 +2,7 @@ using ElBaul.Application.Admin;
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Moderation;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;

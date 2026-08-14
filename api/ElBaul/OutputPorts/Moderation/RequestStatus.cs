@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Sharing;
+namespace ElBaul.OutputPorts.Moderation;
 public enum RequestStatus
 {
     Pending,

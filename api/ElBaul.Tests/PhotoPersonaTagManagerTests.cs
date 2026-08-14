@@ -1,5 +1,5 @@
 using ElBaul.Application.Bauls;
-using ElBaul.Application.Photos;
+using ElBaul.Application.Personas;
 using ElBaul.OutputPorts.Personas;
 
 using ElBaul.Infra.Lite;

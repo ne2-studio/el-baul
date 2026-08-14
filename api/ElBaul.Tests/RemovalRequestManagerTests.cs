@@ -1,11 +1,11 @@
 using ElBaul.Application.Bauls;
+using ElBaul.Application.Moderation;
 using ElBaul.Application.Photos;
-using ElBaul.Application.Sharing;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Moderation;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Sharing;
 using ElBaul.OutputPorts.Users;
 
 using ElBaul.Infra.Lite;

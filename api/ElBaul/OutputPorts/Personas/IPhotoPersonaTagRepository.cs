@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.OutputPorts.Personas;
 public interface IPhotoPersonaTagRepository
 {
     Task<IEnumerable<PersonaId>> GetPersonaIdsByPhotoIdAsync(PhotoId photoId);

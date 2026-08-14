@@ -4,6 +4,7 @@ using ElBaul.Application.Sharing;
 using ElBaul.InputPorts.TvMode;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;

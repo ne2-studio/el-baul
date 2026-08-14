@@ -571,7 +571,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Photos", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Photos.PhotoPersonaTag", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Personas.PhotoPersonaTag", b =>
                 {
                     b.Property<Guid>("PhotoId")
                         .HasColumnType("uuid");
@@ -699,7 +699,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("BaulInviteLinks", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Sharing.RemovalRequest", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Moderation.RemovalRequest", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -1036,7 +1036,7 @@ namespace ElBaul.Infra.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Photos.PhotoPersonaTag", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Personas.PhotoPersonaTag", b =>
                 {
                     b.HasOne("ElBaul.OutputPorts.Personas.Persona", null)
                         .WithMany()
@@ -1100,7 +1100,7 @@ namespace ElBaul.Infra.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Sharing.RemovalRequest", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Moderation.RemovalRequest", b =>
                 {
                     b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
                         .WithMany()

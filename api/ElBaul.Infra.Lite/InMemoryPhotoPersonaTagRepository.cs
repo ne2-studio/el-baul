@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Photos;
+using ElBaul.OutputPorts.Personas;
 using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 

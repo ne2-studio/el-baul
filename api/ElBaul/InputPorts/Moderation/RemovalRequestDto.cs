@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Sharing;
+namespace ElBaul.InputPorts.Moderation;
 public record RemovalRequestDto
 (
     string Id,

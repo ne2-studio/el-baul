@@ -2,6 +2,7 @@ using ElBaul.Application.Bauls;
 using ElBaul.InputPorts.Photos;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
+using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
 using Ne2Studio.Common;
