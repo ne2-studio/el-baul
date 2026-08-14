@@ -5,6 +5,7 @@ import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { ConnectivityLostScreen } from '@/design-system/components/feedback/ConnectivityLostScreen';
+import { MaintenanceScreen } from '@/design-system/components/feedback/MaintenanceScreen';
 import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
 import { PushNotificationsHandler } from '@/features/profile/native/PushNotificationsHandler';
 import { ScrollToTop } from '@/app/ScrollToTop';
@@ -67,6 +68,7 @@ function App() {
   } = useUIStore();
 
   const { setAuthenticated } = useAuthStore();
+  const maintenanceModeEnabled = useAppConfigStore((state) => state.maintenanceModeEnabled);
 
   const { run, isPending } = useAsyncAction();
 
@@ -177,7 +179,9 @@ function App() {
       <PushNotificationsHandler />
       <AndroidAppBanner />
 
-      {isAccessDenied ? (
+      {maintenanceModeEnabled ? (
+        <MaintenanceScreen />
+      ) : isAccessDenied ? (
         <AccessDeniedScreen onBackToBaules={handleBackToBaules} />
       ) : (
         <>

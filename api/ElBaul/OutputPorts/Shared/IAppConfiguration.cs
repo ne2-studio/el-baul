@@ -86,4 +86,12 @@ public interface IAppConfiguration
     /// as SharedLinksEnabled. Defaults to false.
     /// </summary>
     bool TvModeEnabled { get; }
+
+    /// <summary>
+    /// Global maintenance switch. While true, MaintenanceModeMiddleware short-circuits every
+    /// request with 503 except GET /api/app-config itself (the frontend needs that endpoint to
+    /// keep working so it can learn maintenance mode is on and show the maintenance screen, and
+    /// learn it's back off without a deploy). Defaults to false.
+    /// </summary>
+    bool MaintenanceModeEnabled { get; }
 }

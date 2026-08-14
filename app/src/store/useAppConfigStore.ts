@@ -22,6 +22,10 @@ interface AppConfigState {
   // Defaults to false so the "Ver en TV" menu entry never flashes visible before the backend
   // confirms Modo TV's rollout is on — see docs PRD "Modo TV".
   tvModeEnabled: boolean;
+  // Defaults to false; while true, App renders MaintenanceScreen instead of the app. Every
+  // other backend request 503s while this is on, so it's fetched from the one endpoint the
+  // backend still serves during maintenance (see MaintenanceModeMiddleware).
+  maintenanceModeEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -51,6 +55,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   androidAppBannerEnabled: false,
   chatMemoryEnabled: false,
   tvModeEnabled: false,
+  maintenanceModeEnabled: false,
   helpCenterUrl: '',
   appUrl: window.location.origin,
   googlePlayUrl: '',
@@ -68,6 +73,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         androidAppBannerEnabled: config.features.androidAppBannerEnabled ?? false,
         chatMemoryEnabled: config.features.chatMemoryEnabled ?? false,
         tvModeEnabled: config.features.tvModeEnabled ?? false,
+        maintenanceModeEnabled: config.features.maintenanceModeEnabled ?? false,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
         googlePlayUrl: config.googlePlayUrl ?? '',

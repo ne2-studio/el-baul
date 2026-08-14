@@ -45,7 +45,9 @@ Anonymous exceptions:
 - `404 Not Found` — the resource doesn't exist, or its existence must not be disclosed to
   this caller (e.g. a baúl invite `preview` for an already-invalidated token).
 - `503 Service Unavailable` — a downstream dependency required to complete the operation is
-  unavailable.
+  unavailable, or the whole backend is in maintenance mode (`MaintenanceModeMiddleware`,
+  see [`architecture/backend.md`](architecture/backend.md#controllers)) — every request gets
+  this except `GET /api/app-config`.
 
 All application error bodies share one shape, `{ "error": "..." }`. The mapping from an
 application-layer failure to a status code is driven by `ApplicationError.Code`, not message text

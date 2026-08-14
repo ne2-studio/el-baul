@@ -72,6 +72,11 @@ text: `Validation` → 400, `Forbidden` → 403, `NotFound` → 404, and
 `ExternalDependencyUnavailable` → 503. See [`../API-CONVENTIONS.md`](../API-CONVENTIONS.md) for
 the resulting observable semantics.
 
+**Maintenance mode**: `MaintenanceModeMiddleware` (`ElBaul.Api.Common`) runs early in the
+pipeline — after CORS, before rate limiting/auth — and, while `IAppConfiguration.MaintenanceModeEnabled`
+is true, short-circuits every request with 503 except `GET /api/app-config`, which stays up so
+the frontend can learn the flag's state without a deploy. Defaults to false.
+
 ## Auth
 
 - `JwtBearer` validates access tokens. Signing keys are fetched directly from a configured

@@ -19,7 +19,10 @@ public class StaticAppConfiguration(
     bool pushDigestEnabled = true,
     bool chatMemoryEnabled = true,
     int chatMemoryRetrievalLimit = 5,
-    bool tvModeEnabled = true)
+    bool tvModeEnabled = true,
+    // Defaults to false here too (unlike most other flags above) — maintenance mode gating is
+    // covered by its own dedicated tests, constructed with true.
+    bool maintenanceModeEnabled = false)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -38,4 +41,5 @@ public class StaticAppConfiguration(
     public bool ChatMemoryEnabled { get; } = chatMemoryEnabled;
     public int ChatMemoryRetrievalLimit { get; } = chatMemoryRetrievalLimit;
     public bool TvModeEnabled { get; } = tvModeEnabled;
+    public bool MaintenanceModeEnabled { get; } = maintenanceModeEnabled;
 }

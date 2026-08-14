@@ -8794,6 +8794,7 @@
           "chatEnabled",
           "chatMemoryEnabled",
           "chatSuggestionsEnabled",
+          "maintenanceModeEnabled",
           "sharedLinksEnabled",
           "tvModeEnabled"
         ],
@@ -8818,6 +8819,9 @@
             "type": "boolean"
           },
           "tvModeEnabled": {
+            "type": "boolean"
+          },
+          "maintenanceModeEnabled": {
             "type": "boolean"
           }
         },

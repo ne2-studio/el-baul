@@ -24,6 +24,10 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
         var androidAppBannerEnabled = configuration.GetValue<bool>("Features:AndroidAppBannerEnabled");
         var chatMemoryEnabled = configuration.GetValue<bool>("Features:ChatMemoryEnabled");
         var tvModeEnabled = configuration.GetValue<bool>("Features:TvModeEnabled");
+        // Exposed even while maintenance mode is on: this endpoint is the one exception
+        // MaintenanceModeMiddleware carves out, so the frontend can learn the flag is set (and
+        // learn it's back off) without a deploy.
+        var maintenanceModeEnabled = configuration.GetValue<bool>("Features:MaintenanceModeEnabled");
         var helpCenterUrl = configuration.GetValue<string>("Support:HelpCenterUrl");
         var appUrl = configuration.GetValue<string>("App:PublicUrl");
         var googlePlayUrl = configuration.GetValue<string>("App:GooglePlayUrl");
@@ -43,7 +47,8 @@ public class AppConfigController(IConfiguration configuration) : ControllerBase
                 baulFeedEnabled,
                 androidAppBannerEnabled,
                 chatMemoryEnabled,
-                tvModeEnabled
+                tvModeEnabled,
+                maintenanceModeEnabled
             },
             helpCenterUrl,
             appUrl,

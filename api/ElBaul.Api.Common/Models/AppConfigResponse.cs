@@ -9,4 +9,4 @@ public record AppConfigResponse(
 
 public record AppConfigFeatures(
     bool ChatEnabled, bool ChatSuggestionsEnabled, bool SharedLinksEnabled, bool BaulFeedEnabled,
-    bool AndroidAppBannerEnabled, bool ChatMemoryEnabled, bool TvModeEnabled);
+    bool AndroidAppBannerEnabled, bool ChatMemoryEnabled, bool TvModeEnabled, bool MaintenanceModeEnabled);

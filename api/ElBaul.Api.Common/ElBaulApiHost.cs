@@ -1,4 +1,5 @@
 using ElBaul.Api.Logging;
+using ElBaul.Api.Middleware;
 using ElBaul.Api.Models;
 using ElBaul.Api.Swagger;
 using ElBaul.Application.Admin;
@@ -300,6 +301,7 @@ public static class ElBaulApiHost
             // fetch() and silently falls back to a generic name.
             .WithExposedHeaders("Content-Disposition"));
 
+        app.UseMiddleware<MaintenanceModeMiddleware>();
         app.UseRateLimiter();
         app.UseAuthentication();
         app.UseMiddleware<UserLogContextMiddleware>();

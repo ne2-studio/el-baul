@@ -25,6 +25,7 @@ internal sealed class StaticAppConfiguration(bool chatMemoryEnabled = true) : IA
     public bool ChatMemoryEnabled { get; } = chatMemoryEnabled;
     public int ChatMemoryRetrievalLimit => 5;
     public bool TvModeEnabled => true;
+    public bool MaintenanceModeEnabled => false;
 }
 
 internal sealed class InMemoryMaintenancePhotoStorage : IPhotoStorage

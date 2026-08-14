@@ -7569,6 +7569,7 @@ export interface components {
             androidAppBannerEnabled: boolean;
             chatMemoryEnabled: boolean;
             tvModeEnabled: boolean;
+            maintenanceModeEnabled: boolean;
         };
         AppConfigResponse: {
             features: components["schemas"]["AppConfigFeatures"];

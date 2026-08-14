@@ -23,4 +23,5 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public bool ChatMemoryEnabled => configuration.GetValue<bool>("Features:ChatMemoryEnabled");
     public int ChatMemoryRetrievalLimit => configuration.GetValue("Features:ChatMemoryRetrievalLimit", 5);
     public bool TvModeEnabled => configuration.GetValue<bool>("Features:TvModeEnabled");
+    public bool MaintenanceModeEnabled => configuration.GetValue<bool>("Features:MaintenanceModeEnabled");
 }
