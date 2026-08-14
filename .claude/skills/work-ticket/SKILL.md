@@ -15,7 +15,10 @@ context — everything needed must come from the ticket text and the repository 
 
 ### 1. Understand the ticket
 
-Read the ticket text given in the prompt. It may be terse. Inspect the codebase, the
+Read the ticket text given in the prompt. It may be terse. The prompt also includes any
+comments already posted on the issue (`-- comment by <author> (<date>) --` blocks after
+the body) — later comments can narrow, correct, or override the original body, so treat
+them as part of the ticket, not as optional extra context. Inspect the codebase, the
 relevant `docs/` files referenced by root/service `CLAUDE.md`, and existing code before
 assuming intent.
 
@@ -24,9 +27,10 @@ product behavior, scope, or architecture, and cannot be reasonably inferred from
 codebase, ask a single clear question and wait. Remote Control forwards it to Pedro's
 phone. Do not ask about implementation details you can reasonably decide yourself.
 
-If the ticket body contains image URLs (e.g. `![...](https://github.com/user-attachments/...)`
-or other GitHub-hosted image links), download each one and view it before proceeding —
-the ticket text alone may not convey what a screenshot shows:
+If the ticket body or any comment contains image URLs (e.g.
+`![...](https://github.com/user-attachments/...)` or other GitHub-hosted image links),
+download each one and view it before proceeding — the ticket text alone may not convey
+what a screenshot shows:
 ```bash
 mkdir -p /tmp/work-ticket-images && curl -sL "<url>" -o /tmp/work-ticket-images/<n>.png
 ```

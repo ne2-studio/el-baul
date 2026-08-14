@@ -142,9 +142,12 @@ _process_queue() {
     fi
 
     rm -f "$SIGNAL_FILE"
-    title="$(gh issue view "$n" --json title --jq .title)"
-    body="$(gh issue view "$n" --json body --jq '.body // ""')"
-    url="$(gh issue view "$n" --json url --jq .url)"
+    local issue_json comments
+    issue_json="$(gh issue view "$n" --json title,body,url,comments)"
+    title="$(jq -r '.title' <<<"$issue_json")"
+    body="$(jq -r '.body // ""' <<<"$issue_json")"
+    url="$(jq -r '.url' <<<"$issue_json")"
+    comments="$(jq -r '.comments[]? | "-- comment by \(.author.login) (\(.createdAt)) --\n\(.body)"' <<<"$issue_json")"
 
     seen=$(( seen + 1 ))
     echo
@@ -152,7 +155,7 @@ _process_queue() {
     echo "Ticket: #$n $title"
     echo "=================================================="
     local prompt
-    prompt="$(printf '/work-ticket\n\nGitHub issue: #%s (%s)\n\n%s\n\n%s' "$n" "$url" "$title" "$body")"
+    prompt="$(printf '/work-ticket\n\nGitHub issue: #%s (%s)\n\n%s\n\n%s\n\n%s' "$n" "$url" "$title" "$body" "$comments")"
     claude "${claude_flags[@]}" "$prompt" || true
 
     if [[ -f "$SIGNAL_FILE" ]]; then
