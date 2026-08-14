@@ -61,5 +61,6 @@ jobs:
       - name: Deploy imgproxy
         uses: ./.github/actions/deploy-coolify
         with:
+          service: imgproxy
           webhook: ${{ secrets.COOLIFY_WEBHOOK_IMGPROXY }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}

@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+DEPLOY_TIMEOUT_SECONDS="${DEPLOY_TIMEOUT_SECONDS:-600}"
+POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-5}"
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/deploy <service>
+
+Triggers a Coolify deployment webhook for <service> and waits for the
+deployment to reach a final status. Coolify's own Health Check (configured
+per resource, see Configuration > Health Check) gates when a deployment is
+marked finished, so this doesn't re-check health itself — see
+docs/architecture/deployment.md.
+
+Services: backend, frontend, admin, imgproxy, storybook
+
+Environment:
+  COOLIFY_WEBHOOK_<SERVICE>   Deployment webhook URL for <service> (required),
+                              e.g. COOLIFY_WEBHOOK_BACKEND. Same secret CI uses.
+  COOLIFY_API_TOKEN           Coolify API token (required). Same secret CI uses.
+  DEPLOY_TIMEOUT_SECONDS      Max seconds to wait for a final status. Default 600.
+  POLL_INTERVAL_SECONDS       Seconds between deployment status polls. Default 5.
+EOF
+}
+
+die() {
+  printf 'deploy: %s\n' "$*" >&2
+  exit 1
+}
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+# /deploy queues a build and returns immediately — it doesn't mean the new container is live
+# yet. Its response carries a deployment_uuid per queued resource, which is what lets us track
+# this specific deployment instead of racing against whatever was already running.
+trigger_deploy() {
+  local webhook="$1"
+  local token="$2"
+
+  local response
+  response=$(curl -f -sS -X GET "$webhook" -H "Authorization: Bearer $token") \
+    || die "failed to call Coolify webhook"
+  echo "$response" >&2
+
+  local deployment_uuid
+  deployment_uuid=$(echo "$response" | jq -r '.deployments[0].deployment_uuid // empty')
+  [[ -n "$deployment_uuid" ]] || die "Coolify response carried no deployment_uuid: $response"
+
+  echo "$deployment_uuid"
+}
+
+# Polls this specific deployment_uuid until Coolify reports it finished. Each resource has its
+# own Health Check configured in Coolify, so "finished" already means the new container passed
+# it before traffic switched over — no need to re-check health here. If that ever gets disabled
+# for a resource, this degrades to "container started", not "container is healthy".
+wait_for_deploy() {
+  local webhook="$1"
+  local token="$2"
+  local deployment_uuid="$3"
+
+  local origin
+  origin=$(echo "$webhook" | sed -E 's#^(https?://[^/]+).*#\1#')
+  local deadline=$(( $(date +%s) + DEPLOY_TIMEOUT_SECONDS ))
+
+  while true; do
+    local status
+    status=$(curl -f -sS "$origin/api/v1/deployments/$deployment_uuid" \
+      -H "Authorization: Bearer $token" | jq -r '.status // empty')
+
+    case "$status" in
+      finished)
+        echo "deploy: Coolify deployment finished: $deployment_uuid" >&2
+        return 0
+        ;;
+      failed|cancelled-by-user)
+        die "Coolify deployment $status: $deployment_uuid"
+        ;;
+      queued|in_progress)
+        echo "deploy: status $status, waiting..." >&2
+        ;;
+      *)
+        echo "deploy: unexpected/empty status ('$status'), retrying..." >&2
+        ;;
+    esac
+
+    if (( $(date +%s) >= deadline )); then
+      die "deployment did not reach a final status within ${DEPLOY_TIMEOUT_SECONDS}s: $deployment_uuid"
+    fi
+
+    sleep "$POLL_INTERVAL_SECONDS"
+  done
+}
+
+deploy() {
+  local service="$1"
+  local webhook_var="COOLIFY_WEBHOOK_$(echo "$service" | tr '[:lower:]' '[:upper:]')"
+  local webhook="${!webhook_var:-}"
+  local token="${COOLIFY_API_TOKEN:-}"
+
+  [[ -n "$webhook" ]] || die "$webhook_var is not set"
+  [[ -n "$token" ]] || die "COOLIFY_API_TOKEN is not set"
+
+  local deployment_uuid
+  deployment_uuid=$(trigger_deploy "$webhook" "$token")
+  wait_for_deploy "$webhook" "$token" "$deployment_uuid"
+}
+
+need curl
+need jq
+
+case "${1:-}" in
+  backend|frontend|admin|imgproxy|storybook) deploy "$1" ;;
+  -h|--help|help|"") usage ;;
+  *) usage >&2; die "unknown service: $1" ;;
+esac

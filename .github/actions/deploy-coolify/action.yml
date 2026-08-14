@@ -1,9 +1,12 @@
 name: Deploy with Coolify
-description: Trigger a Coolify deployment webhook and wait for it to finish.
+description: Trigger a Coolify deployment webhook and wait for it to finish. Thin wrapper around scripts/deploy, so the same logic runs in CI and by hand.
 
 inputs:
+  service:
+    description: Service name (backend, frontend, admin, imgproxy, storybook).
+    required: true
   webhook:
-    description: Coolify deployment webhook URL.
+    description: Coolify deployment webhook URL for this service.
     required: true
   token:
     description: Coolify API token.
@@ -20,63 +23,14 @@ inputs:
 runs:
   using: composite
   steps:
-    # /deploy queues a build and returns immediately — it doesn't mean the new container is
-    # live yet. Its response carries a deployment_uuid per queued resource, which is what lets
-    # us track this specific deployment instead of racing against whatever was already running.
-    - name: Trigger Coolify deploy
-      id: trigger
+    - name: Deploy
       shell: bash
+      env:
+        COOLIFY_API_TOKEN: ${{ inputs.token }}
+        DEPLOY_TIMEOUT_SECONDS: ${{ inputs.deploy-timeout-seconds }}
+        POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds }}
       run: |
         set -euo pipefail
-        response=$(curl -f -sS -X GET "${{ inputs.webhook }}" \
-          -H "Authorization: Bearer ${{ inputs.token }}")
-        echo "$response"
-
-        deployment_uuid=$(echo "$response" | jq -r '.deployments[0].deployment_uuid // empty')
-        if [[ -z "$deployment_uuid" ]]; then
-          echo "::error::Coolify response carried no deployment_uuid, cannot track this deployment"
-          exit 1
-        fi
-        echo "deployment-uuid=$deployment_uuid" >> "$GITHUB_OUTPUT"
-
-    # Poll this specific deployment_uuid until Coolify reports it finished. Each resource has
-    # its own Health Check configured in Coolify (Configuration > Health Check), so "finished"
-    # already means the new container passed it before traffic switched over — no need to
-    # re-check health ourselves here. If that ever gets disabled for a resource, this step
-    # degrades to "container started", not "container is healthy".
-    - name: Wait for Coolify deployment to finish
-      shell: bash
-      run: |
-        set -euo pipefail
-        origin=$(echo "${{ inputs.webhook }}" | sed -E 's#^(https?://[^/]+).*#\1#')
-        deployment_uuid="${{ steps.trigger.outputs.deployment-uuid }}"
-        deadline=$(( $(date +%s) + ${{ inputs.deploy-timeout-seconds }} ))
-
-        while true; do
-          status=$(curl -f -sS "$origin/api/v1/deployments/$deployment_uuid" \
-            -H "Authorization: Bearer ${{ inputs.token }}" | jq -r '.status // empty')
-
-          case "$status" in
-            finished)
-              echo "Coolify deployment finished: $deployment_uuid"
-              break
-              ;;
-            failed|cancelled-by-user)
-              echo "::error::Coolify deployment $status: $deployment_uuid"
-              exit 1
-              ;;
-            queued|in_progress)
-              echo "Deployment status: $status, waiting..."
-              ;;
-            *)
-              echo "Unexpected/empty deployment status ('$status'), retrying..."
-              ;;
-          esac
-
-          if (( $(date +%s) >= deadline )); then
-            echo "::error::Coolify deployment did not reach a final status within ${{ inputs.deploy-timeout-seconds }}s: $deployment_uuid"
-            exit 1
-          fi
-
-          sleep "${{ inputs.poll-interval-seconds }}"
-        done
+        service_upper=$(echo "${{ inputs.service }}" | tr '[:lower:]' '[:upper:]')
+        export "COOLIFY_WEBHOOK_${service_upper}=${{ inputs.webhook }}"
+        ./scripts/deploy "${{ inputs.service }}"

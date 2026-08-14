@@ -92,5 +92,6 @@ jobs:
       - name: Deploy backend
         uses: ./.github/actions/deploy-coolify
         with:
+          service: backend
           webhook: ${{ secrets.COOLIFY_WEBHOOK_BACKEND }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}

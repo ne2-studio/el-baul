@@ -138,5 +138,6 @@ jobs:
       - name: Deploy frontend
         uses: ./.github/actions/deploy-coolify
         with:
+          service: frontend
           webhook: ${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}
