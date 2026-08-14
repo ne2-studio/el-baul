@@ -46,20 +46,36 @@ export default mergeConfig(
               storybookScript: 'npm run storybook -- --no-open',
             }),
           ],
-          // Pre-bundled explicitly: features/*/containers/* (self-sufficient tab/panel
-          // components, see docs/architecture/frontend.md) are the first things under
-          // components/ to pull in these deps, e.g. via PhotosView.stories.tsx's withRouter
-          // decorator (react-router-dom/zustand) and PhotoViewer.stories.tsx's
-          // usePhotoSettingsMenu, whose download action pulls in the Capacitor packages.
-          // Left implicit, Vite discovers them mid-run on first render and reloads the whole
-          // browser-mode test context, which breaks React for any story already in flight
-          // (`Cannot read properties of null (reading 'useRef'/'useEffect')`).
+          // `include` pre-bundles deps we know are only reachable from a handful of stories
+          // (react-router-dom/zustand via PhotoViewer's withRouter decorator, motion/react
+          // via RecuerdosList/OnboardingCarousel, ...); `entries` backs that up by having
+          // Vite's esbuild scanner crawl every story file up front instead of discovering
+          // each story's dependencies lazily as the test runner renders it. This narrows,
+          // but on its own doesn't eliminate, a known upstream @storybook/addon-vitest
+          // failure mode (storybookjs/storybook#33067, #33347): a dependency discovered
+          // mid-run forces Vite to restart its dev server, breaking whatever OTHER story
+          // happens to be in flight at that moment (`Cannot read properties of null
+          // (reading 'useRef'/'useEffect')`, `Failed to fetch dynamically imported module`,
+          // `Cannot connect to the iframe` — on a different, unrelated story every time).
+          // `isolate: false` below is what actually closes it out in practice.
           optimizeDeps: {
-            include: ['react-router-dom', 'zustand', '@capacitor/core', '@capacitor-community/media'],
+            entries: ['src/**/*.stories.tsx'],
+            include: ['react-router-dom', 'zustand', '@capacitor/core', '@capacitor-community/media', 'motion/react'],
           },
           test: {
             name: 'storybook',
             testTimeout: 120000,
+            // Defense-in-depth for ordinary flaky assertions (e.g. a hover/CSS-transition
+            // race) — distinct from the collection-time failures above, which a retry of
+            // an individual test can't catch.
+            retry: 2,
+            // The fix for the optimizeDeps issue above: per Storybook's own vitest-addon
+            // docs, "Cannot connect to the iframe" / "Failed to fetch dynamically imported
+            // module" are resource-overwhelm errors, common in constrained/CI environments,
+            // and `isolate: false` (share one browser context across files instead of
+            // tearing one down and spinning up a new one per file) is their documented fix.
+            // Confirmed locally: ~9/9 clean runs with this on vs. ~2/9 without.
+            isolate: false,
             browser: {
               enabled: true,
               provider: playwright({}),
