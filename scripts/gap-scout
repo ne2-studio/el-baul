@@ -12,7 +12,8 @@ usage() {
 Usage: ./scripts/gap-scout <command>
 
 Commands:
-  scan <app|api|both>   Dispatch the architecture-gap-scout skill over the
+  scan <app|api|both> [--yolo]
+                        Dispatch the architecture-gap-scout skill over the
                           given scope(s), one interactive `claude` session
                           per scope, each in its own window inside the
                           "backlog" tmux session (creating it if needed) —
@@ -28,12 +29,21 @@ Commands:
                           exists), that scope is skipped instead of starting
                           a second overlapping session.
 
-Runs interactively, not headless: if a session needs an approval it can't
-resolve from the allow-list, it pauses in its tmux window instead of hanging
-with no one able to answer — attach with `tmux attach -t backlog` (or
-forward it to your phone with Remote Control) to answer it. This is why
-scheduling this (e.g. from a systemd timer) doesn't need --dangerously-skip-
-permissions: it degrades to "needs a look" instead of stalling silently.
+Runs interactively, not headless: without --yolo, a command outside the
+narrow allow-list (only `gh issue`/`gh label`) pauses for approval in its
+tmux window instead of hanging with no one able to answer — attach with
+`tmux attach -t backlog` (or forward it to your phone with Remote Control) to
+answer it. The inspection does a lot of ad-hoc shell pipelines (churn
+analysis, grep/sed chains), so expect this fairly often.
+
+--yolo runs claude with --dangerously-skip-permissions instead: no prompts
+at all. Reasonable here specifically because gap-scout-runner never touches
+git or edits code (unlike work-ticket's --yolo, which also skips the
+commit/push approval) — the remaining exposure is unrestricted shell access
+to a read-only inspection, not a write path. Still means no technical
+safety net if something in the repo's content tried to steer the agent; use
+it once you're comfortable leaving a scan fully unattended (e.g. from the
+systemd timer).
 
 Filed issues are not queued for execution by themselves. Review one, and if
 you want it done, add the "backlog" label — that hands it to
@@ -59,7 +69,8 @@ ensure_labels() {
 # Launches one scan as its own tmux window inside $TMUX_SESSION, creating the session if it
 # doesn't exist yet. Skips it if a window for this scope is already running.
 _dispatch_one() {
-  local scope="$1"
+  local scope="$1"; shift
+  local claude_flags=("$@")
   local window="gap-scout-${scope%/}"
   local prompt
   prompt="$(printf '/gap-scout-runner\n\nScope: %s\n' "$scope")"
@@ -69,27 +80,40 @@ _dispatch_one() {
       echo "aviso: la ventana tmux '$TMUX_SESSION:$window' ya existe (escaneo previo aún corriendo o sin cerrar); lo salto." >&2
       return 0
     fi
-    tmux new-window -t "$TMUX_SESSION" -n "$window" claude "$prompt" --allowed-tools "$ALLOWED_TOOLS"
+    tmux new-window -t "$TMUX_SESSION" -n "$window" claude "$prompt" "${claude_flags[@]}"
   else
-    tmux new-session -d -s "$TMUX_SESSION" -n "$window" claude "$prompt" --allowed-tools "$ALLOWED_TOOLS"
+    tmux new-session -d -s "$TMUX_SESSION" -n "$window" claude "$prompt" "${claude_flags[@]}"
   fi
   echo "Lanzado: $TMUX_SESSION:$window"
 }
 
 cmd_scan() {
   local target="${1:-}"
+  local yolo=0
+  case "${2:-}" in
+    --yolo) yolo=1 ;;
+    "") ;;
+    *) echo "Uso: ./scripts/gap-scout scan <app|api|both> [--yolo]" >&2; exit 1 ;;
+  esac
   case "$target" in
     app) ;;
     api) ;;
     both) ;;
-    *) echo "Uso: ./scripts/gap-scout scan <app|api|both>" >&2; exit 1 ;;
+    *) echo "Uso: ./scripts/gap-scout scan <app|api|both> [--yolo]" >&2; exit 1 ;;
   esac
+
+  local claude_flags=()
+  if (( yolo )); then
+    claude_flags+=(--dangerously-skip-permissions)
+  else
+    claude_flags+=(--allowed-tools "$ALLOWED_TOOLS")
+  fi
 
   ensure_labels
   case "$target" in
-    app) _dispatch_one "app/" ;;
-    api) _dispatch_one "api/" ;;
-    both) _dispatch_one "app/"; _dispatch_one "api/" ;;
+    app) _dispatch_one "app/" "${claude_flags[@]}" ;;
+    api) _dispatch_one "api/" "${claude_flags[@]}" ;;
+    both) _dispatch_one "app/" "${claude_flags[@]}"; _dispatch_one "api/" "${claude_flags[@]}" ;;
   esac
   echo "Adjunta con: tmux attach -t $TMUX_SESSION"
 }

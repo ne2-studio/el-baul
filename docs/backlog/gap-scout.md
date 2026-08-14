@@ -11,6 +11,16 @@ permission prompt it can't resolve from `--allowed-tools` has no one to ask and 
 forever with no way to reach it. An interactive session pauses in its tmux window instead —
 attach and answer it, same as any other prompt from `./scripts/backlog`'s worker.
 
+Without `--yolo`, expect this fairly often: the scout runs a lot of ad-hoc shell pipelines
+(churn analysis, grep/sed chains) that a narrow allow-list can't realistically enumerate.
+`scan <app|api|both> --yolo` runs `claude --dangerously-skip-permissions` instead — no
+prompts at all. That's a reasonable trade-off specifically for this skill (unlike
+`work-ticket`'s `--yolo`, which also skips the commit/push approval): `gap-scout-runner`
+never touches git or edits code, so the only thing being unblocked is shell access for a
+read-only inspection, not a write path. It still means no technical safety net if
+something in the repo's content tried to steer the agent — use it once you're comfortable
+leaving scans fully unattended, e.g. from the timer below.
+
 ## 1. Service unit
 
 `/etc/systemd/system/gap-scout.service`:
@@ -24,9 +34,14 @@ After=network-online.target
 Type=oneshot
 User=<user>
 WorkingDirectory=/path/to/el-baul
-ExecStart=/path/to/el-baul/scripts/gap-scout scan both
+ExecStart=/path/to/el-baul/scripts/gap-scout scan both --yolo
 # needed if claude/gh/tmux aren't on systemd's default PATH:
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:/home/<user>/.local/bin
+# without this, systemd's default KillMode=control-group kills everything left in this
+# unit's cgroup once ExecStart exits — including the tmux server the script just spawned,
+# even though it detached. process-only killing leaves it (and the claude session inside)
+# running after the oneshot is done.
+KillMode=process
 ```
 
 `ExecStart` only *dispatches* the tmux windows and exits — it doesn't run the scan itself,
