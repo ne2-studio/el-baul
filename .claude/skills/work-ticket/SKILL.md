@@ -24,6 +24,15 @@ product behavior, scope, or architecture, and cannot be reasonably inferred from
 codebase, ask a single clear question and wait. Remote Control forwards it to Pedro's
 phone. Do not ask about implementation details you can reasonably decide yourself.
 
+If the ticket body contains image URLs (e.g. `![...](https://github.com/user-attachments/...)`
+or other GitHub-hosted image links), download each one and view it before proceeding —
+the ticket text alone may not convey what a screenshot shows:
+```bash
+mkdir -p /tmp/work-ticket-images && curl -sL "<url>" -o /tmp/work-ticket-images/<n>.png
+```
+Then `Read` the downloaded file. If a download fails (private attachment, expired URL),
+note it and continue with the text you do have rather than blocking on it.
+
 ### 2. Implement
 
 Make the change. Follow the repository's architecture and API conventions. Keep the
