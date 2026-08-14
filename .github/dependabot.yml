@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # Composite actions live under .github/actions/*/action.yml — Dependabot scans those too,
+  # not just .github/workflows/*.yml, as long as directory is "/".
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
