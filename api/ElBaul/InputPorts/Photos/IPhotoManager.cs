@@ -55,4 +55,9 @@ public interface IPhotoManager
     /// contribution suggestion even though it never received a PhotoPersonaTag. Reversed
     /// automatically the moment the photo actually gets tagged.</summary>
     Task<Result<PhotoDto>> ConfirmNoPersonasAsync(PhotoId photoId);
+
+    /// <summary>Every active photo in one upload batch, chronologically ascending — backs the
+    /// batch's own grid/gallery reached from a feed card. Fails with a Validation error while
+    /// Features:BaulFeedEnabled is off — see IAppConfiguration.BaulFeedEnabled.</summary>
+    Task<Result<IEnumerable<PhotoDto>>> GetBatchPhotosAsync(BaulId baulId, Guid batchId);
 }

@@ -17,9 +17,8 @@ namespace ElBaul.Application.Feed;
 // Merges IRecuerdoManager's recuerdo listing, IPhotoUploadBatchReadModel's photo-upload
 // batches and IChapterRepository's chapters into one newest-first feed. Deliberately thin: it
 // reuses RecuerdoManager's own GetRecuerdosAsync(BaulId) rather than duplicating its
-// authorization/DTO-shaping logic, and authorizes its own photo-batch fetch independently —
-// BaulAccessService.AuthorizeAsync is meant to be called liberally, not memoized across
-// collaborators.
+// authorization/DTO-shaping logic. A batch's own photos are fetched separately, via
+// IPhotoManager.GetBatchPhotosAsync.
 public class BaulFeedManager(
     ILogger<BaulFeedManager> logger,
     IRecuerdoManager recuerdoManager,
@@ -93,30 +92,6 @@ public class BaulFeedManager(
         }
 
         return Result.Success(new FeedPageDto(pageItems, hasMore));
-    }
-
-    public async Task<Result<IEnumerable<PhotoDto>>> GetBatchPhotosAsync(BaulId baulId, Guid batchId)
-    {
-        if (!appConfiguration.BaulFeedEnabled)
-        {
-            logger.LogWarning("Photo batch photos rejected: feed is not enabled {BatchId}", batchId);
-            return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.Validation("Baul feed is not enabled"));
-        }
-
-        var userId = currentUserProvider.GetUserId();
-        var auth = await baulAccess.AuthorizeAsync(
-            baulId, userId, AccessLevel.Member, "Photo batch photos", new { BaulId = baulId, BatchId = batchId });
-        if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
-
-        var rows = await photoUploadBatchReadModel.GetPhotosByBatchIdAsync(baulId, batchId);
-        if (rows.Count == 0)
-        {
-            logger.LogWarning("Photo batch photos rejected: batch not found {BatchId}", batchId);
-            return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Photo batch not found"));
-        }
-
-        var dtos = await photoDtoProjector.ProjectAsync(rows, auth.Value.IsAdmin, userId);
-        return Result.Success<IEnumerable<PhotoDto>>(dtos);
     }
 
     private async Task<List<PhotoBatchDto>> BuildPhotoBatchDtosAsync(BaulId baulId, bool isAdmin, UserId currentUserId)

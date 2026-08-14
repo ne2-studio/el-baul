@@ -38,11 +38,12 @@ public class PhotoManagerTests
     private IPhotoListReadModel CreatePhotoListReadModel() =>
         new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.PhotoPersonaTags);
 
-    private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null) =>
+    private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null, bool baulFeedEnabled = true) =>
         new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(nextId: nextId), _fixture.Clock,
-            new FakeUnitOfWork());
+            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
+            new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled));
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
     // (it's a photo listing method), but tests need to tag photos first to exercise it.
@@ -125,7 +126,8 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage), _fixture.Clock,
-            new FakeUnitOfWork());
+            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
+            new StaticAppConfiguration());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -146,7 +148,8 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
-            new FakeUnitOfWork());
+            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
+            new StaticAppConfiguration());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -170,7 +173,8 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
-            new FakeUnitOfWork());
+            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
+            new StaticAppConfiguration());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -936,6 +940,34 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task GetBatchPhotosAsync_ShouldReturnOnlyThatBatchsPhotos()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var batchId = Guid.NewGuid();
+        var otherBatchId = Guid.NewGuid();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadBatchId: batchId);
+        await _fixture.AddPhotoAsync(baulId, chapterId, uploadBatchId: otherBatchId);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetBatchPhotosAsync(baulId, batchId);
+
+        Assert.True(result.IsSuccess);
+        var photo = Assert.Single(result.Value);
+        Assert.Equal(photoId.ToString(), photo.Id);
+    }
+
+    [Fact]
+    public async Task GetBatchPhotosAsync_ShouldFail_WhenBatchDoesNotExist()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var manager = CreateManager(CustodioId);
+
+        var result = await manager.GetBatchPhotosAsync(baulId, Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
     }
 
     private sealed class CapturingLogger<T> : ILogger<T>

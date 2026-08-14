@@ -253,7 +253,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPhotoBatchPhotos(BaulId baulId, Guid batchId)
     {
-        var result = await baulFeedManager.GetBatchPhotosAsync(baulId, batchId);
+        var result = await photoManager.GetBatchPhotosAsync(baulId, batchId);
         return result.ToActionResult();
     }
 }

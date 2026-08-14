@@ -24,7 +24,9 @@ public class PhotoManager(
     PhotoFileService photoFileService,
     PhotoUploadWorkflow photoUploadWorkflow,
     IClock clock,
-    IUnitOfWork unitOfWork) : IPhotoManager
+    IUnitOfWork unitOfWork,
+    IPhotoUploadBatchReadModel photoUploadBatchReadModel,
+    IAppConfiguration appConfiguration) : IPhotoManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
     {
@@ -433,4 +435,27 @@ public class PhotoManager(
         return Result.Success<PhotoDto?>(dtos[0]);
     }
 
+    public async Task<Result<IEnumerable<PhotoDto>>> GetBatchPhotosAsync(BaulId baulId, Guid batchId)
+    {
+        if (!appConfiguration.BaulFeedEnabled)
+        {
+            logger.LogWarning("Photo batch photos rejected: feed is not enabled {BatchId}", batchId);
+            return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.Validation("Baul feed is not enabled"));
+        }
+
+        var userId = currentUserProvider.GetUserId();
+        var auth = await baulAccess.AuthorizeAsync(
+            baulId, userId, AccessLevel.Member, "Photo batch photos", new { BaulId = baulId, BatchId = batchId });
+        if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
+
+        var rows = await photoUploadBatchReadModel.GetPhotosByBatchIdAsync(baulId, batchId);
+        if (rows.Count == 0)
+        {
+            logger.LogWarning("Photo batch photos rejected: batch not found {BatchId}", batchId);
+            return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.NotFound("Photo batch not found"));
+        }
+
+        var dtos = await photoDtoProjector.ProjectAsync(rows, auth.Value.IsAdmin, userId);
+        return Result.Success<IEnumerable<PhotoDto>>(dtos);
+    }
 }

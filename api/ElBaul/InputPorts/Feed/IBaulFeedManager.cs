@@ -17,8 +17,4 @@ public interface IBaulFeedManager
     /// same items as new again. Calls with skip &gt; 0 ("load more") never touch the cursor and
     /// never tag IsNew (by construction, skip 0 already returned every new item).</summary>
     Task<Result<FeedPageDto>> GetFeedAsync(BaulId baulId, int skip, int take);
-
-    /// <summary>Every active photo in one upload batch, chronologically ascending — backs the
-    /// batch's own grid/gallery reached from a feed card.</summary>
-    Task<Result<IEnumerable<PhotoDto>>> GetBatchPhotosAsync(BaulId baulId, Guid batchId);
 }

@@ -275,31 +275,4 @@ public class BaulFeedManagerTests
         Assert.False(result.Value.HasMore);
     }
 
-    [Fact]
-    public async Task GetBatchPhotosAsync_ShouldReturnOnlyThatBatchsPhotos()
-    {
-        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
-        var batchId = Guid.NewGuid();
-        var otherBatchId = Guid.NewGuid();
-        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadBatchId: batchId);
-        await _fixture.AddPhotoAsync(baulId, chapterId, uploadBatchId: otherBatchId);
-
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetBatchPhotosAsync(baulId, batchId);
-
-        Assert.True(result.IsSuccess);
-        var photo = Assert.Single(result.Value);
-        Assert.Equal(photoId.ToString(), photo.Id);
-    }
-
-    [Fact]
-    public async Task GetBatchPhotosAsync_ShouldFail_WhenBatchDoesNotExist()
-    {
-        var baulId = await _fixture.CreateBaulAsync();
-        var manager = CreateManager(CustodioId);
-
-        var result = await manager.GetBatchPhotosAsync(baulId, Guid.NewGuid());
-
-        Assert.True(result.IsFailure);
-    }
 }
