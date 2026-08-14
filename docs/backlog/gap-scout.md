@@ -49,7 +49,7 @@ systemctl list-timers gap-scout.timer   # next run
 ## 4. Run once without waiting for the timer
 
 ```bash
-sudo systemctl start gap-scout.service
+sudo systemctl start --no-block gap-scout.service
 journalctl -u gap-scout.service -f
 ```
 
