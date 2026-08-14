@@ -1,5 +1,7 @@
+using ElBaul.InputPorts.Photos;
 using ElBaul.InputPorts.Recuerdos;
-namespace ElBaul.InputPorts.Photos;
+
+namespace ElBaul.InputPorts.Feed;
 // One card in the baúl feed for a single upload action — every photo sharing the same
 // UploadBatchId. UserName/UserAvatar/PersonaId follow the same Persona-nickname authorship
 // rule as RecuerdoDto (see docs/API-CONVENTIONS.md's "Display names"). PreviewPhotos carries
