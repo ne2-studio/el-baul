@@ -25,6 +25,8 @@ unlabeled (or closing it) means "not now"; it won't be re-filed verbatim on
 the next scan.
 
 Requires `gh` authenticated against this repo.
+
+See docs/backlog/gap-scout.md for how to schedule this with a systemd timer.
 EOF
 }
 
