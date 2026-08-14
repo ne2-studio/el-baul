@@ -7,9 +7,11 @@ disable-model-invocation: true
 ## Goal
 
 Produce fresh, non-duplicate architecture initiatives for the scope given in the prompt,
-filed as GitHub issues labeled `gap-scout` for Pedro to review. This skill runs
-unattended (via `./scripts/gap-scout scan`) with no prior context — everything needed
-comes from the prompt and the repository itself.
+filed as GitHub issues labeled `gap-scout` for Pedro to review. This skill runs in its own
+tmux window, dispatched by `./scripts/gap-scout scan`, with no prior context — everything
+needed comes from the prompt and the repository itself. It's usually unattended, but a
+permission prompt it can't resolve pauses in that window rather than failing silently —
+Pedro may answer it directly.
 
 Filing an issue is the end of this skill's responsibility. It never approves its own
 findings: approval is Pedro adding the `backlog` label by hand, which hands the issue to

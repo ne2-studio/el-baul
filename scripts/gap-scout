@@ -4,6 +4,7 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 LABEL="gap-scout"
+TMUX_SESSION="backlog"
 ALLOWED_TOOLS="Bash(gh issue list *) Bash(gh issue create *) Bash(gh issue view *) Bash(gh label create *)"
 
 usage() {
@@ -11,12 +12,28 @@ usage() {
 Usage: ./scripts/gap-scout <command>
 
 Commands:
-  scan <app|api|both>   Run the architecture-gap-scout skill over the given
-                          scope(s), file each new initiative as a GitHub issue
-                          (label "gap-scout"), skipping anything that
-                          duplicates an already-filed issue (open or closed).
-                          Read-only over the code; only creates GitHub issues.
-                          Safe to run unattended, e.g. from cron/systemd timer.
+  scan <app|api|both>   Dispatch the architecture-gap-scout skill over the
+                          given scope(s), one interactive `claude` session
+                          per scope, each in its own window inside the
+                          "backlog" tmux session (creating it if needed) —
+                          same session ./scripts/backlog run uses. Returns as
+                          soon as the session(s) are launched; doesn't wait
+                          for them to finish.
+                          Each session dedupes against already-filed
+                          initiatives and files new ones as GitHub issues
+                          (label "gap-scout"). Read-only over the code; only
+                          creates GitHub issues (and, once, the "gap-scout"
+                          label).
+                          If a scan is already running (its window still
+                          exists), that scope is skipped instead of starting
+                          a second overlapping session.
+
+Runs interactively, not headless: if a session needs an approval it can't
+resolve from the allow-list, it pauses in its tmux window instead of hanging
+with no one able to answer — attach with `tmux attach -t backlog` (or
+forward it to your phone with Remote Control) to answer it. This is why
+scheduling this (e.g. from a systemd timer) doesn't need --dangerously-skip-
+permissions: it degrades to "needs a look" instead of stalling silently.
 
 Filed issues are not queued for execution by themselves. Review one, and if
 you want it done, add the "backlog" label — that hands it to
@@ -24,9 +41,8 @@ you want it done, add the "backlog" label — that hands it to
 unlabeled (or closing it) means "not now"; it won't be re-filed verbatim on
 the next scan.
 
-Requires `gh` authenticated against this repo.
-
-See docs/backlog/gap-scout.md for how to schedule this with a systemd timer.
+Requires `gh` and `tmux`. See docs/backlog/gap-scout.md for how to schedule
+this with a systemd timer.
 EOF
 }
 
@@ -40,15 +56,24 @@ ensure_labels() {
   fi
 }
 
-_scan_one() {
+# Launches one scan as its own tmux window inside $TMUX_SESSION, creating the session if it
+# doesn't exist yet. Skips it if a window for this scope is already running.
+_dispatch_one() {
   local scope="$1"
+  local window="gap-scout-${scope%/}"
   local prompt
   prompt="$(printf '/gap-scout-runner\n\nScope: %s\n' "$scope")"
-  echo
-  echo "=================================================="
-  echo "gap-scout: $scope"
-  echo "=================================================="
-  claude -p "$prompt" --allowed-tools "$ALLOWED_TOOLS" || true
+
+  if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
+    if tmux list-windows -t "$TMUX_SESSION" -F '#{window_name}' 2>/dev/null | grep -qx "$window"; then
+      echo "aviso: la ventana tmux '$TMUX_SESSION:$window' ya existe (escaneo previo aún corriendo o sin cerrar); lo salto." >&2
+      return 0
+    fi
+    tmux new-window -t "$TMUX_SESSION" -n "$window" claude "$prompt" --allowed-tools "$ALLOWED_TOOLS"
+  else
+    tmux new-session -d -s "$TMUX_SESSION" -n "$window" claude "$prompt" --allowed-tools "$ALLOWED_TOOLS"
+  fi
+  echo "Lanzado: $TMUX_SESSION:$window"
 }
 
 cmd_scan() {
@@ -62,10 +87,11 @@ cmd_scan() {
 
   ensure_labels
   case "$target" in
-    app) _scan_one "app/" ;;
-    api) _scan_one "api/" ;;
-    both) _scan_one "app/"; _scan_one "api/" ;;
+    app) _dispatch_one "app/" ;;
+    api) _dispatch_one "api/" ;;
+    both) _dispatch_one "app/"; _dispatch_one "api/" ;;
   esac
+  echo "Adjunta con: tmux attach -t $TMUX_SESSION"
 }
 
 case "${1:-}" in
