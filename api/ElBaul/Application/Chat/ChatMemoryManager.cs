@@ -1,6 +1,6 @@
 using ElBaul.Application.Bauls;
-using ElBaul.InputPorts.Memories;
-using ElBaul.OutputPorts.Memories;
+using ElBaul.InputPorts.Chat;
+using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using Ne2Studio.Common;
@@ -8,7 +8,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Memories;
+namespace ElBaul.Application.Chat;
 public class ChatMemoryManager(
     ILogger<ChatMemoryManager> logger,
     IChatMemoryRepository chatMemoryRepository,

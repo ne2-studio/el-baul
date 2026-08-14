@@ -38,11 +38,17 @@ public class PhotoManagerTests
     private IPhotoListReadModel CreatePhotoListReadModel() =>
         new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.PhotoPersonaTags);
 
-    private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null, bool baulFeedEnabled = true) =>
-        new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
+    private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null) =>
+        new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(nextId: nextId), _fixture.Clock,
-            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(nextId: nextId), _fixture.Clock,
+            new FakeUnitOfWork());
+
+    private PhotoReadManager CreateReadManager(string currentUserId, ILogger<PhotoReadManager>? logger = null, bool baulFeedEnabled = true) =>
+        new(logger ?? NullLogger<PhotoReadManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            _fixture.PhotoPersonaTags, CreatePhotoDtoProjector(), CreatePhotoFileService(),
+            new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
             new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled));
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
@@ -123,11 +129,10 @@ public class PhotoManagerTests
             .Returns<Task>(_ => throw new InvalidOperationException("storage unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
+            NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoFileService(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage), _fixture.Clock,
-            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
-            new StaticAppConfiguration());
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage), _fixture.Clock,
+            new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -145,11 +150,10 @@ public class PhotoManagerTests
             .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
+            NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
-            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
-            new StaticAppConfiguration());
+            CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
+            new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -170,11 +174,10 @@ public class PhotoManagerTests
             .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
-            NullLogger<PhotoManager>.Instance, failingRepository, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
+            NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            _fixture.PhotoPersonaTags, CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoFileService(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
-            new FakeUnitOfWork(), new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
-            new StaticAppConfiguration());
+            CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
+            new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -220,8 +223,8 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetByChapterIdAsync_ShouldFail_WhenChapterDoesNotExist()
     {
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetByChapterIdAsync(new ChapterId(Guid.NewGuid()));
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetByChapterIdAsync(new ChapterId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error.Message);
@@ -230,11 +233,11 @@ public class PhotoManagerTests
     [Fact]
     public async Task GetByChapterIdAsync_ShouldLogWarning_WhenChapterDoesNotExist()
     {
-        var logger = new CapturingLogger<PhotoManager>();
+        var logger = new CapturingLogger<PhotoReadManager>();
         var chapterId = new ChapterId(Guid.NewGuid());
-        var manager = CreateManager(CustodioId, logger: logger);
+        var readManager = CreateReadManager(CustodioId, logger: logger);
 
-        await manager.GetByChapterIdAsync(chapterId);
+        await readManager.GetByChapterIdAsync(chapterId);
 
         var warning = Assert.Single(logger.Entries, entry => entry.Level == LogLevel.Warning);
         Assert.Equal($"Photos by chapter rejected: chapter not found {chapterId}", warning.Message);
@@ -253,8 +256,8 @@ public class PhotoManagerTests
         await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, new UserId(CustodioId), "uno", _fixture.Clock.UtcNow()));
         await _fixture.Recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), busyPhotoId, chapterId, baulId, new UserId(CustodioId), "dos", _fixture.Clock.UtcNow()));
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetByChapterIdAsync(chapterId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetByChapterIdAsync(chapterId);
 
         Assert.True(result.IsSuccess);
         var dtos = result.Value.ToList();
@@ -306,7 +309,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
         await manager.DeleteAsync(photoId, "Ya no aplica");
 
-        var result = await manager.GetByChapterIdAsync(chapterId);
+        var result = await CreateReadManager(CustodioId).GetByChapterIdAsync(chapterId);
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value);
     }
@@ -409,8 +412,8 @@ public class PhotoManagerTests
         await _fixture.AddPhotoAsync(baulId, chapterId, "in-chapter-key");
         await _fixture.AddPhotoAsync(baulId, storageKey: "loose-key");
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetLooseByBaulIdAsync(baulId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetLooseByBaulIdAsync(baulId);
 
         Assert.True(result.IsSuccess);
         var photo = Assert.Single(result.Value);
@@ -430,8 +433,8 @@ public class PhotoManagerTests
         var undatedPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "undated-key");
         var earlyPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "early-key", earlyDate);
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(
@@ -448,8 +451,8 @@ public class PhotoManagerTests
         var inSourceChapterId = await _fixture.AddPhotoAsync(baulId, sourceChapterId, "source-key");
         await _fixture.AddPhotoAsync(baulId, targetChapterId, "target-key");
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(baulId, sourceChapterId, 0, 10);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetPageAsync(baulId, sourceChapterId, 0, 10);
 
         Assert.True(result.IsSuccess);
         var photo = Assert.Single(result.Value.Items);
@@ -465,8 +468,8 @@ public class PhotoManagerTests
             await _fixture.AddPhotoAsync(baulId, chapterId, $"key-{i}");
         }
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(baulId, null, 0, 2);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetPageAsync(baulId, null, 0, 2);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Items.Count);
@@ -482,8 +485,8 @@ public class PhotoManagerTests
             await _fixture.AddPhotoAsync(baulId, chapterId, $"key-{i}");
         }
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Items.Count);
@@ -496,9 +499,8 @@ public class PhotoManagerTests
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
-        var manager = CreateManager(CustodioId);
-        await manager.DeleteAsync(photoId, "reason");
-        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+        await CreateManager(CustodioId).DeleteAsync(photoId, "reason");
+        var result = await CreateReadManager(CustodioId).GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value.Items);
@@ -508,8 +510,8 @@ public class PhotoManagerTests
     public async Task GetPageAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
-        var manager = CreateManager("stranger");
-        var result = await manager.GetPageAsync(baulId, null, 0, 10);
+        var readManager = CreateReadManager("stranger");
+        var result = await readManager.GetPageAsync(baulId, null, 0, 10);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -521,8 +523,8 @@ public class PhotoManagerTests
         var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
         var (_, otherChapterId) = await _fixture.CreateBaulWithChapterAsync();
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetPageAsync(baulId, otherChapterId, 0, 10);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetPageAsync(baulId, otherChapterId, 0, 10);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Chapter not found", result.Error.Message);
@@ -655,8 +657,8 @@ public class PhotoManagerTests
         await _photoStorage.SaveAsync(storageKey, new MemoryStream([1, 2, 3]), "image/jpeg");
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, storageKey);
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.DownloadAsync(photoId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.DownloadAsync(photoId);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("image/jpeg", result.Value.ContentType);
@@ -669,8 +671,8 @@ public class PhotoManagerTests
     [Fact]
     public async Task DownloadAsync_ShouldFail_WhenPhotoNotFound()
     {
-        var manager = CreateManager(CustodioId);
-        var result = await manager.DownloadAsync(new PhotoId(Guid.NewGuid()));
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.DownloadAsync(new PhotoId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
@@ -704,13 +706,13 @@ public class PhotoManagerTests
         var olderPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "older", PhotoDates.Of(1998, 6, 15));
         var undatedPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "undated");
 
-        var manager = CreateManager(CustodioId);
         var tagManager = CreateTagManager(CustodioId);
         await tagManager.SetTaggedPersonasAsync(newerPhotoId, [personaId]);
         await tagManager.SetTaggedPersonasAsync(olderPhotoId, [personaId]);
         await tagManager.SetTaggedPersonasAsync(undatedPhotoId, [personaId]);
 
-        var result = await manager.GetByPersonaIdAsync(baulId, personaId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetByPersonaIdAsync(baulId, personaId);
 
         Assert.True(result.IsSuccess);
         Assert.Equal([olderPhotoId.ToString(), newerPhotoId.ToString(), undatedPhotoId.ToString()], result.Value.Select(p => p.Id));
@@ -724,11 +726,11 @@ public class PhotoManagerTests
 
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
-        var manager = CreateManager(CustodioId);
         await CreateTagManager(CustodioId).SetTaggedPersonasAsync(photoId, [personaId]);
-        await manager.DeleteAsync(photoId, "duplicada");
+        await CreateManager(CustodioId).DeleteAsync(photoId, "duplicada");
 
-        var result = await manager.GetByPersonaIdAsync(baulId, personaId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetByPersonaIdAsync(baulId, personaId);
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value);
@@ -741,8 +743,8 @@ public class PhotoManagerTests
         var otherBaulId = await _fixture.CreateBaulAsync("Otro", "someone-else");
         var foreignPersonaId = await _fixture.AddPendingPersonaAsync(otherBaulId, "Ajeno");
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetByPersonaIdAsync(baulId, foreignPersonaId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetByPersonaIdAsync(baulId, foreignPersonaId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error.Message);
@@ -752,9 +754,9 @@ public class PhotoManagerTests
     public async Task GetUntaggedSuggestionAsync_ShouldReturnNull_WhenBaulHasNoPhotos()
     {
         var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
-        var manager = CreateManager(CustodioId);
+        var readManager = CreateReadManager(CustodioId);
 
-        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+        var result = await readManager.GetUntaggedSuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value);
@@ -768,8 +770,8 @@ public class PhotoManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
         await _fixture.PhotoPersonaTags.SetTagsAsync(photoId, baulId, [personaId], _fixture.Clock.UtcNow());
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetUntaggedSuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value);
@@ -784,8 +786,8 @@ public class PhotoManagerTests
         await _fixture.PhotoPersonaTags.SetTagsAsync(taggedPhotoId, baulId, [personaId], _fixture.Clock.UtcNow());
         var untaggedPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetUntaggedSuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
@@ -806,11 +808,11 @@ public class PhotoManagerTests
             photoIds.Add(photo.Id);
         }
 
-        var manager = CreateManager(CustodioId);
+        var readManager = CreateReadManager(CustodioId);
         var seen = new HashSet<string>();
         for (var i = 0; i < 30; i++)
         {
-            var result = await manager.GetUntaggedSuggestionAsync(baulId);
+            var result = await readManager.GetUntaggedSuggestionAsync(baulId);
             Assert.True(result.IsSuccess);
             Assert.Contains(result.Value!.Id, photoIds.Select(id => id.ToString()));
             seen.Add(result.Value!.Id);
@@ -827,10 +829,10 @@ public class PhotoManagerTests
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
-        var manager = CreateManager(CustodioId);
-        await manager.DeleteAsync(photoId, "reason");
+        await CreateManager(CustodioId).DeleteAsync(photoId, "reason");
 
-        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetUntaggedSuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value);
@@ -840,9 +842,9 @@ public class PhotoManagerTests
     public async Task GetUntaggedSuggestionAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
-        var manager = CreateManager("stranger");
+        var readManager = CreateReadManager("stranger");
 
-        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+        var result = await readManager.GetUntaggedSuggestionAsync(baulId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -854,11 +856,11 @@ public class PhotoManagerTests
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
-        var manager = CreateManager(CustodioId);
-        var confirmResult = await manager.ConfirmNoPersonasAsync(photoId);
+        var confirmResult = await CreateManager(CustodioId).ConfirmNoPersonasAsync(photoId);
         Assert.True(confirmResult.IsSuccess);
 
-        var result = await manager.GetUntaggedSuggestionAsync(baulId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetUntaggedSuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value);
@@ -868,9 +870,9 @@ public class PhotoManagerTests
     public async Task GetMemorySuggestionAsync_ShouldReturnNull_WhenBaulHasNoPhotos()
     {
         var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
-        var manager = CreateManager(CustodioId);
+        var readManager = CreateReadManager(CustodioId);
 
-        var result = await manager.GetMemorySuggestionAsync(baulId);
+        var result = await readManager.GetMemorySuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value);
@@ -885,8 +887,8 @@ public class PhotoManagerTests
             new Recuerdo(new RecuerdoId(Guid.NewGuid()), withMemoryId, chapterId, baulId, new UserId(CustodioId), "ya escrito", _fixture.Clock.UtcNow()));
         var withoutMemoryId = await _fixture.AddPhotoAsync(baulId, chapterId);
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetMemorySuggestionAsync(baulId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetMemorySuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
@@ -898,10 +900,10 @@ public class PhotoManagerTests
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId);
-        var manager = CreateManager(CustodioId);
-        await manager.DeleteAsync(photoId, "reason");
+        await CreateManager(CustodioId).DeleteAsync(photoId, "reason");
 
-        var result = await manager.GetMemorySuggestionAsync(baulId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetMemorySuggestionAsync(baulId);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value);
@@ -911,9 +913,9 @@ public class PhotoManagerTests
     public async Task GetMemorySuggestionAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
     {
         var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
-        var manager = CreateManager("stranger");
+        var readManager = CreateReadManager("stranger");
 
-        var result = await manager.GetMemorySuggestionAsync(baulId);
+        var result = await readManager.GetMemorySuggestionAsync(baulId);
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -951,8 +953,8 @@ public class PhotoManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadBatchId: batchId);
         await _fixture.AddPhotoAsync(baulId, chapterId, uploadBatchId: otherBatchId);
 
-        var manager = CreateManager(CustodioId);
-        var result = await manager.GetBatchPhotosAsync(baulId, batchId);
+        var readManager = CreateReadManager(CustodioId);
+        var result = await readManager.GetBatchPhotosAsync(baulId, batchId);
 
         Assert.True(result.IsSuccess);
         var photo = Assert.Single(result.Value);
@@ -963,9 +965,9 @@ public class PhotoManagerTests
     public async Task GetBatchPhotosAsync_ShouldFail_WhenBatchDoesNotExist()
     {
         var baulId = await _fixture.CreateBaulAsync();
-        var manager = CreateManager(CustodioId);
+        var readManager = CreateReadManager(CustodioId);
 
-        var result = await manager.GetBatchPhotosAsync(baulId, Guid.NewGuid());
+        var result = await readManager.GetBatchPhotosAsync(baulId, Guid.NewGuid());
 
         Assert.True(result.IsFailure);
     }

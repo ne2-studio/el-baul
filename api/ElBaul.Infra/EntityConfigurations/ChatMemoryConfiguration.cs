@@ -1,5 +1,5 @@
 using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Memories;
+using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

@@ -1,7 +1,7 @@
 using ElBaul.Application.Chat;
 using ElBaul.OutputPorts.Bauls;
 using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Memories;
+using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Personas;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Recuerdos;

@@ -1,6 +1,5 @@
-using ElBaul.InputPorts.Memories;
+using ElBaul.InputPorts.Chat;
 using ElBaul.OutputPorts.Chat;
-using ElBaul.OutputPorts.Memories;
 using ElBaul.OutputPorts.Shared;
 using Microsoft.Extensions.Logging;
 

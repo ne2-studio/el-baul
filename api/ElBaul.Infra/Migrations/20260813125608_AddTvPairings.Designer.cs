@@ -194,7 +194,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("BaulFeedCursors", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemory", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemory", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -229,7 +229,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("ChatMemories", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemoryEmbedding", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemoryEmbedding", b =>
                 {
                     b.Property<Guid>("ChatMemoryId")
                         .HasColumnType("uuid");
@@ -952,7 +952,7 @@ namespace ElBaul.Infra.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemory", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemory", b =>
                 {
                     b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
                         .WithMany()
@@ -967,11 +967,11 @@ namespace ElBaul.Infra.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Memories.ChatMemoryEmbedding", b =>
+            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemoryEmbedding", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Memories.ChatMemory", null)
+                    b.HasOne("ElBaul.OutputPorts.Chat.ChatMemory", null)
                         .WithOne()
-                        .HasForeignKey("ElBaul.OutputPorts.Memories.ChatMemoryEmbedding", "ChatMemoryId")
+                        .HasForeignKey("ElBaul.OutputPorts.Chat.ChatMemoryEmbedding", "ChatMemoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

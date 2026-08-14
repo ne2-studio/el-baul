@@ -3,12 +3,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ElBaul.Infra.Chat;
-using ElBaul.OutputPorts.Memories;
+using ElBaul.OutputPorts.Chat;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ElBaul.Infra.Memories;
+namespace ElBaul.Infra.Chat;
 
 // Same OpenAI chat-completions endpoint as OpenAiChatBackend, but constrained with
 // response_format: json_schema (OpenAI's "structured outputs") instead of a free-text reply —

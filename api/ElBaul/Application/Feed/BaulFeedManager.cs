@@ -18,7 +18,7 @@ namespace ElBaul.Application.Feed;
 // batches and IChapterRepository's chapters into one newest-first feed. Deliberately thin: it
 // reuses RecuerdoManager's own GetRecuerdosAsync(BaulId) rather than duplicating its
 // authorization/DTO-shaping logic. A batch's own photos are fetched separately, via
-// IPhotoManager.GetBatchPhotosAsync.
+// IPhotoReadManager.GetBatchPhotosAsync.
 public class BaulFeedManager(
     ILogger<BaulFeedManager> logger,
     IRecuerdoManager recuerdoManager,

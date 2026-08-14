@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using ElBaul.Application.Chat;
-using ElBaul.Application.Memories;
-using ElBaul.InputPorts.Memories;
+using ElBaul.InputPorts.Chat;
 using ElBaul.Infra;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

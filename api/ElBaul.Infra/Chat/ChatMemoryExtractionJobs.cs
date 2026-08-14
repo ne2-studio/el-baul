@@ -1,8 +1,8 @@
-using ElBaul.InputPorts.Memories;
+using ElBaul.InputPorts.Chat;
 using Serilog.Context;
 
 using ElBaul.Domain;
-namespace ElBaul.Infra.Memories;
+namespace ElBaul.Infra.Chat;
 
 /// <summary>
 /// The actual Hangfire-invoked entry point for memory extraction — HangfireBackgroundJobScheduler

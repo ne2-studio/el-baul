@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Memories;
+namespace ElBaul.OutputPorts.Chat;
 public interface IChatMemoryRepository
 {
     Task<IEnumerable<ChatMemory>> GetByBaulAndUserAsync(BaulId baulId, UserId userId);

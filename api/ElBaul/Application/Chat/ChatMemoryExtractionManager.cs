@@ -1,6 +1,6 @@
 using ElBaul.Application.Chat;
-using ElBaul.InputPorts.Memories;
-using ElBaul.OutputPorts.Memories;
+using ElBaul.InputPorts.Chat;
+using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using Ne2Studio.Common;
@@ -8,7 +8,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Memories;
+namespace ElBaul.Application.Chat;
 // Runs entirely off the critical path — see IBackgroundJobScheduler.EnqueueChatMemoryExtraction
 // and ChatManager.SendMessageAsync, which enqueues this after replying instead of awaiting it.
 // Every failure here (extraction, embedding, persistence) is logged and swallowed at the

@@ -1,6 +1,6 @@
 using ElBaul.Application.Chat;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Memories;
+using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;

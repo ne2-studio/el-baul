@@ -18,7 +18,7 @@ namespace ElBaul.Api.Controllers;
 [Route("api/baules")]
 public class BaulesController(
     IBaulManager baulManager, IPersonaManager personaManager, IRemovalRequestManager removalRequestManager,
-    IPhotoManager photoManager, IRecuerdoManager recuerdoManager, IBaulInviteLinkManager baulInviteLinkManager,
+    IPhotoReadManager photoReadManager, IRecuerdoManager recuerdoManager, IBaulInviteLinkManager baulInviteLinkManager,
     IBaulFeedManager baulFeedManager)
     : ControllerBase
 {
@@ -183,7 +183,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPersonaPhotos(BaulId baulId, PersonaId personaId)
     {
-        var result = await photoManager.GetByPersonaIdAsync(baulId, personaId);
+        var result = await photoReadManager.GetByPersonaIdAsync(baulId, personaId);
         return result.ToActionResult();
     }
 
@@ -253,7 +253,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPhotoBatchPhotos(BaulId baulId, Guid batchId)
     {
-        var result = await photoManager.GetBatchPhotosAsync(baulId, batchId);
+        var result = await photoReadManager.GetBatchPhotosAsync(baulId, batchId);
         return result.ToActionResult();
     }
 }

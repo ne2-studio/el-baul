@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Memories;
+namespace ElBaul.OutputPorts.Chat;
 // Private, per-user chat memory — durable facts the chat has learned from a user's own
 // messages within a single baúl, distinct from Recuerdo (baúl content, visible to the whole
 // family). Never surfaced anywhere except that user's own "Gestionar memoria" screen and, as

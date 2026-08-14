@@ -15,14 +15,14 @@ namespace ElBaul.Api.Controllers;
 [ApiController]
 [Route("api")]
 public class PhotosController(
-    IPhotoManager photoManager, IRecuerdoManager recuerdoManager, IPhotoPersonaTagManager photoPersonaTagManager)
+    IPhotoManager photoManager, IPhotoReadManager photoReadManager, IRecuerdoManager recuerdoManager, IPhotoPersonaTagManager photoPersonaTagManager)
     : ControllerBase
 {
     [HttpGet("chapters/{chapterId:guid}/photos")]
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByChapter(ChapterId chapterId)
     {
-        var result = await photoManager.GetByChapterIdAsync(chapterId);
+        var result = await photoReadManager.GetByChapterIdAsync(chapterId);
         return result.ToActionResult();
     }
 
@@ -101,7 +101,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(PhotoPageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPage(BaulId baulId, [FromQuery] ChapterId? chapterId, [FromQuery] int skip = 0, [FromQuery] int take = 60)
     {
-        var result = await photoManager.GetPageAsync(baulId, chapterId, skip, take);
+        var result = await photoReadManager.GetPageAsync(baulId, chapterId, skip, take);
         return result.ToActionResult();
     }
 
@@ -109,7 +109,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLoose(BaulId baulId)
     {
-        var result = await photoManager.GetLooseByBaulIdAsync(baulId);
+        var result = await photoReadManager.GetLooseByBaulIdAsync(baulId);
         return result.ToActionResult();
     }
 
@@ -117,7 +117,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUntaggedSuggestion(BaulId baulId)
     {
-        var result = await photoManager.GetUntaggedSuggestionAsync(baulId);
+        var result = await photoReadManager.GetUntaggedSuggestionAsync(baulId);
         return result.ToActionResult();
     }
 
@@ -125,7 +125,7 @@ public class PhotosController(
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMemorySuggestion(BaulId baulId)
     {
-        var result = await photoManager.GetMemorySuggestionAsync(baulId);
+        var result = await photoReadManager.GetMemorySuggestionAsync(baulId);
         return result.ToActionResult();
     }
 
@@ -175,7 +175,7 @@ public class PhotosController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Download(PhotoId photoId)
     {
-        var result = await photoManager.DownloadAsync(photoId);
+        var result = await photoReadManager.DownloadAsync(photoId);
         if (result.IsFailure) return ErrorMapping.ToActionResult(result.Error);
 
         var download = result.Value;

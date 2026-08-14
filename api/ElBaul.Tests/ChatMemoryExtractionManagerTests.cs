@@ -1,7 +1,6 @@
 using ElBaul.Application.Chat;
-using ElBaul.Application.Memories;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Memories;
+using ElBaul.OutputPorts.Chat;
 using ElBaul.OutputPorts.Recuerdos;
 using ElBaul.OutputPorts.Shared;
 using Ne2Studio.Common;

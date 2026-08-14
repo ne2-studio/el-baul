@@ -4,10 +4,6 @@ using Ne2Studio.Common;
 namespace ElBaul.InputPorts.Photos;
 public interface IPhotoManager
 {
-    Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId);
-    Task<Result<IEnumerable<PhotoDto>>> GetLooseByBaulIdAsync(BaulId baulId);
-    Task<Result<PhotoPageDto>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take);
-
     Task<Result<PhotoDto>> UploadAsync(
         ChapterId chapterId,
         Stream content,
@@ -37,27 +33,8 @@ public interface IPhotoManager
     /// when the family realizes the date they had wasn't right, without knowing a replacement.</summary>
     Task<Result<PhotoDto>> ClearDateAsync(PhotoId photoId);
 
-    Task<Result<PhotoDownloadResult>> DownloadAsync(PhotoId photoId);
-
-    Task<Result<IEnumerable<PhotoDto>>> GetByPersonaIdAsync(BaulId baulId, PersonaId personaId);
-
-    /// <summary>The photo behind the "help us tag this photo" contribution suggestion shown on
-    /// entering a baúl's feed — a random active photo with no persona tagged yet and not
-    /// confirmed as having nobody in it, or a successful null result once none remain.</summary>
-    Task<Result<PhotoDto?>> GetUntaggedSuggestionAsync(BaulId baulId);
-
-    /// <summary>The photo behind the "write a memory" contribution suggestion, the alternative
-    /// to GetUntaggedSuggestionAsync shown on entering a baúl's feed — a random active photo
-    /// with no recuerdo written yet, or a successful null result once none remain.</summary>
-    Task<Result<PhotoDto?>> GetMemorySuggestionAsync(BaulId baulId);
-
     /// <summary>Confirms nobody appears in this photo, so it stops being proposed by the
     /// contribution suggestion even though it never received a PhotoPersonaTag. Reversed
     /// automatically the moment the photo actually gets tagged.</summary>
     Task<Result<PhotoDto>> ConfirmNoPersonasAsync(PhotoId photoId);
-
-    /// <summary>Every active photo in one upload batch, chronologically ascending — backs the
-    /// batch's own grid/gallery reached from a feed card. Fails with a Validation error while
-    /// Features:BaulFeedEnabled is off — see IAppConfiguration.BaulFeedEnabled.</summary>
-    Task<Result<IEnumerable<PhotoDto>>> GetBatchPhotosAsync(BaulId baulId, Guid batchId);
 }

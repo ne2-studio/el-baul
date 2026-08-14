@@ -1,6 +1,6 @@
 using Ne2Studio.Common;
 
-namespace ElBaul.OutputPorts.Memories;
+namespace ElBaul.OutputPorts.Chat;
 
 /// <summary>An existing memory offered to the extractor as dedup/update context — see
 /// ChatMemoryExtractionManager, which fetches these via RelevantChatMemorySelector before
