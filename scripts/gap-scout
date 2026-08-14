@@ -12,7 +12,7 @@ usage() {
 Usage: ./scripts/gap-scout <command>
 
 Commands:
-  scan <app|api|both> [--yolo]
+  scan <app|api|admin|all> [--yolo]
                         Dispatch the architecture-gap-scout skill over the
                           given scope(s), one `claude` session per scope,
                           each in its own window inside the "backlog" tmux
@@ -98,13 +98,14 @@ cmd_scan() {
   case "${2:-}" in
     --yolo) yolo=1 ;;
     "") ;;
-    *) echo "Uso: ./scripts/gap-scout scan <app|api|both> [--yolo]" >&2; exit 1 ;;
+    *) echo "Uso: ./scripts/gap-scout scan <app|api|admin|all> [--yolo]" >&2; exit 1 ;;
   esac
   case "$target" in
     app) ;;
     api) ;;
-    both) ;;
-    *) echo "Uso: ./scripts/gap-scout scan <app|api|both> [--yolo]" >&2; exit 1 ;;
+    admin) ;;
+    all) ;;
+    *) echo "Uso: ./scripts/gap-scout scan <app|api|admin|all> [--yolo]" >&2; exit 1 ;;
   esac
 
   local claude_flags=()
@@ -118,7 +119,12 @@ cmd_scan() {
   case "$target" in
     app) _dispatch_one "app/" "${claude_flags[@]}" ;;
     api) _dispatch_one "api/" "${claude_flags[@]}" ;;
-    both) _dispatch_one "app/" "${claude_flags[@]}"; _dispatch_one "api/" "${claude_flags[@]}" ;;
+    admin) _dispatch_one "admin/" "${claude_flags[@]}" ;;
+    all)
+      _dispatch_one "app/" "${claude_flags[@]}"
+      _dispatch_one "api/" "${claude_flags[@]}"
+      _dispatch_one "admin/" "${claude_flags[@]}"
+      ;;
   esac
   echo "Adjunta con: tmux attach -t $TMUX_SESSION"
 }

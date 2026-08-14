@@ -1,6 +1,6 @@
 # Scheduling gap-scout on the VPS
 
-`./scripts/gap-scout scan <app|api|both>` dispatches one `claude` session per scope into its
+`./scripts/gap-scout scan <app|api|admin|all>` dispatches one `claude` session per scope into its
 own window inside the `backlog` tmux session (the same one `./scripts/backlog run` uses),
 creating that session if it doesn't exist yet, and returns immediately — it doesn't wait for
 the session(s) to finish. That makes it safe and cheap to call from a systemd timer. A
@@ -13,7 +13,7 @@ attach and answer it, same as any other prompt from `./scripts/backlog`'s worker
 this fairly often: the scout runs a lot of ad-hoc shell pipelines (churn analysis, grep/sed
 chains) that a narrow allow-list can't realistically cover.
 
-`scan <app|api|both> --yolo` runs `claude --dangerously-skip-permissions` instead — no
+`scan <app|api|admin|all> --yolo` runs `claude --dangerously-skip-permissions` instead — no
 prompts at all, so nothing ever needs answering or gets forwarded to your phone. That's what
 makes it safe to leave running unattended from a timer while still landing in tmux for you
 to check on later. Reasonable specifically for this skill (unlike `work-ticket`'s `--yolo`,
@@ -35,7 +35,7 @@ After=network-online.target
 Type=oneshot
 User=<user>
 WorkingDirectory=/path/to/el-baul
-ExecStart=/path/to/el-baul/scripts/gap-scout scan both --yolo
+ExecStart=/path/to/el-baul/scripts/gap-scout scan all --yolo
 # needed if claude/gh/tmux aren't on systemd's default PATH:
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:/home/<user>/.local/bin
 # without this, systemd's default KillMode=control-group kills everything left in this
