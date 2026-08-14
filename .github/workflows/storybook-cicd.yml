@@ -21,7 +21,7 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-storybook
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -66,6 +66,16 @@ jobs:
           sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: storybook-production
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Deploy Storybook
         uses: ./.github/actions/deploy-coolify

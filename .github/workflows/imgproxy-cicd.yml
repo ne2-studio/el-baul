@@ -20,7 +20,7 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-imgproxy
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -47,6 +47,16 @@ jobs:
           sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: imgproxy-production
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Deploy imgproxy
         uses: ./.github/actions/deploy-coolify

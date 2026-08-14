@@ -31,7 +31,7 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-app
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -112,12 +112,6 @@ jobs:
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy frontend
-        uses: ./.github/actions/deploy-coolify
-        with:
-          webhook: ${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}
-          token: ${{ secrets.COOLIFY_API_TOKEN }}
-
       - name: Release frontend dist
         working-directory: app
         run: |
@@ -130,3 +124,19 @@ jobs:
         run: npm run sentry:upload-sourcemaps
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: frontend-production
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy frontend
+        uses: ./.github/actions/deploy-coolify
+        with:
+          webhook: ${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}
+          token: ${{ secrets.COOLIFY_API_TOKEN }}

@@ -21,7 +21,7 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-api
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -78,6 +78,16 @@ jobs:
           sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: backend-production
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Deploy backend
         uses: ./.github/actions/deploy-coolify
