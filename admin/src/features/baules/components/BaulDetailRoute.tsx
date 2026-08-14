@@ -116,12 +116,21 @@ export function BaulDetailRoute() {
             />
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             <StatCard label="Fotos" value={selectedBaul.stats.photos} icon={Image} />
             <StatCard label="Recuerdos" value={selectedBaul.stats.recuerdos} icon={MessageSquare} />
             <StatCard label="Personas" value={selectedBaul.stats.personas} icon={Users} />
             <StatCard label="Capítulos" value={selectedBaul.stats.chapters} icon={BookOpen} />
             <StatCard label="Tamaño" value={formatBytes(selectedBaul.stats.totalSizeBytes)} icon={HardDrive} />
+            <StatCard
+              label="Tamaño medio/foto"
+              value={
+                selectedBaul.stats.photos > 0
+                  ? formatBytes(selectedBaul.stats.totalSizeBytes / selectedBaul.stats.photos)
+                  : formatBytes(0)
+              }
+              icon={HardDrive}
+            />
           </div>
 
           <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
