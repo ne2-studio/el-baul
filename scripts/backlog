@@ -20,13 +20,20 @@ Commands:
   list               List queued/done/failed tickets (GitHub issues).
   requeue <number>   Move a failed/blocked issue back into the queue.
   run [--yolo]       Start the orchestrator (tmux session with a worker pane
-                      and a watcher pane) and attach to it. Safe to detach
-                      (Ctrl-b d) and reattach later with:
+                      and a watcher pane) and attach to it. The worker polls
+                      the queue every 30s (BACKLOG_POLL_INTERVAL to override)
+                      and keeps running, picking up new issues as they're
+                      labeled "backlog" — no need to restart it per ticket.
+                      Safe to detach (Ctrl-b d) and reattach later with:
                         tmux attach -t backlog
                       --yolo runs claude with --dangerously-skip-permissions:
                       no prompts at all, including git commit/push. Only use it
                       when you're comfortable leaving it fully unattended.
   stop               Kill the orchestrator tmux session.
+
+The worker stops polling (leaving the tmux session up) if a ticket ends
+without a clear done/blocked signal — that needs a human look before
+resuming; requeue/fix the issue and `./scripts/backlog stop && run` again.
 
 Tickets live as GitHub issues on this repo, not on the local filesystem:
   queued   open issue,   label "backlog"
@@ -91,20 +98,37 @@ cmd_requeue() {
   echo "Reencolado: #$n"
 }
 
-# Runs inside the worker tmux pane. Processes the queue sequentially.
+POLL_INTERVAL="${BACKLOG_POLL_INTERVAL:-30}"
+
+# Runs inside the worker tmux pane. Polls the queue forever, processing
+# issues as they appear.
 _worker() {
   local yolo=0
   [[ "${1:-}" == "--yolo" ]] && yolo=1
 
   ensure_dirs
+  local claude_flags=()
+  (( yolo )) && claude_flags+=(--dangerously-skip-permissions)
+
+  echo "Escuchando issues con label '$QUEUE_LABEL' (cada ${POLL_INTERVAL}s). Ctrl-C o './scripts/backlog stop' para parar."
+  while true; do
+    if ! _process_queue "${claude_flags[@]}"; then
+      echo "Worker detenido (revisión manual necesaria antes de reanudar)."
+      return 1
+    fi
+    sleep "$POLL_INTERVAL"
+  done
+}
+
+# Processes every currently queued issue once. Returns 1 if it hit a
+# condition that needs human review before polling should resume.
+_process_queue() {
+  local claude_flags=("$@")
   local issues
   issues="$(gh issue list --label "$QUEUE_LABEL" --state open --json number --jq '.[].number' | sort -n)"
   if [[ -z "$issues" ]]; then
-    echo "Backlog vacío."
     return 0
   fi
-  local claude_flags=()
-  (( yolo )) && claude_flags+=(--dangerously-skip-permissions)
 
   local n title body url seen=0 total=0
   total="$(wc -l <<<"$issues")"
@@ -147,17 +171,18 @@ _worker() {
           ;;
         *)
           echo "-> señal desconocida ('$status'), dejo #$n en cola para revisión manual."
-          break
+          return 1
           ;;
       esac
       rm -f "$SIGNAL_FILE"
     else
       echo "-> la sesión terminó sin señal (salida manual/crash). Dejo #$n en cola y paro."
-      break
+      return 1
     fi
   done <<<"$issues"
   echo
-  echo "Cola procesada. Vistos: $seen/$total tickets."
+  echo "Pasada de cola completada. Vistos: $seen/$total tickets."
+  return 0
 }
 
 # Runs inside the watcher tmux pane. Injects /exit into the worker pane once
