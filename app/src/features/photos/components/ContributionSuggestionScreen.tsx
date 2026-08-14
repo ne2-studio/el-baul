@@ -4,6 +4,7 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
 import { PersonaSelectionList } from '@/features/photos/components/PersonaSelectionList';
 import { useElementHeight } from '@/hooks/useElementHeight';
+import { photoStageHeight, usePhotoAspectRatio } from '@/hooks/usePhotoAspectRatio';
 import { Persona, Photo } from '@/types';
 
 interface ContributionSuggestionScreenProps {
@@ -29,10 +30,18 @@ interface ContributionSuggestionScreenProps {
 // `sticky` con un offset MEDIDO (useElementHeight), no un valor fijo, porque WKWebView (iOS) y
 // Chrome WebView (Android) renderizan la misma cabecera a alturas ligeramente distintas. Así,
 // al hacer scroll, lo único que se mueve por debajo es la lista de personas — la foto candidata
-// queda siempre visible mientras se decide a quién etiquetar. Alto de la foto fijo (~mitad de
-// pantalla) vía PhotoStage, el mismo componente del visor de fotos de la galería, para tener
-// los mismos gestos de zoom (pellizco y doble toque); sin hasPrevious/hasNext porque aquí no
-// hay carrusel, solo la única foto candidata.
+// queda siempre visible mientras se decide a quién etiquetar. Alto de la foto vía PhotoStage,
+// el mismo componente del visor de fotos de la galería, para tener los mismos gestos de zoom
+// (pellizco y doble toque); sin hasPrevious/hasNext porque aquí no hay carrusel, solo la única
+// foto candidata.
+//
+// El alto NO es fijo: se deriva del aspect ratio real de la foto (usePhotoAspectRatio,
+// photoStageHeight) para que una foto landscape ocupe solo lo que necesita en vez de dejar
+// franjas negras arriba y abajo (PhotoStage pinta con object-contain) mientras le roba media
+// pantalla a la lista de personas de debajo. clamp() lo acota entre PHOTO_STAGE_MIN_HEIGHT_DVH
+// (para que una foto muy panorámica no quede ridículamente baja) y PHOTO_STAGE_MAX_HEIGHT_DVH
+// (más bajo que el 50dvh original, a propósito, para dejar más aire a los radio buttons de la
+// lista incluso con fotos portrait).
 export function ContributionSuggestionScreen({
   photo,
   personas,
@@ -44,6 +53,7 @@ export function ContributionSuggestionScreen({
   isSubmitting = false,
 }: ContributionSuggestionScreenProps) {
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
+  const aspectRatio = usePhotoAspectRatio(photo.fullUrl);
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,7 +76,11 @@ export function ContributionSuggestionScreen({
       {/* z-[9]: justo debajo del z-10 de PageHeader, igual que la franja de pestañas de
           Tabbar — sin esto, la lista de personas (después en el DOM) pintaría por encima de
           la foto al pasar por debajo mientras hace scroll. */}
-      <div className="sticky z-[9] flex h-[50dvh] overflow-hidden bg-foreground/95" style={{ top: headerHeight }}>
+      <div
+        data-testid="photo-stage-panel"
+        className="sticky z-[9] flex overflow-hidden bg-foreground/95"
+        style={{ top: headerHeight, height: photoStageHeight(aspectRatio) }}
+      >
         <PhotoStage
           photoKey={photo.id}
           src={photo.fullUrl}

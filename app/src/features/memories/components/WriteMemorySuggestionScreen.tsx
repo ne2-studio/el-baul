@@ -4,6 +4,7 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
 import { RecuerdoInput } from '@/features/memories/components/RecuerdoInput';
 import { useElementHeight } from '@/hooks/useElementHeight';
+import { photoStageHeight, usePhotoAspectRatio } from '@/hooks/usePhotoAspectRatio';
 import { Photo } from '@/types';
 
 interface WriteMemorySuggestionScreenProps {
@@ -23,6 +24,7 @@ interface WriteMemorySuggestionScreenProps {
 // segundo botón "Guardar" aparte — enviar el textarea es guardar.
 export function WriteMemorySuggestionScreen({ photo, onSkip, onSave, isSubmitting = false }: WriteMemorySuggestionScreenProps) {
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
+  const aspectRatio = usePhotoAspectRatio(photo.fullUrl);
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,7 +45,11 @@ export function WriteMemorySuggestionScreen({ photo, onSkip, onSave, isSubmittin
       />
 
       {/* z-[9]: ver mismo comentario en ContributionSuggestionScreen. */}
-      <div className="sticky z-[9] flex h-[50dvh] overflow-hidden bg-foreground/95" style={{ top: headerHeight }}>
+      <div
+        data-testid="photo-stage-panel"
+        className="sticky z-[9] flex overflow-hidden bg-foreground/95"
+        style={{ top: headerHeight, height: photoStageHeight(aspectRatio) }}
+      >
         <PhotoStage
           photoKey={photo.id}
           src={photo.fullUrl}

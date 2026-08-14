@@ -5,6 +5,8 @@ export const storybookPhotos = {
   sunset: '/storybook-fixtures/photo-4.svg',
   people: '/storybook-fixtures/photo-5.svg',
   landscape: '/storybook-fixtures/photo-6.svg',
+  /** Portrait aspect ratio (800×1200) — the rest of the fixtures are all 1200×800 landscape. */
+  portrait: '/storybook-fixtures/photo-portrait.svg',
 } as const;
 
 export const storybookAvatars = {
