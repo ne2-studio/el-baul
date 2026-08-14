@@ -1,0 +1,9 @@
+# Vulnerabilities in ghcr.io/imgproxy/imgproxy:latest's Go stdlib (net/idna, net/dns/dnsmessage)
+# that are already fixed upstream in Go, but imgproxy hasn't rebuilt its image against a patched
+# Go yet — nothing to fix on our side, we don't build this binary. Attacker control over the
+# hostnames these packages parse is limited: every processing URL is server-side HMAC-signed
+# (see Dockerfile), so exploiting this needs the signing key, at which point this isn't the way
+# in. Remove these once ghcr.io/imgproxy/imgproxy:latest rebuilds with a patched Go — re-check
+# by dropping this file and re-running the pipeline.
+CVE-2026-39821
+CVE-2026-46600

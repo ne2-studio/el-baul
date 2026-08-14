@@ -5,6 +5,12 @@ inputs:
   image:
     description: Image tag to scan (must already be loaded in the local Docker daemon).
     required: true
+  trivyignores:
+    description: >-
+      Path to a .trivyignore file for CVEs accepted as known/tracked (e.g. an upstream base
+      image issue outside our control). Leave empty for none.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -16,3 +22,4 @@ runs:
         severity: HIGH,CRITICAL
         ignore-unfixed: true
         exit-code: "1"
+        trivyignores: ${{ inputs.trivyignores }}

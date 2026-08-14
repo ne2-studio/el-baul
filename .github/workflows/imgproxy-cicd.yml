@@ -37,6 +37,7 @@ jobs:
         uses: ./.github/actions/scan-image
         with:
           image: ${{ env.IMAGE_NAME }}:latest
+          trivyignores: imgproxy/.trivyignore
 
       - name: Release imgproxy image
         uses: ./.github/actions/release-ghcr-image
