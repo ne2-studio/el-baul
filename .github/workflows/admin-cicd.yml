@@ -129,4 +129,3 @@ jobs:
         with:
           webhook: ${{ secrets.COOLIFY_WEBHOOK_ADMIN }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}
-          health-url: ${{ vars.ADMIN_HEALTH_URL }}

@@ -94,4 +94,3 @@ jobs:
         with:
           webhook: ${{ secrets.COOLIFY_WEBHOOK_BACKEND }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}
-          health-url: ${{ vars.BACKEND_HEALTH_URL }}

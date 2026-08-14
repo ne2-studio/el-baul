@@ -63,4 +63,3 @@ jobs:
         with:
           webhook: ${{ secrets.COOLIFY_WEBHOOK_IMGPROXY }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}
-          health-url: ${{ vars.IMGPROXY_HEALTH_URL }}

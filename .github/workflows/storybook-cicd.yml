@@ -82,4 +82,3 @@ jobs:
         with:
           webhook: ${{ secrets.COOLIFY_WEBHOOK_STORYBOOK }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}
-          health-url: ${{ vars.STORYBOOK_HEALTH_URL }}
