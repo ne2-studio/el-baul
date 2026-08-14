@@ -7,7 +7,8 @@ import { AsyncState } from '@/app/components/AsyncState';
 
 function formatEmailOpenRate(sent: number, opened: number): string {
   if (sent === 0) return '—';
-  return `${Math.round((opened / sent) * 100)}% (${opened}/${sent})`;
+  const rate = Math.round((opened / sent) * 1000) / 10;
+  return `${rate}% (${opened}/${sent})`;
 }
 
 export function DashboardRoute() {
