@@ -13,37 +13,44 @@ Usage: ./scripts/gap-scout <command>
 
 Commands:
   scan <app|api|both> [--yolo]
-                        Dispatch the architecture-gap-scout skill over the
-                          given scope(s), one interactive `claude` session
+                        Run the architecture-gap-scout skill over the given
+                          scope(s). Each session dedupes against already-
+                          filed initiatives and files new ones as GitHub
+                          issues (label "gap-scout"). Read-only over the
+                          code; only creates GitHub issues (and, once, the
+                          "gap-scout" label).
+
+                          Without --yolo: one interactive `claude` session
                           per scope, each in its own window inside the
                           "backlog" tmux session (creating it if needed) —
-                          same session ./scripts/backlog run uses. Returns as
-                          soon as the session(s) are launched; doesn't wait
-                          for them to finish.
-                          Each session dedupes against already-filed
-                          initiatives and files new ones as GitHub issues
-                          (label "gap-scout"). Read-only over the code; only
-                          creates GitHub issues (and, once, the "gap-scout"
-                          label).
+                          same session ./scripts/backlog run uses. Returns
+                          as soon as the session(s) are launched, doesn't
+                          wait for them to finish. A command outside the
+                          narrow allow-list (only gh issue/label) pauses for
+                          approval in its tmux window instead of hanging
+                          with no one able to answer — attach with
+                          `tmux attach -t backlog` to answer it. Expect this
+                          fairly often: the inspection runs a lot of ad-hoc
+                          shell pipelines (churn analysis, grep/sed chains)
+                          a narrow allow-list can't realistically cover.
                           If a scan is already running (its window still
-                          exists), that scope is skipped instead of starting
-                          a second overlapping session.
+                          exists), that scope is skipped instead of
+                          starting a second overlapping session.
 
-Runs interactively, not headless: without --yolo, a command outside the
-narrow allow-list (only `gh issue`/`gh label`) pauses for approval in its
-tmux window instead of hanging with no one able to answer — attach with
-`tmux attach -t backlog` (or forward it to your phone with Remote Control) to
-answer it. The inspection does a lot of ad-hoc shell pipelines (churn
-analysis, grep/sed chains), so expect this fairly often.
-
---yolo runs claude with --dangerously-skip-permissions instead: no prompts
-at all. Reasonable here specifically because gap-scout-runner never touches
-git or edits code (unlike work-ticket's --yolo, which also skips the
-commit/push approval) — the remaining exposure is unrestricted shell access
-to a read-only inspection, not a write path. Still means no technical
-safety net if something in the repo's content tried to steer the agent; use
-it once you're comfortable leaving a scan fully unattended (e.g. from the
-systemd timer).
+                          With --yolo: runs headless (`claude -p`) with
+                          --dangerously-skip-permissions, one scope after
+                          another, blocking until each is done — no tmux, no
+                          prompts, nothing forwarded to your phone. No
+                          permission prompt can ever hang since none get
+                          asked. Reasonable specifically for this skill
+                          (unlike work-ticket's --yolo, which also skips the
+                          commit/push approval): gap-scout-runner never
+                          touches git or edits code, so the only thing being
+                          unblocked is shell access to a read-only
+                          inspection, not a write path. Still no technical
+                          safety net if something in the repo's content
+                          tried to steer the agent. This is the mode meant
+                          for the systemd timer.
 
 Filed issues are not queued for execution by themselves. Review one, and if
 you want it done, add the "backlog" label — that hands it to
@@ -51,8 +58,8 @@ you want it done, add the "backlog" label — that hands it to
 unlabeled (or closing it) means "not now"; it won't be re-filed verbatim on
 the next scan.
 
-Requires `gh` and `tmux`. See docs/backlog/gap-scout.md for how to schedule
-this with a systemd timer.
+Requires `gh`, and `tmux` unless --yolo. See docs/backlog/gap-scout.md for
+how to schedule this with a systemd timer.
 EOF
 }
 
@@ -66,23 +73,38 @@ ensure_labels() {
   fi
 }
 
-# Launches one scan as its own tmux window inside $TMUX_SESSION, creating the session if it
-# doesn't exist yet. Skips it if a window for this scope is already running.
+_prompt_for() {
+  printf '/gap-scout-runner\n\nScope: %s\n' "$1"
+}
+
+# --yolo path: headless, blocking, one scope at a time. No prompt can ever hang since
+# --dangerously-skip-permissions means none get asked.
+_scan_one_yolo() {
+  local scope="$1"
+  echo
+  echo "=================================================="
+  echo "gap-scout: $scope (--yolo)"
+  echo "=================================================="
+  claude -p "$(_prompt_for "$scope")" --dangerously-skip-permissions || true
+}
+
+# Default path: dispatches one interactive session as its own tmux window inside
+# $TMUX_SESSION, creating the session if it doesn't exist yet. Skips it if a window for
+# this scope is already running.
 _dispatch_one() {
-  local scope="$1"; shift
-  local claude_flags=("$@")
+  local scope="$1"
   local window="gap-scout-${scope%/}"
   local prompt
-  prompt="$(printf '/gap-scout-runner\n\nScope: %s\n' "$scope")"
+  prompt="$(_prompt_for "$scope")"
 
   if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
     if tmux list-windows -t "$TMUX_SESSION" -F '#{window_name}' 2>/dev/null | grep -qx "$window"; then
       echo "aviso: la ventana tmux '$TMUX_SESSION:$window' ya existe (escaneo previo aún corriendo o sin cerrar); lo salto." >&2
       return 0
     fi
-    tmux new-window -t "$TMUX_SESSION" -n "$window" claude "$prompt" "${claude_flags[@]}"
+    tmux new-window -t "$TMUX_SESSION" -n "$window" claude "$prompt" --allowed-tools "$ALLOWED_TOOLS"
   else
-    tmux new-session -d -s "$TMUX_SESSION" -n "$window" claude "$prompt" "${claude_flags[@]}"
+    tmux new-session -d -s "$TMUX_SESSION" -n "$window" claude "$prompt" --allowed-tools "$ALLOWED_TOOLS"
   fi
   echo "Lanzado: $TMUX_SESSION:$window"
 }
@@ -102,20 +124,21 @@ cmd_scan() {
     *) echo "Uso: ./scripts/gap-scout scan <app|api|both> [--yolo]" >&2; exit 1 ;;
   esac
 
-  local claude_flags=()
-  if (( yolo )); then
-    claude_flags+=(--dangerously-skip-permissions)
-  else
-    claude_flags+=(--allowed-tools "$ALLOWED_TOOLS")
-  fi
-
   ensure_labels
-  case "$target" in
-    app) _dispatch_one "app/" "${claude_flags[@]}" ;;
-    api) _dispatch_one "api/" "${claude_flags[@]}" ;;
-    both) _dispatch_one "app/" "${claude_flags[@]}"; _dispatch_one "api/" "${claude_flags[@]}" ;;
-  esac
-  echo "Adjunta con: tmux attach -t $TMUX_SESSION"
+  if (( yolo )); then
+    case "$target" in
+      app) _scan_one_yolo "app/" ;;
+      api) _scan_one_yolo "api/" ;;
+      both) _scan_one_yolo "app/"; _scan_one_yolo "api/" ;;
+    esac
+  else
+    case "$target" in
+      app) _dispatch_one "app/" ;;
+      api) _dispatch_one "api/" ;;
+      both) _dispatch_one "app/"; _dispatch_one "api/" ;;
+    esac
+    echo "Adjunta con: tmux attach -t $TMUX_SESSION"
+  fi
 }
 
 case "${1:-}" in
