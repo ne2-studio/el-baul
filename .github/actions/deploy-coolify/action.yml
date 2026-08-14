@@ -1,5 +1,5 @@
 name: Deploy with Coolify
-description: Trigger a Coolify deployment webhook.
+description: Trigger a Coolify deployment webhook and verify the deployed service comes back healthy.
 
 inputs:
   webhook:
@@ -8,6 +8,21 @@ inputs:
   token:
     description: Coolify API token.
     required: true
+  health-url:
+    description: URL polled after triggering the deploy until it responds healthy.
+    required: true
+  health-match:
+    description: Optional substring the health response body must contain, in addition to a 2xx status.
+    required: false
+    default: ''
+  timeout-seconds:
+    description: Max seconds to wait for health-url to become healthy before failing the job.
+    required: false
+    default: '300'
+  interval-seconds:
+    description: Seconds to wait between health checks.
+    required: false
+    default: '5'
 
 runs:
   using: composite
@@ -15,5 +30,36 @@ runs:
     - name: Trigger Coolify deploy
       shell: bash
       run: |
-        curl -X GET "${{ inputs.webhook }}" \
+        curl -f -sS -X GET "${{ inputs.webhook }}" \
           -H "Authorization: Bearer ${{ inputs.token }}"
+
+    # Coolify's webhook just queues the build; it doesn't report back when the new container
+    # is actually live. Polling the service's own health-url is what tells us the deploy really
+    # succeeded (build + container start + app boot), without depending on Coolify's internal
+    # deployment-status API.
+    - name: Wait for deployment to become healthy
+      shell: bash
+      run: |
+        set -euo pipefail
+        deadline=$(( $(date +%s) + ${{ inputs.timeout-seconds }} ))
+        health_url="${{ inputs.health-url }}"
+        match="${{ inputs.health-match }}"
+
+        while true; do
+          if body=$(curl -f -sS "$health_url" 2>/dev/null); then
+            if [[ -z "$match" || "$body" == *"$match"* ]]; then
+              echo "Healthy: $health_url"
+              exit 0
+            fi
+            echo "Reachable but content check failed, retrying..."
+          else
+            echo "Not reachable yet, retrying..."
+          fi
+
+          if (( $(date +%s) >= deadline )); then
+            echo "::error::Deployment did not become healthy within ${{ inputs.timeout-seconds }}s: $health_url"
+            exit 1
+          fi
+
+          sleep "${{ inputs.interval-seconds }}"
+        done

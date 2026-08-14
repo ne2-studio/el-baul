@@ -140,3 +140,4 @@ jobs:
         with:
           webhook: ${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}
+          health-url: ${{ vars.FRONTEND_HEALTH_URL }}
