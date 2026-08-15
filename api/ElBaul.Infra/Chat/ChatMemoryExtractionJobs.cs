@@ -1,4 +1,4 @@
-using ElBaul.Core.Chat.InputPorts;
+using ElBaul.Core.Chat;
 using Serilog.Context;
 
 using ElBaul.Domain;

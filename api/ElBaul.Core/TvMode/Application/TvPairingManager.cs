@@ -1,5 +1,5 @@
 using ElBaul.Core.Sharing.Application;
-using ElBaul.Core.TvMode.InputPorts;
+using ElBaul.Core.TvMode;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.TvMode.OutputPorts;
 using Ne2Studio.Common;

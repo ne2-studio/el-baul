@@ -1,7 +1,7 @@
 using ElBaul.Api.Controllers;
 using ElBaul.Domain;
-using ElBaul.Core.Personas.InputPorts;
-using ElBaul.Core.Sharing.InputPorts;
+using ElBaul.Core.Personas;
+using ElBaul.Core.Sharing;
 using Microsoft.AspNetCore.Mvc;
 using Ne2Studio.Common;
 

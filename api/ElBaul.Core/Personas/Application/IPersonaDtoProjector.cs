@@ -1,4 +1,4 @@
-using ElBaul.Core.Personas.InputPorts;
+using ElBaul.Core.Personas;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 

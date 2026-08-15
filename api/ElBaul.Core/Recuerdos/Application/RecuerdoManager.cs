@@ -1,6 +1,6 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
-using ElBaul.Core.Recuerdos.InputPorts;
+using ElBaul.Core.Recuerdos;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;

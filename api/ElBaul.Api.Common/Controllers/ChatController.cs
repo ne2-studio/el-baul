@@ -1,5 +1,5 @@
 using ElBaul.Api.Models;
-using ElBaul.Core.Chat.InputPorts;
+using ElBaul.Core.Chat;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

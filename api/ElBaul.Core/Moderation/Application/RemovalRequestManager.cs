@@ -1,7 +1,7 @@
 using ElBaul.Core.Application;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Photos.Application;
-using ElBaul.Core.Moderation.InputPorts;
+using ElBaul.Core.Moderation;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;

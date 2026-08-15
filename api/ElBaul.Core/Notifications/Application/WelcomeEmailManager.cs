@@ -1,5 +1,5 @@
 using ElBaul.Core.Bauls.Application;
-using ElBaul.Core.Notifications.InputPorts;
+using ElBaul.Core.Notifications;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;

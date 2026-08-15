@@ -1,8 +1,8 @@
 using ElBaul.Api;
 using ElBaul.Api.Common;
 using ElBaul.Infra;
-using ElBaul.Core.Analytics.InputPorts;
-using ElBaul.Core.Notifications.InputPorts;
+using ElBaul.Core.Analytics;
+using ElBaul.Core.Notifications;
 
 using Hangfire;
 using Hangfire.PostgreSql;

@@ -1,5 +1,5 @@
 using ElBaul.Core.Bauls.Application;
-using ElBaul.Core.Photos.InputPorts;
+using ElBaul.Core.Photos;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;

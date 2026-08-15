@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Reflection;
 using ElBaul.Core.Chat.Application;
 using ElBaul.Core.Photos.Application;
-using ElBaul.Core.Chat.InputPorts;
+using ElBaul.Core.Chat;
 using ElBaul.Infra;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

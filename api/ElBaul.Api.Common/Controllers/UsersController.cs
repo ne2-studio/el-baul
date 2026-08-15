@@ -1,6 +1,6 @@
 using ElBaul.Api.Models;
-using ElBaul.Core.Notifications.InputPorts;
-using ElBaul.Core.Users.InputPorts;
+using ElBaul.Core.Notifications;
+using ElBaul.Core.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
