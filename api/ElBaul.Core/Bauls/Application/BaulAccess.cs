@@ -1,12 +1,13 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Application;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Bauls;
+namespace ElBaul.Core.Bauls.Application;
 // The single interpretation of "does this user belong to this baúl / are they an
 // admin of it" — every manager asks BaulAccessService instead of re-deriving the
 // membership rule from Baul.CustodioId and IBaulRepository.GetPersonaByUserIdAsync by hand.

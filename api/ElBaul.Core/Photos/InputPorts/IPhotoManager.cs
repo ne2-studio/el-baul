@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Photos;
+namespace ElBaul.Core.Photos.InputPorts;
 public interface IPhotoManager
 {
     Task<Result<PhotoDto>> UploadAsync(

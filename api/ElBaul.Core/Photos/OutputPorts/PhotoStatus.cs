@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 public enum PhotoStatus
 {
     Active,

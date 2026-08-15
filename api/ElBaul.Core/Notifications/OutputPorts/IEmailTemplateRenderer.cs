@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Notifications;
+namespace ElBaul.Core.Notifications.OutputPorts;
 public record RenderedEmail(string Subject, string Html, string PlainText, string TemplateVersion, string Locale);
 
 /// <summary>

@@ -1,10 +1,10 @@
-using ElBaul.Application.Chat;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Chat;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Chat.Application;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Chat.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

@@ -1,7 +1,7 @@
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Photos;
+namespace ElBaul.Core.Photos.Application;
 // Single definition of "can this user delete this photo" — shared by PhotoManager.DeleteAsync
 // (authorization, enforced server-side no matter what the client sends) and PhotoDtoProjector
 // (the CanDelete/CanRequestRemoval capability flags the frontend renders its menu from), so the

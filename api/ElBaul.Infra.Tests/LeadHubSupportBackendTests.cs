@@ -1,6 +1,6 @@
 using System.Net;
 using ElBaul.Domain;
-using ElBaul.OutputPorts.Support;
+using ElBaul.Core.Support.OutputPorts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;

@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Chat;
+using ElBaul.Core.Chat.OutputPorts;
 using Ne2Studio.Common;
 namespace ElBaul.Infra.Lite;
 

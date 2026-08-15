@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Notifications;
+namespace ElBaul.Core.Notifications.InputPorts;
 public interface IPushNotificationManager
 {
     Task<Result> RegisterTokenAsync(string token, string platform);

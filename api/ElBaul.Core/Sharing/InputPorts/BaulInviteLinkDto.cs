@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Sharing;
+namespace ElBaul.Core.Sharing.InputPorts;
 public record BaulInviteLinkDto(string Token, string Url, DateTime CreatedAt);
 
 public record BaulInviteLinkPreviewDto(

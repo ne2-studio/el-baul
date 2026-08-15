@@ -1,4 +1,4 @@
-namespace ElBaul.Application.Photos;
+namespace ElBaul.Core.Photos.Application;
 
 /// <summary>
 /// Single source of truth for the resolution/size limits every uploaded photo must satisfy —

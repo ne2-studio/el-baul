@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 

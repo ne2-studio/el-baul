@@ -1,8 +1,8 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Feed;
-using ElBaul.Application.Personas;
-using ElBaul.Application.Photos;
-using ElBaul.Application.Recuerdos;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Feed.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Recuerdos.Application;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

@@ -1,12 +1,12 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Moderation;
-using ElBaul.Application.Photos;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Moderation;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Moderation.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Moderation.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

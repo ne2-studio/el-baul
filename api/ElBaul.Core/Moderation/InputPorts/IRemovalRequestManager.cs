@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Moderation;
+namespace ElBaul.Core.Moderation.InputPorts;
 public interface IRemovalRequestManager
 {
     Task<Result<IEnumerable<RemovalRequestDto>>> GetRemovalRequestsAsync(BaulId baulId);

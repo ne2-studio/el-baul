@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Recuerdos;
+namespace ElBaul.Core.Recuerdos.InputPorts;
 // Every recuerdo (comment) read/write operation lives here regardless of scope — baúl-wide,
 // chapter-scoped, or on a single photo — rather than being split across IBaulManager/
 // IChapterManager/IRecuerdoManager by which aggregate the caller happens to be looking at.

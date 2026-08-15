@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Personas;
+namespace ElBaul.Core.Personas.InputPorts;
 public interface IPhotoPersonaTagManager
 {
     Task<Result<IEnumerable<TaggedPersonaDto>>> GetTaggedPersonasAsync(PhotoId photoId);

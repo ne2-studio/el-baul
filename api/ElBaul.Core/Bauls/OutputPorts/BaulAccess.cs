@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Bauls;
+namespace ElBaul.Core.Bauls.OutputPorts;
 /// <summary>
 /// A baul shared with a user, paired with the role that access grants them.
 /// Returned by IBaulRepository.GetSharedForUserAsync so callers don't need a

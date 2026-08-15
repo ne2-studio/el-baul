@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Photos;
+namespace ElBaul.Core.Photos.InputPorts;
 public record PhotoDto
 (
     string Id,

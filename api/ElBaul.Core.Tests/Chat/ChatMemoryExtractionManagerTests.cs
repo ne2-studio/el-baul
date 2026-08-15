@@ -1,8 +1,8 @@
-using ElBaul.Application.Chat;
+using ElBaul.Core.Chat.Application;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Chat;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Chat.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Tests.Fakes;

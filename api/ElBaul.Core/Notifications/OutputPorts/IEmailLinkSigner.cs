@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Notifications;
+namespace ElBaul.Core.Notifications.OutputPorts;
 /// <summary>
 /// Mints and verifies self-contained email tracking tokens: the destination URL (and enough
 /// context to record a click) travels inside the signed token itself, so /email/click/{token}

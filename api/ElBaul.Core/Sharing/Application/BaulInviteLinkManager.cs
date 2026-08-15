@@ -1,18 +1,19 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Personas;
-using ElBaul.InputPorts.Personas;
-using ElBaul.InputPorts.Sharing;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Sharing;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Personas.InputPorts;
+using ElBaul.Core.Sharing.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Sharing.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Sharing;
+using ElBaul.Core.Application;
+namespace ElBaul.Core.Sharing.Application;
 public class BaulInviteLinkManager(
     ILogger<BaulInviteLinkManager> logger,
     IBaulInviteLinkRepository baulInviteLinkRepository,

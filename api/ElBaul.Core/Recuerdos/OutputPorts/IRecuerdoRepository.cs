@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Recuerdos;
+namespace ElBaul.Core.Recuerdos.OutputPorts;
 /// <summary>Minimal shape of a recuerdo still missing BaulId — used only by the one-off
 /// backfill command (see ElBaul.Maintenance/Commands/BackfillRecuerdoBaulIdCommand.cs). Recuerdo.BaulId is a
 /// non-nullable Guid in the domain model (the target state once the follow-up migration

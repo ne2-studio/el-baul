@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ElBaul.OutputPorts.Notifications;
+using ElBaul.Core.Notifications.OutputPorts;
 using Microsoft.Extensions.Configuration;
 
 namespace ElBaul.Infra;

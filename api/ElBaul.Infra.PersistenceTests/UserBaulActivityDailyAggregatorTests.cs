@@ -1,11 +1,11 @@
 using ElBaul.Domain;
 using ElBaul.Infra.Analytics;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chat;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chat.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;

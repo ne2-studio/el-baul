@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Users.OutputPorts;
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Admin;
+namespace ElBaul.Core.Admin.OutputPorts;
 /// <summary>A row in the backoffice Usuarios list — a User paired with its baúl count.</summary>
 public record AdminUserRow(User User, int BaulCount);
 

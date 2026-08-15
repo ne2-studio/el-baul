@@ -1,20 +1,20 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Personas;
-using ElBaul.Application.Sharing;
-using ElBaul.InputPorts.TvMode;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.TvMode;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Sharing.Application;
+using ElBaul.Core.TvMode.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.TvMode.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.TvMode;
+namespace ElBaul.Core.TvMode.Application;
 
 // See docs PRD "Modo TV": a temporary, read-only, anonymous session that hands a TV browser
 // every baúl photo plus its context (date, chapter, tagged people, latest recuerdo) in one

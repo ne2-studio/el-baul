@@ -1,7 +1,7 @@
-using ElBaul.Application.Photos;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using ElBaul.Domain;

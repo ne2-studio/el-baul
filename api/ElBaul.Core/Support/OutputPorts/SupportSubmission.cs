@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Support;
+namespace ElBaul.Core.Support.OutputPorts;
 public record SupportSubmission(
     string Category,
     string Message,

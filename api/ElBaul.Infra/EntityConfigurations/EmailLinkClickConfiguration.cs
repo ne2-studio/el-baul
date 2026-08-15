@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Notifications;
+using ElBaul.Core.Notifications.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

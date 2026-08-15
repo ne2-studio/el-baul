@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.TvMode;
+namespace ElBaul.Core.TvMode.InputPorts;
 
 public record CreateTvSessionResult(string Url, string Token, DateTime ExpiresAt);
 

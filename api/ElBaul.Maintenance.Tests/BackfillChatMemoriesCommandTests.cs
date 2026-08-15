@@ -1,7 +1,7 @@
-using ElBaul.InputPorts.Chat;
+using ElBaul.Core.Chat.InputPorts;
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
-using ElBaul.OutputPorts.Chat;
+using ElBaul.Core.Chat.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging.Abstractions;
 

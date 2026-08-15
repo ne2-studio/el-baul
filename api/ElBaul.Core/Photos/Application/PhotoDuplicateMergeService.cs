@@ -1,14 +1,14 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Sharing;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Sharing.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Photos;
+namespace ElBaul.Core.Photos.Application;
 
 public record PhotoMergeResult(Photo Survivor, IReadOnlyList<Photo> Duplicates);
 

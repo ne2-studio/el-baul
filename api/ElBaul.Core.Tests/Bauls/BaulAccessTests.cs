@@ -1,10 +1,10 @@
-using ElBaul.Application.Bauls;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using BaulAccess = ElBaul.Application.Bauls.BaulAccess;
+using BaulAccess = ElBaul.Core.Bauls.Application.BaulAccess;
 
 using ElBaul.Domain;
 namespace ElBaul.Tests;
@@ -170,7 +170,7 @@ public class BaulAccessTests
         var repo = Substitute.For<IBaulRepository>();
         repo.GetOwnedByUserIdAsync(userId).Returns([]);
         repo.GetSharedByUserIdAsync(userId).Returns(
-            [new ElBaul.OutputPorts.Bauls.BaulAccess(TestBaul, BaulRole.Colaborador)]);
+            [new ElBaul.Core.Bauls.OutputPorts.BaulAccess(TestBaul, BaulRole.Colaborador)]);
         var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
 
         var access = Assert.Single(await service.GetAccessibleAsync(userId));
@@ -187,7 +187,7 @@ public class BaulAccessTests
         var repo = Substitute.For<IBaulRepository>();
         repo.GetOwnedByUserIdAsync(userId).Returns([TestBaul]);
         repo.GetSharedByUserIdAsync(userId).Returns(
-            [new ElBaul.OutputPorts.Bauls.BaulAccess(TestBaul, BaulRole.Colaborador)]);
+            [new ElBaul.Core.Bauls.OutputPorts.BaulAccess(TestBaul, BaulRole.Colaborador)]);
         var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
 
         var access = Assert.Single(await service.GetAccessibleAsync(userId));

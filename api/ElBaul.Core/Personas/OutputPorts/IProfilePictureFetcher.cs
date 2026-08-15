@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Personas;
+namespace ElBaul.Core.Personas.OutputPorts;
 /// <summary>
 /// Fetches an externally-hosted profile picture (e.g. the OIDC provider's "picture" claim) so
 /// it can be re-stored as a Persona avatar. Used only for the global-invite-link auto-created

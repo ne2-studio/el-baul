@@ -1,5 +1,5 @@
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using System.Collections.Concurrent;
 namespace ElBaul.Infra.Lite;
 

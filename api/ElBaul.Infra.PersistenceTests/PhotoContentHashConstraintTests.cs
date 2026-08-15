@@ -1,7 +1,7 @@
 using ElBaul.Infra.Persistence;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 public record Photo
 (
     PhotoId Id,

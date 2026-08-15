@@ -1,5 +1,5 @@
-using ElBaul.Application.Notifications;
-using ElBaul.OutputPorts.Notifications;
+using ElBaul.Core.Notifications.Application;
+using ElBaul.Core.Notifications.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;

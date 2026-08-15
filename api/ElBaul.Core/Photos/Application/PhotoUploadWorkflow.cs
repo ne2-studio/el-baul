@@ -1,10 +1,10 @@
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.Extensions.Logging;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Photos;
+namespace ElBaul.Core.Photos.Application;
 
 // Created(photo, AlreadyExisted: false) for a genuinely new upload; Duplicate(existingActivePhoto,
 // AlreadyExisted: true) when the upload turned out to be an exact-content duplicate of an

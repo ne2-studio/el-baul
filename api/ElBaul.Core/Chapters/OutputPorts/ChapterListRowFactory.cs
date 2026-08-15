@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
-namespace ElBaul.OutputPorts.Chapters;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+namespace ElBaul.Core.Chapters.OutputPorts;
 /// <summary>Min/max photo date (year/month/day, nullable per precision) plus a count of undated
 /// photos — the shape ChapterDto's MinDate*/MaxDate*/UndatedPhotoCount fields come from.</summary>
 public readonly record struct ChapterDateRange(

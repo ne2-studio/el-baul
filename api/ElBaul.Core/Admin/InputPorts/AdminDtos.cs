@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Admin;
+namespace ElBaul.Core.Admin.InputPorts;
 // Backoffice DTOs. ExternalLinks (Dashboard's tool shortcuts) are deliberately not part of
 // AdminDashboardCountsDto — they're config, assembled at the Api layer (AdminController)
 // straight from IConfiguration, same pattern as AppConfigController's feature flags. Core

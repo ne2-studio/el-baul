@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.InputPorts.Notifications;
+namespace ElBaul.Core.Notifications.InputPorts;
 /// <summary>
 /// One push per user per day, at most, and only when there is something to report — see
 /// PushDigestManager for the aggregation/silence rules. Same scheduler/per-user-job split as

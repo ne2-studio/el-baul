@@ -1,6 +1,6 @@
 using ElBaul.Domain;
 
-namespace ElBaul.OutputPorts.Admin;
+namespace ElBaul.Core.Admin.OutputPorts;
 
 public sealed record DeletedBaulStorageObjects(
     IReadOnlyList<string> PhotoStorageKeys,

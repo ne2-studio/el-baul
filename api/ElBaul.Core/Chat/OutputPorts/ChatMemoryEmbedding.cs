@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Chat;
+namespace ElBaul.Core.Chat.OutputPorts;
 // BaulId/UserId are redundant with the ChatMemory row this belongs to (1:1, see
 // ChatMemoryEmbeddingConfiguration), carried here anyway so retrieval can scope its query to
 // (BaulId, UserId) directly — same reasoning as RecuerdoEmbedding.BaulId.

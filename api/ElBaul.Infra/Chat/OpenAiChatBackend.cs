@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using ElBaul.OutputPorts.Chat;
+using ElBaul.Core.Chat.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

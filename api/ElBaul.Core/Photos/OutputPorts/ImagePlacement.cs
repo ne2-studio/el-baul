@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 /// <summary>
 /// The UI placement an image URL is destined for. Infra maps each value to a concrete
 /// resize preset (dimensions, crop behavior) — Core only knows the symbolic placement,

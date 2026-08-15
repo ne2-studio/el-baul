@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Users;
+namespace ElBaul.Core.Users.OutputPorts;
 /// <summary>
 /// Calls the OIDC provider's userinfo endpoint. Zitadel access tokens carry only "sub" —
 /// email/name aren't standard OIDC access-token claims, so they must be fetched out-of-band.

@@ -1,8 +1,8 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
 using Ne2Studio.Common;
 
-namespace ElBaul.Application.Chat;
+namespace ElBaul.Core.Chat.Application;
 // Own seam so the AI-backed alternative (AiSuggestedQuestionsStrategy) and this default can be
 // swapped via Features:ChatSuggestionsStrategy without ChatManager knowing which one is active.
 public interface ISuggestedQuestionsStrategy

@@ -1,5 +1,5 @@
 using System.Globalization;
-using ElBaul.OutputPorts.Analytics;
+using ElBaul.Core.Analytics.OutputPorts;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Maintenance.Commands;

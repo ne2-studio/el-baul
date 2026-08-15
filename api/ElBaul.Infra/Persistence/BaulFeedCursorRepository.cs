@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-using ElBaul.OutputPorts.Feed;
+using ElBaul.Core.Feed.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra.Persistence;

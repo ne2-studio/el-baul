@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Admin;
+namespace ElBaul.Core.Admin.InputPorts;
 public interface IAdminManager
 {
     Task<Result<AdminDashboardCountsDto>> GetDashboardCountsAsync();

@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Users;
+namespace ElBaul.Core.Users.OutputPorts;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(UserId id);

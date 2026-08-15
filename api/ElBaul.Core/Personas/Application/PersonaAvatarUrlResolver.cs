@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-namespace ElBaul.Application.Personas;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+namespace ElBaul.Core.Personas.Application;
 /// <summary>
 /// The single interpretation of "what is this persona's avatar URL": the linked photo wins
 /// when it's present, active, and still in this baúl; otherwise fall back to the legacy

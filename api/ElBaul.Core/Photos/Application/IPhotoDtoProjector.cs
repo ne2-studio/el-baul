@@ -1,8 +1,8 @@
-using ElBaul.InputPorts.Photos;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.InputPorts;
+using ElBaul.Core.Photos.OutputPorts;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Photos;
+namespace ElBaul.Core.Photos.Application;
 public interface IPhotoDtoProjector
 {
     // isAdmin/currentUserId feed PhotoDeletePolicy for every photo in the batch — the caller's

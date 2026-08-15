@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 public interface IPhotoRepository
 {
     Task<Photo?> GetByIdAsync(PhotoId id);

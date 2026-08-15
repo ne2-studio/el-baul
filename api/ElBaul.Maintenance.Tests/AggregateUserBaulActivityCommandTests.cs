@@ -1,5 +1,5 @@
 using ElBaul.Maintenance.Commands;
-using ElBaul.OutputPorts.Analytics;
+using ElBaul.Core.Analytics.OutputPorts;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ElBaul.Maintenance.Tests;

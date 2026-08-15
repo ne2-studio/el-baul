@@ -1,5 +1,5 @@
 using ElBaul.Api.Models;
-using ElBaul.InputPorts.Personas;
+using ElBaul.Core.Personas.InputPorts;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

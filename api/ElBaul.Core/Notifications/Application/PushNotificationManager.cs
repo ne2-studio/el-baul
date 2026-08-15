@@ -1,10 +1,10 @@
-using ElBaul.InputPorts.Notifications;
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Notifications.InputPorts;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Notifications;
+namespace ElBaul.Core.Notifications.Application;
 public class PushNotificationManager(
     IPushTokenRepository pushTokenRepository,
     IPushNotificationSender pushNotificationSender,

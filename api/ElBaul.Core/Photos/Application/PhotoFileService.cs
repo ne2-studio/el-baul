@@ -1,13 +1,13 @@
 using System.Security.Cryptography;
-using ElBaul.InputPorts.Photos;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Photos.InputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 
 using Microsoft.Extensions.Logging;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Photos;
+namespace ElBaul.Core.Photos.Application;
 public class PhotoFileService(
     ILogger<PhotoFileService> logger,
     IPhotoStorage photoStorage,

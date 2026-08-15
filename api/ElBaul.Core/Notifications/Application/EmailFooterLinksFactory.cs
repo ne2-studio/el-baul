@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Shared;
-namespace ElBaul.Application.Notifications;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+namespace ElBaul.Core.Notifications.Application;
 /// <summary>
 /// Builds the footer links (help center, privacy policy, contact support) shared by every
 /// transactional email, already wrapped as tracked click-through links — kept in one place so

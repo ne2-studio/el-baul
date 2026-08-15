@@ -25,7 +25,7 @@ namespace ElBaul.Infra.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Bauls.Baul", b =>
+            modelBuilder.Entity("ElBaul.Core.Bauls.OutputPorts.Baul", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -82,7 +82,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Baules", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chapters.Chapter", b =>
+            modelBuilder.Entity("ElBaul.Core.Chapters.OutputPorts.Chapter", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -140,7 +140,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Chapters", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemory", b =>
+            modelBuilder.Entity("ElBaul.Core.Chat.OutputPorts.ChatMemory", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -175,7 +175,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("ChatMemories", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemoryEmbedding", b =>
+            modelBuilder.Entity("ElBaul.Core.Chat.OutputPorts.ChatMemoryEmbedding", b =>
                 {
                     b.Property<Guid>("ChatMemoryId")
                         .HasColumnType("uuid");
@@ -207,7 +207,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("ChatMemoryEmbeddings", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMessage", b =>
+            modelBuilder.Entity("ElBaul.Core.Chat.OutputPorts.ChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -242,7 +242,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("ChatMessages", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Feed.BaulFeedCursor", b =>
+            modelBuilder.Entity("ElBaul.Core.Feed.OutputPorts.BaulFeedCursor", b =>
                 {
                     b.Property<string>("UserId")
                         .HasMaxLength(255)
@@ -261,7 +261,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("BaulFeedCursors", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Moderation.RemovalRequest", b =>
+            modelBuilder.Entity("ElBaul.Core.Moderation.OutputPorts.RemovalRequest", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -306,7 +306,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("RemovalRequests", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Notifications.EmailLinkClick", b =>
+            modelBuilder.Entity("ElBaul.Core.Notifications.OutputPorts.EmailLinkClick", b =>
                 {
                     b.Property<string>("Token")
                         .HasMaxLength(4000)
@@ -344,7 +344,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("EmailLinkClicks", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Notifications.PushToken", b =>
+            modelBuilder.Entity("ElBaul.Core.Notifications.OutputPorts.PushToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -378,7 +378,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("PushTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Notifications.SentEmail", b =>
+            modelBuilder.Entity("ElBaul.Core.Notifications.OutputPorts.SentEmail", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -466,7 +466,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("SentEmails", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Personas.Persona", b =>
+            modelBuilder.Entity("ElBaul.Core.Personas.OutputPorts.Persona", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -539,7 +539,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Personas", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Personas.PhotoPersonaTag", b =>
+            modelBuilder.Entity("ElBaul.Core.Personas.OutputPorts.PhotoPersonaTag", b =>
                 {
                     b.Property<Guid>("PhotoId")
                         .HasColumnType("uuid");
@@ -562,7 +562,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("PhotoPersonaTags", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Photos.Photo", b =>
+            modelBuilder.Entity("ElBaul.Core.Photos.OutputPorts.Photo", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -667,7 +667,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Photos", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Recuerdos.Recuerdo", b =>
+            modelBuilder.Entity("ElBaul.Core.Recuerdos.OutputPorts.Recuerdo", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -707,7 +707,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Recuerdos", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Recuerdos.RecuerdoEmbedding", b =>
+            modelBuilder.Entity("ElBaul.Core.Recuerdos.OutputPorts.RecuerdoEmbedding", b =>
                 {
                     b.Property<Guid>("RecuerdoId")
                         .HasColumnType("uuid");
@@ -734,7 +734,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("RecuerdoEmbeddings", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Sharing.BaulInviteLink", b =>
+            modelBuilder.Entity("ElBaul.Core.Sharing.OutputPorts.BaulInviteLink", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -772,7 +772,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("BaulInviteLinks", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Sharing.SharedLink", b =>
+            modelBuilder.Entity("ElBaul.Core.Sharing.OutputPorts.SharedLink", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -823,7 +823,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("SharedLinks", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.TvMode.TvPairing", b =>
+            modelBuilder.Entity("ElBaul.Core.TvMode.OutputPorts.TvPairing", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -851,7 +851,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("TvPairings", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.TvMode.TvSession", b =>
+            modelBuilder.Entity("ElBaul.Core.TvMode.OutputPorts.TvSession", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -890,7 +890,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("TvSessions", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Users.User", b =>
+            modelBuilder.Entity("ElBaul.Core.Users.OutputPorts.User", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(255)
@@ -932,245 +932,245 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Bauls.Baul", b =>
+            modelBuilder.Entity("ElBaul.Core.Bauls.OutputPorts.Baul", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("CustodioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chapters.Chapter", b =>
+            modelBuilder.Entity("ElBaul.Core.Chapters.OutputPorts.Chapter", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemory", b =>
+            modelBuilder.Entity("ElBaul.Core.Chat.OutputPorts.ChatMemory", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMemoryEmbedding", b =>
+            modelBuilder.Entity("ElBaul.Core.Chat.OutputPorts.ChatMemoryEmbedding", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Chat.ChatMemory", null)
+                    b.HasOne("ElBaul.Core.Chat.OutputPorts.ChatMemory", null)
                         .WithOne()
-                        .HasForeignKey("ElBaul.OutputPorts.Chat.ChatMemoryEmbedding", "ChatMemoryId")
+                        .HasForeignKey("ElBaul.Core.Chat.OutputPorts.ChatMemoryEmbedding", "ChatMemoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Chat.ChatMessage", b =>
+            modelBuilder.Entity("ElBaul.Core.Chat.OutputPorts.ChatMessage", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Feed.BaulFeedCursor", b =>
+            modelBuilder.Entity("ElBaul.Core.Feed.OutputPorts.BaulFeedCursor", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Moderation.RemovalRequest", b =>
+            modelBuilder.Entity("ElBaul.Core.Moderation.OutputPorts.RemovalRequest", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Notifications.EmailLinkClick", b =>
+            modelBuilder.Entity("ElBaul.Core.Notifications.OutputPorts.EmailLinkClick", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Notifications.SentEmail", null)
+                    b.HasOne("ElBaul.Core.Notifications.OutputPorts.SentEmail", null)
                         .WithMany()
                         .HasForeignKey("SentEmailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Notifications.PushToken", b =>
+            modelBuilder.Entity("ElBaul.Core.Notifications.OutputPorts.PushToken", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Notifications.SentEmail", b =>
+            modelBuilder.Entity("ElBaul.Core.Notifications.OutputPorts.SentEmail", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Personas.Persona", b =>
+            modelBuilder.Entity("ElBaul.Core.Personas.OutputPorts.Persona", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Photos.Photo", null)
+                    b.HasOne("ElBaul.Core.Photos.OutputPorts.Photo", null)
                         .WithMany()
                         .HasForeignKey("AvatarPhotoId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Personas.PhotoPersonaTag", b =>
+            modelBuilder.Entity("ElBaul.Core.Personas.OutputPorts.PhotoPersonaTag", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Personas.Persona", null)
+                    b.HasOne("ElBaul.Core.Personas.OutputPorts.Persona", null)
                         .WithMany()
                         .HasForeignKey("PersonaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Photos.Photo", null)
+                    b.HasOne("ElBaul.Core.Photos.OutputPorts.Photo", null)
                         .WithMany()
                         .HasForeignKey("PhotoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Photos.Photo", b =>
+            modelBuilder.Entity("ElBaul.Core.Photos.OutputPorts.Photo", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Chapters.Chapter", null)
+                    b.HasOne("ElBaul.Core.Chapters.OutputPorts.Chapter", null)
                         .WithMany()
                         .HasForeignKey("ChapterId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Recuerdos.Recuerdo", b =>
+            modelBuilder.Entity("ElBaul.Core.Recuerdos.OutputPorts.Recuerdo", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Chapters.Chapter", null)
+                    b.HasOne("ElBaul.Core.Chapters.OutputPorts.Chapter", null)
                         .WithMany()
                         .HasForeignKey("ChapterId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ElBaul.OutputPorts.Photos.Photo", null)
+                    b.HasOne("ElBaul.Core.Photos.OutputPorts.Photo", null)
                         .WithMany()
                         .HasForeignKey("PhotoId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Recuerdos.RecuerdoEmbedding", b =>
+            modelBuilder.Entity("ElBaul.Core.Recuerdos.OutputPorts.RecuerdoEmbedding", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Recuerdos.Recuerdo", null)
+                    b.HasOne("ElBaul.Core.Recuerdos.OutputPorts.Recuerdo", null)
                         .WithOne()
-                        .HasForeignKey("ElBaul.OutputPorts.Recuerdos.RecuerdoEmbedding", "RecuerdoId")
+                        .HasForeignKey("ElBaul.Core.Recuerdos.OutputPorts.RecuerdoEmbedding", "RecuerdoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Sharing.BaulInviteLink", b =>
+            modelBuilder.Entity("ElBaul.Core.Sharing.OutputPorts.BaulInviteLink", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Sharing.SharedLink", b =>
+            modelBuilder.Entity("ElBaul.Core.Sharing.OutputPorts.SharedLink", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Photos.Photo", null)
+                    b.HasOne("ElBaul.Core.Photos.OutputPorts.Photo", null)
                         .WithMany()
                         .HasForeignKey("PhotoId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ElBaul.OutputPorts.Recuerdos.Recuerdo", null)
+                    b.HasOne("ElBaul.Core.Recuerdos.OutputPorts.Recuerdo", null)
                         .WithMany()
                         .HasForeignKey("RecuerdoId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.TvMode.TvSession", b =>
+            modelBuilder.Entity("ElBaul.Core.TvMode.OutputPorts.TvSession", b =>
                 {
-                    b.HasOne("ElBaul.OutputPorts.Bauls.Baul", null)
+                    b.HasOne("ElBaul.Core.Bauls.OutputPorts.Baul", null)
                         .WithMany()
                         .HasForeignKey("BaulId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ElBaul.OutputPorts.Users.User", null)
+                    b.HasOne("ElBaul.Core.Users.OutputPorts.User", null)
                         .WithMany()
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)

@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Shared;
+namespace ElBaul.Core.Shared.OutputPorts;
 public interface ICurrentUserProvider
 {
     UserId GetUserId();

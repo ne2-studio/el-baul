@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Users.OutputPorts;
 namespace ElBaul.Infra.Lite;
 
 // Registered as a Singleton (see ServiceRegistration.AddLiteInfrastructure) so state survives

@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Admin;
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Admin.OutputPorts;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

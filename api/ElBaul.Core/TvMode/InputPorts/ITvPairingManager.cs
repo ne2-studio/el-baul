@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.TvMode;
+namespace ElBaul.Core.TvMode.InputPorts;
 public interface ITvPairingManager
 {
     Task<Result<CreateTvPairingResult>> CreateAsync();

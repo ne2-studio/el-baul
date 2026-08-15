@@ -1,14 +1,15 @@
-using ElBaul.OutputPorts.Analytics;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Analytics.InputPorts;
+using ElBaul.Core.Analytics.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.Extensions.Logging;
 
-namespace ElBaul.Application.Analytics;
+namespace ElBaul.Core.Analytics.Application;
 
 public class DailyUserBaulActivityAggregationJob(
     IUserBaulActivityDailyAggregator aggregator,
     IAppConfiguration appConfiguration,
     IClock clock,
-    ILogger<DailyUserBaulActivityAggregationJob> logger) : InputPorts.Analytics.IDailyUserBaulActivityAggregationJob
+    ILogger<DailyUserBaulActivityAggregationJob> logger) : IDailyUserBaulActivityAggregationJob
 {
     public async Task AggregateYesterdayAsync()
     {

@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 
 /// <summary>Raw pixel dimensions of an image, read off its header/metadata — never the
 /// display orientation. Null from IdentifyAsync means the content couldn't be identified as a

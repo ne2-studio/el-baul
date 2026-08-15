@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Sharing;
+using ElBaul.Core.Sharing.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Chapters;
+namespace ElBaul.Core.Chapters.InputPorts;
 public record ChapterDto
 (
     string Id,

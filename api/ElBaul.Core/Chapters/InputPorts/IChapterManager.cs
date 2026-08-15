@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Chapters;
+namespace ElBaul.Core.Chapters.InputPorts;
 public interface IChapterManager
 {
     Task<Result<IEnumerable<ChapterDto>>> GetByBaulIdAsync(BaulId baulId);

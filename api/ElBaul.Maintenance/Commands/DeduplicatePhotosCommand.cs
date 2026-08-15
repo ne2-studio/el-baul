@@ -1,7 +1,7 @@
-using ElBaul.Application.Photos;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Maintenance.Commands;

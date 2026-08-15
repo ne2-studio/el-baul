@@ -1,7 +1,7 @@
 using System.Reflection;
-using ElBaul.Application.Chat;
-using ElBaul.Application.Photos;
-using ElBaul.InputPorts.Chat;
+using ElBaul.Core.Chat.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Chat.InputPorts;
 using ElBaul.Infra.Lite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

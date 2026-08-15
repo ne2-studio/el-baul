@@ -245,7 +245,7 @@ namespace ElBaul.Infra.Migrations
                     b.ToTable("Recuerdos", (string)null);
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Moderation.RemovalRequest", b =>
+            modelBuilder.Entity("ElBaul.Core.Moderation.OutputPorts.RemovalRequest", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -523,7 +523,7 @@ namespace ElBaul.Infra.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ElBaul.OutputPorts.Moderation.RemovalRequest", b =>
+            modelBuilder.Entity("ElBaul.Core.Moderation.OutputPorts.RemovalRequest", b =>
                 {
                     b.HasOne("ElBaul.Ports.Output.Baul", null)
                         .WithMany()

@@ -1,11 +1,12 @@
 using ElBaul.Domain;
-using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Application;
+using ElBaul.Core.Personas.InputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 
-namespace ElBaul.Application.Personas;
+namespace ElBaul.Core.Personas.Application;
 public class PersonaDtoProjector(
     IPhotoRepository photoRepository,
     IPhotoStorage photoStorage,

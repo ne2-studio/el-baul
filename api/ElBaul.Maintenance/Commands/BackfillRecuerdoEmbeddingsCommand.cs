@@ -1,5 +1,5 @@
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Maintenance.Commands;

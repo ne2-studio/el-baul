@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 /// <summary>
 /// Read-only projection of photo-upload batches (photos sharing the same UploadBatchId) — the
 /// baúl feed's "N fotos subidas" cards. Same "cross-repository read model" shape as

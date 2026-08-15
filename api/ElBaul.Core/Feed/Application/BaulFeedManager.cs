@@ -1,19 +1,20 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Personas;
-using ElBaul.Application.Photos;
-using ElBaul.InputPorts.Feed;
-using ElBaul.InputPorts.Photos;
-using ElBaul.InputPorts.Recuerdos;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Feed;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Application;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Feed.InputPorts;
+using ElBaul.Core.Photos.InputPorts;
+using ElBaul.Core.Recuerdos.InputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Feed.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Feed;
+namespace ElBaul.Core.Feed.Application;
 // Merges IRecuerdoManager's recuerdo listing, IPhotoUploadBatchReadModel's photo-upload
 // batches and IChapterRepository's chapters into one newest-first feed. Deliberately thin: it
 // reuses RecuerdoManager's own GetRecuerdosAsync(BaulId) rather than duplicating its

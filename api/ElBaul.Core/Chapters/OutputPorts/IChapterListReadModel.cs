@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Chapters;
+namespace ElBaul.Core.Chapters.OutputPorts;
 /// <summary>
 /// Read-only projection of a baúl's chapters for listing — recuerdo count, latest recuerdo, and
 /// photo date range, computed directly against storage instead of the one-repository-round-trip

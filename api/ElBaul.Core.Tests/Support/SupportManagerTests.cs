@@ -1,5 +1,5 @@
-using ElBaul.Application.Support;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Support.Application;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;

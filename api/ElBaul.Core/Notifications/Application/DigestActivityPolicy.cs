@@ -1,12 +1,12 @@
-using ElBaul.Application.Bauls;
+using ElBaul.Core.Bauls.Application;
 using ElBaul.Domain;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 
-namespace ElBaul.Application.Notifications;
+namespace ElBaul.Core.Notifications.Application;
 
 /// <summary>
 /// The single policy for what counts as notable family activity in a digest: contributions made

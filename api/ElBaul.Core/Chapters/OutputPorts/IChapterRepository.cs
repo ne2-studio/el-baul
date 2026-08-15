@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Chapters;
+namespace ElBaul.Core.Chapters.OutputPorts;
 public interface IChapterRepository
 {
     Task<Chapter?> GetByIdAsync(ChapterId id);

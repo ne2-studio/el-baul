@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Notifications;
+namespace ElBaul.Core.Notifications.InputPorts;
 public interface IWeeklyDigestManager
 {
     /// <summary>Recurring-job entry point: finds users due for a digest and enqueues one job per user.</summary>

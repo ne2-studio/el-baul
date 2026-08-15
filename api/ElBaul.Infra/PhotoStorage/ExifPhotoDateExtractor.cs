@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using Microsoft.Extensions.Logging;

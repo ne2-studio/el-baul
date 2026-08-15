@@ -1,6 +1,6 @@
 using Ne2Studio.Common;
 
-namespace ElBaul.OutputPorts.Shared;
+namespace ElBaul.Core.Shared.OutputPorts;
 
 /// <summary>
 /// The commit boundary for a manager method that stages 2+ writes across one or more

@@ -1,6 +1,6 @@
-using ElBaul.Application.Personas;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Personas;
+using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Tests.Fakes;
 
 using ElBaul.Domain;

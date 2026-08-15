@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Ne2Studio.Common;
 
-namespace ElBaul.Application;
+namespace ElBaul.Core.Application;
 
 public static class EntityLookup
 {

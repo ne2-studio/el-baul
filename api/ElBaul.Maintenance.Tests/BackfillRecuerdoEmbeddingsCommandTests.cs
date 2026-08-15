@@ -1,6 +1,6 @@
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Recuerdos.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging.Abstractions;
 

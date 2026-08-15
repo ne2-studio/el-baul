@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Notifications;
+using ElBaul.Core.Notifications.OutputPorts;
 namespace ElBaul.Infra.Emails;
 
 internal class EmailTemplateRenderer(IEmailRenderer emailRenderer) : IEmailTemplateRenderer

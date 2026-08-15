@@ -1,4 +1,4 @@
-using ElBaul.Application.Photos;
+using ElBaul.Core.Photos.Application;
 
 namespace ElBaul.Tests.Application.Photos;
 

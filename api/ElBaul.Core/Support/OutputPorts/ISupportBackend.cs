@@ -1,6 +1,6 @@
 using Ne2Studio.Common;
 
-namespace ElBaul.OutputPorts.Support;
+namespace ElBaul.Core.Support.OutputPorts;
 // Secondary port for wherever support requests actually end up (currently LeadHub,
 // see ElBaul.Infra/LeadHubSupportBackend). Lets us swap or add ticket backends
 // without touching SupportManager.

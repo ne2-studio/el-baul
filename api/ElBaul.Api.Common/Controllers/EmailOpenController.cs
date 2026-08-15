@@ -1,5 +1,5 @@
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

@@ -1,5 +1,5 @@
-using ElBaul.Application.Chat;
-using ElBaul.OutputPorts.Bauls;
+using ElBaul.Core.Chat.Application;
+using ElBaul.Core.Bauls.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;

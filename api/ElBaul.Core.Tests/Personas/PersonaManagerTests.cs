@@ -1,8 +1,8 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Personas;
-using ElBaul.Application.Photos;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

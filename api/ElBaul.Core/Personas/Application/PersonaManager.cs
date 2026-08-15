@@ -1,20 +1,21 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Photos;
-using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Personas.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 // Disambiguates from OutputPorts.Bauls.BaulAccess (the "baúl + role" DTO from
 // IBaulRepository.GetSharedForUserAsync) — this file means the authorization-check type
 // returned by BaulAccessService.AuthorizeAsync.
-using BaulAccess = ElBaul.Application.Bauls.BaulAccess;
+using BaulAccess = ElBaul.Core.Bauls.Application.BaulAccess;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Personas;
+using ElBaul.Core.Application;
+namespace ElBaul.Core.Personas.Application;
 public class PersonaManager(
     ILogger<PersonaManager> logger,
     IBaulRepository baulRepository,

@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 /// <summary>
 /// Read-only projection of photo listing rows (chapter grid, loose photos, the paginated baúl
 /// grid, a persona's tagged photos) — each row already carries its recuerdo count, batched

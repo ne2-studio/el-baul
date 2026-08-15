@@ -1,11 +1,11 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Personas;
-using ElBaul.Application.Sharing;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Sharing.Application;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Tests.Fakes;

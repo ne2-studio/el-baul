@@ -1,8 +1,8 @@
 using ElBaul.Domain;
-using ElBaul.InputPorts.Photos;
+using ElBaul.Core.Photos.InputPorts;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Feed;
+namespace ElBaul.Core.Feed.InputPorts;
 public interface IBaulFeedManager
 {
     /// <summary>One page of recuerdo, photo-upload-batch and chapter-created cards for a baúl's

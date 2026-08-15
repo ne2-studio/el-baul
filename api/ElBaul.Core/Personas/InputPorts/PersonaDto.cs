@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Personas;
+namespace ElBaul.Core.Personas.InputPorts;
 public record PersonaDto
 (
     string Id,

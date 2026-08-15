@@ -1,16 +1,17 @@
-using ElBaul.Application.Chat;
-using ElBaul.InputPorts.Admin;
-using ElBaul.OutputPorts.Admin;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Application;
+using ElBaul.Core.Chat.Application;
+using ElBaul.Core.Admin.InputPorts;
+using ElBaul.Core.Admin.OutputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Admin;
+namespace ElBaul.Core.Admin.Application;
 /// <summary>
 /// Backs the backoffice's Dashboard/Usuarios/Baúles screens. Unlike every other manager in
 /// this codebase, methods here do NOT check per-call ownership (the "load the baúl, check

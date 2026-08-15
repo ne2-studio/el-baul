@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.TvMode;
+namespace ElBaul.Core.TvMode.OutputPorts;
 public interface ITvSessionRepository
 {
     Task<TvSession?> GetByTokenAsync(string token);

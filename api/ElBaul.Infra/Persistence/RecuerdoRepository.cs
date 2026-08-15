@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Recuerdos.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Notifications;
+namespace ElBaul.Core.Notifications.OutputPorts;
 public interface ISentEmailRepository
 {
     Task<SentEmail?> GetByDeduplicationKeyAsync(string deduplicationKey);

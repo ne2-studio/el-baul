@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.TvMode;
+using ElBaul.Core.TvMode.OutputPorts;
 namespace ElBaul.Infra.Lite;
 
 public class InMemoryTvPairingRepository : ITvPairingRepository

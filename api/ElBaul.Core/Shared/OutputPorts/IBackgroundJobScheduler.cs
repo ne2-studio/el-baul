@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Shared;
+namespace ElBaul.Core.Shared.OutputPorts;
 /// <summary>
 /// Fan-out for per-user background work (Hangfire in Infra). Kept as its own port so the
 /// Application layer stays free of a direct Hangfire dependency, same as every other

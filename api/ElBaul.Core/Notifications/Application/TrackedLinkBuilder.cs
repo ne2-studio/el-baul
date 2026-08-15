@@ -1,5 +1,5 @@
-using ElBaul.OutputPorts.Notifications;
-namespace ElBaul.Application.Notifications;
+using ElBaul.Core.Notifications.OutputPorts;
+namespace ElBaul.Core.Notifications.Application;
 /// <summary>
 /// Wraps a destination URL into an absolute /email/click/{token} tracking link. The token is
 /// self-contained (signed via IEmailLinkSigner) — it carries the owning SentEmail's id, the

@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 namespace ElBaul.Infra.Persistence;

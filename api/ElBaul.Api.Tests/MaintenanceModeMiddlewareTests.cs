@@ -1,5 +1,5 @@
 using ElBaul.Api.Middleware;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 

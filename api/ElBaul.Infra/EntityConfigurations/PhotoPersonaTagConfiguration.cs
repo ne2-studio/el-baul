@@ -1,5 +1,5 @@
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

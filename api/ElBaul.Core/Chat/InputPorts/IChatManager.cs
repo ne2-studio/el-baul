@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Chat;
+namespace ElBaul.Core.Chat.InputPorts;
 public interface IChatManager
 {
     Task<Result<IEnumerable<ChatMessageDto>>> GetMessagesAsync(BaulId baulId);

@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;

@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Personas;
-using ElBaul.Application.Photos;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

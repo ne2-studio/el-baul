@@ -1,6 +1,6 @@
 using Ne2Studio.Common;
 
-namespace ElBaul.OutputPorts.Notifications;
+namespace ElBaul.Core.Notifications.OutputPorts;
 public record EmailMessage(string To, string Subject, string Html, string PlainText);
 
 public record EmailSendResult(string ProviderMessageId);

@@ -1,5 +1,5 @@
 using Ne2Studio.Common;
-namespace ElBaul.InputPorts.Users;
+namespace ElBaul.Core.Users.InputPorts;
 public interface IUserManager
 {
     Task<Result<UserProfileDto>> GetCurrentProfileAsync();

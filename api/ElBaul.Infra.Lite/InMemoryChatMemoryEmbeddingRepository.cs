@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Chat;
+using ElBaul.Core.Chat.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 

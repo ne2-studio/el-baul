@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Chat;
+namespace ElBaul.Core.Chat.OutputPorts;
 public interface IChatMessageRepository
 {
     /// <summary>The single ongoing conversation thread for a user in a baúl, oldest first —

@@ -1,7 +1,7 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Domain;
-namespace ElBaul.Application.Personas;
+namespace ElBaul.Core.Personas.Application;
 // A Persona's apodo/avatar for a baúl — always the display identity for recuerdo/chapter
 // authorship, never the underlying account's OIDC-synced name (a nickname is what the
 // family chose; the account name may be unset or unrelated). See docs/API-CONVENTIONS.md's

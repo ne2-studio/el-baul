@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Moderation;
-using ElBaul.OutputPorts.Personas;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Moderation.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 

@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Bauls;
+namespace ElBaul.Core.Bauls.OutputPorts;
 public record Baul
 (
     BaulId Id,

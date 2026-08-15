@@ -1,13 +1,13 @@
-using ElBaul.InputPorts.Notifications;
-using ElBaul.OutputPorts.Feed;
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Notifications.InputPorts;
+using ElBaul.Core.Feed.OutputPorts;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Notifications;
+namespace ElBaul.Core.Notifications.Application;
 /// <summary>
 /// Daily, aggregated, silence-by-default: at most one push per user per day, only sent when
 /// there is real family activity (other people's recuerdos/fotos/capítulos) to report since the

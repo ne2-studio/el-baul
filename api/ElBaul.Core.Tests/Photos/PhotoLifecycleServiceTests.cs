@@ -1,8 +1,8 @@
-using ElBaul.Application.Photos;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
 
 using ElBaul.Tests.Fakes;
 

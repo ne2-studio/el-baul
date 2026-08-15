@@ -1,6 +1,6 @@
 using Ne2Studio.Common;
 
-namespace ElBaul.OutputPorts.Chat;
+namespace ElBaul.Core.Chat.OutputPorts;
 public record ChatTurn(string Role, string Content);
 
 // Secondary port for whichever LLM actually answers chat questions (currently OpenAI, see

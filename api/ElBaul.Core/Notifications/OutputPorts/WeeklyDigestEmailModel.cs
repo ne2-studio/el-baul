@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Notifications;
+namespace ElBaul.Core.Notifications.OutputPorts;
 public enum DigestBlockKind
 {
     NewChapter,

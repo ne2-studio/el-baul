@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Shared;
+namespace ElBaul.Core.Shared.OutputPorts;
 // The object-storage key a photo or persona avatar is saved under. Two related but distinct
 // shapes exist ("{userId}/{guid}-{fileName}" for photos, "personas/{personaId}/{guid}-
 // {fileName}" for persona avatars) — both share the same "last path segment ends in

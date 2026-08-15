@@ -1,13 +1,13 @@
-using ElBaul.Application.Sharing;
-using ElBaul.InputPorts.TvMode;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.TvMode;
+using ElBaul.Core.Sharing.Application;
+using ElBaul.Core.TvMode.InputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.TvMode.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.TvMode;
+namespace ElBaul.Core.TvMode.Application;
 
 // See docs PRD "Modo TV". Turns the old "type a link into the TV" flow around: the TV lands on
 // a fixed, baúl-agnostic URL (CreateAsync, called with no baúl in hand) and shows a QR built

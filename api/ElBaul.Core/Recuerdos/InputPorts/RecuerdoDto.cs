@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Recuerdos;
+namespace ElBaul.Core.Recuerdos.InputPorts;
 public record RecuerdoDto
 (
     string Id,

@@ -1,9 +1,9 @@
-using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Personas.InputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Personas;
+namespace ElBaul.Core.Personas.Application;
 public interface IPersonaDtoProjector
 {
     // custodioId decides the wire "custodio" role string (Custodio isn't a stored BaulRole

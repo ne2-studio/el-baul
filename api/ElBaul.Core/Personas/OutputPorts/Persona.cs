@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Personas;
+namespace ElBaul.Core.Personas.OutputPorts;
 // The three observable phases of a Persona's access: invited but unclaimed, claimed by an
 // account, or revoked. Derived from (Role, UserId) rather than stored, because BaulRoleParser
 // never accepts "sin_acceso" from the wire — Revoked is only ever reached via Persona.Revoke().

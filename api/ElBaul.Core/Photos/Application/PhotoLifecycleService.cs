@@ -1,8 +1,8 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-namespace ElBaul.Application.Photos;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+namespace ElBaul.Core.Photos.Application;
 public class PhotoLifecycleService(
     IPhotoRepository photoRepository,
     IChapterRepository chapterRepository,

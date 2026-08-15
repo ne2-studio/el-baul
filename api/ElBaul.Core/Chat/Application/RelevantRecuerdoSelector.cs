@@ -1,9 +1,9 @@
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.Extensions.Logging;
 using ElBaul.Domain;
 
-namespace ElBaul.Application.Chat;
+namespace ElBaul.Core.Chat.Application;
 
 public interface IRelevantRecuerdoSelector
 {

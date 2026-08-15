@@ -1,6 +1,6 @@
 using System.Net.Mail;
 using Ne2Studio.Common;
-namespace ElBaul.Application.Notifications;
+namespace ElBaul.Core.Notifications.Application;
 // A syntactically valid email address, worth being a VO for the behavior (Create), not just
 // the label: it's the single place "is this address well-formed enough to send to" is decided,
 // replacing the copy-pasted IsValidEmail in WelcomeEmailManager/WeeklyDigestManager. Deliberately

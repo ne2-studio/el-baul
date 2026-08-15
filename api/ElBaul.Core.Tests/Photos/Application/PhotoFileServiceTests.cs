@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using ElBaul.Application.Photos;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Tests.Fakes;
 
 using Microsoft.Extensions.Logging.Abstractions;

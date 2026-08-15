@@ -1,17 +1,17 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Personas;
-using ElBaul.InputPorts.Sharing;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Sharing;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Sharing.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Sharing.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Sharing;
+namespace ElBaul.Core.Sharing.Application;
 public class SharedLinkManager(
     ILogger<SharedLinkManager> logger,
     ISharedLinkRepository sharedLinkRepository,

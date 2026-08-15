@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Admin;
+using ElBaul.Core.Admin.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 

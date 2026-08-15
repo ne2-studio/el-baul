@@ -1,6 +1,6 @@
 using Ne2Studio.Common;
 
-namespace ElBaul.OutputPorts.Recuerdos;
+namespace ElBaul.Core.Recuerdos.OutputPorts;
 // Secondary port for whichever embedding provider turns recuerdo/query text into vectors
 // (currently OpenAI, see ElBaul.Infra/OpenAiEmbeddingBackend). Kept separate from
 // IAiChatBackend since it's a different OpenAI endpoint with a different request/response shape.

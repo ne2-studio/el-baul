@@ -1,4 +1,4 @@
-using ElBaul.InputPorts.TvMode;
+using ElBaul.Core.TvMode.InputPorts;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

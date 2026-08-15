@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Notifications;
+using ElBaul.Core.Notifications.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 

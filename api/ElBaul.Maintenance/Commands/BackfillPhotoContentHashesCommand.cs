@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
-using ElBaul.Application.Photos;
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Photos.OutputPorts;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Maintenance.Commands;

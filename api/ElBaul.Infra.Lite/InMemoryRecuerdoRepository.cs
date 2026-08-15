@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 

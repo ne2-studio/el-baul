@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Recuerdos.OutputPorts;
 using Ne2Studio.Common;
 namespace ElBaul.Infra.Lite;
 

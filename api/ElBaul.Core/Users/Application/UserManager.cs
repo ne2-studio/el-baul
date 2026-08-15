@@ -1,9 +1,9 @@
-using ElBaul.InputPorts.Users;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Users.InputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 
-namespace ElBaul.Application.Users;
+namespace ElBaul.Core.Users.Application;
 public class UserManager(
     IUserRepository userRepository,
     ICurrentUserProvider currentUserProvider) : IUserManager

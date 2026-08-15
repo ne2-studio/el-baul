@@ -1,7 +1,7 @@
-using ElBaul.OutputPorts.Moderation;
-using ElBaul.OutputPorts.Personas;
+using ElBaul.Core.Moderation.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Bauls;
+namespace ElBaul.Core.Bauls.OutputPorts;
 /// <summary>
 /// Owns the Baul aggregate and its baul-scoped child collections (sharing,
 /// removal requests) — they never make sense outside the

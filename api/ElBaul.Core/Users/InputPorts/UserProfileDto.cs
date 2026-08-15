@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Users;
+namespace ElBaul.Core.Users.InputPorts;
 public record UserProfileDto
 (
     string Id,

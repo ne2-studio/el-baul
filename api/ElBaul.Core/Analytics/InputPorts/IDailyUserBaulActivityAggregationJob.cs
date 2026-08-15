@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Analytics;
+namespace ElBaul.Core.Analytics.InputPorts;
 
 public interface IDailyUserBaulActivityAggregationJob
 {

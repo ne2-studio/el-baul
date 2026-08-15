@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-using ElBaul.OutputPorts.Bauls;
+using ElBaul.Core.Bauls.OutputPorts;
 
 namespace ElBaul.Tests;
 

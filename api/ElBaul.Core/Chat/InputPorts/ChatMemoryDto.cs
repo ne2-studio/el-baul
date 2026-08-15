@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Chat;
+namespace ElBaul.Core.Chat.InputPorts;
 public record ChatMemoryDto
 (
     string Id,

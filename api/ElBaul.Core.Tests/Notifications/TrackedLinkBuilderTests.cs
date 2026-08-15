@@ -1,4 +1,4 @@
-using ElBaul.Application.Notifications;
+using ElBaul.Core.Notifications.Application;
 using ElBaul.Tests.Fakes;
 namespace ElBaul.Tests;
 

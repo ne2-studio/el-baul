@@ -1,6 +1,6 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Feed;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Feed.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

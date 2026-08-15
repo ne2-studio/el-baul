@@ -1,7 +1,7 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Chapters;
-using ElBaul.Application.Personas;
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Recuerdos.OutputPorts;
 
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;

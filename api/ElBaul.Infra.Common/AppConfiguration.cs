@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.Extensions.Configuration;
 
 namespace ElBaul.Infra;

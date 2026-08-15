@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

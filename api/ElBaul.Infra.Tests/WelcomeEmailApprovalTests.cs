@@ -1,5 +1,5 @@
 using ElBaul.Infra.Emails;
-using ElBaul.OutputPorts.Notifications;
+using ElBaul.Core.Notifications.OutputPorts;
 
 namespace ElBaul.Infra.Tests;
 

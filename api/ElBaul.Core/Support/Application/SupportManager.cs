@@ -1,12 +1,12 @@
-using ElBaul.InputPorts.Support;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Support;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Support.InputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Support.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
-namespace ElBaul.Application.Support;
+namespace ElBaul.Core.Support.Application;
 public class SupportManager(
     ILogger<SupportManager> logger,
     IUserRepository userRepository,

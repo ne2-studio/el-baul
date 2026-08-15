@@ -1,14 +1,14 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Chapters;
-using ElBaul.Application.Personas;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Infra.PersistenceTests.Fakes;
 using ElBaul.Infra.Persistence;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;

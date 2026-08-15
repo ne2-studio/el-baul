@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.TvMode;
+namespace ElBaul.Core.TvMode.OutputPorts;
 
 // Temporary, read-only access to one baúl's photos for Modo TV — see docs PRD "Modo TV".
 // Deliberately time-limited (ExpiresAt), unlike SharedLink/BaulInviteLink which only revoke

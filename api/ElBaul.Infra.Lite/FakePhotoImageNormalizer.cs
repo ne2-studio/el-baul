@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Photos;
+using ElBaul.Core.Photos.OutputPorts;
 namespace ElBaul.Infra.Lite;
 
 public class FakePhotoImageNormalizer : IPhotoImageNormalizer

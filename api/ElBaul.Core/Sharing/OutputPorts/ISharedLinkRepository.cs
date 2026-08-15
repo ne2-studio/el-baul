@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Sharing;
+namespace ElBaul.Core.Sharing.OutputPorts;
 public interface ISharedLinkRepository
 {
     Task<SharedLink?> GetByTokenAsync(string token);

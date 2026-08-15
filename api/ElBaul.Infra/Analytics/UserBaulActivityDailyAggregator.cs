@@ -1,5 +1,5 @@
-using ElBaul.OutputPorts.Analytics;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Analytics.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

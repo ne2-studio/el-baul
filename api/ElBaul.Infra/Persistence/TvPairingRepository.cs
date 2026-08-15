@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.TvMode;
+using ElBaul.Core.TvMode.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElBaul.Infra.Persistence;

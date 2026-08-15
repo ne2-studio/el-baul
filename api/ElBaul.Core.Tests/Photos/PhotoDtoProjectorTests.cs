@@ -1,7 +1,7 @@
-using ElBaul.Application.Photos;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
 
 using ElBaul.Tests.Fakes;
 

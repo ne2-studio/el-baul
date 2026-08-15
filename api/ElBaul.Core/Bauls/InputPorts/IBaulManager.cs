@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Bauls;
+namespace ElBaul.Core.Bauls.InputPorts;
 public interface IBaulManager
 {
     Task<Result<IEnumerable<BaulDto>>> GetAllForCurrentUserAsync();

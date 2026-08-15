@@ -1,8 +1,8 @@
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Personas;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Admin;
+namespace ElBaul.Core.Admin.OutputPorts;
 /// <summary>
 /// The backoffice baúl detail screen. Personas doubles as both "miembros" and "personas"
 /// from the PRD — they're the same rows (Persona.Id is already the PersonId the

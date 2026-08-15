@@ -1,15 +1,15 @@
-using ElBaul.Application.Bauls;
-using ElBaul.InputPorts.Personas;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Personas.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Personas;
+namespace ElBaul.Core.Personas.Application;
 public class PhotoPersonaTagManager(
     ILogger<PhotoPersonaTagManager> logger,
     IPhotoRepository photoRepository,

@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Personas;
+namespace ElBaul.Core.Personas.InputPorts;
 // Display-only shape for the personas tagged in a photo — deliberately not the full
 // PersonaDto (that needs a User? lookup and a canEdit computation PhotoManager has no
 // business knowing about).

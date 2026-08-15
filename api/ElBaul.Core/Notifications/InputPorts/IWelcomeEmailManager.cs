@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Notifications;
+namespace ElBaul.Core.Notifications.InputPorts;
 public interface IWelcomeEmailManager
 {
     /// <summary>Recurring-job entry point: finds eligible users and enqueues one job per user.</summary>

@@ -1,12 +1,12 @@
-using ElBaul.OutputPorts.Notifications;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Notifications;
+namespace ElBaul.Core.Notifications.Application;
 /// <summary>
 /// Shared reserve -> render -> send -> persist orchestration for every outbound email type
 /// (welcome, weekly digest, and their test variants). Not a Ports/Input use case on its own —

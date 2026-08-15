@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.AspNetCore.Http;
 
 namespace ElBaul.Api.Middleware;

@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Feed;
+namespace ElBaul.Core.Feed.OutputPorts;
 public interface IBaulFeedCursorRepository
 {
     /// <summary>Null when the user has never opened this baúl's feed before.</summary>

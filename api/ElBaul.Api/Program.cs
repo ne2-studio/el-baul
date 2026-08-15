@@ -1,8 +1,8 @@
 using ElBaul.Api;
 using ElBaul.Api.Common;
 using ElBaul.Infra;
-using ElBaul.InputPorts.Analytics;
-using ElBaul.InputPorts.Notifications;
+using ElBaul.Core.Analytics.InputPorts;
+using ElBaul.Core.Notifications.InputPorts;
 
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -36,7 +36,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<ElBaulDbContext>();
     await dbContext.Database.MigrateAsync();
 
-    var photoStorage = scope.ServiceProvider.GetRequiredService<ElBaul.OutputPorts.Photos.IPhotoStorage>();
+    var photoStorage = scope.ServiceProvider.GetRequiredService<ElBaul.Core.Photos.OutputPorts.IPhotoStorage>();
     await photoStorage.EnsureBucketExistsAsync();
 
     // Service-based API (not the static RecurringJob.AddOrUpdate) — the static one relies on

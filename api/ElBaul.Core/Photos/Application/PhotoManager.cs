@@ -1,15 +1,16 @@
-using ElBaul.Application.Bauls;
-using ElBaul.InputPorts.Photos;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chapters;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Photos.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Photos;
+using ElBaul.Core.Application;
+namespace ElBaul.Core.Photos.Application;
 public class PhotoManager(
     ILogger<PhotoManager> logger,
     IPhotoRepository photoRepository,

@@ -2,7 +2,7 @@ using ElBaul.Domain;
 using ElBaul.Infra.Emails;
 using ElBaul.Infra.Chat;
 using ElBaul.Infra.PushNotifications;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Shared.OutputPorts;
 using Hangfire;
 
 namespace ElBaul.Infra;

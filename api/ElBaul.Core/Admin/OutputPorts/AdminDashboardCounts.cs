@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Admin;
+namespace ElBaul.Core.Admin.OutputPorts;
 /// <summary>
 /// Raw DB counts for the backoffice dashboard. External tool links are not part of this —
 /// they're config, read straight from IConfiguration at the Api layer (AdminController),

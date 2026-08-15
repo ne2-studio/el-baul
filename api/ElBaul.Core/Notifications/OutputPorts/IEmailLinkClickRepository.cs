@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Notifications;
+namespace ElBaul.Core.Notifications.OutputPorts;
 public interface IEmailLinkClickRepository
 {
     /// <summary>Legacy path only — resolves tokens minted before self-contained signed tokens.</summary>

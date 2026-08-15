@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.TvMode;
+namespace ElBaul.Core.TvMode.OutputPorts;
 public interface ITvPairingRepository
 {
     Task<TvPairing?> GetByCodeAsync(string code);

@@ -1,4 +1,4 @@
-using ElBaul.InputPorts.Notifications;
+using ElBaul.Core.Notifications.InputPorts;
 
 using Hangfire;
 using Serilog.Context;

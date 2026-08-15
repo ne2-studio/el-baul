@@ -1,7 +1,7 @@
 using ElBaul.Domain;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Sharing;
+namespace ElBaul.Core.Sharing.InputPorts;
 public interface ISharedLinkManager
 {
     Task<Result<CreateSharedLinkResult>> CreateForPhotoAsync(PhotoId photoId);

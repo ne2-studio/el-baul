@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Recuerdos;
+namespace ElBaul.Core.Recuerdos.OutputPorts;
 /// <summary>
 /// Read-only projection of recuerdo feed rows (a baúl's whole wall, one chapter's, one photo's)
 /// — each row already carries its photo's storage key (for the thumbnail) and its chapter's

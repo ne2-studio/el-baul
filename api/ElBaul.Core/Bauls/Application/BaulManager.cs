@@ -1,14 +1,15 @@
-using ElBaul.InputPorts.Bauls;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Application;
+using ElBaul.Core.Bauls.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Bauls;
+namespace ElBaul.Core.Bauls.Application;
 public class BaulManager(
     ILogger<BaulManager> logger,
     IBaulRepository baulRepository,

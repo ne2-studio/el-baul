@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.OutputPorts.Admin;
+namespace ElBaul.Core.Admin.OutputPorts;
 /// <summary>
 /// Cross-aggregate, unscoped read queries for the backoffice — dashboard KPIs and the
 /// Usuarios/Baúles list/detail screens. Every other repository in this codebase is built

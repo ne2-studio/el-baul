@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Analytics;
+namespace ElBaul.Core.Analytics.OutputPorts;
 
 public interface IUserBaulActivityDailyAggregator
 {

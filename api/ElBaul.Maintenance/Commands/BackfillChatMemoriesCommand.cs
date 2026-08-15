@@ -1,6 +1,6 @@
-using ElBaul.InputPorts.Chat;
-using ElBaul.OutputPorts.Chat;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Chat.InputPorts;
+using ElBaul.Core.Chat.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Maintenance.Commands;

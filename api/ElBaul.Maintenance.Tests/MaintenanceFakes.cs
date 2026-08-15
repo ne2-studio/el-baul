@@ -1,6 +1,6 @@
 using ElBaul.Infra.Lite;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Maintenance.Tests;
 

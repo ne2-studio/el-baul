@@ -1,4 +1,4 @@
-using ElBaul.OutputPorts.Personas;
+using ElBaul.Core.Personas.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
 using ElBaul.Domain;

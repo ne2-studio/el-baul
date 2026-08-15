@@ -1,4 +1,4 @@
-namespace ElBaul.InputPorts.Bauls;
+namespace ElBaul.Core.Bauls.InputPorts;
 public record BaulDto
 (
     string Id,

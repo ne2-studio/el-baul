@@ -1,8 +1,8 @@
 using ElBaul.Domain;
-using ElBaul.InputPorts.Personas;
+using ElBaul.Core.Personas.InputPorts;
 using Ne2Studio.Common;
 
-namespace ElBaul.InputPorts.Sharing;
+namespace ElBaul.Core.Sharing.InputPorts;
 public interface IBaulInviteLinkManager
 {
     Task<Result<BaulInviteLinkDto>> GetOrCreateAsync(BaulId baulId);

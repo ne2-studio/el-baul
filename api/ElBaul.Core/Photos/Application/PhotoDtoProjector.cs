@@ -1,10 +1,10 @@
-using ElBaul.InputPorts.Photos;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Recuerdos;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Photos.InputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Photos;
+namespace ElBaul.Core.Photos.Application;
 public class PhotoDtoProjector(
     IPhotoStorage photoStorage,
     IRecuerdoRepository recuerdoRepository,

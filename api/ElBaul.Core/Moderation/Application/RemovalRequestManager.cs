@@ -1,16 +1,17 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Photos;
-using ElBaul.InputPorts.Moderation;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Photos;
-using ElBaul.OutputPorts.Shared;
-using ElBaul.OutputPorts.Moderation;
-using ElBaul.OutputPorts.Users;
+using ElBaul.Core.Application;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Moderation.InputPorts;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Moderation.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-namespace ElBaul.Application.Moderation;
+namespace ElBaul.Core.Moderation.Application;
 public class RemovalRequestManager(
     ILogger<RemovalRequestManager> logger,
     IBaulRepository baulRepository,

@@ -1,9 +1,9 @@
-using ElBaul.Application.Bauls;
-using ElBaul.Application.Chat;
-using ElBaul.OutputPorts.Bauls;
-using ElBaul.OutputPorts.Chat;
-using ElBaul.OutputPorts.Personas;
-using ElBaul.OutputPorts.Shared;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chat.Application;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chat.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Infra.Lite;

@@ -1,4 +1,4 @@
-namespace ElBaul.OutputPorts.Photos;
+namespace ElBaul.Core.Photos.OutputPorts;
 public record NormalizedPhoto(Stream Content, string ContentType, string FileName);
 
 /// <summary>
