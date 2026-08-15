@@ -21,8 +21,6 @@ public class BaulInviteLinkManager(
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
     IPhotoStorage photoStorage,
-    IUserInfoClient userInfoClient,
-    IProfilePictureFetcher profilePictureFetcher,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
@@ -226,37 +224,7 @@ public class BaulInviteLinkManager(
         await personaRepository.AddPersonaAsync(persona);
         logger.LogInformation("Global invite accepted, persona auto-created {BaulId} {PersonaId}", link.BaulId, persona.Id);
 
-        persona = await TryImportAvatarAsync(persona);
-
         return await personaDtoProjector.ProjectWithResolvedUserAsync(persona, user, canEdit: true, baul.CustodioId);
-    }
-
-    private async Task<Persona> TryImportAvatarAsync(Persona persona)
-    {
-        try
-        {
-            var accessToken = currentUserProvider.GetAccessToken();
-            if (accessToken is null) return persona;
-
-            var userInfo = await userInfoClient.GetUserInfoAsync(accessToken);
-            if (userInfo?.Picture is not { Length: > 0 } pictureUrl) return persona;
-
-            var bytes = await profilePictureFetcher.TryFetchAsync(pictureUrl);
-            if (bytes is null) return persona;
-
-            var key = StorageKey.ForPersonaAvatar(persona.Id, idGenerator.NewId(), "avatar.jpg");
-            await photoStorage.SaveAsync(key, new MemoryStream(bytes), "image/jpeg");
-
-            var updated = persona.WithImportedAvatar(key);
-            await personaRepository.UpdatePersonaAsync(updated);
-            return updated;
-        }
-        catch (Exception ex)
-        {
-            // Best-effort only — never fail the join over a decorative avatar.
-            logger.LogWarning(ex, "Best-effort avatar import failed for auto-created persona {PersonaId}", persona.Id);
-            return persona;
-        }
     }
 
     private BaulInviteLinkDto ToDto(BaulInviteLink link) =>

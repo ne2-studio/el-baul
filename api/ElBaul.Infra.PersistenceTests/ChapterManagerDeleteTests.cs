@@ -103,5 +103,4 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
 file sealed class StaticCurrentUserProvider(string userId) : ICurrentUserProvider
 {
     public UserId GetUserId() => new(userId);
-    public string? GetAccessToken() => null;
 }

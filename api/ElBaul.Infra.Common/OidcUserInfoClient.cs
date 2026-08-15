@@ -38,7 +38,7 @@ public class OidcUserInfoClient(HttpClient httpClient, IConfiguration configurat
                 return null;
             }
 
-            return new UserInfo(payload.Email, payload.Name, payload.Picture);
+            return new UserInfo(payload.Email, payload.Name);
         }
         catch (HttpRequestException ex)
         {
@@ -49,6 +49,5 @@ public class OidcUserInfoClient(HttpClient httpClient, IConfiguration configurat
 
     private record UserInfoResponse(
         [property: JsonPropertyName("email")] string? Email,
-        [property: JsonPropertyName("name")] string? Name,
-        [property: JsonPropertyName("picture")] string? Picture);
+        [property: JsonPropertyName("name")] string? Name);
 }

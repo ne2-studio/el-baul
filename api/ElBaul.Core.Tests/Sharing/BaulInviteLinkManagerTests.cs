@@ -46,12 +46,10 @@ public class BaulInviteLinkManagerTests
         return baulId;
     }
 
-    private BaulInviteLinkManager CreateManager(
-        string currentUserId, UserInfo? userInfo = null, IProfilePictureFetcher? pictureFetcher = null, string? accessToken = "token-abc") =>
+    private BaulInviteLinkManager CreateManager(string currentUserId) =>
         new(
             NullLogger<BaulInviteLinkManager>.Instance, _links, _baules, _personas, _photos, _users, _photoStorage,
-            new FakeUserInfoClient(userInfo), pictureFetcher ?? new FakeProfilePictureFetcher(),
-            new StaticIdGenerator(Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId, accessToken),
+            new StaticIdGenerator(Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
             _configuration, new BaulAccessService(_baules, _personas, NullLogger<BaulAccessService>.Instance),
             new PersonaDtoProjector(_photos, _photoStorage, _users));
 
@@ -290,49 +288,6 @@ public class BaulInviteLinkManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ApplicationErrorCode.NotFound, result.Error.Code);
-    }
-
-    [Fact]
-    public async Task AcceptAsync_ShouldImportAvatar_WhenPictureClaimPresent()
-    {
-        var baulId = await SeedBaulAsync();
-        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
-        var userInfo = new UserInfo("guest@test.com", "Invitado", "https://provider.test/avatar.jpg");
-        var fetcher = new FakeProfilePictureFetcher([1, 2, 3]);
-
-        var result = await CreateManager(GuestId, userInfo, fetcher).AcceptAsync(link.Value.Token);
-
-        Assert.True(result.IsSuccess);
-        Assert.NotEmpty(_photoStorage.SavedKeys);
-        var persona = await _personas.GetPersonaByUserIdAsync(baulId, new UserId(GuestId));
-        Assert.NotNull(persona!.AvatarPhotoKey);
-    }
-
-    [Fact]
-    public async Task AcceptAsync_ShouldSucceed_WhenAvatarFetchThrows()
-    {
-        var baulId = await SeedBaulAsync();
-        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
-        var userInfo = new UserInfo("guest@test.com", "Invitado", "https://provider.test/avatar.jpg");
-        var throwingFetcher = new FakeProfilePictureFetcher(throwOnFetch: true);
-
-        var result = await CreateManager(GuestId, userInfo, throwingFetcher).AcceptAsync(link.Value.Token);
-
-        Assert.True(result.IsSuccess);
-        Assert.Empty(_photoStorage.SavedKeys);
-    }
-
-    [Fact]
-    public async Task AcceptAsync_ShouldSucceed_WhenNoPictureClaim()
-    {
-        var baulId = await SeedBaulAsync();
-        var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
-        var userInfo = new UserInfo("guest@test.com", "Invitado");
-
-        var result = await CreateManager(GuestId, userInfo).AcceptAsync(link.Value.Token);
-
-        Assert.True(result.IsSuccess);
-        Assert.Empty(_photoStorage.SavedKeys);
     }
 
     [Fact]

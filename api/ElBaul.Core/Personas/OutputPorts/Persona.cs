@@ -59,9 +59,6 @@ public record Persona
     public Persona WithRole(BaulRole role) =>
         this with { Role = role };
 
-    public Persona WithImportedAvatar(string avatarPhotoKey) =>
-        this with { AvatarPhotoKey = avatarPhotoKey };
-
     public Persona WithAvatarPhoto(Photo photo, decimal cropX, decimal cropY, decimal cropScale) =>
         this with
         {

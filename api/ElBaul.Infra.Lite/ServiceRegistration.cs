@@ -97,7 +97,6 @@ public static class ServiceRegistration
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
         services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
-        services.AddHttpClient<IProfilePictureFetcher, HttpProfilePictureFetcher>();
 
         return services;
     }

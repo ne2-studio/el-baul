@@ -88,7 +88,6 @@ public static class ServiceRegistration
         services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
 
         services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
-        services.AddHttpClient<IProfilePictureFetcher, HttpProfilePictureFetcher>();
 
         // LeadHub responds to a successful submission with a redirect to a "thanks"
         // page we have no use for — don't waste a round trip following it.
