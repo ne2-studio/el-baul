@@ -302,7 +302,6 @@ public class PersonaManagerTests
 
         var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.Equal(new PhotoId(photoId), persona!.AvatarPhotoId);
-        Assert.Null(persona.AvatarPhotoKey);
 
         var photo = await _fixture.Photos.GetByIdAsync(new PhotoId(photoId));
         Assert.NotNull(photo);

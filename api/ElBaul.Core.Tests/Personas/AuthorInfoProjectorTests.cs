@@ -59,18 +59,6 @@ public class AuthorInfoProjectorTests
     }
 
     [Fact]
-    public async Task GetAsync_ShouldResolveAvatarUrl_FromLegacyAvatarKey()
-    {
-        var baulId = await SeedBaulAsync();
-        await _personaRepository.AddPersonaAsync(new Persona(
-            new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Administrador, Now, AvatarPhotoKey: "avatar-key"));
-
-        var author = await CreateProjector().GetAsync(baulId, new UserId(CustodioId));
-
-        Assert.Equal("https://imgproxy.test/PersonaAvatar/avatar-key", author.AvatarUrl);
-    }
-
-    [Fact]
     public async Task GetManyAsync_ShouldResolveEveryDistinctAuthor_InOnePass()
     {
         var baulId = await SeedBaulAsync();

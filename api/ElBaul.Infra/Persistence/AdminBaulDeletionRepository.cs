@@ -37,10 +37,7 @@ public class AdminBaulDeletionRepository(
         if (baul is null) return null;
 
         var photos = (await photoRepository.GetAllByBaulIdAsync(baulId)).ToList();
-        var personas = (await personaRepository.GetPersonasAsync(baulId)).ToList();
-        var storageObjects = new DeletedBaulStorageObjects(
-            photos.Select(p => p.StorageKey).ToList(),
-            personas.Where(p => !string.IsNullOrEmpty(p.AvatarPhotoKey)).Select(p => p.AvatarPhotoKey!).ToList());
+        var storageObjects = new DeletedBaulStorageObjects(photos.Select(p => p.StorageKey).ToList());
 
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {

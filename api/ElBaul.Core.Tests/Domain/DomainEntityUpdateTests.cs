@@ -31,7 +31,7 @@ public class DomainEntityUpdateTests
     }
 
     [Fact]
-    public void Persona_WithAvatarPhoto_UsesThePhotoIdAndClearsImportedAvatarKey()
+    public void Persona_WithAvatarPhoto_UsesThePhotoIdAndCrop()
     {
         var persona = new Persona(
             new PersonaId(Guid.NewGuid()),
@@ -39,8 +39,7 @@ public class DomainEntityUpdateTests
             new UserId("user-1"),
             "Tita",
             BaulRole.Colaborador,
-            new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc),
-            AvatarPhotoKey: "imported/avatar.jpg");
+            new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
         var photo = Photo.Create(
             new PhotoId(Guid.NewGuid()),
             null,
@@ -52,7 +51,6 @@ public class DomainEntityUpdateTests
 
         var updated = persona.WithAvatarPhoto(photo, cropX: 0.2m, cropY: 0.3m, cropScale: 1.4m);
 
-        Assert.Null(updated.AvatarPhotoKey);
         Assert.Equal(photo.Id, updated.AvatarPhotoId);
         Assert.Equal(0.2m, updated.AvatarCropX);
         Assert.Equal(0.3m, updated.AvatarCropY);

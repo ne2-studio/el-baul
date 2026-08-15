@@ -18,7 +18,6 @@ public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
         builder.Property(s => s.UserId).HasConversion(IdValueConverters.UserId).HasMaxLength(255);
         builder.Property(s => s.Nickname).IsRequired().HasMaxLength(100);
         builder.Property(s => s.Name).HasMaxLength(100);
-        builder.Property(s => s.AvatarPhotoKey).HasMaxLength(1000);
         builder.Property(s => s.AvatarPhotoId).HasConversion(IdValueConverters.PhotoId);
         builder.Property(s => s.AvatarCropX).HasPrecision(5, 4).HasDefaultValue(0.5m);
         builder.Property(s => s.AvatarCropY).HasPrecision(5, 4).HasDefaultValue(0.5m);

@@ -91,11 +91,9 @@ public class AdminManager(
         var deletedStorageObjects = await baulDeletionRepository.DeleteBaulGraphAsync(baulId);
         if (deletedStorageObjects is null) return Result.Failure(ApplicationError.NotFound("Baul not found"));
 
-        logger.LogWarning(
-            "Baul hard-deleted ({PhotoCount} photos, {PersonaAvatarCount} persona avatars)",
-            deletedStorageObjects.PhotoStorageKeys.Count, deletedStorageObjects.PersonaAvatarStorageKeys.Count);
+        logger.LogWarning("Baul hard-deleted ({PhotoCount} photos)", deletedStorageObjects.PhotoStorageKeys.Count);
 
-        foreach (var key in deletedStorageObjects.AllKeys)
+        foreach (var key in deletedStorageObjects.PhotoStorageKeys)
         {
             try
             {

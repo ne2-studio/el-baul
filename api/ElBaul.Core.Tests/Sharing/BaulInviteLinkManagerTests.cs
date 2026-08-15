@@ -154,9 +154,11 @@ public class BaulInviteLinkManagerTests
         await _baules.UpdateAsync(baul!.WithCover(coverPhoto, 0.5m, 0.5m, 1m, Now));
 
         // Custodio persona (seeded by SeedBaulAsync) has no avatar and should be skipped.
+        var avatarPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "avatar-key", null, null, null, new UserId(CustodioId), Now);
+        await _photos.CreateAsync(avatarPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now,
-            AvatarPhotoKey: "avatar-key"));
+            AvatarPhotoId: avatarPhoto.Id));
 
         var manager = CreateManager(CustodioId);
         var link = await manager.GetOrCreateAsync(baulId);
@@ -192,17 +194,21 @@ public class BaulInviteLinkManagerTests
     public async Task GetPreviewAsync_ShouldResolveEachPersonasAvatar_Independently()
     {
         // Targets GetPreviewAsync's batched ProjectManyAsync avatar resolution specifically:
-        // two members with different avatar keys must each surface their own avatar, not one
+        // two members with different avatar photos must each surface their own avatar, not one
         // leaking onto the other — the exact mistake a broken dictionary lookup would produce.
         var baulId = await SeedBaulAsync();
+        var firstAvatarPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "first-avatar-key", null, null, null, new UserId(CustodioId), Now);
+        await _photos.CreateAsync(firstAvatarPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now,
-            AvatarPhotoKey: "first-avatar-key"));
+            AvatarPhotoId: firstAvatarPhoto.Id));
         const string secondGuestId = "guest-2";
         _users.Seed(new User(new UserId(secondGuestId), "guest2@test.com", "Segundo invitado", Now));
+        var secondAvatarPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "second-avatar-key", null, null, null, new UserId(CustodioId), Now);
+        await _photos.CreateAsync(secondAvatarPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(secondGuestId), "Segundo invitado", BaulRole.Colaborador, Now,
-            AvatarPhotoKey: "second-avatar-key"));
+            AvatarPhotoId: secondAvatarPhoto.Id));
 
         var manager = CreateManager(CustodioId);
         var link = await manager.GetOrCreateAsync(baulId);
@@ -298,15 +304,19 @@ public class BaulInviteLinkManagerTests
     public async Task GetClaimablePersonasAsync_ShouldResolveEachPersonasAvatar_Independently()
     {
         // Same batching-isolation concern as GetPreviewAsync above, for the claimable-personas
-        // list: two pending personas with different avatar keys must each keep their own.
+        // list: two pending personas with different avatar photos must each keep their own.
         const string OutsiderId = "outsider-1";
         var baulId = await SeedBaulAsync();
+        var firstPendingPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "first-pending-key", null, null, null, new UserId(CustodioId), Now);
+        await _photos.CreateAsync(firstPendingPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, null, "Primera pendiente", BaulRole.Colaborador, Now,
-            AvatarPhotoKey: "first-pending-key"));
+            AvatarPhotoId: firstPendingPhoto.Id));
+        var secondPendingPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "second-pending-key", null, null, null, new UserId(CustodioId), Now);
+        await _photos.CreateAsync(secondPendingPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, null, "Segunda pendiente", BaulRole.Colaborador, Now,
-            AvatarPhotoKey: "second-pending-key"));
+            AvatarPhotoId: secondPendingPhoto.Id));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         var result = await CreateManager(OutsiderId).GetClaimablePersonasAsync(link.Value.Token);

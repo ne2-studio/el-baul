@@ -102,8 +102,10 @@ public class RecuerdoManagerTests
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
         const string colaboradorId = "colaborador-1";
+        var avatarPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baulId), "avatar-key", null, new UserId(CustodioId), _clock.UtcNow());
+        await _photoRepository.CreateAsync(avatarPhoto);
         await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow(),
-            AvatarPhotoKey: "avatar-key"));
+            AvatarPhotoId: avatarPhoto.Id));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");

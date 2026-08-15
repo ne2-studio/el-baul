@@ -15,7 +15,6 @@ public record Persona
     BaulRole Role,
     DateTime InvitedDate,
     string? Name = null,
-    string? AvatarPhotoKey = null,
     string? Biografia = null,
     PhotoId? AvatarPhotoId = null,
     decimal AvatarCropX = 0.5m,
@@ -62,14 +61,13 @@ public record Persona
     public Persona WithAvatarPhoto(Photo photo, decimal cropX, decimal cropY, decimal cropScale) =>
         this with
         {
-            AvatarPhotoKey = null,
             AvatarPhotoId = photo.Id,
             AvatarCropX = cropX,
             AvatarCropY = cropY,
             AvatarCropScale = cropScale
         };
 
-    // Repoints the avatar to a different photo id without touching AvatarPhotoKey/crop — used by
+    // Repoints the avatar to a different photo id without touching the crop — used by
     // PhotoDuplicateMergeService when the duplicate being merged away is currently someone's
     // avatar photo. Unlike WithAvatarPhoto (the user-initiated "pick a new avatar" action), this
     // never resets the crop: the survivor's blob is bit-identical, so the existing framing still

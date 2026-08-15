@@ -266,8 +266,11 @@ public class AdminManagerTests
         var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baulId, new UserId("custodio-1"), "Qué buen día", _clock.UtcNow());
         await _recuerdoRepository.CreateAsync(recuerdo);
 
+        var avatarPhoto = Photo.Create(
+            new PhotoId(Guid.NewGuid()), null, baulId, "avatars/abuela.jpg", null, new UserId("custodio-1"), _clock.UtcNow());
+        await _photoRepository.CreateAsync(avatarPhoto);
         var persona = new Persona(
-            new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
+            new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow(), AvatarPhotoId: avatarPhoto.Id);
         await _personaRepository.AddPersonaAsync(persona);
 
         await _photoPersonaTagRepository.SetTagsAsync(photo.Id, baulId, [persona.Id], _clock.UtcNow());

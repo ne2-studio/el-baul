@@ -21,8 +21,8 @@ public class BaulAccessTests
     private static readonly Baul TestBaul =
         new(new BaulId(Guid.NewGuid()), "Familia", null, new UserId("custodio-1"), 0, DateTime.UtcNow, DateTime.UtcNow);
 
-    private static Persona MakePersona(BaulRole role, string? userId = OtherUserId, string? avatarKey = null) =>
-        new(new PersonaId(Guid.NewGuid()), TestBaul.Id, userId is null ? null : new UserId(userId), "Nick", role, DateTime.UtcNow, AvatarPhotoKey: avatarKey);
+    private static Persona MakePersona(BaulRole role, string? userId = OtherUserId) =>
+        new(new PersonaId(Guid.NewGuid()), TestBaul.Id, userId is null ? null : new UserId(userId), "Nick", role, DateTime.UtcNow);
 
     // --- BaulAccess record: pure combinatorics, no service involved ---
 
@@ -310,5 +310,5 @@ public class BaulAccessTests
 
     // BaulAccessService.GetAuthorInfoAsync moved out to AuthorInfoProjector — see
     // AuthorInfoProjectorTests for the persona-facing display identity coverage that used
-    // to live here (default nickname, avatar-key resolution, persona-not-found fallback).
+    // to live here (default nickname, avatar resolution, persona-not-found fallback).
 }

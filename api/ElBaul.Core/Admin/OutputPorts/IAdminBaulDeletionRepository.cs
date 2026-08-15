@@ -2,12 +2,7 @@ using ElBaul.Domain;
 
 namespace ElBaul.Core.Admin.OutputPorts;
 
-public sealed record DeletedBaulStorageObjects(
-    IReadOnlyList<string> PhotoStorageKeys,
-    IReadOnlyList<string> PersonaAvatarStorageKeys)
-{
-    public IEnumerable<string> AllKeys => PhotoStorageKeys.Concat(PersonaAvatarStorageKeys);
-}
+public sealed record DeletedBaulStorageObjects(IReadOnlyList<string> PhotoStorageKeys);
 
 /// <summary>
 /// Owns the storage-side hard-delete graph for one baúl. This is intentionally separate from
