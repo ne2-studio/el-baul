@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using ElBaul.Application.Chat;
+using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Chat;
 using ElBaul.Infra;
 using Microsoft.AspNetCore.Builder;
@@ -77,6 +78,12 @@ public static class MaintenanceCommandRunner
         // it replays extraction through the exact same path the live app uses.
         builder.Services.AddScoped<IRelevantChatMemorySelector, RelevantChatMemorySelector>();
         builder.Services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
+
+        // BackfillPhotoContentHashesCommand/DeduplicatePhotosCommand need the real merge/soft-delete
+        // domain behavior (PhotoDuplicateMergeService, and the PhotoLifecycleService it composes)
+        // rather than reimplementing it — same rationale as the chat memory registrations above.
+        builder.Services.AddScoped<PhotoLifecycleService>();
+        builder.Services.AddScoped<PhotoDuplicateMergeService>();
 
         builder.Services.AddSingleton(new MaintenanceCommandArguments(args.Skip(1).Where(arg => arg != "--dry-run").ToArray()));
         foreach (var (name, type) in Commands.Value)

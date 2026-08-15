@@ -187,6 +187,11 @@ export class Photo {
    * que corresponda. */
   canDelete: boolean;
   canRequestRemoval: boolean;
+  /** true solo en la respuesta de una subida cuyo contenido coincidía exactamente con una foto
+   * ya activa del mismo baúl — entonces `id`/`thumbnailUrl`/etc. son los de esa foto existente,
+   * no los de los bytes recién subidos. Ver uploads.ts, el único caller que lo lee; el resto de
+   * pantallas que consumen Photo lo ignoran sin más. */
+  alreadyExisted?: boolean;
 
   constructor(data: PhotoDto) {
     this.id = data.id;
@@ -197,6 +202,7 @@ export class Photo {
     this.chapterId = data.chapterId ?? undefined;
     this.canDelete = data.canDelete;
     this.canRequestRemoval = data.canRequestRemoval;
+    this.alreadyExisted = data.alreadyExisted ?? undefined;
   }
 }
 

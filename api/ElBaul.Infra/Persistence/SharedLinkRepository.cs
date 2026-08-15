@@ -9,6 +9,12 @@ public class SharedLinkRepository(ElBaulDbContext dbContext) : ISharedLinkReposi
     public Task<SharedLink?> GetByTokenAsync(string token) =>
         dbContext.SharedLinks.AsNoTracking().FirstOrDefaultAsync(s => s.Token == token);
 
+    public async Task<IEnumerable<SharedLink>> GetByPhotoIdsAsync(IEnumerable<PhotoId> photoIds)
+    {
+        var ids = photoIds.ToList();
+        return await dbContext.SharedLinks.AsNoTracking().Where(s => s.PhotoId != null && ids.Contains(s.PhotoId.Value)).ToListAsync();
+    }
+
     public async Task CreateAsync(SharedLink sharedLink)
     {
         dbContext.SharedLinks.Add(sharedLink);

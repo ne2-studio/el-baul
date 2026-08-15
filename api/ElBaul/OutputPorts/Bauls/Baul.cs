@@ -47,6 +47,11 @@ public record Baul
             UpdatedAt = updatedAt
         };
 
+    // See Chapter.WithCoverPhotoKey for why this is a separate, crop-preserving method from
+    // WithCover.
+    public Baul WithCoverPhotoKey(string coverPhotoKey, DateTime updatedAt) =>
+        this with { CoverPhotoKey = coverPhotoKey, UpdatedAt = updatedAt };
+
     public Baul WithCover(Photo photo, decimal cropX, decimal cropY, decimal cropScale, DateTime updatedAt) =>
         this with
         {

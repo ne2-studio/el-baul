@@ -72,6 +72,14 @@ public record Persona
             AvatarCropScale = cropScale
         };
 
+    // Repoints the avatar to a different photo id without touching AvatarPhotoKey/crop — used by
+    // PhotoDuplicateMergeService when the duplicate being merged away is currently someone's
+    // avatar photo. Unlike WithAvatarPhoto (the user-initiated "pick a new avatar" action), this
+    // never resets the crop: the survivor's blob is bit-identical, so the existing framing still
+    // applies.
+    public Persona WithAvatarPhotoId(PhotoId photoId) =>
+        this with { AvatarPhotoId = photoId };
+
     // The only way a Persona reaches Revoked — clears the account link alongside the role so
     // the two never drift out of sync (see PersonaAccessStatus).
     public Persona Revoke() => this with { UserId = null, Role = BaulRole.SinAcceso };

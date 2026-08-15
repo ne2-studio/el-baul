@@ -64,6 +64,7 @@ function newPhoto(id: string, overrides: Partial<ConstructorParameters<typeof Ph
     recuerdoCount: 0,
     canDelete: false,
     canRequestRemoval: true,
+    alreadyExisted: false,
     ...overrides,
   });
 }

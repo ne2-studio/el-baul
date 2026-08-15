@@ -64,7 +64,44 @@ public interface IPhotoRepository
     /// deleted (Photo.BaulId is a Restrict FK).</summary>
     Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId);
 
+    /// <summary>The active photo (if any) in this baúl already carrying this content hash —
+    /// used by PhotoUploadWorkflow's app-level duplicate check and by the merge/backfill flows
+    /// to look up the survivor of a race they lost. Never matches a soft-deleted duplicate.</summary>
+    Task<Photo?> GetActiveByContentHashAsync(BaulId baulId, string originalContentHash);
+
+    /// <summary>Photos with no OriginalContentHash yet, regardless of status — used by the
+    /// backfill-photo-content-hashes maintenance command. Not status-filtered, same rationale as
+    /// GetMissingSizeBytesAsync: a soft-deleted photo's blob is never removed either, so it's
+    /// just as hashable, and doing so costs nothing extra since the uniqueness constraint only
+    /// ever applies to Active rows.</summary>
+    Task<IEnumerable<Photo>> GetMissingContentHashAsync();
+
+    /// <summary>Every active photo that already has a content hash — the candidate set the
+    /// deduplicate-photos maintenance command groups by (BaulId, OriginalContentHash) to find
+    /// duplicate groups.</summary>
+    Task<IEnumerable<Photo>> GetActiveWithContentHashAsync();
+
     Task CreateAsync(Photo photo);
+
+    /// <summary>Inserts a new Active photo, honoring the same (BaulId, OriginalContentHash)
+    /// uniqueness that IX_Photos_BaulId_OriginalContentHash_Active enforces (or, until that
+    /// migration has been applied, an application-level equivalent of it) — the final
+    /// concurrency guard against two uploads of the same exact file racing each other. Returns
+    /// false, without throwing and without persisting anything, if another Active photo in the
+    /// same baúl already carries this hash; the caller is responsible for treating that as a
+    /// duplicate (see PhotoUploadWorkflow.CreatePhotoAsync). A null/OriginalContentHash never
+    /// conflicts with anything, so this is safe to use unconditionally for every photo
+    /// insert.</summary>
+    Task<bool> TryCreateActiveAsync(Photo photo);
+
+    /// <summary>Sets OriginalContentHash on an existing photo, honoring the same uniqueness
+    /// as TryCreateActiveAsync when the photo being updated is Active. Returns false, without
+    /// writing anything, if another Active photo in the same baúl already carries this hash —
+    /// used by backfill-photo-content-hashes to detect a pre-existing, previously-unflagged
+    /// duplicate pair instead of corrupting the constraint. A Deleted photo can never conflict
+    /// (the constraint only covers Active rows), so this always succeeds for one.</summary>
+    Task<bool> TrySetContentHashAsync(PhotoId photoId, BaulId baulId, string originalContentHash);
+
     Task UpdateAsync(Photo photo);
     Task DeleteAsync(PhotoId id);
     Task DeleteByBaulIdAsync(BaulId baulId);

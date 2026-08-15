@@ -76,11 +76,12 @@ public class BaulFixture
     public async Task<PhotoId> AddPhotoAsync(
         BaulId baulId, ChapterId? chapterId = null, string storageKey = "key", PhotoDate? date = null,
         string uploadedBy = DefaultCustodioId, Guid? id = null, Guid? clientUploadId = null, long sizeBytes = 0,
-        Guid? uploadBatchId = null, DateTime? createdAt = null)
+        Guid? uploadBatchId = null, DateTime? createdAt = null, string? originalContentHash = null)
     {
         var photoId = new PhotoId(id ?? Guid.NewGuid());
         await Photos.CreateAsync(Photo.Create(
-            photoId, chapterId, baulId, storageKey, date, new UserId(uploadedBy), createdAt ?? Clock.UtcNow(), clientUploadId, sizeBytes, uploadBatchId));
+            photoId, chapterId, baulId, storageKey, date, new UserId(uploadedBy), createdAt ?? Clock.UtcNow(), clientUploadId, sizeBytes,
+            uploadBatchId, originalContentHash: originalContentHash));
         return photoId;
     }
 }

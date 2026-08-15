@@ -25,12 +25,25 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.Property(p => p.ConfirmedNoPersonas).HasDefaultValue(false);
         builder.Property(p => p.Width).HasDefaultValue(0);
         builder.Property(p => p.Height).HasDefaultValue(0);
+        // Lowercase hex-encoded SHA-256 is always exactly 64 characters.
+        builder.Property(p => p.OriginalContentHash).HasMaxLength(64);
         builder.Ignore(p => p.Date);
 
         builder.HasIndex(p => p.ChapterId);
         builder.HasIndex(p => p.BaulId);
         builder.HasIndex(p => p.ClientUploadId).IsUnique();
         builder.HasIndex(p => p.UploadBatchId);
+        // The database-level enforcement of "no two active photos in the same baúl share an
+        // exact-duplicate hash" (see PhotoDuplicateMergeService) — application-level checks in
+        // PhotoUploadWorkflow exist for normal-flow UX, but this index is what actually resolves
+        // a race between two concurrent identical uploads. Scoped to Active + non-null so
+        // soft-deleted duplicates (which intentionally keep their original hash — see
+        // Photo.MarkDeleted) never block a later legitimate upload/backfill/merge from reaching a
+        // clean Active state.
+        builder.HasIndex(p => new { p.BaulId, p.OriginalContentHash })
+            .IsUnique()
+            .HasFilter("\"Status\" = 'Active' AND \"OriginalContentHash\" IS NOT NULL")
+            .HasDatabaseName("IX_Photos_BaulId_OriginalContentHash_Active");
 
         builder.HasOne<Chapter>()
             .WithMany()

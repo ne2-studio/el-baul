@@ -66,6 +66,7 @@ export function newPhoto(
     recuerdoCount: 0,
     canDelete: false,
     canRequestRemoval: true,
+    alreadyExisted: false,
     ...overrides,
   });
 }

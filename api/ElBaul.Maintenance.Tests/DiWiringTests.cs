@@ -1,5 +1,6 @@
 using System.Reflection;
 using ElBaul.Application.Chat;
+using ElBaul.Application.Photos;
 using ElBaul.InputPorts.Chat;
 using ElBaul.Infra.Lite;
 using Microsoft.Extensions.Configuration;
@@ -38,6 +39,8 @@ public class DiWiringTests
         // AddInfrastructure.
         services.AddScoped<IRelevantChatMemorySelector, RelevantChatMemorySelector>();
         services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
+        services.AddScoped<PhotoLifecycleService>();
+        services.AddScoped<PhotoDuplicateMergeService>();
 
         services.AddSingleton(new MaintenanceCommandArguments([]));
 

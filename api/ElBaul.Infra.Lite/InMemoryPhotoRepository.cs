@@ -108,10 +108,64 @@ public class InMemoryPhotoRepository : IPhotoRepository
         }
     }
 
+    public Task<Photo?> GetActiveByContentHashAsync(BaulId baulId, string originalContentHash)
+    {
+        lock (_lock)
+            return Task.FromResult(_photos.Values.FirstOrDefault(p =>
+                p.BaulId == baulId && p.OriginalContentHash == originalContentHash && p.Status == PhotoStatus.Active));
+    }
+
+    public Task<IEnumerable<Photo>> GetMissingContentHashAsync()
+    {
+        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.OriginalContentHash == null).ToList().AsEnumerable());
+    }
+
+    public Task<IEnumerable<Photo>> GetActiveWithContentHashAsync()
+    {
+        lock (_lock)
+            return Task.FromResult(_photos.Values
+                .Where(p => p.Status == PhotoStatus.Active && p.OriginalContentHash != null)
+                .ToList().AsEnumerable());
+    }
+
     public Task CreateAsync(Photo photo)
     {
         lock (_lock) _photos[photo.Id] = photo;
         return Task.CompletedTask;
+    }
+
+    // Mirrors the real PhotoRepository's ON CONFLICT DO NOTHING semantics without a real unique
+    // index to enforce it — see IX_Photos_BaulId_OriginalContentHash_Active.
+    public Task<bool> TryCreateActiveAsync(Photo photo)
+    {
+        lock (_lock)
+        {
+            if (photo.OriginalContentHash is { } hash && _photos.Values.Any(p =>
+                    p.BaulId == photo.BaulId && p.OriginalContentHash == hash && p.Status == PhotoStatus.Active))
+            {
+                return Task.FromResult(false);
+            }
+
+            _photos[photo.Id] = photo;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task<bool> TrySetContentHashAsync(PhotoId photoId, BaulId baulId, string originalContentHash)
+    {
+        lock (_lock)
+        {
+            if (!_photos.TryGetValue(photoId, out var photo)) return Task.FromResult(false);
+
+            if (photo.Status == PhotoStatus.Active && _photos.Values.Any(p =>
+                    p.Id != photoId && p.BaulId == baulId && p.OriginalContentHash == originalContentHash && p.Status == PhotoStatus.Active))
+            {
+                return Task.FromResult(false);
+            }
+
+            _photos[photoId] = photo.WithOriginalContentHash(originalContentHash);
+            return Task.FromResult(true);
+        }
     }
 
     public Task UpdateAsync(Photo photo)

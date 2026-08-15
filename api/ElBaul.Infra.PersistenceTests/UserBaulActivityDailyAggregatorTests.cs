@@ -114,5 +114,6 @@ public class UserBaulActivityDailyAggregatorTests(PostgresFixture fixture) : Per
         public bool BaulFeedEnabled => false;
         public bool PushDigestEnabled => false;
         public bool TvModeEnabled => false;
+        public bool MaintenanceModeEnabled => false;
     }
 }

@@ -12,6 +12,15 @@ public class InMemorySharedLinkRepository : ISharedLinkRepository
         lock (_lock) return Task.FromResult(_sharedLinksByToken.GetValueOrDefault(token));
     }
 
+    public Task<IEnumerable<SharedLink>> GetByPhotoIdsAsync(IEnumerable<PhotoId> photoIds)
+    {
+        lock (_lock)
+        {
+            var ids = photoIds.ToHashSet();
+            return Task.FromResult(_sharedLinksByToken.Values.Where(s => s.PhotoId is { } photoId && ids.Contains(photoId)).ToList().AsEnumerable());
+        }
+    }
+
     public Task CreateAsync(SharedLink sharedLink)
     {
         lock (_lock) _sharedLinksByToken[sharedLink.Token] = sharedLink;

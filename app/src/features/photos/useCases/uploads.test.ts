@@ -79,8 +79,8 @@ describe('photos useCases uploads', () => {
       const results = await uploadPhotos(baulId, chapterId, items, onItemSettled);
 
       expect(results).toEqual([
-        { clientUploadId: 'c1', photo: photo1 },
-        { clientUploadId: 'c2', photo: photo2 },
+        { clientUploadId: 'c1', photo: photo1, alreadyExisted: false },
+        { clientUploadId: 'c2', photo: photo2, alreadyExisted: false },
       ]);
       expect(onItemSettled).toHaveBeenCalledTimes(2);
       expect(api.photos.getAll).toHaveBeenCalledWith(chapterId);
@@ -117,7 +117,7 @@ describe('photos useCases uploads', () => {
       const results = await uploadPhotos(baulId, chapterId, items);
 
       expect(results).toEqual([
-        { clientUploadId: 'ok', photo: photo1 },
+        { clientUploadId: 'ok', photo: photo1, alreadyExisted: false },
         { clientUploadId: 'fails', error: 'network down' },
       ]);
       expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), { tags: { phase: 'upload-request' } });
@@ -146,13 +146,32 @@ describe('photos useCases uploads', () => {
 
       expect(results).toEqual([
         { clientUploadId: 'unreadable', error: 'No se pudo leer la foto (puede que ya no esté disponible)' },
-        { clientUploadId: 'ok', photo: photo1 },
+        { clientUploadId: 'ok', photo: photo1, alreadyExisted: false },
       ]);
       expect(api.photos.upload).toHaveBeenCalledTimes(1);
       expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
         tags: { phase: 'read-file-before-upload' },
         extra: { name: 'a.jpg', size: 100, type: 'image/jpeg' },
       });
+    });
+
+    it('propagates alreadyExisted from the API response without treating it as a failure', async () => {
+      useBaulesStore.setState({
+        baules: [newBaul()],
+        chapters: { [baulId]: [newChapter(chapterId, { photoCount: 0 })] },
+      });
+
+      const existingPhoto = newPhoto('existing-photo', { alreadyExisted: true });
+      vi.mocked(api.photos.upload).mockResolvedValueOnce(existingPhoto);
+      vi.mocked(api.photos.getAll).mockResolvedValue([existingPhoto]);
+      vi.mocked(api.chapters.getAll).mockResolvedValue([newChapter(chapterId, { photoCount: 1 })]);
+
+      const results = await uploadPhotos(baulId, chapterId, [
+        { clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') },
+      ]);
+
+      expect(results).toEqual([{ clientUploadId: 'c1', photo: existingPhoto, alreadyExisted: true }]);
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     it('does not refetch or touch the chapter when every file fails', async () => {
@@ -184,7 +203,7 @@ describe('photos useCases uploads', () => {
 
       const results = await uploadPhotos(baulId, null, [{ clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') }]);
 
-      expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
+      expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1, alreadyExisted: false }]);
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined, 'batch-1');
       const state = useBaulesStore.getState();
       expect(state.loosePhotos[baulId]).toEqual([existing.id, photo1.id]);
@@ -207,7 +226,7 @@ describe('photos useCases uploads', () => {
       ]);
 
       expect(results).toEqual([
-        { clientUploadId: 'ok', photo: photo1 },
+        { clientUploadId: 'ok', photo: photo1, alreadyExisted: false },
         { clientUploadId: 'fails', error: 'network down' },
       ]);
       expect(useBaulesStore.getState().loosePhotos[baulId]).toEqual([photo1.id]);
@@ -231,7 +250,7 @@ describe('photos useCases uploads', () => {
       );
 
       expect(resolvedChapterId).toBe(chapterId);
-      expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
+      expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1, alreadyExisted: false }]);
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, chapterId, expect.anything(), 'c1', undefined, 'batch-1');
     });
 
@@ -245,7 +264,7 @@ describe('photos useCases uploads', () => {
       );
 
       expect(resolvedChapterId).toBeNull();
-      expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1 }]);
+      expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1, alreadyExisted: false }]);
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined, 'batch-1');
     });
   });

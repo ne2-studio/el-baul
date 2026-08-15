@@ -87,7 +87,13 @@ internal sealed class FailingPhotoRepository : IPhotoRepository
     public Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync() => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take) => Task.FromResult(Enumerable.Empty<Photo>());
     public Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId) => Task.FromResult(Enumerable.Empty<Photo>());
+    public Task<Photo?> GetActiveByContentHashAsync(BaulId baulId, string originalContentHash) => Task.FromResult<Photo?>(null);
+    public Task<IEnumerable<Photo>> GetMissingContentHashAsync() => throw new InvalidOperationException("database unavailable");
+    public Task<IEnumerable<Photo>> GetActiveWithContentHashAsync() => throw new InvalidOperationException("database unavailable");
     public Task CreateAsync(Photo photo) => Task.CompletedTask;
+    public Task<bool> TryCreateActiveAsync(Photo photo) => Task.FromResult(true);
+    public Task<bool> TrySetContentHashAsync(PhotoId photoId, BaulId baulId, string originalContentHash) =>
+        throw new InvalidOperationException("database unavailable");
     public Task UpdateAsync(Photo photo) => Task.CompletedTask;
     public Task DeleteAsync(PhotoId id) => Task.CompletedTask;
     public Task DeleteByBaulIdAsync(BaulId baulId) => Task.CompletedTask;
@@ -160,7 +166,13 @@ internal sealed class UpdateFailsPhotoRepository(InMemoryPhotoRepository inner) 
     public Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take) =>
         inner.GetPageAsync(baulId, chapterId, skip, take);
     public Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId) => inner.GetAllByBaulIdAsync(baulId);
+    public Task<Photo?> GetActiveByContentHashAsync(BaulId baulId, string originalContentHash) => inner.GetActiveByContentHashAsync(baulId, originalContentHash);
+    public Task<IEnumerable<Photo>> GetMissingContentHashAsync() => inner.GetMissingContentHashAsync();
+    public Task<IEnumerable<Photo>> GetActiveWithContentHashAsync() => inner.GetActiveWithContentHashAsync();
     public Task CreateAsync(Photo photo) => inner.CreateAsync(photo);
+    public Task<bool> TryCreateActiveAsync(Photo photo) => inner.TryCreateActiveAsync(photo);
+    public Task<bool> TrySetContentHashAsync(PhotoId photoId, BaulId baulId, string originalContentHash) =>
+        throw new InvalidOperationException("database unavailable");
     public Task UpdateAsync(Photo photo) => throw new InvalidOperationException("database unavailable");
     public Task DeleteAsync(PhotoId id) => inner.DeleteAsync(id);
     public Task DeleteByBaulIdAsync(BaulId baulId) => inner.DeleteByBaulIdAsync(baulId);

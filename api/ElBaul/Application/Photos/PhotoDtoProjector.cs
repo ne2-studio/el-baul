@@ -10,10 +10,11 @@ public class PhotoDtoProjector(
     IRecuerdoRepository recuerdoRepository,
     IClock clock) : IPhotoDtoProjector
 {
-    public async Task<PhotoDto> ProjectAsync(Photo photo, bool isAdmin, UserId currentUserId)
+    public async Task<PhotoDto> ProjectAsync(Photo photo, bool isAdmin, UserId currentUserId, bool alreadyExisted = false)
     {
         var dtos = await ProjectAsync([photo], isAdmin, currentUserId);
-        return dtos.Single();
+        var dto = dtos.Single();
+        return alreadyExisted ? dto with { AlreadyExisted = true } : dto;
     }
 
     public async Task<List<PhotoDto>> ProjectAsync(IEnumerable<Photo> photos, bool isAdmin, UserId currentUserId)

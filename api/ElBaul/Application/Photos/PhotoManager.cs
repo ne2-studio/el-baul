@@ -88,15 +88,23 @@ public class PhotoManager(
             return Result.Success(await photoDtoProjector.ProjectAsync(existingPhoto, isAdmin, userId));
         }
 
-        var photoResult = await photoUploadWorkflow.CreatePhotoAsync(
+        var uploadResult = await photoUploadWorkflow.CreatePhotoAsync(
             baul.Id, chapterId, userId, content, fileName, contentType, date, clientUploadId, uploadBatchId,
             (createdPhoto, now) => photoLifecycle.AddAsync(createdPhoto, chapter, baul, now));
-        if (photoResult.IsFailure) return Result.Failure<PhotoDto>(photoResult.Error);
-        var photo = photoResult.Value;
+        if (uploadResult.IsFailure) return Result.Failure<PhotoDto>(uploadResult.Error);
+        var outcome = uploadResult.Value;
 
-        logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", baul.Id, chapterId, photo.Id);
+        if (outcome.AlreadyExisted)
+        {
+            logger.LogInformation(
+                "Photo upload was an exact duplicate {BaulId} {ChapterId} {ExistingPhotoId}", baul.Id, chapterId, outcome.Photo.Id);
+        }
+        else
+        {
+            logger.LogInformation("Photo uploaded {BaulId} {ChapterId} {PhotoId}", baul.Id, chapterId, outcome.Photo.Id);
+        }
 
-        return await photoDtoProjector.ProjectAsync(photo, isAdmin, userId);
+        return await photoDtoProjector.ProjectAsync(outcome.Photo, isAdmin, userId, outcome.AlreadyExisted);
     }
 
     public async Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId)

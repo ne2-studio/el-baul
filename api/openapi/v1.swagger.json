@@ -9760,6 +9760,7 @@
       },
       "PhotoDto": {
         "required": [
+          "alreadyExisted",
           "baulId",
           "canDelete",
           "canRequestRemoval",
@@ -9818,6 +9819,9 @@
             "type": "boolean"
           },
           "canRequestRemoval": {
+            "type": "boolean"
+          },
+          "alreadyExisted": {
             "type": "boolean"
           }
         },

@@ -32,7 +32,7 @@ function newPhotoBatch(overrides: Partial<ConstructorParameters<typeof PhotoBatc
     createdAt: new Date().toISOString(),
     previewPhotos: [{
       id: 'p1', baulId: 'baul-1', thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1',
-      createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true,
+      createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false,
     }],
     ...overrides,
   });

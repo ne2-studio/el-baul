@@ -4,6 +4,7 @@ import {
   materializeSharedPhoto,
   resolvePhotoRouteContext,
   uploadItemsFromSelectedPhotos,
+  uploadResultMessage,
 } from './index';
 
 vi.mock('@sentry/react', () => ({
@@ -213,5 +214,31 @@ describe('uploadFlow', () => {
     vi.mocked(crypto.randomUUID).mockReturnValueOnce(batch2);
     const [third] = uploadItemsFromSelectedPhotos(selectedPhotos, null);
     expect(third.uploadBatchId).toBe(batch2);
+  });
+
+  describe('uploadResultMessage', () => {
+    it('reports a single newly-uploaded photo the same way as before this feature existed', () => {
+      expect(uploadResultMessage(1, 0)).toBe('Tu recuerdo ya está a salvo');
+    });
+
+    it('reports several newly-uploaded photos the same way as before this feature existed', () => {
+      expect(uploadResultMessage(3, 0)).toBe('Tus 3 recuerdos ya están a salvo');
+    });
+
+    it('reports a single already-existing photo without any error/duplicate wording', () => {
+      expect(uploadResultMessage(0, 1)).toBe('Esta foto ya estaba en el baúl');
+    });
+
+    it('reports several already-existing photos, plural', () => {
+      expect(uploadResultMessage(0, 3)).toBe('Estas fotos ya estaban en el baúl');
+    });
+
+    it('reports a mixed batch distinguishing uploaded from already-existing counts', () => {
+      expect(uploadResultMessage(17, 3)).toBe('17 fotos subidas · 3 ya estaban en el baúl');
+    });
+
+    it('uses singular wording for a mixed batch of exactly one of each', () => {
+      expect(uploadResultMessage(1, 1)).toBe('1 foto subida · 1 ya estaba en el baúl');
+    });
   });
 });

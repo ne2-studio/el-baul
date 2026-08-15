@@ -7899,6 +7899,7 @@ export interface components {
             recuerdoCount: number;
             canDelete: boolean;
             canRequestRemoval: boolean;
+            alreadyExisted: boolean;
         };
         PhotoPageDto: {
             items: components["schemas"]["PhotoDto"][];

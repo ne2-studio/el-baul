@@ -81,7 +81,10 @@ public class PhotoTaggingBatchTests(ElBaulAcceptanceFixture fixture)
     private static async Task<string> UploadPhotoAsync(HttpClient client, string chapterId, string fileName)
     {
         using var multipart = new MultipartFormDataContent();
-        var fileContent = new ByteArrayContent(SampleJpegBytes);
+        // Distinct bytes per call, not the same SampleJpegBytes for every upload — this suite
+        // uploads several "different" photos into the same baúl, which exact-content
+        // deduplication (see PhotoDuplicateMergeService) would otherwise collapse into one.
+        var fileContent = new ByteArrayContent(UniqueJpegBytes(fileName));
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
         multipart.Add(fileContent, "File", fileName);
         multipart.Add(new StringContent(Guid.NewGuid().ToString()), "ClientUploadId");
@@ -89,6 +92,28 @@ public class PhotoTaggingBatchTests(ElBaulAcceptanceFixture fixture)
         var response = await client.PostAsync($"/api/chapters/{chapterId}/photos", multipart);
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         return (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
+    }
+
+    // Inserts a standard JPEG COM (comment) marker segment right after the SOI marker, carrying
+    // `marker` as its payload — decoders universally ignore COM segments, so this stays a valid,
+    // decodable JPEG while giving each caller genuinely different bytes (and therefore a
+    // different OriginalContentHash) without maintaining a separate fixture image per test.
+    private static byte[] UniqueJpegBytes(string marker)
+    {
+        var payload = System.Text.Encoding.ASCII.GetBytes(marker);
+        var segment = new byte[4 + payload.Length];
+        segment[0] = 0xFF;
+        segment[1] = 0xFE; // COM marker
+        var length = (ushort)(payload.Length + 2);
+        segment[2] = (byte)(length >> 8);
+        segment[3] = (byte)(length & 0xFF);
+        Array.Copy(payload, 0, segment, 4, payload.Length);
+
+        var result = new byte[2 + segment.Length + (SampleJpegBytes.Length - 2)];
+        Array.Copy(SampleJpegBytes, 0, result, 0, 2); // SOI
+        Array.Copy(segment, 0, result, 2, segment.Length);
+        Array.Copy(SampleJpegBytes, 2, result, 2 + segment.Length, SampleJpegBytes.Length - 2);
+        return result;
     }
 
     private static async Task TagBatchAsync(HttpClient client, string baulId, IReadOnlyList<string> photoIds, IReadOnlyList<string> personaIds)

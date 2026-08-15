@@ -38,6 +38,14 @@ public record Chapter
             UpdatedAt = updatedAt
         };
 
+    // Redirects the cover to a different photo's storage key without touching the existing crop
+    // — unlike WithCover, which is the user-initiated "pick a new cover" action and resets crop
+    // to whatever the picker submitted. Used by PhotoDuplicateMergeService: when the duplicate
+    // being merged away is the current cover, the survivor's own (bit-identical) blob takes over
+    // the same framing rather than resetting it to center.
+    public Chapter WithCoverPhotoKey(string coverPhotoKey, DateTime updatedAt) =>
+        this with { CoverPhotoKey = coverPhotoKey, UpdatedAt = updatedAt };
+
     public Chapter WithName(string name, DateTime updatedAt) =>
         this with { Name = name, UpdatedAt = updatedAt };
 
