@@ -34,6 +34,16 @@ that calls them) — not before:
   scheme/host just for this. Opening the app this way is harmless: `isNativeOidcCallbackUrl` only
   treats the deep link as a real sign-in callback when `code`/`error` is present in the query,
   which this link never sets.
+- `features/profile/native/PushNotificationsBanner.tsx` (mounted globally in `App.tsx`, right
+  next to `AndroidAppBanner`) is that banner's mirror image: it offers to enable native push
+  notifications, and only makes sense *inside* the native Android app (gated by
+  `isPushNotificationsSupported()`, i.e. never in the webapp) and only while this device hasn't
+  enabled them yet (`useAuthStore.pushNotificationsEnabled` — the same flag that gates the push
+  toggle in `NotificationPreferencesRoute`). Same visual shell and same dismiss-cooldown pattern
+  as `AndroidAppBanner` (`pushNotificationsBannerUtils.ts`), but a one-week cooldown instead of a
+  one-day one, and deliberately still `localStorage` rather than anything synced to the
+  account/backend or a persistent native store: the whole point is that it resets on
+  uninstall/reinstall or on a new device, so each install gets asked once.
 - Email links (`TrackedLinkBuilder` in the API) *do* need a verified Android App Link, since they
   arrive as a plain `https://` URL in someone's inbox, never through this app's own UI: a second
   `intent-filter` in `AndroidManifest.xml`, `android:autoVerify="true"` on the app's own domain

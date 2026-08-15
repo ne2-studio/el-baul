@@ -8,6 +8,7 @@ import { ConnectivityLostScreen } from '@/design-system/components/feedback/Conn
 import { MaintenanceScreen } from '@/design-system/components/feedback/MaintenanceScreen';
 import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
 import { PushNotificationsHandler } from '@/features/profile/native/PushNotificationsHandler';
+import { PushNotificationsBanner } from '@/features/profile/native/PushNotificationsBanner';
 import { ScrollToTop } from '@/app/ScrollToTop';
 import { AndroidAppBanner } from '@/app/AndroidAppBanner';
 import { API_CONNECTIVITY_LOST_EVENT, API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
@@ -178,6 +179,7 @@ function App() {
       <NativeShareHandler />
       <PushNotificationsHandler />
       <AndroidAppBanner />
+      <PushNotificationsBanner />
 
       {maintenanceModeEnabled ? (
         <MaintenanceScreen />

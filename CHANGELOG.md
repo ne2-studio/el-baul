@@ -19,6 +19,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la selección múltiple de fotos, ahora puedes borrar la fecha de todas las fotos seleccionadas a la vez.
 - La pantalla de una subida de fotos (la que abres desde "y N más" en el feed) ahora tiene selección múltiple, con las mismas acciones en lote que ya había en capítulos: cambiar fecha, borrar fecha, mover, crear un capítulo nuevo y etiquetar personas.
 - Si subes una foto que ya estaba en el baúl, ya no se duplica: la app la reconoce y avisa de que esa foto ya estaba, sin que cuente como un error ni interrumpa la subida del resto de fotos seleccionadas.
+- En la app nativa de Android, si aún no has activado las notificaciones push, aparece un aviso ofreciendo activarlas. Si lo cierras, no vuelve a aparecer hasta pasada una semana (y se resetea si desinstalas/reinstalas la app o la usas en otro dispositivo).
 
 ### Arreglado
 
