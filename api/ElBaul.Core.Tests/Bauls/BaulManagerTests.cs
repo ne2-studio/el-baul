@@ -249,6 +249,32 @@ public class BaulManagerTests
     }
 
     [Fact]
+    public async Task GetAllForCurrentUserAsync_ShouldResolveEachBaulsOwnCover_WhenListingSeveral()
+    {
+        // Exercises the batched cover-photo lookup GetAllForCurrentUserAsync uses (one
+        // GetByIdsAsync for every baúl in the list, not one GetByIdAsync per baúl) — each baúl
+        // must still get back its own cover, not another one's or none at all.
+        var firstBaulId = Guid.NewGuid();
+        var secondBaulId = Guid.NewGuid();
+        var firstBaul = await SeedBaulAsync(firstBaulId, "Familia 1");
+        var secondBaul = await SeedBaulAsync(secondBaulId, "Familia 2");
+        var firstPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, firstBaul.Id, "first-key", null, new UserId(CustodioId), _clock.UtcNow());
+        var secondPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, secondBaul.Id, "second-key", null, new UserId(CustodioId), _clock.UtcNow());
+        await _photoRepository.CreateAsync(firstPhoto);
+        await _photoRepository.CreateAsync(secondPhoto);
+        await _baulRepository.UpdateAsync(firstBaul.WithCover(firstPhoto, 0.5m, 0.5m, 1m, _clock.UtcNow()));
+        await _baulRepository.UpdateAsync(secondBaul.WithCover(secondPhoto, 0.5m, 0.5m, 1m, _clock.UtcNow()));
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetAllForCurrentUserAsync();
+
+        Assert.True(result.IsSuccess);
+        var byId = result.Value.ToDictionary(d => d.Id);
+        Assert.Contains("first-key", byId[firstBaulId.ToString()].CoverPhotoUrl);
+        Assert.Contains("second-key", byId[secondBaulId.ToString()].CoverPhotoUrl);
+    }
+
+    [Fact]
     public async Task GetByIdAsync_ShouldIncludeCustodio_InMemberCount_ForNonCustodioCaller()
     {
         var baulId = Guid.NewGuid();

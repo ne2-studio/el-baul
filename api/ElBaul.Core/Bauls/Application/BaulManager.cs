@@ -30,11 +30,20 @@ public class BaulManager(
 
         var sharedCounts = await personaRepository.GetPersonaCountsAsync(accesses.Select(a => a.Baul.Id));
 
+        // One batched cover-photo lookup for every baúl the user can see instead of one
+        // GetByIdAsync per baúl — same batching ChapterManager.GetByBaulIdAsync/
+        // AuthorInfoProjector.GetManyAsync use for their own per-row photo lookups.
+        var coverPhotoIds = accesses.Where(a => a.Baul.CoverPhotoId is not null).Select(a => a.Baul.CoverPhotoId!.Value).Distinct().ToList();
+        var coverPhotosById = coverPhotoIds.Count == 0
+            ? new Dictionary<PhotoId, Photo>()
+            : (await photoRepository.GetByIdsAsync(coverPhotoIds)).ToDictionary(p => p.Id);
+
         var dtos = new List<BaulDto>();
         foreach (var access in accesses)
             dtos.Add(await ToDtoAsync(
                 access.Baul, access.RoleApiString, access.IsCustodio,
-                sharedCounts.GetValueOrDefault(access.Baul.Id)));
+                sharedCounts.GetValueOrDefault(access.Baul.Id),
+                access.Baul.CoverPhotoId is { } coverPhotoId ? coverPhotosById.GetValueOrDefault(coverPhotoId) : null));
 
         return Result.Success<IEnumerable<BaulDto>>(dtos.OrderByDescending(d => d.UpdatedAt).ToList());
     }
@@ -119,10 +128,14 @@ public class BaulManager(
         return await ToDtoAsync(updated, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
-    private async Task<BaulDto> ToDtoAsync(Baul baul, string role, bool isCustodio, int memberCount = 1)
+    // coverPhoto: pass the already-resolved Photo when the caller has one (e.g.
+    // GetAllForCurrentUserAsync's batched lookup) to avoid a redundant GetByIdAsync; omitted
+    // callers (single-baúl paths) fall back to resolving it here themselves.
+    private async Task<BaulDto> ToDtoAsync(Baul baul, string role, bool isCustodio, int memberCount = 1, Photo? coverPhoto = null)
     {
         var crop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
-        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoId, baul.Id, ImagePlacement.BaulCover, photoRepository, photoStorage, crop);
+        coverPhoto ??= baul.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
+        var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, baul.Id, ImagePlacement.BaulCover, photoStorage, crop);
 
         return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.ChapterCount, coverUrl,
             baul.CreatedAt, baul.UpdatedAt, role, isCustodio, memberCount,
