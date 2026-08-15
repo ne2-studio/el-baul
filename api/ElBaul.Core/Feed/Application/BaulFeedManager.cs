@@ -1,4 +1,3 @@
-using ElBaul.Core.Shared.Application;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
