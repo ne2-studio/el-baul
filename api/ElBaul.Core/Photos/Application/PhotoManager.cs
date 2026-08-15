@@ -90,7 +90,7 @@ public class PhotoManager(
 
         var uploadResult = await photoUploadWorkflow.CreatePhotoAsync(
             baul.Id, chapterId, userId, content, fileName, contentType, date, clientUploadId, uploadBatchId,
-            (createdPhoto, now) => photoLifecycle.AddAsync(createdPhoto, chapter, baul, now));
+            (createdPhoto, now) => photoLifecycle.AddAsync(createdPhoto, chapterId, baul.Id, now));
         if (uploadResult.IsFailure) return Result.Failure<PhotoDto>(uploadResult.Error);
         var outcome = uploadResult.Value;
 
@@ -133,7 +133,6 @@ public class PhotoManager(
             photoId,
             targetChapterId);
         if (targetChapterResult.IsFailure) return Result.Failure<PhotoDto>(targetChapterResult.Error);
-        var targetChapter = targetChapterResult.Value;
 
         if (photo.ChapterId == targetChapterId)
         {
@@ -143,17 +142,11 @@ public class PhotoManager(
             return Result.Failure<PhotoDto>(ApplicationError.Validation("Photo is already in that chapter"));
         }
 
-        Chapter? sourceChapter = null;
-        if (photo.ChapterId is { } sourceChapterId)
-        {
-            sourceChapter = await chapterRepository.GetByIdAsync(sourceChapterId);
-        }
-
         // Source-chapter removal, photo reassignment and target-chapter addition commit
         // together — a photo whose ChapterId points somewhere its PhotoCount doesn't reflect
         // is exactly the partial-write state this port exists to prevent.
         var moveResult = await unitOfWork.ExecuteInTransactionAsync(async () =>
-            Result.Success(await photoLifecycle.MoveAsync(photo, sourceChapter, targetChapter)));
+            Result.Success(await photoLifecycle.MoveAsync(photo, photo.ChapterId, targetChapterId)));
         var updatedPhoto = moveResult.Value;
 
         logger.LogInformation(

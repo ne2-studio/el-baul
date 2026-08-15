@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
@@ -17,7 +19,7 @@ public class BackfillPhotoContentHashesCommandTests
         InMemoryPersonaRepository personas, InMemoryRecuerdoRepository recuerdos, InMemoryPhotoPersonaTagRepository tags,
         InMemorySharedLinkRepository sharedLinks) =>
         new(photos, chapters, baules, personas, recuerdos, tags, sharedLinks,
-            new PhotoLifecycleService(photos, chapters, baules, new FixedClock(DateTime.UtcNow)),
+            new PhotoLifecycleService(photos, new ChapterPhotoCountListener(chapters), new BaulPhotoCoverListener(baules), new FixedClock(DateTime.UtcNow)),
             new FakeUnitOfWork(), new FixedClock(DateTime.UtcNow));
 
     private static BackfillPhotoContentHashesCommand CreateCommand(

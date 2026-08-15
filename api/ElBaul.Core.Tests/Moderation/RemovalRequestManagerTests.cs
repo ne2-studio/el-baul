@@ -1,4 +1,5 @@
 using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Moderation.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Bauls.OutputPorts;
@@ -41,7 +42,8 @@ public class RemovalRequestManagerTests
         new(NullLogger<RemovalRequestManager>.Instance, _removalRequestRepository, _photoRepository,
             _userRepository, _photoStorage, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
-            new PhotoLifecycleService(_photoRepository, _chapterRepository, _baulRepository, _clock), new FakeUnitOfWork());
+            new PhotoLifecycleService(_photoRepository, new ChapterPhotoCountListener(_chapterRepository), new BaulPhotoCoverListener(_baulRepository), _clock),
+            new FakeUnitOfWork());
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.

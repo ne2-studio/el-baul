@@ -22,7 +22,7 @@ public record Chapter
     // first photo in becomes the cover, and only the current cover is ever cleared. WithPhotoAdded/
     // WithPhotoRemoved/WithCover are the sanctioned way to change it (mirrors Photo.WithDate/Create)
     // so that rule lives in one place instead of being reconstructed inline per call site.
-    public Chapter WithPhotoAdded(Photo photo, DateTime updatedAt) =>
+    public Chapter WithPhotoAdded(PhotoRef photo, DateTime updatedAt) =>
         this with
         {
             PhotoCount = PhotoCount + 1,
@@ -30,7 +30,7 @@ public record Chapter
             UpdatedAt = updatedAt
         };
 
-    public Chapter WithPhotoRemoved(Photo photo, DateTime updatedAt) =>
+    public Chapter WithPhotoRemoved(PhotoRef photo, DateTime updatedAt) =>
         this with
         {
             PhotoCount = Math.Max(0, PhotoCount - 1),

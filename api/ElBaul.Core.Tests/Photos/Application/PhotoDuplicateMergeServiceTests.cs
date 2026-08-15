@@ -14,7 +14,7 @@ public class PhotoDuplicateMergeServiceTests
 
     private PhotoDuplicateMergeService CreateService() =>
         new(_fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Personas, _fixture.Recuerdos, _fixture.PhotoPersonaTags,
-            _sharedLinks, new PhotoLifecycleService(_fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Clock),
+            _sharedLinks, new PhotoLifecycleService(_fixture.Photos, _fixture.ChapterPhotoCountListener, _fixture.BaulPhotoCoverListener, _fixture.Clock),
             new FakeUnitOfWork(), _fixture.Clock);
 
     private static PhotoDate Date(int year, int? month = null, int? day = null) =>

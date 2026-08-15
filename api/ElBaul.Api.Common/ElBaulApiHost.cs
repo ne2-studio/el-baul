@@ -12,6 +12,7 @@ using ElBaul.Core.Moderation.Application;
 using ElBaul.Core.Notifications.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.Application;
 using ElBaul.Core.Sharing.Application;
 using ElBaul.Core.Support.Application;
@@ -232,6 +233,8 @@ public static class ElBaulApiHost
         // Register application services
         builder.Services.AddScoped<BaulAccessService>();
         builder.Services.AddScoped<AuthorInfoProjector>();
+        builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
+        builder.Services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         builder.Services.AddScoped<PhotoLifecycleService>();
         builder.Services.AddScoped<PhotoFileService>();
         builder.Services.AddScoped<PhotoUploadWorkflow>();

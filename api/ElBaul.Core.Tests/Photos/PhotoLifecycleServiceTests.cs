@@ -1,3 +1,5 @@
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Bauls.OutputPorts;
@@ -19,17 +21,18 @@ public class PhotoLifecycleServiceTests
     private readonly StaticClock _clock = new();
 
     private PhotoLifecycleService CreateService() =>
-        new(_photoRepository, _chapterRepository, _baulRepository, _clock);
+        new(_photoRepository,
+            new ChapterPhotoCountListener(_chapterRepository),
+            new BaulPhotoCoverListener(_baulRepository),
+            _clock);
 
     [Fact]
     public async Task AddAsync_ShouldSetFirstPhotoAsChapterCover()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        var baul = await _baulRepository.GetByIdAsync(baulId);
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
-        await CreateService().AddAsync(photo, chapter, baul!, _clock.UtcNow());
+        await CreateService().AddAsync(photo, chapterId, baulId, _clock.UtcNow());
 
         var updatedChapter = await _chapterRepository.GetByIdAsync(chapterId);
         Assert.Equal("key", updatedChapter!.CoverPhotoKey);
@@ -40,11 +43,9 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldSetBaulCover_WhenBaulHasNoCoverYet()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        var baul = await _baulRepository.GetByIdAsync(baulId);
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
-        await CreateService().AddAsync(photo, chapter, baul!, _clock.UtcNow());
+        await CreateService().AddAsync(photo, chapterId, baulId, _clock.UtcNow());
 
         var updatedBaul = await _baulRepository.GetByIdAsync(baulId);
         Assert.Equal("key", updatedBaul!.CoverPhotoKey);
@@ -54,13 +55,11 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldNotOverwriteExistingBaulCover()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
         var existingBaul = await _baulRepository.GetByIdAsync(baulId);
         await _baulRepository.UpdateAsync(existingBaul! with { CoverPhotoKey = "existing-key" });
-        var baul = await _baulRepository.GetByIdAsync(baulId);
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "new-key", null, new UserId(UserId), _clock.UtcNow());
 
-        await CreateService().AddAsync(photo, chapter, baul!, _clock.UtcNow());
+        await CreateService().AddAsync(photo, chapterId, baulId, _clock.UtcNow());
 
         var updatedBaul = await _baulRepository.GetByIdAsync(baulId);
         Assert.Equal("existing-key", updatedBaul!.CoverPhotoKey);
@@ -70,10 +69,9 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldSetBaulCover_ForLoosePhoto_WhenChapterIsNull()
     {
         var baulId = await SeedBaulAsync();
-        var baul = await _baulRepository.GetByIdAsync(baulId);
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
-        await CreateService().AddAsync(photo, null, baul!, _clock.UtcNow());
+        await CreateService().AddAsync(photo, null, baulId, _clock.UtcNow());
 
         var updatedBaul = await _baulRepository.GetByIdAsync(baulId);
         Assert.Equal("key", updatedBaul!.CoverPhotoKey);
@@ -83,10 +81,9 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldSkipChapterBookkeeping_WhenChapterIsNull()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var baul = await _baulRepository.GetByIdAsync(baulId);
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
-        await CreateService().AddAsync(photo, null, baul!, _clock.UtcNow());
+        await CreateService().AddAsync(photo, null, baulId, _clock.UtcNow());
 
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
         Assert.Equal(0, chapter!.PhotoCount);
@@ -101,9 +98,8 @@ public class PhotoLifecycleServiceTests
         await _photoRepository.CreateAsync(photo);
         var sourceChapter = await _chapterRepository.GetByIdAsync(sourceChapterId);
         await _chapterRepository.UpdateAsync(sourceChapter! with { PhotoCount = 1, CoverPhotoKey = "cover-key" });
-        var targetChapter = await _chapterRepository.GetByIdAsync(targetChapterId);
 
-        await CreateService().MoveAsync(photo, await _chapterRepository.GetByIdAsync(sourceChapterId), targetChapter!);
+        await CreateService().MoveAsync(photo, sourceChapterId, targetChapterId);
 
         var updatedSource = await _chapterRepository.GetByIdAsync(sourceChapterId);
         Assert.Null(updatedSource!.CoverPhotoKey);
@@ -115,10 +111,8 @@ public class PhotoLifecycleServiceTests
         var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), sourceChapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
-        var sourceChapter = await _chapterRepository.GetByIdAsync(sourceChapterId);
-        var targetChapter = await _chapterRepository.GetByIdAsync(targetChapterId);
 
-        await CreateService().MoveAsync(photo, sourceChapter, targetChapter!);
+        await CreateService().MoveAsync(photo, sourceChapterId, targetChapterId);
 
         var updatedTarget = await _chapterRepository.GetByIdAsync(targetChapterId);
         Assert.Equal("key", updatedTarget!.CoverPhotoKey);
@@ -130,9 +124,8 @@ public class PhotoLifecycleServiceTests
         var (baulId, _, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
-        var targetChapter = await _chapterRepository.GetByIdAsync(targetChapterId);
 
-        var updatedPhoto = await CreateService().MoveAsync(photo, null, targetChapter!);
+        var updatedPhoto = await CreateService().MoveAsync(photo, null, targetChapterId);
 
         Assert.Equal(targetChapterId, updatedPhoto.ChapterId);
         var updatedTarget = await _chapterRepository.GetByIdAsync(targetChapterId);

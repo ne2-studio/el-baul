@@ -1,7 +1,10 @@
 using System.Diagnostics;
 using System.Reflection;
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Chat.Application;
 using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Chat;
 using ElBaul.Infra;
 using Microsoft.AspNetCore.Builder;
@@ -82,6 +85,8 @@ public static class MaintenanceCommandRunner
         // BackfillPhotoContentHashesCommand/DeduplicatePhotosCommand need the real merge/soft-delete
         // domain behavior (PhotoDuplicateMergeService, and the PhotoLifecycleService it composes)
         // rather than reimplementing it — same rationale as the chat memory registrations above.
+        builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
+        builder.Services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         builder.Services.AddScoped<PhotoLifecycleService>();
         builder.Services.AddScoped<PhotoDuplicateMergeService>();
 

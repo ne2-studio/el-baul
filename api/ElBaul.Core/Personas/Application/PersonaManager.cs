@@ -1,6 +1,5 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Photos.Application;
-using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -17,7 +16,7 @@ using ElBaul.Core.Shared.Application;
 namespace ElBaul.Core.Personas.Application;
 public class PersonaManager(
     ILogger<PersonaManager> logger,
-    IBaulRepository baulRepository,
+    IBaulPhotoCoverListener baulPhotoCoverListener,
     IPersonaRepository personaRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
@@ -183,7 +182,7 @@ public class PersonaManager(
             var photoResult = await photoUploadWorkflow.CreatePhotoAsync(
                 baulId, chapterId: null, userId, content, fileName, contentType, explicitDate: null,
                 clientUploadId, uploadBatchId: null,
-                (createdPhoto, now) => baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(createdPhoto, now)));
+                (createdPhoto, now) => baulPhotoCoverListener.OnPhotoAddedAsync(baulId, PhotoRef.From(createdPhoto), now));
             if (photoResult.IsFailure) return Result.Failure<PersonaDto>(photoResult.Error);
             // AlreadyExisted is irrelevant here: whether these bytes were just stored as a new
             // loose photo or turned out to exactly match one already in the baúl, either way

@@ -1,37 +1,47 @@
-using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Domain;
 namespace ElBaul.Core.Photos.Application;
+
+// Orchestrates the write-side bookkeeping every photo lifecycle transition needs — chapter/baúl
+// PhotoCount and CoverPhotoKey — without depending on IChapterRepository/IBaulRepository
+// directly. Chapter/Baul react to these transitions via IChapterPhotoCountListener/
+// IBaulPhotoCoverListener instead, each doing its own fetch-then-update: one extra round trip in
+// the few call sites where the caller already had the Chapter/Baul loaded, traded for Photos not
+// needing to know Chapters'/Bauls' repositories at all. Not worth it on a hot read path; this one
+// only runs on upload/move/delete, so the trade is cheap.
 public class PhotoLifecycleService(
     IPhotoRepository photoRepository,
-    IChapterRepository chapterRepository,
-    IBaulRepository baulRepository,
+    IChapterPhotoCountListener chapterPhotoCountListener,
+    IBaulPhotoCoverListener baulPhotoCoverListener,
     IClock clock)
 {
-    public async Task AddAsync(Photo photo, Chapter? chapter, Baul baul, DateTime now)
+    public async Task AddAsync(Photo photo, ChapterId? chapterId, BaulId baulId, DateTime now)
     {
-        if (chapter is not null)
+        var photoRef = PhotoRef.From(photo);
+
+        if (chapterId is { } id)
         {
-            await chapterRepository.UpdateAsync(chapter.WithPhotoAdded(photo, now));
+            await chapterPhotoCountListener.OnPhotoAddedAsync(id, photoRef, now);
         }
 
-        await baulRepository.UpdateAsync(baul.WithPhotoAdded(photo, now));
+        await baulPhotoCoverListener.OnPhotoAddedAsync(baulId, photoRef, now);
     }
 
-    public async Task<Photo> MoveAsync(Photo photo, Chapter? sourceChapter, Chapter targetChapter)
+    public async Task<Photo> MoveAsync(Photo photo, ChapterId? sourceChapterId, ChapterId targetChapterId)
     {
         var now = clock.UtcNow();
+        var photoRef = PhotoRef.From(photo);
 
-        if (sourceChapter is not null)
+        if (sourceChapterId is { } id)
         {
-            await chapterRepository.UpdateAsync(sourceChapter.WithPhotoRemoved(photo, now));
+            await chapterPhotoCountListener.OnPhotoRemovedAsync(id, photoRef, now);
         }
 
-        var updatedPhoto = photo.InChapter(targetChapter.Id);
+        var updatedPhoto = photo.InChapter(targetChapterId);
         await photoRepository.UpdateAsync(updatedPhoto);
 
-        await chapterRepository.UpdateAsync(targetChapter.WithPhotoAdded(photo, now));
+        await chapterPhotoCountListener.OnPhotoAddedAsync(targetChapterId, photoRef, now);
 
         return updatedPhoto;
     }
@@ -44,19 +54,13 @@ public class PhotoLifecycleService(
         var updatedPhoto = photo.MarkDeleted(reason, now);
         await photoRepository.UpdateAsync(updatedPhoto);
 
+        var photoRef = PhotoRef.From(photo);
+
         if (photo.ChapterId is { } chapterId)
         {
-            var chapter = await chapterRepository.GetByIdAsync(chapterId);
-            if (chapter is not null)
-            {
-                await chapterRepository.UpdateAsync(chapter.WithPhotoRemoved(photo, now));
-            }
+            await chapterPhotoCountListener.OnPhotoRemovedAsync(chapterId, photoRef, now);
         }
 
-        var baul = await baulRepository.GetByIdAsync(photo.BaulId);
-        if (baul is not null && baul.CoverPhotoKey == photo.StorageKey)
-        {
-            await baulRepository.UpdateAsync(baul.WithPhotoRemoved(photo, now));
-        }
+        await baulPhotoCoverListener.OnPhotoRemovedAsync(photo.BaulId, photoRef, now);
     }
 }

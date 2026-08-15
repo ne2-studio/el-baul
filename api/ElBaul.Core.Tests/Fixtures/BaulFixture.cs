@@ -1,5 +1,7 @@
 using ElBaul.Infra.Lite;
+using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -26,9 +28,17 @@ public class BaulFixture
     public InMemoryUserRepository Users { get; } = new();
     public StaticClock Clock { get; } = new();
 
+    // PhotoLifecycleService's ports — see ChapterPhotoCountListener/BaulPhotoCoverListener's own
+    // doc comments — wrapping the same in-memory repositories every other property here exposes,
+    // so a test wiring PhotoLifecycleService doesn't need to know it's built from two listeners.
+    public IChapterPhotoCountListener ChapterPhotoCountListener { get; }
+    public IBaulPhotoCoverListener BaulPhotoCoverListener { get; }
+
     public BaulFixture()
     {
         Baules = new InMemoryBaulRepository(Personas);
+        ChapterPhotoCountListener = new ChapterPhotoCountListener(Chapters);
+        BaulPhotoCoverListener = new BaulPhotoCoverListener(Baules);
     }
 
     // "Baúl with custodio": mirrors BaulManager.CreateAsync, which always gives the custodio

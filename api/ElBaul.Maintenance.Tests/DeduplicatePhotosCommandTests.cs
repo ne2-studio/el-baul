@@ -1,3 +1,5 @@
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
@@ -26,7 +28,7 @@ public class DeduplicatePhotosCommandTests
     private DeduplicatePhotosCommand CreateCommand() =>
         new(_photos, _recuerdos, _tags,
             new PhotoDuplicateMergeService(_photos, _chapters, _baules, _personas, _recuerdos, _tags, _sharedLinks,
-                new PhotoLifecycleService(_photos, _chapters, _baules, new FixedClock(DateTime.UtcNow)),
+                new PhotoLifecycleService(_photos, new ChapterPhotoCountListener(_chapters), new BaulPhotoCoverListener(_baules), new FixedClock(DateTime.UtcNow)),
                 new FakeUnitOfWork(), new FixedClock(DateTime.UtcNow)),
             NullLogger<DeduplicatePhotosCommand>.Instance);
 
@@ -193,7 +195,7 @@ public class DeduplicatePhotosCommandTests
         // (mid-merge, before soft-delete) doesn't corrupt or block any other group's merge.
         var recuerdos = new FailingForOnePhotoRecuerdoRepository(brokenDuplicate.Id, _recuerdos);
         var mergeService = new PhotoDuplicateMergeService(_photos, _chapters, _baules, _personas, recuerdos, _tags, _sharedLinks,
-            new PhotoLifecycleService(_photos, _chapters, _baules, new FixedClock(DateTime.UtcNow)),
+            new PhotoLifecycleService(_photos, new ChapterPhotoCountListener(_chapters), new BaulPhotoCoverListener(_baules), new FixedClock(DateTime.UtcNow)),
             new FakeUnitOfWork(), new FixedClock(DateTime.UtcNow));
         var command = new DeduplicatePhotosCommand(_photos, _recuerdos, _tags, mergeService, NullLogger<DeduplicatePhotosCommand>.Instance);
 

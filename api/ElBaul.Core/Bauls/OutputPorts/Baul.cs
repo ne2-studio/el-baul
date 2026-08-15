@@ -33,14 +33,14 @@ public record Baul
 
     // Same cover-photo rule as Chapter (see Chapter.WithPhotoAdded/WithPhotoRemoved/WithCover):
     // first photo in becomes the cover, only the current cover is ever cleared.
-    public Baul WithPhotoAdded(Photo photo, DateTime updatedAt) =>
+    public Baul WithPhotoAdded(PhotoRef photo, DateTime updatedAt) =>
         this with
         {
             CoverPhotoKey = string.IsNullOrEmpty(CoverPhotoKey) ? photo.StorageKey : CoverPhotoKey,
             UpdatedAt = updatedAt
         };
 
-    public Baul WithPhotoRemoved(Photo photo, DateTime updatedAt) =>
+    public Baul WithPhotoRemoved(PhotoRef photo, DateTime updatedAt) =>
         this with
         {
             CoverPhotoKey = CoverPhotoKey == photo.StorageKey ? null : CoverPhotoKey,

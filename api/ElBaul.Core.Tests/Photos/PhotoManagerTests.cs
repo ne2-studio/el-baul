@@ -24,7 +24,7 @@ public class PhotoManagerTests
     private readonly FakePhotoDateExtractor _photoDateExtractor = new();
 
     private PhotoLifecycleService CreatePhotoLifecycleService(IPhotoRepository? photoRepository = null) =>
-        new(photoRepository ?? _fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Clock);
+        new(photoRepository ?? _fixture.Photos, _fixture.ChapterPhotoCountListener, _fixture.BaulPhotoCoverListener, _fixture.Clock);
 
     private PhotoDtoProjector CreatePhotoDtoProjector(IPhotoStorage? photoStorage = null) =>
         new(photoStorage ?? _photoStorage, _fixture.Recuerdos, _fixture.Clock);
