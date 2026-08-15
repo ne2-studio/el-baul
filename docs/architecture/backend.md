@@ -23,13 +23,16 @@ ElBaul.Maintenance ───┘                                           │
                                                     ElBaul.Core (core: Application + Ports)
 ```
 
-- **`ElBaul.Core`** — domain/use-case core: `Application/` (one manager class per aggregate root,
-  implementing its input port), `Ports/Input/` (use-case interfaces + DTOs), `Ports/Output/`
-  (everything the core needs from the outside world — repositories, `IClock`, `IIdGenerator`,
-  `ICurrentUserProvider`, `IPhotoStorage`, etc.). Every fallible operation — use cases and output
-  ports alike — returns `Shared.Result`/`Result<T>`, the one outcome vocabulary for the whole
-  core. References only `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB
-  driver, no ORM.** Fully unit-testable in isolation.
+- **`ElBaul.Core`** — domain/use-case core, organized by feature (`Bauls/`, `Photos/`, `Chapters/`,
+  `Sharing/`, `Shared/`, …), plus a cross-cutting `Domain/` for value objects/ids shared across
+  features. Each feature folder holds its use-case (input port) interfaces + DTOs at its root,
+  `Application/` (one manager class per aggregate root, implementing its input port), and
+  `OutputPorts/` (everything that feature needs from the outside world — repositories, `IClock`,
+  `IIdGenerator`, `ICurrentUserProvider`, `IPhotoStorage`, etc.; cross-feature ones live in
+  `Shared/OutputPorts/`). Every fallible operation — use cases and output ports alike — returns
+  `Shared.Result`/`Result<T>`, the one outcome vocabulary for the whole core. References only
+  `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB driver, no ORM.** Fully
+  unit-testable in isolation.
 - **`ElBaul.Api` / `ElBaul.Api.Lite`** — thin `Program.cs` per image: register that image's own
   infrastructure, call the shared host bootstrap, then handle whatever's genuinely
   infra-specific (migrations/Hangfire dashboard for the real image; nothing extra for Lite).
@@ -38,7 +41,8 @@ ElBaul.Maintenance ───┘                                           │
 - **`ElBaul.Api.Common`** — everything about the HTTP host that doesn't depend on which
   infrastructure is behind it: controllers, request DTOs, `ErrorMapping`, JWT auth setup, CORS,
   rate limiting, the manager DI registrations, the middleware pipeline. Controllers depend only
-  on `Ports/Input` interfaces, never on `Infra`/`Infra.Lite` or `Application` concrete types.
+  on input-port interfaces (`ElBaul.Core`'s per-feature `I*Manager` etc.), never on
+  `Infra`/`Infra.Lite` or `Application` concrete types.
 - **`ElBaul.Infra` / `ElBaul.Infra.Lite`** — implement every output port with real adapters (EF
   Core repositories, MinIO, Hangfire) or in-memory ones, respectively. `ElBaul.Infra.Lite` never
   references `ElBaul.Infra` — no Npgsql/AWSSDK/Hangfire dependency at all. Each exposes its own

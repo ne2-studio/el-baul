@@ -91,7 +91,7 @@ codes, invitations, photos, display names) are in
 ## Structure
 
 ```
-ElBaul.Core         — domain core (Application/ use cases, Ports/Input, Ports/Output)
+ElBaul.Core         — domain core, organized by feature (input ports + DTOs, Application/ use cases, OutputPorts/)
 ElBaul.Api          — HTTP entry point for el-baul-api: real infra registration + Program.cs
 ElBaul.Api.Lite     — HTTP entry point for el-baul-api-lite: in-memory infra + Program.cs
 ElBaul.Api.Common   — shared with both: controllers, JWT validation, CORS, rate limiting, manager DI
