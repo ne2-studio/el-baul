@@ -38,4 +38,15 @@ public class ChapterRepository(ElBaulDbContext dbContext) : IChapterRepository
     {
         await dbContext.Chapters.Where(a => a.BaulId == baulId).ExecuteDeleteAsync();
     }
+
+    public async Task<IEnumerable<Chapter>> GetWithLegacyCoverPhotoKeyAsync() =>
+        await dbContext.Chapters.AsNoTracking()
+            .Where(a => a.CoverPhotoKey != null && a.CoverPhotoId == null)
+            .ToListAsync();
+
+    public async Task SetCoverPhotoIdAsync(ChapterId id, PhotoId coverPhotoId)
+    {
+        await dbContext.Chapters.Where(a => a.Id == id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.CoverPhotoId, coverPhotoId));
+    }
 }

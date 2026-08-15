@@ -83,7 +83,9 @@ public class ChapterManagerTests
     public async Task GetByBaulIdAsync_ShouldResolveSignedUrls_ForCoverPhotos()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
-        await _fixture.AddChapterAsync(baulId, "Chapter", coverPhotoKey: "cover-key", photoCount: 1);
+        var chapterId = await _fixture.AddChapterAsync(baulId, "Chapter", photoCount: 1);
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, "cover-key");
+        await _fixture.Chapters.UpdateAsync((await _fixture.Chapters.GetByIdAsync(chapterId))! with { CoverPhotoId = photoId });
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);
@@ -93,7 +95,7 @@ public class ChapterManagerTests
     }
 
     [Fact]
-    public async Task SetCoverAsync_ShouldSetCoverPhotoKey_ForCustodio()
+    public async Task SetCoverAsync_ShouldSetCoverPhotoId_ForCustodio()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
         var chapterId = await _fixture.AddChapterAsync(baulId, "Chapter", photoCount: 1);
@@ -109,7 +111,7 @@ public class ChapterManagerTests
         Assert.Equal(1.8m, result.Value.CoverCropScale);
 
         var chapter = await _fixture.Chapters.GetByIdAsync(chapterId);
-        Assert.Equal("photo-key", chapter!.CoverPhotoKey);
+        Assert.Equal(photoId, chapter!.CoverPhotoId);
         Assert.Equal(0.25m, chapter.CoverCropX);
         Assert.Equal(0.75m, chapter.CoverCropY);
         Assert.Equal(1.8m, chapter.CoverCropScale);

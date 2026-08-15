@@ -10,10 +10,15 @@ public record Baul
     int ChapterCount,
     DateTime CreatedAt,
     DateTime UpdatedAt,
+    // Legacy, no longer written by any domain code — kept only so a backfill can still read it
+    // to populate CoverPhotoId below (see backfill-baul-chapter-cover-photo-id) and so it isn't
+    // silently dropped from rows that predate CoverPhotoId. Every read path goes through
+    // CoverPhotoId + CoverUrlResolver instead; do not add a new consumer of this field.
     string? CoverPhotoKey = null,
     decimal CoverCropX = 0.5m,
     decimal CoverCropY = 0.5m,
-    decimal CoverCropScale = 1m
+    decimal CoverCropScale = 1m,
+    PhotoId? CoverPhotoId = null
 )
 {
     // The single interpretation of "is this user the baúl's custodio" — a legal-custody
@@ -36,26 +41,26 @@ public record Baul
     public Baul WithPhotoAdded(PhotoRef photo, DateTime updatedAt) =>
         this with
         {
-            CoverPhotoKey = string.IsNullOrEmpty(CoverPhotoKey) ? photo.StorageKey : CoverPhotoKey,
+            CoverPhotoId = CoverPhotoId is null ? photo.Id : CoverPhotoId,
             UpdatedAt = updatedAt
         };
 
     public Baul WithPhotoRemoved(PhotoRef photo, DateTime updatedAt) =>
         this with
         {
-            CoverPhotoKey = CoverPhotoKey == photo.StorageKey ? null : CoverPhotoKey,
+            CoverPhotoId = CoverPhotoId == photo.Id ? null : CoverPhotoId,
             UpdatedAt = updatedAt
         };
 
-    // See Chapter.WithCoverPhotoKey for why this is a separate, crop-preserving method from
+    // See Chapter.WithCoverPhotoId for why this is a separate, crop-preserving method from
     // WithCover.
-    public Baul WithCoverPhotoKey(string coverPhotoKey, DateTime updatedAt) =>
-        this with { CoverPhotoKey = coverPhotoKey, UpdatedAt = updatedAt };
+    public Baul WithCoverPhotoId(PhotoId coverPhotoId, DateTime updatedAt) =>
+        this with { CoverPhotoId = coverPhotoId, UpdatedAt = updatedAt };
 
     public Baul WithCover(Photo photo, decimal cropX, decimal cropY, decimal cropScale, DateTime updatedAt) =>
         this with
         {
-            CoverPhotoKey = photo.StorageKey,
+            CoverPhotoId = photo.Id,
             CoverCropX = cropX,
             CoverCropY = cropY,
             CoverCropScale = cropScale,

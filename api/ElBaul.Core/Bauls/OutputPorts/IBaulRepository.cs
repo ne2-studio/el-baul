@@ -14,6 +14,17 @@ public interface IBaulRepository
     Task CreateAsync(Baul baul);
     Task UpdateAsync(Baul baul);
 
+    /// <summary>Bauls that still carry a legacy CoverPhotoKey but have never had CoverPhotoId
+    /// backfilled — the candidate set backfill-baul-chapter-cover-photo-id resolves. See
+    /// Baul.CoverPhotoKey for why the field still exists at all.</summary>
+    Task<IEnumerable<Baul>> GetWithLegacyCoverPhotoKeyAsync();
+
+    /// <summary>Sets CoverPhotoId directly, bypassing the normal Baul.WithCoverPhotoId/
+    /// UpdateAsync path — used only by the backfill command, which must not bump UpdatedAt for
+    /// a purely internal migration of an already-existing cover reference (mirrors
+    /// IRecuerdoRepository.SetBaulIdAsync).</summary>
+    Task SetCoverPhotoIdAsync(BaulId id, PhotoId coverPhotoId);
+
     /// <summary>Hard-deletes the Baul row itself. Callers must first clear every child
     /// collection (Chapters, Personas, RemovalRequests, and — via IPhotoRepository/
     /// IRecuerdoRepository/IRemovalRequestRepository/IPersonaRepository —

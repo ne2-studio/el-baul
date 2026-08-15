@@ -81,10 +81,11 @@ public class BaulFixture
         AddPersonaAsync(baulId, userId: null, nickname, role);
 
     public async Task<ChapterId> AddChapterAsync(
-        BaulId baulId, string name = "Chapter", Guid? id = null, string? coverPhotoKey = null, int photoCount = 0)
+        BaulId baulId, string name = "Chapter", Guid? id = null, PhotoId? coverPhotoId = null, int photoCount = 0)
     {
         var chapterId = new ChapterId(id ?? Guid.NewGuid());
-        await Chapters.CreateAsync(new Chapter(chapterId, baulId, name, photoCount, coverPhotoKey, Clock.UtcNow(), Clock.UtcNow()));
+        await Chapters.CreateAsync(new Chapter(
+            chapterId, baulId, name, photoCount, CoverPhotoKey: null, Clock.UtcNow(), Clock.UtcNow(), CoverPhotoId: coverPhotoId));
         return chapterId;
     }
 

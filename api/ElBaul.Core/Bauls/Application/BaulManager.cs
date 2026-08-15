@@ -122,7 +122,7 @@ public class BaulManager(
     private async Task<BaulDto> ToDtoAsync(Baul baul, string role, bool isCustodio, int memberCount = 1)
     {
         var crop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
-        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoKey, ImagePlacement.BaulCover, photoStorage, crop);
+        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoId, baul.Id, ImagePlacement.BaulCover, photoRepository, photoStorage, crop);
 
         return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.ChapterCount, coverUrl,
             baul.CreatedAt, baul.UpdatedAt, role, isCustodio, memberCount,

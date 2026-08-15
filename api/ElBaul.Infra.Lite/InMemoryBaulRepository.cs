@@ -52,4 +52,22 @@ public class InMemoryBaulRepository(IPersonaRepository personaRepository) : IBau
         lock (_lock) _baules.Remove(id);
         return Task.CompletedTask;
     }
+
+    public Task<IEnumerable<Baul>> GetWithLegacyCoverPhotoKeyAsync()
+    {
+        lock (_lock)
+            return Task.FromResult(_baules.Values
+                .Where(b => b.CoverPhotoKey is not null && b.CoverPhotoId is null)
+                .ToList().AsEnumerable());
+    }
+
+    public Task SetCoverPhotoIdAsync(BaulId id, PhotoId coverPhotoId)
+    {
+        lock (_lock)
+        {
+            if (_baules.TryGetValue(id, out var baul))
+                _baules[id] = baul with { CoverPhotoId = coverPhotoId };
+        }
+        return Task.CompletedTask;
+    }
 }

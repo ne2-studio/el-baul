@@ -45,9 +45,9 @@ public static class ChapterListRowFactory
     {
         var latest = recuerdos.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
         return new ChapterListRow(
-            chapter.Id, chapter.BaulId, chapter.Name, chapter.PhotoCount, chapter.CoverPhotoKey,
+            chapter.Id, chapter.BaulId, chapter.Name, chapter.PhotoCount,
             chapter.CreatedAt, chapter.UpdatedAt, recuerdos.Count, latest?.Text, latest?.UserId,
             ChapterDateRangeCalculator.Compute(photos),
-            chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
+            chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale, chapter.CoverPhotoId);
     }
 }

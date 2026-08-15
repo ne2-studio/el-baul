@@ -24,6 +24,7 @@ public class BaulFeedManager(
     IPhotoDtoProjector photoDtoProjector,
     AuthorInfoProjector authorInfoProjector,
     IChapterRepository chapterRepository,
+    IPhotoRepository photoRepository,
     IPhotoStorage photoStorage,
     IBaulFeedCursorRepository feedCursorRepository,
     IAppConfiguration appConfiguration,
@@ -120,12 +121,21 @@ public class BaulFeedManager(
         var authorsByUserId = await authorInfoProjector.GetManyAsync(
             baulId, chapters.Select(c => new UserId(c.CreatedByUserId)).Distinct());
 
+        // One batched cover-photo lookup for every chapter in the feed instead of one
+        // GetByIdAsync per chapter — same batching AuthorInfoProjector.GetManyAsync does above
+        // for avatars.
+        var coverPhotoIds = chapters.Where(c => c.CoverPhotoId is not null).Select(c => c.CoverPhotoId!.Value).Distinct().ToList();
+        var coverPhotosById = coverPhotoIds.Count == 0
+            ? new Dictionary<PhotoId, Photo>()
+            : (await photoRepository.GetByIdsAsync(coverPhotoIds)).ToDictionary(p => p.Id);
+
         var items = new List<FeedItemDto>();
         foreach (var chapter in chapters)
         {
             var (nickname, avatarUrl, personaId) = AuthorInfoProjector.Resolve(authorsByUserId, new UserId(chapter.CreatedByUserId));
             var coverCrop = new ImageCrop(chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
-            var coverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage, coverCrop);
+            var coverPhoto = chapter.CoverPhotoId is { } coverPhotoId ? coverPhotosById.GetValueOrDefault(coverPhotoId) : null;
+            var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCover, photoStorage, coverCrop);
             var dto = new ChapterCreatedFeedDto(
                 chapter.Id.ToString(), chapter.Name, coverUrl, chapter.CreatedAt,
                 chapter.CreatedByUserId, nickname, avatarUrl, personaId);

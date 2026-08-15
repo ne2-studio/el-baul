@@ -183,28 +183,29 @@ public class PhotoDuplicateMergeServiceTests
         var survivorId = await _fixture.AddPhotoAsync(baulId, storageKey: "survivor-key", date: Date(1990), originalContentHash: "hash");
         var duplicateId = await _fixture.AddPhotoAsync(baulId, storageKey: "duplicate-key", date: Date(2020), originalContentHash: "hash");
         var baul = (await _fixture.Baules.GetByIdAsync(baulId))!;
-        await _fixture.Baules.UpdateAsync(baul with { CoverPhotoKey = "duplicate-key" });
+        await _fixture.Baules.UpdateAsync(baul with { CoverPhotoId = duplicateId });
         var group = new[] { survivorId, duplicateId }.Select(id => _fixture.Photos.GetByIdAsync(id).Result!).ToList();
 
         await CreateService().MergeGroupAsync(group);
 
         var reloadedBaul = await _fixture.Baules.GetByIdAsync(baulId);
-        Assert.Equal("survivor-key", reloadedBaul!.CoverPhotoKey);
+        Assert.Equal(survivorId, reloadedBaul!.CoverPhotoId);
     }
 
     [Fact]
     public async Task MergeGroupAsync_RedirectsTheChapterCover_WhenADuplicateWasTheCover()
     {
         var baulId = await _fixture.CreateBaulAsync();
-        var chapterId = await _fixture.AddChapterAsync(baulId, coverPhotoKey: "duplicate-key");
+        var chapterId = await _fixture.AddChapterAsync(baulId);
         var survivorId = await _fixture.AddPhotoAsync(baulId, chapterId, "survivor-key", Date(1990), originalContentHash: "hash");
         var duplicateId = await _fixture.AddPhotoAsync(baulId, chapterId, "duplicate-key", Date(2020), originalContentHash: "hash");
+        await _fixture.Chapters.UpdateAsync((await _fixture.Chapters.GetByIdAsync(chapterId))! with { CoverPhotoId = duplicateId });
         var group = new[] { survivorId, duplicateId }.Select(id => _fixture.Photos.GetByIdAsync(id).Result!).ToList();
 
         await CreateService().MergeGroupAsync(group);
 
         var reloadedChapter = await _fixture.Chapters.GetByIdAsync(chapterId);
-        Assert.Equal("survivor-key", reloadedChapter!.CoverPhotoKey);
+        Assert.Equal(survivorId, reloadedChapter!.CoverPhotoId);
     }
 
     [Fact]

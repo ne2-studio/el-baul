@@ -87,14 +87,14 @@ public class PhotoDuplicateMergeService(
             // duplicate's storage key — see docs/.backlog issue #20 §17, the survivor must never
             // reference the duplicate's blob.
             var baul = await baulRepository.GetByIdAsync(survivor.BaulId);
-            if (baul is not null && duplicates.Any(d => d.StorageKey == baul.CoverPhotoKey))
-                await baulRepository.UpdateAsync(baul.WithCoverPhotoKey(survivor.StorageKey, now));
+            if (baul is not null && duplicates.Any(d => d.Id == baul.CoverPhotoId))
+                await baulRepository.UpdateAsync(baul.WithCoverPhotoId(survivor.Id, now));
 
             foreach (var chapterId in duplicates.Select(d => d.ChapterId).Where(id => id is not null).Select(id => id!.Value).Distinct())
             {
                 var chapter = await chapterRepository.GetByIdAsync(chapterId);
-                if (chapter is not null && duplicates.Any(d => d.ChapterId == chapterId && d.StorageKey == chapter.CoverPhotoKey))
-                    await chapterRepository.UpdateAsync(chapter.WithCoverPhotoKey(survivor.StorageKey, now));
+                if (chapter is not null && duplicates.Any(d => d.ChapterId == chapterId && d.Id == chapter.CoverPhotoId))
+                    await chapterRepository.UpdateAsync(chapter.WithCoverPhotoId(survivor.Id, now));
             }
 
             // Persona avatar photo references, same redirect rationale as covers above.

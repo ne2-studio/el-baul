@@ -20,7 +20,7 @@ public class BaulPhotoCoverListener(IBaulRepository baulRepository) : IBaulPhoto
     public async Task OnPhotoRemovedAsync(BaulId baulId, PhotoRef photo, DateTime now)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null || baul.CoverPhotoKey != photo.StorageKey) return;
+        if (baul is null || baul.CoverPhotoId != photo.Id) return;
 
         await baulRepository.UpdateAsync(baul.WithPhotoRemoved(photo, now));
     }

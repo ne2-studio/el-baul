@@ -148,6 +148,7 @@ public class BaulInviteLinkManagerTests
         var baulId = await SeedBaulAsync();
         var baul = await _baules.GetByIdAsync(baulId);
         var coverPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, null, null, new UserId(CustodioId), Now);
+        await _photos.CreateAsync(coverPhoto);
         await _baules.UpdateAsync(baul!.WithCover(coverPhoto, 0.5m, 0.5m, 1m, Now));
 
         // Custodio persona (seeded by SeedBaulAsync) has no avatar and should be skipped.
@@ -171,6 +172,7 @@ public class BaulInviteLinkManagerTests
         var baulId = await SeedBaulAsync();
         var baul = await _baules.GetByIdAsync(baulId);
         var coverPhoto = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, null, null, new UserId(CustodioId), Now);
+        await _photos.CreateAsync(coverPhoto);
         await _baules.UpdateAsync(baul!.WithCover(coverPhoto, 0.5m, 0.5m, 1m, Now));
 
         var manager = CreateManager(CustodioId);

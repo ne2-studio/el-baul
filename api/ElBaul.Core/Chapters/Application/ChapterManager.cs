@@ -47,9 +47,17 @@ public class ChapterManager(
             .Distinct();
         var authors = await authorInfoProjector.GetManyAsync(baulId, authorUserIds);
 
+        // One batched cover-photo lookup for the whole baúl instead of one GetByIdAsync per
+        // chapter (the exact N+1 IChapterListReadModel itself exists to avoid — see its doc
+        // comment) — mirrors AuthorInfoProjector.GetManyAsync's batching of avatar photos.
+        var coverPhotoIds = rows.Where(r => r.CoverPhotoId is not null).Select(r => r.CoverPhotoId!.Value).Distinct().ToList();
+        var coverPhotosById = coverPhotoIds.Count == 0
+            ? new Dictionary<PhotoId, Photo>()
+            : (await photoRepository.GetByIdsAsync(coverPhotoIds)).ToDictionary(p => p.Id);
+
         var dtos = new List<ChapterDto>();
         foreach (var row in rows)
-            dtos.Add(await ToDtoAsync(row, authors));
+            dtos.Add(await ToDtoAsync(row, authors, coverPhotosById));
 
         // Chronological: dated chapters first (oldest min date first, so the baúl reads like a
         // story), undated-only chapters last.
@@ -195,8 +203,11 @@ public class ChapterManager(
     private async Task<ChapterDto> ToDtoAsync(Chapter chapter)
     {
         var crop = new ImageCrop(chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
-        var coverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage, crop);
-        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(chapter.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
+        // Resolved once and reused for both placements — CoverUrlResolver's Photo overload does
+        // no I/O of its own, so this is one GetByIdAsync instead of two identical ones.
+        var coverPhoto = chapter.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
+        var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCover, photoStorage, crop);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
 
         var photos = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
         var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
@@ -214,11 +225,13 @@ public class ChapterManager(
     // author map (see GetByBaulIdAsync) into a ChapterDto. The only per-row work left is
     // resolving cover/featured-cover URLs, which IPhotoStorage computes locally (no DB/network
     // round trip — see MinioPhotoStorage.GetImageUrl), so it stays cheap per chapter.
-    private async Task<ChapterDto> ToDtoAsync(ChapterListRow row, IReadOnlyDictionary<UserId, AuthorInfo> authorsByUserId)
+    private async Task<ChapterDto> ToDtoAsync(
+        ChapterListRow row, IReadOnlyDictionary<UserId, AuthorInfo> authorsByUserId, IReadOnlyDictionary<PhotoId, Photo> coverPhotosById)
     {
         var crop = new ImageCrop(row.CoverCropX, row.CoverCropY, row.CoverCropScale);
-        var coverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCover, photoStorage, crop);
-        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(row.CoverPhotoKey, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
+        var coverPhoto = row.CoverPhotoId is { } coverPhotoId ? coverPhotosById.GetValueOrDefault(coverPhotoId) : null;
+        var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, row.BaulId, ImagePlacement.ChapterCover, photoStorage, crop);
+        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, row.BaulId, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
 
         var latestAuthor = row.LatestRecuerdoAuthorUserId is { } userId
             ? AuthorInfoProjector.Resolve(authorsByUserId, userId).Nickname

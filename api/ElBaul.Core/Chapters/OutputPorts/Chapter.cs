@@ -7,6 +7,10 @@ public record Chapter
     BaulId BaulId,
     string Name,
     int PhotoCount,
+    // Legacy, no longer written by any domain code — kept only so a backfill can still read it
+    // to populate CoverPhotoId below (see backfill-baul-chapter-cover-photo-id) and so it isn't
+    // silently dropped from rows that predate CoverPhotoId. Every read path goes through
+    // CoverPhotoId + CoverUrlResolver instead; do not add a new consumer of this field.
     string? CoverPhotoKey,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -15,10 +19,11 @@ public record Chapter
     string CreatedByUserId = "",
     decimal CoverCropX = 0.5m,
     decimal CoverCropY = 0.5m,
-    decimal CoverCropScale = 1m
+    decimal CoverCropScale = 1m,
+    PhotoId? CoverPhotoId = null
 )
 {
-    // CoverPhotoKey follows the same rule everywhere a photo enters or leaves a chapter: the
+    // CoverPhotoId follows the same rule everywhere a photo enters or leaves a chapter: the
     // first photo in becomes the cover, and only the current cover is ever cleared. WithPhotoAdded/
     // WithPhotoRemoved/WithCover are the sanctioned way to change it (mirrors Photo.WithDate/Create)
     // so that rule lives in one place instead of being reconstructed inline per call site.
@@ -26,7 +31,7 @@ public record Chapter
         this with
         {
             PhotoCount = PhotoCount + 1,
-            CoverPhotoKey = string.IsNullOrEmpty(CoverPhotoKey) ? photo.StorageKey : CoverPhotoKey,
+            CoverPhotoId = CoverPhotoId is null ? photo.Id : CoverPhotoId,
             UpdatedAt = updatedAt
         };
 
@@ -34,17 +39,17 @@ public record Chapter
         this with
         {
             PhotoCount = Math.Max(0, PhotoCount - 1),
-            CoverPhotoKey = CoverPhotoKey == photo.StorageKey ? null : CoverPhotoKey,
+            CoverPhotoId = CoverPhotoId == photo.Id ? null : CoverPhotoId,
             UpdatedAt = updatedAt
         };
 
-    // Redirects the cover to a different photo's storage key without touching the existing crop
-    // — unlike WithCover, which is the user-initiated "pick a new cover" action and resets crop
-    // to whatever the picker submitted. Used by PhotoDuplicateMergeService: when the duplicate
+    // Redirects the cover to a different photo without touching the existing crop — unlike
+    // WithCover, which is the user-initiated "pick a new cover" action and resets crop to
+    // whatever the picker submitted. Used by PhotoDuplicateMergeService: when the duplicate
     // being merged away is the current cover, the survivor's own (bit-identical) blob takes over
     // the same framing rather than resetting it to center.
-    public Chapter WithCoverPhotoKey(string coverPhotoKey, DateTime updatedAt) =>
-        this with { CoverPhotoKey = coverPhotoKey, UpdatedAt = updatedAt };
+    public Chapter WithCoverPhotoId(PhotoId coverPhotoId, DateTime updatedAt) =>
+        this with { CoverPhotoId = coverPhotoId, UpdatedAt = updatedAt };
 
     public Chapter WithName(string name, DateTime updatedAt) =>
         this with { Name = name, UpdatedAt = updatedAt };
@@ -52,7 +57,7 @@ public record Chapter
     public Chapter WithCover(Photo photo, decimal cropX, decimal cropY, decimal cropScale, DateTime updatedAt) =>
         this with
         {
-            CoverPhotoKey = photo.StorageKey,
+            CoverPhotoId = photo.Id,
             CoverCropX = cropX,
             CoverCropY = cropY,
             CoverCropScale = cropScale,

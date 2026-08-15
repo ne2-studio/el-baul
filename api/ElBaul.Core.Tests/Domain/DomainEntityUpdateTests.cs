@@ -60,7 +60,7 @@ public class DomainEntityUpdateTests
     }
 
     [Fact]
-    public void Chapter_WithCover_StoresCropAlongsideTheCoverPhotoKey()
+    public void Chapter_WithCover_StoresCropAlongsideTheCoverPhotoId()
     {
         var chapter = new Chapter(
             new ChapterId(Guid.NewGuid()), new BaulId(Guid.NewGuid()), "Vacaciones", 0, null,
@@ -72,7 +72,7 @@ public class DomainEntityUpdateTests
 
         var updated = chapter.WithCover(photo, cropX: 0.2m, cropY: 0.3m, cropScale: 1.4m, updatedAt);
 
-        Assert.Equal(photo.StorageKey, updated.CoverPhotoKey);
+        Assert.Equal(photo.Id, updated.CoverPhotoId);
         Assert.Equal(0.2m, updated.CoverCropX);
         Assert.Equal(0.3m, updated.CoverCropY);
         Assert.Equal(1.4m, updated.CoverCropScale);
@@ -80,7 +80,7 @@ public class DomainEntityUpdateTests
     }
 
     [Fact]
-    public void Baul_WithCover_StoresCropAlongsideTheCoverPhotoKey()
+    public void Baul_WithCover_StoresCropAlongsideTheCoverPhotoId()
     {
         var baul = new Baul(
             new BaulId(Guid.NewGuid()), "Familia", null, new UserId("user-1"), 0,
@@ -92,7 +92,7 @@ public class DomainEntityUpdateTests
 
         var updated = baul.WithCover(photo, cropX: 0.2m, cropY: 0.3m, cropScale: 1.4m, updatedAt);
 
-        Assert.Equal(photo.StorageKey, updated.CoverPhotoKey);
+        Assert.Equal(photo.Id, updated.CoverPhotoId);
         Assert.Equal(0.2m, updated.CoverCropX);
         Assert.Equal(0.3m, updated.CoverCropY);
         Assert.Equal(1.4m, updated.CoverCropScale);

@@ -4,7 +4,7 @@ using ElBaul.Domain;
 namespace ElBaul.Core.Photos.Application;
 
 // Orchestrates the write-side bookkeeping every photo lifecycle transition needs — chapter/baúl
-// PhotoCount and CoverPhotoKey — without depending on IChapterRepository/IBaulRepository
+// PhotoCount and CoverPhotoId — without depending on IChapterRepository/IBaulRepository
 // directly. Chapter/Baul react to these transitions via IChapterPhotoCountListener/
 // IBaulPhotoCoverListener instead, each doing its own fetch-then-update: one extra round trip in
 // the few call sites where the caller already had the Chapter/Baul loaded, traded for Photos not

@@ -21,7 +21,6 @@ public sealed record ChapterListRow(
     BaulId BaulId,
     string Name,
     int PhotoCount,
-    string? CoverPhotoKey,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     int RecuerdoCount,
@@ -30,5 +29,6 @@ public sealed record ChapterListRow(
     ChapterDateRange DateRange,
     decimal CoverCropX,
     decimal CoverCropY,
-    decimal CoverCropScale
+    decimal CoverCropScale,
+    PhotoId? CoverPhotoId
 );

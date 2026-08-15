@@ -101,7 +101,7 @@ public class BaulManagerTests
     }
 
     [Fact]
-    public async Task SetCoverAsync_ShouldSetCoverPhotoKey_ForCustodio()
+    public async Task SetCoverAsync_ShouldSetCoverPhotoId_ForCustodio()
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
@@ -119,7 +119,7 @@ public class BaulManagerTests
         Assert.Equal(1.8m, result.Value.CoverCropScale);
 
         var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
-        Assert.Equal("photo-key", baul!.CoverPhotoKey);
+        Assert.Equal(new PhotoId(photoId), baul!.CoverPhotoId);
         Assert.Equal(0.25m, baul.CoverCropX);
         Assert.Equal(0.75m, baul.CoverCropY);
         Assert.Equal(1.8m, baul.CoverCropScale);
