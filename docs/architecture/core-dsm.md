@@ -17,7 +17,7 @@
 | Personas |  |  | ● |  |  |  |  |  | — | ● |  | ● |  |  |  | ● |
 | Photos |  |  | ● | ● |  |  |  |  | ● | — | ● | ● | ● |  |  |  |
 | Recuerdos |  |  | ● | ● |  |  |  |  | ● | ● | — | ● |  |  |  |  |
-| Shared |  |  |  |  | ● |  | ● |  | ● | ● |  | — |  |  |  |  |
+| Shared |  |  |  |  |  |  |  |  |  | ● |  | — |  |  |  |  |
 | Sharing |  |  | ● |  |  |  |  |  | ● | ● | ● | ● | — |  |  | ● |
 | Support |  |  |  |  |  |  |  |  |  |  |  | ● |  | — |  | ● |
 | TvMode |  |  | ● | ● |  |  |  |  | ● | ● | ● | ● | ● |  | — |  |
@@ -27,4 +27,4 @@
 
 El grafo NO es acíclico. Grupos fuertemente conexos (SCC) con más de un feature:
 
-- Bauls, Chapters, Chat, Moderation, Personas, Photos, Recuerdos, Shared, Sharing, Users
+- Bauls, Chapters, Moderation, Personas, Photos, Recuerdos, Shared, Sharing, Users

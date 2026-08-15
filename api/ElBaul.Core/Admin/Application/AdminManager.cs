@@ -1,6 +1,6 @@
-using ElBaul.Core.Shared.Application;
 using ElBaul.Core.Chat.Application;
 using ElBaul.Core.Admin.OutputPorts;
+using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;

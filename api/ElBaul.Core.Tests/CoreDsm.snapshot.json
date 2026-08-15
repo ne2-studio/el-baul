@@ -305,21 +305,6 @@
     },
     {
       "From": "Shared",
-      "To": "Chat",
-      "Kind": "Deep"
-    },
-    {
-      "From": "Shared",
-      "To": "Moderation",
-      "Kind": "Deep"
-    },
-    {
-      "From": "Shared",
-      "To": "Personas",
-      "Kind": "Deep"
-    },
-    {
-      "From": "Shared",
       "To": "Photos",
       "Kind": "Deep"
     },
@@ -408,7 +393,6 @@
     [
       "Bauls",
       "Chapters",
-      "Chat",
       "Moderation",
       "Personas",
       "Photos",
