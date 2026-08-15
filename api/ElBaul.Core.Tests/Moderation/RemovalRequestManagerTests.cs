@@ -22,6 +22,7 @@ public class RemovalRequestManagerTests
     private const string OtherUserId = "user-2";
 
     private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryRemovalRequestRepository _removalRequestRepository = new();
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryUserRepository _userRepository = new();
@@ -35,7 +36,7 @@ public class RemovalRequestManagerTests
     }
 
     private RemovalRequestManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<RemovalRequestManager>.Instance, _baulRepository, _photoRepository,
+        new(NullLogger<RemovalRequestManager>.Instance, _removalRequestRepository, _photoRepository,
             _userRepository, _photoStorage, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
             new PhotoLifecycleService(_photoRepository, _chapterRepository, _baulRepository, _clock), new FakeUnitOfWork());
@@ -106,7 +107,7 @@ public class RemovalRequestManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
-        Assert.Empty(await _baulRepository.GetRemovalRequestsAsync(new BaulId(firstBaulId)));
+        Assert.Empty(await _removalRequestRepository.GetRemovalRequestsAsync(new BaulId(firstBaulId)));
     }
 
     [Fact]
@@ -121,7 +122,7 @@ public class RemovalRequestManagerTests
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var requestId = Guid.NewGuid();
-        await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", "Retirar por privacidad", _clock.UtcNow(), RequestStatus.Pending));
+        await _removalRequestRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", "Retirar por privacidad", _clock.UtcNow(), RequestStatus.Pending));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.ApproveRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId));
@@ -135,7 +136,7 @@ public class RemovalRequestManagerTests
         Assert.Equal(_clock.UtcNow(), deletedPhoto.DeletedAt);
         Assert.Equal("Retirar por privacidad", deletedPhoto.DeletionReason);
         Assert.Empty(_photoStorage.DeletedKeys);
-        Assert.Null(await _baulRepository.GetRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId)));
+        Assert.Null(await _removalRequestRepository.GetRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId)));
 
         var chapter = await _chapterRepository.GetByIdAsync(new ChapterId(chapterId));
         Assert.Equal(0, chapter!.PhotoCount);
@@ -149,13 +150,13 @@ public class RemovalRequestManagerTests
         await SeedBaulAsync(baulId, "Familia");
 
         var requestId = Guid.NewGuid();
-        await _baulRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
+        await _removalRequestRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", null, _clock.UtcNow(), RequestStatus.Pending));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.RejectRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId));
 
         Assert.True(result.IsSuccess);
-        Assert.Null(await _baulRepository.GetRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId)));
+        Assert.Null(await _removalRequestRepository.GetRemovalRequestAsync(new BaulId(baulId), new RemovalRequestId(requestId)));
     }
 
     [Fact]

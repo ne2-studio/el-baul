@@ -40,6 +40,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var recuerdos = new RecuerdoRepository(dbContext);
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
         var inviteLinks = new BaulInviteLinkRepository(dbContext);
+        var removalRequests = new RemovalRequestRepository(dbContext);
 
         var deletion = new AdminBaulDeletionRepository(
             baules,
@@ -50,6 +51,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             inviteLinks,
             new TvSessionRepository(dbContext),
             photoPersonaTags,
+            removalRequests,
             new UnitOfWork(dbContext));
 
         var admin = new AdminManager(
@@ -104,7 +106,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         // explicitly anyway (see its own doc comment) so behavior doesn't depend on which
         // backend is running; included so this test covers every entity type that comment
         // names, not just the two Restrict-FK cases above.
-        await baules.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(Guid.NewGuid()),
+        await removalRequests.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(Guid.NewGuid()),
             baul.Id, photo.Id, photo.StorageKey, "Alguien", "alguien@example.com",
             "Solicitud pendiente en el baúl a borrar", DateTime.UtcNow, RequestStatus.Pending));
 
@@ -149,6 +151,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             new BaulInviteLinkRepository(dbContext),
             new TvSessionRepository(dbContext),
             photoPersonaTags,
+            new RemovalRequestRepository(dbContext),
             new UnitOfWork(dbContext));
 
         var admin = new AdminManager(

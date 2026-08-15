@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Admin | — |  | ● | ● | ● |  |  | ● | ● | ● |  | ● |  |  |  | ● |
 | Analytics |  | — |  |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| Bauls |  |  | — |  |  |  | ● |  | ● | ● |  | ● |  |  |  | ● |
+| Bauls |  |  | — |  |  |  |  |  | ● | ● |  | ● |  |  |  | ● |
 | Chapters |  |  | ● | — |  |  |  |  | ● | ● | ● | ● |  |  |  |  |
 | Chat |  |  | ● | ● | — |  |  |  | ● | ● | ● | ● |  |  |  |  |
 | Feed |  |  | ● | ● |  | — |  |  | ● | ● | ○ | ● |  |  |  |  |
@@ -27,4 +27,4 @@
 
 El grafo NO es acíclico. Grupos fuertemente conexos (SCC) con más de un feature:
 
-- Bauls, Chapters, Moderation, Personas, Photos, Recuerdos, Sharing
+- Bauls, Chapters, Personas, Photos, Recuerdos, Sharing

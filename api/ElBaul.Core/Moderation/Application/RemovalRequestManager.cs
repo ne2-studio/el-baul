@@ -1,6 +1,5 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Photos.Application;
-using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Moderation.OutputPorts;
@@ -12,7 +11,7 @@ using ElBaul.Domain;
 namespace ElBaul.Core.Moderation.Application;
 public class RemovalRequestManager(
     ILogger<RemovalRequestManager> logger,
-    IBaulRepository baulRepository,
+    IRemovalRequestRepository removalRequestRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
     IPhotoStorage photoStorage,
@@ -30,7 +29,7 @@ public class RemovalRequestManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal requests");
         if (auth.IsFailure) return Result.Failure<IEnumerable<RemovalRequestDto>>(auth.Error);
 
-        var requests = await baulRepository.GetRemovalRequestsAsync(baulId);
+        var requests = await removalRequestRepository.GetRemovalRequestsAsync(baulId);
         var dtos = new List<RemovalRequestDto>();
         foreach (var request in requests)
         {
@@ -63,7 +62,7 @@ public class RemovalRequestManager(
             new RemovalRequestId(idGenerator.NewId()), baulId, photoId, photo.StorageKey,
             nickname, userProfile?.Email ?? "", reason, now, RequestStatus.Pending);
 
-        await baulRepository.CreateRemovalRequestAsync(request);
+        await removalRequestRepository.CreateRemovalRequestAsync(request);
         logger.LogInformation("Removal request created {PhotoId} {RemovalRequestId}", photoId, request.Id);
 
         var url = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.RemovalRequestThumbnail);
@@ -77,7 +76,7 @@ public class RemovalRequestManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request approval");
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
+        var request = await removalRequestRepository.GetRemovalRequestAsync(baulId, requestId);
         if (request is null)
         {
             logger.LogWarning("Removal request approval rejected: request not found {RemovalRequestId}", requestId);
@@ -96,7 +95,7 @@ public class RemovalRequestManager(
                 await photoLifecycle.SoftDeleteAsync(photo, request.Reason);
             }
 
-            await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+            await removalRequestRepository.DeleteRemovalRequestAsync(baulId, requestId);
             return Result.Success();
         });
 
@@ -114,14 +113,14 @@ public class RemovalRequestManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Admin, "Removal request rejection");
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
-        var request = await baulRepository.GetRemovalRequestAsync(baulId, requestId);
+        var request = await removalRequestRepository.GetRemovalRequestAsync(baulId, requestId);
         if (request is null)
         {
             logger.LogWarning("Removal request rejection rejected: request not found {RemovalRequestId}", requestId);
             return Result.Failure(ApplicationError.NotFound("Request not found"));
         }
 
-        await baulRepository.DeleteRemovalRequestAsync(baulId, requestId);
+        await removalRequestRepository.DeleteRemovalRequestAsync(baulId, requestId);
         logger.LogInformation("Removal request rejected {RemovalRequestId}", requestId);
         return Result.Success();
     }

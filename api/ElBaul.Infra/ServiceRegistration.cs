@@ -11,6 +11,7 @@ using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Chat.OutputPorts;
 using ElBaul.Core.Feed.OutputPorts;
+using ElBaul.Core.Moderation.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -37,6 +38,7 @@ public static class ServiceRegistration
         services.AddScoped<IUserBaulActivityDailyAggregator, UserBaulActivityDailyAggregator>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBaulRepository, BaulRepository>();
+        services.AddScoped<IRemovalRequestRepository, RemovalRequestRepository>();
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IChapterListReadModel, ChapterListReadModel>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();

@@ -28,6 +28,7 @@ public class AdminManagerTests
     private readonly InMemoryBaulInviteLinkRepository _baulInviteLinkRepository = new();
     private readonly InMemoryTvSessionRepository _tvSessionRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
+    private readonly InMemoryRemovalRequestRepository _removalRequestRepository = new();
     private readonly IAdminBaulDeletionRepository _baulDeletionRepository;
     private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
@@ -45,6 +46,7 @@ public class AdminManagerTests
             _baulInviteLinkRepository,
             _tvSessionRepository,
             _photoPersonaTagRepository,
+            _removalRequestRepository,
             new FakeUnitOfWork());
     }
 

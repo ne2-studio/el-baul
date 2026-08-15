@@ -1,12 +1,12 @@
-using ElBaul.Core.Moderation.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Core.Bauls.OutputPorts;
 /// <summary>
-/// Owns the Baul aggregate and its baul-scoped child collections (sharing,
-/// removal requests) — they never make sense outside the
-/// context of a baul, so they're grouped here rather than split into their
-/// own repositories.
+/// Owns the Baul aggregate and its baul-scoped sharing collection (Personas) — it never makes
+/// sense outside the context of a baul, so it's grouped here rather than split into its own
+/// repository. Removal requests are a Moderation concern and live in
+/// Moderation.OutputPorts.IRemovalRequestRepository instead, even though they're also
+/// baul-scoped.
 /// </summary>
 public interface IBaulRepository
 {
@@ -19,9 +19,9 @@ public interface IBaulRepository
 
     /// <summary>Hard-deletes the Baul row itself. Callers must first clear every child
     /// collection (Chapters, Personas, RemovalRequests, and — via IPhotoRepository/
-    /// IRecuerdoRepository — Photos/Recuerdos) since the in-memory (Lite) backend has no real
-    /// FK cascade to fall back on; admin callers should use IAdminBaulDeletionRepository for
-    /// the full sequence.</summary>
+    /// IRecuerdoRepository/IRemovalRequestRepository — Photos/Recuerdos/RemovalRequests)
+    /// since the in-memory (Lite) backend has no real FK cascade to fall back on; admin
+    /// callers should use IAdminBaulDeletionRepository for the full sequence.</summary>
     Task DeleteAsync(BaulId id);
 
     // Sharing
@@ -38,11 +38,4 @@ public interface IBaulRepository
     Task UpdatePersonaAsync(Persona persona);
     Task RemovePersonaAsync(BaulId baulId, PersonaId personaId);
     Task RemoveAllPersonasAsync(BaulId baulId);
-
-    // Removal requests
-    Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId);
-    Task<RemovalRequest?> GetRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId);
-    Task CreateRemovalRequestAsync(RemovalRequest request);
-    Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId);
-    Task DeleteAllRemovalRequestsAsync(BaulId baulId);
 }

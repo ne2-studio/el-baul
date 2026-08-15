@@ -1,6 +1,7 @@
 using ElBaul.Core.Admin.OutputPorts;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Moderation.OutputPorts;
 using ElBaul.Core.Sharing.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -21,6 +22,7 @@ public class InMemoryAdminBaulDeletionRepository(
     IBaulInviteLinkRepository baulInviteLinkRepository,
     ITvSessionRepository tvSessionRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
+    IRemovalRequestRepository removalRequestRepository,
     IUnitOfWork unitOfWork)
     : IAdminBaulDeletionRepository
 {
@@ -45,7 +47,7 @@ public class InMemoryAdminBaulDeletionRepository(
             await photoRepository.DeleteByBaulIdAsync(baulId);
             await chapterRepository.DeleteByBaulIdAsync(baulId);
             await baulRepository.RemoveAllPersonasAsync(baulId);
-            await baulRepository.DeleteAllRemovalRequestsAsync(baulId);
+            await removalRequestRepository.DeleteByBaulIdAsync(baulId);
             await baulRepository.DeleteAsync(baulId);
             return Result.Success();
         });

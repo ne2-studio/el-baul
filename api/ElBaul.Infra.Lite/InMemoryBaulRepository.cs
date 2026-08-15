@@ -1,5 +1,4 @@
 using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Moderation.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
@@ -11,7 +10,6 @@ public class InMemoryBaulRepository : IBaulRepository
 {
     private readonly Dictionary<BaulId, Baul> _baules = new();
     private readonly Dictionary<PersonaId, Persona> _personas = new();
-    private readonly Dictionary<RemovalRequestId, RemovalRequest> _removalRequests = new();
     private readonly Lock _lock = new();
 
     public Task<Baul?> GetByIdAsync(BaulId id)
@@ -120,38 +118,6 @@ public class InMemoryBaulRepository : IBaulRepository
         {
             var ids = _personas.Values.Where(s => s.BaulId == baulId).Select(s => s.Id).ToList();
             foreach (var id in ids) _personas.Remove(id);
-        }
-        return Task.CompletedTask;
-    }
-
-    public Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId)
-    {
-        lock (_lock) return Task.FromResult(_removalRequests.Values.Where(r => r.BaulId == baulId).ToList().AsEnumerable());
-    }
-
-    public Task<RemovalRequest?> GetRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
-    {
-        lock (_lock) return Task.FromResult(_removalRequests.Values.FirstOrDefault(r => r.BaulId == baulId && r.Id == requestId));
-    }
-
-    public Task CreateRemovalRequestAsync(RemovalRequest request)
-    {
-        lock (_lock) _removalRequests[request.Id] = request;
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
-    {
-        lock (_lock) _removalRequests.Remove(requestId);
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteAllRemovalRequestsAsync(BaulId baulId)
-    {
-        lock (_lock)
-        {
-            var ids = _removalRequests.Values.Where(r => r.BaulId == baulId).Select(r => r.Id).ToList();
-            foreach (var id in ids) _removalRequests.Remove(id);
         }
         return Task.CompletedTask;
     }

@@ -1,5 +1,4 @@
 using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Moderation.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,27 +89,5 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
     public async Task RemoveAllPersonasAsync(BaulId baulId)
     {
         await dbContext.Personas.Where(s => s.BaulId == baulId).ExecuteDeleteAsync();
-    }
-
-    public async Task<IEnumerable<RemovalRequest>> GetRemovalRequestsAsync(BaulId baulId) =>
-        await dbContext.RemovalRequests.AsNoTracking().Where(r => r.BaulId == baulId).ToListAsync();
-
-    public Task<RemovalRequest?> GetRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId) =>
-        dbContext.RemovalRequests.AsNoTracking().FirstOrDefaultAsync(r => r.BaulId == baulId && r.Id == requestId);
-
-    public async Task CreateRemovalRequestAsync(RemovalRequest request)
-    {
-        dbContext.RemovalRequests.Add(request);
-        await dbContext.SaveChangesAsync();
-    }
-
-    public async Task DeleteRemovalRequestAsync(BaulId baulId, RemovalRequestId requestId)
-    {
-        await dbContext.RemovalRequests.Where(r => r.BaulId == baulId && r.Id == requestId).ExecuteDeleteAsync();
-    }
-
-    public async Task DeleteAllRemovalRequestsAsync(BaulId baulId)
-    {
-        await dbContext.RemovalRequests.Where(r => r.BaulId == baulId).ExecuteDeleteAsync();
     }
 }
