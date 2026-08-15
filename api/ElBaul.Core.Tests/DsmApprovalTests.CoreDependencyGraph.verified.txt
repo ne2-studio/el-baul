@@ -1,0 +1,420 @@
+﻿{
+  Features: [
+    Admin,
+    Analytics,
+    Bauls,
+    Chapters,
+    Chat,
+    Feed,
+    Moderation,
+    Notifications,
+    Personas,
+    Photos,
+    Recuerdos,
+    Shared,
+    Sharing,
+    Support,
+    TvMode,
+    Users
+  ],
+  Edges: [
+    {
+      From: Admin,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Admin,
+      To: Chapters,
+      Kind: Deep
+    },
+    {
+      From: Admin,
+      To: Chat,
+      Kind: Deep
+    },
+    {
+      From: Admin,
+      To: Notifications,
+      Kind: Deep
+    },
+    {
+      From: Admin,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Admin,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Admin,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Admin,
+      To: Users,
+      Kind: Deep
+    },
+    {
+      From: Analytics,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Bauls,
+      To: Moderation,
+      Kind: Deep
+    },
+    {
+      From: Bauls,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Bauls,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Bauls,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Bauls,
+      To: Users,
+      Kind: Deep
+    },
+    {
+      From: Chapters,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Chapters,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Chapters,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Chapters,
+      To: Recuerdos,
+      Kind: Deep
+    },
+    {
+      From: Chapters,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Chat,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Chat,
+      To: Chapters,
+      Kind: Deep
+    },
+    {
+      From: Chat,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Chat,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Chat,
+      To: Recuerdos,
+      Kind: Deep
+    },
+    {
+      From: Chat,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Feed,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Feed,
+      To: Chapters,
+      Kind: Deep
+    },
+    {
+      From: Feed,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Feed,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Feed,
+      To: Recuerdos
+    },
+    {
+      From: Feed,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Moderation,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Moderation,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Moderation,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Moderation,
+      To: Users,
+      Kind: Deep
+    },
+    {
+      From: Notifications,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Notifications,
+      To: Chapters,
+      Kind: Deep
+    },
+    {
+      From: Notifications,
+      To: Feed,
+      Kind: Deep
+    },
+    {
+      From: Notifications,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Notifications,
+      To: Recuerdos,
+      Kind: Deep
+    },
+    {
+      From: Notifications,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Notifications,
+      To: Users,
+      Kind: Deep
+    },
+    {
+      From: Personas,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Personas,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Personas,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Personas,
+      To: Users,
+      Kind: Deep
+    },
+    {
+      From: Photos,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Photos,
+      To: Chapters,
+      Kind: Deep
+    },
+    {
+      From: Photos,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Photos,
+      To: Recuerdos,
+      Kind: Deep
+    },
+    {
+      From: Photos,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Photos,
+      To: Sharing,
+      Kind: Deep
+    },
+    {
+      From: Recuerdos,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Recuerdos,
+      To: Chapters,
+      Kind: Deep
+    },
+    {
+      From: Recuerdos,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Recuerdos,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Recuerdos,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Shared,
+      To: Chat,
+      Kind: Deep
+    },
+    {
+      From: Shared,
+      To: Moderation,
+      Kind: Deep
+    },
+    {
+      From: Shared,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Shared,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Sharing,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: Sharing,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: Sharing,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: Sharing,
+      To: Recuerdos,
+      Kind: Deep
+    },
+    {
+      From: Sharing,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Sharing,
+      To: Users,
+      Kind: Deep
+    },
+    {
+      From: Support,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: Support,
+      To: Users,
+      Kind: Deep
+    },
+    {
+      From: TvMode,
+      To: Bauls,
+      Kind: Deep
+    },
+    {
+      From: TvMode,
+      To: Chapters,
+      Kind: Deep
+    },
+    {
+      From: TvMode,
+      To: Personas,
+      Kind: Deep
+    },
+    {
+      From: TvMode,
+      To: Photos,
+      Kind: Deep
+    },
+    {
+      From: TvMode,
+      To: Recuerdos,
+      Kind: Deep
+    },
+    {
+      From: TvMode,
+      To: Shared,
+      Kind: Deep
+    },
+    {
+      From: TvMode,
+      To: Sharing,
+      Kind: Deep
+    },
+    {
+      From: Users,
+      To: Shared,
+      Kind: Deep
+    }
+  ],
+  CyclicGroups: [
+    [
+      Bauls,
+      Chapters,
+      Chat,
+      Moderation,
+      Personas,
+      Photos,
+      Recuerdos,
+      Shared,
+      Sharing,
+      Users
+    ]
+  ]
+}

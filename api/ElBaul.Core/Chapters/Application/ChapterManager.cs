@@ -4,6 +4,7 @@ using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.Application;
 using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 

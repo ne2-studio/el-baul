@@ -1,3 +1,4 @@
+using ElBaul.Core.Shared.OutputPorts;
 namespace ElBaul.Tests.Fakes;
 
 public class StaticClock(DateTime? now = null) : IClock

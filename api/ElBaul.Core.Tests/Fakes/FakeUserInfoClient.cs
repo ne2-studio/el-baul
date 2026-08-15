@@ -1,3 +1,4 @@
+using ElBaul.Core.Users.OutputPorts;
 namespace ElBaul.Tests.Fakes;
 
 public class FakeUserInfoClient(UserInfo? userInfo = null) : IUserInfoClient

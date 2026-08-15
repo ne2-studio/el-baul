@@ -1,3 +1,8 @@
+using ElBaul.Core.Shared.Application;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
