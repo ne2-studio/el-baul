@@ -11,7 +11,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-using ElBaul.Core.Application;
+using ElBaul.Core.Shared.Application;
 namespace ElBaul.Core.Chapters.Application;
 public class ChapterManager(
     ILogger<ChapterManager> logger,

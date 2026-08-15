@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 using BaulAccess = ElBaul.Core.Bauls.Application.BaulAccess;
 
 using ElBaul.Domain;
-using ElBaul.Core.Application;
+using ElBaul.Core.Shared.Application;
 namespace ElBaul.Core.Personas.Application;
 public class PersonaManager(
     ILogger<PersonaManager> logger,

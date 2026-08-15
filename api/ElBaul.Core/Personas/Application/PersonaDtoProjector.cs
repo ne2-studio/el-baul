@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-using ElBaul.Core.Application;
+using ElBaul.Core.Shared.Application;
 using ElBaul.Core.Personas;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;

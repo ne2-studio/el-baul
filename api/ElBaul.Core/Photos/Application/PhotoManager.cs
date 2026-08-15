@@ -9,7 +9,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-using ElBaul.Core.Application;
+using ElBaul.Core.Shared.Application;
 namespace ElBaul.Core.Photos.Application;
 public class PhotoManager(
     ILogger<PhotoManager> logger,

@@ -10,6 +10,11 @@ namespace ElBaul.Tests;
 // on both sides of a port are Domain concepts (ids, BaulRole, PhotoDate, ...) — and Domain is
 // the innermost layer, depending on nothing else in the core (InputPorts/OutputPorts/
 // Application all depend on it, never the other way round).
+//
+// ElBaul.Core is organized per feature (ElBaul.Core.<Feature>), each with its own Application/
+// and OutputPorts/ sub-namespace; InputPorts live unsuffixed at the feature's root namespace
+// (e.g. ElBaul.Core.Bauls). ElBaul.Core.Shared.Application and ElBaul.Core.Shared.OutputPorts are the
+// cross-feature Application/OutputPorts namespaces.
 public class ArchitectureTests
 {
     // TIP: load the architecture once to keep every rule check in this file fast.
@@ -19,17 +24,17 @@ public class ArchitectureTests
 
     private readonly IObjectProvider<IType> InputPorts = Types()
         .That()
-        .ResideInNamespaceMatching(@"^ElBaul\.InputPorts(\..*)?$")
+        .ResideInNamespaceMatching(@"^ElBaul\.Core\.[A-Za-z]+$")
         .As("InputPorts");
 
     private readonly IObjectProvider<IType> OutputPorts = Types()
         .That()
-        .ResideInNamespaceMatching(@"^ElBaul\.OutputPorts(\..*)?$")
+        .ResideInNamespaceMatching(@"^ElBaul\.Core\.[A-Za-z]+\.OutputPorts(\..*)?$")
         .As("OutputPorts");
 
     private readonly IObjectProvider<IType> Application = Types()
         .That()
-        .ResideInNamespaceMatching(@"^ElBaul\.Application(\..*)?$")
+        .ResideInNamespaceMatching(@"^ElBaul\.Core\.[A-Za-z]+\.Application(\..*)?$")
         .As("Application");
 
     private readonly IObjectProvider<IType> Domain = Types()

@@ -1,4 +1,4 @@
-using ElBaul.Core.Application;
+using ElBaul.Core.Shared.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
