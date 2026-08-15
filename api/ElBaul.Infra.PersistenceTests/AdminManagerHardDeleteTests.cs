@@ -79,7 +79,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
 
         // 1. Baúl, chapter, photo, recuerdo — the ordinary content chain.
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baul.Id, "Capítulo a borrar",
-            PhotoCount: 0, CoverPhotoKey: null, DateTime.UtcNow, DateTime.UtcNow);
+            PhotoCount: 0, DateTime.UtcNow, DateTime.UtcNow);
         await chapters.CreateAsync(chapter);
 
         var photo = new Photo(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/to-delete.jpg",
@@ -179,7 +179,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         await baules.CreateAsync(baul);
 
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baul.Id, "Capítulo",
-            PhotoCount: 0, CoverPhotoKey: null, DateTime.UtcNow, DateTime.UtcNow);
+            PhotoCount: 0, DateTime.UtcNow, DateTime.UtcNow);
         await chapters.CreateAsync(chapter);
 
         var photo = new Photo(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/rollback.jpg",

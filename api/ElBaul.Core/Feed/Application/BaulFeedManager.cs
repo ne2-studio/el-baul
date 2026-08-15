@@ -25,7 +25,7 @@ public class BaulFeedManager(
     AuthorInfoProjector authorInfoProjector,
     IChapterRepository chapterRepository,
     IPhotoRepository photoRepository,
-    IPhotoStorage photoStorage,
+    CoverUrlResolver coverUrlResolver,
     IBaulFeedCursorRepository feedCursorRepository,
     IAppConfiguration appConfiguration,
     ICurrentUserProvider currentUserProvider,
@@ -135,7 +135,7 @@ public class BaulFeedManager(
             var (nickname, avatarUrl, personaId) = AuthorInfoProjector.Resolve(authorsByUserId, new UserId(chapter.CreatedByUserId));
             var coverCrop = new ImageCrop(chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
             var coverPhoto = chapter.CoverPhotoId is { } coverPhotoId ? coverPhotosById.GetValueOrDefault(coverPhotoId) : null;
-            var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCover, photoStorage, coverCrop);
+            var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCover, coverCrop);
             var dto = new ChapterCreatedFeedDto(
                 chapter.Id.ToString(), chapter.Name, coverUrl, chapter.CreatedAt,
                 chapter.CreatedByUserId, nickname, avatarUrl, personaId);

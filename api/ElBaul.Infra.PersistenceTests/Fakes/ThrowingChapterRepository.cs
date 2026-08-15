@@ -26,8 +26,4 @@ public class ThrowingChapterRepository(IChapterRepository inner) : IChapterRepos
 
     public Task DeleteByBaulIdAsync(BaulId baulId) =>
         throw new InvalidOperationException("Simulated failure partway through the delete cascade");
-
-    public Task<IEnumerable<Chapter>> GetWithLegacyCoverPhotoKeyAsync() => inner.GetWithLegacyCoverPhotoKeyAsync();
-
-    public Task SetCoverPhotoIdAsync(ChapterId id, PhotoId coverPhotoId) => inner.SetCoverPhotoIdAsync(id, coverPhotoId);
 }

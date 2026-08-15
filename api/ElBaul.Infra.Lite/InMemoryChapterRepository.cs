@@ -54,22 +54,4 @@ public class InMemoryChapterRepository : IChapterRepository
         }
         return Task.CompletedTask;
     }
-
-    public Task<IEnumerable<Chapter>> GetWithLegacyCoverPhotoKeyAsync()
-    {
-        lock (_lock)
-            return Task.FromResult(_chapters.Values
-                .Where(a => a.CoverPhotoKey is not null && a.CoverPhotoId is null)
-                .ToList().AsEnumerable());
-    }
-
-    public Task SetCoverPhotoIdAsync(ChapterId id, PhotoId coverPhotoId)
-    {
-        lock (_lock)
-        {
-            if (_chapters.TryGetValue(id, out var chapter))
-                _chapters[id] = chapter with { CoverPhotoId = coverPhotoId };
-        }
-        return Task.CompletedTask;
-    }
 }

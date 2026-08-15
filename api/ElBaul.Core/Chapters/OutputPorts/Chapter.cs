@@ -7,11 +7,6 @@ public record Chapter
     BaulId BaulId,
     string Name,
     int PhotoCount,
-    // Legacy, no longer written by any domain code — kept only so a backfill can still read it
-    // to populate CoverPhotoId below (see backfill-baul-chapter-cover-photo-id) and so it isn't
-    // silently dropped from rows that predate CoverPhotoId. Every read path goes through
-    // CoverPhotoId + CoverUrlResolver instead; do not add a new consumer of this field.
-    string? CoverPhotoKey,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     // "" for chapters created before this field existed — never matches a real user id, so

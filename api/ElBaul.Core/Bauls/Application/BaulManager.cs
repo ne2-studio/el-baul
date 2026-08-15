@@ -15,7 +15,7 @@ public class BaulManager(
     IPersonaRepository personaRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
-    IPhotoStorage photoStorage,
+    CoverUrlResolver coverUrlResolver,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
@@ -135,7 +135,7 @@ public class BaulManager(
     {
         var crop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
         coverPhoto ??= baul.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
-        var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, baul.Id, ImagePlacement.BaulCover, photoStorage, crop);
+        var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, baul.Id, ImagePlacement.BaulCover, crop);
 
         return new BaulDto(baul.Id.ToString(), baul.Name, baul.Description, baul.ChapterCount, coverUrl,
             baul.CreatedAt, baul.UpdatedAt, role, isCustodio, memberCount,

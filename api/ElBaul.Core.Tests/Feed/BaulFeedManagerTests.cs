@@ -34,7 +34,7 @@ public class BaulFeedManagerTests
             new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
             new PhotoDtoProjector(_photoStorage, _fixture.Recuerdos, _fixture.Clock),
             new AuthorInfoProjector(_fixture.Personas, _fixture.Photos, _photoStorage),
-            _fixture.Chapters, _fixture.Photos, _photoStorage, _feedCursors,
+            _fixture.Chapters, _fixture.Photos, new CoverUrlResolver(_photoStorage), _feedCursors,
             new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled),
             new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),

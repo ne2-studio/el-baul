@@ -10,11 +10,6 @@ public record Baul
     int ChapterCount,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    // Legacy, no longer written by any domain code — kept only so a backfill can still read it
-    // to populate CoverPhotoId below (see backfill-baul-chapter-cover-photo-id) and so it isn't
-    // silently dropped from rows that predate CoverPhotoId. Every read path goes through
-    // CoverPhotoId + CoverUrlResolver instead; do not add a new consumer of this field.
-    string? CoverPhotoKey = null,
     decimal CoverCropX = 0.5m,
     decimal CoverCropY = 0.5m,
     decimal CoverCropScale = 1m,

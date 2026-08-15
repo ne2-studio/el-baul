@@ -4,6 +4,7 @@ using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
@@ -49,7 +50,7 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
         await baules.CreateAsync(baul);
 
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baul.Id, "Capítulo a borrar",
-            PhotoCount: 0, CoverPhotoKey: null, DateTime.UtcNow, DateTime.UtcNow);
+            PhotoCount: 0, DateTime.UtcNow, DateTime.UtcNow);
         await chapters.CreateAsync(chapter);
 
         // A photo that was soft-deleted before the chapter delete — GetByChapterIdAsync (Active
@@ -77,7 +78,7 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
             baules,
             photos,
             recuerdos,
-            Substitute.For<IPhotoStorage>(),
+            new CoverUrlResolver(Substitute.For<IPhotoStorage>()),
             Substitute.For<IIdGenerator>(),
             new FixedClock(),
             new StaticCurrentUserProvider(custodioId),

@@ -39,7 +39,7 @@ public class BackfillRecuerdoBaulIdCommandTests
         var recuerdoRepository = new InMemoryRecuerdoRepository();
         var chapterRepository = new InMemoryChapterRepository();
         await chapterRepository.CreateAsync(
-            new Chapter(chapterId, baulId, "Verano", 0, null, DateTime.UtcNow, DateTime.UtcNow));
+            new Chapter(chapterId, baulId, "Verano", 0, DateTime.UtcNow, DateTime.UtcNow));
         var recuerdo = await CreateCandidateAsync(recuerdoRepository, null, chapterId);
 
         var command = new BackfillRecuerdoBaulIdCommand(

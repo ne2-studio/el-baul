@@ -52,7 +52,7 @@ public class StaticSuggestedQuestionsStrategyTests
         var baul = await SeedBaulAsync(baulId);
         var now = _clock.UtcNow();
         await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Abuelo Antonio", BaulRole.Administrador, now));
-        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano en Asturias", 3, null, now, now));
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano en Asturias", 3, now, now));
 
         var strategy = CreateStrategy();
         var result = await strategy.GenerateAsync(baul);
@@ -85,7 +85,7 @@ public class StaticSuggestedQuestionsStrategyTests
         for (var i = 0; i < 5; i++)
         {
             await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, $"Persona {i}", BaulRole.Colaborador, now));
-            await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), $"Capítulo {i}", 0, null, now, now));
+            await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), $"Capítulo {i}", 0, now, now));
         }
 
         var strategy = CreateStrategy();

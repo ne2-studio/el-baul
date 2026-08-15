@@ -63,7 +63,7 @@ public class DomainEntityUpdateTests
     public void Chapter_WithCover_StoresCropAlongsideTheCoverPhotoId()
     {
         var chapter = new Chapter(
-            new ChapterId(Guid.NewGuid()), new BaulId(Guid.NewGuid()), "Vacaciones", 0, null,
+            new ChapterId(Guid.NewGuid()), new BaulId(Guid.NewGuid()), "Vacaciones", 0,
             new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
         var photo = Photo.Create(
             new PhotoId(Guid.NewGuid()), chapter.Id, chapter.BaulId, "photos/cover.jpg", null,

@@ -138,7 +138,7 @@ public static class ListReadModelContractScenarios
         var chapterId = C(30);
         await SeedBaulAsync(store, baulId);
         await SeedBaulAsync(store, otherBaulId);
-        await store.AddChapterAsync(NewChapter(chapterId, baulId, "Boda", coverPhotoKey: "cover", photoCount: 2));
+        await store.AddChapterAsync(NewChapter(chapterId, baulId, "Boda", photoCount: 2));
         await store.AddChapterAsync(NewChapter(C(31), otherBaulId, "Otro"));
 
         var early = NewPhoto(P(30), baulId, chapterId, "early", T0, Date(1980, null, null));
@@ -228,8 +228,8 @@ public static class ListReadModelContractScenarios
         await store.AddBaulAsync(new Baul(baulId, $"Baul {baulId.Value}", null, User, 0, T0, T0));
     }
 
-    private static Chapter NewChapter(ChapterId id, BaulId baulId, string name, string? coverPhotoKey = null, int photoCount = 0) =>
-        new(id, baulId, name, photoCount, coverPhotoKey, T0, T0, User.Value);
+    private static Chapter NewChapter(ChapterId id, BaulId baulId, string name, int photoCount = 0) =>
+        new(id, baulId, name, photoCount, T0, T0, User.Value);
 
     private static Photo NewPhoto(
         PhotoId id, BaulId baulId, ChapterId? chapterId, string key, DateTime createdAt, PhotoDate? date, Guid? uploadBatchId = null) =>

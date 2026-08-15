@@ -39,17 +39,6 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Baul>> GetWithLegacyCoverPhotoKeyAsync() =>
-        await dbContext.Baules.AsNoTracking()
-            .Where(b => b.CoverPhotoKey != null && b.CoverPhotoId == null)
-            .ToListAsync();
-
-    public async Task SetCoverPhotoIdAsync(BaulId id, PhotoId coverPhotoId)
-    {
-        await dbContext.Baules.Where(b => b.Id == id)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(b => b.CoverPhotoId, coverPhotoId));
-    }
-
     public async Task DeleteAsync(BaulId id)
     {
         await dbContext.Baules.Where(b => b.Id == id).ExecuteDeleteAsync();

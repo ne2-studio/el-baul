@@ -1,6 +1,7 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Recuerdos.OutputPorts;
 
 using ElBaul.Infra.Lite;
@@ -23,7 +24,7 @@ public class ChapterManagerTests
         new(NullLogger<ChapterManager>.Instance, _fixture.Chapters,
             new InMemoryChapterListReadModel(_fixture.Chapters, _fixture.Photos, _fixture.Recuerdos),
             _fixture.Baules, _fixture.Photos,
-            _fixture.Recuerdos, _photoStorage,
+            _fixture.Recuerdos, new CoverUrlResolver(_photoStorage),
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             new AuthorInfoProjector(_fixture.Personas, _fixture.Photos, _photoStorage), new FakeUnitOfWork());

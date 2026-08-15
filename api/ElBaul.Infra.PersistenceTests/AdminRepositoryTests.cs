@@ -148,7 +148,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         new(new PersonaId(Guid.NewGuid()), baulId, userId is null ? null : new UserId(userId), nickname, role, DateTime.UtcNow);
 
     private static Chapter NewChapter(BaulId baulId, string name) =>
-        new(new ChapterId(Guid.NewGuid()), baulId, name, PhotoCount: 0, CoverPhotoKey: null, DateTime.UtcNow, DateTime.UtcNow);
+        new(new ChapterId(Guid.NewGuid()), baulId, name, PhotoCount: 0, DateTime.UtcNow, DateTime.UtcNow);
 
     private static Photo NewPhoto(BaulId baulId, ChapterId chapterId, string uploadedBy, long sizeBytes) =>
         new(new PhotoId(Guid.NewGuid()), chapterId, baulId, $"photos/{Guid.NewGuid()}.jpg",

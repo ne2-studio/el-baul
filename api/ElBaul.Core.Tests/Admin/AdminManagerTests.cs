@@ -214,7 +214,7 @@ public class AdminManagerTests
         var baul = new Baul(new BaulId(baulId), "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
         var linkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow());
         var unlinkedPersona = new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano 2020", 5, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano 2020", 5, _clock.UtcNow(), _clock.UtcNow());
 
         _adminRepository.BaulDetails[new BaulId(baulId)] = new AdminBaulDetailRow(
             baul,
@@ -256,7 +256,7 @@ public class AdminManagerTests
         var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
 
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baulId, "Verano 2020", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baulId, "Verano 2020", 1, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
         var photo = Photo.Create(

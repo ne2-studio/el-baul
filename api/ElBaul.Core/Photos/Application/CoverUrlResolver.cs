@@ -5,27 +5,16 @@ namespace ElBaul.Core.Photos.Application;
 /// The single interpretation of "what is this cover photo's URL": the linked photo wins when
 /// it's present and still active in this baúl; otherwise there is no cover. Mirrors
 /// PersonaAvatarUrlResolver's role for persona avatars — kept in one place so BaulManager,
-/// ChapterManager (both its single-chapter and list-path DTO builders), BaulFeedManager and
-/// BaulInviteLinkManager don't each re-derive the same rule inline.
+/// ChapterManager (both its single-chapter and list-path DTO builders) and BaulFeedManager don't
+/// each re-derive the same rule inline. Takes an already-resolved Photo rather than a PhotoId on
+/// purpose: every one of those callers already has (or batch-fetches) the Photo anyway, so
+/// resolving it here too would mean doing that lookup twice or hiding an extra round trip inside
+/// what looks like a pure function. BaulInviteLinkManager's two call sites are the only ones that
+/// start from just a PhotoId — they resolve it via IPhotoRepository themselves before calling in.
 /// </summary>
-public static class CoverUrlResolver
+public class CoverUrlResolver(IPhotoStorage photoStorage)
 {
-    public static async Task<string?> ResolveAsync(
-        PhotoId? coverPhotoId, BaulId baulId, ImagePlacement placement, IPhotoRepository photoRepository,
-        IPhotoStorage photoStorage, ImageCrop? crop = null)
-    {
-        if (coverPhotoId is not { } id) return null;
-
-        var coverPhoto = await photoRepository.GetByIdAsync(id);
-        return await ResolveAsync(coverPhoto, baulId, placement, photoStorage, crop);
-    }
-
-    // Batch-friendly overload: the caller has already resolved (or bulk-fetched) whichever Photo
-    // backs this cover, so this does no I/O of its own — used by ChapterManager's list-path DTO
-    // builder to turn a single batched photo lookup into N cover URLs instead of N individual
-    // ones, the same shape AuthorInfoProjector.GetManyAsync uses for avatars.
-    public static async Task<string?> ResolveAsync(
-        Photo? coverPhoto, BaulId baulId, ImagePlacement placement, IPhotoStorage photoStorage, ImageCrop? crop = null) =>
+    public async Task<string?> ResolveAsync(Photo? coverPhoto, BaulId baulId, ImagePlacement placement, ImageCrop? crop = null) =>
         coverPhoto is not null && coverPhoto.BaulId == baulId && coverPhoto.Status == PhotoStatus.Active
             ? await photoStorage.GetImageUrl(coverPhoto.StorageKey, placement, crop)
             : null;

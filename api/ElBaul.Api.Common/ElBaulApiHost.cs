@@ -233,6 +233,7 @@ public static class ElBaulApiHost
         // Register application services
         builder.Services.AddScoped<BaulAccessService>();
         builder.Services.AddScoped<AuthorInfoProjector>();
+        builder.Services.AddScoped<CoverUrlResolver>();
         builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
         builder.Services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         builder.Services.AddScoped<PhotoLifecycleService>();

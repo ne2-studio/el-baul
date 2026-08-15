@@ -107,7 +107,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), new UserId(CustodioId), _clock.UtcNow()));
@@ -127,7 +127,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 2, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 9), new UserId(CustodioId), _clock.UtcNow()));
@@ -147,8 +147,8 @@ public class ChatContextBuilderTests
         // must each show their own range, the exact mistake a broken group-by would produce.
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var firstChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Capítulo antiguo", 1, null, _clock.UtcNow(), _clock.UtcNow());
-        var secondChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Capítulo reciente", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        var firstChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Capítulo antiguo", 1, _clock.UtcNow(), _clock.UtcNow());
+        var secondChapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Capítulo reciente", 1, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(firstChapter);
         await _chapterRepository.CreateAsync(secondChapter);
 
@@ -167,7 +167,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Cumple de Marta", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Cumple de Marta", 1, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2015, 3, 20), new UserId(CustodioId), _clock.UtcNow()));
 
@@ -182,7 +182,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Sin fecha", 0, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Sin fecha", 0, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
         var builder = CreateBuilder();
@@ -196,7 +196,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 1, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 1, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 5), new UserId(CustodioId), _clock.UtcNow()));
 
@@ -238,7 +238,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, _clock.UtcNow(), _clock.UtcNow());
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Un recuerdo que no debería aparecer", _clock.UtcNow()));
 

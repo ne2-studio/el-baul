@@ -15,8 +15,6 @@ public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
         builder.Property(a => a.Id).HasConversion(IdValueConverters.ChapterId);
         builder.Property(a => a.BaulId).HasConversion(IdValueConverters.BaulId);
         builder.Property(a => a.Name).IsRequired().HasMaxLength(200);
-        // Legacy, kept only for backfill-baul-chapter-cover-photo-id to read — see Chapter.CoverPhotoKey.
-        builder.Property(a => a.CoverPhotoKey).HasMaxLength(1000);
         builder.Property(a => a.CoverCropX).HasPrecision(5, 4).HasDefaultValue(0.5m);
         builder.Property(a => a.CoverCropY).HasPrecision(5, 4).HasDefaultValue(0.5m);
         builder.Property(a => a.CoverCropScale).HasPrecision(4, 2).HasDefaultValue(1m);

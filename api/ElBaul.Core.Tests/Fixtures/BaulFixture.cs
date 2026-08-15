@@ -85,7 +85,7 @@ public class BaulFixture
     {
         var chapterId = new ChapterId(id ?? Guid.NewGuid());
         await Chapters.CreateAsync(new Chapter(
-            chapterId, baulId, name, photoCount, CoverPhotoKey: null, Clock.UtcNow(), Clock.UtcNow(), CoverPhotoId: coverPhotoId));
+            chapterId, baulId, name, photoCount, Clock.UtcNow(), Clock.UtcNow(), CoverPhotoId: coverPhotoId));
         return chapterId;
     }
 

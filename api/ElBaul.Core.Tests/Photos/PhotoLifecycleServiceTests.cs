@@ -233,7 +233,7 @@ public class PhotoLifecycleServiceTests
     {
         var baulId = await SeedBaulAsync();
         var chapterId = new ChapterId(Guid.NewGuid());
-        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(chapterId, baulId, "Chapter", 0, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, chapterId);
     }
 
@@ -241,7 +241,7 @@ public class PhotoLifecycleServiceTests
     {
         var (baulId, sourceChapterId) = await SeedBaulWithChapterAsync();
         var targetChapterId = new ChapterId(Guid.NewGuid());
-        await _chapterRepository.CreateAsync(new Chapter(targetChapterId, baulId, "Destino", 0, null, _clock.UtcNow(), _clock.UtcNow()));
+        await _chapterRepository.CreateAsync(new Chapter(targetChapterId, baulId, "Destino", 0, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, sourceChapterId, targetChapterId);
     }
 

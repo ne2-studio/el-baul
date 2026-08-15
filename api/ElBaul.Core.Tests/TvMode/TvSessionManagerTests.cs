@@ -70,7 +70,7 @@ public class TvSessionManagerTests
     public async Task GetContentAsync_ShouldExposeBaulNameAndPhotoContext()
     {
         var baul = await SeedBaulAsync();
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baul.Id, "Verano en la playa", 1, null, Now, Now);
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baul.Id, "Verano en la playa", 1, Now, Now);
         await _chapters.CreateAsync(chapter);
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, null, "Rosa", BaulRole.Colaborador, Now);
         await _personas.AddPersonaAsync(persona);

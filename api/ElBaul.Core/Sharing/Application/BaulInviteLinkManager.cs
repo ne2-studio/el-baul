@@ -21,6 +21,7 @@ public class BaulInviteLinkManager(
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
     IPhotoStorage photoStorage,
+    CoverUrlResolver coverUrlResolver,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
@@ -99,7 +100,8 @@ public class BaulInviteLinkManager(
         }
 
         var coverCrop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
-        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoId, baul.Id, ImagePlacement.BaulCover, photoRepository, photoStorage, coverCrop);
+        var coverPhoto = baul.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
+        var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, baul.Id, ImagePlacement.BaulCover, coverCrop);
 
         // Up to 4 avatars from real (non-revoked) family members, no name attached — same
         // limited-disclosure trade-off the public preview already makes for previewPhotos.
@@ -129,7 +131,8 @@ public class BaulInviteLinkManager(
         if (baul is null) return Result.Failure<BaulInviteLinkLandingDto>(ApplicationError.NotFound("Baul not found"));
 
         var coverCrop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
-        var coverUrl = await CoverUrlResolver.ResolveAsync(baul.CoverPhotoId, baul.Id, ImagePlacement.BaulCover, photoRepository, photoStorage, coverCrop);
+        var coverPhoto = baul.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
+        var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, baul.Id, ImagePlacement.BaulCover, coverCrop);
         var title = $"Invitación a {baul.Name}";
         var description = string.IsNullOrWhiteSpace(baul.Description)
             ? $"Te han invitado a unirte al baúl familiar {baul.Name}."

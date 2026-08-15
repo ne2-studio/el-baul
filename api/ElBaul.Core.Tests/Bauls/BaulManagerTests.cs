@@ -1,6 +1,7 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 
@@ -32,7 +33,7 @@ public class BaulManagerTests
 
     private BaulManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<BaulManager>.Instance, _baulRepository, _personaRepository, _photoRepository,
-            _userRepository, _photoStorage,
+            _userRepository, new CoverUrlResolver(_photoStorage),
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance), new FakeUnitOfWork());
 

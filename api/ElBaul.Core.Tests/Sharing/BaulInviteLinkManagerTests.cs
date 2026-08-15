@@ -4,6 +4,7 @@ using ElBaul.Core.Sharing.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
@@ -49,6 +50,7 @@ public class BaulInviteLinkManagerTests
     private BaulInviteLinkManager CreateManager(string currentUserId) =>
         new(
             NullLogger<BaulInviteLinkManager>.Instance, _links, _baules, _personas, _photos, _users, _photoStorage,
+            new CoverUrlResolver(_photoStorage),
             new StaticIdGenerator(Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
             _configuration, new BaulAccessService(_baules, _personas, NullLogger<BaulAccessService>.Instance),
             new PersonaDtoProjector(_photos, _photoStorage, _users));

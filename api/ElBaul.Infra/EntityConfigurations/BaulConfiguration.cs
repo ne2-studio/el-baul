@@ -16,8 +16,6 @@ public class BaulConfiguration : IEntityTypeConfiguration<Baul>
         builder.Property(b => b.Name).IsRequired().HasMaxLength(200);
         builder.Property(b => b.Description).HasMaxLength(2000);
         builder.Property(b => b.CustodioId).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
-        // Legacy, kept only for backfill-baul-chapter-cover-photo-id to read — see Baul.CoverPhotoKey.
-        builder.Property(b => b.CoverPhotoKey).HasMaxLength(1000);
         builder.Property(b => b.CoverCropX).HasPrecision(5, 4).HasDefaultValue(0.5m);
         builder.Property(b => b.CoverCropY).HasPrecision(5, 4).HasDefaultValue(0.5m);
         builder.Property(b => b.CoverCropScale).HasPrecision(4, 2).HasDefaultValue(1m);

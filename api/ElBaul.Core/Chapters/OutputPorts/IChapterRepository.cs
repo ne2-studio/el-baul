@@ -12,17 +12,6 @@ public interface IChapterRepository
     Task UpdateAsync(Chapter chapter);
     Task DeleteAsync(ChapterId id);
 
-    /// <summary>Chapters that still carry a legacy CoverPhotoKey but have never had CoverPhotoId
-    /// backfilled — the candidate set backfill-baul-chapter-cover-photo-id resolves. See
-    /// Chapter.CoverPhotoKey for why the field still exists at all.</summary>
-    Task<IEnumerable<Chapter>> GetWithLegacyCoverPhotoKeyAsync();
-
-    /// <summary>Sets CoverPhotoId directly, bypassing the normal Chapter.WithCoverPhotoId/
-    /// UpdateAsync path — used only by the backfill command, which must not bump UpdatedAt for
-    /// a purely internal migration of an already-existing cover reference (mirrors
-    /// IRecuerdoRepository.SetBaulIdAsync).</summary>
-    Task SetCoverPhotoIdAsync(ChapterId id, PhotoId coverPhotoId);
-
     /// <summary>Used by the admin hard-delete flow. Chapter.BaulId cascades at the DB level,
     /// but the in-memory (Lite) repository has no such enforcement, so callers delete
     /// explicitly rather than relying on cascade behavior that only exists in one backend.</summary>

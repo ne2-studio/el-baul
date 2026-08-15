@@ -20,7 +20,7 @@ public class ChapterManager(
     IBaulRepository baulRepository,
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
-    IPhotoStorage photoStorage,
+    CoverUrlResolver coverUrlResolver,
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
@@ -81,7 +81,7 @@ public class ChapterManager(
 
         var baul = auth.Value.Baul;
         var now = clock.UtcNow();
-        var chapter = new Chapter(new ChapterId(idGenerator.NewId()), baulId, name, 0, null, now, now, userId);
+        var chapter = new Chapter(new ChapterId(idGenerator.NewId()), baulId, name, 0, now, now, userId);
 
         // Both writes commit together — a chapter that isn't reflected in its baúl's
         // ChapterCount is an inconsistency the frontend has no way to reconcile.
@@ -206,8 +206,8 @@ public class ChapterManager(
         // Resolved once and reused for both placements — CoverUrlResolver's Photo overload does
         // no I/O of its own, so this is one GetByIdAsync instead of two identical ones.
         var coverPhoto = chapter.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
-        var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCover, photoStorage, crop);
-        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
+        var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCover, crop);
+        var featuredCoverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCoverFeatured, crop);
 
         var photos = (await photoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
         var recuerdos = (await recuerdoRepository.GetByChapterIdAsync(chapter.Id)).ToList();
@@ -230,8 +230,8 @@ public class ChapterManager(
     {
         var crop = new ImageCrop(row.CoverCropX, row.CoverCropY, row.CoverCropScale);
         var coverPhoto = row.CoverPhotoId is { } coverPhotoId ? coverPhotosById.GetValueOrDefault(coverPhotoId) : null;
-        var coverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, row.BaulId, ImagePlacement.ChapterCover, photoStorage, crop);
-        var featuredCoverUrl = await CoverUrlResolver.ResolveAsync(coverPhoto, row.BaulId, ImagePlacement.ChapterCoverFeatured, photoStorage, crop);
+        var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, row.BaulId, ImagePlacement.ChapterCover, crop);
+        var featuredCoverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, row.BaulId, ImagePlacement.ChapterCoverFeatured, crop);
 
         var latestAuthor = row.LatestRecuerdoAuthorUserId is { } userId
             ? AuthorInfoProjector.Resolve(authorsByUserId, userId).Nickname

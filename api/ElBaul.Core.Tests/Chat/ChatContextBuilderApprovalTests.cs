@@ -58,7 +58,7 @@ public class ChatContextBuilderApprovalTests
         await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Papá", BaulRole.Administrador, BaseDate, Name: "Antonio"));
         await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-2"), "Mamá", BaulRole.Colaborador, BaseDate));
 
-        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, BaseDate, BaseDate);
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, BaseDate, BaseDate);
         await _chapterRepository.CreateAsync(chapter);
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-1", PhotoDates.Of(2010, 5), new UserId(CustodioId), BaseDate));
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, new BaulId(baulId), "key-2", PhotoDates.Of(2010, 9), new UserId(CustodioId), BaseDate));
