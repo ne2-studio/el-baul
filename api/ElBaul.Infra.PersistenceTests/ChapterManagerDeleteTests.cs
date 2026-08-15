@@ -1,3 +1,13 @@
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chapters.Application;
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Personas.Application;
+using ElBaul.Core.Personas.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
+using ElBaul.Domain;
 using ElBaul.Infra.PersistenceTests.Fakes;
 using ElBaul.Infra.Persistence;
 

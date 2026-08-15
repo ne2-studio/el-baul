@@ -1,3 +1,8 @@
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Sharing.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
+using ElBaul.Domain;
 using ElBaul.Infra.Persistence;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;

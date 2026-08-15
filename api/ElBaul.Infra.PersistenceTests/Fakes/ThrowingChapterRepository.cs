@@ -1,3 +1,6 @@
+using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Domain;
+
 namespace ElBaul.Infra.PersistenceTests.Fakes;
 
 /// <summary>

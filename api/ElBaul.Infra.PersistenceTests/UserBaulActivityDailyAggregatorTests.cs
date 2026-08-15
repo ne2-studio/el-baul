@@ -1,3 +1,10 @@
+using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Chat.OutputPorts;
+using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.OutputPorts;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
+using ElBaul.Domain;
 using ElBaul.Infra.Analytics;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;

@@ -1,3 +1,6 @@
+using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
+using ElBaul.Domain;
 using ElBaul.Infra.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
