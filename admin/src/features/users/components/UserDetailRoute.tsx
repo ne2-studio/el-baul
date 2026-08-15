@@ -9,9 +9,6 @@ import { EMAIL_TYPE_LABELS, EMAIL_STATUS_LABELS } from '@/utils/emailLabels';
 import { buildUserLogsUrl } from '@/utils/logs';
 import { api } from '@/api';
 import type { AdminSentEmail, AdminUserBaulMembership } from '@/types';
-import { getEnv } from '@/runtimeConfig';
-
-const APP_URL = getEnv('VITE_APP_URL') || 'http://localhost:3000';
 
 export function UserDetailRoute() {
   const { userId } = useParams<{ userId: string }>();
@@ -193,20 +190,6 @@ export function UserDetailRoute() {
                 },
                 { header: 'Rol', render: (b) => (b.isCustodio ? 'Custodio' : b.role) },
                 { header: 'Persona asociada', render: (b) => <span className="font-mono text-xs">{b.personId}</span> },
-                {
-                  header: '',
-                  render: (b) => (
-                    <a
-                      href={`${APP_URL}/baules/${b.baulId}/personas/${b.personId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      Ficha
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  ),
-                },
               ]}
             />
           </div>
