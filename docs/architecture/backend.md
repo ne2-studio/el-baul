@@ -60,6 +60,20 @@ ElBaul.Maintenance ───┘                                           │
 `api/acceptance-tests/` is a deliberately separate solution testing the *built image* — see
 [`architecture/testing.md`](testing.md).
 
+### ElBaul.Core's feature boundaries
+
+Two automated checks guard `ElBaul.Core`'s internal shape, both in `ElBaul.Core.Tests`:
+
+- **`ArchitectureTests`** (ArchUnitNET) enforces the InputPorts/OutputPorts/Application/Domain
+  layering *within* each feature — e.g. OutputPorts must never depend on InputPorts.
+- **`DsmApprovalTests`** snapshots the dependency graph *between* features (which feature imports
+  another feature's `Application`/`OutputPorts` vs. only its public root namespace) and whether
+  that graph has cycles. See [`core-dsm.md`](core-dsm.md) for the current graph. Any new edge or
+  cycle fails the test until reviewed; run `./scripts/dsm approve` to accept it — this
+  regenerates both the approved snapshot and `core-dsm.md` from the same data in one step, so
+  they can't drift apart. Only approve when the change reduces cycles/deep imports or is
+  deliberate and justified in the commit message, never just to silence the test.
+
 ## Controllers
 
 Controllers are thin HTTP adapters: one per resource area, each handler delegates to an input

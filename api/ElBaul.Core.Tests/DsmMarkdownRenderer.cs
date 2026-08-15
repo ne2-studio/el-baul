@@ -3,10 +3,9 @@ using System.Text;
 namespace ElBaul.Tests;
 
 /// <summary>
-/// Renders a DsmGenerator.Dsm as the human-readable table/summary from
-/// docs/architecture/backend.md's DSM section. Not run automatically and nothing here writes
-/// to disk — see DsmApprovalTests.PrintHumanReadableDependencyGraph for how to produce it
-/// on demand.
+/// Renders a DsmGenerator.Dsm as the human-readable table/summary committed at
+/// docs/architecture/core-dsm.md. Only ./scripts/dsm approve writes that file (from the same
+/// Dsm as the approved JSON snapshot, so the two never drift) — this class itself does no I/O.
 /// </summary>
 public static class DsmMarkdownRenderer
 {
@@ -16,6 +15,8 @@ public static class DsmMarkdownRenderer
         var features = dsm.Features;
         var edgesByPair = dsm.Edges.ToDictionary(e => (e.From, e.To), e => e.Kind);
 
+        sb.AppendLine("<!-- AUTOGENERADO por ./scripts/dsm approve a partir de CoreDsm.snapshot.json. No editar a mano. -->");
+        sb.AppendLine();
         sb.AppendLine("## DSM — ElBaul.Core (filas = usa → columnas)");
         sb.AppendLine();
         sb.AppendLine("`●` = deep import (`.Application`/`.OutputPorts` ajeno) · `○` = solo API pública · vacío = sin dependencia");

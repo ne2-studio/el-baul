@@ -1,4 +1,6 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace ElBaul.Tests;
@@ -73,6 +75,16 @@ public static class DsmGenerator
 
         return new Dsm(features.ToList(), edges, cyclicGroups);
     }
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() },
+    };
+
+    // Canonical, deterministic serialization — this is the exact text the approved snapshot
+    // and the received (mismatch) file are compared/written as, so keep it stable.
+    public static string ToJson(Dsm dsm) => JsonSerializer.Serialize(dsm, JsonOptions);
 
     // Tarjan's SCC algorithm; only groups with more than one feature represent a real cycle.
     private static IReadOnlyList<IReadOnlyList<string>> FindCyclicGroups(IEnumerable<string> features, IReadOnlyList<Edge> edges)
