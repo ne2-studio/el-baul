@@ -21,7 +21,8 @@ public class RemovalRequestManagerTests
     private const string CustodioId = "custodio-1";
     private const string OtherUserId = "user-2";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryRemovalRequestRepository _removalRequestRepository = new();
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
@@ -31,6 +32,7 @@ public class RemovalRequestManagerTests
 
     public RemovalRequestManagerTests()
     {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
         _userRepository.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", _clock.UtcNow()));
         _userRepository.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", _clock.UtcNow()));
     }
@@ -38,7 +40,7 @@ public class RemovalRequestManagerTests
     private RemovalRequestManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<RemovalRequestManager>.Instance, _removalRequestRepository, _photoRepository,
             _userRepository, _photoStorage, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
             new PhotoLifecycleService(_photoRepository, _chapterRepository, _baulRepository, _clock), new FakeUnitOfWork());
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
@@ -50,7 +52,7 @@ public class RemovalRequestManagerTests
         var created = createdAt ?? _clock.UtcNow();
         var baul = new Baul(new BaulId(baulId), name, description, new UserId(custodioId), 0, created, updatedAt ?? created);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
         return baul;
     }
 
@@ -63,7 +65,7 @@ public class RemovalRequestManagerTests
         await SeedBaulAsync(baulId, "Familia");
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, "key", _clock.UtcNow(), _clock.UtcNow()));
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.CreateRemovalRequestAsync(new BaulId(baulId), new PhotoId(photoId), "no me gusta");

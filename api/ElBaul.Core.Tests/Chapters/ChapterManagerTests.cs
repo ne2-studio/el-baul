@@ -25,8 +25,8 @@ public class ChapterManagerTests
             _fixture.Baules, _fixture.Photos,
             _fixture.Recuerdos, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage), new FakeUnitOfWork());
+            new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            new AuthorInfoProjector(_fixture.Personas, _fixture.Photos, _photoStorage), new FakeUnitOfWork());
 
     [Fact]
     public async Task CreateAsync_ShouldIncrementBaulChapterCount()

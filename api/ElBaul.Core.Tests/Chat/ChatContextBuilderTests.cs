@@ -20,7 +20,8 @@ public class ChatContextBuilderTests
     private const string CustodioId = "custodio-1";
     private static readonly UserId CurrentUserId = new(CustodioId);
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
@@ -29,8 +30,13 @@ public class ChatContextBuilderTests
     private readonly FakeRelevantChatMemorySelector _relevantChatMemorySelector = new();
     private readonly StaticAppConfiguration _appConfiguration = new();
 
+    public ChatContextBuilderTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
     private ChatContextBuilder CreateBuilder() =>
-        new(_baulRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
+        new(_personaRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
             _relevantRecuerdoSelector, _relevantChatMemorySelector, _appConfiguration);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name)
@@ -38,7 +44,7 @@ public class ChatContextBuilderTests
         var now = _clock.UtcNow();
         var baul = new Baul(new BaulId(baulId), name, null, new UserId(CustodioId), 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, now));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, now));
         return baul;
     }
 
@@ -219,7 +225,7 @@ public class ChatContextBuilderTests
     {
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow(), Biografia: "Nació en Asturias en 1945."));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow(), Biografia: "Nació en Asturias en 1945."));
 
         var builder = CreateBuilder();
         var context = await builder.BuildAsync(baul, CurrentUserId, "¿Qué sabemos del abuelo?");
@@ -269,7 +275,7 @@ public class ChatContextBuilderTests
             [new ChatMemory(new ChatMemoryId(Guid.NewGuid()), new BaulId(baulId), CurrentUserId, "El abuelo Manuel trabajó en Muebles López.", _clock.UtcNow(), _clock.UtcNow(), null)];
 
         var builder = new ChatContextBuilder(
-            _baulRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
+            _personaRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
             _relevantRecuerdoSelector, _relevantChatMemorySelector, new StaticAppConfiguration(chatMemoryEnabled: false));
         var context = await builder.BuildAsync(baul, CurrentUserId, "¿Dónde trabajó el abuelo?");
 

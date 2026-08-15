@@ -27,7 +27,8 @@ public class ChatManagerTests
     private const string OtherUserId = "user-2";
     private const string StubbedContext = "contexto de prueba";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChatMessageRepository _chatMessageRepository = new();
     private readonly FakeAiChatBackend _aiChatBackend = new();
     private readonly StaticClock _clock = new();
@@ -38,6 +39,7 @@ public class ChatManagerTests
 
     public ChatManagerTests()
     {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
         _chatContextBuilder.BuildAsync(Arg.Any<Baul>(), Arg.Any<UserId>(), Arg.Any<string>()).Returns(StubbedContext);
         _suggestedQuestionsStrategy.GenerateAsync(Arg.Any<Baul>())
             .Returns(Result.Success<IEnumerable<string>>(["¿Pregunta de prueba?"]));
@@ -47,7 +49,7 @@ public class ChatManagerTests
         string currentUserId, Guid? nextId = null, IAppConfiguration? appConfiguration = null) =>
         new(NullLogger<ChatManager>.Instance, _chatMessageRepository, _aiChatBackend,
             appConfiguration ?? new StaticAppConfiguration(), new StaticIdGenerator(nextId ?? Guid.NewGuid()),
-            _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            _clock, new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
             _chatContextBuilder, _suggestedQuestionsStrategy, _backgroundJobScheduler);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId, string name, string custodioId = CustodioId)
@@ -55,7 +57,7 @@ public class ChatManagerTests
         var now = _clock.UtcNow();
         var baul = new Baul(new BaulId(baulId), name, null, new UserId(custodioId), 0, now, now);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, now));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, now));
         return baul;
     }
 

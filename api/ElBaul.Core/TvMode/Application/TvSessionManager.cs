@@ -24,6 +24,7 @@ public class TvSessionManager(
     ILogger<TvSessionManager> logger,
     ITvSessionRepository tvSessionRepository,
     IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IPhotoRepository photoRepository,
     IChapterRepository chapterRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
@@ -93,7 +94,7 @@ public class TvSessionManager(
         var photoIds = photos.Select(p => p.Id).ToList();
         var personaIdsByPhoto = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdsAsync(photoIds);
         var allPersonaIds = personaIdsByPhoto.Values.SelectMany(ids => ids).Distinct().ToList();
-        var personasById = (await baulRepository.GetPersonasByIdsAsync(allPersonaIds)).ToDictionary(p => p.Id);
+        var personasById = (await personaRepository.GetPersonasByIdsAsync(allPersonaIds)).ToDictionary(p => p.Id);
 
         // Latest recuerdo per photo is the "quote" shown in the context overlay — same
         // "most recent wins" choice ChapterDto.latestRecuerdoText already makes for a chapter.

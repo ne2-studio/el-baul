@@ -15,7 +15,7 @@ public class AiSuggestedQuestionsStrategyTests
     private const string CustodioId = "custodio-1";
     private const string StubbedContext = "contexto de prueba";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository = new(new InMemoryPersonaRepository());
     private readonly FakeAiChatBackend _aiChatBackend = new();
     private readonly IChatContextBuilder _chatContextBuilder = Substitute.For<IChatContextBuilder>();
     private readonly StaticClock _clock = new();

@@ -12,6 +12,7 @@ namespace ElBaul.Core.Bauls.Application;
 public class BaulManager(
     ILogger<BaulManager> logger,
     IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
     IPhotoStorage photoStorage,
@@ -27,7 +28,7 @@ public class BaulManager(
 
         var accesses = await baulAccess.GetAccessibleAsync(userId);
 
-        var sharedCounts = await baulRepository.GetPersonaCountsAsync(accesses.Select(a => a.Baul.Id));
+        var sharedCounts = await personaRepository.GetPersonaCountsAsync(accesses.Select(a => a.Baul.Id));
 
         var dtos = new List<BaulDto>();
         foreach (var access in accesses)
@@ -57,7 +58,7 @@ public class BaulManager(
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
             await baulRepository.CreateAsync(baul);
-            await baulRepository.AddPersonaAsync(custodianPersona);
+            await personaRepository.AddPersonaAsync(custodianPersona);
             return Result.Success();
         });
 
@@ -73,7 +74,7 @@ public class BaulManager(
         if (auth.IsFailure) return Result.Failure<BaulDto>(auth.Error);
         var access = auth.Value;
 
-        var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
+        var memberCount = (await personaRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(access.Baul, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
@@ -97,7 +98,7 @@ public class BaulManager(
 
         logger.LogInformation("Baul cover updated {PhotoId}", photoId);
 
-        var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
+        var memberCount = (await personaRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(updated, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
@@ -114,7 +115,7 @@ public class BaulManager(
 
         logger.LogInformation("Baul updated {Name}", name);
 
-        var memberCount = (await baulRepository.GetPersonasAsync(baulId)).Count();
+        var memberCount = (await personaRepository.GetPersonasAsync(baulId)).Count();
         return await ToDtoAsync(updated, access.RoleApiString, access.IsCustodio, memberCount);
     }
 

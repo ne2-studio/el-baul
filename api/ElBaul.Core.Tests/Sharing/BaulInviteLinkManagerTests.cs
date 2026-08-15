@@ -21,7 +21,8 @@ public class BaulInviteLinkManagerTests
     private const string GuestId = "guest-1";
 
     private readonly InMemoryBaulInviteLinkRepository _links = new();
-    private readonly InMemoryBaulRepository _baules = new();
+    private readonly InMemoryPersonaRepository _personas = new();
+    private readonly InMemoryBaulRepository _baules;
     private readonly InMemoryPhotoRepository _photos = new();
     private readonly InMemoryUserRepository _users = new();
     private readonly FakePhotoStorage _photoStorage = new();
@@ -32,6 +33,7 @@ public class BaulInviteLinkManagerTests
 
     public BaulInviteLinkManagerTests()
     {
+        _baules = new InMemoryBaulRepository(_personas);
         _users.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", Now));
         _users.Seed(new User(new UserId(GuestId), "guest@test.com", "Invitado", Now));
     }
@@ -40,24 +42,24 @@ public class BaulInviteLinkManagerTests
     {
         var baulId = new BaulId(Guid.NewGuid());
         await _baules.CreateAsync(new Baul(baulId, "Familia Pérez", null, new UserId(CustodioId), 0, Now, Now));
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Administrador, Now));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Administrador, Now));
         return baulId;
     }
 
     private BaulInviteLinkManager CreateManager(
         string currentUserId, UserInfo? userInfo = null, IProfilePictureFetcher? pictureFetcher = null, string? accessToken = "token-abc") =>
         new(
-            NullLogger<BaulInviteLinkManager>.Instance, _links, _baules, _photos, _users, _photoStorage,
+            NullLogger<BaulInviteLinkManager>.Instance, _links, _baules, _personas, _photos, _users, _photoStorage,
             new FakeUserInfoClient(userInfo), pictureFetcher ?? new FakeProfilePictureFetcher(),
             new StaticIdGenerator(Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId, accessToken),
-            _configuration, new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance),
+            _configuration, new BaulAccessService(_baules, _personas, NullLogger<BaulAccessService>.Instance),
             new PersonaDtoProjector(_photos, _photoStorage, _users));
 
     [Fact]
     public async Task GetOrCreateAsync_ShouldDenyAccess_WhenCallerIsNotAdmin()
     {
         var baulId = await SeedBaulAsync();
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now));
 
         var result = await CreateManager(GuestId).GetOrCreateAsync(baulId);
 
@@ -151,7 +153,7 @@ public class BaulInviteLinkManagerTests
         await _baules.UpdateAsync(baul!.WithCover(coverPhoto, 0.5m, 0.5m, 1m, Now));
 
         // Custodio persona (seeded by SeedBaulAsync) has no avatar and should be skipped.
-        await _baules.AddPersonaAsync(new Persona(
+        await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now,
             AvatarPhotoKey: "avatar-key"));
 
@@ -191,12 +193,12 @@ public class BaulInviteLinkManagerTests
         // two members with different avatar keys must each surface their own avatar, not one
         // leaking onto the other — the exact mistake a broken dictionary lookup would produce.
         var baulId = await SeedBaulAsync();
-        await _baules.AddPersonaAsync(new Persona(
+        await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now,
             AvatarPhotoKey: "first-avatar-key"));
         const string secondGuestId = "guest-2";
         _users.Seed(new User(new UserId(secondGuestId), "guest2@test.com", "Segundo invitado", Now));
-        await _baules.AddPersonaAsync(new Persona(
+        await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(secondGuestId), "Segundo invitado", BaulRole.Colaborador, Now,
             AvatarPhotoKey: "second-avatar-key"));
 
@@ -226,7 +228,7 @@ public class BaulInviteLinkManagerTests
         Assert.Equal("colaborador", result.Value.Role);
         Assert.Equal("active", result.Value.Status);
 
-        var persona = await _baules.GetPersonaByUserIdAsync(baulId, new UserId(GuestId));
+        var persona = await _personas.GetPersonaByUserIdAsync(baulId, new UserId(GuestId));
         Assert.NotNull(persona);
     }
 
@@ -241,7 +243,7 @@ public class BaulInviteLinkManagerTests
         var secondAccept = await CreateManager(GuestId).AcceptAsync(link.Value.Token);
 
         Assert.True(secondAccept.IsSuccess);
-        var personas = await _baules.GetPersonasAsync(baulId);
+        var personas = await _personas.GetPersonasAsync(baulId);
         Assert.Single(personas, p => p.UserId == GuestId);
     }
 
@@ -257,7 +259,7 @@ public class BaulInviteLinkManagerTests
         Assert.True(result.IsSuccess);
         Assert.Equal("administrador", result.Value.Role);
         Assert.True(result.Value.IsCustodio);
-        var personas = await _baules.GetPersonasAsync(baulId);
+        var personas = await _personas.GetPersonasAsync(baulId);
         Assert.Single(personas);
     }
 
@@ -265,14 +267,14 @@ public class BaulInviteLinkManagerTests
     public async Task AcceptAsync_ShouldReject_WhenCallerAccessWasRevoked()
     {
         var baulId = await SeedBaulAsync();
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.SinAcceso, Now));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.SinAcceso, Now));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         var result = await CreateManager(GuestId).AcceptAsync(link.Value.Token);
 
         Assert.True(result.IsFailure);
         Assert.Equal(ApplicationErrorCode.Validation, result.Error.Code);
-        var personas = await _baules.GetPersonasAsync(baulId);
+        var personas = await _personas.GetPersonasAsync(baulId);
         Assert.Single(personas, p => p.Role == BaulRole.SinAcceso);
     }
 
@@ -302,7 +304,7 @@ public class BaulInviteLinkManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.NotEmpty(_photoStorage.SavedKeys);
-        var persona = await _baules.GetPersonaByUserIdAsync(baulId, new UserId(GuestId));
+        var persona = await _personas.GetPersonaByUserIdAsync(baulId, new UserId(GuestId));
         Assert.NotNull(persona!.AvatarPhotoKey);
     }
 
@@ -340,10 +342,10 @@ public class BaulInviteLinkManagerTests
         // list: two pending personas with different avatar keys must each keep their own.
         const string OutsiderId = "outsider-1";
         var baulId = await SeedBaulAsync();
-        await _baules.AddPersonaAsync(new Persona(
+        await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, null, "Primera pendiente", BaulRole.Colaborador, Now,
             AvatarPhotoKey: "first-pending-key"));
-        await _baules.AddPersonaAsync(new Persona(
+        await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, null, "Segunda pendiente", BaulRole.Colaborador, Now,
             AvatarPhotoKey: "second-pending-key"));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
@@ -364,9 +366,9 @@ public class BaulInviteLinkManagerTests
         const string OutsiderId = "outsider-1";
         var baulId = await SeedBaulAsync();
         var pendingId = new PersonaId(Guid.NewGuid());
-        await _baules.AddPersonaAsync(new Persona(pendingId, baulId, null, "Abuela", BaulRole.Colaborador, Now, Name: "María"));
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Ya unido", BaulRole.Colaborador, Now));
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Sin acceso", BaulRole.SinAcceso, Now));
+        await _personas.AddPersonaAsync(new Persona(pendingId, baulId, null, "Abuela", BaulRole.Colaborador, Now, Name: "María"));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Ya unido", BaulRole.Colaborador, Now));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Sin acceso", BaulRole.SinAcceso, Now));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         var result = await CreateManager(OutsiderId).GetClaimablePersonasAsync(link.Value.Token);
@@ -382,7 +384,7 @@ public class BaulInviteLinkManagerTests
     public async Task GetClaimablePersonasAsync_ShouldReturnEmpty_WhenCallerAlreadyHasAPersonaInTheBaul()
     {
         var baulId = await SeedBaulAsync();
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Abuela", BaulRole.Colaborador, Now, Name: "María"));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Abuela", BaulRole.Colaborador, Now, Name: "María"));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         var result = await CreateManager(CustodioId).GetClaimablePersonasAsync(link.Value.Token);
@@ -405,7 +407,7 @@ public class BaulInviteLinkManagerTests
     {
         var baulId = await SeedBaulAsync();
         var pendingId = new PersonaId(Guid.NewGuid());
-        await _baules.AddPersonaAsync(new Persona(pendingId, baulId, null, "Abuela", BaulRole.Colaborador, Now));
+        await _personas.AddPersonaAsync(new Persona(pendingId, baulId, null, "Abuela", BaulRole.Colaborador, Now));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         var result = await CreateManager(GuestId).AcceptAsync(link.Value.Token, pendingId);
@@ -416,7 +418,7 @@ public class BaulInviteLinkManagerTests
         Assert.Equal(GuestId, result.Value.UserId);
         Assert.Equal("active", result.Value.Status);
 
-        var personas = await _baules.GetPersonasAsync(baulId);
+        var personas = await _personas.GetPersonasAsync(baulId);
         Assert.Equal(2, personas.Count()); // custodio + claimed Abuela — no extra persona created
     }
 
@@ -425,14 +427,14 @@ public class BaulInviteLinkManagerTests
     {
         var baulId = await SeedBaulAsync();
         var alreadyClaimedId = new PersonaId(Guid.NewGuid());
-        await _baules.AddPersonaAsync(new Persona(alreadyClaimedId, baulId, new UserId("someone-else"), "Ya unido", BaulRole.Colaborador, Now));
+        await _personas.AddPersonaAsync(new Persona(alreadyClaimedId, baulId, new UserId("someone-else"), "Ya unido", BaulRole.Colaborador, Now));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         var result = await CreateManager(GuestId).AcceptAsync(link.Value.Token, alreadyClaimedId);
 
         Assert.True(result.IsFailure);
         Assert.Equal(ApplicationErrorCode.Validation, result.Error.Code);
-        var persona = await _baules.GetPersonaByIdAsync(alreadyClaimedId);
+        var persona = await _personas.GetPersonaByIdAsync(alreadyClaimedId);
         Assert.Equal("someone-else", persona!.UserId);
     }
 
@@ -442,7 +444,7 @@ public class BaulInviteLinkManagerTests
         var baulId = await SeedBaulAsync();
         var otherBaulId = await SeedBaulAsync();
         var otherBaulPendingId = new PersonaId(Guid.NewGuid());
-        await _baules.AddPersonaAsync(new Persona(otherBaulPendingId, otherBaulId, null, "Abuela", BaulRole.Colaborador, Now));
+        await _personas.AddPersonaAsync(new Persona(otherBaulPendingId, otherBaulId, null, "Abuela", BaulRole.Colaborador, Now));
         var link = await CreateManager(CustodioId).GetOrCreateAsync(baulId);
 
         var result = await CreateManager(GuestId).AcceptAsync(link.Value.Token, otherBaulPendingId);

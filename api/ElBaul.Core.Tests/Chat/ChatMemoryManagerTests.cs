@@ -21,16 +21,22 @@ public class ChatMemoryManagerTests
     private const string CustodioId = "custodio-1";
     private const string OtherUserId = "user-2";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChatMemoryRepository _chatMemoryRepository = new();
     private readonly InMemoryChatMemoryEmbeddingRepository _chatMemoryEmbeddingRepository = new();
     private readonly FakeEmbeddingBackend _embeddingBackend = new(["muebles", "abuelo"]);
     private readonly StaticClock _clock = new();
 
+    public ChatMemoryManagerTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
     private ChatMemoryManager CreateManager(string currentUserId, IAppConfiguration? appConfiguration = null) =>
         new(NullLogger<ChatMemoryManager>.Instance, _chatMemoryRepository, _chatMemoryEmbeddingRepository,
             _embeddingBackend, appConfiguration ?? new StaticAppConfiguration(), _clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
             new FakeUnitOfWork());
 
     private async Task<BaulId> SeedBaulAsync(string custodioId = CustodioId)
@@ -38,7 +44,7 @@ public class ChatMemoryManagerTests
         var baulId = new BaulId(Guid.NewGuid());
         var now = _clock.UtcNow();
         await _baulRepository.CreateAsync(new Baul(baulId, "Familia", null, new UserId(custodioId), 0, now, now));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(custodioId), "Custodio", BaulRole.Administrador, now));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(custodioId), "Custodio", BaulRole.Administrador, now));
         return baulId;
     }
 
@@ -57,7 +63,7 @@ public class ChatMemoryManagerTests
     public async Task GetMemoriesAsync_ShouldOnlyReturn_TheCurrentUsersOwnMemories()
     {
         var baulId = await SeedBaulAsync();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Otro", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Otro", BaulRole.Colaborador, _clock.UtcNow()));
         var mine = await SeedMemoryAsync(baulId, new UserId(CustodioId), "Mi memoria");
         await SeedMemoryAsync(baulId, new UserId(OtherUserId), "Memoria ajena");
 
@@ -85,7 +91,7 @@ public class ChatMemoryManagerTests
     public async Task UpdateMemoryAsync_ShouldFail_WhenCalledByAnotherUser()
     {
         var baulId = await SeedBaulAsync();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Otro", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Otro", BaulRole.Colaborador, _clock.UtcNow()));
         var memory = await SeedMemoryAsync(baulId, new UserId(CustodioId));
 
         var result = await CreateManager(OtherUserId).UpdateMemoryAsync(memory.Id, "Contenido modificado");
@@ -98,7 +104,7 @@ public class ChatMemoryManagerTests
     public async Task DeleteMemoryAsync_ShouldFail_WhenCalledByAnotherUser()
     {
         var baulId = await SeedBaulAsync();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Otro", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Otro", BaulRole.Colaborador, _clock.UtcNow()));
         var memory = await SeedMemoryAsync(baulId, new UserId(CustodioId));
 
         var result = await CreateManager(OtherUserId).DeleteMemoryAsync(memory.Id);

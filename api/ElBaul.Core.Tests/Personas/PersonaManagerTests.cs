@@ -28,9 +28,9 @@ public class PersonaManagerTests
     }
 
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<PersonaManager>.Instance, _fixture.Baules, _fixture.Photos, _fixture.Users,
+        new(NullLogger<PersonaManager>.Instance, _fixture.Baules, _fixture.Personas, _fixture.Photos, _fixture.Users,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags,
             new PhotoUploadWorkflow(
                 NullLogger<PhotoUploadWorkflow>.Instance, _fixture.Photos,
@@ -116,7 +116,7 @@ public class PersonaManagerTests
         // produce is one persona's user/avatar leaking onto another's DTO.
         var baulId = await _fixture.CreateBaulAsync("Familia");
         var avatarPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "avatar-key");
-        await _fixture.Baules.AddPersonaAsync(new Persona(
+        await _fixture.Personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(OtherUserId), "Colaborador con avatar", BaulRole.Colaborador,
             _fixture.Clock.UtcNow(), AvatarPhotoId: avatarPhotoId));
         await _fixture.AddPendingPersonaAsync(baulId, "Pendiente sin cuenta");
@@ -211,7 +211,7 @@ public class PersonaManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Persona not found", result.Error.Message);
 
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(foreignPersonaId);
+        var persona = await _fixture.Personas.GetPersonaByIdAsync(foreignPersonaId);
         Assert.Equal(BaulRole.Colaborador, persona!.Role);
     }
 
@@ -224,7 +224,7 @@ public class PersonaManagerTests
     public async Task UpdatePersonaRoleAsync_ShouldRejectChangingTheCustodioOwnRole()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
-        var custodioPersona = (await _fixture.Baules.GetPersonaByUserIdAsync(baulId, new UserId(CustodioId)))!;
+        var custodioPersona = (await _fixture.Personas.GetPersonaByUserIdAsync(baulId, new UserId(CustodioId)))!;
 
         var manager = CreateManager(CustodioId);
         var result = await manager.UpdatePersonaRoleAsync(baulId, custodioPersona.Id, BaulRole.Colaborador);
@@ -232,7 +232,7 @@ public class PersonaManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("The custodio role cannot be changed", result.Error.Message);
 
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(custodioPersona.Id);
+        var persona = await _fixture.Personas.GetPersonaByIdAsync(custodioPersona.Id);
         Assert.Equal(BaulRole.Administrador, persona!.Role);
     }
 
@@ -247,7 +247,7 @@ public class PersonaManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
-        var persisted = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        var persisted = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.Equal("Nació en Asturias en 1945.", persisted!.Biografia);
     }
 
@@ -263,7 +263,7 @@ public class PersonaManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Nació en Asturias en 1945.", result.Value.Biografia);
-        var persisted = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        var persisted = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.Equal("Nació en Asturias en 1945.", persisted!.Biografia);
     }
 
@@ -300,7 +300,7 @@ public class PersonaManagerTests
         Assert.Equal(0.75m, result.Value.AvatarCropY);
         Assert.Equal(1.8m, result.Value.AvatarCropScale);
 
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.Equal(new PhotoId(photoId), persona!.AvatarPhotoId);
         Assert.Null(persona.AvatarPhotoKey);
 
@@ -326,7 +326,7 @@ public class PersonaManagerTests
         Assert.Equal(photoId.ToString(), result.Value.AvatarPhotoId);
         Assert.Contains(personaId, await _fixture.PhotoPersonaTags.GetPersonaIdsByPhotoIdAsync(photoId));
 
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.Equal(photoId, persona!.AvatarPhotoId);
     }
 
@@ -345,7 +345,7 @@ public class PersonaManagerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
 
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.Null(persona!.AvatarPhotoId);
     }
 
@@ -363,7 +363,7 @@ public class PersonaManagerTests
         Assert.True(result.IsSuccess);
         Assert.Contains(personaId, await _fixture.PhotoPersonaTags.GetPersonaIdsByPhotoIdAsync(photoId));
 
-        var persona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.NotNull(persona);
         Assert.Null(persona.UserId);
         Assert.Equal(BaulRole.SinAcceso, persona.Role);
@@ -373,7 +373,7 @@ public class PersonaManagerTests
     public async Task RemovePersonaAsync_ShouldRejectCustodio()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
-        var custodioPersona = (await _fixture.Baules.GetPersonaByUserIdAsync(baulId, new UserId(CustodioId)))!;
+        var custodioPersona = (await _fixture.Personas.GetPersonaByUserIdAsync(baulId, new UserId(CustodioId)))!;
 
         var manager = CreateManager(CustodioId);
         var result = await manager.RemovePersonaAsync(baulId, custodioPersona.Id);

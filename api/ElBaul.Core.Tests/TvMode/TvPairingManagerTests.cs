@@ -19,11 +19,17 @@ public class TvPairingManagerTests
 
     private readonly InMemoryTvPairingRepository _tvPairings = new();
     private readonly InMemoryTvSessionRepository _tvSessions = new();
-    private readonly InMemoryBaulRepository _baules = new();
+    private readonly InMemoryPersonaRepository _personas = new();
+    private readonly InMemoryBaulRepository _baules;
     private readonly StaticClock _clock = new(Now);
     private readonly StaticCurrentUserProvider _currentUser = new("user-1");
     private readonly StaticAppConfiguration _configuration = new(
         publicUrl: "https://app.el-baul.test", apiPublicUrl: "https://api.el-baul.test", tvModeEnabled: true);
+
+    public TvPairingManagerTests()
+    {
+        _baules = new InMemoryBaulRepository(_personas);
+    }
 
     [Fact]
     public async Task CreateAsync_ShouldReturnClaimUrlAndCode()
@@ -132,6 +138,7 @@ public class TvPairingManagerTests
             NullLogger<TvSessionManager>.Instance,
             _tvSessions,
             _baules,
+            _personas,
             new InMemoryPhotoRepository(),
             new InMemoryChapterRepository(),
             new InMemoryPhotoPersonaTagRepository(),
@@ -141,8 +148,8 @@ public class TvPairingManagerTests
             _clock,
             currentUser ?? _currentUser,
             configuration,
-            new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(_baules, new InMemoryPhotoRepository(), new FakePhotoStorage()));
+            new BaulAccessService(_baules, _personas, NullLogger<BaulAccessService>.Instance),
+            new AuthorInfoProjector(_personas, new InMemoryPhotoRepository(), new FakePhotoStorage()));
 
         return new TvPairingManager(
             NullLogger<TvPairingManager>.Instance,
@@ -158,7 +165,7 @@ public class TvPairingManagerTests
         var baulId = new BaulId(Guid.NewGuid());
         var baul = new Baul(baulId, "Familia Pérez", null, new UserId("user-1"), 1, Now, Now);
         await _baules.CreateAsync(baul);
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Administrador, Now));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Administrador, Now));
         return baul;
     }
 }

@@ -1,5 +1,4 @@
 using ElBaul.Core.Bauls.Application;
-using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -16,7 +15,7 @@ public class PhotoReadManager(
     IPhotoRepository photoRepository,
     IPhotoListReadModel photoListReadModel,
     IChapterRepository chapterRepository,
-    IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     ICurrentUserProvider currentUserProvider,
     BaulAccessService baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
@@ -118,7 +117,7 @@ public class PhotoReadManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PhotoDto>>(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
-            () => baulRepository.GetPersonaByIdAsync(personaId),
+            () => personaRepository.GetPersonaByIdAsync(personaId),
             persona => persona.BaulId == baulId,
             logger,
             "Photos by persona rejected: persona not found {BaulId} {PersonaId}",

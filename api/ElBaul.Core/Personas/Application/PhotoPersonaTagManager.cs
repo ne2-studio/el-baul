@@ -1,5 +1,4 @@
 using ElBaul.Core.Bauls.Application;
-using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -12,7 +11,7 @@ namespace ElBaul.Core.Personas.Application;
 public class PhotoPersonaTagManager(
     ILogger<PhotoPersonaTagManager> logger,
     IPhotoRepository photoRepository,
-    IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IPhotoStorage photoStorage,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
@@ -31,7 +30,7 @@ public class PhotoPersonaTagManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<TaggedPersonaDto>>(auth.Error);
 
         var personaIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photoId)).ToList();
-        var personasById = (await baulRepository.GetPersonasByIdsAsync(personaIds)).ToDictionary(p => p.Id);
+        var personasById = (await personaRepository.GetPersonasByIdsAsync(personaIds)).ToDictionary(p => p.Id);
         // Preserves GetPersonaIdsByPhotoIdAsync's order (and its original "skip if the persona
         // was since removed" behavior) now that the fetch itself is batched.
         var personas = personaIds.Select(id => personasById.GetValueOrDefault(id)).OfType<Persona>();
@@ -58,7 +57,7 @@ public class PhotoPersonaTagManager(
         var personas = new List<Persona>();
         foreach (var personaId in distinctIds)
         {
-            var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+            var persona = await personaRepository.GetPersonaByIdAsync(personaId);
             if (persona is null || persona.BaulId != photo.BaulId)
             {
                 logger.LogWarning(
@@ -102,7 +101,7 @@ public class PhotoPersonaTagManager(
         // photo validity below, which tolerates individual failures. Batched: one query for
         // every persona in the request instead of one GetPersonaByIdAsync round trip each.
         var distinctPersonaIds = personaIds.Distinct().ToList();
-        var personasById = (await baulRepository.GetPersonasByIdsAsync(distinctPersonaIds)).ToDictionary(p => p.Id);
+        var personasById = (await personaRepository.GetPersonasByIdsAsync(distinctPersonaIds)).ToDictionary(p => p.Id);
         foreach (var personaId in distinctPersonaIds)
         {
             if (!personasById.TryGetValue(personaId, out var persona) || persona.BaulId != baulId)

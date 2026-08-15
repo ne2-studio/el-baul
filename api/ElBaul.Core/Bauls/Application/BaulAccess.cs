@@ -31,7 +31,7 @@ public sealed record AccessibleBaul(Baul Baul, bool IsCustodio, BaulRole Role)
 
 public enum AccessLevel { Member, Admin }
 
-public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAccessService> logger)
+public class BaulAccessService(IBaulRepository baulRepository, IPersonaRepository personaRepository, ILogger<BaulAccessService> logger)
 {
     private static readonly object EmptyLogContext = new { };
 
@@ -49,7 +49,7 @@ public class BaulAccessService(IBaulRepository baulRepository, ILogger<BaulAcces
 
     public async Task<BaulAccess> GetAsync(Baul baul, UserId userId)
     {
-        var persona = await baulRepository.GetPersonaByUserIdAsync(baul.Id, userId);
+        var persona = await personaRepository.GetPersonaByUserIdAsync(baul.Id, userId);
         return new BaulAccess(baul, baul.IsCustodio(userId), persona);
     }
 

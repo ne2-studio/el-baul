@@ -17,6 +17,7 @@ public class BaulInviteLinkManager(
     ILogger<BaulInviteLinkManager> logger,
     IBaulInviteLinkRepository baulInviteLinkRepository,
     IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
     IPhotoStorage photoStorage,
@@ -106,7 +107,7 @@ public class BaulInviteLinkManager(
         // limited-disclosure trade-off the public preview already makes for previewPhotos.
         // ProjectManyAsync batches the avatar-photo lookup for every candidate persona instead
         // of one round trip each; only the URL list itself stays capped at 4.
-        var personas = await baulRepository.GetPersonasAsync(baul.Id);
+        var personas = await personaRepository.GetPersonasAsync(baul.Id);
         var candidates = personas.Where(p => p.Role != BaulRole.SinAcceso)
             .Select(p => (Persona: p, User: (User?)null, CanEdit: false));
         var dtos = await personaDtoProjector.ProjectManyAsync(candidates, baul.CustodioId);
@@ -158,7 +159,7 @@ public class BaulInviteLinkManager(
         if (access.Persona is not null)
             return Result.Success<IEnumerable<ClaimablePersonaDto>>([]);
 
-        var personas = await baulRepository.GetPersonasAsync(baul.Id);
+        var personas = await personaRepository.GetPersonasAsync(baul.Id);
         // Projected with no User and canEdit: false purely to reuse the avatar-URL resolution
         // logic — only Id/Nickname/Name/AvatarUrl survive into the narrower DTO below, so
         // nothing else it computes (Email, Biografia, CanEdit) ever leaks to a caller who isn't
@@ -204,7 +205,7 @@ public class BaulInviteLinkManager(
 
         if (personaId is { } claimId)
         {
-            var target = await baulRepository.GetPersonaByIdAsync(claimId);
+            var target = await personaRepository.GetPersonaByIdAsync(claimId);
             if (target is null || target.BaulId != link.BaulId || !target.IsClaimable)
             {
                 logger.LogWarning(
@@ -213,7 +214,7 @@ public class BaulInviteLinkManager(
             }
 
             var claimed = target.AcceptInvite(userId, user?.Name);
-            await baulRepository.UpdatePersonaAsync(claimed);
+            await personaRepository.UpdatePersonaAsync(claimed);
             logger.LogInformation("Global invite accepted, existing persona claimed {BaulId} {PersonaId}", link.BaulId, claimed.Id);
 
             return await personaDtoProjector.ProjectWithResolvedUserAsync(claimed, user, canEdit: true, baul.CustodioId);
@@ -222,7 +223,7 @@ public class BaulInviteLinkManager(
         var persona = new Persona(
             new PersonaId(idGenerator.NewId()), link.BaulId, userId, user?.Name ?? user?.Email ?? "Nuevo miembro",
             BaulRole.Colaborador, clock.UtcNow(), Name: user?.Name);
-        await baulRepository.AddPersonaAsync(persona);
+        await personaRepository.AddPersonaAsync(persona);
         logger.LogInformation("Global invite accepted, persona auto-created {BaulId} {PersonaId}", link.BaulId, persona.Id);
 
         persona = await TryImportAvatarAsync(persona);
@@ -247,7 +248,7 @@ public class BaulInviteLinkManager(
             await photoStorage.SaveAsync(key, new MemoryStream(bytes), "image/jpeg");
 
             var updated = persona.WithImportedAvatar(key);
-            await baulRepository.UpdatePersonaAsync(updated);
+            await personaRepository.UpdatePersonaAsync(updated);
             return updated;
         }
         catch (Exception ex)

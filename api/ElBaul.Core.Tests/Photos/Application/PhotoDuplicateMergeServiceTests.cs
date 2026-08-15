@@ -13,7 +13,7 @@ public class PhotoDuplicateMergeServiceTests
     private readonly InMemorySharedLinkRepository _sharedLinks = new();
 
     private PhotoDuplicateMergeService CreateService() =>
-        new(_fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Recuerdos, _fixture.PhotoPersonaTags,
+        new(_fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Personas, _fixture.Recuerdos, _fixture.PhotoPersonaTags,
             _sharedLinks, new PhotoLifecycleService(_fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Clock),
             new FakeUnitOfWork(), _fixture.Clock);
 
@@ -214,13 +214,13 @@ public class PhotoDuplicateMergeServiceTests
         var survivorId = await _fixture.AddPhotoAsync(baulId, storageKey: "survivor-key", date: Date(1990), originalContentHash: "hash");
         var duplicateId = await _fixture.AddPhotoAsync(baulId, storageKey: "duplicate-key", date: Date(2020), originalContentHash: "hash");
         var personaId = await _fixture.AddColaboradorAsync(baulId, "u1", "Pedro");
-        var persona = (await _fixture.Baules.GetPersonaByIdAsync(personaId))!;
-        await _fixture.Baules.UpdatePersonaAsync(persona.WithAvatarPhotoId(duplicateId));
+        var persona = (await _fixture.Personas.GetPersonaByIdAsync(personaId))!;
+        await _fixture.Personas.UpdatePersonaAsync(persona.WithAvatarPhotoId(duplicateId));
         var group = new[] { survivorId, duplicateId }.Select(id => _fixture.Photos.GetByIdAsync(id).Result!).ToList();
 
         await CreateService().MergeGroupAsync(group);
 
-        var reloadedPersona = await _fixture.Baules.GetPersonaByIdAsync(personaId);
+        var reloadedPersona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.Equal(survivorId, reloadedPersona!.AvatarPhotoId);
     }
 

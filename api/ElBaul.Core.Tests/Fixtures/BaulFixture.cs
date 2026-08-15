@@ -17,13 +17,19 @@ public class BaulFixture
 {
     public const string DefaultCustodioId = "custodio-1";
 
-    public InMemoryBaulRepository Baules { get; } = new();
+    public InMemoryPersonaRepository Personas { get; } = new();
+    public InMemoryBaulRepository Baules { get; }
     public InMemoryChapterRepository Chapters { get; } = new();
     public InMemoryPhotoRepository Photos { get; } = new();
     public InMemoryPhotoPersonaTagRepository PhotoPersonaTags { get; } = new();
     public InMemoryRecuerdoRepository Recuerdos { get; } = new();
     public InMemoryUserRepository Users { get; } = new();
     public StaticClock Clock { get; } = new();
+
+    public BaulFixture()
+    {
+        Baules = new InMemoryBaulRepository(Personas);
+    }
 
     // "Baúl with custodio": mirrors BaulManager.CreateAsync, which always gives the custodio
     // a real Persona row alongside the Baul row.
@@ -34,7 +40,7 @@ public class BaulFixture
         var baulId = new BaulId(id ?? Guid.NewGuid());
         var created = createdAt ?? Clock.UtcNow();
         await Baules.CreateAsync(new Baul(baulId, name, description, new UserId(custodioId), chapterCount, created, created));
-        await Baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
+        await Personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
         return baulId;
     }
 
@@ -50,7 +56,7 @@ public class BaulFixture
         BaulId baulId, string? userId, string nickname, BaulRole role = BaulRole.Colaborador, Guid? id = null)
     {
         var personaId = new PersonaId(id ?? Guid.NewGuid());
-        await Baules.AddPersonaAsync(new Persona(personaId, baulId, userId is null ? null : new UserId(userId), nickname, role, Clock.UtcNow()));
+        await Personas.AddPersonaAsync(new Persona(personaId, baulId, userId is null ? null : new UserId(userId), nickname, role, Clock.UtcNow()));
         return personaId;
     }
 

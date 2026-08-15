@@ -1,4 +1,4 @@
-using ElBaul.Core.Bauls.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Core.Personas.Application;
@@ -18,13 +18,13 @@ public sealed record AuthorInfo(string Nickname, string? AvatarUrl, string? Pers
 // BaulAccessService.GetAuthorInfoAsync used to have. GetManyAsync is the batch-friendly
 // counterpart for lists: one GetPersonasAsync for the whole baúl plus one batched avatar-photo
 // lookup, instead of a lookup pair per recuerdo (the N+1 this class exists to remove).
-public class AuthorInfoProjector(IBaulRepository baulRepository, IPhotoRepository photoRepository, IPhotoStorage photoStorage)
+public class AuthorInfoProjector(IPersonaRepository personaRepository, IPhotoRepository photoRepository, IPhotoStorage photoStorage)
 {
     private static readonly AuthorInfo Fallback = new("Usuario", null, null);
 
     public async Task<AuthorInfo> GetAsync(BaulId baulId, UserId userId)
     {
-        var persona = await baulRepository.GetPersonaByUserIdAsync(baulId, userId);
+        var persona = await personaRepository.GetPersonaByUserIdAsync(baulId, userId);
         if (persona is null) return Fallback;
 
         var avatarUrl = await PersonaAvatarUrlResolver.ResolveAsync(persona, photoRepository, photoStorage);
@@ -34,7 +34,7 @@ public class AuthorInfoProjector(IBaulRepository baulRepository, IPhotoRepositor
     public async Task<IReadOnlyDictionary<UserId, AuthorInfo>> GetManyAsync(BaulId baulId, IEnumerable<UserId> userIds)
     {
         var wanted = userIds.ToHashSet();
-        var personas = (await baulRepository.GetPersonasAsync(baulId)).Where(p => p.UserId is not null && wanted.Contains(p.UserId.Value)).ToList();
+        var personas = (await personaRepository.GetPersonasAsync(baulId)).Where(p => p.UserId is not null && wanted.Contains(p.UserId.Value)).ToList();
 
         var avatarPhotoIds = personas.Where(p => p.AvatarPhotoId is not null).Select(p => p.AvatarPhotoId!.Value).Distinct().ToList();
         var photosById = avatarPhotoIds.Count == 0

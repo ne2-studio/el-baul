@@ -41,6 +41,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
         var inviteLinks = new BaulInviteLinkRepository(dbContext);
         var removalRequests = new RemovalRequestRepository(dbContext);
+        var personas = new PersonaRepository(dbContext);
 
         var deletion = new AdminBaulDeletionRepository(
             baules,
@@ -52,6 +53,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             new TvSessionRepository(dbContext),
             photoPersonaTags,
             removalRequests,
+            personas,
             new UnitOfWork(dbContext));
 
         var admin = new AdminManager(
@@ -59,6 +61,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             deletion,
             new SentEmailRepository(dbContext),
             baules,
+            personas,
             new PushTokenRepository(dbContext),
             // Nothing in DeleteBaulAsync's storage cleanup depends on these two — they only
             // get exercised for real in ElBaul.Tests/AdminManagerTests.
@@ -93,7 +96,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         // class an in-memory fake can't catch.
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, UserId: null, "Tía a borrar",
             BaulRole.Colaborador, DateTime.UtcNow);
-        await baules.AddPersonaAsync(persona);
+        await personas.AddPersonaAsync(persona);
         await photoPersonaTags.SetTagsAsync(photo.Id, baul.Id, [persona.Id], DateTime.UtcNow);
 
         // 3. A baúl invite link — a Restrict FK straight to Baul itself (like SharedLink,
@@ -141,6 +144,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var photos = new PhotoRepository(dbContext);
         var recuerdos = new RecuerdoRepository(dbContext);
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
+        var personas = new PersonaRepository(dbContext);
 
         var deletion = new AdminBaulDeletionRepository(
             baules,
@@ -152,6 +156,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             new TvSessionRepository(dbContext),
             photoPersonaTags,
             new RemovalRequestRepository(dbContext),
+            personas,
             new UnitOfWork(dbContext));
 
         var admin = new AdminManager(
@@ -159,6 +164,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             deletion,
             new SentEmailRepository(dbContext),
             baules,
+            personas,
             new PushTokenRepository(dbContext),
             Substitute.For<IPhotoStorage>(),
             Substitute.For<IChatContextBuilder>(),
@@ -185,7 +191,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
 
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, UserId: null, "Persona",
             BaulRole.Colaborador, DateTime.UtcNow);
-        await baules.AddPersonaAsync(persona);
+        await personas.AddPersonaAsync(persona);
         await photoPersonaTags.SetTagsAsync(photo.Id, baul.Id, [persona.Id], DateTime.UtcNow);
 
         dbContext.ChangeTracker.Clear();

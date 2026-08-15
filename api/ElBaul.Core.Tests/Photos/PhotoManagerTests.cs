@@ -42,13 +42,13 @@ public class PhotoManagerTests
 
     private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null) =>
         new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(nextId: nextId), _fixture.Clock,
             new FakeUnitOfWork());
 
     private PhotoReadManager CreateReadManager(string currentUserId, ILogger<PhotoReadManager>? logger = null, bool baulFeedEnabled = true) =>
-        new(logger ?? NullLogger<PhotoReadManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Baules,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+        new(logger ?? NullLogger<PhotoReadManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Personas,
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoDtoProjector(), CreatePhotoFileService(),
             new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
             new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled));
@@ -56,8 +56,8 @@ public class PhotoManagerTests
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
     // (it's a photo listing method), but tests need to tag photos first to exercise it.
     private PhotoPersonaTagManager CreateTagManager(string currentUserId) =>
-        new(NullLogger<PhotoPersonaTagManager>.Instance, _fixture.Photos, _fixture.Baules, _photoStorage, _fixture.Clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+        new(NullLogger<PhotoPersonaTagManager>.Instance, _fixture.Photos, _fixture.Personas, _photoStorage, _fixture.Clock,
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, new FakeUnitOfWork());
 
     [Fact]
@@ -132,7 +132,7 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
-            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage), _fixture.Clock,
             new FakeUnitOfWork());
 
@@ -153,7 +153,7 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
-            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
             new FakeUnitOfWork());
 
@@ -177,7 +177,7 @@ public class PhotoManagerTests
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
-            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
             new FakeUnitOfWork());
 

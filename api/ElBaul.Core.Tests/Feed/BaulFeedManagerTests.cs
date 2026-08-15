@@ -26,18 +26,18 @@ public class BaulFeedManagerTests
             new InMemoryRecuerdoListReadModel(_fixture.Recuerdos, _fixture.Photos, _fixture.Chapters),
             new InMemoryRecuerdoEmbeddingRepository(), new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new StaticCurrentUserProvider(currentUserId), _photoStorage,
-            new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage), new FakeUnitOfWork());
+            new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            new AuthorInfoProjector(_fixture.Personas, _fixture.Photos, _photoStorage), new FakeUnitOfWork());
 
     private BaulFeedManager CreateManager(string currentUserId, bool baulFeedEnabled = true) =>
         new(NullLogger<BaulFeedManager>.Instance, CreateRecuerdoManager(currentUserId),
             new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
             new PhotoDtoProjector(_photoStorage, _fixture.Recuerdos, _fixture.Clock),
-            new AuthorInfoProjector(_fixture.Baules, _fixture.Photos, _photoStorage),
+            new AuthorInfoProjector(_fixture.Personas, _fixture.Photos, _photoStorage),
             _fixture.Chapters, _photoStorage, _feedCursors,
             new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled),
             new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+            new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             _fixture.Clock);
 
     [Fact]

@@ -18,8 +18,8 @@ public class PhotoPersonaTagManagerTests
     private readonly FakePhotoStorage _photoStorage = new();
 
     private PhotoPersonaTagManager CreateManager(string currentUserId) =>
-        new(NullLogger<PhotoPersonaTagManager>.Instance, _fixture.Photos, _fixture.Baules, _photoStorage, _fixture.Clock,
-            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, NullLogger<BaulAccessService>.Instance),
+        new(NullLogger<PhotoPersonaTagManager>.Instance, _fixture.Photos, _fixture.Personas, _photoStorage, _fixture.Clock,
+            new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, new FakeUnitOfWork());
 
     [Fact]
@@ -53,9 +53,9 @@ public class PhotoPersonaTagManagerTests
         var secondAvatarPhotoId = await _fixture.AddPhotoAsync(baulId, storageKey: "second-avatar-key");
         var firstPersonaId = new PersonaId(Guid.NewGuid());
         var secondPersonaId = new PersonaId(Guid.NewGuid());
-        await _fixture.Baules.AddPersonaAsync(new Persona(
+        await _fixture.Personas.AddPersonaAsync(new Persona(
             firstPersonaId, baulId, null, "Primera", BaulRole.Colaborador, _fixture.Clock.UtcNow(), AvatarPhotoId: firstAvatarPhotoId));
-        await _fixture.Baules.AddPersonaAsync(new Persona(
+        await _fixture.Personas.AddPersonaAsync(new Persona(
             secondPersonaId, baulId, null, "Segunda", BaulRole.Colaborador, _fixture.Clock.UtcNow(), AvatarPhotoId: secondAvatarPhotoId));
 
         var manager = CreateManager(CustodioId);

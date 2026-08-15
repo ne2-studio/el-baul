@@ -24,7 +24,8 @@ public class TvSessionManagerTests
     private readonly InMemoryChapterRepository _chapters = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTags = new();
     private readonly InMemoryRecuerdoRepository _recuerdos = new();
-    private readonly InMemoryBaulRepository _baules = new();
+    private readonly InMemoryPersonaRepository _personas = new();
+    private readonly InMemoryBaulRepository _baules;
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new(Now);
     private readonly StaticCurrentUserProvider _currentUser = new("user-1");
@@ -32,6 +33,11 @@ public class TvSessionManagerTests
         publicUrl: "https://app.el-baul.test",
         apiPublicUrl: "https://api.el-baul.test",
         tvModeEnabled: true);
+
+    public TvSessionManagerTests()
+    {
+        _baules = new InMemoryBaulRepository(_personas);
+    }
 
     [Fact]
     public async Task CreateAsync_ShouldCreatePublicUrl_WhenUserBelongsToBaul()
@@ -67,7 +73,7 @@ public class TvSessionManagerTests
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baul.Id, "Verano en la playa", 1, null, Now, Now);
         await _chapters.CreateAsync(chapter);
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, null, "Rosa", BaulRole.Colaborador, Now);
-        await _baules.AddPersonaAsync(persona);
+        await _personas.AddPersonaAsync(persona);
 
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photo-key", PhotoDate.Parse(2026, 7, 15).Value, new UserId("user-1"), Now);
         await _photos.CreateAsync(photo);
@@ -122,6 +128,7 @@ public class TvSessionManagerTests
         NullLogger<TvSessionManager>.Instance,
         _tvSessions,
         _baules,
+        _personas,
         _photos,
         _chapters,
         _photoPersonaTags,
@@ -132,15 +139,15 @@ public class TvSessionManagerTests
         _currentUser,
         tvModeEnabled ? _configuration : new StaticAppConfiguration(
             publicUrl: "https://app.el-baul.test", apiPublicUrl: "https://api.el-baul.test", tvModeEnabled: false),
-        new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance),
-        new AuthorInfoProjector(_baules, _photos, _photoStorage));
+        new BaulAccessService(_baules, _personas, NullLogger<BaulAccessService>.Instance),
+        new AuthorInfoProjector(_personas, _photos, _photoStorage));
 
     private async Task<Baul> SeedBaulAsync()
     {
         var baulId = new BaulId(Guid.NewGuid());
         var baul = new Baul(baulId, "Familia Pérez", null, new UserId("user-1"), 1, Now, Now);
         await _baules.CreateAsync(baul);
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Administrador, Now));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Administrador, Now));
         return baul;
     }
 }

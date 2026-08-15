@@ -13,11 +13,17 @@ public class StaticSuggestedQuestionsStrategyTests
 {
     private const string CustodioId = "custodio-1";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly StaticClock _clock = new();
 
-    private StaticSuggestedQuestionsStrategy CreateStrategy() => new(_chapterRepository, _baulRepository);
+    public StaticSuggestedQuestionsStrategyTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
+    private StaticSuggestedQuestionsStrategy CreateStrategy() => new(_chapterRepository, _personaRepository);
 
     private async Task<Baul> SeedBaulAsync(Guid baulId)
     {
@@ -45,7 +51,7 @@ public class StaticSuggestedQuestionsStrategyTests
         var baulId = Guid.NewGuid();
         var baul = await SeedBaulAsync(baulId);
         var now = _clock.UtcNow();
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Abuelo Antonio", BaulRole.Administrador, now));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Abuelo Antonio", BaulRole.Administrador, now));
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Verano en Asturias", 3, null, now, now));
 
         var strategy = CreateStrategy();
@@ -78,7 +84,7 @@ public class StaticSuggestedQuestionsStrategyTests
         var now = _clock.UtcNow();
         for (var i = 0; i < 5; i++)
         {
-            await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, $"Persona {i}", BaulRole.Colaborador, now));
+            await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, $"Persona {i}", BaulRole.Colaborador, now));
             await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), $"Capítulo {i}", 0, null, now, now));
         }
 

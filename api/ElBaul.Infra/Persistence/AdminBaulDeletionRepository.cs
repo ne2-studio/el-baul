@@ -28,6 +28,7 @@ public class AdminBaulDeletionRepository(
     ITvSessionRepository tvSessionRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IRemovalRequestRepository removalRequestRepository,
+    IPersonaRepository personaRepository,
     IUnitOfWork unitOfWork) : IAdminBaulDeletionRepository
 {
     public async Task<DeletedBaulStorageObjects?> DeleteBaulGraphAsync(BaulId baulId)
@@ -36,7 +37,7 @@ public class AdminBaulDeletionRepository(
         if (baul is null) return null;
 
         var photos = (await photoRepository.GetAllByBaulIdAsync(baulId)).ToList();
-        var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
+        var personas = (await personaRepository.GetPersonasAsync(baulId)).ToList();
         var storageObjects = new DeletedBaulStorageObjects(
             photos.Select(p => p.StorageKey).ToList(),
             personas.Where(p => !string.IsNullOrEmpty(p.AvatarPhotoKey)).Select(p => p.AvatarPhotoKey!).ToList());
@@ -50,7 +51,7 @@ public class AdminBaulDeletionRepository(
             await recuerdoRepository.DeleteByBaulIdAsync(baulId);
             await photoRepository.DeleteByBaulIdAsync(baulId);
             await chapterRepository.DeleteByBaulIdAsync(baulId);
-            await baulRepository.RemoveAllPersonasAsync(baulId);
+            await personaRepository.RemoveAllPersonasAsync(baulId);
             await removalRequestRepository.DeleteByBaulIdAsync(baulId);
             await baulRepository.DeleteAsync(baulId);
             return Result.Success();

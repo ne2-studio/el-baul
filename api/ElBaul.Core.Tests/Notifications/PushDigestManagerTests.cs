@@ -3,6 +3,7 @@ using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -29,7 +30,8 @@ public class PushDigestManagerTests
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
     private readonly FakePushNotificationSender _pushNotificationSender = new();
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
@@ -37,6 +39,11 @@ public class PushDigestManagerTests
     private readonly FakeBackgroundJobScheduler _jobScheduler = new();
     private readonly StaticAppConfiguration _appConfiguration = new();
     private readonly StaticClock _clock = new();
+
+    public PushDigestManagerTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
 
     private PushDigestManager CreateManager() => CreateManager(_appConfiguration);
 
@@ -47,7 +54,7 @@ public class PushDigestManagerTests
         _jobScheduler, appConfiguration, _clock);
 
     private DigestActivityPolicy CreateDigestActivityPolicy() => new(
-        new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+        new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
         _chapterRepository, _photoRepository, _recuerdoRepository);
 
     private User SeedUser(string id, DateTime? lastPushDigestSentAt = null, string email = "user@example.com")

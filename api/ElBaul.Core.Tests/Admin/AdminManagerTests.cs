@@ -20,7 +20,8 @@ public class AdminManagerTests
 {
     private readonly InMemoryAdminRepository _adminRepository = new();
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
@@ -37,6 +38,7 @@ public class AdminManagerTests
 
     public AdminManagerTests()
     {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
         _baulDeletionRepository = new InMemoryAdminBaulDeletionRepository(
             _baulRepository,
             _chapterRepository,
@@ -47,11 +49,12 @@ public class AdminManagerTests
             _tvSessionRepository,
             _photoPersonaTagRepository,
             _removalRequestRepository,
+            _personaRepository,
             new FakeUnitOfWork());
     }
 
     private AdminManager CreateManager() => new(
-        _adminRepository, _baulDeletionRepository, _sentEmailRepository, _baulRepository, _pushTokenRepository,
+        _adminRepository, _baulDeletionRepository, _sentEmailRepository, _baulRepository, _personaRepository, _pushTokenRepository,
         _photoStorage, _chatContextBuilder, _clock, NullLogger<AdminManager>.Instance);
 
     [Fact]
@@ -265,7 +268,7 @@ public class AdminManagerTests
 
         var persona = new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow(), AvatarPhotoKey: "avatars/abuela.jpg");
-        await _baulRepository.AddPersonaAsync(persona);
+        await _personaRepository.AddPersonaAsync(persona);
 
         await _photoPersonaTagRepository.SetTagsAsync(photo.Id, baulId, [persona.Id], _clock.UtcNow());
 
@@ -276,7 +279,7 @@ public class AdminManagerTests
         Assert.Empty(await _chapterRepository.GetByBaulIdAsync(baulId));
         Assert.Empty(await _photoRepository.GetAllByBaulIdAsync(baulId));
         Assert.Empty(await _recuerdoRepository.GetByBaulIdAsync(baulId));
-        Assert.Empty(await _baulRepository.GetPersonasAsync(baulId));
+        Assert.Empty(await _personaRepository.GetPersonasAsync(baulId));
         Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id));
         Assert.Contains("photos/one.jpg", _photoStorage.DeletedKeys);
         Assert.Contains("avatars/abuela.jpg", _photoStorage.DeletedKeys);
@@ -290,12 +293,12 @@ public class AdminManagerTests
         await _baulRepository.CreateAsync(baul);
         var persona = new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
-        await _baulRepository.AddPersonaAsync(persona);
+        await _personaRepository.AddPersonaAsync(persona);
 
         var result = await CreateManager().UnlinkPersonaAsync(baulId, persona.Id);
 
         Assert.True(result.IsSuccess);
-        var updated = await _baulRepository.GetPersonaByIdAsync(persona.Id);
+        var updated = await _personaRepository.GetPersonaByIdAsync(persona.Id);
         Assert.Null(updated!.UserId);
         Assert.False(updated.IsClaimed);
         Assert.True(updated.IsClaimable);
@@ -322,7 +325,7 @@ public class AdminManagerTests
         var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Tío Pedro", BaulRole.Colaborador, _clock.UtcNow());
-        await _baulRepository.AddPersonaAsync(persona);
+        await _personaRepository.AddPersonaAsync(persona);
 
         var result = await CreateManager().UnlinkPersonaAsync(baulId, persona.Id);
 
@@ -338,7 +341,7 @@ public class AdminManagerTests
         await _baulRepository.CreateAsync(baul);
         var persona = new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId("custodio-1"), "Abuela", BaulRole.Administrador, _clock.UtcNow());
-        await _baulRepository.AddPersonaAsync(persona);
+        await _personaRepository.AddPersonaAsync(persona);
 
         var result = await CreateManager().UnlinkPersonaAsync(baulId, persona.Id);
 

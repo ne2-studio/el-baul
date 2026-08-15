@@ -25,6 +25,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         await using var dbContext = Fixture.CreateDbContext();
         var users = new UserRepository(dbContext);
         var baules = new BaulRepository(dbContext);
+        var personas = new PersonaRepository(dbContext);
         var admin = new AdminRepository(dbContext);
 
         var custodio = NewUser("custodio-1");
@@ -38,9 +39,9 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         await baules.CreateAsync(baulY);
 
         // The same user claims a Persona in each baúl — two Persona rows, one distinct user.
-        await baules.AddPersonaAsync(NewPersona(baulX.Id, guest.Id, "Invitado X", BaulRole.Colaborador));
+        await personas.AddPersonaAsync(NewPersona(baulX.Id, guest.Id, "Invitado X", BaulRole.Colaborador));
         var personaY = NewPersona(baulY.Id, guest.Id, "Invitado Y", BaulRole.Colaborador);
-        await baules.AddPersonaAsync(personaY);
+        await personas.AddPersonaAsync(personaY);
 
         var userRows = await admin.GetAllUsersAsync();
         userRows.Single(row => row.User.Id == guest.Id).BaulCount.Should().Be(2,
@@ -58,6 +59,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         await using var dbContext = Fixture.CreateDbContext();
         var users = new UserRepository(dbContext);
         var baules = new BaulRepository(dbContext);
+        var personas = new PersonaRepository(dbContext);
         var chapters = new ChapterRepository(dbContext);
         var photos = new PhotoRepository(dbContext);
         var admin = new AdminRepository(dbContext);
@@ -73,10 +75,10 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         // Three Personas, only two claimed — the custodio, the guest (claimed), and one
         // pre-provisioned row nobody has claimed yet: the exact shape AdminRepository's own
         // comments warn about (Persona.IsClaimed can't be used in the server-side Where).
-        await baules.AddPersonaAsync(NewPersona(baul.Id, custodio.Id, "Custodio", BaulRole.Administrador));
+        await personas.AddPersonaAsync(NewPersona(baul.Id, custodio.Id, "Custodio", BaulRole.Administrador));
         var claimedGuest = NewPersona(baul.Id, guest.Id, "Invitado", BaulRole.Colaborador);
-        await baules.AddPersonaAsync(claimedGuest);
-        await baules.AddPersonaAsync(NewPersona(baul.Id, userId: null, "Sin reclamar", BaulRole.Colaborador));
+        await personas.AddPersonaAsync(claimedGuest);
+        await personas.AddPersonaAsync(NewPersona(baul.Id, userId: null, "Sin reclamar", BaulRole.Colaborador));
 
         var chapter = NewChapter(baul.Id, "Capítulo de agregación");
         await chapters.CreateAsync(chapter);
@@ -101,6 +103,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         await using var dbContext = Fixture.CreateDbContext();
         var users = new UserRepository(dbContext);
         var baules = new BaulRepository(dbContext);
+        var personas = new PersonaRepository(dbContext);
         var chapters = new ChapterRepository(dbContext);
         var photos = new PhotoRepository(dbContext);
         var admin = new AdminRepository(dbContext);

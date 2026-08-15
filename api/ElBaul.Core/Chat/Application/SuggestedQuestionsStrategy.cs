@@ -1,5 +1,6 @@
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 using Ne2Studio.Common;
 
 namespace ElBaul.Core.Chat.Application;
@@ -15,7 +16,7 @@ public interface ISuggestedQuestionsStrategy
 // see AiSuggestedQuestionsStrategy for the AI-generated alternative.
 public class StaticSuggestedQuestionsStrategy(
     IChapterRepository chapterRepository,
-    IBaulRepository baulRepository) : ISuggestedQuestionsStrategy
+    IPersonaRepository personaRepository) : ISuggestedQuestionsStrategy
 {
     private const int MaxQuestions = 4;
     private const int MaxPerCategory = 2;
@@ -31,7 +32,7 @@ public class StaticSuggestedQuestionsStrategy(
     public async Task<Result<IEnumerable<string>>> GenerateAsync(Baul baul)
     {
         var chapters = (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToList();
-        var personas = (await baulRepository.GetPersonasAsync(baul.Id)).ToList();
+        var personas = (await personaRepository.GetPersonasAsync(baul.Id)).ToList();
 
         var questions = new List<string>();
         questions.AddRange(personas.Take(MaxPerCategory).Select(p => $"¿Qué recuerdos tenemos sobre {p.Nickname}?"));

@@ -18,6 +18,7 @@ namespace ElBaul.Core.Personas.Application;
 public class PersonaManager(
     ILogger<PersonaManager> logger,
     IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IPhotoRepository photoRepository,
     IUserRepository userRepository,
     IIdGenerator idGenerator,
@@ -37,7 +38,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<IEnumerable<PersonaDto>>(auth.Error);
         var access = auth.Value;
 
-        var personas = (await baulRepository.GetPersonasAsync(baulId)).ToList();
+        var personas = (await personaRepository.GetPersonasAsync(baulId)).ToList();
 
         // One batched user lookup for every claimed persona instead of one round trip each,
         // plus IPersonaDtoProjector.ProjectManyAsync batching the avatar-photo lookup the same
@@ -65,7 +66,7 @@ public class PersonaManager(
         var access = auth.Value;
 
         var personaResult = await EntityLookup.ResolveAsync(
-            () => baulRepository.GetPersonaByIdAsync(personaId),
+            () => personaRepository.GetPersonaByIdAsync(personaId),
             persona => persona.BaulId == baulId,
             logger,
             "Persona detail rejected: persona not found {PersonaId}",
@@ -88,7 +89,7 @@ public class PersonaManager(
         var persona = new Persona(
             new PersonaId(idGenerator.NewId()), baulId, null, nickname, BaulRole.Colaborador, clock.UtcNow());
 
-        await baulRepository.AddPersonaAsync(persona);
+        await personaRepository.AddPersonaAsync(persona);
         logger.LogInformation("Persona created {PersonaId} {Nickname}", persona.Id, nickname);
         return await personaDtoProjector.ProjectAsync(persona, canEdit: true, auth.Value.Baul.CustodioId);
     }
@@ -102,7 +103,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
-            () => baulRepository.GetPersonaByIdAsync(personaId),
+            () => personaRepository.GetPersonaByIdAsync(personaId),
             persona => persona.BaulId == baulId,
             logger,
             "Persona update rejected: persona not found {PersonaId}",
@@ -119,7 +120,7 @@ public class PersonaManager(
         }
 
         var updated = persona.WithIdentity(name, nickname);
-        await baulRepository.UpdatePersonaAsync(updated);
+        await personaRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona updated {PersonaId}", personaId);
 
         return await personaDtoProjector.ProjectAsync(updated, canEdit, auth.Value.Baul.CustodioId);
@@ -136,7 +137,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
-            () => baulRepository.GetPersonaByIdAsync(personaId),
+            () => personaRepository.GetPersonaByIdAsync(personaId),
             persona => persona.BaulId == baulId,
             logger,
             "Persona biografia update rejected: persona not found {PersonaId}",
@@ -146,7 +147,7 @@ public class PersonaManager(
         var persona = personaResult.Value;
 
         var updated = persona.WithBiografia(biografia);
-        await baulRepository.UpdatePersonaAsync(updated);
+        await personaRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona biografia updated {PersonaId}", personaId);
 
         return await personaDtoProjector.ProjectAsync(updated, CanEditPersona(updated, userId, auth.Value), auth.Value.Baul.CustodioId);
@@ -221,7 +222,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
-            () => baulRepository.GetPersonaByIdAsync(personaId),
+            () => personaRepository.GetPersonaByIdAsync(personaId),
             persona => persona.BaulId == baulId,
             logger,
             "Persona role update rejected: persona not found {PersonaId}",
@@ -241,7 +242,7 @@ public class PersonaManager(
         }
 
         var updated = persona.WithRole(role);
-        await baulRepository.UpdatePersonaAsync(updated);
+        await personaRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona role updated {PersonaId} {Role}", personaId, role);
 
         return await personaDtoProjector.ProjectAsync(updated, canEdit: true, auth.Value.Baul.CustodioId);
@@ -255,7 +256,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
-            () => baulRepository.GetPersonaByIdAsync(personaId),
+            () => personaRepository.GetPersonaByIdAsync(personaId),
             persona => persona.BaulId == baulId,
             logger,
             "Persona access revocation rejected: persona not found {PersonaId}",
@@ -270,7 +271,7 @@ public class PersonaManager(
             return Result.Failure(ApplicationError.Validation("The custodio cannot lose access"));
         }
 
-        await baulRepository.UpdatePersonaAsync(persona.Revoke());
+        await personaRepository.UpdatePersonaAsync(persona.Revoke());
         logger.LogInformation("Persona access revoked {PersonaId}", personaId);
         return Result.Success();
     }
@@ -287,7 +288,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<(Persona, BaulAccess, UserId)>(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
-            () => baulRepository.GetPersonaByIdAsync(personaId),
+            () => personaRepository.GetPersonaByIdAsync(personaId),
             persona => persona.BaulId == baulId,
             logger,
             "Persona avatar update rejected: persona not found {PersonaId}",
@@ -322,7 +323,7 @@ public class PersonaManager(
                 await photoPersonaTagRepository.SetTagsAsync(photo.Id, photo.BaulId, existingIds.Append(persona.Id), clock.UtcNow());
             }
 
-            await baulRepository.UpdatePersonaAsync(updated);
+            await personaRepository.UpdatePersonaAsync(updated);
             return Result.Success();
         });
         logger.LogInformation("Persona avatar photo updated {PersonaId} {PhotoId}", persona.Id, photo.Id);

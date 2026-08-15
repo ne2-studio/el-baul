@@ -20,7 +20,7 @@ public interface IChatContextBuilder
 }
 
 public class ChatContextBuilder(
-    IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IChapterRepository chapterRepository,
     IRecuerdoRepository recuerdoRepository,
     IPhotoRepository photoRepository,
@@ -35,7 +35,7 @@ public class ChatContextBuilder(
     {
         var chapters = (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToList();
         var chapterNames = chapters.ToDictionary(a => a.Id, a => a.Name);
-        var personas = (await baulRepository.GetPersonasAsync(baul.Id)).ToList();
+        var personas = (await personaRepository.GetPersonasAsync(baul.Id)).ToList();
         var nicknamesByUserId = personas
             .Where(s => s.IsClaimed)
             .ToDictionary(s => s.UserId!.Value, s => s.Nickname);
@@ -118,7 +118,7 @@ public class ChatContextBuilder(
     public async Task<string> BuildSummaryAsync(Baul baul)
     {
         var chapters = (await chapterRepository.GetByBaulIdAsync(baul.Id)).ToList();
-        var personas = (await baulRepository.GetPersonasAsync(baul.Id)).ToList();
+        var personas = (await personaRepository.GetPersonasAsync(baul.Id)).ToList();
         var photosByChapter = (await photoRepository.GetActiveByBaulIdAsync(baul.Id))
             .Where(p => p.ChapterId is not null)
             .GroupBy(p => p.ChapterId!.Value)

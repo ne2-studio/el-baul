@@ -26,7 +26,8 @@ public class ChatContextBuilderApprovalTests
 
     private static readonly UserId CurrentUserId = new(CustodioId);
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemoryRecuerdoEmbeddingRepository _recuerdoEmbeddingRepository = new();
@@ -35,8 +36,13 @@ public class ChatContextBuilderApprovalTests
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly StaticClock _clock = new();
 
+    public ChatContextBuilderApprovalTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
     private ChatContextBuilder CreateBuilder(IEmbeddingBackend? embeddingBackend = null) =>
-        new(_baulRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
+        new(_personaRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
             new RelevantRecuerdoSelector(NullLogger<RelevantRecuerdoSelector>.Instance, _recuerdoEmbeddingRepository,
                 embeddingBackend ?? new FakeEmbeddingBackend([]), _clock),
             new RelevantChatMemorySelector(NullLogger<RelevantChatMemorySelector>.Instance, _chatMemoryRepository,
@@ -49,8 +55,8 @@ public class ChatContextBuilderApprovalTests
         var baulId = Guid.NewGuid();
         var baul = new Baul(new BaulId(baulId), "Viajes de la familia", "Los viajes que hicimos juntos", new UserId(CustodioId), 1, BaseDate, BaseDate);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Papá", BaulRole.Administrador, BaseDate, Name: "Antonio"));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-2"), "Mamá", BaulRole.Colaborador, BaseDate));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Papá", BaulRole.Administrador, BaseDate, Name: "Antonio"));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId("user-2"), "Mamá", BaulRole.Colaborador, BaseDate));
 
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baulId), "Boda de Ana", 5, null, BaseDate, BaseDate);
         await _chapterRepository.CreateAsync(chapter);
@@ -85,7 +91,7 @@ public class ChatContextBuilderApprovalTests
         var baulId = Guid.NewGuid();
         var baul = new Baul(new BaulId(baulId), "Familia", null, new UserId(CustodioId), 0, BaseDate, BaseDate);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, BaseDate));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, BaseDate));
 
         _recuerdoRepository.SeedForBaul(new BaulId(baulId), new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baulId), new UserId(CustodioId), "Fuimos de viaje a Asturias en verano", BaseDate));
         for (var i = 0; i < 25; i++)

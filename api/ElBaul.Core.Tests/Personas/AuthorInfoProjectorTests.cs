@@ -13,12 +13,18 @@ public class AuthorInfoProjectorTests
 {
     private const string CustodioId = "custodio-1";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
     private static readonly DateTime Now = new(2026, 8, 5, 12, 0, 0, DateTimeKind.Utc);
 
-    private AuthorInfoProjector CreateProjector() => new(_baulRepository, _photoRepository, _photoStorage);
+    public AuthorInfoProjectorTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
+    private AuthorInfoProjector CreateProjector() => new(_personaRepository, _photoRepository, _photoStorage);
 
     private async Task<BaulId> SeedBaulAsync()
     {
@@ -32,7 +38,7 @@ public class AuthorInfoProjectorTests
     {
         var baulId = await SeedBaulAsync();
         var personaId = new PersonaId(Guid.NewGuid());
-        await _baulRepository.AddPersonaAsync(new Persona(personaId, baulId, new UserId(CustodioId), "Tito Recuerdos", BaulRole.Administrador, Now));
+        await _personaRepository.AddPersonaAsync(new Persona(personaId, baulId, new UserId(CustodioId), "Tito Recuerdos", BaulRole.Administrador, Now));
 
         var author = await CreateProjector().GetAsync(baulId, new UserId(CustodioId));
 
@@ -56,7 +62,7 @@ public class AuthorInfoProjectorTests
     public async Task GetAsync_ShouldResolveAvatarUrl_FromLegacyAvatarKey()
     {
         var baulId = await SeedBaulAsync();
-        await _baulRepository.AddPersonaAsync(new Persona(
+        await _personaRepository.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Administrador, Now, AvatarPhotoKey: "avatar-key"));
 
         var author = await CreateProjector().GetAsync(baulId, new UserId(CustodioId));
@@ -70,8 +76,8 @@ public class AuthorInfoProjectorTests
         var baulId = await SeedBaulAsync();
         const string author1 = "author-1";
         const string author2 = "author-2";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(author1), "Ana", BaulRole.Colaborador, Now));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(author2), "Beto", BaulRole.Colaborador, Now));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(author1), "Ana", BaulRole.Colaborador, Now));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId(author2), "Beto", BaulRole.Colaborador, Now));
 
         var authors = await CreateProjector().GetManyAsync(baulId, [new UserId(author1), new UserId(author1), new UserId(author1), new UserId(author2)]);
 
@@ -97,7 +103,7 @@ public class AuthorInfoProjectorTests
         var baulId = await SeedBaulAsync();
         var photoId = new PhotoId(Guid.NewGuid());
         await _photoRepository.CreateAsync(Photo.Create(photoId, null, baulId, "photo-key", null, new UserId(CustodioId), Now));
-        await _baulRepository.AddPersonaAsync(new Persona(
+        await _personaRepository.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Administrador, Now, AvatarPhotoId: photoId));
 
         var authors = await CreateProjector().GetManyAsync(baulId, [new UserId(CustodioId)]);

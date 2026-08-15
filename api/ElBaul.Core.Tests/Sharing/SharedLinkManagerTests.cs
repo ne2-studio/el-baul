@@ -21,7 +21,8 @@ public class SharedLinkManagerTests
     private readonly InMemorySharedLinkRepository _sharedLinks = new();
     private readonly InMemoryPhotoRepository _photos = new();
     private readonly InMemoryRecuerdoRepository _recuerdos = new();
-    private readonly InMemoryBaulRepository _baules = new();
+    private readonly InMemoryPersonaRepository _personas = new();
+    private readonly InMemoryBaulRepository _baules;
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
     private readonly StaticCurrentUserProvider _currentUser = new("user-1");
@@ -29,6 +30,11 @@ public class SharedLinkManagerTests
         publicUrl: "https://app.el-baul.test",
         apiPublicUrl: "https://api.el-baul.test",
         sharedLinksEnabled: true);
+
+    public SharedLinkManagerTests()
+    {
+        _baules = new InMemoryBaulRepository(_personas);
+    }
 
     [Fact]
     public async Task CreateForPhotoAsync_ShouldCreatePublicUrl_WhenUserBelongsToBaul()
@@ -89,15 +95,15 @@ public class SharedLinkManagerTests
         _clock,
         _currentUser,
         _configuration,
-        new BaulAccessService(_baules, NullLogger<BaulAccessService>.Instance),
-        new AuthorInfoProjector(_baules, _photos, _photoStorage));
+        new BaulAccessService(_baules, _personas, NullLogger<BaulAccessService>.Instance),
+        new AuthorInfoProjector(_personas, _photos, _photoStorage));
 
     private async Task<Photo> SeedPhotoAsync()
     {
         var baulId = new BaulId(Guid.NewGuid());
         var chapterId = new ChapterId(Guid.NewGuid());
         await _baules.CreateAsync(new Baul(baulId, "Familia Pérez", null, new UserId("user-1"), 1, Now, Now));
-        await _baules.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Administrador, Now));
+        await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Administrador, Now));
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "photo-key", null, new UserId("user-1"), Now);
         await _photos.CreateAsync(photo);
         return photo;

@@ -90,8 +90,9 @@ public class BaulAccessTests
     public async Task GetAsync_ShouldSetIsCustodio_WhenUserIdMatchesBaulCustodioId()
     {
         var repo = Substitute.For<IBaulRepository>();
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, TestBaul.CustodioId).Returns((Persona?)null);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        var personaRepo = Substitute.For<IPersonaRepository>();
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, TestBaul.CustodioId).Returns((Persona?)null);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var access = await service.GetAsync(TestBaul, TestBaul.CustodioId);
 
@@ -105,9 +106,10 @@ public class BaulAccessTests
         // Custodians get a real Persona row too (created by BaulManager.CreateAsync) — GetAsync
         // must surface it rather than short-circuit to null once IsCustodio is already known.
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         var custodioPersona = MakePersona(BaulRole.Administrador, TestBaul.CustodioId);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, TestBaul.CustodioId).Returns(custodioPersona);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, TestBaul.CustodioId).Returns(custodioPersona);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var access = await service.GetAsync(TestBaul, TestBaul.CustodioId);
 
@@ -119,9 +121,10 @@ public class BaulAccessTests
     public async Task GetAsync_ShouldNotSetIsCustodio_ForAnyOtherUser()
     {
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         var persona = MakePersona(BaulRole.Colaborador, OtherUserId);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(persona);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(persona);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var access = await service.GetAsync(TestBaul, new UserId(OtherUserId));
 
@@ -138,9 +141,10 @@ public class BaulAccessTests
     {
         var userId = new UserId(OtherUserId);
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetOwnedByUserIdAsync(userId).Returns([]);
         repo.GetSharedByUserIdAsync(userId).Returns([]);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var accesses = await service.GetAccessibleAsync(userId);
 
@@ -152,9 +156,10 @@ public class BaulAccessTests
     {
         var userId = TestBaul.CustodioId;
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetOwnedByUserIdAsync(userId).Returns([TestBaul]);
         repo.GetSharedByUserIdAsync(userId).Returns([]);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var access = Assert.Single(await service.GetAccessibleAsync(userId));
 
@@ -168,10 +173,11 @@ public class BaulAccessTests
     {
         var userId = new UserId(OtherUserId);
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetOwnedByUserIdAsync(userId).Returns([]);
         repo.GetSharedByUserIdAsync(userId).Returns(
             [new ElBaul.Core.Bauls.OutputPorts.BaulAccess(TestBaul, BaulRole.Colaborador)]);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var access = Assert.Single(await service.GetAccessibleAsync(userId));
 
@@ -185,10 +191,11 @@ public class BaulAccessTests
     {
         var userId = TestBaul.CustodioId;
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetOwnedByUserIdAsync(userId).Returns([TestBaul]);
         repo.GetSharedByUserIdAsync(userId).Returns(
             [new ElBaul.Core.Bauls.OutputPorts.BaulAccess(TestBaul, BaulRole.Colaborador)]);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var access = Assert.Single(await service.GetAccessibleAsync(userId));
 
@@ -203,8 +210,9 @@ public class BaulAccessTests
     public async Task AuthorizeAsync_ShouldFail_WhenBaulDoesNotExist()
     {
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetByIdAsync(TestBaul.Id).Returns((Baul?)null);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var result = await service.AuthorizeAsync(TestBaul.Id, new UserId(OtherUserId), AccessLevel.Member, "Test op");
 
@@ -216,9 +224,10 @@ public class BaulAccessTests
     public async Task AuthorizeAsync_ShouldFail_ForMemberLevel_WhenCallerHasNoRelationToBaul()
     {
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetByIdAsync(TestBaul.Id).Returns(TestBaul);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns((Persona?)null);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns((Persona?)null);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var result = await service.AuthorizeAsync(TestBaul.Id, new UserId(OtherUserId), AccessLevel.Member, "Test op");
 
@@ -230,9 +239,10 @@ public class BaulAccessTests
     public async Task AuthorizeAsync_ShouldFail_ForAdminLevel_WhenMemberIsOnlyColaborador()
     {
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetByIdAsync(TestBaul.Id).Returns(TestBaul);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(MakePersona(BaulRole.Colaborador));
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(MakePersona(BaulRole.Colaborador));
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var result = await service.AuthorizeAsync(TestBaul.Id, new UserId(OtherUserId), AccessLevel.Admin, "Test op");
 
@@ -244,10 +254,11 @@ public class BaulAccessTests
     public async Task AuthorizeAsync_ShouldSucceed_ForMemberLevel_WhenColaborador()
     {
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetByIdAsync(TestBaul.Id).Returns(TestBaul);
         var persona = MakePersona(BaulRole.Colaborador);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(persona);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(persona);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var result = await service.AuthorizeAsync(TestBaul.Id, new UserId(OtherUserId), AccessLevel.Member, "Test op");
 
@@ -259,9 +270,10 @@ public class BaulAccessTests
     public async Task AuthorizeAsync_ShouldSucceed_ForAdminLevel_WhenAdministrador()
     {
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetByIdAsync(TestBaul.Id).Returns(TestBaul);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(MakePersona(BaulRole.Administrador));
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(MakePersona(BaulRole.Administrador));
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var result = await service.AuthorizeAsync(TestBaul.Id, new UserId(OtherUserId), AccessLevel.Admin, "Test op");
 
@@ -272,9 +284,10 @@ public class BaulAccessTests
     public async Task AuthorizeAsync_ShouldSucceed_ForAdminLevel_WhenCustodio()
     {
         var repo = Substitute.For<IBaulRepository>();
+        var personaRepo = Substitute.For<IPersonaRepository>();
         repo.GetByIdAsync(TestBaul.Id).Returns(TestBaul);
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, TestBaul.CustodioId).Returns((Persona?)null);
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, TestBaul.CustodioId).Returns((Persona?)null);
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var result = await service.AuthorizeAsync(TestBaul.Id, TestBaul.CustodioId, AccessLevel.Admin, "Test op");
 
@@ -285,8 +298,9 @@ public class BaulAccessTests
     public async Task AuthorizeAsync_WithPreloadedBaul_ShouldSkipTheRepositoryLookup()
     {
         var repo = Substitute.For<IBaulRepository>();
-        repo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(MakePersona(BaulRole.Colaborador));
-        var service = new BaulAccessService(repo, NullLogger<BaulAccessService>.Instance);
+        var personaRepo = Substitute.For<IPersonaRepository>();
+        personaRepo.GetPersonaByUserIdAsync(TestBaul.Id, new UserId(OtherUserId)).Returns(MakePersona(BaulRole.Colaborador));
+        var service = new BaulAccessService(repo, personaRepo, NullLogger<BaulAccessService>.Instance);
 
         var result = await service.AuthorizeAsync(TestBaul, new UserId(OtherUserId), AccessLevel.Member, "Test op");
 

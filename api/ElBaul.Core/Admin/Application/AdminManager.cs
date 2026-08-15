@@ -3,6 +3,7 @@ using ElBaul.Core.Admin.OutputPorts;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
@@ -24,6 +25,7 @@ public class AdminManager(
     IAdminBaulDeletionRepository baulDeletionRepository,
     ISentEmailRepository sentEmailRepository,
     IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IPushTokenRepository pushTokenRepository,
     IPhotoStorage photoStorage,
     IChatContextBuilder chatContextBuilder,
@@ -129,7 +131,7 @@ public class AdminManager(
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return Result.Failure(ApplicationError.NotFound("Baul not found"));
 
-        var persona = await baulRepository.GetPersonaByIdAsync(personaId);
+        var persona = await personaRepository.GetPersonaByIdAsync(personaId);
         if (persona is null || persona.BaulId != baulId)
             return Result.Failure(ApplicationError.NotFound("Persona not found"));
 
@@ -139,7 +141,7 @@ public class AdminManager(
         if (persona.IsCustodioProtected(baul.CustodioId))
             return Result.Failure(ApplicationError.Validation("The custodio cannot be unlinked"));
 
-        await baulRepository.UpdatePersonaAsync(persona.Unlink());
+        await personaRepository.UpdatePersonaAsync(persona.Unlink());
         logger.LogInformation("Persona unlinked from user by admin {PersonaId}", personaId);
         return Result.Success();
     }

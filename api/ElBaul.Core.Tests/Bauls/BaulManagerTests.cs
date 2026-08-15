@@ -16,7 +16,8 @@ public class BaulManagerTests
     private const string CustodioId = "custodio-1";
     private const string OtherUserId = "user-2";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly FakePhotoStorage _photoStorage = new();
@@ -24,15 +25,16 @@ public class BaulManagerTests
 
     public BaulManagerTests()
     {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
         _userRepository.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", _clock.UtcNow()));
         _userRepository.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", _clock.UtcNow()));
     }
 
     private BaulManager CreateManager(string currentUserId, Guid? nextId = null) =>
-        new(NullLogger<BaulManager>.Instance, _baulRepository, _photoRepository,
+        new(NullLogger<BaulManager>.Instance, _baulRepository, _personaRepository, _photoRepository,
             _userRepository, _photoStorage,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock, new StaticCurrentUserProvider(currentUserId),
-            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance), new FakeUnitOfWork());
+            new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance), new FakeUnitOfWork());
 
     // Custodians now have a real Personas row (created by BaulManager.CreateAsync);
     // tests that seed the Baul directly via the repository need to add it themselves.
@@ -43,7 +45,7 @@ public class BaulManagerTests
         var created = createdAt ?? _clock.UtcNow();
         var baul = new Baul(new BaulId(baulId), name, description, new UserId(custodioId), 0, created, updatedAt ?? created);
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, created));
         return baul;
     }
 
@@ -89,7 +91,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.GetByIdAsync(new BaulId(baulId));
@@ -203,7 +205,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetAllForCurrentUserAsync();
@@ -218,7 +220,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.GetAllForCurrentUserAsync();
@@ -251,7 +253,7 @@ public class BaulManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.GetByIdAsync(new BaulId(baulId));

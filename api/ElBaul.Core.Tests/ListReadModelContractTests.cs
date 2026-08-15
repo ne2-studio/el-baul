@@ -41,7 +41,8 @@ public class ListReadModelContractTests
 
     private sealed class LiteStore : IListReadModelContractStore
     {
-        private readonly InMemoryBaulRepository _baules = new();
+        private readonly InMemoryPersonaRepository _personas = new();
+        private readonly InMemoryBaulRepository _baules;
         private readonly InMemoryChapterRepository _chapters = new();
         private readonly InMemoryPhotoRepository _photos = new();
         private readonly InMemoryRecuerdoRepository _recuerdos = new();
@@ -49,6 +50,7 @@ public class ListReadModelContractTests
 
         public LiteStore()
         {
+            _baules = new InMemoryBaulRepository(_personas);
             PhotoLists = new InMemoryPhotoListReadModel(_photos, _recuerdos, _photoPersonaTags);
             ChapterLists = new InMemoryChapterListReadModel(_chapters, _photos, _recuerdos);
             RecuerdoLists = new InMemoryRecuerdoListReadModel(_recuerdos, _photos, _chapters);
@@ -64,7 +66,7 @@ public class ListReadModelContractTests
         public Task AddChapterAsync(Chapter chapter) => _chapters.CreateAsync(chapter);
         public Task AddPhotoAsync(Photo photo) => _photos.CreateAsync(photo);
         public Task AddRecuerdoAsync(Recuerdo recuerdo) => _recuerdos.CreateAsync(recuerdo);
-        public Task AddPersonaAsync(Persona persona) => _baules.AddPersonaAsync(persona);
+        public Task AddPersonaAsync(Persona persona) => _personas.AddPersonaAsync(persona);
 
         public Task AddPhotoPersonaTagAsync(PhotoId photoId, PersonaId personaId, BaulId baulId, DateTime createdAt) =>
             _photoPersonaTags.SetTagsAsync(photoId, baulId, [personaId], createdAt);

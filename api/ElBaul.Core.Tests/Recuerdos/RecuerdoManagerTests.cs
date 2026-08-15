@@ -20,7 +20,8 @@ public class RecuerdoManagerTests
     private const string CustodioId = "custodio-1";
     private const string OtherUserId = "user-2";
 
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
@@ -28,20 +29,25 @@ public class RecuerdoManagerTests
     private readonly FakePhotoStorage _photoStorage = new();
     private readonly StaticClock _clock = new();
 
+    public RecuerdoManagerTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
     private RecuerdoManager CreateManager(string currentUserId, Guid? nextId = null) =>
         new(NullLogger<RecuerdoManager>.Instance, _chapterRepository, _photoRepository, _recuerdoRepository,
             new InMemoryRecuerdoListReadModel(_recuerdoRepository, _photoRepository, _chapterRepository),
             _recuerdoEmbeddingRepository, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), _photoStorage,
-            new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(_baulRepository, _photoRepository, _photoStorage), new FakeUnitOfWork());
+            new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
+            new AuthorInfoProjector(_personaRepository, _photoRepository, _photoStorage), new FakeUnitOfWork());
 
     private async Task<(Guid baulId, Guid chapterId)> SeedBaulWithChapterAsync()
     {
         var baulId = Guid.NewGuid();
         var chapterId = Guid.NewGuid();
         await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, new UserId(CustodioId), 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(CustodioId), "Custodio", BaulRole.Administrador, _clock.UtcNow()));
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
         return (baulId, chapterId);
     }
@@ -52,7 +58,7 @@ public class RecuerdoManagerTests
     {
         var baul = new Baul(new BaulId(baulId), name, null, new UserId(custodioId), 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(custodioId), "Custodio", BaulRole.Administrador, _clock.UtcNow()));
         return baul;
     }
 
@@ -80,7 +86,7 @@ public class RecuerdoManagerTests
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
         var result = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");
@@ -96,7 +102,7 @@ public class RecuerdoManagerTests
         var photoId = Guid.NewGuid();
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow(),
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow(),
             AvatarPhotoKey: "avatar-key"));
 
         var manager = CreateManager(colaboradorId);
@@ -156,7 +162,7 @@ public class RecuerdoManagerTests
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
         const string colaboradorId = "colaborador-1";
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Tito Recuerdos", BaulRole.Colaborador, _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), new UserId(colaboradorId), "primero", _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), new UserId(colaboradorId), "segundo", _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, new ChapterId(chapterId), new BaulId(baulId), new UserId(CustodioId), "de otro autor", _clock.UtcNow()));
@@ -218,7 +224,7 @@ public class RecuerdoManagerTests
         var chapterId = Guid.NewGuid();
         const string colaboradorId = "colaborador-1";
         await _baulRepository.CreateAsync(new Baul(new BaulId(baulId), "Familia", null, new UserId(CustodioId), 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(colaboradorId), "Colaborador", BaulRole.Colaborador, _clock.UtcNow()));
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 0, null, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager(colaboradorId);
@@ -331,7 +337,7 @@ public class RecuerdoManagerTests
     {
         var baulId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.CreateRecuerdoAsync(new BaulId(baulId), "Recuerdo de un miembro");
@@ -464,7 +470,7 @@ public class RecuerdoManagerTests
         var baulId = Guid.NewGuid();
         var recuerdoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _baulRepository.AddPersonaAsync(new Persona(
+        await _personaRepository.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Other", BaulRole.Colaborador, _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(
             new RecuerdoId(recuerdoId), null, null, new BaulId(baulId), new UserId(CustodioId), "texto viejo", _clock.UtcNow()));

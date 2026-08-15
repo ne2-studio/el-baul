@@ -28,7 +28,8 @@ public class WeeklyDigestManagerTests
     private const string OtherUserId = "other-user";
 
     private readonly InMemoryUserRepository _userRepository = new();
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
@@ -42,6 +43,11 @@ public class WeeklyDigestManagerTests
     private readonly StaticCurrentUserProvider _currentUserProvider = new(AdminUserId);
     private readonly StaticClock _clock = new();
 
+    public WeeklyDigestManagerTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
     private WeeklyDigestManager CreateManager() => CreateManager(_appConfiguration);
 
     private WeeklyDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
@@ -54,7 +60,7 @@ public class WeeklyDigestManagerTests
         _jobScheduler, appConfiguration, _currentUserProvider, _clock);
 
     private DigestActivityPolicy CreateDigestActivityPolicy() => new(
-        new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance),
+        new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
         _chapterRepository, _photoRepository, _recuerdoRepository);
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
@@ -393,7 +399,7 @@ public class WeeklyDigestManagerTests
         var baul = SeedOwnedBaul(owner.Id, "Baúl compartido");
         var since = _clock.UtcNow().AddDays(-7);
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo", 0, null, since.AddDays(1), since.AddDays(1)));
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), new UserIdVo(UserId), "Yo", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), new UserIdVo(UserId), "Yo", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);

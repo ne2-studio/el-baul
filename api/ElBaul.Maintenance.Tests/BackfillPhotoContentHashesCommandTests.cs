@@ -14,8 +14,9 @@ public class BackfillPhotoContentHashesCommandTests
 
     private static PhotoDuplicateMergeService CreateMergeService(
         InMemoryPhotoRepository photos, InMemoryChapterRepository chapters, InMemoryBaulRepository baules,
-        InMemoryRecuerdoRepository recuerdos, InMemoryPhotoPersonaTagRepository tags, InMemorySharedLinkRepository sharedLinks) =>
-        new(photos, chapters, baules, recuerdos, tags, sharedLinks,
+        InMemoryPersonaRepository personas, InMemoryRecuerdoRepository recuerdos, InMemoryPhotoPersonaTagRepository tags,
+        InMemorySharedLinkRepository sharedLinks) =>
+        new(photos, chapters, baules, personas, recuerdos, tags, sharedLinks,
             new PhotoLifecycleService(photos, chapters, baules, new FixedClock(DateTime.UtcNow)),
             new FakeUnitOfWork(), new FixedClock(DateTime.UtcNow));
 
@@ -23,12 +24,13 @@ public class BackfillPhotoContentHashesCommandTests
         InMemoryPhotoRepository photos, InMemoryMaintenancePhotoStorage storage, PhotoDuplicateMergeService? mergeService = null)
     {
         var chapters = new InMemoryChapterRepository();
-        var baules = new InMemoryBaulRepository();
+        var personas = new InMemoryPersonaRepository();
+        var baules = new InMemoryBaulRepository(personas);
         var recuerdos = new InMemoryRecuerdoRepository();
         var tags = new InMemoryPhotoPersonaTagRepository();
         var sharedLinks = new InMemorySharedLinkRepository();
         return new BackfillPhotoContentHashesCommand(
-            photos, storage, mergeService ?? CreateMergeService(photos, chapters, baules, recuerdos, tags, sharedLinks),
+            photos, storage, mergeService ?? CreateMergeService(photos, chapters, baules, personas, recuerdos, tags, sharedLinks),
             NullLogger<BackfillPhotoContentHashesCommand>.Instance);
     }
 

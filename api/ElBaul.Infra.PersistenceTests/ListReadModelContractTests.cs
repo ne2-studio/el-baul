@@ -66,6 +66,7 @@ public class ListReadModelContractTests(PostgresFixture fixture) : PersistenceTe
         private readonly ElBaulDbContext _dbContext;
         private readonly UserRepository _users;
         private readonly BaulRepository _baules;
+        private readonly PersonaRepository _personas;
         private readonly ChapterRepository _chapters;
         private readonly PhotoRepository _photos;
         private readonly RecuerdoRepository _recuerdos;
@@ -76,6 +77,7 @@ public class ListReadModelContractTests(PostgresFixture fixture) : PersistenceTe
             _dbContext = dbContext;
             _users = new UserRepository(dbContext);
             _baules = new BaulRepository(dbContext);
+            _personas = new PersonaRepository(dbContext);
             _chapters = new ChapterRepository(dbContext);
             _photos = new PhotoRepository(dbContext);
             _recuerdos = new RecuerdoRepository(dbContext);
@@ -100,7 +102,7 @@ public class ListReadModelContractTests(PostgresFixture fixture) : PersistenceTe
         public Task AddChapterAsync(Chapter chapter) => _chapters.CreateAsync(chapter);
         public Task AddPhotoAsync(Photo photo) => _photos.CreateAsync(photo);
         public Task AddRecuerdoAsync(Recuerdo recuerdo) => _recuerdos.CreateAsync(recuerdo);
-        public Task AddPersonaAsync(Persona persona) => _baules.AddPersonaAsync(persona);
+        public Task AddPersonaAsync(Persona persona) => _personas.AddPersonaAsync(persona);
 
         public async Task AddPhotoPersonaTagAsync(PhotoId photoId, PersonaId personaId, BaulId baulId, DateTime createdAt)
         {

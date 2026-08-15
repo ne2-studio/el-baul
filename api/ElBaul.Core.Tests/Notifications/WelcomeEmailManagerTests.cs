@@ -23,7 +23,8 @@ public class WelcomeEmailManagerTests
     private const string AdminUserId = "admin-1";
 
     private readonly InMemoryUserRepository _userRepository = new();
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryPersonaRepository _personaRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
     private readonly InMemoryEmailLinkClickRepository _emailLinkClickRepository = new();
     private readonly FakeEmailLinkSigner _emailLinkSigner = new();
@@ -34,6 +35,11 @@ public class WelcomeEmailManagerTests
     private readonly StaticCurrentUserProvider _currentUserProvider = new(AdminUserId);
     private readonly StaticClock _clock = new();
 
+    public WelcomeEmailManagerTests()
+    {
+        _baulRepository = new InMemoryBaulRepository(_personaRepository);
+    }
+
     private EmailDeliveryCoordinator CreateCoordinator() => new(
         _userRepository, _sentEmailRepository, _emailLinkSigner, _emailSender, _appConfiguration, _clock,
         new StaticIdGenerator(Guid.NewGuid()), NullLogger<EmailDeliveryCoordinator>.Instance);
@@ -42,7 +48,7 @@ public class WelcomeEmailManagerTests
 
     private WelcomeEmailManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WelcomeEmailManager>.Instance,
-        _userRepository, new BaulAccessService(_baulRepository, NullLogger<BaulAccessService>.Instance), _sentEmailRepository,
+        _userRepository, new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance), _sentEmailRepository,
         _templateRenderer, CreateCoordinator(), _jobScheduler, appConfiguration, _currentUserProvider, _clock);
 
     private User SeedUser(string id, DateTime createdAt, string email = "user@example.com")
@@ -173,7 +179,7 @@ public class WelcomeEmailManagerTests
         var custodio = SeedUser("custodio-1", _clock.UtcNow().AddHours(-10));
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Familia Jimena", null, custodio.Id, 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
-        await _baulRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), new UserIdVo(UserId), "Yo", BaulRole.Colaborador, _clock.UtcNow()));
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baul.Id), new UserIdVo(UserId), "Yo", BaulRole.Colaborador, _clock.UtcNow()));
         var manager = CreateManager();
 
         await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));

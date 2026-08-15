@@ -24,6 +24,7 @@ public class PhotoDuplicateMergeService(
     IPhotoRepository photoRepository,
     IChapterRepository chapterRepository,
     IBaulRepository baulRepository,
+    IPersonaRepository personaRepository,
     IRecuerdoRepository recuerdoRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     ISharedLinkRepository sharedLinkRepository,
@@ -97,9 +98,9 @@ public class PhotoDuplicateMergeService(
             }
 
             // Persona avatar photo references, same redirect rationale as covers above.
-            var personas = await baulRepository.GetPersonasAsync(survivor.BaulId);
+            var personas = await personaRepository.GetPersonasAsync(survivor.BaulId);
             foreach (var persona in personas.Where(p => p.AvatarPhotoId is { } avatarPhotoId && duplicates.Any(d => d.Id == avatarPhotoId)))
-                await baulRepository.UpdatePersonaAsync(persona.WithAvatarPhotoId(survivor.Id));
+                await personaRepository.UpdatePersonaAsync(persona.WithAvatarPhotoId(survivor.Id));
 
             // Shared links: a link generated for a duplicate must keep working, pointing at the
             // survivor, rather than silently breaking once the duplicate is soft-deleted.

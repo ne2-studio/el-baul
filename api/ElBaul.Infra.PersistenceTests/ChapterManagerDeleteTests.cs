@@ -39,6 +39,7 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
         var photos = new PhotoRepository(dbContext);
         var recuerdos = new RecuerdoRepository(dbContext);
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
+        var personas = new PersonaRepository(dbContext);
 
         var custodioId = "custodio-chapter-delete";
         await users.UpsertAsync(new User(new UserId(custodioId), "custodio-chapter-delete@example.com", "Custodio", DateTime.UtcNow));
@@ -64,7 +65,7 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
         // PhotoPersonaTag has a Restrict FK to Photo.
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, UserId: null, "Persona etiquetada",
             BaulRole.Colaborador, DateTime.UtcNow);
-        await baules.AddPersonaAsync(persona);
+        await personas.AddPersonaAsync(persona);
         await photoPersonaTags.SetTagsAsync(photo.Id, baul.Id, [persona.Id], DateTime.UtcNow);
 
         dbContext.ChangeTracker.Clear();
@@ -80,8 +81,8 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
             Substitute.For<IIdGenerator>(),
             new FixedClock(),
             new StaticCurrentUserProvider(custodioId),
-            new BaulAccessService(baules, NullLogger<BaulAccessService>.Instance),
-            new AuthorInfoProjector(baules, photos, Substitute.For<IPhotoStorage>()),
+            new BaulAccessService(baules, personas, NullLogger<BaulAccessService>.Instance),
+            new AuthorInfoProjector(personas, photos, Substitute.For<IPhotoStorage>()),
             new UnitOfWork(dbContext));
 
         // Act — success here, not an unhandled Postgres foreign-key violation, is the direct

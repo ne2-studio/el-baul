@@ -15,7 +15,7 @@ public class PhotoLifecycleServiceTests
 
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryChapterRepository _chapterRepository = new();
-    private readonly InMemoryBaulRepository _baulRepository = new();
+    private readonly InMemoryBaulRepository _baulRepository = new(new InMemoryPersonaRepository());
     private readonly StaticClock _clock = new();
 
     private PhotoLifecycleService CreateService() =>
