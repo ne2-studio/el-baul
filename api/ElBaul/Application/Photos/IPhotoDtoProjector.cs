@@ -9,7 +9,11 @@ public interface IPhotoDtoProjector
     // own baúl-access check (already done before reaching here) is the only place these two
     // values come from, so a projected DTO's CanDelete/CanRequestRemoval always reflects the
     // same authorization the manager itself would apply.
-    Task<PhotoDto> ProjectAsync(Photo photo, bool isAdmin, UserId currentUserId);
+    // alreadyExisted flows straight onto PhotoDto.AlreadyExisted — see PhotoUploadWorkflow's
+    // PhotoUploadOutcome, the only caller that ever passes true. Every other read path leaves it
+    // at the default: an already-active photo being re-fetched normally never "already existed"
+    // in the upload-outcome sense, that's a property of the specific write that just happened.
+    Task<PhotoDto> ProjectAsync(Photo photo, bool isAdmin, UserId currentUserId, bool alreadyExisted = false);
     Task<List<PhotoDto>> ProjectAsync(IEnumerable<Photo> photos, bool isAdmin, UserId currentUserId);
 
     /// <summary>Builds DTOs from IPhotoListReadModel rows, which already carry a batched

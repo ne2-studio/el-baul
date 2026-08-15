@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using ElBaul.Application.Bauls;
 using ElBaul.Application.Personas;
 using ElBaul.Application.Photos;
@@ -219,6 +220,100 @@ public class PhotoManagerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(existingPhotoId.ToString(), result.Value.Id);
         Assert.Empty(_photoStorage.SavedKeys);
+    }
+
+    [Fact]
+    public async Task UploadAsync_ReportsAlreadyExisted_WhenBytesExactlyMatchAnActivePhotoInTheSameBaul()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var bytes = new byte[] { 10, 20, 30 };
+        var hash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        var existingPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "already-in-baul-key", originalContentHash: hash);
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream(bytes);
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value.AlreadyExisted);
+        Assert.Equal(existingPhotoId.ToString(), result.Value.Id);
+        // The chapter's active photo count is untouched — the newly-received bytes never became
+        // an active photo (see PhotoUploadWorkflow.RecordDuplicateAsync).
+        var chapter = await _fixture.Chapters.GetByIdAsync(chapterId);
+        Assert.Equal(0, chapter!.PhotoCount);
+    }
+
+    [Fact]
+    public async Task UploadAsync_StoresTheDuplicateAsAnAlreadySoftDeletedRow_KeepingItsOwnStorageKey()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var bytes = new byte[] { 11, 22, 33 };
+        var hash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        await _fixture.AddPhotoAsync(baulId, chapterId, "already-in-baul-key", originalContentHash: hash);
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream(bytes);
+        await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+
+        // The upload's own bytes really were written to storage (PhotoFileService always saves
+        // before the duplicate check runs) — never overwritten, moved, or left blob-orphaned:
+        // it's tracked by a real, soft-deleted Photo row instead.
+        Assert.Single(_photoStorage.SavedKeys);
+        var allPhotosInChapter = await _fixture.Photos.GetAllByChapterIdAsync(chapterId);
+        var duplicateRow = Assert.Single(allPhotosInChapter, p => p.StorageKey == _photoStorage.SavedKeys[0]);
+        Assert.Equal(PhotoStatus.Deleted, duplicateRow.Status);
+        Assert.Equal(PhotoDeletionReasons.FlaggedAsDuplicate, duplicateRow.DeletionReason);
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_AllowsTheSameBytes_InADifferentBaul()
+    {
+        var bytes = new byte[] { 40, 50, 60 };
+        var hash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        var (baulA, _) = await _fixture.CreateBaulWithChapterAsync(custodioId: CustodioId, baulName: "Baúl A");
+        await _fixture.AddPhotoAsync(baulA, storageKey: "in-baul-a", originalContentHash: hash);
+        var baulB = await _fixture.CreateBaulAsync("Baúl B", CustodioId);
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream(bytes);
+        var result = await manager.UploadToBaulAsync(baulB, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.AlreadyExisted);
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_TreatsANullHash_AsNeverColliding()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        // A legacy photo with no hash yet — never a duplicate match for anything.
+        await _fixture.AddPhotoAsync(baulId, storageKey: "legacy-key", originalContentHash: null);
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([1, 2, 3]);
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.AlreadyExisted);
+    }
+
+    [Fact]
+    public async Task UploadToBaulAsync_IsNotBlockedByASoftDeletedDuplicate_AndBecomesTheNewActiveSurvivor()
+    {
+        var bytes = new byte[] { 7, 8, 9 };
+        var hash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        var baulId = await _fixture.CreateBaulAsync();
+        var deletedId = await _fixture.AddPhotoAsync(baulId, storageKey: "deleted-key", originalContentHash: hash);
+        var deleted = (await _fixture.Photos.GetByIdAsync(deletedId))!;
+        await _fixture.Photos.UpdateAsync(deleted.MarkDeleted("some other reason", DateTime.UtcNow));
+
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream(bytes);
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.AlreadyExisted);
+        Assert.NotEqual(deletedId.ToString(), result.Value.Id);
     }
 
     [Fact]

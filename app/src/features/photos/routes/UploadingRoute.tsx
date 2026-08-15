@@ -12,6 +12,7 @@ import {
   resolvePhotoRouteContext,
   SelectedPhoto,
   uploadItemsFromSelectedPhotos,
+  uploadResultMessage,
 } from '@/features/photos/uploadFlow';
 
 interface LocationState {
@@ -52,7 +53,11 @@ export const UploadingRoute: React.FC = () => {
 
   const handleSettled = (results: UploadItemResult[]) => {
     const failed = results.filter((r) => r.error);
-    const succeededCount = succeededSoFar + (results.length - failed.length);
+    // "Ya estaba en el baúl" es un resultado exitoso, no un fallo — nunca cuenta como fallido ni
+    // dispara el flujo de reintento (ver docs/.backlog issue #20, addendum de UX).
+    const alreadyExisted = results.filter((r) => r.alreadyExisted);
+    const newlyUploaded = results.filter((r) => !r.error && !r.alreadyExisted);
+    const succeededCount = succeededSoFar + newlyUploaded.length + alreadyExisted.length;
     const resolvedChapterId = resolvedChapterIdRef.current;
     const { basePath: chapterPath } = resolvePhotoRouteContext({
       baulId: baul.id,
@@ -66,16 +71,13 @@ export const UploadingRoute: React.FC = () => {
       // Shown as an "Añadido recientemente" swimlane at the top of the chapter (see
       // ChapterRoute) — carried purely via router state, not persisted anywhere, so it
       // naturally disappears the moment the user navigates away from this exact screen,
-      // reloads, or reopens the baúl later. No explicit cleanup needed.
-      const recentlyUploadedPhotos = results
+      // reloads, or reopens the baúl later. No explicit cleanup needed. Excludes photos that
+      // already existed: they aren't new arrivals, so they don't belong in "recently added".
+      const recentlyUploadedPhotos = newlyUploaded
         .map((result) => result.photo)
         .filter((photo): photo is Photo => photo !== undefined);
       navigate(chapterPath, { state: { recentlyUploadedPhotos } });
-      showToastMessage(
-        succeededCount === 1
-          ? 'Tu recuerdo ya está a salvo'
-          : `Tus ${succeededCount} recuerdos ya están a salvo`
-      );
+      showToastMessage(uploadResultMessage(newlyUploaded.length, alreadyExisted.length));
       return;
     }
 

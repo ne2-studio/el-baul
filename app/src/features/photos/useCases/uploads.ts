@@ -47,7 +47,7 @@ export async function uploadPhotos(
       const photo = await api.photos.upload(
         baulId, chapterId, selected.file, selected.clientUploadId, selected.date, selected.uploadBatchId);
       uploaded.push(photo);
-      result = { clientUploadId: selected.clientUploadId, photo };
+      result = { clientUploadId: selected.clientUploadId, photo, alreadyExisted: photo.alreadyExisted };
     } catch (error) {
       Sentry.captureException(error, { tags: { phase: 'upload-request' } });
       result = { clientUploadId: selected.clientUploadId, error: error instanceof Error ? error.message : 'Upload failed' };

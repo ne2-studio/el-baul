@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using ElBaul.Application.Photos;
 using ElBaul.Infra.Lite;
 using ElBaul.OutputPorts.Photos;
@@ -106,5 +107,57 @@ public class PhotoFileServiceTests
         Assert.Equal(12000, result.Value.OriginalWidth);
         Assert.Equal(9000, result.Value.OriginalHeight);
         Assert.Equal(uploadedBytes.Length, result.Value.OriginalSizeBytes);
+    }
+
+    [Fact]
+    public async Task SaveForUploadAsync_ComputesTheSameOriginalContentHash_ForIdenticalBytes()
+    {
+        _imageProcessor.IdentifyAsync(Arg.Any<Stream>()).Returns(new ImageMetadata(800, 600));
+        var service = CreateService(new ImagePolicy());
+        var bytes = new byte[] { 1, 2, 3, 4, 5 };
+
+        var first = await service.SaveForUploadAsync(new UserId("user-1"), "a.jpg", "image/jpeg", new MemoryStream(bytes), null);
+        var second = await service.SaveForUploadAsync(new UserId("user-1"), "b.jpg", "image/jpeg", new MemoryStream(bytes), null);
+
+        Assert.True(first.IsSuccess);
+        Assert.True(second.IsSuccess);
+        Assert.Equal(first.Value.OriginalContentHash, second.Value.OriginalContentHash);
+        Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(bytes)), first.Value.OriginalContentHash);
+    }
+
+    [Fact]
+    public async Task SaveForUploadAsync_ComputesDifferentOriginalContentHashes_ForDifferentBytes()
+    {
+        _imageProcessor.IdentifyAsync(Arg.Any<Stream>()).Returns(new ImageMetadata(800, 600));
+        var service = CreateService(new ImagePolicy());
+
+        var first = await service.SaveForUploadAsync(new UserId("user-1"), "a.jpg", "image/jpeg", new MemoryStream([1, 2, 3]), null);
+        var second = await service.SaveForUploadAsync(new UserId("user-1"), "b.jpg", "image/jpeg", new MemoryStream([4, 5, 6]), null);
+
+        Assert.True(first.IsSuccess);
+        Assert.True(second.IsSuccess);
+        Assert.NotEqual(first.Value.OriginalContentHash, second.Value.OriginalContentHash);
+    }
+
+    [Fact]
+    public async Task SaveForUploadAsync_ComputesTheHash_FromThePreNormalizationBytes()
+    {
+        // Simulates HEIC-to-JPEG conversion (IPhotoImageNormalizer) actually transforming the
+        // bytes — the hash must still reflect what the server received, not what normalization
+        // produced (see Photo.OriginalContentHash's doc comment).
+        var originalBytes = new byte[] { 1, 2, 3 };
+        var normalizedBytes = new byte[] { 9, 8, 7, 6 };
+        var normalizer = Substitute.For<IPhotoImageNormalizer>();
+        normalizer.NormalizeAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new NormalizedPhoto(new MemoryStream(normalizedBytes), "image/jpeg", "converted.jpg"));
+        _imageProcessor.IdentifyAsync(Arg.Any<Stream>()).Returns(new ImageMetadata(800, 600));
+        var service = new PhotoFileService(
+            NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor,
+            normalizer, _imageProcessor, new ImagePolicy());
+
+        var result = await service.SaveForUploadAsync(new UserId("user-1"), "photo.heic", "image/heic", new MemoryStream(originalBytes), null);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(originalBytes)), result.Value.OriginalContentHash);
     }
 }

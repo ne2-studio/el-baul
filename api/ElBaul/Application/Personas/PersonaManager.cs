@@ -184,7 +184,10 @@ public class PersonaManager(
                 clientUploadId, uploadBatchId: null,
                 (createdPhoto, now) => baulRepository.UpdateAsync(access.Baul.WithPhotoAdded(createdPhoto, now)));
             if (photoResult.IsFailure) return Result.Failure<PersonaDto>(photoResult.Error);
-            photo = photoResult.Value;
+            // AlreadyExisted is irrelevant here: whether these bytes were just stored as a new
+            // loose photo or turned out to exactly match one already in the baúl, either way
+            // photo is a real, active photo this persona's avatar can point at.
+            photo = photoResult.Value.Photo;
         }
 
         return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);

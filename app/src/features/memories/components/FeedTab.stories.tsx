@@ -39,8 +39,8 @@ const photoBatchItem: FeedItem = {
     chapterName: 'Verano 2024',
     createdAt: '2024-07-15T10:00:00Z',
     previewPhotos: [
-      { id: 'p1', baulId: 'b1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, uploadedBy: 'user-1', createdAt: '2024-07-15T10:00:00Z', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
-      { id: 'p2', baulId: 'b1', thumbnailUrl: storybookPhotos.people, fullUrl: storybookPhotos.people, uploadedBy: 'user-1', createdAt: '2024-07-15T10:00:00Z', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
+      { id: 'p1', baulId: 'b1', thumbnailUrl: storybookPhotos.beach, fullUrl: storybookPhotos.beach, uploadedBy: 'user-1', createdAt: '2024-07-15T10:00:00Z', recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false },
+      { id: 'p2', baulId: 'b1', thumbnailUrl: storybookPhotos.people, fullUrl: storybookPhotos.people, uploadedBy: 'user-1', createdAt: '2024-07-15T10:00:00Z', recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false },
     ],
   }),
 };

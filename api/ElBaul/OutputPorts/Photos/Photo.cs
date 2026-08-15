@@ -40,7 +40,15 @@ public record Photo
     // was uploaded, byte for byte.
     int? OriginalWidth = null,
     int? OriginalHeight = null,
-    long? OriginalSizeBytes = null
+    long? OriginalSizeBytes = null,
+    // SHA-256 (lowercase hex) of the bytes the server actually received for this upload,
+    // computed before any server-side image processing — see PhotoFileService. Null for every
+    // photo uploaded before this field existed until backfill-photo-content-hashes runs, and
+    // for those, necessarily SHA-256 of the bytes currently in storage instead (the original
+    // upload bytes may no longer be recoverable) — see that command's own doc comment for the
+    // accepted limitation. Duplicate identity (see PhotoDuplicateMergeService) is strictly
+    // (BaulId, OriginalContentHash) among Active photos; never used across baúles.
+    string? OriginalContentHash = null
 )
 {
     public bool WasResized => OriginalWidth is not null;
@@ -58,13 +66,18 @@ public record Photo
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
         UserId uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
         Guid? uploadBatchId = null, int width = 0, int height = 0,
-        int? originalWidth = null, int? originalHeight = null, long? originalSizeBytes = null) =>
+        int? originalWidth = null, int? originalHeight = null, long? originalSizeBytes = null,
+        string? originalContentHash = null) =>
         new(id, chapterId, baulId, storageKey, date?.Year, date?.Month, date?.Day, uploadedBy, createdAt, clientUploadId,
             SizeBytes: sizeBytes, UploadBatchId: uploadBatchId, Width: width, Height: height,
-            OriginalWidth: originalWidth, OriginalHeight: originalHeight, OriginalSizeBytes: originalSizeBytes);
+            OriginalWidth: originalWidth, OriginalHeight: originalHeight, OriginalSizeBytes: originalSizeBytes,
+            OriginalContentHash: originalContentHash);
 
     public Photo WithDate(PhotoDate? date) =>
         this with { DateYear = date?.Year, DateMonth = date?.Month, DateDay = date?.Day };
+
+    public Photo WithOriginalContentHash(string? hash) =>
+        this with { OriginalContentHash = hash };
 
     public Photo WithConfirmedNoPersonas(bool confirmedNoPersonas) =>
         this with { ConfirmedNoPersonas = confirmedNoPersonas };

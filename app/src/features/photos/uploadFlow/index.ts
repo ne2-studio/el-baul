@@ -27,6 +27,11 @@ export interface UploadItemResult {
   clientUploadId: string;
   photo?: Photo;
   error?: string;
+  // true cuando el backend detectó que estos bytes ya estaban en el baúl (ver
+  // Photo.alreadyExisted) — un resultado exitoso, nunca un error: nunca cuenta como fallo, ni
+  // dispara el flujo de reintento. Ver uploads.ts y UploadingRoute, que lo usan para separar
+  // "subidas nuevas" de "ya estaba" en el mensaje final.
+  alreadyExisted?: boolean;
 }
 
 export type PhotoUploadDestination =
@@ -97,6 +102,25 @@ export async function materializeFileList(files: File[]): Promise<{ selectedPhot
   const materialized = await Promise.all(files.map(materializeSelectedPhoto));
   const selectedPhotos = materialized.filter((photo): photo is SelectedPhoto => photo !== null);
   return { selectedPhotos, droppedCount: materialized.length - selectedPhotos.length };
+}
+
+// Builds the final toast for a fully-succeeded upload batch — "already existed" photos are a
+// successful, expected outcome (see docs/.backlog issue #20, addendum de UX), never rendered as
+// an error and never mentioned with technical terms (duplicado, hash, etc.). Both counts are
+// callers' successful results only — a failed upload never reaches this helper (see
+// UploadingRoute.handleSettled, the only caller).
+export function uploadResultMessage(newlyUploadedCount: number, alreadyExistedCount: number): string {
+  if (alreadyExistedCount === 0) {
+    return newlyUploadedCount === 1 ? 'Tu recuerdo ya está a salvo' : `Tus ${newlyUploadedCount} recuerdos ya están a salvo`;
+  }
+
+  if (newlyUploadedCount === 0) {
+    return alreadyExistedCount === 1 ? 'Esta foto ya estaba en el baúl' : 'Estas fotos ya estaban en el baúl';
+  }
+
+  const uploadedPart = newlyUploadedCount === 1 ? '1 foto subida' : `${newlyUploadedCount} fotos subidas`;
+  const existedPart = alreadyExistedCount === 1 ? '1 ya estaba en el baúl' : `${alreadyExistedCount} ya estaban en el baúl`;
+  return `${uploadedPart} · ${existedPart}`;
 }
 
 function photoChapterPath(baulId: string, chapterId: string | null | undefined): string {

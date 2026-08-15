@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using ElBaul.InputPorts.Photos;
 using ElBaul.OutputPorts.Photos;
 using ElBaul.OutputPorts.Shared;
@@ -30,6 +31,13 @@ public class PhotoFileService(
         if (imagePolicy.ExceedsUploadBytes(buffered.Length))
             return Result.Failure<StoredPhotoFile>(ApplicationError.Validation(
                 $"El archivo supera el tamaño máximo permitido ({imagePolicy.MaxUploadBytes / 1_000_000} MB)"));
+
+        // SHA-256 of exactly the bytes the server received, before any of the processing below
+        // (HEIC conversion, normalization, re-encoding) touches them — see Photo.OriginalContentHash.
+        // Hashed off the buffer already read above rather than re-reading `content`, so this never
+        // costs a second in-memory copy of the upload.
+        var originalContentHash = Convert.ToHexStringLower(await SHA256.HashDataAsync(buffered));
+        buffered.Position = 0;
 
         // Runs before EXIF extraction so ResolvePhotoDate reads dates off web-safe (e.g.
         // normalized-from-HEIC) bytes rather than a source format the date extractor may not
@@ -64,7 +72,7 @@ public class PhotoFileService(
 
         return Result.Success(new StoredPhotoFile(
             storageKey, photoDate, storedFile.SizeBytes, storedFile.Width, storedFile.Height,
-            storedFile.OriginalWidth, storedFile.OriginalHeight, storedFile.OriginalSizeBytes));
+            storedFile.OriginalWidth, storedFile.OriginalHeight, storedFile.OriginalSizeBytes, originalContentHash));
     }
 
     public async Task<PhotoDownloadResult> OpenForDownloadAsync(string storageKey)
@@ -120,4 +128,4 @@ public class PhotoFileService(
 
 public record StoredPhotoFile(
     string StorageKey, PhotoDate? Date, long SizeBytes, int Width, int Height,
-    int? OriginalWidth, int? OriginalHeight, long? OriginalSizeBytes);
+    int? OriginalWidth, int? OriginalHeight, long? OriginalSizeBytes, string OriginalContentHash);

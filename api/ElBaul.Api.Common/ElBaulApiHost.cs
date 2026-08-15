@@ -235,6 +235,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<PhotoLifecycleService>();
         builder.Services.AddScoped<PhotoFileService>();
         builder.Services.AddScoped<PhotoUploadWorkflow>();
+        builder.Services.AddScoped<PhotoDuplicateMergeService>();
         builder.Services.AddScoped<IPhotoDtoProjector, PhotoDtoProjector>();
         builder.Services.AddScoped<IPersonaDtoProjector, PersonaDtoProjector>();
         builder.Services.AddScoped<IBaulManager, BaulManager>();

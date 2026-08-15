@@ -43,11 +43,11 @@ const chapters: Chapter[] = [
 
 const photo1 = new Photo({
   id: 'photo-1', chapterId: 'c1', baulId: 'baul-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg',
-  uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true,
+  uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false,
 });
 const photo2 = new Photo({
   id: 'photo-2', chapterId: null, baulId: 'baul-1', thumbnailUrl: '/photo-2-thumb.jpg', fullUrl: '/photo-2.jpg',
-  uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true,
+  uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false,
 });
 
 function renderRoute() {

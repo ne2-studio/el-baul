@@ -9,7 +9,7 @@ function newPreviewPhoto(id: string): ConstructorParameters<typeof Photo>[0] {
   return {
     id, baulId: 'baul-1', thumbnailUrl: `${id}-thumb`, fullUrl: `${id}-full`,
     uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0,
-    canDelete: false, canRequestRemoval: true,
+    canDelete: false, canRequestRemoval: true, alreadyExisted: false,
   };
 }
 
