@@ -6,7 +6,7 @@ namespace ElBaul.Maintenance.Tests;
 
 // Only the members BackfillChatMemoriesCommandTests actually needs vary; everything else gets
 // a harmless placeholder value, same shape as ElBaul.Tests.Fakes.StaticAppConfiguration but
-// local to this project (ElBaul.Maintenance.Tests doesn't reference ElBaul.Tests).
+// local to this project (ElBaul.Maintenance.Tests doesn't reference ElBaul.Core.Tests).
 internal sealed class StaticAppConfiguration(bool chatMemoryEnabled = true) : IAppConfiguration
 {
     public string PublicUrl => "https://el-baul.test";

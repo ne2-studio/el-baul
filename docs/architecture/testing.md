@@ -4,7 +4,7 @@ Choose the smallest test that can detect the failure.
 
 | Change | Primary verification |
 |---|---|
-| Backend application/domain logic | `api/ElBaul.Tests` (unit, fake-first, NSubstitute for narrow seams) |
+| Backend application/domain logic | `api/ElBaul.Core.Tests` (unit, fake-first, NSubstitute for narrow seams) |
 | `Ne2Studio.Common` vocabulary (`Result`/`ApplicationError`) | `api/Ne2Studio.Common.Tests` |
 | Backend infra-layer logic (URL building, middleware) | `api/ElBaul.Infra.Tests` |
 | Backend controller/authorization concerns | `api/ElBaul.Api.Tests` |
@@ -36,15 +36,15 @@ Run verification from the repository root through `./scripts/verify`:
 
 ## Backend
 
-- **`ElBaul.Tests`** — `Application/` business logic with hand-written fakes as the default.
+- **`ElBaul.Core.Tests`** — `Application/` business logic with hand-written fakes as the default.
   Most state-bearing fakes live in `ElBaul.Infra.Lite` (`InMemory*Repository` and related
   collaborators) — they're the same classes that back `el-baul-api-lite`, so a unit test and the
   lite image can never quietly disagree on what a fake does. Test-local fakes live under
-  `ElBaul.Tests/Fakes` for deterministic ports such as storage, clocks, IDs, and external
+  `ElBaul.Core.Tests/Fakes` for deterministic ports such as storage, clocks, IDs, and external
   services.
 - **`Ne2Studio.Common.Tests`** — unit tests for `Ne2Studio.Common` itself (`Result`/
   `ApplicationError`), kept in their own project since `Ne2Studio.Common` has no dependency on
-  `ElBaul` and shouldn't gain one just to be tested.
+  `ElBaul.Core` and shouldn't gain one just to be tested.
 - Use **NSubstitute** only for narrow cases where a full fake would add noise: injecting a
   specific collaborator failure into an otherwise working flow (for example upload rollback
   tests), or stubbing a single method on a dependency whose full behavior is tested elsewhere
@@ -56,18 +56,18 @@ Run verification from the repository root through `./scripts/verify`:
 - **`ElBaul.Api.Tests`** — concerns that need the ASP.NET pipeline itself (authorization
   policies), not just the `Application/` logic behind it.
 - **`ElBaul.Maintenance.Tests`** — one-off maintenance command behavior with the same
-  fake-first convention as `ElBaul.Tests`: use `ElBaul.Infra.Lite`'s `InMemory*Repository`
+  fake-first convention as `ElBaul.Core.Tests`: use `ElBaul.Infra.Lite`'s `InMemory*Repository`
   implementations for stateful ports and small test-local fakes for deterministic storage,
   clocks, extractors, or provider failures.
 - **`ElBaul.Infra.PersistenceTests`** — a separate project, excluded from `ElBaul.slnx` since it
   needs a running Docker daemon that `./scripts/verify backend` deliberately doesn't require.
   Runs the real EF repository/adapter classes directly through their port interfaces
   (`IAdminRepository`, `IBaulRepository`, ...) against one real, migrated Postgres container
-  (Testcontainers), reset to empty between tests. Deliberately **not** a second `ElBaul.Tests`:
+  (Testcontainers), reset to empty between tests. Deliberately **not** a second `ElBaul.Core.Tests`:
   it exists only for the narrow class of bug an in-memory fake structurally cannot reproduce —
   EF query translation into SQL (`GroupBy`/`Join`/`Distinct`/computed properties that don't
   translate) and real Postgres FK-Restrict ordering. Most repository logic should stay covered
-  by `ElBaul.Tests`' fakes; add a test here only when you can name the real-Postgres-only
+  by `ElBaul.Core.Tests`' fakes; add a test here only when you can name the real-Postgres-only
   behavior a fake would let through.
 
   Run with `./scripts/verify backend-persistence`. See

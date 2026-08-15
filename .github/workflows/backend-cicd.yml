@@ -36,7 +36,7 @@ jobs:
         run: VERIFY_COVERAGE=1 ./scripts/verify backend
 
       # Merges the per-project cobertura files coverlet drops under coverage/<guid>/ (one per
-      # xunit project: ElBaul.Tests, ElBaul.Api.Tests, ElBaul.Infra.Tests) into a single
+      # xunit project: ElBaul.Core.Tests, ElBaul.Api.Tests, ElBaul.Infra.Tests) into a single
       # markdown report with a combined total plus a per-assembly breakdown.
       - name: Build/test coverage report
         uses: ./.github/actions/publish-dotnet-coverage

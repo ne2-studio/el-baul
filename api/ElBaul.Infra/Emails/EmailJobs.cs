@@ -9,7 +9,7 @@ namespace ElBaul.Infra.Emails;
 /// <summary>
 /// The actual Hangfire-invoked entry points for per-user email jobs — HangfireBackgroundJobScheduler
 /// enqueues these instead of the IWelcomeEmailManager/IWeeklyDigestManager methods directly.
-/// [DisableConcurrentExecution] is a Hangfire attribute, and Core (ElBaul.csproj) deliberately
+/// [DisableConcurrentExecution] is a Hangfire attribute, and Core (ElBaul.Core.csproj) deliberately
 /// never references Hangfire — the same reason IBackgroundJobScheduler exists as a port in the
 /// first place — so this thin wrapper is where the attribute actually lives, one level below.
 /// Its lock resource is derived from (Type, Method), so it serializes each job type

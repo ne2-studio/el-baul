@@ -9,7 +9,7 @@ on:
       - 'admin/**'
       # Admin acceptance runs el-baul-api-lite next to the admin image, so changes to the lite
       # stack can break this pipeline even when admin/ itself still builds.
-      - 'api/ElBaul/**'
+      - 'api/ElBaul.Core/**'
       - 'api/ElBaul.Api.Common/**'
       - 'api/ElBaul.Api.Lite/**'
       - 'api/ElBaul.Infra.Common/**'

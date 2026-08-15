@@ -9,8 +9,8 @@
   <Project Path="ElBaul.Infra/ElBaul.Infra.csproj" />
   <Project Path="ElBaul.Maintenance/ElBaul.Maintenance.csproj" />
   <Project Path="ElBaul.Maintenance.Tests/ElBaul.Maintenance.Tests.csproj" />
-  <Project Path="ElBaul.Tests/ElBaul.Tests.csproj" />
-  <Project Path="ElBaul/ElBaul.csproj" />
+  <Project Path="ElBaul.Core.Tests/ElBaul.Core.Tests.csproj" />
+  <Project Path="ElBaul.Core/ElBaul.Core.csproj" />
   <Project Path="Ne2Studio.Common/Ne2Studio.Common.csproj" />
   <Project Path="Ne2Studio.Common.Tests/Ne2Studio.Common.Tests.csproj" />
 </Solution>

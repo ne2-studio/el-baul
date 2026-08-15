@@ -16,15 +16,15 @@ silently diverge between images — only the project graph differs:
 ```
 ElBaul.Api.Lite ──┐
                   ├──→  ElBaul.Api.Common  ──┐
-                  │                          ├──→  ElBaul.Infra.Common  ──→  ElBaul
+                  │                          ├──→  ElBaul.Infra.Common  ──→  ElBaul.Core
                   └──→  ElBaul.Infra.Lite  ──┘
 ```
 
 | Port | Real (`el-baul-api`) | Lite (`el-baul-api-lite`) |
 |---|---|---|
-| Repositories (`I*Repository`) | EF Core / Postgres | `InMemory*Repository` — the exact classes `ElBaul.Tests` uses, singleton-scoped so a run's data survives across requests |
+| Repositories (`I*Repository`) | EF Core / Postgres | `InMemory*Repository` — the exact classes `ElBaul.Core.Tests` uses, singleton-scoped so a run's data survives across requests |
 | `IPhotoStorage` | MinIO + signed imgproxy URLs | `LitePhotoStorage` — an in-memory byte dictionary; `GetImageUrl` points at this image's own unauthenticated `GET /lite/photos/{*key}` endpoint instead of imgproxy |
-| `IEmailSender`, `IAiChatBackend`, `IEmbeddingBackend`, `ISupportBackend`, `IEmailTemplateRenderer`, `IPhotoDateExtractor` | Real providers (Resend/SMTP, OpenAI, LeadHub, HTML templates, EXIF) | Deterministic fakes (`ElBaul.Tests`'s `Fake*` classes) — no real network calls, no cost, no flaky third parties |
+| `IEmailSender`, `IAiChatBackend`, `IEmbeddingBackend`, `ISupportBackend`, `IEmailTemplateRenderer`, `IPhotoDateExtractor` | Real providers (Resend/SMTP, OpenAI, LeadHub, HTML templates, EXIF) | Deterministic fakes (`ElBaul.Core.Tests`'s `Fake*` classes) — no real network calls, no cost, no flaky third parties |
 | `IBackgroundJobScheduler` | Hangfire + Postgres storage | `FakeBackgroundJobScheduler` — records the call and does nothing else. **Welcome/weekly-digest emails are never actually sent in this image** — no Hangfire at all, not even an in-memory storage provider |
 | `IClock`, `IIdGenerator`, `ICurrentUserProvider`, `IAppConfiguration`, `IUserInfoClient` | Real implementations | The **same** real implementations (`ElBaul.Infra.Common`) — these don't touch Postgres/S3/Hangfire, so there's nothing to fake |
 | Auth (JWT/OIDC) | fake-oidc / Zitadel | Unchanged — still needs a real fake-oidc container to mint tokens against |

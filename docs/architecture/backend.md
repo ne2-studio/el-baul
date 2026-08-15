@@ -20,10 +20,10 @@ ElBaul.Infra ────┤            │            ├──→  ElBaul.Infr
                  ├──→  ElBaul.Infra.Common ─┴─────────────────────┤
 ElBaul.Maintenance ───┘                                           │
                                                                    ↓
-                                                    ElBaul  (core: Application + Ports)
+                                                    ElBaul.Core (core: Application + Ports)
 ```
 
-- **`ElBaul`** — domain/use-case core: `Application/` (one manager class per aggregate root,
+- **`ElBaul.Core`** — domain/use-case core: `Application/` (one manager class per aggregate root,
   implementing its input port), `Ports/Input/` (use-case interfaces + DTOs), `Ports/Output/`
   (everything the core needs from the outside world — repositories, `IClock`, `IIdGenerator`,
   `ICurrentUserProvider`, `IPhotoStorage`, etc.). Every fallible operation — use cases and output
@@ -47,7 +47,7 @@ ElBaul.Maintenance ───┘                                           │
   Postgres/S3/Hangfire and so are identical in both images (clock, id generator, current-user
   provider, user-sync middleware, OIDC userinfo client). Referenced by both Infra projects.
 - **`ElBaul.Maintenance`** — one-off maintenance CLI commands, with its own `Program.cs`
-  (`OutputType=Exe`). References `ElBaul.Infra` and `ElBaul`, never `ElBaul.Api`. Published
+  (`OutputType=Exe`). References `ElBaul.Infra` and `ElBaul.Core`, never `ElBaul.Api`. Published
   alongside `ElBaul.Api` into the same `el-baul-api` image/container so it can be invoked via
   `docker exec ... dotnet ElBaul.Maintenance.dll <command>`, but the two are independent
   executables — there's no compile-time or runtime dependency between them. See
