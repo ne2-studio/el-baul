@@ -137,6 +137,22 @@ public class PhotosController(
         return result.ToActionResult();
     }
 
+    [HttpGet("baules/{baulId:guid}/personas/{personaId:guid}/photos")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByPersona(BaulId baulId, PersonaId personaId)
+    {
+        var result = await photoReadManager.GetByPersonaIdAsync(baulId, personaId);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("baules/{baulId:guid}/photo-batches/{batchId:guid}/photos")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByBatch(BaulId baulId, Guid batchId)
+    {
+        var result = await photoReadManager.GetBatchPhotosAsync(baulId, batchId);
+        return result.ToActionResult();
+    }
+
     [HttpPut("photos/{photoId:guid}/no-personas")]
     [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ConfirmNoPersonas(PhotoId photoId)
