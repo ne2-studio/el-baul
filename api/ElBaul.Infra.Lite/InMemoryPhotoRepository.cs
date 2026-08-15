@@ -62,38 +62,6 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active).OrderByDescending(p => p.CreatedAt).Take(limit).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<Photo>> GetUndatedAsync()
-    {
-        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.Date == null && p.Status == PhotoStatus.Active).ToList().AsEnumerable());
-    }
-
-    public Task<IEnumerable<Photo>> GetMissingSizeBytesAsync()
-    {
-        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.SizeBytes == 0).ToList().AsEnumerable());
-    }
-
-    public Task<IEnumerable<Photo>> GetMissingDimensionsAsync()
-    {
-        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.Width == 0).ToList().AsEnumerable());
-    }
-
-    public Task<IEnumerable<Photo>> GetOversizedAsync(int maxLongEdge)
-    {
-        lock (_lock)
-            return Task.FromResult(_photos.Values
-                .Where(p => p.Width > maxLongEdge || p.Height > maxLongEdge)
-                .ToList().AsEnumerable());
-    }
-
-    public Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync()
-    {
-        lock (_lock)
-            return Task.FromResult(_photos.Values
-                .Where(p => p.UploadBatchId == null && p.Status == PhotoStatus.Active)
-                .OrderBy(p => p.BaulId.Value).ThenBy(p => p.ChapterId?.Value).ThenBy(p => p.UploadedBy.Value).ThenBy(p => p.CreatedAt)
-                .ToList().AsEnumerable());
-    }
-
     public Task<IEnumerable<Photo>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take)
     {
         lock (_lock)
@@ -113,11 +81,6 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock)
             return Task.FromResult(_photos.Values.FirstOrDefault(p =>
                 p.BaulId == baulId && p.OriginalContentHash == originalContentHash && p.Status == PhotoStatus.Active));
-    }
-
-    public Task<IEnumerable<Photo>> GetMissingContentHashAsync()
-    {
-        lock (_lock) return Task.FromResult(_photos.Values.Where(p => p.OriginalContentHash == null).ToList().AsEnumerable());
     }
 
     public Task<IEnumerable<Photo>> GetActiveWithContentHashAsync()
@@ -147,23 +110,6 @@ public class InMemoryPhotoRepository : IPhotoRepository
             }
 
             _photos[photo.Id] = photo;
-            return Task.FromResult(true);
-        }
-    }
-
-    public Task<bool> TrySetContentHashAsync(PhotoId photoId, BaulId baulId, string originalContentHash)
-    {
-        lock (_lock)
-        {
-            if (!_photos.TryGetValue(photoId, out var photo)) return Task.FromResult(false);
-
-            if (photo.Status == PhotoStatus.Active && _photos.Values.Any(p =>
-                    p.Id != photoId && p.BaulId == baulId && p.OriginalContentHash == originalContentHash && p.Status == PhotoStatus.Active))
-            {
-                return Task.FromResult(false);
-            }
-
-            _photos[photoId] = photo.WithOriginalContentHash(originalContentHash);
             return Task.FromResult(true);
         }
     }

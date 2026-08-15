@@ -14,11 +14,6 @@ public class InMemoryRecuerdoEmbeddingRepository : IRecuerdoEmbeddingRepository
         lock (_lock) return Task.FromResult(_embeddings.Values.Where(e => e.BaulId == baulId).ToList().AsEnumerable());
     }
 
-    public Task<IEnumerable<RecuerdoEmbedding>> GetAllAsync()
-    {
-        lock (_lock) return Task.FromResult(_embeddings.Values.ToList().AsEnumerable());
-    }
-
     public Task CreateManyAsync(IEnumerable<RecuerdoEmbedding> embeddings)
     {
         lock (_lock)

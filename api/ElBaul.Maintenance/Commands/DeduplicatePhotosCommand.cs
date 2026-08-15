@@ -11,8 +11,8 @@ namespace ElBaul.Maintenance.Commands;
 /// active photos — see the domain definition in docs/.backlog issue #20 §1) and merges each one
 /// through PhotoDuplicateMergeService: picks the oldest-dated photo as survivor, transfers
 /// memories/tagged people/cover and share-link references onto it, then soft-deletes every other
-/// member with DeletionReason=FlaggedAsDuplicate. Groups with a null hash are never considered —
-/// run backfill-photo-content-hashes first.
+/// member with DeletionReason=FlaggedAsDuplicate. Groups with a null hash are never
+/// considered.
 ///
 /// Safe to re-run: a soft-deleted duplicate never resurfaces (GetActiveWithContentHashAsync is
 /// Active-only), so a second run over an already-clean baúl finds zero groups and changes

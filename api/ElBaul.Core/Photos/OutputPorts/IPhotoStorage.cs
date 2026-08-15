@@ -14,13 +14,6 @@ public interface IPhotoStorage
     Task SaveAsync(string key, Stream content, string contentType);
 
     /// <summary>
-    /// Reads a stored photo's raw bytes back out. Server-side/tooling use only (e.g. the
-    /// EXIF backfill command) — never exposed through the API, which always hands out a
-    /// signed imgproxy URL instead (see GetImageUrl).
-    /// </summary>
-    Task<Stream> OpenReadAsync(string key);
-
-    /// <summary>
     /// Reads a stored photo's raw bytes and original content type back out, for the
     /// authenticated "download original" endpoint (PhotoManager.DownloadAsync) — unlike
     /// OpenReadAsync's callers, this one does reach the API surface, always behind the

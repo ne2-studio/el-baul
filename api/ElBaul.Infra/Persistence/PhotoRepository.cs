@@ -54,40 +54,9 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Take(take)
             .ToListAsync();
 
-    // Queries the raw DateYear column, not the computed Photo.Date — Date isn't part of the EF
-    // model (see PhotoConfiguration's Ignore), so it can't be translated into SQL.
-    public async Task<IEnumerable<Photo>> GetUndatedAsync() =>
-        await dbContext.Photos.AsNoTracking()
-            .Where(p => p.DateYear == null && p.Status == PhotoStatus.Active)
-            .ToListAsync();
-
-    public async Task<IEnumerable<Photo>> GetMissingSizeBytesAsync() =>
-        await dbContext.Photos.AsNoTracking()
-            .Where(p => p.SizeBytes == 0)
-            .ToListAsync();
-
-    public async Task<IEnumerable<Photo>> GetMissingDimensionsAsync() =>
-        await dbContext.Photos.AsNoTracking()
-            .Where(p => p.Width == 0)
-            .ToListAsync();
-
-    public async Task<IEnumerable<Photo>> GetOversizedAsync(int maxLongEdge) =>
-        await dbContext.Photos.AsNoTracking()
-            .Where(p => p.Width > maxLongEdge || p.Height > maxLongEdge)
-            .ToListAsync();
-
-    public async Task<IEnumerable<Photo>> GetMissingUploadBatchIdAsync() =>
-        await dbContext.Photos.AsNoTracking()
-            .Where(p => p.UploadBatchId == null && p.Status == PhotoStatus.Active)
-            .OrderBy(p => p.BaulId).ThenBy(p => p.ChapterId).ThenBy(p => p.UploadedBy).ThenBy(p => p.CreatedAt)
-            .ToListAsync();
-
     public Task<Photo?> GetActiveByContentHashAsync(BaulId baulId, string originalContentHash) =>
         dbContext.Photos.AsNoTracking()
             .FirstOrDefaultAsync(p => p.BaulId == baulId && p.OriginalContentHash == originalContentHash && p.Status == PhotoStatus.Active);
-
-    public async Task<IEnumerable<Photo>> GetMissingContentHashAsync() =>
-        await dbContext.Photos.AsNoTracking().Where(p => p.OriginalContentHash == null).ToListAsync();
 
     public async Task<IEnumerable<Photo>> GetActiveWithContentHashAsync() =>
         await dbContext.Photos.AsNoTracking()
@@ -120,29 +89,6 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             photo.OriginalWidth!, photo.OriginalHeight!, photo.OriginalSizeBytes!, photo.OriginalContentHash!);
 
         return inserted == 1;
-    }
-
-    // Guards the same uniqueness as TryCreateActiveAsync's ON CONFLICT clause, but for an
-    // UPDATE (no ON CONFLICT equivalent exists there) — the WHERE makes the whole statement
-    // atomic, so this is race-safe against another concurrent call reaching the same check even
-    // before IX_Photos_BaulId_OriginalContentHash_Active exists; the index is the final backstop
-    // once it does. Only Active targets are guarded: a Deleted photo can carry any hash value
-    // without ever tripping the (Active-only) constraint, so backfilling one never needs to check.
-    public async Task<bool> TrySetContentHashAsync(PhotoId photoId, BaulId baulId, string originalContentHash)
-    {
-        var updated = await dbContext.Database.ExecuteSqlRawAsync(
-            """
-            UPDATE "Photos" SET "OriginalContentHash" = {0}
-            WHERE "Id" = {1}
-              AND ("Status" <> 'Active' OR NOT EXISTS (
-                  SELECT 1 FROM "Photos" other
-                  WHERE other."BaulId" = {2} AND other."OriginalContentHash" = {0}
-                    AND other."Status" = 'Active' AND other."Id" <> {1}
-              ))
-            """,
-            originalContentHash, photoId.Value, baulId.Value);
-
-        return updated == 1;
     }
 
     public async Task UpdateAsync(Photo photo)

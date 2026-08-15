@@ -29,9 +29,8 @@ public record Photo
     // wins over a stale confirmation.
     bool ConfirmedNoPersonas = false,
     // Dimensions/size of the asset as it actually sits in storage today — for a photo uploaded
-    // before this field existed, 0 until backfill-photo-metadata fills it in (see
-    // ImagePolicy/BackfillPhotoMetadataCommand). Never the *display* orientation — raw pixel
-    // dimensions of the stored bytes.
+    // before this field existed, 0 until it's set (see ImagePolicy). Never the *display*
+    // orientation — raw pixel dimensions of the stored bytes.
     int Width = 0,
     int Height = 0,
     // Set only when the stored asset is a normalized (downscaled) version of what the user
@@ -43,11 +42,9 @@ public record Photo
     long? OriginalSizeBytes = null,
     // SHA-256 (lowercase hex) of the bytes the server actually received for this upload,
     // computed before any server-side image processing — see PhotoFileService. Null for every
-    // photo uploaded before this field existed until backfill-photo-content-hashes runs, and
-    // for those, necessarily SHA-256 of the bytes currently in storage instead (the original
-    // upload bytes may no longer be recoverable) — see that command's own doc comment for the
-    // accepted limitation. Duplicate identity (see PhotoDuplicateMergeService) is strictly
-    // (BaulId, OriginalContentHash) among Active photos; never used across baúles.
+    // photo uploaded before this field existed. Duplicate identity (see
+    // PhotoDuplicateMergeService) is strictly (BaulId, OriginalContentHash) among Active
+    // photos; never used across baúles.
     string? OriginalContentHash = null
 )
 {
@@ -87,27 +84,6 @@ public record Photo
 
     public Photo WithoutChapter() =>
         this with { ChapterId = null };
-
-    /// <summary>Records dimensions/size read off the stored asset without changing what's
-    /// stored — used by backfill-photo-metadata for photos that predate these columns.</summary>
-    public Photo WithMetadata(int width, int height, long sizeBytes) =>
-        this with { Width = width, Height = height, SizeBytes = sizeBytes };
-
-    /// <summary>Records that the stored asset was just replaced by a downscaled version —
-    /// captures the pre-normalization dimensions/size into Original* before overwriting
-    /// Width/Height/SizeBytes with the new asset's. Used by both the upload pipeline
-    /// (PhotoFileService) and backfill-normalize-photos, so the two can never disagree on what
-    /// "normalized" means to persist.</summary>
-    public Photo Normalized(int width, int height, long sizeBytes) =>
-        this with
-        {
-            OriginalWidth = Width,
-            OriginalHeight = Height,
-            OriginalSizeBytes = SizeBytes,
-            Width = width,
-            Height = height,
-            SizeBytes = sizeBytes
-        };
 
     public Photo MarkDeleted(string? reason, DateTime deletedAt) =>
         this with

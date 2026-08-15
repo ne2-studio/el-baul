@@ -2,10 +2,8 @@ using System.Diagnostics;
 using System.Reflection;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
-using ElBaul.Core.Chat.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Chat;
 using ElBaul.Infra;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -76,15 +74,9 @@ public static class MaintenanceCommandRunner
         // Application-layer managers aren't part of AddInfrastructure (they live in
         // ElBaul.Api.Common's manager DI graph, which this project deliberately never
         // references — see docs/architecture/backend.md). Register here, one by one, only the
-        // managers a command actually needs; BackfillChatMemoriesCommand needs the real
-        // IChatMemoryExtractionManager (and the IRelevantChatMemorySelector it depends on) so
-        // it replays extraction through the exact same path the live app uses.
-        builder.Services.AddScoped<IRelevantChatMemorySelector, RelevantChatMemorySelector>();
-        builder.Services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
-
-        // BackfillPhotoContentHashesCommand/DeduplicatePhotosCommand need the real merge/soft-delete
-        // domain behavior (PhotoDuplicateMergeService, and the PhotoLifecycleService it composes)
-        // rather than reimplementing it — same rationale as the chat memory registrations above.
+        // managers a command actually needs; DeduplicatePhotosCommand needs the real
+        // merge/soft-delete domain behavior (PhotoDuplicateMergeService, and the
+        // PhotoLifecycleService it composes) rather than reimplementing it.
         builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
         builder.Services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         builder.Services.AddScoped<PhotoLifecycleService>();

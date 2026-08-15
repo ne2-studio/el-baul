@@ -220,9 +220,6 @@ public class DeduplicatePhotosCommandTests
         public Task<IEnumerable<Recuerdo>> GetByBaulIdAsync(BaulId baulId) => inner.GetByBaulIdAsync(baulId);
         public Task<IEnumerable<Recuerdo>> GetCreatedSinceByBaulIdAsync(BaulId baulId, DateTime since, UserId excludingUserId) =>
             inner.GetCreatedSinceByBaulIdAsync(baulId, since, excludingUserId);
-        public Task<IEnumerable<Recuerdo>> GetAllAsync() => inner.GetAllAsync();
-        public Task<IEnumerable<RecuerdoBaulIdCandidate>> GetCandidatesWithNoBaulIdAsync() => inner.GetCandidatesWithNoBaulIdAsync();
-        public Task SetBaulIdAsync(RecuerdoId recuerdoId, BaulId baulId) => inner.SetBaulIdAsync(recuerdoId, baulId);
         public Task CreateAsync(Recuerdo recuerdo) => inner.CreateAsync(recuerdo);
         public Task UpdateAsync(Recuerdo recuerdo) => inner.UpdateAsync(recuerdo);
         public Task DeleteByBaulIdAsync(BaulId baulId) => inner.DeleteByBaulIdAsync(baulId);

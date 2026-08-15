@@ -25,8 +25,6 @@ photo bytes back out over HTTP itself:
   security boundary is the HMAC signature, not a preset allowlist — every URL is still built and
   signed server-side by the API, so a leaked signing key would be able to request an arbitrary
   render regardless of ONLY_PRESETS.
-- `IPhotoStorage.OpenReadAsync` (raw bytes) exists only for server-side tooling — e.g. the EXIF
-  backfill command — and is never reachable through the API.
 
 ## Containers
 

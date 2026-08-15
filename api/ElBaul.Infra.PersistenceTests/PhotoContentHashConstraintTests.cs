@@ -11,10 +11,9 @@ namespace ElBaul.Infra.PersistenceTests;
 /// IX_Photos_BaulId_OriginalContentHash_Active is a *partial* unique index (Active + non-null
 /// hash only) — exactly the kind of predicate an in-memory fake enforces with hand-written C#
 /// (see InMemoryPhotoRepository), which can't prove the real index actually behaves the way its
-/// filter string says. These tests exercise PhotoRepository.TryCreateActiveAsync/
-/// TrySetContentHashAsync directly against real Postgres: the final concurrency guard behind
-/// PhotoUploadWorkflow's app-level pre-check (see docs/.backlog issue #20 §24) and
-/// BackfillPhotoContentHashesCommand's merge-on-conflict path.
+/// filter string says. These tests exercise PhotoRepository.TryCreateActiveAsync directly
+/// against real Postgres: the final concurrency guard behind PhotoUploadWorkflow's app-level
+/// pre-check (see docs/.backlog issue #20 §24).
 /// </summary>
 [Collection(PersistenceTestCollection.Name)]
 public class PhotoContentHashConstraintTests(PostgresFixture fixture) : PersistenceTestBase(fixture)
@@ -96,37 +95,5 @@ public class PhotoContentHashConstraintTests(PostgresFixture fixture) : Persiste
         (await photos.TryCreateActiveAsync(ActivePhoto(baulId, "b", null))).Should().BeTrue();
 
         (await dbContext.Photos.AsNoTracking().CountAsync(p => p.BaulId == baulId)).Should().Be(2);
-    }
-
-    [Fact]
-    public async Task TrySetContentHashAsync_RejectsSettingAHash_ThatAnotherActivePhotoAlreadyHasInTheSameBaul()
-    {
-        await using var dbContext = Fixture.CreateDbContext();
-        var baulId = await SeedBaulAsync(dbContext);
-        var photos = new PhotoRepository(dbContext);
-        var existing = ActivePhoto(baulId, "existing-key", "shared-hash");
-        await photos.CreateAsync(existing);
-        var target = ActivePhoto(baulId, "target-key", null);
-        await photos.CreateAsync(target);
-
-        (await photos.TrySetContentHashAsync(target.Id, baulId, "shared-hash")).Should().BeFalse();
-
-        (await dbContext.Photos.AsNoTracking().FirstAsync(p => p.Id == target.Id)).OriginalContentHash.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task TrySetContentHashAsync_AlwaysSucceeds_ForADeletedPhoto_EvenIfAnActivePhotoHasTheSameHash()
-    {
-        await using var dbContext = Fixture.CreateDbContext();
-        var baulId = await SeedBaulAsync(dbContext);
-        var photos = new PhotoRepository(dbContext);
-        var active = ActivePhoto(baulId, "active-key", "shared-hash");
-        await photos.CreateAsync(active);
-        var deletedTarget = ActivePhoto(baulId, "deleted-key", null).MarkDeleted("reason", DateTime.UtcNow);
-        await photos.CreateAsync(deletedTarget);
-
-        (await photos.TrySetContentHashAsync(deletedTarget.Id, baulId, "shared-hash")).Should().BeTrue();
-
-        (await dbContext.Photos.AsNoTracking().FirstAsync(p => p.Id == deletedTarget.Id)).OriginalContentHash.Should().Be("shared-hash");
     }
 }

@@ -12,9 +12,6 @@ public class ChatMessageRepository(ElBaulDbContext dbContext) : IChatMessageRepo
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
 
-    public async Task<IEnumerable<ChatMessage>> GetAllAsync() =>
-        await dbContext.ChatMessages.AsNoTracking().ToListAsync();
-
     public async Task CreateAsync(ChatMessage message)
     {
         dbContext.ChatMessages.Add(message);

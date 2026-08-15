@@ -30,7 +30,7 @@ run that first, always.
 5. Document what the command does, whether it's safe to re-run, and any deploy-order gate it
    creates (e.g. "must reach zero remaining candidates before deploying migration X") in that
    class's own XML doc comment — that's the source of truth for an individual command, not this
-   file. See `BackfillExifDatesCommand.cs` or `BackfillRecuerdoBaulIdCommand.cs` for the shape.
+   file. See `DeduplicatePhotosCommand.cs` for the shape.
 
 ## Testing commands
 

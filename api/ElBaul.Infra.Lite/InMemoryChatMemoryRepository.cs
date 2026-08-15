@@ -20,11 +20,6 @@ public class InMemoryChatMemoryRepository : IChatMemoryRepository
         lock (_lock) return Task.FromResult(_memories.GetValueOrDefault(chatMemoryId));
     }
 
-    public Task<IEnumerable<ChatMemory>> GetAllAsync()
-    {
-        lock (_lock) return Task.FromResult(_memories.Values.ToList().AsEnumerable());
-    }
-
     public Task CreateAsync(ChatMemory memory)
     {
         lock (_lock) _memories[memory.Id] = memory;

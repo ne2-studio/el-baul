@@ -1,10 +1,8 @@
 using System.Reflection;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
-using ElBaul.Core.Chat.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Chat;
 using ElBaul.Infra.Lite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,8 +38,6 @@ public class DiWiringTests
         // Kept in lockstep with MaintenanceCommandRunner.RunAsync's own Application-layer
         // registrations — see the comment there for why they live here instead of coming from
         // AddInfrastructure.
-        services.AddScoped<IRelevantChatMemorySelector, RelevantChatMemorySelector>();
-        services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
         services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
         services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         services.AddScoped<PhotoLifecycleService>();

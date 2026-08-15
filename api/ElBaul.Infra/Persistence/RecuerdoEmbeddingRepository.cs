@@ -11,9 +11,6 @@ public class RecuerdoEmbeddingRepository(ElBaulDbContext dbContext) : IRecuerdoE
             .Where(e => e.BaulId == baulId)
             .ToListAsync();
 
-    public async Task<IEnumerable<RecuerdoEmbedding>> GetAllAsync() =>
-        await dbContext.RecuerdoEmbeddings.AsNoTracking().ToListAsync();
-
     public async Task CreateManyAsync(IEnumerable<RecuerdoEmbedding> embeddings)
     {
         // Upsert, not a plain insert: a recuerdo re-embedded after an EmbeddingModel change

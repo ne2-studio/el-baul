@@ -17,9 +17,6 @@ public class FakePhotoStorage : IPhotoStorage
         _contentTypes[key] = contentType;
     }
 
-    public Task<Stream> OpenReadAsync(string key) =>
-        Task.FromResult<Stream>(new MemoryStream(_content.GetValueOrDefault(key, [])));
-
     public Task<PhotoContent> OpenReadForDownloadAsync(string key) =>
         Task.FromResult(new PhotoContent(
             new MemoryStream(_content.GetValueOrDefault(key, [])),

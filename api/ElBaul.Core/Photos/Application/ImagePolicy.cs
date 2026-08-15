@@ -2,9 +2,8 @@ namespace ElBaul.Core.Photos.Application;
 
 /// <summary>
 /// Single source of truth for the resolution/size limits every uploaded photo must satisfy —
-/// both the upload pipeline (PhotoFileService) and the normalization backfill
-/// (BackfillNormalizePhotosCommand) decide against this exact type, never against a
-/// locally-hardcoded number, so the two paths can't quietly drift apart. Values are
+/// the upload pipeline (PhotoFileService) decides against this exact type, never against a
+/// locally-hardcoded number, so nothing can quietly drift apart from it. Values are
 /// configuration-bound (see ElBaul.Infra's ServiceRegistration, "ImagePolicy" section) but
 /// default to the numbers below if unconfigured.
 ///

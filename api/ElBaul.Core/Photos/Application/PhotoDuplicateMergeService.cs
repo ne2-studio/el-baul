@@ -16,9 +16,9 @@ public record PhotoMergeResult(Photo Survivor, IReadOnlyList<Photo> Duplicates);
 /// Merges one exact-duplicate group (same BaulId + OriginalContentHash, every member currently
 /// Active — see the domain definition in docs/.backlog issue #20) into a single active survivor,
 /// atomically. The single place both the new-upload race path (PhotoUploadWorkflow) and the
-/// maintenance commands (backfill-photo-content-hashes' own race path, deduplicate-photos) go
-/// through, so "what does merging two duplicate photos mean" is answered once — see the PRD's
-/// explicit instruction not to invent independent conflicting rules per call site.
+/// deduplicate-photos maintenance command go through, so "what does merging two duplicate
+/// photos mean" is answered once — see the PRD's explicit instruction not to invent independent
+/// conflicting rules per call site.
 /// </summary>
 public class PhotoDuplicateMergeService(
     IPhotoRepository photoRepository,
@@ -125,8 +125,7 @@ public class PhotoDuplicateMergeService(
 
             // Photo-date rule: the survivor keeps the oldest known date across the whole group,
             // not just its own — see docs/.backlog issue #20 §8. OriginalContentHash is carried
-            // over explicitly too: a survivor reached via the backfill race path (see
-            // BackfillPhotoContentHashesCommand) may not have had its own hash persisted yet.
+            // over explicitly too: a survivor may not have had its own hash persisted yet.
             var mergedSurvivor = survivor.WithDate(MinDate(group)).WithOriginalContentHash(survivor.OriginalContentHash ?? duplicates[0].OriginalContentHash);
             await photoRepository.UpdateAsync(mergedSurvivor);
 

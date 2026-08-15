@@ -9,8 +9,8 @@ public record NormalizedImage(Stream Content, string ContentType, int Width, int
 
 /// <summary>
 /// The one place in the codebase that knows how to inspect/resize image pixels — everything
-/// else (upload, both photo backfill commands) goes through this instead of talking to an
-/// image library directly, so ImagePolicy's resolution rules only ever get interpreted once.
+/// else (the upload pipeline) goes through this instead of talking to an image library
+/// directly, so ImagePolicy's resolution rules only ever get interpreted once.
 /// Implementations must avoid loading a full decoded bitmap just to answer IdentifyAsync (read
 /// header/metadata only), and NormalizeAsync should shrink during decode rather than decode
 /// full size then downscale, to keep memory use proportional to the output, not the source.

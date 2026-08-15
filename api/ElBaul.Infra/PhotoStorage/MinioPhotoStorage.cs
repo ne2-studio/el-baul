@@ -43,8 +43,6 @@ public class MinioPhotoStorage : IPhotoStorage
         });
     }
 
-    public async Task<Stream> OpenReadAsync(string key) => (await ReadObjectAsync(key)).Content;
-
     public async Task<PhotoContent> OpenReadForDownloadAsync(string key)
     {
         var (content, contentType) = await ReadObjectAsync(key);
