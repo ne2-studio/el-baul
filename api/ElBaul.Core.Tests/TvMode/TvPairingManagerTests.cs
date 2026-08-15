@@ -3,10 +3,7 @@ using ElBaul.Core.Personas.Application;
 using ElBaul.Core.TvMode.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
-using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 

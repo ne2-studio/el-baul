@@ -1,7 +1,6 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Sharing.Application;
-using ElBaul.Core.TvMode;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;

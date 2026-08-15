@@ -1,4 +1,3 @@
-using ElBaul.Core.Personas.OutputPorts;
 namespace ElBaul.Tests.Fakes;
 
 public class FakeProfilePictureFetcher(byte[]? bytes = null, bool throwOnFetch = false) : IProfilePictureFetcher

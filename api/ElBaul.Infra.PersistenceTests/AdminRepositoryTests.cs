@@ -1,12 +1,5 @@
 using ElBaul.Infra.Persistence;
-using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Chapters.OutputPorts;
-using ElBaul.Core.Personas.OutputPorts;
-using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Users.OutputPorts;
 using FluentAssertions;
-
-using ElBaul.Domain;
 namespace ElBaul.Infra.PersistenceTests;
 
 /// <summary>

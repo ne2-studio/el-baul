@@ -1,7 +1,6 @@
 using ElBaul.Core.Chat.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Chat.OutputPorts;
-using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 

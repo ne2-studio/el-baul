@@ -3,7 +3,6 @@ using ElBaul.Core.Chat.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chat.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
-using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 

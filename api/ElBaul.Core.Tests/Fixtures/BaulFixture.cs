@@ -1,8 +1,4 @@
 using ElBaul.Infra.Lite;
-using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Chapters.OutputPorts;
-using ElBaul.Core.Personas.OutputPorts;
-using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Tests.Fakes;
 
 using ElBaul.Domain;

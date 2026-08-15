@@ -1,4 +1,3 @@
-using ElBaul.Core.Shared.OutputPorts;
 namespace ElBaul.Tests.Fakes;
 
 /// <summary>

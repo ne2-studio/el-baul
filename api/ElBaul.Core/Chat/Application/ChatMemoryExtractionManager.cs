@@ -1,5 +1,3 @@
-using ElBaul.Core.Chat.Application;
-using ElBaul.Core.Chat;
 using ElBaul.Core.Chat.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;

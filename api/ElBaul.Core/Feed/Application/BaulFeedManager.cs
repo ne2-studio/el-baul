@@ -2,8 +2,6 @@ using ElBaul.Core.Shared.Application;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
-using ElBaul.Core.Feed;
-using ElBaul.Core.Photos;
 using ElBaul.Core.Recuerdos;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Feed.OutputPorts;

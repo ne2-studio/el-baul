@@ -1,4 +1,3 @@
-using ElBaul.Api.Models;
 using ElBaul.Core.Feed;
 
 using Microsoft.AspNetCore.Authorization;

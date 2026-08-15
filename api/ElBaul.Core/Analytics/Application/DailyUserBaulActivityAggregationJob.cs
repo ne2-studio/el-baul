@@ -1,4 +1,3 @@
-using ElBaul.Core.Analytics;
 using ElBaul.Core.Analytics.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.Extensions.Logging;

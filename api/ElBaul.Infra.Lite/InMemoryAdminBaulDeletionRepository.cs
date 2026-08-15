@@ -1,7 +1,6 @@
 using ElBaul.Core.Admin.OutputPorts;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
-using ElBaul.Core.Moderation.OutputPorts;
 using ElBaul.Core.Sharing.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;

@@ -1,9 +1,7 @@
 using ElBaul.Domain;
 using ElBaul.Core.Shared.Application;
-using ElBaul.Core.Personas;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 
 namespace ElBaul.Core.Personas.Application;

@@ -1,6 +1,5 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
-using ElBaul.Core.Chapters;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -11,7 +10,6 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
-using ElBaul.Core.Shared.Application;
 namespace ElBaul.Core.Chapters.Application;
 public class ChapterManager(
     ILogger<ChapterManager> logger,

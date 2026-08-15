@@ -1,20 +1,9 @@
-using ElBaul.Core.Bauls.Application;
-using ElBaul.Core.Chapters.Application;
-using ElBaul.Core.Personas.Application;
 using ElBaul.Infra.PersistenceTests.Fakes;
 using ElBaul.Infra.Persistence;
-using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Chapters.OutputPorts;
-using ElBaul.Core.Personas.OutputPorts;
-using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Shared.OutputPorts;
-using ElBaul.Core.Users.OutputPorts;
 
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-
-using ElBaul.Domain;
 namespace ElBaul.Infra.PersistenceTests;
 
 /// <summary>
