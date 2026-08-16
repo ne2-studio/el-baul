@@ -94,4 +94,13 @@ public interface IAppConfiguration
     /// learn it's back off without a deploy). Defaults to false.
     /// </summary>
     bool MaintenanceModeEnabled { get; }
+
+    /// <summary>
+    /// Probability (0-1) that ContributionsManager picks "write a memory" over "tag people" when
+    /// choosing which contribution suggestion to offer on entering a baúl. Same key/default
+    /// (0.2) as AppConfigController's own copy, which still reads it from IConfiguration
+    /// directly for backward compatibility with app versions that decided the type client-side —
+    /// this port is only for the new server-side decision in Contributions.
+    /// </summary>
+    double WriteMemorySuggestionRatio { get; }
 }

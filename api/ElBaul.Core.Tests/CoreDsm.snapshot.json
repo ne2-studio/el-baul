@@ -5,6 +5,7 @@
     "Bauls",
     "Chapters",
     "Chat",
+    "Contributions",
     "Feed",
     "Moderation",
     "Notifications",
@@ -135,6 +136,21 @@
     },
     {
       "From": "Chat",
+      "To": "Shared",
+      "Kind": "Deep"
+    },
+    {
+      "From": "Contributions",
+      "To": "Bauls",
+      "Kind": "Deep"
+    },
+    {
+      "From": "Contributions",
+      "To": "Photos",
+      "Kind": "Deep"
+    },
+    {
+      "From": "Contributions",
       "To": "Shared",
       "Kind": "Deep"
     },

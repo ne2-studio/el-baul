@@ -38,14 +38,10 @@ interface AppConfigState {
   // para poder acortarlo en pruebas sin tocar código. Por defecto 60 — mismo valor con el que
   // nació la funcionalidad, antes de ser configurable.
   contributionSuggestionCooldownMinutes: number;
-  // Probabilidad (0-1) de que la recomendación de contribución sea "escribe un recuerdo" en vez
-  // de "etiqueta personas" — ver ContributionSuggestionPickerContainer. Por defecto 0.2 (20%).
-  writeMemorySuggestionRatio: number;
   fetchAppConfig: () => Promise<void>;
 }
 
 const DEFAULT_CONTRIBUTION_SUGGESTION_COOLDOWN_MINUTES = 60;
-const DEFAULT_WRITE_MEMORY_SUGGESTION_RATIO = 0.2;
 
 export const useAppConfigStore = create<AppConfigState>((set) => ({
   chatEnabled: false,
@@ -60,7 +56,6 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   appUrl: window.location.origin,
   googlePlayUrl: '',
   contributionSuggestionCooldownMinutes: DEFAULT_CONTRIBUTION_SUGGESTION_COOLDOWN_MINUTES,
-  writeMemorySuggestionRatio: DEFAULT_WRITE_MEMORY_SUGGESTION_RATIO,
 
   fetchAppConfig: async () => {
     try {
@@ -79,7 +74,6 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         googlePlayUrl: config.googlePlayUrl ?? '',
         contributionSuggestionCooldownMinutes:
           config.contributionSuggestionCooldownMinutes ?? DEFAULT_CONTRIBUTION_SUGGESTION_COOLDOWN_MINUTES,
-        writeMemorySuggestionRatio: config.writeMemorySuggestionRatio ?? DEFAULT_WRITE_MEMORY_SUGGESTION_RATIO,
       });
     } catch (error) {
       console.error('Error loading app config:', error);

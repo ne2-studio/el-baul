@@ -6,14 +6,10 @@ import { Photo } from '@/types';
 import { useUIStore } from '@/store/uiStore';
 import { WriteMemorySuggestionContainer } from './WriteMemorySuggestionContainer';
 
-vi.mock('@/api', () => ({
-  api: { photos: { getMemorySuggestion: vi.fn() } },
-}));
 vi.mock('@/features/memories/useCases', () => ({
   addRecuerdo: vi.fn(),
 }));
 
-import { api } from '@/api';
 import { addRecuerdo } from '@/features/memories/useCases';
 
 // jsdom no implementa ResizeObserver — ver mismo stub en ContributionSuggestionContainer.test.tsx.
@@ -36,41 +32,20 @@ describe('WriteMemorySuggestionContainer', () => {
     useUIStore.setState({ showToast: false, toastMessage: '' });
   });
 
-  it('resolves immediately without rendering anything when there is no candidate photo', async () => {
-    vi.mocked(api.photos.getMemorySuggestion).mockResolvedValue(null);
-    const onResolved = vi.fn();
+  // La foto candidata ya llega resuelta por ContributionSuggestionGateContainer — ver ese test
+  // para los casos de "sin candidata"/"fetch falla", que ya no aplican aquí.
+  it('shows the candidate photo and the memory input', () => {
+    render(<WriteMemorySuggestionContainer baulId={baulId} photo={photo()} onResolved={vi.fn()} />);
 
-    const { container } = render(<WriteMemorySuggestionContainer baulId={baulId} onResolved={onResolved} />);
-
-    await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it('resolves without rendering anything when the suggestion fetch fails', async () => {
-    vi.mocked(api.photos.getMemorySuggestion).mockRejectedValue(new Error('network error'));
-    const onResolved = vi.fn();
-
-    render(<WriteMemorySuggestionContainer baulId={baulId} onResolved={onResolved} />);
-
-    await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
-  });
-
-  it('shows the candidate photo and the memory input', async () => {
-    vi.mocked(api.photos.getMemorySuggestion).mockResolvedValue(photo());
-
-    render(<WriteMemorySuggestionContainer baulId={baulId} onResolved={vi.fn()} />);
-
-    expect(await screen.findByText('¿Nos ayudas con esta foto?')).toBeInTheDocument();
+    expect(screen.getByText('¿Nos ayudas con esta foto?')).toBeInTheDocument();
   });
 
   it('saves the written memory and resolves on submit', async () => {
     const user = userEvent.setup();
-    vi.mocked(api.photos.getMemorySuggestion).mockResolvedValue(photo());
     vi.mocked(addRecuerdo).mockResolvedValue(undefined);
     const onResolved = vi.fn();
 
-    render(<WriteMemorySuggestionContainer baulId={baulId} onResolved={onResolved} />);
-    await screen.findByText('¿Nos ayudas con esta foto?');
+    render(<WriteMemorySuggestionContainer baulId={baulId} photo={photo()} onResolved={onResolved} />);
 
     const input = screen.getByRole('textbox');
     await user.type(input, 'Fue un día precioso');
@@ -83,11 +58,9 @@ describe('WriteMemorySuggestionContainer', () => {
 
   it('resolves on "Ahora no" without saving anything', async () => {
     const user = userEvent.setup();
-    vi.mocked(api.photos.getMemorySuggestion).mockResolvedValue(photo());
     const onResolved = vi.fn();
 
-    render(<WriteMemorySuggestionContainer baulId={baulId} onResolved={onResolved} />);
-    await screen.findByText('¿Nos ayudas con esta foto?');
+    render(<WriteMemorySuggestionContainer baulId={baulId} photo={photo()} onResolved={onResolved} />);
 
     await user.click(screen.getByText('Ahora no →'));
 

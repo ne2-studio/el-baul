@@ -22,7 +22,10 @@ public class StaticAppConfiguration(
     bool tvModeEnabled = true,
     // Defaults to false here too (unlike most other flags above) — maintenance mode gating is
     // covered by its own dedicated tests, constructed with true.
-    bool maintenanceModeEnabled = false)
+    bool maintenanceModeEnabled = false,
+    // Matches the real appsettings.json default (20% "write a memory") — tests about the ratio
+    // itself construct this explicitly to force a branch.
+    double writeMemorySuggestionRatio = 0.2)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -42,4 +45,5 @@ public class StaticAppConfiguration(
     public int ChatMemoryRetrievalLimit { get; } = chatMemoryRetrievalLimit;
     public bool TvModeEnabled { get; } = tvModeEnabled;
     public bool MaintenanceModeEnabled { get; } = maintenanceModeEnabled;
+    public double WriteMemorySuggestionRatio { get; } = writeMemorySuggestionRatio;
 }

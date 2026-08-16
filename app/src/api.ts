@@ -19,6 +19,7 @@ import { baulesApi } from './api/resources/baules';
 import { chaptersApi } from './api/resources/chapters';
 import { chatApi } from './api/resources/chat';
 import { chatMemoriesApi } from './api/resources/chatMemories';
+import { contributionsApi } from './api/resources/contributions';
 import { photoBatchesApi } from './api/resources/photoBatches';
 import { photosApi } from './api/resources/photos';
 import { pushNotificationsApi, usersApi } from './api/resources/users';
@@ -44,4 +45,5 @@ export const api = {
   support: supportApi,
   chat: chatApi,
   chatMemories: chatMemoriesApi,
+  contributions: contributionsApi,
 };

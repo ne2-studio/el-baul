@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { useEffect, useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,14 +7,11 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
 import { ContributionSuggestionContainer } from './ContributionSuggestionContainer';
 
-vi.mock('@/api', () => ({
-  api: { photos: { getUntaggedSuggestion: vi.fn() } },
-}));
 vi.mock('@/features/photos/useCases', () => ({
   setTaggedPersonas: vi.fn(),
+  confirmPhotoHasNoPersonas: vi.fn(),
 }));
 
-import { api } from '@/api';
 import { setTaggedPersonas } from '@/features/photos/useCases';
 
 // jsdom no implementa ResizeObserver — lo usa useElementHeight (vía PageHeader) para medir el
@@ -46,67 +42,22 @@ describe('ContributionSuggestionContainer', () => {
     useUIStore.setState({ showToast: false, toastMessage: '' });
   });
 
-  it('resolves immediately without rendering anything when there is no candidate photo', async () => {
-    vi.mocked(api.photos.getUntaggedSuggestion).mockResolvedValue(null);
-    const onResolved = vi.fn();
+  // La foto candidata ya llega resuelta por ContributionSuggestionGateContainer — ver ese test
+  // para los casos de "sin candidata"/"fetch falla", que ya no aplican aquí.
+  it('shows the candidate photo and its persona selector, Guardar disabled with nothing selected', () => {
+    render(<ContributionSuggestionContainer baulId={baulId} photo={photo()} onResolved={vi.fn()} />);
 
-    const { container } = render(<ContributionSuggestionContainer baulId={baulId} onResolved={onResolved} />);
-
-    await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it('resolves without rendering anything when the suggestion fetch fails', async () => {
-    vi.mocked(api.photos.getUntaggedSuggestion).mockRejectedValue(new Error('network error'));
-    const onResolved = vi.fn();
-
-    render(<ContributionSuggestionContainer baulId={baulId} onResolved={onResolved} />);
-
-    await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
-  });
-
-  // Regression for a real crash: BaulRoute passes a brand new inline onResolved closure on
-  // every one of its own renders (it re-renders whenever chapters/personas/baulRecuerdos
-  // change, which happens repeatedly right after entering a baúl while useBaulScope's loads
-  // are still settling). A previous version resolved the no-candidate case from a second
-  // effect keyed on `[photo, onResolved]`, which re-fired on every such parent render and
-  // threw React error #185 ("Maximum update depth exceeded"). This wrapper reproduces that
-  // parent re-render churn to prove the fix doesn't depend on onResolved's identity.
-  it('resolves exactly once even when the parent re-renders repeatedly with a new onResolved closure', async () => {
-    vi.mocked(api.photos.getUntaggedSuggestion).mockResolvedValue(null);
-    const onResolved = vi.fn();
-
-    function ChurningParent() {
-      const [tick, setTick] = useState(0);
-      useEffect(() => {
-        if (tick < 5) setTick((t) => t + 1);
-      }, [tick]);
-      return <ContributionSuggestionContainer baulId={baulId} onResolved={() => onResolved()} />;
-    }
-
-    render(<ChurningParent />);
-
-    await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
-  });
-
-  it('shows the candidate photo and its persona selector, Guardar disabled with nothing selected', async () => {
-    vi.mocked(api.photos.getUntaggedSuggestion).mockResolvedValue(photo());
-
-    render(<ContributionSuggestionContainer baulId={baulId} onResolved={vi.fn()} />);
-
-    expect(await screen.findByText('¿Nos ayudas con esta foto?')).toBeInTheDocument();
+    expect(screen.getByText('¿Nos ayudas con esta foto?')).toBeInTheDocument();
     expect(screen.getByText('Abuela')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled();
   });
 
   it('saves the selected personas and resolves on Guardar', async () => {
     const user = userEvent.setup();
-    vi.mocked(api.photos.getUntaggedSuggestion).mockResolvedValue(photo());
     vi.mocked(setTaggedPersonas).mockResolvedValue(undefined);
     const onResolved = vi.fn();
 
-    render(<ContributionSuggestionContainer baulId={baulId} onResolved={onResolved} />);
-    await screen.findByText('Abuela');
+    render(<ContributionSuggestionContainer baulId={baulId} photo={photo()} onResolved={onResolved} />);
 
     await user.click(screen.getByText('Abuela'));
     expect(screen.getByRole('button', { name: 'Guardar' })).toBeEnabled();
@@ -120,11 +71,9 @@ describe('ContributionSuggestionContainer', () => {
 
   it('resolves on "Ahora no" without saving anything', async () => {
     const user = userEvent.setup();
-    vi.mocked(api.photos.getUntaggedSuggestion).mockResolvedValue(photo());
     const onResolved = vi.fn();
 
-    render(<ContributionSuggestionContainer baulId={baulId} onResolved={onResolved} />);
-    await screen.findByText('¿Nos ayudas con esta foto?');
+    render(<ContributionSuggestionContainer baulId={baulId} photo={photo()} onResolved={onResolved} />);
 
     await user.click(screen.getByText('Ahora no →'));
 

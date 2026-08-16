@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-// Cubre la parte nueva de la condición de BaulRoute (ver comentario junto a
-// canShowContributionSuggestion): primera sesión en la app y llegada por push/email deben
-// suprimir el gate igual que el cooldown ya lo hacía — el resto de casos (candidata inexistente,
-// guardado, "ahora no") ya están cubiertos por ContributionSuggestionContainer.test.tsx.
+// Cubre la condición de BaulRoute (ver comentario junto a canShowContributionSuggestion) que
+// decide *cuándo* preguntarle al backend por una sugerencia: cooldown, primera sesión en la app y
+// llegada por push/email deben suprimir el gate. Qué tipo de sugerencia proponer (o ninguna) ya
+// no lo decide el front — eso lo cubre ContributionsManagerTests en el backend; aquí solo se
+// verifica que se monta o no ContributionSuggestionGateContainer.
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +12,6 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { BaulRoute } from './BaulRoute';
 
 vi.mock('react-oidc-context', () => ({
@@ -32,11 +32,8 @@ vi.mock('@/features/baules/containers/WorkspaceSwitcherContainer', () => ({
 vi.mock('@/features/baules/containers/BaulSettingsMenuContainer', () => ({
   BaulSettingsMenuContainer: () => null,
 }));
-vi.mock('@/features/baules/containers/ContributionSuggestionContainer', () => ({
-  ContributionSuggestionContainer: () => <div>Sugerencia de contribución</div>,
-}));
-vi.mock('@/features/baules/containers/WriteMemorySuggestionContainer', () => ({
-  WriteMemorySuggestionContainer: () => <div>Sugerencia de recuerdo</div>,
+vi.mock('@/features/baules/containers/ContributionSuggestionGateContainer', () => ({
+  ContributionSuggestionGateContainer: () => <div>Sugerencia de contribución</div>,
 }));
 vi.mock('@/features/memories/containers/BaulFeedTabContainer', () => ({
   BaulFeedTabContainer: () => <div>Contenido de Recuerdos</div>,
@@ -73,26 +70,14 @@ describe('BaulRoute — cuándo se suprime la recomendación de contribución', 
     usePersonasStore.setState({ personas: { [baul.id]: [] } });
     // Caso base: nada en cooldown y no es la primera sesión — así cada test solo aísla la
     // condición que le interesa (isFirstAppLaunch o entrySource) en vez de arrastrar el estado
-    // que dejó el test anterior. writeMemorySuggestionRatio a 0 fuerza siempre la rama
-    // "etiqueta personas" — la elección aleatoria entre las dos recomendaciones tiene sus
-    // propios tests más abajo, que sí varían el ratio.
+    // que dejó el test anterior.
     useUIStore.setState({ isFirstAppLaunch: false });
-    useAppConfigStore.setState({ writeMemorySuggestionRatio: 0 });
   });
 
   it('se propone en una entrada normal (sin cooldown, sin ser la primera sesión)', async () => {
     renderAt(`/baules/${baul.id}`);
 
     expect(await screen.findByText('Sugerencia de contribución')).toBeInTheDocument();
-  });
-
-  it('propone "escribe un recuerdo" en vez de "etiqueta personas" cuando el ratio fuerza esa rama', async () => {
-    useAppConfigStore.setState({ writeMemorySuggestionRatio: 1 });
-
-    renderAt(`/baules/${baul.id}`);
-
-    expect(await screen.findByText('Sugerencia de recuerdo')).toBeInTheDocument();
-    expect(screen.queryByText('Sugerencia de contribución')).not.toBeInTheDocument();
   });
 
   it('se suprime en la primerísima sesión de la app', async () => {
