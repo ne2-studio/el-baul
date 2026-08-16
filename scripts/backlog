@@ -141,6 +141,8 @@ _process_queue() {
       continue
     fi
 
+    git pull --ff-only
+
     rm -f "$SIGNAL_FILE"
     local issue_json comments
     issue_json="$(gh issue view "$n" --json title,body,url,comments)"
