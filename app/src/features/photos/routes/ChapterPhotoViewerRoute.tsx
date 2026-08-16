@@ -3,9 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChapterPhotoViewerContainer } from '@/features/chapters/containers/ChapterPhotoViewerContainer';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
-import { loadPersonas } from '@/features/people/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -33,7 +31,6 @@ export const ChapterPhotoViewerRoute: React.FC = () => {
   const backgroundLocation = getBackgroundLocation(location);
 
   const { photos: chapterPhotosById } = useBaulesStore();
-  const { personas } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
 
   const baulScope = useBaulScope(baulId);
@@ -54,13 +51,6 @@ export const ChapterPhotoViewerRoute: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, chapterId, chapterPhotosById, loadChapterPhotos]);
-
-  useEffect(() => {
-    if (auth.isAuthenticated && baulId && !personas[baulId]) {
-      run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'No se pudieron cargar las personas del baúl' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, baulId, personas, loadPersonas]);
 
   const guard = guardBaulScope(baulScope, { loadingLabel: 'Cargando foto...' });
   if (!guard.ready) return guard.screen;

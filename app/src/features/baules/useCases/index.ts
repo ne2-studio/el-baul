@@ -4,9 +4,6 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { applyCoverUpdate } from '@/store/baulesCacheReconciliation';
-import { getBaulPermissions } from '@/utils/roleUtils';
-import { loadPersonas } from '@/features/people/useCases';
-import { loadRemovalRequests } from '@/features/photos/useCases';
 
 interface HomeDestinationInput {
   baulIds: string[];
@@ -66,13 +63,6 @@ export function resolveHomeDestination(baules: Baul[]): string {
 export async function loadChapters(baulId: string): Promise<void> {
   const chapters = await api.chapters.getAll(baulId);
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
-
-  await loadPersonas(baulId);
-
-  const baul = useBaulesStore.getState().baules.find((b) => b.id === baulId);
-  if (getBaulPermissions(baul).canReviewRemovalRequests) {
-    await loadRemovalRequests(baulId);
-  }
 }
 
 export async function createBaul(name: string, description: string): Promise<Baul> {

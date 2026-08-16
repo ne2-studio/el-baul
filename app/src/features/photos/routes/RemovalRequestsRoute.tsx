@@ -1,11 +1,11 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RemovalRequestsList } from '@/features/photos/components/RemovalRequestsList';
-import { useBaulesStore } from '@/store/useBaulesStore';
-import { usePersonasStore } from '@/store/usePersonasStore';
 import { removePhoto, keepPhoto } from '@/features/photos/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useBaulScope } from '@/hooks/useBaulScope';
+import { guardBaulScope } from '@/hooks/baulScopeGuard';
 
 export const RemovalRequestsRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -13,12 +13,12 @@ export const RemovalRequestsRoute: React.FC = () => {
   const auth = useAuth();
   const { run } = useAsyncAction();
 
-  const { baules } = useBaulesStore();
-  const { removalRequests } = usePersonasStore();
+  const baulScope = useBaulScope(baulId);
+  const { removalRequests } = baulScope;
 
-  const baul = baules.find(b => b.id === baulId);
-
-  if (!baul) return <div className="p-8 text-center">Cargando...</div>;
+  const guard = guardBaulScope(baulScope);
+  if (!guard.ready) return guard.screen;
+  const { baul } = guard;
 
   const handleRemove = async (requestId: string, photoId: string): Promise<boolean> => {
     if (!auth.isAuthenticated) return false;
@@ -42,7 +42,7 @@ export const RemovalRequestsRoute: React.FC = () => {
 
   return (
     <RemovalRequestsList
-      requests={removalRequests[baul.id] || []}
+      requests={removalRequests || []}
       onBack={() => navigate(`/baules/${baul.id}`)}
       onRemovePhoto={handleRemove}
       onKeepPhoto={handleKeep}

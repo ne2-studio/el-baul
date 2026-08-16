@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from 'react-oidc-context';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { Hero } from '@/design-system/layouts/Hero';
@@ -18,11 +17,8 @@ import { useElementHeight } from '@/hooks/useElementHeight';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { loadPersonas } from '@/features/people/useCases';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { useChapterScope } from '@/hooks/useChapterScope';
@@ -62,16 +58,11 @@ export const ChapterRoute: React.FC = () => {
   const location = useLocation();
   const { recentlyUploadedPhotos, returnTab = 'capitulos' } = (location.state as LocationState) || {};
   const { baulId, chapterId } = useParams();
-  const auth = useAuth();
   const { photos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
   // Solo para el badge de recuento del Tabbar y el modal de borrado — ChapterRecuerdosFeedContainer
   // lee los datos completos él mismo.
   const { chapterRecuerdos } = useRecuerdosStore();
-  // La carga sigue aquí (guardia + efecto) porque BatchPhotoActionsContainer asume que ya
-  // están cargadas al montar.
-  const { personas } = usePersonasStore();
-  const { run } = useAsyncAction();
 
   const baulScope = useBaulScope(baulId);
   const { chapters, loosePhotos } = baulScope;
@@ -121,13 +112,6 @@ export const ChapterRoute: React.FC = () => {
     setSelectionMode(false);
     setSelectedIds(new Set());
   };
-
-  useEffect(() => {
-    if (auth.isAuthenticated && baulId && !personas[baulId]) {
-      run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'No se pudieron cargar las personas del baúl' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, baulId, personas, loadPersonas]);
 
   const guard = guardBaulScope(baulScope);
   if (!guard.ready) return guard.screen;

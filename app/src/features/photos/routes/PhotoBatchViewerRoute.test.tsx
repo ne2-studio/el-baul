@@ -27,6 +27,7 @@ vi.mock('@/features/photos/useCases', () => ({
   changePhotoDate: vi.fn().mockResolvedValue(undefined),
   clearPhotoDate: vi.fn().mockResolvedValue(undefined),
   movePhotos: vi.fn().mockResolvedValue(undefined),
+  loadRemovalRequests: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/baules/useCases', () => ({
@@ -87,7 +88,7 @@ describe('PhotoBatchViewerRoute', () => {
       photoBatchPhotos: { 'batch-1': [batchPhoto.id] },
     });
     usePhotosStore.setState({ photosById: { [batchPhoto.id]: batchPhoto } });
-    usePersonasStore.setState({ personas: { 'baul-1': [] }, taggedPersonas: {}, personaPhotos: {}, removalRequests: {} });
+    usePersonasStore.setState({ personas: { 'baul-1': [] }, taggedPersonas: {}, personaPhotos: {}, removalRequests: { 'baul-1': [] } });
     useRecuerdosStore.setState({ baulRecuerdos: { 'baul-1': [] }, recuerdos: {} });
   });
 

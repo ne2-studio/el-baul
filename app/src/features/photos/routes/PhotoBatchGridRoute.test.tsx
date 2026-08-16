@@ -21,6 +21,7 @@ vi.mock('@/features/people/useCases', () => ({
 vi.mock('@/features/photos/useCases', () => ({
   loadPhotoBatchPhotos: vi.fn().mockResolvedValue(undefined),
   movePhotos: vi.fn().mockResolvedValue(undefined),
+  loadRemovalRequests: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/chapters/useCases', () => ({

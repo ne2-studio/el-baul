@@ -11,10 +11,8 @@ import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { BatchPhotoActionsContainer } from '@/features/photos/containers/BatchPhotoActionsContainer';
 import { Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { loadPhotoBatchPhotos } from '@/features/photos/useCases';
-import { loadPersonas } from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
@@ -36,7 +34,6 @@ export const PhotoBatchGridRoute: React.FC = () => {
   const { baulId, batchId } = useParams();
   const auth = useAuth();
   const { photoBatchPhotos } = useBaulesStore();
-  const { personas } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const { run } = useAsyncAction();
   const [loadFailed, setLoadFailed] = useState(false);
@@ -95,13 +92,6 @@ export const PhotoBatchGridRoute: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, baulId, batchId, photoBatchPhotos]);
-
-  useEffect(() => {
-    if (auth.isAuthenticated && baulId && !personas[baulId]) {
-      run(() => loadPersonas(baulId), { key: 'personas', errorMessage: 'No se pudieron cargar las personas del baúl' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, baulId, personas, loadPersonas]);
 
   if (!baulId || !batchId) return <div className="p-8 text-center">No se ha encontrado la subida.</div>;
 
