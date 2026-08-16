@@ -32,7 +32,7 @@ vi.mock('@/features/baules/containers/WorkspaceSwitcherContainer', () => ({
 vi.mock('@/features/baules/containers/BaulSettingsMenuContainer', () => ({
   BaulSettingsMenuContainer: () => null,
 }));
-vi.mock('@/features/baules/containers/ContributionSuggestionGateContainer', () => ({
+vi.mock('@/features/contributions/containers/ContributionSuggestionGateContainer', () => ({
   ContributionSuggestionGateContainer: () => <div>Sugerencia de contribución</div>,
 }));
 vi.mock('@/features/memories/containers/BaulFeedTabContainer', () => ({

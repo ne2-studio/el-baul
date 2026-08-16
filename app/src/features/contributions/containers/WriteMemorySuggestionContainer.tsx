@@ -1,4 +1,4 @@
-import { WriteMemorySuggestionScreen } from '@/features/memories/components/WriteMemorySuggestionScreen';
+import { WriteMemorySuggestionScreen } from '@/features/contributions/components/WriteMemorySuggestionScreen';
 import { addRecuerdo } from '@/features/memories/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Photo } from '@/types';

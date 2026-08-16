@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { ContributionSuggestionScreen } from '@/features/photos/components/ContributionSuggestionScreen';
+import { ContributionSuggestionScreen } from '@/features/contributions/components/ContributionSuggestionScreen';
 import { PHOTO_STAGE_MAX_HEIGHT_DVH, PHOTO_STAGE_MIN_HEIGHT_DVH } from '@/hooks/usePhotoAspectRatio';
 import { Persona, Photo } from '@/types';
 import { storybookAvatars, storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'Features/Photos/ContributionSuggestionScreen',
+  title: 'Features/Contributions/ContributionSuggestionScreen',
   component: ContributionSuggestionScreen,
   tags: ['autodocs'],
   parameters: {

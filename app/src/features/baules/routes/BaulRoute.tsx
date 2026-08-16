@@ -9,7 +9,7 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { BaulChaptersTabContainer } from '@/features/baules/containers/BaulChaptersTabContainer';
-import { ContributionSuggestionGateContainer } from '@/features/baules/containers/ContributionSuggestionGateContainer';
+import { ContributionSuggestionGateContainer } from '@/features/contributions/containers/ContributionSuggestionGateContainer';
 import { BaulPersonasTabContainer } from '@/features/people/containers/BaulPersonasTabContainer';
 import { BaulFeedTabContainer } from '@/features/memories/containers/BaulFeedTabContainer';
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';

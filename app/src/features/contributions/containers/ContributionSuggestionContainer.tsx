@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ContributionSuggestionScreen } from '@/features/photos/components/ContributionSuggestionScreen';
+import { ContributionSuggestionScreen } from '@/features/contributions/components/ContributionSuggestionScreen';
 import { confirmPhotoHasNoPersonas, setTaggedPersonas } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { usePersonasStore } from '@/store/usePersonasStore';
