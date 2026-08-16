@@ -110,6 +110,7 @@ public class UserBaulActivityDailyAggregatorTests(PostgresFixture fixture) : Per
         public bool ChatSuggestionsEnabled => false;
         public bool ChatMemoryEnabled => false;
         public int ChatMemoryRetrievalLimit => 0;
+        public double WriteMemorySuggestionRatio => 0.2;
         public bool SharedLinksEnabled => false;
         public bool BaulFeedEnabled => false;
         public bool PushDigestEnabled => false;
