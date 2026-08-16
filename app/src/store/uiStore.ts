@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ToastVariant } from '@/design-system/components/feedback/Toast';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import type { Baul } from '@/types';
 
 const CONTRIBUTION_SUGGESTION_COOLDOWN_STORAGE_KEY = 'elbaul.contributionSuggestionCooldowns';
 // Configurable vía appsettings (ver useAppConfigStore.contributionSuggestionCooldownMinutes) en
@@ -48,6 +49,28 @@ function writeRemovalRequestedPhotoIds(ids: string[]): void {
     localStorage.setItem(REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY, JSON.stringify(ids));
   } catch {
     // ver comentario de readRemovalRequestedPhotoIds
+  }
+}
+
+const BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY = 'elbaul.baulActivitySeenAt';
+
+// Mismo motivo que readContributionSuggestionCooldowns: fail-open, nunca romper la app por
+// localStorage en modo privado o con cuota llena — en el peor caso el dot de novedades vuelve
+// a aparecer tras un reinicio en vez de recordar lo ya visto.
+function readBaulActivitySeenAt(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeBaulActivitySeenAt(seenAt: Record<string, string>): void {
+  try {
+    localStorage.setItem(BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY, JSON.stringify(seenAt));
+  } catch {
+    // ver comentario de readBaulActivitySeenAt
   }
 }
 
@@ -105,6 +128,25 @@ interface UIState {
   removalRequestedPhotoIds: string[];
   hasRequestedPhotoRemoval: (photoId: string) => boolean;
   markPhotoRemovalRequested: (photoId: string) => void;
+
+  // Dot de novedades del selector de baúles (WorkspaceSwitcherContainer): puramente local al
+  // dispositivo, sin backend — se compara baul.updatedAt contra la última vez que esta persona
+  // "entró" a ese baúl aquí (ver markBaulActivitySeen, llamado desde useBaulScope en cuanto el
+  // baúl está resuelto, tanto al cambiar de baúl con el selector como al aterrizar en él por
+  // deep link/recarga). Expuesto como state (no como función derivada) para que los
+  // componentes que lo leen con un selector de useUIStore se re-rendericen cuando cambia — ver
+  // hasUnseenBaulActivity más abajo, que es la función pura de lectura sobre este mapa.
+  baulActivitySeenAt: Record<string, string>;
+  markBaulActivitySeen: (baulId: string, updatedAt: string) => void;
+}
+
+// Un baúl sin entrada en el mapa se considera con novedades — así un baúl nunca visitado en
+// este dispositivo empieza marcado hasta que se abre una vez. Función pura (no un método del
+// store) para poder usarse tanto en un selector reactivo de useUIStore (ver
+// WorkspaceSwitcherContainer) como fuera de React.
+export function hasUnseenBaulActivity(baul: Baul, baulActivitySeenAt: Record<string, string>): boolean {
+  const seenAt = baulActivitySeenAt[baul.id];
+  return !seenAt || new Date(baul.updatedAt) > new Date(seenAt);
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -150,5 +192,12 @@ export const useUIStore = create<UIState>((set, get) => ({
     const ids = [...get().removalRequestedPhotoIds, photoId];
     writeRemovalRequestedPhotoIds(ids);
     set({ removalRequestedPhotoIds: ids });
+  },
+
+  baulActivitySeenAt: readBaulActivitySeenAt(),
+  markBaulActivitySeen: (baulId, updatedAt) => {
+    const seenAt = { ...get().baulActivitySeenAt, [baulId]: updatedAt };
+    writeBaulActivitySeenAt(seenAt);
+    set({ baulActivitySeenAt: seenAt });
   },
 }));

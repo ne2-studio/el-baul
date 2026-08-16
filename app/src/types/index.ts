@@ -114,6 +114,10 @@ export class Baul {
   coverCropY?: number;
   coverCropScale?: number;
   lastUpdated: string;
+  // ISO timestamp crudo detrás de lastUpdated — necesario para comparar contra
+  // uiStore.baulActivitySeenAt (ver hasUnseenBaulActivity) y decidir el dot de novedades del
+  // selector de baúles; lastUpdated ya está formateado como texto relativo y no sirve para eso.
+  updatedAt: string;
   role?: BaulRole;
   isCustodio?: boolean;
   memberCount?: number;
@@ -128,6 +132,7 @@ export class Baul {
     this.coverCropY = data.coverCropY ?? 0.5;
     this.coverCropScale = data.coverCropScale ?? 1;
     this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
+    this.updatedAt = data.updatedAt;
     this.role = data.role as BaulRole;
     this.isCustodio = data.isCustodio;
     this.memberCount = data.memberCount;

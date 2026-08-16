@@ -4,6 +4,7 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useUIStore } from '@/store/uiStore';
 import { loadUserData } from '@/features/auth/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useScopeOutcome } from '@/hooks/useScopeOutcome';
@@ -105,6 +106,17 @@ export function useBaulScope(baulId: string | undefined) {
     if (isLoading) loadScope(baulId!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baulId, isLoading]);
+
+  // "Entrar" a un baúl —sea por el selector de workspace, un deep link o una recarga— cuenta
+  // como haberlo visto: apaga su dot de novedades (ver hasUnseenBaulActivity en uiStore) para
+  // esta persona en este dispositivo. Se dispara en cuanto el baúl está resuelto (no hace falta
+  // esperar al resto del scope), keyed por baul.updatedAt además de su id para que una
+  // actualización posterior mientras la persona sigue dentro del mismo baúl también se marque
+  // como vista sin necesidad de salir y volver a entrar.
+  useEffect(() => {
+    if (!baul) return;
+    useUIStore.getState().markBaulActivitySeen(baul.id, baul.updatedAt);
+  }, [baul?.id, baul?.updatedAt]);
 
   return {
     baul,
