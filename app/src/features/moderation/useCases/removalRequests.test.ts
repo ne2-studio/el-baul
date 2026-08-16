@@ -34,7 +34,7 @@ import { api } from '@/api';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { loadRemovalRequests, removePhoto } from './index';
-import { newPhoto } from './testFactories';
+import { newPhoto } from '@/features/photos/useCases/testFactories';
 
 describe('photos useCases loadRemovalRequests', () => {
   const baulId = 'baul-1';

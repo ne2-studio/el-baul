@@ -24,6 +24,9 @@ vi.mock('@/features/baules/useCases', () => ({
 
 vi.mock('@/features/photos/useCases', () => ({
   loadLoosePhotos: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/moderation/useCases', () => ({
   loadRemovalRequests: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -35,7 +38,8 @@ import { useAuth } from 'react-oidc-context';
 import { loadUserData } from '@/features/auth/useCases';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { loadChapters } from '@/features/baules/useCases';
-import { loadLoosePhotos, loadRemovalRequests } from '@/features/photos/useCases';
+import { loadLoosePhotos } from '@/features/photos/useCases';
+import { loadRemovalRequests } from '@/features/moderation/useCases';
 import { loadPersonas } from '@/features/people/useCases';
 import { useBaulScope } from './useBaulScope';
 

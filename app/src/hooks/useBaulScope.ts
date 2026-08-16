@@ -9,7 +9,8 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { loadChapters } from '@/features/baules/useCases';
-import { loadLoosePhotos, loadRemovalRequests } from '@/features/photos/useCases';
+import { loadLoosePhotos } from '@/features/photos/useCases';
+import { loadRemovalRequests } from '@/features/moderation/useCases';
 import { loadPersonas } from '@/features/people/useCases';
 import { getBaulPermissions } from '@/utils/roleUtils';
 

@@ -24,10 +24,13 @@ vi.mock('@/features/memories/useCases', () => ({
 vi.mock('@/features/photos/useCases', () => ({
   loadTaggedPersonas: vi.fn().mockResolvedValue(undefined),
   setTaggedPersonas: vi.fn().mockResolvedValue(undefined),
-  submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
   deletePhoto: vi.fn().mockResolvedValue(undefined),
   changePhotoDate: vi.fn().mockResolvedValue(undefined),
   clearPhotoDate: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/moderation/useCases', () => ({
+  submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/api', () => ({
@@ -47,7 +50,8 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
 }));
 
 import { loadRecuerdos, addRecuerdo } from '@/features/memories/useCases';
-import { loadTaggedPersonas, setTaggedPersonas, submitRemovalRequest, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
+import { loadTaggedPersonas, setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
+import { submitRemovalRequest } from '@/features/moderation/useCases';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 

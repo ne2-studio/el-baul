@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { RemovalRequestsList } from '@/features/photos/components/RemovalRequestsList';
-import { removePhoto, keepPhoto } from '@/features/photos/useCases';
+import { RemovalRequestsList } from '@/features/moderation/components/RemovalRequestsList';
+import { removePhoto, keepPhoto } from '@/features/moderation/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';

@@ -4,13 +4,14 @@ import { Download, Calendar, CalendarOff, Flag, Trash2, Tag, Share2 } from 'luci
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
 import { ConfirmActionModal } from '@/design-system/patterns/forms/ConfirmActionModal';
 import { DeletePhotoModal } from '@/features/photos/components/DeletePhotoModal';
-import { RemovalRequestModal } from '@/features/photos/components/RemovalRequestModal';
+import { RemovalRequestModal } from '@/features/moderation/components/RemovalRequestModal';
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
 import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { Persona, Photo, PhotoDate, Recuerdo, TaggedPersona } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
-import { submitRemovalRequest, setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
+import { submitRemovalRequest } from '@/features/moderation/useCases';
+import { setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
 import { addRecuerdo as addRecuerdoUseCase, editRecuerdo as editRecuerdoUseCase } from '@/features/memories/useCases';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';

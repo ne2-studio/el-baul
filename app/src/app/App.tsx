@@ -32,7 +32,7 @@ import { ChapterRoute } from '../features/chapters/routes/ChapterRoute';
 import { UploadConfirmationRoute } from '../features/photos/routes/UploadConfirmationRoute';
 import { UploadingRoute } from '../features/photos/routes/UploadingRoute';
 import { UploadErrorRoute } from '../features/photos/routes/UploadErrorRoute';
-import { RemovalRequestsRoute } from '../features/photos/routes/RemovalRequestsRoute';
+import { RemovalRequestsRoute } from '../features/moderation/routes/RemovalRequestsRoute';
 import { PhotoBatchGridRoute } from '../features/photos/routes/PhotoBatchGridRoute';
 import { PersonaDetailRoute } from '../features/people/routes/PersonaDetailRoute';
 import { BaulGlobalInvitacionRoute } from '../features/sharing/routes/BaulGlobalInvitacionRoute';
