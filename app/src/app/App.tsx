@@ -174,7 +174,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen w-full bg-[var(--bg-primary)]">
+    <div className="h-screen w-full bg-background">
       <ScrollToTop />
       <NativeShareHandler />
       <PushNotificationsHandler />
