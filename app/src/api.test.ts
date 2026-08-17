@@ -48,14 +48,66 @@ describe('api error handling', () => {
     window.removeEventListener(API_UNAUTHORIZED_EVENT, onUnauthorized);
   });
 
-  it('normalizes fetch connectivity failures and emits a connectivity lost event', async () => {
+  it('normalizes fetch connectivity failures and emits a connectivity lost event once retries on get are exhausted', async () => {
+    vi.useFakeTimers();
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
     const onConnectivityLost = vi.fn();
     window.addEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
 
-    await expect(api.baules.getAll()).rejects.toBeInstanceOf(ApiConnectionError);
+    const pending = expect(api.baules.getAll()).rejects.toBeInstanceOf(ApiConnectionError);
+    await vi.runAllTimersAsync();
+    await pending;
 
     expect(onConnectivityLost).toHaveBeenCalledOnce();
+    window.removeEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
+  });
+
+  // Regresión issue #38: "Pantalla de 'Sin conexión' salta demasiado a menudo" — un blip de red
+  // que se resuelve solo (fallo puntual de SW/CORS, cambio breve de red móvil) no debe mostrar
+  // el splash de conectividad. get() reintenta hasta 3 veces (500ms/1s/2s de espera) antes de
+  // rendirse, así que una petición que falla una sola vez y luego se resuelve nunca llega a
+  // emitir el evento.
+  it('retries a transient get failure with backoff and resolves without emitting connectivity lost', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      );
+    const onConnectivityLost = vi.fn();
+    window.addEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
+
+    const pending = api.baules.getAll();
+    await vi.runAllTimersAsync();
+    await expect(pending).resolves.toEqual([]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onConnectivityLost).not.toHaveBeenCalled();
+    window.removeEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
+  });
+
+  it('does not retry a transient post failure and emits connectivity lost on the first failure', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+    const onConnectivityLost = vi.fn();
+    window.addEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
+
+    await expect(api.baules.create('Familia', 'Fotos')).rejects.toBeInstanceOf(ApiConnectionError);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(onConnectivityLost).toHaveBeenCalledOnce();
+    window.removeEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
+  });
+
+  it('does not treat an aborted request as a connectivity loss', async () => {
+    const abortError = new DOMException('The operation was aborted', 'AbortError');
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(abortError);
+    const onConnectivityLost = vi.fn();
+    window.addEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
+
+    await expect(api.baules.getAll()).rejects.toBe(abortError);
+
+    expect(onConnectivityLost).not.toHaveBeenCalled();
     window.removeEventListener(API_CONNECTIVITY_LOST_EVENT, onConnectivityLost);
   });
 });
