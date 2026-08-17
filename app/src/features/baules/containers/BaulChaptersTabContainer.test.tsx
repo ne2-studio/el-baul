@@ -74,18 +74,21 @@ describe('BaulChaptersTabContainer', () => {
     expect(screen.getByText('Fotos sueltas')).toBeInTheDocument();
   });
 
-  it('creates a chapter from the FAB', async () => {
+  it('creates a chapter from the FAB and selects it', async () => {
     const user = userEvent.setup();
-    vi.mocked(createChapter).mockResolvedValue(chapter());
+    const onSelectChapter = vi.fn();
+    const newChapter = chapter({ id: 'c-new', name: 'Navidad' });
+    vi.mocked(createChapter).mockResolvedValue(newChapter);
     useBaulesStore.setState({ chapters: { [baulId]: [chapter()] } });
 
-    renderContainer();
+    renderContainer(onSelectChapter);
     await user.click(screen.getByRole('button', { name: 'Acciones' }));
     await user.click(screen.getByText('Nuevo capítulo'));
     await user.type(screen.getByPlaceholderText('Verano 2018'), 'Navidad');
     await user.click(screen.getByRole('button', { name: /crear capítulo/i }));
 
     expect(createChapter).toHaveBeenCalledWith(baulId, 'Navidad');
+    expect(onSelectChapter).toHaveBeenCalledWith(newChapter);
   });
 
   it('navigates to the upload flow from the FAB', async () => {

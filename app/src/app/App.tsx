@@ -27,7 +27,6 @@ import { BaulRoute } from '../features/baules/routes/BaulRoute';
 import { AiChatRoute } from '../features/chat/routes/AiChatRoute';
 import { ChatMemoriesRoute } from '../features/chat/routes/ChatMemoriesRoute';
 import { RequestBaulDeletionRoute } from '../features/baules/routes/RequestBaulDeletionRoute';
-import { CreateChapterModalRoute } from '../features/chapters/routes/CreateChapterModalRoute';
 import { ChapterRoute } from '../features/chapters/routes/ChapterRoute';
 import { UploadConfirmationRoute } from '../features/photos/routes/UploadConfirmationRoute';
 import { UploadingRoute } from '../features/photos/routes/UploadingRoute';
@@ -233,11 +232,6 @@ function App() {
         <Route path="/baules/:baulId/solicitar-borrado" element={
           <ProtectedRoute>
             <RequestBaulDeletionRoute />
-          </ProtectedRoute>
-        } />
-        <Route path="/baules/:baulId/nuevo-capitulo" element={
-          <ProtectedRoute>
-            <CreateChapterModalRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/capitulos/:chapterId" element={

@@ -38,9 +38,13 @@ export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChapte
   const handleCreateChapter = async (name: string) => {
     const result = await run(() => createChapter(baulId, name), {
       key: 'create-chapter',
+      successMessage: 'Capítulo creado',
       errorMessage: 'Error al crear el capítulo',
     });
-    if (result.ok) setShowCreateChapterModal(false);
+    if (result.ok) {
+      setShowCreateChapterModal(false);
+      onSelectChapter(result.value);
+    }
   };
 
   return (
