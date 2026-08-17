@@ -27,7 +27,9 @@ public class EmailDeliveryCoordinator(
     public async Task ScheduleEligibleUsersAsync(
         IEnumerable<User> candidates,
         Func<User, bool> isEligible,
-        Action<User> schedule)
+        Action<User> schedule,
+        ILogger? notDueLogger = null,
+        string? notDueEventName = null)
     {
         var blocked = await sentEmailRepository.GetUserIdsWithBlockedStatusAsync();
 
@@ -37,7 +39,15 @@ public class EmailDeliveryCoordinator(
                 continue;
 
             if (!isEligible(user))
+            {
+                // Closes the diagnosability gap that made GitHub #33 need to be root-caused from
+                // production log evidence alone: previously this branch just `continue`d with no
+                // signal at all, so "far fewer users scheduled than expected" was invisible.
+                if (notDueLogger is not null)
+                    notDueLogger.LogInformation("{EventName} {UserId}", notDueEventName, user.Id);
+
                 continue;
+            }
 
             schedule(user);
         }

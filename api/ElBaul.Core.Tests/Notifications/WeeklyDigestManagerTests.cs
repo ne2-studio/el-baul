@@ -125,6 +125,54 @@ public class WeeklyDigestManagerTests
     }
 
     [Fact]
+    public async Task ScheduleWeeklyDigestsAsync_ShouldEnqueue_WhenPreviousSendCompletedLateDueToQueueProcessingLag()
+    {
+        // Regression test for GitHub #33: EmailJobs.SendWeeklyDigestAsync carries
+        // [DisableConcurrentExecution], which serializes ALL per-user weekly-digest sends onto
+        // one worker. A user near the back of a growing batch can have their previous week's
+        // SentEmail.SentAt land minutes (or more) after the nominal Sunday 08:00 UTC tick.
+        // Anchoring eligibility to a strict `>= 7 days` gate measured from that actual
+        // completion time makes any such processing lag push the margin negative and silently
+        // skip the user the following week — with no log line, which is why this had to be
+        // root-caused from production evidence instead of directly. Reproduces the exact
+        // mechanism from the production log evidence quoted on the ticket.
+        SeedUser(UserId);
+        var nominalPreviousTick = _clock.UtcNow().AddDays(-7);
+        var processingLag = TimeSpan.FromMinutes(90); // inherent to the serialized send queue
+        SeedSentDigest(UserId, nominalPreviousTick + processingLag);
+        var manager = CreateManager();
+
+        await manager.ScheduleWeeklyDigestsAsync();
+
+        Assert.Single(_jobScheduler.EnqueuedWeeklyDigests);
+    }
+
+    [Fact]
+    public async Task ScheduleWeeklyDigestsAsync_ShouldKeepEnqueuing_AsPerUserProcessingLagGrowsAcrossMultipleWeeks()
+    {
+        // Simulates several consecutive weekly cycles where the per-user processing lag keeps
+        // growing (e.g. a growing candidate pool draining through the serialized send queue).
+        // The fix must not let this drift compound: each week's eligibility must be decided on
+        // that week's own lag, not on an ever-shrinking margin inherited from prior weeks.
+        SeedUser(UserId);
+        var lagsByWeek = new[] { TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(30), TimeSpan.FromHours(3) };
+        var tick = _clock.UtcNow();
+
+        foreach (var lag in lagsByWeek)
+        {
+            tick = tick.AddDays(7);
+            _clock.Now = tick;
+            var manager = CreateManager();
+
+            await manager.ScheduleWeeklyDigestsAsync();
+
+            Assert.Single(_jobScheduler.EnqueuedWeeklyDigests);
+            _jobScheduler.EnqueuedWeeklyDigests.Clear();
+            SeedSentDigest(UserId, tick + lag);
+        }
+    }
+
+    [Fact]
     public async Task ScheduleWeeklyDigestsAsync_ShouldNotEnqueue_UsersWithDigestDisabled()
     {
         SeedUser(UserId, digestEnabled: false);

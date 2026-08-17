@@ -20,6 +20,18 @@ public class WeeklyDigestManager(
     IClock clock) : IWeeklyDigestManager
 {
     private static readonly TimeSpan DigestInterval = TimeSpan.FromDays(7);
+
+    // EmailJobs.SendWeeklyDigestAsync carries [DisableConcurrentExecution], which serializes
+    // every per-user send in a batch onto a single worker. As the digest-enabled population
+    // grows, a user's SentEmail.SentAt (this eligibility check's `lastSent`) can land minutes —
+    // in principle longer — after the nominal Sunday 08:00 UTC tick, purely because of their
+    // position in that serialized queue. A strict `>= 7 days` gate anchored to that actual
+    // completion time turns any such processing lag into a silent skip the following week (see
+    // GitHub #33). This tolerance absorbs that inherent lag without weakening the "roughly once
+    // a week" gate: it's an order of magnitude below the 1-day granularity the existing
+    // eligibility tests rely on, so genuinely early re-sends are still rejected.
+    private static readonly TimeSpan DigestIntervalTolerance = TimeSpan.FromHours(6);
+
     private const int MaxBlocksPerBaul = 3;
 
     public async Task ScheduleWeeklyDigestsAsync()
@@ -39,7 +51,7 @@ public class WeeklyDigestManager(
             user =>
             {
                 var hasLastSent = lastSentByUser.TryGetValue(user.Id, out var lastSent);
-                return !hasLastSent || now - lastSent >= DigestInterval;
+                return !hasLastSent || now - lastSent >= DigestInterval - DigestIntervalTolerance;
             },
             user =>
             {
@@ -48,7 +60,9 @@ public class WeeklyDigestManager(
                     : now - DigestInterval;
                 backgroundJobScheduler.EnqueueWeeklyDigest(user.Id, since);
                 logger.LogInformation("WeeklyDigestScheduled {UserId} {Since}", user.Id, since);
-            });
+            },
+            logger,
+            "WeeklyDigestNotDue");
     }
 
     public async Task SendWeeklyDigestAsync(UserId userId, DateTime since)
