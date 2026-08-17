@@ -3,6 +3,7 @@ import { Button } from '@/design-system/components/actions/Button';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Chapter } from '@/types';
+import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
@@ -27,19 +28,25 @@ export function UploadConfirmationScreen({
   onUpload,
 }: UploadConfirmationScreenProps) {
   const [photos, setPhotos] = useState(selectedPhotos);
+  const [isLoadingPreviews, setIsLoadingPreviews] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openPicker = () => fileInputRef.current?.click();
   const addPhotos = (newPhotos: SelectedPhoto[]) => setPhotos((prev) => [...prev, ...newPhotos]);
-  const handleFileSelect = useFileInputSelection(addPhotos, onPhotosDropped);
+  const handleFileSelect = useFileInputSelection(addPhotos, onPhotosDropped, setIsLoadingPreviews);
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
-    const { selectedPhotos: dropped, droppedCount } = await materializeFileList(files);
-    if (droppedCount > 0) onPhotosDropped?.(droppedCount);
-    if (dropped.length > 0) addPhotos(dropped);
+    setIsLoadingPreviews(true);
+    try {
+      const { selectedPhotos: dropped, droppedCount } = await materializeFileList(files);
+      if (droppedCount > 0) onPhotosDropped?.(droppedCount);
+      if (dropped.length > 0) addPhotos(dropped);
+    } finally {
+      setIsLoadingPreviews(false);
+    }
   };
 
   const handleRemovePhoto = (id: string) => {
@@ -55,6 +62,8 @@ export function UploadConfirmationScreen({
 
   return (
     <div className="min-h-screen bg-background">
+      {isLoadingPreviews && <BlockingLoadingOverlay message="Cargando fotos..." />}
+
       <PageHeader
         variant="stacked"
         onBack={onBack}

@@ -8,7 +8,8 @@ import { SelectedPhoto, materializeFileList } from '@/features/photos/uploadFlow
  */
 export function useFileInputSelection(
   onSelected: (selectedPhotos: SelectedPhoto[]) => void,
-  onPhotosDropped?: (count: number) => void
+  onPhotosDropped?: (count: number) => void,
+  onLoadingChange?: (isLoading: boolean) => void
 ) {
   return async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -16,10 +17,15 @@ export function useFileInputSelection(
     const fileArray = Array.from(files);
     e.target.value = ''; // must run after snapshotting — files is a live FileList tied to the input
 
-    const { selectedPhotos, droppedCount } = await materializeFileList(fileArray);
-    if (droppedCount > 0) onPhotosDropped?.(droppedCount);
-    if (selectedPhotos.length === 0) return;
+    onLoadingChange?.(true);
+    try {
+      const { selectedPhotos, droppedCount } = await materializeFileList(fileArray);
+      if (droppedCount > 0) onPhotosDropped?.(droppedCount);
+      if (selectedPhotos.length === 0) return;
 
-    onSelected(selectedPhotos);
+      onSelected(selectedPhotos);
+    } finally {
+      onLoadingChange?.(false);
+    }
   };
 }
