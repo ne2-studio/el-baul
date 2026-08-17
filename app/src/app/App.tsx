@@ -159,9 +159,6 @@ function App() {
     setAuthenticated(auth.isAuthenticated);
 
     if (auth.isAuthenticated) {
-      // Sesión OK: libera el "un solo intento" del reintento automático (ver attemptAutoRelogin)
-      // para que una caída posterior en la misma pestaña vuelva a tener su propio reintento.
-      clearAutoReloginAttempt();
       handleLoadUserData();
     } else {
       resetAllStores();
@@ -175,6 +172,15 @@ function App() {
       errorMessage: 'No se pudieron cargar tus baúles. Comprueba tu conexión e inténtalo de nuevo.',
     });
     if (!result.ok) return;
+
+    // Solo aquí sabemos que el servidor ha aceptado el token, no solo que oidc-client-ts lo
+    // tenía cacheado localmente como no caducado — auth.isAuthenticated pasa a true nada más
+    // rehidratar desde localStorage, antes de cualquier ida y vuelta al servidor. Si liberásemos
+    // aquí el "un solo intento" del reintento automático (ver attemptAutoRelogin) ya en el efecto
+    // de arriba, una recarga con un token localmente válido pero rechazado por el servidor
+    // (exactamente el escenario que ese reintento cubre) borraría el intento ya consumido justo
+    // antes de que llegara el 401, dejando la protección de "una vez por pestaña" sin efecto.
+    clearAutoReloginAttempt();
 
     // No further navigation here: CallbackRoute/PublicRoute already send an authenticated user
     // to "/baules", and HomeRedirectRoute (mounted there) owns the actual decision of where

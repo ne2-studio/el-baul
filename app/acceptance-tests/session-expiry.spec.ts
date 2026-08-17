@@ -4,6 +4,15 @@ import { loginAs, createBaulViaApi } from './helpers';
 // Reproduces a session that's still valid client-side (OIDC user in localStorage) but has been
 // rejected server-side (expired/invalid token) — the exact scenario the app used to mishandle:
 // a generic error toast that never went away, with no path back to the sign-in screen.
+//
+// Since commit 7e9707a (feat(auth): request offline_access and retry login once on session
+// drop), a session drop for a previously-authenticated tab first tries an automatic
+// signinRedirect() once (straight to the real IDP, no app UI in between) and only falls back
+// to this app's own sign-in screen if that single retry has already been used up in this tab —
+// see app/src/features/auth/autoRelogin.ts. This test is about that fallback path (clean local
+// sign-out, redirectTo preserved, no stray error toast), so it pre-marks the tab as having
+// already used its one automatic retry, which is what makes the 401 below fall back to the
+// sign-in screen instead of bouncing the test through the real IDP's /authorize.
 test('a 401 from the API signs the user out locally and redirects to the sign-in screen', async ({ page }) => {
   const pageErrors: Error[] = [];
   page.on('pageerror', (err) => pageErrors.push(err));
@@ -17,6 +26,10 @@ test('a 401 from the API signs the user out locally and redirects to the sign-in
   // baúl) happens to resolve to if other tests left it with more than one.
   await page.goto(`/baules/${baulId}`);
   await expect(page.getByText(baulName)).toBeVisible();
+
+  // See top-of-file comment: this is the "already retried once" tab state, per
+  // app/src/features/auth/autoRelogin.ts's SESSION_FLAG_KEY.
+  await page.evaluate(() => sessionStorage.setItem('elbaul.autoReloginAttempted', '1'));
 
   // Every subsequent API call now looks like an expired/invalid session, regardless of which
   // call site triggers it first (app-config fetch, baúles load, ...).
