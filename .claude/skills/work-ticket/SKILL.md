@@ -1,15 +1,17 @@
 ---
 name: work-ticket
-description: "Implements a single backlog ticket autonomously end-to-end, signaling completion for the backlog orchestrator."
+description: "Coordinates a single backlog ticket end-to-end, delegating implementation to bug-fixer/implementer, verifying, committing, and signaling completion for the backlog orchestrator."
 disable-model-invocation: true
 ---
 
 ## Goal
 
-Take the ticket supplied in the prompt, implement it, verify it, get it committed and
-pushed to `main`, and hand control back to `./scripts/backlog`'s orchestrator. This skill
-runs unattended (via `./scripts/backlog run`) inside a fresh session with no prior
-context — everything needed must come from the ticket text and the repository itself.
+Coordinate a single backlog ticket end-to-end: understand it, delegate implementation to
+the agent that owns it, confirm it's verified, get it committed and pushed to `main`, and
+hand control back to `./scripts/backlog`'s orchestrator. This skill runs unattended (via
+`./scripts/backlog run`) inside a fresh session with no prior context — everything needed
+must come from the ticket text and the repository itself. It does not implement changes
+or run verification itself — that's `bug-fixer`/`implementer`'s and `verifier`'s job.
 
 ## Workflow
 
@@ -37,20 +39,27 @@ mkdir -p /tmp/work-ticket-images && curl -sL "<url>" -o /tmp/work-ticket-images/
 Then `Read` the downloaded file. If a download fails (private attachment, expired URL),
 note it and continue with the text you do have rather than blocking on it.
 
-### 2. Implement
+### 2. Delegate implementation
 
-Make the change. Follow the repository's architecture and API conventions. Keep the
-change scoped to the ticket; do not bundle unrelated refactors.
+This skill coordinates the ticket's lifecycle; it does not implement the change itself.
+Spawn the agent that owns the outcome:
 
-Update `CHANGELOG.md` per the `update-changelog` skill if the change is user-facing.
+- The ticket reports a defect in existing behavior → spawn `bug-fixer`.
+- The ticket asks for a new or changed behavior → spawn `implementer`.
 
-### 3. Verify
+Give it the ticket text (and any comments/images already resolved in step 1). That agent
+owns reproducing/implementing, testing, and getting its own diff verified through a
+`verifier` agent — do not duplicate that work here.
 
-Spawn a `verifier` agent with the diff and a minimal statement of intent. It selects and
-runs the smallest evidence set that covers the diff's risks, per the repository's
-canonical `./scripts/verify ...` commands, using the `run` skill itself when a real
-environment is required. Fix any issues it reports. This must succeed — do not proceed
-to commit on red or partial evidence.
+If it returns `BLOCKED: REQUIREMENT_AMBIGUITY`, treat that the same as unresolved
+ambiguity found directly: ask the single clarifying question per step 1's rule, or, if
+truly out of scope, proceed to step 6 as blocked.
+
+### 3. Confirm the handoff
+
+Read the agent's handoff. Proceed to commit only once it reports its diff as verified
+(via `verifier`) — never on red or partial evidence, and never by re-running verification
+yourself on its behalf.
 
 ### 4. Commit and push
 
