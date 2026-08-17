@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   materializeSelectedPhoto,
@@ -20,6 +21,54 @@ import * as Sentry from '@sentry/react';
 import { heicTo, isHeic } from 'heic-to';
 
 const originalCreateObjectURL = URL.createObjectURL;
+const originalRevokeObjectURL = URL.revokeObjectURL;
+const originalCreateElement = document.createElement.bind(document);
+const originalImage = global.Image;
+
+// jsdom never actually decodes image bytes, so `new Image()` never fires a real `load`/`error`
+// event on its own (see usePhotoAspectRatio.test.ts for the same stand-in) — this fires one
+// synchronously on assigning `src`, keyed by src, so downscaleForPreview's image-loading step
+// can be driven deterministically without a real image-decoding stack.
+class FakeImage {
+  naturalWidth = 0;
+  naturalHeight = 0;
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  #src = '';
+
+  set src(value: string) {
+    this.#src = value;
+    const dims = FakeImage.dimensionsBySrc[value];
+    if (dims) {
+      this.naturalWidth = dims.width;
+      this.naturalHeight = dims.height;
+      this.onload?.();
+    } else {
+      this.onerror?.();
+    }
+  }
+
+  get src() {
+    return this.#src;
+  }
+
+  static dimensionsBySrc: Record<string, { width: number; height: number }> = {};
+}
+
+// Stands in for the <canvas> downscaleForPreview draws into: jsdom's own canvas has no real
+// 2D rendering backend, so this fakes just enough of the surface (a 2D context and
+// `toBlob`) to prove downscaleForPreview asks it to draw at the downscaled size and use its
+// output as the preview.
+function createFakeCanvas(thumbnailBlob: Blob) {
+  const drawImage = vi.fn();
+  return {
+    width: 0,
+    height: 0,
+    getContext: vi.fn(() => ({ drawImage })),
+    toBlob: vi.fn((callback: BlobCallback) => callback(thumbnailBlob)),
+    drawImage,
+  };
+}
 
 describe('uploadFlow', () => {
   beforeEach(() => {
@@ -30,6 +79,13 @@ describe('uploadFlow', () => {
       configurable: true,
       value: vi.fn(() => 'blob:preview'),
     });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    // @ts-expect-error -- test double, not a full HTMLImageElement
+    global.Image = FakeImage;
+    FakeImage.dimensionsBySrc = {};
   });
 
   afterEach(() => {
@@ -41,6 +97,16 @@ describe('uploadFlow', () => {
     } else {
       Reflect.deleteProperty(URL, 'createObjectURL');
     }
+    if (originalRevokeObjectURL) {
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        value: originalRevokeObjectURL,
+      });
+    } else {
+      Reflect.deleteProperty(URL, 'revokeObjectURL');
+    }
+    document.createElement = originalCreateElement;
+    global.Image = originalImage;
     vi.unstubAllGlobals();
   });
 
@@ -63,6 +129,63 @@ describe('uploadFlow', () => {
     expect(selected?.file.lastModified).toBe(123);
     expect(await selected?.file.text()).toBe('image-bytes');
     expect(URL.createObjectURL).toHaveBeenCalledWith(selected?.file);
+  });
+
+  // Regression coverage for issue #36: UploadConfirmationScreen/UploadingScreen render
+  // `preview` for every picked photo at once, so a full-resolution object URL there makes
+  // that grid unresponsive. Before the fix, `preview` was always built straight from the
+  // original blob; these assert it's built from a downscaled thumbnail instead — without
+  // ever touching `file`, which is what actually gets uploaded.
+  describe('preview downscaling', () => {
+    it('downscales a large image to a capped thumbnail instead of previewing it full-resolution', async () => {
+      const original = new File(['big-image-bytes'], 'foto.jpg', { type: 'image/jpeg' });
+      const thumbnailBlob = new Blob(['thumb-bytes'], { type: 'image/jpeg' });
+      const fakeCanvas = createFakeCanvas(thumbnailBlob);
+      vi.spyOn(document, 'createElement').mockImplementation(((tag: string) =>
+        tag === 'canvas' ? fakeCanvas : originalCreateElement(tag)) as typeof document.createElement);
+      FakeImage.dimensionsBySrc['blob:preview'] = { width: 4000, height: 3000 };
+
+      const selected = await materializeSelectedPhoto(original);
+
+      // Longer side capped at 480px, aspect ratio preserved.
+      expect(fakeCanvas.width).toBe(480);
+      expect(fakeCanvas.height).toBe(360);
+      expect(fakeCanvas.drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 480, 360);
+      // The final `preview` object URL — the last createObjectURL call — is built from the
+      // downscaled thumbnail, not from the full-resolution `selected.file` that's about to be
+      // uploaded (the *first* call, used only to measure/draw the source image). Compared by
+      // identity, since two same-shaped Blobs would otherwise look equal to a deep matcher
+      // regardless of their actual bytes.
+      const createObjectURLCalls = vi.mocked(URL.createObjectURL).mock.calls.map(([arg]) => arg);
+      expect(createObjectURLCalls[0]).toBe(selected?.file);
+      expect(createObjectURLCalls.at(-1)).toBe(thumbnailBlob);
+      // The intermediate object URL used only to measure/draw the source image is released.
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
+    });
+
+    it('does not downscale an image already within the preview size cap', async () => {
+      const original = new File(['small-image-bytes'], 'foto.jpg', { type: 'image/jpeg' });
+      const createElementSpy = vi.spyOn(document, 'createElement');
+      FakeImage.dimensionsBySrc['blob:preview'] = { width: 300, height: 200 };
+
+      const selected = await materializeSelectedPhoto(original);
+
+      expect(createElementSpy).not.toHaveBeenCalledWith('canvas');
+      expect(URL.createObjectURL).toHaveBeenCalledWith(selected?.file);
+    });
+
+    it('falls back to the un-downscaled source and reports to Sentry when the image fails to load', async () => {
+      const original = new File(['broken-bytes'], 'foto.jpg', { type: 'image/jpeg' });
+      // No dims registered for 'blob:preview' — FakeImage fires onerror.
+
+      const selected = await materializeSelectedPhoto(original);
+
+      expect(URL.createObjectURL).toHaveBeenCalledWith(selected?.file);
+      expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
+        tags: { phase: 'preview-downscale' },
+        extra: { name: 'foto.jpg', size: expect.any(Number), type: 'image/jpeg' },
+      });
+    });
   });
 
   it('reports unreadable picked files and drops them from the selected-photo flow', async () => {

@@ -35,6 +35,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Si la sesión se cae mientras estabas usando la app, ahora se intenta volver a iniciarla automáticamente en vez de mandarte directamente a la pantalla de "Continuar con Google".
 - Se ha corregido un fallo por el que el email de resumen semanal dejaba de llegar a algunas personas usuarias de forma silenciosa e intermitente.
 - Se ha corregido que, al abrir la app en el navegador, a veces se recargara sola sin avisar (por ejemplo, cambiando de golpe una recomendación que ya estabas viendo). Ahora, si hay una versión nueva disponible, aparece un aviso para actualizar cuando tú quieras.
+- En las pantallas de subida de fotos, al seleccionar fotos muy pesadas la app se quedaba pillada mientras las previsualizaba. Ahora las previsualizaciones se muestran a un tamaño reducido, sin afectar a la calidad de la foto que se sube y se guarda.
 
 ## [beta-v0.4.0] - 2026-08-13
 
