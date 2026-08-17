@@ -26,9 +26,9 @@ If none, report that and stop — nothing to refine.
 
 For each ticket, in order:
 
-1. Fetch its full body and comments: `gh issue view <n> --json title,body,url,comments`.
-2. Spawn a `refiner` agent with the ticket's number, title, body, comments, and URL. It
-   asks you questions directly as needed — answer them as they come.
+1. Fetch its full title, body, and comments per the `read-github-ticket` skill.
+2. Spawn a `refiner` agent with the ticket's number, title, body, formatted comments, and
+   URL. It asks you questions directly as needed — answer them as they come.
 3. Wait for it to finish before moving to the next ticket. This is sequential by design:
    one ticket's questions shouldn't overlap with another's.
 

@@ -17,12 +17,10 @@ or run verification itself — that's `bug-fixer`/`implementer`'s and `verifier`
 
 ### 1. Understand the ticket
 
-Read the ticket text given in the prompt. It may be terse. The prompt also includes any
-comments already posted on the issue (`-- comment by <author> (<date>) --` blocks after
-the body) — later comments can narrow, correct, or override the original body, so treat
-them as part of the ticket, not as optional extra context. Inspect the codebase, the
-relevant `docs/` files referenced by root/service `CLAUDE.md`, and existing code before
-assuming intent.
+The prompt gives you the ticket's title, body, and comments already fetched and
+formatted. Read them per the `read-github-ticket` skill — including resolving any
+embedded images before proceeding. Inspect the codebase, the relevant `docs/` files
+referenced by root/service `CLAUDE.md`, and existing code before assuming intent.
 
 This ticket already went through the `refine-backlog` session (it's only queued here once
 labeled `refined`), so it should be implementation-ready. This session is unattended —
@@ -30,16 +28,6 @@ there is no live Pedro to interrupt, so never ask a question here. If it still t
 to be genuinely ambiguous or contradictory in a way that materially affects product
 behavior, scope, or architecture, that's a gap in refinement, not something to resolve by
 guessing: treat it as blocked (step 6) and say so, so it can go back through refinement.
-
-If the ticket body or any comment contains image URLs (e.g.
-`![...](https://github.com/user-attachments/...)` or other GitHub-hosted image links),
-download each one and view it before proceeding — the ticket text alone may not convey
-what a screenshot shows:
-```bash
-mkdir -p /tmp/work-ticket-images && curl -sL "<url>" -o /tmp/work-ticket-images/<n>.png
-```
-Then `Read` the downloaded file. If a download fails (private attachment, expired URL),
-note it and continue with the text you do have rather than blocking on it.
 
 ### 2. Delegate implementation
 

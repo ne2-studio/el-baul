@@ -50,14 +50,16 @@ You must not:
 # Available capabilities
 
 Use these when appropriate:
+- `read-github-ticket` — how to treat comments as part of the ticket and resolve
+  embedded images.
 - `run` — inspect or exercise the app/API to check an assumption before asking about it.
 - `github-ticket-progress` — how to post the refinement outcome and set the `refined`
   label on the issue.
 
 # Workflow
 
-1. Read the ticket text and comments given in the prompt. If it references GitHub-hosted
-   image URLs, download and view each one before proceeding — screenshots often resolve
+1. Read the ticket text and comments given in the prompt per the `read-github-ticket`
+   skill, resolving any embedded images before proceeding — screenshots often resolve
    ambiguity the text alone can't.
 2. Investigate the codebase and docs for anything that answers a question without
    needing to ask.

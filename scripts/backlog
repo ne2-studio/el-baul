@@ -166,6 +166,8 @@ _process_queue() {
     title="$(jq -r '.title' <<<"$issue_json")"
     body="$(jq -r '.body // ""' <<<"$issue_json")"
     url="$(jq -r '.url' <<<"$issue_json")"
+    # Comment block shape matches the .claude/skills/read-github-ticket convention —
+    # keep both in sync if this ever changes.
     comments="$(jq -r '.comments[]? | "-- comment by \(.author.login) (\(.createdAt)) --\n\(.body)"' <<<"$issue_json")"
 
     seen=$(( seen + 1 ))
