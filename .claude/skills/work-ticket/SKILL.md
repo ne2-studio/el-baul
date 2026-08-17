@@ -24,10 +24,12 @@ them as part of the ticket, not as optional extra context. Inspect the codebase,
 relevant `docs/` files referenced by root/service `CLAUDE.md`, and existing code before
 assuming intent.
 
-If the ticket is genuinely ambiguous or contradictory in a way that materially affects
-product behavior, scope, or architecture, and cannot be reasonably inferred from the
-codebase, ask a single clear question and wait. Remote Control forwards it to Pedro's
-phone. Do not ask about implementation details you can reasonably decide yourself.
+This ticket already went through the `refine-backlog` session (it's only queued here once
+labeled `refined`), so it should be implementation-ready. This session is unattended —
+there is no live Pedro to interrupt, so never ask a question here. If it still turns out
+to be genuinely ambiguous or contradictory in a way that materially affects product
+behavior, scope, or architecture, that's a gap in refinement, not something to resolve by
+guessing: treat it as blocked (step 6) and say so, so it can go back through refinement.
 
 If the ticket body or any comment contains image URLs (e.g.
 `![...](https://github.com/user-attachments/...)` or other GitHub-hosted image links),
@@ -51,9 +53,9 @@ Give it the ticket text (and any comments/images already resolved in step 1). Th
 owns reproducing/implementing, testing, and getting its own diff verified through a
 `verifier` agent — do not duplicate that work here.
 
-If it returns `BLOCKED: REQUIREMENT_AMBIGUITY`, treat that the same as unresolved
-ambiguity found directly: ask the single clarifying question per step 1's rule, or, if
-truly out of scope, proceed to step 6 as blocked.
+If it returns `BLOCKED: REQUIREMENT_AMBIGUITY`, do not attempt to resolve it yourself —
+proceed to step 6 as blocked, including its question in the reason, so the ticket can go
+back through `refine-backlog`.
 
 ### 3. Confirm the handoff
 
@@ -102,9 +104,9 @@ cannot tell you're done any other way — a session cannot end itself.
   ```bash
   mkdir -p .backlog && printf 'status=done\n' > .backlog/.signal
   ```
-- If genuinely blocked (contradictory requirements after asking, verification cannot be
-  made to pass, ticket describes something out of scope for this repo, etc.) — explain
-  why in your final message, then:
+- If genuinely blocked (an agent reported `BLOCKED: REQUIREMENT_AMBIGUITY`, verification
+  cannot be made to pass, ticket describes something out of scope for this repo, etc.) —
+  explain why in your final message, then:
   ```bash
   mkdir -p .backlog && printf 'status=blocked\nreason=%s\n' "<short reason>" > .backlog/.signal
   ```
