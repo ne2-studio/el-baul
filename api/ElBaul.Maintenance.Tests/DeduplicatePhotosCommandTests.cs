@@ -1,6 +1,9 @@
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Recuerdos.Application;
+using ElBaul.Core.Sharing.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Maintenance.Commands;
 using ElBaul.Core.Photos.OutputPorts;
@@ -25,9 +28,19 @@ public class DeduplicatePhotosCommandTests
         _baules = new InMemoryBaulRepository(_personas);
     }
 
+    private IEnumerable<IPhotoMergeListener> CreateMergeListeners(IRecuerdoRepository? recuerdos = null) =>
+        [
+            new SharedLinkPhotoMergeListener(_sharedLinks),
+            new BaulCoverPhotoMergeListener(_baules),
+            new ChapterCoverPhotoMergeListener(_chapters),
+            new PersonaAvatarPhotoMergeListener(_personas),
+            new PhotoPersonaTagMergeListener(_tags),
+            new RecuerdoPhotoMergeListener(recuerdos ?? _recuerdos),
+        ];
+
     private DeduplicatePhotosCommand CreateCommand() =>
         new(_photos, _recuerdos, _tags,
-            new PhotoDuplicateMergeService(_photos, _chapters, _baules, _personas, _recuerdos, _tags, _sharedLinks,
+            new PhotoDuplicateMergeService(_photos, CreateMergeListeners(),
                 new PhotoLifecycleService(_photos, new ChapterPhotoCountListener(_chapters), new BaulPhotoCoverListener(_baules), new FixedClock(DateTime.UtcNow)),
                 new FakeUnitOfWork(), new FixedClock(DateTime.UtcNow)),
             NullLogger<DeduplicatePhotosCommand>.Instance);
@@ -194,7 +207,7 @@ public class DeduplicatePhotosCommandTests
         // Fails only while migrating the broken group's memories — proves one group's failure
         // (mid-merge, before soft-delete) doesn't corrupt or block any other group's merge.
         var recuerdos = new FailingForOnePhotoRecuerdoRepository(brokenDuplicate.Id, _recuerdos);
-        var mergeService = new PhotoDuplicateMergeService(_photos, _chapters, _baules, _personas, recuerdos, _tags, _sharedLinks,
+        var mergeService = new PhotoDuplicateMergeService(_photos, CreateMergeListeners(recuerdos),
             new PhotoLifecycleService(_photos, new ChapterPhotoCountListener(_chapters), new BaulPhotoCoverListener(_baules), new FixedClock(DateTime.UtcNow)),
             new FakeUnitOfWork(), new FixedClock(DateTime.UtcNow));
         var command = new DeduplicatePhotosCommand(_photos, _recuerdos, _tags, mergeService, NullLogger<DeduplicatePhotosCommand>.Instance);

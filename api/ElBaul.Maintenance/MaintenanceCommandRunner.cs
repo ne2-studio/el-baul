@@ -2,8 +2,11 @@ using System.Diagnostics;
 using System.Reflection;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.Application;
+using ElBaul.Core.Sharing.Application;
 using ElBaul.Infra;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,6 +83,14 @@ public static class MaintenanceCommandRunner
         builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
         builder.Services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         builder.Services.AddScoped<PhotoLifecycleService>();
+        // IPhotoMergeListener: kept in lockstep with ElBaulApiHost's own registrations — see
+        // IPhotoMergeListener's doc comment.
+        builder.Services.AddScoped<IPhotoMergeListener, SharedLinkPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, BaulCoverPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, ChapterCoverPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, PersonaAvatarPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, PhotoPersonaTagMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, RecuerdoPhotoMergeListener>();
         builder.Services.AddScoped<PhotoDuplicateMergeService>();
 
         builder.Services.AddSingleton(new MaintenanceCommandArguments(args.Skip(1).Where(arg => arg != "--dry-run").ToArray()));

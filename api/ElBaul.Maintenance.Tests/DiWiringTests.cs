@@ -1,8 +1,11 @@
 using System.Reflection;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Recuerdos.Application;
+using ElBaul.Core.Sharing.Application;
 using ElBaul.Infra.Lite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +44,12 @@ public class DiWiringTests
         services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
         services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         services.AddScoped<PhotoLifecycleService>();
+        services.AddScoped<IPhotoMergeListener, SharedLinkPhotoMergeListener>();
+        services.AddScoped<IPhotoMergeListener, BaulCoverPhotoMergeListener>();
+        services.AddScoped<IPhotoMergeListener, ChapterCoverPhotoMergeListener>();
+        services.AddScoped<IPhotoMergeListener, PersonaAvatarPhotoMergeListener>();
+        services.AddScoped<IPhotoMergeListener, PhotoPersonaTagMergeListener>();
+        services.AddScoped<IPhotoMergeListener, RecuerdoPhotoMergeListener>();
         services.AddScoped<PhotoDuplicateMergeService>();
 
         services.AddSingleton(new MaintenanceCommandArguments([]));

@@ -285,11 +285,6 @@
       "Kind": "Deep"
     },
     {
-      "From": "Photos",
-      "To": "Sharing",
-      "Kind": "Deep"
-    },
-    {
       "From": "Recuerdos",
       "To": "Bauls",
       "Kind": "Deep"
@@ -401,8 +396,7 @@
       "Chapters",
       "Personas",
       "Photos",
-      "Recuerdos",
-      "Sharing"
+      "Recuerdos"
     ]
   ]
 }

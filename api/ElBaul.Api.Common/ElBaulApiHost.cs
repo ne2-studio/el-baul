@@ -241,6 +241,15 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<PhotoLifecycleService>();
         builder.Services.AddScoped<PhotoFileService>();
         builder.Services.AddScoped<PhotoUploadWorkflow>();
+        // IPhotoMergeListener: every feature that reacts to a duplicate-photo merge — see its own
+        // doc comment for why these are several registrations of one shared interface, resolved
+        // as a collection, rather than one interface per feature.
+        builder.Services.AddScoped<IPhotoMergeListener, SharedLinkPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, BaulCoverPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, ChapterCoverPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, PersonaAvatarPhotoMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, PhotoPersonaTagMergeListener>();
+        builder.Services.AddScoped<IPhotoMergeListener, RecuerdoPhotoMergeListener>();
         builder.Services.AddScoped<PhotoDuplicateMergeService>();
         builder.Services.AddScoped<IPhotoDtoProjector, PhotoDtoProjector>();
         builder.Services.AddScoped<IPersonaDtoProjector, PersonaDtoProjector>();

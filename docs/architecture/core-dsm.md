@@ -16,7 +16,7 @@
 | Moderation |  |  | ● |  |  |  |  | — |  |  | ● |  | ● |  |  |  | ● |
 | Notifications |  |  | ● | ● |  |  | ● |  | — |  | ● | ● | ● |  |  |  | ● |
 | Personas |  |  | ● |  |  |  |  |  |  | — | ● |  | ● |  |  |  | ● |
-| Photos |  |  | ● | ● |  |  |  |  |  | ● | — | ● | ● | ● |  |  |  |
+| Photos |  |  | ● | ● |  |  |  |  |  | ● | — | ● | ● |  |  |  |  |
 | Recuerdos |  |  | ● | ● |  |  |  |  |  | ● | ● | — | ● |  |  |  |  |
 | Shared |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |
 | Sharing |  |  | ● |  |  |  |  |  |  | ● | ● | ● | ● | — |  |  | ● |
@@ -28,4 +28,4 @@
 
 El grafo NO es acíclico. Grupos fuertemente conexos (SCC) con más de un feature:
 
-- Bauls, Chapters, Personas, Photos, Recuerdos, Sharing
+- Bauls, Chapters, Personas, Photos, Recuerdos

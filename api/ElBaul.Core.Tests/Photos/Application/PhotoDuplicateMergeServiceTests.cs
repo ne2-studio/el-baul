@@ -1,4 +1,9 @@
+using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Chapters.Application;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
+using ElBaul.Core.Recuerdos.Application;
+using ElBaul.Core.Sharing.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;
@@ -12,10 +17,21 @@ public class PhotoDuplicateMergeServiceTests
     private readonly BaulFixture _fixture = new();
     private readonly InMemorySharedLinkRepository _sharedLinks = new();
 
-    private PhotoDuplicateMergeService CreateService() =>
-        new(_fixture.Photos, _fixture.Chapters, _fixture.Baules, _fixture.Personas, _fixture.Recuerdos, _fixture.PhotoPersonaTags,
-            _sharedLinks, new PhotoLifecycleService(_fixture.Photos, _fixture.ChapterPhotoCountListener, _fixture.BaulPhotoCoverListener, _fixture.Clock),
+    private PhotoDuplicateMergeService CreateService()
+    {
+        IPhotoMergeListener[] mergeListeners =
+        [
+            new SharedLinkPhotoMergeListener(_sharedLinks),
+            new BaulCoverPhotoMergeListener(_fixture.Baules),
+            new ChapterCoverPhotoMergeListener(_fixture.Chapters),
+            new PersonaAvatarPhotoMergeListener(_fixture.Personas),
+            new PhotoPersonaTagMergeListener(_fixture.PhotoPersonaTags),
+            new RecuerdoPhotoMergeListener(_fixture.Recuerdos),
+        ];
+        return new(_fixture.Photos, mergeListeners,
+            new PhotoLifecycleService(_fixture.Photos, _fixture.ChapterPhotoCountListener, _fixture.BaulPhotoCoverListener, _fixture.Clock),
             new FakeUnitOfWork(), _fixture.Clock);
+    }
 
     private static PhotoDate Date(int year, int? month = null, int? day = null) =>
         PhotoDate.Parse(year, month, day).Value;

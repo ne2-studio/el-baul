@@ -1,16 +1,9 @@
-using ElBaul.Core.Bauls.OutputPorts;
-using ElBaul.Core.Chapters.OutputPorts;
-using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
-using ElBaul.Core.Sharing.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;
 namespace ElBaul.Core.Photos.Application;
-
-public record PhotoMergeResult(Photo Survivor, IReadOnlyList<Photo> Duplicates);
 
 /// <summary>
 /// Merges one exact-duplicate group (same BaulId + OriginalContentHash, every member currently
@@ -19,15 +12,14 @@ public record PhotoMergeResult(Photo Survivor, IReadOnlyList<Photo> Duplicates);
 /// deduplicate-photos maintenance command go through, so "what does merging two duplicate
 /// photos mean" is answered once — see the PRD's explicit instruction not to invent independent
 /// conflicting rules per call site.
+///
+/// Everything a merge does outside Photos' own tables (shared links, baúl/chapter covers, persona
+/// avatars, persona tags, recuerdos) is delegated to IPhotoMergeListener — see its doc comment for
+/// why that's one shared port taken as a collection rather than a repository per feature.
 /// </summary>
 public class PhotoDuplicateMergeService(
     IPhotoRepository photoRepository,
-    IChapterRepository chapterRepository,
-    IBaulRepository baulRepository,
-    IPersonaRepository personaRepository,
-    IRecuerdoRepository recuerdoRepository,
-    IPhotoPersonaTagRepository photoPersonaTagRepository,
-    ISharedLinkRepository sharedLinkRepository,
+    IEnumerable<IPhotoMergeListener> mergeListeners,
     PhotoLifecycleService photoLifecycle,
     IUnitOfWork unitOfWork,
     IClock clock)
@@ -63,50 +55,14 @@ public class PhotoDuplicateMergeService(
             var now = clock.UtcNow();
             var survivor = SelectSurvivor(group);
             var duplicates = group.Where(p => p.Id != survivor.Id).ToList();
-            var allIds = group.Select(p => p.Id).ToList();
+            var mergeResult = new PhotoMergeResult(survivor, duplicates);
 
-            // Tagged people: union every duplicate's tags onto the survivor's — SetTagsAsync
-            // replaces the survivor's full tag set, and a persona already tagged on the survivor
-            // is naturally deduplicated by the Distinct() below (see PhotoPersonaTagManager, the
-            // same "photo can only carry one relationship per PersonaId" invariant).
-            var tagsByPhoto = await photoPersonaTagRepository.GetPersonaIdsByPhotoIdsAsync(allIds);
-            var unionedPersonaIds = tagsByPhoto.Values.SelectMany(personaIds => personaIds).Distinct().ToList();
-            if (unionedPersonaIds.Count > 0)
-                await photoPersonaTagRepository.SetTagsAsync(survivor.Id, survivor.BaulId, unionedPersonaIds, now);
-
-            // Memories/comments: reassign every duplicate's recuerdos onto the survivor, keeping
-            // the entities themselves (authorship/timestamps untouched) rather than recreating them.
-            foreach (var duplicate in duplicates)
-            {
-                foreach (var recuerdo in await recuerdoRepository.GetByPhotoIdAsync(duplicate.Id))
-                    await recuerdoRepository.UpdateAsync(recuerdo.ForPhoto(survivor.Id));
-            }
-
-            // Cover references: redirect any baúl/chapter currently using a to-be-merged
-            // duplicate as its cover onto the survivor's own (bit-identical) blob, never onto the
-            // duplicate's storage key — see docs/.backlog issue #20 §17, the survivor must never
-            // reference the duplicate's blob.
-            var baul = await baulRepository.GetByIdAsync(survivor.BaulId);
-            if (baul is not null && duplicates.Any(d => d.Id == baul.CoverPhotoId))
-                await baulRepository.UpdateAsync(baul.WithCoverPhotoId(survivor.Id, now));
-
-            foreach (var chapterId in duplicates.Select(d => d.ChapterId).Where(id => id is not null).Select(id => id!.Value).Distinct())
-            {
-                var chapter = await chapterRepository.GetByIdAsync(chapterId);
-                if (chapter is not null && duplicates.Any(d => d.ChapterId == chapterId && d.Id == chapter.CoverPhotoId))
-                    await chapterRepository.UpdateAsync(chapter.WithCoverPhotoId(survivor.Id, now));
-            }
-
-            // Persona avatar photo references, same redirect rationale as covers above.
-            var personas = await personaRepository.GetPersonasAsync(survivor.BaulId);
-            foreach (var persona in personas.Where(p => p.AvatarPhotoId is { } avatarPhotoId && duplicates.Any(d => d.Id == avatarPhotoId)))
-                await personaRepository.UpdatePersonaAsync(persona.WithAvatarPhotoId(survivor.Id));
-
-            // Shared links: a link generated for a duplicate must keep working, pointing at the
-            // survivor, rather than silently breaking once the duplicate is soft-deleted.
-            var duplicateIds = duplicates.Select(d => d.Id).ToList();
-            foreach (var sharedLink in await sharedLinkRepository.GetByPhotoIdsAsync(duplicateIds))
-                await sharedLinkRepository.UpdateAsync(sharedLink with { PhotoId = survivor.Id });
+            // Everything outside Photos' own tables — tags, recuerdos, covers, avatars, shared
+            // links — is each listener's own responsibility. Runs before the soft-delete below so
+            // a listener failure aborts the whole transaction before any duplicate is touched,
+            // same as before this was split out.
+            foreach (var listener in mergeListeners)
+                await listener.OnPhotosMergedAsync(mergeResult, now);
 
             // RemovalRequest.PhotoId is deliberately left pointing at the (now soft-deleted)
             // duplicate it was raised against: soft-deleting the duplicate already accomplishes
