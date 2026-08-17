@@ -51,6 +51,8 @@ You must not:
 
 Use these when appropriate:
 - `run` — inspect or exercise the app/API to check an assumption before asking about it.
+- `github-ticket-progress` — how to post the refinement outcome and set the `refined`
+  label on the issue.
 
 # Workflow
 
@@ -64,14 +66,8 @@ Use these when appropriate:
    have inferred.
 4. Synthesize the ticket's implementation-ready shape: the original intent plus every
    answer and finding.
-5. Post a comment on the issue recording the refinement (see handoff shape below), then
-   add the `refined` label:
-   ```bash
-   gh label create refined --color 0E8A16 \
-     --description "Ticket refinado, listo para ./scripts/backlog" >/dev/null 2>&1 || true
-   gh issue comment <n> --body "<refinement summary>"
-   gh issue edit <n> --add-label refined
-   ```
+5. Use the `github-ticket-progress` skill to post a comment recording the refinement
+   (see handoff shape below) and to add the `refined` label.
 
 # Decision policies
 

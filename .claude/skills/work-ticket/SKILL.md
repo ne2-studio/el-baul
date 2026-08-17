@@ -84,19 +84,14 @@ finish the turn — either it's committed and pushed, or you've signaled `blocke
 ### 5. Report back to the issue
 
 The ticket's GitHub issue number is given in the prompt (`GitHub issue: #<n> (<url>)`).
-Post your final feedback message there as a comment, so the outcome is visible on the
-issue itself, not just in a session Pedro may never open:
-
-```bash
-gh issue comment <n> --body "<final feedback message>"
-```
+Use the `github-ticket-progress` skill to post your final feedback there as a comment, so
+the outcome is visible on the issue itself, not just in a session Pedro may never open:
 
 - On success: the same summary you gave Pedro before committing (what changed, why,
   verification evidence), plus the commit SHA(s).
 - If blocked: the explanation of why, exactly as given in your final message.
 
-Post this before signaling completion (step 6). If the comment fails to post (network,
-permissions), don't let that block the signal — note it and move on.
+Post this before signaling completion (step 6).
 
 ### 6. Signal completion
 
