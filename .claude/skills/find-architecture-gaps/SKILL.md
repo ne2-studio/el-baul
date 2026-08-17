@@ -15,6 +15,14 @@ This skill does not implement changes, propose speculative architecture, or reco
 
 Every reported initiative must demonstrate that the proposed change would objectively improve at least one relevant attribute of the codebase.
 
+## Scope
+
+The caller may give a scope (e.g. a single deployable's directory). When given, Steps 1-4
+apply to that directory only: evidence, tensions, and reported initiatives must all come
+from inside it. Root-level docs (`ARCHITECTURE.md`, ADRs) stay fair game for context
+regardless of scope — Step 1 reads them for any deployable. With no scope given, inspect
+the whole repository.
+
 ---
 
 # Core principles

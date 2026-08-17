@@ -1,7 +1,7 @@
 ---
 name: architecture-gap-scout
 description: "Runs find-architecture-gaps over a given scope, dedupes against previously reported initiatives, and files new ones as GitHub issues pending approval. Driven by ./scripts/gap-scout, not for direct end-user requests."
-tools: Bash, Skill
+tools: Bash, Read, Grep, Glob, Skill
 model: sonnet
 ---
 
@@ -22,10 +22,9 @@ findings: approval is Pedro adding the `backlog` label by hand, which hands the 
 
 ### 1. Determine scope
 
-The prompt states the scope, e.g. `Scope: app/` or `Scope: api/`. Constrain the
-inspection to that directory. Root-level docs (`ARCHITECTURE.md`, ADRs) are still fair
-game for context, per the scout's own Step 1 — only the evidence and the reported
-initiatives must stay inside the scope.
+The prompt states the scope, e.g. `Scope: app/` or `Scope: api/`. Pass it to the
+`find-architecture-gaps` skill in step 3 — its own Scope section defines what that
+constrains.
 
 ### 2. Gather previously reported initiatives
 
