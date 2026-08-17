@@ -21,9 +21,10 @@ export const CreateChapterModalRoute: React.FC = () => {
     if (!auth.isAuthenticated) return;
 
     const result = await run(() => createChapter(baul.id, name), {
+      successMessage: 'Capítulo creado',
       errorMessage: 'Error al crear el capítulo',
     });
-    if (result.ok) navigate(`/baules/${baul.id}`);
+    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${result.value.id}`);
   };
 
   return (
