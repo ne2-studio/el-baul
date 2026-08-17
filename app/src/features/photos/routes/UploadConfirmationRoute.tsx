@@ -33,6 +33,7 @@ export const UploadConfirmationRoute: React.FC = () => {
       onPhotosDropped={(count) =>
         showToastMessage(`${count} ${count === 1 ? 'foto no se pudo leer y no se ha añadido' : 'fotos no se pudieron leer y no se han añadido'}`, 'error')
       }
+      onPhotosLimitExceeded={() => showToastMessage('Se ha limitado la selección a 30 fotos por subida.', 'error')}
       onUpload={(photos) => {
         navigate(`${basePath}/subiendo`, { state: { selectedPhotos: photos, chapter: destination, date: null } });
       }}

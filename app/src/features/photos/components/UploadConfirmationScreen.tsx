@@ -10,6 +10,10 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { SelectedPhoto, materializeFileList } from '@/features/photos/uploadFlow';
 import { useFileInputSelection } from '@/hooks/useFileInputSelection';
 
+/** Máximo de fotos por subida — evita que "Guardando tus recuerdos…" reciba lotes
+ * inmanejables (ver issue #37). */
+const MAX_PHOTOS_PER_UPLOAD = 30;
+
 interface UploadConfirmationScreenProps {
   currentChapter: Chapter;
   selectedPhotos: SelectedPhoto[];
@@ -17,6 +21,9 @@ interface UploadConfirmationScreenProps {
   /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
    * Android caducó) y por tanto se ha excluido en silencio de la selección. */
   onPhotosDropped?: (count: number) => void;
+  /** Se llama cuando la selección supera {@link MAX_PHOTOS_PER_UPLOAD} y se ha recortado
+   * al máximo permitido; recibe cuántas fotos se han excluido por este motivo. */
+  onPhotosLimitExceeded?: (count: number) => void;
   onUpload: (photos: SelectedPhoto[]) => void;
 }
 
@@ -25,6 +32,7 @@ export function UploadConfirmationScreen({
   selectedPhotos,
   onBack,
   onPhotosDropped,
+  onPhotosLimitExceeded,
   onUpload,
 }: UploadConfirmationScreenProps) {
   const [photos, setPhotos] = useState(selectedPhotos);
@@ -32,7 +40,19 @@ export function UploadConfirmationScreen({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openPicker = () => fileInputRef.current?.click();
-  const addPhotos = (newPhotos: SelectedPhoto[]) => setPhotos((prev) => [...prev, ...newPhotos]);
+
+  // Único punto de entrada de fotos nuevas (selector, drag&drop, "Añadir más fotos"): aquí
+  // se aplica el máximo por subida para no dejar que "Guardando tus recuerdos…" reciba lotes
+  // inmanejables (ver issue #37).
+  const addPhotos = (newPhotos: SelectedPhoto[]) => {
+    setPhotos((prev) => {
+      const merged = [...prev, ...newPhotos];
+      if (merged.length <= MAX_PHOTOS_PER_UPLOAD) return merged;
+
+      onPhotosLimitExceeded?.(merged.length - MAX_PHOTOS_PER_UPLOAD);
+      return merged.slice(0, MAX_PHOTOS_PER_UPLOAD);
+    });
+  };
   const handleFileSelect = useFileInputSelection(addPhotos, onPhotosDropped, setIsLoadingPreviews);
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {

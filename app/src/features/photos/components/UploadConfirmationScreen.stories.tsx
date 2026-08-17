@@ -61,6 +61,31 @@ export const WithSelectedPhotos: Story = {
   },
 };
 
+// Regression coverage for issue #37: at the 30-photo cap the grid should still render
+// cleanly, with the "Añadir más fotos" tile letting the user try to add more (which then
+// gets trimmed with a toast, exercised at the integration level in the test suite).
+const maxPhotos = Array.from({ length: 30 }, (_, i) => ({
+  id: `${i + 1}`,
+  file: new File([], `photo${i + 1}.jpg`),
+  preview: storybookPhotos.beach,
+}));
+
+export const AtMaxPhotos: Story = {
+  args: {
+    currentChapter,
+    selectedPhotos: maxPhotos,
+    onBack: fn(),
+    onUpload: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText('30 fotos seleccionadas')).toBeInTheDocument();
+    await expect(canvas.getAllByAltText('Preview')).toHaveLength(30);
+    await expect(canvas.getByRole('button', { name: 'Añadir más fotos' })).toBeInTheDocument();
+  },
+};
+
 export const RemovingAllPhotosReturnsToEmptyState: Story = {
   args: {
     currentChapter,

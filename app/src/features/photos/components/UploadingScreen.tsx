@@ -37,8 +37,10 @@ export function UploadingScreen({ photos, onUpload, onSettled }: UploadingScreen
   const succeededCount = Object.values(statuses).filter((s) => s === 'success').length;
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center px-6">
-      <div className="max-w-md w-full text-center">
+    <div className="fixed inset-0 bg-background z-50 flex flex-col items-center px-6">
+      {/* Header: icon, title and progress stay visible while the photo grid scrolls
+          independently below (see issue #37 — large batches used to push these off-screen). */}
+      <div className="max-w-md w-full text-center shrink-0 pt-6">
         {/* Animated icon */}
         <div className="mb-8 flex justify-center">
           <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center relative">
@@ -57,8 +59,11 @@ export function UploadingScreen({ photos, onUpload, onSettled }: UploadingScreen
         <p className="text-muted-foreground mb-8">
           {succeededCount} de {photos.length} fotos subidas
         </p>
+      </div>
 
-        {/* Per-photo status grid */}
+      {/* Per-photo status grid — scrolls on its own so the header above stays reachable
+          regardless of how many photos are in this batch. */}
+      <div className="max-w-md w-full flex-1 min-h-0 overflow-y-auto pb-6">
         <div className="grid grid-cols-3 gap-3">
           {photos.map((photo) => (
             <div key={photo.id} className="relative aspect-square">

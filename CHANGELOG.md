@@ -22,6 +22,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la app nativa de Android, si aún no has activado las notificaciones push, aparece un aviso ofreciendo activarlas. Si lo cierras, no vuelve a aparecer hasta pasada una semana (y se resetea si desinstalas/reinstalas la app o la usas en otro dispositivo).
 - El selector de baúles ahora muestra un punto junto a cada baúl con novedades desde tu última visita, y otro junto al propio selector si hay novedades en cualquiera de tus baúles.
 - En la sugerencia de etiquetar personas en una foto, al pulsar "No hay nadie en esta foto" ahora se propone escribir un recuerdo sobre esa misma foto, en vez de no hacer nada.
+- Ahora cada subida de fotos admite como máximo 30; si seleccionas más, la selección se recorta automáticamente y se avisa con un mensaje.
 
 ### Arreglado
 
@@ -30,6 +31,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Las pestañas de "Recuerdos" y "Fotos" en la pantalla de Capítulo ya no muestran el número entre paréntesis, no aportaba nada.
 - Al abrir la app (por ejemplo, al compartir una foto con El Baúl desde otra app en Android), ya no se ve una pantalla en negro mientras carga: ahora se muestra una pantalla de carga.
 - En la pantalla de subida de fotos, al añadir muchas fotos de golpe ya no parece que la app se haya quedado colgada mientras se preparan las previsualizaciones: ahora se muestra un aviso de carga.
+- En la pantalla "Guardando tus recuerdos…", al subir muchas fotos a la vez ya no se bloquea el scroll ni el título y el progreso quedan fuera de la pantalla: ahora se quedan siempre visibles y solo se desplaza la cuadrícula de fotos.
 
 ## [beta-v0.4.0] - 2026-08-13
 

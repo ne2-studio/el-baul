@@ -33,6 +33,29 @@ export const Default: Story = {
   },
 };
 
+// Regression coverage for issue #37: with many photos the header (icon, title, progress)
+// must stay visible and only the photo grid should scroll.
+const manyPhotos = Array.from({ length: 30 }, (_, i) => ({
+  id: `${i + 1}`,
+  file: new File([], `photo${i + 1}.jpg`),
+  preview: storybookPhotos.beach,
+}));
+
+export const ManyPhotos: Story = {
+  args: {
+    photos: manyPhotos,
+    onUpload: keepUploading,
+    onSettled: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('heading', { name: 'Guardando tus recuerdos…' })).toBeInTheDocument();
+    await expect(canvas.getByText('0 de 30 fotos subidas')).toBeInTheDocument();
+    await expect(canvas.getAllByAltText('Preview')).toHaveLength(30);
+  },
+};
+
 export const DeterministicSettled: Story = {
   args: {
     photos,
