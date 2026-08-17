@@ -34,6 +34,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la pantalla "Guardando tus recuerdos…", al subir muchas fotos a la vez ya no se bloquea el scroll ni el título y el progreso quedan fuera de la pantalla: ahora se quedan siempre visibles y solo se desplaza la cuadrícula de fotos.
 - Si la sesión se cae mientras estabas usando la app, ahora se intenta volver a iniciarla automáticamente en vez de mandarte directamente a la pantalla de "Continuar con Google".
 - Se ha corregido un fallo por el que el email de resumen semanal dejaba de llegar a algunas personas usuarias de forma silenciosa e intermitente.
+- Se ha corregido que, al abrir la app en el navegador, a veces se recargara sola sin avisar (por ejemplo, cambiando de golpe una recomendación que ya estabas viendo). Ahora, si hay una versión nueva disponible, aparece un aviso para actualizar cuando tú quieras.
 
 ## [beta-v0.4.0] - 2026-08-13
 

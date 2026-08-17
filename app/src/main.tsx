@@ -14,6 +14,7 @@ import { registerSW } from "virtual:pwa-register";
 import { initSentry } from "./sentry";
 import { getEnv } from "./runtimeConfig";
 import { isNativeAppLinkUrl, isNativeOidcCallbackUrl } from "./nativeOidcCallback";
+import { usePwaUpdateStore } from "@/store/usePwaUpdateStore";
 
 initSentry();
 
@@ -107,7 +108,14 @@ async function configureNativeDeepLinks() {
 
 async function bootstrap() {
   if (!isNative) {
-    registerSW({ immediate: true });
+    // registerType: 'prompt' (vite.config.ts) hace que el service worker deje la versión nueva
+    // en espera en vez de activarla y recargar sola (issue #34) — onNeedRefresh solo la expone
+    // vía usePwaUpdateStore para que PwaUpdateBanner la ofrezca; updateSW únicamente se invoca
+    // cuando la persona confirma ese aviso.
+    const updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh: () => usePwaUpdateStore.getState().setUpdateAvailable(() => void updateSW(true)),
+    });
   }
 
   await configureNativeDeepLinks();

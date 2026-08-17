@@ -12,7 +12,12 @@ export function createViteConfig() {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        // 'prompt' en vez de 'autoUpdate': con autoUpdate, vite-plugin-pwa recarga la página
+        // sola y sin avisar en cuanto detecta y activa una versión nueva del service worker —
+        // causaba el issue #34 ("la app se refresca sola"). Con 'prompt', la versión nueva se
+        // descarga y se queda en espera; main.tsx la expone vía usePwaUpdateStore y
+        // PwaUpdateBanner ofrece actualizar, y solo entonces se activa/recarga.
+        registerType: 'prompt',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         workbox: {
           // The HEIC decoder is dynamically imported only when previewing an

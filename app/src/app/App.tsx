@@ -11,6 +11,7 @@ import { PushNotificationsHandler } from '@/features/profile/native/PushNotifica
 import { PushNotificationsBanner } from '@/features/profile/native/PushNotificationsBanner';
 import { ScrollToTop } from '@/app/ScrollToTop';
 import { AndroidAppBanner } from '@/app/AndroidAppBanner';
+import { PwaUpdateBanner } from '@/app/PwaUpdateBanner';
 import { API_CONNECTIVITY_LOST_EVENT, API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 
@@ -217,6 +218,7 @@ function App() {
       <PushNotificationsHandler />
       <AndroidAppBanner />
       <PushNotificationsBanner />
+      <PwaUpdateBanner />
 
       {maintenanceModeEnabled ? (
         <MaintenanceScreen />
