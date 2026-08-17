@@ -12,6 +12,11 @@ interface WriteMemorySuggestionScreenProps {
   onSkip: () => void;
   onSave: (text: string) => void;
   isSubmitting?: boolean;
+  // Distinto del prompt rotativo de RecuerdoInput ("¿Qué recuerdas de este momento?" y
+  // variantes, que guía qué escribir): esto es contexto sobre *por qué* se pregunta, usado por
+  // ContributionSuggestionContainer cuando convierte en el momento un "no hay nadie en esta
+  // foto" en esta misma pantalla — ver ese container.
+  subtitle?: string;
 }
 
 // Pantalla completa que WriteMemorySuggestionContainer muestra al entrar en el feed de un
@@ -22,7 +27,13 @@ interface WriteMemorySuggestionScreenProps {
 // de pantalla aunque la tarea sea distinta. RecuerdoInput ya trae su propio prompt rotativo
 // ("¿Qué recuerdas de este momento?" y variantes) y botón de enviar, así que aquí no hay un
 // segundo botón "Guardar" aparte — enviar el textarea es guardar.
-export function WriteMemorySuggestionScreen({ photo, onSkip, onSave, isSubmitting = false }: WriteMemorySuggestionScreenProps) {
+export function WriteMemorySuggestionScreen({
+  photo,
+  onSkip,
+  onSave,
+  isSubmitting = false,
+  subtitle,
+}: WriteMemorySuggestionScreenProps) {
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const aspectRatio = usePhotoAspectRatio(photo.fullUrl);
 
@@ -63,7 +74,10 @@ export function WriteMemorySuggestionScreen({ photo, onSkip, onSave, isSubmittin
       </div>
 
       <PageContainer className="py-6">
-        <h2 className="text-base font-medium text-foreground mb-3">Cuéntanos algo sobre esta foto</h2>
+        <div className="mb-3">
+          <h2 className="text-base font-medium text-foreground">Cuéntanos algo sobre esta foto</h2>
+          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
 
         <RecuerdoInput photoId={photo.id} onSubmit={onSave} theme="light" />
       </PageContainer>

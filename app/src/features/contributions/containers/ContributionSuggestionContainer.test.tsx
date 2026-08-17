@@ -11,8 +11,12 @@ vi.mock('@/features/photos/useCases', () => ({
   setTaggedPersonas: vi.fn(),
   confirmPhotoHasNoPersonas: vi.fn(),
 }));
+vi.mock('@/features/memories/useCases', () => ({
+  addRecuerdo: vi.fn(),
+}));
 
-import { setTaggedPersonas } from '@/features/photos/useCases';
+import { setTaggedPersonas, confirmPhotoHasNoPersonas } from '@/features/photos/useCases';
+import { addRecuerdo } from '@/features/memories/useCases';
 
 // jsdom no implementa ResizeObserver — lo usa useElementHeight (vía PageHeader) para medir el
 // offset del que depende el sticky de la foto. Sin este stub, montar la pantalla real revienta
@@ -78,6 +82,41 @@ describe('ContributionSuggestionContainer', () => {
     await user.click(screen.getByText('Ahora no →'));
 
     expect(setTaggedPersonas).not.toHaveBeenCalled();
+    expect(onResolved).toHaveBeenCalledTimes(1);
+  });
+
+  // Issue #29: en vez de simplemente cerrar la sugerencia, "no hay nadie en esta foto" la
+  // reconvierte en la sugerencia hermana "escribe un recuerdo" sobre la misma foto — la app no
+  // se queda sin preguntar nada.
+  it('confirms no personas and converts into the "write a memory" fallback instead of resolving', async () => {
+    const user = userEvent.setup();
+    vi.mocked(confirmPhotoHasNoPersonas).mockResolvedValue(undefined);
+    const onResolved = vi.fn();
+
+    render(<ContributionSuggestionContainer baulId={baulId} photo={photo()} onResolved={onResolved} />);
+
+    await user.click(screen.getByText('No hay nadie en esta foto'));
+
+    await waitFor(() => expect(confirmPhotoHasNoPersonas).toHaveBeenCalledWith('photo-1'));
+    expect(onResolved).not.toHaveBeenCalled();
+    expect(await screen.findByText('Describe la foto o cuéntanos por qué es importante')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
+
+  it('saves the memory written in the fallback screen and resolves on submit', async () => {
+    const user = userEvent.setup();
+    vi.mocked(confirmPhotoHasNoPersonas).mockResolvedValue(undefined);
+    vi.mocked(addRecuerdo).mockResolvedValue(undefined);
+    const onResolved = vi.fn();
+
+    render(<ContributionSuggestionContainer baulId={baulId} photo={photo()} onResolved={onResolved} />);
+
+    await user.click(screen.getByText('No hay nadie en esta foto'));
+    const input = await screen.findByRole('textbox');
+    await user.type(input, 'Fue un día precioso');
+    await user.click(screen.getByRole('button', { name: 'Enviar recuerdo' }));
+
+    await waitFor(() => expect(addRecuerdo).toHaveBeenCalledWith(baulId, 'photo-1', 'Fue un día precioso'));
     expect(onResolved).toHaveBeenCalledTimes(1);
   });
 });

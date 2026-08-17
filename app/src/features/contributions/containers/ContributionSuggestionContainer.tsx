@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { ContributionSuggestionScreen } from '@/features/contributions/components/ContributionSuggestionScreen';
+import { WriteMemorySuggestionContainer } from '@/features/contributions/containers/WriteMemorySuggestionContainer';
 import { confirmPhotoHasNoPersonas, setTaggedPersonas } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { Photo } from '@/types';
+
+// Subtexto de WriteMemorySuggestionScreen cuando esta pantalla se reconvierte en ella tras "no
+// hay nadie en esta foto" — ver handleConfirmNoPersonas más abajo.
+const NO_PERSONAS_MEMORY_SUBTITLE = 'Describe la foto o cuéntanos por qué es importante';
 
 interface ContributionSuggestionContainerProps {
   baulId: string;
@@ -20,6 +25,11 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
   const { personas } = usePersonasStore();
   const baulPersonas = personas[baulId] || [];
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Una vez confirmado "no hay nadie en esta foto" no volvemos al feed (onResolved): en vez de
+  // desperdiciar la oportunidad, reconvertimos esta misma foto candidata en una sugerencia de
+  // "escribe un recuerdo" — ver NO_PERSONAS_MEMORY_SUBTITLE. Todo en cliente, el backend ya
+  // conoce la foto y ya sabe que no tiene personas (confirmPhotoHasNoPersonas ya se llamó).
+  const [showMemoryFallback, setShowMemoryFallback] = useState(false);
   const { run, isPending } = useAsyncAction();
 
   const toggle = (personaId: string) =>
@@ -35,12 +45,25 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
   };
 
   const handleConfirmNoPersonas = async () => {
+    // Sin successMessage: a diferencia de handleSave, esta acción no cierra la sugerencia — deja
+    // paso de inmediato al fallback de "escribe un recuerdo", así que un toast de "no volveremos
+    // a preguntar" sería confuso justo cuando aparece una pregunta nueva.
     const result = await run(() => confirmPhotoHasNoPersonas(photo.id), {
-      successMessage: 'Anotado — no volveremos a preguntar por esta foto',
       errorMessage: 'No se pudo guardar',
     });
-    if (result.ok) onResolved();
+    if (result.ok) setShowMemoryFallback(true);
   };
+
+  if (showMemoryFallback) {
+    return (
+      <WriteMemorySuggestionContainer
+        baulId={baulId}
+        photo={photo}
+        onResolved={onResolved}
+        subtitle={NO_PERSONAS_MEMORY_SUBTITLE}
+      />
+    );
+  }
 
   return (
     <ContributionSuggestionScreen
