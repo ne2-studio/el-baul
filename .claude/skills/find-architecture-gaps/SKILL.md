@@ -1,5 +1,5 @@
 ---
-name: architecture-gap-scout
+name: find-architecture-gaps
 description: "Inspect a codebase for architecture, design, testing, and maintainability gaps. Produce a prioritized list of evidence-based refactoring initiatives. Do not modify code, create plans for features, or implement refactors."
 ---
 

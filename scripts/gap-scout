@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 LABEL="gap-scout"
 TMUX_SESSION="backlog"
-ALLOWED_TOOLS="Bash(gh issue list *) Bash(gh issue create *) Bash(gh issue view *) Bash(gh label create *)"
+ALLOWED_TOOLS="Agent Bash(gh issue list *) Bash(gh issue create *) Bash(gh issue view *) Bash(gh label create *)"
 
 usage() {
   cat <<'EOF'
@@ -13,7 +13,7 @@ Usage: ./scripts/gap-scout <command>
 
 Commands:
   scan <app|api|admin|all> [--yolo]
-                        Dispatch the architecture-gap-scout skill over the
+                        Dispatch the architecture-gap-scout agent over the
                           given scope(s), one `claude` session per scope,
                           each in its own window inside the "backlog" tmux
                           session (creating it if needed) — same session
@@ -42,9 +42,9 @@ grep/sed chains) a narrow allow-list can't realistically cover.
 at all, so nothing ever needs answering or gets forwarded to your phone —
 safe to leave running unattended (e.g. from a systemd timer) while still
 landing in tmux for you to check on later. Reasonable specifically for this
-skill (unlike work-ticket's --yolo, which also skips the commit/push
-approval): gap-scout-runner never touches git or edits code, so the only
-thing being unblocked is shell access to a read-only inspection, not a
+agent (unlike work-ticket's --yolo, which also skips the commit/push
+approval): architecture-gap-scout never touches git or edits code, so the
+only thing being unblocked is shell access to a read-only inspection, not a
 write path. Still no technical safety net if something in the repo's
 content tried to steer the agent.
 
@@ -77,7 +77,7 @@ _dispatch_one() {
   local claude_flags=("$@")
   local window="gap-scout-${scope%/}"
   local prompt
-  prompt="$(printf '/gap-scout-runner\n\nScope: %s\n' "$scope")"
+  prompt="$(printf 'Spawn the `architecture-gap-scout` agent with:\n\nScope: %s\n' "$scope")"
 
   if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
     if tmux list-windows -t "$TMUX_SESSION" -F '#{window_name}' 2>/dev/null | grep -qx "$window"; then

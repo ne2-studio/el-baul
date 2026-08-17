@@ -1,21 +1,22 @@
 ---
-name: gap-scout-runner
-description: "Runs architecture-gap-scout over a given scope, dedupes against previously reported initiatives, and files new ones as GitHub issues pending approval. Driven by ./scripts/gap-scout, not for direct end-user requests."
-disable-model-invocation: true
+name: architecture-gap-scout
+description: "Runs find-architecture-gaps over a given scope, dedupes against previously reported initiatives, and files new ones as GitHub issues pending approval. Driven by ./scripts/gap-scout, not for direct end-user requests."
+tools: Bash, Skill
+model: sonnet
 ---
 
 ## Goal
 
 Produce fresh, non-duplicate architecture initiatives for the scope given in the prompt,
-filed as GitHub issues labeled `gap-scout` for Pedro to review. This skill runs in its own
+filed as GitHub issues labeled `gap-scout` for Pedro to review. This agent runs in its own
 tmux window, dispatched by `./scripts/gap-scout scan`, with no prior context — everything
 needed comes from the prompt and the repository itself. It's usually unattended, but a
 permission prompt it can't resolve pauses in that window rather than failing silently —
 Pedro may answer it directly.
 
-Filing an issue is the end of this skill's responsibility. It never approves its own
+Filing an issue is the end of this agent's responsibility. It never approves its own
 findings: approval is Pedro adding the `backlog` label by hand, which hands the issue to
-`./scripts/backlog`'s existing worker. This skill must never add that label itself.
+`./scripts/backlog`'s existing worker. This agent must never add that label itself.
 
 ## Workflow
 
@@ -41,8 +42,8 @@ to retry.
 
 ### 3. Run the scout
 
-Invoke `/architecture-gap-scout`, treating its scope as the directory from step 1. Follow
-its own process and validity gate in full. Then, before filing anything, drop any
+Use the `find-architecture-gaps` skill, treating its scope as the directory from step 1.
+Follow its own process and validity gate in full. Then, before filing anything, drop any
 candidate that names essentially the same smell + affected area as an issue from step 2
 — open or closed. When in doubt whether two initiatives are the same underlying gap,
 treat them as duplicates rather than filing a near-identical issue.
@@ -56,7 +57,7 @@ gh issue create --label gap-scout --title "<initiative title>" --body "<initiati
 ```
 
 Do not add the `backlog` label. Do not close, edit, or comment on any existing issue —
-this skill only ever adds new `gap-scout` issues.
+this agent only ever adds new `gap-scout` issues.
 
 ### 5. Report
 

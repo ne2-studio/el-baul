@@ -16,11 +16,11 @@ chains) that a narrow allow-list can't realistically cover.
 `scan <app|api|admin|all> --yolo` runs `claude --dangerously-skip-permissions` instead — no
 prompts at all, so nothing ever needs answering or gets forwarded to your phone. That's what
 makes it safe to leave running unattended from a timer while still landing in tmux for you
-to check on later. Reasonable specifically for this skill (unlike `work-ticket`'s `--yolo`,
-which also skips the commit/push approval): `gap-scout-runner` never touches git or edits
-code, so the only thing being unblocked is shell access to a read-only inspection, not a
-write path. It still means no technical safety net if something in the repo's content tried
-to steer the agent.
+to check on later. Reasonable specifically for this agent (unlike `work-ticket`'s `--yolo`,
+which also skips the commit/push approval): `architecture-gap-scout` never touches git or
+edits code, so the only thing being unblocked is shell access to a read-only inspection, not
+a write path. It still means no technical safety net if something in the repo's content
+tried to steer the agent.
 
 ## 1. Service unit
 
