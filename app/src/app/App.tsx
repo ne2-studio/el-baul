@@ -51,6 +51,7 @@ import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppConfigStore } from '../store/useAppConfigStore';
 import { loadUserData, resetAllStores } from '@/features/auth/useCases';
+import { attemptAutoRelogin, clearAutoReloginAttempt } from '@/features/auth/autoRelogin';
 
 function App() {
   const navigate = useNavigate();
@@ -106,15 +107,49 @@ function App() {
   // than the `location` from useLocation() for the same staleness reason as handleLoadUserData
   // above: this listener is registered once, so a closed-over `location` would go stale the
   // moment the user navigates.
+  //
+  // This only fires for a session that WAS authenticated (we only get a 401 after having sent
+  // a token), so it's exactly the case where an automatic re-login attempt is wanted instead of
+  // dumping the user straight on the manual WelcomeScreen — see attemptAutoRelogin.
   useEffect(() => {
     const handleUnauthorized = () => {
       resetAllStores();
       auth.removeUser();
-      const redirectTo = encodeURIComponent(window.location.pathname + window.location.search);
-      navigate(`/?redirectTo=${redirectTo}`, { replace: true });
+      const redirectTo = window.location.pathname + window.location.search;
+      void attemptAutoRelogin(auth.signinRedirect, redirectTo).then((retried) => {
+        if (!retried) {
+          navigate(`/?redirectTo=${encodeURIComponent(redirectTo)}`, { replace: true });
+        }
+      });
     };
     window.addEventListener(API_UNAUTHORIZED_EVENT, handleUnauthorized);
     return () => window.removeEventListener(API_UNAUTHORIZED_EVENT, handleUnauthorized);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sin refresh token, la renovación del access token dependía por completo del silent renew
+  // por defecto de oidc-client-ts (iframe prompt=none), que falla a menudo en Safari/WebViews
+  // móviles por restricciones de cookies de terceros — y no aplica en absoluto en nativo. Con
+  // offline_access (ver main.tsx) esto debería ser raro, pero si aun así ocurre, react-oidc-context
+  // no reintenta nada por sí mismo: auth.isAuthenticated simplemente cae a false y
+  // ProtectedRoute/PublicRoute resuelven a la WelcomeScreen pública. Igual que el 401 de arriba,
+  // esto solo puede dispararse tras haber estado autenticado, así que aplica el mismo reintento
+  // automático de un solo tiro.
+  useEffect(() => {
+    const handleSessionDrop = () => {
+      const redirectTo = window.location.pathname + window.location.search;
+      void attemptAutoRelogin(auth.signinRedirect, redirectTo).then((retried) => {
+        if (!retried) {
+          navigate(`/?redirectTo=${encodeURIComponent(redirectTo)}`, { replace: true });
+        }
+      });
+    };
+    const removeAccessTokenExpired = auth.events.addAccessTokenExpired(handleSessionDrop);
+    const removeSilentRenewError = auth.events.addSilentRenewError(handleSessionDrop);
+    return () => {
+      removeAccessTokenExpired();
+      removeSilentRenewError();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -123,6 +158,9 @@ function App() {
     setAuthenticated(auth.isAuthenticated);
 
     if (auth.isAuthenticated) {
+      // Sesión OK: libera el "un solo intento" del reintento automático (ver attemptAutoRelogin)
+      // para que una caída posterior en la misma pestaña vuelva a tener su propio reintento.
+      clearAutoReloginAttempt();
       handleLoadUserData();
     } else {
       resetAllStores();

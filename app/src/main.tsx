@@ -30,7 +30,13 @@ const userManager = new UserManager({
   // nativo (AndroidManifest.xml / Info.plist) y como ruta web (/callback), así que el logout
   // puede volver a caer ahí sin abrir un segundo esquema/host.
   post_logout_redirect_uri: getEnv('VITE_OIDC_CALLBACK_URI'),
-  scope: `openid profile email urn:zitadel:iam:org:id:${organizationId}`,
+  // offline_access le pide a Zitadel un refresh token: sin él, oidc-client-ts solo puede
+  // renovar el access token vía silent renew (iframe prompt=none), que falla a menudo en
+  // Safari/WebViews móviles por restricciones de cookies de terceros y no aplica en absoluto en
+  // nativo (ver comentario más abajo sobre el callback studio.ne2.elbaul://). Con refresh token
+  // disponible, la renovación deja de depender de ese iframe en la gran mayoría de los casos —
+  // aplica a los tres clientes (web/android/ios), que comparten esta misma configuración.
+  scope: `openid profile email offline_access urn:zitadel:iam:org:id:${organizationId}`,
   userStore: new WebStorageStateStore({ store: window.localStorage }),
 });
 
