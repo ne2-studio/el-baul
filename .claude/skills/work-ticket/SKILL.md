@@ -65,13 +65,16 @@ yourself on its behalf.
 
 ### 4. Commit and push
 
+Use the `commit` skill to stage and create the commit.
+
 `git commit` and `git push` are not in this repository's permission allow-list, so
 attempting them will pause for approval — that pause is the approval gate, forwarded to
 Pedro's phone via Remote Control. Do not try to work around it or batch it with an
 allow-listed command.
 
 Before committing, summarize for Pedro: what changed, why, and the verification
-evidence (mirroring the `verifier` agent's handoff format). Then run the commit and push.
+evidence (mirroring the `verifier` agent's handoff format). Then create the commit and
+push.
 
 If Pedro rejects or requests changes, address them and repeat this step. Never leave
 `main` in a state where the working tree has verified-but-uncommitted changes when you
