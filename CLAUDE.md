@@ -21,6 +21,11 @@ docs/ARCHITECTURE.md
 docs/API-CONVENTIONS.md
 docs/DESIGN.md
 
+## Branching
+
+This project uses trunk-based development. If you're already on `main` branch, commit
+changes and push straight to `main`.
+
 ## Before finishing a task
 
 Spawn a `verifier` agent with the diff and a minimal statement of intent. Verification
