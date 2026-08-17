@@ -29,6 +29,7 @@ public class EmailTemplateIntegrityTests
 
     [Theory]
     [InlineData("WelcomeEmail")]
+    [InlineData("WelcomeWithBaulesEmail")]
     [InlineData("WeeklyDigestEmail")]
     public async Task RenderAsync_ShouldRenderWithoutThrowing_AndLeaveNoUnsubstitutedTemplateSyntax(string template)
     {
@@ -47,6 +48,9 @@ public class EmailTemplateIntegrityTests
     private static object BuildModel(string template) => template switch
     {
         "WelcomeEmail" => new WelcomeEmailModel(
+            "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl),
+        "WelcomeWithBaulesEmail" => new WelcomeEmailModel(
             "Pedro", ["Familia Pardal"], true, "https://el-baul.test/cta", "Añadir un recuerdo",
             "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl),
         "WeeklyDigestEmail" => new WeeklyDigestEmailModel(

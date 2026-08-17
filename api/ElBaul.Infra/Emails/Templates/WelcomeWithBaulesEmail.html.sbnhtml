@@ -1,0 +1,22 @@
+{{~ capture subject ~}}Bienvenido a El Baúl{{~ end ~}}
+{{~ user_name_t = truncate user_name 100 ~}}
+{{~ intro = "Ya formas parte de la historia de " + (baul_names.size == 1 ? "tu familia" : "tus familias") + " en El Baúl." ~}}
+{{~ body_text = "Cada foto y cada recuerdo que añadáis se queda a salvo y disponible para siempre. El siguiente paso es sencillo: añade un recuerdo." ~}}
+{{~ capture content ~}}
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola {{ user_name_t | html.escape }},</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">{{ intro | html.escape }}</p>
+<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">{{ body_text | html.escape }}</p>
+{{~ if baul_names.size > 0 ~}}
+<ul style="margin:0 0 24px 0;padding-left:20px;font-size:15px;line-height:1.6;">
+{{~ for name in (baul_names | array.limit 5) ~}}
+  <li>{{ truncate name 80 | html.escape }}</li>
+{{~ end ~}}
+{{~ remaining = baul_names.size - 5 ~}}
+{{~ if remaining > 0 ~}}
+  <li>Y {{ remaining }} baúl{{ if remaining != 1 }}es{{ end }} más</li>
+{{~ end ~}}
+</ul>
+{{~ end ~}}
+{{ include "Button.html" url: primary_cta_url label: primary_cta_label }}
+{{~ end ~}}
+{{ include "Layout.html" }}

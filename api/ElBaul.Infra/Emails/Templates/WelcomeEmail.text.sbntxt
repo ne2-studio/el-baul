@@ -1,21 +1,9 @@
 {{~ capture subject ~}}Bienvenido a El Baúl{{~ end ~}}
 {{~ user_name_t = truncate user_name 100 ~}}
-{{~ intro = has_baules ? ("Ya formas parte de la historia de " + (baul_names.size == 1 ? "tu familia" : "tus familias") + " en El Baúl.") : "Aún no perteneces a ningún baúl, pero eso tiene fácil arreglo." ~}}
-{{~ body_text = has_baules ? "Cada foto y cada recuerdo que añadáis se queda a salvo y disponible para siempre. El siguiente paso es sencillo: añade un recuerdo." : "Un baúl es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar." ~}}
 Hola {{ user_name_t }},
 
-{{ intro }}
-{{ body_text }}
-{{~ if has_baules && baul_names.size > 0 ~}}
-
-{{~ for name in (baul_names | array.limit 5) ~}}
-- {{ truncate name 80 }}
-{{~ end ~}}
-{{~ remaining = baul_names.size - 5 ~}}
-{{~ if remaining > 0 ~}}
-Y {{ remaining }} baúl{{ if remaining != 1 }}es{{ end }} más
-{{~ end ~}}
-{{~ end ~}}
+Aún no perteneces a ningún baúl, pero eso tiene fácil arreglo.
+Un baúl es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar.
 
 {{ primary_cta_label }}: {{ primary_cta_url }}
 {{ include "Footer.text" footer: footer notification_settings_url: notification_settings_url }}
