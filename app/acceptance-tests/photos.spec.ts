@@ -14,10 +14,18 @@ test('create baúl → create chapter → upload photo → move photo → delete
   await page.getByRole('button', { name: /Capítulos/ }).click();
 
   // Two chapters: the second is the move target below.
+  // createChapter() now navigates straight into the new chapter (real creation flow), so
+  // we have to come back to the Capítulos tab before creating the second one.
   const chapter1Name = `Capítulo uno ${Date.now()}`;
   const chapter2Name = `Capítulo dos ${Date.now()}`;
   await createChapter(page, chapter1Name);
+  await page.waitForURL(/\/capitulos\//);
+  await page.goto(`/baules/${baulId}`);
+  await page.getByRole('button', { name: /Capítulos/ }).click();
   await createChapter(page, chapter2Name);
+  await page.waitForURL(/\/capitulos\//);
+  await page.goto(`/baules/${baulId}`);
+  await page.getByRole('button', { name: /Capítulos/ }).click();
 
   await page.getByText(chapter1Name).click();
   await page.waitForURL(/\/capitulos\//);
