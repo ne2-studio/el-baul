@@ -55,7 +55,7 @@ Find the root cause and make the smallest safe change.
 
 Avoid unrelated refactors.
 
-Run the regression test until it passes. Then run the relevant verification defined by the repository's `verify` skill.
+Run the regression test until it passes. Then spawn a `verifier` agent with the diff and a minimal statement of intent to run the relevant verification.
 
 ### 4. Verify manually
 

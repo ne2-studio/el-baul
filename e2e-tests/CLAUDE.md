@@ -10,5 +10,6 @@ Do not import implementation code or DTOs from `api/`, `app/`, or `admin/`.
 
 ## Before finishing a task
 
-Use the `verify` skill to confirm this suite is the right evidence for the diff.
-Run `./scripts/verify e2e` from the repo root and fix all issues found.
+Spawn a `verifier` agent with the diff and a minimal statement of intent to confirm this
+suite is the right evidence and run it (`./scripts/verify e2e`). Verification MUST
+succeed to consider the task done.

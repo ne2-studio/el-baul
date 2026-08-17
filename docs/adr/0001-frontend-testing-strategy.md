@@ -63,7 +63,7 @@ login, accepting an invite, creating the first baúl, creating a chapter, upload
 adding a recuerdo, navigating from a recuerdo to a persona, sharing or deleting content,
 permission flows, basic responsive behavior. This is `/e2e-tests/` (repo root, full stack
 smoke test) and `app/acceptance-tests/` (lighter stack, covers photo/persona/removal-
-request flows) — see the `run` and `verify` skills for how to drive them.
+request flows) — see the `run` skill and the `verifier` agent for how to drive them.
 
 Do **not** use Playwright to cover the six prop combinations of a single component like
 `RecuerdoFeedCard` — that belongs at level 2. Playwright is reserved for journeys that

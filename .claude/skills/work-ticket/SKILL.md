@@ -46,11 +46,11 @@ Update `CHANGELOG.md` per the `update-changelog` skill if the change is user-fac
 
 ### 3. Verify
 
-Use the `verify` skill to select and run the smallest evidence set that covers the
-diff's risks, per the repository's canonical `./scripts/verify ...` commands. Fix all
-issues found. This must succeed — do not proceed to commit on red or partial evidence.
-
-If a real environment is required, use the `run` skill first.
+Spawn a `verifier` agent with the diff and a minimal statement of intent. It selects and
+runs the smallest evidence set that covers the diff's risks, per the repository's
+canonical `./scripts/verify ...` commands, using the `run` skill itself when a real
+environment is required. Fix any issues it reports. This must succeed — do not proceed
+to commit on red or partial evidence.
 
 ### 4. Commit and push
 
@@ -60,7 +60,7 @@ Pedro's phone via Remote Control. Do not try to work around it or batch it with 
 allow-listed command.
 
 Before committing, summarize for Pedro: what changed, why, and the verification
-evidence (mirroring the `verify` skill's report shape). Then run the commit and push.
+evidence (mirroring the `verifier` agent's handoff format). Then run the commit and push.
 
 If Pedro rejects or requests changes, address them and repeat this step. Never leave
 `main` in a state where the working tree has verified-but-uncommitted changes when you

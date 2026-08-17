@@ -14,7 +14,5 @@ If DTOs or controllers change the HTTP contract, run from the repo root:
 
 ## Before finishing a task
 
-- Use the `verify` skill to choose the smallest evidence set that covers the risks in the diff.
-- Run the relevant canonical `./scripts/verify ...` command from the repo root and fix all
-  issues found. Verification MUST succeed to consider the task done.
-- If the task requires manual verification, use the `run` skill first.
+Spawn a `verifier` agent with the diff and a minimal statement of intent. Verification
+MUST succeed to consider the task done.
