@@ -2,6 +2,7 @@ import { PhotoCrop, api } from '@/api';
 import { BaulRole, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
+import { withOptimisticUpdate } from '@/store/withOptimisticUpdate';
 
 // Its only caller is PersonasTabContainer (features/people/containers) — moved here from
 // features/baules/useCases when that container took over the baúl's Personas tab.
@@ -76,25 +77,24 @@ export async function setPersonaAvatarPhoto(baulId: string, personaId: string, p
 
 // Optimista: el <select> de rol está controlado por este valor, así que sin aplicar
 // el cambio antes del await se ve "rebotar" al valor anterior mientras se espera al
-// servidor. Si la petición falla, se revierte al snapshot previo.
+// servidor. Si la petición falla, se revierte al snapshot previo (ver withOptimisticUpdate
+// para el detalle de snapshot/apply/rollback compartido).
 export async function updateUserRole(baulId: string, personaId: string, role: BaulRole): Promise<void> {
-  const previous = usePersonasStore.getState().personas[baulId] || [];
-  usePersonasStore.setState((state) => ({
-    personas: {
-      ...state.personas,
-      [baulId]: previous.map((u) => (
-        u.id === personaId
-          ? { ...u, role, status: u.status === 'sin_acceso' ? 'pending' : u.status }
-          : u
-      )),
-    },
-  }));
-  try {
-    await api.baules.updatePersonaRole(baulId, personaId, role);
-  } catch (error) {
-    usePersonasStore.setState((state) => ({ personas: { ...state.personas, [baulId]: previous } }));
-    throw error;
-  }
+  await withOptimisticUpdate({
+    getSnapshot: () => usePersonasStore.getState().personas[baulId] || [],
+    applyOptimistic: () => usePersonasStore.setState((state) => ({
+      personas: {
+        ...state.personas,
+        [baulId]: (state.personas[baulId] || []).map((u) => (
+          u.id === personaId
+            ? { ...u, role, status: u.status === 'sin_acceso' ? 'pending' : u.status }
+            : u
+        )),
+      },
+    })),
+    rollback: (previous) => usePersonasStore.setState((state) => ({ personas: { ...state.personas, [baulId]: previous } })),
+    operation: () => api.baules.updatePersonaRole(baulId, personaId, role),
+  });
 }
 
 export async function revokeAccess(baulId: string, personaId: string): Promise<void> {

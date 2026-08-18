@@ -5,6 +5,7 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { clearChapterRecuerdos } from '@/features/memories/useCases';
 import { applyCoverUpdate } from '@/store/baulesCacheReconciliation';
+import { withOptimisticUpdate } from '@/store/withOptimisticUpdate';
 
 // No hay estado que actualizar: la cuadrícula de fotos no muestra chips de personas
 // etiquetadas (solo el visor de una foto lo hace, vía taggedPersonas).
@@ -41,6 +42,8 @@ export async function clearPhotoDateBatch(baulId: string, photoIds: string[]): P
   useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: chapters } }));
 }
 
+// Optimista: aplica la miniatura elegida de inmediato y la revierte si la petición falla
+// (ver withOptimisticUpdate para el detalle de snapshot/apply/rollback compartido).
 export async function setChapterCover(
   baulId: string,
   chapterId: string,
@@ -48,27 +51,27 @@ export async function setChapterCover(
   crop: PhotoCrop,
   optimisticThumbnailUrl?: string
 ): Promise<void> {
-  const previous = useBaulesStore.getState().chapters[baulId] || [];
-  if (optimisticThumbnailUrl) {
-    useBaulesStore.setState((state) => ({
-      chapters: {
-        ...state.chapters,
-        [baulId]: applyCoverUpdate(previous, chapterId, optimisticThumbnailUrl),
-      },
-    }));
-  }
-  try {
-    const updated = await api.chapters.setCover(baulId, chapterId, photoId, crop);
-    useBaulesStore.setState((state) => ({
-      chapters: {
-        ...state.chapters,
-        [baulId]: (state.chapters[baulId] || []).map((a) => (a.id === chapterId ? updated : a)),
-      },
-    }));
-  } catch (error) {
-    useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: previous } }));
-    throw error;
-  }
+  await withOptimisticUpdate({
+    getSnapshot: () => useBaulesStore.getState().chapters[baulId] || [],
+    applyOptimistic: optimisticThumbnailUrl
+      ? () => useBaulesStore.setState((state) => ({
+          chapters: {
+            ...state.chapters,
+            [baulId]: applyCoverUpdate(state.chapters[baulId] || [], chapterId, optimisticThumbnailUrl),
+          },
+        }))
+      : undefined,
+    rollback: (previous) => useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulId]: previous } })),
+    operation: async () => {
+      const updated = await api.chapters.setCover(baulId, chapterId, photoId, crop);
+      useBaulesStore.setState((state) => ({
+        chapters: {
+          ...state.chapters,
+          [baulId]: (state.chapters[baulId] || []).map((a) => (a.id === chapterId ? updated : a)),
+        },
+      }));
+    },
+  });
 }
 
 export async function renameChapter(baulId: string, chapterId: string, name: string): Promise<void> {
