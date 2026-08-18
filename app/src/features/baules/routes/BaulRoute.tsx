@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { UserCircle } from 'lucide-react';
-import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
@@ -16,8 +15,6 @@ import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSett
 import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
 import { useUIStore } from '@/store/uiStore';
 import { getEntrySource } from '@/utils/entrySource';
-import { loadChapterPhotos } from '@/features/photos/useCases';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { getBaulPermissions } from '@/utils/roleUtils';
@@ -35,12 +32,10 @@ export const BaulRoute: React.FC = () => {
   const location = useLocation();
   const { baulId } = useParams();
   const auth = useAuth();
-  const { run } = useAsyncAction();
 
   const setShowProfileMenu = useUIStore((state) => state.setShowProfileMenu);
   const startContributionSuggestionCooldown = useUIStore((state) => state.startContributionSuggestionCooldown);
 
-  const [isLoadingChapterPhotos, setIsLoadingChapterPhotos] = useState(false);
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const initialTab = (location.state as { activeTab?: BaulTab } | null)?.activeTab ?? 'recuerdos';
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
@@ -101,16 +96,18 @@ export const BaulRoute: React.FC = () => {
     return <ContributionSuggestionGateContainer baulId={baul.id} onResolved={resolveContributionSuggestion} />;
   }
 
-  const handleSelectChapter = async (chapter: { id: string }) => {
+  const handleSelectChapter = (chapter: { id: string }) => {
     if (!auth.isAuthenticated) return;
-    setIsLoadingChapterPhotos(true);
-    const result = await run(() => loadChapterPhotos(chapter.id), { errorMessage: 'Error al cargar las fotos' });
-    setIsLoadingChapterPhotos(false);
+    // Las fotos y los recuerdos del capítulo se cargan ya dentro de ChapterRoute (vía
+    // useChapterScope, que bloquea hasta tener ambos) — prefetchearlas aquí antes de navegar
+    // solo servía para pintar un segundo loader propio ("Cargando fotos...") justo antes del
+    // "Abriendo capítulo..." de ChapterRoute, dos loaders consecutivos para una única
+    // transición. Navegar directo deja el gate en un único sitio.
     // returnTab: para que el botón "Volver" de ChapterRoute pueda reabrir la pestaña desde la
     // que se entró (recuerdos o capítulos, las dos únicas que llevan aquí) en vez de caer
     // siempre en la pestaña inicial — mismo mecanismo que ya usan handleSelectPersona en
     // BaulPersonasTabContainer/BaulFeedTabContainer con PersonaDetailRoute.
-    if (result.ok) navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { state: { returnTab: activeTab } });
+    navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { state: { returnTab: activeTab } });
   };
 
   return (
@@ -168,8 +165,6 @@ export const BaulRoute: React.FC = () => {
           )}
         </PageContainer>
       </Tabbar>
-
-      {isLoadingChapterPhotos && <BlockingLoadingOverlay message="Cargando fotos..." />}
     </div>
   );
 };

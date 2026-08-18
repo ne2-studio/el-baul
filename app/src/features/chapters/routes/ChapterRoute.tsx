@@ -120,7 +120,7 @@ export const ChapterRoute: React.FC = () => {
   if (chapterId && !chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
   if (chapterId) {
-    if (chapterScope.isLoading) return <FullScreenLoading message="Cargando capítulo..." />;
+    if (chapterScope.isLoading) return <FullScreenLoading message="Abriendo capítulo..." />;
     if (!chapterScope.photos || !chapterScope.chapterRecuerdos) {
       if (chapterScope.loadFailed) {
         return (
@@ -132,7 +132,7 @@ export const ChapterRoute: React.FC = () => {
           />
         );
       }
-      return <FullScreenLoading message="Cargando capítulo..." />;
+      return <FullScreenLoading message="Abriendo capítulo..." />;
     }
   }
 
