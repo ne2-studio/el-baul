@@ -16,11 +16,18 @@ public class PhotoFileService(
     IImageProcessor imageProcessor,
     ImagePolicy imagePolicy)
 {
-    public async Task<Result<StoredPhotoFile>> SaveForUploadAsync(
-        UserId userId,
-        string fileName,
-        string contentType,
-        Stream content)
+    // Maps IImageProcessor.IdentifyAsync's byte-detected content type to a storage-key
+    // extension — deliberately closed to exactly the content types IdentifyAsync ever returns
+    // (see VipsImageProcessor.ContentTypesByLoader), never anything client-declared.
+    private static readonly Dictionary<string, string> ExtensionsByContentType = new(StringComparer.Ordinal)
+    {
+        ["image/jpeg"] = "jpg",
+        ["image/png"] = "png",
+        ["image/gif"] = "gif",
+        ["image/webp"] = "webp",
+    };
+
+    public async Task<Result<StoredPhotoFile>> SaveForUploadAsync(UserId userId, Stream content)
     {
         using var buffered = new MemoryStream();
         await content.CopyToAsync(buffered);
@@ -44,7 +51,7 @@ public class PhotoFileService(
         // support the web-safe formats this already produces, not HEIC as well, which keeps
         // that abstraction narrow. HEIC/HEIF conversion has always run unconditionally here;
         // this ticket only adds a limit downstream of it, not a new cost.
-        var normalized = await photoImageNormalizer.NormalizeAsync(buffered, contentType, fileName);
+        var normalized = await photoImageNormalizer.NormalizeAsync(buffered);
 
         // Reads the date before anything below strips metadata (NormalizeAsync, when the image
         // policy needs it, drops EXIF entirely — see IImageProcessor) — must not move after it.
@@ -64,7 +71,12 @@ public class PhotoFileService(
             ? await NormalizeAndDescribeAsync(normalized, metadata)
             : DescribeAsIs(normalized, metadata);
 
-        var storageKey = StorageKey.ForPhoto(userId, idGenerator.NewId(), normalized.FileName);
+        // The stored file name is always generated from the real, byte-detected format — never
+        // from anything the client sent (see the ticket this closes: relying on client-declared
+        // filename/content-type let a mislabeled or malicious upload dictate how its own bytes
+        // got interpreted).
+        var storedFileId = idGenerator.NewId();
+        var storageKey = StorageKey.ForPhoto(userId, storedFileId, $"{storedFileId}.{ExtensionFor(storedFile.ContentType)}");
         storedFile.Content.Position = 0;
         await photoStorage.SaveAsync(storageKey, storedFile.Content, storedFile.ContentType);
 
@@ -76,7 +88,7 @@ public class PhotoFileService(
     public async Task<PhotoDownloadResult> OpenForDownloadAsync(string storageKey)
     {
         var content = await photoStorage.OpenReadForDownloadAsync(storageKey);
-        return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(storageKey).OriginalFileName);
+        return new PhotoDownloadResult(content.Content, content.ContentType, StorageKey.From(storageKey).DownloadFileName);
     }
 
     public async Task TryDeleteOrphanedStorageObjectAsync(string storageKey)
@@ -105,8 +117,11 @@ public class PhotoFileService(
     }
 
     private static DescribedFile DescribeAsIs(NormalizedPhoto normalized, ImageMetadata metadata) =>
-        new(normalized.Content, normalized.ContentType, normalized.Content.Length, metadata.Width, metadata.Height,
+        new(normalized.Content, metadata.ContentType, normalized.Content.Length, metadata.Width, metadata.Height,
             null, null, null);
+
+    private static string ExtensionFor(string contentType) =>
+        ExtensionsByContentType.TryGetValue(contentType, out var extension) ? extension : "bin";
 
     private PhotoDate? ResolvePhotoDate(Stream content)
     {

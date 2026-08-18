@@ -39,6 +39,10 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En las pantallas de subida de fotos, al seleccionar fotos muy pesadas la app se quedaba pillada mientras las previsualizaba. Ahora las previsualizaciones se muestran a un tamaño reducido, sin afectar a la calidad de la foto que se sube y se guarda.
 - La pantalla de "Sin conexión" saltaba con demasiada facilidad ante un fallo de red puntual que se resolvía solo. Ahora se reintenta antes de mostrarla y, si llega a aparecer, la app se recupera sola en cuanto vuelve la conexión, sin necesidad de recargar la página.
 
+### Seguridad
+
+- Al subir una foto, ya no se confía en el nombre de archivo ni en el tipo declarado por quien la sube para decidir cómo tratarla: ahora se examina el propio contenido del archivo. Esto evita que un archivo mal etiquetado o manipulado a propósito pueda saltarse las comprobaciones de imagen válida.
+
 ## [beta-v0.4.0] - 2026-08-13
 
 ### Añadido

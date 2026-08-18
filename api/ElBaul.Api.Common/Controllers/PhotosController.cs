@@ -41,9 +41,7 @@ public class PhotosController(
             return BadRequest(new { error = "ClientUploadId is required" });
 
         await using var stream = request.File.OpenReadStream();
-        var result = await photoManager.UploadAsync(
-            chapterId, stream, request.File.FileName, request.File.ContentType,
-            clientUploadId, request.UploadBatchId);
+        var result = await photoManager.UploadAsync(chapterId, stream, clientUploadId, request.UploadBatchId);
 
         return result.ToActionResult();
     }
@@ -173,9 +171,7 @@ public class PhotosController(
             return BadRequest(new { error = "ClientUploadId is required" });
 
         await using var stream = request.File.OpenReadStream();
-        var result = await photoManager.UploadToBaulAsync(
-            baulId, stream, request.File.FileName, request.File.ContentType,
-            clientUploadId, request.UploadBatchId);
+        var result = await photoManager.UploadToBaulAsync(baulId, stream, clientUploadId, request.UploadBatchId);
 
         return result.ToActionResult();
     }
