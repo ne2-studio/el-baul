@@ -2,6 +2,7 @@
 name: refine-backlog
 description: "Interactive session that refines every unrefined backlog ticket (GitHub issues labeled `backlog` without `refined`) one at a time via the refiner agent, so ./scripts/backlog only ever picks up implementation-ready tickets."
 disable-model-invocation: true
+model: haiku
 ---
 
 ## Goal

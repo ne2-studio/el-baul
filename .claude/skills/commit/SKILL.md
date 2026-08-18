@@ -1,6 +1,7 @@
 ---
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git branch:*), Bash(git log:*), Bash(git commit:*)
 description: "How commits should be prepared and created in this repository: staging, message conventions, and scope."
+model: haiku
 ---
 
 ## Context
