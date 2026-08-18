@@ -32,7 +32,6 @@ public class PhotoUploadWorkflow(
         Stream content,
         string fileName,
         string contentType,
-        PhotoDate? explicitDate,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId,
         Func<Photo, DateTime, Task> persistRelatedStateAsync)
@@ -40,7 +39,7 @@ public class PhotoUploadWorkflow(
         Result<StoredPhotoFile> storedFileResult;
         try
         {
-            storedFileResult = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, explicitDate);
+            storedFileResult = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content);
         }
         catch (Exception ex)
         {

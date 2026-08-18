@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { UploadErrorScreen } from '@/features/photos/components/UploadErrorScreen';
-import { PhotoDate } from '@/types';
 import { resolvePhotoRouteContext, SelectedPhoto } from '@/features/photos/uploadFlow';
 
 interface UploadErrorRouteProps {
@@ -10,7 +9,6 @@ interface UploadErrorRouteProps {
 
 interface LocationState {
   failedPhotos: SelectedPhoto[];
-  date: PhotoDate | null;
   succeededCount: number;
 }
 
@@ -21,8 +19,8 @@ export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
 }) => {
   const { baulId, chapterId } = useParams();
   const location = useLocation();
-  const { failedPhotos, date, succeededCount } =
-    (location.state as LocationState) || { failedPhotos: [], date: null, succeededCount: 0 };
+  const { failedPhotos, succeededCount } =
+    (location.state as LocationState) || { failedPhotos: [], succeededCount: 0 };
 
   const { basePath, destination } = resolvePhotoRouteContext({
     baulId: baulId!,
@@ -42,7 +40,6 @@ export const UploadErrorRoute: React.FC<UploadErrorRouteProps> = ({
           state: {
             selectedPhotos: failedPhotos,
             chapter: destination,
-            date,
             succeededCount,
           },
         })

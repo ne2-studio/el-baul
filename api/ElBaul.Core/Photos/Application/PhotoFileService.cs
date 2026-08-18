@@ -20,8 +20,7 @@ public class PhotoFileService(
         UserId userId,
         string fileName,
         string contentType,
-        Stream content,
-        PhotoDate? explicitDate)
+        Stream content)
     {
         using var buffered = new MemoryStream();
         await content.CopyToAsync(buffered);
@@ -50,7 +49,7 @@ public class PhotoFileService(
         // Reads the date before anything below strips metadata (NormalizeAsync, when the image
         // policy needs it, drops EXIF entirely — see IImageProcessor) — must not move after it.
         normalized.Content.Position = 0;
-        var photoDate = ResolvePhotoDate(explicitDate, normalized.Content);
+        var photoDate = ResolvePhotoDate(normalized.Content);
 
         normalized.Content.Position = 0;
         var metadata = await imageProcessor.IdentifyAsync(normalized.Content);
@@ -109,10 +108,8 @@ public class PhotoFileService(
         new(normalized.Content, normalized.ContentType, normalized.Content.Length, metadata.Width, metadata.Height,
             null, null, null);
 
-    private PhotoDate? ResolvePhotoDate(PhotoDate? explicitDate, Stream content)
+    private PhotoDate? ResolvePhotoDate(Stream content)
     {
-        if (explicitDate is not null) return explicitDate;
-
         var extracted = photoDateExtractor.TryExtractDate(content);
         if (extracted is not { } e) return null;
 

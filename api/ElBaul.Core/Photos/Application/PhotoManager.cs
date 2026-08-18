@@ -27,7 +27,6 @@ public class PhotoManager(
         Stream content,
         string fileName,
         string contentType,
-        PhotoDate? date,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId = null)
     {
@@ -45,7 +44,7 @@ public class PhotoManager(
             chapter.BaulId, userId, AccessLevel.Member, "Photo upload", new { chapter.BaulId, ChapterId = chapterId });
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        return await UploadPhotoAsync(auth.Value.Baul, chapter, content, fileName, contentType, date, clientUploadId, userId, auth.Value.IsAdmin, uploadBatchId);
+        return await UploadPhotoAsync(auth.Value.Baul, chapter, content, fileName, contentType, clientUploadId, userId, auth.Value.IsAdmin, uploadBatchId);
     }
 
     public async Task<Result<PhotoDto>> UploadToBaulAsync(
@@ -53,7 +52,6 @@ public class PhotoManager(
         Stream content,
         string fileName,
         string contentType,
-        PhotoDate? date,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId = null)
     {
@@ -62,7 +60,7 @@ public class PhotoManager(
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Loose photo upload");
         if (auth.IsFailure) return Result.Failure<PhotoDto>(auth.Error);
 
-        return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, date, clientUploadId, userId, auth.Value.IsAdmin, uploadBatchId);
+        return await UploadPhotoAsync(auth.Value.Baul, null, content, fileName, contentType, clientUploadId, userId, auth.Value.IsAdmin, uploadBatchId);
     }
 
     private async Task<Result<PhotoDto>> UploadPhotoAsync(
@@ -71,7 +69,6 @@ public class PhotoManager(
         Stream content,
         string fileName,
         string contentType,
-        PhotoDate? date,
         ClientUploadId clientUploadId,
         UserId userId,
         bool isAdmin,
@@ -89,7 +86,7 @@ public class PhotoManager(
         }
 
         var uploadResult = await photoUploadWorkflow.CreatePhotoAsync(
-            baul.Id, chapterId, userId, content, fileName, contentType, date, clientUploadId, uploadBatchId,
+            baul.Id, chapterId, userId, content, fileName, contentType, clientUploadId, uploadBatchId,
             (createdPhoto, now) => photoLifecycle.AddAsync(createdPhoto, chapterId, baul.Id, now));
         if (uploadResult.IsFailure) return Result.Failure<PhotoDto>(uploadResult.Error);
         var outcome = uploadResult.Value;

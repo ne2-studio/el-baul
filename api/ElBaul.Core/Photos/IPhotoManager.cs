@@ -9,7 +9,6 @@ public interface IPhotoManager
         Stream content,
         string fileName,
         string contentType,
-        PhotoDate? date,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId = null);
 
@@ -18,7 +17,6 @@ public interface IPhotoManager
         Stream content,
         string fileName,
         string contentType,
-        PhotoDate? date,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId = null);
 

@@ -180,7 +180,7 @@ public class PersonaManager(
         else
         {
             var photoResult = await photoUploadWorkflow.CreatePhotoAsync(
-                baulId, chapterId: null, userId, content, fileName, contentType, explicitDate: null,
+                baulId, chapterId: null, userId, content, fileName, contentType,
                 clientUploadId, uploadBatchId: null,
                 (createdPhoto, now) => baulPhotoCoverListener.OnPhotoAddedAsync(baulId, PhotoRef.From(createdPhoto), now));
             if (photoResult.IsFailure) return Result.Failure<PersonaDto>(photoResult.Error);

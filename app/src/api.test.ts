@@ -139,7 +139,7 @@ describe('api adapters', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse(photoDto()));
     const file = new File(['img'], 'foto.jpg', { type: 'image/jpeg' });
 
-    await api.photos.upload('baul-1', null, file, 'upload-1', { year: 1999, month: 5 }, 'batch-1');
+    await api.photos.upload('baul-1', null, file, 'upload-1', 'batch-1');
 
     const [, init] = fetchMock.mock.calls[0];
     expect(fetchMock.mock.calls[0][0]).toBe(`${API_BASE}/api/baules/baul-1/photos/sueltas`);
@@ -149,8 +149,6 @@ describe('api adapters', () => {
     expect(formData.get('file')).toBe(file);
     expect(formData.get('clientUploadId')).toBe('upload-1');
     expect(formData.get('uploadBatchId')).toBe('batch-1');
-    expect(formData.get('dateYear')).toBe('1999');
-    expect(formData.get('dateMonth')).toBe('5');
   });
 
   it('returns binary downloads with decoded filename', async () => {

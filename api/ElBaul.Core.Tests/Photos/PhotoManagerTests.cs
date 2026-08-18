@@ -67,7 +67,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Single(_photoStorage.SavedKeys);
@@ -88,7 +88,7 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         var result = await manager.UploadAsync(
-            chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()), uploadBatchId);
+            chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()), uploadBatchId);
 
         Assert.True(result.IsSuccess);
         var stored = await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
@@ -102,7 +102,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3, 4, 5]);
-        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         var stored = await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
@@ -116,7 +116,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager("stranger");
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -138,7 +138,7 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
+            () => manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid())));
 
         Assert.Empty(await _fixture.Photos.GetByChapterIdAsync(chapterId));
     }
@@ -159,7 +159,7 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
+            () => manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid())));
 
         // The file was saved to storage before the DB write failed, so the manager
         // must compensate by deleting it to avoid leaving an orphaned blob.
@@ -183,7 +183,7 @@ public class PhotoManagerTests
 
         using var content = new MemoryStream([1, 2, 3]);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid())));
+            () => manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid())));
 
         Assert.Single(_photoStorage.SavedKeys);
         Assert.Equal(_photoStorage.SavedKeys, _photoStorage.DeletedKeys);
@@ -198,7 +198,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(clientUploadId));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(clientUploadId));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(existingPhotoId.ToString(), result.Value.Id);
@@ -215,7 +215,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(clientUploadId));
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", new ClientUploadId(clientUploadId));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(existingPhotoId.ToString(), result.Value.Id);
@@ -232,7 +232,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream(bytes);
-        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.AlreadyExisted);
@@ -253,7 +253,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream(bytes);
-        await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         // The upload's own bytes really were written to storage (PhotoFileService always saves
         // before the duplicate check runs) — never overwritten, moved, or left blob-orphaned:
@@ -276,7 +276,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream(bytes);
-        var result = await manager.UploadToBaulAsync(baulB, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadToBaulAsync(baulB, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.AlreadyExisted);
@@ -291,7 +291,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.AlreadyExisted);
@@ -309,7 +309,7 @@ public class PhotoManagerTests
 
         var manager = CreateManager(CustodioId);
         using var content = new MemoryStream(bytes);
-        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.AlreadyExisted);
@@ -494,7 +494,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadToBaulAsync(baulId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.ChapterId);
@@ -633,7 +633,7 @@ public class PhotoManagerTests
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.DateYear);
@@ -642,68 +642,19 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task UploadAsync_ShouldUseExifDate_WhenNoExplicitDateGiven()
+    public async Task UploadAsync_ShouldUseExifDate()
     {
         var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         _photoDateExtractor.NextResult = (2019, 8, 3);
         var manager = CreateManager(CustodioId);
 
         using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", null, new ClientUploadId(Guid.NewGuid()));
+        var result = await manager.UploadAsync(chapterId, content, "photo.jpg", "image/jpeg", new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2019, result.Value.DateYear);
         Assert.Equal(8, result.Value.DateMonth);
         Assert.Equal(3, result.Value.DateDay);
-    }
-
-    [Fact]
-    public async Task UploadAsync_ShouldPreferExplicitDate_OverExif()
-    {
-        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
-        _photoDateExtractor.NextResult = (2019, 8, 3);
-        var manager = CreateManager(CustodioId);
-
-        using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(
-            chapterId, content, "photo.jpg", "image/jpeg", PhotoDates.Of(2021, 1, 2), new ClientUploadId(Guid.NewGuid()));
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(2021, result.Value.DateYear);
-        Assert.Equal(1, result.Value.DateMonth);
-        Assert.Equal(2, result.Value.DateDay);
-    }
-
-    [Fact]
-    public async Task UploadAsync_ShouldAcceptPartialExplicitDate_YearOnly()
-    {
-        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
-        var manager = CreateManager(CustodioId);
-
-        using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(
-            chapterId, content, "photo.jpg", "image/jpeg", PhotoDates.Of(2020), new ClientUploadId(Guid.NewGuid()));
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(2020, result.Value.DateYear);
-        Assert.Null(result.Value.DateMonth);
-        Assert.Null(result.Value.DateDay);
-    }
-
-    [Fact]
-    public async Task UploadAsync_ShouldAcceptPartialExplicitDate_YearAndMonth()
-    {
-        var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
-        var manager = CreateManager(CustodioId);
-
-        using var content = new MemoryStream([1, 2, 3]);
-        var result = await manager.UploadAsync(
-            chapterId, content, "photo.jpg", "image/jpeg", PhotoDates.Of(2020, 6), new ClientUploadId(Guid.NewGuid()));
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(2020, result.Value.DateYear);
-        Assert.Equal(6, result.Value.DateMonth);
-        Assert.Null(result.Value.DateDay);
     }
 
     [Fact]

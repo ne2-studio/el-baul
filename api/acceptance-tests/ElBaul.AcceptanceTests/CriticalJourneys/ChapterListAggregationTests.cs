@@ -102,6 +102,9 @@ public class ChapterListAggregationTests(ElBaulAcceptanceFixture fixture)
         return (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
     }
 
+    // Uploads never carry a date hint — the only date a fresh upload can get is from EXIF, which
+    // these synthetic JPEGs don't have. Callers that need a dated photo apply it afterwards via
+    // the live ChangeDate endpoint, exactly like a real client editing a photo's date post-upload.
     private static async Task<string> UploadPhotoAsync(HttpClient client, string chapterId, string fileName, int? year, int? month, int? day)
     {
         using var multipart = new MultipartFormDataContent();
@@ -112,13 +115,18 @@ public class ChapterListAggregationTests(ElBaulAcceptanceFixture fixture)
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
         multipart.Add(fileContent, "File", fileName);
         multipart.Add(new StringContent(Guid.NewGuid().ToString()), "ClientUploadId");
-        if (year is { } y) multipart.Add(new StringContent(y.ToString()), "DateYear");
-        if (month is { } m) multipart.Add(new StringContent(m.ToString()), "DateMonth");
-        if (day is { } d) multipart.Add(new StringContent(d.ToString()), "DateDay");
 
         var response = await client.PostAsync($"/api/chapters/{chapterId}/photos", multipart);
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
-        return (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
+        var photoId = (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
+
+        if (year is { } y)
+        {
+            var dateResponse = await client.PutAsJsonAsync($"/api/photos/{photoId}/date", new { year = y, month, day });
+            dateResponse.StatusCode.Should().Be(HttpStatusCode.OK, await dateResponse.Content.ReadAsStringAsync());
+        }
+
+        return photoId;
     }
 
     // Inserts a standard JPEG COM (comment) marker segment right after the SOI marker, carrying

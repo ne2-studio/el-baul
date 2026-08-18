@@ -27,7 +27,7 @@ public class PhotoFileServiceTests
         var service = CreateService();
         using var content = new MemoryStream(new byte[1001]);
 
-        var result = await service.SaveForUploadAsync(new UserId("user-1"), "big.jpg", "image/jpeg", content, null);
+        var result = await service.SaveForUploadAsync(new UserId("user-1"), "big.jpg", "image/jpeg", content);
 
         Assert.True(result.IsFailure);
         Assert.Equal(Ne2Studio.Common.ApplicationErrorCode.Validation, result.Error.Code);
@@ -42,7 +42,7 @@ public class PhotoFileServiceTests
         var service = CreateService();
         using var content = new MemoryStream([1, 2, 3]);
 
-        var result = await service.SaveForUploadAsync(new UserId("user-1"), "corrupt.jpg", "image/jpeg", content, null);
+        var result = await service.SaveForUploadAsync(new UserId("user-1"), "corrupt.jpg", "image/jpeg", content);
 
         Assert.True(result.IsFailure);
         Assert.Equal(Ne2Studio.Common.ApplicationErrorCode.Validation, result.Error.Code);
@@ -57,7 +57,7 @@ public class PhotoFileServiceTests
         var service = CreateService();
         using var content = new MemoryStream([1, 2, 3]);
 
-        var result = await service.SaveForUploadAsync(new UserId("user-1"), "huge.jpg", "image/jpeg", content, null);
+        var result = await service.SaveForUploadAsync(new UserId("user-1"), "huge.jpg", "image/jpeg", content);
 
         Assert.True(result.IsFailure);
         Assert.Equal(Ne2Studio.Common.ApplicationErrorCode.Validation, result.Error.Code);
@@ -73,7 +73,7 @@ public class PhotoFileServiceTests
         var bytes = new byte[] { 1, 2, 3, 4, 5 };
         using var content = new MemoryStream(bytes);
 
-        var result = await service.SaveForUploadAsync(new UserId("user-1"), "small.jpg", "image/jpeg", content, null);
+        var result = await service.SaveForUploadAsync(new UserId("user-1"), "small.jpg", "image/jpeg", content);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(800, result.Value.Width);
@@ -98,7 +98,7 @@ public class PhotoFileServiceTests
         var uploadedBytes = new byte[10_000];
         using var content = new MemoryStream(uploadedBytes);
 
-        var result = await service.SaveForUploadAsync(new UserId("user-1"), "giant.jpg", "image/jpeg", content, null);
+        var result = await service.SaveForUploadAsync(new UserId("user-1"), "giant.jpg", "image/jpeg", content);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(4096, result.Value.Width);
@@ -116,8 +116,8 @@ public class PhotoFileServiceTests
         var service = CreateService(new ImagePolicy());
         var bytes = new byte[] { 1, 2, 3, 4, 5 };
 
-        var first = await service.SaveForUploadAsync(new UserId("user-1"), "a.jpg", "image/jpeg", new MemoryStream(bytes), null);
-        var second = await service.SaveForUploadAsync(new UserId("user-1"), "b.jpg", "image/jpeg", new MemoryStream(bytes), null);
+        var first = await service.SaveForUploadAsync(new UserId("user-1"), "a.jpg", "image/jpeg", new MemoryStream(bytes));
+        var second = await service.SaveForUploadAsync(new UserId("user-1"), "b.jpg", "image/jpeg", new MemoryStream(bytes));
 
         Assert.True(first.IsSuccess);
         Assert.True(second.IsSuccess);
@@ -131,8 +131,8 @@ public class PhotoFileServiceTests
         _imageProcessor.IdentifyAsync(Arg.Any<Stream>()).Returns(new ImageMetadata(800, 600));
         var service = CreateService(new ImagePolicy());
 
-        var first = await service.SaveForUploadAsync(new UserId("user-1"), "a.jpg", "image/jpeg", new MemoryStream([1, 2, 3]), null);
-        var second = await service.SaveForUploadAsync(new UserId("user-1"), "b.jpg", "image/jpeg", new MemoryStream([4, 5, 6]), null);
+        var first = await service.SaveForUploadAsync(new UserId("user-1"), "a.jpg", "image/jpeg", new MemoryStream([1, 2, 3]));
+        var second = await service.SaveForUploadAsync(new UserId("user-1"), "b.jpg", "image/jpeg", new MemoryStream([4, 5, 6]));
 
         Assert.True(first.IsSuccess);
         Assert.True(second.IsSuccess);
@@ -155,7 +155,7 @@ public class PhotoFileServiceTests
             NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor,
             normalizer, _imageProcessor, new ImagePolicy());
 
-        var result = await service.SaveForUploadAsync(new UserId("user-1"), "photo.heic", "image/heic", new MemoryStream(originalBytes), null);
+        var result = await service.SaveForUploadAsync(new UserId("user-1"), "photo.heic", "image/heic", new MemoryStream(originalBytes));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(originalBytes)), result.Value.OriginalContentHash);

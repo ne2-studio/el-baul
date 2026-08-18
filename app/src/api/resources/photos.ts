@@ -36,18 +36,13 @@ export const photosApi = {
     return { photos: result.items.map((p) => new Photo(p)), hasMore: result.hasMore };
   },
   upload: async (
-    baulId: string, chapterId: string | null, file: File, clientUploadId: string, date?: PhotoDate,
+    baulId: string, chapterId: string | null, file: File, clientUploadId: string,
     uploadBatchId?: string
   ) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('clientUploadId', clientUploadId);
     if (uploadBatchId) formData.append('uploadBatchId', uploadBatchId);
-    if (date) {
-      formData.append('dateYear', String(date.year));
-      if (date.month) formData.append('dateMonth', String(date.month));
-      if (date.day) formData.append('dateDay', String(date.day));
-    }
 
     const uploadPath = chapterId ? path(CHAPTER_PHOTOS, { chapterId }) : path(LOOSE_PHOTOS, { baulId });
     const response = await apiFetch(`${API_BASE}${uploadPath}`, {

@@ -40,12 +40,9 @@ public class PhotosController(
         if (request.ClientUploadId is not { } clientUploadId)
             return BadRequest(new { error = "ClientUploadId is required" });
 
-        var date = ParseDate(request);
-        if (date.IsFailure) return ErrorMapping.ToActionResult(date.Error);
-
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(
-            chapterId, stream, request.File.FileName, request.File.ContentType, date.Value,
+            chapterId, stream, request.File.FileName, request.File.ContentType,
             clientUploadId, request.UploadBatchId);
 
         return result.ToActionResult();
@@ -175,12 +172,9 @@ public class PhotosController(
         if (request.ClientUploadId is not { } clientUploadId)
             return BadRequest(new { error = "ClientUploadId is required" });
 
-        var date = ParseDate(request);
-        if (date.IsFailure) return ErrorMapping.ToActionResult(date.Error);
-
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadToBaulAsync(
-            baulId, stream, request.File.FileName, request.File.ContentType, date.Value,
+            baulId, stream, request.File.FileName, request.File.ContentType,
             clientUploadId, request.UploadBatchId);
 
         return result.ToActionResult();
@@ -251,14 +245,4 @@ public class PhotosController(
         var result = await photoPersonaTagManager.SetTaggedPersonasAsync(photoId, request.PersonaIds);
         return result.ToActionResult();
     }
-
-    // Optional at the wire level (a photo may upload with no known date at all, falling back to
-    // EXIF extraction downstream) but validated here if present, so an invalid year/month/day
-    // never crosses the IPhotoManager boundary. PhotoDate.Parse itself owns the actual validation
-    // rule — this only adapts its "no year at all" case, which Parse's required-year signature
-    // can't express, into a Result<PhotoDate?>.
-    private static Result<PhotoDate?> ParseDate(UploadPhotoRequest request) =>
-        request.DateYear is not { } year
-            ? Result.Success<PhotoDate?>(null)
-            : PhotoDate.Parse(year, request.DateMonth, request.DateDay).Map(d => (PhotoDate?)d);
 }

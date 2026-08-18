@@ -35,7 +35,7 @@ export const UploadConfirmationRoute: React.FC = () => {
       }
       onPhotosLimitExceeded={() => showToastMessage('Se ha limitado la selección a 30 fotos por subida.', 'error')}
       onUpload={(photos) => {
-        navigate(`${basePath}/subiendo`, { state: { selectedPhotos: photos, chapter: destination, date: null } });
+        navigate(`${basePath}/subiendo`, { state: { selectedPhotos: photos, chapter: destination } });
       }}
     />
   );
