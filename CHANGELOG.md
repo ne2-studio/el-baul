@@ -13,6 +13,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+## [beta-v0.4.1] - 2026-08-18
+
 ### Añadido
 
 - Ahora es posible poner El Baúl en mantenimiento: mientras dura, la app muestra una pantalla explicándolo y ninguna acción está disponible.
