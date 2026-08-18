@@ -11,8 +11,3 @@ observable error semantics.
 If DTOs or controllers change the HTTP contract, run from the repo root:
 `./scripts/openapi accept-contract`, `./scripts/openapi generate-types`,
 `./scripts/verify backend`, `./scripts/verify frontend`, and `./scripts/verify admin`.
-
-## Before finishing a task
-
-Spawn a `verifier` agent with the diff and a minimal statement of intent. Verification
-MUST succeed to consider the task done.
