@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react';
-import { Chapter, Photo, PhotoDate } from '@/types';
+import { Chapter, Photo } from '@/types';
 
 const LOOSE_PHOTOS_CHAPTER_ID = 'sueltas';
 const LOOSE_PHOTOS_CHAPTER_NAME = 'Fotos sueltas';
@@ -17,7 +17,6 @@ export interface UploadItem {
   // baúl feed's "N fotos subidas" cards (see IPhotoUploadBatchReadModel on the backend).
   uploadBatchId: string;
   file: File;
-  date?: PhotoDate;
 }
 
 // The upload use case's result shape lives here (not in useCases/) so presentational
@@ -182,7 +181,7 @@ function photoChapterPath(baulId: string, chapterId: string | null | undefined):
   return chapterId ? `/baules/${baulId}/capitulos/${chapterId}` : `/baules/${baulId}/fotos-sueltas`;
 }
 
-export function uploadItemsFromSelectedPhotos(selectedPhotos: SelectedPhoto[], date: PhotoDate | null): UploadItem[] {
+export function uploadItemsFromSelectedPhotos(selectedPhotos: SelectedPhoto[]): UploadItem[] {
   // One id per call, shared by every item — this is the single point where a set of picked
   // photos becomes "one upload action" (see UploadingRoute, the only caller of
   // uploadPhotosWithChapter/uploadPhotos).
@@ -191,7 +190,6 @@ export function uploadItemsFromSelectedPhotos(selectedPhotos: SelectedPhoto[], d
     clientUploadId: photo.id,
     uploadBatchId,
     file: photo.file,
-    date: date ?? undefined,
   }));
 }
 

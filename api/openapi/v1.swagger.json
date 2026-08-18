@@ -4646,18 +4646,6 @@
                     "type": "string",
                     "format": "binary"
                   },
-                  "DateYear": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
-                  "DateMonth": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
-                  "DateDay": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
                   "ClientUploadId": {
                     "type": "string",
                     "format": "uuid"
@@ -4670,15 +4658,6 @@
               },
               "encoding": {
                 "File": {
-                  "style": "form"
-                },
-                "DateYear": {
-                  "style": "form"
-                },
-                "DateMonth": {
-                  "style": "form"
-                },
-                "DateDay": {
                   "style": "form"
                 },
                 "ClientUploadId": {
@@ -5568,18 +5547,6 @@
                     "type": "string",
                     "format": "binary"
                   },
-                  "DateYear": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
-                  "DateMonth": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
-                  "DateDay": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
                   "ClientUploadId": {
                     "type": "string",
                     "format": "uuid"
@@ -5592,15 +5559,6 @@
               },
               "encoding": {
                 "File": {
-                  "style": "form"
-                },
-                "DateYear": {
-                  "style": "form"
-                },
-                "DateMonth": {
-                  "style": "form"
-                },
-                "DateDay": {
                   "style": "form"
                 },
                 "ClientUploadId": {

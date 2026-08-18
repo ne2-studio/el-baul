@@ -4103,12 +4103,6 @@ export interface paths {
                     "multipart/form-data": {
                         /** Format: binary */
                         File?: string;
-                        /** Format: int32 */
-                        DateYear?: number;
-                        /** Format: int32 */
-                        DateMonth?: number;
-                        /** Format: int32 */
-                        DateDay?: number;
                         /** Format: uuid */
                         ClientUploadId?: string;
                         /** Format: uuid */
@@ -4840,12 +4834,6 @@ export interface paths {
                     "multipart/form-data": {
                         /** Format: binary */
                         File?: string;
-                        /** Format: int32 */
-                        DateYear?: number;
-                        /** Format: int32 */
-                        DateMonth?: number;
-                        /** Format: int32 */
-                        DateDay?: number;
                         /** Format: uuid */
                         ClientUploadId?: string;
                         /** Format: uuid */

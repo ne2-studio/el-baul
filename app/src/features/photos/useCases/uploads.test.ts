@@ -204,7 +204,7 @@ describe('photos useCases uploads', () => {
       const results = await uploadPhotos(baulId, null, [{ clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') }]);
 
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1, alreadyExisted: false }]);
-      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined, 'batch-1');
+      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', 'batch-1');
       const state = useBaulesStore.getState();
       expect(state.loosePhotos[baulId]).toEqual([existing.id, photo1.id]);
       expect(state.baules[0].coverPhotoUrl).toBe(photo1.thumbnailUrl);
@@ -251,7 +251,7 @@ describe('photos useCases uploads', () => {
 
       expect(resolvedChapterId).toBe(chapterId);
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1, alreadyExisted: false }]);
-      expect(api.photos.upload).toHaveBeenCalledWith(baulId, chapterId, expect.anything(), 'c1', undefined, 'batch-1');
+      expect(api.photos.upload).toHaveBeenCalledWith(baulId, chapterId, expect.anything(), 'c1', 'batch-1');
     });
 
     it('delegates to uploadPhotos with a null chapterId when there is no target chapter', async () => {
@@ -265,7 +265,7 @@ describe('photos useCases uploads', () => {
 
       expect(resolvedChapterId).toBeNull();
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1, alreadyExisted: false }]);
-      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', undefined, 'batch-1');
+      expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', 'batch-1');
     });
   });
 });

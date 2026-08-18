@@ -45,7 +45,7 @@ export async function uploadPhotos(
     }
     try {
       const photo = await api.photos.upload(
-        baulId, chapterId, selected.file, selected.clientUploadId, selected.date, selected.uploadBatchId);
+        baulId, chapterId, selected.file, selected.clientUploadId, selected.uploadBatchId);
       uploaded.push(photo);
       result = { clientUploadId: selected.clientUploadId, photo, alreadyExisted: photo.alreadyExisted };
     } catch (error) {

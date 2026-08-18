@@ -302,15 +302,12 @@ describe('uploadFlow', () => {
     });
   });
 
-  it('converts selected photos to store upload items with the optional upload date', () => {
+  it('converts selected photos to store upload items', () => {
     const file = new File(['image-bytes'], 'foto.jpg', { type: 'image/jpeg' });
     const selectedPhotos = [{ id: 'selected-1', file, preview: 'blob:preview' }];
 
-    expect(uploadItemsFromSelectedPhotos(selectedPhotos, { year: 1991, month: 8 })).toEqual([
-      { clientUploadId: 'selected-1', uploadBatchId: expect.any(String), file, date: { year: 1991, month: 8 } },
-    ]);
-    expect(uploadItemsFromSelectedPhotos(selectedPhotos, null)).toEqual([
-      { clientUploadId: 'selected-1', uploadBatchId: expect.any(String), file, date: undefined },
+    expect(uploadItemsFromSelectedPhotos(selectedPhotos)).toEqual([
+      { clientUploadId: 'selected-1', uploadBatchId: expect.any(String), file },
     ]);
   });
 
@@ -330,12 +327,12 @@ describe('uploadFlow', () => {
     const batch2 = '22222222-2222-2222-2222-222222222222';
 
     vi.mocked(crypto.randomUUID).mockReturnValueOnce(batch1);
-    const [first, second] = uploadItemsFromSelectedPhotos(selectedPhotos, null);
+    const [first, second] = uploadItemsFromSelectedPhotos(selectedPhotos);
     expect(first.uploadBatchId).toBe(batch1);
     expect(second.uploadBatchId).toBe(batch1);
 
     vi.mocked(crypto.randomUUID).mockReturnValueOnce(batch2);
-    const [third] = uploadItemsFromSelectedPhotos(selectedPhotos, null);
+    const [third] = uploadItemsFromSelectedPhotos(selectedPhotos);
     expect(third.uploadBatchId).toBe(batch2);
   });
 

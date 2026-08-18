@@ -7,18 +7,12 @@ public interface IPhotoManager
     Task<Result<PhotoDto>> UploadAsync(
         ChapterId chapterId,
         Stream content,
-        string fileName,
-        string contentType,
-        PhotoDate? date,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId = null);
 
     Task<Result<PhotoDto>> UploadToBaulAsync(
         BaulId baulId,
         Stream content,
-        string fileName,
-        string contentType,
-        PhotoDate? date,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId = null);
 

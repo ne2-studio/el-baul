@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ToastVariant } from '@/design-system/components/feedback/Toast';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { readJson, readString, writeJson, writeString } from '@/utils/safeLocalStorage';
 import type { Baul } from '@/types';
 
 const CONTRIBUTION_SUGGESTION_COOLDOWN_STORAGE_KEY = 'elbaul.contributionSuggestionCooldowns';
@@ -11,67 +12,32 @@ function contributionSuggestionCooldownMs(): number {
   return useAppConfigStore.getState().contributionSuggestionCooldownMinutes * 60 * 1000;
 }
 
-// try/catch en ambos lados, mismo motivo que useCurrentBaulStore: modo privado o cuota de
-// localStorage llena no debe romper la app — en el peor caso se pierde la persistencia entre
-// reinicios y el cooldown vuelve a comportarse como si nunca se hubiera mostrado nada.
 function readContributionSuggestionCooldowns(): Record<string, number> {
-  try {
-    const raw = localStorage.getItem(CONTRIBUTION_SUGGESTION_COOLDOWN_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+  return readJson(CONTRIBUTION_SUGGESTION_COOLDOWN_STORAGE_KEY, {});
 }
 
 function writeContributionSuggestionCooldowns(cooldowns: Record<string, number>): void {
-  try {
-    localStorage.setItem(CONTRIBUTION_SUGGESTION_COOLDOWN_STORAGE_KEY, JSON.stringify(cooldowns));
-  } catch {
-    // ver comentario de readContributionSuggestionCooldowns
-  }
+  writeJson(CONTRIBUTION_SUGGESTION_COOLDOWN_STORAGE_KEY, cooldowns);
 }
 
 const REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY = 'elbaul.removalRequestedPhotoIds';
 
-// Mismo motivo que readContributionSuggestionCooldowns: fail-open, nunca romper la app por
-// localStorage en modo privado o con cuota llena.
 function readRemovalRequestedPhotoIds(): string[] {
-  try {
-    const raw = localStorage.getItem(REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  return readJson(REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY, []);
 }
 
 function writeRemovalRequestedPhotoIds(ids: string[]): void {
-  try {
-    localStorage.setItem(REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY, JSON.stringify(ids));
-  } catch {
-    // ver comentario de readRemovalRequestedPhotoIds
-  }
+  writeJson(REMOVAL_REQUESTED_PHOTO_IDS_STORAGE_KEY, ids);
 }
 
 const BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY = 'elbaul.baulActivitySeenAt';
 
-// Mismo motivo que readContributionSuggestionCooldowns: fail-open, nunca romper la app por
-// localStorage en modo privado o con cuota llena — en el peor caso el dot de novedades vuelve
-// a aparecer tras un reinicio en vez de recordar lo ya visto.
 function readBaulActivitySeenAt(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem(BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+  return readJson(BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY, {});
 }
 
 function writeBaulActivitySeenAt(seenAt: Record<string, string>): void {
-  try {
-    localStorage.setItem(BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY, JSON.stringify(seenAt));
-  } catch {
-    // ver comentario de readBaulActivitySeenAt
-  }
+  writeJson(BAUL_ACTIVITY_SEEN_AT_STORAGE_KEY, seenAt);
 }
 
 const HAS_LAUNCHED_APP_STORAGE_KEY = 'elbaul.hasLaunchedApp';
@@ -81,17 +47,12 @@ const HAS_LAUNCHED_APP_STORAGE_KEY = 'elbaul.hasLaunchedApp';
 // (ver BaulRoute.tsx) y una función que se pudiera llamar más de una vez marcaría "ya lanzada"
 // a mitad de la primerísima sesión, dejando el segundo baúl visitado con un resultado
 // distinto al primero. Al ser un `const` de módulo, todo el que importe el store durante esta
-// carga de página ve el mismo valor.
+// carga de página ve el mismo valor. Si no se puede saber (readString/writeString fallan
+// open) no bloqueamos la sugerencia.
 const IS_FIRST_APP_LAUNCH = (() => {
-  try {
-    if (localStorage.getItem(HAS_LAUNCHED_APP_STORAGE_KEY)) return false;
-    localStorage.setItem(HAS_LAUNCHED_APP_STORAGE_KEY, '1');
-    return true;
-  } catch {
-    // modo privado o cuota llena: no podemos saber si es la primera vez, así que no bloqueamos
-    // la sugerencia — mismo criterio "fail open" que readContributionSuggestionCooldowns.
-    return false;
-  }
+  if (readString(HAS_LAUNCHED_APP_STORAGE_KEY)) return false;
+  writeString(HAS_LAUNCHED_APP_STORAGE_KEY, '1');
+  return true;
 })();
 
 interface UIState {

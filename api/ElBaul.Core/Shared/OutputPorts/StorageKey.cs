@@ -3,8 +3,10 @@ namespace ElBaul.Core.Shared.OutputPorts;
 // The object-storage key a photo or persona avatar is saved under. Two related but distinct
 // shapes exist ("{userId}/{guid}-{fileName}" for photos, "personas/{personaId}/{guid}-
 // {fileName}" for persona avatars) — both share the same "last path segment ends in
-// {36-char guid}-{originalFileName}" convention, which OriginalFileName parses back off,
-// replacing the magic-number substring extraction that used to live in PhotoManager.
+// {36-char guid}-{fileName}" convention, which DownloadFileName parses back off, replacing the
+// magic-number substring extraction that used to live in PhotoManager. fileName here is never
+// client-supplied — callers pass a name generated from the real, byte-detected format (see
+// PhotoFileService), so it's safe to also reuse as the suggested download filename.
 public readonly record struct StorageKey
 {
     private const int GuidAndDashLength = 37;
@@ -20,11 +22,14 @@ public readonly record struct StorageKey
         new($"personas/{personaId}/{id}-{fileName}");
 
     // Wraps an already-persisted key (loaded as plain string from Photo.StorageKey) so
-    // OriginalFileName can be read off it — not for building new keys, see ForPhoto/
+    // DownloadFileName can be read off it — not for building new keys, see ForPhoto/
     // ForPersonaAvatar for that.
     public static StorageKey From(string value) => new(value);
 
-    public string OriginalFileName
+    /// <summary>The generated (never client-supplied) file name suggested for "download
+    /// original" — despite the name resembling one, it was never the uploader's actual
+    /// filename, see the type-level comment.</summary>
+    public string DownloadFileName
     {
         get
         {

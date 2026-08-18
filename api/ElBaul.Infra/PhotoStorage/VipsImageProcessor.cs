@@ -19,6 +19,18 @@ namespace ElBaul.Infra.PhotoStorage;
 /// </summary>
 public class VipsImageProcessor(ILogger<VipsImageProcessor> logger) : IImageProcessor
 {
+    // libvips' own loader name for each buffer-decoded format ("<format>load_buffer") mapped to
+    // the MIME type the rest of the pipeline stores/serves — this is what makes IdentifyAsync's
+    // ContentType trustworthy: it comes from the loader libvips actually picked to decode the
+    // bytes, never from a client-declared content-type or filename extension.
+    private static readonly Dictionary<string, string> ContentTypesByLoader = new(StringComparer.Ordinal)
+    {
+        ["jpegload_buffer"] = "image/jpeg",
+        ["pngload_buffer"] = "image/png",
+        ["gifload_buffer"] = "image/gif",
+        ["webpload_buffer"] = "image/webp",
+    };
+
     // A memory-safety valve for the container this process runs in, not a tunable performance
     // knob — deliberately small and fixed rather than configurable (see ticket 010). Only
     // NormalizeAsync (the heavy path) is gated; IdentifyAsync stays header-only and cheap.
@@ -29,7 +41,17 @@ public class VipsImageProcessor(ILogger<VipsImageProcessor> logger) : IImageProc
         try
         {
             using var image = Image.NewFromBuffer(ReadAllBytes(content));
-            return Task.FromResult<ImageMetadata?>(new ImageMetadata(image.Width, image.Height));
+            var loader = image.Get("vips-loader") as string;
+            if (loader is null || !ContentTypesByLoader.TryGetValue(loader, out var contentType))
+            {
+                // Decoded, but not one of the formats this pipeline is willing to store (e.g.
+                // SVG, TIFF, PDF thumbnails — anything libvips itself can open but that isn't a
+                // web-safe stored-photo format here) — treated the same as "not a valid image".
+                logger.LogInformation("Uploaded file decoded via unsupported loader {Loader}", loader);
+                return Task.FromResult<ImageMetadata?>(null);
+            }
+
+            return Task.FromResult<ImageMetadata?>(new ImageMetadata(image.Width, image.Height, contentType));
         }
         catch (VipsException ex)
         {

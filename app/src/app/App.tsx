@@ -12,8 +12,9 @@ import { PushNotificationsBanner } from '@/features/profile/native/PushNotificat
 import { ScrollToTop } from '@/app/ScrollToTop';
 import { AndroidAppBanner } from '@/app/AndroidAppBanner';
 import { PwaUpdateBanner } from '@/app/PwaUpdateBanner';
-import { API_CONNECTIVITY_LOST_EVENT, API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
+import { API_FORBIDDEN_EVENT, API_UNAUTHORIZED_EVENT, setAccessToken } from '@/api';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useConnectivityLost } from '@/hooks/useConnectivityLost';
 
 // Auth and Route Guards
 import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
@@ -59,7 +60,6 @@ function App() {
   const location = useLocation();
   const auth = useAuth();
   const [isAccessDenied, setIsAccessDenied] = React.useState(false);
-  const [isConnectivityLost, setIsConnectivityLost] = React.useState(false);
   const {
     showToast,
     toastMessage,
@@ -93,12 +93,6 @@ function App() {
     const handleForbidden = () => setIsAccessDenied(true);
     window.addEventListener(API_FORBIDDEN_EVENT, handleForbidden);
     return () => window.removeEventListener(API_FORBIDDEN_EVENT, handleForbidden);
-  }, []);
-
-  useEffect(() => {
-    const handleConnectivityLost = () => setIsConnectivityLost(true);
-    window.addEventListener(API_CONNECTIVITY_LOST_EVENT, handleConnectivityLost);
-    return () => window.removeEventListener(API_CONNECTIVITY_LOST_EVENT, handleConnectivityLost);
   }, []);
 
   // A 401 means the API rejected the access token we sent (expired/invalid session) — the
@@ -188,6 +182,14 @@ function App() {
     // resolveHomeDestination. Keeping a single source of truth avoids this effect racing that
     // route's own resolution with a different criterion.
   };
+
+  // See useConnectivityLost: once the browser reports it's back online, drop the splash and
+  // re-run the same data load the initial-auth effect above triggers, instead of forcing a
+  // full page reload (ConnectivityLostScreen's "Reintentar" button still does that, as a
+  // manual fallback).
+  const isConnectivityLost = useConnectivityLost(() => {
+    if (auth.isAuthenticated) void handleLoadUserData();
+  });
 
   const handleSignOut = async (): Promise<boolean> => {
     // signoutRedirect() limpia el usuario local ANTES de construir la petición a

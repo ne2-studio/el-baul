@@ -12,7 +12,7 @@ namespace ElBaul.Infra.Lite;
 public class FakeImageProcessor : IImageProcessor
 {
     public Task<ImageMetadata?> IdentifyAsync(Stream content) =>
-        Task.FromResult<ImageMetadata?>(content.Length == 0 ? null : new ImageMetadata(800, 600));
+        Task.FromResult<ImageMetadata?>(content.Length == 0 ? null : new ImageMetadata(800, 600, "image/jpeg"));
 
     public Task<NormalizedImage> NormalizeAsync(Stream content, int maxLongEdge)
     {

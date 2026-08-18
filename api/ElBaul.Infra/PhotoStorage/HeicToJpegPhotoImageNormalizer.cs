@@ -11,34 +11,26 @@ namespace ElBaul.Infra.PhotoStorage;
 // api/Dockerfile) rather than a .NET binding, since Magick.NET doesn't reliably support musl.
 public class HeicToJpegPhotoImageNormalizer(ILogger<HeicToJpegPhotoImageNormalizer> logger) : IPhotoImageNormalizer
 {
-    private static readonly HashSet<string> HeicContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    public async Task<NormalizedPhoto> NormalizeAsync(Stream content)
     {
-        "image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"
-    };
-
-    private static readonly string[] HeicExtensions = [".heic", ".heif"];
-
-    public async Task<NormalizedPhoto> NormalizeAsync(Stream content, string contentType, string fileName)
-    {
-        if (!IsHeic(contentType, fileName)) return new NormalizedPhoto(content, contentType, fileName);
+        var bytes = await ReadAllBytesAsync(content);
+        if (!HeicSniffer.IsHeic(bytes)) return new NormalizedPhoto(new MemoryStream(bytes));
 
         try
         {
-            content.Position = 0;
-            var jpegBytes = await ConvertToJpegAsync(content);
-            return new NormalizedPhoto(new MemoryStream(jpegBytes), "image/jpeg", Path.ChangeExtension(fileName, ".jpg"));
+            var jpegBytes = await ConvertToJpegAsync(new MemoryStream(bytes));
+            return new NormalizedPhoto(new MemoryStream(jpegBytes));
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to convert HEIC photo {FileName} to JPEG, storing original bytes", fileName);
-            content.Position = 0;
-            return new NormalizedPhoto(content, contentType, fileName);
+            // No client-declared content-type/filename to fall back to reporting here (this
+            // port doesn't accept either, see IPhotoImageNormalizer) — the original bytes go on
+            // to IImageProcessor.IdentifyAsync exactly as received, which rejects them as an
+            // invalid image if it (like this conversion attempt) can't make sense of raw HEIC.
+            logger.LogWarning(ex, "Failed to convert HEIC photo to JPEG, storing original bytes");
+            return new NormalizedPhoto(new MemoryStream(bytes));
         }
     }
-
-    private static bool IsHeic(string contentType, string fileName) =>
-        HeicContentTypes.Contains(contentType) ||
-        HeicExtensions.Contains(Path.GetExtension(fileName), StringComparer.OrdinalIgnoreCase);
 
     private static async Task<byte[]> ConvertToJpegAsync(Stream content)
     {

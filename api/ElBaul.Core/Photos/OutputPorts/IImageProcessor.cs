@@ -1,9 +1,13 @@
 namespace ElBaul.Core.Photos.OutputPorts;
 
 /// <summary>Raw pixel dimensions of an image, read off its header/metadata — never the
-/// display orientation. Null from IdentifyAsync means the content couldn't be identified as a
-/// valid image at all.</summary>
-public record ImageMetadata(int Width, int Height);
+/// display orientation — plus the MIME content type IdentifyAsync itself determined from those
+/// same bytes. Deliberately never a client-declared content-type/filename hint: this is the one
+/// value the rest of the upload pipeline (storage content-type, storage key extension) is
+/// allowed to trust, precisely because it comes from decoding the file, not from what the
+/// uploader claimed it was. Null from IdentifyAsync means the content couldn't be identified as
+/// a valid image at all.</summary>
+public record ImageMetadata(int Width, int Height, string ContentType);
 
 public record NormalizedImage(Stream Content, string ContentType, int Width, int Height, long SizeBytes);
 

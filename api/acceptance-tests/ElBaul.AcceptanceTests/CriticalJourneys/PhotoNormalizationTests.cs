@@ -29,6 +29,14 @@ public class PhotoNormalizationTests(ElBaulAcceptanceFixture fixture)
     private static readonly byte[] CompliantJpegBytes = Convert.FromBase64String(
         "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=");
 
+    // A real, tiny (20x20) HEIC file, produced with libheif's heif-enc. Its client-declared
+    // filename/content-type get set to "photo.jpg"/"image/jpeg" by UploadPhotoAsync below — the
+    // ticket's own worked example of a HEIC file mislabeled as a JPEG. Detection/conversion must
+    // still happen because it's driven purely by these bytes' ISOBMFF `ftyp` box, never by that
+    // label (see HeicSniffer, HeicToJpegPhotoImageNormalizer).
+    private static readonly byte[] MislabeledHeicBytes = Convert.FromBase64String(
+        "AAAAHGZ0eXBoZWl4AAAAAG1pZjFoZWl4bWlhZgAAAbdtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAHbAAEAAAAAAAAAIwACAAAAAAH+AAEAAAAAAAAAuAAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGh2YzEAAAAAFWluZmUCAAABAAIAAEV4aWYAAAAA9mlwcnAAAADWaXBjbwAAAHFodmNDAQQIAAAAAAAAAAAAHvAA/Pz4+AAADwNgAAEAF0ABDAH//wQIAAADAJ/4AAADAAAeugJAYQABACZCAQEECAAAAwCf+AAAAwAAHsCCBBZbqrprmwIAAAMAMgAAAwACEGIAAQAGRAHBc8GJAAAAE2NvbHJuY2x4AAEADQAGgAAAABRpc3BlAAAAAAAAAEAAAABAAAAAKGNsYXAAAAAUAAAAAQAAABQAAAAB////1AAAAAL////UAAAAAgAAAA5waXhpAAAAAAEIAAAAGGlwbWEAAAAAAAAAAQABBYECAwWEAAAAGmlyZWYAAAAAAAAADmNkc2MAAgABAAEAAADjbWRhdAAAAB8oAa4mQkok59cN//4fCxdhVXNTsmwgYkQpEoBj9fSuAAAAAElJKgAIAAAABgASAQMAAQAAAAEAAAAaAQUAAQAAAFYAAAAbAQUAAQAAAF4AAAAoAQMAAQAAAAIAAAATAgMAAQAAAAEAAABphwQAAQAAAGYAAAAAAAAAOGMAAOgDAAA4YwAA6AMAAAYAAJAHAAQAAAAwMjEwAZEHAAQAAAABAgMAAKAHAAQAAAAwMTAwAaADAAEAAAD//wAAAqAEAAEAAAAUAAAAA6AEAAEAAAAUAAAAAAAAAA==");
+
     [Fact]
     public async Task Uploading_an_oversized_photo_normalizes_it_down_to_the_policy_limit()
     {
@@ -70,6 +78,27 @@ public class PhotoNormalizationTests(ElBaulAcceptanceFixture fixture)
         var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
 
         downloadedBytes.Should().Equal(CompliantJpegBytes, "a photo already within policy must not be recompressed");
+    }
+
+    [Fact]
+    public async Task Uploading_a_heic_photo_mislabeled_as_jpeg_still_gets_detected_and_converted_by_its_bytes()
+    {
+        using var tokenClient = fixture.CreateOidcTokenClient();
+        using var client = await CreateAuthenticatedClientAsync(tokenClient);
+
+        var baulId = await CreateBaulAsync(client, "Baúl HEIC");
+        var chapterId = await CreateChapterAsync(client, baulId, "Capítulo HEIC");
+
+        // UploadPhotoAsync always declares "image/jpeg" as the upload's content-type and this
+        // filename below — a JPEG mislabel over real HEIC bytes, exactly the ticket scenario.
+        var photoId = await UploadPhotoAsync(client, chapterId, MislabeledHeicBytes, "photo.jpg");
+
+        var downloadResponse = await client.GetAsync($"/api/photos/{photoId}/download");
+        downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
+
+        downloadedBytes.Should().NotEqual(MislabeledHeicBytes, "the raw HEIC bytes must have been converted, not stored as-is");
+        downloadedBytes.Take(3).Should().Equal(new byte[] { 0xFF, 0xD8, 0xFF }, "the stored asset must be a real JPEG (SOI + marker), proving conversion actually ran");
     }
 
     private async Task<HttpClient> CreateAuthenticatedClientAsync(FakeOidcTokenClient tokenClient)

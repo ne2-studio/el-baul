@@ -30,9 +30,6 @@ public class PhotoUploadWorkflow(
         ChapterId? chapterId,
         UserId userId,
         Stream content,
-        string fileName,
-        string contentType,
-        PhotoDate? explicitDate,
         ClientUploadId clientUploadId,
         Guid? uploadBatchId,
         Func<Photo, DateTime, Task> persistRelatedStateAsync)
@@ -40,13 +37,13 @@ public class PhotoUploadWorkflow(
         Result<StoredPhotoFile> storedFileResult;
         try
         {
-            storedFileResult = await photoFileService.SaveForUploadAsync(userId, fileName, contentType, content, explicitDate);
+            storedFileResult = await photoFileService.SaveForUploadAsync(userId, content);
         }
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Photo upload failed while saving to storage {BaulId} {ChapterId} {FileName} {ContentType}",
-                baulId, chapterId, fileName, contentType);
+                "Photo upload failed while saving to storage {BaulId} {ChapterId}",
+                baulId, chapterId);
             throw;
         }
 

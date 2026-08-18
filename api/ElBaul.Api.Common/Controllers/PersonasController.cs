@@ -73,8 +73,7 @@ public class PersonasController(IPersonaManager personaManager) : ControllerBase
 
         await using var stream = request.File.OpenReadStream();
         var result = await personaManager.UpdatePersonaAvatarAsync(
-            baulId, personaId, stream, request.File.FileName, request.File.ContentType,
-            crop.Value, new ClientUploadId(clientUploadId));
+            baulId, personaId, stream, crop.Value, new ClientUploadId(clientUploadId));
 
         return result.ToActionResult();
     }

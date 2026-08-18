@@ -7,6 +7,7 @@ vi.mock('@/api', () => ({
       getPersonas: vi.fn(),
       setPersonaAvatarPhoto: vi.fn(),
       createPersona: vi.fn(),
+      updatePersonaRole: vi.fn(),
     },
   },
 }));
@@ -14,7 +15,7 @@ vi.mock('@/api', () => ({
 import { api } from '@/api';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
-import { createPersona, loadPersonas, setPersonaAvatarPhoto } from './index';
+import { createPersona, loadPersonas, setPersonaAvatarPhoto, updateUserRole } from './index';
 
 // Regression coverage for a bug where loadPersonas swallowed every error — a genuine
 // network failure looked identical to "this baúl has no shared people" and never reached
@@ -148,5 +149,71 @@ describe('setPersonaAvatarPhoto', () => {
     await setPersonaAvatarPhoto(baulId, 'p1', photo, { x: 0.5, y: 0.5, scale: 1 });
 
     expect(usePersonasStore.getState().personaPhotos.p1).toEqual(['photo-1', 'photo-2']);
+  });
+});
+
+// Regression coverage for the optimistic-update/rollback pairing in updateUserRole: the role
+// <select> is controlled by this value, so it applies the new role immediately for instant
+// feedback, then either leaves it applied once the server confirms or rolls back to the
+// pre-update snapshot if the request fails. A rollback that missed a field, or that failed to
+// rethrow, would leave the UI either silently wrong or unaware the change didn't actually happen.
+describe('people useCases updateUserRole', () => {
+  const baulId = 'baul-1';
+  const personaId = 'p1';
+
+  function newPersona(overrides: Partial<ConstructorParameters<typeof Persona>[0]> = {}): Persona {
+    return new Persona({
+      id: personaId,
+      baulId,
+      nickname: 'Abu',
+      status: 'active',
+      role: 'colaborador',
+      isCustodio: false,
+      invitedDate: new Date().toISOString(),
+      canEdit: true,
+      ...overrides,
+    });
+  }
+
+  beforeEach(() => {
+    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    vi.clearAllMocks();
+  });
+
+  it('applies the new role immediately, before the server confirms it', async () => {
+    usePersonasStore.setState({ personas: { [baulId]: [newPersona({ role: 'colaborador' })] } });
+
+    let resolveUpdate!: () => void;
+    vi.mocked(api.baules.updatePersonaRole).mockReturnValue(new Promise((resolve) => { resolveUpdate = resolve; }));
+
+    const promise = updateUserRole(baulId, personaId, 'administrador');
+    expect(usePersonasStore.getState().personas[baulId][0].role).toBe('administrador');
+
+    resolveUpdate();
+    await promise;
+
+    expect(usePersonasStore.getState().personas[baulId][0].role).toBe('administrador');
+  });
+
+  it('reactivates a persona with no access when its role is changed', async () => {
+    usePersonasStore.setState({ personas: { [baulId]: [newPersona({ role: 'sin_acceso', status: 'sin_acceso' })] } });
+    vi.mocked(api.baules.updatePersonaRole).mockResolvedValue(undefined);
+
+    await updateUserRole(baulId, personaId, 'colaborador');
+
+    expect(usePersonasStore.getState().personas[baulId][0].status).toBe('pending');
+  });
+
+  it('rolls back to the previous personas snapshot and rethrows when the request fails', async () => {
+    const original = newPersona({ role: 'colaborador' });
+    usePersonasStore.setState({ personas: { [baulId]: [original] } });
+
+    vi.mocked(api.baules.updatePersonaRole).mockRejectedValue(new Error('server rejected role change'));
+
+    await expect(
+      updateUserRole(baulId, personaId, 'administrador')
+    ).rejects.toThrow('server rejected role change');
+
+    expect(usePersonasStore.getState().personas[baulId][0]).toBe(original);
   });
 });

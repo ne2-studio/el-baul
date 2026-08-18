@@ -291,7 +291,7 @@ public class PersonaManagerTests
         using var content = new MemoryStream([1, 2, 3]);
         var crop = new PhotoCrop(0.25m, 0.75m, 1.8m);
         var result = await manager.UpdatePersonaAvatarAsync(
-            baulId, personaId, content, "avatar.jpg", "image/jpeg", crop, new ClientUploadId(Guid.NewGuid()));
+            baulId, personaId, content, crop, new ClientUploadId(Guid.NewGuid()));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.AvatarUrl);

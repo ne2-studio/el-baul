@@ -6,7 +6,7 @@ import { uploadPhotosWithChapter } from '@/features/photos/useCases';
 import { UploadItemResult } from '@/features/photos/uploadFlow';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
-import { Photo, PhotoDate } from '@/types';
+import { Photo } from '@/types';
 import {
   PhotoUploadDestination,
   resolvePhotoRouteContext,
@@ -18,7 +18,6 @@ import {
 interface LocationState {
   selectedPhotos: SelectedPhoto[];
   chapter: PhotoUploadDestination;
-  date: PhotoDate | null;
   succeededCount?: number;
 }
 
@@ -31,8 +30,8 @@ export const UploadingRoute: React.FC = () => {
   const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);
-  const { selectedPhotos, chapter, date, succeededCount: succeededSoFar = 0 } =
-    (location.state as LocationState) || { selectedPhotos: [], chapter: { type: 'none' }, date: null };
+  const { selectedPhotos, chapter, succeededCount: succeededSoFar = 0 } =
+    (location.state as LocationState) || { selectedPhotos: [], chapter: { type: 'none' } };
 
   const resolvedChapterIdRef = useRef<string | null>(null);
 
@@ -43,7 +42,7 @@ export const UploadingRoute: React.FC = () => {
     return uploadPhotosWithChapter(
       baul.id,
       chapter,
-      uploadItemsFromSelectedPhotos(photos, date),
+      uploadItemsFromSelectedPhotos(photos),
       onItemSettled
     ).then(({ results, chapterId }) => {
       resolvedChapterIdRef.current = chapterId;
@@ -82,7 +81,7 @@ export const UploadingRoute: React.FC = () => {
     }
 
     const failedPhotos = selectedPhotos.filter((p) => failed.some((f) => f.clientUploadId === p.id));
-    navigate(errorPath, { state: { failedPhotos, date, succeededCount } });
+    navigate(errorPath, { state: { failedPhotos, succeededCount } });
   };
 
   return (
