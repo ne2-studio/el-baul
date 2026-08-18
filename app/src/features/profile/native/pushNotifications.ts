@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { readString, writeString } from '@/utils/safeLocalStorage';
 
 // Android-only for now — see docs/architecture/native-android.md. Gated on both
 // isNativePlatform() and the platform name (not just isPluginAvailable) so a stale iOS build
@@ -17,27 +18,12 @@ export class PushPermissionDeniedError extends Error {
 
 const TOKEN_STORAGE_KEY = 'elbaul.pushToken';
 
-// try/catch en ambos lados, mismo motivo que useCurrentBaulStore: modo privado o cuota de
-// localStorage llena no debe romper el flujo de activar/desactivar notificaciones — en el
-// peor caso, el toggle no recuerda su estado entre recargas.
 export function getStoredPushToken(): string | null {
-  try {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+  return readString(TOKEN_STORAGE_KEY);
 }
 
 function setStoredPushToken(token: string | null): void {
-  try {
-    if (token) {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    } else {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-    }
-  } catch {
-    // ver comentario de getStoredPushToken
-  }
+  writeString(TOKEN_STORAGE_KEY, token);
 }
 
 // Requests the native permission, registers the device with FCM, and resolves with the

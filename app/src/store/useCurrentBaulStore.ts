@@ -1,28 +1,14 @@
 import { create } from 'zustand';
+import { readString, writeString } from '@/utils/safeLocalStorage';
 
 const STORAGE_KEY = 'elbaul.currentBaulId';
 
-// try/catch en ambos lados: modo privado o cuota de localStorage llena no debe romper el
-// arranque de la app ni la acción de cambiar de baúl — en el peor caso, se pierde la
-// persistencia entre recargas, pero el estado en memoria sigue funcionando para la sesión.
 function readStoredBaulId(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
+  return readString(STORAGE_KEY);
 }
 
 function writeStoredBaulId(baulId: string | null): void {
-  try {
-    if (baulId) {
-      localStorage.setItem(STORAGE_KEY, baulId);
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  } catch {
-    // ver comentario de readStoredBaulId
-  }
+  writeString(STORAGE_KEY, baulId);
 }
 
 interface CurrentBaulState {
