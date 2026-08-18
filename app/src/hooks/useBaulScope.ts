@@ -4,11 +4,12 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { loadUserData } from '@/features/auth/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useScopeOutcome } from '@/hooks/useScopeOutcome';
-import { loadBaulRecuerdos } from '@/features/memories/useCases';
+import { loadBaulFeed, loadBaulRecuerdos } from '@/features/memories/useCases';
 import { loadChapters } from '@/features/baules/useCases';
 import { loadLoosePhotos } from '@/features/photos/useCases';
 import { loadRemovalRequests } from '@/features/moderation/useCases';
@@ -27,19 +28,26 @@ import { getBaulPermissions } from '@/utils/roleUtils';
 // vive en guardBaulScope (./baulScopeGuard), no en cada caller — ver ese archivo. El propio
 // estado de "todavía cargando vs. ya falló" vive en useScopeOutcome, compartido con
 // useChapterScope/usePersonaScope.
-export function useBaulScope(baulId: string | undefined) {
+interface UseBaulScopeOptions {
+  includeBaulFeed?: boolean;
+}
+
+export function useBaulScope(baulId: string | undefined, options: UseBaulScopeOptions = {}) {
   const auth = useAuth();
   const { run } = useAsyncAction();
   const { baules, chapters, loosePhotos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
-  const { baulRecuerdos } = useRecuerdosStore();
+  const { baulRecuerdos, baulFeed } = useRecuerdosStore();
+  const baulFeedEnabled = useAppConfigStore((state) => state.baulFeedEnabled);
   const { personas, removalRequests } = usePersonasStore();
 
   const baul = baules.find(b => b.id === baulId);
   // canReviewRemovalRequests solo depende de baul.role/isCustodio, ya disponibles en cuanto
   // el propio baúl está en el store — no hace falta esperar a nada más para decidirlo.
   const needsRemovalRequestsScope = getBaulPermissions(baul).canReviewRemovalRequests;
-  const hasScope = !!baul && !!baulId && !!chapters[baulId] && !!baulRecuerdos[baulId]
+  const needsBaulFeedScope = options.includeBaulFeed === true && baulFeedEnabled;
+  const hasHistoryScope = !!(baulId && baulRecuerdos[baulId]) && (!needsBaulFeedScope || !!baulFeed[baulId]);
+  const hasScope = !!baul && !!baulId && !!chapters[baulId] && hasHistoryScope
     && !!personas[baulId] && (!needsRemovalRequestsScope || !!removalRequests[baulId]);
 
   const { result, setOutcome, reset } = useScopeOutcome(baulId ?? '');
@@ -71,14 +79,15 @@ export function useBaulScope(baulId: string | undefined) {
     }
 
     const { chapters } = useBaulesStore.getState();
-    const { baulRecuerdos } = useRecuerdosStore.getState();
+    const { baulRecuerdos, baulFeed } = useRecuerdosStore.getState();
     const { personas, removalRequests } = usePersonasStore.getState();
     const needsChapters = !chapters[id];
     const needsRecuerdos = !baulRecuerdos[id];
+    const needsBaulFeed = needsBaulFeedScope && !baulFeed[id];
     const needsPersonas = !personas[id];
     const needsRemovalRequests = getBaulPermissions(currentBaul).canReviewRemovalRequests && !removalRequests[id];
 
-    if (!needsChapters && !needsRecuerdos && !needsPersonas && !needsRemovalRequests) {
+    if (!needsChapters && !needsRecuerdos && !needsBaulFeed && !needsPersonas && !needsRemovalRequests) {
       setOutcome(id, null);
       return;
     }
@@ -93,6 +102,7 @@ export function useBaulScope(baulId: string | undefined) {
     const loadResult = await run(() => Promise.all([
       ...(needsChapters ? [loadChapters(id), loadLoosePhotos(id)] : []),
       ...(needsRecuerdos ? [loadBaulRecuerdos(id)] : []),
+      ...(needsBaulFeed ? [loadBaulFeed(id)] : []),
       ...(needsPersonas ? [loadPersonas(id)] : []),
       ...(needsRemovalRequests ? [loadRemovalRequests(id)] : []),
     ]), { key: `baul-scope:${id}:load`, errorMessage: 'Error al cargar los capítulos del baúl' });

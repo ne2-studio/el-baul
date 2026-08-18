@@ -5,6 +5,7 @@ import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(() => ({ isAuthenticated: true })),
@@ -16,6 +17,7 @@ vi.mock('@/features/auth/useCases', () => ({
 
 vi.mock('@/features/memories/useCases', () => ({
   loadBaulRecuerdos: vi.fn().mockResolvedValue(undefined),
+  loadBaulFeed: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/baules/useCases', () => ({
@@ -36,7 +38,7 @@ vi.mock('@/features/people/useCases', () => ({
 
 import { useAuth } from 'react-oidc-context';
 import { loadUserData } from '@/features/auth/useCases';
-import { loadBaulRecuerdos } from '@/features/memories/useCases';
+import { loadBaulFeed, loadBaulRecuerdos } from '@/features/memories/useCases';
 import { loadChapters } from '@/features/baules/useCases';
 import { loadLoosePhotos } from '@/features/photos/useCases';
 import { loadRemovalRequests } from '@/features/moderation/useCases';
@@ -53,9 +55,11 @@ describe('useBaulScope', () => {
     useBaulesStore.getState().reset();
     usePersonasStore.getState().reset();
     useRecuerdosStore.getState().reset();
+    useAppConfigStore.setState({ baulFeedEnabled: false });
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(loadUserData).mockReset();
     vi.mocked(loadBaulRecuerdos).mockClear().mockResolvedValue(undefined);
+    vi.mocked(loadBaulFeed).mockClear().mockResolvedValue(undefined);
     vi.mocked(loadChapters).mockClear().mockResolvedValue(undefined);
     vi.mocked(loadLoosePhotos).mockClear().mockResolvedValue(undefined);
     vi.mocked(loadRemovalRequests).mockClear().mockResolvedValue(undefined);
@@ -114,6 +118,16 @@ describe('useBaulScope', () => {
     expect(loadPersonas).toHaveBeenCalledWith('baul-1');
     // Sin permiso de revisar solicitudes de eliminación (baul sin role/isCustodio), no se piden.
     expect(loadRemovalRequests).not.toHaveBeenCalled();
+  });
+
+  it('loads the unified feed as part of the baúl scope when requested and enabled', async () => {
+    useAppConfigStore.setState({ baulFeedEnabled: true });
+    useBaulesStore.setState({ baules: [baul] });
+
+    renderHook(() => useBaulScope('baul-1', { includeBaulFeed: true }));
+
+    await waitFor(() => expect(loadBaulFeed).toHaveBeenCalledWith('baul-1'));
+    expect(loadBaulRecuerdos).toHaveBeenCalledWith('baul-1');
   });
 
   it('requests removal requests too when the baúl grants canReviewRemovalRequests', async () => {

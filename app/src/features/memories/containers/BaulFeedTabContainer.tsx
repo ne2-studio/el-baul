@@ -113,7 +113,6 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
         hidden={!chatEnabled}
       />
       {isPending() && <BlockingLoadingOverlay message="Cargando fotos..." />}
-      {isPending('baul-feed') && <BlockingLoadingOverlay message="Cargando el feed..." />}
     </>
   );
 }

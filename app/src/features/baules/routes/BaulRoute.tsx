@@ -80,7 +80,7 @@ export const BaulRoute: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baulId]);
 
-  const baulScope = useBaulScope(baulId);
+  const baulScope = useBaulScope(baulId, { includeBaulFeed: activeTab === 'recuerdos' });
   const guard = guardBaulScope(baulScope, { loadingLabel: 'Abriendo baúl...' });
   if (!guard.ready) return guard.screen;
   const { baul } = guard;

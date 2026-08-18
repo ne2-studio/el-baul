@@ -26,6 +26,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Arreglado
 
+- Al abrir un baúl, ya no aparece un segundo aviso de carga del feed: ahora toda la entrada queda bajo "Abriendo baúl...".
 - Al crear un capítulo nuevo, ahora navega directamente a ese capítulo y muestra un aviso de éxito, en vez de volver a la vista del baúl sin confirmación.
 - En la pantalla de "¿nos ayudas con esta foto?" (etiquetar personas o escribir un recuerdo), el panel de la foto ya no tiene un alto fijo: ahora se ajusta a la proporción real de la foto, así una foto panorámica deja más sitio a la lista de debajo en vez de mostrarse con franjas negras. Además, el alto máximo es algo menor, para que los botones de seleccionar personas se vean mejor.
 - Las pestañas de "Recuerdos" y "Fotos" en la pantalla de Capítulo ya no muestran el número entre paréntesis, no aportaba nada.
