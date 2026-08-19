@@ -1,4 +1,3 @@
-using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Domain;
@@ -10,19 +9,19 @@ namespace ElBaul.Core.Bauls.Application;
 /// </summary>
 public class BaulPhotoCoverListener(IBaulRepository baulRepository) : IBaulPhotoCoverListener
 {
-    public async Task OnPhotoAddedAsync(BaulId baulId, PhotoRef photo, DateTime now)
+    public async Task OnPhotoAddedAsync(BaulId baulId, PhotoId photoId, DateTime now)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
         if (baul is null) return;
 
-        await baulRepository.UpdateAsync(baul.WithPhotoAdded(photo, now));
+        await baulRepository.UpdateAsync(baul.WithPhotoAdded(photoId, now));
     }
 
-    public async Task OnPhotoRemovedAsync(BaulId baulId, PhotoRef photo, DateTime now)
+    public async Task OnPhotoRemovedAsync(BaulId baulId, PhotoId photoId, DateTime now)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null || baul.CoverPhotoId != photo.Id) return;
+        if (baul is null || baul.CoverPhotoId != photoId) return;
 
-        await baulRepository.UpdateAsync(baul.WithPhotoRemoved(photo, now));
+        await baulRepository.UpdateAsync(baul.WithPhotoRemoved(photoId, now));
     }
 }

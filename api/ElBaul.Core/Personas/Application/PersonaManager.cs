@@ -183,7 +183,7 @@ public class PersonaManager(
             var photoResult = await photoUploadWorkflow.CreatePhotoAsync(
                 baulId, chapterId: null, userId, content,
                 clientUploadId, uploadBatchId: null,
-                (createdPhoto, now) => baulPhotoCoverListener.OnPhotoAddedAsync(baulId, PhotoRef.From(createdPhoto), now));
+                (createdPhoto, now) => baulPhotoCoverListener.OnPhotoAddedAsync(baulId, createdPhoto.Id, now));
             if (photoResult.IsFailure) return Result.Failure<PersonaDto>(photoResult.Error);
             // AlreadyExisted is irrelevant here: whether these bytes were just stored as a new
             // loose photo or turned out to exactly match one already in the baúl, either way

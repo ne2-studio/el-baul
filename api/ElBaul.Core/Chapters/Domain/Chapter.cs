@@ -37,11 +37,11 @@ public sealed class Chapter : Entity<ChapterId>
     // first photo in becomes the cover, and only the current cover is ever cleared. WithPhotoAdded/
     // WithPhotoRemoved/WithCover are the sanctioned way to change it (mirrors Photo.WithDate/Create)
     // so that rule lives in one place instead of being reconstructed inline per call site.
-    public Chapter WithPhotoAdded(PhotoRef photo, DateTime updatedAt) =>
-        Mutate(() => { PhotoCount++; CoverPhotoId ??= photo.Id; UpdatedAt = updatedAt; });
+    public Chapter WithPhotoAdded(PhotoId photoId, DateTime updatedAt) =>
+        Mutate(() => { PhotoCount++; CoverPhotoId ??= photoId; UpdatedAt = updatedAt; });
 
-    public Chapter WithPhotoRemoved(PhotoRef photo, DateTime updatedAt) =>
-        Mutate(() => { PhotoCount = Math.Max(0, PhotoCount - 1); if (CoverPhotoId == photo.Id) CoverPhotoId = null; UpdatedAt = updatedAt; });
+    public Chapter WithPhotoRemoved(PhotoId photoId, DateTime updatedAt) =>
+        Mutate(() => { PhotoCount = Math.Max(0, PhotoCount - 1); if (CoverPhotoId == photoId) CoverPhotoId = null; UpdatedAt = updatedAt; });
 
     // Redirects the cover to a different photo without touching the existing crop — unlike
     // WithCover, which is the user-initiated "pick a new cover" action and resets crop to

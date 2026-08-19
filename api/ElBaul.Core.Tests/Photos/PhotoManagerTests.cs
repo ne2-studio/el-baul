@@ -371,7 +371,7 @@ public class PhotoManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, sourceChapterId);
         var sourceChapter = await _fixture.Chapters.GetByIdAsync(sourceChapterId);
         var sourcePhoto = await _fixture.Photos.GetByIdAsync(photoId);
-        await _fixture.Chapters.UpdateAsync(sourceChapter!.WithPhotoAdded(PhotoRef.From(sourcePhoto!), _fixture.Clock.UtcNow()));
+        await _fixture.Chapters.UpdateAsync(sourceChapter!.WithPhotoAdded(sourcePhoto!.Id, _fixture.Clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.MoveAsync(photoId, targetChapterId);

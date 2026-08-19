@@ -101,7 +101,7 @@ public class PhotoLifecycleServiceTests
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), sourceChapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var sourceChapter = await _chapterRepository.GetByIdAsync(sourceChapterId);
-        await _chapterRepository.UpdateAsync(sourceChapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()));
+        await _chapterRepository.UpdateAsync(sourceChapter!.WithPhotoAdded(photo.Id, _clock.UtcNow()));
 
         await CreateService().MoveAsync(photo, sourceChapterId, targetChapterId);
 
@@ -144,7 +144,7 @@ public class PhotoLifecycleServiceTests
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()));
+        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(photo.Id, _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "Foto duplicada");
 
@@ -177,7 +177,7 @@ public class PhotoLifecycleServiceTests
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()));
+        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(photo.Id, _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "reason");
 
@@ -193,7 +193,7 @@ public class PhotoLifecycleServiceTests
         await _photoRepository.CreateAsync(photo);
         var otherCoverPhotoId = new PhotoId(Guid.NewGuid());
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()).WithCoverPhotoId(otherCoverPhotoId, _clock.UtcNow()));
+        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(photo.Id, _clock.UtcNow()).WithCoverPhotoId(otherCoverPhotoId, _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "reason");
 

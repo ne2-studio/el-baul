@@ -57,11 +57,11 @@ public sealed class Baul : Entity<BaulId>
 
     // Same cover-photo rule as Chapter (see Chapter.WithPhotoAdded/WithPhotoRemoved/WithCover):
     // first photo in becomes the cover, only the current cover is ever cleared.
-    public Baul WithPhotoAdded(PhotoRef photo, DateTime updatedAt) =>
-        Mutate(() => { CoverPhotoId ??= photo.Id; UpdatedAt = updatedAt; });
+    public Baul WithPhotoAdded(PhotoId photoId, DateTime updatedAt) =>
+        Mutate(() => { CoverPhotoId ??= photoId; UpdatedAt = updatedAt; });
 
-    public Baul WithPhotoRemoved(PhotoRef photo, DateTime updatedAt) =>
-        Mutate(() => { if (CoverPhotoId == photo.Id) CoverPhotoId = null; UpdatedAt = updatedAt; });
+    public Baul WithPhotoRemoved(PhotoId photoId, DateTime updatedAt) =>
+        Mutate(() => { if (CoverPhotoId == photoId) CoverPhotoId = null; UpdatedAt = updatedAt; });
 
     // See Chapter.WithCoverPhotoId for why this is a separate, crop-preserving method from
     // WithCover.

@@ -1,4 +1,3 @@
-using ElBaul.Core.Photos.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 
@@ -13,6 +12,6 @@ namespace ElBaul.Core.Photos.OutputPorts;
 /// </summary>
 public interface IChapterPhotoCountListener
 {
-    Task OnPhotoAddedAsync(ChapterId chapterId, PhotoRef photo, DateTime now);
-    Task OnPhotoRemovedAsync(ChapterId chapterId, PhotoRef photo, DateTime now);
+    Task OnPhotoAddedAsync(ChapterId chapterId, PhotoId photoId, DateTime now);
+    Task OnPhotoRemovedAsync(ChapterId chapterId, PhotoId photoId, DateTime now);
 }

@@ -19,30 +19,26 @@ public class PhotoLifecycleService(
 {
     public async Task AddAsync(Photo photo, ChapterId? chapterId, BaulId baulId, DateTime now)
     {
-        var photoRef = PhotoRef.From(photo);
-
         if (chapterId is { } id)
         {
-            await chapterPhotoCountListener.OnPhotoAddedAsync(id, photoRef, now);
+            await chapterPhotoCountListener.OnPhotoAddedAsync(id, photo.Id, now);
         }
 
-        await baulPhotoCoverListener.OnPhotoAddedAsync(baulId, photoRef, now);
+        await baulPhotoCoverListener.OnPhotoAddedAsync(baulId, photo.Id, now);
     }
 
     public async Task<Photo> MoveAsync(Photo photo, ChapterId? sourceChapterId, ChapterId targetChapterId)
     {
         var now = clock.UtcNow();
-        var photoRef = PhotoRef.From(photo);
-
         if (sourceChapterId is { } id)
         {
-            await chapterPhotoCountListener.OnPhotoRemovedAsync(id, photoRef, now);
+            await chapterPhotoCountListener.OnPhotoRemovedAsync(id, photo.Id, now);
         }
 
         var updatedPhoto = photo.InChapter(targetChapterId);
         await photoRepository.UpdateAsync(updatedPhoto);
 
-        await chapterPhotoCountListener.OnPhotoAddedAsync(targetChapterId, photoRef, now);
+        await chapterPhotoCountListener.OnPhotoAddedAsync(targetChapterId, photo.Id, now);
 
         return updatedPhoto;
     }
@@ -55,13 +51,11 @@ public class PhotoLifecycleService(
         var updatedPhoto = photo.MarkDeleted(reason, now);
         await photoRepository.UpdateAsync(updatedPhoto);
 
-        var photoRef = PhotoRef.From(photo);
-
         if (photo.ChapterId is { } chapterId)
         {
-            await chapterPhotoCountListener.OnPhotoRemovedAsync(chapterId, photoRef, now);
+            await chapterPhotoCountListener.OnPhotoRemovedAsync(chapterId, photo.Id, now);
         }
 
-        await baulPhotoCoverListener.OnPhotoRemovedAsync(photo.BaulId, photoRef, now);
+        await baulPhotoCoverListener.OnPhotoRemovedAsync(photo.BaulId, photo.Id, now);
     }
 }

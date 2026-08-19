@@ -1,4 +1,3 @@
-using ElBaul.Core.Photos.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 
@@ -10,6 +9,6 @@ namespace ElBaul.Core.Photos.OutputPorts;
 /// </summary>
 public interface IBaulPhotoCoverListener
 {
-    Task OnPhotoAddedAsync(BaulId baulId, PhotoRef photo, DateTime now);
-    Task OnPhotoRemovedAsync(BaulId baulId, PhotoRef photo, DateTime now);
+    Task OnPhotoAddedAsync(BaulId baulId, PhotoId photoId, DateTime now);
+    Task OnPhotoRemovedAsync(BaulId baulId, PhotoId photoId, DateTime now);
 }
