@@ -1,4 +1,5 @@
 using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Domain;
 namespace ElBaul.Infra.Lite;
 
 /// <summary>
@@ -12,13 +13,13 @@ namespace ElBaul.Infra.Lite;
 public class FakeImageProcessor : IImageProcessor
 {
     public Task<ImageMetadata?> IdentifyAsync(Stream content) =>
-        Task.FromResult<ImageMetadata?>(content.Length == 0 ? null : new ImageMetadata(800, 600, "image/jpeg"));
+        Task.FromResult<ImageMetadata?>(content.Length == 0 ? null : new ImageMetadata(new ImageDimensions(800, 600), "image/jpeg"));
 
     public Task<NormalizedImage> NormalizeAsync(Stream content, int maxLongEdge)
     {
         using var buffer = new MemoryStream();
         content.CopyTo(buffer);
         var bytes = buffer.ToArray();
-        return Task.FromResult(new NormalizedImage(new MemoryStream(bytes), "image/jpeg", maxLongEdge, maxLongEdge, bytes.LongLength));
+        return Task.FromResult(new NormalizedImage(new MemoryStream(bytes), "image/jpeg", new ImageDimensions(maxLongEdge, maxLongEdge), bytes.LongLength));
     }
 }

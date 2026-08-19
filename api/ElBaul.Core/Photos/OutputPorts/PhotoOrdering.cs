@@ -7,24 +7,23 @@ namespace ElBaul.Core.Photos.OutputPorts;
 //
 // Two overloads exist rather than one, because the two LINQ providers need different shapes:
 // the IQueryable<Photo> overload is built from Expression<Func<...>> so EF Core can translate
-// it straight to SQL (it queries the raw DateYear/Month/Day columns since Photo.Date isn't
-// part of the EF model); the IEnumerable<Photo> overload runs as compiled delegates over
+// it straight to SQL (it queries the mapped PhotoDate complex property); the IEnumerable<Photo> overload runs as compiled delegates over
 // already-materialized photos. PhotoOrderingTests pins both to identical output.
 public static class PhotoOrdering
 {
     public static IOrderedQueryable<Photo> OrderByChronology(this IQueryable<Photo> photos) =>
         photos
-            .OrderBy(p => p.DateYear == null)
-            .ThenBy(p => p.DateYear)
-            .ThenBy(p => p.DateMonth ?? 1)
-            .ThenBy(p => p.DateDay ?? 1)
+            .OrderBy(p => p.TakenAt == null)
+            .ThenBy(p => p.TakenAt == null ? (int?)null : p.TakenAt.Year)
+            .ThenBy(p => p.TakenAt == null ? (int?)null : p.TakenAt.Month ?? 1)
+            .ThenBy(p => p.TakenAt == null ? (int?)null : p.TakenAt.Day ?? 1)
             .ThenBy(p => p.CreatedAt);
 
     public static IOrderedEnumerable<Photo> OrderByChronology(this IEnumerable<Photo> photos) =>
         photos
-            .OrderBy(p => p.DateYear == null)
-            .ThenBy(p => p.DateYear)
-            .ThenBy(p => p.DateMonth ?? 1)
-            .ThenBy(p => p.DateDay ?? 1)
+            .OrderBy(p => p.TakenAt == null)
+            .ThenBy(p => p.TakenAt?.Year)
+            .ThenBy(p => p.TakenAt?.Month ?? 1)
+            .ThenBy(p => p.TakenAt?.Day ?? 1)
             .ThenBy(p => p.CreatedAt);
 }

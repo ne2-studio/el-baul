@@ -24,16 +24,16 @@ public static class ChapterDateRangeCalculator
 {
     public static ChapterDateRange Compute(IReadOnlyCollection<Photo> photos)
     {
-        var dated = photos.Where(p => p.Date is not null).ToList();
+        var dated = photos.Where(p => p.TakenAt is not null).ToList();
         var undatedCount = photos.Count - dated.Count;
         if (dated.Count == 0) return ChapterDateRange.Empty with { UndatedPhotoCount = undatedCount };
 
-        var min = dated.OrderBy(p => p.Date!.Year).ThenBy(p => p.Date!.Month ?? 1).ThenBy(p => p.Date!.Day ?? 1).First();
-        var max = dated.OrderByDescending(p => p.Date!.Year).ThenByDescending(p => p.Date!.Month ?? 1).ThenByDescending(p => p.Date!.Day ?? 1).First();
+        var min = dated.OrderBy(p => p.TakenAt!.Year).ThenBy(p => p.TakenAt!.Month ?? 1).ThenBy(p => p.TakenAt!.Day ?? 1).First();
+        var max = dated.OrderByDescending(p => p.TakenAt!.Year).ThenByDescending(p => p.TakenAt!.Month ?? 1).ThenByDescending(p => p.TakenAt!.Day ?? 1).First();
 
         return new ChapterDateRange(
-            min.Date!.Year, min.Date!.Month, min.Date!.Day,
-            max.Date!.Year, max.Date!.Month, max.Date!.Day, undatedCount);
+            min.TakenAt!.Year, min.TakenAt!.Month, min.TakenAt!.Day,
+            max.TakenAt!.Year, max.TakenAt!.Month, max.TakenAt!.Day, undatedCount);
     }
 }
 

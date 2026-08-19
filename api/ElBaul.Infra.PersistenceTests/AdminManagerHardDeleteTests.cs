@@ -90,8 +90,8 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             PhotoCount: 0, DateTime.UtcNow, DateTime.UtcNow);
         await chapters.CreateAsync(chapter);
 
-        var photo = new Photo(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/to-delete.jpg",
-            DateYear: null, DateMonth: null, DateDay: null, new UserId(custodioId), DateTime.UtcNow);
+        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/to-delete.jpg",
+            null, new UserId(custodioId), DateTime.UtcNow);
         await photos.CreateAsync(photo);
 
         await recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baul.Id,
@@ -190,8 +190,8 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             PhotoCount: 0, DateTime.UtcNow, DateTime.UtcNow);
         await chapters.CreateAsync(chapter);
 
-        var photo = new Photo(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/rollback.jpg",
-            DateYear: null, DateMonth: null, DateDay: null, new UserId(custodioId), DateTime.UtcNow);
+        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/rollback.jpg",
+            null, new UserId(custodioId), DateTime.UtcNow);
         await photos.CreateAsync(photo);
 
         await recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baul.Id,

@@ -121,7 +121,7 @@ public class TvSessionManager(
                 : null;
 
             photoDtos.Add(new TvPhotoDto(
-                photo.Id.ToString(), imageUrl, photo.DateYear, photo.DateMonth, photo.DateDay,
+                photo.Id.ToString(), imageUrl, photo.TakenAt?.Year, photo.TakenAt?.Month, photo.TakenAt?.Day,
                 chapterName, personaNames, latestRecuerdo?.Text, quoteAuthor));
         }
 

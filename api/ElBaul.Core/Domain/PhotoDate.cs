@@ -8,7 +8,7 @@ namespace ElBaul.Domain;
 // same Result<T>-returning shape as PhotoCrop.Create and the Ids.Parse family, so every value
 // object at the HTTP boundary is validated the same way.
 //
-// A reference-type record, not a struct: Photo.Date needs to be optional, and EF Core's
+// A reference-type record, not a struct: Photo.TakenAt needs to be optional, and EF Core's
 // ComplexProperty mapping only supports optional (nullable) complex properties for reference
 // types — a Nullable<T>-wrapped struct trips the `notnull` constraint on ComplexProperty's
 // generic type parameter.

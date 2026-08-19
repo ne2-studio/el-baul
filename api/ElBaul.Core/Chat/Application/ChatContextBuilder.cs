@@ -168,7 +168,7 @@ public class ChatContextBuilder(
     private static PhotoDate? EffectiveDate(
         Recuerdo recuerdo, IReadOnlyDictionary<PhotoId, Photo> photoById, IReadOnlyDictionary<ChapterId, PhotoDate?> chapterDates)
     {
-        if (recuerdo.PhotoId is { } photoId && photoById.TryGetValue(photoId, out var photo) && photo.Date is { } photoDate)
+        if (recuerdo.PhotoId is { } photoId && photoById.TryGetValue(photoId, out var photo) && photo.TakenAt is { } photoDate)
             return photoDate;
         if (recuerdo.ChapterId is { } chapterId && chapterDates.TryGetValue(chapterId, out var chapterDate))
             return chapterDate;
@@ -177,16 +177,16 @@ public class ChatContextBuilder(
 
     private static PhotoDate? EarliestDate(IReadOnlyCollection<Photo> photos) =>
         photos
-            .Where(p => p.Date is not null)
-            .OrderBy(p => p.Date!.Year).ThenBy(p => p.Date!.Month ?? 1).ThenBy(p => p.Date!.Day ?? 1)
-            .Select(p => p.Date)
+            .Where(p => p.TakenAt is not null)
+            .OrderBy(p => p.TakenAt!.Year).ThenBy(p => p.TakenAt!.Month ?? 1).ThenBy(p => p.TakenAt!.Day ?? 1)
+            .Select(p => p.TakenAt)
             .FirstOrDefault();
 
     private static PhotoDate? LatestDate(IReadOnlyCollection<Photo> photos) =>
         photos
-            .Where(p => p.Date is not null)
-            .OrderByDescending(p => p.Date!.Year).ThenByDescending(p => p.Date!.Month ?? 1).ThenByDescending(p => p.Date!.Day ?? 1)
-            .Select(p => p.Date)
+            .Where(p => p.TakenAt is not null)
+            .OrderByDescending(p => p.TakenAt!.Year).ThenByDescending(p => p.TakenAt!.Month ?? 1).ThenByDescending(p => p.TakenAt!.Day ?? 1)
+            .Select(p => p.TakenAt)
             .FirstOrDefault();
 
     // A chapter's own date is never stored (see the CreatedAt/UpdatedAt note above) — it's shown

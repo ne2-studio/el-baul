@@ -31,14 +31,14 @@ public class PhotoDuplicateMergeService(
     // alone and never database iteration order.
     public static Photo SelectSurvivor(IReadOnlyCollection<Photo> group) =>
         group
-            .OrderBy(p => p.Date is null)
-            .ThenBy(p => p.Date is null ? default : (p.Date.Year, p.Date.Month ?? 13, p.Date.Day ?? 32))
+            .OrderBy(p => p.TakenAt is null)
+            .ThenBy(p => p.TakenAt is null ? default : (p.TakenAt.Year, p.TakenAt.Month ?? 13, p.TakenAt.Day ?? 32))
             .ThenBy(p => p.CreatedAt)
             .ThenBy(p => p.Id.Value)
             .First();
 
     public static PhotoDate? MinDate(IReadOnlyCollection<Photo> group) =>
-        group.Where(p => p.Date is not null).Select(p => p.Date!).OrderBy(d => (d.Year, d.Month ?? 13, d.Day ?? 32)).FirstOrDefault();
+        group.Where(p => p.TakenAt is not null).Select(p => p.TakenAt!).OrderBy(d => (d.Year, d.Month ?? 13, d.Day ?? 32)).FirstOrDefault();
 
     /// <summary>Merges one duplicate group — every Photo passed in must share the same BaulId and
     /// OriginalContentHash and be currently Active; callers (deduplicate-photos,

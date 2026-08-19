@@ -84,10 +84,10 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             ON CONFLICT ("BaulId", "OriginalContentHash") WHERE "Status" = 'Active' AND "OriginalContentHash" IS NOT NULL DO NOTHING
             """,
             photo.Id.Value, photo.BaulId.Value, photo.ChapterId?.Value!, photo.StorageKey,
-            photo.DateYear!, photo.DateMonth!, photo.DateDay!, photo.UploadedBy.Value, photo.CreatedAt,
+            photo.TakenAt?.Year, photo.TakenAt?.Month, photo.TakenAt?.Day, photo.UploadedBy.Value, photo.CreatedAt,
             photo.ClientUploadId!, photo.Status.ToString(), photo.DeletedAt!, photo.DeletionReason!,
-            photo.SizeBytes, photo.UploadBatchId!, photo.ConfirmedNoPersonas, photo.Width, photo.Height,
-            photo.OriginalWidth!, photo.OriginalHeight!, photo.OriginalSizeBytes!, photo.OriginalContentHash!);
+            photo.SizeBytes, photo.UploadBatchId!, photo.ConfirmedNoPersonas, photo.Dimensions.Width, photo.Dimensions.Height,
+            photo.OriginalDimensions?.Width, photo.OriginalDimensions?.Height, photo.OriginalSizeBytes!, photo.OriginalContentHash!);
 
         return inserted == 1;
     }

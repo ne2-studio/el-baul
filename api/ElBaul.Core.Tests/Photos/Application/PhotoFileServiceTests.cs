@@ -77,11 +77,10 @@ public class PhotoFileServiceTests
         var result = await service.SaveForUploadAsync(new UserId("user-1"), content);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(800, result.Value.Width);
-        Assert.Equal(600, result.Value.Height);
+        Assert.Equal(800, result.Value.Dimensions.Width);
+        Assert.Equal(600, result.Value.Dimensions.Height);
         Assert.Equal(bytes.Length, result.Value.SizeBytes);
-        Assert.Null(result.Value.OriginalWidth);
-        Assert.Null(result.Value.OriginalHeight);
+        Assert.Null(result.Value.OriginalDimensions);
         Assert.Null(result.Value.OriginalSizeBytes);
         await _imageProcessor.DidNotReceive().NormalizeAsync(Arg.Any<Stream>(), Arg.Any<int>());
         Assert.Single(_photoStorage.SavedKeys);
@@ -102,11 +101,11 @@ public class PhotoFileServiceTests
         var result = await service.SaveForUploadAsync(new UserId("user-1"), content);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(4096, result.Value.Width);
-        Assert.Equal(3072, result.Value.Height);
+        Assert.Equal(4096, result.Value.Dimensions.Width);
+        Assert.Equal(3072, result.Value.Dimensions.Height);
         Assert.Equal(normalizedBytes.Length, result.Value.SizeBytes);
-        Assert.Equal(12000, result.Value.OriginalWidth);
-        Assert.Equal(9000, result.Value.OriginalHeight);
+        Assert.Equal(12000, result.Value.OriginalDimensions!.Width);
+        Assert.Equal(9000, result.Value.OriginalDimensions.Height);
         Assert.Equal(uploadedBytes.Length, result.Value.OriginalSizeBytes);
     }
 

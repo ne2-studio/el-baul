@@ -1,4 +1,5 @@
 using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Domain;
 using Microsoft.Extensions.Logging;
 using NetVips;
 
@@ -51,7 +52,7 @@ public class VipsImageProcessor(ILogger<VipsImageProcessor> logger) : IImageProc
                 return Task.FromResult<ImageMetadata?>(null);
             }
 
-            return Task.FromResult<ImageMetadata?>(new ImageMetadata(image.Width, image.Height, contentType));
+            return Task.FromResult<ImageMetadata?>(new ImageMetadata(new ImageDimensions(image.Width, image.Height), contentType));
         }
         catch (VipsException ex)
         {
@@ -77,7 +78,7 @@ public class VipsImageProcessor(ILogger<VipsImageProcessor> logger) : IImageProc
             var outputBytes = thumbnail.WriteToBuffer(".jpg", new VOption { { "Q", 90 }, { "strip", true } });
 
             return new NormalizedImage(
-                new MemoryStream(outputBytes), "image/jpeg", thumbnail.Width, thumbnail.Height, outputBytes.LongLength);
+                new MemoryStream(outputBytes), "image/jpeg", new ImageDimensions(thumbnail.Width, thumbnail.Height), outputBytes.LongLength);
         }
         finally
         {

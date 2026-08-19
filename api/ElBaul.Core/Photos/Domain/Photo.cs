@@ -2,12 +2,12 @@ using ElBaul.Domain;
 namespace ElBaul.Core.Photos.Domain;
 public sealed class Photo : Entity<PhotoId>
 {
+    private Photo() : base(default) { }
+
     public ChapterId? ChapterId { get; private set; }
     public BaulId BaulId { get; private set; }
     public string StorageKey { get; private set; }
-    public int? DateYear { get; private set; }
-    public int? DateMonth { get; private set; }
-    public int? DateDay { get; private set; }
+    public PhotoDate? TakenAt { get; private set; }
     public UserId UploadedBy { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public Guid? ClientUploadId { get; private set; }
@@ -17,10 +17,8 @@ public sealed class Photo : Entity<PhotoId>
     public long SizeBytes { get; private set; }
     public Guid? UploadBatchId { get; private set; }
     public bool ConfirmedNoPersonas { get; private set; }
-    public int Width { get; private set; }
-    public int Height { get; private set; }
-    public int? OriginalWidth { get; private set; }
-    public int? OriginalHeight { get; private set; }
+    public ImageDimensions Dimensions { get; private set; } = new(0, 0);
+    public ImageDimensions? OriginalDimensions { get; private set; }
     public long? OriginalSizeBytes { get; private set; }
     public string? OriginalContentHash { get; private set; }
 
@@ -29,9 +27,7 @@ public sealed class Photo : Entity<PhotoId>
     ChapterId? ChapterId,
     BaulId BaulId,
     string StorageKey,
-    int? DateYear,
-    int? DateMonth,
-    int? DateDay,
+    PhotoDate? TakenAt,
     UserId UploadedBy,
     DateTime CreatedAt,
     Guid? ClientUploadId = null,
@@ -54,14 +50,12 @@ public sealed class Photo : Entity<PhotoId>
     // Dimensions/size of the asset as it actually sits in storage today — for a photo uploaded
     // before this field existed, 0 until it's set (see ImagePolicy). Never the *display*
     // orientation — raw pixel dimensions of the stored bytes.
-    int Width = 0,
-    int Height = 0,
+    ImageDimensions? Dimensions = null,
     // Set only when the stored asset is a normalized (downscaled) version of what the user
     // uploaded — the pre-normalization dimensions/size, for measuring normalization's storage
     // impact later (see docs/.backlog ticket 010). Null means the stored bytes are exactly what
     // was uploaded, byte for byte.
-    int? OriginalWidth = null,
-    int? OriginalHeight = null,
+    ImageDimensions? OriginalDimensions = null,
     long? OriginalSizeBytes = null,
     // SHA-256 (lowercase hex) of the bytes the server actually received for this upload,
     // computed before any server-side image processing — see PhotoFileService. Null for every
@@ -71,39 +65,30 @@ public sealed class Photo : Entity<PhotoId>
     string? OriginalContentHash = null) : base(Id)
     {
         this.ChapterId = ChapterId; this.BaulId = BaulId; this.StorageKey = StorageKey;
-        this.DateYear = DateYear; this.DateMonth = DateMonth; this.DateDay = DateDay;
+        this.TakenAt = TakenAt;
         this.UploadedBy = UploadedBy; this.CreatedAt = CreatedAt; this.ClientUploadId = ClientUploadId;
         this.Status = Status; this.DeletedAt = DeletedAt; this.DeletionReason = DeletionReason;
         this.SizeBytes = SizeBytes; this.UploadBatchId = UploadBatchId;
-        this.ConfirmedNoPersonas = ConfirmedNoPersonas; this.Width = Width; this.Height = Height;
-        this.OriginalWidth = OriginalWidth; this.OriginalHeight = OriginalHeight;
+        this.ConfirmedNoPersonas = ConfirmedNoPersonas; this.Dimensions = Dimensions ?? new(0, 0);
+        this.OriginalDimensions = OriginalDimensions;
         this.OriginalSizeBytes = OriginalSizeBytes; this.OriginalContentHash = OriginalContentHash;
     }
 
-    public bool WasResized => OriginalWidth is not null;
-
-
-    // DateYear/Month/Day stay the raw persisted columns — EF Core can't map an optional
-    // (nullable) complex/owned type (see https://github.com/dotnet/efcore/issues/31376, hit
-    // when this was tried), so PhotoDate lives only on the domain side: a single validated
-    // read of the three columns, and the sanctioned way to change them (WithDate/Create)
-    // instead of touching DateYear/Month/Day directly.
-    public PhotoDate? Date =>
-        DateYear is { } year && PhotoDate.Parse(year, DateMonth, DateDay) is { IsSuccess: true, Value: var date } ? date : null;
+    public bool WasResized => OriginalDimensions is not null;
 
     public static Photo Create(
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
         UserId uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
-        Guid? uploadBatchId = null, int width = 0, int height = 0,
-        int? originalWidth = null, int? originalHeight = null, long? originalSizeBytes = null,
+        Guid? uploadBatchId = null, ImageDimensions? dimensions = null,
+        ImageDimensions? originalDimensions = null, long? originalSizeBytes = null,
         string? originalContentHash = null) =>
-        new(id, chapterId, baulId, storageKey, date?.Year, date?.Month, date?.Day, uploadedBy, createdAt, clientUploadId,
-            SizeBytes: sizeBytes, UploadBatchId: uploadBatchId, Width: width, Height: height,
-            OriginalWidth: originalWidth, OriginalHeight: originalHeight, OriginalSizeBytes: originalSizeBytes,
+        new(id, chapterId, baulId, storageKey, date, uploadedBy, createdAt, clientUploadId,
+            SizeBytes: sizeBytes, UploadBatchId: uploadBatchId, Dimensions: dimensions,
+            OriginalDimensions: originalDimensions, OriginalSizeBytes: originalSizeBytes,
             OriginalContentHash: originalContentHash);
 
     public Photo WithDate(PhotoDate? date) =>
-        Mutate(() => { DateYear = date?.Year; DateMonth = date?.Month; DateDay = date?.Day; });
+        Mutate(() => TakenAt = date);
 
     public Photo WithOriginalContentHash(string? hash) =>
         Mutate(() => OriginalContentHash = hash);

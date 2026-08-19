@@ -26,11 +26,24 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.Property(p => p.DeletionReason).HasMaxLength(2000);
         builder.Property(p => p.SizeBytes).HasDefaultValue(0L);
         builder.Property(p => p.ConfirmedNoPersonas).HasDefaultValue(false);
-        builder.Property(p => p.Width).HasDefaultValue(0);
-        builder.Property(p => p.Height).HasDefaultValue(0);
+        builder.ComplexProperty(p => p.Dimensions, dimensions =>
+        {
+            dimensions.Property(d => d.Width).HasColumnName("Width").HasDefaultValue(0);
+            dimensions.Property(d => d.Height).HasColumnName("Height").HasDefaultValue(0);
+        });
+        builder.ComplexProperty(p => p.OriginalDimensions, dimensions =>
+        {
+            dimensions.Property(d => d.Width).HasColumnName("OriginalWidth");
+            dimensions.Property(d => d.Height).HasColumnName("OriginalHeight");
+        });
+        builder.ComplexProperty(p => p.TakenAt, date =>
+        {
+            date.Property(d => d.Year).HasColumnName("DateYear");
+            date.Property(d => d.Month).HasColumnName("DateMonth");
+            date.Property(d => d.Day).HasColumnName("DateDay");
+        });
         // Lowercase hex-encoded SHA-256 is always exactly 64 characters.
         builder.Property(p => p.OriginalContentHash).HasMaxLength(64);
-        builder.Ignore(p => p.Date);
 
         builder.HasIndex(p => p.ChapterId);
         builder.HasIndex(p => p.BaulId);

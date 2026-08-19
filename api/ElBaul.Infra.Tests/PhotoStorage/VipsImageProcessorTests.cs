@@ -18,8 +18,8 @@ public class VipsImageProcessorTests
         var metadata = await _processor.IdentifyAsync(content);
 
         Assert.NotNull(metadata);
-        Assert.Equal(width, metadata!.Width);
-        Assert.Equal(height, metadata.Height);
+        Assert.Equal(width, metadata!.Dimensions.Width);
+        Assert.Equal(height, metadata.Dimensions.Height);
     }
 
     [Fact]
@@ -40,8 +40,8 @@ public class VipsImageProcessorTests
         var result = await _processor.NormalizeAsync(content, 4096);
 
         // Matches the ticket's own worked example exactly.
-        Assert.Equal(4096, result.Width);
-        Assert.Equal(3072, result.Height);
+        Assert.Equal(4096, result.Dimensions.Width);
+        Assert.Equal(3072, result.Dimensions.Height);
 
         using var written = Image.NewFromBuffer(await ReadAllBytesAsync(result.Content));
         Assert.Equal(4096, written.Width);
@@ -55,8 +55,8 @@ public class VipsImageProcessorTests
 
         var result = await _processor.NormalizeAsync(content, 4096);
 
-        Assert.Equal(800, result.Width);
-        Assert.Equal(600, result.Height);
+        Assert.Equal(800, result.Dimensions.Width);
+        Assert.Equal(600, result.Dimensions.Height);
     }
 
     [Fact]

@@ -56,9 +56,9 @@ public class PhotoUploadWorkflow(
 
         var now = clock.UtcNow();
         var photo = Photo.Create(
-            new PhotoId(idGenerator.NewId()), chapterId, baulId, storedFile.StorageKey, storedFile.Date, userId, now,
-            clientUploadId, storedFile.SizeBytes, uploadBatchId, storedFile.Width, storedFile.Height,
-            storedFile.OriginalWidth, storedFile.OriginalHeight, storedFile.OriginalSizeBytes,
+            new PhotoId(idGenerator.NewId()), chapterId, baulId, storedFile.StorageKey, storedFile.TakenAt, userId, now,
+            clientUploadId, storedFile.SizeBytes, uploadBatchId, storedFile.Dimensions,
+            storedFile.OriginalDimensions, storedFile.OriginalSizeBytes,
             storedFile.OriginalContentHash);
 
         // Cheap app-level check ahead of the transaction below — the common, non-concurrent case

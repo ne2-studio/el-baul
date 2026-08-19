@@ -109,9 +109,9 @@ public class PhotoDuplicateMergeServiceTests
 
         var result = await CreateService().MergeGroupAsync(group);
 
-        Assert.Equal(1987, result.Survivor.Date!.Year);
+        Assert.Equal(1987, result.Survivor.TakenAt!.Year);
         var reloaded = await _fixture.Photos.GetByIdAsync(result.Survivor.Id);
-        Assert.Equal(1987, reloaded!.Date!.Year);
+        Assert.Equal(1987, reloaded!.TakenAt!.Year);
     }
 
     [Fact]

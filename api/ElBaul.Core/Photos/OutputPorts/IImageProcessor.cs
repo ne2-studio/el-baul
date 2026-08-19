@@ -1,3 +1,4 @@
+using ElBaul.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 
 /// <summary>Raw pixel dimensions of an image, read off its header/metadata — never the
@@ -7,9 +8,16 @@ namespace ElBaul.Core.Photos.OutputPorts;
 /// allowed to trust, precisely because it comes from decoding the file, not from what the
 /// uploader claimed it was. Null from IdentifyAsync means the content couldn't be identified as
 /// a valid image at all.</summary>
-public record ImageMetadata(int Width, int Height, string ContentType);
+public record ImageMetadata(ImageDimensions Dimensions, string ContentType)
+{
+    public ImageMetadata(int width, int height, string contentType) : this(new ImageDimensions(width, height), contentType) { }
+}
 
-public record NormalizedImage(Stream Content, string ContentType, int Width, int Height, long SizeBytes);
+public record NormalizedImage(Stream Content, string ContentType, ImageDimensions Dimensions, long SizeBytes)
+{
+    public NormalizedImage(Stream content, string contentType, int width, int height, long sizeBytes)
+        : this(content, contentType, new ImageDimensions(width, height), sizeBytes) { }
+}
 
 /// <summary>
 /// The one place in the codebase that knows how to inspect/resize image pixels — everything

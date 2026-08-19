@@ -64,11 +64,11 @@ public class PhotoFileService(
         if (metadata is null)
             return Result.Failure<StoredPhotoFile>(ApplicationError.Validation("El archivo no es una imagen válida"));
 
-        if (imagePolicy.ExceedsUploadMegapixels(metadata.Width, metadata.Height))
+        if (imagePolicy.ExceedsUploadMegapixels(metadata.Dimensions.Width, metadata.Dimensions.Height))
             return Result.Failure<StoredPhotoFile>(ApplicationError.Validation(
                 $"La imagen supera la resolución máxima permitida ({imagePolicy.MaxUploadMegapixels} MP)"));
 
-        var storedFile = imagePolicy.NeedsNormalization(metadata.Width, metadata.Height)
+        var storedFile = imagePolicy.NeedsNormalization(metadata.Dimensions.Width, metadata.Dimensions.Height)
             ? await NormalizeAndDescribeAsync(normalized, metadata)
             : DescribeAsIs(normalized, metadata);
 
@@ -82,8 +82,8 @@ public class PhotoFileService(
         await photoStorage.SaveAsync(storageKey, storedFile.Content, storedFile.ContentType);
 
         return Result.Success(new StoredPhotoFile(
-            storageKey, photoDate, storedFile.SizeBytes, storedFile.Width, storedFile.Height,
-            storedFile.OriginalWidth, storedFile.OriginalHeight, storedFile.OriginalSizeBytes, originalContentHash));
+            storageKey, photoDate, storedFile.SizeBytes, storedFile.Dimensions,
+            storedFile.OriginalDimensions, storedFile.OriginalSizeBytes, originalContentHash));
     }
 
     public async Task<PhotoDownloadResult> OpenForDownloadAsync(string storageKey)
@@ -113,13 +113,12 @@ public class PhotoFileService(
         var resized = await imageProcessor.NormalizeAsync(normalized.Content, imagePolicy.MaxStoredLongEdge);
 
         return new DescribedFile(
-            resized.Content, resized.ContentType, resized.SizeBytes, resized.Width, resized.Height,
-            metadata.Width, metadata.Height, originalSizeBytes);
+            resized.Content, resized.ContentType, resized.SizeBytes, resized.Dimensions,
+            metadata.Dimensions, originalSizeBytes);
     }
 
     private static DescribedFile DescribeAsIs(NormalizedPhoto normalized, ImageMetadata metadata) =>
-        new(normalized.Content, metadata.ContentType, normalized.Content.Length, metadata.Width, metadata.Height,
-            null, null, null);
+        new(normalized.Content, metadata.ContentType, normalized.Content.Length, metadata.Dimensions, null, null);
 
     private static string ExtensionFor(string contentType) =>
         ExtensionsByContentType.TryGetValue(contentType, out var extension) ? extension : "bin";
@@ -134,10 +133,10 @@ public class PhotoFileService(
     }
 
     private record DescribedFile(
-        Stream Content, string ContentType, long SizeBytes, int Width, int Height,
-        int? OriginalWidth, int? OriginalHeight, long? OriginalSizeBytes);
+        Stream Content, string ContentType, long SizeBytes, ImageDimensions Dimensions,
+        ImageDimensions? OriginalDimensions, long? OriginalSizeBytes);
 }
 
 public record StoredPhotoFile(
-    string StorageKey, PhotoDate? Date, long SizeBytes, int Width, int Height,
-    int? OriginalWidth, int? OriginalHeight, long? OriginalSizeBytes, string OriginalContentHash);
+    string StorageKey, PhotoDate? TakenAt, long SizeBytes, ImageDimensions Dimensions,
+    ImageDimensions? OriginalDimensions, long? OriginalSizeBytes, string OriginalContentHash);

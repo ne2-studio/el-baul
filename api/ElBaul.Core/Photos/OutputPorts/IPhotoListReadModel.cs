@@ -58,5 +58,5 @@ public static class PhotoListRowFactory
 {
     public static PhotoListRow Build(Photo photo, int recuerdoCount) =>
         new(photo.Id, photo.ChapterId, photo.BaulId, photo.StorageKey,
-            photo.DateYear, photo.DateMonth, photo.DateDay, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
+            photo.TakenAt?.Year, photo.TakenAt?.Month, photo.TakenAt?.Day, photo.UploadedBy, photo.CreatedAt, recuerdoCount);
 }

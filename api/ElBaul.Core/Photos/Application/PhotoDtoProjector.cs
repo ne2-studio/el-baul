@@ -56,6 +56,6 @@ public class PhotoDtoProjector(
     {
         var canDelete = PhotoDeletePolicy.CanDelete(photo, currentUserId, isAdmin, now);
         return new(photo.Id.ToString(), photo.ChapterId?.ToString(), photo.BaulId.ToString(), thumbnailUrl, fullUrl,
-            photo.Date?.Year, photo.Date?.Month, photo.Date?.Day, photo.UploadedBy, photo.CreatedAt, recuerdoCount, canDelete, !canDelete);
+            photo.TakenAt?.Year, photo.TakenAt?.Month, photo.TakenAt?.Day, photo.UploadedBy, photo.CreatedAt, recuerdoCount, canDelete, !canDelete);
     }
 }
