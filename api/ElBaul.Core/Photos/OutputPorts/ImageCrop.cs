@@ -5,4 +5,7 @@ namespace ElBaul.Core.Photos.OutputPorts;
 /// receives an already-cropped, properly resampled image instead of scaling a
 /// full-resolution decode with `transform: scale()`.
 /// </summary>
-public record ImageCrop(decimal X, decimal Y, decimal Scale);
+public record ImageCrop(decimal X, decimal Y, decimal Scale)
+{
+    public static ImageCrop DefaultCoverCrop { get; } = new(0.5m, 0.5m, 1m);
+}

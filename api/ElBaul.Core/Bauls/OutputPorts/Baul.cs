@@ -14,12 +14,10 @@ public record Baul
     PhotoId? CoverPhotoId = null
 )
 {
-    public static ImageCrop DefaultCoverCrop { get; } = new(0.5m, 0.5m, 1m);
-
     public Baul(
         BaulId Id, string Name, string? Description, UserId CustodioId, int ChapterCount,
         DateTime CreatedAt, DateTime UpdatedAt)
-        : this(Id, Name, Description, CustodioId, ChapterCount, CreatedAt, UpdatedAt, DefaultCoverCrop)
+        : this(Id, Name, Description, CustodioId, ChapterCount, CreatedAt, UpdatedAt, ImageCrop.DefaultCoverCrop)
     {
     }
 
