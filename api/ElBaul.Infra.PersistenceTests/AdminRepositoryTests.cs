@@ -125,7 +125,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
         dbContext.ChangeTracker.Clear();
         // Soft-delete directly at the repository level — PhotoLifecycleService.SoftDeleteAsync
         // is exactly this UpdateAsync call plus chapter-cover bookkeeping this test doesn't need.
-        await photos.UpdateAsync(deleted with { Status = PhotoStatus.Deleted, DeletedAt = DateTime.UtcNow });
+        await photos.UpdateAsync(deleted.MarkDeleted(null, DateTime.UtcNow));
 
         var dashboard = await admin.GetDashboardCountsAsync(DateTime.UtcNow.Date);
         dashboard.Photos.Should().Be(1, "the deleted photo's row survives the soft delete and must not still be counted");

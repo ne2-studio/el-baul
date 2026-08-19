@@ -11,6 +11,21 @@ namespace ElBaul.Tests;
 public class DomainEntityUpdateTests
 {
     [Fact]
+    public void Entities_UseIdIdentity_RegardlessOfOtherState()
+    {
+        var id = new BaulId(Guid.NewGuid());
+        var first = new Baul(id, "Familia", null, new UserId("owner"), 0, DateTime.UtcNow, DateTime.UtcNow);
+        var second = new Baul(id, "Otra familia", "Descripción", new UserId("other"), 3, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1));
+        var different = new Baul(new BaulId(Guid.NewGuid()), first.Name, first.Description, first.CustodioId, first.ChapterCount, first.CreatedAt, first.UpdatedAt);
+
+        Assert.Equal(first, second);
+        Assert.True(first == second);
+        Assert.True(first != different);
+        Assert.Equal(first.GetHashCode(), second.GetHashCode());
+        Assert.NotEqual(first, different);
+    }
+
+    [Fact]
     public void Photo_MarkDeleted_StoresDeletionStateAndReason()
     {
         var photo = Photo.Create(

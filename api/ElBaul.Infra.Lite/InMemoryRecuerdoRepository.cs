@@ -11,7 +11,10 @@ public class InMemoryRecuerdoRepository : IRecuerdoRepository
 
     public void SeedForBaul(BaulId baulId, Recuerdo recuerdo)
     {
-        lock (_lock) _recuerdos.Add(recuerdo with { BaulId = baulId });
+        var copy = new Recuerdo(
+            recuerdo.Id, recuerdo.PhotoId, recuerdo.ChapterId, baulId, recuerdo.UserId,
+            recuerdo.Text, recuerdo.CreatedAt);
+        lock (_lock) _recuerdos.Add(copy);
     }
 
     public Task<Recuerdo?> GetByIdAsync(RecuerdoId recuerdoId)

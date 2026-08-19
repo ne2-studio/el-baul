@@ -6,8 +6,18 @@ public enum SharedLinkContentType
     Recuerdo
 }
 
-public record SharedLink
-(
+public sealed class SharedLink : Entity<SharedLinkId>
+{
+    public string Token { get; private set; }
+    public BaulId BaulId { get; private set; }
+    public SharedLinkContentType ContentType { get; private set; }
+    public PhotoId? PhotoId { get; private set; }
+    public RecuerdoId? RecuerdoId { get; private set; }
+    public UserId CreatedBy { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public DateTime? RevokedAt { get; private set; }
+
+    public SharedLink(
     SharedLinkId Id,
     string Token,
     BaulId BaulId,
@@ -16,11 +26,23 @@ public record SharedLink
     RecuerdoId? RecuerdoId,
     UserId CreatedBy,
     DateTime CreatedAt,
-    DateTime? RevokedAt = null
-)
-{
+    DateTime? RevokedAt = null) : base(Id)
+    {
+        this.Token = Token; this.BaulId = BaulId; this.ContentType = ContentType;
+        this.PhotoId = PhotoId; this.RecuerdoId = RecuerdoId; this.CreatedBy = CreatedBy;
+        this.CreatedAt = CreatedAt; this.RevokedAt = RevokedAt;
+    }
     public bool IsRevoked => RevokedAt is not null;
 
-    public SharedLink Revoke(DateTime revokedAt) =>
-        this with { RevokedAt = revokedAt };
+    public SharedLink ForPhoto(PhotoId photoId)
+    {
+        PhotoId = photoId;
+        return this;
+    }
+
+    public SharedLink Revoke(DateTime revokedAt)
+    {
+        RevokedAt = revokedAt;
+        return this;
+    }
 }

@@ -284,7 +284,7 @@ public class WeeklyDigestManagerTests
         var baul = SeedOwnedBaul(UserId);
         var since = _clock.UtcNow().AddDays(-7);
         await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "deleted-1", null, new UserIdVo(UserId), _clock.UtcNow())
-            with { Status = PhotoStatus.Deleted, DeletedAt = _clock.UtcNow(), DeletionReason = "test" });
+            .MarkDeleted("test", _clock.UtcNow()));
 
         var manager = CreateManager();
         await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);

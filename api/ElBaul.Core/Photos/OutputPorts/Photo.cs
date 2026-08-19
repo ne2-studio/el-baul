@@ -1,7 +1,30 @@
 using ElBaul.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
-public record Photo
-(
+public sealed class Photo : Entity<PhotoId>
+{
+    public ChapterId? ChapterId { get; private set; }
+    public BaulId BaulId { get; private set; }
+    public string StorageKey { get; private set; }
+    public int? DateYear { get; private set; }
+    public int? DateMonth { get; private set; }
+    public int? DateDay { get; private set; }
+    public UserId UploadedBy { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public Guid? ClientUploadId { get; private set; }
+    public PhotoStatus Status { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+    public string? DeletionReason { get; private set; }
+    public long SizeBytes { get; private set; }
+    public Guid? UploadBatchId { get; private set; }
+    public bool ConfirmedNoPersonas { get; private set; }
+    public int Width { get; private set; }
+    public int Height { get; private set; }
+    public int? OriginalWidth { get; private set; }
+    public int? OriginalHeight { get; private set; }
+    public long? OriginalSizeBytes { get; private set; }
+    public string? OriginalContentHash { get; private set; }
+
+    public Photo(
     PhotoId Id,
     ChapterId? ChapterId,
     BaulId BaulId,
@@ -45,9 +68,18 @@ public record Photo
     // photo uploaded before this field existed. Duplicate identity (see
     // PhotoDuplicateMergeService) is strictly (BaulId, OriginalContentHash) among Active
     // photos; never used across baúles.
-    string? OriginalContentHash = null
-)
-{
+    string? OriginalContentHash = null) : base(Id)
+    {
+        this.ChapterId = ChapterId; this.BaulId = BaulId; this.StorageKey = StorageKey;
+        this.DateYear = DateYear; this.DateMonth = DateMonth; this.DateDay = DateDay;
+        this.UploadedBy = UploadedBy; this.CreatedAt = CreatedAt; this.ClientUploadId = ClientUploadId;
+        this.Status = Status; this.DeletedAt = DeletedAt; this.DeletionReason = DeletionReason;
+        this.SizeBytes = SizeBytes; this.UploadBatchId = UploadBatchId;
+        this.ConfirmedNoPersonas = ConfirmedNoPersonas; this.Width = Width; this.Height = Height;
+        this.OriginalWidth = OriginalWidth; this.OriginalHeight = OriginalHeight;
+        this.OriginalSizeBytes = OriginalSizeBytes; this.OriginalContentHash = OriginalContentHash;
+    }
+
     public bool WasResized => OriginalWidth is not null;
 
 
@@ -71,25 +103,22 @@ public record Photo
             OriginalContentHash: originalContentHash);
 
     public Photo WithDate(PhotoDate? date) =>
-        this with { DateYear = date?.Year, DateMonth = date?.Month, DateDay = date?.Day };
+        Mutate(() => { DateYear = date?.Year; DateMonth = date?.Month; DateDay = date?.Day; });
 
     public Photo WithOriginalContentHash(string? hash) =>
-        this with { OriginalContentHash = hash };
+        Mutate(() => OriginalContentHash = hash);
 
     public Photo WithConfirmedNoPersonas(bool confirmedNoPersonas) =>
-        this with { ConfirmedNoPersonas = confirmedNoPersonas };
+        Mutate(() => ConfirmedNoPersonas = confirmedNoPersonas);
 
     public Photo InChapter(ChapterId chapterId) =>
-        this with { ChapterId = chapterId };
+        Mutate(() => ChapterId = chapterId);
 
     public Photo WithoutChapter() =>
-        this with { ChapterId = null };
+        Mutate(() => ChapterId = null);
 
     public Photo MarkDeleted(string? reason, DateTime deletedAt) =>
-        this with
-        {
-            Status = PhotoStatus.Deleted,
-            DeletedAt = deletedAt,
-            DeletionReason = reason
-        };
+        Mutate(() => { Status = PhotoStatus.Deleted; DeletedAt = deletedAt; DeletionReason = reason; });
+
+    private Photo Mutate(Action action) { action(); return this; }
 }

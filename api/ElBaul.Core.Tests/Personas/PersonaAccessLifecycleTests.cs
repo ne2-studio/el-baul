@@ -114,7 +114,7 @@ public class PersonaAccessLifecycleTests
         // Active, never revocation-then-role-change alone.
         var persona = MakePersona(BaulRole.Colaborador, OwnerUserId);
 
-        var reopened = persona.Revoke() with { Role = BaulRole.Colaborador };
+        var reopened = persona.Revoke().WithRole(BaulRole.Colaborador);
 
         Assert.Equal(PersonaAccessStatus.Pending, reopened.AccessStatus);
     }

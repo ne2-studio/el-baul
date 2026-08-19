@@ -57,7 +57,7 @@ public class PhotoLifecycleServiceTests
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
         var existingCoverPhotoId = new PhotoId(Guid.NewGuid());
         var existingBaul = await _baulRepository.GetByIdAsync(baulId);
-        await _baulRepository.UpdateAsync(existingBaul! with { CoverPhotoId = existingCoverPhotoId });
+        await _baulRepository.UpdateAsync(existingBaul!.WithCoverPhotoId(existingCoverPhotoId, _clock.UtcNow()));
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "new-key", null, new UserId(UserId), _clock.UtcNow());
 
         await CreateService().AddAsync(photo, chapterId, baulId, _clock.UtcNow());
@@ -98,7 +98,7 @@ public class PhotoLifecycleServiceTests
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), sourceChapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var sourceChapter = await _chapterRepository.GetByIdAsync(sourceChapterId);
-        await _chapterRepository.UpdateAsync(sourceChapter! with { PhotoCount = 1, CoverPhotoId = photo.Id });
+        await _chapterRepository.UpdateAsync(sourceChapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()));
 
         await CreateService().MoveAsync(photo, sourceChapterId, targetChapterId);
 
@@ -141,7 +141,7 @@ public class PhotoLifecycleServiceTests
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        await _chapterRepository.UpdateAsync(chapter! with { PhotoCount = 1 });
+        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "Foto duplicada");
 
@@ -174,7 +174,7 @@ public class PhotoLifecycleServiceTests
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        await _chapterRepository.UpdateAsync(chapter! with { PhotoCount = 1, CoverPhotoId = photo.Id });
+        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "reason");
 
@@ -190,7 +190,7 @@ public class PhotoLifecycleServiceTests
         await _photoRepository.CreateAsync(photo);
         var otherCoverPhotoId = new PhotoId(Guid.NewGuid());
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        await _chapterRepository.UpdateAsync(chapter! with { PhotoCount = 1, CoverPhotoId = otherCoverPhotoId });
+        await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(PhotoRef.From(photo), _clock.UtcNow()).WithCoverPhotoId(otherCoverPhotoId, _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "reason");
 
@@ -205,7 +205,7 @@ public class PhotoLifecycleServiceTests
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var baul = await _baulRepository.GetByIdAsync(baulId);
-        await _baulRepository.UpdateAsync(baul! with { CoverPhotoId = photo.Id });
+        await _baulRepository.UpdateAsync(baul!.WithCoverPhotoId(photo.Id, _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "reason");
 
@@ -221,7 +221,7 @@ public class PhotoLifecycleServiceTests
         await _photoRepository.CreateAsync(photo);
         var otherCoverPhotoId = new PhotoId(Guid.NewGuid());
         var baul = await _baulRepository.GetByIdAsync(baulId);
-        await _baulRepository.UpdateAsync(baul! with { CoverPhotoId = otherCoverPhotoId });
+        await _baulRepository.UpdateAsync(baul!.WithCoverPhotoId(otherCoverPhotoId, _clock.UtcNow()));
 
         await CreateService().SoftDeleteAsync(photo, "reason");
 

@@ -86,7 +86,7 @@ public class ChapterManagerTests
         var baulId = await _fixture.CreateBaulAsync("Familia");
         var chapterId = await _fixture.AddChapterAsync(baulId, "Chapter", photoCount: 1);
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, "cover-key");
-        await _fixture.Chapters.UpdateAsync((await _fixture.Chapters.GetByIdAsync(chapterId))! with { CoverPhotoId = photoId });
+        await _fixture.Chapters.UpdateAsync((await _fixture.Chapters.GetByIdAsync(chapterId))!.WithCoverPhotoId(photoId, _fixture.Clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetByBaulIdAsync(baulId);

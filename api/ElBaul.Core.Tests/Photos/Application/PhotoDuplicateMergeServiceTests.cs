@@ -199,7 +199,7 @@ public class PhotoDuplicateMergeServiceTests
         var survivorId = await _fixture.AddPhotoAsync(baulId, storageKey: "survivor-key", date: Date(1990), originalContentHash: "hash");
         var duplicateId = await _fixture.AddPhotoAsync(baulId, storageKey: "duplicate-key", date: Date(2020), originalContentHash: "hash");
         var baul = (await _fixture.Baules.GetByIdAsync(baulId))!;
-        await _fixture.Baules.UpdateAsync(baul with { CoverPhotoId = duplicateId });
+        await _fixture.Baules.UpdateAsync(baul.WithCoverPhotoId(duplicateId, _fixture.Clock.UtcNow()));
         var group = new[] { survivorId, duplicateId }.Select(id => _fixture.Photos.GetByIdAsync(id).Result!).ToList();
 
         await CreateService().MergeGroupAsync(group);
@@ -215,7 +215,7 @@ public class PhotoDuplicateMergeServiceTests
         var chapterId = await _fixture.AddChapterAsync(baulId);
         var survivorId = await _fixture.AddPhotoAsync(baulId, chapterId, "survivor-key", Date(1990), originalContentHash: "hash");
         var duplicateId = await _fixture.AddPhotoAsync(baulId, chapterId, "duplicate-key", Date(2020), originalContentHash: "hash");
-        await _fixture.Chapters.UpdateAsync((await _fixture.Chapters.GetByIdAsync(chapterId))! with { CoverPhotoId = duplicateId });
+        await _fixture.Chapters.UpdateAsync((await _fixture.Chapters.GetByIdAsync(chapterId))!.WithCoverPhotoId(duplicateId, _fixture.Clock.UtcNow()));
         var group = new[] { survivorId, duplicateId }.Select(id => _fixture.Photos.GetByIdAsync(id).Result!).ToList();
 
         await CreateService().MergeGroupAsync(group);

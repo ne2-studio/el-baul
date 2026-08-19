@@ -14,6 +14,6 @@ public class SharedLinkPhotoMergeListener(ISharedLinkRepository sharedLinkReposi
     {
         var duplicateIds = result.Duplicates.Select(d => d.Id).ToList();
         foreach (var sharedLink in await sharedLinkRepository.GetByPhotoIdsAsync(duplicateIds))
-            await sharedLinkRepository.UpdateAsync(sharedLink with { PhotoId = result.Survivor.Id });
+            await sharedLinkRepository.UpdateAsync(sharedLink.ForPhoto(result.Survivor.Id));
     }
 }

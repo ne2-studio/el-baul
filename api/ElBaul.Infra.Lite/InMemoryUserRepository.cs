@@ -52,7 +52,7 @@ public class InMemoryUserRepository : IUserRepository
         {
             if (_users.TryGetValue(id, out var user))
             {
-                _users[id] = user with { LastAccessAt = at };
+                _users[id] = user.WithLastAccessAt(at);
             }
         }
         return Task.CompletedTask;
@@ -64,7 +64,7 @@ public class InMemoryUserRepository : IUserRepository
         {
             if (_users.TryGetValue(id, out var user))
             {
-                _users[id] = user with { WeeklyDigestEnabled = enabled };
+                _users[id] = user.WithWeeklyDigestEnabled(enabled);
             }
         }
         return Task.CompletedTask;
@@ -76,7 +76,7 @@ public class InMemoryUserRepository : IUserRepository
         {
             if (_users.TryGetValue(id, out var user))
             {
-                _users[id] = user with { LastPushDigestSentAt = at };
+                _users[id] = user.WithLastPushDigestSentAt(at);
             }
         }
         return Task.CompletedTask;
@@ -88,7 +88,7 @@ public class InMemoryUserRepository : IUserRepository
         {
             if (_users.TryGetValue(id, out var user))
             {
-                _users[id] = user with { HasSeenOnboarding = true };
+                _users[id] = user.WithOnboardingSeen();
             }
         }
         return Task.CompletedTask;
