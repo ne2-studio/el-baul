@@ -2,7 +2,7 @@ using ElBaul.Api.Controllers;
 using ElBaul.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace ElBaul.Api.Swagger;
@@ -44,14 +44,18 @@ public class DefaultResponseTypesOperationFilter : IOperationFilter
         AddResponse(operation, "503", "A downstream dependency is unavailable.", errorSchema);
     }
 
-    private static void AddResponse(OpenApiOperation operation, string statusCode, string description, OpenApiSchema? schema)
+    private static void AddResponse(OpenApiOperation operation, string statusCode, string description, IOpenApiSchema? schema)
     {
-        if (operation.Responses.ContainsKey(statusCode)) return;
+        var responses = operation.Responses ??= new();
+        if (responses.ContainsKey(statusCode)) return;
 
         var response = new OpenApiResponse { Description = description };
         if (schema is not null)
+        {
+            response.Content ??= new Dictionary<string, OpenApiMediaType>();
             response.Content["application/json"] = new OpenApiMediaType { Schema = schema };
+        }
 
-        operation.Responses[statusCode] = response;
+        responses[statusCode] = response;
     }
 }

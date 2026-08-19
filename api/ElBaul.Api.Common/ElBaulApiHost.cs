@@ -52,7 +52,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -368,7 +368,7 @@ public static class ElBaulApiHost
         TypeDescriptor.AddAttributes(typeof(TId), new TypeConverterAttribute(typeof(IdTypeConverter<TId>)));
 
     private static void MapIdSchema<TId>(SwaggerGenOptions options) where TId : struct, IParsableId<TId> =>
-        options.MapType<TId>(() => new OpenApiSchema { Type = "string", Format = "uuid" });
+        options.MapType<TId>(() => new OpenApiSchema { Type = JsonSchemaType.String, Format = "uuid" });
 
     // Prefers a JsonException's own message over ModelError.ErrorMessage when one is attached —
     // this is a partial mitigation, not a full fix. Both binding paths a bad id can take

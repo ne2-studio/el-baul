@@ -20,7 +20,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -100,7 +100,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -182,7 +182,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -262,7 +262,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -344,7 +344,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -486,7 +486,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -568,7 +568,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -659,7 +659,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1056,7 +1056,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1093,7 +1093,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1165,7 +1165,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1245,7 +1245,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1318,7 +1318,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1406,7 +1406,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1487,7 +1487,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1571,7 +1571,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1651,7 +1651,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1713,7 +1713,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1779,7 +1779,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1869,7 +1869,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1949,7 +1949,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2023,7 +2023,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2111,7 +2111,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2263,7 +2263,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2345,7 +2345,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2420,7 +2420,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2500,7 +2500,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2574,7 +2574,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2654,7 +2654,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2736,7 +2736,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2825,7 +2825,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2893,7 +2893,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2972,7 +2972,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3052,7 +3052,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3114,7 +3114,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3176,7 +3176,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Redirect */
+                /** @description Found */
                 302: {
                     headers: {
                         [name: string]: unknown;
@@ -3225,7 +3225,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3307,7 +3307,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3381,7 +3381,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3462,7 +3462,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3536,7 +3536,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3605,7 +3605,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3692,7 +3692,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3781,7 +3781,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3863,7 +3863,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3951,7 +3951,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4032,7 +4032,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4111,7 +4111,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4198,7 +4198,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4288,7 +4288,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4374,7 +4374,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4442,7 +4442,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4526,7 +4526,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4598,7 +4598,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4681,7 +4681,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4763,7 +4763,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4842,7 +4842,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4922,7 +4922,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5004,7 +5004,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5087,7 +5087,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5170,7 +5170,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5253,7 +5253,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5334,7 +5334,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5408,7 +5408,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5488,7 +5488,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5573,7 +5573,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5659,7 +5659,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5740,7 +5740,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5813,7 +5813,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5894,7 +5894,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5968,7 +5968,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6048,7 +6048,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6122,7 +6122,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6205,7 +6205,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6288,7 +6288,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6370,7 +6370,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6452,7 +6452,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6610,7 +6610,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6678,7 +6678,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6758,7 +6758,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6822,7 +6822,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -6974,7 +6974,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -7054,7 +7054,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -7180,7 +7180,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -7267,7 +7267,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -7348,7 +7348,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Success */
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;

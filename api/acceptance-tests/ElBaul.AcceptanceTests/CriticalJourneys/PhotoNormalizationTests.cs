@@ -55,8 +55,8 @@ public class PhotoNormalizationTests(ElBaulAcceptanceFixture fixture)
         downloadedBytes.Should().NotEqual(OversizedJpegBytes, "the oversized original must not be the stored asset");
 
         var (width, height) = JpegDimensions.Read(downloadedBytes);
-        width.Should().BeLessOrEqualTo(64);
-        height.Should().BeLessOrEqualTo(64);
+        width.Should().BeLessThanOrEqualTo(64);
+        height.Should().BeLessThanOrEqualTo(64);
         // Aspect ratio (2:1) preserved, long edge capped exactly at the policy limit.
         width.Should().Be(64);
         height.Should().Be(32);

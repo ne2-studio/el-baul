@@ -5,7 +5,7 @@ using ElBaul.Infra.Lite;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Writers;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace ElBaul.Api.Tests;
@@ -78,7 +78,6 @@ public class OpenApiContractSnapshotTests
         using var stringWriter = new StringWriter();
         var jsonWriter = new OpenApiJsonWriter(stringWriter);
         swagger.SerializeAsV3(jsonWriter);
-        jsonWriter.Flush();
 
         return stringWriter + Environment.NewLine;
     }
