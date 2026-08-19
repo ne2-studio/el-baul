@@ -10,12 +10,19 @@ public record Baul
     int ChapterCount,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    decimal CoverCropX = 0.5m,
-    decimal CoverCropY = 0.5m,
-    decimal CoverCropScale = 1m,
+    ImageCrop CoverCrop,
     PhotoId? CoverPhotoId = null
 )
 {
+    public static ImageCrop DefaultCoverCrop { get; } = new(0.5m, 0.5m, 1m);
+
+    public Baul(
+        BaulId Id, string Name, string? Description, UserId CustodioId, int ChapterCount,
+        DateTime CreatedAt, DateTime UpdatedAt)
+        : this(Id, Name, Description, CustodioId, ChapterCount, CreatedAt, UpdatedAt, DefaultCoverCrop)
+    {
+    }
+
     // The single interpretation of "is this user the baúl's custodio" — a legal-custody
     // relationship, singular and non-transferable except via an explicit ownership change, not a
     // permission level. Callers should ask this instead of re-deriving it from CustodioId
@@ -52,13 +59,11 @@ public record Baul
     public Baul WithCoverPhotoId(PhotoId coverPhotoId, DateTime updatedAt) =>
         this with { CoverPhotoId = coverPhotoId, UpdatedAt = updatedAt };
 
-    public Baul WithCover(Photo photo, decimal cropX, decimal cropY, decimal cropScale, DateTime updatedAt) =>
+    public Baul WithCover(Photo photo, ImageCrop crop, DateTime updatedAt) =>
         this with
         {
             CoverPhotoId = photo.Id,
-            CoverCropX = cropX,
-            CoverCropY = cropY,
-            CoverCropScale = cropScale,
+            CoverCrop = crop,
             UpdatedAt = updatedAt
         };
 }

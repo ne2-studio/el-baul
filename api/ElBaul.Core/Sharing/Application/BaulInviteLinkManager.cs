@@ -99,7 +99,7 @@ public class BaulInviteLinkManager(
             urls.Add(await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.InvitationPreview));
         }
 
-        var coverCrop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
+        var coverCrop = baul.CoverCrop;
         var coverPhoto = baul.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
         var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, baul.Id, ImagePlacement.BaulCover, coverCrop);
 
@@ -130,7 +130,7 @@ public class BaulInviteLinkManager(
         var baul = await baulRepository.GetByIdAsync(link.BaulId);
         if (baul is null) return Result.Failure<BaulInviteLinkLandingDto>(ApplicationError.NotFound("Baul not found"));
 
-        var coverCrop = new ImageCrop(baul.CoverCropX, baul.CoverCropY, baul.CoverCropScale);
+        var coverCrop = baul.CoverCrop;
         var coverPhoto = baul.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
         var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, baul.Id, ImagePlacement.BaulCover, coverCrop);
         var title = $"Invitación a {baul.Name}";

@@ -121,9 +121,9 @@ public class BaulManagerTests
 
         var baul = await _baulRepository.GetByIdAsync(new BaulId(baulId));
         Assert.Equal(new PhotoId(photoId), baul!.CoverPhotoId);
-        Assert.Equal(0.25m, baul.CoverCropX);
-        Assert.Equal(0.75m, baul.CoverCropY);
-        Assert.Equal(1.8m, baul.CoverCropScale);
+        Assert.Equal(0.25m, baul!.CoverCrop.X);
+        Assert.Equal(0.75m, baul.CoverCrop.Y);
+        Assert.Equal(1.8m, baul.CoverCrop.Scale);
     }
 
     [Fact]
@@ -263,8 +263,8 @@ public class BaulManagerTests
         var secondPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, secondBaul.Id, "second-key", null, new UserId(CustodioId), _clock.UtcNow());
         await _photoRepository.CreateAsync(firstPhoto);
         await _photoRepository.CreateAsync(secondPhoto);
-        await _baulRepository.UpdateAsync(firstBaul.WithCover(firstPhoto, 0.5m, 0.5m, 1m, _clock.UtcNow()));
-        await _baulRepository.UpdateAsync(secondBaul.WithCover(secondPhoto, 0.5m, 0.5m, 1m, _clock.UtcNow()));
+        await _baulRepository.UpdateAsync(firstBaul.WithCover(firstPhoto, new ImageCrop(0.5m, 0.5m, 1m), _clock.UtcNow()));
+        await _baulRepository.UpdateAsync(secondBaul.WithCover(secondPhoto, new ImageCrop(0.5m, 0.5m, 1m), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.GetAllForCurrentUserAsync();

@@ -16,9 +16,12 @@ public class BaulConfiguration : IEntityTypeConfiguration<Baul>
         builder.Property(b => b.Name).IsRequired().HasMaxLength(200);
         builder.Property(b => b.Description).HasMaxLength(2000);
         builder.Property(b => b.CustodioId).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
-        builder.Property(b => b.CoverCropX).HasPrecision(5, 4).HasDefaultValue(0.5m);
-        builder.Property(b => b.CoverCropY).HasPrecision(5, 4).HasDefaultValue(0.5m);
-        builder.Property(b => b.CoverCropScale).HasPrecision(4, 2).HasDefaultValue(1m);
+        builder.ComplexProperty(b => b.CoverCrop, crop =>
+        {
+            crop.Property(c => c.X).HasColumnName("CoverCropX").HasPrecision(5, 4).HasDefaultValue(0.5m);
+            crop.Property(c => c.Y).HasColumnName("CoverCropY").HasPrecision(5, 4).HasDefaultValue(0.5m);
+            crop.Property(c => c.Scale).HasColumnName("CoverCropScale").HasPrecision(4, 2).HasDefaultValue(1m);
+        });
         builder.Property(b => b.CoverPhotoId).HasConversion(IdValueConverters.PhotoId);
         builder.Property(b => b.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(b => b.UpdatedAt).HasColumnType("timestamp with time zone");
