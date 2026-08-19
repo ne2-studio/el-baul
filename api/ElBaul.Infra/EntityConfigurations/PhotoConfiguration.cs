@@ -28,8 +28,8 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.Property(p => p.ConfirmedNoPersonas).HasDefaultValue(false);
         builder.ComplexProperty(p => p.Dimensions, dimensions =>
         {
-            dimensions.Property(d => d.Width).HasColumnName("Width").HasDefaultValue(0);
-            dimensions.Property(d => d.Height).HasColumnName("Height").HasDefaultValue(0);
+            dimensions.Property(d => d.Width).HasColumnName("Width").IsRequired();
+            dimensions.Property(d => d.Height).HasColumnName("Height").IsRequired();
         });
         builder.ComplexProperty(p => p.OriginalDimensions, dimensions =>
         {

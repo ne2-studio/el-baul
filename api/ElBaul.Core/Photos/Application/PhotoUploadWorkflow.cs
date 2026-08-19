@@ -57,7 +57,7 @@ public class PhotoUploadWorkflow(
         var now = clock.UtcNow();
         var photo = Photo.Create(
             new PhotoId(idGenerator.NewId()), chapterId, baulId, storedFile.StorageKey, storedFile.TakenAt, userId, now,
-            clientUploadId, storedFile.SizeBytes, uploadBatchId, storedFile.Dimensions,
+            storedFile.Dimensions, clientUploadId, storedFile.SizeBytes, uploadBatchId,
             storedFile.OriginalDimensions, storedFile.OriginalSizeBytes,
             storedFile.OriginalContentHash);
 

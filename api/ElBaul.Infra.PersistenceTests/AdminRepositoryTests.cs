@@ -157,5 +157,5 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
 
     private static Photo NewPhoto(BaulId baulId, ChapterId chapterId, string uploadedBy, long sizeBytes) =>
         new(new PhotoId(Guid.NewGuid()), chapterId, baulId, $"photos/{Guid.NewGuid()}.jpg",
-            null, new UserId(uploadedBy), DateTime.UtcNow, SizeBytes: sizeBytes);
+            null, new UserId(uploadedBy), DateTime.UtcNow, new ImageDimensions(1, 1), SizeBytes: sizeBytes);
 }

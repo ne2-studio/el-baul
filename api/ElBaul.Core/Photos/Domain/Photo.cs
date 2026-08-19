@@ -17,7 +17,7 @@ public sealed class Photo : Entity<PhotoId>
     public long SizeBytes { get; private set; }
     public Guid? UploadBatchId { get; private set; }
     public bool ConfirmedNoPersonas { get; private set; }
-    public ImageDimensions Dimensions { get; private set; } = new(0, 0);
+    public ImageDimensions Dimensions { get; private set; } = new(1, 1);
     public ImageDimensions? OriginalDimensions { get; private set; }
     public long? OriginalSizeBytes { get; private set; }
     public string? OriginalContentHash { get; private set; }
@@ -30,6 +30,7 @@ public sealed class Photo : Entity<PhotoId>
     PhotoDate? TakenAt,
     UserId UploadedBy,
     DateTime CreatedAt,
+    ImageDimensions Dimensions,
     Guid? ClientUploadId = null,
     PhotoStatus Status = PhotoStatus.Active,
     DateTime? DeletedAt = null,
@@ -47,10 +48,8 @@ public sealed class Photo : Entity<PhotoId>
     // tag (SetTaggedPersonasAsync/AddTaggedPersonasBatchAsync), so a later manual tagging always
     // wins over a stale confirmation.
     bool ConfirmedNoPersonas = false,
-    // Dimensions/size of the asset as it actually sits in storage today — for a photo uploaded
-    // before this field existed, 0 until it's set (see ImagePolicy). Never the *display*
+    // Dimensions/size of the asset as it actually sits in storage today. Never the *display*
     // orientation — raw pixel dimensions of the stored bytes.
-    ImageDimensions? Dimensions = null,
     // Set only when the stored asset is a normalized (downscaled) version of what the user
     // uploaded — the pre-normalization dimensions/size, for measuring normalization's storage
     // impact later (see docs/.backlog ticket 010). Null means the stored bytes are exactly what
@@ -64,12 +63,15 @@ public sealed class Photo : Entity<PhotoId>
     // photos; never used across baúles.
     string? OriginalContentHash = null) : base(Id)
     {
+        if (Dimensions.Width <= 0 || Dimensions.Height <= 0)
+            throw new ArgumentOutOfRangeException(nameof(Dimensions), "Photo dimensions must be positive.");
+
         this.ChapterId = ChapterId; this.BaulId = BaulId; this.StorageKey = StorageKey;
         this.TakenAt = TakenAt;
         this.UploadedBy = UploadedBy; this.CreatedAt = CreatedAt; this.ClientUploadId = ClientUploadId;
         this.Status = Status; this.DeletedAt = DeletedAt; this.DeletionReason = DeletionReason;
         this.SizeBytes = SizeBytes; this.UploadBatchId = UploadBatchId;
-        this.ConfirmedNoPersonas = ConfirmedNoPersonas; this.Dimensions = Dimensions ?? new(0, 0);
+        this.ConfirmedNoPersonas = ConfirmedNoPersonas; this.Dimensions = Dimensions;
         this.OriginalDimensions = OriginalDimensions;
         this.OriginalSizeBytes = OriginalSizeBytes; this.OriginalContentHash = OriginalContentHash;
     }
@@ -78,14 +80,25 @@ public sealed class Photo : Entity<PhotoId>
 
     public static Photo Create(
         PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
-        UserId uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
-        Guid? uploadBatchId = null, ImageDimensions? dimensions = null,
+        UserId uploadedBy, DateTime createdAt, ImageDimensions dimensions,
+        Guid? clientUploadId = null, long sizeBytes = 0,
+        Guid? uploadBatchId = null,
         ImageDimensions? originalDimensions = null, long? originalSizeBytes = null,
         string? originalContentHash = null) =>
-        new(id, chapterId, baulId, storageKey, date, uploadedBy, createdAt, clientUploadId,
-            SizeBytes: sizeBytes, UploadBatchId: uploadBatchId, Dimensions: dimensions,
+        new(id, chapterId, baulId, storageKey, date, uploadedBy, createdAt, dimensions, clientUploadId,
+            SizeBytes: sizeBytes, UploadBatchId: uploadBatchId,
             OriginalDimensions: originalDimensions, OriginalSizeBytes: originalSizeBytes,
             OriginalContentHash: originalContentHash);
+
+    [Obsolete("Pass the stored image dimensions explicitly.")]
+    public static Photo Create(
+        PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
+        UserId uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
+        Guid? uploadBatchId = null, ImageDimensions? originalDimensions = null,
+        long? originalSizeBytes = null, string? originalContentHash = null) =>
+        Create(id, chapterId, baulId, storageKey, date, uploadedBy, createdAt, new(1, 1),
+            clientUploadId, sizeBytes, uploadBatchId, originalDimensions, originalSizeBytes,
+            originalContentHash);
 
     public Photo WithDate(PhotoDate? date) =>
         Mutate(() => TakenAt = date);
