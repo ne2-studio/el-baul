@@ -108,7 +108,7 @@ public class SharedLinkManagerTests
         var chapterId = new ChapterId(Guid.NewGuid());
         await _baules.CreateAsync(new Baul(baulId, "Familia Pérez", null, new UserId("user-1"), 1, Now, Now));
         await _personas.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), baulId, new UserId("user-1"), "Pedro", BaulRole.Administrador, Now));
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "photo-key", null, new UserId("user-1"), Now);
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "photo-key", null, new UserId("user-1"), Now);
         await _photos.CreateAsync(photo);
         return photo;
     }

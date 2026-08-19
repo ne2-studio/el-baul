@@ -24,7 +24,7 @@ public class PhotoDtoProjectorTests
     [Fact]
     public async Task ProjectAsync_ShouldBuildStorageUrls_ForGridAndFullPlacements()
     {
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null, new UserId(UserId), _clock.UtcNow());
 
         var dto = await CreateProjector().ProjectAsync(photo, isAdmin: true, new UserId(UserId));
 
@@ -36,8 +36,8 @@ public class PhotoDtoProjectorTests
     public async Task ProjectAsync_ShouldIncludeRecuerdoCounts_PerPhoto()
     {
         var baulId = new BaulId(Guid.NewGuid());
-        var countedPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "counted-key", null, new UserId(UserId), _clock.UtcNow());
-        var emptyPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "empty-key", null, new UserId(UserId), _clock.UtcNow());
+        var countedPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "counted-key", null, new UserId(UserId), _clock.UtcNow());
+        var emptyPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "empty-key", null, new UserId(UserId), _clock.UtcNow());
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), countedPhoto.Id, null, baulId, new UserId(UserId), "uno", _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), countedPhoto.Id, null, baulId, new UserId(UserId), "dos", _clock.UtcNow()));
         await _recuerdoRepository.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, baulId, new UserId(UserId), "suelto", _clock.UtcNow()));
@@ -53,7 +53,7 @@ public class PhotoDtoProjectorTests
     {
         // Admin uploaded by someone else, ages ago — still deletable directly, never a removal
         // request, no matter who uploaded it or how long ago.
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null,
             new UserId(OtherUserId), _clock.UtcNow().AddDays(-30));
 
@@ -66,7 +66,7 @@ public class PhotoDtoProjectorTests
     [Fact]
     public async Task ProjectAsync_ShouldGrantDelete_NotRemovalRequest_ForOwnRecentUpload()
     {
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null,
             new UserId(UserId), _clock.UtcNow());
 
@@ -79,7 +79,7 @@ public class PhotoDtoProjectorTests
     [Fact]
     public async Task ProjectAsync_ShouldGrantRemovalRequest_NotDelete_ForOwnUploadPastGracePeriod()
     {
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null,
             new UserId(UserId), _clock.UtcNow() - PhotoDeletePolicy.OwnPhotoGracePeriod);
 
@@ -92,7 +92,7 @@ public class PhotoDtoProjectorTests
     [Fact]
     public async Task ProjectAsync_ShouldGrantRemovalRequest_NotDelete_ForSomeoneElsesRecentUpload()
     {
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), "photo-key", null,
             new UserId(OtherUserId), _clock.UtcNow());
 

@@ -112,7 +112,7 @@ public class BaulManagerTests
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.25m, 0.75m, 1.8m));
@@ -137,7 +137,7 @@ public class BaulManagerTests
         var chapterId = Guid.NewGuid();
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.5m, 0.5m, 1m));
@@ -168,7 +168,7 @@ public class BaulManagerTests
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         await _baulRepository.CreateAsync(new Baul(new BaulId(otherBaulId), "Otro", null, new UserId(CustodioId), 0, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(otherBaulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(otherBaulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.5m, 0.5m, 1m));
@@ -263,8 +263,8 @@ public class BaulManagerTests
         var secondBaulId = Guid.NewGuid();
         var firstBaul = await SeedBaulAsync(firstBaulId, "Familia 1");
         var secondBaul = await SeedBaulAsync(secondBaulId, "Familia 2");
-        var firstPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, firstBaul.Id, "first-key", null, new UserId(CustodioId), _clock.UtcNow());
-        var secondPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, secondBaul.Id, "second-key", null, new UserId(CustodioId), _clock.UtcNow());
+        var firstPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, firstBaul.Id, "first-key", null, new UserId(CustodioId), _clock.UtcNow());
+        var secondPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, secondBaul.Id, "second-key", null, new UserId(CustodioId), _clock.UtcNow());
         await _photoRepository.CreateAsync(firstPhoto);
         await _photoRepository.CreateAsync(secondPhoto);
         await _baulRepository.UpdateAsync(firstBaul.WithCover(firstPhoto, new ImageCrop(0.5m, 0.5m, 1m), _clock.UtcNow()));

@@ -34,7 +34,7 @@ public class DomainEntityUpdateTests
     [Fact]
     public void Photo_MarkDeleted_StoresDeletionStateAndReason()
     {
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()),
             new ChapterId(Guid.NewGuid()),
             new BaulId(Guid.NewGuid()),
@@ -61,7 +61,7 @@ public class DomainEntityUpdateTests
             "Tita",
             BaulRole.Colaborador,
             new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()),
             null,
             persona.BaulId,
@@ -84,7 +84,7 @@ public class DomainEntityUpdateTests
         var chapter = new Chapter(
             new ChapterId(Guid.NewGuid()), new BaulId(Guid.NewGuid()), "Vacaciones", 0,
             new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), chapter.Id, chapter.BaulId, "photos/cover.jpg", null,
             new UserId("user-1"), chapter.CreatedAt);
         var updatedAt = new DateTime(2026, 1, 2, 10, 0, 0, DateTimeKind.Utc);
@@ -104,7 +104,7 @@ public class DomainEntityUpdateTests
         var baul = new Baul(
             new BaulId(Guid.NewGuid()), "Familia", null, new UserId("user-1"), 0,
             new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), null, baul.Id, "photos/cover.jpg", null,
             new UserId("user-1"), baul.CreatedAt);
         var updatedAt = new DateTime(2026, 1, 2, 10, 0, 0, DateTimeKind.Utc);

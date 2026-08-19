@@ -100,7 +100,7 @@ public class BaulFixture
         Guid? uploadBatchId = null, DateTime? createdAt = null, string? originalContentHash = null)
     {
         var photoId = new PhotoId(id ?? Guid.NewGuid());
-        await Photos.CreateAsync(Photo.Create(
+        await Photos.CreateAsync(PhotoMother.Create(
             photoId, chapterId, baulId, storageKey, date, new UserId(uploadedBy), createdAt ?? Clock.UtcNow(), clientUploadId, sizeBytes,
             uploadBatchId, originalContentHash: originalContentHash));
         return photoId;

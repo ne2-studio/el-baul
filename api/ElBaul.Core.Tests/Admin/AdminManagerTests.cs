@@ -266,14 +266,14 @@ public class AdminManagerTests
         var chapter = new Chapter(new ChapterId(Guid.NewGuid()), baulId, "Verano 2020", 1, _clock.UtcNow(), _clock.UtcNow());
         await _chapterRepository.CreateAsync(chapter);
 
-        var photo = Photo.Create(
+        var photo = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), chapter.Id, baulId, "photos/one.jpg", null, new UserId("custodio-1"), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
 
         var recuerdo = new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baulId, new UserId("custodio-1"), "Qué buen día", _clock.UtcNow());
         await _recuerdoRepository.CreateAsync(recuerdo);
 
-        var avatarPhoto = Photo.Create(
+        var avatarPhoto = PhotoMother.Create(
             new PhotoId(Guid.NewGuid()), null, baulId, "avatars/abuela.jpg", null, new UserId("custodio-1"), _clock.UtcNow());
         await _photoRepository.CreateAsync(avatarPhoto);
         var persona = new Persona(

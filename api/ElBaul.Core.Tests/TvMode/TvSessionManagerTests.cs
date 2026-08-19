@@ -80,7 +80,7 @@ public class TvSessionManagerTests
         var persona = new Persona(new PersonaId(Guid.NewGuid()), baul.Id, null, "Rosa", BaulRole.Colaborador, Now);
         await _personas.AddPersonaAsync(persona);
 
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photo-key", PhotoDate.Parse(2026, 7, 15).Value, new UserId("user-1"), Now);
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photo-key", PhotoDate.Parse(2026, 7, 15).Value, new UserId("user-1"), Now);
         await _photos.CreateAsync(photo);
         await _photoPersonaTags.SetTagsAsync(photo.Id, baul.Id, [persona.Id], Now);
         await _recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baul.Id, new UserId("user-1"), "Aprendiste a nadar", Now));

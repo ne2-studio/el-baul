@@ -93,7 +93,7 @@ public class AuthorInfoProjectorTests
     {
         var baulId = await SeedBaulAsync();
         var photoId = new PhotoId(Guid.NewGuid());
-        await _photoRepository.CreateAsync(Photo.Create(photoId, null, baulId, "photo-key", null, new UserId(CustodioId), Now));
+        await _photoRepository.CreateAsync(PhotoMother.Create(photoId, null, baulId, "photo-key", null, new UserId(CustodioId), Now));
         await _personaRepository.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(CustodioId), "Custodio", BaulRole.Administrador, Now, AvatarPhotoId: photoId));
 

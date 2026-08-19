@@ -15,7 +15,7 @@ namespace ElBaul.Tests;
 public class PhotoOrderingTests
 {
     private static Photo MakePhoto(string id, PhotoDate? date, DateTime createdAt) =>
-        Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), id, date, new UserId("uploader"), createdAt);
+        PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()), id, date, new UserId("uploader"), createdAt);
 
     [Fact]
     public void OrderByChronology_QueryableAndEnumerableOverloads_AgreeOnOrder()

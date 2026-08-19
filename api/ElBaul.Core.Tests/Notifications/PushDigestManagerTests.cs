@@ -209,7 +209,7 @@ public class PushDigestManagerTests
         var since = _clock.UtcNow().AddDays(-1);
         _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
         _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Dos", _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Verano", 0, _clock.UtcNow(), _clock.UtcNow()));
 
         var manager = CreateManager();

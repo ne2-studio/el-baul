@@ -72,7 +72,7 @@ public class RemovalRequestManagerTests
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
         await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), new UserId(OtherUserId), "Tita Solicitudes", BaulRole.Colaborador, _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
@@ -90,7 +90,7 @@ public class RemovalRequestManagerTests
         var photoId = Guid.NewGuid();
         await SeedBaulAsync(baulId, "Familia");
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
         var result = await manager.CreateRemovalRequestAsync(new BaulId(baulId), new PhotoId(photoId), "no me gusta");
@@ -109,7 +109,7 @@ public class RemovalRequestManagerTests
         await SeedBaulAsync(firstBaulId, "Familia primera");
         await SeedBaulAsync(secondBaulId, "Familia segunda", custodioId: OtherUserId);
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(secondChapterId), new BaulId(secondBaulId), "Chapter", 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(secondPhotoId), new ChapterId(secondChapterId), new BaulId(secondBaulId), "key", null, new UserId(OtherUserId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(secondPhotoId), new ChapterId(secondChapterId), new BaulId(secondBaulId), "key", null, new UserId(OtherUserId), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
         var result = await manager.CreateRemovalRequestAsync(
@@ -129,7 +129,7 @@ public class RemovalRequestManagerTests
 
         await SeedBaulAsync(baulId, "Familia");
         await _chapterRepository.CreateAsync(new Chapter(new ChapterId(chapterId), new BaulId(baulId), "Chapter", 1, _clock.UtcNow(), _clock.UtcNow()));
-        await _photoRepository.CreateAsync(Photo.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var requestId = Guid.NewGuid();
         await _removalRequestRepository.CreateRemovalRequestAsync(new RemovalRequest(new RemovalRequestId(requestId), new BaulId(baulId), new PhotoId(photoId), "key", "Requester", "req@test.com", "Retirar por privacidad", _clock.UtcNow(), RequestStatus.Pending));

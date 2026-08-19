@@ -90,16 +90,6 @@ public sealed class Photo : Entity<PhotoId>
             OriginalDimensions: originalDimensions, OriginalSizeBytes: originalSizeBytes,
             OriginalContentHash: originalContentHash);
 
-    [Obsolete("Pass the stored image dimensions explicitly.")]
-    public static Photo Create(
-        PhotoId id, ChapterId? chapterId, BaulId baulId, string storageKey, PhotoDate? date,
-        UserId uploadedBy, DateTime createdAt, Guid? clientUploadId = null, long sizeBytes = 0,
-        Guid? uploadBatchId = null, ImageDimensions? originalDimensions = null,
-        long? originalSizeBytes = null, string? originalContentHash = null) =>
-        Create(id, chapterId, baulId, storageKey, date, uploadedBy, createdAt, new(1, 1),
-            clientUploadId, sizeBytes, uploadBatchId, originalDimensions, originalSizeBytes,
-            originalContentHash);
-
     public Photo WithDate(PhotoDate? date) =>
         Mutate(() => TakenAt = date);
 

@@ -153,12 +153,12 @@ public class BaulInviteLinkManagerTests
     {
         var baulId = await SeedBaulAsync();
         var baul = await _baules.GetByIdAsync(baulId);
-        var coverPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, new UserId(CustodioId), Now);
+        var coverPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(coverPhoto);
         await _baules.UpdateAsync(baul!.WithCover(coverPhoto, new ImageCrop(0.5m, 0.5m, 1m), Now));
 
         // Custodio persona (seeded by SeedBaulAsync) has no avatar and should be skipped.
-        var avatarPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "avatar-key", null, new UserId(CustodioId), Now);
+        var avatarPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "avatar-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(avatarPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now,
@@ -179,7 +179,7 @@ public class BaulInviteLinkManagerTests
     {
         var baulId = await SeedBaulAsync();
         var baul = await _baules.GetByIdAsync(baulId);
-        var coverPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, new UserId(CustodioId), Now);
+        var coverPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "cover-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(coverPhoto);
         await _baules.UpdateAsync(baul!.WithCover(coverPhoto, new ImageCrop(0.5m, 0.5m, 1m), Now));
 
@@ -201,14 +201,14 @@ public class BaulInviteLinkManagerTests
         // two members with different avatar photos must each surface their own avatar, not one
         // leaking onto the other — the exact mistake a broken dictionary lookup would produce.
         var baulId = await SeedBaulAsync();
-        var firstAvatarPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "first-avatar-key", null, new UserId(CustodioId), Now);
+        var firstAvatarPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "first-avatar-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(firstAvatarPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now,
             AvatarPhotoId: firstAvatarPhoto.Id));
         const string secondGuestId = "guest-2";
         _users.Seed(new User(new UserId(secondGuestId), "guest2@test.com", "Segundo invitado", Now));
-        var secondAvatarPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "second-avatar-key", null, new UserId(CustodioId), Now);
+        var secondAvatarPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "second-avatar-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(secondAvatarPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, new UserId(secondGuestId), "Segundo invitado", BaulRole.Colaborador, Now,
@@ -311,12 +311,12 @@ public class BaulInviteLinkManagerTests
         // list: two pending personas with different avatar photos must each keep their own.
         const string OutsiderId = "outsider-1";
         var baulId = await SeedBaulAsync();
-        var firstPendingPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "first-pending-key", null, new UserId(CustodioId), Now);
+        var firstPendingPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "first-pending-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(firstPendingPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, null, "Primera pendiente", BaulRole.Colaborador, Now,
             AvatarPhotoId: firstPendingPhoto.Id));
-        var secondPendingPhoto = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "second-pending-key", null, new UserId(CustodioId), Now);
+        var secondPendingPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "second-pending-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(secondPendingPhoto);
         await _personas.AddPersonaAsync(new Persona(
             new PersonaId(Guid.NewGuid()), baulId, null, "Segunda pendiente", BaulRole.Colaborador, Now,

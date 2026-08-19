@@ -238,7 +238,7 @@ public static class ListReadModelContractScenarios
 
     private static Photo NewPhoto(
         PhotoId id, BaulId baulId, ChapterId? chapterId, string key, DateTime createdAt, PhotoDate? date, Guid? uploadBatchId = null) =>
-        Photo.Create(id, chapterId, baulId, key, date, User, createdAt, uploadBatchId: uploadBatchId);
+        Photo.Create(id, chapterId, baulId, key, date, User, createdAt, new(1, 1), uploadBatchId: uploadBatchId);
 
     private static Recuerdo NewRecuerdo(RecuerdoId id, BaulId baulId, PhotoId? photoId, ChapterId? chapterId, string text, DateTime createdAt) =>
         new(id, photoId, chapterId, baulId, User, text, createdAt);

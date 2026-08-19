@@ -33,7 +33,7 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldSetFirstPhotoAsChapterCover()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
         await CreateService().AddAsync(photo, chapterId, baulId, _clock.UtcNow());
 
@@ -46,7 +46,7 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldSetBaulCover_WhenBaulHasNoCoverYet()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
         await CreateService().AddAsync(photo, chapterId, baulId, _clock.UtcNow());
 
@@ -61,7 +61,7 @@ public class PhotoLifecycleServiceTests
         var existingCoverPhotoId = new PhotoId(Guid.NewGuid());
         var existingBaul = await _baulRepository.GetByIdAsync(baulId);
         await _baulRepository.UpdateAsync(existingBaul!.WithCoverPhotoId(existingCoverPhotoId, _clock.UtcNow()));
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "new-key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "new-key", null, new UserId(UserId), _clock.UtcNow());
 
         await CreateService().AddAsync(photo, chapterId, baulId, _clock.UtcNow());
 
@@ -73,7 +73,7 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldSetBaulCover_ForLoosePhoto_WhenChapterIsNull()
     {
         var baulId = await SeedBaulAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
         await CreateService().AddAsync(photo, null, baulId, _clock.UtcNow());
 
@@ -85,7 +85,7 @@ public class PhotoLifecycleServiceTests
     public async Task AddAsync_ShouldSkipChapterBookkeeping_WhenChapterIsNull()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
 
         await CreateService().AddAsync(photo, null, baulId, _clock.UtcNow());
 
@@ -98,7 +98,7 @@ public class PhotoLifecycleServiceTests
     public async Task MoveAsync_ShouldClearSourceCover_WhenMovedPhotoWasTheCover()
     {
         var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), sourceChapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), sourceChapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var sourceChapter = await _chapterRepository.GetByIdAsync(sourceChapterId);
         await _chapterRepository.UpdateAsync(sourceChapter!.WithPhotoAdded(photo.Id, _clock.UtcNow()));
@@ -113,7 +113,7 @@ public class PhotoLifecycleServiceTests
     public async Task MoveAsync_ShouldSetTargetCover_WhenTargetHasNoCoverYet()
     {
         var (baulId, sourceChapterId, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), sourceChapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), sourceChapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
 
         await CreateService().MoveAsync(photo, sourceChapterId, targetChapterId);
@@ -126,7 +126,7 @@ public class PhotoLifecycleServiceTests
     public async Task MoveAsync_ShouldAddToTargetOnly_WhenPhotoHadNoSourceChapter()
     {
         var (baulId, _, targetChapterId) = await SeedBaulWithTwoChaptersAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
 
         var updatedPhoto = await CreateService().MoveAsync(photo, null, targetChapterId);
@@ -141,7 +141,7 @@ public class PhotoLifecycleServiceTests
     public async Task SoftDeleteAsync_ShouldMarkPhotoDeleted_AndDecrementChapterPhotoCount()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
         await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(photo.Id, _clock.UtcNow()));
@@ -161,7 +161,7 @@ public class PhotoLifecycleServiceTests
     public async Task SoftDeleteAsync_ShouldNotRequireChapter_ForLoosePhoto()
     {
         var baulId = await SeedBaulAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
 
         await CreateService().SoftDeleteAsync(photo, null);
@@ -174,7 +174,7 @@ public class PhotoLifecycleServiceTests
     public async Task SoftDeleteAsync_ShouldClearChapterCover_WhenDeletedPhotoWasTheCover()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
         await _chapterRepository.UpdateAsync(chapter!.WithPhotoAdded(photo.Id, _clock.UtcNow()));
@@ -189,7 +189,7 @@ public class PhotoLifecycleServiceTests
     public async Task SoftDeleteAsync_ShouldKeepChapterCover_WhenDeletedPhotoWasNotTheCover()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var otherCoverPhotoId = new PhotoId(Guid.NewGuid());
         var chapter = await _chapterRepository.GetByIdAsync(chapterId);
@@ -205,7 +205,7 @@ public class PhotoLifecycleServiceTests
     public async Task SoftDeleteAsync_ShouldClearBaulCover_WhenDeletedPhotoWasTheCover()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "cover-key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var baul = await _baulRepository.GetByIdAsync(baulId);
         await _baulRepository.UpdateAsync(baul!.WithCoverPhotoId(photo.Id, _clock.UtcNow()));
@@ -220,7 +220,7 @@ public class PhotoLifecycleServiceTests
     public async Task SoftDeleteAsync_ShouldKeepBaulCover_WhenDeletedPhotoWasNotTheCover()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();
-        var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
+        var photo = PhotoMother.Create(new PhotoId(Guid.NewGuid()), chapterId, baulId, "key", null, new UserId(UserId), _clock.UtcNow());
         await _photoRepository.CreateAsync(photo);
         var otherCoverPhotoId = new PhotoId(Guid.NewGuid());
         var baul = await _baulRepository.GetByIdAsync(baulId);

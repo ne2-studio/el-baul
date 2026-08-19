@@ -53,7 +53,7 @@ public class DeduplicatePhotosCommandTests
     {
         var photo = Photo.Create(
             new PhotoId(Guid.NewGuid()), null, baulId, storageKey, year is { } y ? Date(y) : null,
-            new UserId("user-1"), DateTime.UtcNow, originalContentHash: hash);
+            new UserId("user-1"), DateTime.UtcNow, new(1, 1), originalContentHash: hash);
         if (status == PhotoStatus.Deleted) photo = photo.MarkDeleted("other reason", DateTime.UtcNow);
         await _photos.CreateAsync(photo);
         return photo;

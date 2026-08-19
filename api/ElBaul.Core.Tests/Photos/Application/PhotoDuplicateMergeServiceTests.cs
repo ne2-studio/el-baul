@@ -41,9 +41,9 @@ public class PhotoDuplicateMergeServiceTests
     [Fact]
     public void SelectSurvivor_PicksTheOldestPhotoDate_RegardlessOfChapterOrCreatedAt()
     {
-        var a = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(Guid.NewGuid()), new BaulId(Guid.NewGuid()),
+        var a = PhotoMother.Create(new PhotoId(Guid.NewGuid()), new ChapterId(Guid.NewGuid()), new BaulId(Guid.NewGuid()),
             "a", Date(1998, 5, 1), new UserId("u"), new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-        var b = Photo.Create(new PhotoId(Guid.NewGuid()), null, a.BaulId,
+        var b = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, a.BaulId,
             "b", Date(1997, 6, 1), new UserId("u"), new DateTime(2019, 1, 1, 0, 0, 0, DateTimeKind.Utc));
 
         var survivor = PhotoDuplicateMergeService.SelectSurvivor([a, b]);
@@ -54,9 +54,9 @@ public class PhotoDuplicateMergeServiceTests
     [Fact]
     public void SelectSurvivor_TreatsAnUndatedPhoto_AsOlderThanNothing_ButYoungerThanAnyDatedOne()
     {
-        var dated = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()),
+        var dated = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()),
             "dated", Date(1997), new UserId("u"), DateTime.UtcNow);
-        var undated = Photo.Create(new PhotoId(Guid.NewGuid()), new ChapterId(Guid.NewGuid()), dated.BaulId,
+        var undated = PhotoMother.Create(new PhotoId(Guid.NewGuid()), new ChapterId(Guid.NewGuid()), dated.BaulId,
             "undated", null, new UserId("u"), DateTime.UtcNow);
 
         var survivor = PhotoDuplicateMergeService.SelectSurvivor([dated, undated]);
@@ -69,9 +69,9 @@ public class PhotoDuplicateMergeServiceTests
     public void SelectSurvivor_BreaksATiedPhotoDate_WithTheOldestCreatedAt()
     {
         var sameDate = Date(2000, 1, 1);
-        var older = Photo.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()),
+        var older = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(Guid.NewGuid()),
             "older", sameDate, new UserId("u"), new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-        var newer = Photo.Create(new PhotoId(Guid.NewGuid()), null, older.BaulId,
+        var newer = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, older.BaulId,
             "newer", sameDate, new UserId("u"), new DateTime(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc));
 
         var survivor = PhotoDuplicateMergeService.SelectSurvivor([newer, older]);
@@ -87,8 +87,8 @@ public class PhotoDuplicateMergeServiceTests
         var baulId = new BaulId(Guid.NewGuid());
         var lowerId = new PhotoId(Guid.Parse("00000000-0000-0000-0000-000000000001"));
         var higherId = new PhotoId(Guid.Parse("00000000-0000-0000-0000-000000000002"));
-        var a = Photo.Create(higherId, null, baulId, "a", sameDate, new UserId("u"), sameCreatedAt);
-        var b = Photo.Create(lowerId, null, baulId, "b", sameDate, new UserId("u"), sameCreatedAt);
+        var a = PhotoMother.Create(higherId, null, baulId, "a", sameDate, new UserId("u"), sameCreatedAt);
+        var b = PhotoMother.Create(lowerId, null, baulId, "b", sameDate, new UserId("u"), sameCreatedAt);
 
         var survivorAB = PhotoDuplicateMergeService.SelectSurvivor([a, b]);
         var survivorBA = PhotoDuplicateMergeService.SelectSurvivor([b, a]);

@@ -871,7 +871,7 @@ public class PhotoManagerTests
         var photoIds = new List<PhotoId>();
         for (var i = 0; i < 20; i++)
         {
-            var photo = Photo.Create(
+            var photo = PhotoMother.Create(
                 new PhotoId(Guid.NewGuid()), chapterId, baulId, $"key-{i}", null, new UserId(CustodioId), now.AddDays(-i));
             await _fixture.Photos.CreateAsync(photo);
             photoIds.Add(photo.Id);
