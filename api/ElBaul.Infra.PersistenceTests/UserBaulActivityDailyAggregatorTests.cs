@@ -31,7 +31,7 @@ public class UserBaulActivityDailyAggregatorTests(PostgresFixture fixture) : Per
 
         dbContext.Photos.Add(Photo.Create(
             new PhotoId(Guid.NewGuid()), null, baulId, "photo-key", null, contributor,
-            new DateTime(2026, 8, 11, 10, 0, 0, DateTimeKind.Utc)));
+            new DateTime(2026, 8, 11, 10, 0, 0, DateTimeKind.Utc), new(1, 1)));
         dbContext.Recuerdos.Add(new Recuerdo(
             new RecuerdoId(Guid.NewGuid()), null, null, baulId, contributor, "Texto",
             new DateTime(2026, 8, 11, 11, 0, 0, DateTimeKind.Utc)));

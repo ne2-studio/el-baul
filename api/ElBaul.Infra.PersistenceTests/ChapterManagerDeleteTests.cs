@@ -62,7 +62,7 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
         // only) would skip it, leaving it pointing at the chapter when Postgres executes the
         // cascade-delete FK.
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/soft-deleted.jpg",
-            null, new UserId(custodioId), DateTime.UtcNow);
+            null, new UserId(custodioId), DateTime.UtcNow, new(1, 1));
         await photos.CreateAsync(photo);
         dbContext.ChangeTracker.Clear();
         await photos.UpdateAsync(photo.MarkDeleted("test", DateTime.UtcNow));

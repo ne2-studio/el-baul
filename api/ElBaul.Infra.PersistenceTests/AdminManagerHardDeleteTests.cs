@@ -91,7 +91,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         await chapters.CreateAsync(chapter);
 
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/to-delete.jpg",
-            null, new UserId(custodioId), DateTime.UtcNow);
+            null, new UserId(custodioId), DateTime.UtcNow, new(1, 1));
         await photos.CreateAsync(photo);
 
         await recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baul.Id,
@@ -191,7 +191,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         await chapters.CreateAsync(chapter);
 
         var photo = Photo.Create(new PhotoId(Guid.NewGuid()), chapter.Id, baul.Id, "photos/rollback.jpg",
-            null, new UserId(custodioId), DateTime.UtcNow);
+            null, new UserId(custodioId), DateTime.UtcNow, new(1, 1));
         await photos.CreateAsync(photo);
 
         await recuerdos.CreateAsync(new Recuerdo(new RecuerdoId(Guid.NewGuid()), photo.Id, chapter.Id, baul.Id,

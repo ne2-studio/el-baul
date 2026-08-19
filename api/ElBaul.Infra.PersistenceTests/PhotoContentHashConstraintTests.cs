@@ -34,7 +34,7 @@ public class PhotoContentHashConstraintTests(PostgresFixture fixture) : Persiste
 
     private static Photo ActivePhoto(BaulId baulId, string storageKey, string? hash) =>
         Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, storageKey, null, new UserId("custodio-1"), DateTime.UtcNow,
-            originalContentHash: hash);
+            new(1, 1), originalContentHash: hash);
 
     [Fact]
     public async Task TryCreateActiveAsync_RejectsASecondActivePhoto_WithTheSameHashInTheSameBaul()
