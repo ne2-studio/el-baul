@@ -56,5 +56,5 @@ public class PersonaDtoProjector(
         new(persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
             persona.Nickname, persona.Role.ToApiString(), persona.UserId == custodioId, persona.AccessStatus.ToApiString(),
             persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia,
-            persona.AvatarPhotoId?.ToString(), persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
+            persona.AvatarPhotoId?.ToString(), persona.AvatarCrop.X, persona.AvatarCrop.Y, persona.AvatarCrop.Scale);
 }

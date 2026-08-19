@@ -125,7 +125,7 @@ public class ChapterManager(
         if (photoResult.IsFailure) return Result.Failure<ChapterDto>(photoResult.Error);
         var photo = photoResult.Value;
 
-        var updated = chapter.WithCover(photo, crop.X, crop.Y, crop.Scale, clock.UtcNow());
+        var updated = chapter.WithCover(photo, new ImageCrop(crop.X, crop.Y, crop.Scale), clock.UtcNow());
         await chapterRepository.UpdateAsync(updated);
 
         logger.LogInformation("Chapter cover updated {PhotoId}", photoId);
@@ -205,7 +205,7 @@ public class ChapterManager(
     // below instead, precisely to avoid running this once per chapter in a baúl.
     private async Task<ChapterDto> ToDtoAsync(Chapter chapter)
     {
-        var crop = new ImageCrop(chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
+        var crop = chapter.CoverCrop;
         // Resolved once and reused for both placements — CoverUrlResolver's Photo overload does
         // no I/O of its own, so this is one GetByIdAsync instead of two identical ones.
         var coverPhoto = chapter.CoverPhotoId is { } coverPhotoId ? await photoRepository.GetByIdAsync(coverPhotoId) : null;
@@ -245,7 +245,7 @@ public class ChapterManager(
             row.CreatedAt, row.UpdatedAt, row.RecuerdoCount, row.LatestRecuerdoText, latestAuthor,
             row.DateRange.MinYear, row.DateRange.MinMonth, row.DateRange.MinDay,
             row.DateRange.MaxYear, row.DateRange.MaxMonth, row.DateRange.MaxDay, row.DateRange.UndatedPhotoCount,
-            row.CoverCropX, row.CoverCropY, row.CoverCropScale);
+            crop.X, crop.Y, crop.Scale);
     }
 
     private static ChapterDto ToDto(
@@ -255,5 +255,5 @@ public class ChapterManager(
             chapter.PhotoCount, coverUrl, featuredCoverUrl, chapter.CreatedAt, chapter.UpdatedAt,
             recuerdoCount, latestRecuerdoText, latestRecuerdoAuthor,
             dateRange.MinYear, dateRange.MinMonth, dateRange.MinDay, dateRange.MaxYear, dateRange.MaxMonth, dateRange.MaxDay, dateRange.UndatedPhotoCount,
-            chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
+            chapter.CoverCrop.X, chapter.CoverCrop.Y, chapter.CoverCrop.Scale);
 }

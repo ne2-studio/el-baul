@@ -18,9 +18,12 @@ public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
         builder.Property(a => a.Id).HasConversion(IdValueConverters.ChapterId);
         builder.Property(a => a.BaulId).HasConversion(IdValueConverters.BaulId);
         builder.Property(a => a.Name).IsRequired().HasMaxLength(200);
-        builder.Property(a => a.CoverCropX).HasPrecision(5, 4).HasDefaultValue(0.5m);
-        builder.Property(a => a.CoverCropY).HasPrecision(5, 4).HasDefaultValue(0.5m);
-        builder.Property(a => a.CoverCropScale).HasPrecision(4, 2).HasDefaultValue(1m);
+        builder.ComplexProperty(a => a.CoverCrop, crop =>
+        {
+            crop.Property(c => c.X).HasColumnName("CoverCropX").HasPrecision(5, 4).HasDefaultValue(0.5m);
+            crop.Property(c => c.Y).HasColumnName("CoverCropY").HasPrecision(5, 4).HasDefaultValue(0.5m);
+            crop.Property(c => c.Scale).HasColumnName("CoverCropScale").HasPrecision(4, 2).HasDefaultValue(1m);
+        });
         builder.Property(a => a.CoverPhotoId).HasConversion(IdValueConverters.PhotoId);
         builder.Property(a => a.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(a => a.UpdatedAt).HasColumnType("timestamp with time zone");

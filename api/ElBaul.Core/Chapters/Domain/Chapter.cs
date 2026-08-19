@@ -3,15 +3,20 @@ using ElBaul.Domain;
 namespace ElBaul.Core.Chapters.Domain;
 public sealed class Chapter : Entity<ChapterId>
 {
+    private Chapter() : base(default!)
+    {
+        Name = null!;
+        CreatedByUserId = null!;
+        CoverCrop = ImageCrop.DefaultCoverCrop;
+    }
+
     public BaulId BaulId { get; private set; }
     public string Name { get; private set; }
     public int PhotoCount { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
     public string CreatedByUserId { get; private set; }
-    public decimal CoverCropX { get; private set; }
-    public decimal CoverCropY { get; private set; }
-    public decimal CoverCropScale { get; private set; }
+    public ImageCrop CoverCrop { get; private set; }
     public PhotoId? CoverPhotoId { get; private set; }
 
     public Chapter(
@@ -21,17 +26,24 @@ public sealed class Chapter : Entity<ChapterId>
     int PhotoCount,
     DateTime CreatedAt,
     DateTime UpdatedAt,
+    ImageCrop CoverCrop,
     // "" for chapters created before this field existed — never matches a real user id, so
     // legacy chapters are simply never excluded as "your own" (e.g. from the weekly digest).
     string CreatedByUserId = "",
-    decimal CoverCropX = 0.5m,
-    decimal CoverCropY = 0.5m,
-    decimal CoverCropScale = 1m,
     PhotoId? CoverPhotoId = null) : base(Id)
     {
         this.BaulId = BaulId; this.Name = Name; this.PhotoCount = PhotoCount; this.CreatedAt = CreatedAt;
-        this.UpdatedAt = UpdatedAt; this.CreatedByUserId = CreatedByUserId; this.CoverCropX = CoverCropX;
-        this.CoverCropY = CoverCropY; this.CoverCropScale = CoverCropScale; this.CoverPhotoId = CoverPhotoId;
+        this.UpdatedAt = UpdatedAt; this.CreatedByUserId = CreatedByUserId; this.CoverCrop = CoverCrop;
+        this.CoverPhotoId = CoverPhotoId;
+    }
+
+    public Chapter(
+        ChapterId Id, BaulId BaulId, string Name, int PhotoCount, DateTime CreatedAt, DateTime UpdatedAt,
+        string CreatedByUserId = "", decimal CoverCropX = 0.5m, decimal CoverCropY = 0.5m,
+        decimal CoverCropScale = 1m, PhotoId? CoverPhotoId = null)
+        : this(Id, BaulId, Name, PhotoCount, CreatedAt, UpdatedAt,
+            new ImageCrop(CoverCropX, CoverCropY, CoverCropScale), CreatedByUserId, CoverPhotoId)
+    {
     }
     // CoverPhotoId follows the same rule everywhere a photo enters or leaves a chapter: the
     // first photo in becomes the cover, and only the current cover is ever cleared. WithPhotoAdded/
@@ -54,8 +66,8 @@ public sealed class Chapter : Entity<ChapterId>
     public Chapter WithName(string name, DateTime updatedAt) =>
         Mutate(() => { Name = name; UpdatedAt = updatedAt; });
 
-    public Chapter WithCover(Photo photo, decimal cropX, decimal cropY, decimal cropScale, DateTime updatedAt) =>
-        Mutate(() => { CoverPhotoId = photo.Id; CoverCropX = cropX; CoverCropY = cropY; CoverCropScale = cropScale; UpdatedAt = updatedAt; });
+    public Chapter WithCover(Photo photo, ImageCrop crop, DateTime updatedAt) =>
+        Mutate(() => { CoverPhotoId = photo.Id; CoverCrop = crop; UpdatedAt = updatedAt; });
 
     private Chapter Mutate(Action action) { action(); return this; }
 }

@@ -310,7 +310,7 @@ public class PersonaManager(
     {
         var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
 
-        var updated = persona.WithAvatarPhoto(photo, crop.X, crop.Y, crop.Scale);
+        var updated = persona.WithAvatarPhoto(photo, new ImageCrop(crop.X, crop.Y, crop.Scale));
 
         // Tagging the persona into their own new avatar photo and assigning the avatar commit
         // together — SetTagsAsync bulk-deletes/reinserts via ExecuteDeleteAsync (bypasses the

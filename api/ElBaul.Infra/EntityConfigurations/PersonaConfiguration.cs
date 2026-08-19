@@ -23,9 +23,12 @@ public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
         builder.Property(s => s.Nickname).IsRequired().HasMaxLength(100);
         builder.Property(s => s.Name).HasMaxLength(100);
         builder.Property(s => s.AvatarPhotoId).HasConversion(IdValueConverters.PhotoId);
-        builder.Property(s => s.AvatarCropX).HasPrecision(5, 4).HasDefaultValue(0.5m);
-        builder.Property(s => s.AvatarCropY).HasPrecision(5, 4).HasDefaultValue(0.5m);
-        builder.Property(s => s.AvatarCropScale).HasPrecision(4, 2).HasDefaultValue(1m);
+        builder.ComplexProperty(s => s.AvatarCrop, crop =>
+        {
+            crop.Property(c => c.X).HasColumnName("AvatarCropX").HasPrecision(5, 4).HasDefaultValue(0.5m);
+            crop.Property(c => c.Y).HasColumnName("AvatarCropY").HasPrecision(5, 4).HasDefaultValue(0.5m);
+            crop.Property(c => c.Scale).HasColumnName("AvatarCropScale").HasPrecision(4, 2).HasDefaultValue(1m);
+        });
         builder.Property(s => s.Biografia).HasMaxLength(4000);
         builder.Property(s => s.Role).HasConversion<string>().HasMaxLength(20);
         builder.Property(s => s.InvitedDate).HasColumnType("timestamp with time zone");

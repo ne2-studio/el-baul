@@ -134,7 +134,7 @@ public class BaulFeedManager(
         foreach (var chapter in chapters)
         {
             var (nickname, avatarUrl, personaId) = AuthorInfoProjector.Resolve(authorsByUserId, new UserId(chapter.CreatedByUserId));
-            var coverCrop = new ImageCrop(chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale);
+            var coverCrop = chapter.CoverCrop;
             var coverPhoto = chapter.CoverPhotoId is { } coverPhotoId ? coverPhotosById.GetValueOrDefault(coverPhotoId) : null;
             var coverUrl = await coverUrlResolver.ResolveAsync(coverPhoto, chapter.BaulId, ImagePlacement.ChapterCover, coverCrop);
             var dto = new ChapterCreatedFeedDto(

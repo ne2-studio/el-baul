@@ -51,6 +51,6 @@ public static class ChapterListRowFactory
             chapter.Id, chapter.BaulId, chapter.Name, chapter.PhotoCount,
             chapter.CreatedAt, chapter.UpdatedAt, recuerdos.Count, latest?.Text, latest?.UserId,
             ChapterDateRangeCalculator.Compute(photos),
-            chapter.CoverCropX, chapter.CoverCropY, chapter.CoverCropScale, chapter.CoverPhotoId);
+            chapter.CoverCrop.X, chapter.CoverCrop.Y, chapter.CoverCrop.Scale, chapter.CoverPhotoId);
     }
 }

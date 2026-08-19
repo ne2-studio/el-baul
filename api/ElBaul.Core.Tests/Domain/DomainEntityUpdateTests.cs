@@ -70,12 +70,12 @@ public class DomainEntityUpdateTests
             new UserId("user-1"),
             persona.InvitedDate);
 
-        var updated = persona.WithAvatarPhoto(photo, cropX: 0.2m, cropY: 0.3m, cropScale: 1.4m);
+        var updated = persona.WithAvatarPhoto(photo, new ImageCrop(0.2m, 0.3m, 1.4m));
 
         Assert.Equal(photo.Id, updated.AvatarPhotoId);
-        Assert.Equal(0.2m, updated.AvatarCropX);
-        Assert.Equal(0.3m, updated.AvatarCropY);
-        Assert.Equal(1.4m, updated.AvatarCropScale);
+        Assert.Equal(0.2m, updated.AvatarCrop.X);
+        Assert.Equal(0.3m, updated.AvatarCrop.Y);
+        Assert.Equal(1.4m, updated.AvatarCrop.Scale);
     }
 
     [Fact]
@@ -89,12 +89,12 @@ public class DomainEntityUpdateTests
             new UserId("user-1"), chapter.CreatedAt);
         var updatedAt = new DateTime(2026, 1, 2, 10, 0, 0, DateTimeKind.Utc);
 
-        var updated = chapter.WithCover(photo, cropX: 0.2m, cropY: 0.3m, cropScale: 1.4m, updatedAt);
+        var updated = chapter.WithCover(photo, new ImageCrop(0.2m, 0.3m, 1.4m), updatedAt);
 
         Assert.Equal(photo.Id, updated.CoverPhotoId);
-        Assert.Equal(0.2m, updated.CoverCropX);
-        Assert.Equal(0.3m, updated.CoverCropY);
-        Assert.Equal(1.4m, updated.CoverCropScale);
+        Assert.Equal(0.2m, updated.CoverCrop.X);
+        Assert.Equal(0.3m, updated.CoverCrop.Y);
+        Assert.Equal(1.4m, updated.CoverCrop.Scale);
         Assert.Equal(updatedAt, updated.UpdatedAt);
     }
 

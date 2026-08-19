@@ -8,6 +8,12 @@ public enum PersonaAccessStatus { Pending, Active, Revoked }
 
 public sealed class Persona : Entity<PersonaId>
 {
+    private Persona() : base(default!)
+    {
+        Nickname = null!;
+        AvatarCrop = ImageCrop.DefaultCoverCrop;
+    }
+
     public BaulId BaulId { get; private set; }
     public UserId? UserId { get; private set; }
     public string Nickname { get; private set; }
@@ -16,9 +22,7 @@ public sealed class Persona : Entity<PersonaId>
     public string? Name { get; private set; }
     public string? Biografia { get; private set; }
     public PhotoId? AvatarPhotoId { get; private set; }
-    public decimal AvatarCropX { get; private set; }
-    public decimal AvatarCropY { get; private set; }
-    public decimal AvatarCropScale { get; private set; }
+    public ImageCrop AvatarCrop { get; private set; }
 
     public Persona(
     PersonaId Id,
@@ -27,17 +31,23 @@ public sealed class Persona : Entity<PersonaId>
     string Nickname,
     BaulRole Role,
     DateTime InvitedDate,
+    ImageCrop AvatarCrop,
     string? Name = null,
     string? Biografia = null,
-    PhotoId? AvatarPhotoId = null,
-    decimal AvatarCropX = 0.5m,
-    decimal AvatarCropY = 0.5m,
-    decimal AvatarCropScale = 1m) : base(Id)
+    PhotoId? AvatarPhotoId = null) : base(Id)
     {
         this.BaulId = BaulId; this.UserId = UserId; this.Nickname = Nickname; this.Role = Role;
         this.InvitedDate = InvitedDate; this.Name = Name; this.Biografia = Biografia;
-        this.AvatarPhotoId = AvatarPhotoId; this.AvatarCropX = AvatarCropX; this.AvatarCropY = AvatarCropY;
-        this.AvatarCropScale = AvatarCropScale;
+        this.AvatarPhotoId = AvatarPhotoId; this.AvatarCrop = AvatarCrop;
+    }
+
+    public Persona(
+        PersonaId Id, BaulId BaulId, UserId? UserId, string Nickname, BaulRole Role, DateTime InvitedDate,
+        string? Name = null, string? Biografia = null, PhotoId? AvatarPhotoId = null,
+        decimal AvatarCropX = 0.5m, decimal AvatarCropY = 0.5m, decimal AvatarCropScale = 1m)
+        : this(Id, BaulId, UserId, Nickname, Role, InvitedDate,
+            new ImageCrop(AvatarCropX, AvatarCropY, AvatarCropScale), Name, Biografia, AvatarPhotoId)
+    {
     }
     // The single interpretation of "is this Persona row linked to an authenticated account" —
     // callers should ask this instead of re-deriving it from UserId nullity by hand.
@@ -75,8 +85,8 @@ public sealed class Persona : Entity<PersonaId>
     public Persona WithRole(BaulRole role) =>
         Mutate(() => Role = role);
 
-    public Persona WithAvatarPhoto(Photo photo, decimal cropX, decimal cropY, decimal cropScale) =>
-        Mutate(() => { AvatarPhotoId = photo.Id; AvatarCropX = cropX; AvatarCropY = cropY; AvatarCropScale = cropScale; });
+    public Persona WithAvatarPhoto(Photo photo, ImageCrop crop) =>
+        Mutate(() => { AvatarPhotoId = photo.Id; AvatarCrop = crop; });
 
     // Repoints the avatar to a different photo id without touching the crop — used by
     // PhotoDuplicateMergeService when the duplicate being merged away is currently someone's

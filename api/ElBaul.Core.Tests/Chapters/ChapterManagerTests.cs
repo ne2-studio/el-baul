@@ -114,9 +114,9 @@ public class ChapterManagerTests
 
         var chapter = await _fixture.Chapters.GetByIdAsync(chapterId);
         Assert.Equal(photoId, chapter!.CoverPhotoId);
-        Assert.Equal(0.25m, chapter.CoverCropX);
-        Assert.Equal(0.75m, chapter.CoverCropY);
-        Assert.Equal(1.8m, chapter.CoverCropScale);
+        Assert.Equal(0.25m, chapter.CoverCrop.X);
+        Assert.Equal(0.75m, chapter.CoverCrop.Y);
+        Assert.Equal(1.8m, chapter.CoverCrop.Scale);
     }
 
     [Fact]

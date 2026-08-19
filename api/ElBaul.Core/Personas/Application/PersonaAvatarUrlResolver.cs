@@ -35,7 +35,7 @@ public static class PersonaAvatarUrlResolver
     {
         if (persona.AvatarPhotoId is null) return null;
 
-        var crop = new ImageCrop(persona.AvatarCropX, persona.AvatarCropY, persona.AvatarCropScale);
+        var crop = persona.AvatarCrop;
         return avatarPhoto is not null && avatarPhoto.BaulId == persona.BaulId && avatarPhoto.Status == PhotoStatus.Active
             ? await photoStorage.GetImageUrl(avatarPhoto.StorageKey, ImagePlacement.PersonaAvatar, crop)
             : null;
