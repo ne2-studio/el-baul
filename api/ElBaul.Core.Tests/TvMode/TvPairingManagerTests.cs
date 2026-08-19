@@ -1,3 +1,5 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Personas.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.TvMode.Application;

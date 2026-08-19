@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Users.OutputPorts;
+namespace ElBaul.Core.Users.Domain;
 public sealed class User : Entity<UserId>
 {
     public string Email { get; private set; }

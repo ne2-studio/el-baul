@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Moderation.OutputPorts;
+namespace ElBaul.Core.Moderation.Domain;
 public record RemovalRequest
 (
     RemovalRequestId Id,

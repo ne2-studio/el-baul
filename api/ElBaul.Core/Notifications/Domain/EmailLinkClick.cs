@@ -1,4 +1,4 @@
-namespace ElBaul.Core.Notifications.OutputPorts;
+namespace ElBaul.Core.Notifications.Domain;
 public record EmailLinkClick(
     string Token,
     Guid SentEmailId,

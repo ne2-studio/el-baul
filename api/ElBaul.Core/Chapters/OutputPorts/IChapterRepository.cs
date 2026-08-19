@@ -1,3 +1,4 @@
+using ElBaul.Core.Chapters.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Chapters.OutputPorts;
 public interface IChapterRepository

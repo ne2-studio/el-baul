@@ -1,3 +1,4 @@
+using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Personas.Application;

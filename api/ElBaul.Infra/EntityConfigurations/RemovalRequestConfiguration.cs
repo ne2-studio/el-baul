@@ -1,3 +1,5 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Moderation.Domain;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Moderation.OutputPorts;
 using Microsoft.EntityFrameworkCore;

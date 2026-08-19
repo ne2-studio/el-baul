@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Sharing.OutputPorts;
+namespace ElBaul.Core.Sharing.Domain;
 public sealed class BaulInviteLink : Entity<BaulInviteLinkId>
 {
     public string Token { get; private set; }

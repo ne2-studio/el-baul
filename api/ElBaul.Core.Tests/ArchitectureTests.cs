@@ -42,6 +42,11 @@ public class ArchitectureTests
         .ResideInNamespaceMatching(@"^ElBaul\.Domain(\..*)?$")
         .As("Domain");
 
+    private readonly IObjectProvider<IType> FeatureDomain = Types()
+        .That()
+        .ResideInNamespaceMatching(@"^ElBaul\.Core\.[A-Za-z]+\.Domain(\..*)?$")
+        .As("FeatureDomain");
+
     [Fact]
     public void InputPorts_ShouldNotDependOn_OutputPorts()
     {
@@ -99,6 +104,20 @@ public class ArchitectureTests
             .Should()
             .NotDependOnAny(Application)
             .Because("ElBaul.Domain is the innermost layer — Application depends on it, never the reverse")
+            .Check(Architecture);
+    }
+
+    [Fact]
+    public void FeatureDomain_ShouldNotDependOn_ApplicationOrOutputPorts()
+    {
+        Types()
+            .That()
+            .Are(FeatureDomain)
+            .Should()
+            .NotDependOnAny(Application)
+            .AndShould()
+            .NotDependOnAny(OutputPorts)
+            .Because("feature Domain is the innermost feature layer; Application and OutputPorts may depend on it, never the reverse")
             .Check(Architecture);
     }
 }

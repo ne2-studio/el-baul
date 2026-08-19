@@ -1,3 +1,4 @@
+using ElBaul.Core.Users.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Users.OutputPorts;
 public interface IUserRepository

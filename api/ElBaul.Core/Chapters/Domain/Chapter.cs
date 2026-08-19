@@ -1,6 +1,6 @@
-using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Domain;
-namespace ElBaul.Core.Chapters.OutputPorts;
+namespace ElBaul.Core.Chapters.Domain;
 public sealed class Chapter : Entity<ChapterId>
 {
     public BaulId BaulId { get; private set; }

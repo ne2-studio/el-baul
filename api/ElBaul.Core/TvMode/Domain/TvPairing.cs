@@ -1,6 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.TvMode.OutputPorts;
-
+namespace ElBaul.Core.TvMode.Domain;
 // The handshake between a TV's landing page (see docs PRD "Modo TV") and the phone that scans
 // its QR code. Deliberately baúl-agnostic and short-lived — unlike TvSession, this never gets
 // authorized against a baúl itself; it just waits for ClaimAsync to turn it into one. The TV

@@ -1,3 +1,4 @@
+using ElBaul.Core.Bauls.Domain;
 using ElBaul.Core.Bauls.OutputPorts;
 namespace ElBaul.Core.Admin.OutputPorts;
 /// <summary>A row in the backoffice Baúles list.</summary>

@@ -1,3 +1,4 @@
+using ElBaul.Core.Personas.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Personas.OutputPorts;

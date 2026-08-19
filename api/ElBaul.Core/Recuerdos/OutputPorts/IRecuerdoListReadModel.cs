@@ -1,3 +1,4 @@
+using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Recuerdos.OutputPorts;
 /// <summary>

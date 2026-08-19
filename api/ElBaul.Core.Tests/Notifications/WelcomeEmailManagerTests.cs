@@ -1,3 +1,7 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Personas.Domain;
+using ElBaul.Core.Users.Domain;
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Core.Notifications.Application;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;

@@ -1,3 +1,4 @@
+using ElBaul.Core.Bauls.Domain;
 using System.Text.RegularExpressions;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chat.OutputPorts;

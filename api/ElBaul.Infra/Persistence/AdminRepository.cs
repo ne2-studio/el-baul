@@ -1,3 +1,5 @@
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Core.Admin.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;

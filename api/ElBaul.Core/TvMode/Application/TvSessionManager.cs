@@ -13,6 +13,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.TvMode.Domain;
 namespace ElBaul.Core.TvMode.Application;
 
 // See docs PRD "Modo TV": a temporary, read-only, anonymous session that hands a TV browser

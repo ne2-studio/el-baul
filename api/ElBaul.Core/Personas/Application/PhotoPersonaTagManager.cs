@@ -1,3 +1,4 @@
+using ElBaul.Core.Personas.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -7,6 +8,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.Photos.Domain;
 namespace ElBaul.Core.Personas.Application;
 public class PhotoPersonaTagManager(
     ILogger<PhotoPersonaTagManager> logger,

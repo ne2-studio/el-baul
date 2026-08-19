@@ -1,3 +1,4 @@
+using ElBaul.Core.Chat.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Chat.OutputPorts;
 public interface IChatMemoryRepository

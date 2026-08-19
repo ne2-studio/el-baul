@@ -1,3 +1,4 @@
+using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Feed.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;

@@ -1,3 +1,10 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Chapters.Domain;
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Personas.Domain;
+using ElBaul.Core.Recuerdos.Domain;
+using ElBaul.Core.Users.Domain;
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Core.Admin.Application;
 using ElBaul.Core.Chat.Application;
 using ElBaul.Core.Admin.OutputPorts;

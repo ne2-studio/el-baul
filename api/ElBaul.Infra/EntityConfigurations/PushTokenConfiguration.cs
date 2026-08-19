@@ -1,3 +1,5 @@
+using ElBaul.Core.Users.Domain;
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 using Microsoft.EntityFrameworkCore;

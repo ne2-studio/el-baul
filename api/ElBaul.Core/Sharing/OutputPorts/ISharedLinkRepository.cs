@@ -1,3 +1,4 @@
+using ElBaul.Core.Sharing.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Sharing.OutputPorts;
 public interface ISharedLinkRepository

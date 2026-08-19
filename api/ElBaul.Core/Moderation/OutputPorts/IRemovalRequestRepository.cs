@@ -1,3 +1,4 @@
+using ElBaul.Core.Moderation.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Moderation.OutputPorts;
 /// <summary>

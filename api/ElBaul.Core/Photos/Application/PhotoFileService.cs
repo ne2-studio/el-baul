@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 using System.Security.Cryptography;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;

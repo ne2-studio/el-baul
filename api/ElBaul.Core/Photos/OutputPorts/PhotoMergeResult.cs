@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 
 /// <summary>Payload IPhotoMergeListener implementations receive: the survivor a duplicate group

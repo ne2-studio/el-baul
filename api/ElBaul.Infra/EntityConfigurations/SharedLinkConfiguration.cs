@@ -1,3 +1,8 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Recuerdos.Domain;
+using ElBaul.Core.Users.Domain;
+using ElBaul.Core.Sharing.Domain;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;

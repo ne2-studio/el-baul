@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Core.Photos.Application;

@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Photos.OutputPorts;
 namespace ElBaul.Tests.Fakes;
 

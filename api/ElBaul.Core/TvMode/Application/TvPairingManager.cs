@@ -6,6 +6,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.TvMode.Domain;
 namespace ElBaul.Core.TvMode.Application;
 
 // See docs PRD "Modo TV". Turns the old "type a link into the TV" flow around: the TV lands on

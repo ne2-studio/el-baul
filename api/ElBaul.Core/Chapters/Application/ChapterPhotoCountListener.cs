@@ -1,3 +1,5 @@
+using ElBaul.Core.Chapters.Domain;
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Domain;

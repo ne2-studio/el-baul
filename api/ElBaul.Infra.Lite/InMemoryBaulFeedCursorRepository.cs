@@ -1,3 +1,4 @@
+using ElBaul.Core.Feed.Domain;
 using ElBaul.Domain;
 using ElBaul.Core.Feed.OutputPorts;
 namespace ElBaul.Infra.Lite;

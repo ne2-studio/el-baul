@@ -1,4 +1,4 @@
-namespace ElBaul.Core.Photos.OutputPorts;
+namespace ElBaul.Core.Photos.Domain;
 /// <summary>
 /// Focal-point crop/zoom for a stored image, applied server-side by imgproxy
 /// (gravity:fp + zoom processing options) rather than client-side CSS — the browser

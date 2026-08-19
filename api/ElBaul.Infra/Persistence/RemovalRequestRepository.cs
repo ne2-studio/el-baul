@@ -1,3 +1,4 @@
+using ElBaul.Core.Moderation.Domain;
 using ElBaul.Core.Moderation.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 

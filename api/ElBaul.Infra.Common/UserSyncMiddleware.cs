@@ -1,6 +1,7 @@
 using ElBaul.Domain;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
+using ElBaul.Core.Users.Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;

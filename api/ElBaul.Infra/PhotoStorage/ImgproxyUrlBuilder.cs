@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;

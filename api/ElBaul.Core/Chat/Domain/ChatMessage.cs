@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Chat.OutputPorts;
+namespace ElBaul.Core.Chat.Domain;
 public enum ChatMessageRole
 {
     User,

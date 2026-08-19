@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 // The canonical "how does El Baúl order photos" rule: dated photos first (oldest to newest),
 // undated photos last, CreatedAt as the tiebreaker. Every photo listing (baúl-wide pages,

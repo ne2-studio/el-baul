@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Personas.OutputPorts;
+namespace ElBaul.Core.Personas.Domain;
 // A plain join, not its own aggregate — no identity beyond the (PhotoId, PersonaId) pair.
 // BaulId is redundant with Photo.BaulId/Persona.BaulId but stored directly anyway, mirroring
 // Photo.BaulId's own rationale (see PhotoConfiguration): it's what makes DeleteByBaulIdAsync a

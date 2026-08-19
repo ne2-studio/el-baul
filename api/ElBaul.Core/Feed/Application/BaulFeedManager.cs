@@ -11,6 +11,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.Photos.Domain;
 namespace ElBaul.Core.Feed.Application;
 // Merges IRecuerdoManager's recuerdo listing, IPhotoUploadBatchReadModel's photo-upload
 // batches and IChapterRepository's chapters into one newest-first feed. Deliberately thin: it

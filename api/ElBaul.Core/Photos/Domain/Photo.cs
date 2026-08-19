@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Photos.OutputPorts;
+namespace ElBaul.Core.Photos.Domain;
 public sealed class Photo : Entity<PhotoId>
 {
     public ChapterId? ChapterId { get; private set; }

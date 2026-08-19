@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Notifications.OutputPorts;
+namespace ElBaul.Core.Notifications.Domain;
 public record PushToken
 (
     Guid Id,

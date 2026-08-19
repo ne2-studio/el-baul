@@ -1,3 +1,5 @@
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Personas.Application;
@@ -247,8 +249,8 @@ public class PhotoDuplicateMergeServiceTests
         var baulId = await _fixture.CreateBaulAsync();
         var survivorId = await _fixture.AddPhotoAsync(baulId, storageKey: "survivor-key", date: Date(1990), originalContentHash: "hash");
         var duplicateId = await _fixture.AddPhotoAsync(baulId, storageKey: "duplicate-key", date: Date(2020), originalContentHash: "hash");
-        var sharedLink = new ElBaul.Core.Sharing.OutputPorts.SharedLink(
-            new SharedLinkId(Guid.NewGuid()), "token-1", baulId, ElBaul.Core.Sharing.OutputPorts.SharedLinkContentType.Photo,
+        var sharedLink = new ElBaul.Core.Sharing.Domain.SharedLink(
+            new SharedLinkId(Guid.NewGuid()), "token-1", baulId, ElBaul.Core.Sharing.Domain.SharedLinkContentType.Photo,
             duplicateId, null, new UserId("u1"), DateTime.UtcNow);
         await _sharedLinks.CreateAsync(sharedLink);
         var group = new[] { survivorId, duplicateId }.Select(id => _fixture.Photos.GetByIdAsync(id).Result!).ToList();

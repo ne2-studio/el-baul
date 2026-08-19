@@ -1,5 +1,5 @@
 using ElBaul.Domain;
-namespace ElBaul.Core.Recuerdos.OutputPorts;
+namespace ElBaul.Core.Recuerdos.Domain;
 public sealed class Recuerdo : Entity<RecuerdoId>
 {
     public PhotoId? PhotoId { get; private set; }

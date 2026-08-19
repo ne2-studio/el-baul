@@ -1,3 +1,5 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Sharing.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Personas;
@@ -12,6 +14,8 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.Personas.Domain;
+using ElBaul.Core.Users.Domain;
 namespace ElBaul.Core.Sharing.Application;
 public class BaulInviteLinkManager(
     ILogger<BaulInviteLinkManager> logger,

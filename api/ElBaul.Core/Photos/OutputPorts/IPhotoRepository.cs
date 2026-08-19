@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 public interface IPhotoRepository

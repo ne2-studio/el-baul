@@ -1,3 +1,4 @@
+using ElBaul.Core.TvMode.Domain;
 using ElBaul.Core.TvMode.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

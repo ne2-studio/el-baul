@@ -1,3 +1,4 @@
+using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -7,6 +8,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.Notifications.Domain;
 namespace ElBaul.Core.Notifications.Application;
 public class WelcomeEmailManager(
     ILogger<WelcomeEmailManager> logger,

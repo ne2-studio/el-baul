@@ -1,3 +1,4 @@
+using ElBaul.Core.Chat.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chat.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;

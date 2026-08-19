@@ -1,3 +1,4 @@
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Core.Notifications.OutputPorts;
 namespace ElBaul.Infra.Lite;
 

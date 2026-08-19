@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace ElBaul.Tests;
-
 /// <summary>
 /// Regex-based scanner over ElBaul.Core's source that builds a cross-feature dependency graph
 /// (which feature imports which other feature's Application/OutputPorts/public root

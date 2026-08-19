@@ -1,3 +1,4 @@
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Notifications.OutputPorts;
 public interface IPushTokenRepository

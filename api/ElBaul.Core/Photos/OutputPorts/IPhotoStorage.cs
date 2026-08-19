@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 public record PhotoContent(Stream Content, string ContentType);
 

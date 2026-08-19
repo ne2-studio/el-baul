@@ -1,3 +1,6 @@
+using ElBaul.Core.Users.Domain;
+using ElBaul.Core.Personas.Domain;
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Personas.OutputPorts;

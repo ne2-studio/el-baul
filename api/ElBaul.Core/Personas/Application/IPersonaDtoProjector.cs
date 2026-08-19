@@ -1,3 +1,5 @@
+using ElBaul.Core.Personas.Domain;
+using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 

@@ -1,3 +1,4 @@
+using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Chat.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Recuerdos.OutputPorts;

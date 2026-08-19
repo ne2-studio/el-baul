@@ -1,3 +1,4 @@
+using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Support.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;

@@ -1,3 +1,4 @@
+using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
@@ -6,6 +7,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.Notifications.Domain;
 namespace ElBaul.Core.Notifications.Application;
 public class WeeklyDigestManager(
     ILogger<WeeklyDigestManager> logger,

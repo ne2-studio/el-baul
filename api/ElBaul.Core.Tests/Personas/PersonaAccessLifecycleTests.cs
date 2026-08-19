@@ -1,3 +1,4 @@
+using ElBaul.Core.Personas.Domain;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Domain;
 namespace ElBaul.Tests;

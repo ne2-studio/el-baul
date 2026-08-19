@@ -1,3 +1,5 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.Application;
@@ -8,6 +10,7 @@ using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
 
 using ElBaul.Domain;
+using ElBaul.Core.Personas.Domain;
 namespace ElBaul.Core.Bauls.Application;
 public class BaulManager(
     ILogger<BaulManager> logger,

@@ -1,3 +1,4 @@
+using ElBaul.Core.Chat.Domain;
 using ElBaul.Core.Chat.Application;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Chat.OutputPorts;

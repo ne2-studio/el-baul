@@ -1,3 +1,4 @@
+using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Support.Application;
 using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;

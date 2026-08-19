@@ -1,3 +1,5 @@
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Contributions;
 using ElBaul.Core.Contributions.Application;

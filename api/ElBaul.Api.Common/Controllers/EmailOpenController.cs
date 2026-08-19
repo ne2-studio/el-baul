@@ -1,3 +1,4 @@
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.AspNetCore.Authorization;

@@ -1,3 +1,7 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Chapters.Domain;
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Personas.Domain;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;

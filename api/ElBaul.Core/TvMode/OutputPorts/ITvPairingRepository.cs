@@ -1,3 +1,4 @@
+using ElBaul.Core.TvMode.Domain;
 namespace ElBaul.Core.TvMode.OutputPorts;
 public interface ITvPairingRepository
 {

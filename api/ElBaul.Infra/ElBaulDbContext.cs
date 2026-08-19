@@ -1,3 +1,15 @@
+using ElBaul.Core.Bauls.Domain;
+using ElBaul.Core.Chapters.Domain;
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Personas.Domain;
+using ElBaul.Core.Recuerdos.Domain;
+using ElBaul.Core.Users.Domain;
+using ElBaul.Core.Sharing.Domain;
+using ElBaul.Core.Chat.Domain;
+using ElBaul.Core.TvMode.Domain;
+using ElBaul.Core.Moderation.Domain;
+using ElBaul.Core.Notifications.Domain;
+using ElBaul.Core.Feed.Domain;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Chat.OutputPorts;
