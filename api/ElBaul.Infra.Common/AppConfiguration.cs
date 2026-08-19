@@ -11,6 +11,7 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public string FunctionalTimeZoneId => configuration["Analytics:FunctionalTimeZoneId"] ?? "Europe/Madrid";
     public string HelpCenterUrl => configuration["Support:HelpCenterUrl"] ?? "";
     public string PrivacyPolicyUrl => configuration["Legal:PrivacyPolicyUrl"] ?? "";
+    public string OnboardingVideoUrl => configuration["Onboarding:VideoUrl"] ?? "";
 
     // GetValue<bool> defaults to false when the key is absent, matching the required default.
     public bool WelcomeEmailsEnabled => configuration.GetValue<bool>("Features:WelcomeEmailsEnabled");

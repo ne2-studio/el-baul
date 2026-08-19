@@ -7,6 +7,7 @@ public class StaticAppConfiguration(
     string apiPublicUrl = "https://api.el-baul.test",
     string helpCenterUrl = "https://el-baul-web.test/ayuda",
     string privacyPolicyUrl = "https://el-baul-web.test/legal/privacy-policy/",
+    string onboardingVideoUrl = "https://www.youtube.com/watch?v=test-onboarding",
     // Defaults to enabled here (unlike the real appsettings.json default of false) so tests
     // that aren't specifically about this flag don't all need to opt in explicitly — the
     // gating behavior itself is covered by its own dedicated tests, constructed with false.
@@ -34,6 +35,7 @@ public class StaticAppConfiguration(
     public string FunctionalTimeZoneId { get; } = "Europe/Madrid";
     public string HelpCenterUrl { get; } = helpCenterUrl;
     public string PrivacyPolicyUrl { get; } = privacyPolicyUrl;
+    public string OnboardingVideoUrl { get; } = onboardingVideoUrl;
     public bool WelcomeEmailsEnabled { get; } = welcomeEmailsEnabled;
     public bool WeeklyDigestEmailsEnabled { get; } = weeklyDigestEmailsEnabled;
     public bool ChatEnabled { get; } = chatEnabled;

@@ -15,6 +15,8 @@ public class EmailTemplateIntegrityTests
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
     private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
+    private const string TestVideoUrl = "https://el-baul.test/email/click/video-token";
+    private const string TestVideoThumbnailUrl = "https://el-baul.test/email/assets/onboarding-video-thumbnail.jpg";
 
     [Fact]
     public void Constructing_ShouldParseEveryEmbeddedTemplate_WithoutErrors()
@@ -48,11 +50,11 @@ public class EmailTemplateIntegrityTests
     private static object BuildModel(string template) => template switch
     {
         "WelcomeEmail" => new WelcomeEmailModel(
-            "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl),
+            "Pedro", [], false, "https://el-baul.test/cta", "Empezar mi baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl),
         "WelcomeWithBaulesEmail" => new WelcomeEmailModel(
-            "Pedro", ["Familia Pardal"], true, "https://el-baul.test/cta", "Añadir un recuerdo",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl),
+            "Pedro", ["Familia Pardal"], true, "https://el-baul.test/cta", "Entrar en Familia Pardal",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl),
         "WeeklyDigestEmail" => new WeeklyDigestEmailModel(
             "Pedro", true, true,
             [

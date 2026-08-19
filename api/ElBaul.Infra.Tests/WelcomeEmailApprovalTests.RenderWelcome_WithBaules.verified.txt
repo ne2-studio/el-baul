@@ -1,12 +1,12 @@
 ﻿{
-  Subject: Bienvenido a El Baúl,
+  Subject: Bienvenido a Familia Pardal,
   Html:
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bienvenido a El Ba&#250;l</title>
+  <title>Bienvenido a Familia Pardal</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#3a2f28;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ec;padding:32px 16px;">
@@ -20,20 +20,54 @@
                 <span style="font-size:20px;color:#6b3f2a;font-weight:bold;">El Baúl</span>
               </div>
               <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola Pedro,</p>
-              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Ya formas parte de la historia de tus familias en El Ba&#250;l.</p>
-              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Cada foto y cada recuerdo que a&#241;ad&#225;is se queda a salvo y disponible para siempre. El siguiente paso es sencillo: a&#241;ade un recuerdo.</p>
-              <ul style="margin:0 0 24px 0;padding-left:20px;font-size:15px;line-height:1.6;">
-                <li>Familia Pardal</li>
-                <li>Familia Jimena</li>
-              </ul>
-              <table role="presentation" cellpadding="0" cellspacing="0">
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hace unas horas entraste en <strong>Familia Pardal</strong>.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Alguien de tu familia decidió empezar a reunir ahí vuestras fotos, recuerdos e historias.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Y quería contarte por qué existe El Baúl.</p>
+              <!-- Shared by both welcome-email variants: the founder-intro video thumbnail (play button
+                   baked into the image itself) plus a text fallback link, both pointing at the tracked
+                   video URL. -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
                 <tr>
-                  <td style="border-radius:8px;background-color:#6b3f2a;">
-                    <a href="https://el-baul.test/baules/abc" style="display:inline-block;padding:12px 24px;font-size:15px;color:#ffffff;text-decoration:none;">A&#241;adir un recuerdo</a>
+                  <td>
+                    <a href="https://el-baul.test/email/click/video-token" style="display:block;">
+                      <img src="https://el-baul.test/email/assets/onboarding-video-thumbnail.jpg" width="416" alt="Ver vídeo" style="display:block;width:100%;height:auto;border:0;border-radius:8px;" />
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0 0 0;text-align:center;">
+                    <a href="https://el-baul.test/email/click/video-token" style="font-size:14px;color:#6b3f2a;text-decoration:none;font-weight:bold;">▶ Ver vídeo</a>
                   </td>
                 </tr>
               </table>
               
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Con los años acumulamos miles de fotos.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Pero muchas de las cosas importantes de una familia <strong>no están escritas en ninguna parte</strong>.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">
+                Quién era realmente esa persona.<br />
+                Cómo era de joven.<br />
+                Qué ocurrió aquel verano.<br />
+                Por qué esa foto era importante.<br />
+                Esa historia que tu madre ha contado cien veces y que algún día alguien echará de menos poder preguntarle.
+              </p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">El Baúl intenta que esas cosas no se pierdan.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Y para eso hace falta algo que ninguna tecnología puede hacer sola:</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;"><strong>que cada persona aporte lo que recuerda.</strong></p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">No necesitas sentarte una tarde entera a ordenar fotos.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Empieza por algo pequeño.</p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Sube una foto que tengas y que quizá los demás no tengan. O escribe un recuerdo sobre alguna de las que ya están en el baúl.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-radius:8px;background-color:#6b3f2a;">
+                    <a href="https://el-baul.test/baules/abc" style="display:inline-block;padding:12px 24px;font-size:15px;color:#ffffff;text-decoration:none;">Entrar en Familia Pardal</a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:24px 0 16px 0;font-size:16px;line-height:1.5;">Puede parecer una contribución pequeña.</p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Pero dentro de muchos años, probablemente esas pequeñas historias sean precisamente lo más valioso que haya dentro.</p>
+              <p style="margin:0 0 4px 0;font-size:16px;line-height:1.5;">Un abrazo,</p>
+              <p style="margin:0;font-size:16px;line-height:1.5;">Pedro<br />El Baúl</p>
 
             </td>
           </tr>
@@ -66,13 +100,46 @@
   PlainText:
 Hola Pedro,
 
-Ya formas parte de la historia de tus familias en El Baúl.
-Cada foto y cada recuerdo que añadáis se queda a salvo y disponible para siempre. El siguiente paso es sencillo: añade un recuerdo.
+Hace unas horas entraste en Familia Pardal.
 
-- Familia Pardal
-- Familia Jimena
+Alguien de tu familia decidió empezar a reunir ahí vuestras fotos, recuerdos e historias.
 
-Añadir un recuerdo: https://el-baul.test/baules/abc
+Y quería contarte por qué existe El Baúl.
+
+Ver vídeo: https://el-baul.test/email/click/video-token
+
+Con los años acumulamos miles de fotos.
+
+Pero muchas de las cosas importantes de una familia no están escritas en ninguna parte.
+
+Quién era realmente esa persona.
+Cómo era de joven.
+Qué ocurrió aquel verano.
+Por qué esa foto era importante.
+Esa historia que tu madre ha contado cien veces y que algún día alguien echará de menos poder preguntarle.
+
+El Baúl intenta que esas cosas no se pierdan.
+
+Y para eso hace falta algo que ninguna tecnología puede hacer sola:
+
+que cada persona aporte lo que recuerda.
+
+No necesitas sentarte una tarde entera a ordenar fotos.
+
+Empieza por algo pequeño.
+
+Sube una foto que tengas y que quizá los demás no tengan. O escribe un recuerdo sobre alguna de las que ya están en el baúl.
+
+Entrar en Familia Pardal: https://el-baul.test/baules/abc
+
+Puede parecer una contribución pequeña.
+
+Pero dentro de muchos años, probablemente esas pequeñas historias sean precisamente lo más valioso que haya dentro.
+
+Un abrazo,
+
+Pedro
+El Baúl
 
 El Baúl
 

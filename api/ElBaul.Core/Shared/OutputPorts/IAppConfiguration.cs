@@ -19,6 +19,12 @@ public interface IAppConfiguration
     string PrivacyPolicyUrl { get; }
 
     /// <summary>
+    /// Destination for the founder-intro video linked from both welcome-email variants.
+    /// Defaults to "" like the other optional external links above.
+    /// </summary>
+    string OnboardingVideoUrl { get; }
+
+    /// <summary>
     /// Kill switch for the real (non-test) automatic sends — the recurring schedulers and the
     /// per-user send jobs both check this, so flipping it off mid-batch stops anything still
     /// queued too, not just future scheduling. Defaults to false (opt-in rollout); admin

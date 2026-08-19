@@ -1,11 +1,21 @@
-{{~ capture subject ~}}Bienvenido a El Baúl{{~ end ~}}
+{{~ capture subject ~}}Por qué existe El Baúl{{~ end ~}}
 {{~ user_name_t = truncate user_name 100 ~}}
-{{~ intro = "Aún no perteneces a ningún baúl, pero eso tiene fácil arreglo." ~}}
-{{~ body_text = "Un baúl es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar." ~}}
 {{~ capture content ~}}
 <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola {{ user_name_t | html.escape }},</p>
-<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">{{ intro | html.escape }}</p>
-<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">{{ body_text | html.escape }}</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hace unas horas entraste por primera vez en <strong>El Baúl</strong>.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Quizá todavía no tengas muy claro qué hacer con él. Así que antes de explicarte botones, fotos o capítulos, quiero contarte <strong>por qué lo estamos construyendo</strong>.</p>
+{{ include "VideoThumbnail.html" video_url: video_url video_thumbnail_url: video_thumbnail_url }}
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">El Baúl nace de una idea muy sencilla:</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;"><strong>hay historias de nuestra familia que, si nadie las guarda, algún día desaparecerán.</strong></p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Las fotos ayudan, pero muchas veces no son suficientes.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Quién aparece en ellas. Qué estaba pasando. Cómo era esa persona. Qué historias contaba siempre. Qué cosas recuerdas de ella que no aparecen en ningún álbum.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Por eso El Baúl es un espacio privado para construir, entre todos, la memoria de una familia.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Y no hace falta empezar haciendo algo enorme.</p>
+<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Puedes empezar simplemente creando tu baúl y subiendo <strong>una foto que signifique algo para ti</strong>.</p>
 {{ include "Button.html" url: primary_cta_url label: primary_cta_label }}
+<p style="margin:24px 0 16px 0;font-size:16px;line-height:1.5;">Luego podrás invitar a tu familia para que añadan sus propias fotos, recuerdos e historias.</p>
+<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Poco a poco, entre todos, el baúl empieza a contar una historia que ninguno podría reconstruir por separado.</p>
+<p style="margin:0 0 4px 0;font-size:16px;line-height:1.5;">Un abrazo,</p>
+<p style="margin:0;font-size:16px;line-height:1.5;">Pedro<br />El Baúl</p>
 {{~ end ~}}
 {{ include "Layout.html" }}

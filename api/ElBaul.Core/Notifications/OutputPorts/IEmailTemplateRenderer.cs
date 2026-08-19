@@ -21,7 +21,9 @@ public record WelcomeEmailModel(
     string NotificationSettingsUrl,
     EmailFooterLinks Footer,
     string PixelUrl,
-    string LogoUrl);
+    string LogoUrl,
+    string VideoUrl,
+    string VideoThumbnailUrl);
 
 /// <summary>
 /// Turns an email content model into subject/HTML/plain-text — kept separate from

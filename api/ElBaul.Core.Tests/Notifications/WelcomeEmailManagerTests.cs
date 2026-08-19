@@ -171,7 +171,7 @@ public class WelcomeEmailManagerTests
 
         Assert.NotNull(_templateRenderer.LastModel);
         Assert.True(_templateRenderer.LastModel!.HasBaules);
-        Assert.Equal("Añadir un recuerdo", _templateRenderer.LastModel.PrimaryCtaLabel);
+        Assert.Equal("Entrar en Familia Pardal", _templateRenderer.LastModel.PrimaryCtaLabel);
         Assert.Contains(baul.Id.ToString(), ResolveTrackedDestination(_templateRenderer.LastModel.PrimaryCtaUrl));
         Assert.Contains("Familia Pardal", _templateRenderer.LastModel.BaulNames);
     }
@@ -200,7 +200,7 @@ public class WelcomeEmailManagerTests
         await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.False(_templateRenderer.LastModel!.HasBaules);
-        Assert.Equal("Crear mi primer baúl", _templateRenderer.LastModel.PrimaryCtaLabel);
+        Assert.Equal("Empezar mi baúl", _templateRenderer.LastModel.PrimaryCtaLabel);
         Assert.Contains("/baules/nuevo", Uri.UnescapeDataString(ResolveTrackedDestination(_templateRenderer.LastModel.PrimaryCtaUrl)));
     }
 
@@ -404,6 +404,22 @@ public class WelcomeEmailManagerTests
         Assert.StartsWith(trackedPrefix, model.Footer.HelpCenterUrl);
         Assert.StartsWith(trackedPrefix, model.Footer.PrivacyPolicyUrl);
         Assert.StartsWith(trackedPrefix, model.Footer.SupportUrl);
+    }
+
+    [Fact]
+    public async Task SendWelcomeEmailAsync_ShouldRouteTheOnboardingVideoThroughTheTrackingEndpoint()
+    {
+        SeedUser(UserId, _clock.UtcNow().AddHours(-3));
+        var manager = CreateManager();
+
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
+
+        var model = _templateRenderer.LastModel!;
+        Assert.Contains($"{_appConfiguration.ApiPublicUrl}/email/click/", model.VideoUrl);
+        var token = model.VideoUrl.Split('/').Last();
+        var decoded = _emailLinkSigner.TryDecode(token)!;
+        Assert.Equal("onboarding-video", decoded.LinkKey);
+        Assert.Equal(_appConfiguration.OnboardingVideoUrl, decoded.DestinationUrl);
     }
 
     [Fact]

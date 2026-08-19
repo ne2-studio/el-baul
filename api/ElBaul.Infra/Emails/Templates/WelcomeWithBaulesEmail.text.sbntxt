@@ -1,20 +1,46 @@
-{{~ capture subject ~}}Bienvenido a El Baúl{{~ end ~}}
 {{~ user_name_t = truncate user_name 100 ~}}
-{{~ intro = "Ya formas parte de la historia de " + (baul_names.size == 1 ? "tu familia" : "tus familias") + " en El Baúl." ~}}
+{{~ baul_name_t = truncate baul_names[0] 100 ~}}
+{{~ capture subject ~}}Bienvenido a {{ baul_name_t }}{{~ end ~}}
 Hola {{ user_name_t }},
 
-{{ intro }}
-Cada foto y cada recuerdo que añadáis se queda a salvo y disponible para siempre. El siguiente paso es sencillo: añade un recuerdo.
-{{~ if baul_names.size > 0 ~}}
+Hace unas horas entraste en {{ baul_name_t }}.
 
-{{~ for name in (baul_names | array.limit 5) ~}}
-- {{ truncate name 80 }}
-{{~ end ~}}
-{{~ remaining = baul_names.size - 5 ~}}
-{{~ if remaining > 0 ~}}
-Y {{ remaining }} baúl{{ if remaining != 1 }}es{{ end }} más
-{{~ end ~}}
-{{~ end ~}}
+Alguien de tu familia decidió empezar a reunir ahí vuestras fotos, recuerdos e historias.
+
+Y quería contarte por qué existe El Baúl.
+
+Ver vídeo: {{ video_url }}
+
+Con los años acumulamos miles de fotos.
+
+Pero muchas de las cosas importantes de una familia no están escritas en ninguna parte.
+
+Quién era realmente esa persona.
+Cómo era de joven.
+Qué ocurrió aquel verano.
+Por qué esa foto era importante.
+Esa historia que tu madre ha contado cien veces y que algún día alguien echará de menos poder preguntarle.
+
+El Baúl intenta que esas cosas no se pierdan.
+
+Y para eso hace falta algo que ninguna tecnología puede hacer sola:
+
+que cada persona aporte lo que recuerda.
+
+No necesitas sentarte una tarde entera a ordenar fotos.
+
+Empieza por algo pequeño.
+
+Sube una foto que tengas y que quizá los demás no tengan. O escribe un recuerdo sobre alguna de las que ya están en el baúl.
 
 {{ primary_cta_label }}: {{ primary_cta_url }}
+
+Puede parecer una contribución pequeña.
+
+Pero dentro de muchos años, probablemente esas pequeñas historias sean precisamente lo más valioso que haya dentro.
+
+Un abrazo,
+
+Pedro
+El Baúl
 {{ include "Footer.text" footer: footer notification_settings_url: notification_settings_url }}

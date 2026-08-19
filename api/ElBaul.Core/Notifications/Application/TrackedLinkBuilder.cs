@@ -43,6 +43,13 @@ public class TrackedLinkBuilder(string apiPublicUrl, IEmailLinkSigner signer, Gu
     /// </summary>
     public string BuildLogoUrl() => $"{_apiPublicUrl}/email/assets/logo.png";
 
+    /// <summary>
+    /// Absolute URL for the welcome-email video thumbnail — same reasoning as
+    /// <see cref="BuildLogoUrl"/>: static, untokenized, served from the API's own static
+    /// files rather than a controller.
+    /// </summary>
+    public string BuildOnboardingVideoThumbnailUrl() => $"{_apiPublicUrl}/email/assets/onboarding-video-thumbnail.jpg";
+
     private static string BuildRedirectUrl(string publicUrl, string path) =>
         $"{publicUrl}/?redirectTo={Uri.EscapeDataString(WithEmailEntrySource(path))}";
 

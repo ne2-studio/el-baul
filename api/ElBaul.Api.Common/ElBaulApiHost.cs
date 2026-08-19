@@ -47,11 +47,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -306,6 +308,17 @@ public static class ElBaulApiHost
         }
 
         app.UseSerilogRequestLogging();
+
+        // Serves wwwroot/email/assets/* (welcome-email images) — real static files, not bytes
+        // handed out by hand from a controller. AllowAnonymous by nature: recipients' email
+        // clients load these with no auth, same as EmailAssetsController's logo. Content is
+        // static and versionless (filename changes if the image ever does), so caching it
+        // aggressively is safe — mirrors EmailAssetsController's Cache-Control for the logo.
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+                ctx.Context.Response.Headers[HeaderNames.CacheControl] = "public, max-age=31536000, immutable"
+        });
 
         app.UseRouting();
 

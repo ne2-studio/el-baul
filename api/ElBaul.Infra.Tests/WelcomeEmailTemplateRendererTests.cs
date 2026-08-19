@@ -8,6 +8,8 @@ public class WelcomeEmailTemplateRendererTests
     private const string NotificationSettingsUrl = "https://el-baul.test/perfil";
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
     private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
+    private const string TestVideoUrl = "https://el-baul.test/email/click/video-token";
+    private const string TestVideoThumbnailUrl = "https://el-baul.test/email/assets/onboarding-video-thumbnail.jpg";
     private static readonly EmailFooterLinks TestFooter = new(
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
 
@@ -21,11 +23,13 @@ public class WelcomeEmailTemplateRendererTests
             BaulNames: ["<img src=x onerror=alert(1)>"],
             HasBaules: true,
             PrimaryCtaUrl: "https://el-baul.test/baules/1",
-            PrimaryCtaLabel: "Añadir un recuerdo",
+            PrimaryCtaLabel: "Entrar en el baúl",
             NotificationSettingsUrl: NotificationSettingsUrl,
             Footer: TestFooter,
             PixelUrl: TestPixelUrl,
-            LogoUrl: TestLogoUrl);
+            LogoUrl: TestLogoUrl,
+            VideoUrl: TestVideoUrl,
+            VideoThumbnailUrl: TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -39,7 +43,7 @@ public class WelcomeEmailTemplateRendererTests
     public void RenderWelcome_ShouldTruncateVeryLongBaulNames()
     {
         var longName = new string('a', 500);
-        var model = new WelcomeEmailModel("Pedro", [longName], true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
+        var model = new WelcomeEmailModel("Pedro", [longName], true, "https://el-baul.test/baules/1", "Entrar en el baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -50,7 +54,7 @@ public class WelcomeEmailTemplateRendererTests
     [Fact]
     public void RenderWelcome_ShouldSupportUnicodeAndEmoji()
     {
-        var model = new WelcomeEmailModel("José 🎉", ["Verano en Salobreña 🏖️"], true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
+        var model = new WelcomeEmailModel("José 🎉", ["Verano en Salobreña 🏖️"], true, "https://el-baul.test/baules/1", "Entrar en el baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -65,47 +69,58 @@ public class WelcomeEmailTemplateRendererTests
     [Fact]
     public void RenderWelcome_ShouldUseTheGivenCtaUrlAndLabel_ForUsersWithBaules()
     {
-        var model = new WelcomeEmailModel("Pedro", ["Familia Pardal"], true, "https://el-baul.test/baules/abc", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
+        var model = new WelcomeEmailModel("Pedro", ["Familia Pardal"], true, "https://el-baul.test/baules/abc", "Entrar en Familia Pardal", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
         Assert.Contains("https://el-baul.test/baules/abc", result.Html);
-        Assert.Contains("Añadir un recuerdo", WebUtility.HtmlDecode(result.Html));
+        Assert.Contains("Entrar en Familia Pardal", WebUtility.HtmlDecode(result.Html));
         Assert.Contains("https://el-baul.test/baules/abc", result.PlainText);
     }
 
     [Fact]
     public void RenderWelcome_ShouldUseTheGivenCtaUrlAndLabel_ForUsersWithoutBaules()
     {
-        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Crear mi primer baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
+        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Empezar mi baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
         Assert.Contains("https://el-baul.test/baules/nuevo", result.Html);
-        Assert.Contains("Crear mi primer baúl", WebUtility.HtmlDecode(result.Html));
-        Assert.DoesNotContain("<ul", result.Html);
+        Assert.Contains("Empezar mi baúl", WebUtility.HtmlDecode(result.Html));
     }
 
     [Fact]
-    public void RenderWelcome_ShouldSummarizeBaulesBeyondTheListedLimit()
+    public void RenderWelcome_ShouldUseTheFirstBaulName_AsTheGreetingAndSubject()
     {
-        var names = Enumerable.Range(1, 8).Select(i => $"Baúl {i}").ToList();
-        var model = new WelcomeEmailModel("Pedro", names, true, "https://el-baul.test/baules/1", "Añadir un recuerdo", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
+        var model = new WelcomeEmailModel("Pedro", ["Familia Pardal", "Familia Jimena"], true, "https://el-baul.test/baules/1", "Entrar en Familia Pardal", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
-        Assert.Contains("Y 3 baúles más", result.Html);
+        Assert.Equal("Bienvenido a Familia Pardal", result.Subject);
+        Assert.Contains("Familia Pardal", WebUtility.HtmlDecode(result.Html));
+    }
+
+    [Fact]
+    public void RenderWelcome_ShouldIncludeTheVideoThumbnailAndLink()
+    {
+        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Empezar mi baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
+
+        var result = _renderer.RenderWelcome(model);
+
+        Assert.Contains(TestVideoThumbnailUrl, result.Html);
+        Assert.Contains(TestVideoUrl, result.Html);
+        Assert.Contains(TestVideoUrl, result.PlainText);
     }
 
     [Fact]
     public void RenderWelcome_ShouldReportTemplateVersionAndLocale()
     {
-        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Crear mi primer baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl);
+        var model = new WelcomeEmailModel("Pedro", [], false, "https://el-baul.test/baules/nuevo", "Empezar mi baúl", NotificationSettingsUrl, TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
         Assert.Equal("welcome-v1", result.TemplateVersion);
         Assert.Equal("es-ES", result.Locale);
-        Assert.Equal("Bienvenido a El Baúl", result.Subject);
+        Assert.Equal("Por qué existe El Baúl", result.Subject);
     }
 }

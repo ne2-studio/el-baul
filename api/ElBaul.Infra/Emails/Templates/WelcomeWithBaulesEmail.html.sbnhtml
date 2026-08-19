@@ -1,22 +1,31 @@
-{{~ capture subject ~}}Bienvenido a El Baúl{{~ end ~}}
 {{~ user_name_t = truncate user_name 100 ~}}
-{{~ intro = "Ya formas parte de la historia de " + (baul_names.size == 1 ? "tu familia" : "tus familias") + " en El Baúl." ~}}
-{{~ body_text = "Cada foto y cada recuerdo que añadáis se queda a salvo y disponible para siempre. El siguiente paso es sencillo: añade un recuerdo." ~}}
+{{~ baul_name_t = truncate baul_names[0] 100 ~}}
+{{~ capture subject ~}}Bienvenido a {{ baul_name_t }}{{~ end ~}}
 {{~ capture content ~}}
 <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola {{ user_name_t | html.escape }},</p>
-<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">{{ intro | html.escape }}</p>
-<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">{{ body_text | html.escape }}</p>
-{{~ if baul_names.size > 0 ~}}
-<ul style="margin:0 0 24px 0;padding-left:20px;font-size:15px;line-height:1.6;">
-{{~ for name in (baul_names | array.limit 5) ~}}
-  <li>{{ truncate name 80 | html.escape }}</li>
-{{~ end ~}}
-{{~ remaining = baul_names.size - 5 ~}}
-{{~ if remaining > 0 ~}}
-  <li>Y {{ remaining }} baúl{{ if remaining != 1 }}es{{ end }} más</li>
-{{~ end ~}}
-</ul>
-{{~ end ~}}
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hace unas horas entraste en <strong>{{ baul_name_t | html.escape }}</strong>.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Alguien de tu familia decidió empezar a reunir ahí vuestras fotos, recuerdos e historias.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Y quería contarte por qué existe El Baúl.</p>
+{{ include "VideoThumbnail.html" video_url: video_url video_thumbnail_url: video_thumbnail_url }}
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Con los años acumulamos miles de fotos.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Pero muchas de las cosas importantes de una familia <strong>no están escritas en ninguna parte</strong>.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">
+  Quién era realmente esa persona.<br />
+  Cómo era de joven.<br />
+  Qué ocurrió aquel verano.<br />
+  Por qué esa foto era importante.<br />
+  Esa historia que tu madre ha contado cien veces y que algún día alguien echará de menos poder preguntarle.
+</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">El Baúl intenta que esas cosas no se pierdan.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Y para eso hace falta algo que ninguna tecnología puede hacer sola:</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;"><strong>que cada persona aporte lo que recuerda.</strong></p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">No necesitas sentarte una tarde entera a ordenar fotos.</p>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Empieza por algo pequeño.</p>
+<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Sube una foto que tengas y que quizá los demás no tengan. O escribe un recuerdo sobre alguna de las que ya están en el baúl.</p>
 {{ include "Button.html" url: primary_cta_url label: primary_cta_label }}
+<p style="margin:24px 0 16px 0;font-size:16px;line-height:1.5;">Puede parecer una contribución pequeña.</p>
+<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Pero dentro de muchos años, probablemente esas pequeñas historias sean precisamente lo más valioso que haya dentro.</p>
+<p style="margin:0 0 4px 0;font-size:16px;line-height:1.5;">Un abrazo,</p>
+<p style="margin:0;font-size:16px;line-height:1.5;">Pedro<br />El Baúl</p>
 {{~ end ~}}
 {{ include "Layout.html" }}

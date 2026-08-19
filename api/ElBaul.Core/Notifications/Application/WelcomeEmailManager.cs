@@ -104,8 +104,9 @@ public class WelcomeEmailManager(
 
         var targetPath = hasBaules ? $"/baules/{baules[0].Id}" : "/baules/nuevo";
         var ctaUrl = linkBuilder.TrackRedirect("primary-cta", publicUrl, targetPath);
-        var ctaLabel = hasBaules ? "Añadir un recuerdo" : "Crear mi primer baúl";
+        var ctaLabel = hasBaules ? $"Entrar en {baules[0].Name}" : "Empezar mi baúl";
         var notificationSettingsUrl = linkBuilder.TrackRedirect("notification-settings", publicUrl, "/configuracion/notificaciones");
+        var videoUrl = linkBuilder.Track("onboarding-video", appConfiguration.OnboardingVideoUrl);
 
         return new WelcomeEmailModel(
             user.Name ?? user.Email,
@@ -116,6 +117,8 @@ public class WelcomeEmailManager(
             notificationSettingsUrl,
             EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder),
             linkBuilder.BuildOpenPixelUrl(),
-            linkBuilder.BuildLogoUrl());
+            linkBuilder.BuildLogoUrl(),
+            videoUrl,
+            linkBuilder.BuildOnboardingVideoThumbnailUrl());
     }
 }

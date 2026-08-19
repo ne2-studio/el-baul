@@ -109,6 +109,7 @@ public class UserBaulActivityDailyAggregatorTests(PostgresFixture fixture) : Per
         public string FunctionalTimeZoneId => "Europe/Madrid";
         public string HelpCenterUrl => "";
         public string PrivacyPolicyUrl => "";
+        public string OnboardingVideoUrl => "";
         public bool WelcomeEmailsEnabled => false;
         public bool WeeklyDigestEmailsEnabled => false;
         public bool ChatEnabled => false;

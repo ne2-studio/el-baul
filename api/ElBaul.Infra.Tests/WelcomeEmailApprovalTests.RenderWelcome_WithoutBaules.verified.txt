@@ -1,12 +1,12 @@
 ﻿{
-  Subject: Bienvenido a El Baúl,
+  Subject: Por qué existe El Baúl,
   Html:
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bienvenido a El Ba&#250;l</title>
+  <title>Por qu&#233; existe El Ba&#250;l</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#3a2f28;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ec;padding:32px 16px;">
@@ -20,16 +20,45 @@
                 <span style="font-size:20px;color:#6b3f2a;font-weight:bold;">El Baúl</span>
               </div>
               <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hola Pedro,</p>
-              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">A&#250;n no perteneces a ning&#250;n ba&#250;l, pero eso tiene f&#225;cil arreglo.</p>
-              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Un ba&#250;l es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar.</p>
-              <table role="presentation" cellpadding="0" cellspacing="0">
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Hace unas horas entraste por primera vez en <strong>El Baúl</strong>.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Quizá todavía no tengas muy claro qué hacer con él. Así que antes de explicarte botones, fotos o capítulos, quiero contarte <strong>por qué lo estamos construyendo</strong>.</p>
+              <!-- Shared by both welcome-email variants: the founder-intro video thumbnail (play button
+                   baked into the image itself) plus a text fallback link, both pointing at the tracked
+                   video URL. -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
                 <tr>
-                  <td style="border-radius:8px;background-color:#6b3f2a;">
-                    <a href="https://el-baul.test/baules/nuevo" style="display:inline-block;padding:12px 24px;font-size:15px;color:#ffffff;text-decoration:none;">Crear mi primer ba&#250;l</a>
+                  <td>
+                    <a href="https://el-baul.test/email/click/video-token" style="display:block;">
+                      <img src="https://el-baul.test/email/assets/onboarding-video-thumbnail.jpg" width="416" alt="Ver vídeo" style="display:block;width:100%;height:auto;border:0;border-radius:8px;" />
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0 0 0;text-align:center;">
+                    <a href="https://el-baul.test/email/click/video-token" style="font-size:14px;color:#6b3f2a;text-decoration:none;font-weight:bold;">▶ Ver vídeo</a>
                   </td>
                 </tr>
               </table>
               
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">El Baúl nace de una idea muy sencilla:</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;"><strong>hay historias de nuestra familia que, si nadie las guarda, algún día desaparecerán.</strong></p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Las fotos ayudan, pero muchas veces no son suficientes.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Quién aparece en ellas. Qué estaba pasando. Cómo era esa persona. Qué historias contaba siempre. Qué cosas recuerdas de ella que no aparecen en ningún álbum.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Por eso El Baúl es un espacio privado para construir, entre todos, la memoria de una familia.</p>
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">Y no hace falta empezar haciendo algo enorme.</p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Puedes empezar simplemente creando tu baúl y subiendo <strong>una foto que signifique algo para ti</strong>.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-radius:8px;background-color:#6b3f2a;">
+                    <a href="https://el-baul.test/baules/nuevo" style="display:inline-block;padding:12px 24px;font-size:15px;color:#ffffff;text-decoration:none;">Empezar mi ba&#250;l</a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:24px 0 16px 0;font-size:16px;line-height:1.5;">Luego podrás invitar a tu familia para que añadan sus propias fotos, recuerdos e historias.</p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">Poco a poco, entre todos, el baúl empieza a contar una historia que ninguno podría reconstruir por separado.</p>
+              <p style="margin:0 0 4px 0;font-size:16px;line-height:1.5;">Un abrazo,</p>
+              <p style="margin:0;font-size:16px;line-height:1.5;">Pedro<br />El Baúl</p>
 
             </td>
           </tr>
@@ -62,10 +91,36 @@
   PlainText:
 Hola Pedro,
 
-Aún no perteneces a ningún baúl, pero eso tiene fácil arreglo.
-Un baúl es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar.
+Hace unas horas entraste por primera vez en El Baúl.
 
-Crear mi primer baúl: https://el-baul.test/baules/nuevo
+Quizá todavía no tengas muy claro qué hacer con él. Así que antes de explicarte botones, fotos o capítulos, quiero contarte por qué lo estamos construyendo.
+
+Ver vídeo: https://el-baul.test/email/click/video-token
+
+El Baúl nace de una idea muy sencilla:
+
+hay historias de nuestra familia que, si nadie las guarda, algún día desaparecerán.
+
+Las fotos ayudan, pero muchas veces no son suficientes.
+
+Quién aparece en ellas. Qué estaba pasando. Cómo era esa persona. Qué historias contaba siempre. Qué cosas recuerdas de ella que no aparecen en ningún álbum.
+
+Por eso El Baúl es un espacio privado para construir, entre todos, la memoria de una familia.
+
+Y no hace falta empezar haciendo algo enorme.
+
+Puedes empezar simplemente creando tu baúl y subiendo una foto que signifique algo para ti.
+
+Empezar mi baúl: https://el-baul.test/baules/nuevo
+
+Luego podrás invitar a tu familia para que añadan sus propias fotos, recuerdos e historias.
+
+Poco a poco, entre todos, el baúl empieza a contar una historia que ninguno podría reconstruir por separado.
+
+Un abrazo,
+
+Pedro
+El Baúl
 
 El Baúl
 

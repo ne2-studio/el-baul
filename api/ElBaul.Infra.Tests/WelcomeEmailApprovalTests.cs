@@ -16,6 +16,8 @@ public class WelcomeEmailApprovalTests
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
     private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
+    private const string TestVideoUrl = "https://el-baul.test/email/click/video-token";
+    private const string TestVideoThumbnailUrl = "https://el-baul.test/email/assets/onboarding-video-thumbnail.jpg";
 
     private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
@@ -27,11 +29,13 @@ public class WelcomeEmailApprovalTests
             BaulNames: ["Familia Pardal", "Familia Jimena"],
             HasBaules: true,
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
-            PrimaryCtaLabel: "Añadir un recuerdo",
+            PrimaryCtaLabel: "Entrar en Familia Pardal",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
             Footer: TestFooter,
             PixelUrl: TestPixelUrl,
-            LogoUrl: TestLogoUrl);
+            LogoUrl: TestLogoUrl,
+            VideoUrl: TestVideoUrl,
+            VideoThumbnailUrl: TestVideoThumbnailUrl);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -44,29 +48,13 @@ public class WelcomeEmailApprovalTests
             BaulNames: [],
             HasBaules: false,
             PrimaryCtaUrl: "https://el-baul.test/baules/nuevo",
-            PrimaryCtaLabel: "Crear mi primer baúl",
+            PrimaryCtaLabel: "Empezar mi baúl",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
             Footer: TestFooter,
             PixelUrl: TestPixelUrl,
-            LogoUrl: TestLogoUrl);
-
-        return Verify(_renderer.RenderWelcome(model));
-    }
-
-    [Fact]
-    public Task RenderWelcome_WithMoreBaulesThanTheDisplayLimit()
-    {
-        var names = Enumerable.Range(1, 8).Select(i => $"Baúl {i}").ToList();
-        var model = new WelcomeEmailModel(
-            UserName: "Pedro",
-            BaulNames: names,
-            HasBaules: true,
-            PrimaryCtaUrl: "https://el-baul.test/baules/abc",
-            PrimaryCtaLabel: "Añadir un recuerdo",
-            NotificationSettingsUrl: "https://el-baul.test/perfil",
-            Footer: TestFooter,
-            PixelUrl: TestPixelUrl,
-            LogoUrl: TestLogoUrl);
+            LogoUrl: TestLogoUrl,
+            VideoUrl: TestVideoUrl,
+            VideoThumbnailUrl: TestVideoThumbnailUrl);
 
         return Verify(_renderer.RenderWelcome(model));
     }
@@ -79,11 +67,13 @@ public class WelcomeEmailApprovalTests
             BaulNames: ["Verano en Salobreña 🏖️", "<img src=x onerror=alert(1)>"],
             HasBaules: true,
             PrimaryCtaUrl: "https://el-baul.test/baules/abc",
-            PrimaryCtaLabel: "Añadir un recuerdo",
+            PrimaryCtaLabel: "Entrar en Verano en Salobreña 🏖️",
             NotificationSettingsUrl: "https://el-baul.test/perfil",
             Footer: TestFooter,
             PixelUrl: TestPixelUrl,
-            LogoUrl: TestLogoUrl);
+            LogoUrl: TestLogoUrl,
+            VideoUrl: TestVideoUrl,
+            VideoThumbnailUrl: TestVideoThumbnailUrl);
 
         return Verify(_renderer.RenderWelcome(model));
     }

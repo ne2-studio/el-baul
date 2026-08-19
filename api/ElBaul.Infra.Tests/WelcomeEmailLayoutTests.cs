@@ -13,6 +13,8 @@ public class WelcomeEmailLayoutTests
         "https://el-baul.test/ayuda", "https://el-baul.test/legal/privacy-policy/", "https://el-baul.test/soporte", 2026);
     private const string TestPixelUrl = "https://el-baul.test/email/open/token.gif";
     private const string TestLogoUrl = "https://el-baul.test/email/assets/logo.png";
+    private const string TestVideoUrl = "https://el-baul.test/email/click/video-token";
+    private const string TestVideoThumbnailUrl = "https://el-baul.test/email/assets/onboarding-video-thumbnail.jpg";
 
     private readonly EmailTemplateRenderer _renderer = new(new ScribanEmailRenderer());
 
@@ -20,8 +22,8 @@ public class WelcomeEmailLayoutTests
     public void RenderWelcome_ShouldAlwaysIncludeTheSharedLayoutWrapper()
     {
         var model = new WelcomeEmailModel(
-            "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl);
+            "Pedro", [], false, "https://el-baul.test/cta", "Empezar mi baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -34,8 +36,8 @@ public class WelcomeEmailLayoutTests
     public void RenderWelcome_ShouldAlwaysIncludeTheFooterComponent()
     {
         var model = new WelcomeEmailModel(
-            "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl);
+            "Pedro", [], false, "https://el-baul.test/cta", "Empezar mi baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -48,8 +50,8 @@ public class WelcomeEmailLayoutTests
     public void RenderWelcome_ShouldAlwaysIncludeTheOpenTrackingPixel()
     {
         var model = new WelcomeEmailModel(
-            "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl);
+            "Pedro", [], false, "https://el-baul.test/cta", "Empezar mi baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
@@ -61,12 +63,26 @@ public class WelcomeEmailLayoutTests
     public void RenderWelcome_ShouldReferenceTheLogoByUrl_NotEmbedItInline()
     {
         var model = new WelcomeEmailModel(
-            "Pedro", [], false, "https://el-baul.test/cta", "Crear mi primer baúl",
-            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl);
+            "Pedro", [], false, "https://el-baul.test/cta", "Empezar mi baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
 
         var result = _renderer.RenderWelcome(model);
 
         Assert.Contains($"<img src=\"{TestLogoUrl}\"", result.Html);
         Assert.DoesNotContain("data:image/png;base64,", result.Html);
+    }
+
+    [Fact]
+    public void RenderWelcome_ShouldAlwaysIncludeTheVideoThumbnail_LinkedToTheVideoUrl()
+    {
+        var model = new WelcomeEmailModel(
+            "Pedro", [], false, "https://el-baul.test/cta", "Empezar mi baúl",
+            "https://el-baul.test/perfil", TestFooter, TestPixelUrl, TestLogoUrl, TestVideoUrl, TestVideoThumbnailUrl);
+
+        var result = _renderer.RenderWelcome(model);
+
+        Assert.Contains($"<img src=\"{TestVideoThumbnailUrl}\"", result.Html);
+        Assert.Contains($"href=\"{TestVideoUrl}\"", result.Html);
+        Assert.Contains(TestVideoUrl, result.PlainText);
     }
 }

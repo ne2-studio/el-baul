@@ -1,0 +1,17 @@
+<!-- Shared by both welcome-email variants: the founder-intro video thumbnail (play button
+     baked into the image itself) plus a text fallback link, both pointing at the tracked
+     video URL. -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
+  <tr>
+    <td>
+      <a href="{{ $.video_url | html.escape }}" style="display:block;">
+        <img src="{{ $.video_thumbnail_url }}" width="416" alt="Ver vídeo" style="display:block;width:100%;height:auto;border:0;border-radius:8px;" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:8px 0 0 0;text-align:center;">
+      <a href="{{ $.video_url | html.escape }}" style="font-size:14px;color:#6b3f2a;text-decoration:none;font-weight:bold;">▶ Ver vídeo</a>
+    </td>
+  </tr>
+</table>

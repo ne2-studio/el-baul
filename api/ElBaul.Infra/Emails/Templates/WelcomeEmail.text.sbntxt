@@ -1,9 +1,35 @@
-{{~ capture subject ~}}Bienvenido a El Baúl{{~ end ~}}
+{{~ capture subject ~}}Por qué existe El Baúl{{~ end ~}}
 {{~ user_name_t = truncate user_name 100 ~}}
 Hola {{ user_name_t }},
 
-Aún no perteneces a ningún baúl, pero eso tiene fácil arreglo.
-Un baúl es el espacio donde tu familia guarda sus fotos y recuerdos. Crea el tuyo para empezar.
+Hace unas horas entraste por primera vez en El Baúl.
+
+Quizá todavía no tengas muy claro qué hacer con él. Así que antes de explicarte botones, fotos o capítulos, quiero contarte por qué lo estamos construyendo.
+
+Ver vídeo: {{ video_url }}
+
+El Baúl nace de una idea muy sencilla:
+
+hay historias de nuestra familia que, si nadie las guarda, algún día desaparecerán.
+
+Las fotos ayudan, pero muchas veces no son suficientes.
+
+Quién aparece en ellas. Qué estaba pasando. Cómo era esa persona. Qué historias contaba siempre. Qué cosas recuerdas de ella que no aparecen en ningún álbum.
+
+Por eso El Baúl es un espacio privado para construir, entre todos, la memoria de una familia.
+
+Y no hace falta empezar haciendo algo enorme.
+
+Puedes empezar simplemente creando tu baúl y subiendo una foto que signifique algo para ti.
 
 {{ primary_cta_label }}: {{ primary_cta_url }}
+
+Luego podrás invitar a tu familia para que añadan sus propias fotos, recuerdos e historias.
+
+Poco a poco, entre todos, el baúl empieza a contar una historia que ninguno podría reconstruir por separado.
+
+Un abrazo,
+
+Pedro
+El Baúl
 {{ include "Footer.text" footer: footer notification_settings_url: notification_settings_url }}
