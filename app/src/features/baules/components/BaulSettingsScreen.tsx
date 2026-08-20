@@ -3,7 +3,6 @@ import { ActionListItem } from '@/design-system/components/data-display/ActionLi
 import { CounterBadge } from '@/design-system/components/data-display/Badges';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
-import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 
 interface BaulSettingsScreenProps {
   onBack: () => void;
@@ -37,12 +36,7 @@ export function BaulSettingsScreen({
       <PageHeader
         variant="inline"
         onBack={onBack}
-        title={
-          <span className="flex items-center gap-2">
-            <BaulIcon className="w-6 h-6" aria-hidden />
-            Ajustes del baúl
-          </span>
-        }
+        title="Ajustes del baúl"
       />
 
       <PageContainer className="py-6">
