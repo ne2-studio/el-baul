@@ -81,7 +81,8 @@ test('submit removal request → approve (photo is removed)', async ({ page, bro
   await page.goto(`/baules/${baulId}`);
   await dismissContributionSuggestionIfShown(page);
   await page.getByRole('button', { name: 'Menú' }).click();
-  await page.getByRole('menuitem', { name: 'Solicitudes de eliminación' }).click();
+  await page.getByRole('menuitem', { name: 'Ajustes del baúl' }).click();
+  await page.getByRole('button', { name: 'Solicitudes de eliminación' }).click();
   await page.waitForURL(/\/eliminar-solicitudes\//);
   await page.getByRole('button', { name: 'Borrar foto' }).click();
   await expect(page.getByText('La foto ha sido eliminada')).toBeVisible({ timeout: 10_000 });
@@ -99,7 +100,8 @@ test('submit removal request → reject (photo is kept)', async ({ page, browser
   await page.goto(`/baules/${baulId}`);
   await dismissContributionSuggestionIfShown(page);
   await page.getByRole('button', { name: 'Menú' }).click();
-  await page.getByRole('menuitem', { name: 'Solicitudes de eliminación' }).click();
+  await page.getByRole('menuitem', { name: 'Ajustes del baúl' }).click();
+  await page.getByRole('button', { name: 'Solicitudes de eliminación' }).click();
   await page.waitForURL(/\/eliminar-solicitudes\//);
   await page.getByRole('button', { name: 'Mantener foto' }).click();
   await expect(page.getByText('La foto se ha conservado')).toBeVisible({ timeout: 10_000 });

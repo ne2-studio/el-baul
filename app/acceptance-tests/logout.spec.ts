@@ -10,7 +10,8 @@ test('user can sign out and lands back on the sign-in screen', async ({ page }) 
 
   await loginAs(page, 'Admin User');
 
-  await page.getByRole('button', { name: 'Abrir menú de cuenta' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
+  await page.getByRole('menuitem', { name: 'Mi cuenta' }).click();
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
 
   await page.waitForURL((url) => url.pathname === '/', { timeout: 15_000 });
