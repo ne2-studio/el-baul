@@ -1,25 +1,17 @@
 // @vitest-environment jsdom
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Baul } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { BaulSettingsMenuContainer } from './BaulSettingsMenuContainer';
 
-vi.mock('@/features/baules/useCases', () => ({
-  renameBaul: vi.fn(),
-  setBaulCover: vi.fn(),
-}));
-
 vi.mock('@/api', () => ({
   api: {
     baules: { getInviteLink: vi.fn(), regenerateInviteLink: vi.fn() },
-    photos: { getPage: vi.fn() },
   },
 }));
-
-import { renameBaul } from '@/features/baules/useCases';
 
 function baul(overrides: Partial<Baul> = {}): Baul {
   return {
@@ -33,8 +25,9 @@ function renderContainer(b: Baul) {
     <MemoryRouter initialEntries={[`/baules/${b.id}`]}>
       <Routes>
         <Route path="/baules/:baulId" element={<BaulSettingsMenuContainer baul={b} />} />
-        <Route path="/baules/:baulId/solicitar-borrado" element={<div>Solicitar borrado</div>} />
-        <Route path="/eliminar-solicitudes/:baulId" element={<div>Solicitudes de eliminación</div>} />
+        <Route path="/baules/:baulId/ajustes" element={<div>Ajustes del baúl</div>} />
+        <Route path="/cuenta" element={<div>Mi cuenta</div>} />
+        <Route path="/ayuda" element={<div>Ayuda</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -46,51 +39,50 @@ describe('BaulSettingsMenuContainer', () => {
     vi.clearAllMocks();
   });
 
-  it('renders nothing for a role with no baúl-settings permissions', () => {
+  it('always shows the menu trigger, even for a role with no baúl-management permissions', () => {
     renderContainer(baul({ role: 'colaborador', isCustodio: false }));
-
-    expect(screen.queryByRole('button', { name: 'Opciones del baúl' })).not.toBeInTheDocument();
-  });
-
-  it('shows the menu trigger for a custodio', () => {
-    renderContainer(baul());
 
     expect(screen.getByRole('button', { name: 'Opciones del baúl' })).toBeInTheDocument();
   });
 
-  it('edits the baúl info and closes the modal on success', async () => {
+  it('hides "Ajustes del baúl" for a role with no baúl-management permissions', async () => {
     const user = userEvent.setup();
-    vi.mocked(renameBaul).mockResolvedValue(undefined);
+    renderContainer(baul({ role: 'colaborador', isCustodio: false }));
 
-    renderContainer(baul());
     await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
-    await user.click(await screen.findByText('Editar información del baúl'));
-    const nameInput = await screen.findByDisplayValue('Familia García');
-    await user.clear(nameInput);
-    await user.type(nameInput, 'Familia Pérez');
-    await user.click(screen.getByRole('button', { name: /^guardar$/i }));
 
-    expect(renameBaul).toHaveBeenCalledWith('baul-1', 'Familia Pérez', '');
-    await waitFor(() => expect(screen.queryByDisplayValue('Familia Pérez')).not.toBeInTheDocument());
+    expect(screen.queryByText('Ajustes del baúl')).not.toBeInTheDocument();
+    expect(await screen.findByText('Mi cuenta')).toBeInTheDocument();
+    expect(screen.getByText('Ayuda')).toBeInTheDocument();
   });
 
-  it('navigates to the deletion request screen', async () => {
+  it('navigates to the baúl settings screen for a custodio', async () => {
     const user = userEvent.setup();
-
     renderContainer(baul());
-    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
-    await user.click(await screen.findByText('Eliminar baúl'));
 
-    expect(screen.getByText('Solicitar borrado')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(await screen.findByText('Ajustes del baúl'));
+
+    expect(await screen.findByText('Ajustes del baúl')).toBeInTheDocument();
   });
 
-  it('shows the removal-requests item with a badge only when there are pending ones', async () => {
+  it('navigates to "Mi cuenta"', async () => {
     const user = userEvent.setup();
-    usePersonasStore.setState({ removalRequests: { 'baul-1': [{ id: 'r1', status: 'pending' } as never] } });
-
     renderContainer(baul());
-    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
 
-    expect(await screen.findByText('Solicitudes de eliminación')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(await screen.findByText('Mi cuenta'));
+
+    expect(await screen.findByText('Mi cuenta')).toBeInTheDocument();
+  });
+
+  it('navigates to "Ayuda"', async () => {
+    const user = userEvent.setup();
+    renderContainer(baul());
+
+    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(await screen.findByText('Ayuda'));
+
+    expect(await screen.findByText('Ayuda')).toBeInTheDocument();
   });
 });

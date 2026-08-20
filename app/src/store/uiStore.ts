@@ -63,10 +63,6 @@ interface UIState {
   showToastMessage: (message: string, variant?: ToastVariant) => void;
   hideToast: () => void;
 
-  // Modals state
-  showProfileMenu: boolean;
-  setShowProfileMenu: (show: boolean) => void;
-
   // Recomendación de contribución (ver ContributionSuggestionContainer): una vez mostrada y
   // resuelta (guardada u "ahora no"), no debe volver a proponerse en ESE baúl durante el
   // cooldown — pero cambiar a otro baúl sí debe poder proponer una sugerencia nueva, de ahí la
@@ -123,10 +119,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     }, 3000);
   },
   hideToast: () => set({ showToast: false }),
-
-  // Modals
-  showProfileMenu: false,
-  setShowProfileMenu: (show) => set({ showProfileMenu: show }),
 
   isContributionSuggestionOnCooldown: (baulId) => {
     const dismissedAt = readContributionSuggestionCooldowns()[baulId];

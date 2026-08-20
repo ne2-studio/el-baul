@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import { ProfileMenuModal } from '@/features/profile/components/ProfileMenuModal';
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { ConnectivityLostScreen } from '@/design-system/components/feedback/ConnectivityLostScreen';
@@ -26,6 +25,7 @@ import { OnboardingRoute } from '../features/auth/routes/OnboardingRoute';
 import { HomeRedirectRoute } from '../features/baules/routes/HomeRedirectRoute';
 import { CreateBaulRoute } from '../features/baules/routes/CreateBaulRoute';
 import { BaulRoute } from '../features/baules/routes/BaulRoute';
+import { BaulSettingsRoute } from '../features/baules/routes/BaulSettingsRoute';
 import { AiChatRoute } from '../features/chat/routes/AiChatRoute';
 import { ChatMemoriesRoute } from '../features/chat/routes/ChatMemoriesRoute';
 import { RequestBaulDeletionRoute } from '../features/baules/routes/RequestBaulDeletionRoute';
@@ -43,6 +43,7 @@ import { TvSessionRoute } from '../features/tv/routes/TvSessionRoute';
 import { AcceptBaulInviteRoute } from '../features/sharing/routes/AcceptBaulInviteRoute';
 import { SelectBaulForShareRoute } from '../features/sharing/routes/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/routes/ProfileRoute';
+import { MyAccountRoute } from '../features/profile/routes/MyAccountRoute';
 import { NotificationPreferencesRoute } from '../features/profile/routes/NotificationPreferencesRoute';
 import { HelpSupportRoute } from '../features/support/routes/HelpSupportRoute';
 import { SupportFormRoute } from '../features/support/routes/SupportFormRoute';
@@ -65,8 +66,6 @@ function App() {
     toastMessage,
     toastVariant,
     hideToast,
-    showProfileMenu,
-    setShowProfileMenu,
   } = useUIStore();
 
   const { setAuthenticated } = useAuthStore();
@@ -282,6 +281,11 @@ function App() {
             <RequestBaulDeletionRoute />
           </ProtectedRoute>
         } />
+        <Route path="/baules/:baulId/ajustes" element={
+          <ProtectedRoute>
+            <BaulSettingsRoute />
+          </ProtectedRoute>
+        } />
         <Route path="/baules/:baulId/capitulos/:chapterId" element={
           <ProtectedRoute>
             <ChapterRoute />
@@ -357,6 +361,11 @@ function App() {
           </ProtectedRoute>
         } />
 
+        <Route path="/cuenta" element={
+          <ProtectedRoute>
+            <MyAccountRoute onSignOut={handleSignOut} isSigningOut={isPending('signOut')} />
+          </ProtectedRoute>
+        } />
         <Route path="/perfil" element={
           <ProtectedRoute>
             <ProfileRoute />
@@ -400,30 +409,6 @@ function App() {
         </Routes>
       )}
         </>
-      )}
-
-      {/* Profile Menu Modal */}
-      {showProfileMenu && (
-        <ProfileMenuModal
-          onClose={() => setShowProfileMenu(false)}
-          onNavigateToProfile={() => {
-            setShowProfileMenu(false);
-            navigate('/perfil');
-          }}
-          onNavigateToNotifications={() => {
-            setShowProfileMenu(false);
-            navigate('/configuracion/notificaciones');
-          }}
-          onNavigateToHelp={() => {
-            setShowProfileMenu(false);
-            navigate('/ayuda');
-          }}
-          onSignOut={async () => {
-            const signedOut = await handleSignOut();
-            if (signedOut) setShowProfileMenu(false);
-          }}
-          isSigningOut={isPending('signOut')}
-        />
       )}
 
       {/* Toast */}

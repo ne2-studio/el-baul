@@ -2,14 +2,12 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationPreferencesScreen } from '@/features/profile/components/NotificationPreferencesScreen';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { loadNotificationPreferences, updateNotificationPreferences, enablePushNotifications, disablePushNotifications } from '@/features/profile/useCases';
 import { isPushNotificationsSupported, PushPermissionDeniedError } from '@/features/profile/native/pushNotifications';
 
 export const NotificationPreferencesRoute: React.FC = () => {
   const navigate = useNavigate();
-  const { setShowProfileMenu } = useUIStore();
   const { run, isPending } = useAsyncAction();
   const { run: runPush, isPending: isPushPending } = useAsyncAction();
   const { weeklyDigestEnabled, pushNotificationsEnabled } = useAuthStore();
@@ -52,10 +50,7 @@ export const NotificationPreferencesRoute: React.FC = () => {
 
   return (
     <NotificationPreferencesScreen
-      onBack={() => {
-        setShowProfileMenu(false);
-        navigate('/baules');
-      }}
+      onBack={() => navigate('/cuenta')}
       weeklyDigestEnabled={weeklyDigestEnabled}
       onToggle={handleToggle}
       isSaving={isPending()}

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import { UserCircle } from 'lucide-react';
-import { IconButton } from '@/design-system/components/actions/IconButton';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
@@ -33,7 +31,6 @@ export const BaulRoute: React.FC = () => {
   const { baulId } = useParams();
   const auth = useAuth();
 
-  const setShowProfileMenu = useUIStore((state) => state.setShowProfileMenu);
   const startContributionSuggestionCooldown = useUIStore((state) => state.startContributionSuggestionCooldown);
 
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
@@ -118,9 +115,6 @@ export const BaulRoute: React.FC = () => {
         leading={<WorkspaceSwitcherContainer activeBaul={baul} />}
         trailing={
           <div className="flex items-center gap-1">
-            <IconButton aria-label="Abrir menú de cuenta" onClick={() => setShowProfileMenu(true)}>
-              <UserCircle className="w-5 h-5" />
-            </IconButton>
             <BaulSettingsMenuContainer baul={baul} />
           </div>
         }
