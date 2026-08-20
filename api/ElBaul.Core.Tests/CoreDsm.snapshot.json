@@ -1,22 +1,22 @@
 {
   "Features": [
-    "Admin",
-    "Analytics",
+    "Shared",
+    "Users",
     "Bauls",
     "Chapters",
-    "Chat",
-    "Contributions",
-    "Feed",
-    "Moderation",
-    "Notifications",
     "Personas",
     "Photos",
     "Recuerdos",
-    "Shared",
+    "Chat",
+    "Feed",
+    "Notifications",
+    "Admin",
+    "Analytics",
+    "Contributions",
+    "Moderation",
     "Sharing",
     "Support",
-    "TvMode",
-    "Users"
+    "TvMode"
   ],
   "Edges": [
     {

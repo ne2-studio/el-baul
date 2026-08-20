@@ -70,9 +70,14 @@ public static class DsmGenerator
             .ThenBy(e => e.To, StringComparer.Ordinal)
             .ToList();
 
-        var cyclicGroups = FindCyclicGroups(features, edges);
+        var sccs = ComputeSccsInDependencyOrder(features, edges);
+        var orderedFeatures = sccs.SelectMany(g => g).ToList();
+        var cyclicGroups = sccs
+            .Where(g => g.Count > 1)
+            .OrderBy(g => g[0], StringComparer.Ordinal)
+            .ToList();
 
-        return new Dsm(features.ToList(), edges, cyclicGroups);
+        return new Dsm(orderedFeatures, edges, cyclicGroups);
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -85,8 +90,13 @@ public static class DsmGenerator
     // and the received (mismatch) file are compared/written as, so keep it stable.
     public static string ToJson(Dsm dsm) => JsonSerializer.Serialize(dsm, JsonOptions);
 
-    // Tarjan's SCC algorithm; only groups with more than one feature represent a real cycle.
-    private static IReadOnlyList<IReadOnlyList<string>> FindCyclicGroups(IEnumerable<string> features, IReadOnlyList<Edge> edges)
+    // Tarjan's SCC algorithm. Returns every SCC (singletons included), in dependency-first
+    // finish order: a group is only appended once everything it (transitively) uses has
+    // already been appended. Flattening this order gives the DSM row/column order used for
+    // triangularization — used-before-user, so acyclic edges land on one consistent side of
+    // the diagonal and the only entries crossing to the other side sit inside a cyclic
+    // group's own contiguous block. Groups with more than one feature represent a real cycle.
+    private static IReadOnlyList<IReadOnlyList<string>> ComputeSccsInDependencyOrder(IEnumerable<string> features, IReadOnlyList<Edge> edges)
     {
         var graph = edges
             .GroupBy(e => e.From)
@@ -141,9 +151,7 @@ public static class DsmGenerator
         }
 
         return groups
-            .Where(g => g.Count > 1)
             .Select(g => (IReadOnlyList<string>)g.OrderBy(f => f, StringComparer.Ordinal).ToList())
-            .OrderBy(g => g[0], StringComparer.Ordinal)
             .ToList();
     }
 

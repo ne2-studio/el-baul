@@ -4,25 +4,25 @@
 
 `●` = deep import (`.Application`/`.OutputPorts` ajeno) · `○` = solo API pública · vacío = sin dependencia
 
-| ↓usa→ | Admin | Analytics | Bauls | Chapters | Chat | Contributions | Feed | Moderation | Notifications | Personas | Photos | Recuerdos | Shared | Sharing | Support | TvMode | Users |
+| ↓usa→ | Shared | Users | Bauls | Chapters | Personas | Photos | Recuerdos | Chat | Feed | Notifications | Admin | Analytics | Contributions | Moderation | Sharing | Support | TvMode |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Admin | — |  | ● | ● | ● |  |  |  | ● | ● | ● |  | ● |  |  |  | ● |
-| Analytics |  | — |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| Bauls |  |  | — |  |  |  |  |  |  | ● | ● |  | ● |  |  |  | ● |
-| Chapters |  |  | ● | — |  |  |  |  |  | ● | ● | ● | ● |  |  |  |  |
-| Chat |  |  | ● | ● | — |  |  |  |  | ● | ● | ● | ● |  |  |  |  |
-| Contributions |  |  | ● |  |  | — |  |  |  |  | ● |  | ● |  |  |  |  |
-| Feed |  |  | ● | ● |  |  | — |  |  | ● | ● | ○ | ● |  |  |  |  |
-| Moderation |  |  | ● |  |  |  |  | — |  |  | ● |  | ● |  |  |  | ● |
-| Notifications |  |  | ● | ● |  |  | ● |  | — |  | ● | ● | ● |  |  |  | ● |
-| Personas |  |  | ● |  |  |  |  |  |  | — | ● |  | ● |  |  |  | ● |
-| Photos |  |  | ● | ● |  |  |  |  |  | ● | — | ● | ● |  |  |  |  |
-| Recuerdos |  |  | ● | ● |  |  |  |  |  | ● | ● | — | ● |  |  |  |  |
-| Shared |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |
-| Sharing |  |  | ● |  |  |  |  |  |  | ● | ● | ● | ● | — |  |  | ● |
-| Support |  |  |  |  |  |  |  |  |  |  |  |  | ● |  | — |  | ● |
-| TvMode |  |  | ● | ● |  |  |  |  |  | ● | ● | ● | ● | ● |  | — |  |
-| Users |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |  | — |
+| Shared | — |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Users | ● | — |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Bauls | ● | ● | — |  | ● | ● |  |  |  |  |  |  |  |  |  |  |  |
+| Chapters | ● |  | ● | — | ● | ● | ● |  |  |  |  |  |  |  |  |  |  |
+| Personas | ● | ● | ● |  | — | ● |  |  |  |  |  |  |  |  |  |  |  |
+| Photos | ● |  | ● | ● | ● | — | ● |  |  |  |  |  |  |  |  |  |  |
+| Recuerdos | ● |  | ● | ● | ● | ● | — |  |  |  |  |  |  |  |  |  |  |
+| Chat | ● |  | ● | ● | ● | ● | ● | — |  |  |  |  |  |  |  |  |  |
+| Feed | ● |  | ● | ● | ● | ● | ○ |  | — |  |  |  |  |  |  |  |  |
+| Notifications | ● | ● | ● | ● |  | ● | ● |  | ● | — |  |  |  |  |  |  |  |
+| Admin | ● | ● | ● | ● | ● | ● |  | ● |  | ● | — |  |  |  |  |  |  |
+| Analytics | ● |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |  |
+| Contributions | ● |  | ● |  |  | ● |  |  |  |  |  |  | — |  |  |  |  |
+| Moderation | ● | ● | ● |  |  | ● |  |  |  |  |  |  |  | — |  |  |  |
+| Sharing | ● | ● | ● |  | ● | ● | ● |  |  |  |  |  |  |  | — |  |  |
+| Support | ● | ● |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |
+| TvMode | ● |  | ● | ● | ● | ● | ● |  |  |  |  |  |  |  | ● |  | — |
 
 ## Ciclos
 
