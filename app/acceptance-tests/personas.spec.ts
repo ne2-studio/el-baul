@@ -67,7 +67,7 @@ test('joining via the global invite link → change role → revoke access → a
   const baulId = await createBaulViaApi(page, accessToken, `Personas role-change test baúl ${Date.now()}`);
   await page.goto(`/baules/${baulId}`);
 
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   const linkLocator = page.getByText(/\/invitacion\/baul\//);
   await expect(linkLocator).toBeVisible();

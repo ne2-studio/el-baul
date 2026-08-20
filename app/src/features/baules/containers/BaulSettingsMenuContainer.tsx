@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HelpCircle, MoreVertical, Share2, User } from 'lucide-react';
+import { HelpCircle, Menu, Share2, User } from 'lucide-react';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import { InviteFamilyModal } from '@/features/sharing/components/InviteFamilyModal';
 import {
@@ -48,8 +48,8 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <IconButton aria-label="Opciones del baúl">
-            <MoreVertical className="w-5 h-5" />
+          <IconButton aria-label="Menú">
+            <Menu className="w-5 h-5" />
           </IconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">

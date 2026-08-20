@@ -36,7 +36,7 @@ async function inviteAndAcceptCollaborator(
 ): Promise<{ guestContext: BrowserContext; guestPage: Page }> {
   await adminPage.goto(`/baules/${baulId}`);
   await dismissContributionSuggestionIfShown(adminPage);
-  await adminPage.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await adminPage.getByRole('button', { name: 'Menú' }).click();
   await adminPage.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   const linkLocator = adminPage.getByText(/\/invitacion\/baul\//);
   await expect(linkLocator).toBeVisible();
@@ -80,7 +80,7 @@ test('submit removal request → approve (photo is removed)', async ({ page, bro
 
   await page.goto(`/baules/${baulId}`);
   await dismissContributionSuggestionIfShown(page);
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Solicitudes de eliminación' }).click();
   await page.waitForURL(/\/eliminar-solicitudes\//);
   await page.getByRole('button', { name: 'Borrar foto' }).click();
@@ -98,7 +98,7 @@ test('submit removal request → reject (photo is kept)', async ({ page, browser
 
   await page.goto(`/baules/${baulId}`);
   await dismissContributionSuggestionIfShown(page);
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Solicitudes de eliminación' }).click();
   await page.waitForURL(/\/eliminar-solicitudes\//);
   await page.getByRole('button', { name: 'Mantener foto' }).click();

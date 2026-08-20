@@ -6,7 +6,7 @@ test('invite family via global link → guest auto-joins with an auto-created pe
   const baulId = await createBaulViaApi(page, accessToken, `Global invite test baúl ${Date.now()}`);
   await page.goto(`/baules/${baulId}`);
 
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
 
   const linkLocator = page.getByText(/\/invitacion\/baul\//);
@@ -55,7 +55,7 @@ test('invite family via global link → guest auto-joins with an auto-created pe
   // views, so wait for the confirmation sheet before the second click — otherwise a slow
   // re-render could let the second click land on the still-visible trigger again instead of
   // actually confirming, silently no-oping the regenerate.
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   await page.getByRole('button', { name: 'Regenerar enlace' }).click();
   await expect(page.getByText('¿Regenerar el enlace?')).toBeVisible();
@@ -81,7 +81,7 @@ test('invite family via global link → guest takes the "ver más" onboarding de
   const baulId = await createBaulViaApi(page, accessToken, `Global invite onboarding test baúl ${Date.now()}`);
   await page.goto(`/baules/${baulId}`);
 
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   const linkLocator = page.getByText(/\/invitacion\/baul\//);
   await expect(linkLocator).toBeVisible();
@@ -121,7 +121,7 @@ test('invite family via global link → pre-provisioned persona exists → guest
   const personaId = await createPersonaViaApi(page, accessToken, baulId, nickname);
 
   await page.goto(`/baules/${baulId}`);
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   const linkLocator = page.getByText(/\/invitacion\/baul\//);
   await expect(linkLocator).toBeVisible();
@@ -162,7 +162,7 @@ test('invite family via global link → pre-provisioned persona exists → guest
   const personaId = await createPersonaViaApi(page, accessToken, baulId, nickname);
 
   await page.goto(`/baules/${baulId}`);
-  await page.getByRole('button', { name: 'Opciones del baúl' }).click();
+  await page.getByRole('button', { name: 'Menú' }).click();
   await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
   const linkLocator = page.getByText(/\/invitacion\/baul\//);
   await expect(linkLocator).toBeVisible();

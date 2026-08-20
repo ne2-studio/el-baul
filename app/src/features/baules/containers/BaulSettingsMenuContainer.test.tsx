@@ -42,14 +42,14 @@ describe('BaulSettingsMenuContainer', () => {
   it('always shows the menu trigger, even for a role with no baúl-management permissions', () => {
     renderContainer(baul({ role: 'colaborador', isCustodio: false }));
 
-    expect(screen.getByRole('button', { name: 'Opciones del baúl' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Menú' })).toBeInTheDocument();
   });
 
   it('hides "Ajustes del baúl" for a role with no baúl-management permissions', async () => {
     const user = userEvent.setup();
     renderContainer(baul({ role: 'colaborador', isCustodio: false }));
 
-    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(screen.getByRole('button', { name: 'Menú' }));
 
     expect(screen.queryByText('Ajustes del baúl')).not.toBeInTheDocument();
     expect(await screen.findByText('Mi cuenta')).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('BaulSettingsMenuContainer', () => {
     const user = userEvent.setup();
     renderContainer(baul());
 
-    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(screen.getByRole('button', { name: 'Menú' }));
     await user.click(await screen.findByText('Ajustes del baúl'));
 
     expect(await screen.findByText('Ajustes del baúl')).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('BaulSettingsMenuContainer', () => {
     const user = userEvent.setup();
     renderContainer(baul());
 
-    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(screen.getByRole('button', { name: 'Menú' }));
     await user.click(await screen.findByText('Mi cuenta'));
 
     expect(await screen.findByText('Mi cuenta')).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('BaulSettingsMenuContainer', () => {
     const user = userEvent.setup();
     renderContainer(baul());
 
-    await user.click(screen.getByRole('button', { name: 'Opciones del baúl' }));
+    await user.click(screen.getByRole('button', { name: 'Menú' }));
     await user.click(await screen.findByText('Ayuda'));
 
     expect(await screen.findByText('Ayuda')).toBeInTheDocument();

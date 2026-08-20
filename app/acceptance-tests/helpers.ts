@@ -35,7 +35,7 @@ export async function loginAs(page: Page, userButtonName: 'Admin User' | 'Normal
 // suggestion (see ContributionSuggestionContainer) whenever that baúl already has an
 // untagged photo — most specs never hit this (they navigate to the baúl before uploading
 // anything), but any that upload a photo first and then land back on `/baules/:baulId` need
-// to get past it before the normal chrome (header, tabs, "Opciones del baúl", …) is there to
+// to get past it before the normal chrome (header, tabs, "Menú", …) is there to
 // interact with. Only ever waits a short beat: on every other spec the normal chrome is just
 // already there and this resolves immediately without clicking anything.
 export async function dismissContributionSuggestionIfShown(page: Page): Promise<void> {
