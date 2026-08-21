@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Chapter } from '@/types';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
@@ -89,5 +89,31 @@ describe('UploadConfirmationScreen — 30-photo cap per upload (issue #37)', () 
 
     expect(await screen.findByText('5 fotos seleccionadas')).toBeInTheDocument();
     expect(onPhotosLimitExceeded).not.toHaveBeenCalled();
+  });
+});
+
+describe('UploadConfirmationScreen — drag and drop (issue #41)', () => {
+  it('adds dropped files on the "Añadir más fotos" tile once photos are already selected', async () => {
+    const newFiles = makeFiles(2);
+    vi.mocked(materializeFileList).mockResolvedValue({
+      selectedPhotos: makePhotos(2, 3),
+      droppedCount: 0,
+    });
+
+    render(
+      <UploadConfirmationScreen
+        currentChapter={currentChapter}
+        selectedPhotos={makePhotos(3)}
+        onBack={vi.fn()}
+        onUpload={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('3 fotos seleccionadas')).toBeInTheDocument();
+
+    const addMoreTile = screen.getByLabelText('Añadir más fotos');
+    fireEvent.drop(addMoreTile, { dataTransfer: { files: newFiles } });
+
+    expect(await screen.findByText('5 fotos seleccionadas')).toBeInTheDocument();
   });
 });

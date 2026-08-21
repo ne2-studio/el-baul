@@ -55,7 +55,7 @@ export function UploadConfirmationScreen({
   };
   const handleFileSelect = useFileInputSelection(addPhotos, onPhotosDropped, setIsLoadingPreviews);
 
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
@@ -158,6 +158,8 @@ export function UploadConfirmationScreen({
               <button
                 type="button"
                 onClick={openPicker}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
                 aria-label="Añadir más fotos"
                 className="aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
               >
