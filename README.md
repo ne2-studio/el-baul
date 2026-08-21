@@ -19,6 +19,7 @@ glossary behind these trade-offs.
 api/            ASP.NET Core (.NET 10) backend
 app/            React consumer frontend
 app/android/    Capacitor Android wrapper around app/'s built dist/
+app/ios/        Capacitor iOS wrapper around app/'s built dist/
 admin/          React ops backoffice
 e2e-tests/      Whole-repo Playwright smoke suite
 imgproxy/       Image-resizing sidecar
@@ -68,23 +69,6 @@ npm run dev
 
 See [`app/README.md`](app/README.md) for environment configuration and tests.
 
-## Verification
-
-All canonical verification commands run from the repository root:
-
-```bash
-./scripts/verify backend
-./scripts/verify backend-acceptance
-./scripts/verify frontend          # typecheck + Vitest + Storybook executable specs
-./scripts/verify admin
-./scripts/verify frontend-acceptance
-./scripts/verify admin-acceptance
-./scripts/verify e2e
-./scripts/verify all
-```
-
-See [`docs/architecture/testing.md`](docs/architecture/testing.md) for what each level covers.
-
 ## Git Hooks
 
 This repository includes Git hooks in `.githooks/`. Enable them once per clone:
@@ -93,13 +77,22 @@ This repository includes Git hooks in `.githooks/`. Enable them once per clone:
 git config core.hooksPath .githooks
 ```
 
-The `commit-msg` hook requires commit messages to follow Conventional Commits:
+## Verification
 
-```text
-feat(app): add photo upload
-fix(api): handle missing user claims
-docs: update local development guide
+All canonical verification commands run from the repository root:
+
+```bash
+./scripts/verify backend
+./scripts/verify backend-acceptance
+./scripts/verify frontend          # typecheck + Vitest + Storybook executable specs
+./scripts/verify frontend-acceptance
+./scripts/verify admin
+./scripts/verify admin-acceptance
+./scripts/verify e2e
+./scripts/verify all
 ```
+
+See [`docs/architecture/testing.md`](docs/architecture/testing.md) for what each level covers.
 
 ## Documentation
 

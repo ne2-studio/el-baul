@@ -25,12 +25,7 @@ docs/API-CONVENTIONS.md
 docs/DESIGN.md
 ```
 
-## Branching
+## Workflow
 
-This project uses trunk-based development. If you're already on `main` branch, commit
-changes and push straight to `main`.
-
-## Before finishing a non-trivial coding task
-
-Spawn a `verifier` agent with the diff and a minimal statement of intent. Verification
-MUST succeed to consider the task done.
+This project uses trunk-based development.
+Always use conventional commits.
