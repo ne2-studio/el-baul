@@ -21,6 +21,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Arreglado
 
 - Al cambiar el nivel de acceso de una persona, ahora aparece un aviso de éxito confirmando el cambio.
+- En el menú "···" de una persona, ya no aparece una doble línea separadora cuando no hay ninguna opción de gestión de acceso disponible (por ejemplo, en una persona pendiente de aceptar la invitación).
 
 ## [beta-v0.4.1] - 2026-08-18
 

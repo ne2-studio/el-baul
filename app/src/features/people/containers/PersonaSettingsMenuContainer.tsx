@@ -37,6 +37,12 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
   const { run, isPending } = useAsyncAction();
   const currentBaul = baules.find((b) => b.id === baulId);
   const permissions = getPersonaPermissions({ currentBaulRole: currentBaul?.role, currentIsCustodio: currentBaul?.isCustodio, persona });
+  // Separators must reflect whether the groups they sit between actually render items, not just
+  // the raw permission flags — otherwise an empty group (e.g. a pending persona, whose "manage
+  // access" actions are both hidden) leaves two adjacent separators with nothing in between.
+  const showsInfoGroup = permissions.canEditPersonaInfo || permissions.canUploadPersonaAvatar;
+  const showsAccessGroup = permissions.canChangePersonaRole || permissions.canRestorePersonaAccess;
+  const showsRevokeGroup = permissions.canRevokePersonaAccess;
 
   const [showEditInfoModal, setShowEditInfoModal] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
@@ -122,7 +128,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
             </DropdownMenuItem>
           )}
 
-          {permissions.canEditPersonaInfo && permissions.canManagePersona && <DropdownMenuSeparator />}
+          {showsInfoGroup && showsAccessGroup && <DropdownMenuSeparator />}
 
           {permissions.canChangePersonaRole && (
             <DropdownMenuItem onClick={() => setShowManageAccessModal(true)}>
@@ -138,7 +144,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
             </DropdownMenuItem>
           )}
 
-          {permissions.canManagePersona && <DropdownMenuSeparator />}
+          {(showsInfoGroup || showsAccessGroup) && showsRevokeGroup && <DropdownMenuSeparator />}
 
           {permissions.canRevokePersonaAccess && (
             <DropdownMenuItem variant="destructive" onClick={() => setShowRevokeModal(true)}>

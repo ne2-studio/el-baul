@@ -117,4 +117,18 @@ describe('PersonaSettingsMenuContainer', () => {
     expect(screen.queryByText('Revocar acceso')).not.toBeInTheDocument();
     expect(screen.queryByText('Gestionar acceso')).not.toBeInTheDocument();
   });
+
+  it('does not render two adjacent separators for a pending persona', async () => {
+    const user = userEvent.setup();
+    renderContainer(persona({ status: 'pending' }));
+
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+
+    // A pending persona has neither "Gestionar acceso" nor "Permitir invitación" available,
+    // so the group between the two separators is empty and only one separator (at most)
+    // should render, not two adjacent ones.
+    expect(screen.queryByText('Gestionar acceso')).not.toBeInTheDocument();
+    expect(screen.queryByText('Permitir invitación')).not.toBeInTheDocument();
+    expect(document.querySelectorAll('[data-slot="dropdown-menu-separator"]')).toHaveLength(1);
+  });
 });
