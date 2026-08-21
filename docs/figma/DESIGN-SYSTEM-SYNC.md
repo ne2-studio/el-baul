@@ -111,9 +111,47 @@ built: `BaulPersonasScreen` (Screens > Baul). New reusable pieces this required:
   `lucide-react` imports in this feature's code, not part of the `icons.ts` catalog,
   but built with the same real-SVG pipeline as the other 48.
 
-Remaining `BaulRoute` tabs (`Historia`/`Recuerdos` — `BaulFeedTabContainer`'s `FeedTab`
-is the largest, still unexplored — and `Capítulos` — `ChapterCard` + the loose-photos
-collage) are not yet built.
+**`BaulCapitulosScreen`** (Screens > Baul), the second of the 3 tabs, built the same way
+— straight from `BaulChaptersTabContainer.tsx` + `ChapterCard.tsx`, no Storybook source.
+New pieces:
+- `ChapterCard` gained a real `Cover` variant axis (`Fallback` / `Photo`) — the photo
+  variant uses the app's own `storybookPhotos.beach` fixture (same SVG→PNG→re-upload
+  round-trip as `Avatar`'s photos).
+- `LooseChapterCard` (Feature Components > Baules): the "fotos sueltas" virtual-chapter
+  tile, its 3x3 collage using `FotosSueltasCollage`'s real fallback palette
+  (`COLLAGE_COLORS`) since no loose-photo fixtures exist in the repo.
+- `ExpandableFAB` (Components > Actions): built closed-state only (single circular
+  button) — the 2-action expanded state (`Nuevo capítulo` / `Subir fotos`) was not
+  built, the same "skip the overlay" scope call as the header dropdowns.
+
+**`BaulRecuerdosScreen`** (Screens > Baul), the third and last tab, closes out the full
+`BaulRoute` — built by cloning `BaulCapitulosScreen`'s shell (PageHeader row + Tabbar +
+Body) and swapping `Tabbar` to `Active=Historia` + replacing `Body`'s content, from
+`BaulFeedTabContainer.tsx` + `FeedTab.tsx`. Modeled the `Features:BaulFeedEnabled`
+toggle-ON path (merged recuerdos + photo-upload-batch + chapter-created cards) rather
+than the toggle-off recuerdo-only fallback, since it exercises more of the feed's real
+component surface — and left out the "Nueva actividad" / `isNew` highlight state (all
+cards shown as already-seen). 3 new Feature Components, each a real `COMPONENT` (not a
+one-off frame) so they can be instanced like `PersonaCard`/`ChapterCard`:
+- `RecuerdoFeedCard`, `ChapterCreatedFeedCard` (Feature Components > Memories)
+- `PhotoBatchCard` (Feature Components > Photos)
+
+All 3 share 2 new Components > Data Display pieces: `FeedCardHeader` (avatar + "name did
+action" line + relative timestamp — built with no trailing slot, so
+`RecuerdoFeedCard`'s edit/share icon buttons were deliberately left out) and
+`ChapterBadge` (the pill-shaped "en «chapter name»" link, `bg-primary/10` pre-blended to
+a flat solid per the known opacity+variable-bind limitation below).
+
+Along the way, review caught: a stale typo baked into `Tabbar`'s own `Active=Historia`
+variant (its own tab button's label read "Activa", not "Historia" — dormant until this
+was the first screen to actually use that variant) — fixed at the component definition;
+and all 3 Baul screens' FABs were positioned horizontally centered under their screen,
+when the real code (`SimpleFAB`/`ExpandableFAB`, both `fixed bottom-6 right-5`) anchors
+them to the bottom-right corner instead — fixed across all 3.
+
+`BaulRoute` (all 3 tabs) is now fully built out. Remaining screens beyond the Baúl
+shell — chapter detail, photo viewer, sharing flows beyond `ClaimPersonaScreen`, etc. —
+are not yet started.
 
 ## Known gotchas (read before writing more `use_figma` scripts)
 
@@ -164,6 +202,31 @@ collage) are not yet built.
 - **`Avatar`'s `Size` variant values are Tailwind spacing units, not pixels.** Circle
   diameter is `unit * 4px` (6→24px … 24→96px) — resize components to that, not to the
   raw variant number.
+- **Icon `strokeWeight` does NOT auto-scale with `resize()`.** Unlike a browser scaling
+  an SVG viewBox, Figma's `strokeWeight` is a separate absolute-px value. Every icon
+  placed at a non-24px size needs its `VECTOR` children's `strokeWeight` manually set to
+  `2 * (instance.width / 24)` after every resize — no automatic mechanism exists.
+- **Auto-layout components need BOTH `primaryAxisSizingMode` and
+  `counterAxisSizingMode` explicitly `'FIXED'`** for anything that must stay a fixed
+  circle/square (FABs, icon-only buttons) — leaving one on its `AUTO` default lets it hug
+  down to its icon's own size on that axis. Hit twice (`ExpandableFAB`, `IconButton`).
+- **`node.appendChild(x)` returns `void`, not `x`.** `const child = parent.appendChild(y)`
+  silently assigns `undefined` — create the node first, `appendChild` it as its own
+  statement, then keep using the original variable.
+- **A `findAll`/`findOne` scoped to a whole component instance can reach into nested
+  instances' own internals** (e.g. `Avatar`'s initials text) if the search predicate
+  isn't specific enough — matching on loose conditions like "first/other text node"
+  inside a `FeedCardHeader` instance overwrote the nested `Avatar`'s initials text
+  instead of the header's own name/timestamp text. Prefer structural indexing
+  (`instance.children[i]`) over a broad `findAll(type === 'TEXT')` when a component
+  nests other instances that also carry text.
+- **`SimpleFAB`/`ExpandableFAB` are `fixed bottom-6 right-5` in code — right-aligned, not
+  centered.** Don't assume a FAB is horizontally centered under its screen just because
+  it visually reads that way at a glance; check the actual Tailwind classes.
+- **A component variant that nothing has used yet can carry a dormant bug** (a stale
+  typo, wrong size, etc.) that only surfaces the first time a screen actually selects
+  it — re-verify content, not just structure, on any variant used for the first time,
+  even if the component set as a whole was "already built and reviewed".
 
 ## Related skills
 
