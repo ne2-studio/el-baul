@@ -29,3 +29,9 @@ docs/DESIGN.md
 
 This project uses trunk-based development.
 Always use conventional commits.
+
+## Language
+
+Everything in this repo (incl. but not limited to code, docs, commit msgs...) MUST be
+written in english, EXCEPT domain terms that convey a special meaning, such as Baúl,
+Recuerdo, Persona, Custodio, etc.
