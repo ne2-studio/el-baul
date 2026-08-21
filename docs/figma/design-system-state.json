@@ -52,6 +52,9 @@
     "ActionListItem": "147:24",
     "Avatar": "161:77"
   },
+  "avatarImageFill": {
+    "note": "Avatar's 5 'State=Image' variants (161:5/6/7/8/9) use a real photo instead of a flat gray placeholder — the actual app/src/storybook/fixtures.ts storybookAvatars.abuela fixture (public/storybook-fixtures/avatar-1.svg), exported to PNG and applied as an IMAGE fill via upload_assets(nodeId=...). Uploaded once per variant since upload_assets only accepts a single nodeId per call. imageHash: 81a3dd3971f394a35bdd2ed23c6997cd5734e439."
+  },
   "icons": {
     "note": "48 real Lucide vector components on Foundations page, section 166:2, one per app/src/design-system/foundations/icons/icons.ts catalog key (name = 'Icon/{key}'). Built with figma.createNodeFromSvg() from lucide-static SVGs fetched via unpkg, then figma.createComponentFromNode(). Vector strokes bound to color/icon/default. Replaces the old generic Icon/Placeholder component (153:47), which was removed once its 0 remaining usages were confirmed.",
     "componentIds": {
@@ -103,6 +106,8 @@
     "review-fixes-round3-icons-and-avatar-initials",
     "page-restructure-storybook-style",
     "component-Avatar-added-and-wired-into-Card",
-    "real-icon-import-48-lucide-icons-and-rewire-Avatar-ActionListItem-BackButton"
+    "real-icon-import-48-lucide-icons-and-rewire-Avatar-ActionListItem-BackButton",
+    "fix-two-toned-icons-findAll-vs-findOne",
+    "avatar-image-variants-use-real-photo-fixture"
   ]
 }

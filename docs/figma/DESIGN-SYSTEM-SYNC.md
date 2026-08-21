@@ -57,6 +57,13 @@ screen painted its own avatar circle inline). Modeled as a 20-variant set —
 a `TEXT` property for the initials. `Card`'s hardcoded avatar circle was replaced with
 a real `Avatar` instance (`Initials Plain`, `Size=14`).
 
+`Avatar`'s `Image` variants show a real photo (the app's own
+`storybookAvatars.abuela` fixture, `public/storybook-fixtures/avatar-1.svg`) instead of
+a flat gray placeholder — exported to PNG and applied as an `IMAGE` fill via
+`upload_assets`, one call per size since the tool only accepts a single target node
+per upload. Avatar's own circular clip crops out the export's non-transparent corners,
+so no extra masking was needed.
+
 **Real icons.** All 48 entries of `app/src/design-system/foundations/icons/icons.ts`
 were imported as real, pixel-accurate Lucide vector components — one Figma component
 per catalog key (`Icon/{key}`), living in a new `Icons` section on the `Foundations`
@@ -99,6 +106,11 @@ from scratch.
 - **Setting x/y on a nested child inside an `INSTANCE`** can throw `This property
   cannot be overridden in an instance: relative-transform` — usually means the parent
   is auto-layout and already governs that child's position; no fix needed if so.
+- **`upload_assets` accepts a real photo for a fill.** POST an SVG to get back an
+  `imageHash` too, but that hash renders blank when applied directly as a fill on
+  another node — export the uploaded node to PNG (`download_assets`) and re-upload
+  *that* PNG with `nodeId` set to get a working `IMAGE` fill. One `upload_assets` call
+  per target node (its `nodeId` param only takes one at a time).
 - **Multi-path icons are multiple `VECTOR` nodes, not one.** `createNodeFromSvg` turns
   each `<path>`/`<circle>`/`<line>` into its own vector layer. Recoloring with
   `findOne(type === 'VECTOR')` only touches the first one, leaving the icon visibly
