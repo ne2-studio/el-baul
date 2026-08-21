@@ -39,7 +39,10 @@
       "Bash(head *)",
       "Bash(tail *)",
       "Bash(./scripts/run-env *)",
-      "Bash(./scripts/verify *)"
+      "Bash(./scripts/verify *)",
+      "Bash(./scripts/openapi)",
+      "Bash(./scripts/openapi accept-contract *)",
+      "Bash(./scripts/openapi generate-types *)"
     ]
   }
 }
