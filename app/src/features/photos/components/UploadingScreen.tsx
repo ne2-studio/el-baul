@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Loader2, X } from 'lucide-react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
+import { PhotoStack } from '@/design-system/patterns/media/PhotoStack';
 import { SelectedPhoto } from '@/features/photos/uploadFlow';
 import { UploadItemResult } from '@/features/photos/uploadFlow';
-
-type PhotoStatus = 'pending' | 'success' | 'error';
 
 interface UploadingScreenProps {
   photos: SelectedPhoto[];
@@ -13,16 +11,18 @@ interface UploadingScreenProps {
 }
 
 export function UploadingScreen({ photos, onUpload, onSettled }: UploadingScreenProps) {
-  const [statuses, setStatuses] = useState<Record<string, PhotoStatus>>(() =>
-    Object.fromEntries(photos.map((p) => [p.id, 'pending' as PhotoStatus]))
-  );
+  // Only the total settled count (success + error combined) is tracked — nothing renders
+  // per-photo anymore, so there's no need for a status map. This also fixes issue #42: a fixed-
+  // size layout regardless of batch size, instead of a per-photo grid that got stuck on large
+  // batches.
+  const [settledCount, setSettledCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
-    onUpload(photos, (result) => {
+    onUpload(photos, () => {
       if (cancelled) return;
-      setStatuses((prev) => ({ ...prev, [result.clientUploadId]: result.error ? 'error' : 'success' }));
+      setSettledCount((prev) => prev + 1);
     }).then((results) => {
       if (!cancelled) onSettled(results);
     });
@@ -34,13 +34,11 @@ export function UploadingScreen({ photos, onUpload, onSettled }: UploadingScreen
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const succeededCount = Object.values(statuses).filter((s) => s === 'success').length;
+  const previewPhotos = photos.slice(0, 3).map((photo) => photo.preview);
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col items-center px-6">
-      {/* Header: icon, title and progress stay visible while the photo grid scrolls
-          independently below (see issue #37 — large batches used to push these off-screen). */}
-      <div className="max-w-md w-full text-center shrink-0 pt-6">
+    <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center px-6">
+      <div className="max-w-md w-full text-center">
         {/* Animated icon */}
         <div className="mb-8 flex justify-center">
           <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center relative">
@@ -55,33 +53,18 @@ export function UploadingScreen({ photos, onUpload, onSettled }: UploadingScreen
           Guardando tus recuerdos…
         </h2>
 
-        {/* Live progress */}
-        <p className="text-muted-foreground mb-8">
-          {succeededCount} de {photos.length} fotos subidas
-        </p>
-      </div>
+        {/* Static preview of a subset of the batch, instead of a full per-photo grid — see
+            issue #42. */}
+        {previewPhotos.length > 0 && (
+          <div className="mb-8 flex justify-center">
+            <PhotoStack photos={previewPhotos} />
+          </div>
+        )}
 
-      {/* Per-photo status grid — scrolls on its own so the header above stays reachable
-          regardless of how many photos are in this batch. */}
-      <div className="max-w-md w-full flex-1 min-h-0 overflow-y-auto pb-6">
-        <div className="grid grid-cols-3 gap-3">
-          {photos.map((photo) => (
-            <div key={photo.id} className="relative aspect-square">
-              <img
-                src={photo.preview}
-                alt="Preview"
-                className="w-full h-full object-cover rounded-lg"
-              />
-              <div className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center bg-background/90 shadow">
-                {statuses[photo.id] === 'pending' && (
-                  <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
-                )}
-                {statuses[photo.id] === 'success' && <Check className="w-4 h-4 text-green-600" />}
-                {statuses[photo.id] === 'error' && <X className="w-4 h-4 text-destructive" />}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Live progress */}
+        <p className="text-muted-foreground">
+          Subiendo {settledCount} de {photos.length} fotos
+        </p>
       </div>
     </div>
   );

@@ -33,8 +33,9 @@ export const Default: Story = {
   },
 };
 
-// Regression coverage for issue #37: with many photos the header (icon, title, progress)
-// must stay visible and only the photo grid should scroll.
+// Regression coverage for issue #42: with many photos the screen must stay a fixed-size layout
+// (a static 3-photo PhotoStack + a live progress count) instead of a per-photo grid that used to
+// get stuck on large batches.
 const manyPhotos = Array.from({ length: 30 }, (_, i) => ({
   id: `${i + 1}`,
   file: new File([], `photo${i + 1}.jpg`),
@@ -51,8 +52,9 @@ export const ManyPhotos: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole('heading', { name: 'Guardando tus recuerdos…' })).toBeInTheDocument();
-    await expect(canvas.getByText('0 de 30 fotos subidas')).toBeInTheDocument();
-    await expect(canvas.getAllByAltText('Preview')).toHaveLength(30);
+    await expect(canvas.getByText('Subiendo 0 de 30 fotos')).toBeInTheDocument();
+    // Only a static 3-photo subset is shown — never the whole batch.
+    await expect(canvas.getAllByAltText('')).toHaveLength(3);
   },
 };
 
@@ -76,7 +78,9 @@ export const DeterministicSettled: Story = {
     await expect(canvas.getByRole('heading', { name: 'Guardando tus recuerdos…' })).toBeInTheDocument();
     await expect(args.onUpload).toHaveBeenCalled();
 
-    await waitFor(() => expect(canvas.getByText('2 de 3 fotos subidas')).toBeInTheDocument());
+    // Both the successful and the failed photo count toward the live total, so it always
+    // reaches the batch size once every upload has settled — see issue #42.
+    await waitFor(() => expect(canvas.getByText('Subiendo 3 de 3 fotos')).toBeInTheDocument());
     await expect(args.onSettled).toHaveBeenCalledWith([
       { clientUploadId: '1' },
       { clientUploadId: '2' },

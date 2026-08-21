@@ -1,33 +1,8 @@
 import { HardDrive, Image as ImageIcon, MessageCircle, Smartphone, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
+import { PhotoStack } from '@/design-system/patterns/media/PhotoStack';
 import { TrunkReadyIllustration } from '@/features/auth/components/OnboardingCarousel';
-
-// Up to 3 real photo thumbnails, fanned and overlapping. Reused as both the "settled" state of
-// the scattered-icons animation (screen 1) and the cover fallback (screen 4) — a baúl with fewer
-// than 3 photos just renders fewer slots instead of leaving a gap.
-export function PhotoStack({ photos, startDelay = 0 }: { photos: string[]; startDelay?: number }) {
-  const slots = photos.slice(0, 3);
-  const offsets = [-16, 0, 16];
-  const rotations = [-6, 0, 6];
-
-  return (
-    <div className="relative w-24 h-20">
-      {slots.map((url, i) => (
-        <motion.div
-          key={url}
-          className="absolute top-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-card shadow-sm bg-muted flex items-center justify-center text-muted-foreground"
-          style={{ left: `calc(50% + ${offsets[i]}px - 2rem)`, zIndex: i }}
-          initial={{ opacity: 0, scale: 0.7, rotate: rotations[i] }}
-          animate={{ opacity: 1, scale: 1, rotate: rotations[i] }}
-          transition={{ duration: 0.5, delay: startDelay + i * 0.15 }}
-        >
-          <img src={url} alt="" className="w-full h-full object-cover" />
-        </motion.div>
-      ))}
-    </div>
-  );
-}
 
 export function InvitePreviewPhotosIllustration({ photos }: { photos: string[] }) {
   const scattered = [
