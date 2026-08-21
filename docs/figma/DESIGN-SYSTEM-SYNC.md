@@ -80,6 +80,41 @@ Scaling to more screens means widening this scope component-by-component, follow
 the same discovery → foundations → components → screen workflow, not rebuilding
 from scratch.
 
+**Code Connect** was attempted but is blocked: it requires a Dev or Full seat on an
+Organization/Enterprise Figma plan (confirmed via `whoami` — the file's plans are all
+starter/pro). Everything else (components, variants, tokens, icons) is unaffected —
+Code Connect only adds a code snippet next to the component in Dev Mode.
+
+**`BaulRoute` shell (feature `baules`), no Storybook source.** `BaulRoute` mounts the
+same chrome — `PageHeader` (variant `row`) + `Tabbar` + a `Body` slot — across its 3
+tabs (`recuerdos`/`capitulos`/`personas`), each swapping in a different tab container.
+None of `BaulRoute`/its 3 tab containers/`PersonaCard`/`ChapterCard` have a Storybook
+story — built straight from the `.tsx` source instead, which the workflow supports
+just as well (Storybook fixtures are a convenience, not a requirement). First screen
+built: `BaulPersonasScreen` (Screens > Baul). New reusable pieces this required:
+- `PageHeader` gained a real `row` variant (it was previously `stacked`-only) — the
+  original single component was renamed to `Variant=stacked` and combined with the new
+  `Variant=row` into a proper variant set; the underlying node id for `stacked` didn't
+  change, so `ClaimPersonaScreen`'s existing instance kept working untouched.
+- `Tabbar` (Layouts): 3-variant set (`Active=Historia|Capítulos|Familia`), each just 3
+  `TabButton` instances with the matching one toggled active — modeled specifically for
+  `BaulRoute`'s 3 fixed tabs, not as a fully generic N-tabs component.
+- `TabButton`, `IconButton`, `EmptyState`, `SwimlaneLabel`, `SimpleFAB` (Components):
+  each built with only the variant axes this one screen needs (documented in the state
+  ledger's `baulShellNote`) — e.g. `IconButton` has no size/tone variants yet. Expand
+  them later rather than rebuilding, once another screen needs the missing axis.
+- `WorkspaceSwitcherTrigger`, `PersonaCard` (Feature Components, `Baules`/`People`
+  sections): both dropdown triggers in the header (`WorkspaceSwitcherContainer`,
+  `BaulSettingsMenuContainer`) are modeled **closed-state only** — no dropdown menu
+  content — a deliberate scope call, not an oversight.
+- 2 more real icons imported (`chevronDown`, `menu`) — used directly as raw
+  `lucide-react` imports in this feature's code, not part of the `icons.ts` catalog,
+  but built with the same real-SVG pipeline as the other 48.
+
+Remaining `BaulRoute` tabs (`Historia`/`Recuerdos` — `BaulFeedTabContainer`'s `FeedTab`
+is the largest, still unexplored — and `Capítulos` — `ChapterCard` + the loose-photos
+collage) are not yet built.
+
 ## Known gotchas (read before writing more `use_figma` scripts)
 
 - **Paint opacity + variable binding doesn't render.** If a paint's `color` is bound to

@@ -16,10 +16,13 @@
   },
   "sections": {
     "Foundations": "144:2",
-    "Foundations > Icons (48 real Lucide icons from icons.ts)": "166:2",
-    "Components (Button/BackButton/Card/ActionListItem/Avatar)": "144:95",
-    "Layouts (StickyHeader/PageContainer/PageHeader)": "156:8",
-    "Screens > Sharing": "148:18"
+    "Foundations > Icons (50 real Lucide icons from icons.ts + 2 ad hoc: chevronDown, menu)": "166:2",
+    "Components (Button/BackButton/Card/ActionListItem/Avatar/IconButton/TabButton/EmptyState/SwimlaneLabel/SimpleFAB)": "144:95",
+    "Layouts (StickyHeader/PageContainer/PageHeader/Tabbar)": "156:8",
+    "Feature Components > Baules": "178:14",
+    "Feature Components > People": "178:15",
+    "Screens > Sharing": "148:18",
+    "Screens > Baul": "181:39"
   },
   "collections": {
     "Color": "VariableCollectionId:143:2",
@@ -47,16 +50,27 @@
     "BackButton": "145:7",
     "StickyHeader": "145:8",
     "PageContainer": "145:9",
-    "PageHeader": "146:2",
+    "PageHeader": "179:21",
     "Card": "147:4",
     "ActionListItem": "147:24",
-    "Avatar": "161:77"
+    "Avatar": "161:77",
+    "IconButton": "177:52",
+    "TabButton": "177:63",
+    "Tabbar": "179:118",
+    "EmptyState": "177:64",
+    "SwimlaneLabel": "177:71",
+    "SimpleFAB": "180:26"
   },
+  "featureComponents": {
+    "WorkspaceSwitcherTrigger": "178:16",
+    "PersonaCard": "178:34"
+  },
+  "pageHeaderNote": "PageHeader (179:21) is now a real variant set — Variant=stacked (146:2, unchanged node id, pre-existing instances like ClaimPersonaScreen's still resolve fine) and Variant=row (179:6, new: leading=WorkspaceSwitcherTrigger instance, trailing=IconButton instance, no own title — matches code's variant='row').",
   "avatarImageFill": {
     "note": "Avatar's 5 'State=Image' variants (161:5/6/7/8/9) use a real photo instead of a flat gray placeholder — the actual app/src/storybook/fixtures.ts storybookAvatars.abuela fixture (public/storybook-fixtures/avatar-1.svg), exported to PNG and applied as an IMAGE fill via upload_assets(nodeId=...). Uploaded once per variant since upload_assets only accepts a single nodeId per call. imageHash: 81a3dd3971f394a35bdd2ed23c6997cd5734e439."
   },
   "icons": {
-    "note": "48 real Lucide vector components on Foundations page, section 166:2, one per app/src/design-system/foundations/icons/icons.ts catalog key (name = 'Icon/{key}'). Built with figma.createNodeFromSvg() from lucide-static SVGs fetched via unpkg, then figma.createComponentFromNode(). Vector strokes bound to color/icon/default. Replaces the old generic Icon/Placeholder component (153:47), which was removed once its 0 remaining usages were confirmed.",
+    "note": "50 real Lucide vector components on Foundations page, section 166:2. 48 come from app/src/design-system/foundations/icons/icons.ts catalog keys (name = 'Icon/{key}'); 2 more (chevronDown, menu) were added ad hoc for the Baúl shell — used directly as raw lucide-react imports in WorkspaceSwitcherContainer/BaulSettingsMenuContainer, not part of the icons.ts catalog, but same real-SVG-import convention. Built with figma.createNodeFromSvg() from lucide-static SVGs fetched via unpkg, then figma.createComponentFromNode(). Vector strokes bound to color/icon/default. Replaces the old generic Icon/Placeholder component (153:47), which was removed once its 0 remaining usages were confirmed.",
     "componentIds": {
       "add": "166:6", "alertCircle": "166:12", "alertTriangle": "166:18", "bell": "166:23",
       "bookImage": "166:29", "bookOpen": "166:34", "bug": "166:48", "calendar": "166:55",
@@ -69,7 +83,8 @@
       "mail": "166:185", "messageCircle": "166:189", "moreOptions": "166:195", "photo": "166:201",
       "refresh": "166:208", "send": "166:213", "sendHorizontal": "166:218", "share": "166:226",
       "sparkles": "166:233", "spinner": "166:237", "upload": "166:243", "user": "166:248",
-      "userAdd": "166:255", "userCircle": "166:261", "userRemove": "166:268", "users": "166:275"
+      "userAdd": "166:255", "userCircle": "166:261", "userRemove": "166:268", "users": "166:275",
+      "chevronDown": "175:4", "menu": "175:9"
     },
     "wiredUsages": [
       "Avatar's Icon variant (all 5 sizes) → Icon/user",
@@ -81,8 +96,10 @@
     ]
   },
   "screens": {
-    "ClaimPersonaScreen": "148:19"
+    "ClaimPersonaScreen": "148:19",
+    "BaulPersonasScreen": "182:102"
   },
+  "baulShellNote": "BaulRoute (feature 'baules') mounts the same shell — PageHeader(row) + Tabbar + Body — across its 3 tabs. BaulPersonasScreen is the first of 3 planned screens (Historia/Recuerdos and Capítulos still pending); each is its own top-level frame under Screens > Baul, differing only in which Tabbar variant is active and what fills Body. Simplifications made deliberately for this pass, all built from reading the real .tsx source (no Storybook stories exist for these): WorkspaceSwitcherContainer and BaulSettingsMenuContainer are modeled only as their closed-trigger visual (name+chevron / hamburger IconButton) — the open DropdownMenuContent overlay was NOT built, per explicit user decision. IconButton/TabButton/EmptyState/SwimlaneLabel/SimpleFAB/PersonaCard were built with only the variant axes this screen actually uses (e.g. IconButton has no size/tone variants yet, PersonaCard's avatar area is an INSTANCE_SWAP defaulting to Icon/user rather than a true photo/crown/user 3-way) — expand them when a later screen needs the missing axis, don't rebuild from scratch. Fixed after user review against a real screenshot: the persona grid is 2 columns, not 3 (code is `grid-cols-2 sm:grid-cols-3` — sm: doesn't apply at this mobile frame width), and each PersonaCard instance in this screen shows a real photo (avatarWrap fill = IMAGE, imageHash 81a3dd3971f394a35bdd2ed23c6997cd5734e439 — same storybookAvatars.abuela fixture as Avatar's Image variants, reused directly since it's the only real photo fixture in the repo; the fallback Icon/user instance is hidden, not deleted) instead of the generic icon placeholder. User explicitly approved reusing the same photo across all 4 example cards rather than sourcing/creating more fixtures.",
   "knownIssues": [
     "Paint opacity is NOT rendered when the paint's color is bound to a variable (Figma renderer limitation, confirmed by sampling exported PNG pixels): use a pre-blended flat solid color instead of variable + opacity for borders/translucent tints.",
     "resize() resets layoutSizingHorizontal/Vertical back to FIXED if called after setting AUTO/HUG — set sizing AFTER resize(), not before.",
@@ -93,7 +110,16 @@
     "figma.createNodeFromSvg() + figma.createComponentFromNode() reliably turns a real lucide-static SVG into a proper Figma component — far more accurate than hand-drawing vector placeholders. SVG stroke=\"currentColor\" resolves to flat black; strokes must be manually rebound to a color variable afterward.",
     "Changing an INSTANCE_SWAP property's defaultValue via editComponentProperty() auto-updates every unoverridden instance driven by that property (name + mainComponent), but does NOT preserve the previous instance size/position — it resizes to the new default component's natural size, which can throw off centering (had to re-resize/re-center after every default-value change).",
     "Setting x/y on a deeply-nested child inside an INSTANCE (not the main component) can throw 'This property cannot be overridden in an instance: relative-transform' — happens when that node sits inside an auto-layout ancestor that governs its position; check whether the parent is auto-layout before trying to reposition, since the position is already handled by layout flow (no error, and no fix needed, if so).",
-    "Multi-path lucide icons import as MULTIPLE separate VECTOR nodes (one per <path>/<circle>/<line> in the source SVG), not one. Recoloring an icon instance with `iconInst.findOne(n => n.type === 'VECTOR')` only rebinds the FIRST one, leaving the rest at the old color — produces a visibly two-toned icon (e.g. UserPlus's '+' recolored but the person glyph left dark). Always use `findAll`, never `findOne`, when rebinding icon stroke color."
+    "Multi-path lucide icons import as MULTIPLE separate VECTOR nodes (one per <path>/<circle>/<line> in the source SVG), not one. Recoloring an icon instance with `iconInst.findOne(n => n.type === 'VECTOR')` only rebinds the FIRST one, leaving the rest at the old color — produces a visibly two-toned icon (e.g. UserPlus's '+' recolored but the person glyph left dark). Always use `findAll`, never `findOne`, when rebinding icon stroke color.",
+    "code_connect requires a Dev/Full seat on an Organization or Enterprise Figma plan (not starter/pro) — confirmed via whoami + list_file_components_for_code_connect. Doesn't block anything else; only Dev Mode's code-snippet-next-to-component view is unavailable.",
+    "color/border/default was imported WRONG at variable-creation time, not just at a binding site: the real CSS is rgba(58,50,48,0.12) (a 'soft brown border', see app/src/styles/theme.css) but the Figma variable stored the same RGB at alpha=1 — full-opacity near-black instead of a subtle tint. This is the same paint-opacity-ignored-on-variable-bind limitation, but baked into the variable's own stored value rather than at each usage site, so every consumer of this variable rendered a solid black/dark line. Fixed by setValueForMode() to the pre-blended flat solid (blend against color/bg/background, the most common backdrop) — same workaround pattern as other variable+opacity cases. Re-check any OTHER color variable that was originally a translucent rgba() in code for the same bug — this one was caught only because the user compared a real screenshot's Tabbar underline.",
+    "StickyHeader (design-system/layouts/StickyHeader.tsx) has its own `border-b border-border` — since StickyHeader is recomposed inline inside PageHeader (per the 'cannot appendChild into an INSTANCE' rule) rather than nested as its own instance, that border has to be manually re-added to every PageHeader variant's own strokes, or it silently disappears. Missed on first pass for both `stacked` and `row` variants; same omission likely worth checking on any other component that inlines StickyHeader/PageContainer's shell instead of nesting it.",
+    "Resizing a nested child of an INSTANCE that is a FIXED-size (non-FILL) auto-layout child can silently no-op — no error thrown, but the size just doesn't change (confirmed: `avatarArea.resize(163,163)` on a PersonaCard instance left it at the component's original 160x160, while the outer instance's own resize() DID stick). The reliable fix is to change the size at the COMPONENT definition itself (all instances then inherit it automatically, confirmed working) rather than trying to override geometry on instance children after the fact.",
+    "TabButton's active-state underline (bg-primary bar under the label) initially used layoutPositioning='ABSOLUTE' + a manual resize() per instance to match each tab's own text width (Historia/Capítulos/Familia differ) — this hit the exact same silent-no-op as the PersonaCard issue above (every instance stayed frozen at the master's width) AND threw 'cannot be overridden in an instance: relative-transform' when also trying to set x on it. Fixed by making the rectangle an in-flow (non-absolute) auto-layout child with layoutSizingHorizontal='FILL' instead — FILL children reliably recompute per-instance (same mechanism used successfully for PersonaCard's nameWrap text), unlike ABSOLUTE overlays or raw resize() overrides on instance children. Costs 2px of extra component height (the underline now occupies its own flow slot instead of overlapping the padding box like CSS `absolute bottom-0`), an acceptable trade-off. Also caught in the same review: TabButton's itemSpacing was 6 (a stray gap between label and underline not present in code, which has no gap — the underline is a zero-flow overlay in CSS), inflating total height to 53px instead of the correct ~47px; set to 0.",
+    "After the TabButton height fix (47px), Tabbar's own frame was still a stale counterAxisSizingMode='FIXED' at the height set when it was first built (40px, before TabButton's real height was known) — so the 47px-tall TabButton instances overflowed the declared 40px container, leaving the active tab's underline floating below/disconnected from Tabbar's own border-bottom line instead of flush against it (caught by the user comparing a real screenshot side-by-side). Fixed by setting Tabbar's counterAxisSizingMode='AUTO' (HUG) so its height always tracks its TabButton children's real height exactly — matches code, where Tabbar has no explicit height of its own, it's simply as tall as the tab row inside it. General lesson: any wrapper container built with a fixed height BEFORE its content's final height was known needs re-checking (HUG) once that content changes.",
+    "TabButton's underline is a `border-bottom`-style element (spans the ENTIRE button edge-to-edge, not just the label text), and needed two more rounds after the HUG fix: (1) the frame's own paddingBottom (14px, from py-3.5) still sat AFTER the underline in flow, leaving a 14px gap below it instead of the line sitting flush at the true bottom edge — fixed by zeroing paddingBottom and moving that 14px into itemSpacing (12px gap + 2px line = 14px, so height stays correct at 45px, matching code's real total, while the line itself now touches the bottom edge). (2) the underline's layoutSizingHorizontal='FILL' was filling only the CONTENT box (frame width minus the 4px+4px horizontal padding, i.e. narrower than the full button) since that same padding was on the same frame as the underline — fixed by moving the horizontal px-1 padding onto a new inner 'Label' wrapper around just the text, leaving the outer TabButton frame's own horizontal padding at 0 so the FILL-width underline now spans the button's true full width edge-to-edge, matching a real CSS border-bottom rather than a text-underline.",
+    "An imageHash already known-good on one fill (obtained via the upload_assets SVG→PNG→re-upload round-trip) CAN be reused directly on a brand-new node's fills array in a plain use_figma script (fills = [{type:'IMAGE', scaleMode:'FILL', imageHash}]) — no need to re-run upload_assets per node. Confirmed working when applying Avatar's already-uploaded photo hash to 4 new PersonaCard instances in one script.",
+    "Tailwind responsive classes encode a MOBILE-FIRST breakpoint order — `grid-cols-2 sm:grid-cols-3` means 2 columns is the base/mobile layout and 3 only applies at `sm:` (640px) and up. Since these screens are built at real mobile frame widths (390px), always use the base (unprefixed) class, not the largest one — building `sm:grid-cols-3` here was a first-pass mistake caught by the user comparing against a real screenshot at phone width."
   ],
   "completedSteps": [
     "phase0-discovery",
@@ -108,6 +134,8 @@
     "component-Avatar-added-and-wired-into-Card",
     "real-icon-import-48-lucide-icons-and-rewire-Avatar-ActionListItem-BackButton",
     "fix-two-toned-icons-findAll-vs-findOne",
-    "avatar-image-variants-use-real-photo-fixture"
+    "avatar-image-variants-use-real-photo-fixture",
+    "code-connect-blocked-plan-not-org-enterprise",
+    "baul-shell-and-BaulPersonasScreen-from-raw-tsx-no-storybook"
   ]
 }
