@@ -17,6 +17,7 @@ vi.mock('@/api', () => ({
       getAll: vi.fn(),
       move: vi.fn(),
       delete: vi.fn(),
+      deleteBatch: vi.fn(),
       changeDate: vi.fn(),
       clearDate: vi.fn(),
       getTaggedPersonas: vi.fn(),
@@ -33,7 +34,7 @@ import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
-import { changePhotoDate, clearPhotoDate, deletePhoto } from './index';
+import { changePhotoDate, clearPhotoDate, deletePhoto, deletePhotosBatch } from './index';
 import { newChapter, newPhoto } from './testFactories';
 
 // Regression coverage for single-write photo cache ownership on delete/date changes.
@@ -56,6 +57,20 @@ describe('photos useCases deletePhoto/changePhotoDate', () => {
 
     expect(api.photos.delete).toHaveBeenCalledWith(photoId, 'blurry');
     expect(usePhotosStore.getState().photosById[photoId]).toBeUndefined();
+    expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
+    expect(useBaulesStore.getState().chapters[baulId][0].photoCount).toBe(0);
+  });
+
+  it('deletePhotosBatch removes every photo from usePhotosStore and refetches chapters', async () => {
+    const photoId2 = 'photo-2';
+    usePhotosStore.getState().upsertPhotos([newPhoto(photoId), newPhoto(photoId2)]);
+    vi.mocked(api.chapters.getAll).mockResolvedValue([newChapter('chapter-1', { photoCount: 0 })]);
+
+    await deletePhotosBatch(baulId, [photoId, photoId2], 'Se borrarán 2 fotos');
+
+    expect(api.photos.deleteBatch).toHaveBeenCalledWith([photoId, photoId2], 'Se borrarán 2 fotos');
+    expect(usePhotosStore.getState().photosById[photoId]).toBeUndefined();
+    expect(usePhotosStore.getState().photosById[photoId2]).toBeUndefined();
     expect(api.chapters.getAll).toHaveBeenCalledWith(baulId);
     expect(useBaulesStore.getState().chapters[baulId][0].photoCount).toBe(0);
   });
