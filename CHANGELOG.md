@@ -25,6 +25,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la pantalla de subir fotos, ya se pueden arrastrar y soltar fotos también sobre el botón "Añadir más fotos" cuando ya hay fotos seleccionadas; antes el navegador las abría en una pestaña nueva en vez de añadirlas.
 - La pantalla de "Guardando tus recuerdos…" al subir muchas fotos a la vez ya no se queda bloqueada; ahora muestra una vista previa compacta de las fotos junto con el progreso ("Subiendo X de Y fotos") en vez de una lista completa con una foto por fila.
 - Al copiar el enlace de invitación a un baúl, el aviso de confirmación ("Enlace copiado al portapapeles") ya no queda oculto detrás de la ventana de invitación.
+- Al entrar directamente a un baúl (por ejemplo, recargando la página o abriendo un enlace guardado), la pantalla "Abriendo baúl..." ya no se queda cargando para siempre en algunos casos.
 
 ## [beta-v0.4.1] - 2026-08-18
 
