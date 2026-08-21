@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Baul, Persona } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { useUIStore } from '@/store/uiStore';
 import { PersonaSettingsMenuContainer } from './PersonaSettingsMenuContainer';
 
 vi.mock('@/features/people/useCases', () => ({
@@ -20,7 +21,7 @@ vi.mock('@/api', () => ({
   api: { photos: { getPage: vi.fn() } },
 }));
 
-import { revokeAccess, updatePersona } from '@/features/people/useCases';
+import { revokeAccess, updatePersona, updateUserRole } from '@/features/people/useCases';
 
 const baulId = 'baul-1';
 
@@ -47,6 +48,7 @@ function renderContainer(p: Persona, currentBaulRole: Baul['role'] = 'administra
 describe('PersonaSettingsMenuContainer', () => {
   beforeEach(() => {
     usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    useUIStore.setState({ showToast: false, toastMessage: '' });
     vi.clearAllMocks();
   });
 
@@ -89,6 +91,21 @@ describe('PersonaSettingsMenuContainer', () => {
 
     expect(revokeAccess).toHaveBeenCalledWith(baulId, 'p1');
     await waitFor(() => expect(screen.queryByText('¿Revocar el acceso?')).not.toBeInTheDocument());
+  });
+
+  it('changes the role and shows a success toast on submit', async () => {
+    const user = userEvent.setup();
+    vi.mocked(updateUserRole).mockResolvedValue(undefined);
+
+    renderContainer(persona({ role: 'colaborador' }));
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+    await user.click(await screen.findByText('Gestionar acceso'));
+    await user.selectOptions(await screen.findByRole('combobox'), 'administrador');
+    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    expect(updateUserRole).toHaveBeenCalledWith(baulId, 'p1', 'administrador');
+    await waitFor(() => expect(screen.queryByText('Gestionar acceso')).not.toBeInTheDocument());
+    expect(useUIStore.getState().toastMessage).toBe('Rol actualizado');
   });
 
   it('hides manage-access actions for a custodio persona', async () => {

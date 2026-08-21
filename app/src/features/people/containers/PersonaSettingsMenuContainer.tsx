@@ -77,6 +77,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
   const handleChangeRole = async (role: BaulRole) => {
     const result = await run(() => updateUserRole(baulId, persona.id, role), {
       key: 'role',
+      successMessage: 'Rol actualizado',
       errorMessage: 'Error al actualizar el rol',
     });
     if (result.ok) setShowManageAccessModal(false);
