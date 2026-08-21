@@ -7,7 +7,9 @@ interface BottomSheetModalProps {
   children: React.ReactNode;
   /**
    * 'sm': hoja de confirmación/acción — rounded-t-2xl, max-w-md, p-6, fondo bg-background,
-   * por encima de todo lo demás incluido el visor de fotos (z-[60]). Es el valor por defecto.
+   * por encima de todo lo demás incluido el visor de fotos (z-[60]), salvo el `Toast`
+   * (z-[70]), que se mantiene visible aunque la hoja siga abierta cuando dispara la acción.
+   * Es el valor por defecto.
    * 'lg': hoja de formulario — rounded-t-3xl, max-w-2xl, más padding, fondo bg-card, con el
    * "handle" (barrita) arriba, z-50. En desktop (md+) pasa a un panel lateral fijo a la
    * derecha, a toda altura y ~1/3 del ancho, en vez de quedarse pegada abajo.
