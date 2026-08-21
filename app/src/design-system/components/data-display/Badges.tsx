@@ -1,6 +1,7 @@
 import { BaulRole } from '@/types';
 import { cn } from '@/design-system/components/ui/utils';
 import { getRoleDisplayName } from '@/utils/roleUtils';
+import { Avatar } from '@/design-system/components/data-display/Avatar';
 
 interface ChapterBadgeProps {
   chapterName?: string;
@@ -39,13 +40,7 @@ interface PersonBadgeProps {
 export function PersonBadge({ nickname, avatarUrl, onClick, className }: PersonBadgeProps) {
   const content = (
     <>
-      {avatarUrl ? (
-        <img src={avatarUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
-      ) : (
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-background/20 text-[10px] text-background/70">
-          {nickname.charAt(0).toUpperCase()}
-        </span>
-      )}
+      <Avatar name={nickname} src={avatarUrl} size={6} className="bg-background/20 text-background/70" />
       <span className="text-xs text-background/80">{nickname}</span>
     </>
   );

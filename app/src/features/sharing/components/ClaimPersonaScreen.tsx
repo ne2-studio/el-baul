@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserPlus } from 'lucide-react';
 import { Card } from '@/design-system/components/data-display/Card';
+import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { ActionListItem } from '@/design-system/components/data-display/ActionListItem';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
@@ -40,13 +41,7 @@ export function ClaimPersonaScreen({
             onClick={isSubmitting ? undefined : () => onSelectPersona(persona)}
             className="flex items-center gap-4"
           >
-            <div className="w-14 h-14 rounded-full overflow-hidden bg-secondary flex-shrink-0 flex items-center justify-center">
-              {persona.avatarUrl ? (
-                <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-lg text-muted-foreground">{persona.nickname.charAt(0).toUpperCase()}</span>
-              )}
-            </div>
+            <Avatar name={persona.nickname} src={persona.avatarUrl} size={14} />
             <div className="min-w-0">
               <h3 className="font-serif text-foreground text-lg leading-tight truncate">{persona.nickname}</h3>
               {persona.name && <p className="text-muted-foreground text-xs mt-0.5 truncate">{persona.name}</p>}

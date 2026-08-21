@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Pencil, Share2 } from 'lucide-react';
 import { Recuerdo } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
+import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { RecuerdoEditModal } from '@/features/memories/components/RecuerdoEditModal';
 
 interface RecuerdoCardProps {
@@ -13,31 +14,6 @@ interface RecuerdoCardProps {
   onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
 }
 
-// Helper para generar color basado en nombre
-function getAvatarColor(name: string): string {
-  const colors = [
-    'bg-primary/20 text-primary',
-    'bg-blue-500/20 text-blue-300',
-    'bg-green-500/20 text-green-300',
-    'bg-purple-500/20 text-purple-300',
-    'bg-orange-500/20 text-orange-300',
-    'bg-pink-500/20 text-pink-300',
-  ];
-
-  const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return colors[index % colors.length];
-}
-
-// Helper para obtener iniciales
-function getInitials(name: string): string {
-  if (!name) return '??';
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) {
-    return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
-
 export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
   ({ recuerdo, onUserClick, onShareRecuerdo, onEditRecuerdo }, ref) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -45,8 +21,6 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
     const [isSaving, setIsSaving] = useState(false);
 
     const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
-    const initials = getInitials(userName);
-    const colorClass = getAvatarColor(userName);
     const canOpenPersona = !!(recuerdo.personaId && onUserClick);
     const canEdit = !!(recuerdo.isOwn && onEditRecuerdo);
 
@@ -75,22 +49,13 @@ export const RecuerdoCard = forwardRef<HTMLDivElement, RecuerdoCardProps>(
       >
         <div className="flex gap-3 items-start">
           {/* Avatar - siempre visible */}
-          <Button variant="plain"
-            type="button"
+          <Avatar
+            name={userName}
+            src={recuerdo.userAvatar}
+            initialsVariant="colored"
             onClick={canOpenPersona ? () => onUserClick!(recuerdo.personaId!) : undefined}
-            disabled={!canOpenPersona}
-            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium overflow-hidden ${colorClass} ${canOpenPersona ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'}`}
-          >
-            {recuerdo.userAvatar ? (
-              <img
-                src={recuerdo.userAvatar}
-                alt={userName}
-                className="w-full h-full object-cover rounded-full"
-              />
-            ) : (
-              initials
-            )}
-          </Button>
+            alwaysButton
+          />
 
           <div className="flex-1 min-w-0">
             {/* Texto del recuerdo con truncado y fade */}

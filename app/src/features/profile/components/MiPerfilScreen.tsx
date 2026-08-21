@@ -3,6 +3,7 @@ import { User } from 'lucide-react';
 import { Notice } from '@/design-system/components/feedback/Notice';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
+import { Avatar } from '@/design-system/components/data-display/Avatar';
 
 interface UserProfile {
   photoUrl?: string;
@@ -26,17 +27,13 @@ export function MiPerfilScreen({ onBack, userProfile }: MiPerfilScreenProps) {
         <div className="bg-card rounded-2xl border border-border p-8">
           {/* Profile photo */}
           <div className="flex justify-center mb-6">
-            {userProfile.photoUrl ? (
-              <img
-                src={userProfile.photoUrl}
-                alt={userProfile.name}
-                className="w-24 h-24 rounded-full object-cover border-2 border-border"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border">
-                <User className="w-12 h-12 text-primary" />
-              </div>
-            )}
+            <Avatar
+              name={userProfile.name}
+              src={userProfile.photoUrl}
+              size={24}
+              fallbackIcon={User}
+              className="border-2 border-border bg-primary/10 text-primary"
+            />
           </div>
 
           {/* Name */}

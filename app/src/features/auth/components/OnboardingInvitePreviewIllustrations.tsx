@@ -2,6 +2,7 @@ import { HardDrive, Image as ImageIcon, MessageCircle, Smartphone, Users } from 
 import { motion } from 'motion/react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import { PhotoStack } from '@/design-system/patterns/media/PhotoStack';
+import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { TrunkReadyIllustration } from '@/features/auth/components/OnboardingCarousel';
 
 export function InvitePreviewPhotosIllustration({ photos }: { photos: string[] }) {
@@ -50,16 +51,11 @@ export function InvitePeopleIllustration({ avatarUrls }: { avatarUrls: string[] 
         {slots.map((url, i) => (
           <motion.div
             key={i}
-            className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/70 overflow-hidden"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
           >
-            {url ? (
-              <img src={url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <Users className="w-5 h-5" strokeWidth={1.5} />
-            )}
+            <Avatar name="" src={url} size={10} fallbackIcon={Users} className="bg-secondary text-foreground/70" />
           </motion.div>
         ))}
       </div>

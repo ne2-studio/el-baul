@@ -1,4 +1,5 @@
 import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
+import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { Persona } from '@/types';
 
 interface PersonaSelectionListProps {
@@ -26,13 +27,7 @@ export function PersonaSelectionList({ personas, selectedIds, onToggle, disabled
             controlPosition="right"
             onClick={() => onToggle(persona.id)}
             disabled={disabled}
-            leading={persona.avatarUrl ? (
-              <img src={persona.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs text-muted-foreground">
-                {persona.nickname.charAt(0).toUpperCase()}
-              </div>
-            )}
+            leading={<Avatar name={persona.nickname} src={persona.avatarUrl} size={8} />}
           >
             <span className="text-sm text-foreground flex-1">{persona.nickname}</span>
           </SelectionRow>
