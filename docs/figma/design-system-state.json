@@ -16,7 +16,8 @@
   },
   "sections": {
     "Foundations": "144:2",
-    "Components (Button/BackButton/Card/ActionListItem/Icon-Placeholder)": "144:95",
+    "Foundations > Icons (48 real Lucide icons from icons.ts)": "166:2",
+    "Components (Button/BackButton/Card/ActionListItem/Avatar)": "144:95",
     "Layouts (StickyHeader/PageContainer/PageHeader)": "156:8",
     "Screens > Sharing": "148:18"
   },
@@ -24,6 +25,9 @@
     "Color": "VariableCollectionId:143:2",
     "Radius": "VariableCollectionId:143:15",
     "Spacing": "VariableCollectionId:143:23"
+  },
+  "newColorVariables": {
+    "color/icon/default": "VariableID:164:13"
   },
   "textStyles": {
     "Screen Title (Lora 3xl)": "S:76f0b81fc13d24ccf33e44609549efc2121d662d",
@@ -46,7 +50,32 @@
     "PageHeader": "146:2",
     "Card": "147:4",
     "ActionListItem": "147:24",
-    "Icon/Placeholder": "153:47"
+    "Avatar": "161:77"
+  },
+  "icons": {
+    "note": "48 real Lucide vector components on Foundations page, section 166:2, one per app/src/design-system/foundations/icons/icons.ts catalog key (name = 'Icon/{key}'). Built with figma.createNodeFromSvg() from lucide-static SVGs fetched via unpkg, then figma.createComponentFromNode(). Vector strokes bound to color/icon/default. Replaces the old generic Icon/Placeholder component (153:47), which was removed once its 0 remaining usages were confirmed.",
+    "componentIds": {
+      "add": "166:6", "alertCircle": "166:12", "alertTriangle": "166:18", "bell": "166:23",
+      "bookImage": "166:29", "bookOpen": "166:34", "bug": "166:48", "calendar": "166:55",
+      "check": "166:59", "checkCircle": "166:64", "checkSquare": "166:69", "chevronLeft": "166:73",
+      "chevronRight": "166:77", "circle": "166:81", "clock": "166:86", "close": "166:91",
+      "creditCard": "166:96", "crown": "166:101", "delete": "166:109", "download": "166:115",
+      "edit": "166:120", "externalLink": "166:126", "flag": "166:130", "folder": "166:134",
+      "folderInput": "166:140", "hardDrive": "166:147", "heart": "166:151", "helpCircle": "166:157",
+      "info": "166:163", "lightbulb": "166:169", "lock": "166:174", "logOut": "166:180",
+      "mail": "166:185", "messageCircle": "166:189", "moreOptions": "166:195", "photo": "166:201",
+      "refresh": "166:208", "send": "166:213", "sendHorizontal": "166:218", "share": "166:226",
+      "sparkles": "166:233", "spinner": "166:237", "upload": "166:243", "user": "166:248",
+      "userAdd": "166:255", "userCircle": "166:261", "userRemove": "166:268", "users": "166:275"
+    },
+    "wiredUsages": [
+      "Avatar's Icon variant (all 5 sizes) → Icon/user",
+      "ActionListItem's icon INSTANCE_SWAP property (icon#153:5): default → Icon/user, preferredValues → user/userAdd/delete/logOut/bookOpen; base variants (plain/card/destructive) auto-swapped",
+      "ActionListItem's icon vector stroke, per variant: plain/card → color/brand/primary, destructive → color/status/destructive (matches code's text-primary/text-destructive ternary on the icon-wrap span) — was previously hardcoded to color/icon/default (foreground) on all 3 variants, a bug reported by the user",
+      "ClaimPersonaScreen's ActionListItem instance (148:42) → explicit override to Icon/userAdd, matching code's <UserPlus>",
+      "BackButton Style=Label chevron (145:2) → Icon/chevronLeft instance, 20px, stroke bound to color/text/muted-foreground",
+      "BackButton Style=IconOnly chevron (145:5) → Icon/chevronLeft instance, 24px, stroke bound to color/text/foreground (matches code's hardcoded text-foreground on that variant)"
+    ]
   },
   "screens": {
     "ClaimPersonaScreen": "148:19"
@@ -55,8 +84,13 @@
     "Paint opacity is NOT rendered when the paint's color is bound to a variable (Figma renderer limitation, confirmed by sampling exported PNG pixels): use a pre-blended flat solid color instead of variable + opacity for borders/translucent tints.",
     "resize() resets layoutSizingHorizontal/Vertical back to FIXED if called after setting AUTO/HUG — set sizing AFTER resize(), not before.",
     "Cannot appendChild into an INSTANCE (only edit nodes that already exist inside it) — reusable slot-less wrappers (StickyHeader/PageContainer) are recomposed inline in composite components instead of being nested as instances.",
-    "Icons are generic vector placeholders (not real Lucide icons), exposed via INSTANCE_SWAP on ActionListItem — pending real icon set import / Code Connect.",
-    "No shared Avatar component exists in code — the avatar is modeled inline per screen; Card got a TEXT property 'avatarInitial' to match the no-avatarUrl fallback."
+    "Icons are generic vector placeholders (not real Lucide icons), exposed via INSTANCE_SWAP on ActionListItem and on Avatar's Icon variant — pending real icon set import / Code Connect.",
+    "Appending a new instance into an auto-layout frame with appendChild() puts it LAST in flow, ignoring manually-set x/y — when replacing a child at a specific position (e.g. Card's avatar slot), capture the old child's index and insertChild(index, ...) instead.",
+    "Avatar variant 'Size' values (6/8/10/14/24) are Tailwind spacing units, not pixels — actual circle diameter is unit*4px (6→24px ... 24→96px). Caught only after first pass resized components to the raw unit value; fixed by re-resizing all 20 variants.",
+    "figma.createNodeFromSvg() + figma.createComponentFromNode() reliably turns a real lucide-static SVG into a proper Figma component — far more accurate than hand-drawing vector placeholders. SVG stroke=\"currentColor\" resolves to flat black; strokes must be manually rebound to a color variable afterward.",
+    "Changing an INSTANCE_SWAP property's defaultValue via editComponentProperty() auto-updates every unoverridden instance driven by that property (name + mainComponent), but does NOT preserve the previous instance size/position — it resizes to the new default component's natural size, which can throw off centering (had to re-resize/re-center after every default-value change).",
+    "Setting x/y on a deeply-nested child inside an INSTANCE (not the main component) can throw 'This property cannot be overridden in an instance: relative-transform' — happens when that node sits inside an auto-layout ancestor that governs its position; check whether the parent is auto-layout before trying to reposition, since the position is already handled by layout flow (no error, and no fix needed, if so).",
+    "Multi-path lucide icons import as MULTIPLE separate VECTOR nodes (one per <path>/<circle>/<line> in the source SVG), not one. Recoloring an icon instance with `iconInst.findOne(n => n.type === 'VECTOR')` only rebinds the FIRST one, leaving the rest at the old color — produces a visibly two-toned icon (e.g. UserPlus's '+' recolored but the person glyph left dark). Always use `findAll`, never `findOne`, when rebinding icon stroke color."
   ],
   "completedSteps": [
     "phase0-discovery",
@@ -67,6 +101,8 @@
     "review-fixes-round1",
     "review-fixes-round2",
     "review-fixes-round3-icons-and-avatar-initials",
-    "page-restructure-storybook-style"
+    "page-restructure-storybook-style",
+    "component-Avatar-added-and-wired-into-Card",
+    "real-icon-import-48-lucide-icons-and-rewire-Avatar-ActionListItem-BackButton"
   ]
 }

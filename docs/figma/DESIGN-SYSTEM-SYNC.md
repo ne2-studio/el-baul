@@ -31,7 +31,7 @@ top-level Figma page per category, mirroring `app/src/design-system/*`:
 | Figma page | Mirrors |
 |---|---|
 | `Overview` | entry point / getting-started (former single "Design System" page) |
-| `Foundations` | design tokens: color, radius, spacing, typography, elevation |
+| `Foundations` | design tokens: color, radius, spacing, typography, elevation, icons |
 | `Components` | `design-system/components/**` |
 | `Layouts` | `design-system/layouts/**` |
 | `Patterns` | `design-system/patterns/**` |
@@ -46,9 +46,28 @@ navigability, not a technical constraint.
 
 Pilot: `ClaimPersonaScreen` (feature `sharing`) plus its full dependency chain —
 `Button`, `BackButton`, `StickyHeader`, `PageContainer`, `PageHeader` (variant
-`stacked` only), `Card`, `ActionListItem`. Tokens cover only what those components use
-(single light mode — `.dark` is unfinished scaffolding per `docs/DESIGN.md`, out of
-scope).
+`stacked` only), `Card`, `ActionListItem`, `Avatar`. Tokens cover only what those
+components use (single light mode — `.dark` is unfinished scaffolding per
+`docs/DESIGN.md`, out of scope).
+
+`Avatar` was added after the code introduced a shared component (previously each
+screen painted its own avatar circle inline). Modeled as a 20-variant set —
+`State` (`Image` / `Initials Plain` / `Initials Colored` / `Icon`) × `Size`
+(`6`/`8`/`10`/`14`/`24`, matching `AvatarSize` in code, rendered at `unit*4px`) — plus
+a `TEXT` property for the initials. `Card`'s hardcoded avatar circle was replaced with
+a real `Avatar` instance (`Initials Plain`, `Size=14`).
+
+**Real icons.** All 48 entries of `app/src/design-system/foundations/icons/icons.ts`
+were imported as real, pixel-accurate Lucide vector components — one Figma component
+per catalog key (`Icon/{key}`), living in a new `Icons` section on the `Foundations`
+page. Built by fetching each icon's actual SVG from `lucide-static` (not hand-drawn or
+memorized path data) and running it through `figma.createNodeFromSvg()` +
+`figma.createComponentFromNode()`, then rebinding the stroke to a new
+`color/icon/default` variable (aliased to `color/text/foreground`). This replaced the
+old generic `Icon/Placeholder` component (a bare circle used as an `INSTANCE_SWAP`
+stand-in), which is now removed — `Avatar`'s `Icon` variant, `ActionListItem`'s icon
+slot (default + the `ClaimPersonaScreen` instance's `UserPlus` override), and both
+`BackButton` chevrons now reference real icon components instead.
 
 Scaling to more screens means widening this scope component-by-component, following
 the same discovery → foundations → components → screen workflow, not rebuilding
@@ -67,12 +86,37 @@ from scratch.
   exist inside an instance can be edited. Slot-less layout wrappers (`StickyHeader`,
   `PageContainer`) can't hold arbitrary nested instances — composite components that use
   them recreate the same visual shell inline instead of nesting an instance.
-- **No shared `Avatar` component in code.** Each screen paints its own avatar circle
-  inline (image or initials fallback) — this is not a design-system gap to "fix" in
-  Figma, replicate it as-is per screen.
-- **Icons are placeholders.** `ActionListItem`'s icon slot is a generic vector exposed
-  via `INSTANCE_SWAP`, not a real Lucide icon — swapping in a real icon library / Code
-  Connect mapping is still pending.
+- **Icons are now real.** All 48 `icons.ts` entries exist as real Lucide vector
+  components (`Icon/{key}`) on `Foundations > Icons`. `figma-code-connect` mapping to
+  the actual `lucide-react` exports is still pending.
+- **`figma.createNodeFromSvg()` + `figma.createComponentFromNode()` is the reliable way
+  to import real icons.** Fetch the actual SVG (e.g. from `lucide-static` on unpkg) —
+  never hand-type or recall path data from memory — then convert. `stroke="currentColor"`
+  resolves to flat black; rebind every `VECTOR`'s stroke to a color variable afterward.
+- **`editComponentProperty()` on an `INSTANCE_SWAP` default resizes unoverridden
+  instances to the new default's natural size**, breaking centering — re-check size/
+  position on every instance driven by that property after changing its default.
+- **Setting x/y on a nested child inside an `INSTANCE`** can throw `This property
+  cannot be overridden in an instance: relative-transform` — usually means the parent
+  is auto-layout and already governs that child's position; no fix needed if so.
+- **Multi-path icons are multiple `VECTOR` nodes, not one.** `createNodeFromSvg` turns
+  each `<path>`/`<circle>`/`<line>` into its own vector layer. Recoloring with
+  `findOne(type === 'VECTOR')` only touches the first one, leaving the icon visibly
+  two-toned (this exact bug shipped once with `UserPlus`: the `+` recolored, the person
+  glyph stayed dark). Always `findAll` when rebinding icon stroke color.
+- **Icon color follows the consuming component's own variant, not a property of the
+  icon itself** — same as code (`Icon`/lucide has no color of its own, it inherits
+  `currentColor` from whatever wraps it). `ActionListItem`'s `Variant` (`plain` /
+  `card` / `destructive`) already is that axis; its icon vector must be rebound to
+  `color/brand/primary` (plain/card) or `color/status/destructive` (destructive) at
+  the component definition, once, so every instance gets it for free — don't add a
+  redundant "icon color" variant/property on top of `Variant`.
+- **`appendChild` into auto-layout puts the node last in flow, ignoring manual x/y.**
+  When replacing a child at a specific position (e.g. swapping `Card`'s avatar slot),
+  capture the old child's index first and `insertChild(index, ...)`, not `appendChild`.
+- **`Avatar`'s `Size` variant values are Tailwind spacing units, not pixels.** Circle
+  diameter is `unit * 4px` (6→24px … 24→96px) — resize components to that, not to the
+  raw variant number.
 
 ## Related skills
 
