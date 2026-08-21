@@ -1,7 +1,7 @@
 using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Personas.Domain;
 using ElBaul.Core.Photos.Domain;
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -9,10 +9,6 @@ using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 using Microsoft.Extensions.Logging;
-// Disambiguates from OutputPorts.Bauls.BaulAccess (the "baúl + role" DTO from
-// IBaulRepository.GetSharedForUserAsync) — this file means the authorization-check type
-// returned by BaulAccessService.AuthorizeAsync.
-using BaulAccess = ElBaul.Core.Bauls.Application.BaulAccess;
 
 using ElBaul.Domain;
 using ElBaul.Core.Shared.Application;
@@ -26,7 +22,7 @@ public class PersonaManager(
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     PhotoUploadWorkflow photoUploadWorkflow,
     IPersonaDtoProjector personaDtoProjector,
@@ -54,7 +50,7 @@ public class PersonaManager(
             User: persona.IsClaimed ? usersById.GetValueOrDefault(persona.UserId!.Value) : null,
             CanEdit: CanEditPersona(persona, userId, access)));
 
-        var dtos = await personaDtoProjector.ProjectManyAsync(items, access.Baul.CustodioId);
+        var dtos = await personaDtoProjector.ProjectManyAsync(items, access.CustodioId);
         return Result.Success<IEnumerable<PersonaDto>>(dtos);
     }
 
@@ -78,7 +74,7 @@ public class PersonaManager(
         var persona = personaResult.Value;
 
         var canEdit = CanEditPersona(persona, userId, access);
-        return await personaDtoProjector.ProjectAsync(persona, canEdit, access.Baul.CustodioId);
+        return await personaDtoProjector.ProjectAsync(persona, canEdit, access.CustodioId);
     }
 
     public async Task<Result<PersonaDto>> CreatePersonaAsync(BaulId baulId, string nickname)
@@ -93,7 +89,7 @@ public class PersonaManager(
 
         await personaRepository.AddPersonaAsync(persona);
         logger.LogInformation("Persona created {PersonaId} {Nickname}", persona.Id, nickname);
-        return await personaDtoProjector.ProjectAsync(persona, canEdit: true, auth.Value.Baul.CustodioId);
+        return await personaDtoProjector.ProjectAsync(persona, canEdit: true, auth.Value.CustodioId);
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaAsync(BaulId baulId, PersonaId personaId, string? name, string nickname)
@@ -125,7 +121,7 @@ public class PersonaManager(
         await personaRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona updated {PersonaId}", personaId);
 
-        return await personaDtoProjector.ProjectAsync(updated, canEdit, auth.Value.Baul.CustodioId);
+        return await personaDtoProjector.ProjectAsync(updated, canEdit, auth.Value.CustodioId);
     }
 
     // Biografía is shared, wiki-like family content: unlike name/nickname/avatar it only
@@ -152,7 +148,7 @@ public class PersonaManager(
         await personaRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona biografia updated {PersonaId}", personaId);
 
-        return await personaDtoProjector.ProjectAsync(updated, CanEditPersona(updated, userId, auth.Value), auth.Value.Baul.CustodioId);
+        return await personaDtoProjector.ProjectAsync(updated, CanEditPersona(updated, userId, auth.Value), auth.Value.CustodioId);
     }
 
     public async Task<Result<PersonaDto>> UpdatePersonaAvatarAsync(
@@ -235,7 +231,7 @@ public class PersonaManager(
         // for, since BaulRole has no Custodio value (see BaulRole.cs). Touching the actual
         // custodio's own row would let one strip their own protected status, so that's the one
         // case left to block. Ownership only ever moves via Baul.CustodioId.
-        if (persona.IsCustodioProtected(auth.Value.Baul.CustodioId))
+        if (persona.IsCustodioProtected(auth.Value.CustodioId))
         {
             logger.LogWarning("Persona role update rejected: custodio role cannot be changed {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.Validation("The custodio role cannot be changed"));
@@ -245,7 +241,7 @@ public class PersonaManager(
         await personaRepository.UpdatePersonaAsync(updated);
         logger.LogInformation("Persona role updated {PersonaId} {Role}", personaId, role);
 
-        return await personaDtoProjector.ProjectAsync(updated, canEdit: true, auth.Value.Baul.CustodioId);
+        return await personaDtoProjector.ProjectAsync(updated, canEdit: true, auth.Value.CustodioId);
     }
 
     public async Task<Result> RemovePersonaAsync(BaulId baulId, PersonaId personaId)
@@ -265,7 +261,7 @@ public class PersonaManager(
         if (personaResult.IsFailure) return Result.Failure(personaResult.Error);
         var persona = personaResult.Value;
 
-        if (persona.IsCustodioProtected(auth.Value.Baul.CustodioId))
+        if (persona.IsCustodioProtected(auth.Value.CustodioId))
         {
             logger.LogWarning("Persona access revocation rejected: custodio cannot lose access {PersonaId}", personaId);
             return Result.Failure(ApplicationError.Validation("The custodio cannot lose access"));
@@ -276,16 +272,16 @@ public class PersonaManager(
         return Result.Success();
     }
 
-    private static bool CanEditPersona(Persona target, UserId callerUserId, BaulAccess callerAccess) =>
+    private static bool CanEditPersona(Persona target, UserId callerUserId, BaulAuthorization callerAccess) =>
         callerAccess.IsAdmin || (target.AccessStatus == PersonaAccessStatus.Active && target.UserId == callerUserId);
 
-    private async Task<Result<(Persona Persona, BaulAccess Access, UserId UserId)>> AuthorizePersonaAvatarChangeAsync(BaulId baulId, PersonaId personaId)
+    private async Task<Result<(Persona Persona, BaulAuthorization Access, UserId UserId)>> AuthorizePersonaAvatarChangeAsync(BaulId baulId, PersonaId personaId)
     {
         var userId = currentUserProvider.GetUserId();
 
         var auth = await baulAccess.AuthorizeAsync(
             baulId, userId, AccessLevel.Member, "Persona avatar update", new { BaulId = baulId, PersonaId = personaId });
-        if (auth.IsFailure) return Result.Failure<(Persona, BaulAccess, UserId)>(auth.Error);
+        if (auth.IsFailure) return Result.Failure<(Persona, BaulAuthorization, UserId)>(auth.Error);
 
         var personaResult = await EntityLookup.ResolveAsync(
             () => personaRepository.GetPersonaByIdAsync(personaId),
@@ -294,19 +290,19 @@ public class PersonaManager(
             "Persona avatar update rejected: persona not found {PersonaId}",
             "Persona not found",
             personaId);
-        if (personaResult.IsFailure) return Result.Failure<(Persona, BaulAccess, UserId)>(personaResult.Error);
+        if (personaResult.IsFailure) return Result.Failure<(Persona, BaulAuthorization, UserId)>(personaResult.Error);
         var persona = personaResult.Value;
 
         if (!CanEditPersona(persona, userId, auth.Value))
         {
             logger.LogWarning("Persona avatar update rejected: access denied {PersonaId}", personaId);
-            return Result.Failure<(Persona, BaulAccess, UserId)>(ApplicationError.Forbidden("Access denied"));
+            return Result.Failure<(Persona, BaulAuthorization, UserId)>(ApplicationError.Forbidden("Access denied"));
         }
 
         return (persona, auth.Value, userId);
     }
 
-    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAccess access, UserId userId, Photo photo, PhotoCrop crop)
+    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAuthorization access, UserId userId, Photo photo, PhotoCrop crop)
     {
         var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
 
@@ -328,6 +324,6 @@ public class PersonaManager(
         });
         logger.LogInformation("Persona avatar photo updated {PersonaId} {PhotoId}", persona.Id, photo.Id);
 
-        return await personaDtoProjector.ProjectAsync(updated, CanEditPersona(updated, userId, access), access.Baul.CustodioId);
+        return await personaDtoProjector.ProjectAsync(updated, CanEditPersona(updated, userId, access), access.CustodioId);
     }
 }

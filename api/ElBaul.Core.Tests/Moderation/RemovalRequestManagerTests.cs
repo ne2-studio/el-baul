@@ -7,6 +7,7 @@ using ElBaul.Core.Moderation.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chapters.Application;
 using ElBaul.Core.Moderation.Application;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
@@ -48,6 +49,7 @@ public class RemovalRequestManagerTests
         new(NullLogger<RemovalRequestManager>.Instance, _removalRequestRepository, _photoRepository,
             _userRepository, _photoStorage, new StaticIdGenerator(nextId ?? Guid.NewGuid()), _clock,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
+            new AuthorInfoProjector(_personaRepository, _photoRepository, _photoStorage),
             new PhotoLifecycleService(_photoRepository, new ChapterPhotoCountListener(_chapterRepository), new BaulPhotoCoverListener(_baulRepository), _clock),
             new FakeUnitOfWork());
 

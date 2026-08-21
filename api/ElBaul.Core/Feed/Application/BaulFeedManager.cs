@@ -1,4 +1,4 @@
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Recuerdos;
@@ -30,7 +30,7 @@ public class BaulFeedManager(
     IBaulFeedCursorRepository feedCursorRepository,
     IAppConfiguration appConfiguration,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     IClock clock) : IBaulFeedManager
 {
     public async Task<Result<FeedPageDto>> GetFeedAsync(BaulId baulId, int skip, int take)

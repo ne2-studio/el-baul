@@ -1,7 +1,7 @@
 using ElBaul.Core.Chapters.Domain;
 using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Personas.Domain;
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -20,7 +20,7 @@ public class PhotoReadManager(
     IChapterRepository chapterRepository,
     IPersonaRepository personaRepository,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IPhotoDtoProjector photoDtoProjector,
     PhotoFileService photoFileService,

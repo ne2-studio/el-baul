@@ -1,4 +1,4 @@
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Sharing.Application;
 using ElBaul.Core.Bauls.OutputPorts;
@@ -35,7 +35,7 @@ public class TvSessionManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     IAppConfiguration appConfiguration,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     AuthorInfoProjector authorInfoProjector) : ITvSessionManager
 {
     // Cuánto dura el acceso desde que se crea — pasado ese tiempo la TV debe pedir uno nuevo

@@ -1,7 +1,7 @@
 using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Sharing.Domain;
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
@@ -25,7 +25,7 @@ public class SharedLinkManager(
     IClock clock,
     ICurrentUserProvider currentUserProvider,
     IAppConfiguration appConfiguration,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     AuthorInfoProjector authorInfoProjector) : ISharedLinkManager
 {
     public async Task<Result<CreateSharedLinkResult>> CreateForPhotoAsync(PhotoId photoId)

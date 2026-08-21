@@ -1,5 +1,5 @@
 using ElBaul.Core.Chat.Domain;
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Chat.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -17,7 +17,7 @@ public class ChatMemoryManager(
     IAppConfiguration appConfiguration,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     IUnitOfWork unitOfWork) : IChatMemoryManager
 {
     public async Task<Result<IEnumerable<ChatMemoryDto>>> GetMemoriesAsync(BaulId baulId)

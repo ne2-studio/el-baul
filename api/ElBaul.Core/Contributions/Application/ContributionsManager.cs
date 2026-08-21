@@ -1,4 +1,4 @@
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -12,7 +12,7 @@ public class ContributionsManager(
     IPhotoListReadModel photoListReadModel,
     IPhotoDtoProjector photoDtoProjector,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     IAppConfiguration appConfiguration) : IContributionsManager
 {
     public async Task<Result<ContributionSuggestionDto?>> GetSuggestionAsync(BaulId baulId)

@@ -31,9 +31,12 @@ public sealed record AccessibleBaul(Baul Baul, bool IsCustodio, BaulRole Role)
     public string RoleApiString => Role.ToApiString();
 }
 
-public enum AccessLevel { Member, Admin }
-
+// Also implements IBaulAuthorizer, the plain (no-domain-types) authorization contract most
+// managers should depend on instead of this concrete class — see IBaulAuthorizer's doc
+// comment. Managers that additionally need the Baul/Persona entities (to mutate the baúl, or
+// to read Persona fields beyond role/membership) keep depending on this concrete type.
 public class BaulAccessService(IBaulRepository baulRepository, IPersonaRepository personaRepository, ILogger<BaulAccessService> logger)
+    : IBaulAuthorizer
 {
     private static readonly object EmptyLogContext = new { };
 
@@ -86,4 +89,13 @@ public class BaulAccessService(IBaulRepository baulRepository, IPersonaRepositor
 
         return Result.Success(access);
     }
+
+    // IBaulAuthorizer projects the rich BaulAccess (Baul/Persona domain entities) down to the
+    // plain BaulAuthorization — see IBaulAuthorizer's doc comment for why the two stay separate.
+    async Task<Result<BaulAuthorization>> IBaulAuthorizer.AuthorizeAsync(
+        BaulId baulId, UserId userId, AccessLevel level, string operation, object? logContext) =>
+        (await AuthorizeAsync(baulId, userId, level, operation, logContext)).Map(ToAuthorization);
+
+    private static BaulAuthorization ToAuthorization(BaulAccess access) =>
+        new(access.Baul.Id, access.RoleApiString, access.IsAdmin, access.IsCustodio, access.Persona?.Id, access.Baul.CustodioId);
 }

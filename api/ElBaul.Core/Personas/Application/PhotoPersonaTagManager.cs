@@ -1,5 +1,5 @@
 using ElBaul.Core.Personas.Domain;
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -17,7 +17,7 @@ public class PhotoPersonaTagManager(
     IPhotoStorage photoStorage,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IUnitOfWork unitOfWork) : IPhotoPersonaTagManager
 {

@@ -1,5 +1,6 @@
 using ElBaul.Core.Chat.Domain;
 using ElBaul.Core.Personas.Domain;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Chat.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;

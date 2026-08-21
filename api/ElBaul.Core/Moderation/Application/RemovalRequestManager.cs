@@ -1,6 +1,7 @@
 using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Moderation.Domain;
-using ElBaul.Core.Bauls.Application;
+using ElBaul.Core.Bauls;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -20,7 +21,8 @@ public class RemovalRequestManager(
     IIdGenerator idGenerator,
     IClock clock,
     ICurrentUserProvider currentUserProvider,
-    BaulAccessService baulAccess,
+    IBaulAuthorizer baulAccess,
+    AuthorInfoProjector authorInfoProjector,
     PhotoLifecycleService photoLifecycle,
     IUnitOfWork unitOfWork) : IRemovalRequestManager
 {
@@ -48,7 +50,6 @@ public class RemovalRequestManager(
 
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Removal request creation");
         if (auth.IsFailure) return Result.Failure<RemovalRequestDto>(auth.Error);
-        var access = auth.Value;
 
         var photo = await photoRepository.GetByIdAsync(photoId);
         if (photo is null || photo.BaulId != baulId)
@@ -57,7 +58,7 @@ public class RemovalRequestManager(
             return Result.Failure<RemovalRequestDto>(ApplicationError.NotFound("Photo not found"));
         }
 
-        var nickname = access.Persona?.Nickname ?? "Usuario";
+        var nickname = (await authorInfoProjector.GetAsync(baulId, userId)).Nickname;
         var userProfile = await userRepository.GetByIdAsync(userId);
         var now = clock.UtcNow();
         var request = new RemovalRequest(

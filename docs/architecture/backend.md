@@ -121,7 +121,11 @@ the frontend can learn the flag's state without a deploy. Defaults to false.
 - **Access control is centralized in `BaulAccessService`**, not via a global filter and not
   re-derived per manager: it's the single interpretation of "does this user belong to this baúl
   / are they an admin of it". Every manager touching a baúl-scoped resource calls
-  `baulAccess.AuthorizeAsync(...)` instead of re-implementing the check inline.
+  `baulAccess.AuthorizeAsync(...)` instead of re-implementing the check inline. Managers that
+  only need that yes/no-plus-role (`BaulAuthorization`, no domain types) depend on
+  `Bauls.IBaulAuthorizer`, the public contract `BaulAccessService` implements; managers that
+  also need the `Baul`/`Persona` entities themselves (to mutate the baúl, or to read `Persona`
+  fields `IBaulAuthorizer` doesn't expose) deep-import `BaulAccessService` concretely instead.
 - **One deliberate exception**: `BaulInviteLinkManager.AcceptAsync` creates or claims a Persona
   without going through the admin-only authorization path that gates
   `PersonaManager.CreatePersonaAsync` — the caller is authorizing themselves by presenting a

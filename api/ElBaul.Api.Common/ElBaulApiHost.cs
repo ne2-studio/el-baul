@@ -236,6 +236,7 @@ public static class ElBaulApiHost
 
         // Register application services
         builder.Services.AddScoped<BaulAccessService>();
+        builder.Services.AddScoped<IBaulAuthorizer>(sp => sp.GetRequiredService<BaulAccessService>());
         builder.Services.AddScoped<AuthorInfoProjector>();
         builder.Services.AddScoped<CoverUrlResolver>();
         builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();

@@ -142,7 +142,7 @@
     {
       "From": "Contributions",
       "To": "Bauls",
-      "Kind": "Deep"
+      "Kind": "Public"
     },
     {
       "From": "Contributions",
@@ -157,7 +157,7 @@
     {
       "From": "Feed",
       "To": "Bauls",
-      "Kind": "Deep"
+      "Kind": "Public"
     },
     {
       "From": "Feed",
@@ -187,6 +187,11 @@
     {
       "From": "Moderation",
       "To": "Bauls",
+      "Kind": "Public"
+    },
+    {
+      "From": "Moderation",
+      "To": "Personas",
       "Kind": "Deep"
     },
     {
@@ -287,7 +292,7 @@
     {
       "From": "Recuerdos",
       "To": "Bauls",
-      "Kind": "Deep"
+      "Kind": "Public"
     },
     {
       "From": "Recuerdos",

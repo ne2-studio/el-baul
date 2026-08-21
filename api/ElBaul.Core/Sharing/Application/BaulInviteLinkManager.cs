@@ -1,5 +1,6 @@
 using ElBaul.Core.Bauls.Domain;
 using ElBaul.Core.Sharing.Domain;
+using ElBaul.Core.Bauls;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Personas;
