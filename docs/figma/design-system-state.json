@@ -1,0 +1,72 @@
+{
+  "runId": "elbaul-figma-lib-2026-08-21",
+  "fileKey": "B2noWyICxZ2d04YWZJ4Jpk",
+  "fileUrl": "https://www.figma.com/design/B2noWyICxZ2d04YWZJ4Jpk/App---El-Ba%C3%BAl",
+  "phase": "phase3-pilot-complete-restructured",
+  "scope": "Pilot: ClaimPersonaScreen + 7 components. Source of truth: docs/DESIGN.md and app/src/design-system/foundations/design-language/DesignLanguage.mdx.",
+  "structure": "Storybook-style dedicated pages (one top-level Figma page per category; screens grouped into per-feature sections inside the Screens page).",
+  "pages": {
+    "Overview": "141:2",
+    "Foundations": "156:2",
+    "Components": "156:3",
+    "Layouts": "156:4",
+    "Patterns": "156:5",
+    "Feature Components": "156:6",
+    "Screens": "156:7"
+  },
+  "sections": {
+    "Foundations": "144:2",
+    "Components (Button/BackButton/Card/ActionListItem/Icon-Placeholder)": "144:95",
+    "Layouts (StickyHeader/PageContainer/PageHeader)": "156:8",
+    "Screens > Sharing": "148:18"
+  },
+  "collections": {
+    "Color": "VariableCollectionId:143:2",
+    "Radius": "VariableCollectionId:143:15",
+    "Spacing": "VariableCollectionId:143:23"
+  },
+  "textStyles": {
+    "Screen Title (Lora 3xl)": "S:76f0b81fc13d24ccf33e44609549efc2121d662d",
+    "Section Title (Lora xl)": "S:296e25c628e174e6c58f4182f5e7c56d0baeb9c0",
+    "Card Title (Lora lg)": "S:68eda2aba1b15f7e43f7bf06334be3a9f40fcbb3",
+    "Body (Inter base)": "S:efeb514d4f98acdb280ac76329d27fc6aea0d426",
+    "Body Small (Inter sm)": "S:f4c139dee0258747a7dac36931a8ac3aacdb8e38",
+    "Action Label (Inter sm medium)": "S:5e8c78a5d06f18cbc37e1dafc18f3d522658cbc3",
+    "Caption (Inter xs)": "S:32f9948c7e2989a76e3220763cc523597b7b403d"
+  },
+  "effectStyles": {
+    "Elevation/shadow-sm": "S:b1885b9578ceb159e6cea8382dfc8fd57cb1886b",
+    "Elevation/shadow-md": "S:9f8d6f331f47f2dc705c52525b1ddd0b92ec90ee"
+  },
+  "components": {
+    "Button": "144:106",
+    "BackButton": "145:7",
+    "StickyHeader": "145:8",
+    "PageContainer": "145:9",
+    "PageHeader": "146:2",
+    "Card": "147:4",
+    "ActionListItem": "147:24",
+    "Icon/Placeholder": "153:47"
+  },
+  "screens": {
+    "ClaimPersonaScreen": "148:19"
+  },
+  "knownIssues": [
+    "Paint opacity is NOT rendered when the paint's color is bound to a variable (Figma renderer limitation, confirmed by sampling exported PNG pixels): use a pre-blended flat solid color instead of variable + opacity for borders/translucent tints.",
+    "resize() resets layoutSizingHorizontal/Vertical back to FIXED if called after setting AUTO/HUG — set sizing AFTER resize(), not before.",
+    "Cannot appendChild into an INSTANCE (only edit nodes that already exist inside it) — reusable slot-less wrappers (StickyHeader/PageContainer) are recomposed inline in composite components instead of being nested as instances.",
+    "Icons are generic vector placeholders (not real Lucide icons), exposed via INSTANCE_SWAP on ActionListItem — pending real icon set import / Code Connect.",
+    "No shared Avatar component exists in code — the avatar is modeled inline per screen; Card got a TEXT property 'avatarInitial' to match the no-avatarUrl fallback."
+  ],
+  "completedSteps": [
+    "phase0-discovery",
+    "phase1-foundations",
+    "phase2-file-structure",
+    "phase3-7-components",
+    "phase3-pilot-screen-ClaimPersonaScreen",
+    "review-fixes-round1",
+    "review-fixes-round2",
+    "review-fixes-round3-icons-and-avatar-initials",
+    "page-restructure-storybook-style"
+  ]
+}
