@@ -81,6 +81,14 @@ public class PhotosController(
         return result.ToActionResult();
     }
 
+    [HttpDelete("photos/delete-batch")]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteBatch([FromBody] DeletePhotosBatchRequest request)
+    {
+        var result = await photoManager.DeleteBatchAsync(request.PhotoIds, request.Reason);
+        return result.ToActionResult(Ok(new { success = true }));
+    }
+
     [HttpPut("photos/date-batch")]
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeDateBatch([FromBody] ChangePhotoDateBatchRequest request)

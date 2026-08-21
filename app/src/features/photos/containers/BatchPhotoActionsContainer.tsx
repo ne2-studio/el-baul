@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { movePhotos } from '@/features/photos/useCases';
+import { deletePhotosBatch, movePhotos } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, changePhotoDateBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Chapter, Photo, PhotoDate } from '@/types';
@@ -81,6 +81,14 @@ export function BatchPhotoActionsContainer({
     return result.ok;
   };
 
+  const handleBatchDelete = async (photoIds: string[], reason?: string): Promise<boolean> => {
+    const result = await run(() => deletePhotosBatch(baulId, photoIds, reason), {
+      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto borrada' : 'fotos borradas'}`,
+      errorMessage: 'Error al borrar las fotos',
+    });
+    return result.ok;
+  };
+
   return (
     <BatchPhotoActionsBar
       active={active}
@@ -93,6 +101,7 @@ export function BatchPhotoActionsContainer({
       onBatchClearDate={handleBatchClearDate}
       onBatchCreateChapter={chapterId === null ? handleBatchCreateChapter : undefined}
       onBatchTagPersonas={handleBatchTagPersonas}
+      onBatchDelete={handleBatchDelete}
       onDone={onDone}
     />
   );

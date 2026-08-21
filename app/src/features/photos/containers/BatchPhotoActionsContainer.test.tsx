@@ -9,6 +9,7 @@ import { BatchPhotoActionsContainer } from './BatchPhotoActionsContainer';
 
 vi.mock('@/features/photos/useCases', () => ({
   movePhotos: vi.fn(),
+  deletePhotosBatch: vi.fn(),
 }));
 
 vi.mock('@/features/chapters/useCases', () => ({
@@ -18,15 +19,18 @@ vi.mock('@/features/chapters/useCases', () => ({
   createChapter: vi.fn(),
 }));
 
-import { movePhotos } from '@/features/photos/useCases';
+import { deletePhotosBatch, movePhotos } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 
 const baulId = 'baul-1';
-const photos = [{ id: 'photo-1', thumbnailUrl: 't1', date: { year: 2020 } }] as Photo[];
+const photos = [{ id: 'photo-1', thumbnailUrl: 't1', date: { year: 2020 }, canDelete: true }] as Photo[];
 const persona = { id: 'p1', baulId, nickname: 'Abuela Rosa' } as Persona;
 const chapters = [{ id: 'c2', name: 'Navidad' }] as Chapter[];
 
-function renderContainer(chapterId: string | null) {
+function renderContainer(
+  chapterId: string | null,
+  options: { photos?: Photo[]; selectedIds?: Set<string>; onDone?: () => void } = {}
+) {
   return render(
     <MemoryRouter initialEntries={[`/baules/${baulId}`]}>
       <Routes>
@@ -37,10 +41,10 @@ function renderContainer(chapterId: string | null) {
               active
               baulId={baulId}
               chapterId={chapterId}
-              photos={photos}
-              selectedIds={new Set(['photo-1'])}
+              photos={options.photos ?? photos}
+              selectedIds={options.selectedIds ?? new Set(['photo-1'])}
               moveableChapters={chapters}
-              onDone={vi.fn()}
+              onDone={options.onDone ?? vi.fn()}
             />
           }
         />
@@ -102,5 +106,46 @@ describe('BatchPhotoActionsContainer', () => {
     expect(createChapter).toHaveBeenCalledWith(baulId, 'Verano');
     await waitFor(() => expect(movePhotos).toHaveBeenCalledWith(baulId, null, ['photo-1'], 'new-chapter'));
     await waitFor(() => expect(screen.getByText('Vista de capítulo')).toBeInTheDocument());
+  });
+
+  it('deletes the deletable photos in the selection with a single shared reason', async () => {
+    const user = userEvent.setup();
+    vi.mocked(deletePhotosBatch).mockResolvedValue(undefined);
+    const onDone = vi.fn();
+
+    renderContainer('chapter-1', { onDone });
+    await user.click(screen.getByRole('button', { name: /borrar 1 foto/i }));
+    expect(screen.getByText(/se borrarán 1 foto/i)).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText(/por qué se borran estas fotos/i), 'duplicadas');
+    await user.click(screen.getByRole('button', { name: /sí, borrar fotos/i }));
+
+    await waitFor(() => expect(deletePhotosBatch).toHaveBeenCalledWith(baulId, ['photo-1'], 'duplicadas'));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+  });
+
+  it('only deletes the eligible subset when the selection mixes deletable and non-deletable photos', async () => {
+    const user = userEvent.setup();
+    vi.mocked(deletePhotosBatch).mockResolvedValue(undefined);
+    const mixedPhotos = [
+      { id: 'photo-1', thumbnailUrl: 't1', date: { year: 2020 }, canDelete: true },
+      { id: 'photo-2', thumbnailUrl: 't2', date: { year: 2019 }, canDelete: false },
+    ] as Photo[];
+
+    renderContainer('chapter-1', { photos: mixedPhotos, selectedIds: new Set(['photo-1', 'photo-2']) });
+    await user.click(screen.getByRole('button', { name: /borrar 1 foto/i }));
+    expect(screen.getByText(/se borrarán 1 foto/i)).toBeInTheDocument();
+    expect(screen.getByText(/solo se pueden borrar 1 de las 2 fotos seleccionadas/i)).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText(/por qué se borran estas fotos/i), 'duplicadas');
+    await user.click(screen.getByRole('button', { name: /sí, borrar fotos/i }));
+
+    await waitFor(() => expect(deletePhotosBatch).toHaveBeenCalledWith(baulId, ['photo-1'], 'duplicadas'));
+  });
+
+  it('disables "Borrar fotos" rather than hiding it when none of the selection is deletable', () => {
+    const undeletablePhotos = [{ id: 'photo-1', thumbnailUrl: 't1', date: { year: 2020 }, canDelete: false }] as Photo[];
+
+    renderContainer('chapter-1', { photos: undeletablePhotos });
+
+    expect(screen.getByRole('button', { name: /borrar fotos/i })).toBeDisabled();
   });
 });

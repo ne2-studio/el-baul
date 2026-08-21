@@ -20,6 +20,13 @@ public interface IPhotoManager
 
     Task<Result> DeleteAsync(PhotoId photoId, string? reason);
 
+    /// <summary>Batch counterpart to DeleteAsync, for deleting a multi-selection of photos at
+    /// once with a single shared reason — see ChangeDateBatchAsync for the best-effort
+    /// skip-and-log semantics this mirrors. Reuses PhotoDeletePolicy unchanged per-photo, so a
+    /// photo that's no longer eligible (e.g. its grace period expired between the client's
+    /// eligibility check and this call) is skipped rather than aborting the whole batch.</summary>
+    Task<Result> DeleteBatchAsync(IEnumerable<PhotoId> photoIds, string? reason);
+
     Task<Result<PhotoDto>> ChangeDateAsync(PhotoId photoId, PhotoDate date);
     Task<Result<IEnumerable<PhotoDto>>> ChangeDateBatchAsync(IEnumerable<PhotoId> photoIds, PhotoDate date);
 

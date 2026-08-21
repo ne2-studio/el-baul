@@ -11,6 +11,7 @@ const PHOTO_CHAPTER = '/api/photos/{photoId}/chapter' satisfies PathTemplate;
 const PHOTO = '/api/photos/{photoId}' satisfies PathTemplate;
 const PHOTO_DATE = '/api/photos/{photoId}/date' satisfies PathTemplate;
 const PHOTO_DATE_BATCH = '/api/photos/date-batch' satisfies PathTemplate;
+const PHOTO_DELETE_BATCH = '/api/photos/delete-batch' satisfies PathTemplate;
 const PHOTO_DOWNLOAD = '/api/photos/{photoId}/download' satisfies PathTemplate;
 const PHOTO_SHARE = '/api/photos/{photoId}/share' satisfies PathTemplate;
 const PHOTO_PERSONAS = '/api/photos/{photoId}/personas' satisfies PathTemplate;
@@ -57,6 +58,9 @@ export const photosApi = {
     new Photo(await put<PhotoDto>(path(PHOTO_CHAPTER, { photoId }), { chapterId } satisfies JsonRequest<typeof PHOTO_CHAPTER, 'put'>)),
   delete: (photoId: string, reason?: string) =>
     del<SuccessResponse>(photoPath(photoId), { reason } satisfies JsonRequest<typeof PHOTO, 'delete'>),
+  deleteBatch: (photoIds: string[], reason?: string) =>
+    del<JsonResponse<typeof PHOTO_DELETE_BATCH, 'delete'>>(
+      PHOTO_DELETE_BATCH, { photoIds, reason } satisfies JsonRequest<typeof PHOTO_DELETE_BATCH, 'delete'>),
   changeDate: async (photoId: string, date: PhotoDate) =>
     new Photo(await put<JsonResponse<typeof PHOTO_DATE, 'put'>>(path(PHOTO_DATE, { photoId }), date satisfies JsonRequest<typeof PHOTO_DATE, 'put'>)),
   changeDateBatch: async (photoIds: string[], date: PhotoDate) =>

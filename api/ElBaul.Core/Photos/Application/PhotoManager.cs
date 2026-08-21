@@ -190,6 +190,21 @@ public class PhotoManager(
         return Result.Success();
     }
 
+    // Same best-effort skip-and-log semantics as ChangeDateBatchAsync below — see its comment.
+    public async Task<Result> DeleteBatchAsync(IEnumerable<PhotoId> photoIds, string? reason)
+    {
+        foreach (var photoId in photoIds)
+        {
+            var result = await DeleteAsync(photoId, reason);
+            if (result.IsFailure)
+            {
+                logger.LogWarning("Skipping photo in batch delete {PhotoId}: {Error}", photoId, result.Error);
+            }
+        }
+
+        return Result.Success();
+    }
+
     public async Task<Result<PhotoDto>> ChangeDateAsync(PhotoId photoId, PhotoDate date)
     {
         var userId = currentUserProvider.GetUserId();

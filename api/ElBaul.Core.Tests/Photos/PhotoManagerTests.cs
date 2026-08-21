@@ -729,6 +729,46 @@ public class PhotoManagerTests
     }
 
     [Fact]
+    public async Task DeleteBatchAsync_ShouldDeleteAllValidPhotos_AndSkipInaccessibleOnes()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var ownPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "key-1");
+
+        var otherBaulId = await _fixture.CreateBaulAsync("Otro", "someone-else");
+        var foreignPhotoId = await _fixture.AddPhotoAsync(otherBaulId, storageKey: "key-2", uploadedBy: "someone-else");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteBatchAsync([ownPhotoId, foreignPhotoId], "Se borrarán 2 fotos");
+
+        Assert.True(result.IsSuccess);
+
+        var ownPhoto = await _fixture.Photos.GetByIdAsync(ownPhotoId);
+        Assert.Equal(PhotoStatus.Deleted, ownPhoto!.Status);
+
+        var foreignPhoto = await _fixture.Photos.GetByIdAsync(foreignPhotoId);
+        Assert.Equal(PhotoStatus.Active, foreignPhoto!.Status);
+    }
+
+    [Fact]
+    public async Task DeleteBatchAsync_ShouldApplySameReason_ToEveryDeletedPhoto()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var firstPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "key-1");
+        var secondPhotoId = await _fixture.AddPhotoAsync(baulId, chapterId, "key-2");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.DeleteBatchAsync([firstPhotoId, secondPhotoId], "Se borrarán 2 fotos");
+
+        Assert.True(result.IsSuccess);
+        var firstPhoto = await _fixture.Photos.GetByIdAsync(firstPhotoId);
+        var secondPhoto = await _fixture.Photos.GetByIdAsync(secondPhotoId);
+        Assert.Equal(PhotoStatus.Deleted, firstPhoto!.Status);
+        Assert.Equal(PhotoStatus.Deleted, secondPhoto!.Status);
+        Assert.Equal("Se borrarán 2 fotos", firstPhoto.DeletionReason);
+        Assert.Equal("Se borrarán 2 fotos", secondPhoto.DeletionReason);
+    }
+
+    [Fact]
     public async Task ChangeDateBatchAsync_ShouldUpdateAllValidPhotos_AndSkipInaccessibleOnes()
     {
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();

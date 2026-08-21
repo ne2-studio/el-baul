@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, CalendarOff, FolderInput, Plus, Tag } from 'lucide-react';
+import { Calendar, CalendarOff, FolderInput, Plus, Tag, Trash2 } from 'lucide-react';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { MoveModal } from '@/features/photos/components/MoveModal';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
@@ -25,6 +25,9 @@ interface BatchPhotoActionsBarProps {
   onBatchClearDate?: (photoIds: string[]) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
   onBatchTagPersonas?: (photoIds: string[], personaIds: string[]) => Promise<boolean>;
+  /** No hay equivalente "Solicitar retirada" para lote — a diferencia del visor de una sola
+   * foto, "Borrar fotos" en lote sólo borra, nunca solicita retirada (fuera de alcance). */
+  onBatchDelete?: (photoIds: string[], reason?: string) => Promise<boolean>;
   onDone: () => void;
 }
 
@@ -34,7 +37,7 @@ interface BatchPhotoActionsBarProps {
 // no perder el patrón de gating explícito que tenía PhotosView antes de la extracción.
 export function BatchPhotoActionsBar({
   active, photos, selectedIds, moveableChapters, personas = [], onBatchMove, onBatchChangeDate, onBatchClearDate,
-  onBatchCreateChapter, onBatchTagPersonas, onDone,
+  onBatchCreateChapter, onBatchTagPersonas, onBatchDelete, onDone,
 }: BatchPhotoActionsBarProps) {
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
@@ -48,10 +51,20 @@ export function BatchPhotoActionsBar({
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagPersonaIds, setTagPersonaIds] = useState<string[]>([]);
   const [isTaggingSubmitting, setIsTaggingSubmitting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Solo se ofrece si alguna de las fotos seleccionadas tiene fecha — igual que el menú de
   // una sola foto, que oculta "Borrar fecha" cuando photo.date es null (usePhotoViewerActions).
   const selectedHaveDate = photos.some((p) => selectedIds.has(p.id) && p.date);
+
+  // Solo el subconjunto de la selección que el usuario puede borrar (photo.canDelete, ya
+  // calculado server-side por PhotoDeletePolicy) — no toda la selección. El botón se muestra
+  // siempre que haya algo seleccionado, pero se deshabilita en vez de ocultarse cuando ese
+  // subconjunto está vacío (a diferencia de las demás acciones de este componente).
+  const deletablePhotoIds = photos.filter((p) => selectedIds.has(p.id) && p.canDelete).map((p) => p.id);
+  const selectedCount = selectedIds.size;
+  const deletableCount = deletablePhotoIds.length;
 
   const handleMoveSubmit = async () => {
     if (!moveTargetId || !onBatchMove) return;
@@ -129,10 +142,21 @@ export function BatchPhotoActionsBar({
     }
   };
 
+  const handleDeleteConfirm = async (reason?: string) => {
+    if (!onBatchDelete) return;
+    setIsDeleting(true);
+    const ok = await onBatchDelete(deletablePhotoIds, reason);
+    setIsDeleting(false);
+    if (ok) {
+      setShowDeleteModal(false);
+      onDone();
+    }
+  };
+
   return (
     <>
       {active && selectedIds.size > 0 &&
-        (onBatchChangeDate || onBatchClearDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas) && (
+        (onBatchChangeDate || onBatchClearDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas || onBatchDelete) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 pb-safe">
           {/* w-max en el contenedor interno evita que los botones se compriman: con muchas
               acciones el PageContainer hace scroll lateral en vez de aplastar la barra. */}
@@ -178,6 +202,16 @@ export function BatchPhotoActionsBar({
                   Etiquetar personas
                 </ActionBarButton>
               )}
+              {onBatchDelete && (
+                <ActionBarButton
+                  onClick={() => setShowDeleteModal(true)}
+                  icon={<Trash2 aria-hidden />}
+                  disabled={deletableCount === 0}
+                  className="border-destructive/30 text-destructive [&_span]:text-destructive"
+                >
+                  {deletableCount > 0 ? `Borrar ${deletableCount} ${deletableCount === 1 ? 'foto' : 'fotos'}` : 'Borrar fotos'}
+                </ActionBarButton>
+              )}
             </div>
           </PageContainer>
         </div>
@@ -202,6 +236,37 @@ export function BatchPhotoActionsBar({
           onCancel={() => setShowClearDateModal(false)}
           onConfirm={handleClearDateConfirm}
           isSubmitting={isClearingDate}
+        />
+      )}
+
+      {showDeleteModal && (
+        <ConfirmActionModal
+          title={`Borrar ${deletableCount} ${deletableCount === 1 ? 'foto' : 'fotos'}`}
+          description={
+            <>
+              <span className="font-semibold">Atención:</span> Se borrarán {deletableCount}{' '}
+              {deletableCount === 1 ? 'foto' : 'fotos'}. Dejarán de estar disponibles para todos los miembros del
+              baúl y todos los recuerdos asociados a ellas se perderán de forma permanente.
+              {deletableCount < selectedCount && (
+                <>
+                  {' '}
+                  Solo se pueden borrar {deletableCount} de las {selectedCount} fotos seleccionadas (el resto no se
+                  puede borrar por no estar dentro del plazo de corrección tras la subida). Las {
+                    selectedCount - deletableCount} fotos restantes no se modificarán.
+                </>
+              )}
+            </>
+          }
+          reason={{
+            label: 'Motivo del borrado',
+            placeholder: '¿Por qué se borran estas fotos?',
+            variant: 'destructive',
+          }}
+          confirmLabel="Sí, borrar fotos"
+          backdropOpacity={60}
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={(reason) => handleDeleteConfirm(reason)}
+          isSubmitting={isDeleting}
         />
       )}
 
