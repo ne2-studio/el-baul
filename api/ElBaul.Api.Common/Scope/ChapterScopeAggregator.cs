@@ -11,13 +11,15 @@ public class ChapterScopeAggregator(IPhotoReadManager photoReadManager, IRecuerd
 {
     public async Task<Result<ChapterScopeDto>> GetScopeAsync(ChapterId chapterId)
     {
-        var photosTask = photoReadManager.GetByChapterIdAsync(chapterId);
-        var recuerdosTask = recuerdoManager.GetRecuerdosAsync(chapterId);
-        await Task.WhenAll(photosTask, recuerdosTask);
+        // Awaited sequentially, not fanned out with Task.WhenAll: both managers share the same
+        // request-scoped DbContext, and EF Core's DbContext isn't safe for concurrent use by
+        // multiple in-flight operations (it throws InvalidOperationException when two do).
+        var photosResult = await photoReadManager.GetByChapterIdAsync(chapterId);
+        if (photosResult.IsFailure) return Result.Failure<ChapterScopeDto>(photosResult.Error);
 
-        if (photosTask.Result.IsFailure) return Result.Failure<ChapterScopeDto>(photosTask.Result.Error);
-        if (recuerdosTask.Result.IsFailure) return Result.Failure<ChapterScopeDto>(recuerdosTask.Result.Error);
+        var recuerdosResult = await recuerdoManager.GetRecuerdosAsync(chapterId);
+        if (recuerdosResult.IsFailure) return Result.Failure<ChapterScopeDto>(recuerdosResult.Error);
 
-        return Result.Success(new ChapterScopeDto(photosTask.Result.Value, recuerdosTask.Result.Value));
+        return Result.Success(new ChapterScopeDto(photosResult.Value, recuerdosResult.Value));
     }
 }

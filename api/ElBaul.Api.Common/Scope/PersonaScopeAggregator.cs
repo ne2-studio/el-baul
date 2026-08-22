@@ -12,15 +12,18 @@ public class PersonaScopeAggregator(IPersonaManager personaManager, IPhotoReadMa
 {
     public async Task<Result<PersonaScopeDto>> GetScopeAsync(BaulId baulId, PersonaId personaId)
     {
-        var personasTask = personaManager.GetPersonasAsync(baulId);
-        var photosTask = photoReadManager.GetByPersonaIdAsync(baulId, personaId);
-        var recuerdosTask = recuerdoManager.GetRecuerdosAsync(baulId);
-        await Task.WhenAll(personasTask, photosTask, recuerdosTask);
+        // Awaited sequentially, not fanned out with Task.WhenAll: all three managers share the
+        // same request-scoped DbContext, and EF Core's DbContext isn't safe for concurrent use by
+        // multiple in-flight operations (it throws InvalidOperationException when two do).
+        var personasResult = await personaManager.GetPersonasAsync(baulId);
+        if (personasResult.IsFailure) return Result.Failure<PersonaScopeDto>(personasResult.Error);
 
-        if (personasTask.Result.IsFailure) return Result.Failure<PersonaScopeDto>(personasTask.Result.Error);
-        if (photosTask.Result.IsFailure) return Result.Failure<PersonaScopeDto>(photosTask.Result.Error);
-        if (recuerdosTask.Result.IsFailure) return Result.Failure<PersonaScopeDto>(recuerdosTask.Result.Error);
+        var photosResult = await photoReadManager.GetByPersonaIdAsync(baulId, personaId);
+        if (photosResult.IsFailure) return Result.Failure<PersonaScopeDto>(photosResult.Error);
 
-        return Result.Success(new PersonaScopeDto(personasTask.Result.Value, photosTask.Result.Value, recuerdosTask.Result.Value));
+        var recuerdosResult = await recuerdoManager.GetRecuerdosAsync(baulId);
+        if (recuerdosResult.IsFailure) return Result.Failure<PersonaScopeDto>(recuerdosResult.Error);
+
+        return Result.Success(new PersonaScopeDto(personasResult.Value, photosResult.Value, recuerdosResult.Value));
     }
 }
