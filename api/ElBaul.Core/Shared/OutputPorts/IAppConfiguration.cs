@@ -102,6 +102,14 @@ public interface IAppConfiguration
     bool MaintenanceModeEnabled { get; }
 
     /// <summary>
+    /// Whether the app's Android-only install banner is shown. Purely presentational (no
+    /// server-side gating besides this switch itself) — kept here rather than read straight off
+    /// IConfiguration by AppConfigController so every Features:* toggle goes through the same
+    /// port, regardless of backing store.
+    /// </summary>
+    bool AndroidAppBannerEnabled { get; }
+
+    /// <summary>
     /// Probability (0-1) that ContributionsManager picks "write a memory" over "tag people" when
     /// choosing which contribution suggestion to offer on entering a baúl. Same key/default
     /// (0.2) as AppConfigController's own copy, which still reads it from IConfiguration

@@ -174,3 +174,14 @@ a command and how to run one, locally and in production.
 - **Config**: `appsettings.json` (dev defaults committed) + `appsettings.Production.json` +
   environment variables in the container — see `docker-compose.yaml` for the local set. Never
   commit production secrets.
+- **Feature flags**: `IAppConfiguration` (`ElBaul.Core.Shared.OutputPorts`) is the one port
+  Application code reads flags through. `el-baul-api` swaps its implementation at startup
+  (`ElBaul.Infra/ServiceRegistration.cs`) based on `UNLEASH_ENABLED`: off (default, and always in
+  local/CI/tests) reads the static `Features:*` section of `IConfiguration`, same as before; on
+  (prod) reads a self-hosted [Unleash](https://www.getunleash.io/) server instead, so a flag can
+  be killed without a redeploy. `el-baul-api-lite` never talks to Unleash — third-party
+  self-hosters have no access to our instance — it always uses the static implementation. Unleash
+  flag names are `elbaul.<kebab-case-property>` (e.g. `elbaul.chat-enabled`): namespaced by app
+  because the free/OSS tier has a single shared "Default" project across every app on the
+  instance. Environment (dev/staging/prod) is a native Unleash concept, not part of the name —
+  selected by which environment-scoped API token `Unleash:ApiToken` is set to.

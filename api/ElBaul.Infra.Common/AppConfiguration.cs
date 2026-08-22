@@ -25,5 +25,6 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public int ChatMemoryRetrievalLimit => configuration.GetValue("Features:ChatMemoryRetrievalLimit", 5);
     public bool TvModeEnabled => configuration.GetValue<bool>("Features:TvModeEnabled");
     public bool MaintenanceModeEnabled => configuration.GetValue<bool>("Features:MaintenanceModeEnabled");
+    public bool AndroidAppBannerEnabled => configuration.GetValue<bool>("Features:AndroidAppBannerEnabled");
     public double WriteMemorySuggestionRatio => configuration.GetValue("Features:WriteMemorySuggestionRatio", 0.2);
 }

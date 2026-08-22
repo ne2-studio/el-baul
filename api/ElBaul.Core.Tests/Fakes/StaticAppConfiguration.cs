@@ -24,6 +24,7 @@ public class StaticAppConfiguration(
     // Defaults to false here too (unlike most other flags above) — maintenance mode gating is
     // covered by its own dedicated tests, constructed with true.
     bool maintenanceModeEnabled = false,
+    bool androidAppBannerEnabled = true,
     // Matches the real appsettings.json default (20% "write a memory") — tests about the ratio
     // itself construct this explicitly to force a branch.
     double writeMemorySuggestionRatio = 0.2)
@@ -47,5 +48,6 @@ public class StaticAppConfiguration(
     public int ChatMemoryRetrievalLimit { get; } = chatMemoryRetrievalLimit;
     public bool TvModeEnabled { get; } = tvModeEnabled;
     public bool MaintenanceModeEnabled { get; } = maintenanceModeEnabled;
+    public bool AndroidAppBannerEnabled { get; } = androidAppBannerEnabled;
     public double WriteMemorySuggestionRatio { get; } = writeMemorySuggestionRatio;
 }

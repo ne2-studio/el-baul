@@ -24,6 +24,7 @@ using ElBaul.Core.Users.OutputPorts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Unleash;
 
 namespace ElBaul.Infra;
 
@@ -67,7 +68,33 @@ public static class ServiceRegistration
         services.AddScoped<EmailJobs>();
         services.AddScoped<PushNotificationJobs>();
         services.AddScoped<ChatMemoryExtractionJobs>();
-        services.AddScoped<IAppConfiguration, AppConfiguration>();
+        // Feature flags: Unleash in prod (kill switches without a redeploy), static
+        // appsettings/env vars everywhere else (local, CI, tests) so those stay deterministic
+        // and don't need a running Unleash server. Never gated by ASPNETCORE_ENVIRONMENT
+        // directly — UNLEASH_ENABLED is its own switch so it can be turned on for a staging
+        // environment later without also flipping unrelated Production-only behavior.
+        if (configuration.GetValue<bool>("UNLEASH_ENABLED"))
+        {
+            var unleashApiUrl = configuration["Unleash:ApiUrl"]
+                ?? throw new InvalidOperationException("Unleash:ApiUrl must be set when UNLEASH_ENABLED is true.");
+            var unleashSettings = new UnleashSettings
+            {
+                AppName = configuration.GetValue("Unleash:AppName", "el-baul-api"),
+                UnleashApi = new Uri(unleashApiUrl),
+                CustomHttpHeaders = new Dictionary<string, string>
+                {
+                    ["Authorization"] = configuration["Unleash:ApiToken"] ?? ""
+                }
+            };
+            // Singleton: DefaultUnleash owns a background poller and an in-memory toggle cache
+            // meant to be shared process-wide, not recreated per request.
+            services.AddSingleton<IUnleash>(new DefaultUnleash(unleashSettings));
+            services.AddScoped<IAppConfiguration, UnleashAppConfiguration>();
+        }
+        else
+        {
+            services.AddScoped<IAppConfiguration, AppConfiguration>();
+        }
         services.AddScoped<IPhotoDateExtractor, ExifPhotoDateExtractor>();
         services.AddScoped<IPhotoImageNormalizer, HeicToJpegPhotoImageNormalizer>();
 
