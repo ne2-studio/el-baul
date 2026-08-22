@@ -27,7 +27,8 @@
     "Feature Components > Memories (RecuerdoFeedCard/ChapterCreatedFeedCard)": "201:60",
     "Feature Components > Photos (PhotoBatchCard)": "201:61",
     "Screens > Sharing": "148:18",
-    "Screens > Baul": "181:39"
+    "Screens > Baul": "181:39",
+    "Screens > Chapter": "214:302"
   },
   "componentsPageStructure": "The Components page mirrors app/src/design-system/components/{category}/ 1:1 — one Figma section per category, matching the folder each component's real .tsx lives in (checked via find, not guessed): actions→Button/IconButton/SimpleFAB/ExpandableFAB, navigation→BackButton/TabButton, data-display→Card/ActionListItem/Avatar/SwimlaneLabel, feedback→EmptyState. Only categories with at least one built component get a section — forms/overlays/ui exist in code but have nothing built yet, so no empty section for them (add one only when the first component in that category is built). The old single flat 'Components' section (144:95) was deleted once everything was re-parented into its category section — don't resurrect that ID.",
   "sectionBackgroundConvention": "Every SECTION frame (the organizational canvas container, not the actual screen/component content inside it) is flat white (#FFFFFF, no variable binding) across every tracked page — this is deliberately different from color/bg/background (the app's real cream tone), which stays correctly applied only on actual Screen frames (BaulPersonasScreen etc.) and any component whose own fill genuinely is that token in code. Sections are blank-canvas chrome; only screens carry the app's real background.",
@@ -69,7 +70,9 @@
     "SimpleFAB": "180:26",
     "ExpandableFAB": "188:173",
     "FeedCardHeader": "200:35",
-    "ChapterBadge": "200:234"
+    "ChapterBadge": "200:234",
+    "ChapterTabbar": "211:83",
+    "Hero": "213:61"
   },
   "featureComponents": {
     "WorkspaceSwitcherTrigger": "178:16",
@@ -88,19 +91,56 @@
   "icons": {
     "note": "50 real Lucide vector components on Foundations page, section 166:2. 48 come from app/src/design-system/foundations/icons/icons.ts catalog keys (name = 'Icon/{key}'); 2 more (chevronDown, menu) were added ad hoc for the Baúl shell — used directly as raw lucide-react imports in WorkspaceSwitcherContainer/BaulSettingsMenuContainer, not part of the icons.ts catalog, but same real-SVG-import convention. Built with figma.createNodeFromSvg() from lucide-static SVGs fetched via unpkg, then figma.createComponentFromNode(). Vector strokes bound to color/icon/default. Replaces the old generic Icon/Placeholder component (153:47), which was removed once its 0 remaining usages were confirmed.",
     "componentIds": {
-      "add": "166:6", "alertCircle": "166:12", "alertTriangle": "166:18", "bell": "166:23",
-      "bookImage": "166:29", "bookOpen": "166:34", "bug": "166:48", "calendar": "166:55",
-      "check": "166:59", "checkCircle": "166:64", "checkSquare": "166:69", "chevronLeft": "166:73",
-      "chevronRight": "166:77", "circle": "166:81", "clock": "166:86", "close": "166:91",
-      "creditCard": "166:96", "crown": "166:101", "delete": "166:109", "download": "166:115",
-      "edit": "166:120", "externalLink": "166:126", "flag": "166:130", "folder": "166:134",
-      "folderInput": "166:140", "hardDrive": "166:147", "heart": "166:151", "helpCircle": "166:157",
-      "info": "166:163", "lightbulb": "166:169", "lock": "166:174", "logOut": "166:180",
-      "mail": "166:185", "messageCircle": "166:189", "moreOptions": "166:195", "photo": "166:201",
-      "refresh": "166:208", "send": "166:213", "sendHorizontal": "166:218", "share": "166:226",
-      "sparkles": "166:233", "spinner": "166:237", "upload": "166:243", "user": "166:248",
-      "userAdd": "166:255", "userCircle": "166:261", "userRemove": "166:268", "users": "166:275",
-      "chevronDown": "175:4", "menu": "175:9"
+      "add": "166:6",
+      "alertCircle": "166:12",
+      "alertTriangle": "166:18",
+      "bell": "166:23",
+      "bookImage": "166:29",
+      "bookOpen": "166:34",
+      "bug": "166:48",
+      "calendar": "166:55",
+      "check": "166:59",
+      "checkCircle": "166:64",
+      "checkSquare": "166:69",
+      "chevronLeft": "166:73",
+      "chevronRight": "166:77",
+      "circle": "166:81",
+      "clock": "166:86",
+      "close": "166:91",
+      "creditCard": "166:96",
+      "crown": "166:101",
+      "delete": "166:109",
+      "download": "166:115",
+      "edit": "166:120",
+      "externalLink": "166:126",
+      "flag": "166:130",
+      "folder": "166:134",
+      "folderInput": "166:140",
+      "hardDrive": "166:147",
+      "heart": "166:151",
+      "helpCircle": "166:157",
+      "info": "166:163",
+      "lightbulb": "166:169",
+      "lock": "166:174",
+      "logOut": "166:180",
+      "mail": "166:185",
+      "messageCircle": "166:189",
+      "moreOptions": "166:195",
+      "photo": "166:201",
+      "refresh": "166:208",
+      "send": "166:213",
+      "sendHorizontal": "166:218",
+      "share": "166:226",
+      "sparkles": "166:233",
+      "spinner": "166:237",
+      "upload": "166:243",
+      "user": "166:248",
+      "userAdd": "166:255",
+      "userCircle": "166:261",
+      "userRemove": "166:268",
+      "users": "166:275",
+      "chevronDown": "175:4",
+      "menu": "175:9"
     },
     "wiredUsages": [
       "Avatar's Icon variant (all 5 sizes) → Icon/user",
@@ -115,7 +155,9 @@
     "ClaimPersonaScreen": "148:19",
     "BaulPersonasScreen": "182:102",
     "BaulCapitulosScreen": "189:165",
-    "BaulRecuerdosScreen": "202:241"
+    "BaulRecuerdosScreen": "202:241",
+    "ChapterRecuerdosScreen": "214:303",
+    "ChapterFotosScreen": "215:325"
   },
   "recuerdosScreenNote": "BaulRecuerdosScreen (202:241) built by cloning BaulCapitulosScreen's shell (PageHeader row + Tabbar + Body) rather than from scratch, then switching Tabbar to Active=Historia and replacing Body's content — same shell-reuse approach as BaulPersonasScreen/BaulCapitulosScreen. From BaulFeedTabContainer/FeedTab.tsx: modeled the toggle-ON path (Features:BaulFeedEnabled — merged recuerdos + photo-upload-batch + chapter-created cards, the richer of the two data sources) rather than the toggle-off recuerdo-only fallback, since it exercises more of the feed's real component surface. 3 new Feature Components built straight from .tsx source (no Storybook stories, same as the other 2 BaulRoute tabs): RecuerdoFeedCard (Memories, 202:287), ChapterCreatedFeedCard (Memories, 202:288), PhotoBatchCard (Photos, 202:289) — each a real COMPONENT (converted from a built frame via figma.createComponentFromNode(), matching PersonaCard/ChapterCard's pattern), all sharing 2 new Components > Data Display pieces: FeedCardHeader (200:35 — avatar + name/action line + relative timestamp, no trailing slot: RecuerdoFeedCard's edit/share icon buttons were deliberately left out, same 'skip non-essential interactive chrome' call as the WorkspaceSwitcher/BaulSettingsMenu dropdown contents and the ExpandableFAB's expanded state) and ChapterBadge (200:234 — pill-shaped chapter-name link, bg-primary/10 pre-blended flat per the known opacity+variable-bind limitation). Modeled the feed as all-seen (no 'Nueva actividad' banner / isNew highlight state) — a scope simplification, not a limitation of the underlying components. RecuerdoFeedCard shows the real storybookPhotos.beach fixture as its attached photo; PhotoBatchCard's 4-thumbnail grid reuses the same fixture across all 4 cells (still the only real photo fixture in the repo, consistent with the PersonaCard-photo precedent) plus a 'y 2 más' overflow pill; ChapterCreatedFeedCard shows a small chapter-cover thumbnail + name in a bg-secondary pill. SimpleFAB reused with an Icon INSTANCE_SWAP override to Icon/sparkles (was defaulting to Icon/add) + strokeWeight rescaled per the icon-scaling gotcha, matching FeedTab's real 'Recordemos juntos' FAB (chatEnabled-gated in code, always shown here since only one state is modeled).",
   "baulShellNote": "BaulRoute (feature 'baules') mounts the same shell — PageHeader(row) + Tabbar + Body — across its 3 tabs. BaulPersonasScreen is the first of 3 planned screens (Historia/Recuerdos and Capítulos still pending); each is its own top-level frame under Screens > Baul, differing only in which Tabbar variant is active and what fills Body. Simplifications made deliberately for this pass, all built from reading the real .tsx source (no Storybook stories exist for these): WorkspaceSwitcherContainer and BaulSettingsMenuContainer are modeled only as their closed-trigger visual (name+chevron / hamburger IconButton) — the open DropdownMenuContent overlay was NOT built, per explicit user decision. IconButton/TabButton/EmptyState/SwimlaneLabel/SimpleFAB/PersonaCard were built with only the variant axes this screen actually uses (e.g. IconButton has no size/tone variants yet, PersonaCard's avatar area is an INSTANCE_SWAP defaulting to Icon/user rather than a true photo/crown/user 3-way) — expand them when a later screen needs the missing axis, don't rebuild from scratch. Fixed after user review against a real screenshot: the persona grid is 2 columns, not 3 (code is `grid-cols-2 sm:grid-cols-3` — sm: doesn't apply at this mobile frame width), and each PersonaCard instance in this screen shows a real photo (avatarWrap fill = IMAGE, imageHash 81a3dd3971f394a35bdd2ed23c6997cd5734e439 — same storybookAvatars.abuela fixture as Avatar's Image variants, reused directly since it's the only real photo fixture in the repo; the fallback Icon/user instance is hidden, not deleted) instead of the generic icon placeholder. User explicitly approved reusing the same photo across all 4 example cards rather than sourcing/creating more fixtures.",
@@ -142,7 +184,10 @@
     "TabButton's underline is a `border-bottom`-style element (spans the ENTIRE button edge-to-edge, not just the label text), and needed two more rounds after the HUG fix: (1) the frame's own paddingBottom (14px, from py-3.5) still sat AFTER the underline in flow, leaving a 14px gap below it instead of the line sitting flush at the true bottom edge — fixed by zeroing paddingBottom and moving that 14px into itemSpacing (12px gap + 2px line = 14px, so height stays correct at 45px, matching code's real total, while the line itself now touches the bottom edge). (2) the underline's layoutSizingHorizontal='FILL' was filling only the CONTENT box (frame width minus the 4px+4px horizontal padding, i.e. narrower than the full button) since that same padding was on the same frame as the underline — fixed by moving the horizontal px-1 padding onto a new inner 'Label' wrapper around just the text, leaving the outer TabButton frame's own horizontal padding at 0 so the FILL-width underline now spans the button's true full width edge-to-edge, matching a real CSS border-bottom rather than a text-underline.",
     "An imageHash already known-good on one fill (obtained via the upload_assets SVG→PNG→re-upload round-trip) CAN be reused directly on a brand-new node's fills array in a plain use_figma script (fills = [{type:'IMAGE', scaleMode:'FILL', imageHash}]) — no need to re-run upload_assets per node. Confirmed working when applying Avatar's already-uploaded photo hash to 4 new PersonaCard instances in one script.",
     "SimpleFAB/ExpandableFAB are 'fixed bottom-6 right-5' in real code — right-aligned to the screen edge, NOT horizontally centered. All 3 Baul screens' FABs had been positioned centered (a mistake carried over from the first BaulPersonasScreen build and copied to the other 2) — user caught it as looking 'pocho'/off. Fixed by recomputing x = screen.x + screen.width - 20 - fab.width, y = screen.y + screen.height - 24 - fab.height for all 3 (BaulPersonasScreen's SimpleFAB, BaulCapitulosScreen's ExpandableFAB, BaulRecuerdosScreen's SimpleFAB). Also worth checking: BaulRecuerdosScreen's screen frame height must be read AFTER its auto-layout Body has settled (it grows from the feed cards), not a stale/assumed value, or the FAB's y ends up floating below the screen's real bottom edge.",
-    "Tailwind responsive classes encode a MOBILE-FIRST breakpoint order — `grid-cols-2 sm:grid-cols-3` means 2 columns is the base/mobile layout and 3 only applies at `sm:` (640px) and up. Since these screens are built at real mobile frame widths (390px), always use the base (unprefixed) class, not the largest one — building `sm:grid-cols-3` here was a first-pass mistake caught by the user comparing against a real screenshot at phone width."
+    "Tailwind responsive classes encode a MOBILE-FIRST breakpoint order — `grid-cols-2 sm:grid-cols-3` means 2 columns is the base/mobile layout and 3 only applies at `sm:` (640px) and up. Since these screens are built at real mobile frame widths (390px), always use the base (unprefixed) class, not the largest one — building `sm:grid-cols-3` here was a first-pass mistake caught by the user comparing against a real screenshot at phone width.",
+    "Building a vertical (top-to-bottom) linear gradient paint requires a manual gradientTransform matrix — there is no simple angle/direction property. Formula used: given desired gradient handles start=(0.5,0) end=(0.5,1) width-axis=(1,0) in normalized node space, gradientTransform = [[end.x-start.x, widthAxis.x-start.x, start.x], [end.y-start.y, widthAxis.y-start.y, start.y]] = [[0,0.5,0.5],[1,0,0]] for Hero's bg-gradient-to-t overlay. A first guess of [[0,1,0],[-1,0,1]] produced a diagonal/near-opaque mess instead of a clean vertical fade — verified only by screenshot, not inferable from the API types.",
+    "PageHeader's row variant already ships default Leading (WorkspaceSwitcherTrigger) and Trailing (IconButton -> Icon/menu) instances baked into the master — for a screen that needs a plain BackButton + a different trailing icon (e.g. ChapterRoute, unlike BaulRoute), swap those existing instances' mainComponent in place (leading.mainComponent = BackButtonComp, trailingIcon.mainComponent = otherIconComp) rather than trying to appendChild a new node into the Trailing slot — appendChild into an INSTANCE still throws 'New parent is an instance or is inside of an instance' even for a frame that looks like an empty slot, because it isn't empty, it already holds a default instance to swap instead of replace.",
+    "A parent auto-layout frame's primaryAxisSizingMode/counterAxisSizingMode set to AUTO (hug) BEFORE that frame's own resize() call gets silently reset back to FIXED by that resize() call (same root cause as the already-documented resize()-resets-sizing-mode issue, but this time hit on a plain container frame — ChapterFotosScreen's Body — not a component, so it was easy to miss: the frame LOOKED like it should hug because AUTO was set, but a resize(390,100) placeholder call two lines later silently undid it, and the bug was invisible until a second use_figma call re-measured body.height and still got the stale placeholder value. Fixed by re-setting primaryAxisSizingMode = 'AUTO' again AFTER all content was appended (no further resize() calls after that point) rather than before."
   ],
   "capitulosScreenNote": "BaulCapitulosScreen (189:165) built from BaulChaptersTabContainer + ChapterCard.tsx: 2 ChapterCard instances (Verano en la playa / Cumpleaños de la abuela, both placeholder data — no real chapter cover photos exist in any fixture, so the card just shows its gradient over the plain bg-secondary fallback, matching code's own `chapter.coverPhotoUrl ? img : fallback` branch honestly) grouped under a '2019' SwimlaneLabel (code groups by year — grid-cols-1 at this mobile width, single column, no 2-col mistake this time), then an 'OTRAS' swimlane with LooseChapterCard (the 'fotos sueltas' virtual-chapter tile, its 3x3 collage using the exact COLLAGE_COLORS fallback palette from FotosSueltasCollage since no loose-photo fixtures exist either), plus ExpandableFAB — built closed-state only (single circular button), consistent with the WorkspaceSwitcher/BaulSettingsMenu dropdown precedent from BaulPersonasScreen: the 2-action expanded state (Nuevo capítulo / Subir fotos) was not built.",
   "completedSteps": [
@@ -165,6 +210,8 @@
     "BaulCapitulosScreen-ChapterCard-LooseChapterCard-ExpandableFAB",
     "components-page-restructured-by-storybook-category-and-white-backgrounds",
     "BaulRecuerdosScreen-RecuerdoFeedCard-PhotoBatchCard-ChapterCreatedFeedCard-FeedCardHeader-ChapterBadge",
-    "fixed-all-3-baul-screen-FABs-to-bottom-right-not-centered"
-  ]
+    "fixed-all-3-baul-screen-FABs-to-bottom-right-not-centered",
+    "ChapterTabbar-Hero-ChapterRecuerdosScreen-ChapterFotosScreen"
+  ],
+  "chapterScreensNote": "ChapterRecuerdosScreen (214:303) and ChapterFotosScreen (215:325) built from ChapterRoute.tsx (the two tabs of a real chapter, not the virtual 'Fotos sueltas' branch) — new top-level Screens > Chapter section (214:302), separate from Screens > Baul since ChapterRoute is a distinct top-level route, not a BaulRoute tab. 2 new shared components: ChapterTabbar (211:83, 2-variant set Active=Recuerdos/Active=Fotos, built the same way as BaulRoute's Tabbar but with its own 2-tab label set — kept separate from Tabbar since that set's 3 variants are hardcoded to BaulRoute's own Personas/Capitulos/Historia labels, not swappable) and Hero (213:61 — cover image + bg-gradient-to-t black overlay + serif Lora title + Inter subtitle, matching Hero.tsx; the black gradient overlay needed a manual gradientTransform matrix, see known gotchas). Both screens share PageHeader(row) with its default Leading swapped from WorkspaceSwitcherTrigger to BackButton Style=Label ('Volver') and Trailing's IconButton icon swapped to Icon/moreOptions (the ChapterSettingsMenuContainer '···' menu, modeled closed-only like every other dropdown trigger in this file), plus the same Hero instance (title 'Verano en la playa', reusing ChapterCard's example chapter name, cover = the storybookPhotos.beach fixture — the only real photo fixture in the repo, same reuse precedent as every other screen). ChapterRecuerdosScreen's Body reuses the existing RecuerdoFeedCard component with its ChapterBadge instance hidden (visible=false) — matching RecuerdosFeed.tsx's showChapterBadge={false}, since a recuerdo already living inside its own chapter's tab doesn't need to repeat which chapter it's in — plus a SimpleFAB with Icon/bookOpen, 'Escribe lo que recuerdas' (matches RecuerdosFeed.tsx's write-recuerdo FAB). ChapterFotosScreen's Body is a SwimlaneLabel ('2019') + a new inline 3-col photo grid (layoutMode HORIZONTAL + layoutWrap='WRAP', 6 PhotoCell rectangles at the beach fixture, matching PhotoSwimlanes.tsx's grid-cols-3 gap-2) — not promoted to its own shared component this pass, since only one screen uses it yet; promote to a PhotoCell/PhotoGrid component if a second screen needs it — plus a SimpleFAB with Icon/add, 'Subir fotos' (matches ChapterRoute.tsx's upload FAB, gated to the fotos tab in code). Both screens' Body got the same pb-28-equivalent (112px) bottom padding as BaulRecuerdosScreen so their bottom-right FAB does not overlap the last row of content — a fix applied proactively this time instead of after user review."
 }

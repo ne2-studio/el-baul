@@ -149,9 +149,37 @@ and all 3 Baul screens' FABs were positioned horizontally centered under their s
 when the real code (`SimpleFAB`/`ExpandableFAB`, both `fixed bottom-6 right-5`) anchors
 them to the bottom-right corner instead — fixed across all 3.
 
-`BaulRoute` (all 3 tabs) is now fully built out. Remaining screens beyond the Baúl
-shell — chapter detail, photo viewer, sharing flows beyond `ClaimPersonaScreen`, etc. —
-are not yet started.
+`BaulRoute` (all 3 tabs) is now fully built out.
+
+**`ChapterRecuerdosScreen` / `ChapterFotosScreen`** (new `Screens > Chapter` section —
+kept separate from `Screens > Baul` since `ChapterRoute` is its own top-level route, not
+a `BaulRoute` tab), built from `ChapterRoute.tsx` (the real-chapter branch, not the
+virtual "Fotos sueltas" one) + `RecuerdosFeed.tsx` / `PhotoSwimlanes.tsx`. 2 new shared
+components:
+- `Hero` (Components > Layouts) — cover image + `bg-gradient-to-t` black overlay + serif
+  (`Lora`) title + `Inter` subtitle, from `layouts/Hero.tsx`. The gradient needed a
+  hand-computed `gradientTransform` matrix (see gotchas below).
+- `ChapterTabbar` (Components > Layouts) — a 2-variant set (`Active=Recuerdos` /
+  `Active=Fotos`), built the same way as `Tabbar` but kept as its own component since
+  `Tabbar`'s 3 variants are hardcoded to `BaulRoute`'s own tab labels, not swappable.
+
+Both screens share `PageHeader`(row) with its default `Leading` swapped from
+`WorkspaceSwitcherTrigger` to `BackButton` (`Style=Label`, "Volver") and `Trailing`'s
+`IconButton` icon swapped to `Icon/moreOptions` (the `ChapterSettingsMenuContainer`
+"···" menu — modeled closed-only, same as every other dropdown trigger in this file),
+plus a shared `Hero` instance (title "Verano en la playa", reusing `ChapterCard`'s
+example chapter name and the `storybookPhotos.beach` fixture as its cover). Body content
+differs per tab: `ChapterRecuerdosScreen` reuses `RecuerdoFeedCard` with its
+`ChapterBadge` hidden (`showChapterBadge={false}` in code — a recuerdo already inside its
+own chapter's tab doesn't repeat which chapter it's in) plus a `SimpleFAB`
+("Escribe lo que recuerdas", `Icon/bookOpen`); `ChapterFotosScreen` is a `SwimlaneLabel`
+("2019") + an inline 3-column photo grid (`layoutMode: HORIZONTAL` +
+`layoutWrap: 'WRAP'`, matching `grid-cols-3 gap-2`) of the same beach fixture — not
+promoted to its own shared component yet since only one screen uses it — plus a
+`SimpleFAB` ("Subir fotos", `Icon/add`).
+
+Remaining screens beyond the Baúl/Chapter shells — photo viewer, sharing flows beyond
+`ClaimPersonaScreen`, etc. — are not yet started.
 
 ## Known gotchas (read before writing more `use_figma` scripts)
 
@@ -227,6 +255,25 @@ are not yet started.
   typo, wrong size, etc.) that only surfaces the first time a screen actually selects
   it — re-verify content, not just structure, on any variant used for the first time,
   even if the component set as a whole was "already built and reviewed".
+- **A vertical linear gradient paint needs a hand-computed `gradientTransform` matrix** —
+  there's no angle/direction shortcut. For handles `start=(0.5,0)`, `end=(0.5,1)`,
+  `widthAxis=(1,0)` in normalized node space, the matrix is
+  `[[end.x-start.x, widthAxis.x-start.x, start.x], [end.y-start.y, widthAxis.y-start.y, start.y]]`
+  = `[[0,0.5,0.5],[1,0,0]]` for a top-to-bottom fade. A first guess of
+  `[[0,1,0],[-1,0,1]]` rendered as a diagonal/near-opaque mess — only caught by
+  screenshot, not inferable from the types.
+- **`PageHeader`'s `row` variant ships default `Leading`/`Trailing` instances already
+  populated** (`WorkspaceSwitcherTrigger` / `IconButton → Icon/menu`), not empty slots.
+  For a screen needing different content, swap the existing instance's
+  `mainComponent` in place — `appendChild`ing a new node into `Trailing` still throws
+  "New parent is an instance or is inside of an instance", because the slot already
+  holds something to swap, not append to.
+- **Setting a frame's `primaryAxisSizingMode`/`counterAxisSizingMode` to `AUTO` *before*
+  that same frame's own `resize()` call gets silently undone by the `resize()`** — same
+  root cause as the already-documented rule above, but easy to miss on a plain container
+  (not a component): the property read back as `AUTO` in the same script, yet the frame
+  never hugged, because `resize()` ran after. Fix: set sizing modes to `AUTO`/`HUG` as
+  the *last* step, once all children are appended and no more `resize()` calls remain.
 
 ## Related skills
 
