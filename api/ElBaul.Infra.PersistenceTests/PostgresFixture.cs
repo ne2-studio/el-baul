@@ -56,7 +56,8 @@ public sealed class PostgresFixture : IAsyncLifetime
         await using var dbContext = CreateDbContext();
         var quotedTableNames = string.Join(", ", _tableNames.Select(name => $"\"{name}\"")
             .Append("analytics.user_baul_activity_daily")
-            .Append("analytics.user_sessions"));
+            .Append("analytics.user_sessions")
+            .Append("analytics.user_activity_daily"));
         // Built entirely from EF's own model metadata (captured in InitializeAsync), never from
         // request/user input — string.Concat rather than an interpolated literal only to keep
         // the EF1002 "don't interpolate raw SQL" analyzer, tuned for user-supplied values, quiet.

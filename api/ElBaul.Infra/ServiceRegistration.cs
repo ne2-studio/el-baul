@@ -37,6 +37,7 @@ public static class ServiceRegistration
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserBaulActivityDailyAggregator, UserBaulActivityDailyAggregator>();
+        services.AddScoped<IUserActivityDailyAggregator, UserActivityDailyAggregator>();
         services.AddScoped<IUserSessionRepository, UserSessionRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBaulRepository, BaulRepository>();

@@ -58,6 +58,10 @@ using (var scope = app.Services.CreateScope())
         "aggregate-user-baul-activity-daily",
         m => m.AggregateYesterdayAsync(),
         Cron.Daily(2)); // 02:00 UTC, after the functional day in Europe/Madrid has completed
+    recurringJobManager.AddOrUpdate<IDailyUserActivityAggregationJob>(
+        "aggregate-user-activity-daily",
+        m => m.AggregateYesterdayAsync(),
+        Cron.Daily(2)); // 02:00 UTC, same schedule — depends on the same functional day's user_sessions rows
 }
 
 app.MapHangfireDashboard("/hangfire", new DashboardOptions

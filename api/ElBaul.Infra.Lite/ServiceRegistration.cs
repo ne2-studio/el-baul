@@ -40,6 +40,7 @@ public static class ServiceRegistration
         // matches every other stateless port implementation here (IClock, IIdGenerator, …).
         services.AddScoped<IUnitOfWork, FakeUnitOfWork>();
         services.AddSingleton<IUserBaulActivityDailyAggregator, NoOpUserBaulActivityDailyAggregator>();
+        services.AddSingleton<IUserActivityDailyAggregator, NoOpUserActivityDailyAggregator>();
         services.AddSingleton<IUserSessionRepository, NoOpUserSessionRepository>();
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         services.AddSingleton<IBaulRepository, InMemoryBaulRepository>();
@@ -104,6 +105,11 @@ public static class ServiceRegistration
 }
 
 internal sealed class NoOpUserBaulActivityDailyAggregator : IUserBaulActivityDailyAggregator
+{
+    public Task AggregateForDateAsync(DateOnly date) => Task.CompletedTask;
+}
+
+internal sealed class NoOpUserActivityDailyAggregator : IUserActivityDailyAggregator
 {
     public Task AggregateForDateAsync(DateOnly date) => Task.CompletedTask;
 }
