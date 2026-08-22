@@ -178,8 +178,25 @@ own chapter's tab doesn't repeat which chapter it's in) plus a `SimpleFAB`
 promoted to its own shared component yet since only one screen uses it — plus a
 `SimpleFAB` ("Subir fotos", `Icon/add`).
 
-Remaining screens beyond the Baúl/Chapter shells — photo viewer, sharing flows beyond
-`ClaimPersonaScreen`, etc. — are not yet started.
+**`PhotoViewerScreen`** (new `Screens > PhotoViewer` section), built from `PhotoViewer.tsx`
++ `PhotoViewerHeader.tsx` + `RecuerdosList`/`RecuerdoCard`/`RecuerdoInput.tsx`, using the
+mobile-stack layout (photo on top, recuerdos panel below — not the desktop side-by-side
+layout). 3 separate screens, one per `RecuerdosList`/`recuerdosLoading` state (same
+"separate frame per state" precedent as the two `ChapterRoute` tabs): **Default** (2
+`RecuerdoCard`s), **Sin recuerdos** ("Sé el primero en añadir un recuerdo"), **Cargando
+recuerdos** (spinner glyph placeholder). 4 new components, all flat solid colors — no
+variable binding — since this whole surface is `bg-foreground/95` +
+`text-background/*`, a dark-surface/light-text inversion the existing variables aren't
+scoped for: `PhotoViewerHeader` (close + counter + `···` menu, icons' strokes overridden
+to flat off-white), `PersonBadge` (`Avatar` Initials Colored + nickname pill),
+`RecuerdoCard` (the on-image dark sibling of `RecuerdoFeedCard`/`FeedCardHeader` — a
+different visual shell, not just a recolor: no card border, no chapter badge, no
+edit/share icons), and `RecuerdoInput` (idle state only — the focused/has-text/"Guardado"
+states weren't built). `PhotoStage`'s swipeable carousel is a plain static image frame,
+same "skip live interaction" call as everywhere else in this file.
+
+Remaining screens beyond the Baúl/Chapter/PhotoViewer shells — sharing flows beyond
+`ClaimPersonaScreen`, `PhotoBatchViewerRoute`, etc. — are not yet started.
 
 ## Known gotchas (read before writing more `use_figma` scripts)
 
@@ -274,6 +291,12 @@ Remaining screens beyond the Baúl/Chapter shells — photo viewer, sharing flow
   (not a component): the property read back as `AUTO` in the same script, yet the frame
   never hugged, because `resize()` ran after. Fix: set sizing modes to `AUTO`/`HUG` as
   the *last* step, once all children are appended and no more `resize()` calls remain.
+
+- **No color variable is scoped for a dark-surface/light-text inversion.** `PhotoViewer`'s
+  `bg-foreground/95` + `text-background/*` surface has no matching `FRAME_FILL`
+  dark-background variable (`color/text/foreground` is `TEXT_FILL`-only) — used flat
+  pre-blended solid colors instead of introducing a variable for one screen family;
+  revisit if a second dark-surface screen appears.
 
 ## Related skills
 
