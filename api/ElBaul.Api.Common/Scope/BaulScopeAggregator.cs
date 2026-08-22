@@ -65,8 +65,8 @@ public class BaulScopeAggregator(
         // exactly the read that used to happen in a second, separately-timed request on the
         // client (see the class doc comment above).
         var wantsFeed = includeBaulFeed && appConfiguration.BaulFeedEnabled;
-        var baulFeedResult = wantsFeed ? await baulFeedManager.GetFeedAsync(baulId, 0, 20) : null;
-        var baulFeed = baulFeedResult is not null && baulFeedResult.IsSuccess ? baulFeedResult.Value : null;
+        var baulFeedResult = wantsFeed ? await baulFeedManager.GetFeedAsync(baulId, 0, 20) : (Result<FeedPageDto>?)null;
+        var baulFeed = baulFeedResult is { IsSuccess: true } ? baulFeedResult.Value.Value : null;
 
         return Result.Success(new BaulScopeDto(
             baulResult.Value,
