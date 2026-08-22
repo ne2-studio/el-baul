@@ -313,6 +313,15 @@ are not yet started.
   to import real icons.** Fetch the actual SVG (e.g. from `lucide-static` on unpkg) —
   never hand-type or recall path data from memory — then convert. `stroke="currentColor"`
   resolves to flat black; rebind every `VECTOR`'s stroke to a color variable afterward.
+- **Swapping the icon inside a `SimpleFAB`/`ExpandableFAB` can leave some vector strokes
+  bound to the dark `color/icon/default` variable instead of white `color/icon/onPrimary`.**
+  The instance-swap resets each vector's stroke to the new icon component's own defaults;
+  fixing only the ones that look wrong at a glance misses the rest. After any FAB icon
+  swap, rebind *every* `VECTOR` descendant's stroke to the white variable, not just the
+  ones visibly off — `findAll(n => n.type === 'VECTOR')` on the FAB instance, then
+  `figma.variables.setBoundVariableForPaint(stroke, 'color', whiteVar)` + reassign into
+  `node.strokes` for each. The master components (`SimpleFAB`/`ExpandableFAB` themselves)
+  are correct — this is purely an instance-level regression per icon swap.
 - **`editComponentProperty()` on an `INSTANCE_SWAP` default resizes unoverridden
   instances to the new default's natural size**, breaking centering — re-check size/
   position on every instance driven by that property after changing its default.
