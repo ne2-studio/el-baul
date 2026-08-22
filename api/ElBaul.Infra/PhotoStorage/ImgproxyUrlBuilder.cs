@@ -12,9 +12,10 @@ namespace ElBaul.Infra.PhotoStorage;
 /// exposes a MinIO URL of any kind. Base resize/crop behavior is a named preset configured
 /// server-side on imgproxy (see imgproxy/presets.conf), keyed by ImagePlacement. An
 /// optional per-image ImageCrop overrides the preset's gravity with a focal point
-/// (gravity:fp) and, when zoomed in, pre-crops a fractional region around that focal point
-/// (crop:w:h:fp) before the preset's own fill/resize runs — used for persona avatars so the
-/// user-chosen crop/zoom is resampled by imgproxy against the original resolution, instead
+/// (gravity:fp), or, when zoomed in, first pre-crops a fractional region around that focal
+/// point (crop:w:h:fp) and then re-centers the preset's own fill/resize on that sub-image
+/// (gravity:ce) — used for persona avatars so the user-chosen crop/zoom is resampled by
+/// imgproxy against the original resolution, instead
 /// of the browser CSS-scaling an already-downloaded, already-decoded image. imgproxy's
 /// `zoom` processing option would be the more direct fit, but it's Pro-only: verified
 /// empirically against the OSS image (ghcr.io/imgproxy/imgproxy) that a `zoom:` option is
@@ -41,18 +42,33 @@ public static class ImgproxyUrlBuilder
         if (crop is not null)
         {
             var focalPoint = $"{FormatOption(crop.X)}:{FormatOption(crop.Y)}";
-            // Declared after the preset reference, so it overrides the preset's own
-            // gravity:sm — imgproxy applies same-named processing options in order,
-            // last one wins.
-            processingOptions += $"/gravity:fp:{focalPoint}";
             if (crop.Scale > 1m)
             {
                 // crop's width/height are relative (0-1) fractions of the source image
                 // here, never >= 1 — imgproxy treats a value >= 1 as an *absolute pixel
                 // count* instead (verified empirically: crop:1:1 produced a 1x1 image),
                 // which is exactly why this branch is skipped entirely at scale == 1.
+                //
+                // imgproxy runs `crop` before the preset's own fill/resize, so this crop
+                // pre-extracts a region around the focal point *first* — after which the
+                // focal point sits at (or as close as edge-clamping allows to) the center
+                // of that sub-image, not of the original source. The final fill/resize
+                // must therefore center on that already-focused sub-image (gravity:ce),
+                // not reapply gravity:fp:{focalPoint}: imgproxy would resolve those
+                // fractions against the sub-image it now has in hand, not the original
+                // source, silently re-shifting the crop a second time away from the point
+                // the user actually chose (verified empirically against a running
+                // imgproxy — a synthetic marker landed nowhere near where it should).
                 var fraction = FormatOption(1m / crop.Scale);
-                processingOptions += $"/crop:{fraction}:{fraction}:fp:{focalPoint}";
+                processingOptions += $"/crop:{fraction}:{fraction}:fp:{focalPoint}/gravity:ce";
+            }
+            else
+            {
+                // No pre-crop here, so gravity:fp is resolved against the original
+                // source — declared after the preset reference so it overrides the
+                // preset's own gravity:sm (imgproxy applies same-named processing
+                // options in order, last one wins).
+                processingOptions += $"/gravity:fp:{focalPoint}";
             }
         }
         var path = $"/{processingOptions}/{encodedSource}";
