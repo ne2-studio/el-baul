@@ -1,6 +1,7 @@
 using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Domain;
 using System.Collections.Concurrent;
 namespace ElBaul.Infra.Lite;
 
@@ -37,7 +38,7 @@ public class LitePhotoStorage(IAppConfiguration appConfiguration) : IPhotoStorag
     // crop is ignored here: there's no imgproxy in this image to resample against, so the
     // Lite-backed frontend/e2e stack shows the un-cropped original — real crop rendering is
     // only exercised against the real image (MinioPhotoStorage + imgproxy).
-    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) =>
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null, ImageDimensions? sourceDimensions = null) =>
         Task.FromResult($"{appConfiguration.ApiPublicUrl}/lite/photos/{string.Join('/', key.Split('/').Select(Uri.EscapeDataString))}");
 
     public Task DeleteAsync(string key)

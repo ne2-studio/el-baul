@@ -1,5 +1,6 @@
 using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Photos.OutputPorts;
+using ElBaul.Domain;
 namespace ElBaul.Tests.Fakes;
 
 public class FakePhotoStorage : IPhotoStorage
@@ -23,7 +24,7 @@ public class FakePhotoStorage : IPhotoStorage
             new MemoryStream(_content.GetValueOrDefault(key, [])),
             _contentTypes.GetValueOrDefault(key, "application/octet-stream")));
 
-    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) =>
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null, ImageDimensions? sourceDimensions = null) =>
         Task.FromResult($"https://imgproxy.test/{placement}/{key}");
 
     public Task DeleteAsync(string key)

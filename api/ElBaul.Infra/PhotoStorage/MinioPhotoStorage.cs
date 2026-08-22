@@ -1,4 +1,5 @@
 using ElBaul.Core.Photos.Domain;
+using ElBaul.Domain;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -67,8 +68,8 @@ public class MinioPhotoStorage : IPhotoStorage
         return (buffer, response.Headers.ContentType);
     }
 
-    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null) =>
-        Task.FromResult(ImgproxyUrlBuilder.Build(_options.BucketName, key, placement, _imgproxyOptions, crop));
+    public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null, ImageDimensions? sourceDimensions = null) =>
+        Task.FromResult(ImgproxyUrlBuilder.Build(_options.BucketName, key, placement, _imgproxyOptions, crop, sourceDimensions));
 
     public async Task DeleteAsync(string key)
     {

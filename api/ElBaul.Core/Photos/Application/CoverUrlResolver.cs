@@ -17,6 +17,6 @@ public class CoverUrlResolver(IPhotoStorage photoStorage)
 {
     public async Task<string?> ResolveAsync(Photo? coverPhoto, BaulId baulId, ImagePlacement placement, ImageCrop? crop = null) =>
         coverPhoto is not null && coverPhoto.BaulId == baulId && coverPhoto.Status == PhotoStatus.Active
-            ? await photoStorage.GetImageUrl(coverPhoto.StorageKey, placement, crop)
+            ? await photoStorage.GetImageUrl(coverPhoto.StorageKey, placement, crop, coverPhoto.Dimensions)
             : null;
 }

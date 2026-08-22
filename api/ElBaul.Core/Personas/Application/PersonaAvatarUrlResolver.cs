@@ -37,7 +37,7 @@ public static class PersonaAvatarUrlResolver
 
         var crop = persona.AvatarCrop;
         return avatarPhoto is not null && avatarPhoto.BaulId == persona.BaulId && avatarPhoto.Status == PhotoStatus.Active
-            ? await photoStorage.GetImageUrl(avatarPhoto.StorageKey, ImagePlacement.PersonaAvatar, crop)
+            ? await photoStorage.GetImageUrl(avatarPhoto.StorageKey, ImagePlacement.PersonaAvatar, crop, avatarPhoto.Dimensions)
             : null;
     }
 }

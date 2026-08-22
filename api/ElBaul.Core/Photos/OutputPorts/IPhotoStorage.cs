@@ -1,4 +1,5 @@
 using ElBaul.Core.Photos.Domain;
+using ElBaul.Domain;
 namespace ElBaul.Core.Photos.OutputPorts;
 public record PhotoContent(Stream Content, string ContentType);
 
@@ -22,7 +23,11 @@ public interface IPhotoStorage
     /// </summary>
     Task<PhotoContent> OpenReadForDownloadAsync(string key);
 
-    Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null);
+    /// <param name="sourceDimensions">
+    /// Required whenever <paramref name="crop"/> is set — the crop window depends on the
+    /// source image's own aspect ratio (see ImgproxyUrlBuilder.BuildCropWindow).
+    /// </param>
+    Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null, ImageDimensions? sourceDimensions = null);
     Task DeleteAsync(string key);
     Task EnsureBucketExistsAsync();
 }
