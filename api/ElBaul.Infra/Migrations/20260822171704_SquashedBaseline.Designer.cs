@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElBaul.Infra.Migrations
 {
     [DbContext(typeof(ElBaulDbContext))]
-    [Migration("20260819060614_RefactorPhotoValueObjects")]
-    partial class RefactorPhotoValueObjects
+    [Migration("20260822171704_SquashedBaseline")]
+    partial class SquashedBaseline
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -651,15 +651,11 @@ namespace ElBaul.Infra.Migrations
                             b1.IsRequired();
 
                             b1.Property<int>("Height")
-                                .ValueGeneratedOnAdd()
                                 .HasColumnType("integer")
-                                .HasDefaultValue(0)
                                 .HasColumnName("Height");
 
                             b1.Property<int>("Width")
-                                .ValueGeneratedOnAdd()
                                 .HasColumnType("integer")
-                                .HasDefaultValue(0)
                                 .HasColumnName("Width");
                         });
 

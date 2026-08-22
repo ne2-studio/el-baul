@@ -142,6 +142,14 @@ the frontend can learn the flag's state without a deploy. Defaults to false.
   Table/column mapping via Fluent API (`EntityConfigurations/`), not data annotations.
 - Migrations apply automatically at startup (`dbContext.Database.MigrateAsync()`), never a
   manual deploy step.
+- **The `analytics` schema is raw SQL, not EF-mapped.** `analytics.user_sessions`,
+  `analytics.user_baul_activity_daily`, `analytics.user_activity_daily` (written/read via
+  `Analytics/*Repository`/`*Aggregator` classes) are Metabase-facing, append-only tables with
+  no `DbSet`/`EntityConfiguration` — deliberately kept outside the domain model. `dotnet ef
+  migrations add` can't regenerate them from the model, so any future migration squash must
+  hand-copy their `CREATE SCHEMA`/`CREATE TABLE`/`CREATE INDEX` statements into the new
+  baseline migration (see `SquashedBaseline`'s XML doc comment for the current list and
+  worked example). Adding another such table means updating that list too.
 - **IDs**: `Guid` primary keys for domain entities; `User` is keyed by the OIDC `sub` claim
   instead (opaque `text` — OIDC subject ids aren't guaranteed GUID-shaped).
 - **Photos are soft-deleted** (`PhotoStatus.Active`/`Deleted`), driven by the removal-request
