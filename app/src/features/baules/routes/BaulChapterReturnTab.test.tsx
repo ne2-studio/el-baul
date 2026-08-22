@@ -134,4 +134,24 @@ describe('Baúl <-> Capítulo: volver retoma la pestaña de origen', () => {
 
     expect(await screen.findByText('Contenido de Recuerdos')).toBeInTheDocument();
   });
+
+  it('vuelve al mismo punto de scroll en el que estaba antes de entrar al capítulo', async () => {
+    const user = userEvent.setup();
+    sessionStorage.clear();
+    Object.defineProperty(window, 'scrollY', { value: 640, configurable: true });
+    renderApp(`/baules/${baul.id}`);
+
+    await user.click(screen.getByText('Capítulos'));
+    await user.click(await screen.findByText(chapter.name));
+
+    expect(await screen.findByText('Volver')).toBeInTheDocument();
+    (window.scrollTo as ReturnType<typeof vi.fn>).mockClear();
+    await user.click(screen.getByText('Volver'));
+
+    await screen.findByText(chapter.name);
+    // BaulRoute restaura la posición guardada al montar (vía rAF) — esperamos a que corra.
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 640);
+  });
 });

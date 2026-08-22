@@ -16,6 +16,7 @@ import { getEntrySource } from '@/utils/entrySource';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { getBaulPermissions } from '@/utils/roleUtils';
+import { readBaulScrollPosition, saveBaulScrollPosition } from './baulScrollRestoration';
 
 type BaulTab = 'capitulos' | 'personas' | 'recuerdos';
 
@@ -36,6 +37,10 @@ export const BaulRoute: React.FC = () => {
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const initialTab = (location.state as { activeTab?: BaulTab } | null)?.activeTab ?? 'recuerdos';
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
+  // Solo hay algo que restaurar cuando se llega con un activeTab explícito en el state — eso
+  // solo pasa al volver de un Capítulo o de una Persona (ver returnTab en handleSelectChapter
+  // y en el "Volver" de ChapterRoute/PersonaDetailRoute), nunca en una entrada nueva al baúl.
+  const cameBackFromChildRoute = Boolean((location.state as { activeTab?: BaulTab } | null)?.activeTab);
   // Solo se intenta cuando el punto de entrada es el feed ('recuerdos', el valor por defecto
   // de initialTab — cualquier otra pestaña llega por un state.activeTab explícito, es decir
   // por navegación directa, no por una entrada nueva al baúl), el baúl no está en cooldown
@@ -79,6 +84,22 @@ export const BaulRoute: React.FC = () => {
 
   const baulScope = useBaulScope(baulId, { includeBaulFeed: activeTab === 'recuerdos' });
   const guard = guardBaulScope(baulScope, { loadingLabel: 'Abriendo baúl...' });
+
+  // Restaura el scroll de la pestaña de origen al volver de un Capítulo/Persona. Se dispara
+  // cuando el guard pasa a listo (antes de eso no hay nada pintado a lo que hacer scroll) — el
+  // rAF deja que ScrollToTop (montado antes que <Routes> en App.tsx, así que su efecto de
+  // reset a (0,0) corre primero en el mismo commit) y el layout del tab ya pintado terminen
+  // antes de saltar a la posición guardada.
+  useEffect(() => {
+    if (!guard.ready || !cameBackFromChildRoute) return;
+    const savedScrollY = readBaulScrollPosition(guard.baul.id, activeTab);
+    if (savedScrollY === undefined) return;
+    requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
+    // activeTab/cameBackFromChildRoute no cambian entre el mount y que guard.ready pase a
+    // true — solo se necesita disparar una vez, al quedar listo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guard.ready]);
+
   if (!guard.ready) return guard.screen;
   const { baul } = guard;
 
@@ -104,6 +125,9 @@ export const BaulRoute: React.FC = () => {
     // que se entró (recuerdos o capítulos, las dos únicas que llevan aquí) en vez de caer
     // siempre en la pestaña inicial — mismo mecanismo que ya usan handleSelectPersona en
     // BaulPersonasTabContainer/BaulFeedTabContainer con PersonaDetailRoute.
+    // Se guarda el scroll de la pestaña actual para poder devolver a la misma posición al
+    // volver (ver el useEffect de arriba que lo lee).
+    saveBaulScrollPosition(baul.id, activeTab);
     navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { state: { returnTab: activeTab } });
   };
 
