@@ -6,13 +6,25 @@ import { DataTable } from '@/app/components/DataTable';
 import { AsyncState } from '@/app/components/AsyncState';
 import { formatDate } from '@/utils/format';
 import { EMAIL_TYPE_LABELS, EMAIL_STATUS_LABELS } from '@/utils/emailLabels';
+import { PUSH_TYPE_LABELS, PUSH_STATUS_LABELS } from '@/utils/pushLabels';
 import { buildUserLogsUrl } from '@/utils/logs';
 import { api } from '@/api';
-import type { AdminSentEmail, AdminUserBaulMembership } from '@/types';
+import type { AdminSentEmail, AdminSentPushNotification, AdminUserBaulMembership } from '@/types';
 
 export function UserDetailRoute() {
   const { userId } = useParams<{ userId: string }>();
-  const { selectedUser, selectedUserEmails, isLoading, isLoadingEmails, error, fetchUser, fetchUserEmails } = useUsersStore();
+  const {
+    selectedUser,
+    selectedUserEmails,
+    selectedUserPushNotifications,
+    isLoading,
+    isLoadingEmails,
+    isLoadingPushNotifications,
+    error,
+    fetchUser,
+    fetchUserEmails,
+    fetchUserPushNotifications,
+  } = useUsersStore();
   const navigate = useNavigate();
 
   type TestSendKey = 'welcome' | 'digest';
@@ -34,6 +46,7 @@ export function UserDetailRoute() {
     if (userId) {
       fetchUser(userId);
       fetchUserEmails(userId);
+      fetchUserPushNotifications(userId);
     }
   }, [userId]);
 
@@ -60,6 +73,7 @@ export function UserDetailRoute() {
     try {
       await api.pushNotifications.sendTest(userId, pushMessage.trim(), pushDeepLink.trim() || null);
       setPushResult('success');
+      fetchUserPushNotifications(userId); // refresh so the just-sent test notification shows up below
     } catch (err) {
       setPushResult('error');
       setPushError(err instanceof Error ? err.message : 'No se pudo enviar la notificación.');
@@ -316,6 +330,33 @@ export function UserDetailRoute() {
                   {
                     header: 'Clic',
                     render: (e) => (e.firstClickedAt ? <Check className="w-4 h-4 text-primary" /> : null),
+                  },
+                ]}
+              />
+            </AsyncState>
+          </div>
+
+          <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
+            <h3 className="mb-4">Notificaciones push enviadas</h3>
+            <AsyncState
+              isLoading={isLoadingPushNotifications}
+              error={null}
+              hasData={selectedUserPushNotifications.length > 0}
+              renderWhenEmpty
+              loadingClassName="text-muted-foreground text-sm"
+            >
+              <DataTable<AdminSentPushNotification>
+                rows={selectedUserPushNotifications}
+                keyFor={(n) => n.id}
+                emptyMessage="Todavía no se ha enviado ninguna notificación push a este usuario."
+                columns={[
+                  { header: 'Fecha', render: (n) => formatDate(n.sentAt ?? n.createdAt) },
+                  { header: 'Tipo', render: (n) => PUSH_TYPE_LABELS[n.type] ?? n.type },
+                  { header: 'Título', render: (n) => n.title },
+                  { header: 'Estado', render: (n) => PUSH_STATUS_LABELS[n.status] ?? n.status },
+                  {
+                    header: 'Abierto',
+                    render: (n) => (n.firstOpenedAt ? <Check className="w-4 h-4 text-primary" /> : null),
                   },
                 ]}
               />

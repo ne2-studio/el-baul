@@ -16,6 +16,7 @@ using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 
+using ElBaul.Infra;
 using ElBaul.Infra.Lite;
 using ElBaul.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -36,6 +37,8 @@ public class PushDigestManagerTests
     private readonly InMemoryUserRepository _userRepository = new();
     private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
     private readonly FakePushNotificationSender _pushNotificationSender = new();
+    private readonly InMemorySentPushNotificationRepository _sentPushNotificationRepository = new();
+    private readonly FakePushLinkSigner _pushLinkSigner = new();
     private readonly InMemoryPersonaRepository _personaRepository = new();
     private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
@@ -56,6 +59,7 @@ public class PushDigestManagerTests
     private PushDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<PushDigestManager>.Instance,
         _userRepository, _pushTokenRepository, _pushNotificationSender,
+        _sentPushNotificationRepository, _pushLinkSigner, new GuidIdGenerator(),
         CreateDigestActivityPolicy(), _feedCursorRepository,
         _jobScheduler, appConfiguration, _clock);
 

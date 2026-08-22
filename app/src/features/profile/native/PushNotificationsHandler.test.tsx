@@ -16,8 +16,13 @@ vi.mock('@capacitor/push-notifications', () => ({
   PushNotifications: { addListener: vi.fn() },
 }));
 
+vi.mock('@/api', () => ({
+  api: { pushNotifications: { reportOpened: vi.fn().mockResolvedValue(undefined) } },
+}));
+
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications, type ActionPerformed } from '@capacitor/push-notifications';
+import { api } from '@/api';
 
 function LocationDisplay() {
   const location = useLocation();
@@ -117,5 +122,38 @@ describe('PushNotificationsHandler', () => {
     });
 
     expect(screen.getByTestId('location')).toHaveTextContent('/');
+  });
+
+  it('reports the tap as opened when the notification carries a tracking token', async () => {
+    let tapCallback: ((event: ActionPerformed) => void) | undefined;
+    vi.mocked(PushNotifications.addListener).mockImplementation((_event, callback) => {
+      tapCallback = callback as (event: ActionPerformed) => void;
+      return Promise.resolve({ remove: vi.fn() });
+    });
+
+    renderHandler();
+    await waitFor(() => expect(tapCallback).toBeDefined());
+
+    act(() => tapCallback!(actionPerformed({ trackingToken: 'po1.abc.def' })));
+
+    await waitFor(() => expect(api.pushNotifications.reportOpened).toHaveBeenCalledWith('po1.abc.def'));
+  });
+
+  it('does not report opened when the notification has no tracking token', async () => {
+    let tapCallback: ((event: ActionPerformed) => void) | undefined;
+    vi.mocked(PushNotifications.addListener).mockImplementation((_event, callback) => {
+      tapCallback = callback as (event: ActionPerformed) => void;
+      return Promise.resolve({ remove: vi.fn() });
+    });
+
+    renderHandler();
+    await waitFor(() => expect(tapCallback).toBeDefined());
+
+    act(() => tapCallback!(actionPerformed({ deepLink: '/baules/abc' })));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(api.pushNotifications.reportOpened).not.toHaveBeenCalled();
   });
 });

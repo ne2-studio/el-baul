@@ -11,7 +11,7 @@ const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Usuarios', icon: Users, path: '/usuarios' },
   { label: 'Baúles', icon: Archive, path: '/baules' },
-  { label: 'Emails', icon: Mail, path: '/emails' },
+  { label: 'Comms', icon: Mail, path: '/comms' },
 ];
 
 export function Layout({ children, onLogout }: LayoutProps) {

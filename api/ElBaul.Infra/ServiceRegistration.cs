@@ -67,6 +67,8 @@ public static class ServiceRegistration
         services.AddScoped<ISentEmailRepository, SentEmailRepository>();
         services.AddScoped<IEmailLinkClickRepository, EmailLinkClickRepository>();
         services.AddSingleton<IEmailLinkSigner, EmailLinkSigner>();
+        services.AddScoped<ISentPushNotificationRepository, SentPushNotificationRepository>();
+        services.AddSingleton<IPushLinkSigner, PushLinkSigner>();
         services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
         services.AddScoped<EmailJobs>();
         services.AddScoped<PushNotificationJobs>();

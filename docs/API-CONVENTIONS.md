@@ -26,6 +26,9 @@ Anonymous exceptions:
 - `GET /email/assets/logo.png` — the masthead logo loaded by the recipient's email client,
   never carries auth. Served as a real URL (not embedded as a `data:` URI) because several
   major email clients/providers strip or refuse to render inline base64 images.
+- `GET /push/opened/{token}` — called by the app itself when the user taps a push notification;
+  push has no pixel to load, so unlike the email open tracker this is a plain client-side fetch,
+  and it may fire with no active/valid session (app cold-started from the notification).
 - `GET /s/{token}` — public shared photo/recuerdo landing with Open Graph metadata.
 - `GET /api/tv-sessions/{token}` — public, rate-limited; Modo TV's temporary read-only session
   content (baúl name + every photo's date/chapter/tagged people/latest recuerdo). The token

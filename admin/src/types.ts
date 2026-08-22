@@ -10,6 +10,7 @@ type AdminChatContextDebugDto = ApiSchemas['AdminChatContextDebugDto'];
 type AdminDashboardResponse = ApiSchemas['AdminDashboardResponse'];
 type AdminExternalLinkDto = ApiSchemas['AdminExternalLinkDto'];
 type AdminSentEmailDto = ApiSchemas['AdminSentEmailDto'];
+type AdminSentPushNotificationDto = ApiSchemas['AdminSentPushNotificationDto'];
 type AdminUserBaulMembershipDto = ApiSchemas['AdminUserBaulMembershipDto'];
 type AdminUserDetailDto = ApiSchemas['AdminUserDetailDto'];
 type AdminUserListItemDto = ApiSchemas['AdminUserListItemDto'];
@@ -31,6 +32,8 @@ export class DashboardKpis {
   photosUploadedToday: number;
   emailsSentLast30Days: number;
   emailsOpenedLast30Days: number;
+  pushNotificationsSentLast30Days: number;
+  pushNotificationsOpenedLast30Days: number;
   externalLinks: ExternalLink[];
 
   constructor(data: AdminDashboardResponse) {
@@ -40,6 +43,8 @@ export class DashboardKpis {
     this.photosUploadedToday = data.photosUploadedToday;
     this.emailsSentLast30Days = data.emailsSentLast30Days;
     this.emailsOpenedLast30Days = data.emailsOpenedLast30Days;
+    this.pushNotificationsSentLast30Days = data.pushNotificationsSentLast30Days;
+    this.pushNotificationsOpenedLast30Days = data.pushNotificationsOpenedLast30Days;
     this.externalLinks = data.externalLinks.map((l) => new ExternalLink(l));
   }
 }
@@ -120,6 +125,30 @@ export class AdminSentEmail {
     this.createdAt = data.createdAt;
     this.sentAt = data.sentAt ?? undefined;
     this.firstClickedAt = data.firstClickedAt ?? undefined;
+    this.firstOpenedAt = data.firstOpenedAt ?? undefined;
+  }
+}
+
+export class AdminSentPushNotification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  status: string;
+  createdAt: string;
+  sentAt?: string;
+  firstOpenedAt?: string;
+
+  constructor(data: AdminSentPushNotificationDto) {
+    this.id = data.id;
+    this.userId = data.userId;
+    this.type = data.type;
+    this.title = data.title;
+    this.body = data.body;
+    this.status = data.status;
+    this.createdAt = data.createdAt;
+    this.sentAt = data.sentAt ?? undefined;
     this.firstOpenedAt = data.firstOpenedAt ?? undefined;
   }
 }

@@ -36,6 +36,8 @@ public class AdminController(
             counts.PhotosUploadedToday,
             counts.EmailsSentLast30Days,
             counts.EmailsOpenedLast30Days,
+            counts.PushNotificationsSentLast30Days,
+            counts.PushNotificationsOpenedLast30Days,
             externalLinks = GetExternalLinks()
         });
     }
@@ -93,6 +95,22 @@ public class AdminController(
     public async Task<IActionResult> GetUserEmails(string userId)
     {
         var result = await adminManager.GetUserSentEmailsAsync(new UserId(userId));
+        return result.ToActionResult();
+    }
+
+    [HttpGet("push-notifications")]
+    [ProducesResponseType(typeof(IEnumerable<AdminSentPushNotificationDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPushNotifications()
+    {
+        var result = await adminManager.GetSentPushNotificationsAsync();
+        return result.ToActionResult();
+    }
+
+    [HttpGet("users/{userId}/push-notifications")]
+    [ProducesResponseType(typeof(IEnumerable<AdminSentPushNotificationDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserPushNotifications(string userId)
+    {
+        var result = await adminManager.GetUserSentPushNotificationsAsync(new UserId(userId));
         return result.ToActionResult();
     }
 

@@ -10,4 +10,6 @@ public record AdminDashboardResponse(
     int PhotosUploadedToday,
     int EmailsSentLast30Days,
     int EmailsOpenedLast30Days,
+    int PushNotificationsSentLast30Days,
+    int PushNotificationsOpenedLast30Days,
     IReadOnlyList<AdminExternalLinkDto> ExternalLinks);

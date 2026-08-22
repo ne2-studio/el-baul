@@ -27,6 +27,7 @@ public class AdminManagerTests
 {
     private readonly InMemoryAdminRepository _adminRepository = new();
     private readonly InMemorySentEmailRepository _sentEmailRepository = new();
+    private readonly InMemorySentPushNotificationRepository _sentPushNotificationRepository = new();
     private readonly InMemoryPersonaRepository _personaRepository = new();
     private readonly InMemoryBaulRepository _baulRepository;
     private readonly InMemoryChapterRepository _chapterRepository = new();
@@ -61,14 +62,15 @@ public class AdminManagerTests
     }
 
     private AdminManager CreateManager() => new(
-        _adminRepository, _baulDeletionRepository, _sentEmailRepository, _baulRepository, _personaRepository, _pushTokenRepository,
+        _adminRepository, _baulDeletionRepository, _sentEmailRepository, _sentPushNotificationRepository, _baulRepository, _personaRepository, _pushTokenRepository,
         _photoStorage, _chatContextBuilder, _clock, NullLogger<AdminManager>.Instance);
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()
     {
         _adminRepository.DashboardCounts = new AdminDashboardCounts(
-            Users: 3, Baules: 2, Photos: 40, PhotosToday: 5, EmailsSentLast30Days: 12, EmailsOpenedLast30Days: 7);
+            Users: 3, Baules: 2, Photos: 40, PhotosToday: 5, EmailsSentLast30Days: 12, EmailsOpenedLast30Days: 7,
+            PushNotificationsSentLast30Days: 9, PushNotificationsOpenedLast30Days: 4);
 
         var result = await CreateManager().GetDashboardCountsAsync();
 
@@ -79,6 +81,8 @@ public class AdminManagerTests
         Assert.Equal(5, result.Value.PhotosUploadedToday);
         Assert.Equal(12, result.Value.EmailsSentLast30Days);
         Assert.Equal(7, result.Value.EmailsOpenedLast30Days);
+        Assert.Equal(9, result.Value.PushNotificationsSentLast30Days);
+        Assert.Equal(4, result.Value.PushNotificationsOpenedLast30Days);
         Assert.Equal(_clock.UtcNow().Date, _adminRepository.LastRequestedTodayUtcStart);
     }
 
@@ -170,6 +174,25 @@ public class AdminManagerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(["WeeklyDigest", "Welcome"], result.Value.Select(e => e.Type));
+    }
+
+    [Fact]
+    public async Task GetUserSentPushNotificationsAsync_ShouldReturnOnlyThatUsersNotifications_MostRecentFirst()
+    {
+        var older = new SentPushNotification(Guid.NewGuid(), new UserId("user-1"), PushNotificationType.WeeklySummary,
+            "t", "b", PushNotificationStatus.Sent, "push-digest:user-1:x", _clock.UtcNow().AddDays(-1));
+        var newer = new SentPushNotification(Guid.NewGuid(), new UserId("user-1"), PushNotificationType.Test,
+            "t", "b", PushNotificationStatus.Sent, "test-push:user-1:y", _clock.UtcNow());
+        var otherUser = new SentPushNotification(Guid.NewGuid(), new UserId("user-2"), PushNotificationType.WeeklySummary,
+            "t", "b", PushNotificationStatus.Sent, "push-digest:user-2:z", _clock.UtcNow());
+        await _sentPushNotificationRepository.TryReserveAsync(older);
+        await _sentPushNotificationRepository.TryReserveAsync(newer);
+        await _sentPushNotificationRepository.TryReserveAsync(otherUser);
+
+        var result = await CreateManager().GetUserSentPushNotificationsAsync(new UserId("user-1"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["Test", "WeeklySummary"], result.Value.Select(n => n.Type));
     }
 
     [Fact]

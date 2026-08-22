@@ -3,6 +3,7 @@ import {
   AdminBaulDetail,
   AdminChatContextDebug,
   AdminSentEmail,
+  AdminSentPushNotification,
   AdminUser,
   AdminUserDetail,
   DashboardKpis,
@@ -16,6 +17,7 @@ type AdminBaulListItemDto = ApiSchemas['AdminBaulListItemDto'];
 type AdminChatContextDebugDto = ApiSchemas['AdminChatContextDebugDto'];
 type AdminDashboardResponse = ApiSchemas['AdminDashboardResponse'];
 type AdminSentEmailDto = ApiSchemas['AdminSentEmailDto'];
+type AdminSentPushNotificationDto = ApiSchemas['AdminSentPushNotificationDto'];
 type AdminUserDetailDto = ApiSchemas['AdminUserDetailDto'];
 type AdminUserListItemDto = ApiSchemas['AdminUserListItemDto'];
 
@@ -61,6 +63,10 @@ export const api = {
       fetch(`${API_BASE_URL}/api/admin/users/${id}/emails`, { headers: getHeaders() })
         .then((res) => handleResponse<AdminSentEmailDto[]>(res))
         .then((data) => data.map((e) => new AdminSentEmail(e))),
+    getPushNotifications: async (id: string): Promise<AdminSentPushNotification[]> =>
+      fetch(`${API_BASE_URL}/api/admin/users/${id}/push-notifications`, { headers: getHeaders() })
+        .then((res) => handleResponse<AdminSentPushNotificationDto[]>(res))
+        .then((data) => data.map((n) => new AdminSentPushNotification(n))),
     debugChatContext: async (userId: string, baulId: string, message: string): Promise<AdminChatContextDebug> =>
       fetch(`${API_BASE_URL}/api/admin/users/${userId}/baules/${baulId}/chat-context-debug`, {
         method: 'POST',
@@ -102,6 +108,10 @@ export const api = {
         .then((res) => handleResponse<void>(res)),
   },
   pushNotifications: {
+    getAll: async (): Promise<AdminSentPushNotification[]> =>
+      fetch(`${API_BASE_URL}/api/admin/push-notifications`, { headers: getHeaders() })
+        .then((res) => handleResponse<AdminSentPushNotificationDto[]>(res))
+        .then((data) => data.map((n) => new AdminSentPushNotification(n))),
     sendTest: async (userId: string, message: string, deepLink: string | null): Promise<void> =>
       fetch(`${API_BASE_URL}/api/admin/users/${userId}/push-notifications/test`, {
         method: 'POST',
