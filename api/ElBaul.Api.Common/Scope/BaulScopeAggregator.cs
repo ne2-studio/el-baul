@@ -39,39 +39,41 @@ public class BaulScopeAggregator(
         var baulResult = await baulManager.GetByIdAsync(baulId);
         if (baulResult.IsFailure) return Result.Failure<BaulScopeDto>(baulResult.Error);
 
-        var chaptersTask = chapterManager.GetByBaulIdAsync(baulId);
-        var loosePhotosTask = photoReadManager.GetLooseByBaulIdAsync(baulId);
-        var recuerdosTask = recuerdoManager.GetRecuerdosAsync(baulId);
-        var personasTask = personaManager.GetPersonasAsync(baulId);
-        var removalRequestsTask = removalRequestManager.GetRemovalRequestsAsync(baulId);
+        // Awaited sequentially, not fanned out with Task.WhenAll: every manager here shares the
+        // same request-scoped DbContext, and EF Core's DbContext isn't safe for concurrent use
+        // by multiple in-flight operations (it throws InvalidOperationException when two do).
+        var chaptersResult = await chapterManager.GetByBaulIdAsync(baulId);
+        if (chaptersResult.IsFailure) return Result.Failure<BaulScopeDto>(chaptersResult.Error);
 
-        // Checked here, once, instead of trusting the caller's includeBaulFeed alone — this is
-        // exactly the read that used to happen in a second, separately-timed request on the
-        // client (see the class doc comment above).
-        var wantsFeed = includeBaulFeed && appConfiguration.BaulFeedEnabled;
-        var baulFeedTask = wantsFeed ? baulFeedManager.GetFeedAsync(baulId, 0, 20) : null;
+        var loosePhotosResult = await photoReadManager.GetLooseByBaulIdAsync(baulId);
+        if (loosePhotosResult.IsFailure) return Result.Failure<BaulScopeDto>(loosePhotosResult.Error);
 
-        await Task.WhenAll(new Task[] { chaptersTask, loosePhotosTask, recuerdosTask, personasTask, removalRequestsTask }
-            .Concat(baulFeedTask is null ? [] : [baulFeedTask]));
+        var recuerdosResult = await recuerdoManager.GetRecuerdosAsync(baulId);
+        if (recuerdosResult.IsFailure) return Result.Failure<BaulScopeDto>(recuerdosResult.Error);
 
-        if (chaptersTask.Result.IsFailure) return Result.Failure<BaulScopeDto>(chaptersTask.Result.Error);
-        if (loosePhotosTask.Result.IsFailure) return Result.Failure<BaulScopeDto>(loosePhotosTask.Result.Error);
-        if (recuerdosTask.Result.IsFailure) return Result.Failure<BaulScopeDto>(recuerdosTask.Result.Error);
-        if (personasTask.Result.IsFailure) return Result.Failure<BaulScopeDto>(personasTask.Result.Error);
+        var personasResult = await personaManager.GetPersonasAsync(baulId);
+        if (personasResult.IsFailure) return Result.Failure<BaulScopeDto>(personasResult.Error);
 
         // A non-admin can't review removal requests — that's an expected "not applicable to this
         // user", not a reason to fail the whole scope. Any other failure (a genuine infra error)
         // is treated the same way: the removal-requests section is just omitted, since it's the
         // one piece of this response that's optional even when it was asked for.
-        var removalRequests = removalRequestsTask.Result.IsSuccess ? removalRequestsTask.Result.Value : null;
-        var baulFeed = baulFeedTask is not null && baulFeedTask.Result.IsSuccess ? baulFeedTask.Result.Value : null;
+        var removalRequestsResult = await removalRequestManager.GetRemovalRequestsAsync(baulId);
+        var removalRequests = removalRequestsResult.IsSuccess ? removalRequestsResult.Value : null;
+
+        // Checked here, once, instead of trusting the caller's includeBaulFeed alone — this is
+        // exactly the read that used to happen in a second, separately-timed request on the
+        // client (see the class doc comment above).
+        var wantsFeed = includeBaulFeed && appConfiguration.BaulFeedEnabled;
+        var baulFeedResult = wantsFeed ? await baulFeedManager.GetFeedAsync(baulId, 0, 20) : null;
+        var baulFeed = baulFeedResult is not null && baulFeedResult.IsSuccess ? baulFeedResult.Value : null;
 
         return Result.Success(new BaulScopeDto(
             baulResult.Value,
-            chaptersTask.Result.Value,
-            loosePhotosTask.Result.Value,
-            recuerdosTask.Result.Value,
-            personasTask.Result.Value,
+            chaptersResult.Value,
+            loosePhotosResult.Value,
+            recuerdosResult.Value,
+            personasResult.Value,
             removalRequests,
             baulFeed));
     }
