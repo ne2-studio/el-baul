@@ -41,6 +41,7 @@ public static class ServiceRegistration
         services.AddScoped<IUnitOfWork, FakeUnitOfWork>();
         services.AddSingleton<IUserBaulActivityDailyAggregator, NoOpUserBaulActivityDailyAggregator>();
         services.AddSingleton<IUserActivityDailyAggregator, NoOpUserActivityDailyAggregator>();
+        services.AddSingleton<INotificationPreferencesDailyAggregator, NoOpNotificationPreferencesDailyAggregator>();
         services.AddSingleton<IUserSessionRepository, NoOpUserSessionRepository>();
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         services.AddSingleton<IBaulRepository, InMemoryBaulRepository>();
@@ -110,6 +111,11 @@ internal sealed class NoOpUserBaulActivityDailyAggregator : IUserBaulActivityDai
 }
 
 internal sealed class NoOpUserActivityDailyAggregator : IUserActivityDailyAggregator
+{
+    public Task AggregateForDateAsync(DateOnly date) => Task.CompletedTask;
+}
+
+internal sealed class NoOpNotificationPreferencesDailyAggregator : INotificationPreferencesDailyAggregator
 {
     public Task AggregateForDateAsync(DateOnly date) => Task.CompletedTask;
 }

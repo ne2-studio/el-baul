@@ -62,6 +62,10 @@ using (var scope = app.Services.CreateScope())
         "aggregate-user-activity-daily",
         m => m.AggregateYesterdayAsync(),
         Cron.Daily(2)); // 02:00 UTC, same schedule — depends on the same functional day's user_sessions rows
+    recurringJobManager.AddOrUpdate<IDailyNotificationPreferencesAggregationJob>(
+        "aggregate-notification-preferences-daily",
+        m => m.AggregateYesterdayAsync(),
+        Cron.Daily(2)); // 02:00 UTC, same schedule as the other analytics aggregations
 }
 
 app.MapHangfireDashboard("/hangfire", new DashboardOptions
