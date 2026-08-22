@@ -10,17 +10,12 @@ vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(() => ({ isAuthenticated: true })),
 }));
 
-vi.mock('@/features/photos/useCases', () => ({
-  loadChapterPhotos: vi.fn(),
-}));
-
-vi.mock('@/features/memories/useCases', () => ({
-  loadChapterRecuerdos: vi.fn(),
+vi.mock('@/api', () => ({
+  api: { chapters: { getScope: vi.fn() } },
 }));
 
 import { useAuth } from 'react-oidc-context';
-import { loadChapterPhotos } from '@/features/photos/useCases';
-import { loadChapterRecuerdos } from '@/features/memories/useCases';
+import { api } from '@/api';
 import { useChapterScope } from './useChapterScope';
 
 const baulId = 'baul-1';
@@ -52,8 +47,7 @@ describe('useChapterScope', () => {
     usePhotosStore.getState().reset();
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
-    vi.mocked(loadChapterPhotos).mockReset().mockResolvedValue(undefined);
-    vi.mocked(loadChapterRecuerdos).mockReset().mockResolvedValue(undefined);
+    vi.mocked(api.chapters.getScope).mockReset().mockResolvedValue({ photos: [], recuerdos: [] });
   });
 
   afterEach(() => {
@@ -64,41 +58,27 @@ describe('useChapterScope', () => {
     const { result } = renderHook(() => useChapterScope(undefined, chapterId));
 
     expect(result.current.isLoading).toBe(false);
-    expect(loadChapterPhotos).not.toHaveBeenCalled();
-    expect(loadChapterRecuerdos).not.toHaveBeenCalled();
+    expect(api.chapters.getScope).not.toHaveBeenCalled();
   });
 
   it('loads photos and recuerdos together when neither is cached, and stays loading until both arrive', async () => {
     // Deferred via a microtask (not a synchronous mock body) so isLoading — derived straight
     // from the store, same as useBaulScope/usePersonaScope — can actually be observed as true
-    // before these resolve, same as a real network call would behave.
-    vi.mocked(loadChapterPhotos).mockImplementation(() => Promise.resolve().then(() => {
-      seedChapterPhotos(chapterId, [photo()]);
-    }));
-    vi.mocked(loadChapterRecuerdos).mockImplementation(() => Promise.resolve().then(() => {
-      useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: [recuerdo()] } }));
-    }));
+    // before this resolves, same as a real network call would behave.
+    vi.mocked(api.chapters.getScope).mockImplementation(() => Promise.resolve().then(() => ({
+      photos: [photo()], recuerdos: [recuerdo()],
+    })));
 
     const { result } = renderHook(() => useChapterScope(baulId, chapterId));
 
     expect(result.current.isLoading).toBe(true);
 
-    await waitFor(() => expect(loadChapterPhotos).toHaveBeenCalledWith(chapterId));
-    expect(loadChapterRecuerdos).toHaveBeenCalledWith(baulId, chapterId);
+    await waitFor(() => expect(api.chapters.getScope).toHaveBeenCalledWith(baulId, chapterId));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.photos).toEqual([photo()]);
     expect(result.current.chapterRecuerdos).toEqual([recuerdo()]);
     expect(result.current.loadFailed).toBe(false);
-  });
-
-  it('only fetches the piece that is missing', async () => {
-    seedChapterPhotos(chapterId, [photo()]);
-
-    renderHook(() => useChapterScope(baulId, chapterId));
-
-    await waitFor(() => expect(loadChapterRecuerdos).toHaveBeenCalledWith(baulId, chapterId));
-    expect(loadChapterPhotos).not.toHaveBeenCalled();
   });
 
   it('does not refetch anything once both are already cached', async () => {
@@ -110,24 +90,20 @@ describe('useChapterScope', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(loadChapterPhotos).not.toHaveBeenCalled();
-    expect(loadChapterRecuerdos).not.toHaveBeenCalled();
+    expect(api.chapters.getScope).not.toHaveBeenCalled();
     expect(result.current.isLoading).toBe(false);
     expect(result.current.photos).toEqual([photo()]);
   });
 
   it('surfaces loadFailed when the fetch fails, and retry can recover', async () => {
-    vi.mocked(loadChapterRecuerdos).mockRejectedValueOnce(new Error('network down'));
-    seedChapterPhotos(chapterId, [photo()]);
+    vi.mocked(api.chapters.getScope).mockRejectedValueOnce(new Error('network down'));
 
     const { result } = renderHook(() => useChapterScope(baulId, chapterId));
 
     await waitFor(() => expect(result.current.loadFailed).toBe(true));
     expect(result.current.isLoading).toBe(false);
 
-    vi.mocked(loadChapterRecuerdos).mockImplementationOnce(async () => {
-      useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterId]: [recuerdo()] } }));
-    });
+    vi.mocked(api.chapters.getScope).mockResolvedValueOnce({ photos: [photo()], recuerdos: [recuerdo()] });
 
     await act(async () => {
       await result.current.retry();
@@ -144,8 +120,7 @@ describe('useChapterScope', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(loadChapterPhotos).not.toHaveBeenCalled();
-    expect(loadChapterRecuerdos).not.toHaveBeenCalled();
+    expect(api.chapters.getScope).not.toHaveBeenCalled();
   });
 
   // Regression: navigating straight from one chapter to another (e.g. BatchPhotoActionsContainer
@@ -155,34 +130,15 @@ describe('useChapterScope', () => {
   it('never reports "ready" for a chapter whose data was never actually fetched, even when a stale fetch for the previous chapter resolves afterwards', async () => {
     const chapterA = 'chapter-a';
     const chapterB = 'chapter-b';
-    let resolveAPhotos: () => void = () => {};
-    let resolveARecuerdos: () => void = () => {};
+    let resolveA: () => void = () => {};
 
-    vi.mocked(loadChapterPhotos).mockImplementation((id: string) => {
+    vi.mocked(api.chapters.getScope).mockImplementation((_baulId: string, id: string) => {
       if (id === chapterA) {
-        return new Promise<void>((resolve) => {
-          resolveAPhotos = () => {
-            seedChapterPhotos(chapterA, [photo()]);
-            resolve();
-          };
+        return new Promise((resolve) => {
+          resolveA = () => resolve({ photos: [photo()], recuerdos: [] });
         });
       }
-      return Promise.resolve().then(() => {
-        seedChapterPhotos(id, [photo()]);
-      });
-    });
-    vi.mocked(loadChapterRecuerdos).mockImplementation((_baulId: string, id: string) => {
-      if (id === chapterA) {
-        return new Promise<void>((resolve) => {
-          resolveARecuerdos = () => {
-            useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [chapterA]: [] } }));
-            resolve();
-          };
-        });
-      }
-      return Promise.resolve().then(() => {
-        useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [id]: [] } }));
-      });
+      return Promise.resolve({ photos: [photo()], recuerdos: [] });
     });
 
     const { result, rerender } = renderHook(
@@ -195,19 +151,17 @@ describe('useChapterScope', () => {
     // Navigate to chapter B before chapter A's own fetch has resolved.
     rerender({ chapterId: chapterB });
 
-    // Chapter A's stale fetch finally resolves successfully.
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Chapter A's stale fetch finally resolves successfully — must not be mistaken for chapter
+    // B's own data (it's keyed by chapterId in the store, so this passes if the store writes are
+    // correctly keyed either way; the real regression coverage is `isLoading` above having
+    // already resolved for chapter B without needing chapter A's stale promise at all).
     await act(async () => {
-      resolveAPhotos();
-      resolveARecuerdos();
+      resolveA();
       await Promise.resolve();
     });
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    // The hook must not claim "ready, no error" for chapter B unless chapter B's own data was
-    // actually fetched — reporting success off the back of chapter A's stale resolution leaves
-    // ChapterRoute's guard stuck showing a full-screen loader forever (isLoading false,
-    // loadFailed false, but photos/chapterRecuerdos still undefined for the chapter on screen).
     expect(result.current.loadFailed || (!!result.current.photos && !!result.current.chapterRecuerdos)).toBe(true);
   });
 
@@ -216,21 +170,14 @@ describe('useChapterScope', () => {
     const chapterB = 'chapter-b';
     let rejectA: (error: Error) => void = () => {};
 
-    vi.mocked(loadChapterPhotos).mockImplementation((id: string) => {
+    vi.mocked(api.chapters.getScope).mockImplementation((_baulId: string, id: string) => {
       if (id === chapterA) {
-        return new Promise<void>((_resolve, reject) => {
+        return new Promise((_resolve, reject) => {
           rejectA = reject;
         });
       }
-      return Promise.resolve().then(() => {
-        seedChapterPhotos(id, [photo({ id: `photo-${id}` })]);
-      });
+      return Promise.resolve({ photos: [photo({ id: `photo-${id}` })], recuerdos: [recuerdo({ id: `recuerdo-${id}` })] });
     });
-    vi.mocked(loadChapterRecuerdos).mockImplementation((_baulId: string, id: string) => Promise.resolve().then(() => {
-      useRecuerdosStore.setState((state) => ({
-        chapterRecuerdos: { ...state.chapterRecuerdos, [id]: [recuerdo({ id: `recuerdo-${id}` })] },
-      }));
-    }));
 
     const { result, rerender } = renderHook(
       ({ chapterId }: { chapterId: string }) => useChapterScope(baulId, chapterId),

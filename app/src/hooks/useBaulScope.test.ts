@@ -5,7 +5,6 @@ import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(() => ({ isAuthenticated: true })),
@@ -15,37 +14,31 @@ vi.mock('@/features/auth/useCases', () => ({
   loadUserData: vi.fn(),
 }));
 
-vi.mock('@/features/memories/useCases', () => ({
-  loadBaulRecuerdos: vi.fn().mockResolvedValue(undefined),
-  loadBaulFeed: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/baules/useCases', () => ({
-  loadChapters: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/photos/useCases', () => ({
-  loadLoosePhotos: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/moderation/useCases', () => ({
-  loadRemovalRequests: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/features/people/useCases', () => ({
-  loadPersonas: vi.fn().mockResolvedValue(undefined),
+vi.mock('@/api', () => ({
+  api: { baules: { getScope: vi.fn() } },
 }));
 
 import { useAuth } from 'react-oidc-context';
 import { loadUserData } from '@/features/auth/useCases';
-import { loadBaulFeed, loadBaulRecuerdos } from '@/features/memories/useCases';
-import { loadChapters } from '@/features/baules/useCases';
-import { loadLoosePhotos } from '@/features/photos/useCases';
-import { loadRemovalRequests } from '@/features/moderation/useCases';
-import { loadPersonas } from '@/features/people/useCases';
+import { api } from '@/api';
 import { useBaulScope } from './useBaulScope';
 
 const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 0 } as Baul;
+
+// getScope's own response shape — see baulesApi.getScope. Overridable per test; a blank scope
+// is enough to satisfy hasScope for the pieces every baúl always needs.
+function emptyScope(overrides: Partial<Awaited<ReturnType<typeof api.baules.getScope>>> = {}) {
+  return {
+    baul,
+    chapters: [],
+    loosePhotos: [],
+    recuerdos: [],
+    personas: [],
+    removalRequests: null,
+    baulFeed: null,
+    ...overrides,
+  };
+}
 
 describe('useBaulScope', () => {
   beforeEach(() => {
@@ -55,20 +48,9 @@ describe('useBaulScope', () => {
     useBaulesStore.getState().reset();
     usePersonasStore.getState().reset();
     useRecuerdosStore.getState().reset();
-    useAppConfigStore.setState({ baulFeedEnabled: false });
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(loadUserData).mockReset();
-    vi.mocked(loadBaulRecuerdos).mockClear().mockResolvedValue(undefined);
-    vi.mocked(loadBaulFeed).mockClear().mockResolvedValue(undefined);
-    vi.mocked(loadChapters).mockClear().mockResolvedValue(undefined);
-    vi.mocked(loadLoosePhotos).mockClear().mockResolvedValue(undefined);
-    vi.mocked(loadRemovalRequests).mockClear().mockResolvedValue(undefined);
-    // Baúl aquí no tiene role/isCustodio, así que canReviewRemovalRequests es false y
-    // removalRequests nunca entra en el scope salvo que un test concreto lo necesite.
-    vi.mocked(loadPersonas).mockClear().mockImplementation((id: string) => {
-      usePersonasStore.setState((state) => ({ personas: { ...state.personas, [id]: [] } }));
-      return Promise.resolve();
-    });
+    vi.mocked(api.baules.getScope).mockReset().mockResolvedValue(emptyScope());
   });
 
   afterEach(() => {
@@ -107,47 +89,40 @@ describe('useBaulScope', () => {
     expect(result.current.baul).toBeUndefined();
   });
 
-  it('loads chapters, loose photos, recuerdos and personas when the baúl is present but nothing else is', async () => {
+  it('loads chapters, loose photos, recuerdos and personas in one request when the baúl is present but nothing else is', async () => {
     useBaulesStore.setState({ baules: [baul] });
 
-    renderHook(() => useBaulScope('baul-1'));
+    const { result } = renderHook(() => useBaulScope('baul-1'));
 
-    await waitFor(() => expect(loadChapters).toHaveBeenCalledWith('baul-1'));
-    expect(loadLoosePhotos).toHaveBeenCalledWith('baul-1');
-    expect(loadBaulRecuerdos).toHaveBeenCalledWith('baul-1');
-    expect(loadPersonas).toHaveBeenCalledWith('baul-1');
-    // Sin permiso de revisar solicitudes de eliminación (baul sin role/isCustodio), no se piden.
-    expect(loadRemovalRequests).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    // includeBaulFeed defaults to false when the caller didn't opt in.
+    expect(api.baules.getScope).toHaveBeenCalledWith('baul-1', false);
+    expect(api.baules.getScope).toHaveBeenCalledTimes(1);
+    expect(result.current.chapters).toEqual([]);
+    expect(result.current.baulRecuerdos).toEqual([]);
+    expect(result.current.personas).toEqual([]);
   });
 
-  it('loads the unified feed as part of the baúl scope when requested and enabled', async () => {
-    useAppConfigStore.setState({ baulFeedEnabled: true });
+  it('asks the server to include the feed when the caller opts in', async () => {
     useBaulesStore.setState({ baules: [baul] });
+    vi.mocked(api.baules.getScope).mockResolvedValue(
+      emptyScope({ baulFeed: { feedItems: [], hasMore: false } })
+    );
 
     renderHook(() => useBaulScope('baul-1', { includeBaulFeed: true }));
 
-    await waitFor(() => expect(loadBaulFeed).toHaveBeenCalledWith('baul-1'));
-    expect(loadBaulRecuerdos).toHaveBeenCalledWith('baul-1');
+    await waitFor(() => expect(api.baules.getScope).toHaveBeenCalledWith('baul-1', true));
   });
 
-  it('requests removal requests too when the baúl grants canReviewRemovalRequests', async () => {
+  it('stores removal requests when the server includes them (canReviewRemovalRequests)', async () => {
     const adminBaul = { ...baul, isCustodio: true } as Baul;
     useBaulesStore.setState({ baules: [adminBaul] });
+    vi.mocked(api.baules.getScope).mockResolvedValue(emptyScope({ removalRequests: [] }));
 
-    renderHook(() => useBaulScope('baul-1'));
+    const { result } = renderHook(() => useBaulScope('baul-1'));
 
-    await waitFor(() => expect(loadRemovalRequests).toHaveBeenCalledWith('baul-1'));
-  });
-
-  it('only fetches the recuerdos and personas that are missing when chapters are already loaded', async () => {
-    useBaulesStore.setState({ baules: [baul], chapters: { 'baul-1': [] } });
-
-    renderHook(() => useBaulScope('baul-1'));
-
-    await waitFor(() => expect(loadBaulRecuerdos).toHaveBeenCalledWith('baul-1'));
-    expect(loadPersonas).toHaveBeenCalledWith('baul-1');
-    expect(loadChapters).not.toHaveBeenCalled();
-    expect(loadLoosePhotos).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.removalRequests).toEqual([]);
   });
 
   it('does not refetch anything once chapters, recuerdos and personas are already loaded', async () => {
@@ -161,10 +136,7 @@ describe('useBaulScope', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(loadChapters).not.toHaveBeenCalled();
-    expect(loadLoosePhotos).not.toHaveBeenCalled();
-    expect(loadBaulRecuerdos).not.toHaveBeenCalled();
-    expect(loadPersonas).not.toHaveBeenCalled();
+    expect(api.baules.getScope).not.toHaveBeenCalled();
   });
 
   it('does nothing while unauthenticated', async () => {
@@ -179,33 +151,21 @@ describe('useBaulScope', () => {
   });
 
   // Regression: switching baúles (e.g. via the workspace selector) while the previous baúl's
-  // chapters/recuerdos fetch is still in flight must not have the new baúl's own fetch
-  // silently dropped because the previous one — for a *different* id — hasn't resolved yet.
+  // scope fetch is still in flight must not have the new baúl's own fetch silently dropped
+  // because the previous one — for a *different* id — hasn't resolved yet.
   it('fetches the new baúl even while the previous baúl\'s fetch is still in flight', async () => {
     const baulA = { id: 'baul-a', name: 'Baúl A', chapterCount: 0 } as Baul;
     const baulB = { id: 'baul-b', name: 'Baúl B', chapterCount: 0 } as Baul;
     let resolveA: () => void = () => {};
 
     useBaulesStore.setState({ baules: [baulA, baulB] });
-    // Resolves immediately for whichever baúl is asked, so hasScope (which also needs
-    // baulRecuerdos, not just chapters) can become true for baulB.
-    vi.mocked(loadBaulRecuerdos).mockImplementation((id: string) => {
-      useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [id]: [] } }));
-      return Promise.resolve();
-    });
-
-    vi.mocked(loadChapters).mockImplementation((id: string) => {
+    vi.mocked(api.baules.getScope).mockImplementation((id: string) => {
       if (id === baulA.id) {
-        return new Promise<void>((resolve) => {
-          resolveA = () => {
-            useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [baulA.id]: [] } }));
-            resolve();
-          };
+        return new Promise((resolve) => {
+          resolveA = () => resolve(emptyScope({ baul: baulA }));
         });
       }
-      return Promise.resolve().then(() => {
-        useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [id]: [] } }));
-      });
+      return Promise.resolve(emptyScope({ baul: baulB }));
     });
 
     const { result, rerender } = renderHook(
@@ -217,7 +177,7 @@ describe('useBaulScope', () => {
 
     rerender({ baulId: baulB.id });
 
-    await waitFor(() => expect(loadChapters).toHaveBeenCalledWith(baulB.id));
+    await waitFor(() => expect(api.baules.getScope).toHaveBeenCalledWith(baulB.id, false));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.chapters).toEqual([]);
     expect(result.current.refreshFailed).toBe(false);
@@ -231,19 +191,13 @@ describe('useBaulScope', () => {
     let rejectA: (error: Error) => void = () => {};
 
     useBaulesStore.setState({ baules: [baulA, baulB] });
-    vi.mocked(loadBaulRecuerdos).mockImplementation((id: string) => {
-      useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [id]: [] } }));
-      return Promise.resolve();
-    });
-    vi.mocked(loadChapters).mockImplementation((id: string) => {
+    vi.mocked(api.baules.getScope).mockImplementation((id: string) => {
       if (id === baulA.id) {
-        return new Promise<void>((_resolve, reject) => {
+        return new Promise((_resolve, reject) => {
           rejectA = reject;
         });
       }
-      return Promise.resolve().then(() => {
-        useBaulesStore.setState((state) => ({ chapters: { ...state.chapters, [id]: [] } }));
-      });
+      return Promise.resolve(emptyScope({ baul: baulB }));
     });
 
     const { result, rerender } = renderHook(

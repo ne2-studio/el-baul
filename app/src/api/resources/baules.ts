@@ -1,4 +1,4 @@
-import { Baul, BaulInviteLink, FeedItem, Persona, Photo, RemovalRequest, feedItemFrom } from '../../types';
+import { Baul, BaulInviteLink, Chapter, FeedItem, Persona, Photo, Recuerdo, RemovalRequest, feedItemFrom } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { API_BASE, apiFetch, authHeaders, get, handleResponse, post, put, del } from '../http';
 import type { PhotoCrop } from '../publicTypes';
@@ -6,8 +6,10 @@ import type { PhotoCrop } from '../publicTypes';
 const BAULES = '/api/baules' satisfies PathTemplate;
 const BAUL = '/api/baules/{baulId}' satisfies PathTemplate;
 const BAUL_COVER = '/api/baules/{baulId}/cover' satisfies PathTemplate;
+const BAUL_SCOPE = '/api/baules/{baulId}/scope' satisfies PathTemplate;
 const BAUL_PERSONAS = '/api/baules/{baulId}/personas' satisfies PathTemplate;
 const BAUL_PERSONA = '/api/baules/{baulId}/personas/{personaId}' satisfies PathTemplate;
+const PERSONA_SCOPE = '/api/baules/{baulId}/personas/{personaId}/scope' satisfies PathTemplate;
 const PERSONA_BIOGRAFIA = '/api/baules/{baulId}/personas/{personaId}/biografia' satisfies PathTemplate;
 const PERSONA_AVATAR = '/api/baules/{baulId}/personas/{personaId}/avatar' satisfies PathTemplate;
 const PERSONA_ROLE = '/api/baules/{baulId}/personas/{personaId}/role' satisfies PathTemplate;
@@ -20,12 +22,16 @@ const REMOVAL_REQUESTS = '/api/baules/{baulId}/removal-requests' satisfies PathT
 const APPROVE_REMOVAL_REQUEST = '/api/baules/{baulId}/removal-requests/{requestId}/approve' satisfies PathTemplate;
 
 type BaulDto = JsonResponse<typeof BAUL, 'get'>;
+type BaulScopeDto = JsonResponse<typeof BAUL_SCOPE, 'get'>;
+type PersonaScopeDto = JsonResponse<typeof PERSONA_SCOPE, 'get'>;
 type PersonaDto = JsonResponse<typeof BAUL_PERSONA, 'get'>;
 type PhotoDto = JsonResponse<typeof LOOSE_PHOTOS, 'get'>[number];
 type FeedPageDto = JsonResponse<typeof BAUL_FEED, 'get'>;
 type InviteLinkDto = JsonResponse<typeof INVITE_LINK, 'get'>;
 type RemovalRequestDto = JsonResponse<typeof REMOVAL_REQUESTS, 'get'>[number];
 type SuccessResponse = JsonResponse<typeof APPROVE_REMOVAL_REQUEST, 'post'>;
+
+const feedPageFrom = (dto: FeedPageDto) => ({ feedItems: dto.items.map(feedItemFrom), hasMore: dto.hasMore });
 
 const baulPath = (baulId: string) => path(BAUL, { baulId });
 const personaPath = (baulId: string, personaId: string) => path(BAUL_PERSONA, { baulId, personaId });
@@ -35,6 +41,22 @@ export const baulesApi = {
   create: async (name: string, description?: string) =>
     new Baul(await post<BaulDto>(BAULES, { name, description } satisfies JsonRequest<typeof BAULES, 'post'>)),
   getById: async (id: string) => new Baul(await get<BaulDto>(baulPath(id))),
+  // Backs useBaulScope — one request instead of the 5-6 loadX calls it used to fan out, see
+  // BaulScopeAggregator (api/) for why includeBaulFeed is resolved server-side in one go instead
+  // of racing against a separate app-config fetch.
+  getScope: async (baulId: string, includeBaulFeed: boolean) => {
+    const params = new URLSearchParams({ includeBaulFeed: String(includeBaulFeed) });
+    const dto = await get<BaulScopeDto>(path(BAUL_SCOPE, { baulId }, params));
+    return {
+      baul: new Baul(dto.baul),
+      chapters: dto.chapters.map((c) => new Chapter(c)),
+      loosePhotos: dto.loosePhotos.map((p) => new Photo(p)),
+      recuerdos: dto.recuerdos.map((r) => new Recuerdo(r)),
+      personas: dto.personas.map((u) => new Persona(u)),
+      removalRequests: dto.removalRequests ? dto.removalRequests.map((r) => new RemovalRequest(r)) : null,
+      baulFeed: dto.baulFeed ? feedPageFrom(dto.baulFeed) : null,
+    };
+  },
   setCover: async (baulId: string, photoId: string, crop: PhotoCrop) =>
     new Baul(await put<BaulDto>(path(BAUL_COVER, { baulId }), {
       photoId, cropX: crop.x, cropY: crop.y, cropScale: crop.scale,
@@ -89,6 +111,15 @@ export const baulesApi = {
   },
   getPersonaPhotos: async (baulId: string, personaId: string) =>
     (await get<JsonResponse<typeof PERSONA_PHOTOS, 'get'>>(path(PERSONA_PHOTOS, { baulId, personaId }))).map((p) => new Photo(p)),
+  // Backs usePersonaScope — see baulesApi.getScope's doc comment (same rationale).
+  getPersonaScope: async (baulId: string, personaId: string) => {
+    const dto = await get<PersonaScopeDto>(path(PERSONA_SCOPE, { baulId, personaId }));
+    return {
+      personas: dto.personas.map((u) => new Persona(u)),
+      personaPhotos: dto.personaPhotos.map((p) => new Photo(p)),
+      baulRecuerdos: dto.baulRecuerdos.map((r) => new Recuerdo(r)),
+    };
+  },
 
   getInviteLink: async (baulId: string) => new BaulInviteLink(await get<InviteLinkDto>(path(INVITE_LINK, { baulId }))),
   regenerateInviteLink: async (baulId: string) =>

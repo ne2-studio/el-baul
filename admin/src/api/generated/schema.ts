@@ -1077,6 +1077,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/baules/{baulId}/scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    includeBaulFeed?: boolean;
+                };
+                header?: never;
+                path: {
+                    baulId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BaulScopeDto"];
+                        "application/json": components["schemas"]["BaulScopeDto"];
+                        "text/json": components["schemas"]["BaulScopeDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/baules": {
         parameters: {
             query?: never;
@@ -1925,6 +2009,89 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/baules/{baulId}/chapters/{chapterId}/scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                    chapterId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterScopeDto"];
+                        "application/json": components["schemas"]["ChapterScopeDto"];
+                        "text/json": components["schemas"]["ChapterScopeDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3234,6 +3401,89 @@ export interface paths {
                         "text/plain": components["schemas"]["FeedPageDto"];
                         "application/json": components["schemas"]["FeedPageDto"];
                         "text/json": components["schemas"]["FeedPageDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/baules/{baulId}/personas/{personaId}/scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                    personaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PersonaScopeDto"];
+                        "application/json": components["schemas"]["PersonaScopeDto"];
+                        "text/json": components["schemas"]["PersonaScopeDto"];
                     };
                 };
                 /** @description The request was invalid. */
@@ -7843,6 +8093,15 @@ export interface components {
             coverPhotoUrl?: string | null;
             personaAvatarUrls: string[];
         };
+        BaulScopeDto: {
+            baul: components["schemas"]["BaulDto"];
+            chapters: components["schemas"]["ChapterDto"][];
+            loosePhotos: components["schemas"]["PhotoDto"][];
+            recuerdos: components["schemas"]["RecuerdoDto"][];
+            personas: components["schemas"]["PersonaDto"][];
+            removalRequests?: components["schemas"]["RemovalRequestDto"][] | null;
+            baulFeed?: components["schemas"]["FeedPageDto"];
+        };
         ChangePhotoDateBatchRequest: {
             photoIds: string[];
             /** Format: int32 */
@@ -7907,6 +8166,10 @@ export interface components {
             coverCropY: number;
             /** Format: double */
             coverCropScale: number;
+        };
+        ChapterScopeDto: {
+            photos: components["schemas"]["PhotoDto"][];
+            recuerdos: components["schemas"]["RecuerdoDto"][];
         };
         ChatMemoryDto: {
             id: string;
@@ -8029,6 +8292,11 @@ export interface components {
             avatarCropY: number;
             /** Format: double */
             avatarCropScale: number;
+        };
+        PersonaScopeDto: {
+            personas: components["schemas"]["PersonaDto"][];
+            personaPhotos: components["schemas"]["PhotoDto"][];
+            baulRecuerdos: components["schemas"]["RecuerdoDto"][];
         };
         PhotoBatchDto: {
             batchId: string;

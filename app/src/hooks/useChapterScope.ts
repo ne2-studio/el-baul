@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
+import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { loadChapterPhotos } from '@/features/photos/useCases';
-import { loadChapterRecuerdos } from '@/features/memories/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 
@@ -16,7 +15,8 @@ import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 // before the real recuerdos popped in — the "content paints after the loading screen is
 // already gone" glitch. This hook centralizes both fetches — blocking until *both* are cached,
 // only fetching whichever is missing — so ChapterRoute has exactly one gate to check, same
-// pattern as useBaulScope/usePersonaScope (see useScopeOutcome, shared by all three).
+// pattern as useBaulScope/usePersonaScope (see useScopeOutcome, shared by all three). Both
+// fetches go through a single api.chapters.getScope request — see ChapterScopeAggregator (api/).
 export function useChapterScope(baulId: string | undefined, chapterId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
@@ -37,22 +37,30 @@ export function useChapterScope(baulId: string | undefined, chapterId: string | 
   const load = async (id: string, forBaulId: string) => {
     const { photos } = useBaulesStore.getState();
     const { chapterRecuerdos } = useRecuerdosStore.getState();
-    const needsPhotos = !photos[id];
-    const needsRecuerdos = !chapterRecuerdos[id];
-    if (!needsPhotos && !needsRecuerdos) return;
+    if (photos[id] && chapterRecuerdos[id]) return;
 
     // Keyed by the chapter being fetched, not a fixed/default key — otherwise a fetch for a
     // chapter navigated away from mid-flight would make useAsyncAction dedupe the new
     // chapter's own fetch as "already pending" and silently skip it. See useScopeOutcome for
     // the matching half of this fix (why a stale response can't overwrite the new outcome).
-    const loadResult = await run(() => Promise.all([
-      ...(needsPhotos ? [loadChapterPhotos(id)] : []),
-      ...(needsRecuerdos ? [loadChapterRecuerdos(forBaulId, id)] : []),
-    ]), { key: `chapter-scope:${forBaulId}:${id}`, errorMessage: 'Error al cargar el capítulo' });
+    const scopeResult = await run(
+      () => api.chapters.getScope(forBaulId, id),
+      { key: `chapter-scope:${forBaulId}:${id}`, errorMessage: 'Error al cargar el capítulo' }
+    );
 
     // Resolved explicitly either way — including on success — so a previous failed attempt
     // (surfaced via retry) can't leave loadFailed stuck true once this one lands.
-    setOutcome(`${forBaulId}:${id}`, loadResult.ok ? null : 'failed');
+    if (!scopeResult.ok) {
+      setOutcome(`${forBaulId}:${id}`, 'failed');
+      return;
+    }
+
+    const scope = scopeResult.value;
+    usePhotosStore.getState().upsertPhotos(scope.photos);
+    useBaulesStore.setState((state) => ({ photos: { ...state.photos, [id]: scope.photos.map((photo) => photo.id) } }));
+    useRecuerdosStore.setState((state) => ({ chapterRecuerdos: { ...state.chapterRecuerdos, [id]: scope.recuerdos } }));
+
+    setOutcome(`${forBaulId}:${id}`, null);
   };
 
   useEffect(() => {

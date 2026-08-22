@@ -1,12 +1,14 @@
-import { Chapter, PhotoCrop } from '../../types';
+import { Chapter, Photo, PhotoCrop, Recuerdo } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { del, get, post, put } from '../http';
 
 const BAUL_CHAPTERS = '/api/baules/{baulId}/chapters' satisfies PathTemplate;
 const BAUL_CHAPTER = '/api/baules/{baulId}/chapters/{chapterId}' satisfies PathTemplate;
 const CHAPTER_COVER = '/api/baules/{baulId}/chapters/{chapterId}/cover' satisfies PathTemplate;
+const CHAPTER_SCOPE = '/api/baules/{baulId}/chapters/{chapterId}/scope' satisfies PathTemplate;
 
 type ChapterDto = JsonResponse<typeof BAUL_CHAPTER, 'get'>;
+type ChapterScopeDto = JsonResponse<typeof CHAPTER_SCOPE, 'get'>;
 
 const chaptersPath = (baulId: string) => path(BAUL_CHAPTERS, { baulId });
 const chapterPath = (baulId: string, chapterId: string) => path(BAUL_CHAPTER, { baulId, chapterId });
@@ -22,4 +24,12 @@ export const chaptersApi = {
   update: async (baulId: string, chapterId: string, name: string) =>
     new Chapter(await put<ChapterDto>(chapterPath(baulId, chapterId), { name } satisfies JsonRequest<typeof BAUL_CHAPTER, 'put'>)),
   delete: (baulId: string, chapterId: string) => del<void>(chapterPath(baulId, chapterId)),
+  // Backs useChapterScope — see baulesApi.getScope's doc comment (same rationale).
+  getScope: async (baulId: string, chapterId: string) => {
+    const dto = await get<ChapterScopeDto>(path(CHAPTER_SCOPE, { baulId, chapterId }));
+    return {
+      photos: dto.photos.map((p) => new Photo(p)),
+      recuerdos: dto.recuerdos.map((r) => new Recuerdo(r)),
+    };
+  },
 };

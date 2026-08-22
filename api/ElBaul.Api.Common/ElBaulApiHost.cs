@@ -1,6 +1,7 @@
 using ElBaul.Api.Logging;
 using ElBaul.Api.Middleware;
 using ElBaul.Api.Models;
+using ElBaul.Api.Scope;
 using ElBaul.Api.Swagger;
 using ElBaul.Core.Admin.Application;
 using ElBaul.Core.Analytics.Application;
@@ -279,6 +280,9 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IBaulInviteLinkManager, BaulInviteLinkManager>();
         builder.Services.AddScoped<ITvSessionManager, TvSessionManager>();
         builder.Services.AddScoped<ITvPairingManager, TvPairingManager>();
+        builder.Services.AddScoped<BaulScopeAggregator>();
+        builder.Services.AddScoped<ChapterScopeAggregator>();
+        builder.Services.AddScoped<PersonaScopeAggregator>();
 
         // "Ai" costs a real AI call every time the chat opens with no history and can fail;
         // "Static" (the default) is deterministic templates filled from the baúl's own

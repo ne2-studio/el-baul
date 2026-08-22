@@ -1,4 +1,5 @@
 using ElBaul.Api.Models;
+using ElBaul.Api.Scope;
 using ElBaul.Core.Bauls;
 using ElBaul.Core.Sharing;
 
@@ -12,8 +13,21 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules")]
-public class BaulesController(IBaulManager baulManager, IBaulInviteLinkManager baulInviteLinkManager) : ControllerBase
+public class BaulesController(
+    IBaulManager baulManager, IBaulInviteLinkManager baulInviteLinkManager, BaulScopeAggregator baulScopeAggregator)
+    : ControllerBase
 {
+    // Aggregates everything /baules/:id's routes need into one request — see
+    // BaulScopeAggregator's doc comment. includeBaulFeed mirrors the client only wanting the
+    // feed when the Recuerdos tab (its default tab on a deep link) is the one being shown.
+    [HttpGet("{baulId:guid}/scope")]
+    [ProducesResponseType(typeof(BaulScopeDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetScope(BaulId baulId, [FromQuery] bool includeBaulFeed = false)
+    {
+        var result = await baulScopeAggregator.GetScopeAsync(baulId, includeBaulFeed);
+        return result.ToActionResult();
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<BaulDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()

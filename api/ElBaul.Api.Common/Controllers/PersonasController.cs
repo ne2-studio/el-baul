@@ -1,4 +1,5 @@
 using ElBaul.Api.Models;
+using ElBaul.Api.Scope;
 using ElBaul.Core.Personas;
 
 using Microsoft.AspNetCore.Authorization;
@@ -11,8 +12,19 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules/{baulId:guid}/personas")]
-public class PersonasController(IPersonaManager personaManager) : ControllerBase
+public class PersonasController(IPersonaManager personaManager, PersonaScopeAggregator personaScopeAggregator) : ControllerBase
 {
+    // Aggregates everything PersonaDetailRoute/PersonaPhotoViewerRoute need into one request —
+    // see BaulScopeAggregator's doc comment (same rationale, no async-flag race here, just fewer
+    // round-trips on a deep link/refresh).
+    [HttpGet("{personaId:guid}/scope")]
+    [ProducesResponseType(typeof(PersonaScopeDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetScope(BaulId baulId, PersonaId personaId)
+    {
+        var result = await personaScopeAggregator.GetScopeAsync(baulId, personaId);
+        return result.ToActionResult();
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<PersonaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(BaulId baulId)

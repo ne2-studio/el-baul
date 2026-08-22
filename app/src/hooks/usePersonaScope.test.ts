@@ -10,18 +10,12 @@ vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(() => ({ isAuthenticated: true })),
 }));
 
-vi.mock('@/features/people/useCases', () => ({
-  loadPersonas: vi.fn(),
-  loadPersonaPhotos: vi.fn(),
-}));
-
-vi.mock('@/features/memories/useCases', () => ({
-  loadBaulRecuerdos: vi.fn(),
+vi.mock('@/api', () => ({
+  api: { baules: { getPersonaScope: vi.fn() } },
 }));
 
 import { useAuth } from 'react-oidc-context';
-import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
-import { loadBaulRecuerdos } from '@/features/memories/useCases';
+import { api } from '@/api';
 import { usePersonaScope } from './usePersonaScope';
 
 const baulId = 'baul-1';
@@ -50,10 +44,8 @@ describe('usePersonaScope', () => {
     usePhotosStore.getState().reset();
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
-    vi.mocked(loadPersonas).mockReset().mockResolvedValue(undefined);
-    vi.mocked(loadPersonaPhotos).mockReset().mockResolvedValue(undefined);
-    vi.mocked(loadBaulRecuerdos).mockReset().mockImplementation(async (id: string) => {
-      useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [id]: [] } }));
+    vi.mocked(api.baules.getPersonaScope).mockReset().mockResolvedValue({
+      personas: [persona], personaPhotos: [], baulRecuerdos: [],
     });
   });
 
@@ -65,44 +57,27 @@ describe('usePersonaScope', () => {
     const { result } = renderHook(() => usePersonaScope(undefined, personaId));
 
     expect(result.current.isLoading).toBe(false);
-    expect(loadPersonas).not.toHaveBeenCalled();
-    expect(loadPersonaPhotos).not.toHaveBeenCalled();
+    expect(api.baules.getPersonaScope).not.toHaveBeenCalled();
   });
 
   it('loads personas, personaPhotos and baúl recuerdos together when none are cached', async () => {
-    // Deferred via a microtask (not a synchronous mock body) so isLoading — now derived
-    // straight from the store — can actually be observed as true before these resolve, same
-    // as a real network call would behave.
-    vi.mocked(loadPersonas).mockImplementation(() => Promise.resolve().then(() => {
-      usePersonasStore.setState({ personas: { [baulId]: [persona] } });
-    }));
-    vi.mocked(loadPersonaPhotos).mockImplementation(() => Promise.resolve().then(() => {
-      seedPersonaPhotos(personaId, [photo()]);
-    }));
+    // Deferred via a microtask (not a synchronous mock body) so isLoading — derived straight
+    // from the store — can actually be observed as true before this resolves, same as a real
+    // network call would behave.
+    vi.mocked(api.baules.getPersonaScope).mockImplementation(() => Promise.resolve().then(() => ({
+      personas: [persona], personaPhotos: [photo()], baulRecuerdos: [],
+    })));
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
 
     expect(result.current.isLoading).toBe(true);
 
-    await waitFor(() => expect(loadPersonas).toHaveBeenCalledWith(baulId));
-    expect(loadPersonaPhotos).toHaveBeenCalledWith(baulId, personaId);
-    expect(loadBaulRecuerdos).toHaveBeenCalledWith(baulId);
+    await waitFor(() => expect(api.baules.getPersonaScope).toHaveBeenCalledWith(baulId, personaId));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.persona).toEqual(persona);
     expect(result.current.photos).toEqual([photo()]);
     expect(result.current.loadFailed).toBe(false);
-  });
-
-  it('only fetches the pieces that are missing', async () => {
-    usePersonasStore.setState({ personas: { [baulId]: [persona] } });
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
-
-    renderHook(() => usePersonaScope(baulId, personaId));
-
-    await waitFor(() => expect(loadPersonaPhotos).toHaveBeenCalledWith(baulId, personaId));
-    expect(loadPersonas).not.toHaveBeenCalled();
-    expect(loadBaulRecuerdos).not.toHaveBeenCalled();
   });
 
   it('does not refetch anything once everything is already cached', async () => {
@@ -115,24 +90,21 @@ describe('usePersonaScope', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(loadPersonas).not.toHaveBeenCalled();
-    expect(loadPersonaPhotos).not.toHaveBeenCalled();
-    expect(loadBaulRecuerdos).not.toHaveBeenCalled();
+    expect(api.baules.getPersonaScope).not.toHaveBeenCalled();
     expect(result.current.isLoading).toBe(false);
     expect(result.current.persona).toEqual(persona);
   });
 
   it('surfaces loadFailed when the fetch fails, and retry can recover', async () => {
-    vi.mocked(loadPersonaPhotos).mockRejectedValueOnce(new Error('network down'));
-    usePersonasStore.setState({ personas: { [baulId]: [persona] } });
+    vi.mocked(api.baules.getPersonaScope).mockRejectedValueOnce(new Error('network down'));
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
 
     await waitFor(() => expect(result.current.loadFailed).toBe(true));
     expect(result.current.isLoading).toBe(false);
 
-    vi.mocked(loadPersonaPhotos).mockImplementationOnce(async () => {
-      seedPersonaPhotos(personaId, [photo()]);
+    vi.mocked(api.baules.getPersonaScope).mockResolvedValueOnce({
+      personas: [persona], personaPhotos: [photo()], baulRecuerdos: [],
     });
 
     await act(async () => {
@@ -150,47 +122,36 @@ describe('usePersonaScope', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(loadPersonas).not.toHaveBeenCalled();
-    expect(loadPersonaPhotos).not.toHaveBeenCalled();
+    expect(api.baules.getPersonaScope).not.toHaveBeenCalled();
   });
 
   // Regression: navigating straight from one persona's ficha to another (same route, only
   // personaId changes) must not have the new persona's fetch silently dropped because the
   // previous persona's fetch — for a *different* id — is still in flight.
   it('fetches the new persona even while the previous persona\'s fetch is still in flight', async () => {
-    const personaA = 'persona-a';
-    const personaB = 'persona-b';
+    const personaA = { ...persona, id: 'persona-a' };
+    const personaB = { ...persona, id: 'persona-b' };
     let resolveA: () => void = () => {};
 
-    usePersonasStore.setState({
-      personas: { [baulId]: [{ ...persona, id: personaA }, { ...persona, id: personaB }] },
-    });
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
-
-    vi.mocked(loadPersonaPhotos).mockImplementation((_baulId: string, pId: string) => {
-      if (pId === personaA) {
-        return new Promise<void>((resolve) => {
-          resolveA = () => {
-            seedPersonaPhotos(personaA, [photo()]);
-            resolve();
-          };
+    vi.mocked(api.baules.getPersonaScope).mockImplementation((_baulId: string, pId: string) => {
+      if (pId === personaA.id) {
+        return new Promise((resolve) => {
+          resolveA = () => resolve({ personas: [personaA, personaB], personaPhotos: [photo()], baulRecuerdos: [] });
         });
       }
-      return Promise.resolve().then(() => {
-        seedPersonaPhotos(pId, [photo()]);
-      });
+      return Promise.resolve({ personas: [personaA, personaB], personaPhotos: [photo()], baulRecuerdos: [] });
     });
 
     const { result, rerender } = renderHook(
       ({ personaId }: { personaId: string }) => usePersonaScope(baulId, personaId),
-      { initialProps: { personaId: personaA } }
+      { initialProps: { personaId: personaA.id } }
     );
 
     expect(result.current.isLoading).toBe(true);
 
-    rerender({ personaId: personaB });
+    rerender({ personaId: personaB.id });
 
-    await waitFor(() => expect(loadPersonaPhotos).toHaveBeenCalledWith(baulId, personaB));
+    await waitFor(() => expect(api.baules.getPersonaScope).toHaveBeenCalledWith(baulId, personaB.id));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.photos).toEqual([photo()]);
     expect(result.current.loadFailed).toBe(false);
@@ -199,31 +160,27 @@ describe('usePersonaScope', () => {
   });
 
   it('ignores a failed fetch for the previous persona after navigating to a loaded one', async () => {
-    const personaA = 'persona-a';
-    const personaB = 'persona-b';
+    const personaA = { ...persona, id: 'persona-a' };
+    const personaB = { ...persona, id: 'persona-b' };
     let rejectA: (error: Error) => void = () => {};
 
-    usePersonasStore.setState({
-      personas: { [baulId]: [{ ...persona, id: personaA }, { ...persona, id: personaB }] },
-    });
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
-    vi.mocked(loadPersonaPhotos).mockImplementation((_baulId: string, pId: string) => {
-      if (pId === personaA) {
-        return new Promise<void>((_resolve, reject) => {
+    vi.mocked(api.baules.getPersonaScope).mockImplementation((_baulId: string, pId: string) => {
+      if (pId === personaA.id) {
+        return new Promise((_resolve, reject) => {
           rejectA = reject;
         });
       }
-      return Promise.resolve().then(() => {
-        seedPersonaPhotos(pId, [photo({ id: `photo-${pId}` })]);
+      return Promise.resolve({
+        personas: [personaA, personaB], personaPhotos: [photo({ id: `photo-${pId}` })], baulRecuerdos: [],
       });
     });
 
     const { result, rerender } = renderHook(
       ({ personaId }: { personaId: string }) => usePersonaScope(baulId, personaId),
-      { initialProps: { personaId: personaA } }
+      { initialProps: { personaId: personaA.id } }
     );
 
-    rerender({ personaId: personaB });
+    rerender({ personaId: personaB.id });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -232,8 +189,8 @@ describe('usePersonaScope', () => {
       await Promise.resolve();
     });
 
-    expect(result.current.persona?.id).toBe(personaB);
-    expect(result.current.photos).toEqual([photo({ id: `photo-${personaB}` })]);
+    expect(result.current.persona?.id).toBe(personaB.id);
+    expect(result.current.photos).toEqual([photo({ id: `photo-${personaB.id}` })]);
     expect(result.current.loadFailed).toBe(false);
   });
 });

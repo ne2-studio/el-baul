@@ -1,4 +1,5 @@
 using ElBaul.Api.Models;
+using ElBaul.Api.Scope;
 using ElBaul.Core.Chapters;
 using ElBaul.Core.Recuerdos;
 
@@ -12,8 +13,20 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules/{baulId:guid}/chapters")]
-public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager recuerdoManager) : ControllerBase
+public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager recuerdoManager, ChapterScopeAggregator chapterScopeAggregator)
+    : ControllerBase
 {
+    // Aggregates everything ChapterRoute needs into one request — see
+    // BaulScopeAggregator's doc comment (same rationale, no async-flag race here, just fewer
+    // round-trips on a deep link/refresh).
+    [HttpGet("{chapterId:guid}/scope")]
+    [ProducesResponseType(typeof(ChapterScopeDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetScope(BaulId baulId, ChapterId chapterId)
+    {
+        var result = await chapterScopeAggregator.GetScopeAsync(chapterId);
+        return result.ToActionResult();
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ChapterDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(BaulId baulId)

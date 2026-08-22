@@ -6,7 +6,6 @@ import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useUIStore } from '@/store/uiStore';
 import { BaulRoute } from './BaulRoute';
 
@@ -37,15 +36,15 @@ vi.mock('@/features/baules/containers/BaulChaptersTabContainer', () => ({
 vi.mock('@/features/people/containers/BaulPersonasTabContainer', () => ({
   BaulPersonasTabContainer: () => null,
 }));
-vi.mock('@/features/memories/useCases', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/memories/useCases')>();
-  return {
-    ...actual,
-    loadBaulFeed: vi.fn(),
-  };
+vi.mock('@/features/memories/containers/BaulFeedTabContainer', () => ({
+  BaulFeedTabContainer: () => <div>Feed real</div>,
+}));
+vi.mock('@/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api')>();
+  return { ...actual, api: { ...actual.api, baules: { ...actual.api.baules, getScope: vi.fn() } } };
 });
 
-import { loadBaulFeed } from '@/features/memories/useCases';
+import { api } from '@/api';
 
 const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 0 } as Baul;
 
@@ -61,43 +60,35 @@ function renderAt(path: string) {
 
 describe('BaulRoute loading', () => {
   beforeEach(() => {
-    useBaulesStore.setState({
-      baules: [baul],
-      chapters: { [baul.id]: [] },
-      photos: {},
-      loosePhotos: { [baul.id]: [] },
-      isLoading: false,
-    });
-    useRecuerdosStore.setState({
-      baulRecuerdos: { [baul.id]: [] },
-      baulFeed: {},
-      baulFeedHasMore: {},
-      chapterRecuerdos: {},
-    });
-    usePersonasStore.setState({ personas: { [baul.id]: [] } });
-    useAppConfigStore.setState({ baulFeedEnabled: true });
+    useBaulesStore.setState({ baules: [baul], chapters: {}, photos: {}, loosePhotos: {}, isLoading: false });
+    useRecuerdosStore.setState({ baulRecuerdos: {}, baulFeed: {}, baulFeedHasMore: {}, chapterRecuerdos: {} });
+    usePersonasStore.setState({ personas: {} });
     useUIStore.setState({ isFirstAppLaunch: true });
-    vi.clearAllMocks();
+    vi.mocked(api.baules.getScope).mockReset();
   });
 
-  it('keeps initial feed loading inside the opening-baúl loader', async () => {
-    let resolveFeed: () => void = () => {};
-    vi.mocked(loadBaulFeed).mockImplementation(() => new Promise<void>((resolve) => {
-      resolveFeed = () => {
-        useRecuerdosStore.setState((state) => ({
-          baulFeed: { ...state.baulFeed, [baul.id]: [] },
-          baulFeedHasMore: { ...state.baulFeedHasMore, [baul.id]: false },
-        }));
-        resolve();
-      };
+  // Regression coverage for the bug useBaulScope.ts documents at length: the whole scope
+  // (chapters/recuerdos/personas/feed) now arrives in one request, so there's no intermediate
+  // render where some pieces are cached and others aren't — the loader must stay up for the
+  // entire request, not flicker or resolve early on a partial write.
+  it('keeps the opening-baúl loader up until the single scope request resolves', async () => {
+    let resolveScope: () => void = () => {};
+    vi.mocked(api.baules.getScope).mockImplementation(() => new Promise((resolve) => {
+      resolveScope = () => resolve({
+        baul, chapters: [], loosePhotos: [], recuerdos: [], personas: [],
+        removalRequests: null, baulFeed: { feedItems: [], hasMore: false },
+      });
     }));
 
     renderAt(`/baules/${baul.id}`);
 
     expect(await screen.findByText('Abriendo baúl...')).toBeInTheDocument();
-    expect(screen.queryByText('Cargando el feed...')).not.toBeInTheDocument();
-    await waitFor(() => expect(loadBaulFeed).toHaveBeenCalledWith(baul.id));
+    await waitFor(() => expect(api.baules.getScope).toHaveBeenCalledWith(baul.id, true));
+    expect(screen.queryByText('Feed real')).not.toBeInTheDocument();
 
-    resolveFeed();
+    resolveScope();
+
+    await waitFor(() => expect(screen.getByText('Feed real')).toBeInTheDocument());
+    expect(screen.queryByText('Abriendo baúl...')).not.toBeInTheDocument();
   });
 });

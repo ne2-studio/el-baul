@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
+import { api } from '@/api';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { loadPersonas, loadPersonaPhotos } from '@/features/people/useCases';
-import { loadBaulRecuerdos } from '@/features/memories/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 
@@ -20,7 +19,8 @@ import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 // (useScopeOutcome): isLoading se deriva del store en cada render en vez de ser un flag
 // actualizado por un efecto, porque PersonaDetailRoute no se desmonta al cambiar de personaId
 // (mismo componente, solo cambia el param) y un flag así siempre llegaría un frame tarde,
-// dejando ver un instante la ficha anterior (o un hueco vacío) aplicado a la nueva.
+// dejando ver un instante la ficha anterior (o un hueco vacío) aplicado a la nueva. Las tres
+// piezas se piden con una única api.baules.getPersonaScope — ver PersonaScopeAggregator (api/).
 export function usePersonaScope(baulId: string | undefined, personaId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
@@ -39,10 +39,7 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
   const load = async (forBaulId: string, forPersonaId: string) => {
     const { personas, personaPhotos } = usePersonasStore.getState();
     const { baulRecuerdos } = useRecuerdosStore.getState();
-    const needsPersonas = !personas[forBaulId];
-    const needsPhotos = !personaPhotos[forPersonaId];
-    const needsRecuerdos = !baulRecuerdos[forBaulId];
-    if (!needsPersonas && !needsPhotos && !needsRecuerdos) {
+    if (personas[forBaulId] && personaPhotos[forPersonaId] && baulRecuerdos[forBaulId]) {
       setOutcome(`${forBaulId}:${forPersonaId}`, null);
       return;
     }
@@ -52,22 +49,28 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
     // the new persona's own fetch as "already pending" and silently skip it. See
     // useScopeOutcome for the matching half of this fix (why a stale response can't overwrite
     // the new outcome).
-    const loadResult = await run(() => Promise.all([
-      ...(needsPersonas ? [loadPersonas(forBaulId)] : []),
-      ...(needsPhotos ? [loadPersonaPhotos(forBaulId, forPersonaId)] : []),
-      ...(needsRecuerdos ? [loadBaulRecuerdos(forBaulId)] : []),
-    ]), { key: `persona-scope:${forBaulId}:${forPersonaId}`, errorMessage: 'Error al cargar la ficha' });
+    const scopeResult = await run(
+      () => api.baules.getPersonaScope(forBaulId, forPersonaId),
+      { key: `persona-scope:${forBaulId}:${forPersonaId}`, errorMessage: 'Error al cargar la ficha' }
+    );
 
-    if (!loadResult.ok) {
+    if (!scopeResult.ok) {
       setOutcome(`${forBaulId}:${forPersonaId}`, 'failed');
       return;
     }
 
+    const scope = scopeResult.value;
+    usePhotosStore.getState().upsertPhotos(scope.personaPhotos);
+    usePersonasStore.setState((state) => ({
+      personas: { ...state.personas, [forBaulId]: scope.personas },
+      personaPhotos: { ...state.personaPhotos, [forPersonaId]: scope.personaPhotos.map((photo) => photo.id) },
+    }));
+    useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [forBaulId]: scope.baulRecuerdos } }));
+
     // Resolved explicitly either way — including on success — so a previous failed attempt
     // (surfaced via retry) can't leave loadFailed stuck true once this one lands.
-    const { personas: refreshedPersonas, personaPhotos: refreshedPhotos } = usePersonasStore.getState();
-    const found = refreshedPersonas[forBaulId]?.find((p) => p.id === forPersonaId);
-    setOutcome(`${forBaulId}:${forPersonaId}`, (!found || !refreshedPhotos[forPersonaId]) ? 'not-found' : null);
+    const found = scope.personas.find((p) => p.id === forPersonaId);
+    setOutcome(`${forBaulId}:${forPersonaId}`, !found ? 'not-found' : null);
   };
 
   useEffect(() => {
