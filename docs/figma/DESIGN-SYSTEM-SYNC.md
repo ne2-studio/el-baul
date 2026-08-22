@@ -233,6 +233,13 @@ every other real photo here) and centered, height-constrained on both mobile and
 the example recuerdo/persona to "Marta" so not every screen in the file uses the same
 beach/abuela pair.
 
+**`PhotoViewerScreen (Mobile, muchas etiquetas)`** models the `taggedPersonas.length > 0`
+`flex-wrap` branch with enough `PersonBadge` instances (7) in a `layoutWrap: 'WRAP'` frame
+to actually wrap 3 rows at 342px width — the other `PhotoViewerScreen`s only exercise the
+single-badge case. Hit the `resize()`-resets-`AUTO`-sizing-mode gotcha yet again on the
+wrap frame itself (see gotchas) — fixed the same way as `ChapterFotosScreen`'s photo
+grid, re-setting `counterAxisSizingMode = 'AUTO'` after all badges were appended.
+
 Remaining screens beyond the Baúl/Chapter/PhotoViewer/Contributions shells — sharing
 flows beyond `ClaimPersonaScreen`, `PhotoBatchViewerRoute`, etc. — are not yet started.
 
