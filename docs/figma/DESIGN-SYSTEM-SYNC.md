@@ -240,8 +240,25 @@ single-badge case. Hit the `resize()`-resets-`AUTO`-sizing-mode gotcha yet again
 wrap frame itself (see gotchas) — fixed the same way as `ChapterFotosScreen`'s photo
 grid, re-setting `counterAxisSizingMode = 'AUTO'` after all badges were appended.
 
+**`UploadConfirmationScreen`** (2 screens: Empty, "3 fotos, hover eliminar") and
+**`PhotoBatchGridRoute` (selección activa)** round out the Contributions section.
+`UploadConfirmationScreen`'s empty state wraps the existing `EmptyState` component in a
+dashed `DropZone` frame (icon swapped to `Icon/upload`); its selected state shows the
+`group-hover` remove button on the first photo as an *always-visible* overlay — a static
+mockup can't represent `:hover`, so it's modeled as always-on, the same way selection-mode
+checkboxes elsewhere are. `PhotoBatchGridRoute` reuses `PhotoSwimlanes`' selection-mode
+`PhotoCell` chrome (primary border + filled check) on 2 of 6 cells, plus a new
+`ActionBarButton` component (icon-on-top-of-label pill) instanced 6× for every action
+`BatchPhotoActionsBar` can show in a batch-grid context (`chapterId=null`, so "Crear nuevo
+capítulo" *is* included, unlike a real chapter's `ChapterRoute`) — wrapped in a
+390px-clipped frame to simulate the real `overflow-x-auto` horizontal scroll instead of
+shrinking the buttons to fit. 2 more ad hoc icons imported (not in `icons.ts` —
+`BatchPhotoActionsBar.tsx` imports `Tag`/`CalendarOff` directly, same convention as
+`chevronDown`/`menu`): `Icon/tag`, `Icon/calendarOff`.
+
 Remaining screens beyond the Baúl/Chapter/PhotoViewer/Contributions shells — sharing
-flows beyond `ClaimPersonaScreen`, `PhotoBatchViewerRoute`, etc. — are not yet started.
+flows beyond `ClaimPersonaScreen`, `PhotoBatchViewerRoute`'s empty/loaded states, etc. —
+are not yet started.
 
 ## Known gotchas (read before writing more `use_figma` scripts)
 
