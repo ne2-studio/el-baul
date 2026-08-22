@@ -24,6 +24,13 @@ interface PhotoViewerContainerProps {
    * de capítulo — exclusivas de ChapterPhotoViewerContainer). Este container es universal:
    * no sabe nada de capítulos, ni recibe ningún chapterId. */
   extraMenuItems?: PhotoViewerMenuItem[];
+  /** Nombre del capítulo de photo.chapterId — quien nos monta lo resuelve (ya conoce la lista
+   * de capítulos del baúl), este container solo lo pinta y arma la navegación con el id que
+   * ya trae la propia foto. */
+  chapterName?: string;
+  /** true cuando ya se está viendo la foto dentro de ese mismo capítulo — oculta el badge para
+   * no enlazar a donde ya estás (mismo patrón que showChapterBadge en RecuerdoFeedCard). */
+  hideChapterBadge?: boolean;
 }
 
 // Lógica de visor de fotos común a cualquier colección (capítulo, fotos sueltas, fotos
@@ -32,7 +39,7 @@ interface PhotoViewerContainerProps {
 // chapterId — si alguna acción lo necesita, quien nos monta la inyecta vía extraMenuItems
 // (ver ChapterPhotoViewerContainer).
 export function PhotoViewerContainer({
-  photo, photos, baulId, baulName, onClose, onPhotoChange, extraMenuItems,
+  photo, photos, baulId, baulName, onClose, onPhotoChange, extraMenuItems, chapterName, hideChapterBadge = false,
 }: PhotoViewerContainerProps) {
   const auth = useAuth();
   const navigate = useNavigate();
@@ -73,6 +80,9 @@ export function PhotoViewerContainer({
       openDateModal={openDateModal}
       modals={modals}
       taggedPersonas={taggedPersonas[photo.id] || []}
+      chapterName={chapterName}
+      showChapterBadge={!hideChapterBadge && !!photo.chapterId}
+      onChapterClick={photo.chapterId ? () => navigate(`/baules/${baulId}/capitulos/${photo.chapterId}`) : undefined}
       recuerdos={recuerdos[photo.id] || []}
       recuerdosLoading={isPending('recuerdos')}
       onAddRecuerdo={onAddRecuerdo}

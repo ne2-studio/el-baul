@@ -20,6 +20,10 @@ interface ChapterPhotoViewerContainerProps {
   currentChapter?: Chapter;
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
+  /** Nombre del capítulo de la foto actual — forwardeado a PhotoViewerContainer, ver ahí. */
+  chapterName?: string;
+  /** true si el visor ya está dentro de ese capítulo — forwardeado, ver PhotoViewerContainer. */
+  hideChapterBadge?: boolean;
 }
 
 // Envuelve el PhotoViewerContainer universal añadiendo la única acción que sí necesita saber
@@ -30,6 +34,7 @@ interface ChapterPhotoViewerContainerProps {
 // se lo inyecte (ver docs/architecture/frontend.md, regla de navegación de containers/).
 export function ChapterPhotoViewerContainer({
   photo, photos, baulId, baulName, apiChapterId, allChapters, currentChapter, onClose, onPhotoChange,
+  chapterName, hideChapterBadge,
 }: ChapterPhotoViewerContainerProps) {
   const navigate = useNavigate();
   const { run } = useAsyncAction();
@@ -75,6 +80,8 @@ export function ChapterPhotoViewerContainer({
         onClose={onClose}
         onPhotoChange={onPhotoChange}
         extraMenuItems={extraMenuItems}
+        chapterName={chapterName}
+        hideChapterBadge={hideChapterBadge}
       />
 
       {showMoveModal && (

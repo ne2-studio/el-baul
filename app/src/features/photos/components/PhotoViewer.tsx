@@ -9,7 +9,7 @@ import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 import { Button } from '@/design-system/components/actions/Button';
-import { PersonBadge } from '@/design-system/components/data-display/Badges';
+import { ChapterBadge, PersonBadge } from '@/design-system/components/data-display/Badges';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -27,6 +27,14 @@ interface PhotoViewerProps {
   modals: React.ReactNode;
   /** Personas etiquetadas en la foto actualmente mostrada. */
   taggedPersonas?: TaggedPersona[];
+  /** Nombre del capítulo al que pertenece la foto — quien nos monta ya lo resuelve (currentChapter,
+   * o cruzando photo.chapterId contra la lista de capítulos del baúl). */
+  chapterName?: string;
+  /** false cuando la foto no tiene capítulo, o cuando el visor ya se muestra dentro de ese
+   * propio capítulo — mismo patrón que showChapterBadge en RecuerdoFeedCard, para no enlazar a
+   * donde ya estás. */
+  showChapterBadge?: boolean;
+  onChapterClick?: () => void;
   recuerdos?: Recuerdo[];
   /** Recuerdos aún en vuelo (primera carga tras abrir la foto) — pinta un spinner pequeño en
    * vez del estado vacío, para no dar a entender por un instante que la foto no tiene ninguno. */
@@ -57,6 +65,9 @@ export function PhotoViewer({
   openDateModal,
   modals,
   taggedPersonas = [],
+  chapterName,
+  showChapterBadge = false,
+  onChapterClick,
   recuerdos = [],
   recuerdosLoading = false,
   onAddRecuerdo,
@@ -175,17 +186,25 @@ export function PhotoViewer({
                 </Button>
               )}
 
-              {/* Tagged personas */}
-              {taggedPersonas.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {taggedPersonas.map((persona) => (
-                    <PersonBadge
-                      key={persona.id}
-                      nickname={persona.nickname}
-                      avatarUrl={persona.avatarUrl}
-                      onClick={onUserClick ? () => onUserClick(persona.id) : undefined}
-                    />
-                  ))}
+              {/* Tagged personas + chapter badge */}
+              {(taggedPersonas.length > 0 || showChapterBadge) && (
+                <div className="space-y-2">
+                  {taggedPersonas.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {taggedPersonas.map((persona) => (
+                        <PersonBadge
+                          key={persona.id}
+                          nickname={persona.nickname}
+                          avatarUrl={persona.avatarUrl}
+                          onClick={onUserClick ? () => onUserClick(persona.id) : undefined}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {showChapterBadge && (
+                    <ChapterBadge chapterName={chapterName} onClick={onChapterClick} />
+                  )}
                 </div>
               )}
 

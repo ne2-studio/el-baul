@@ -16,6 +16,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Añadido
 
 - En la selección múltiple de fotos, ahora se puede borrar el lote seleccionado de una vez, pidiendo un único motivo para todas ellas.
+- Al ver una foto, ahora aparece debajo de las personas etiquetadas el capítulo al que pertenece, y se puede tocar para ir directamente a él (salvo si ya se está viendo dentro de ese mismo capítulo).
 
 ### Cambiado
 

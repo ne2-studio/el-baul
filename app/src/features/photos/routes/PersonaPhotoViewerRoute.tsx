@@ -21,6 +21,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
   const backgroundLocation = getBackgroundLocation(location);
 
   const baulScope = useBaulScope(baulId);
+  const { chapters } = baulScope;
 
   // Precarga la persona y sus fotos etiquetadas — bloqueando hasta tener ambas — igual que
   // PersonaDetailRoute, para no duplicar aquí la misma lógica de recuperación.
@@ -57,6 +58,11 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
 
   const closeViewer = () => closePhotoViewer(navigate, backgroundLocation, basePath);
 
+  // Las fotos de una persona cruzan capítulos libremente (ver comentario de cabecera), así
+  // que el nombre del capítulo de cada foto se resuelve aquí cruzando su chapterId contra la
+  // lista de capítulos del baúl, ya cargada por useBaulScope.
+  const chapterName = photo.chapterId ? chapters?.find((c) => c.id === photo.chapterId)?.name : undefined;
+
   return (
     <PhotoViewerContainer
       photo={photo}
@@ -65,6 +71,7 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
       baulName={baul.name}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
+      chapterName={chapterName}
     />
   );
 };

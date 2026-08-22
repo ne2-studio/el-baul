@@ -96,6 +96,8 @@ export const ChapterPhotoViewerRoute: React.FC = () => {
       currentChapter={currentChapter}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
+      chapterName={currentChapter?.name}
+      hideChapterBadge={!!chapterId}
     />
   );
 };
