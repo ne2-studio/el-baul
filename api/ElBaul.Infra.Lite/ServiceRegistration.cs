@@ -40,6 +40,7 @@ public static class ServiceRegistration
         // matches every other stateless port implementation here (IClock, IIdGenerator, …).
         services.AddScoped<IUnitOfWork, FakeUnitOfWork>();
         services.AddSingleton<IUserBaulActivityDailyAggregator, NoOpUserBaulActivityDailyAggregator>();
+        services.AddSingleton<IUserSessionRepository, NoOpUserSessionRepository>();
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         services.AddSingleton<IBaulRepository, InMemoryBaulRepository>();
         services.AddSingleton<IRemovalRequestRepository, InMemoryRemovalRequestRepository>();
@@ -105,4 +106,11 @@ public static class ServiceRegistration
 internal sealed class NoOpUserBaulActivityDailyAggregator : IUserBaulActivityDailyAggregator
 {
     public Task AggregateForDateAsync(DateOnly date) => Task.CompletedTask;
+}
+
+// el-baul-api-lite has no analytics schema (no Postgres behind it at all) — recording a session
+// open is a genuine no-op here, same reasoning as NoOpUserBaulActivityDailyAggregator above.
+internal sealed class NoOpUserSessionRepository : IUserSessionRepository
+{
+    public Task RecordAsync(UserSessionOpen session) => Task.CompletedTask;
 }

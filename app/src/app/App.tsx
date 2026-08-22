@@ -54,6 +54,7 @@ import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppConfigStore } from '../store/useAppConfigStore';
 import { loadUserData, resetAllStores } from '@/features/auth/useCases';
+import { reportSessionOpen } from './sessionAnalytics';
 import { attemptAutoRelogin, clearAutoReloginAttempt } from '@/features/auth/autoRelogin';
 
 function App() {
@@ -165,6 +166,10 @@ function App() {
       errorMessage: 'No se pudieron cargar tus baúles. Comprueba tu conexión e inténtalo de nuevo.',
     });
     if (!result.ok) return;
+
+    // Fire-and-forget, mismo motivo que markOnboardingSeen: alimenta analytics.user_sessions
+    // para DAU/plataforma/punto de entrada, nunca debe bloquear ni condicionar la navegación.
+    void reportSessionOpen();
 
     // Solo aquí sabemos que el servidor ha aceptado el token, no solo que oidc-client-ts lo
     // tenía cacheado localmente como no caducado — auth.isAuthenticated pasa a true nada más

@@ -13,6 +13,7 @@ export {
 } from './api/http';
 export type { PhotoCrop } from './api/publicTypes';
 
+import { analyticsApi } from './api/resources/analytics';
 import { appConfigApi } from './api/resources/appConfig';
 import { baulInvitesApi } from './api/resources/baulInvites';
 import { baulesApi } from './api/resources/baules';
@@ -46,4 +47,5 @@ export const api = {
   chat: chatApi,
   chatMemories: chatMemoriesApi,
   contributions: contributionsApi,
+  analytics: analyticsApi,
 };

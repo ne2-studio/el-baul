@@ -293,6 +293,7 @@ public static class ElBaulApiHost
             builder.Services.AddScoped<ISuggestedQuestionsStrategy, StaticSuggestedQuestionsStrategy>();
         builder.Services.AddScoped<IAdminManager, AdminManager>();
         builder.Services.AddScoped<IDailyUserBaulActivityAggregationJob, DailyUserBaulActivityAggregationJob>();
+        builder.Services.AddScoped<IUserSessionManager, UserSessionManager>();
         builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
         builder.Services.AddScoped<DigestActivityPolicy>();
         builder.Services.AddScoped<IWeeklyDigestManager, WeeklyDigestManager>();
