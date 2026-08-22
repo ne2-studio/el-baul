@@ -18,6 +18,11 @@ RUN dotnet publish "ElBaul.Api.Lite/ElBaul.Api.Lite.csproj" -c Release -o /app/p
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 WORKDIR /app
+
+# Alpine ships no tzdata by default — TimeZoneInfo.FindSystemTimeZoneById("Europe/Madrid")
+# (UserSessionManager, the daily aggregation jobs) throws TimeZoneNotFoundException without it.
+RUN apk add --no-cache tzdata
+
 COPY --from=build /app/publish .
 
 # Expose port

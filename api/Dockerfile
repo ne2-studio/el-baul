@@ -29,7 +29,10 @@ WORKDIR /app
 # vips is the native libvips shared library NetVips (ElBaul.Infra's managed NetVips package)
 # links against at runtime — used by VipsImageProcessor to enforce the stored-image resolution
 # policy (see docs/architecture/infrastructure.md).
-RUN apk add --no-cache imagemagick imagemagick-heic imagemagick-jpeg vips
+# tzdata: Alpine ships no timezone database by default — TimeZoneInfo.FindSystemTimeZoneById
+# ("Europe/Madrid") (UserSessionManager, the daily aggregation jobs) throws
+# TimeZoneNotFoundException without it.
+RUN apk add --no-cache imagemagick imagemagick-heic imagemagick-jpeg vips tzdata
 
 COPY --from=build /app/publish .
 

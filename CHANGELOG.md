@@ -28,6 +28,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 - Al ajustar el zoom de una foto de perfil de persona o de portada (capítulo o baúl), el recorte que se guardaba no coincidía con el que se veía en la vista previa; ahora sí coinciden.
 - Al abrir un baúl, un capítulo o una persona, a veces fallaba la carga con un error de servidor; ahora carga siempre correctamente.
+- Al abrir la aplicación, a veces aparecía la pantalla de "Sin conexión" aunque hubiera conexión real; ahora no ocurre.
 - Al cambiar el nivel de acceso de una persona, ahora aparece un aviso de éxito confirmando el cambio.
 - En el menú "···" de una persona, ya no aparece una doble línea separadora cuando no hay ninguna opción de gestión de acceso disponible (por ejemplo, en una persona pendiente de aceptar la invitación).
 - En la pantalla de subir fotos, ya se pueden arrastrar y soltar fotos también sobre el botón "Añadir más fotos" cuando ya hay fotos seleccionadas; antes el navegador las abría en una pestaña nueva en vez de añadirlas.
