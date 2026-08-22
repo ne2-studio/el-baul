@@ -56,14 +56,24 @@ async function createSelectedPhoto(file: File, previewSource: Blob | MediaSource
 // Most browsers/WebViews can't decode HEIC/HEIF (iPhone's default photo format) for an <img>,
 // so the pre-upload preview would otherwise render broken. Decodes it to a JPEG blob just for
 // that preview — the file actually uploaded is untouched; the server normalizes it for storage.
-// Falls back to the raw source on any failure so a bad/unsupported file never blocks the flow.
+// Decodes straight to an ImageBitmap and downscales it here rather than asking heic-to for a
+// full-resolution JPEG (its default) and letting downscaleForPreview shrink *that* afterwards —
+// the latter means decoding and re-encoding the image twice at full camera resolution (easily
+// tens of megapixels) just to throw away everything but a 480px preview. Falls back to the raw
+// source on any failure so a bad/unsupported file never blocks the flow.
 async function resolvePreviewSource(file: File, previewSource: Blob | MediaSource): Promise<Blob | MediaSource> {
   if (!(previewSource instanceof Blob)) return previewSource;
 
   try {
     const { heicTo, isHeic } = await import('heic-to');
     if (!(await isHeic(file))) return previewSource;
-    return await heicTo({ blob: previewSource, type: 'image/jpeg', quality: 0.9 });
+
+    const bitmap = await heicTo({ blob: previewSource, type: 'bitmap' });
+    try {
+      return await downscaleBitmap(bitmap);
+    } finally {
+      bitmap.close();
+    }
   } catch (error) {
     Sentry.captureException(error, {
       tags: { phase: 'heic-preview-decode' },
@@ -71,6 +81,25 @@ async function resolvePreviewSource(file: File, previewSource: Blob | MediaSourc
     });
     return previewSource;
   }
+}
+
+// Downscales an already-decoded HEIC bitmap straight to preview size in a single canvas pass —
+// used instead of round-tripping through downscaleForPreview's <img>-based path, which exists to
+// handle already-compressed Blob sources (see below) and would otherwise require encoding the
+// full-resolution bitmap to a Blob first just to decode it again.
+async function downscaleBitmap(bitmap: ImageBitmap): Promise<Blob> {
+  const { width, height } = bitmap;
+  const scale = Math.min(1, PREVIEW_MAX_DIMENSION / Math.max(width, height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas 2D context unavailable for HEIC preview downscale');
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+  const thumbnail = await canvasToBlob(canvas);
+  if (!thumbnail) throw new Error("Can't convert canvas to blob for HEIC preview");
+  return thumbnail;
 }
 
 // The longer side a pre-upload preview is downscaled to — comfortably above what a 3-column

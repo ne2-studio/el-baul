@@ -32,6 +32,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - La pantalla de "Guardando tus recuerdos…" al subir muchas fotos a la vez ya no se queda bloqueada; ahora muestra una vista previa compacta de las fotos junto con el progreso ("Subiendo X de Y fotos") en vez de una lista completa con una foto por fila.
 - Al copiar el enlace de invitación a un baúl, el aviso de confirmación ("Enlace copiado al portapapeles") ya no queda oculto detrás de la ventana de invitación.
 - Al entrar directamente a un baúl (por ejemplo, recargando la página o abriendo un enlace guardado), la pantalla "Abriendo baúl..." ya no se queda cargando para siempre en algunos casos.
+- Al subir fotos en formato HEIC (el habitual del iPhone), la generación de la vista previa ya no tarda tanto.
 
 ## [beta-v0.4.1] - 2026-08-18
 

@@ -218,16 +218,33 @@ describe('uploadFlow', () => {
     expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
   });
 
-  it('decodes a HEIC file to JPEG before creating its preview blob URL', async () => {
+  it('decodes a HEIC file straight to a downscaled bitmap preview', async () => {
     const original = new File(['heic-bytes'], 'foto.heic', { type: 'image/heic' });
-    const jpegBlob = new Blob(['jpeg-bytes'], { type: 'image/jpeg' });
+    const thumbnailBlob = new Blob(['jpeg-bytes'], { type: 'image/jpeg' });
+    const fakeCanvas = createFakeCanvas(thumbnailBlob);
+    vi.spyOn(document, 'createElement').mockImplementation(((tag: string) =>
+      tag === 'canvas' ? fakeCanvas : originalCreateElement(tag)) as typeof document.createElement);
+    const bitmapClose = vi.fn();
+    const fakeBitmap = { width: 4000, height: 3000, close: bitmapClose } as unknown as ImageBitmap;
+    // The downscaled thumbnail is measured a second time by downscaleForPreview's <img>-based
+    // path (which every preview source, HEIC-decoded or not, flows through) — already at the
+    // preview cap, so that pass is a no-op and re-uses the same object URL stub.
+    FakeImage.dimensionsBySrc['blob:preview'] = { width: 480, height: 360 };
     vi.mocked(isHeic).mockResolvedValue(true);
-    vi.mocked(heicTo).mockResolvedValue(jpegBlob);
+    // `heicTo`'s overloaded signature makes `mockResolvedValue` pick the Blob-returning
+    // overload; `mockImplementation` sidesteps that ambiguity.
+    vi.mocked(heicTo).mockImplementation((async () => fakeBitmap) as unknown as typeof heicTo);
 
     const selected = await materializeSelectedPhoto(original);
 
-    expect(heicTo).toHaveBeenCalledWith({ blob: selected?.file, type: 'image/jpeg', quality: 0.9 });
-    expect(URL.createObjectURL).toHaveBeenCalledWith(jpegBlob);
+    // Decoded straight to a bitmap (no intermediate full-resolution JPEG) and downscaled in a
+    // single canvas pass — longer side capped at 480px, aspect ratio preserved.
+    expect(heicTo).toHaveBeenCalledWith({ blob: selected?.file, type: 'bitmap' });
+    expect(fakeCanvas.width).toBe(480);
+    expect(fakeCanvas.height).toBe(360);
+    expect(fakeCanvas.drawImage).toHaveBeenCalledWith(fakeBitmap, 0, 0, 480, 360);
+    expect(bitmapClose).toHaveBeenCalled();
+    expect(URL.createObjectURL).toHaveBeenCalledWith(thumbnailBlob);
     // The uploaded payload itself stays untouched — only the local preview is re-encoded.
     expect(selected?.file.type).toBe('image/heic');
   });
