@@ -256,6 +256,17 @@ shrinking the buttons to fit. 2 more ad hoc icons imported (not in `icons.ts` �
 `BatchPhotoActionsBar.tsx` imports `Tag`/`CalendarOff` directly, same convention as
 `chevronDown`/`menu`): `Icon/tag`, `Icon/calendarOff`.
 
+**`UploadingScreen`**, from `UploadingScreen.tsx`: the full-screen loading state shown
+while a batch actually uploads — a real `BaulIcon` import (fill-based SVG, unlike every
+stroke-based icon elsewhere in this file) in a tinted rounded box, `PhotoStack` (3 real
+photos fanned/rotated, matching `PhotoStack.tsx`'s exact offsets/rotations), title, and a
+static progress line (no animation — one frozen frame, "Subiendo 1 de 3 fotos"). Not
+promoted to a reusable component since nothing else here needs `BaulIcon`/`PhotoStack` yet.
+
+Also fixed: `PhotoBatchGridRoute`'s action bar had the wrong background —
+`BatchPhotoActionsBar.tsx` is `bg-card` (white), not the page's off-white
+`background`; rebound to `color/bg/card`.
+
 Remaining screens beyond the Baúl/Chapter/PhotoViewer/Contributions shells — sharing
 flows beyond `ClaimPersonaScreen`, `PhotoBatchViewerRoute`'s empty/loaded states, etc. —
 are not yet started.
