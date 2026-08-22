@@ -195,6 +195,17 @@ edit/share icons), and `RecuerdoInput` (idle state only — the focused/has-text
 states weren't built). `PhotoStage`'s swipeable carousel is a plain static image frame,
 same "skip live interaction" call as everywhere else in this file.
 
+**`PhotoViewerScreen-DesktopSideNavigation`** (`PhotoViewerDesktopSideNavigation` story) is
+a 4th screen, fixed at 1280×900 (`storybook/viewports.ts`'s desktop size) instead of
+hugging like every other screen in this file — `PhotoViewer.tsx` genuinely is a
+fixed-viewport overlay at that breakpoint (`md:h-full`). 2-column layout: `PhotoStage`
+`flex-1` on the left, the same `Info` column at `w-1/3` on the right with a left border,
+reusing the exact same `PhotoViewerHeader`/`PersonBadge`/`RecuerdoCard`/`RecuerdoInput`
+instances as the mobile screens. Added the `md:flex` prev/next chevron `IconButton`s
+overlaid on the photo (hidden on mobile) — hit the "resizing a nested instance child can
+silently no-op" issue again (see gotchas) on the icon's size; fixed by re-deriving
+`strokeWeight` from the icon's actual settled width instead of fighting the no-op.
+
 Remaining screens beyond the Baúl/Chapter/PhotoViewer shells — sharing flows beyond
 `ClaimPersonaScreen`, `PhotoBatchViewerRoute`, etc. — are not yet started.
 
