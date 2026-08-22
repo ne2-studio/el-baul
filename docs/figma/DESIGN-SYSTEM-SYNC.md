@@ -206,8 +206,25 @@ overlaid on the photo (hidden on mobile) — hit the "resizing a nested instance
 silently no-op" issue again (see gotchas) on the icon's size; fixed by re-deriving
 `strokeWeight` from the icon's actual settled width instead of fighting the no-op.
 
-Remaining screens beyond the Baúl/Chapter/PhotoViewer shells — sharing flows beyond
-`ClaimPersonaScreen`, `PhotoBatchViewerRoute`, etc. — are not yet started.
+**`TagPersonScreen` / `WriteMemoryScreen`** (new `Screens > Contributions` section), built
+from `ContributionSuggestionScreen.tsx` / `WriteMemorySuggestionScreen.tsx` — the two
+full-screen contribution suggestions `BaulRoute` shows before the feed. Share a header
+(title + "Ahora no →" skip link, no back button) recomposed inline rather than reusing
+the `PageHeader`(row) instance — its default `Leading`/`Trailing` are instances meant for
+*swapping* (see gotchas), not appending a plain-text title + a `plain`-variant `Button`.
+New components: `SelectionRow` (Components > Data Display — 2-variant
+`Selected=true`/`false`, `Avatar` + name + checkbox, extracted from
+`PersonaSelectionList`/`TagPersonasModal`'s row) and `RecuerdoInputLight` (Feature
+Components > Memories — the `theme='light'` sibling of `PhotoViewerScreen`'s dark
+`RecuerdoInput`, kept as its own component rather than a variant since the two themes'
+chrome differs enough). `TagPersonScreen` shows 4 example personas (1 with a real photo
+avatar, 1 pre-selected) plus the sticky footer's ghost/primary button pair;
+`WriteMemoryScreen` reuses `RecuerdoInputLight` idle. Both reuse the
+`storybookPhotos.beach` fixture for the sticky photo panel at a fixed 260px height
+(approximating `photoStageHeight()`'s `clamp()`, not modeled exactly).
+
+Remaining screens beyond the Baúl/Chapter/PhotoViewer/Contributions shells — sharing
+flows beyond `ClaimPersonaScreen`, `PhotoBatchViewerRoute`, etc. — are not yet started.
 
 ## Known gotchas (read before writing more `use_figma` scripts)
 
