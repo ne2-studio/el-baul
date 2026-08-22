@@ -223,6 +223,16 @@ avatar, 1 pre-selected) plus the sticky footer's ghost/primary button pair;
 `storybookPhotos.beach` fixture for the sticky photo panel at a fixed 260px height
 (approximating `photoStageHeight()`'s `clamp()`, not modeled exactly).
 
+**`PhotoViewerScreen-PortraitMobile` / `PhotoViewerScreen-PortraitDesktop`** model
+`PhotoStage`'s real `object-contain` letterboxing for a portrait photo that doesn't fill
+its (landscape-ish) container: the stage frame's fill is a flat dark-surface color, and
+the photo is a separate child rectangle sized to its real aspect ratio (a new
+`storybookPhotos.portrait` fixture, 800×1200, uploaded the same SVG→PNG round-trip way as
+every other real photo here) and centered, height-constrained on both mobile and desktop
+— leaving visible side margins, wider on desktop since that container is wider. Swapped
+the example recuerdo/persona to "Marta" so not every screen in the file uses the same
+beach/abuela pair.
+
 Remaining screens beyond the Baúl/Chapter/PhotoViewer/Contributions shells — sharing
 flows beyond `ClaimPersonaScreen`, `PhotoBatchViewerRoute`, etc. — are not yet started.
 
