@@ -1,4 +1,3 @@
-using ElBaul.Core.Photos.Domain;
 using ElBaul.Domain;
 using Amazon.Runtime;
 using Amazon.S3;

@@ -10,8 +10,8 @@ public interface IPersonaManager
     Task<Result<PersonaDto>> UpdatePersonaAsync(BaulId baulId, PersonaId personaId, string? name, string nickname);
     Task<Result<PersonaDto>> UpdatePersonaBiografiaAsync(BaulId baulId, PersonaId personaId, string? biografia);
     Task<Result<PersonaDto>> UpdatePersonaAvatarAsync(
-        BaulId baulId, PersonaId personaId, Stream content, PhotoCrop crop, ClientUploadId clientUploadId);
-    Task<Result<PersonaDto>> SetPersonaAvatarPhotoAsync(BaulId baulId, PersonaId personaId, PhotoId photoId, PhotoCrop crop);
+        BaulId baulId, PersonaId personaId, Stream content, ImageCrop crop, ClientUploadId clientUploadId);
+    Task<Result<PersonaDto>> SetPersonaAvatarPhotoAsync(BaulId baulId, PersonaId personaId, PhotoId photoId, ImageCrop crop);
     Task<Result<PersonaDto>> UpdatePersonaRoleAsync(BaulId baulId, PersonaId personaId, BaulRole role);
     Task<Result> RemovePersonaAsync(BaulId baulId, PersonaId personaId);
 }

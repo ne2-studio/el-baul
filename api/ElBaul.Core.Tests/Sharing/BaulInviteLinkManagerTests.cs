@@ -1,5 +1,4 @@
 using ElBaul.Core.Bauls.Domain;
-using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Personas.Domain;
 using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Bauls.Application;

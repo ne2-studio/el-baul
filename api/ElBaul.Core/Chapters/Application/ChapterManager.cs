@@ -100,7 +100,7 @@ public class ChapterManager(
         return ToDto(chapter, null, null, 0, null, null, ChapterDateRange.Empty);
     }
 
-    public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId, PhotoCrop crop)
+    public async Task<Result<ChapterDto>> SetCoverAsync(ChapterId chapterId, PhotoId photoId, ImageCrop crop)
     {
         var userId = currentUserProvider.GetUserId();
         var chapterResult = await EntityLookup.ResolveAsync(
@@ -126,7 +126,7 @@ public class ChapterManager(
         if (photoResult.IsFailure) return Result.Failure<ChapterDto>(photoResult.Error);
         var photo = photoResult.Value;
 
-        var updated = chapter.WithCover(photo, new ImageCrop(crop.X, crop.Y, crop.Scale), clock.UtcNow());
+        var updated = chapter.WithCover(photo, crop, clock.UtcNow());
         await chapterRepository.UpdateAsync(updated);
 
         logger.LogInformation("Chapter cover updated {PhotoId}", photoId);

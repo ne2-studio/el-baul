@@ -90,7 +90,7 @@ public class BaulManager(
         return await ToDtoAsync(access.Baul, access.RoleApiString, access.IsCustodio, memberCount);
     }
 
-    public async Task<Result<BaulDto>> SetCoverAsync(BaulId baulId, PhotoId photoId, PhotoCrop crop)
+    public async Task<Result<BaulDto>> SetCoverAsync(BaulId baulId, PhotoId photoId, ImageCrop crop)
     {
         var userId = currentUserProvider.GetUserId();
 
@@ -105,7 +105,7 @@ public class BaulManager(
             return Result.Failure<BaulDto>(ApplicationError.NotFound("Photo not found"));
         }
 
-        var updated = access.Baul.WithCover(photo, new ImageCrop(crop.X, crop.Y, crop.Scale), clock.UtcNow());
+        var updated = access.Baul.WithCover(photo, crop, clock.UtcNow());
         await baulRepository.UpdateAsync(updated);
 
         logger.LogInformation("Baul cover updated {PhotoId}", photoId);

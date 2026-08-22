@@ -74,7 +74,7 @@ public class PersonasController(IPersonaManager personaManager, PersonaScopeAggr
         if (request.File is null || request.File.Length == 0)
             return BadRequest(new { error = "No file provided" });
 
-        var crop = PhotoCrop.Create(request.CropX, request.CropY, request.CropScale);
+        var crop = ImageCrop.Create(request.CropX, request.CropY, request.CropScale);
         if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
 
         // A missing/invalid client-generated idempotency token falls back to a fresh one rather
@@ -95,7 +95,7 @@ public class PersonasController(IPersonaManager personaManager, PersonaScopeAggr
     public async Task<IActionResult> SetAvatarPhoto(
         BaulId baulId, PersonaId personaId, [FromBody] SetPersonaAvatarPhotoRequest request)
     {
-        var crop = PhotoCrop.Create(request.CropX, request.CropY, request.CropScale);
+        var crop = ImageCrop.Create(request.CropX, request.CropY, request.CropScale);
         if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
 
         var result = await personaManager.SetPersonaAvatarPhotoAsync(baulId, personaId, request.PhotoId, crop.Value);

@@ -115,7 +115,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.25m, 0.75m, 1.8m));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new ImageCrop(0.25m, 0.75m, 1.8m));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
@@ -140,7 +140,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(baulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(OtherUserId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.5m, 0.5m, 1m));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new ImageCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
@@ -153,7 +153,7 @@ public class BaulManagerTests
         await SeedBaulAsync(baulId, "Familia");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(Guid.NewGuid()), new PhotoCrop(0.5m, 0.5m, 1m));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(Guid.NewGuid()), new ImageCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
@@ -171,7 +171,7 @@ public class BaulManagerTests
         await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(photoId), new ChapterId(chapterId), new BaulId(otherBaulId), "photo-key", null, new UserId(CustodioId), _clock.UtcNow()));
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new PhotoCrop(0.5m, 0.5m, 1m));
+        var result = await manager.SetCoverAsync(new BaulId(baulId), new PhotoId(photoId), new ImageCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);

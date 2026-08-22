@@ -155,7 +155,7 @@ public class PersonaManager(
         BaulId baulId,
         PersonaId personaId,
         Stream content,
-        PhotoCrop crop,
+        ImageCrop crop,
         ClientUploadId clientUploadId)
     {
         var context = await AuthorizePersonaAvatarChangeAsync(baulId, personaId);
@@ -190,7 +190,7 @@ public class PersonaManager(
         return await ApplyPersonaAvatarPhotoAsync(persona, access, userId, photo, crop);
     }
 
-    public async Task<Result<PersonaDto>> SetPersonaAvatarPhotoAsync(BaulId baulId, PersonaId personaId, PhotoId photoId, PhotoCrop crop)
+    public async Task<Result<PersonaDto>> SetPersonaAvatarPhotoAsync(BaulId baulId, PersonaId personaId, PhotoId photoId, ImageCrop crop)
     {
         var context = await AuthorizePersonaAvatarChangeAsync(baulId, personaId);
         if (context.IsFailure) return Result.Failure<PersonaDto>(context.Error);
@@ -302,11 +302,11 @@ public class PersonaManager(
         return (persona, auth.Value, userId);
     }
 
-    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAuthorization access, UserId userId, Photo photo, PhotoCrop crop)
+    private async Task<Result<PersonaDto>> ApplyPersonaAvatarPhotoAsync(Persona persona, BaulAuthorization access, UserId userId, Photo photo, ImageCrop crop)
     {
         var existingIds = (await photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id)).ToList();
 
-        var updated = persona.WithAvatarPhoto(photo, new ImageCrop(crop.X, crop.Y, crop.Scale));
+        var updated = persona.WithAvatarPhoto(photo, crop);
 
         // Tagging the persona into their own new avatar photo and assigning the avatar commit
         // together — SetTagsAsync bulk-deletes/reinserts via ExecuteDeleteAsync (bypasses the

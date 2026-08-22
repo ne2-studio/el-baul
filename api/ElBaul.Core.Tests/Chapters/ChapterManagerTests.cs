@@ -104,7 +104,7 @@ public class ChapterManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, "photo-key");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, photoId, new PhotoCrop(0.25m, 0.75m, 1.8m));
+        var result = await manager.SetCoverAsync(chapterId, photoId, new ImageCrop(0.25m, 0.75m, 1.8m));
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value.CoverPhotoUrl);
@@ -129,7 +129,7 @@ public class ChapterManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, "photo-key", uploadedBy: colaboradorId);
 
         var manager = CreateManager(colaboradorId);
-        var result = await manager.SetCoverAsync(chapterId, photoId, new PhotoCrop(0.5m, 0.5m, 1m));
+        var result = await manager.SetCoverAsync(chapterId, photoId, new ImageCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsSuccess);
     }
@@ -141,7 +141,7 @@ public class ChapterManagerTests
         var chapterId = await _fixture.AddChapterAsync(baulId, "Chapter");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, new PhotoId(Guid.NewGuid()), new PhotoCrop(0.5m, 0.5m, 1m));
+        var result = await manager.SetCoverAsync(chapterId, new PhotoId(Guid.NewGuid()), new ImageCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);
@@ -156,7 +156,7 @@ public class ChapterManagerTests
         var photoId = await _fixture.AddPhotoAsync(baulId, otherChapterId, "photo-key");
 
         var manager = CreateManager(CustodioId);
-        var result = await manager.SetCoverAsync(chapterId, photoId, new PhotoCrop(0.5m, 0.5m, 1m));
+        var result = await manager.SetCoverAsync(chapterId, photoId, new ImageCrop(0.5m, 0.5m, 1m));
 
         Assert.True(result.IsFailure);
         Assert.Equal("Photo not found", result.Error.Message);

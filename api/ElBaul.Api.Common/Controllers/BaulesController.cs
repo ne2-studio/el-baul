@@ -56,7 +56,7 @@ public class BaulesController(
     [ProducesResponseType(typeof(BaulDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SetCover(BaulId baulId, [FromBody] SetBaulCoverRequest request)
     {
-        var crop = PhotoCrop.Create(request.CropX, request.CropY, request.CropScale);
+        var crop = ImageCrop.Create(request.CropX, request.CropY, request.CropScale);
         if (crop.IsFailure) return ErrorMapping.ToActionResult(crop.Error);
 
         var result = await baulManager.SetCoverAsync(baulId, request.PhotoId, crop.Value);

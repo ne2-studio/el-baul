@@ -8,7 +8,7 @@ namespace ElBaul.Domain;
 //
 // Parse is the single, shared "is this string a valid <id>?" rule for every one of these types —
 // the boundary (a controller reading an id out of a request body) calls Parse instead of hand-rolling
-// Guid.TryParse plus its own BadRequest message, the same way PhotoDate.Parse and PhotoCrop.Create
+// Guid.TryParse plus its own BadRequest message, the same way PhotoDate.Parse and ImageCrop.Create
 // own their own construction rule instead of leaving it to the caller.
 internal static class IdParsing
 {
