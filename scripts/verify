@@ -199,7 +199,7 @@ backend() {
   run dotnet build "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-restore
 
   if [[ "${VERIFY_COVERAGE:-}" == "1" ]]; then
-    run dotnet test "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory "$ROOT_DIR/api/coverage"
+    run dotnet test "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-build --collect:"XPlat Code Coverage" --settings "$ROOT_DIR/api/coverlet.runsettings" --results-directory "$ROOT_DIR/api/coverage"
   else
     run dotnet test "$ROOT_DIR/api/ElBaul.slnx" --configuration Release --no-build
   fi

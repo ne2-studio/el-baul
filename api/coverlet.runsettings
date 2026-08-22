@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <!-- EF Core migrations are generated boilerplate (Designer.cs snapshots included):
+               they add no real logic to cover and were skewing coverage numbers with ~40k
+               dead lines. Excluded by file path, not by project, so it also covers any future
+               *.Infra.* project that carries its own Migrations folder. -->
+          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
