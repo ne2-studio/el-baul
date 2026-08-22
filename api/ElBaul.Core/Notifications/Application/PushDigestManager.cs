@@ -1,5 +1,6 @@
 using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Feed.OutputPorts;
+using ElBaul.Core.Notifications.Domain;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
@@ -24,6 +25,9 @@ public class PushDigestManager(
     IUserRepository userRepository,
     IPushTokenRepository pushTokenRepository,
     IPushNotificationSender pushNotificationSender,
+    ISentPushNotificationRepository sentPushNotificationRepository,
+    IPushLinkSigner pushLinkSigner,
+    IIdGenerator idGenerator,
     DigestActivityPolicy digestActivityPolicy,
     IBaulFeedCursorRepository feedCursorRepository,
     IBackgroundJobScheduler backgroundJobScheduler,
@@ -92,10 +96,28 @@ public class PushDigestManager(
             return;
         }
 
+        // One SentPushNotification per digest window (not per device) — a user with several
+        // devices still counts as a single "opened" once any of them is tapped, matching how
+        // the admin/dashboard read email opens. DeduplicationKey mirrors WeeklyDigestManager's
+        // `weekly-digest:{userId}:{since:O}` so a Hangfire retry within the same window can't
+        // double-send either.
+        var pendingNotification = new SentPushNotification(
+            idGenerator.NewId(), userId, PushNotificationType.WeeklySummary, summary.Title, summary.Body,
+            PushNotificationStatus.Pending, $"push-digest:{userId}:{since:O}", clock.UtcNow(),
+            DeepLink: summary.DeepLink);
+
+        if (!await sentPushNotificationRepository.TryReserveAsync(pendingNotification))
+        {
+            logger.LogInformation("PushDigestSkipped raced by another worker");
+            return;
+        }
+
+        var trackingToken = pushLinkSigner.CreateOpenToken(pendingNotification.Id);
+
         var anySucceeded = false;
         foreach (var token in tokens)
         {
-            var message = new PushNotificationMessage(token.Token, summary.Title, summary.Body, summary.DeepLink);
+            var message = new PushNotificationMessage(token.Token, summary.Title, summary.Body, summary.DeepLink, trackingToken);
             var result = await pushNotificationSender.SendAsync(message);
             if (result.IsSuccess)
                 anySucceeded = true;
@@ -103,8 +125,13 @@ public class PushDigestManager(
                 logger.LogWarning("PushDigestSendFailed {Error}", result.Error);
         }
 
-        if (!anySucceeded) return;
+        if (!anySucceeded)
+        {
+            await sentPushNotificationRepository.UpdateAsync(pendingNotification.MarkFailed("All device sends failed"));
+            return;
+        }
 
+        await sentPushNotificationRepository.UpdateAsync(pendingNotification.MarkSent("Firebase", clock.UtcNow()));
         await userRepository.UpdateLastPushDigestSentAtAsync(userId, clock.UtcNow());
         logger.LogInformation("PushDigestSent");
     }

@@ -17,10 +17,12 @@ public class PushNotificationManagerTests
 
     private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
     private readonly FakePushNotificationSender _sender = new();
+    private readonly InMemorySentPushNotificationRepository _sentPushNotificationRepository = new();
+    private readonly FakePushLinkSigner _pushLinkSigner = new();
 
     private PushNotificationManager CreateManager(string currentUserId = UserId) => new(
-        _pushTokenRepository, _sender, new StaticCurrentUserProvider(currentUserId),
-        new StaticIdGenerator(GeneratedTokenId), new StaticClock());
+        _pushTokenRepository, _sender, _sentPushNotificationRepository, _pushLinkSigner,
+        new StaticCurrentUserProvider(currentUserId), new StaticIdGenerator(GeneratedTokenId), new StaticClock());
 
     [Fact]
     public async Task RegisterTokenAsync_ShouldUpsertAToken_ScopedToTheCurrentUser()
@@ -114,8 +116,8 @@ public class PushNotificationManagerTests
         sender.SendAsync(Arg.Any<PushNotificationMessage>())
             .Returns(Result.Success(), Result.Failure(ApplicationError.ExternalDependencyUnavailable("device unreachable")));
         var manager = new PushNotificationManager(
-            _pushTokenRepository, sender, new StaticCurrentUserProvider(UserId),
-            new StaticIdGenerator(GeneratedTokenId), new StaticClock());
+            _pushTokenRepository, sender, _sentPushNotificationRepository, _pushLinkSigner,
+            new StaticCurrentUserProvider(UserId), new StaticIdGenerator(GeneratedTokenId), new StaticClock());
 
         var result = await manager.SendTestNotificationAsync(new UserId(UserId), "hola", deepLink: null);
 

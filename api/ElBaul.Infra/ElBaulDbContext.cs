@@ -38,6 +38,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<RemovalRequest> RemovalRequests => Set<RemovalRequest>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
     public DbSet<EmailLinkClick> EmailLinkClicks => Set<EmailLinkClick>();
+    public DbSet<SentPushNotification> SentPushNotifications => Set<SentPushNotification>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<RecuerdoEmbedding> RecuerdoEmbeddings => Set<RecuerdoEmbedding>();
     public DbSet<SharedLink> SharedLinks => Set<SharedLink>();

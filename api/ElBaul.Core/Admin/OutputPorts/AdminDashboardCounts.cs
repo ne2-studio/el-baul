@@ -6,4 +6,5 @@ namespace ElBaul.Core.Admin.OutputPorts;
 /// </summary>
 public record AdminDashboardCounts(
     int Users, int Baules, int Photos, int PhotosToday,
-    int EmailsSentLast30Days, int EmailsOpenedLast30Days);
+    int EmailsSentLast30Days, int EmailsOpenedLast30Days,
+    int PushNotificationsSentLast30Days, int PushNotificationsOpenedLast30Days);

@@ -27,6 +27,7 @@ public class AdminManager(
     IAdminRepository adminRepository,
     IAdminBaulDeletionRepository baulDeletionRepository,
     ISentEmailRepository sentEmailRepository,
+    ISentPushNotificationRepository sentPushNotificationRepository,
     IBaulRepository baulRepository,
     IPersonaRepository personaRepository,
     IPushTokenRepository pushTokenRepository,
@@ -41,7 +42,8 @@ public class AdminManager(
         var counts = await adminRepository.GetDashboardCountsAsync(todayUtcStart);
         return new AdminDashboardCountsDto(
             counts.Users, counts.Baules, counts.Photos, counts.PhotosToday,
-            counts.EmailsSentLast30Days, counts.EmailsOpenedLast30Days);
+            counts.EmailsSentLast30Days, counts.EmailsOpenedLast30Days,
+            counts.PushNotificationsSentLast30Days, counts.PushNotificationsOpenedLast30Days);
     }
 
     public async Task<Result<IEnumerable<AdminUserListItemDto>>> GetAllUsersAsync()
@@ -123,6 +125,18 @@ public class AdminManager(
         return Result.Success(emails.Select(ToDto));
     }
 
+    public async Task<Result<IEnumerable<AdminSentPushNotificationDto>>> GetSentPushNotificationsAsync()
+    {
+        var notifications = await sentPushNotificationRepository.GetRecentAsync(200);
+        return Result.Success(notifications.Select(ToDto));
+    }
+
+    public async Task<Result<IEnumerable<AdminSentPushNotificationDto>>> GetUserSentPushNotificationsAsync(UserId userId)
+    {
+        var notifications = await sentPushNotificationRepository.GetByUserIdAsync(userId);
+        return Result.Success(notifications.Select(ToDto));
+    }
+
     // Admin-only unlink: frees a Persona from the account that claimed it (without revoking
     // access, unlike PersonaManager.RemovePersonaAsync) so it can be claimed again by the right
     // account. Sits here rather than on PersonaManager because it's gated by the AdminOnly
@@ -167,6 +181,10 @@ public class AdminManager(
     private static AdminSentEmailDto ToDto(SentEmail email) =>
         new(email.Id.ToString(), email.UserId, email.Type.ToString(), email.Subject, email.RecipientEmail,
             email.Status.ToString(), email.CreatedAt, email.SentAt, email.FirstClickedAt, email.FirstOpenedAt);
+
+    private static AdminSentPushNotificationDto ToDto(SentPushNotification notification) =>
+        new(notification.Id.ToString(), notification.UserId, notification.Type.ToString(), notification.Title, notification.Body,
+            notification.Status.ToString(), notification.CreatedAt, notification.SentAt, notification.FirstOpenedAt);
 
     private static AdminUserListItemDto ToDto(AdminUserRow row) =>
         new(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);

@@ -8,6 +8,8 @@ namespace ElBaul.Core.Notifications.Application;
 public class PushNotificationManager(
     IPushTokenRepository pushTokenRepository,
     IPushNotificationSender pushNotificationSender,
+    ISentPushNotificationRepository sentPushNotificationRepository,
+    IPushLinkSigner pushLinkSigner,
     ICurrentUserProvider currentUserProvider,
     IIdGenerator idGenerator,
     IClock clock) : IPushNotificationManager
@@ -35,14 +37,27 @@ public class PushNotificationManager(
         if (tokens.Count == 0)
             return Result.Failure(ApplicationError.Validation("This user has no registered device"));
 
+        var now = clock.UtcNow();
+        var notificationId = idGenerator.NewId();
+        var pendingNotification = new SentPushNotification(
+            notificationId, targetUserId, PushNotificationType.Test, TestNotificationTitle, message,
+            PushNotificationStatus.Pending, $"test-push:{targetUserId}:{notificationId}", now,
+            DeepLink: deepLink);
+        await sentPushNotificationRepository.TryReserveAsync(pendingNotification);
+        var trackingToken = pushLinkSigner.CreateOpenToken(pendingNotification.Id);
+
         foreach (var pushToken in tokens)
         {
-            var notification = new PushNotificationMessage(pushToken.Token, TestNotificationTitle, message, deepLink);
+            var notification = new PushNotificationMessage(pushToken.Token, TestNotificationTitle, message, deepLink, trackingToken);
             var result = await pushNotificationSender.SendAsync(notification);
             if (result.IsFailure)
+            {
+                await sentPushNotificationRepository.UpdateAsync(pendingNotification.MarkFailed(result.Error.Message));
                 return result;
+            }
         }
 
+        await sentPushNotificationRepository.UpdateAsync(pendingNotification.MarkSent("Firebase", clock.UtcNow()));
         return Result.Success();
     }
 }

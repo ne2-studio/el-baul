@@ -1,5 +1,5 @@
 import { UserProfile } from '../../types';
-import type { JsonRequest, JsonResponse, PathTemplate } from '../contract';
+import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { get, post, put } from '../http';
 
 const USER_ME = '/api/users/me' satisfies PathTemplate;
@@ -7,6 +7,7 @@ const NOTIFICATION_PREFERENCES = '/api/users/me/notification-preferences' satisf
 const ONBOARDING_SEEN = '/api/users/me/onboarding-seen' satisfies PathTemplate;
 const PUSH_TOKENS = '/api/users/me/push-tokens' satisfies PathTemplate;
 const UNREGISTER_PUSH_TOKEN = '/api/users/me/push-tokens/unregister' satisfies PathTemplate;
+const PUSH_OPENED = '/push/opened/{token}' satisfies PathTemplate;
 
 export const usersApi = {
   getProfile: async () => new UserProfile(await get<JsonResponse<typeof USER_ME, 'get'>>(USER_ME)),
@@ -23,4 +24,9 @@ export const pushNotificationsApi = {
     post<void>(PUSH_TOKENS, { token, platform } satisfies JsonRequest<typeof PUSH_TOKENS, 'post'>),
   unregister: (token: string) =>
     post<void>(UNREGISTER_PUSH_TOKEN, { token } satisfies JsonRequest<typeof UNREGISTER_PUSH_TOKEN, 'post'>),
+  // Anonymous endpoint (see PushNotificationOpenController) — the tap can happen with no
+  // active/valid session, so this deliberately goes through the same get() as everything else
+  // rather than a special unauthenticated client: get() only *adds* the Authorization header
+  // when one is stored, it never requires it.
+  reportOpened: (trackingToken: string) => get<void>(path(PUSH_OPENED, { token: trackingToken })),
 };

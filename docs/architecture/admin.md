@@ -10,7 +10,7 @@ independently deployable service with no shared code.
   fake-oidc test user that has it.
 - **Config**: unlike `app/`, the built image has no runtime-config injection mechanism — its
   config is baked in at Vite build time only (see [`infrastructure.md`](infrastructure.md#containers)).
-- **Features**: `baules`, `dashboard`, `emails`, `users` — operator-facing views over the same
+- **Features**: `baules`, `comms`, `dashboard`, `users` — operator-facing views over the same
   domain model `app/` exposes to end users, plus admin-only actions (e.g. hard-deleting a baúl).
 
 See [`../PRODUCT.md`](../PRODUCT.md) for product principles and domain language,

@@ -5,7 +5,8 @@ namespace ElBaul.Core.Admin;
 // (this project) never references IConfiguration.
 public record AdminDashboardCountsDto(
     int RegisteredUsers, int TotalBaules, int TotalPhotos, int PhotosUploadedToday,
-    int EmailsSentLast30Days, int EmailsOpenedLast30Days);
+    int EmailsSentLast30Days, int EmailsOpenedLast30Days,
+    int PushNotificationsSentLast30Days, int PushNotificationsOpenedLast30Days);
 
 public record AdminUserBaulMembershipDto(string BaulId, string BaulName, string Role, bool IsCustodio, string PersonId);
 public record AdminUserListItemDto(string Id, string Email, string? Name, DateTime CreatedAt, DateTime? LastAccessAt, int BaulCount);
@@ -27,5 +28,9 @@ public record AdminBaulDetailDto(
 public record AdminSentEmailDto(
     string Id, string UserId, string Type, string Subject, string RecipientEmail, string Status,
     DateTime CreatedAt, DateTime? SentAt, DateTime? FirstClickedAt, DateTime? FirstOpenedAt);
+
+public record AdminSentPushNotificationDto(
+    string Id, string UserId, string Type, string Title, string Body, string Status,
+    DateTime CreatedAt, DateTime? SentAt, DateTime? FirstOpenedAt);
 
 public record AdminChatContextDebugDto(string BaulId, string Message, string Context);

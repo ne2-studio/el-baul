@@ -36,7 +36,15 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         var emailsSent = await recentEmails.CountAsync();
         var emailsOpened = await recentEmails.CountAsync(e => e.FirstOpenedAt != null);
 
-        return new AdminDashboardCounts(users, baules, photos, photosToday, emailsSent, emailsOpened);
+        // Same "real, non-test sends only" rule as recentEmails above.
+        var recentPushNotifications = dbContext.SentPushNotifications.Where(n =>
+            n.Status == PushNotificationStatus.Sent &&
+            n.SentAt >= todayUtcStart.AddDays(-30) &&
+            n.Type == PushNotificationType.WeeklySummary);
+        var pushSent = await recentPushNotifications.CountAsync();
+        var pushOpened = await recentPushNotifications.CountAsync(n => n.FirstOpenedAt != null);
+
+        return new AdminDashboardCounts(users, baules, photos, photosToday, emailsSent, emailsOpened, pushSent, pushOpened);
     }
 
     public async Task<IEnumerable<AdminUserRow>> GetAllUsersAsync()

@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { Users, Archive, Image, ImagePlus, MailOpen } from 'lucide-react';
+import { Users, Archive, Image, ImagePlus, MailOpen, BellRing } from 'lucide-react';
 import { useDashboardStore } from '@/store/useDashboardStore';
 import { StatCard } from '@/app/components/StatCard';
 import { ExternalLinksPanel } from '@/app/components/ExternalLinksPanel';
 import { AsyncState } from '@/app/components/AsyncState';
 
-function formatEmailOpenRate(sent: number, opened: number): string {
+function formatOpenRate(sent: number, opened: number): string {
   if (sent === 0) return '—';
   const rate = Math.round((opened / sent) * 1000) / 10;
   return `${rate}% (${opened}/${sent})`;
@@ -31,8 +31,13 @@ export function DashboardRoute() {
             <StatCard label="Fotos subidas hoy" value={kpis.photosUploadedToday} icon={ImagePlus} />
             <StatCard
               label="Tasa de apertura de emails (30d)"
-              value={formatEmailOpenRate(kpis.emailsSentLast30Days, kpis.emailsOpenedLast30Days)}
+              value={formatOpenRate(kpis.emailsSentLast30Days, kpis.emailsOpenedLast30Days)}
               icon={MailOpen}
+            />
+            <StatCard
+              label="Tasa de apertura de push (30d)"
+              value={formatOpenRate(kpis.pushNotificationsSentLast30Days, kpis.pushNotificationsOpenedLast30Days)}
+              icon={BellRing}
             />
           </div>
 
