@@ -223,6 +223,28 @@ avatar, 1 pre-selected) plus the sticky footer's ghost/primary button pair;
 `storybookPhotos.beach` fixture for the sticky photo panel at a fixed 260px height
 (approximating `photoStageHeight()`'s `clamp()`, not modeled exactly).
 
+**Basic component gap-fill** (user request: "add the missing basic design-system
+components") — compared `app/src/design-system/components/**` against the ledger and
+filled the real gaps, skipping full-screen feedback states (`ErrorScreen`,
+`FullScreenLoading`, `AccessDeniedScreen`, `MaintenanceScreen`, `ConnectivityLostScreen`,
+`CrashFallback`, `Toast`, `BatchOperationProgress`, `LoadingSpinner`) as already
+out-of-scope screen-level states, and `ChatBubble`/`dropdown-menu` as feature- or
+Radix-primitive-shaped rather than basic reusable primitives:
+- New `Components > Forms` section: `Input` (default + a separately-named
+  support/multiline example — `Input.tsx` has 7 visually-unrelated variant strings, so
+  only the 2 most generic were built, same "different shells, not one variant axis" call
+  as `RecuerdoCard`/`RecuerdoFeedCard`), `Toggle` (`Checked=true`/`false`), `Select`
+  (single state, no open-dropdown overlay, same "skip open-overlay states" precedent as
+  every dropdown trigger in this file).
+- `Components > Data Display` gained `RoleBadge` (`Tone=default`/`onImage`, the latter
+  shown against a dark backdrop so its white-on-transparent styling is visible in
+  isolation), `CounterBadge`, `NewDot`.
+- `Components > Feedback` gained `Notice` (neutral/destructive).
+- New `Components > Overlays` section: `BottomSheetModal`(`size=sm`) + `ModalActions`,
+  shown as one representative confirm-delete sheet against a flat backdrop-tint context
+  frame rather than an empty shell — `size=sm` has no header/handle slot in code, so
+  there's no meaningful "empty" version to build.
+
 **`PhotoViewerScreen-PortraitMobile` / `PhotoViewerScreen-PortraitDesktop`** model
 `PhotoStage`'s real `object-contain` letterboxing for a portrait photo that doesn't fill
 its (landscape-ish) container: the stage frame's fill is a flat dark-surface color, and
