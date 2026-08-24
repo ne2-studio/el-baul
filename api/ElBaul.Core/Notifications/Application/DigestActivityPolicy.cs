@@ -1,5 +1,7 @@
 using ElBaul.Core.Bauls.Domain;
 using ElBaul.Core.Chapters.Domain;
+using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Bauls.Application;
 using ElBaul.Domain;
@@ -50,7 +52,10 @@ public class DigestActivityPolicy(
     private async Task<BaulDigestActivity> CollectBaulAsync(Baul baul, DateTime since, UserId excludingUserId)
     {
         var newChapters = (await chapterRepository.GetCreatedSinceAsync(baul.Id, since, excludingUserId)).ToList();
-        var recuerdoCount = (await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId)).Count();
+        // Keep the full Recuerdo/Photo entities (not just counts) — both digest channels need
+        // each item's author (UserId/CreatedAt) to attribute a block/line to "who did this"
+        // (see DigestAttributionResolver), not just how many items there were.
+        var newRecuerdos = (await recuerdoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId)).ToList();
         var photos = (await photoRepository.GetCreatedSinceByBaulIdAsync(baul.Id, since, excludingUserId)).ToList();
         var photosByChapter = photos.Where(p => p.ChapterId is not null).GroupBy(p => p.ChapterId!.Value).ToList();
 
@@ -60,15 +65,15 @@ public class DigestActivityPolicy(
 
         var chapterPhotoActivity = photosByChapter
             .Select(group => chaptersById.TryGetValue(group.Key, out var chapter)
-                ? new ChapterPhotoDigestActivity(chapter, group.Count())
+                ? new ChapterPhotoDigestActivity(chapter, group.ToList())
                 : null)
             .Where(activity => activity is not null)
             .Select(activity => activity!)
             .OrderByDescending(activity => activity.Count)
             .ToList();
 
-        var loosePhotoCount = photos.Count(p => p.ChapterId is null);
-        return new BaulDigestActivity(baul, newChapters, recuerdoCount, chapterPhotoActivity, loosePhotoCount);
+        var newLoosePhotos = photos.Where(p => p.ChapterId is null).ToList();
+        return new BaulDigestActivity(baul, newChapters, newRecuerdos, chapterPhotoActivity, newLoosePhotos);
     }
 }
 
@@ -87,12 +92,17 @@ public record DigestActivitySummary(
 public record BaulDigestActivity(
     Baul Baul,
     IReadOnlyList<Chapter> NewChapters,
-    int NewRecuerdoCount,
+    IReadOnlyList<Recuerdo> NewRecuerdos,
     IReadOnlyList<ChapterPhotoDigestActivity> NewPhotosByChapter,
-    int NewLoosePhotoCount)
+    IReadOnlyList<Photo> NewLoosePhotos)
 {
     public bool HasActivity => NewChapters.Count + NewRecuerdoCount + NewPhotoCount > 0;
+    public int NewRecuerdoCount => NewRecuerdos.Count;
+    public int NewLoosePhotoCount => NewLoosePhotos.Count;
     public int NewPhotoCount => NewPhotosByChapter.Sum(activity => activity.Count) + NewLoosePhotoCount;
 }
 
-public record ChapterPhotoDigestActivity(Chapter Chapter, int Count);
+public record ChapterPhotoDigestActivity(Chapter Chapter, IReadOnlyList<Photo> Photos)
+{
+    public int Count => Photos.Count;
+}

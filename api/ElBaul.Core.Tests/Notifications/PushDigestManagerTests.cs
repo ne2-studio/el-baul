@@ -1,6 +1,7 @@
 using ElBaul.Core.Bauls.Domain;
 using ElBaul.Core.Chapters.Domain;
 using ElBaul.Core.Photos.Domain;
+using ElBaul.Core.Personas.Domain;
 using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Users.Domain;
 using ElBaul.Core.Notifications.Domain;
@@ -9,6 +10,7 @@ using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;
@@ -60,12 +62,15 @@ public class PushDigestManagerTests
         NullLogger<PushDigestManager>.Instance,
         _userRepository, _pushTokenRepository, _pushNotificationSender,
         _sentPushNotificationRepository, _pushLinkSigner, new GuidIdGenerator(),
-        CreateDigestActivityPolicy(), _feedCursorRepository,
+        CreateDigestActivityPolicy(), CreateAttributionResolver(), _feedCursorRepository,
         _jobScheduler, appConfiguration, _clock);
 
     private DigestActivityPolicy CreateDigestActivityPolicy() => new(
         new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
         _chapterRepository, _photoRepository, _recuerdoRepository);
+
+    private DigestAttributionResolver CreateAttributionResolver() => new(
+        new AuthorInfoProjector(_personaRepository, _photoRepository, new FakePhotoStorage()));
 
     private User SeedUser(string id, DateTime? lastPushDigestSentAt = null, string email = "user@example.com")
     {
@@ -83,6 +88,10 @@ public class PushDigestManagerTests
 
     private void SeedToken(string userId, string token = "token-1") =>
         _pushTokenRepository.UpsertAsync(new PushToken(Guid.NewGuid(), new UserIdVo(userId), token, "android", _clock.UtcNow())).GetAwaiter().GetResult();
+
+    private void SeedPersona(BaulId baulId, string userId, string nickname) =>
+        _personaRepository.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, new UserIdVo(userId), nickname, BaulRole.Colaborador, _clock.UtcNow())).GetAwaiter().GetResult();
 
     // --- Scheduling ----------------------------------------------------------------
 
@@ -245,6 +254,69 @@ public class PushDigestManagerTests
         Assert.Equal("Hay novedades en tus baúles", message.Title);
         Assert.Contains("2 recuerdos nuevos", message.Body);
         Assert.Null(message.DeepLink);
+    }
+
+    // --- Content: attribution ----------------------------------------------------------
+
+    [Fact]
+    public async Task SendPushDigestAsync_ShouldAttributeBody_ToItsSingleContributor()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedPersona(baul.Id, OtherUserId, "Tita Loli");
+        SeedToken(UserId);
+        var since = _clock.UtcNow().AddDays(-1);
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Dos", _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendPushDigestAsync(new UserIdVo(UserId), since);
+
+        var message = Assert.Single(_pushNotificationSender.SentMessages);
+        Assert.Equal("Tita Loli ha añadido 2 recuerdos nuevos y 1 foto nueva", message.Body);
+    }
+
+    [Fact]
+    public async Task SendPushDigestAsync_ShouldAttributeBody_ToTopContributorAndOthers_AcrossBaules()
+    {
+        const string ThirdUserId = "third-user";
+        SeedUser(UserId);
+        var firstBaul = SeedOwnedBaul(UserId, "Uno");
+        var secondBaul = SeedOwnedBaul(UserId, "Dos");
+        SeedPersona(firstBaul.Id, OtherUserId, "Tita Loli");
+        SeedPersona(secondBaul.Id, OtherUserId, "Tita Loli");
+        SeedPersona(secondBaul.Id, ThirdUserId, "Tío Pepe");
+        SeedToken(UserId);
+        var since = _clock.UtcNow().AddDays(-1);
+        // Tita Loli contributes in both baúles (2 items total); Tío Pepe contributes 1 -> Tita
+        // Loli is named as the top contributor, across baúles.
+        _recuerdoRepository.SeedForBaul(firstBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(firstBaul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(secondBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(secondBaul.Id), new UserIdVo(OtherUserId), "Dos", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(secondBaul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(secondBaul.Id), new UserIdVo(ThirdUserId), "Tres", _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendPushDigestAsync(new UserIdVo(UserId), since);
+
+        var message = Assert.Single(_pushNotificationSender.SentMessages);
+        Assert.Equal("Tita Loli y otros han añadido 3 recuerdos nuevos", message.Body);
+    }
+
+    [Fact]
+    public async Task SendPushDigestAsync_ShouldAttributeBody_ToUsuario_WhenContributorsPersonaCannotBeResolved()
+    {
+        // OtherUserId has no Persona seeded in this baúl -> AuthorInfoProjector's "Usuario"
+        // fallback applies, same as it does for every other authorship display in the app.
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedToken(UserId);
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendPushDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-1));
+
+        var message = Assert.Single(_pushNotificationSender.SentMessages);
+        Assert.Equal("Usuario ha añadido 1 recuerdo nuevo", message.Body);
     }
 
     [Fact]

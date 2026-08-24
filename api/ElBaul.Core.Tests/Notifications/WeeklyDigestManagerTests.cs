@@ -10,6 +10,7 @@ using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Chapters.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
+using ElBaul.Core.Personas.Application;
 using ElBaul.Core.Personas.OutputPorts;
 using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Recuerdos.OutputPorts;
@@ -59,7 +60,7 @@ public class WeeklyDigestManagerTests
 
     private WeeklyDigestManager CreateManager(IAppConfiguration appConfiguration) => new(
         NullLogger<WeeklyDigestManager>.Instance,
-        _userRepository, CreateDigestActivityPolicy(), _sentEmailRepository,
+        _userRepository, CreateDigestActivityPolicy(), CreateAttributionResolver(), _sentEmailRepository,
         _templateRenderer,
         new EmailDeliveryCoordinator(
             _userRepository, _sentEmailRepository, _emailLinkSigner, _emailSender, appConfiguration, _clock,
@@ -69,6 +70,9 @@ public class WeeklyDigestManagerTests
     private DigestActivityPolicy CreateDigestActivityPolicy() => new(
         new BaulAccessService(_baulRepository, _personaRepository, NullLogger<BaulAccessService>.Instance),
         _chapterRepository, _photoRepository, _recuerdoRepository);
+
+    private DigestAttributionResolver CreateAttributionResolver() => new(
+        new AuthorInfoProjector(_personaRepository, _photoRepository, new FakePhotoStorage()));
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
     {
@@ -83,6 +87,10 @@ public class WeeklyDigestManagerTests
         _baulRepository.CreateAsync(baul).GetAwaiter().GetResult();
         return baul;
     }
+
+    private void SeedPersona(BaulId baulId, string userId, string nickname) =>
+        _personaRepository.AddPersonaAsync(new Persona(
+            new PersonaId(Guid.NewGuid()), baulId, new UserIdVo(userId), nickname, BaulRole.Colaborador, _clock.UtcNow())).GetAwaiter().GetResult();
 
     private void SeedSentDigest(string userId, DateTime sentAt, EmailStatus status = EmailStatus.Sent) =>
         _sentEmailRepository.TryReserveAsync(new SentEmail(
@@ -336,6 +344,120 @@ public class WeeklyDigestManagerTests
         var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
         Assert.Equal(3, section.Blocks.Count);
         Assert.NotNull(section.OverflowSummary);
+    }
+
+    // --- Content: attribution ----------------------------------------------------------
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldAttributeNewChapterBlock_ToItsSingleCreator()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedPersona(baul.Id, OtherUserId, "Tita Loli");
+        var since = _clock.UtcNow().AddDays(-7);
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Verano 1998", 0, _clock.UtcNow(), _clock.UtcNow(), OtherUserId));
+        var manager = CreateManager();
+
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
+
+        var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewChapter
+            && b.Label == "Tita Loli creó el capítulo “Verano 1998”");
+    }
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldAttributeRecuerdosBlock_ToItsSingleContributor()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedPersona(baul.Id, OtherUserId, "Tita Loli");
+        var since = _clock.UtcNow().AddDays(-7);
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Dos", _clock.UtcNow()));
+        var manager = CreateManager();
+
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
+
+        var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewRecuerdos
+            && b.Label == "Tita Loli añadió 2 recuerdos nuevos");
+    }
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldAttributeRecuerdosBlock_ToTopContributorAndOthers_WhenMultipleContributed()
+    {
+        const string ThirdUserId = "third-user";
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedPersona(baul.Id, OtherUserId, "Tita Loli");
+        SeedPersona(baul.Id, ThirdUserId, "Tío Pepe");
+        var since = _clock.UtcNow().AddDays(-7);
+        // Tita Loli contributes more items than Tío Pepe -> she's named as the top contributor.
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Dos", _clock.UtcNow()));
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(ThirdUserId), "Tres", _clock.UtcNow()));
+        var manager = CreateManager();
+
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
+
+        var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewRecuerdos
+            && b.Label == "Tita Loli y otros añadieron 3 recuerdos nuevos");
+    }
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldAttributePhotosInChapterBlock_ToItsSingleContributor()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedPersona(baul.Id, OtherUserId, "Tita Loli");
+        var since = _clock.UtcNow().AddDays(-7);
+        var chapter = new Chapter(new ChapterId(Guid.NewGuid()), new BaulId(baul.Id), "Capítulo", 0, since.AddDays(-1), since.AddDays(-1));
+        await _chapterRepository.CreateAsync(chapter);
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapter.Id), new BaulId(baul.Id), "key-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(Guid.NewGuid()), new ChapterId(chapter.Id), new BaulId(baul.Id), "key-2", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
+
+        var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewPhotosInChapter
+            && b.Label == "Tita Loli añadió 2 fotos nuevas en “Capítulo”");
+    }
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldAttributeLoosePhotosBlock_ToItsSingleContributor()
+    {
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        SeedPersona(baul.Id, OtherUserId, "Tita Loli");
+        var since = _clock.UtcNow().AddDays(-7);
+        await _photoRepository.CreateAsync(PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, new BaulId(baul.Id), "loose-1", null, new UserIdVo(OtherUserId), _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
+
+        var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewLoosePhotos
+            && b.Label == "Tita Loli añadió 1 foto nueva sin organizar");
+    }
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldAttributeToUsuario_WhenContributorsPersonaCannotBeResolved()
+    {
+        // OtherUserId has no Persona seeded in this baúl -> AuthorInfoProjector's "Usuario"
+        // fallback applies, same as it does for every other authorship display in the app.
+        SeedUser(UserId);
+        var baul = SeedOwnedBaul(UserId);
+        var since = _clock.UtcNow().AddDays(-7);
+        _recuerdoRepository.SeedForBaul(baul.Id, new Recuerdo(new RecuerdoId(Guid.NewGuid()), null, null, new BaulId(baul.Id), new UserIdVo(OtherUserId), "Uno", _clock.UtcNow()));
+
+        var manager = CreateManager();
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), since);
+
+        var section = Assert.Single(_templateRenderer.LastDigestModel!.Sections);
+        Assert.Contains(section.Blocks, b => b.Kind == DigestBlockKind.NewRecuerdos
+            && b.Label == "Usuario añadió 1 recuerdo nuevo");
     }
 
     // --- Own contributions excluded --------------------------------------------------

@@ -29,6 +29,7 @@ public class PushDigestManager(
     IPushLinkSigner pushLinkSigner,
     IIdGenerator idGenerator,
     DigestActivityPolicy digestActivityPolicy,
+    DigestAttributionResolver attributionResolver,
     IBaulFeedCursorRepository feedCursorRepository,
     IBackgroundJobScheduler backgroundJobScheduler,
     IAppConfiguration appConfiguration,
@@ -154,13 +155,43 @@ public class PushDigestManager(
             parts.Add(activity.TotalChapters == 1 ? "1 capítulo nuevo" : $"{activity.TotalChapters} capítulos nuevos");
 
         var title = activity.ActiveBaules.Count == 1 ? "Hay novedades en tu baúl" : "Hay novedades en tus baúles";
-        var body = JoinSpanishList(parts);
+
+        // Attribution is computed once, across every baúl and block kind in this digest — unlike
+        // the weekly email (per baúl/per block), a push is a single cross-baúl, cross-kind line
+        // (see DigestAttributionResolver's doc comment).
+        var attribution = await attributionResolver.ResolveAsync(BuildAttributionItems(activity.ActiveBaules));
+        var verb = attribution!.HasOtherContributors ? "han añadido" : "ha añadido";
+        var body = $"{AttributionPrefix(attribution)} {verb} {JoinSpanishList(parts)}";
         // Only deep-link straight to the feed when exactly one baúl has news — with several,
         // the app's own "opens in the last used baúl" default is a reasonable landing spot.
         var deepLink = activity.ActiveBaules.Count == 1 ? $"/baules/{activity.ActiveBaules[0].Baul.Id}" : null;
 
         return new PushDigestSummary(title, body, deepLink);
     }
+
+    private static List<DigestAttributionItem> BuildAttributionItems(IReadOnlyList<BaulDigestActivity> activeBaules)
+    {
+        var items = new List<DigestAttributionItem>();
+        foreach (var baulActivity in activeBaules)
+        {
+            var baulId = baulActivity.Baul.Id;
+            items.AddRange(baulActivity.NewChapters.Select(c =>
+                new DigestAttributionItem(baulId, new UserId(c.CreatedByUserId), c.CreatedAt)));
+            items.AddRange(baulActivity.NewRecuerdos.Select(r =>
+                new DigestAttributionItem(baulId, r.UserId, r.CreatedAt)));
+            items.AddRange(baulActivity.NewPhotosByChapter.SelectMany(chapterActivity => chapterActivity.Photos)
+                .Select(p => new DigestAttributionItem(baulId, p.UploadedBy, p.CreatedAt)));
+            items.AddRange(baulActivity.NewLoosePhotos.Select(p =>
+                new DigestAttributionItem(baulId, p.UploadedBy, p.CreatedAt)));
+        }
+
+        return items;
+    }
+
+    // "Tita Loli" when she's the only contributor, "Tita Loli y otros" when others also
+    // contributed — no contributor's name is ever omitted (see GitHub #54).
+    private static string AttributionPrefix(DigestAttribution attribution) =>
+        attribution.HasOtherContributors ? $"{attribution.TopAuthor.Nickname} y otros" : attribution.TopAuthor.Nickname;
 
     private static string JoinSpanishList(IReadOnlyList<string> parts) => parts.Count switch
     {

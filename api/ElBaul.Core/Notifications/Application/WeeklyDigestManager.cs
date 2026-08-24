@@ -13,6 +13,7 @@ public class WeeklyDigestManager(
     ILogger<WeeklyDigestManager> logger,
     IUserRepository userRepository,
     DigestActivityPolicy digestActivityPolicy,
+    DigestAttributionResolver attributionResolver,
     ISentEmailRepository sentEmailRepository,
     IEmailTemplateRenderer templateRenderer,
     EmailDeliveryCoordinator deliveryCoordinator,
@@ -136,7 +137,7 @@ public class WeeklyDigestManager(
         var sections = new List<BaulDigestSection>();
         foreach (var baulActivity in activity.ActiveBaules)
         {
-            var section = BuildBaulSection(baulActivity, publicUrl, linkBuilder);
+            var section = await BuildBaulSection(baulActivity, publicUrl, linkBuilder);
             if (section is not null) sections.Add(section);
         }
 
@@ -153,7 +154,7 @@ public class WeeklyDigestManager(
             linkBuilder.BuildLogoUrl());
     }
 
-    private static BaulDigestSection? BuildBaulSection(
+    private async Task<BaulDigestSection?> BuildBaulSection(
         BaulDigestActivity activity, string publicUrl, TrackedLinkBuilder linkBuilder)
     {
         var baul = activity.Baul;
@@ -162,15 +163,22 @@ public class WeeklyDigestManager(
 
         foreach (var chapter in activity.NewChapters)
         {
+            // Always a single creator per chapter, so no "y otros" case here — just name them.
+            var chapterAuthor = await attributionResolver.ResolveAsync(
+                [new DigestAttributionItem(baul.Id, new UserId(chapter.CreatedByUserId), chapter.CreatedAt)]);
+            var label = $"{chapterAuthor!.TopAuthor.Nickname} creó el capítulo “{chapter.Name}”";
             items.Add(new DigestActivityBlock(
-                DigestBlockKind.NewChapter, $"Nuevo capítulo: “{chapter.Name}”",
+                DigestBlockKind.NewChapter, label,
                 linkBuilder.TrackRedirect(DigestBlockKind.NewChapter.ToString(), publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), 1));
         }
 
         var recuerdoCount = activity.NewRecuerdoCount;
         if (recuerdoCount > 0)
         {
-            var label = recuerdoCount == 1 ? "1 recuerdo nuevo" : $"{recuerdoCount} recuerdos nuevos";
+            var attribution = await attributionResolver.ResolveAsync(
+                activity.NewRecuerdos.Select(r => new DigestAttributionItem(baul.Id, r.UserId, r.CreatedAt)).ToList());
+            var countLabel = recuerdoCount == 1 ? "1 recuerdo nuevo" : $"{recuerdoCount} recuerdos nuevos";
+            var label = $"{AttributionPrefix(attribution!)} {(attribution!.HasOtherContributors ? "añadieron" : "añadió")} {countLabel}";
             items.Add(new DigestActivityBlock(DigestBlockKind.NewRecuerdos, label, baulUrl, recuerdoCount));
         }
 
@@ -178,9 +186,10 @@ public class WeeklyDigestManager(
         {
             var chapter = chapterActivity.Chapter;
             var count = chapterActivity.Count;
-            var label = count == 1
-                ? $"1 foto nueva en “{chapter.Name}”"
-                : $"{count} fotos nuevas en “{chapter.Name}”";
+            var attribution = await attributionResolver.ResolveAsync(
+                chapterActivity.Photos.Select(p => new DigestAttributionItem(baul.Id, p.UploadedBy, p.CreatedAt)).ToList());
+            var countLabel = count == 1 ? "1 foto nueva" : $"{count} fotos nuevas";
+            var label = $"{AttributionPrefix(attribution!)} {(attribution!.HasOtherContributors ? "añadieron" : "añadió")} {countLabel} en “{chapter.Name}”";
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewPhotosInChapter, label,
                 linkBuilder.TrackRedirect(DigestBlockKind.NewPhotosInChapter.ToString(), publicUrl, $"/baules/{baul.Id}/capitulos/{chapter.Id}"), count));
@@ -189,7 +198,10 @@ public class WeeklyDigestManager(
         var looseCount = activity.NewLoosePhotoCount;
         if (looseCount > 0)
         {
-            var label = looseCount == 1 ? "1 foto nueva sin organizar" : $"{looseCount} fotos nuevas sin organizar";
+            var attribution = await attributionResolver.ResolveAsync(
+                activity.NewLoosePhotos.Select(p => new DigestAttributionItem(baul.Id, p.UploadedBy, p.CreatedAt)).ToList());
+            var countLabel = looseCount == 1 ? "1 foto nueva" : $"{looseCount} fotos nuevas";
+            var label = $"{AttributionPrefix(attribution!)} {(attribution!.HasOtherContributors ? "añadieron" : "añadió")} {countLabel} sin organizar";
             items.Add(new DigestActivityBlock(
                 DigestBlockKind.NewLoosePhotos, label,
                 linkBuilder.TrackRedirect(DigestBlockKind.NewLoosePhotos.ToString(), publicUrl, $"/baules/{baul.Id}/fotos-sueltas"), looseCount));
@@ -203,6 +215,11 @@ public class WeeklyDigestManager(
 
         return new BaulDigestSection(baul.Name, baulUrl, shown, BuildOverflowSummary(overflow));
     }
+
+    // "Tita Loli" when she's the only contributor, "Tita Loli y otros" when others also
+    // contributed to this block — no contributor's name is ever omitted (see GitHub #54).
+    private static string AttributionPrefix(DigestAttribution attribution) =>
+        attribution.HasOtherContributors ? $"{attribution.TopAuthor.Nickname} y otros" : attribution.TopAuthor.Nickname;
 
     private static string? BuildOverflowSummary(IReadOnlyList<DigestActivityBlock> overflow)
     {
