@@ -74,7 +74,7 @@ public class PushDigestManagerTests
 
     private User SeedUser(string id, DateTime? lastPushDigestSentAt = null, string email = "user@example.com")
     {
-        var user = new User(new UserIdVo(id), email, "Usuaria", _clock.UtcNow().AddDays(-30), LastPushDigestSentAt: lastPushDigestSentAt);
+        var user = new User(new UserIdVo(id), email, "Usuaria", null, _clock.UtcNow().AddDays(-30), LastPushDigestSentAt: lastPushDigestSentAt);
         _userRepository.Seed(user);
         return user;
     }

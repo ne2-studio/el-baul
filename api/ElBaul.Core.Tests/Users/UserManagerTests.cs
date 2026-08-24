@@ -17,7 +17,7 @@ public class UserManagerTests
     private UserManager CreateManager() => new(_userRepository, new StaticCurrentUserProvider(UserId));
 
     private void SeedUser(bool weeklyDigestEnabled = true) =>
-        _userRepository.Seed(new User(new UserId(UserId), "user@example.com", "Usuaria", DateTime.UtcNow, WeeklyDigestEnabled: weeklyDigestEnabled));
+        _userRepository.Seed(new User(new UserId(UserId), "user@example.com", "Usuaria", null, DateTime.UtcNow, WeeklyDigestEnabled: weeklyDigestEnabled));
 
     [Fact]
     public async Task GetCurrentProfileAsync_ShouldIncludeWeeklyDigestEnabled()

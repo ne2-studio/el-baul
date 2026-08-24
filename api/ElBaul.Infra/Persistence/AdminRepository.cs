@@ -103,7 +103,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         var custodioIds = baules.Select(b => b.CustodioId).Distinct().ToList();
         var custodioNames = await dbContext.Users.AsNoTracking()
             .Where(u => custodioIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.Name ?? u.Email);
+            .ToDictionaryAsync(u => u.Id, u => u.FullName ?? u.Email);
 
         return baules.Select(b => new AdminBaulRow(
             b,
@@ -124,7 +124,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         var linkedUserIds = personas.Where(su => su.IsClaimed).Select(su => su.UserId!.Value).Distinct().ToList();
         var linkedUserNames = await dbContext.Users.AsNoTracking()
             .Where(u => linkedUserIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.Name ?? u.Email);
+            .ToDictionaryAsync(u => u.Id, u => u.FullName ?? u.Email);
 
         var chapters = await dbContext.Chapters.AsNoTracking().Where(a => a.BaulId == baulId).ToListAsync();
 

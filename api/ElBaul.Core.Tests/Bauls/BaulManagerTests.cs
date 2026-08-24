@@ -31,8 +31,8 @@ public class BaulManagerTests
     public BaulManagerTests()
     {
         _baulRepository = new InMemoryBaulRepository(_personaRepository);
-        _userRepository.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", _clock.UtcNow()));
-        _userRepository.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", _clock.UtcNow()));
+        _userRepository.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", null, _clock.UtcNow()));
+        _userRepository.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", null, _clock.UtcNow()));
     }
 
     private BaulManager CreateManager(string currentUserId, Guid? nextId = null) =>

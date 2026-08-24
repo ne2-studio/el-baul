@@ -57,7 +57,7 @@ public class WelcomeEmailManagerTests
 
     private User SeedUser(string id, DateTime createdAt, string email = "user@example.com")
     {
-        var user = new User(new UserIdVo(id), email, "Usuaria", createdAt);
+        var user = new User(new UserIdVo(id), email, "Usuaria", null, createdAt);
         _userRepository.Seed(user);
         return user;
     }
@@ -189,6 +189,18 @@ public class WelcomeEmailManagerTests
         await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
 
         Assert.Contains("Familia Jimena", _templateRenderer.LastModel!.BaulNames);
+    }
+
+    [Fact]
+    public async Task SendWelcomeEmailAsync_ShouldGreetWithFirstNameOnly_NotFullName()
+    {
+        var user = new User(new UserIdVo(UserId), "user@example.com", "Pedro", "Pardal Jimena", _clock.UtcNow().AddHours(-3));
+        _userRepository.Seed(user);
+        var manager = CreateManager();
+
+        await manager.SendWelcomeEmailAsync(new UserIdVo(UserId));
+
+        Assert.Equal("Pedro", _templateRenderer.LastModel!.UserName);
     }
 
     [Fact]

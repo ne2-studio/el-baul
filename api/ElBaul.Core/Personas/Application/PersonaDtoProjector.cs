@@ -53,7 +53,7 @@ public class PersonaDtoProjector(
     // custody isn't a BaulRole value (see BaulRole.cs), so Role always reflects the persona's
     // actual assignable tier and IsCustodio is compared against custodioId separately.
     private static PersonaDto BuildDto(Persona persona, User? user, bool canEdit, string? avatarUrl, UserId custodioId) =>
-        new(persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.Name,
+        new(persona.Id.ToString(), persona.UserId, user?.Email, persona.Name ?? user?.FullName,
             persona.Nickname, persona.Role.ToApiString(), persona.UserId == custodioId, persona.AccessStatus.ToApiString(),
             persona.InvitedDate, persona.BaulId.ToString(), avatarUrl, canEdit, persona.Biografia,
             persona.AvatarPhotoId?.ToString(), persona.AvatarCrop.X, persona.AvatarCrop.Y, persona.AvatarCrop.Scale);

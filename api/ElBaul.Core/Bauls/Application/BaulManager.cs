@@ -62,8 +62,8 @@ public class BaulManager(
         // from Baul.CustodioId (see BaulRole.cs), this only needs to be a sensible value for
         // anywhere Persona rows are listed/edited generically.
         var custodianPersona = new Persona(
-            new PersonaId(idGenerator.NewId()), baul.Id, userId, user?.Name ?? user?.Email ?? "Custodio",
-            BaulRole.Administrador, now, Name: user?.Name);
+            new PersonaId(idGenerator.NewId()), baul.Id, userId, user?.FullName ?? user?.Email ?? "Custodio",
+            BaulRole.Administrador, now, Name: user?.FullName);
 
         // Both writes commit together — a Baul with no Custodio persona (or vice versa) is not
         // a state either half of the app can make sense of.

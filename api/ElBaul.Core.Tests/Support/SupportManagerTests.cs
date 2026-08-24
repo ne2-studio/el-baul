@@ -21,7 +21,7 @@ public class SupportManagerTests
         new(NullLogger<SupportManager>.Instance, _userRepository, _supportBackend, new StaticCurrentUserProvider(UserId));
 
     private void SeedUser() =>
-        _userRepository.Seed(new User(new UserId(UserId), "user@example.com", "Usuaria", DateTime.UtcNow));
+        _userRepository.Seed(new User(new UserId(UserId), "user@example.com", "Usuaria", null, DateTime.UtcNow));
 
     [Fact]
     public async Task SubmitAsync_ShouldSucceed_ForValidCategoryAndMessage()

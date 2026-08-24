@@ -48,14 +48,14 @@ public class UserSyncMiddlewareTests
 
         await _userInfoClient.Received(1).GetUserInfoAsync("the-access-token");
         await _userRepository.Received(1).UpsertAsync(Arg.Is<User>(u =>
-            u.Id == new UserId("user-1") && u.Email == "fetched@test.local" && u.Name == "Fetched Name"));
+            u.Id == new UserId("user-1") && u.Email == "fetched@test.local" && u.Nombre == "Fetched" && u.Apellidos == "Name"));
     }
 
     [Fact]
     public async Task InvokeAsync_ShouldSkipEntirely_WhenUserAlreadyExists_WithAnEmail()
     {
         var context = BuildContext("user-1", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync(new UserId("user-1")).Returns(new User(new UserId("user-1"), "already@test.local", "Already Synced", DateTime.UtcNow));
+        _userRepository.GetByIdAsync(new UserId("user-1")).Returns(new User(new UserId("user-1"), "already@test.local", "Already", "Synced", DateTime.UtcNow));
 
         await InvokeAsync(context);
 
@@ -70,14 +70,14 @@ public class UserSyncMiddlewareTests
         // userinfo call failed, or the row predates this sync flow) — without this,
         // such a user would never get synced since a row already exists for its "sub".
         var context = BuildContext("user-2", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync(new UserId("user-2")).Returns(new User(new UserId("user-2"), "", null, DateTime.UtcNow));
+        _userRepository.GetByIdAsync(new UserId("user-2")).Returns(new User(new UserId("user-2"), "", null, null, DateTime.UtcNow));
         _userInfoClient.GetUserInfoAsync("the-access-token").Returns(new UserInfo("resynced@test.local", "Resynced Name"));
 
         await InvokeAsync(context);
 
         await _userInfoClient.Received(1).GetUserInfoAsync("the-access-token");
         await _userRepository.Received(1).UpsertAsync(Arg.Is<User>(u =>
-            u.Id == new UserId("user-2") && u.Email == "resynced@test.local" && u.Name == "Resynced Name"));
+            u.Id == new UserId("user-2") && u.Email == "resynced@test.local" && u.Nombre == "Resynced" && u.Apellidos == "Name"));
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class UserSyncMiddlewareTests
     public async Task InvokeAsync_ShouldUpdateLastAccessAt_WhenNeverSetBefore()
     {
         var context = BuildContext("user-5", bearerToken: "the-access-token");
-        _userRepository.GetByIdAsync(new UserId("user-5")).Returns(new User(new UserId("user-5"), "already@test.local", "Already Synced", DateTime.UtcNow, LastAccessAt: null));
+        _userRepository.GetByIdAsync(new UserId("user-5")).Returns(new User(new UserId("user-5"), "already@test.local", "Already", "Synced", DateTime.UtcNow, LastAccessAt: null));
 
         await InvokeAsync(context);
 
@@ -120,7 +120,7 @@ public class UserSyncMiddlewareTests
     {
         var context = BuildContext("user-6", bearerToken: "the-access-token");
         var recentAccess = _clock.UtcNow().AddMinutes(-5);
-        _userRepository.GetByIdAsync(new UserId("user-6")).Returns(new User(new UserId("user-6"), "already@test.local", "Already Synced", DateTime.UtcNow, recentAccess));
+        _userRepository.GetByIdAsync(new UserId("user-6")).Returns(new User(new UserId("user-6"), "already@test.local", "Already", "Synced", DateTime.UtcNow, recentAccess));
 
         await InvokeAsync(context);
 
@@ -132,7 +132,7 @@ public class UserSyncMiddlewareTests
     {
         var context = BuildContext("user-7", bearerToken: "the-access-token");
         var staleAccess = _clock.UtcNow().AddMinutes(-20);
-        _userRepository.GetByIdAsync(new UserId("user-7")).Returns(new User(new UserId("user-7"), "already@test.local", "Already Synced", DateTime.UtcNow, staleAccess));
+        _userRepository.GetByIdAsync(new UserId("user-7")).Returns(new User(new UserId("user-7"), "already@test.local", "Already", "Synced", DateTime.UtcNow, staleAccess));
 
         await InvokeAsync(context);
 

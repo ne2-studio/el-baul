@@ -25,8 +25,8 @@ public class PersonaManagerTests
 
     public PersonaManagerTests()
     {
-        _fixture.Users.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", _fixture.Clock.UtcNow()));
-        _fixture.Users.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", _fixture.Clock.UtcNow()));
+        _fixture.Users.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", null, _fixture.Clock.UtcNow()));
+        _fixture.Users.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", null, _fixture.Clock.UtcNow()));
     }
 
     private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>

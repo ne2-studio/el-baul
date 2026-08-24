@@ -79,13 +79,13 @@ public class UserBaulActivityDailyAggregatorTests(PostgresFixture fixture) : Per
 
     private static async Task<BaulId> SeedBaulAsync(ElBaulDbContext dbContext)
     {
-        var custodio = new User(new UserId("custodio"), "custodio@example.com", "Custodio", DateTime.UtcNow);
+        var custodio = new User(new UserId("custodio"), "custodio@example.com", "Custodio", null, DateTime.UtcNow);
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Baul", null, custodio.Id, 0, DateTime.UtcNow, DateTime.UtcNow);
         dbContext.Users.AddRange(
             custodio,
-            new User(new UserId("contributor"), "contributor@example.com", "Contributor", DateTime.UtcNow),
-            new User(new UserId("reader"), "reader@example.com", "Reader", DateTime.UtcNow),
-            new User(new UserId("timezone-user"), "timezone@example.com", "Timezone", DateTime.UtcNow));
+            new User(new UserId("contributor"), "contributor@example.com", "Contributor", null, DateTime.UtcNow),
+            new User(new UserId("reader"), "reader@example.com", "Reader", null, DateTime.UtcNow),
+            new User(new UserId("timezone-user"), "timezone@example.com", "Timezone", null, DateTime.UtcNow));
         dbContext.Baules.Add(baul);
         await dbContext.SaveChangesAsync();
         return baul.Id;

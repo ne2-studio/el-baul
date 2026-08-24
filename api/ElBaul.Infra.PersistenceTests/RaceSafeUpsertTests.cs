@@ -34,16 +34,16 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
 
         var originalCreatedAt = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var userId = new UserId("race-user-1");
-        await users.UpsertAsync(new User(userId, "first@example.com", "Primer nombre", originalCreatedAt));
+        await users.UpsertAsync(new User(userId, "first@example.com", "Primer nombre", null, originalCreatedAt));
 
         // Simulates a second, concurrent UserSyncMiddleware call landing after the first —
         // same Id, different profile data and (deliberately wrong) CreatedAt.
-        await users.UpsertAsync(new User(userId, "second@example.com", "Segundo nombre", DateTime.UtcNow, LastAccessAt: DateTime.UtcNow));
+        await users.UpsertAsync(new User(userId, "second@example.com", "Segundo nombre", null, DateTime.UtcNow, LastAccessAt: DateTime.UtcNow));
 
         var stored = await users.GetByIdAsync(userId);
         stored.Should().NotBeNull();
         stored.Email.Should().Be("second@example.com", "ON CONFLICT DO UPDATE applies the second call's data");
-        stored.Name.Should().Be("Segundo nombre");
+        stored.Nombre.Should().Be("Segundo nombre");
         stored.CreatedAt.Should().Be(originalCreatedAt, "CreatedAt is excluded from the DO UPDATE SET list on purpose");
     }
 
@@ -57,7 +57,7 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         {
             await using var dbContext = Fixture.CreateDbContext();
             var users = new UserRepository(dbContext);
-            await users.UpsertAsync(new User(userId, "parallel-sync@example.com", $"Nombre {i}", createdAt.AddSeconds(i)));
+            await users.UpsertAsync(new User(userId, "parallel-sync@example.com", $"Nombre {i}", null, createdAt.AddSeconds(i)));
         });
 
         await FluentActions.Awaiting(() => Task.WhenAll(writes)).Should().NotThrowAsync(
@@ -76,7 +76,7 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         var baules = new BaulRepository(dbContext);
         var links = new BaulInviteLinkRepository(dbContext);
 
-        var custodio = new User(new UserId("race-custodio"), "custodio@example.com", "Custodio", DateTime.UtcNow);
+        var custodio = new User(new UserId("race-custodio"), "custodio@example.com", "Custodio", null, DateTime.UtcNow);
         await users.UpsertAsync(custodio);
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Baúl con carrera de invite link", Description: null,
             custodio.Id, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
@@ -111,7 +111,7 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         var baules = new BaulRepository(dbContext);
         var links = new BaulInviteLinkRepository(dbContext);
 
-        var custodio = new User(new UserId("race-custodio-2"), "custodio2@example.com", "Custodio", DateTime.UtcNow);
+        var custodio = new User(new UserId("race-custodio-2"), "custodio2@example.com", "Custodio", null, DateTime.UtcNow);
         await users.UpsertAsync(custodio);
         var baulA = new Baul(new BaulId(Guid.NewGuid()), "Baúl A", Description: null, custodio.Id, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
         var baulB = new Baul(new BaulId(Guid.NewGuid()), "Baúl B", Description: null, custodio.Id, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
@@ -135,7 +135,7 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         var sentEmails = new SentEmailRepository(dbContext);
         var clicks = new EmailLinkClickRepository(dbContext);
 
-        var user = new User(new UserId("race-email-user"), "user@example.com", "Usuario", DateTime.UtcNow);
+        var user = new User(new UserId("race-email-user"), "user@example.com", "Usuario", null, DateTime.UtcNow);
         await users.UpsertAsync(user);
         var sentEmail = new SentEmail(Guid.NewGuid(), user.Id, EmailType.Welcome, "Asunto", user.Email,
             "v1", "es", EmailStatus.Sent, "dedup-key-race", DateTime.UtcNow);
@@ -165,7 +165,7 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         var users = new UserRepository(dbContext);
         var sentEmails = new SentEmailRepository(dbContext);
 
-        var user = new User(new UserId("race-reserve-user"), "reserve@example.com", "Usuario", DateTime.UtcNow);
+        var user = new User(new UserId("race-reserve-user"), "reserve@example.com", "Usuario", null, DateTime.UtcNow);
         await users.UpsertAsync(user);
 
         var winner = new SentEmail(Guid.NewGuid(), user.Id, EmailType.Welcome, "Asunto", user.Email,

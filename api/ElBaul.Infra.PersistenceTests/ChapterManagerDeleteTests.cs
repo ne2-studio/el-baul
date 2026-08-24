@@ -48,7 +48,7 @@ public class ChapterManagerDeleteTests(PostgresFixture fixture) : PersistenceTes
         var personas = new PersonaRepository(dbContext);
 
         var custodioId = "custodio-chapter-delete";
-        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-chapter-delete@example.com", "Custodio", DateTime.UtcNow));
+        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-chapter-delete@example.com", "Custodio", null, DateTime.UtcNow));
 
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Baúl con capítulo a borrar", Description: null,
             new UserId(custodioId), ChapterCount: 1, DateTime.UtcNow, DateTime.UtcNow);

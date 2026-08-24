@@ -109,7 +109,7 @@ public class WelcomeEmailManager(
         var videoUrl = linkBuilder.Track("onboarding-video", appConfiguration.OnboardingVideoUrl);
 
         return new WelcomeEmailModel(
-            user.Name ?? user.Email,
+            user.Nombre ?? user.Email,
             baules.Select(b => b.Name).ToList(),
             hasBaules,
             ctaUrl,

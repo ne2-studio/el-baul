@@ -148,7 +148,7 @@ public class WeeklyDigestManager(
         var notificationSettingsUrl = linkBuilder.TrackRedirect("notification-settings", publicUrl, "/configuracion/notificaciones");
 
         return new WeeklyDigestEmailModel(
-            user.Name ?? user.Email, activity.HasBaules, activity.HasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
+            user.Nombre ?? user.Email, activity.HasBaules, activity.HasActivity, sections, ctaUrl, ctaLabel, notificationSettingsUrl,
             EmailFooterLinksFactory.BuildTracked(publicUrl, appConfiguration, clock, linkBuilder),
             linkBuilder.BuildOpenPixelUrl(),
             linkBuilder.BuildLogoUrl());

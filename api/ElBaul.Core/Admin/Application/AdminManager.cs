@@ -61,7 +61,7 @@ public class AdminManager(
             new AdminUserBaulMembershipDto(b.BaulId.ToString(), b.BaulName, b.Role.ToApiString(), b.IsCustodio, b.PersonId.ToString()));
         var hasPushToken = (await pushTokenRepository.GetTokensForUserAsync(userId)).Any();
 
-        return new AdminUserDetailDto(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, baules, hasPushToken);
+        return new AdminUserDetailDto(row.User.Id, row.User.Email, row.User.FullName, row.User.CreatedAt, row.User.LastAccessAt, baules, hasPushToken);
     }
 
     public async Task<Result<IEnumerable<AdminBaulListItemDto>>> GetAllBaulesAsync()
@@ -187,7 +187,7 @@ public class AdminManager(
             notification.Status.ToString(), notification.CreatedAt, notification.SentAt, notification.FirstOpenedAt);
 
     private static AdminUserListItemDto ToDto(AdminUserRow row) =>
-        new(row.User.Id, row.User.Email, row.User.Name, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);
+        new(row.User.Id, row.User.Email, row.User.FullName, row.User.CreatedAt, row.User.LastAccessAt, row.BaulCount);
 
     private static AdminBaulListItemDto ToDto(AdminBaulRow row) =>
         new(row.Baul.Id.ToString(), row.Baul.Name, row.CustodioName, row.MemberCount, row.LinkedUserCount, row.PhotoCount, row.ChapterCount, row.Baul.CreatedAt);

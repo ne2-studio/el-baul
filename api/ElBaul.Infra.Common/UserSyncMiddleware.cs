@@ -45,7 +45,8 @@ public class UserSyncMiddleware(RequestDelegate next)
                     var userInfo = await userInfoClient.GetUserInfoAsync(accessToken);
                     if (userInfo is not null)
                     {
-                        await userRepository.UpsertAsync(new User(userId.Value, userInfo.Email, userInfo.Name, clock.UtcNow()));
+                        var (nombre, apellidos) = PersonNameNormalizer.Split(userInfo.Name);
+                        await userRepository.UpsertAsync(new User(userId.Value, userInfo.Email, nombre, apellidos, clock.UtcNow()));
                     }
                     else
                     {

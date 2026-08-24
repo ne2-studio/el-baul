@@ -25,7 +25,7 @@ public class PhotoContentHashConstraintTests(PostgresFixture fixture) : Persiste
     {
         var users = new UserRepository(dbContext);
         var baules = new BaulRepository(dbContext);
-        var custodio = new User(new UserId(custodioId), $"{custodioId}@example.com", "Custodio", DateTime.UtcNow);
+        var custodio = new User(new UserId(custodioId), $"{custodioId}@example.com", "Custodio", null, DateTime.UtcNow);
         await users.UpsertAsync(custodio);
         var baulId = new BaulId(Guid.NewGuid());
         await baules.CreateAsync(new Baul(baulId, "Baúl de prueba", null, custodio.Id, 0, DateTime.UtcNow, DateTime.UtcNow));

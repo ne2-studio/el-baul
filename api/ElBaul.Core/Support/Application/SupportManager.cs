@@ -31,7 +31,7 @@ public class SupportManager(
             "Support request received {Category} {UserEmail} {TechnicalInfo} {Message}",
             category, user.Email, technicalInfo, message);
 
-        var submission = new SupportSubmission(category, message, technicalInfo, userId, user.Email, user.Name);
+        var submission = new SupportSubmission(category, message, technicalInfo, userId, user.Email, user.FullName);
         return await supportBackend.SubmitAsync(submission);
     }
 }

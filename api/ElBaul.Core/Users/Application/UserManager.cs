@@ -38,5 +38,5 @@ public class UserManager(
     }
 
     private static UserProfileDto ToDto(User user) =>
-        new(user.Id, user.Email, user.Name, user.CreatedAt, user.WeeklyDigestEnabled, user.HasSeenOnboarding);
+        new(user.Id, user.Email, user.FullName, user.CreatedAt, user.WeeklyDigestEnabled, user.HasSeenOnboarding);
 }

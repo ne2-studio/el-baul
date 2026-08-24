@@ -20,9 +20,9 @@ public class NotificationPreferencesDailyAggregatorTests(PostgresFixture fixture
         var pushTokens = new PushTokenRepository(dbContext);
         var date = new DateOnly(2026, 8, 22);
 
-        await users.UpsertAsync(new User(new UserId("digest-on-1"), "on1@example.com", "On 1", DateTime.UtcNow, WeeklyDigestEnabled: true));
-        await users.UpsertAsync(new User(new UserId("digest-on-2"), "on2@example.com", "On 2", DateTime.UtcNow, WeeklyDigestEnabled: true));
-        await users.UpsertAsync(new User(new UserId("digest-off"), "off@example.com", "Off", DateTime.UtcNow, WeeklyDigestEnabled: false));
+        await users.UpsertAsync(new User(new UserId("digest-on-1"), "on1@example.com", "On 1", null, DateTime.UtcNow, WeeklyDigestEnabled: true));
+        await users.UpsertAsync(new User(new UserId("digest-on-2"), "on2@example.com", "On 2", null, DateTime.UtcNow, WeeklyDigestEnabled: true));
+        await users.UpsertAsync(new User(new UserId("digest-off"), "off@example.com", "Off", null, DateTime.UtcNow, WeeklyDigestEnabled: false));
 
         // Two tokens for the same user must count once, not twice.
         await pushTokens.UpsertAsync(new PushToken(Guid.NewGuid(), new UserId("digest-on-1"), "token-a", "ios", DateTime.UtcNow));

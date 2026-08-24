@@ -219,7 +219,7 @@ public class BaulInviteLinkManager(
                 return Result.Failure<PersonaDto>(ApplicationError.Validation("This persona can no longer be claimed"));
             }
 
-            var claimed = target.AcceptInvite(userId, user?.Name);
+            var claimed = target.AcceptInvite(userId, user?.FullName);
             await personaRepository.UpdatePersonaAsync(claimed);
             logger.LogInformation("Global invite accepted, existing persona claimed {BaulId} {PersonaId}", link.BaulId, claimed.Id);
 
@@ -227,8 +227,8 @@ public class BaulInviteLinkManager(
         }
 
         var persona = new Persona(
-            new PersonaId(idGenerator.NewId()), link.BaulId, userId, user?.Name ?? user?.Email ?? "Nuevo miembro",
-            BaulRole.Colaborador, clock.UtcNow(), Name: user?.Name);
+            new PersonaId(idGenerator.NewId()), link.BaulId, userId, user?.FullName ?? user?.Email ?? "Nuevo miembro",
+            BaulRole.Colaborador, clock.UtcNow(), Name: user?.FullName);
         await personaRepository.AddPersonaAsync(persona);
         logger.LogInformation("Global invite accepted, persona auto-created {BaulId} {PersonaId}", link.BaulId, persona.Id);
 

@@ -38,8 +38,8 @@ public class BaulInviteLinkManagerTests
     public BaulInviteLinkManagerTests()
     {
         _baules = new InMemoryBaulRepository(_personas);
-        _users.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", Now));
-        _users.Seed(new User(new UserId(GuestId), "guest@test.com", "Invitado", Now));
+        _users.Seed(new User(new UserId(CustodioId), "custodio@test.com", "Custodio", null, Now));
+        _users.Seed(new User(new UserId(GuestId), "guest@test.com", "Invitado", null, Now));
     }
 
     private async Task<BaulId> SeedBaulAsync()
@@ -206,7 +206,7 @@ public class BaulInviteLinkManagerTests
             new PersonaId(Guid.NewGuid()), baulId, new UserId(GuestId), "Invitado", BaulRole.Colaborador, Now,
             AvatarPhotoId: firstAvatarPhoto.Id));
         const string secondGuestId = "guest-2";
-        _users.Seed(new User(new UserId(secondGuestId), "guest2@test.com", "Segundo invitado", Now));
+        _users.Seed(new User(new UserId(secondGuestId), "guest2@test.com", "Segundo invitado", null, Now));
         var secondAvatarPhoto = PhotoMother.Create(new PhotoId(Guid.NewGuid()), null, baulId, "second-avatar-key", null, new UserId(CustodioId), Now);
         await _photos.CreateAsync(secondAvatarPhoto);
         await _personas.AddPersonaAsync(new Persona(

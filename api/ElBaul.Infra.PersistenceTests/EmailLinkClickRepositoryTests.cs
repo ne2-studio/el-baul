@@ -26,7 +26,7 @@ public class EmailLinkClickRepositoryTests(PostgresFixture fixture) : Persistenc
         var sentEmails = new SentEmailRepository(dbContext);
         var clicks = new EmailLinkClickRepository(dbContext);
 
-        var user = new User(new UserId("email-link-length-user"), "user@example.com", "Usuario", DateTime.UtcNow);
+        var user = new User(new UserId("email-link-length-user"), "user@example.com", "Usuario", null, DateTime.UtcNow);
         await users.UpsertAsync(user);
         var sentEmail = new SentEmail(Guid.NewGuid(), user.Id, EmailType.WeeklyDigest, "Asunto", user.Email,
             "v1", "es", EmailStatus.Sent, "dedup-key-link-length", DateTime.UtcNow);

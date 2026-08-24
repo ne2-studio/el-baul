@@ -102,7 +102,7 @@ public class ListReadModelContractTests(PostgresFixture fixture) : PersistenceTe
 
         public async Task AddBaulAsync(Baul baul)
         {
-            await _users.UpsertAsync(new User(baul.CustodioId, $"{baul.CustodioId.Value}@example.com", baul.CustodioId.Value, baul.CreatedAt));
+            await _users.UpsertAsync(new User(baul.CustodioId, $"{baul.CustodioId.Value}@example.com", baul.CustodioId.Value, null, baul.CreatedAt));
             await _baules.CreateAsync(baul);
         }
         public Task AddChapterAsync(Chapter chapter) => _chapters.CreateAsync(chapter);

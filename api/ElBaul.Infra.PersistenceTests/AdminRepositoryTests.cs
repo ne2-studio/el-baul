@@ -144,7 +144,7 @@ public class AdminRepositoryTests(PostgresFixture fixture) : PersistenceTestBase
             "unlike PhotoCount, TotalSizeBytes counts the deleted photo too — its file is still in storage");
     }
 
-    private static User NewUser(string id) => new(new UserId(id), $"{id}@example.com", id, DateTime.UtcNow);
+    private static User NewUser(string id) => new(new UserId(id), $"{id}@example.com", id, null, DateTime.UtcNow);
 
     private static Baul NewBaul(string custodioId, string name, int chapterCount = 0) =>
         new(new BaulId(Guid.NewGuid()), name, Description: null, new UserId(custodioId), ChapterCount: chapterCount, DateTime.UtcNow, DateTime.UtcNow);

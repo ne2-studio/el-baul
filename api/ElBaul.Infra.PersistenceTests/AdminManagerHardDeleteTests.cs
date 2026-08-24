@@ -80,7 +80,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             NullLogger<AdminManager>.Instance);
 
         var custodioId = "custodio-hard-delete";
-        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-hard-delete@example.com", "Custodio", DateTime.UtcNow));
+        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-hard-delete@example.com", "Custodio", null, DateTime.UtcNow));
 
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Baúl a borrar por completo", Description: null,
             new UserId(custodioId), ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
@@ -182,7 +182,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             NullLogger<AdminManager>.Instance);
 
         var custodioId = "custodio-hard-delete-rollback";
-        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-rollback@example.com", "Custodio", DateTime.UtcNow));
+        await users.UpsertAsync(new User(new UserId(custodioId), "custodio-rollback@example.com", "Custodio", null, DateTime.UtcNow));
 
         var baul = new Baul(new BaulId(Guid.NewGuid()), "Baúl cuyo borrado falla a mitad", Description: null,
             new UserId(custodioId), ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);

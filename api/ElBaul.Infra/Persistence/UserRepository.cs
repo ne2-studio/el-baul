@@ -67,20 +67,22 @@ public class UserRepository(ElBaulDbContext dbContext) : IUserRepository
             // conflict the row's original creation time survives untouched, matching the
             // previous `existing with { CreatedAt = existing.CreatedAt }` behavior.
             """
-            INSERT INTO "Users" ("Id", "Email", "Name", "CreatedAt", "LastAccessAt", "WeeklyDigestEnabled", "HasSeenOnboarding", "LastPushDigestSentAt")
-            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})
+            INSERT INTO "Users" ("Id", "Email", "Nombre", "Apellidos", "CreatedAt", "LastAccessAt", "WeeklyDigestEnabled", "HasSeenOnboarding", "LastPushDigestSentAt")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8})
             ON CONFLICT ("Id") DO UPDATE SET
                 "Email" = EXCLUDED."Email",
-                "Name" = EXCLUDED."Name",
+                "Nombre" = EXCLUDED."Nombre",
+                "Apellidos" = EXCLUDED."Apellidos",
                 "LastAccessAt" = EXCLUDED."LastAccessAt",
                 "WeeklyDigestEnabled" = EXCLUDED."WeeklyDigestEnabled",
                 "HasSeenOnboarding" = EXCLUDED."HasSeenOnboarding",
                 "LastPushDigestSentAt" = EXCLUDED."LastPushDigestSentAt"
             """,
-            // Null-forgiving below: Name/LastAccessAt/LastPushDigestSentAt are legitimately
-            // nullable columns — Npgsql binds a null object as SQL NULL correctly, this is only
-            // silencing the analyzer's blanket non-null expectation for `params object[]`.
-            user.Id.Value, user.Email, user.Name!, user.CreatedAt, user.LastAccessAt!,
+            // Null-forgiving below: Nombre/Apellidos/LastAccessAt/LastPushDigestSentAt are
+            // legitimately nullable columns — Npgsql binds a null object as SQL NULL correctly,
+            // this is only silencing the analyzer's blanket non-null expectation for
+            // `params object[]`.
+            user.Id.Value, user.Email, user.Nombre!, user.Apellidos!, user.CreatedAt, user.LastAccessAt!,
             user.WeeklyDigestEnabled, user.HasSeenOnboarding, user.LastPushDigestSentAt!);
 
         await transaction.CommitAsync();

@@ -89,7 +89,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetAllUsersAsync_ShouldMapEachRow()
     {
-        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow(), _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test", "User", _clock.UtcNow(), _clock.UtcNow());
         _adminRepository.Users.Add(new AdminUserRow(user, BaulCount: 2));
 
         var result = await CreateManager().GetAllUsersAsync();
@@ -112,7 +112,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetUserDetailAsync_ShouldMapBaulesWithPersonIdAndRole()
     {
-        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test", "User", _clock.UtcNow());
         var baulId = Guid.NewGuid();
         var personId = Guid.NewGuid();
         _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(
@@ -132,7 +132,7 @@ public class AdminManagerTests
     [Fact]
     public async Task GetUserDetailAsync_ShouldReportHasPushToken_WhenUserHasARegisteredDevice()
     {
-        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test", "User", _clock.UtcNow());
         _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(user, []);
         await _pushTokenRepository.UpsertAsync(new PushToken(Guid.NewGuid(), new UserId("user-1"), "fcm-token", "android", _clock.UtcNow()));
 
@@ -198,7 +198,7 @@ public class AdminManagerTests
     [Fact]
     public async Task DebugChatContextAsync_ShouldBuildContext_WhenUserBelongsToBaul()
     {
-        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test", "User", _clock.UtcNow());
         var baulId = new BaulId(Guid.NewGuid());
         var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 0, _clock.UtcNow(), _clock.UtcNow());
         await _baulRepository.CreateAsync(baul);
@@ -219,7 +219,7 @@ public class AdminManagerTests
     [Fact]
     public async Task DebugChatContextAsync_ShouldFail_WhenBaulDoesNotBelongToUser()
     {
-        var user = new User(new UserId("user-1"), "user@test.local", "Test User", _clock.UtcNow());
+        var user = new User(new UserId("user-1"), "user@test.local", "Test", "User", _clock.UtcNow());
         _adminRepository.UserDetails[new UserId("user-1")] = new AdminUserDetailRow(user, []);
 
         var result = await CreateManager().DebugChatContextAsync(new UserId("user-1"), new BaulId(Guid.NewGuid()), "mensaje");

@@ -76,7 +76,7 @@ public class WeeklyDigestManagerTests
 
     private User SeedUser(string id, bool digestEnabled = true, string email = "user@example.com")
     {
-        var user = new User(new UserIdVo(id), email, "Usuaria", _clock.UtcNow().AddDays(-30), WeeklyDigestEnabled: digestEnabled);
+        var user = new User(new UserIdVo(id), email, "Usuaria", null, _clock.UtcNow().AddDays(-30), WeeklyDigestEnabled: digestEnabled);
         _userRepository.Seed(user);
         return user;
     }
@@ -211,6 +211,18 @@ public class WeeklyDigestManagerTests
         Assert.False(_templateRenderer.LastDigestModel!.HasBaules);
         Assert.False(_templateRenderer.LastDigestModel.HasActivity);
         Assert.Equal("Crear mi primer baúl", _templateRenderer.LastDigestModel.PrimaryCtaLabel);
+    }
+
+    [Fact]
+    public async Task SendWeeklyDigestAsync_ShouldGreetWithFirstNameOnly_NotFullName()
+    {
+        var user = new User(new UserIdVo(UserId), "user@example.com", "Pedro", "Pardal Jimena", _clock.UtcNow().AddDays(-30));
+        _userRepository.Seed(user);
+        var manager = CreateManager();
+
+        await manager.SendWeeklyDigestAsync(new UserIdVo(UserId), _clock.UtcNow().AddDays(-7));
+
+        Assert.Equal("Pedro", _templateRenderer.LastDigestModel!.UserName);
     }
 
     [Fact]
