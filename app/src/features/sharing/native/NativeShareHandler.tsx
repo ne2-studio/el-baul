@@ -7,9 +7,14 @@ import { ShareReceiver, type IncomingShare } from '@/features/sharing/native/sha
 import { useUIStore } from '@/store/uiStore';
 import { loadShare } from '@/features/sharing/useCases';
 
-// Mounted once inside <BrowserRouter> (needs useNavigate). While the user isn't
-// authenticated it deliberately does nothing — the native plugin keeps the pending
-// share in memory, so this picks it up as soon as auth.isAuthenticated flips to true.
+// Mounted once inside <BrowserRouter> (needs useNavigate). Only handles a share arriving while
+// the app is already running (the 'shareReceived' event) — a share already pending at launch is
+// instead picked up by AuthGuards.tsx's usePendingShareGate (see pendingShareGate.ts), ahead of
+// PublicRoute/ProtectedRoute committing to their normal redirect target. That used to be this
+// component's job too (an on-mount getPendingShare() poll, gated the same way on
+// auth.isAuthenticated), but running it here raced PublicRoute's synchronous authenticated
+// redirect on an Android share-sheet cold start and reliably lost: the default baúl flashed
+// before this component's async check caught up and navigated to /compartir.
 export function NativeShareHandler() {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -40,17 +45,6 @@ export function NativeShareHandler() {
         void openShare(share);
       }
     });
-
-    if (auth.isAuthenticated) {
-      void ShareReceiver.getPendingShare()
-        .then(({ share }) => {
-          if (share) void openShare(share);
-        })
-        .catch((error) => {
-          Sentry.captureException(error);
-          if (!disposed) showToastMessage('No se pudo comprobar si había una foto compartida pendiente', 'error');
-        });
-    }
 
     return () => {
       disposed = true;

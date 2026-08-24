@@ -86,46 +86,29 @@ describe('NativeShareHandler', () => {
     expect(useUIStore.getState().showToast).toBe(false);
   });
 
-  it('loads a pending share and navigates to /compartir when authenticated', async () => {
-    vi.mocked(ShareReceiver.getPendingShare).mockResolvedValue({ share: pendingShare });
+  it('loads a share and navigates to /compartir when a shareReceived event fires while authenticated', async () => {
+    let shareReceivedCallback: ((share: IncomingShare) => void) | undefined;
+    vi.mocked(ShareReceiver.addListener).mockImplementation((_event, callback) => {
+      shareReceivedCallback = callback;
+      return Promise.resolve({ remove: vi.fn() });
+    });
 
     renderHandler();
+    await waitFor(() => expect(shareReceivedCallback).toBeDefined());
+
+    act(() => shareReceivedCallback!(pendingShare));
 
     await waitFor(() => expect(loadShare).toHaveBeenCalledWith(pendingShare));
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/compartir'));
   });
 
-  it('does not check for a pending share while unauthenticated', async () => {
-    vi.mocked(useAuth).mockReturnValue({ isAuthenticated: false } as ReturnType<typeof useAuth>);
-
+  it('does not poll for a pending share on mount — that is AuthGuards.tsx/pendingShareGate.ts\'s job now', async () => {
     renderHandler();
 
     await act(async () => {
       await Promise.resolve();
     });
     expect(ShareReceiver.getPendingShare).not.toHaveBeenCalled();
-  });
-
-  it('picks up an already-pending share once auth flips from false to true', async () => {
-    vi.mocked(useAuth).mockReturnValue({ isAuthenticated: false } as ReturnType<typeof useAuth>);
-    vi.mocked(ShareReceiver.getPendingShare).mockResolvedValue({ share: pendingShare });
-
-    const { rerender } = renderHandler();
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(ShareReceiver.getPendingShare).not.toHaveBeenCalled();
-
-    vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
-    rerender(
-      <MemoryRouter initialEntries={['/']}>
-        <NativeShareHandler />
-        <LocationDisplay />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => expect(ShareReceiver.getPendingShare).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/compartir'));
   });
 
   it('ignores a shareReceived event fired while unauthenticated', async () => {
@@ -147,33 +130,46 @@ describe('NativeShareHandler', () => {
     expect(loadShare).not.toHaveBeenCalled();
   });
 
-  it('does not navigate if the component unmounts before getPendingShare resolves', async () => {
-    let resolveShare!: (value: { share?: IncomingShare }) => void;
-    vi.mocked(ShareReceiver.getPendingShare).mockReturnValue(
+  it('does not navigate if the component unmounts before loadShare resolves', async () => {
+    let shareReceivedCallback: ((share: IncomingShare) => void) | undefined;
+    vi.mocked(ShareReceiver.addListener).mockImplementation((_event, callback) => {
+      shareReceivedCallback = callback;
+      return Promise.resolve({ remove: vi.fn() });
+    });
+    let resolveLoadShare!: () => void;
+    vi.mocked(loadShare).mockReturnValue(
       new Promise((resolve) => {
-        resolveShare = resolve;
+        resolveLoadShare = () => resolve(undefined);
       })
     );
 
     const { unmount } = renderHandler();
+    await waitFor(() => expect(shareReceivedCallback).toBeDefined());
+    act(() => shareReceivedCallback!(pendingShare));
     unmount();
 
     await act(async () => {
-      resolveShare({ share: pendingShare });
+      resolveLoadShare();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    // The `disposed` flag set on cleanup must stop openShare from proceeding — otherwise
-    // this would call loadShare and navigate() on an already-unmounted screen.
-    expect(loadShare).not.toHaveBeenCalled();
+    // The `disposed` flag set on cleanup must stop openShare from navigating — otherwise this
+    // would call navigate() on an already-unmounted screen.
+    expect(loadShare).toHaveBeenCalledWith(pendingShare);
   });
 
   it('shows an error toast and does not navigate when loading the share fails', async () => {
-    vi.mocked(ShareReceiver.getPendingShare).mockResolvedValue({ share: pendingShare });
+    let shareReceivedCallback: ((share: IncomingShare) => void) | undefined;
+    vi.mocked(ShareReceiver.addListener).mockImplementation((_event, callback) => {
+      shareReceivedCallback = callback;
+      return Promise.resolve({ remove: vi.fn() });
+    });
     vi.mocked(loadShare).mockRejectedValue(new Error('boom'));
 
     renderHandler();
+    await waitFor(() => expect(shareReceivedCallback).toBeDefined());
+    act(() => shareReceivedCallback!(pendingShare));
 
     await waitFor(() => expect(useUIStore.getState().toastMessage).toBe('No se pudo cargar la foto compartida'));
     expect(screen.getByTestId('location')).toHaveTextContent('/');
