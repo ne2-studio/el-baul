@@ -73,6 +73,20 @@ describe('ContributionSuggestionContainer', () => {
     expect(useUIStore.getState().toastMessage).toBe('Gracias por ayudar a recordar. Tu familia te lo agradece');
   });
 
+  // Issue #52: el botón primario "Guardar" debe ir antes (arriba) que el ghost "No hay nadie
+  // en esta foto", igual que en el resto de pantallas que apilan primario + ghost.
+  it('renders Guardar before "No hay nadie en esta foto" in the footer', () => {
+    render(<ContributionSuggestionContainer baulId={baulId} photo={photo()} onResolved={vi.fn()} />);
+
+    const buttons = screen.getAllByRole('button').map((button) => button.textContent);
+    const guardarIndex = buttons.findIndex((text) => text === 'Guardar');
+    const noHayNadieIndex = buttons.findIndex((text) => text === 'No hay nadie en esta foto');
+
+    expect(guardarIndex).toBeGreaterThanOrEqual(0);
+    expect(noHayNadieIndex).toBeGreaterThanOrEqual(0);
+    expect(guardarIndex).toBeLessThan(noHayNadieIndex);
+  });
+
   it('resolves on "Ahora no" without saving anything', async () => {
     const user = userEvent.setup();
     const onResolved = vi.fn();

@@ -38,6 +38,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al entrar directamente a un baúl (por ejemplo, recargando la página o abriendo un enlace guardado), la pantalla "Abriendo baúl..." ya no se queda cargando para siempre en algunos casos.
 - Al subir fotos en formato HEIC (el habitual del iPhone), la generación de la vista previa ya no tarda tanto.
 - Los recuerdos con texto muy largo ya no ocupan todo el espacio en el feed del baúl ni en el listado de recuerdos de un capítulo; ahora aparecen colapsados con un botón "Ver más" para desplegarlos.
+- En la pantalla de sugerencia de contribución de una foto, el botón "No hay nadie en esta foto" aparecía antes que "Guardar"; ahora aparece debajo, como en el resto de pantallas.
 
 ## [beta-v0.4.1] - 2026-08-18
 

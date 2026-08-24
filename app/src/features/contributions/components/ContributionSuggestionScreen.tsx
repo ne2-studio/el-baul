@@ -106,9 +106,6 @@ export function ContributionSuggestionScreen({
           esto la resuelve para siempre (foto sin PhotoPersonaTag pero ya no candidata). */}
       <div className="sticky bottom-0 pb-safe bg-background/80 backdrop-blur-sm border-t border-border">
         <PageContainer className="py-4 space-y-2">
-          <Button variant="ghost" fullWidth onClick={onConfirmNoPersonas} disabled={isSubmitting}>
-            No hay nadie en esta foto
-          </Button>
           <Button
             variant="primary"
             fullWidth
@@ -117,6 +114,9 @@ export function ContributionSuggestionScreen({
             isLoading={isSubmitting}
           >
             Guardar
+          </Button>
+          <Button variant="ghost" fullWidth onClick={onConfirmNoPersonas} disabled={isSubmitting}>
+            No hay nadie en esta foto
           </Button>
         </PageContainer>
       </div>
