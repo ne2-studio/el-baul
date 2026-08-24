@@ -22,16 +22,24 @@ interface RecuerdoFeedCardProps {
   isNew?: boolean;
 }
 
+// Determina si el texto es lo bastante largo como para necesitar el toggle "Ver más"
+// cuando se colapsa a 4 líneas. Aproximación por longitud de caracteres (no mide el
+// overflow real renderizado), igual que el heurístico de RecuerdoCard mismo pero
+// recalibrado para 4 líneas en el tamaño/fuente de esta card (text-sm font-serif).
+const LONG_TEXT_THRESHOLD = 200;
+
 export function RecuerdoFeedCard({
   recuerdo, onUserClick, onPhotoClick, onChapterClick, onShareRecuerdo, onEditRecuerdo, showChapterBadge = true,
   isNew = false,
 }: RecuerdoFeedCardProps) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const userName = recuerdo.isOwn ? 'Yo' : (recuerdo.userName || 'Usuario desconocido');
   const canOpenPersona = !!(recuerdo.personaId && onUserClick);
   const canEdit = !!(recuerdo.isOwn && onEditRecuerdo);
   const showBadge = showChapterBadge && !recuerdo.photoId && !!recuerdo.chapterId;
+  const isLongText = recuerdo.text.length > LONG_TEXT_THRESHOLD;
 
   const handleSave = async (text: string) => {
     if (!onEditRecuerdo) return;
@@ -93,7 +101,31 @@ export function RecuerdoFeedCard({
         </div>
       ) : (
         <>
-          <p className="mt-3 text-sm text-foreground/90 leading-relaxed font-serif">{recuerdo.text}</p>
+          <div className="relative mt-3">
+            <p className={cn(
+              'text-sm text-foreground/90 leading-relaxed font-serif',
+              !isExpanded && isLongText ? 'line-clamp-4' : '',
+            )}>
+              {recuerdo.text}
+            </p>
+
+            {!isExpanded && isLongText && (
+              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+            )}
+          </div>
+
+          {isLongText && (
+            <Button variant="plain"
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-muted-foreground hover:text-foreground text-sm mt-1 transition-colors relative group/more"
+            >
+              <span className="relative">
+                {isExpanded ? 'Ver menos' : 'Ver más'}
+                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-foreground/40 group-hover/more:w-full transition-all duration-300" />
+              </span>
+            </Button>
+          )}
 
           {recuerdo.photoId && (
             <Button variant="plain"

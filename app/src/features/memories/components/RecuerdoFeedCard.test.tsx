@@ -124,4 +124,25 @@ describe('RecuerdoFeedCard', () => {
 
     expect(onEditRecuerdo).toHaveBeenCalledWith(expect.objectContaining({ id: 'r1' }), 'Texto actualizado');
   });
+
+  it('does not show a "Ver más" toggle for short text', () => {
+    render(<RecuerdoFeedCard recuerdo={newRecuerdo({ text: 'Un recuerdo corto' })} />);
+
+    expect(screen.queryByRole('button', { name: 'Ver más' })).not.toBeInTheDocument();
+  });
+
+  it('collapses long text by default behind a "Ver más" toggle, and expands on tap', async () => {
+    const user = userEvent.setup();
+    const longText = 'Un recuerdo muy largo.'.repeat(20);
+    render(<RecuerdoFeedCard recuerdo={newRecuerdo({ text: longText })} />);
+
+    const text = screen.getByText(longText);
+    expect(text.className).toMatch(/line-clamp-4/);
+
+    const toggle = screen.getByRole('button', { name: 'Ver más' });
+    await user.click(toggle);
+
+    expect(text.className).not.toMatch(/line-clamp-4/);
+    expect(screen.getByRole('button', { name: 'Ver menos' })).toBeInTheDocument();
+  });
 });
