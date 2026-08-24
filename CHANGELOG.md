@@ -39,6 +39,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al entrar directamente a un baúl (por ejemplo, recargando la página o abriendo un enlace guardado), la pantalla "Abriendo baúl..." ya no se queda cargando para siempre en algunos casos.
 - Al subir fotos en formato HEIC (el habitual del iPhone), la generación de la vista previa ya no tarda tanto.
 - En el feed, al tocar la foto de un recuerdo que comparte foto con otra entrada (por ejemplo, la foto subida y el recuerdo escrito sobre ella), ahora se abre correctamente; antes en ocasiones no pasaba nada.
+- Tras una instalación nueva, los baúles aparecían marcados con novedades pero al entrar el feed no mostraba nada como nuevo; ahora la primera visita a un baúl sí muestra su contenido existente marcado como novedad.
 - Los recuerdos con texto muy largo ya no ocupan todo el espacio en el feed del baúl ni en el listado de recuerdos de un capítulo; ahora aparecen colapsados con un botón "Ver más" para desplegarlos.
 - En la pantalla de sugerencia de contribución de una foto, el botón "No hay nadie en esta foto" aparecía antes que "Guardar"; ahora aparece debajo, como en el resto de pantallas.
 - Al compartir una foto con El Baúl desde el share nativo de Android nada más abrir la aplicación, a veces se veía brevemente un baúl (y su sugerencia de contribución) antes de la pantalla para elegir a qué baúl compartir; ahora se va directamente a esa pantalla.

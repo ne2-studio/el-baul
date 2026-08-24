@@ -71,7 +71,10 @@ public class BaulFeedManager(
         if (skip == 0)
         {
             cursor = await feedCursorRepository.GetAsync(userId, baulId);
-            var effectiveCursor = cursor ?? requestedAt;
+            // No cursor means this user has never opened this baúl's feed before — treat
+            // everything as new (epoch), not nothing, so a fresh install's first visit still
+            // shows the "novedad" markers the switcher's unseen-activity dot already promised.
+            var effectiveCursor = cursor ?? DateTime.MinValue;
             var newCount = items.Count(item => item.CreatedAt > effectiveCursor);
             // Widen, never shrink — a visit with more new activity than `take` must still see
             // all of it on the first page, not have it cut off by pagination.
@@ -84,7 +87,7 @@ public class BaulFeedManager(
 
         if (skip == 0)
         {
-            var effectiveCursor = cursor ?? requestedAt;
+            var effectiveCursor = cursor ?? DateTime.MinValue;
             pageItems = pageItems
                 .Select(item => item.CreatedAt > effectiveCursor ? item with { IsNew = true } : item)
                 .ToList();

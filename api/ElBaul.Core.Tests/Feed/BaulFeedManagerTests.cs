@@ -134,7 +134,7 @@ public class BaulFeedManagerTests
     }
 
     [Fact]
-    public async Task GetFeedAsync_ShouldNotMarkAnythingNew_OnFirstEverVisit()
+    public async Task GetFeedAsync_ShouldMarkEverythingNew_OnFirstEverVisit()
     {
         var baulId = await _fixture.CreateBaulAsync();
         var recuerdoManager = CreateRecuerdoManager(CustodioId);
@@ -143,8 +143,11 @@ public class BaulFeedManagerTests
         var manager = CreateManager(CustodioId);
         var result = await manager.GetFeedAsync(baulId, 0, 20);
 
+        // No cursor yet (never opened this baúl before) means everything already in it counts
+        // as new — matching the workspace switcher's "no seen-at entry" dot, which marks a
+        // never-visited baúl as having novedades until it's opened once.
         Assert.True(result.IsSuccess);
-        Assert.All(result.Value.Items, item => Assert.False(item.IsNew));
+        Assert.All(result.Value.Items, item => Assert.True(item.IsNew));
     }
 
     [Fact]
@@ -155,10 +158,11 @@ public class BaulFeedManagerTests
         Assert.True((await recuerdoManager.CreateRecuerdoAsync(baulId, "Recuerdo antiguo")).IsSuccess);
 
         var manager = CreateManager(CustodioId);
-        // First visit: establishes the cursor, nothing is new yet.
+        // First visit: establishes the cursor; the pre-existing recuerdo is new since there was
+        // no earlier cursor to compare against.
         var firstVisit = await manager.GetFeedAsync(baulId, 0, 20);
         Assert.True(firstVisit.IsSuccess);
-        Assert.All(firstVisit.Value.Items, item => Assert.False(item.IsNew));
+        Assert.All(firstVisit.Value.Items, item => Assert.True(item.IsNew));
 
         // Activity that arrives strictly after the cursor set by the first visit.
         var afterCursor = _fixture.Clock.UtcNow().AddMinutes(5);
@@ -200,6 +204,11 @@ public class BaulFeedManagerTests
     public async Task GetFeedAsync_ShouldReportHasMore_WhenMoreItemsRemainAfterThisPage()
     {
         var baulId = await _fixture.CreateBaulAsync();
+        var manager = CreateManager(CustodioId);
+        // Prime the cursor against an empty feed first, so the items below aren't "new" and
+        // don't trigger the first-page widening tested separately.
+        Assert.True((await manager.GetFeedAsync(baulId, 0, 20)).IsSuccess);
+
         var recuerdoManager = CreateRecuerdoManager(CustodioId);
         for (var i = 0; i < 3; i++)
         {
@@ -207,7 +216,6 @@ public class BaulFeedManagerTests
             Assert.True(created.IsSuccess);
         }
 
-        var manager = CreateManager(CustodioId);
         var result = await manager.GetFeedAsync(baulId, 0, 2);
 
         Assert.True(result.IsSuccess);
@@ -219,6 +227,11 @@ public class BaulFeedManagerTests
     public async Task GetFeedAsync_ShouldReportNoMore_OnTheLastPage()
     {
         var baulId = await _fixture.CreateBaulAsync();
+        var manager = CreateManager(CustodioId);
+        // Prime the cursor against an empty feed first, so the items below aren't "new" and
+        // don't trigger the first-page widening tested separately.
+        Assert.True((await manager.GetFeedAsync(baulId, 0, 20)).IsSuccess);
+
         var recuerdoManager = CreateRecuerdoManager(CustodioId);
         for (var i = 0; i < 3; i++)
         {
@@ -226,7 +239,6 @@ public class BaulFeedManagerTests
             Assert.True(created.IsSuccess);
         }
 
-        var manager = CreateManager(CustodioId);
         var result = await manager.GetFeedAsync(baulId, 2, 2);
 
         Assert.True(result.IsSuccess);
@@ -238,6 +250,11 @@ public class BaulFeedManagerTests
     public async Task GetFeedAsync_ShouldAdvanceThroughDistinctItems_AsSkipIncreases()
     {
         var baulId = await _fixture.CreateBaulAsync();
+        var manager = CreateManager(CustodioId);
+        // Prime the cursor against an empty feed first, so the items below aren't "new" and
+        // don't trigger the first-page widening tested separately.
+        Assert.True((await manager.GetFeedAsync(baulId, 0, 20)).IsSuccess);
+
         var recuerdoManager = CreateRecuerdoManager(CustodioId);
         for (var i = 0; i < 5; i++)
         {
@@ -245,7 +262,6 @@ public class BaulFeedManagerTests
             Assert.True(created.IsSuccess);
         }
 
-        var manager = CreateManager(CustodioId);
         var firstPage = await manager.GetFeedAsync(baulId, 0, 2);
         var secondPage = await manager.GetFeedAsync(baulId, 2, 2);
 
