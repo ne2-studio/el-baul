@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
@@ -40,6 +40,10 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
   const { editRecuerdo, shareRecuerdo } = useRecuerdoActions(baulName);
   const { run, isPending } = useAsyncAction();
+  // Tracks how many handleOpenPhoto() calls are in flight, independent of useAsyncAction's
+  // per-photo keys (see below) — the overlay just needs "is some photo opening right now",
+  // not which one.
+  const [openingPhotoCount, setOpeningPhotoCount] = useState(0);
 
   useEffect(() => {
     if (auth.isAuthenticated && baulFeedEnabled && !baulFeed[baulId]) {
@@ -75,8 +79,23 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
       return;
     }
 
-    const result = await run(() => loadChapterPhotos(chapterId), { errorMessage: 'Error al cargar las fotos' });
-    if (result.ok) openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/capitulos/${chapterId}`, photoId));
+    // Uniquely keyed per call — two feed entries can point at the same photo (e.g. a recuerdo
+    // about a photo, and its "photo uploaded" entry, both inheriting the same chapterId), so
+    // every click must trigger its own load/navigation attempt rather than sharing
+    // useAsyncAction's implicit default key (or one derived from photoId/chapterId, which would
+    // collide in exactly this duplicate-entry case) — that would silently drop a second click
+    // landing while an earlier one is still in flight. loadChapterPhotos() is a safe, idempotent
+    // read, so letting concurrent calls for the same chapter overlap has no downside.
+    setOpeningPhotoCount((count) => count + 1);
+    try {
+      const result = await run(() => loadChapterPhotos(chapterId), {
+        key: `open-photo-${crypto.randomUUID()}`,
+        errorMessage: 'Error al cargar las fotos',
+      });
+      if (result.ok) openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/capitulos/${chapterId}`, photoId));
+    } finally {
+      setOpeningPhotoCount((count) => count - 1);
+    }
   };
 
   // A diferencia de una foto de recuerdo (puede vivir en un capítulo cuyas fotos no estén
@@ -112,7 +131,7 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
         onClick={() => navigate(`/baules/${baulId}/recordar`)}
         hidden={!chatEnabled}
       />
-      {isPending() && <BlockingLoadingOverlay message="Cargando fotos..." />}
+      {openingPhotoCount > 0 && <BlockingLoadingOverlay message="Cargando fotos..." />}
     </>
   );
 }

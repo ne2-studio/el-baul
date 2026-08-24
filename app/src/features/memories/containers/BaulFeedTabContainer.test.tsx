@@ -179,6 +179,43 @@ describe('BaulFeedTabContainer', () => {
     expect(screen.getByText('Visor · capítulo')).toBeInTheDocument();
   });
 
+  // Regression for the "clicking a recuerdo's photo does nothing" bug: when the same photo
+  // appears in two feed entries (e.g. a recuerdo about a photo, and its "photo uploaded"
+  // entry), clicking the second (more recent) one right after the first landed a second
+  // handleOpenPhoto() call while the first's loadChapterPhotos() run() was still in flight.
+  // Both calls shared useAsyncAction's implicit default key, so the second silently
+  // short-circuited as "already-pending" — no navigation, no error, nothing visible.
+  it('still opens a second chapter photo clicked while the first one is still loading', async () => {
+    const user = userEvent.setup();
+    let resolveFirstLoad!: () => void;
+    vi.mocked(loadChapterPhotos).mockImplementation((chapterId: string) => {
+      if (chapterId === 'chapter-1') return new Promise((resolve) => { resolveFirstLoad = () => resolve(undefined); });
+      return Promise.resolve(undefined);
+    });
+    useRecuerdosStore.setState({
+      baulRecuerdos: {
+        [baulId]: [
+          recuerdo({ id: 'r1', photoId: 'photo-1', chapterId: 'chapter-1' }),
+          recuerdo({ id: 'r2', photoId: 'photo-1', chapterId: 'chapter-2' }),
+        ],
+      },
+    });
+
+    renderContainer();
+    const [firstButton, secondButton] = screen.getAllByRole('button', { name: 'Ver foto' });
+
+    // Fire both clicks while the first load is still pending — this is the reproduction.
+    await user.click(firstButton);
+    await user.click(secondButton);
+    await act(async () => {
+      resolveFirstLoad();
+      await Promise.resolve();
+    });
+
+    expect(loadChapterPhotos).toHaveBeenCalledWith('chapter-2');
+    expect(screen.getByText('Visor · capítulo')).toBeInTheDocument();
+  });
+
   // Behind Features:BaulFeedEnabled: the mixed feed (recuerdos + photo-upload-batch cards)
   // instead of the recuerdos-only endpoint/cache.
   describe('with baulFeedEnabled on', () => {
