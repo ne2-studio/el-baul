@@ -25,10 +25,11 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
   const { personas } = usePersonasStore();
   const baulPersonas = personas[baulId] || [];
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  // Una vez confirmado "no hay nadie en esta foto" no volvemos al feed (onResolved): en vez de
-  // desperdiciar la oportunidad, reconvertimos esta misma foto candidata en una sugerencia de
-  // "escribe un recuerdo" — ver NO_PERSONAS_MEMORY_SUBTITLE. Todo en cliente, el backend ya
-  // conoce la foto y ya sabe que no tiene personas (confirmPhotoHasNoPersonas ya se llamó).
+  // Una vez confirmado "no hay nadie en esta foto" no volvemos al feed (onResolved) salvo que la
+  // foto ya tenga recuerdos (photo.recuerdoCount > 0): en ese caso no hay nada más que pedir. Si
+  // no tiene recuerdos, reconvertimos esta misma foto candidata en una sugerencia de "escribe un
+  // recuerdo" — ver NO_PERSONAS_MEMORY_SUBTITLE. Todo en cliente, el backend ya conoce la foto y
+  // ya sabe que no tiene personas (confirmPhotoHasNoPersonas ya se llamó).
   const [showMemoryFallback, setShowMemoryFallback] = useState(false);
   const { run, isPending } = useAsyncAction();
 
@@ -45,13 +46,19 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
   };
 
   const handleConfirmNoPersonas = async () => {
-    // Sin successMessage: a diferencia de handleSave, esta acción no cierra la sugerencia — deja
-    // paso de inmediato al fallback de "escribe un recuerdo", así que un toast de "no volveremos
-    // a preguntar" sería confuso justo cuando aparece una pregunta nueva.
+    // Sin successMessage: a diferencia de handleSave, esta acción no cierra la sugerencia de
+    // inmediato cuando hay fallback de "escribe un recuerdo" — un toast de "no volveremos a
+    // preguntar" sería confuso justo cuando aparece una pregunta nueva. Si en cambio la foto ya
+    // tiene recuerdos, cerramos sin fallback ni toast, igual que "Ahora no".
     const result = await run(() => confirmPhotoHasNoPersonas(photo.id), {
       errorMessage: 'No se pudo guardar',
     });
-    if (result.ok) setShowMemoryFallback(true);
+    if (!result.ok) return;
+    if (photo.recuerdoCount > 0) {
+      onResolved();
+      return;
+    }
+    setShowMemoryFallback(true);
   };
 
   if (showMemoryFallback) {

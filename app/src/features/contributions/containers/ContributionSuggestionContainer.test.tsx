@@ -117,6 +117,25 @@ describe('ContributionSuggestionContainer', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
+  // Issue #50: si la foto ya tiene recuerdos, no tiene sentido reconvertir la sugerencia en
+  // "escribe un recuerdo" — cerramos directamente, igual que "Ahora no".
+  it('resolves directly instead of showing the memory fallback when the photo already has recuerdos', async () => {
+    const user = userEvent.setup();
+    vi.mocked(confirmPhotoHasNoPersonas).mockResolvedValue(undefined);
+    const onResolved = vi.fn();
+
+    render(
+      <ContributionSuggestionContainer baulId={baulId} photo={photo({ recuerdoCount: 2 })} onResolved={onResolved} />,
+    );
+
+    await user.click(screen.getByText('No hay nadie en esta foto'));
+
+    await waitFor(() => expect(confirmPhotoHasNoPersonas).toHaveBeenCalledWith('photo-1'));
+    await waitFor(() => expect(onResolved).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('Describe la foto o cuéntanos por qué es importante')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
   it('saves the memory written in the fallback screen and resolves on submit', async () => {
     const user = userEvent.setup();
     vi.mocked(confirmPhotoHasNoPersonas).mockResolvedValue(undefined);
