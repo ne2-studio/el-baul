@@ -22,8 +22,7 @@ export const Default: Story = {
   args: {
     baulNombre: 'Familia García',
     previewPhotos,
-    onUnirme: () => alert('onUnirme clicked'),
-    onVerMas: () => alert('onVerMas clicked'),
+    onContinuar: () => alert('onContinuar clicked'),
   },
 };
 
@@ -31,7 +30,6 @@ export const SinPreview: Story = {
   args: {
     baulNombre: 'Familia García',
     previewPhotos: [],
-    onUnirme: () => alert('onUnirme clicked'),
-    onVerMas: () => alert('onVerMas clicked'),
+    onContinuar: () => alert('onContinuar clicked'),
   },
 };

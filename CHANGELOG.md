@@ -26,6 +26,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - El resumen semanal por email y las notificaciones push de novedades ahora indican quién ha añadido cada novedad (por ejemplo, "Tita Loli añadió 3 recuerdos nuevos"), en vez de mostrar solo el número.
 - Se ha renovado el contenido del email de bienvenida (tanto para quien entra por primera vez como para quien llega invitado a un baúl), que ahora incluye un vídeo de presentación de El Baúl.
 - Se ha rediseñado la navegación de la cuenta y los ajustes del baúl: "Mi cuenta" (perfil, notificaciones y cerrar sesión) y "Ajustes del baúl" (portada, información, solicitudes de eliminación y eliminar baúl) ahora son pantallas propias accesibles desde el menú "···" del baúl, en vez de menús emergentes.
+- En la pantalla de invitación a un baúl, ahora solo hay un botón ("Unirme al Baúl") y siempre pasa por la presentación de El Baúl antes de aceptar la invitación; antes se podía saltar directamente sin verla.
 
 ### Arreglado
 

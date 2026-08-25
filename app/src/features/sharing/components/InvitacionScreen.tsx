@@ -5,15 +5,13 @@ import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 interface InvitacionScreenProps {
   baulNombre: string;
   previewPhotos: string[];
-  onUnirme: () => void;
-  onVerMas: () => void;
+  onContinuar: () => void;
 }
 
 export function InvitacionScreen({
   baulNombre,
   previewPhotos,
-  onUnirme,
-  onVerMas
+  onContinuar
 }: InvitacionScreenProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-12">
@@ -53,21 +51,14 @@ export function InvitacionScreen({
           </div>
         </div>
 
-        {/* CTAs */}
+        {/* CTA: único, siempre pasa por el onboarding */}
         <div className="space-y-3">
           <Button
             variant="primary"
             fullWidth
-            onClick={onUnirme}
+            onClick={onContinuar}
           >
             Unirme al Baúl
-          </Button>
-
-          <Button variant="plain"
-            onClick={onVerMas}
-            className="w-full text-muted-foreground hover:text-foreground transition-colors py-3 text-sm"
-          >
-            Ver de qué va esto
           </Button>
         </div>
       </div>

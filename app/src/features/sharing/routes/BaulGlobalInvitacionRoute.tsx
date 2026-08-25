@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvitacionScreen } from '@/features/sharing/components/InvitacionScreen';
-import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 import { BaulInviteLinkPreview } from '@/types';
@@ -10,7 +9,6 @@ import { Button } from '@/design-system/components/actions/Button';
 export const BaulGlobalInvitacionRoute: React.FC = () => {
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
-  const auth = useAuth();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
   const [preview, setPreview] = useState<BaulInviteLinkPreview | null>(null);
@@ -58,15 +56,10 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
     );
   }
 
-  const handleUnirme = () => {
-    if (!auth.isAuthenticated) {
-      navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/baul/${token}/aceptar`)}`);
-      return;
-    }
-    navigate(`/invitacion/baul/${token}/aceptar`);
-  };
-
-  const handleVerMas = () => {
+  // Único camino: el onboarding es obligatorio antes de aceptar la invitación.
+  // Dentro del propio carrusel el usuario puede pulsar "Saltar", pero no hay
+  // forma de evitar el onboarding desde esta pantalla.
+  const handleContinuar = () => {
     const params = new URLSearchParams();
     if (preview && token) {
       params.set('baulNombre', preview.name);
@@ -87,8 +80,7 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
     <InvitacionScreen
       baulNombre={preview.name}
       previewPhotos={preview.previewPhotos}
-      onUnirme={handleUnirme}
-      onVerMas={handleVerMas}
+      onContinuar={handleContinuar}
     />
   );
 };

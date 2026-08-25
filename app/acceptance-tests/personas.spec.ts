@@ -81,7 +81,10 @@ test('joining via the global invite link → change role → revoke access → a
   const guestPage = await guestContext.newPage();
   await loginAs(guestPage, 'Normal User');
   await guestPage.goto(`/invitacion/baul/${token}`);
+  // The single CTA always routes through onboarding first — no way to skip it from here.
   await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
+  await guestPage.getByRole('button', { name: 'Saltar' }).click();
   await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
   await guestContext.close();
 

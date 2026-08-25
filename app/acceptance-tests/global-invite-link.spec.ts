@@ -21,7 +21,10 @@ test('invite family via global link → guest auto-joins with an auto-created pe
   const guestPage = await guestContext.newPage();
   await loginAs(guestPage, 'Normal User');
   await guestPage.goto(`/invitacion/baul/${token}`);
+  // The single CTA always routes through onboarding first — no way to skip it from here.
   await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
+  await guestPage.getByRole('button', { name: 'Saltar' }).click();
   await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
 
   const personasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
@@ -38,6 +41,8 @@ test('invite family via global link → guest auto-joins with an auto-created pe
   // Opening the same link again as the same guest must be a no-op, not a duplicate persona.
   await guestPage.goto(`/invitacion/baul/${token}`);
   await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
+  await guestPage.getByRole('button', { name: 'Saltar' }).click();
   await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
   await guestContext.close();
 
@@ -76,44 +81,6 @@ test('invite family via global link → guest auto-joins with an auto-created pe
   expect(oldPreviewResponse.status()).toBe(404);
 });
 
-test('invite family via global link → guest takes the "ver más" onboarding detour before joining → still lands in the baúl', async ({ page, browser }) => {
-  const accessToken = await loginAs(page, 'Admin User');
-  const baulId = await createBaulViaApi(page, accessToken, `Global invite onboarding test baúl ${Date.now()}`);
-  await page.goto(`/baules/${baulId}`);
-
-  await page.getByRole('button', { name: 'Menú' }).click();
-  await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
-  const linkLocator = page.getByText(/\/invitacion\/baul\//);
-  await expect(linkLocator).toBeVisible();
-  const linkText = (await linkLocator.textContent())!;
-  const token = linkText.match(/\/invitacion\/baul\/([^\s"']+)/)?.[1];
-  expect(token, `expected to find an invite token in "${linkText}"`).toBeTruthy();
-  await page.getByRole('button', { name: 'Cerrar' }).click();
-
-  const guestContext = await browser.newContext();
-  const guestPage = await guestContext.newPage();
-  await loginAs(guestPage, 'Normal User');
-  await guestPage.goto(`/invitacion/baul/${token}`);
-
-  // The "ver más" detour used to end in a blank screen: OnboardingRoute redirected to
-  // /invitacion/{baulId}/aceptar on completion, a route that doesn't exist (accepting needs
-  // the token/personaId, not a bare baúl id) — see OnboardingRoute.tsx's redirectTo fix.
-  await guestPage.getByRole('button', { name: 'Ver de qué va esto' }).click();
-  await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
-  await guestPage.getByRole('button', { name: 'Saltar' }).click();
-  await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
-
-  const personasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  expect(personasResponse.ok(), `failed to list personas: ${personasResponse.status()}`).toBeTruthy();
-  const personas = await personasResponse.json();
-  const guestPersonas = personas.filter((p: { role: string }) => p.role === 'colaborador');
-  expect(guestPersonas, 'expected the guest to still auto-join after the onboarding detour').toHaveLength(1);
-
-  await guestContext.close();
-});
-
 test('invite family via global link → pre-provisioned persona exists → guest claims it, preserving its identity', async ({ page, browser }) => {
   const accessToken = await loginAs(page, 'Admin User');
   const baulId = await createBaulViaApi(page, accessToken, `Claim persona test baúl ${Date.now()}`);
@@ -135,6 +102,8 @@ test('invite family via global link → pre-provisioned persona exists → guest
   await loginAs(guestPage, 'Normal User');
   await guestPage.goto(`/invitacion/baul/${token}`);
   await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
+  await guestPage.getByRole('button', { name: 'Saltar' }).click();
   await guestPage.getByText('¿Quién eres tú?').waitFor();
   await guestPage.getByText(nickname).click();
   await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
@@ -176,6 +145,8 @@ test('invite family via global link → pre-provisioned persona exists → guest
   await loginAs(guestPage, 'Normal User');
   await guestPage.goto(`/invitacion/baul/${token}`);
   await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
+  await guestPage.getByRole('button', { name: 'Saltar' }).click();
   await guestPage.getByRole('button', { name: /No soy ninguna de las personas anteriores/ }).click();
   await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
   await guestContext.close();

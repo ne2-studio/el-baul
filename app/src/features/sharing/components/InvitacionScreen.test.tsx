@@ -10,32 +10,29 @@ describe('InvitacionScreen', () => {
       <InvitacionScreen
         baulNombre="Familia Pérez"
         previewPhotos={[]}
-        onUnirme={vi.fn()}
-        onVerMas={vi.fn()}
+        onContinuar={vi.fn()}
       />
     );
 
     expect(screen.getByText('Te han invitado a un Baúl privado para guardar recuerdos')).toBeInTheDocument();
   });
 
-  it('fires onUnirme and onVerMas from their respective CTAs', async () => {
+  it('fires onContinuar from its single CTA and exposes no other way to skip onboarding', async () => {
     const user = userEvent.setup();
-    const onUnirme = vi.fn();
-    const onVerMas = vi.fn();
+    const onContinuar = vi.fn();
 
     render(
       <InvitacionScreen
         baulNombre="Familia Pérez"
         previewPhotos={[]}
-        onUnirme={onUnirme}
-        onVerMas={onVerMas}
+        onContinuar={onContinuar}
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Unirme al Baúl' }));
-    await user.click(screen.getByRole('button', { name: 'Ver de qué va esto' }));
+    expect(screen.getAllByRole('button')).toHaveLength(1);
 
-    expect(onUnirme).toHaveBeenCalledTimes(1);
-    expect(onVerMas).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Unirme al Baúl' }));
+
+    expect(onContinuar).toHaveBeenCalledTimes(1);
   });
 });
