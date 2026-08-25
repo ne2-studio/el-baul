@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Chapter } from '@/types';
-import { MoveModal } from './MoveModal';
+import { MoveModal, NEW_CHAPTER_OPTION_ID } from './MoveModal';
 
 const chapters: Chapter[] = [
   { id: '1', name: 'Navidad en familia', photoCount: 0, lastUpdated: '', recuerdoCount: 0, undatedPhotoCount: 0 },
@@ -98,5 +98,100 @@ describe('MoveModal', () => {
     await user.click(screen.getByText('Boda de Marta y Iván'));
 
     expect(onSelect).toHaveBeenCalledWith('3');
+  });
+
+  it('does not show the "new chapter" option when the search box is empty', () => {
+    render(
+      <MoveModal
+        title="Mover a otro capítulo"
+        chapters={chapters}
+        selectedId=""
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/^Nuevo capítulo/)).not.toBeInTheDocument();
+  });
+
+  it('shows a "new chapter" option with the typed text once the user has typed something, separated by a divider', async () => {
+    const user = userEvent.setup();
+    render(
+      <MoveModal
+        title="Mover a otro capítulo"
+        chapters={chapters}
+        selectedId=""
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    await user.type(screen.getByLabelText('Buscar capítulo'), 'inexistente');
+
+    expect(screen.getByText('No se encontraron capítulos.')).toBeInTheDocument();
+    const option = screen.getByText('Nuevo capítulo "inexistente"');
+    expect(option).toBeInTheDocument();
+    expect(document.querySelector('hr')).toBeInTheDocument();
+  });
+
+  it('selects the "new chapter" option, mutually exclusive with an existing chapter', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <MoveModal
+        title="Mover a otro capítulo"
+        chapters={chapters}
+        selectedId=""
+        onSelect={onSelect}
+        onCancel={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    await user.type(screen.getByLabelText('Buscar capítulo'), 'boda');
+    await user.click(screen.getByText('Nuevo capítulo "boda"'));
+
+    expect(onSelect).toHaveBeenCalledWith(NEW_CHAPTER_OPTION_ID);
+  });
+
+  it('calls onConfirm with the trimmed typed text when the "new chapter" option is selected', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(
+      <MoveModal
+        title="Mover a otro capítulo"
+        chapters={chapters}
+        selectedId={NEW_CHAPTER_OPTION_ID}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        onConfirm={onConfirm}
+      />
+    );
+
+    await user.type(screen.getByLabelText('Buscar capítulo'), '  Vacaciones de verano  ');
+    await user.click(screen.getByRole('button', { name: /mover aquí/i }));
+
+    expect(onConfirm).toHaveBeenCalledWith('Vacaciones de verano');
+  });
+
+  it('calls onConfirm with no argument when an existing chapter is selected', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(
+      <MoveModal
+        title="Mover a otro capítulo"
+        chapters={chapters}
+        selectedId="2"
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        onConfirm={onConfirm}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /mover aquí/i }));
+
+    expect(onConfirm).toHaveBeenCalledWith(undefined);
   });
 });

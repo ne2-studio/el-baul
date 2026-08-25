@@ -21,6 +21,14 @@ interface BatchPhotoActionsBarProps {
     targetChapterId: string,
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => Promise<void>;
+  /** Rama "Nuevo capítulo …" inline de MoveModal: crea el capítulo y mueve la selección a él,
+   * como 2 peticiones secuenciales — distinto del onBatchCreateChapter de abajo, que es la
+   * acción independiente "Crear nuevo capítulo" (solo fotos sueltas, vía EditInfoModal). */
+  onBatchMoveToNewChapter?: (
+    photoIds: string[],
+    name: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => Promise<void>;
   onBatchChangeDate?: (photoIds: string[], date: PhotoDate) => Promise<boolean>;
   onBatchClearDate?: (photoIds: string[]) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
@@ -36,8 +44,8 @@ interface BatchPhotoActionsBarProps {
 // selección del padre; se mantiene como prop en vez de desmontar el componente para
 // no perder el patrón de gating explícito que tenía PhotosView antes de la extracción.
 export function BatchPhotoActionsBar({
-  active, photos, selectedIds, moveableChapters, personas = [], onBatchMove, onBatchChangeDate, onBatchClearDate,
-  onBatchCreateChapter, onBatchTagPersonas, onBatchDelete, onDone,
+  active, photos, selectedIds, moveableChapters, personas = [], onBatchMove, onBatchMoveToNewChapter, onBatchChangeDate,
+  onBatchClearDate, onBatchCreateChapter, onBatchTagPersonas, onBatchDelete, onDone,
 }: BatchPhotoActionsBarProps) {
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
@@ -66,8 +74,8 @@ export function BatchPhotoActionsBar({
   const selectedCount = selectedIds.size;
   const deletableCount = deletablePhotoIds.length;
 
-  const handleMoveSubmit = async () => {
-    if (!moveTargetId || !onBatchMove) return;
+  const handleMoveSubmit = async (newChapterName?: string) => {
+    if (!moveTargetId) return;
     const targetChapterId = moveTargetId;
     const ids = Array.from(selectedIds);
     setShowMoveModal(false);
@@ -80,13 +88,21 @@ export function BatchPhotoActionsBar({
       }))
     );
 
-    await onBatchMove(ids, targetChapterId, (result) => {
+    const onItemSettled = (result: { photoId: string; error?: string }) => {
       setMoveItems((prev) =>
         prev?.map((item) =>
           item.id === result.photoId ? { ...item, status: result.error ? ('error' as const) : ('success' as const) } : item
         ) ?? prev
       );
-    });
+    };
+
+    if (newChapterName) {
+      if (!onBatchMoveToNewChapter) return;
+      await onBatchMoveToNewChapter(ids, newChapterName, onItemSettled);
+    } else {
+      if (!onBatchMove) return;
+      await onBatchMove(ids, targetChapterId, onItemSettled);
+    }
 
     setMoveItems(null);
     onDone();

@@ -6,20 +6,31 @@ import { BottomSheetModal } from '@/design-system/components/overlays/BottomShee
 import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { Chapter } from '@/types';
 
+// Sentinel used as selectedId when the user picks the inline "Nuevo capítulo …" row instead
+// of an existing chapter. It can never collide with a real chapter id.
+export const NEW_CHAPTER_OPTION_ID = '__new_chapter__';
+
 interface MoveModalProps {
   title: string;
   chapters: Chapter[];
   selectedId: string;
   onSelect: (id: string) => void;
   onCancel: () => void;
-  onConfirm: () => void;
+  /** newChapterName is set when selectedId is NEW_CHAPTER_OPTION_ID — the trimmed text the
+   * user typed, for the caller to create that chapter before moving into it. */
+  onConfirm: (newChapterName?: string) => void;
   isSubmitting?: boolean;
 }
 
 // Modal compartido para mover fotos a otro capítulo (individual o en lote).
 export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onConfirm, isSubmitting = false }: MoveModalProps) {
   const [query, setQuery] = useState('');
-  const filteredChapters = chapters.filter(a => a.name.toLowerCase().includes(query.trim().toLowerCase()));
+  const trimmedQuery = query.trim();
+  const filteredChapters = chapters.filter(a => a.name.toLowerCase().includes(trimmedQuery.toLowerCase()));
+
+  const handleConfirm = () => {
+    onConfirm(selectedId === NEW_CHAPTER_OPTION_ID ? trimmedQuery : undefined);
+  };
 
   return (
     <BottomSheetModal onCancel={onCancel} backdropOpacity={40}>
@@ -48,6 +59,18 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
             </SelectionRow>
           ))
         )}
+        {trimmedQuery !== '' && (
+          <>
+            <hr className="border-border" />
+            <SelectionRow
+              selected={selectedId === NEW_CHAPTER_OPTION_ID}
+              onClick={() => onSelect(NEW_CHAPTER_OPTION_ID)}
+              disabled={isSubmitting}
+            >
+              <span className="text-sm text-foreground">Nuevo capítulo &quot;{trimmedQuery}&quot;</span>
+            </SelectionRow>
+          </>
+        )}
       </div>
       <ModalActions className="pt-0">
         <Button variant="secondary"
@@ -58,7 +81,7 @@ export function MoveModal({ title, chapters, selectedId, onSelect, onCancel, onC
           Cancelar
         </Button>
         <Button
-          onClick={onConfirm}
+          onClick={handleConfirm}
           disabled={!selectedId || isSubmitting}
           isLoading={isSubmitting}
           className="text-sm"

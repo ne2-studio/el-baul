@@ -30,6 +30,10 @@ vi.mock('@/features/photos/useCases', () => ({
   movePhotos: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/features/chapters/useCases', () => ({
+  createChapter: vi.fn(),
+}));
+
 vi.mock('@/api', () => ({
   api: {
     photos: { download: vi.fn(), createShareLink: vi.fn() },
@@ -47,6 +51,7 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
 }));
 
 import { movePhotos } from '@/features/photos/useCases';
+import { createChapter } from '@/features/chapters/useCases';
 
 const photos: Photo[] = [
   { id: 'photo-1', thumbnailUrl: '/photo-1-thumb.jpg', fullUrl: '/photo-1.jpg', recuerdoCount: 0, canDelete: false, canRequestRemoval: true },
@@ -131,6 +136,22 @@ describe('ChapterPhotoViewerContainer', () => {
     await user.click(screen.getByRole('button', { name: /mover aquí/i }));
 
     expect(movePhotos).toHaveBeenCalledWith('baul-1', 'c1', ['photo-2'], 'c2');
+    expect(await screen.findByText('Vista del capítulo')).toBeInTheDocument();
+  });
+
+  it('creates a chapter from the typed search text, moves the photo into it, and self-navigates there', async () => {
+    const user = userEvent.setup();
+    vi.mocked(createChapter).mockResolvedValue({ id: 'new-chapter' } as Chapter);
+    vi.mocked(movePhotos).mockResolvedValue(undefined);
+    renderContainer();
+    await openMenu(user);
+    await user.click(screen.getByText('Mover a otro capítulo'));
+    await user.type(screen.getByLabelText('Buscar capítulo'), 'Verano en la playa');
+    await user.click(screen.getByText('Nuevo capítulo "Verano en la playa"'));
+    await user.click(screen.getByRole('button', { name: /mover aquí/i }));
+
+    expect(createChapter).toHaveBeenCalledWith('baul-1', 'Verano en la playa');
+    expect(movePhotos).toHaveBeenCalledWith('baul-1', 'c1', ['photo-2'], 'new-chapter');
     expect(await screen.findByText('Vista del capítulo')).toBeInTheDocument();
   });
 

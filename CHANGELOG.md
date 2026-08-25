@@ -20,6 +20,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la selección múltiple de fotos, ahora se puede borrar el lote seleccionado de una vez, pidiendo un único motivo para todas ellas.
 - Al ver una foto, ahora aparece debajo de las personas etiquetadas el capítulo al que pertenece, y se puede tocar para ir directamente a él (salvo si ya se está viendo dentro de ese mismo capítulo).
 - Al volver de un capítulo al listado del baúl, ahora se recupera el punto de scroll en el que se estaba antes de entrar, en vez de volver siempre arriba del todo.
+- Al mover una o varias fotos a otro capítulo, si se busca un capítulo que no existe todavía aparece una opción "Nuevo capítulo" con el texto buscado: al elegirla y confirmar se crea ese capítulo y se mueven las fotos a él directamente, sin pasos adicionales.
 
 ### Cambiado
 

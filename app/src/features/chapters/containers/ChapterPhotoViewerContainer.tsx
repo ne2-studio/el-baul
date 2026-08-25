@@ -7,6 +7,7 @@ import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHea
 import { Chapter, Photo } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { movePhotos } from '@/features/photos/useCases';
+import { createChapter } from '@/features/chapters/useCases';
 
 interface ChapterPhotoViewerContainerProps {
   photo: Photo;
@@ -44,11 +45,22 @@ export function ChapterPhotoViewerContainer({
 
   const moveableChapters = allChapters.filter((chapter) => chapter.id !== currentChapter?.id);
 
-  const handleMoveSubmit = async () => {
+  // newChapterName es distinto de undefined cuando el usuario eligió la fila "Nuevo capítulo
+  // …" de MoveModal en vez de un capítulo existente — ver MoveModal.NEW_CHAPTER_OPTION_ID.
+  // En ese caso se crea el capítulo primero y luego se mueve la foto a él, como 2 peticiones
+  // secuenciales (mismo patrón que BatchPhotoActionsContainer.handleBatchCreateChapter).
+  const handleMoveSubmit = async (newChapterName?: string) => {
     if (!moveTargetId) return;
-    const targetChapterId = moveTargetId;
     setIsSubmittingMove(true);
-    const result = await run(() => movePhotos(baulId, apiChapterId, [photo.id], targetChapterId), {
+    const result = await run(async () => {
+      if (newChapterName) {
+        const newChapter = await createChapter(baulId, newChapterName);
+        await movePhotos(baulId, apiChapterId, [photo.id], newChapter.id);
+        return newChapter.id;
+      }
+      await movePhotos(baulId, apiChapterId, [photo.id], moveTargetId);
+      return moveTargetId;
+    }, {
       successMessage: 'Foto movida',
       errorMessage: 'Error al mover la foto',
     });
@@ -56,7 +68,7 @@ export function ChapterPhotoViewerContainer({
     if (result.ok) {
       setShowMoveModal(false);
       setMoveTargetId('');
-      navigate(`/baules/${baulId}/capitulos/${targetChapterId}`, { replace: true });
+      navigate(`/baules/${baulId}/capitulos/${result.value}`, { replace: true });
     }
   };
 

@@ -48,6 +48,29 @@ export function BatchPhotoActionsContainer({
     if (result.ok) navigate(`/baules/${baulId}/capitulos/${targetChapterId}`);
   };
 
+  // Rama "Nuevo capítulo …" inline de MoveModal (issue #59): crea el capítulo y mueve la
+  // selección a él como 2 peticiones secuenciales, igual que handleBatchCreateChapter — pero
+  // reportando progreso ítem a ítem como handleBatchMove, ya que se dispara desde el mismo
+  // MoveModal de "Mover" en vez de la acción independiente "Crear nuevo capítulo".
+  const handleBatchMoveToNewChapter = async (
+    photoIds: string[],
+    name: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => {
+    const result = await run(
+      async () => {
+        const newChapter = await createChapter(baulId, name);
+        await movePhotos(baulId, chapterId, photoIds, newChapter.id, onItemSettled);
+        return newChapter;
+      },
+      {
+        successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
+        errorMessage: 'Error al mover las fotos',
+      }
+    );
+    if (result.ok) navigate(`/baules/${baulId}/capitulos/${result.value.id}`);
+  };
+
   const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
     const result = await run(() => changePhotoDateBatch(baulId, photoIds, date), {
       successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
@@ -104,6 +127,7 @@ export function BatchPhotoActionsContainer({
       moveableChapters={moveableChapters}
       personas={personas[baulId] || []}
       onBatchMove={allowMoveActions ? handleBatchMove : undefined}
+      onBatchMoveToNewChapter={allowMoveActions ? handleBatchMoveToNewChapter : undefined}
       onBatchChangeDate={handleBatchChangeDate}
       onBatchClearDate={handleBatchClearDate}
       onBatchCreateChapter={allowMoveActions && chapterId === null ? handleBatchCreateChapter : undefined}

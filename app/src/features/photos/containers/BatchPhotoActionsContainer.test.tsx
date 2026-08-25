@@ -108,6 +108,22 @@ describe('BatchPhotoActionsContainer', () => {
     await waitFor(() => expect(screen.getByText('Vista de capítulo')).toBeInTheDocument());
   });
 
+  it('creates a chapter from the text typed in the move modal, moves the selection into it, and navigates there', async () => {
+    const user = userEvent.setup();
+    vi.mocked(createChapter).mockResolvedValue({ id: 'new-chapter' } as Chapter);
+    vi.mocked(movePhotos).mockResolvedValue(undefined);
+
+    renderContainer('chapter-1');
+    await user.click(screen.getByRole('button', { name: /^mover$/i }));
+    await user.type(screen.getByLabelText('Buscar capítulo'), 'Verano');
+    await user.click(screen.getByText('Nuevo capítulo "Verano"'));
+    await user.click(screen.getByRole('button', { name: /mover aquí/i }));
+
+    expect(createChapter).toHaveBeenCalledWith(baulId, 'Verano');
+    await waitFor(() => expect(movePhotos).toHaveBeenCalledWith(baulId, 'chapter-1', ['photo-1'], 'new-chapter', expect.any(Function)));
+    await waitFor(() => expect(screen.getByText('Vista de capítulo')).toBeInTheDocument());
+  });
+
   it('deletes the deletable photos in the selection with a single shared reason', async () => {
     const user = userEvent.setup();
     vi.mocked(deletePhotosBatch).mockResolvedValue(undefined);
