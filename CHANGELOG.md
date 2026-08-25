@@ -15,6 +15,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Añadido
 
+- La ficha de una persona vuelve a tener una pestaña "Recuerdos", entre "Fotos" y "Biografía", con los recuerdos de las fotos en las que esa persona está etiquetada.
 - En la selección múltiple de fotos, ahora se puede borrar el lote seleccionado de una vez, pidiendo un único motivo para todas ellas.
 - Al ver una foto, ahora aparece debajo de las personas etiquetadas el capítulo al que pertenece, y se puede tocar para ir directamente a él (salvo si ya se está viendo dentro de ese mismo capítulo).
 - Al volver de un capítulo al listado del baúl, ahora se recupera el punto de scroll en el que se estaba antes de entrar, en vez de volver siempre arriba del todo.

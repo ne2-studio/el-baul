@@ -10,12 +10,15 @@ import { RoleBadge } from '@/design-system/components/data-display/Badges';
 import { PersonaSettingsMenuContainer } from '@/features/people/containers/PersonaSettingsMenuContainer';
 import { PersonaBiografiaTabContainer } from '@/features/people/containers/PersonaBiografiaTabContainer';
 import { PersonaFotosTabContainer } from '@/features/people/containers/PersonaFotosTabContainer';
+import { PersonaRecuerdosTabContainer } from '@/features/people/containers/PersonaRecuerdosTabContainer';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
+import { usePersonasStore } from '@/store/usePersonasStore';
+import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 
 // PersonaDetailRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las
-// pestañas fotos/biografía como containers autosuficientes — no hay un componente "shell"
+// pestañas fotos/recuerdos/biografía como containers autosuficientes — no hay un componente "shell"
 // intermedio en components/, porque su único trabajo habría sido recomponer containers, lo
 // cual ya no es presentacional de verdad aunque viva ahí — ver la regla de containers/ en
 // docs/architecture/frontend.md.
@@ -25,13 +28,23 @@ export const PersonaDetailRoute: React.FC = () => {
   const { baulId, personaId } = useParams();
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
 
-  const [activeTab, setActiveTab] = useState<'fotos' | 'biografia'>('fotos');
+  const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos' | 'biografia'>('fotos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
 
   // Bloquea hasta tener la persona, sus fotos y los recuerdos del baúl, para que los badges de
   // recuento del Tabbar sean correctos desde el primer render y no haya un hueco de carga al
   // cambiar de pestaña — ver docs/architecture/frontend.md y usePersonaScope.
   const { persona, photos, isLoading, loadFailed, retry } = usePersonaScope(baulId, personaId);
+
+  // Mismo filtro que PersonaRecuerdosTabContainer (recuerdos de las fotos en las que esta
+  // persona está etiquetada) solo para el badge de recuento del Tabbar — igual que el badge de
+  // Fotos ya recalcula `photos` desde el store en vez de que el container se lo devuelva.
+  const { personaPhotos } = usePersonasStore();
+  const { baulRecuerdos } = useRecuerdosStore();
+  const taggedPhotoIds = new Set(personaId ? personaPhotos[personaId] : undefined);
+  const recuerdosCount = ((baulId && baulRecuerdos[baulId]) || []).filter(
+    (recuerdo) => !!recuerdo.photoId && taggedPhotoIds.has(recuerdo.photoId)
+  ).length;
 
   if (isLoading) return <FullScreenLoading message="Abriendo ficha..." />;
 
@@ -88,10 +101,11 @@ export const PersonaDetailRoute: React.FC = () => {
       <Tabbar
         tabs={[
           { key: 'fotos', label: 'Fotos', count: (photos || []).length },
+          { key: 'recuerdos', label: 'Recuerdos', count: recuerdosCount },
           { key: 'biografia', label: 'Biografía' },
         ]}
         active={activeTab}
-        onChange={(key) => setActiveTab(key as 'fotos' | 'biografia')}
+        onChange={(key) => setActiveTab(key as 'fotos' | 'recuerdos' | 'biografia')}
         top={headerHeight}
       >
         <PageContainer className="py-8 space-y-6 pb-28">
@@ -100,6 +114,10 @@ export const PersonaDetailRoute: React.FC = () => {
               personaId={personaId}
               onSelectPhoto={(photo) => openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/personas/${personaId}`, photo.id))}
             />
+          )}
+
+          {activeTab === 'recuerdos' && (
+            <PersonaRecuerdosTabContainer baulId={baulId} personaId={personaId} />
           )}
 
           {activeTab === 'biografia' && (

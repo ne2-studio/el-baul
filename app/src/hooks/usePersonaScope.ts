@@ -9,7 +9,8 @@ import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 
 // PersonaDetailRoute y PersonaPhotoViewerRoute dependen de que la persona, sus fotos
 // etiquetadas y los recuerdos del baúl (la pestaña Recuerdos de la ficha filtra estos últimos
-// por autor) estén en el store. La navegación normal desde BaulRoute ya deja `personas`
+// por las fotos en las que la persona está etiquetada, no por autor) estén en el store. La
+// navegación normal desde BaulRoute ya deja `personas`
 // precargado (loadChapters carga personas como efecto colateral — ver features/baules/useCases)
 // y normalmente también `baulRecuerdos`, pero un refresco o deep link puede aterrizar aquí con
 // el store vacío, y las fotos de la persona nunca se precargan desde BaulRoute. Este hook
