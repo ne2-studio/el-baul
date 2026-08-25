@@ -75,7 +75,11 @@ describe('BaulRoute — pestaña Fotos', () => {
       baules: [baul],
       chapters: { [baul.id]: [] },
       photos: {},
-      loosePhotos: { [baul.id]: [] },
+      // El filtro "Sin capítulo" (activo por defecto en la pestaña Fotos) lee loosePhotos, no
+      // baulPhotos — ver BaulPhotosTabContainer. photo1 se registra en ambos para que estos
+      // tests (centrados en el chrome del header/selección, no en el filtro) vean la misma
+      // foto sin tener que cambiar de filtro.
+      loosePhotos: { [baul.id]: [photo1.id] },
       baulPhotos: { [baul.id]: [photo1.id] },
       baulPhotosHasMore: { [baul.id]: false },
       isLoading: false,

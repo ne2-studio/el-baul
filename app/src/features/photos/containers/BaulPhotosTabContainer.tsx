@@ -6,6 +6,7 @@ import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { LoadingSpinner } from '@/design-system/components/feedback/LoadingSpinner';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
+import { FilterPills } from '@/design-system/components/navigation/FilterPills';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
@@ -28,26 +29,43 @@ interface BaulPhotosTabContainerProps {
   onToggleGroup: (photos: Photo[]) => void;
 }
 
-// Self-sufficient tab (owns su propia carga): scroll infinito de TODAS las fotos del baúl —
-// todos los capítulos + sueltas — agrupadas por swimlane igual que la vista de fotos de un
-// capítulo (PhotoSwimlanes/groupPhotosByYear, orden cronológico ascendente). Pagina contra
-// GET /api/baules/{baulId}/photos sin chapterId (ya devuelve todo el baúl, ya ordenado
-// server-side — ver PhotoOrdering.OrderByChronology), acumulando en
-// useBaulesStore.baulPhotos/baulPhotosHasMore en vez de en estado local, para que
-// BaulPhotoViewerRoute (montada como un árbol de rutas aparte, ver
-// features/photos/viewerNavigation) pueda leer exactamente lo que esta pestaña ya cargó sin
-// duplicar el fetch — mismo patrón que baulFeed/baulFeedHasMore para el feed de recuerdos.
+// Self-sufficient tab (owns su propia carga): agrupa por swimlane igual que la vista de fotos
+// de un capítulo (PhotoSwimlanes/groupPhotosByYear, orden cronológico ascendente), con un
+// filtro de pills ("Sin capítulo"/"Todas") arriba.
+//
+// "Sin capítulo" reutiliza useBaulesStore.loosePhotos[baulId] tal cual — el mismo estado que
+// alimenta la pantalla de fotos sueltas (ChapterRoute sin chapterId) — sin fetch propio: para
+// cuando esta tab se monta, BaulRoute ya esperó (guardBaulScope) a que useBaulScope terminara
+// de cargar el scope completo del baúl, que incluye loosePhotos.
+//
+// "Todas" es el comportamiento original de esta tab: scroll infinito de TODAS las fotos del
+// baúl — todos los capítulos + sueltas —, paginando contra GET /api/baules/{baulId}/photos sin
+// chapterId (ya devuelve todo el baúl, ya ordenado server-side — ver
+// PhotoOrdering.OrderByChronology), acumulando en useBaulesStore.baulPhotos/baulPhotosHasMore
+// en vez de en estado local, para que BaulPhotoViewerRoute (montada como un árbol de rutas
+// aparte, ver features/photos/viewerNavigation) pueda leer exactamente lo que esta pestaña ya
+// cargó sin duplicar el fetch — mismo patrón que baulFeed/baulFeedHasMore para el feed de
+// recuerdos. Solo se pagina cuando el filtro activo es "Todas".
+type PhotosFilter = 'sin-capitulo' | 'todas';
+
+const FILTER_OPTIONS: { value: PhotosFilter; label: string }[] = [
+  { value: 'sin-capitulo', label: 'Sin capítulo' },
+  { value: 'todas', label: 'Todas' },
+];
+
 export function BaulPhotosTabContainer({
   baulId, selectionMode, selectedIds, onSelectPhoto, onToggleSelect, onLongPress, onToggleGroup,
 }: BaulPhotosTabContainerProps) {
   const navigate = useNavigate();
   const auth = useAuth();
   const { run, isPending } = useAsyncAction();
-  const { baulPhotos, baulPhotosHasMore } = useBaulesStore();
+  const { baulPhotos, baulPhotosHasMore, loosePhotos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [filter, setFilter] = useState<PhotosFilter>('sin-capitulo');
 
-  const photos = hydratePhotos(baulPhotos[baulId], photosById);
+  const loosePhotosList = hydratePhotos(loosePhotos[baulId], photosById) ?? [];
+  const allPhotosList = hydratePhotos(baulPhotos[baulId], photosById);
   const hasMore = baulPhotosHasMore[baulId] ?? true;
 
   const fetchFirstPage = useCallback(async () => {
@@ -56,22 +74,23 @@ export function BaulPhotosTabContainer({
   }, [baulId, run]);
 
   useEffect(() => {
-    if (auth.isAuthenticated && !baulPhotos[baulId]) fetchFirstPage();
+    if (auth.isAuthenticated && filter === 'todas' && !baulPhotos[baulId]) fetchFirstPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, baulId, baulPhotos]);
+  }, [auth.isAuthenticated, baulId, filter, baulPhotos]);
 
   const loadMore = useCallback(() => {
-    if (!hasMore) return;
+    if (filter !== 'todas' || !hasMore) return;
     run(() => loadMoreBaulPhotos(baulId), { key: 'baul-photos-more', errorMessage: 'Error al cargar más fotos' });
-  }, [baulId, hasMore, run]);
+  }, [baulId, filter, hasMore, run]);
 
-  // photos !== undefined como remountKey: el sentinel solo se pinta una vez cargada la
-  // primera página — ver useLoadMoreSentinel/CoverPhotoPickerModal.
-  const sentinelRef = useLoadMoreSentinel(loadMore, photos !== undefined);
+  // allPhotosList !== undefined como remountKey: el sentinel solo se pinta una vez cargada la
+  // primera página — ver useLoadMoreSentinel/CoverPhotoPickerModal. En "Sin capítulo" no hay
+  // más páginas que cargar, así que loadMore no hace nada aunque el sentinel esté montado.
+  const sentinelRef = useLoadMoreSentinel(loadMore, filter === 'todas' && allPhotosList !== undefined);
 
   const handleUploadPhotos = () => navigate(`/baules/${baulId}/fotos-sueltas/confirmar`);
 
-  if (photos === undefined) {
+  if (filter === 'todas' && allPhotosList === undefined) {
     if (loadFailed) {
       return (
         <ErrorScreen
@@ -85,8 +104,13 @@ export function BaulPhotosTabContainer({
     return <LoadingSpinner message="Cargando fotos..." />;
   }
 
+  const photos = filter === 'sin-capitulo' ? loosePhotosList : (allPhotosList ?? []);
+
   return (
     <>
+      {!selectionMode && (
+        <FilterPills options={FILTER_OPTIONS} value={filter} onChange={setFilter} className="mb-4" />
+      )}
       {photos.length === 0 ? (
         <EmptyState
           icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}

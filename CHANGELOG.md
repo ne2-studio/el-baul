@@ -15,7 +15,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Añadido
 
-- El baúl tiene ahora una pestaña "Fotos", junto a "Historia", "Capítulos" y "Familia", con todas las fotos del baúl ordenadas cronológicamente, con selección múltiple y las mismas acciones que ya existían en la vista de fotos de un capítulo (cambiar o borrar fecha, etiquetar personas, borrar). Subir fotos sueltas ahora se hace desde esta pestaña; el botón "Subir fotos" se ha quitado del menú de la pestaña "Capítulos".
+- El baúl tiene ahora una pestaña "Fotos", junto a "Historia", "Capítulos" y "Familia", con todas las fotos del baúl ordenadas cronológicamente, con selección múltiple y las mismas acciones que ya existían en la vista de fotos de un capítulo (cambiar o borrar fecha, etiquetar personas, borrar). Subir fotos sueltas ahora se hace desde esta pestaña; el botón "Subir fotos" se ha quitado del menú de la pestaña "Capítulos". Un filtro arriba permite elegir entre ver solo las fotos sin capítulo (opción por defecto) o todas las fotos del baúl.
 - La ficha de una persona vuelve a tener una pestaña "Recuerdos", entre "Fotos" y "Biografía", con los recuerdos de las fotos en las que esa persona está etiquetada.
 - En la selección múltiple de fotos, ahora se puede borrar el lote seleccionado de una vez, pidiendo un único motivo para todas ellas.
 - Al ver una foto, ahora aparece debajo de las personas etiquetadas el capítulo al que pertenece, y se puede tocar para ir directamente a él (salvo si ya se está viendo dentro de ese mismo capítulo).

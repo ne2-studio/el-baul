@@ -68,31 +68,67 @@ function renderContainer(overrides: Partial<React.ComponentProps<typeof BaulPhot
   );
 }
 
-describe('BaulPhotosTabContainer', () => {
-  it('loads the first page on mount and renders it grouped by swimlane', async () => {
+// El filtro "Sin capítulo" está activo por defecto y lee useBaulesStore.loosePhotos, ya
+// cargado por BaulRoute/useBaulScope antes de que esta tab se monte (ver comentario de
+// cabecera de BaulPhotosTabContainer) — no dispara ningún fetch propio.
+describe('BaulPhotosTabContainer — filtro "Sin capítulo" (por defecto)', () => {
+  it('renders the already-loaded loose photos without fetching anything', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: ['p1'] } });
+    usePhotosStore.getState().upsertPhotos([photo('p1')]);
+
+    renderContainer();
+
+    expect(await screen.findByAltText('Foto')).toBeInTheDocument();
+    expect(loadBaulPhotos).not.toHaveBeenCalled();
+  });
+
+  it('shows the empty state when there are no loose photos', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: [] } });
+
+    renderContainer();
+
+    expect(await screen.findByText('Todavía no hay fotos aquí')).toBeInTheDocument();
+  });
+});
+
+describe('BaulPhotosTabContainer — filtro "Todas"', () => {
+  async function switchToTodas() {
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Todas' }));
+  }
+
+  it('loads the first page on switching and renders it grouped by swimlane', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: [] } });
     vi.mocked(loadBaulPhotos).mockImplementation(async () => {
       usePhotosStore.getState().upsertPhotos([photo('p1')]);
       useBaulesStore.setState({ baulPhotos: { [baulId]: ['p1'] }, baulPhotosHasMore: { [baulId]: true } });
     });
 
     renderContainer();
+    await switchToTodas();
 
     await waitFor(() => expect(loadBaulPhotos).toHaveBeenCalledWith(baulId));
     expect(await screen.findByAltText('Foto')).toBeInTheDocument();
   });
 
   it('shows the empty state once the first page resolves with no photos', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: [] } });
     vi.mocked(loadBaulPhotos).mockImplementation(async () => {
       useBaulesStore.setState({ baulPhotos: { [baulId]: [] }, baulPhotosHasMore: { [baulId]: false } });
     });
 
     renderContainer();
+    await switchToTodas();
 
     expect(await screen.findByText('Todavía no hay fotos aquí')).toBeInTheDocument();
   });
 
   it('fetches the next page once the sentinel intersects, and stops once hasMore is false', async () => {
-    useBaulesStore.setState({ baulPhotos: { [baulId]: ['p1'] }, baulPhotosHasMore: { [baulId]: true } });
+    useBaulesStore.setState({
+      loosePhotos: { [baulId]: [] },
+      baulPhotos: { [baulId]: ['p1'] },
+      baulPhotosHasMore: { [baulId]: true },
+    });
     usePhotosStore.getState().upsertPhotos([photo('p1')]);
     vi.mocked(loadMoreBaulPhotos).mockImplementation(async () => {
       usePhotosStore.getState().upsertPhotos([photo('p2')]);
@@ -100,6 +136,7 @@ describe('BaulPhotosTabContainer', () => {
     });
 
     renderContainer();
+    await switchToTodas();
     await screen.findByAltText('Foto');
 
     act(() => triggerIntersection(true));
@@ -111,32 +148,12 @@ describe('BaulPhotosTabContainer', () => {
     expect(loadMoreBaulPhotos).toHaveBeenCalledTimes(1);
   });
 
-  it('navigates to the loose-photos upload flow from the FAB', async () => {
-    useBaulesStore.setState({ baulPhotos: { [baulId]: ['p1'] }, baulPhotosHasMore: { [baulId]: false } });
-    usePhotosStore.getState().upsertPhotos([photo('p1')]);
-
-    const user = userEvent.setup();
-    renderContainer();
-    await screen.findByAltText('Foto');
-    await user.click(screen.getByText('Subir fotos'));
-
-    expect(screen.getByText('Confirmar subida')).toBeInTheDocument();
-  });
-
-  it('hides the upload FAB while in selection mode', async () => {
-    useBaulesStore.setState({ baulPhotos: { [baulId]: ['p1'] }, baulPhotosHasMore: { [baulId]: false } });
-    usePhotosStore.getState().upsertPhotos([photo('p1')]);
-
-    renderContainer({ selectionMode: true, selectedIds: new Set(['p1']) });
-    await screen.findByAltText('Foto');
-
-    expect(screen.queryByText('Subir fotos')).not.toBeInTheDocument();
-  });
-
   it('shows an error state and retries when the first page fails to load', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: [] } });
     vi.mocked(loadBaulPhotos).mockRejectedValueOnce(new Error('network error'));
 
     renderContainer();
+    await switchToTodas();
 
     expect(await screen.findByText('No se han podido cargar las fotos')).toBeInTheDocument();
 
@@ -148,5 +165,30 @@ describe('BaulPhotosTabContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Reintentar' }));
 
     expect(await screen.findByAltText('Foto')).toBeInTheDocument();
+  });
+});
+
+describe('BaulPhotosTabContainer', () => {
+  it('navigates to the loose-photos upload flow from the FAB', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: ['p1'] } });
+    usePhotosStore.getState().upsertPhotos([photo('p1')]);
+
+    const user = userEvent.setup();
+    renderContainer();
+    await screen.findByAltText('Foto');
+    await user.click(screen.getByText('Subir fotos'));
+
+    expect(screen.getByText('Confirmar subida')).toBeInTheDocument();
+  });
+
+  it('hides the upload FAB and the filter pills while in selection mode', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: ['p1'] } });
+    usePhotosStore.getState().upsertPhotos([photo('p1')]);
+
+    renderContainer({ selectionMode: true, selectedIds: new Set(['p1']) });
+    await screen.findByAltText('Foto');
+
+    expect(screen.queryByText('Subir fotos')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Todas' })).not.toBeInTheDocument();
   });
 });
