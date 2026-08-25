@@ -4,6 +4,30 @@ Versiones antiguas movidas fuera de [`CHANGELOG.md`](./CHANGELOG.md) para que
 ese archivo se mantenga corto y legible. Ver ese fichero para el formato y
 las versiones recientes.
 
+## [beta-v0.3.2] - 2026-08-12
+
+### Añadido
+
+- La recomendación de "¿nos ayudas con esta foto?" ahora tiene un botón "No hay nadie en esta foto": esa foto deja de proponerse para etiquetar, a diferencia de "Ahora no" que solo la pospone.
+- El menú de una foto tiene una nueva opción "Borrar fecha" (junto a "Cambiar fecha") para quitarle la fecha asignada, con confirmación previa.
+- El selector de capítulo para mover fotos tiene ahora una caja de búsqueda para filtrar la lista por nombre.
+
+### Cambiado
+
+- La ficha de una persona ya no tiene la pestaña "Recuerdos": ahora solo muestra Fotos y Biografía, en ese orden.
+- El selector de fecha de una foto ahora pide primero el día, luego el mes y por último el año, y el mes se elige por su nombre completo en vez de una abreviatura.
+- El menú de una foto ya no ofrece "Establecer como portada del baúl" ni "Establecer como portada del capítulo" (la portada sigue pudiendo elegirse desde los ajustes del baúl o del capítulo).
+
+### Arreglado
+
+- Al abrir una foto de una tarjeta de subida en el feed, "Mover a otro capítulo" (y "Establecer como portada del capítulo", si corresponde) ya aparecen cuando esa foto pertenece a un capítulo, igual que al abrirla desde dentro del propio capítulo.
+- Al editar la fecha de una foto que ya tenía fecha, el editor ahora la muestra precargada en vez de aparecer vacío.
+- El selector de capítulo para mover fotos ya no cambia de alto al filtrar la lista, y ahora deja un pequeño margen entre las opciones y la barra de scroll.
+
+### Seguridad
+
+- Ya no es posible, a través de la gestión de acceso, convertir a otra persona en custodio del baúl ni quitarle ese rol al custodio original.
+
 ## [beta-v0.3.1] - 2026-08-09
 
 ### Añadido
