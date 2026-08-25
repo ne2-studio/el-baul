@@ -317,11 +317,6 @@ function App() {
             <UploadErrorRoute navigate={navigate} />
           </ProtectedRoute>
         } />
-        <Route path="/baules/:baulId/fotos-sueltas" element={
-          <ProtectedRoute>
-            <ChapterRoute />
-          </ProtectedRoute>
-        } />
         <Route path="/baules/:baulId/fotos-sueltas/confirmar" element={
           <ProtectedRoute>
             <UploadConfirmationRoute />

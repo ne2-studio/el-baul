@@ -46,6 +46,7 @@ export const BaulRoute: React.FC = () => {
   const auth = useAuth();
 
   const baulPhotosIds = useBaulesStore((state) => state.baulPhotos);
+  const loosePhotosIds = useBaulesStore((state) => state.loosePhotos);
   const photosById = usePhotosStore((state) => state.photosById);
 
   const startContributionSuggestionCooldown = useUIStore((state) => state.startContributionSuggestionCooldown);
@@ -58,6 +59,10 @@ export const BaulRoute: React.FC = () => {
   // cambiar de pestaña (más abajo) para que no quede "colgada" si la persona vuelve más tarde.
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Filtro activo de BaulPhotosTabContainer ('sin-capitulo' | 'todas'), notificado vía
+  // onFilterChange — determina si la barra de acciones en lote ofrece Mover/Crear capítulo
+  // (ver su montaje más abajo).
+  const [photosFilter, setPhotosFilter] = useState<'sin-capitulo' | 'todas'>('sin-capitulo');
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -167,8 +172,9 @@ export const BaulRoute: React.FC = () => {
 
   const baulPermissions = getBaulPermissions(baul);
   // Solo para la barra de acciones en lote de la pestaña "Fotos" — BaulPhotosTabContainer lee
-  // esta misma store slice él mismo para pintar el grid, ver ese archivo.
+  // estas mismas store slices él mismo para pintar el grid, ver ese archivo.
   const baulPhotosList = hydratePhotos(baulPhotosIds[baul.id], photosById) || [];
+  const loosePhotosList = hydratePhotos(loosePhotosIds[baul.id], photosById) || [];
 
   const resolveContributionSuggestion = () => {
     startContributionSuggestionCooldown(baul.id);
@@ -263,6 +269,7 @@ export const BaulRoute: React.FC = () => {
               onToggleSelect={toggleSelect}
               onLongPress={handleLongPress}
               onToggleGroup={handleToggleGroup}
+              onFilterChange={setPhotosFilter}
             />
           )}
 
@@ -276,14 +283,18 @@ export const BaulRoute: React.FC = () => {
         </PageContainer>
       </Tabbar>
 
+      {/* "Mover"/"Crear capítulo" solo tienen sentido con el filtro "Sin capítulo": con "Todas"
+          la selección puede abarcar varios capítulos a la vez, así que no hay un único origen
+          desde el que mover, ni un conjunto coherente que mover a un capítulo nuevo — ver el
+          comentario de allowMoveActions en BatchPhotoActionsContainer. */}
       <BatchPhotoActionsContainer
         active={activeTab === 'fotos' && selectionMode}
         baulId={baul.id}
         chapterId={null}
-        photos={baulPhotosList}
+        photos={photosFilter === 'sin-capitulo' ? loosePhotosList : baulPhotosList}
         selectedIds={selectedIds}
-        moveableChapters={[]}
-        allowMoveActions={false}
+        moveableChapters={photosFilter === 'sin-capitulo' ? (baulScope.chapters || []) : []}
+        allowMoveActions={photosFilter === 'sin-capitulo'}
         onDone={exitSelection}
       />
     </div>

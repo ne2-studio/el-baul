@@ -6,11 +6,11 @@ import { uploadPhotosWithChapter } from '@/features/photos/useCases';
 import { UploadItemResult } from '@/features/photos/uploadFlow';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
-import { Photo } from '@/types';
 import {
   PhotoUploadDestination,
   resolvePhotoRouteContext,
   SelectedPhoto,
+  UploadReturnTo,
   uploadItemsFromSelectedPhotos,
   uploadResultMessage,
 } from '@/features/photos/uploadFlow';
@@ -19,6 +19,7 @@ interface LocationState {
   selectedPhotos: SelectedPhoto[];
   chapter: PhotoUploadDestination;
   succeededCount?: number;
+  returnTo?: UploadReturnTo;
 }
 
 export const UploadingRoute: React.FC = () => {
@@ -30,19 +31,25 @@ export const UploadingRoute: React.FC = () => {
   const showToastMessage = useUIStore((state) => state.showToastMessage);
 
   const baul = baules.find(b => b.id === baulId);
-  const { selectedPhotos, chapter, succeededCount: succeededSoFar = 0 } =
+  const { selectedPhotos, chapter, succeededCount: succeededSoFar = 0, returnTo } =
     (location.state as LocationState) || { selectedPhotos: [], chapter: { type: 'none' } };
 
   const resolvedChapterIdRef = useRef<string | null>(null);
+  // Generated once per upload attempt (uploadItemsFromSelectedPhotos mints a fresh one on every
+  // call) — captured here so handleSettled can send the user to that exact batch's grid, the
+  // same batchId the baúl feed's "N fotos subidas" card groups by server-side.
+  const uploadBatchIdRef = useRef<string | null>(null);
 
   if (!baul) return <div className="p-8 text-center">Cargando...</div>;
 
   const handleUpload = (photos: SelectedPhoto[], onItemSettled: (result: UploadItemResult) => void) => {
     if (!auth.isAuthenticated) return Promise.resolve([]);
+    const uploadItems = uploadItemsFromSelectedPhotos(photos);
+    uploadBatchIdRef.current = uploadItems[0]?.uploadBatchId ?? null;
     return uploadPhotosWithChapter(
       baul.id,
       chapter,
-      uploadItemsFromSelectedPhotos(photos),
+      uploadItems,
       onItemSettled
     ).then(({ results, chapterId }) => {
       resolvedChapterIdRef.current = chapterId;
@@ -67,21 +74,17 @@ export const UploadingRoute: React.FC = () => {
     const errorPath = `${chapterPath}/error`;
 
     if (failed.length === 0) {
-      // Shown as an "Añadido recientemente" swimlane at the top of the chapter (see
-      // ChapterRoute) — carried purely via router state, not persisted anywhere, so it
-      // naturally disappears the moment the user navigates away from this exact screen,
-      // reloads, or reopens the baúl later. No explicit cleanup needed. Excludes photos that
-      // already existed: they aren't new arrivals, so they don't belong in "recently added".
-      const recentlyUploadedPhotos = newlyUploaded
-        .map((result) => result.photo)
-        .filter((photo): photo is Photo => photo !== undefined);
-      navigate(chapterPath, { state: { recentlyUploadedPhotos } });
+      // Aterriza en la pantalla del batch recién subido (PhotoBatchGridRoute), no en el
+      // capítulo/pestaña de origen — "< Volver" desde ahí usa returnTo para reaparecer donde
+      // se inició la subida.
+      const batchId = uploadBatchIdRef.current;
+      navigate(batchId ? `/baules/${baul.id}/subida/${batchId}` : chapterPath, { state: { returnTo } });
       showToastMessage(uploadResultMessage(newlyUploaded.length, alreadyExisted.length));
       return;
     }
 
     const failedPhotos = selectedPhotos.filter((p) => failed.some((f) => f.clientUploadId === p.id));
-    navigate(errorPath, { state: { failedPhotos, succeededCount } });
+    navigate(errorPath, { state: { failedPhotos, succeededCount, returnTo } });
   };
 
   return (

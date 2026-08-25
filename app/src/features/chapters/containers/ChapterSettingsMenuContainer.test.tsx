@@ -39,7 +39,6 @@ function renderContainer(props: Partial<React.ComponentProps<typeof ChapterSetti
               chapterName="Verano 2024"
               photoCount={3}
               recuerdoCount={1}
-              onEnterSelectionMode={vi.fn()}
               {...props}
             />
           }
@@ -56,27 +55,10 @@ describe('ChapterSettingsMenuContainer', () => {
     vi.clearAllMocks();
   });
 
-  it('renders nothing for the fotos sueltas virtual chapter', () => {
-    renderContainer({ chapterId: null });
-
-    expect(screen.queryByRole('button', { name: 'Opciones del capítulo' })).not.toBeInTheDocument();
-  });
-
   it('shows the menu trigger for a real chapter', () => {
     renderContainer();
 
     expect(screen.getByRole('button', { name: 'Opciones del capítulo' })).toBeInTheDocument();
-  });
-
-  it('calls onEnterSelectionMode from the menu', async () => {
-    const user = userEvent.setup();
-    const onEnterSelectionMode = vi.fn();
-
-    renderContainer({ onEnterSelectionMode });
-    await user.click(screen.getByRole('button', { name: 'Opciones del capítulo' }));
-    await user.click(await screen.findByText('Seleccionar fotos'));
-
-    expect(onEnterSelectionMode).toHaveBeenCalled();
   });
 
   it('renames the chapter and closes the modal on success', async () => {

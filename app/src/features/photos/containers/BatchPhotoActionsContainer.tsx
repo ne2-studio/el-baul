@@ -16,12 +16,12 @@ interface BatchPhotoActionsContainerProps {
   selectedIds: Set<string>;
   moveableChapters: Chapter[];
   onDone: () => void;
-  /** false only for the baúl-wide "Fotos" tab (BaulRoute): a single selection there can span
-   * several chapters plus fotos sueltas at once, so there's neither one source chapter for
-   * "mover a otro capítulo" nor a clear "crear capítulo desde selección" (it would move
-   * photos already spread across different origins) — v1 only offers fecha/etiquetar/borrar
-   * for that tab. See issue #57's refinement. Defaults to true, i.e. every other caller
-   * (chapter, fotos sueltas, upload batch) keeps today's behavior unchanged. */
+  /** false for the baúl-wide "Fotos" tab (BaulRoute) with its "Todas" filter active: a single
+   * selection there can span several chapters at once, so there's neither one source chapter
+   * for "mover a otro capítulo" nor a clear "crear capítulo desde selección" (it would move
+   * photos already spread across different origins). With "Sin capítulo" active, or from a
+   * real chapter/upload batch, every selected photo shares the same (lack of) origin, so this
+   * defaults to true. See issue #57's refinement. */
   allowMoveActions?: boolean;
 }
 

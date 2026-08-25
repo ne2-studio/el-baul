@@ -13,9 +13,18 @@ import { Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { loadPhotoBatchPhotos } from '@/features/photos/useCases';
+import { UploadReturnTo } from '@/features/photos/uploadFlow';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
+
+interface LocationState {
+  // Set by UploadingRoute right after this batch's upload finished, so "< Volver" reopens
+  // wherever the upload started (Fotos tab or a chapter) instead of always falling back to
+  // Historia — absent when this route is reached from a feed batch card instead, which has no
+  // single "started from" screen to return to.
+  returnTo?: UploadReturnTo;
+}
 
 // Grid for one photo-upload batch's own photos, reached from its feed card's "y N más" tile —
 // same PhotoSwimlanes grid used everywhere else in the app (chapters, fotos sueltas, a
@@ -95,7 +104,10 @@ export const PhotoBatchGridRoute: React.FC = () => {
 
   if (!baulId || !batchId) return <div className="p-8 text-center">No se ha encontrado la subida.</div>;
 
-  const handleBack = () => navigate(`/baules/${baulId}`, { state: { activeTab: 'recuerdos' } });
+  const { returnTo } = (location.state as LocationState) || {};
+  const handleBack = () => returnTo
+    ? navigate(returnTo.pathname, { state: returnTo.state })
+    : navigate(`/baules/${baulId}`, { state: { activeTab: 'recuerdos' } });
   const handleSelectPhoto = (photo: Photo) =>
     openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baulId}/subida/${batchId}`, photo.id));
 

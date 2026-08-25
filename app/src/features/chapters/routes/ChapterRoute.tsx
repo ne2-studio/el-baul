@@ -7,7 +7,7 @@ import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
-import { Plus, ImageIcon, MessageCircle } from 'lucide-react';
+import { Plus, ImageIcon } from 'lucide-react';
 import { ChapterRecuerdosFeedContainer } from '@/features/memories/containers/ChapterRecuerdosFeedContainer';
 import { BatchPhotoActionsContainer } from '@/features/photos/containers/BatchPhotoActionsContainer';
 import { ChapterSettingsMenuContainer } from '@/features/chapters/containers/ChapterSettingsMenuContainer';
@@ -26,26 +26,13 @@ import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 interface LocationState {
-  // Set by UploadingRoute right after a successful upload — see its comment for why this
-  // lives purely in router state instead of a store.
-  recentlyUploadedPhotos?: Photo[];
   // Set by BaulRoute.handleSelectChapter (the "capítulos"/"recuerdos" tabs, the only two that
   // link here) so "Volver" can reopen the same tab instead of always falling back to the
   // baúl's initial one — same returnTab mechanism PersonaDetailRoute already uses. Defaults to
-  // 'capitulos' for entry points that don't set it (e.g. a deep link, or the "fotos sueltas"
-  // card in BaulChaptersTabContainer, which only that tab can reach anyway).
+  // 'capitulos' for entry points that don't set it (e.g. a deep link).
   returnTab?: 'recuerdos' | 'capitulos';
 }
 
-// chapterId is present for a real chapter, absent for the virtual "Fotos sueltas" chapter
-// (see useBaulesStore's nullable chapterId convention). Real-chapter photos are paginated
-// per-chapter, and its recuerdos are fetched separately too — both fetched on demand via
-// useChapterScope, which blocks on both together so the chrome and the default Recuerdos tab
-// never paint with one of the two still missing (see that hook for why). Loose photos are
-// already loaded in full by useBaulScope, so no separate fetch/loading state is needed for
-// them. Chapter-only concerns (rename/delete, recuerdos) stay conditional on chapterId being
-// present.
-//
 // ChapterRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las piezas
 // autosuficientes de la pantalla — no hay un componente "shell" intermedio en components/,
 // porque su único trabajo habría sido recomponer containers, lo cual ya no es presentacional
@@ -56,7 +43,7 @@ interface LocationState {
 export const ChapterRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recentlyUploadedPhotos, returnTab = 'capitulos' } = (location.state as LocationState) || {};
+  const { returnTab = 'capitulos' } = (location.state as LocationState) || {};
   const { baulId, chapterId } = useParams();
   const { photos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
@@ -65,7 +52,7 @@ export const ChapterRoute: React.FC = () => {
   const { chapterRecuerdos } = useRecuerdosStore();
 
   const baulScope = useBaulScope(baulId);
-  const { chapters, loosePhotos } = baulScope;
+  const { chapters } = baulScope;
   const chapter = chapterId ? chapters?.find(a => a.id === chapterId) : undefined;
   const chapterScope = useChapterScope(baulId, chapterId);
 
@@ -117,42 +104,39 @@ export const ChapterRoute: React.FC = () => {
   if (!guard.ready) return guard.screen;
   const { baul } = guard;
 
-  if (chapterId && !chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
+  if (!chapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
-  if (chapterId) {
-    if (chapterScope.isLoading) return <FullScreenLoading message="Abriendo capítulo..." />;
-    if (!chapterScope.photos || !chapterScope.chapterRecuerdos) {
-      if (chapterScope.loadFailed) {
-        return (
-          <ErrorScreen
-            title="No se ha podido cargar el capítulo"
-            message="Comprueba tu conexión e inténtalo de nuevo."
-            actionLabel="Reintentar"
-            onAction={chapterScope.retry}
-          />
-        );
-      }
-      return <FullScreenLoading message="Abriendo capítulo..." />;
+  if (chapterScope.isLoading) return <FullScreenLoading message="Abriendo capítulo..." />;
+  if (!chapterScope.photos || !chapterScope.chapterRecuerdos) {
+    if (chapterScope.loadFailed) {
+      return (
+        <ErrorScreen
+          title="No se ha podido cargar el capítulo"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          actionLabel="Reintentar"
+          onAction={chapterScope.retry}
+        />
+      );
     }
+    return <FullScreenLoading message="Abriendo capítulo..." />;
   }
 
-  const currentPhotos = chapterId ? (hydratePhotos(photos[chapterId], photosById) || []) : (loosePhotos || []);
+  const currentPhotos = hydratePhotos(photos[chapterId!], photosById) || [];
   const { currentChapter, basePath, apiChapterId } = resolvePhotoRouteContext({
     baulId: baul.id,
     chapterId,
     chapters: chapters || [],
-    loosePhotos: currentPhotos,
+    loosePhotos: [],
   });
-  if (!currentChapter) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
+  if (!currentChapter || !apiChapterId) return <div className="p-8 text-center">No se ha encontrado el capítulo.</div>;
 
-  const recuerdosCount = apiChapterId ? (chapterRecuerdos[apiChapterId] || []).length : 0;
-  const totalRecuerdos = apiChapterId !== null
-    ? recuerdosCount
-    : currentPhotos.reduce((sum, photo) => sum + (photo.recuerdoCount || 0), 0);
+  const recuerdosCount = (chapterRecuerdos[apiChapterId] || []).length;
   const moveableChapters = (chapters || []).filter(a => a.id !== currentChapter.id);
 
   const handleSelectPhoto = (photo: Photo) => openPhotoViewer(navigate, location, photoViewerPath(basePath, photo.id));
-  const handleUploadPhotos = () => navigate(`${basePath}/confirmar`);
+  const handleUploadPhotos = () => navigate(`${basePath}/confirmar`, {
+    state: { returnTo: { pathname: `/baules/${baul.id}/capitulos/${apiChapterId}`, state: { activeTab: 'fotos' } } },
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,7 +157,6 @@ export const ChapterRoute: React.FC = () => {
               chapterName={currentChapter.name}
               photoCount={currentPhotos.length}
               recuerdoCount={recuerdosCount}
-              onEnterSelectionMode={() => setSelectionMode(true)}
             />
           )
         }
@@ -190,83 +173,48 @@ export const ChapterRoute: React.FC = () => {
         </Hero>
       )}
 
-      {/* Tabbar solo para capítulos reales (no el de fotos sueltas virtual) — sin un
-          chapterId no hay nada entre lo que hacer swipe. */}
-      {apiChapterId !== null ? (
-        <Tabbar
-          tabs={[
-            { key: 'recuerdos', label: 'Recuerdos' },
-            { key: 'fotos', label: 'Fotos' },
-          ]}
-          active={activeTab}
-          onChange={(key) => setActiveTab(key as 'recuerdos' | 'fotos')}
-          top={headerHeight}
-          hideStrip={selectionMode}
-        >
-          <PageContainer className="py-6 pb-28">
-            {activeTab === 'fotos' && (
-              currentPhotos.length === 0 ? (
-                <EmptyState
-                  icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
-                  title="Todavía no hay fotos aquí"
-                  subtitle="Añade fotos para empezar este recuerdo"
-                />
-              ) : (
-                <PhotoSwimlanes
-                  photos={currentPhotos}
-                  recentlyAddedPhotos={recentlyUploadedPhotos}
-                  onSelectPhoto={handleSelectPhoto}
-                  selectionMode={selectionMode}
-                  selectedIds={selectedIds}
-                  onToggleSelect={toggleSelect}
-                  onLongPress={handleLongPress}
-                  onToggleGroup={handleToggleGroup}
-                />
-              )
-            )}
-
-            <ChapterRecuerdosFeedContainer
-              active={activeTab === 'recuerdos'}
-              baulId={baul.id}
-              baulName={baul.name}
-              chapterId={apiChapterId}
-              photos={currentPhotos}
-              onSelectPhoto={handleSelectPhoto}
-              selectionMode={selectionMode}
-            />
-          </PageContainer>
-        </Tabbar>
-      ) : (
+      <Tabbar
+        tabs={[
+          { key: 'recuerdos', label: 'Recuerdos' },
+          { key: 'fotos', label: 'Fotos' },
+        ]}
+        active={activeTab}
+        onChange={(key) => setActiveTab(key as 'recuerdos' | 'fotos')}
+        top={headerHeight}
+        hideStrip={selectionMode}
+      >
         <PageContainer className="py-6 pb-28">
-          {!selectionMode && totalRecuerdos > 0 && (
-            <div className="flex items-center gap-1.5 mb-5 -mt-1">
-              <MessageCircle className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.5} />
-              <span className="text-xs text-muted-foreground/75">
-                {totalRecuerdos} {totalRecuerdos === 1 ? 'recuerdo' : 'recuerdos'} en este capítulo
-              </span>
-            </div>
+          {activeTab === 'fotos' && (
+            currentPhotos.length === 0 ? (
+              <EmptyState
+                icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
+                title="Todavía no hay fotos aquí"
+                subtitle="Añade fotos para empezar este recuerdo"
+              />
+            ) : (
+              <PhotoSwimlanes
+                photos={currentPhotos}
+                onSelectPhoto={handleSelectPhoto}
+                selectionMode={selectionMode}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onLongPress={handleLongPress}
+                onToggleGroup={handleToggleGroup}
+              />
+            )
           )}
 
-          {currentPhotos.length === 0 ? (
-            <EmptyState
-              icon={<ImageIcon className="w-20 h-20" strokeWidth={1.5} />}
-              title="Todavía no hay fotos aquí"
-              subtitle="Añade fotos para empezar este recuerdo"
-            />
-          ) : (
-            <PhotoSwimlanes
-              photos={currentPhotos}
-              recentlyAddedPhotos={recentlyUploadedPhotos}
-              onSelectPhoto={handleSelectPhoto}
-              selectionMode={selectionMode}
-              selectedIds={selectedIds}
-              onToggleSelect={toggleSelect}
-              onLongPress={handleLongPress}
-              onToggleGroup={handleToggleGroup}
-            />
-          )}
+          <ChapterRecuerdosFeedContainer
+            active={activeTab === 'recuerdos'}
+            baulId={baul.id}
+            baulName={baul.name}
+            chapterId={apiChapterId}
+            photos={currentPhotos}
+            onSelectPhoto={handleSelectPhoto}
+            selectionMode={selectionMode}
+          />
         </PageContainer>
-      )}
+      </Tabbar>
 
       <SimpleFAB
         label="Subir fotos"

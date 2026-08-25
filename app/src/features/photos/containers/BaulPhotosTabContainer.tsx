@@ -27,6 +27,11 @@ interface BaulPhotosTabContainerProps {
   onToggleSelect: (id: string) => void;
   onLongPress: (id: string) => void;
   onToggleGroup: (photos: Photo[]) => void;
+  // Notifica a BaulRoute qué filtro está activo — lo necesita para decidir si la selección
+  // múltiple ofrece "Mover"/"Crear capítulo" (solo tiene sentido con "Sin capítulo": con
+  // "Todas" la selección puede abarcar varios capítulos a la vez). El filtro en sí sigue
+  // viviendo aquí dentro, esto es solo una notificación hacia arriba.
+  onFilterChange?: (filter: PhotosFilter) => void;
 }
 
 // Self-sufficient tab (owns su propia carga): agrupa por swimlane igual que la vista de fotos
@@ -54,7 +59,7 @@ const FILTER_OPTIONS: { value: PhotosFilter; label: string }[] = [
 ];
 
 export function BaulPhotosTabContainer({
-  baulId, selectionMode, selectedIds, onSelectPhoto, onToggleSelect, onLongPress, onToggleGroup,
+  baulId, selectionMode, selectedIds, onSelectPhoto, onToggleSelect, onLongPress, onToggleGroup, onFilterChange,
 }: BaulPhotosTabContainerProps) {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -62,7 +67,15 @@ export function BaulPhotosTabContainer({
   const { baulPhotos, baulPhotosHasMore, loosePhotos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [filter, setFilter] = useState<PhotosFilter>('sin-capitulo');
+  const [filter, setFilterState] = useState<PhotosFilter>('sin-capitulo');
+  const setFilter = (next: PhotosFilter) => {
+    setFilterState(next);
+    onFilterChange?.(next);
+  };
+  // Notifica el valor inicial ('sin-capitulo') al montar — BaulRoute no tiene forma de
+  // conocerlo hasta que este container se lo dice, ver la prop.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onFilterChange?.(filter); }, []);
 
   const loosePhotosList = hydratePhotos(loosePhotos[baulId], photosById) ?? [];
   const allPhotosList = hydratePhotos(baulPhotos[baulId], photosById);
@@ -88,7 +101,9 @@ export function BaulPhotosTabContainer({
   // más páginas que cargar, así que loadMore no hace nada aunque el sentinel esté montado.
   const sentinelRef = useLoadMoreSentinel(loadMore, filter === 'todas' && allPhotosList !== undefined);
 
-  const handleUploadPhotos = () => navigate(`/baules/${baulId}/fotos-sueltas/confirmar`);
+  const handleUploadPhotos = () => navigate(`/baules/${baulId}/fotos-sueltas/confirmar`, {
+    state: { returnTo: { pathname: `/baules/${baulId}`, state: { activeTab: 'fotos' } } },
+  });
 
   if (filter === 'todas' && allPhotosList === undefined) {
     if (loadFailed) {

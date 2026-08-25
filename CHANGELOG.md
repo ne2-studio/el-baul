@@ -15,7 +15,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Añadido
 
-- El baúl tiene ahora una pestaña "Fotos", junto a "Historia", "Capítulos" y "Familia", con todas las fotos del baúl ordenadas cronológicamente, con selección múltiple y las mismas acciones que ya existían en la vista de fotos de un capítulo (cambiar o borrar fecha, etiquetar personas, borrar). Subir fotos sueltas ahora se hace desde esta pestaña; el botón "Subir fotos" se ha quitado del menú de la pestaña "Capítulos". Un filtro arriba permite elegir entre ver solo las fotos sin capítulo (opción por defecto) o todas las fotos del baúl.
+- El baúl tiene ahora una pestaña "Fotos", junto a "Historia", "Capítulos" y "Familia", con todas las fotos del baúl ordenadas cronológicamente, con selección múltiple y las mismas acciones que ya existían en la vista de fotos de un capítulo (cambiar o borrar fecha, etiquetar personas, borrar). Subir fotos sueltas ahora se hace desde esta pestaña; el botón "Subir fotos" se ha quitado del menú de la pestaña "Capítulos". Un filtro arriba permite elegir entre ver solo las fotos sin capítulo (opción por defecto) o todas las fotos del baúl; con "Sin capítulo" seleccionado, la selección múltiple también permite mover las fotos a un capítulo o crear uno nuevo con ellas.
+- Tras subir fotos, ahora se aterriza en una pantalla con esas fotos recién subidas (con selección múltiple y sus acciones habituales) en vez de en el capítulo de destino; al volver, se recupera la pantalla desde la que se inició la subida.
 - La ficha de una persona vuelve a tener una pestaña "Recuerdos", entre "Fotos" y "Biografía", con los recuerdos de las fotos en las que esa persona está etiquetada.
 - En la selección múltiple de fotos, ahora se puede borrar el lote seleccionado de una vez, pidiendo un único motivo para todas ellas.
 - Al ver una foto, ahora aparece debajo de las personas etiquetadas el capítulo al que pertenece, y se puede tocar para ir directamente a él (salvo si ya se está viendo dentro de ese mismo capítulo).
@@ -33,6 +34,11 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la pantalla de invitación a un baúl, ahora solo hay un botón ("Unirme al Baúl") y siempre pasa por la presentación de El Baúl antes de aceptar la invitación; antes se podía saltar directamente sin verla.
 - La pestaña "Biografía" de la ficha de una persona pasa a activarse de forma gradual: mientras no esté disponible para tu baúl no aparecerá, y el asistente de IA tampoco tendrá en cuenta ese contenido.
 - "Invitar a la familia" ya no muestra un único enlace para todo el baúl: ahora es una pantalla con la lista de personas del baúl, cada una con su propio botón "Invitar" para enviarle un enlace de invitación solo para ella. Al final hay un botón "Invitar a otra persona" para dar de alta a alguien que todavía no está en la lista. El estado "Sin acceso" desaparece: una persona está dentro del baúl o no lo está, y "Revocar acceso" ahora invalida su enlace de invitación (se le puede volver a invitar más adelante). La opción "Gestionar acceso" pasa a llamarse "Gestionar permisos".
+
+### Eliminado
+
+- La card "Fotos sueltas" de la pestaña "Capítulos" y su pantalla de listado: ese mismo contenido se ve ahora filtrando "Sin capítulo" en la pestaña "Fotos" del baúl.
+- La opción "Seleccionar fotos" del menú "···" de un capítulo: la selección múltiple se activa igual que siempre tocando una foto o el título de un grupo de fecha.
 
 ### Arreglado
 

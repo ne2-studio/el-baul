@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Chapter, Photo } from '@/types';
+import { Chapter } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { BaulChaptersTabContainer } from './BaulChaptersTabContainer';
@@ -31,8 +31,6 @@ function renderContainer(onSelectChapter = vi.fn()) {
           path="/baules/:baulId"
           element={<BaulChaptersTabContainer baulId={baulId} onSelectChapter={onSelectChapter} />}
         />
-        <Route path="/baules/:baulId/fotos-sueltas" element={<div>Fotos sueltas</div>} />
-        <Route path="/baules/:baulId/fotos-sueltas/confirmar" element={<div>Confirmar subida</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -45,7 +43,7 @@ describe('BaulChaptersTabContainer', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the empty state when there are no chapters or loose photos', () => {
+  it('renders the empty state when there are no chapters', () => {
     renderContainer();
 
     expect(screen.getByText('Este baúl está vacío')).toBeInTheDocument();
@@ -60,18 +58,6 @@ describe('BaulChaptersTabContainer', () => {
     await user.click(screen.getByText('Verano 2024'));
 
     expect(onSelectChapter).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
-  });
-
-  it('renders the loose-photos card and navigates on click', async () => {
-    const user = userEvent.setup();
-    const loosePhoto = { id: 'lp1', thumbnailUrl: '/lp1-thumb.jpg' } as Photo;
-    usePhotosStore.getState().upsertPhotos([loosePhoto]);
-    useBaulesStore.setState({ loosePhotos: { [baulId]: [loosePhoto.id] } });
-
-    renderContainer();
-    await user.click(screen.getByText('Fotos sueltas'));
-
-    expect(screen.getByText('Fotos sueltas')).toBeInTheDocument();
   });
 
   it('creates a chapter from the FAB and selects it', async () => {

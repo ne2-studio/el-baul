@@ -4,10 +4,18 @@ import { UploadConfirmationScreen } from '@/features/photos/components/UploadCon
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useUIStore } from '@/store/uiStore';
-import { resolvePhotoRouteContext } from '@/features/photos/uploadFlow';
+import { resolvePhotoRouteContext, SelectedPhoto, UploadReturnTo } from '@/features/photos/uploadFlow';
 
-// chapterId is present when uploading into a real chapter, absent when uploading into the
-// virtual "Fotos sueltas" chapter (see useBaulesStore's nullable chapterId convention).
+interface LocationState {
+  selectedPhotos?: SelectedPhoto[];
+  // Set by whoever started the upload (BaulPhotosTabContainer/ChapterRoute) — forwarded as-is
+  // to /subiendo so UploadingRoute can send "< Volver" from the resulting batch screen back to
+  // where the upload started, instead of to the (now-removed) "fotos sueltas" listing.
+  returnTo?: UploadReturnTo;
+}
+
+// chapterId is present when uploading into a real chapter, absent when uploading loose
+// (no destination chapter — see useBaulesStore's nullable chapterId convention).
 export const UploadConfirmationRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId, chapterId } = useParams();
@@ -21,7 +29,7 @@ export const UploadConfirmationRoute: React.FC = () => {
   const { currentChapter, basePath, destination } = baulId
     ? resolvePhotoRouteContext({ baulId, chapterId, chapters: existingChapters, loosePhotos: looseChapterPhotos })
     : { currentChapter: undefined, basePath: '', destination: { type: 'none' as const } };
-  const { selectedPhotos } = location.state || { selectedPhotos: [] };
+  const { selectedPhotos = [], returnTo } = (location.state as LocationState) || {};
 
   if (!baul || !currentChapter) return <div className="p-8 text-center">Cargando...</div>;
 
@@ -35,7 +43,7 @@ export const UploadConfirmationRoute: React.FC = () => {
       }
       onPhotosLimitExceeded={() => showToastMessage('Se ha limitado la selección a 30 fotos por subida.', 'error')}
       onUpload={(photos) => {
-        navigate(`${basePath}/subiendo`, { state: { selectedPhotos: photos, chapter: destination } });
+        navigate(`${basePath}/subiendo`, { state: { selectedPhotos: photos, chapter: destination, returnTo } });
       }}
     />
   );

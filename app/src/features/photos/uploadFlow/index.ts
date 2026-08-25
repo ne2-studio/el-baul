@@ -37,6 +37,16 @@ export type PhotoUploadDestination =
   | { type: 'existing'; chapterId: string }
   | { type: 'none' };
 
+// Where "< Volver" should land once the whole upload wizard is done (confirmar -> subiendo ->
+// the resulting PhotoBatchGridRoute) — the tab/chapter the user was on when they tapped "Subir
+// fotos". Carried purely via router state through every step (see UploadConfirmationRoute,
+// UploadingRoute, PhotoBatchGridRoute), never persisted: a reload or deep link into the middle
+// of the wizard simply loses it, same convention as the rest of this flow's state.
+export interface UploadReturnTo {
+  pathname: string;
+  state?: unknown;
+}
+
 export interface PhotoRouteContext {
   currentChapter: Chapter | undefined;
   basePath: string;

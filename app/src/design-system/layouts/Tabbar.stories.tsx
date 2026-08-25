@@ -59,8 +59,7 @@ export const BaulDetailThreeTabs: Story = {
   },
 };
 
-// Uso real en PhotosView.tsx (pantalla de Capítulo): 2 pestañas, y solo aparece cuando el
-// capítulo soporta un feed de Recuerdos (no en el capítulo virtual de fotos sueltas).
+// Uso real en ChapterRoute.tsx: 2 pestañas, Fotos y Recuerdos.
 export const ChapterDetailTwoTabs: Story = {
   args: {
     tabs: [

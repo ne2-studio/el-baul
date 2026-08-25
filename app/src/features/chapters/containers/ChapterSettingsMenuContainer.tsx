@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckSquare, ImageIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { ImageIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { DeleteChapterModal } from '@/features/chapters/components/DeleteChapterModal';
@@ -21,16 +21,10 @@ import { PhotoCrop, api } from '@/api';
 
 interface ChapterSettingsMenuContainerProps {
   baulId: string;
-  /** null = fotos sueltas virtual chapter — mirrors ChapterRoute's own discriminator. The
-   * virtual chapter has no settings at all, so the container renders nothing for it. */
-  chapterId: string | null;
+  chapterId: string;
   chapterName: string;
   photoCount: number;
   recuerdoCount: number;
-  // "Seleccionar fotos" enters ChapterRoute's own multi-select mode — that state stays owned
-  // by ChapterRoute (it drives PhotoSwimlanes highlighting), so this is the one callback the
-  // container needs from outside instead of self-containing everything.
-  onEnterSelectionMode: () => void;
 }
 
 // Self-sufficient "···" menu: owns the cover/rename/delete actions and their modals end to
@@ -39,7 +33,7 @@ interface ChapterSettingsMenuContainerProps {
 // successful delete — only needs baulId, nothing route-context-dependent — see
 // docs/architecture/frontend.md's containers/ rule.
 export function ChapterSettingsMenuContainer({
-  baulId, chapterId, chapterName, photoCount, recuerdoCount, onEnterSelectionMode,
+  baulId, chapterId, chapterName, photoCount, recuerdoCount,
 }: ChapterSettingsMenuContainerProps) {
   const navigate = useNavigate();
   const { baules } = useBaulesStore();
@@ -49,8 +43,6 @@ export function ChapterSettingsMenuContainer({
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  if (chapterId === null) return null;
 
   const handleSaveChapterInfo = async (name: string) => {
     const result = await run(() => renameChapter(baulId, chapterId, name), {
@@ -87,10 +79,6 @@ export function ChapterSettingsMenuContainer({
           </IconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onClick={onEnterSelectionMode}>
-            <CheckSquare className="w-4 h-4 mr-2" />
-            Seleccionar fotos
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setShowCoverPicker(true)}>
             <ImageIcon className="w-4 h-4 mr-2" />
             Elegir foto de portada
