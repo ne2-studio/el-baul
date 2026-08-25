@@ -73,6 +73,23 @@ export async function createPersonaViaApi(
   return body.id as string;
 }
 
+// Issues (or re-shares) a persona's directed invite link — see PersonasController.Invite /
+// PersonaInviteManager. Used by specs to obtain a real, acceptable invite token without
+// depending on the "Invitar" button's native-share/clipboard fallback in a headless browser.
+export async function invitePersonaViaApi(
+  page: Page,
+  accessToken: string,
+  baulId: string,
+  personaId: string,
+): Promise<{ token: string; url: string }> {
+  const response = await page.request.post(`${API_BASE_URL}/api/baules/${baulId}/personas/${personaId}/invite`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(response.ok(), `failed to invite persona: ${response.status()}`).toBeTruthy();
+  const body = await response.json();
+  return { token: body.token as string, url: body.url as string };
+}
+
 export async function getCurrentPersonaViaApi(
   page: Page,
   accessToken: string,

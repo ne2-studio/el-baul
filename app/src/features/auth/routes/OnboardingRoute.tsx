@@ -6,7 +6,7 @@ import { buildInvitePreviewSteps } from '@/features/auth/components/OnboardingIn
 import { markOnboardingSeen } from '@/features/auth/useCases';
 import { useAuth } from 'react-oidc-context';
 import { api } from '@/api';
-import { BaulInviteLinkPreview } from '@/types';
+import { PersonaInvitePreview } from '@/types';
 
 export const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -26,14 +26,14 @@ export const OnboardingRoute: React.FC = () => {
   // nice-to-have layer, not a hard dependency. If there's no token, or the fetch fails (link
   // revoked between screens, network blip), onboarding just falls back to the generic variant
   // below rather than blocking or erroring the "ver más" detour.
-  const [invitePreview, setInvitePreview] = useState<BaulInviteLinkPreview | null>(null);
+  const [invitePreview, setInvitePreview] = useState<PersonaInvitePreview | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(isInvite && inviteToken !== null);
 
   useEffect(() => {
     if (!isInvite || !inviteToken) return;
 
     let cancelled = false;
-    api.baulInvites.getPreview(inviteToken)
+    api.personaInvites.getPreview(inviteToken)
       .then((preview) => {
         if (!cancelled) setInvitePreview(preview);
       })

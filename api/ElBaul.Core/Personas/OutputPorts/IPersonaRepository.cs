@@ -20,6 +20,11 @@ public interface IPersonaRepository
     Task<IEnumerable<Persona>> GetPersonasByIdsAsync(IEnumerable<PersonaId> personaIds);
     Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, UserId userId);
 
+    /// <summary>Resolves a persona-scoped invite link token back to its Persona — used by
+    /// PersonaInviteManager to serve the public preview/landing/accept flow. See
+    /// Persona.InviteToken.</summary>
+    Task<Persona?> GetPersonaByInviteTokenAsync(string token);
+
     /// <summary>Every claimed persona for a user, across every baúl — used to resolve which
     /// baúles a user has been shared into (see BaulRepository.GetSharedByUserIdAsync).</summary>
     Task<IEnumerable<Persona>> GetByUserIdAsync(UserId userId);

@@ -12,7 +12,6 @@ internal static class DtoMapping
     {
         PersonaAccessStatus.Pending => "pending",
         PersonaAccessStatus.Active => "active",
-        PersonaAccessStatus.Revoked => "sin_acceso",
         _ => throw new ArgumentOutOfRangeException(nameof(status))
     };
 }

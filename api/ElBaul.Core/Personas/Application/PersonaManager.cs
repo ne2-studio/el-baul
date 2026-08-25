@@ -274,7 +274,7 @@ public class PersonaManager(
             return Result.Failure(ApplicationError.Validation("The custodio cannot lose access"));
         }
 
-        await personaRepository.UpdatePersonaAsync(persona.Revoke());
+        await personaRepository.UpdatePersonaAsync(persona.RevokeAccess());
         logger.LogInformation("Persona access revoked {PersonaId}", personaId);
         return Result.Success();
     }

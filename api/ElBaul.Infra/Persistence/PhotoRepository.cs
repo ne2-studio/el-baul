@@ -71,7 +71,7 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
     }
 
     // Native INSERT ... ON CONFLICT DO NOTHING rather than Add + catch(DbUpdateException) — same
-    // rationale as SentEmailRepository.TryReserveAsync/BaulInviteLinkRepository.CreateAsync (see
+    // rationale as SentEmailRepository.TryReserveAsync (see
     // IUnitOfWork's doc comment): a caught exception still poisons the ambient transaction
     // PhotoUploadWorkflow runs this inside, so the conflict has to be absorbed by Postgres itself
     // instead of surfacing as a .NET exception at all.

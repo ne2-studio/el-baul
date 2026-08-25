@@ -39,7 +39,6 @@ public class IdsTests
         Assert.Contains("persona id", PersonaId.Parse("bad").Error.Message);
         Assert.Contains("recuerdo id", RecuerdoId.Parse("bad").Error.Message);
         Assert.Contains("shared link id", SharedLinkId.Parse("bad").Error.Message);
-        Assert.Contains("baúl invite link id", BaulInviteLinkId.Parse("bad").Error.Message);
         Assert.Contains("removal request id", RemovalRequestId.Parse("bad").Error.Message);
         Assert.Contains("client upload id", ClientUploadId.Parse("bad").Error.Message);
     }

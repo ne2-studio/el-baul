@@ -22,7 +22,7 @@ export function ManageAccessModal({ role, onSave, onCancel, isSubmitting = false
 
   return (
     <BottomSheetModal onCancel={onCancel} size="lg">
-      <h2 className="text-xl font-serif text-foreground">Gestionar acceso</h2>
+      <h2 className="text-xl font-serif text-foreground">Gestionar permisos</h2>
 
       <Select
         label="Rol"

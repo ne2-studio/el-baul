@@ -99,12 +99,12 @@ describe('PersonaSettingsMenuContainer', () => {
 
     renderContainer(persona({ role: 'colaborador' }));
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
-    await user.click(await screen.findByText('Gestionar acceso'));
+    await user.click(await screen.findByText('Gestionar permisos'));
     await user.selectOptions(await screen.findByRole('combobox'), 'administrador');
     await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
 
     expect(updateUserRole).toHaveBeenCalledWith(baulId, 'p1', 'administrador');
-    await waitFor(() => expect(screen.queryByText('Gestionar acceso')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText('Gestionar permisos')).not.toBeInTheDocument());
     expect(useUIStore.getState().toastMessage).toBe('Rol actualizado');
   });
 
@@ -115,7 +115,7 @@ describe('PersonaSettingsMenuContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
 
     expect(screen.queryByText('Revocar acceso')).not.toBeInTheDocument();
-    expect(screen.queryByText('Gestionar acceso')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gestionar permisos')).not.toBeInTheDocument();
   });
 
   it('does not render two adjacent separators for a pending persona', async () => {
@@ -124,11 +124,10 @@ describe('PersonaSettingsMenuContainer', () => {
 
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
 
-    // A pending persona has neither "Gestionar acceso" nor "Permitir invitación" available,
-    // so the group between the two separators is empty and only one separator (at most)
-    // should render, not two adjacent ones.
-    expect(screen.queryByText('Gestionar acceso')).not.toBeInTheDocument();
-    expect(screen.queryByText('Permitir invitación')).not.toBeInTheDocument();
+    // A pending persona has no "Gestionar permisos" available (role can't be changed until it's
+    // claimed), so the group between the two separators is empty and only one separator (at
+    // most) should render, not two adjacent ones.
+    expect(screen.queryByText('Gestionar permisos')).not.toBeInTheDocument();
     expect(document.querySelectorAll('[data-slot="dropdown-menu-separator"]')).toHaveLength(1);
   });
 });

@@ -21,7 +21,7 @@ namespace ElBaul.Core.Shared.OutputPorts;
 ///
 /// Not every write path goes through this port. The transaction boundary should match a real
 /// business invariant/atomic operation, not default to "the whole manager method" — see the doc
-/// comments on BaulInviteLinkManager.GetOrCreateAsync/RegenerateAsync, UserRepository.UpsertAsync,
+/// comments on PersonaInviteManager.InviteAsync, UserRepository.UpsertAsync,
 /// EmailLinkClickRepository.RegisterSignedClickAsync, ChatManager.SendMessageAsync, and
 /// EmailDeliveryCoordinator.SendAsync for the deliberate exceptions and why. Two of those reasons
 /// are worth calling out explicitly because they're easy to get wrong:

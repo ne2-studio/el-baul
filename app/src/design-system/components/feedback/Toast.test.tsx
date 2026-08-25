@@ -14,10 +14,10 @@ function zIndexOf(el: Element): number {
 
 describe('Toast', () => {
   it('stacks above an open BottomSheetModal (both sizes) so it is never hidden behind it', () => {
-    // Regression: InviteFamilyModal fires a "link copied" toast via onToast() without
+    // Regression: a modal (e.g. an "invite" flow) firing a "link copied" toast via onToast() without
     // closing its BottomSheetModal (intentional — lets the user still see/share the link).
     // Toast used to be z-50, the same as BottomSheetModal's size='lg' overlay and lower than
-    // its size='sm' overlay (z-[60], the default used by InviteFamilyModal), so the toast
+    // its size='sm' overlay (z-[60], the default for that size), so the toast
     // rendered invisibly underneath the modal. Toast must outrank both modal sizes.
     render(
       <>

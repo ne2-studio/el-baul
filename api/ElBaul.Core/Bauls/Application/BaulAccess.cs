@@ -14,7 +14,11 @@ namespace ElBaul.Core.Bauls.Application;
 // membership rule from Baul.CustodioId and IBaulRepository.GetPersonaByUserIdAsync by hand.
 public sealed record BaulAccess(Baul Baul, bool IsCustodio, Persona? Persona)
 {
-    public bool IsMember => IsCustodio || (Persona is not null && Persona.AccessStatus != PersonaAccessStatus.Revoked);
+    // Persona here always comes from GetPersonaByUserIdAsync, which only ever returns a row
+    // whose UserId already matches this user — i.e. a claimed (Active) Persona. There is no
+    // more sin_acceso status to exclude (see PersonaAccessStatus), so a non-null Persona is
+    // membership, full stop.
+    public bool IsMember => IsCustodio || Persona is not null;
     public bool IsAdmin => IsCustodio || (Persona?.Role.IsAdmin() ?? false);
 
     // The caller's assignable permission tier, as a wire string — distinct from custody (see

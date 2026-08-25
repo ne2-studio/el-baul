@@ -1,16 +1,19 @@
 import { PhotoCrop, api } from '@/api';
-import { BaulRole, Photo } from '@/types';
+import { BaulRole, Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { withOptimisticUpdate } from '@/store/withOptimisticUpdate';
 
-// Its only caller is PersonasTabContainer (features/people/containers) — moved here from
-// features/baules/useCases when that container took over the baúl's Personas tab.
-export async function createPersona(baulId: string, nickname: string): Promise<void> {
+// Its callers are BaulPersonasTabContainer (features/people/containers) and
+// InvitarFamiliaRoute (features/sharing/routes) — moved here from features/baules/useCases
+// when the former took over the baúl's Personas tab. Returns the created Persona so
+// InvitarFamiliaRoute can immediately start its invite flow without a second round trip.
+export async function createPersona(baulId: string, nickname: string): Promise<Persona> {
   const persona = await api.baules.createPersona(baulId, nickname);
   usePersonasStore.setState((state) => ({
     personas: { ...state.personas, [baulId]: [...(state.personas[baulId] || []), persona] },
   }));
+  return persona;
 }
 
 export async function loadPersonas(baulId: string): Promise<void> {
@@ -85,11 +88,7 @@ export async function updateUserRole(baulId: string, personaId: string, role: Ba
     applyOptimistic: () => usePersonasStore.setState((state) => ({
       personas: {
         ...state.personas,
-        [baulId]: (state.personas[baulId] || []).map((u) => (
-          u.id === personaId
-            ? { ...u, role, status: u.status === 'sin_acceso' ? 'pending' : u.status }
-            : u
-        )),
+        [baulId]: (state.personas[baulId] || []).map((u) => (u.id === personaId ? { ...u, role } : u)),
       },
     })),
     rollback: (previous) => usePersonasStore.setState((state) => ({ personas: { ...state.personas, [baulId]: previous } })),
@@ -97,6 +96,9 @@ export async function updateUserRole(baulId: string, personaId: string, role: Ba
   });
 }
 
+// "Revocar acceso" — clears the account link (and its invite token, server-side) but leaves
+// the persona's role untouched: there is no more sin_acceso status, the row just falls back
+// to Pending and can be re-invited normally (see Persona.RevokeAccess).
 export async function revokeAccess(baulId: string, personaId: string): Promise<void> {
   await api.baules.revokeAccess(baulId, personaId);
   usePersonasStore.setState((state) => ({
@@ -104,7 +106,7 @@ export async function revokeAccess(baulId: string, personaId: string): Promise<v
       ...state.personas,
       [baulId]: (state.personas[baulId] || []).map((persona) =>
         persona.id === personaId
-          ? { ...persona, email: undefined, role: 'sin_acceso', status: 'sin_acceso' }
+          ? { ...persona, email: undefined, status: 'pending' }
           : persona
       ),
     },

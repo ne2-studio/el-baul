@@ -52,13 +52,6 @@ describe('PersonaBiografiaTabContainer', () => {
     expect(screen.getByRole('button', { name: /editar biografía/i })).toBeInTheDocument();
   });
 
-  it('hides the edit FAB for a viewer with no access', () => {
-    useBaulesStore.setState({ baules: [baul('sin_acceso')] });
-    render(<PersonaBiografiaTabContainer baulId={baulId} persona={persona()} />);
-
-    expect(screen.queryByRole('button', { name: /editar biografía/i })).not.toBeInTheDocument();
-  });
-
   it('saves the biografía and closes the modal on success', async () => {
     const user = userEvent.setup();
     useBaulesStore.setState({ baules: [baul('colaborador')] });

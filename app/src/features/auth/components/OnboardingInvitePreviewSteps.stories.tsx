@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { OnboardingCarousel } from '@/features/auth/components/OnboardingCarousel';
 import { buildInvitePreviewSteps } from '@/features/auth/components/OnboardingInvitePreviewSteps';
-import { BaulInviteLinkPreview } from '@/types';
+import { PersonaInvitePreview } from '@/types';
 import { storybookAvatars, storybookPhotos } from '@/storybook/fixtures';
 
 interface StoryArgs {
-  preview: BaulInviteLinkPreview;
+  preview: PersonaInvitePreview;
   onComplete: () => void;
   onSkip: () => void;
 }
@@ -24,7 +24,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const fullPreview: BaulInviteLinkPreview = {
+const fullPreview: PersonaInvitePreview = {
   baulId: 'baul-1',
   name: 'Familia García',
   description: undefined,

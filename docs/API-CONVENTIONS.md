@@ -15,8 +15,8 @@ unless explicitly marked `[AllowAnonymous]`.
 
 Anonymous exceptions:
 
-- `GET /api/baul-invites/{token}/preview` — public, rate-limited; used for the global baúl
-  invite link before the recipient has signed in.
+- `GET /api/persona-invites/{token}/preview` — public, rate-limited; used for a persona's
+  directed invite link before the recipient has signed in.
 - `GET /invitacion/baul/{token}` — public, rate-limited; invite landing HTML with Open Graph
   metadata for link previews.
 - `GET /api/app-config` — public feature flags/URLs the frontend needs before login.
@@ -67,33 +67,28 @@ There is no read-only access role: every member with access can add chapters/pho
 recuerdos. Only custodio/administrador can manage Personas (invite, change role, revoke
 access), resolve removal requests, delete a photo directly, or set the baúl's cover.
 
-Personas can also have the internal role `sin_acceso`: they still belong to the baúl's family
-history and can remain tagged in photos/recuerdos, but they do not count as members with access
-and cannot accept or preview invitation links.
+There is no "sin_acceso"/revoked role anymore: a Persona either belongs to the baúl or it
+doesn't. "Revocar acceso" (`DELETE /api/baules/{baulId}/personas/{personaId}`) clears the
+account link and invalidates that persona's invite token, but leaves its assignable role
+untouched — the row simply falls back to Pending and can be re-invited normally.
 
 ## Invitations
 
-The only way to grow a baúl's membership is the **global invite link**: one reusable,
-regenerable public landing per baúl (`GET /api/baules/{baulId}/invite-link`,
-`POST /api/baules/{baulId}/invite-link/regenerate`, both custodio/administrador-only), with no
-expiry and no usage limit. Anyone who opens it (`GET /api/baul-invites/{token}/preview`,
-public) can accept it (`POST /api/baul-invites/{token}/accept`, optional `personaId` in the
-body) to join the baúl.
+Invitations are directed, per-persona links, not a baúl-wide one. Each Persona owns at most
+one invite token (`Persona.InviteToken`), issued lazily the first time an admin taps "Invitar"
+(`POST /api/baules/{baulId}/personas/{personaId}/invite`, custodio/administrador-only, returns
+a `PersonaInviteDto` with the shareable landing URL) and re-shared — never regenerated — on
+every later tap while the persona stays Pending. The token has no expiry and cannot be
+regenerated or cancelled directly; the only way it stops working is "Revocar acceso", which
+clears it, or the persona already having been claimed.
 
-Before accepting, the client can list the baúl's still-unclaimed Personas
-(`GET /api/baul-invites/{token}/claimable-personas`, authenticated) — Pending ones only, i.e.
-`IsClaimable` (never `sin_acceso`, never already linked to an account) — so the joining
-account can say "I'm this pre-provisioned family member" instead of always getting a new
-Persona. Passing a `personaId` links the account to that existing (claimable) row —
-same-name backfill as any other claim, existing avatar/biografia untouched; passing none
-auto-creates a new Persona — nickname/name from the account, avatar best-effort from the
-account's OIDC `picture` claim (never blocks the join if it's missing or the fetch fails).
-
-If the caller already has an active Persona in that baúl — including the custodio opening
-their own link — accepting is a no-op regardless of `personaId`. If their existing Persona
-there is `sin_acceso`, accepting is rejected — only an admin can restore revoked access, never
-a self-serve link. Regenerating the link immediately invalidates the previous one (`404` on
-its old token) — there is only ever one active link per baúl at a time.
+Anyone who opens the link (`GET /api/persona-invites/{token}/preview`, public) can accept it
+(`POST /api/persona-invites/{token}/accept`, authenticated, no body) to join the baúl as
+exactly the persona the token was issued for — there is no "who are you" step, unlike the old
+global invite link. If the caller already has an active Persona in that baúl — including
+having already accepted this same token — accepting is a no-op. If the token instead resolves
+to a persona already claimed by a different account, accepting is rejected the same way an
+unknown token is (`404`), without disclosing that the persona exists.
 
 ## Photos
 

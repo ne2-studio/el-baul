@@ -29,6 +29,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Se ha rediseñado la navegación de la cuenta y los ajustes del baúl: "Mi cuenta" (perfil, notificaciones y cerrar sesión) y "Ajustes del baúl" (portada, información, solicitudes de eliminación y eliminar baúl) ahora son pantallas propias accesibles desde el menú "···" del baúl, en vez de menús emergentes.
 - En la pantalla de invitación a un baúl, ahora solo hay un botón ("Unirme al Baúl") y siempre pasa por la presentación de El Baúl antes de aceptar la invitación; antes se podía saltar directamente sin verla.
 - La pestaña "Biografía" de la ficha de una persona pasa a activarse de forma gradual: mientras no esté disponible para tu baúl no aparecerá, y el asistente de IA tampoco tendrá en cuenta ese contenido.
+- "Invitar a la familia" ya no muestra un único enlace para todo el baúl: ahora es una pantalla con la lista de personas del baúl, cada una con su propio botón "Invitar" para enviarle un enlace de invitación solo para ella. Al final hay un botón "Invitar a otra persona" para dar de alta a alguien que todavía no está en la lista. El estado "Sin acceso" desaparece: una persona está dentro del baúl o no lo está, y "Revocar acceso" ahora invalida su enlace de invitación (se le puede volver a invitar más adelante). La opción "Gestionar acceso" pasa a llamarse "Gestionar permisos".
 
 ### Arreglado
 

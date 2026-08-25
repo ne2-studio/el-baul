@@ -1,4 +1,3 @@
-using ElBaul.Api.Models;
 using ElBaul.Core.Personas;
 using ElBaul.Core.Sharing;
 using System.Net;
@@ -8,11 +7,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
-using ElBaul.Domain;
 namespace ElBaul.Api.Controllers;
 
+// Public/authenticated endpoints for accepting a persona-scoped invite link — see
+// PersonasController.Invite for the admin-only action that issues/re-shares the token in the
+// first place.
 [ApiController]
-public class BaulInviteLinksController(IBaulInviteLinkManager baulInviteLinkManager) : ControllerBase
+public class PersonaInvitesController(IPersonaInviteManager personaInviteManager) : ControllerBase
 {
     [AllowAnonymous]
     [EnableRateLimiting("PublicLimiter")]
@@ -21,7 +22,7 @@ public class BaulInviteLinksController(IBaulInviteLinkManager baulInviteLinkMana
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Landing(string token)
     {
-        var result = await baulInviteLinkManager.GetLandingAsync(token);
+        var result = await personaInviteManager.GetLandingAsync(token);
         if (result.IsFailure) return ErrorMapping.ToActionResult(result.Error);
 
         return Content(RenderLanding(result.Value), "text/html; charset=utf-8");
@@ -29,41 +30,24 @@ public class BaulInviteLinksController(IBaulInviteLinkManager baulInviteLinkMana
 
     [AllowAnonymous]
     [EnableRateLimiting("PublicLimiter")]
-    [HttpGet("/api/baul-invites/{token}/preview")]
-    [ProducesResponseType(typeof(BaulInviteLinkPreviewDto), StatusCodes.Status200OK)]
+    [HttpGet("/api/persona-invites/{token}/preview")]
+    [ProducesResponseType(typeof(PersonaInvitePreviewDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPreview(string token)
     {
-        var result = await baulInviteLinkManager.GetPreviewAsync(token);
+        var result = await personaInviteManager.GetPreviewAsync(token);
         return result.ToActionResult();
     }
 
     [Authorize]
-    [HttpGet("/api/baul-invites/{token}/claimable-personas")]
-    [ProducesResponseType(typeof(IEnumerable<ClaimablePersonaDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetClaimablePersonas(string token)
-    {
-        var result = await baulInviteLinkManager.GetClaimablePersonasAsync(token);
-        return result.ToActionResult();
-    }
-
-    [Authorize]
-    [HttpPost("/api/baul-invites/{token}/accept")]
+    [HttpPost("/api/persona-invites/{token}/accept")]
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Accept(string token, [FromBody] AcceptBaulInviteRequest request)
+    public async Task<IActionResult> Accept(string token)
     {
-        PersonaId? personaId = null;
-        if (!string.IsNullOrEmpty(request.PersonaId))
-        {
-            var parsed = PersonaId.Parse(request.PersonaId);
-            if (parsed.IsFailure) return ErrorMapping.ToActionResult(parsed.Error);
-            personaId = parsed.Value;
-        }
-
-        var result = await baulInviteLinkManager.AcceptAsync(token, personaId);
+        var result = await personaInviteManager.AcceptAsync(token);
         return result.ToActionResult();
     }
 
-    private static string RenderLanding(BaulInviteLinkLandingDto model)
+    private static string RenderLanding(PersonaInviteLandingDto model)
     {
         var title = Html(model.Title);
         var description = Html(model.Description);

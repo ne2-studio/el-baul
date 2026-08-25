@@ -15,12 +15,12 @@ export type { PhotoCrop } from './api/publicTypes';
 
 import { analyticsApi } from './api/resources/analytics';
 import { appConfigApi } from './api/resources/appConfig';
-import { baulInvitesApi } from './api/resources/baulInvites';
 import { baulesApi } from './api/resources/baules';
 import { chaptersApi } from './api/resources/chapters';
 import { chatApi } from './api/resources/chat';
 import { chatMemoriesApi } from './api/resources/chatMemories';
 import { contributionsApi } from './api/resources/contributions';
+import { personaInvitesApi } from './api/resources/personaInvites';
 import { photoBatchesApi } from './api/resources/photoBatches';
 import { photosApi } from './api/resources/photos';
 import { pushNotificationsApi, usersApi } from './api/resources/users';
@@ -39,7 +39,7 @@ export const api = {
   sharedLinks: sharedLinksApi,
   tvSessions: tvSessionsApi,
   tvPairings: tvPairingsApi,
-  baulInvites: baulInvitesApi,
+  personaInvites: personaInvitesApi,
   users: usersApi,
   pushNotifications: pushNotificationsApi,
   appConfig: appConfigApi,

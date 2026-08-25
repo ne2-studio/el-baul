@@ -19,14 +19,12 @@ export interface PersonaPermissions {
   canManagePersona: boolean;
   canChangePersonaRole: boolean;
   canRevokePersonaAccess: boolean;
-  canRestorePersonaAccess: boolean;
 }
 
 export function getRoleDisplayName(role: BaulRole): string {
   const roleNames: Record<BaulRole, string> = {
     administrador: 'Administrador',
     colaborador: 'Colaborador',
-    sin_acceso: 'Sin acceso'
   };
   return roleNames[role];
 }
@@ -35,7 +33,6 @@ export function getRoleDescription(role: BaulRole): string {
   const descriptions: Record<BaulRole, string> = {
     administrador: 'Gestiona el baúl, igual que el custodio',
     colaborador: 'Puede añadir fotos',
-    sin_acceso: 'Forma parte de la historia, sin acceso al baúl'
   };
   return descriptions[role];
 }
@@ -74,8 +71,7 @@ export function getPersonaPermissions({
   const canEditOwnPersona = persona.canEdit ?? false;
   // Biografía is shared, wiki-like family content: any member of the baúl can write it for any
   // persona, unlike name/nickname/avatar which stay tied to identity-edit permission.
-  const canEditAnyBiography = currentBaulRole !== undefined && currentBaulRole !== 'sin_acceso';
-  const hasNoAccess = persona.role === 'sin_acceso' || persona.status === 'sin_acceso';
+  const canEditAnyBiography = currentBaulRole !== undefined;
   // The custodio's own row is never manageable by another admin — it's protected server-side
   // too, see Persona.IsCustodioProtected.
   const canManagePersona = currentBaulPermissions.isAdmin && !persona.isCustodio;
@@ -86,8 +82,7 @@ export function getPersonaPermissions({
     canEditPersonaBiography: canEditAnyBiography,
     canUploadPersonaAvatar: canEditOwnPersona,
     canManagePersona,
-    canChangePersonaRole: canManagePersona && !isPending && !hasNoAccess,
-    canRevokePersonaAccess: canManagePersona && !hasNoAccess,
-    canRestorePersonaAccess: canManagePersona && hasNoAccess,
+    canChangePersonaRole: canManagePersona && !isPending,
+    canRevokePersonaAccess: canManagePersona,
   };
 }

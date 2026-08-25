@@ -13,9 +13,9 @@ export function RevokeAccessModal({ userName, onConfirm, onCancel, isSubmitting 
       title="¿Revocar el acceso?"
       description={
         <>
-          <span className="font-semibold">{userName}</span> dejará de poder acceder al baúl, y no podrá recibir
-          invitaciones en el futuro, pero seguirá formando parte de la historia familiar y aparecerá en fotos,
-          recuerdos y cronologías.
+          <span className="font-semibold">{userName}</span> dejará de poder acceder al baúl y su enlace de
+          invitación actual dejará de funcionar, pero seguirá formando parte de la historia familiar, aparecerá
+          en fotos, recuerdos y cronologías, y podrás volver a invitarle más adelante.
         </>
       }
       confirmLabel="Revocar acceso"

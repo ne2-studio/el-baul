@@ -6,11 +6,11 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BaulGlobalInvitacionRoute } from './BaulGlobalInvitacionRoute';
 import { api } from '@/api';
-import type { BaulInviteLinkPreview } from '@/types';
+import type { PersonaInvitePreview } from '@/types';
 
 vi.mock('@/api', () => ({
   api: {
-    baulInvites: {
+    personaInvites: {
       getPreview: vi.fn(),
     },
   },
@@ -37,12 +37,12 @@ describe('BaulGlobalInvitacionRoute', () => {
     vi.clearAllMocks();
     // The route logs the caught error to console.error before showing the fallback — silence the noise.
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(api.baulInvites.getPreview).mockResolvedValue({
+    vi.mocked(api.personaInvites.getPreview).mockResolvedValue({
       baulId: 'baul-1',
       name: 'Baúl de los García',
       previewPhotos: [],
       personaAvatarUrls: [],
-    } as BaulInviteLinkPreview);
+    } as PersonaInvitePreview);
   });
 
   afterEach(() => {
@@ -55,12 +55,12 @@ describe('BaulGlobalInvitacionRoute', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Unirme al Baúl' }));
 
-    expect(api.baulInvites.getPreview).toHaveBeenCalledWith('invite-token');
+    expect(api.personaInvites.getPreview).toHaveBeenCalledWith('invite-token');
     expect(screen.getByText('/onboarding?baulNombre=Ba%C3%BAl+de+los+Garc%C3%ADa&redirectTo=%2Finvitacion%2Fbaul%2Finvite-token%2Faceptar&token=invite-token')).toBeInTheDocument();
   });
 
   it('shows the invalid invitation fallback when preview loading fails', async () => {
-    vi.mocked(api.baulInvites.getPreview).mockRejectedValue(new Error('revoked'));
+    vi.mocked(api.personaInvites.getPreview).mockRejectedValue(new Error('revoked'));
 
     renderRoute();
 

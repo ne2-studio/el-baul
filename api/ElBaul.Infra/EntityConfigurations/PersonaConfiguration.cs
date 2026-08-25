@@ -32,11 +32,16 @@ public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
         builder.Property(s => s.Biografia).HasMaxLength(4000);
         builder.Property(s => s.Role).HasConversion<string>().HasMaxLength(20);
         builder.Property(s => s.InvitedDate).HasColumnType("timestamp with time zone");
+        builder.Property(s => s.InviteToken).HasMaxLength(160);
 
         builder.HasIndex(s => s.BaulId);
         builder.HasIndex(s => s.UserId);
         builder.HasIndex(s => s.AvatarPhotoId);
         builder.HasIndex(s => new { s.BaulId, s.UserId }).IsUnique().HasFilter("\"UserId\" IS NOT NULL");
+        // One slot per persona, replacing the baúl-scoped BaulInviteLink table — see
+        // Persona.InviteToken. Nullable (unissued/revoked personas have no token), so the
+        // uniqueness only needs to hold among the rows that actually have one.
+        builder.HasIndex(s => s.InviteToken).IsUnique().HasFilter("\"InviteToken\" IS NOT NULL");
 
         builder.HasOne<Baul>()
             .WithMany()

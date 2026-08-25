@@ -10,7 +10,7 @@ namespace ElBaul.Core.Photos.Application;
 /// each re-derive the same rule inline. Takes an already-resolved Photo rather than a PhotoId on
 /// purpose: every one of those callers already has (or batch-fetches) the Photo anyway, so
 /// resolving it here too would mean doing that lookup twice or hiding an extra round trip inside
-/// what looks like a pure function. BaulInviteLinkManager's two call sites are the only ones that
+/// what looks like a pure function. PersonaInviteManager's two call sites are the only ones that
 /// start from just a PhotoId — they resolve it via IPhotoRepository themselves before calling in.
 /// </summary>
 public class CoverUrlResolver(IPhotoStorage photoStorage)

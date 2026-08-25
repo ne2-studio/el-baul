@@ -56,20 +56,19 @@ export const Custodio: Story = {
   },
 };
 
-export const WithoutAccess: Story = {
+export const Pending: Story = {
   args: {
     ...Default.args,
     persona: new Persona({
       id: '3',
       baulId: 'b1',
       nickname: 'Laura',
-      status: 'sin_acceso',
-      role: 'sin_acceso',
+      status: 'pending',
+      role: 'colaborador',
       isCustodio: false,
       invitedDate: fixedStorybookDateIso,
       canEdit: true,
     }),
-    muted: true,
   },
 };
 

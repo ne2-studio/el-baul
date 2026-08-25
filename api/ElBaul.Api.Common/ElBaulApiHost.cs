@@ -122,7 +122,6 @@ public static class ElBaulApiHost
             MapIdSchema<PersonaId>(c);
             MapIdSchema<RecuerdoId>(c);
             MapIdSchema<SharedLinkId>(c);
-            MapIdSchema<BaulInviteLinkId>(c);
             MapIdSchema<RemovalRequestId>(c);
             MapIdSchema<ClientUploadId>(c);
         });
@@ -277,7 +276,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IChatMemoryManager, ChatMemoryManager>();
         builder.Services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
         builder.Services.AddScoped<ISharedLinkManager, SharedLinkManager>();
-        builder.Services.AddScoped<IBaulInviteLinkManager, BaulInviteLinkManager>();
+        builder.Services.AddScoped<IPersonaInviteManager, PersonaInviteManager>();
         builder.Services.AddScoped<ITvSessionManager, TvSessionManager>();
         builder.Services.AddScoped<ITvPairingManager, TvPairingManager>();
         builder.Services.AddScoped<BaulScopeAggregator>();
@@ -379,7 +378,6 @@ public static class ElBaulApiHost
             RegisterIdTypeConverter<PersonaId>();
             RegisterIdTypeConverter<RecuerdoId>();
             RegisterIdTypeConverter<SharedLinkId>();
-            RegisterIdTypeConverter<BaulInviteLinkId>();
             RegisterIdTypeConverter<RemovalRequestId>();
             RegisterIdTypeConverter<ClientUploadId>();
             RegisterIdTypeConverter<ChatMemoryId>();

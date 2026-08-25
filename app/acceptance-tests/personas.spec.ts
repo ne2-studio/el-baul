@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, createBaulViaApi, API_BASE_URL } from './helpers';
+import { loginAs, createBaulViaApi, invitePersonaViaApi, API_BASE_URL } from './helpers';
 
-test('create persona → revoke access while still pending → allow invite again', async ({ page }) => {
+test('create persona → invite → guest joins directly (no "¿quién eres tú?" step)', async ({ page, browser }) => {
   const accessToken = await loginAs(page, 'Admin User');
   const baulId = await createBaulViaApi(page, accessToken, `Personas test baúl ${Date.now()}`);
   await page.goto(`/baules/${baulId}`);
@@ -23,60 +23,15 @@ test('create persona → revoke access while still pending → allow invite agai
   expect(persona, `expected to find persona named ${nickname}`).toBeTruthy();
   const personaId = persona.id as string;
 
-  // A pre-provisioned Persona has no account linked yet and no per-persona invite link —
-  // only the global invite link can link an account to it; it can still be revoked/restored
-  // directly.
-  await page.goto(`/baules/${baulId}/personas/${personaId}`);
-  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
-  await expect(page.getByRole('menuitem', { name: 'Compartir invitación' })).toBeHidden();
-  await expect(page.getByRole('menuitem', { name: 'Gestionar acceso' })).toBeHidden();
-  await page.getByRole('menuitem', { name: 'Revocar acceso' }).click();
-  await page.getByRole('button', { name: 'Revocar acceso' }).click();
+  // "Invitar a la familia" is now a full page listing every persona, each with its own
+  // "Invitar" CTA — the pending persona created above shows up there.
+  await page.goto(`/baules/${baulId}/invitar`);
+  const personaCard = page.getByTestId(`persona-invite-${personaId}`);
+  await expect(personaCard.getByText(nickname)).toBeVisible();
+  await expect(personaCard.getByRole('button', { name: 'Invitar' })).toBeVisible();
 
-  await expect(page.getByText('Sin acceso')).toBeVisible();
-  await expect(page.getByText('Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.')).toBeVisible();
+  const { token } = await invitePersonaViaApi(page, accessToken, baulId, personaId);
 
-  const revokedPersonasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  expect(revokedPersonasResponse.ok(), `failed to list revoked personas: ${revokedPersonasResponse.status()}`).toBeTruthy();
-  const revokedPersonas = await revokedPersonasResponse.json();
-  const revokedPersona = revokedPersonas.find((p: { id: string }) => p.id === personaId);
-  expect(revokedPersona).toMatchObject({ id: personaId, nickname, role: 'sin_acceso', status: 'sin_acceso', userId: null });
-
-  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
-  await expect(page.getByRole('menuitem', { name: 'Compartir invitación' })).toBeHidden();
-  await expect(page.getByRole('menuitem', { name: 'Gestionar acceso' })).toBeHidden();
-
-  await page.getByRole('menuitem', { name: 'Permitir invitación' }).click();
-  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
-  await expect(page.getByRole('menuitem', { name: 'Compartir invitación' })).toBeHidden();
-  await expect(page.getByRole('menuitem', { name: 'Gestionar acceso' })).toBeHidden();
-
-  const restoredPersonasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  expect(restoredPersonasResponse.ok(), `failed to list restored personas: ${restoredPersonasResponse.status()}`).toBeTruthy();
-  const restoredPersonas = await restoredPersonasResponse.json();
-  const restoredPersona = restoredPersonas.find((p: { id: string }) => p.id === personaId);
-  expect(restoredPersona).toMatchObject({ id: personaId, nickname, role: 'colaborador', status: 'pending', userId: null });
-});
-
-test('joining via the global invite link → change role → revoke access → allow invite again', async ({ page, browser }) => {
-  const accessToken = await loginAs(page, 'Admin User');
-  const baulId = await createBaulViaApi(page, accessToken, `Personas role-change test baúl ${Date.now()}`);
-  await page.goto(`/baules/${baulId}`);
-
-  await page.getByRole('button', { name: 'Menú' }).click();
-  await page.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
-  const linkLocator = page.getByText(/\/invitacion\/baul\//);
-  await expect(linkLocator).toBeVisible();
-  const linkText = (await linkLocator.textContent())!;
-  const token = linkText.match(/\/invitacion\/baul\/([^\s"']+)/)?.[1];
-  expect(token, `expected to find an invite token in "${linkText}"`).toBeTruthy();
-  await page.getByRole('button', { name: 'Cerrar' }).click();
-
-  // Second identity, second browser context: join via the public global link.
   const guestContext = await browser.newContext();
   const guestPage = await guestContext.newPage();
   await loginAs(guestPage, 'Normal User');
@@ -85,53 +40,88 @@ test('joining via the global invite link → change role → revoke access → a
   await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
   await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
   await guestPage.getByRole('button', { name: 'Saltar' }).click();
+  // Directly lands in the baúl — no "¿Quién eres tú?" step, unlike the old global invite link:
+  // the token identifies exactly this persona.
   await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
   await guestContext.close();
+
+  const joinedPersonasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(joinedPersonasResponse.ok()).toBeTruthy();
+  const joinedPersonas = await joinedPersonasResponse.json();
+  const joined = joinedPersonas.find((p: { id: string }) => p.id === personaId);
+  expect(joined).toMatchObject({ id: personaId, nickname, role: 'colaborador', status: 'active' });
+  expect(joined.userId, 'accepting should link the guest account to this exact persona').toBeTruthy();
+
+  // Back on "Invitar a la familia", the now-active persona shows a disabled "Ya está dentro".
+  await page.goto(`/baules/${baulId}/invitar`);
+  const activeCard = page.getByTestId(`persona-invite-${personaId}`);
+  await expect(activeCard.getByRole('button', { name: 'Ya está dentro' })).toBeDisabled();
+});
+
+test('revoke access on an active persona → its old invite link stops working → re-invite issues a fresh one', async ({ page, browser }) => {
+  const accessToken = await loginAs(page, 'Admin User');
+  const baulId = await createBaulViaApi(page, accessToken, `Personas revoke test baúl ${Date.now()}`);
+  await page.goto(`/baules/${baulId}`);
+  await page.getByRole('button', { name: /Familia/ }).click();
+  await page.getByRole('button', { name: 'Nueva persona' }).click();
+  const nickname = `Persona ${Date.now()}`;
+  await page.getByPlaceholder('Ej. Abuela, Tío Juan…').fill(nickname);
+  await page.getByRole('button', { name: 'Añadir' }).click();
+  await expect(page.getByPlaceholder('Ej. Abuela, Tío Juan…')).toBeHidden({ timeout: 10_000 });
 
   const personasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  expect(personasResponse.ok(), `failed to list personas: ${personasResponse.status()}`).toBeTruthy();
   const personas = await personasResponse.json();
-  const guestPersona = personas.find((p: { role: string }) => p.role === 'colaborador');
-  expect(guestPersona, 'expected an auto-created colaborador persona for the guest').toBeTruthy();
-  const personaId = guestPersona.id as string;
-  const nickname = guestPersona.nickname as string;
+  const personaId = personas.find((p: { nickname: string }) => p.nickname === nickname).id as string;
 
-  // The persona is already active (not pending), so "Gestionar acceso" is now offered
-  // in the options menu — the role <select> lives inside that modal, not on the page itself.
+  const firstInvite = await invitePersonaViaApi(page, accessToken, baulId, personaId);
+
+  const guestContext = await browser.newContext();
+  const guestPage = await guestContext.newPage();
+  await loginAs(guestPage, 'Normal User');
+  await guestPage.goto(`/invitacion/baul/${firstInvite.token}`);
+  await guestPage.getByRole('button', { name: 'Unirme al Baúl' }).click();
+  await guestPage.waitForURL('**/onboarding**', { timeout: 15_000 });
+  await guestPage.getByRole('button', { name: 'Saltar' }).click();
+  await guestPage.waitForURL((url) => url.pathname === `/baules/${baulId}`, { timeout: 15_000 });
+  await guestContext.close();
+
+  // The persona is already active (not pending), so "Gestionar permisos" is offered in the
+  // options menu — the role <select> lives inside that modal.
   await page.goto(`/baules/${baulId}/personas/${personaId}`);
   await page.getByRole('button', { name: 'Opciones de la persona' }).click();
-  await page.getByRole('menuitem', { name: 'Gestionar acceso' }).click();
+  await page.getByRole('menuitem', { name: 'Gestionar permisos' }).click();
   await page.getByRole('combobox').selectOption('administrador');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
   await page.getByRole('button', { name: 'Opciones de la persona' }).click();
   await page.getByRole('menuitem', { name: 'Revocar acceso' }).click();
   await page.getByRole('button', { name: 'Revocar acceso' }).click();
+  // Without this wait, the API assertion right below can race the DELETE request the click
+  // just fired — the confirm modal only closes once revokeAccess has actually resolved
+  // (see PersonaSettingsMenuContainer.handleConfirmRevoke).
+  await expect(page.getByText('¿Revocar el acceso?')).toBeHidden({ timeout: 10_000 });
 
-  await expect(page.getByText('Sin acceso')).toBeVisible();
-
-  const revokedPersonasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
+  const revokedResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  expect(revokedPersonasResponse.ok(), `failed to list revoked personas: ${revokedPersonasResponse.status()}`).toBeTruthy();
-  const revokedPersonas = await revokedPersonasResponse.json();
-  const revokedPersona = revokedPersonas.find((p: { id: string }) => p.id === personaId);
-  expect(revokedPersona).toMatchObject({ id: personaId, nickname, role: 'sin_acceso', status: 'sin_acceso', userId: null });
+  const revokedPersonas = await revokedResponse.json();
+  const revoked = revokedPersonas.find((p: { id: string }) => p.id === personaId);
+  // No more sin_acceso — role stays as whatever it was (administrador, set above), only the
+  // account link (and its invite token) are cleared, so the row falls back to Pending.
+  expect(revoked).toMatchObject({ id: personaId, nickname, role: 'administrador', status: 'pending', userId: null });
 
-  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
-  await expect(page.getByRole('menuitem', { name: 'Gestionar acceso' })).toBeHidden();
+  // The old link is dead — the preview endpoint 404s, same as an unknown token.
+  const oldPreviewResponse = await page.request.get(`${API_BASE_URL}/api/persona-invites/${firstInvite.token}/preview`);
+  expect(oldPreviewResponse.status()).toBe(404);
 
-  await page.getByRole('menuitem', { name: 'Permitir invitación' }).click();
+  // Re-inviting the same, now-Pending persona issues a brand new token.
+  const secondInvite = await invitePersonaViaApi(page, accessToken, baulId, personaId);
+  expect(secondInvite.token).not.toBe(firstInvite.token);
 
-  const restoredPersonasResponse = await page.request.get(`${API_BASE_URL}/api/baules/${baulId}/personas`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  expect(restoredPersonasResponse.ok(), `failed to list restored personas: ${restoredPersonasResponse.status()}`).toBeTruthy();
-  const restoredPersonas = await restoredPersonasResponse.json();
-  const restoredPersona = restoredPersonas.find((p: { id: string }) => p.id === personaId);
-  // Reopening no longer re-links the same account self-serve (that required the removed
-  // per-persona invite); the row goes back to pending, not active.
-  expect(restoredPersona).toMatchObject({ id: personaId, nickname, role: 'colaborador', status: 'pending', userId: null });
+  const previewResponse = await page.request.get(`${API_BASE_URL}/api/persona-invites/${secondInvite.token}/preview`);
+  expect(previewResponse.ok()).toBeTruthy();
 });

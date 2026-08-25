@@ -8,13 +8,13 @@ namespace ElBaul.AcceptanceTests.CriticalJourneys;
 
 /// <summary>
 /// Black-box coverage for the Persona access lifecycle because it crosses public API shape,
-/// persisted role values, authorization, and the global baúl invite link.
+/// persisted role values, authorization, and the persona-scoped directed invite link.
 /// </summary>
 [Collection(AcceptanceTestCollection.Name)]
 public class PersonaAccessRevocationTests(ElBaulAcceptanceFixture fixture)
 {
     [Fact]
-    public async Task Revoking_persona_access_keeps_history_row_and_blocks_access()
+    public async Task Revoking_persona_access_keeps_history_row_and_invalidates_the_old_invite_token()
     {
         using var tokenClient = fixture.CreateOidcTokenClient();
         using var adminClient = await CreateAuthenticatedClientAsync(
@@ -24,42 +24,47 @@ public class PersonaAccessRevocationTests(ElBaulAcceptanceFixture fixture)
         using var anonymousClient = new HttpClient { BaseAddress = fixture.BackendClient.BaseAddress };
 
         var baulId = await CreateBaulAsync(adminClient, "Baúl de revocación");
-        var token = await GetInviteLinkTokenAsync(adminClient, baulId);
+        var personaId = await CreatePersonaAsync(adminClient, baulId, "Segunda persona de aceptación");
+        var firstToken = await InvitePersonaAsync(adminClient, baulId, personaId);
 
-        var previewResponse = await anonymousClient.GetAsync($"/api/baul-invites/{token}/preview");
+        var previewResponse = await anonymousClient.GetAsync($"/api/persona-invites/{firstToken}/preview");
         previewResponse.StatusCode.Should().Be(HttpStatusCode.OK, await previewResponse.Content.ReadAsStringAsync());
 
-        var acceptResponse = await guestClient.PostAsJsonAsync($"/api/baul-invites/{token}/accept", new { personaId = (string?)null });
+        var acceptResponse = await guestClient.PostAsync($"/api/persona-invites/{firstToken}/accept", null);
         acceptResponse.StatusCode.Should().Be(HttpStatusCode.OK, await acceptResponse.Content.ReadAsStringAsync());
         var joinedPersona = await ParseJsonAsync(acceptResponse);
-        var personaId = joinedPersona.GetProperty("id").GetString()!;
-        joinedPersona.GetProperty("nickname").GetString().Should().Be("Second Acceptance Test User");
+        joinedPersona.GetProperty("id").GetString().Should().Be(personaId, "the token resolves directly to the persona it was issued for");
+        joinedPersona.GetProperty("status").GetString().Should().Be("active");
 
         var revokeResponse = await adminClient.DeleteAsync($"/api/baules/{baulId}/personas/{personaId}");
         revokeResponse.StatusCode.Should().Be(HttpStatusCode.OK, await revokeResponse.Content.ReadAsStringAsync());
 
         var revokedPersona = await GetPersonaAsync(adminClient, baulId, personaId);
-        revokedPersona.GetProperty("role").GetString().Should().Be("sin_acceso");
-        revokedPersona.GetProperty("status").GetString().Should().Be("sin_acceso");
+        // No more sin_acceso — role is untouched (still colaborador, the default new personas
+        // get), only the account link is cleared, so the row falls back to Pending.
+        revokedPersona.GetProperty("role").GetString().Should().Be("colaborador");
+        revokedPersona.GetProperty("status").GetString().Should().Be("pending");
         revokedPersona.GetProperty("userId").ValueKind.Should().Be(JsonValueKind.Null);
-        revokedPersona.GetProperty("nickname").GetString().Should().Be("Second Acceptance Test User");
+        revokedPersona.GetProperty("nickname").GetString().Should().Be("Segunda persona de aceptación");
 
         var guestBaulAfterRevocation = await guestClient.GetAsync($"/api/baules/{baulId}");
         guestBaulAfterRevocation.StatusCode.Should().Be(HttpStatusCode.Forbidden, await guestBaulAfterRevocation.Content.ReadAsStringAsync());
 
-        // Reopening is admin-only now: there's no self-serve link tied to a single Persona
-        // any more, only the global invite link. Resetting the role reuses the same history
-        // row (same id, nickname, past tags) and moves it back to Pending; actually reclaiming
-        // it as "active" again requires an admin-mediated path, not exercised here.
-        var reopenResponse = await adminClient.PutAsJsonAsync(
-            $"/api/baules/{baulId}/personas/{personaId}/role",
-            new { role = "colaborador" });
-        reopenResponse.StatusCode.Should().Be(HttpStatusCode.OK, await reopenResponse.Content.ReadAsStringAsync());
-        var reopenedPersona = await ParseJsonAsync(reopenResponse);
-        reopenedPersona.GetProperty("id").GetString().Should().Be(personaId, "reopening must reuse the same history row, not create a new one");
-        reopenedPersona.GetProperty("role").GetString().Should().Be("colaborador");
-        reopenedPersona.GetProperty("status").GetString().Should().Be("pending");
-        reopenedPersona.GetProperty("userId").ValueKind.Should().Be(JsonValueKind.Null);
+        // The old per-person link is dead — explicit exception to invite tokens otherwise being
+        // permanent/non-regenerable (see the ticket's refinement Q&A).
+        var oldPreviewAfterRevocation = await anonymousClient.GetAsync($"/api/persona-invites/{firstToken}/preview");
+        oldPreviewAfterRevocation.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        // Re-inviting the same, now-Pending persona lazily issues a brand new token and lets
+        // the (or another) guest claim it again.
+        var secondToken = await InvitePersonaAsync(adminClient, baulId, personaId);
+        secondToken.Should().NotBe(firstToken);
+
+        var secondAcceptResponse = await guestClient.PostAsync($"/api/persona-invites/{secondToken}/accept", null);
+        secondAcceptResponse.StatusCode.Should().Be(HttpStatusCode.OK, await secondAcceptResponse.Content.ReadAsStringAsync());
+        var reclaimedPersona = await ParseJsonAsync(secondAcceptResponse);
+        reclaimedPersona.GetProperty("id").GetString().Should().Be(personaId, "reclaiming must reuse the same history row, not create a new one");
+        reclaimedPersona.GetProperty("status").GetString().Should().Be("active");
     }
 
     private async Task<HttpClient> CreateAuthenticatedClientAsync(FakeOidcTokenClient tokenClient, string userKey)
@@ -81,9 +86,16 @@ public class PersonaAccessRevocationTests(ElBaulAcceptanceFixture fixture)
         return (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
     }
 
-    private static async Task<string> GetInviteLinkTokenAsync(HttpClient adminClient, string baulId)
+    private static async Task<string> CreatePersonaAsync(HttpClient adminClient, string baulId, string nickname)
     {
-        var response = await adminClient.GetAsync($"/api/baules/{baulId}/invite-link");
+        var response = await adminClient.PostAsJsonAsync($"/api/baules/{baulId}/personas", new { nickname });
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        return (await ParseJsonAsync(response)).GetProperty("id").GetString()!;
+    }
+
+    private static async Task<string> InvitePersonaAsync(HttpClient adminClient, string baulId, string personaId)
+    {
+        var response = await adminClient.PostAsync($"/api/baules/{baulId}/personas/{personaId}/invite", null);
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         return (await ParseJsonAsync(response)).GetProperty("token").GetString()!;
     }

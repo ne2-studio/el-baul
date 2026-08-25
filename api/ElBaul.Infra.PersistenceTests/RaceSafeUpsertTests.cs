@@ -13,11 +13,10 @@ using Microsoft.EntityFrameworkCore;
 namespace ElBaul.Infra.PersistenceTests;
 
 /// <summary>
-/// UserRepository.UpsertAsync, BaulInviteLinkRepository.CreateAsync, EmailLinkClickRepository.
-/// RegisterSignedClickAsync and SentEmailRepository.TryReserveAsync each resolve a
-/// concurrent-insert race with a native <c>INSERT ... ON CONFLICT</c> instead of a caught
-/// <c>DbUpdateException</c> — a real unique constraint (and, for BaulInviteLinks, a partial index
-/// with a predicate) is exactly the kind of behavior ElBaul.Infra.Lite's in-memory fakes cannot
+/// UserRepository.UpsertAsync, EmailLinkClickRepository.RegisterSignedClickAsync and
+/// SentEmailRepository.TryReserveAsync each resolve a concurrent-insert race with a native
+/// <c>INSERT ... ON CONFLICT</c> instead of a caught <c>DbUpdateException</c> — a real unique
+/// constraint is exactly the kind of behavior ElBaul.Infra.Lite's in-memory fakes cannot
 /// reproduce, since they enforce no uniqueness at all. These tests simulate the race
 /// deterministically — seed the "winning" row directly, then call the method under test — rather
 /// than with real concurrent threads, which would make the outcome non-deterministic without
@@ -66,65 +65,6 @@ public class RaceSafeUpsertTests(PostgresFixture fixture) : PersistenceTestBase(
         await using var assertionContext = Fixture.CreateDbContext();
         (await assertionContext.Users.CountAsync(u => u.Id == userId)).Should().Be(1);
         (await assertionContext.Users.CountAsync(u => u.Email == "parallel-sync@example.com")).Should().Be(1);
-    }
-
-    [Fact]
-    public async Task BaulInviteLinkRepository_CreateAsync_a_losing_insert_for_the_same_baul_is_a_silent_no_op()
-    {
-        await using var dbContext = Fixture.CreateDbContext();
-        var users = new UserRepository(dbContext);
-        var baules = new BaulRepository(dbContext);
-        var links = new BaulInviteLinkRepository(dbContext);
-
-        var custodio = new User(new UserId("race-custodio"), "custodio@example.com", "Custodio", null, DateTime.UtcNow);
-        await users.UpsertAsync(custodio);
-        var baul = new Baul(new BaulId(Guid.NewGuid()), "Baúl con carrera de invite link", Description: null,
-            custodio.Id, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
-        await baules.CreateAsync(baul);
-
-        var winner = new BaulInviteLink(new BaulInviteLinkId(Guid.NewGuid()), "winner-token", baul.Id, custodio.Id, DateTime.UtcNow);
-        var loser = new BaulInviteLink(new BaulInviteLinkId(Guid.NewGuid()), "loser-token", baul.Id, custodio.Id, DateTime.UtcNow);
-
-        await links.CreateAsync(winner);
-        // Simulates a concurrent GetOrCreateAsync call racing for the same baúl — must not
-        // throw, and must not create a second active link.
-        var act = async () => await links.CreateAsync(loser);
-        await act.Should().NotThrowAsync("the partial unique index conflict is absorbed by ON CONFLICT DO NOTHING, not an exception");
-
-        // Compares by Id/Token rather than full equivalence: Postgres' microsecond timestamp
-        // precision vs. .NET DateTime's tick precision makes CreatedAt lossy across a round
-        // trip, which isn't what this test is about.
-        (await links.GetActiveByBaulIdAsync(baul.Id)).Should().BeEquivalentTo(new { winner.Id, winner.Token });
-        (await links.GetByTokenAsync(loser.Token)).Should().BeNull("the losing insert must not have persisted any row");
-    }
-
-    [Fact]
-    public async Task BaulInviteLinkRepository_CreateAsync_a_genuine_token_collision_still_throws()
-    {
-        // Distinguishes the two independent unique constraints on BaulInviteLinks: the ON
-        // CONFLICT clause targets only the partial index on (BaulId) WHERE RevokedAt IS NULL, so
-        // a collision on the *other* unique index (Token) must still surface as a real failure —
-        // proving the fix is more precise than the try/catch-any-UniqueViolation it replaced,
-        // which could not tell the two apart.
-        await using var dbContext = Fixture.CreateDbContext();
-        var users = new UserRepository(dbContext);
-        var baules = new BaulRepository(dbContext);
-        var links = new BaulInviteLinkRepository(dbContext);
-
-        var custodio = new User(new UserId("race-custodio-2"), "custodio2@example.com", "Custodio", null, DateTime.UtcNow);
-        await users.UpsertAsync(custodio);
-        var baulA = new Baul(new BaulId(Guid.NewGuid()), "Baúl A", Description: null, custodio.Id, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
-        var baulB = new Baul(new BaulId(Guid.NewGuid()), "Baúl B", Description: null, custodio.Id, ChapterCount: 0, DateTime.UtcNow, DateTime.UtcNow);
-        await baules.CreateAsync(baulA);
-        await baules.CreateAsync(baulB);
-
-        await links.CreateAsync(new BaulInviteLink(new BaulInviteLinkId(Guid.NewGuid()), "shared-token", baulA.Id, custodio.Id, DateTime.UtcNow));
-
-        // Different baúl (so it doesn't hit the ON CONFLICT target), same token.
-        var act = async () => await links.CreateAsync(
-            new BaulInviteLink(new BaulInviteLinkId(Guid.NewGuid()), "shared-token", baulB.Id, custodio.Id, DateTime.UtcNow));
-
-        await act.Should().ThrowAsync<Exception>("a Token collision is a different unique index than the one ON CONFLICT targets");
     }
 
     [Fact]

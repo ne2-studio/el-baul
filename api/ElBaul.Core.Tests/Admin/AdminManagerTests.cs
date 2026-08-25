@@ -34,7 +34,6 @@ public class AdminManagerTests
     private readonly InMemoryPhotoRepository _photoRepository = new();
     private readonly InMemoryRecuerdoRepository _recuerdoRepository = new();
     private readonly InMemorySharedLinkRepository _sharedLinkRepository = new();
-    private readonly InMemoryBaulInviteLinkRepository _baulInviteLinkRepository = new();
     private readonly InMemoryTvSessionRepository _tvSessionRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
     private readonly InMemoryRemovalRequestRepository _removalRequestRepository = new();
@@ -53,7 +52,6 @@ public class AdminManagerTests
             _photoRepository,
             _recuerdoRepository,
             _sharedLinkRepository,
-            _baulInviteLinkRepository,
             _tvSessionRepository,
             _photoPersonaTagRepository,
             _removalRequestRepository,
@@ -334,7 +332,6 @@ public class AdminManagerTests
         var updated = await _personaRepository.GetPersonaByIdAsync(persona.Id);
         Assert.Null(updated!.UserId);
         Assert.False(updated.IsClaimed);
-        Assert.True(updated.IsClaimable);
         Assert.Equal(PersonaAccessStatus.Pending, updated.AccessStatus);
     }
 

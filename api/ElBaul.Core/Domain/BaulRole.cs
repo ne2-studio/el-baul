@@ -8,8 +8,7 @@ namespace ElBaul.Domain;
 public enum BaulRole
 {
     Colaborador,
-    Administrador,
-    SinAcceso
+    Administrador
 }
 
 // Wire-string <-> BaulRole, public (unlike DtoMapping) so the Presentation layer can parse a

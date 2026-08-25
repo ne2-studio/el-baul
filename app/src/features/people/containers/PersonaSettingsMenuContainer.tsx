@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Loader2, MoreVertical, Pencil, UserCog, UserPlus, UserX } from 'lucide-react';
+import { Camera, Loader2, MoreVertical, Pencil, UserCog, UserX } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaInfoModal';
 import { PersonaAvatarPickerModal } from '@/features/people/components/PersonaAvatarPickerModal';
@@ -41,7 +41,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
   // the raw permission flags — otherwise an empty group (e.g. a pending persona, whose "manage
   // access" actions are both hidden) leaves two adjacent separators with nothing in between.
   const showsInfoGroup = permissions.canEditPersonaInfo || permissions.canUploadPersonaAvatar;
-  const showsAccessGroup = permissions.canChangePersonaRole || permissions.canRestorePersonaAccess;
+  const showsAccessGroup = permissions.canChangePersonaRole;
   const showsRevokeGroup = permissions.canRevokePersonaAccess;
 
   const [showEditInfoModal, setShowEditInfoModal] = useState(false);
@@ -133,14 +133,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
           {permissions.canChangePersonaRole && (
             <DropdownMenuItem onClick={() => setShowManageAccessModal(true)}>
               <UserCog className="w-4 h-4 mr-2" />
-              Gestionar acceso
-            </DropdownMenuItem>
-          )}
-
-          {permissions.canRestorePersonaAccess && (
-            <DropdownMenuItem onClick={() => handleChangeRole('colaborador')}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Permitir invitación
+              Gestionar permisos
             </DropdownMenuItem>
           )}
 

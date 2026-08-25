@@ -126,12 +126,8 @@ public class DomainEntityUpdateTests
             new SharedLinkId(Guid.NewGuid()), "shared-token", new BaulId(Guid.NewGuid()),
             SharedLinkContentType.Photo, new PhotoId(Guid.NewGuid()), null,
             new UserId("user-1"), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
-        var inviteLink = new BaulInviteLink(
-            new BaulInviteLinkId(Guid.NewGuid()), "invite-token", new BaulId(Guid.NewGuid()),
-            new UserId("user-1"), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));
 
         Assert.Equal(revokedAt, sharedLink.Revoke(revokedAt).RevokedAt);
-        Assert.Equal(revokedAt, inviteLink.Revoke(revokedAt).RevokedAt);
     }
 
     [Fact]

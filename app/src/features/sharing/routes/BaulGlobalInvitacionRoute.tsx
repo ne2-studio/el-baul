@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { InvitacionScreen } from '@/features/sharing/components/InvitacionScreen';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
-import { BaulInviteLinkPreview } from '@/types';
+import { PersonaInvitePreview } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
 
 export const BaulGlobalInvitacionRoute: React.FC = () => {
@@ -11,7 +11,7 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const showToastMessage = useUIStore(state => state.showToastMessage);
 
-  const [preview, setPreview] = useState<BaulInviteLinkPreview | null>(null);
+  const [preview, setPreview] = useState<PersonaInvitePreview | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
 
       try {
         setLoading(true);
-        const previewData = await api.baulInvites.getPreview(token);
+        const previewData = await api.personaInvites.getPreview(token);
         setPreview(previewData);
       } catch (error) {
         console.error('Error loading invitation data:', error);

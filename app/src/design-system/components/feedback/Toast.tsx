@@ -24,7 +24,7 @@ export function Toast({ message, onClose, duration = 3000, variant = 'success' }
 
   return (
     // z-[70]: above BottomSheetModal's highest overlay (z-[60], size='sm') so a toast fired
-    // while a modal stays open (e.g. "copy invite link" in InviteFamilyModal, which doesn't
+    // while a modal stays open (e.g. a "link copied" toast fired from a modal that doesn't
     // close the modal on copy) is never rendered underneath it. See BottomSheetModal.tsx for
     // the modal side of this stacking contract.
     <div className="fixed bottom-[calc(1.5rem_+_var(--safe-bottom))] left-4 right-4 md:left-1/2 md:right-auto md:w-96 md:-translate-x-1/2 z-[70] animate-slide-up">

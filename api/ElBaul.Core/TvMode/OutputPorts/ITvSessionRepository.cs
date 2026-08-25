@@ -9,6 +9,6 @@ public interface ITvSessionRepository
 
     /// <summary>Used by the admin hard-delete flow. TvSession.BaulId is a Restrict FK, so this
     /// must run before the Baul row is deleted — mirrors ISharedLinkRepository/
-    /// IBaulInviteLinkRepository's same-shaped method.</summary>
+    /// ISharedLinkRepository's same-shaped method.</summary>
     Task DeleteByBaulIdAsync(BaulId baulId);
 }

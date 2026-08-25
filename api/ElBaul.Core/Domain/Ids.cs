@@ -72,13 +72,6 @@ public readonly record struct SharedLinkId(Guid Value) : IParsableId<SharedLinkI
     public static Result<SharedLinkId> Parse(string? raw) => IdParsing.Parse(raw, v => new SharedLinkId(v), "shared link id");
 }
 
-public readonly record struct BaulInviteLinkId(Guid Value) : IParsableId<BaulInviteLinkId>
-{
-    public static implicit operator Guid(BaulInviteLinkId id) => id.Value;
-    public override string ToString() => Value.ToString();
-    public static Result<BaulInviteLinkId> Parse(string? raw) => IdParsing.Parse(raw, v => new BaulInviteLinkId(v), "baúl invite link id");
-}
-
 public readonly record struct TvSessionId(Guid Value) : IParsableId<TvSessionId>
 {
     public static implicit operator Guid(TvSessionId id) => id.Value;

@@ -21,7 +21,7 @@ public class HttpArchitectureRulesTests
     private static readonly HashSet<EndpointContract> AnonymousEndpointAllowlist =
     [
         new("GET", "/api/app-config"),
-        new("GET", "/api/baul-invites/{token}/preview"),
+        new("GET", "/api/persona-invites/{token}/preview"),
         new("GET", "/email/assets/logo.png"),
         new("GET", "/email/click/{token}"),
         new("GET", "/email/open/{token}.gif"),
