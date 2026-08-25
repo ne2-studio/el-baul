@@ -15,11 +15,12 @@ import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photo
 // vive en PhotoViewerContainer, el mismo que usa el resto de visores.
 //
 // A diferencia de los demás visores, no hace fetch propio: solo muestra las fotos que la
-// pestaña ya cargó vía scroll infinito (useBaulesStore.baulPhotos/BaulPhotosTabContainer) —
-// deslizar más allá de lo ya cargado no está soportado en v1 (ver el hallazgo de refinamiento
-// del issue #57: "limitar el swipe a lo que el grid ya haya cargado, sin fetch-on-swipe").
-// Por eso baulId no fuerza aquí ninguna carga adicional — si baulPhotos[baulId] estuviera
-// vacío (solo posible con un enlace directo a esta ruta sin haber abierto antes la pestaña),
+// pestaña ya cargó (useBaulesStore.baulPhotos/loosePhotos, según qué filtro — "Todas" o "Sin
+// capítulo" — estuviera activo en BaulPhotosTabContainer cuando se abrió la foto) — deslizar
+// más allá de lo ya cargado no está soportado en v1 (ver el hallazgo de refinamiento del issue
+// #57: "limitar el swipe a lo que el grid ya haya cargado, sin fetch-on-swipe"). Por eso baulId
+// no fuerza aquí ninguna carga adicional — si ninguna de las dos listas ya cargadas contuviera
+// la foto (solo posible con un enlace directo a esta ruta sin haber abierto antes la pestaña),
 // se cae al mismo "no encontrada" que un id inexistente.
 export const BaulPhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -30,14 +31,19 @@ export const BaulPhotoViewerRoute: React.FC = () => {
 
   const baulScope = useBaulScope(baulId);
   const { chapters } = baulScope;
-  const { baulPhotos } = useBaulesStore();
+  const { baulPhotos, loosePhotos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
 
   const guard = guardBaulScope(baulScope, { loadingLabel: 'Cargando foto...' });
   if (!guard.ready) return guard.screen;
   const { baul } = guard;
 
-  const photos = hydratePhotos(baulPhotos[baul.id], photosById) || [];
+  // La foto puede venir de cualquiera de las dos listas que la tab "Fotos" puede tener
+  // cargadas — se usa la que de verdad la contenga como conjunto para el swipe, así que
+  // deslizar se queda dentro del mismo filtro con el que se abrió la foto.
+  const allPhotos = hydratePhotos(baulPhotos[baul.id], photosById) || [];
+  const loosePhotosList = hydratePhotos(loosePhotos[baul.id], photosById) || [];
+  const photos = allPhotos.some((p) => p.id === photoId) ? allPhotos : loosePhotosList;
   const photo = photos.find((p) => p.id === photoId);
   if (!photo) return <div className="p-8 text-center">No se ha encontrado la foto.</div>;
 

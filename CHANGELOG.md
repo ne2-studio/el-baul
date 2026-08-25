@@ -42,6 +42,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Arreglado
 
+- En la pestaña "Fotos" del baúl, con el filtro "Sin capítulo" activo, al tocar una foto ahora se abre correctamente; antes no pasaba nada (aunque la URL cambiaba) hasta cambiar al filtro "Todas".
 - La pantalla de fotos de una subida ya no depende de que la funcionalidad de "Historia" esté activada; antes fallaba si esa funcionalidad estaba desactivada.
 - Al ajustar el zoom de una foto de perfil de persona o de portada (capítulo o baúl), el recorte que se guardaba no coincidía con el que se veía en la vista previa; ahora sí coinciden.
 - Al abrir un baúl, un capítulo o una persona, a veces fallaba la carga con un error de servidor; ahora carga siempre correctamente.

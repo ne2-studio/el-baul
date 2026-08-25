@@ -101,4 +101,16 @@ describe('BaulPhotoViewerRoute', () => {
 
     expect(await screen.findByText('No se ha encontrado la foto.')).toBeInTheDocument();
   });
+
+  // Con el filtro "Sin capítulo" activo, BaulPhotosTabContainer nunca llega a pedir la página
+  // paginada de "Todas" — baulPhotos[baulId] se queda sin cargar y solo loosePhotos tiene la
+  // foto. Antes esto hacía caer siempre en "no encontrada" — ver el bug que arregla este test.
+  it('shows a loose photo opened with only "Sin capítulo" loaded (baulPhotos never fetched)', async () => {
+    useBaulesStore.setState({ loosePhotos: { 'baul-1': [loosePhoto.id] }, baulPhotos: {} });
+
+    renderAt('/baules/baul-1/fotos/foto/photo-2');
+
+    await screen.findByRole('button', { name: 'Más opciones' });
+    expect(screen.queryByText('No se ha encontrado la foto.')).not.toBeInTheDocument();
+  });
 });
