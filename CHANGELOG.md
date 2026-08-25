@@ -25,6 +25,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Cambiado
 
+- En la pantalla de un capítulo, la pestaña "Fotos" es ahora la primera y la seleccionada por defecto, seguida de "Recuerdos".
 - En la pantalla "Invitar a la familia", las personas se listan ahora primero las que aún no han sido invitadas y luego las que ya están en el baúl, en orden alfabético dentro de cada grupo. En los menús para etiquetar personas, en cambio, se listan primero las que ya están en el baúl y luego las que están pendientes de invitación, también en orden alfabético dentro de cada grupo.
 - En el visor de fotos, en móvil la foto ahora ocupa toda la pantalla y el panel de recuerdos aparece plegado como una hoja desplegable desde abajo; en escritorio se mantiene como antes, siempre visible junto a la foto.
 - El email de bienvenida y el resumen semanal ahora saludan solo por el nombre de pila (por ejemplo, "Hola Pedro"), en vez de por el nombre completo.
