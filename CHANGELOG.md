@@ -22,6 +22,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Cambiado
 
+- En el visor de fotos, en móvil la foto ahora ocupa toda la pantalla y el panel de recuerdos aparece plegado como una hoja desplegable desde abajo; en escritorio se mantiene como antes, siempre visible junto a la foto.
 - El email de bienvenida y el resumen semanal ahora saludan solo por el nombre de pila (por ejemplo, "Hola Pedro"), en vez de por el nombre completo.
 - El resumen semanal por email y las notificaciones push de novedades ahora indican quién ha añadido cada novedad (por ejemplo, "Tita Loli añadió 3 recuerdos nuevos"), en vez de mostrar solo el número.
 - Se ha renovado el contenido del email de bienvenida (tanto para quien entra por primera vez como para quien llega invitado a un baúl), que ahora incluye un vídeo de presentación de El Baúl.

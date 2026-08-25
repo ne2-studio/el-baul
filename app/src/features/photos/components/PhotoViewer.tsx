@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Photo, Recuerdo, TaggedPersona } from '@/types';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
@@ -9,6 +9,8 @@ import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
 import { Button } from '@/design-system/components/actions/Button';
+import { IconButton } from '@/design-system/components/actions/IconButton';
+import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { ChapterBadge, PersonBadge } from '@/design-system/components/data-display/Badges';
 
 interface PhotoViewerProps {
@@ -77,6 +79,9 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   useScrollLock();
   const viewportInset = useVisualViewportInset();
+  // El panel de recuerdos empieza contraído para que la foto ocupe todo el visor — el usuario
+  // lo despliega a demanda (barra inferior en móvil, franja lateral en escritorio).
+  const [panelExpanded, setPanelExpanded] = useState(false);
 
   const currentIndex = photos.findIndex(p => p.id === photo.id);
   const hasRecuerdos = recuerdos.length > 0;
@@ -139,26 +144,101 @@ export function PhotoViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, photos]);
 
+  const extraTaggedCount = Math.max(0, taggedPersonas.length - 3);
+
+  // Contenido del panel de recuerdos (fecha, personas etiquetadas, lista, input) — compartido
+  // entre la franja de escritorio (siempre visible, como en el diseño original) y la hoja
+  // desplegable de móvil (colapsada por defecto).
+  const infoContent = (
+    <>
+      <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
+        {/* Date */}
+        {(photo.date || canChangeDate) && (
+          <Button variant="plain"
+            onClick={() => canChangeDate && openDateModal()}
+            disabled={!canChangeDate}
+            className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
+          >
+            {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
+          </Button>
+        )}
+
+        {/* Tagged personas + chapter badge */}
+        {(taggedPersonas.length > 0 || showChapterBadge) && (
+          <div className="space-y-2">
+            {taggedPersonas.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {taggedPersonas.map((persona) => (
+                  <PersonBadge
+                    key={persona.id}
+                    nickname={persona.nickname}
+                    avatarUrl={persona.avatarUrl}
+                    onClick={onUserClick ? () => onUserClick(persona.id) : undefined}
+                  />
+                ))}
+              </div>
+            )}
+
+            {showChapterBadge && (
+              <ChapterBadge chapterName={chapterName} onClick={onChapterClick} />
+            )}
+          </div>
+        )}
+
+        {/* Recuerdos List */}
+        {recuerdosLoading ? (
+          <div className="flex justify-center py-2">
+            <Loader2 className="w-5 h-5 text-background/40 animate-spin" aria-label="Cargando recuerdos" />
+          </div>
+        ) : !hasRecuerdos ? (
+          <div className="text-center">
+            <p className="text-background/50 text-sm mb-2">
+              Sé el primero en añadir un recuerdo
+            </p>
+          </div>
+        ) : (
+          <RecuerdosList
+            recuerdos={recuerdos}
+            onUserClick={onUserClick}
+            onShareRecuerdo={onShareRecuerdo}
+            onEditRecuerdo={onEditRecuerdo}
+          />
+        )}
+      </div>
+
+      {onAddRecuerdo && (
+        <div className="px-6 pb-6 pt-2 flex-shrink-0">
+          <RecuerdoInput
+            photoId={photo.id}
+            onSubmit={onAddRecuerdo}
+          />
+        </div>
+      )}
+    </>
+  );
+
   return (
     <>
       <div
-        className="fixed left-0 right-0 bg-foreground/95 z-50 flex flex-col pt-safe pb-safe"
+        className="fixed left-0 right-0 bg-foreground z-50 flex flex-col overflow-hidden"
         style={{ top: viewportInset.top, height: viewportInset.height }}
       >
-        <PhotoViewerHeader
-          currentIndex={currentIndex}
-          totalCount={photos.length}
-          onClose={onClose}
-          menuItems={menuItems}
-        />
+        {/* Header: en móvil flota sobre la foto a pantalla completa; en escritorio vuelve a ser
+            una barra normal que empuja la foto hacia abajo, como en el diseño original. */}
+        <div className="absolute inset-x-0 top-0 z-30 pt-safe pointer-events-none md:static md:pt-0 md:pointer-events-auto md:z-auto">
+          <PhotoViewerHeader
+            currentIndex={currentIndex}
+            totalCount={photos.length}
+            onClose={onClose}
+            menuItems={menuItems}
+          />
+        </div>
 
-        {/* Cuerpo: en móvil se apila (foto arriba, recuerdos abajo, mitad y mitad); en
-            escritorio pasa a 2 columnas, foto a la izquierda y recuerdos a la derecha
-            ocupando ~1/3. La caja de la foto mide siempre lo mismo — fija, no depende de las
-            dimensiones de la imagen ni de cuántos recuerdos haya cargados — y es la columna
-            de recuerdos la que hace scroll propio dentro de su tamaño también fijo. */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0">
-          <div className="flex h-1/2 md:h-full md:flex-1 overflow-hidden">
+        {/* Cuerpo: en móvil la foto ocupa todo el visor y el panel de recuerdos flota encima,
+            colapsado por defecto (barra inferior desplegable). En escritorio vuelve al layout
+            de siempre: foto a la izquierda, panel de recuerdos siempre visible a la derecha. */}
+        <div className="flex-1 flex flex-col md:flex-row min-h-0 relative">
+          <div className="absolute inset-0 flex md:static md:flex-1 md:h-full overflow-hidden">
             <PhotoStage
               photoKey={photo.id}
               src={photo.fullUrl}
@@ -171,71 +251,67 @@ export function PhotoViewer({
             />
           </div>
 
-          {/* Info & Recuerdos section: dentro, solo la fecha y la lista hacen scroll propio,
-              mientras el input se queda fijo abajo sin encogerse. */}
-          <div className="flex flex-col flex-1 min-h-0 md:flex-none md:w-1/3 md:h-full md:border-l md:border-background/15">
-            <div className="px-6 pt-8 pb-4 space-y-8 overflow-y-auto min-h-0">
-              {/* Date */}
-              {(photo.date || canChangeDate) && (
-                <Button variant="plain"
-                  onClick={() => canChangeDate && openDateModal()}
-                  disabled={!canChangeDate}
-                  className="text-xs text-background/60 hover:text-background/80 transition-colors disabled:hover:text-background/60"
-                >
-                  {photo.date ? formatPartialDate(photo.date) : 'Sin fecha · Toca para añadir'}
-                </Button>
-              )}
+          {/* Panel de escritorio: siempre visible, sin colapsar. */}
+          <div className="hidden md:flex md:flex-col md:flex-none md:w-1/3 md:h-full md:border-l md:border-background/15">
+            {infoContent}
+          </div>
 
-              {/* Tagged personas + chapter badge */}
-              {(taggedPersonas.length > 0 || showChapterBadge) && (
-                <div className="space-y-2">
+          {/* Panel de móvil: colapsado por defecto (barra inferior); desplegado, hoja flotante
+              sobre la foto que sube desde abajo. */}
+          <div className="md:hidden">
+            {panelExpanded ? (
+              <div className="absolute z-20 flex flex-col bg-foreground/95 backdrop-blur-sm inset-x-0 bottom-0 max-h-[50%] rounded-t-2xl pb-safe">
+                <div className="flex items-center justify-between gap-2 px-6 pt-5 pb-1 flex-shrink-0">
+                  <h2 className="text-background font-semibold">Recuerdos</h2>
+                  <IconButton
+                    onClick={() => setPanelExpanded(false)}
+                    aria-label="Contraer panel de recuerdos"
+                    tone="inverse"
+                  >
+                    <ChevronDown className="w-5 h-5 text-background" aria-hidden />
+                  </IconButton>
+                </div>
+
+                {infoContent}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPanelExpanded(true)}
+                aria-label="Ver recuerdos"
+                className="absolute z-20 bg-foreground/90 backdrop-blur-sm text-left inset-x-0 bottom-0 rounded-t-2xl pb-safe"
+              >
+                {/* padding visual en su propio wrapper: si compartiera elemento con pb-safe, ese
+                    padding-bottom (0 fuera de iOS nativo) le ganaría en cascada al de aquí, por
+                    venir declarado después en index.css — ver BottomSheetModal/AiChatScreen para
+                    el mismo patrón de separar ambos paddings. */}
+                <div className="flex items-center gap-3 h-16 px-4">
                   {taggedPersonas.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {taggedPersonas.map((persona) => (
-                        <PersonBadge
+                    <div className="flex -space-x-2">
+                      {taggedPersonas.slice(0, 3).map((persona) => (
+                        <Avatar
                           key={persona.id}
-                          nickname={persona.nickname}
-                          avatarUrl={persona.avatarUrl}
-                          onClick={onUserClick ? () => onUserClick(persona.id) : undefined}
+                          name={persona.nickname}
+                          src={persona.avatarUrl}
+                          size={8}
+                          className="bg-background/20 text-background/70 ring-2 ring-foreground"
                         />
                       ))}
+                      {extraTaggedCount > 0 && (
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium bg-background/20 text-background/70 ring-2 ring-foreground">
+                          +{extraTaggedCount}
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {showChapterBadge && (
-                    <ChapterBadge chapterName={chapterName} onClick={onChapterClick} />
-                  )}
-                </div>
-              )}
+                  <span className="flex-1 text-background/70 text-sm">
+                    {photo.date ? formatPartialDate(photo.date) : 'Sin fecha'}
+                  </span>
 
-              {/* Recuerdos List */}
-              {recuerdosLoading ? (
-                <div className="flex justify-center py-2">
-                  <Loader2 className="w-5 h-5 text-background/40 animate-spin" aria-label="Cargando recuerdos" />
+                  <ChevronUp className="w-5 h-5 text-background" aria-hidden />
                 </div>
-              ) : !hasRecuerdos ? (
-                <div className="text-center">
-                  <p className="text-background/50 text-sm mb-2">
-                    Sé el primero en añadir un recuerdo
-                  </p>
-                </div>
-              ) : (
-                <RecuerdosList
-                  recuerdos={recuerdos}
-                  onUserClick={onUserClick}
-                  onShareRecuerdo={onShareRecuerdo}
-                  onEditRecuerdo={onEditRecuerdo}
-                />
-              )}
-            </div>
-
-            {onAddRecuerdo && (
-              <div className="px-6 pb-6 pt-2 flex-shrink-0">
-                <RecuerdoInput
-                  photoId={photo.id}
-                  onSubmit={onAddRecuerdo}
-                />
-              </div>
+              </button>
             )}
           </div>
         </div>

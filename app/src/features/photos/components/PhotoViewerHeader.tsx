@@ -30,16 +30,17 @@ export function PhotoViewerHeader({ currentIndex, totalCount, onClose, menuItems
         onClick={onClose}
         aria-label="Cerrar"
         tone="inverse"
+        className="pointer-events-auto"
       >
         <Icon icon={icons.close} size="lg" className="text-background" aria-hidden />
       </IconButton>
 
-      <div className="text-background/75 text-sm">
+      <div className="text-background/75 text-sm pointer-events-auto">
         {currentIndex + 1} / {totalCount}
       </div>
 
       {menuItems.length > 0 ? (
-        <div className="relative">
+        <div className="relative pointer-events-auto">
           <IconButton
             onClick={() => setShowMenu(!showMenu)}
             aria-label="Más opciones"
