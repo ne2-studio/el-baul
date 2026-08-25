@@ -1,6 +1,7 @@
 import { SelectionRow } from '@/design-system/components/data-display/SelectionRow';
 import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { Persona } from '@/types';
+import { sortPersonasForTagging } from '@/utils/personaOrder';
 
 interface PersonaSelectionListProps {
   personas: Persona[];
@@ -17,7 +18,7 @@ interface PersonaSelectionListProps {
 export function PersonaSelectionList({ personas, selectedIds, onToggle, disabled = false }: PersonaSelectionListProps) {
   return (
     <>
-      {personas.map((persona) => {
+      {sortPersonasForTagging(personas).map((persona) => {
         const isSelected = selectedIds.includes(persona.id);
         return (
           <SelectionRow

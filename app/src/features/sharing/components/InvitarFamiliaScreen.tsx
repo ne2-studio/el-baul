@@ -7,6 +7,7 @@ import { Button } from '@/design-system/components/actions/Button';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Persona } from '@/types';
+import { sortPersonasForInvite } from '@/utils/personaOrder';
 
 interface InvitarFamiliaScreenProps {
   baulNombre: string;
@@ -41,7 +42,7 @@ export function InvitarFamiliaScreen({
       />
 
       <PageContainer className="py-6 pb-24 space-y-3">
-        {personas.map((persona) => {
+        {sortPersonasForInvite(personas).map((persona) => {
           const isActive = persona.status === 'active';
           const isInviting = invitingPersonaId === persona.id;
 
