@@ -124,10 +124,11 @@ describe('PersonaSettingsMenuContainer', () => {
 
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
 
-    // A pending persona has no "Gestionar permisos" available (role can't be changed until it's
-    // claimed), so the group between the two separators is empty and only one separator (at
-    // most) should render, not two adjacent ones.
+    // A pending persona has never been invited, so neither "Gestionar permisos" nor "Revocar
+    // acceso" is available (there's no access to change or revoke until it's claimed), and no
+    // separator should render for the empty groups.
     expect(screen.queryByText('Gestionar permisos')).not.toBeInTheDocument();
-    expect(document.querySelectorAll('[data-slot="dropdown-menu-separator"]')).toHaveLength(1);
+    expect(screen.queryByText('Revocar acceso')).not.toBeInTheDocument();
+    expect(document.querySelectorAll('[data-slot="dropdown-menu-separator"]')).toHaveLength(0);
   });
 });

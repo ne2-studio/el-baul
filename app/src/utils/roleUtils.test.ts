@@ -94,7 +94,7 @@ describe('roleUtils persona permissions', () => {
       expected: {
         canManagePersona: true,
         canChangePersonaRole: false,
-        canRevokePersonaAccess: true,
+        canRevokePersonaAccess: false,
       },
     },
     {

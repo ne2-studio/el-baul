@@ -83,6 +83,6 @@ export function getPersonaPermissions({
     canUploadPersonaAvatar: canEditOwnPersona,
     canManagePersona,
     canChangePersonaRole: canManagePersona && !isPending,
-    canRevokePersonaAccess: canManagePersona,
+    canRevokePersonaAccess: canManagePersona && !isPending,
   };
 }
