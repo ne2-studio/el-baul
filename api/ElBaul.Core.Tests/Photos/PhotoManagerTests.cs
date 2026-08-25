@@ -48,12 +48,11 @@ public class PhotoManagerTests
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(nextId: nextId), _fixture.Clock,
             new FakeUnitOfWork());
 
-    private PhotoReadManager CreateReadManager(string currentUserId, ILogger<PhotoReadManager>? logger = null, bool baulFeedEnabled = true) =>
+    private PhotoReadManager CreateReadManager(string currentUserId, ILogger<PhotoReadManager>? logger = null) =>
         new(logger ?? NullLogger<PhotoReadManager>.Instance, _fixture.Photos, CreatePhotoListReadModel(), _fixture.Chapters, _fixture.Personas,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             _fixture.PhotoPersonaTags, CreatePhotoDtoProjector(), CreatePhotoFileService(),
-            new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
-            new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled));
+            new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters));
 
     // Persona-tagging now lives on PhotoPersonaTagManager — GetByPersonaIdAsync stays here
     // (it's a photo listing method), but tests need to tag photos first to exercise it.

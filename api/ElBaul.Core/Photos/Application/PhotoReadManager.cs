@@ -24,8 +24,7 @@ public class PhotoReadManager(
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IPhotoDtoProjector photoDtoProjector,
     PhotoFileService photoFileService,
-    IPhotoUploadBatchReadModel photoUploadBatchReadModel,
-    IAppConfiguration appConfiguration) : IPhotoReadManager
+    IPhotoUploadBatchReadModel photoUploadBatchReadModel) : IPhotoReadManager
 {
     public async Task<Result<IEnumerable<PhotoDto>>> GetByChapterIdAsync(ChapterId chapterId)
     {
@@ -166,12 +165,6 @@ public class PhotoReadManager(
 
     public async Task<Result<IEnumerable<PhotoDto>>> GetBatchPhotosAsync(BaulId baulId, Guid batchId)
     {
-        if (!appConfiguration.BaulFeedEnabled)
-        {
-            logger.LogWarning("Photo batch photos rejected: feed is not enabled {BatchId}", batchId);
-            return Result.Failure<IEnumerable<PhotoDto>>(ApplicationError.Validation("Baul feed is not enabled"));
-        }
-
         var userId = currentUserProvider.GetUserId();
         var auth = await baulAccess.AuthorizeAsync(
             baulId, userId, AccessLevel.Member, "Photo batch photos", new { BaulId = baulId, BatchId = batchId });
