@@ -70,6 +70,10 @@ public sealed class ElBaulAcceptanceFixture : IAsyncLifetime
         // SmokeTests to prove env vars actually reach the running process, not just that
         // the container starts.
         ["App__PublicUrl"] = "https://acceptance-test.el-baul.invalid",
+        // Biografía is behind a gradual rollout toggle (see UnleashAppConfiguration); the
+        // acceptance suite exercises it as if fully rolled out so CrossBaulAuthorizationTests
+        // hits the real authorization path instead of the "not enabled" short-circuit.
+        ["Features__BiografiaEnabled"] = "true",
     };
 
     public async Task InitializeAsync()
