@@ -62,7 +62,6 @@ test('create baúl → create chapter → upload photo → move photo → delete
 });
 
 async function createChapter(page: import('@playwright/test').Page, name: string) {
-  await page.getByRole('button', { name: 'Acciones' }).click();
   await page.getByRole('button', { name: 'Nuevo capítulo' }).click();
   await page.getByPlaceholder('Verano 2018').fill(name);
   await page.getByRole('button', { name: 'Crear capítulo' }).click();
