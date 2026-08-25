@@ -123,5 +123,6 @@ public class UserBaulActivityDailyAggregatorTests(PostgresFixture fixture) : Per
         public bool TvModeEnabled => false;
         public bool MaintenanceModeEnabled => false;
         public bool AndroidAppBannerEnabled => false;
+        public bool BiografiaEnabled => false;
     }
 }
