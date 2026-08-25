@@ -195,15 +195,6 @@ describe('people useCases updateUserRole', () => {
     expect(usePersonasStore.getState().personas[baulId][0].role).toBe('administrador');
   });
 
-  it('reactivates a persona with no access when its role is changed', async () => {
-    usePersonasStore.setState({ personas: { [baulId]: [newPersona({ role: 'sin_acceso', status: 'sin_acceso' })] } });
-    vi.mocked(api.baules.updatePersonaRole).mockResolvedValue(undefined);
-
-    await updateUserRole(baulId, personaId, 'colaborador');
-
-    expect(usePersonasStore.getState().personas[baulId][0].status).toBe('pending');
-  });
-
   it('rolls back to the previous personas snapshot and rethrows when the request fails', async () => {
     const original = newPersona({ role: 'colaborador' });
     usePersonasStore.setState({ personas: { [baulId]: [original] } });

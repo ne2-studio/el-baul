@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/design-system/components/data-display/Card';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
-import { ExpandableFAB } from '@/design-system/components/actions/FAB';
+import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 import { CreateChapterModal } from '@/features/chapters/components/CreateChapterModal';
-import { Plus, Upload, BookImage } from 'lucide-react';
+import { Plus, BookImage } from 'lucide-react';
 import { ChapterCard } from '@/features/baules/components/ChapterCard';
 import { makeLooseChapterView } from '@/features/baules/components/looseChapterView';
 import { Chapter } from '@/types';
@@ -109,19 +109,13 @@ export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChapte
         </div>
       )}
 
-      <ExpandableFAB
-        actions={[
-          {
-            label: 'Nuevo capítulo',
-            icon: <Plus className="w-4 h-4" />,
-            onClick: () => setShowCreateChapterModal(true),
-          },
-          {
-            label: 'Subir fotos',
-            icon: <Upload className="w-4 h-4" />,
-            onClick: () => navigate(`/baules/${baulId}/fotos-sueltas/confirmar`),
-          },
-        ]}
+      {/* "Subir fotos" ya no vive aquí — la pestaña "Fotos" del baúl (BaulPhotosTabContainer)
+          es ahora el único punto de entrada para subir fotos sueltas, así que este FAB vuelve
+          a ser una única acción — ver el hallazgo de refinamiento del issue #57. */}
+      <SimpleFAB
+        label="Nuevo capítulo"
+        icon={<Plus className="w-5 h-5" />}
+        onClick={() => setShowCreateChapterModal(true)}
       />
 
       {showCreateChapterModal && (

@@ -78,20 +78,15 @@ export const PersonaHero: Story = {
   },
 };
 
-export const PersonaHeroSinAcceso: Story = {
+export const PersonaHeroPending: Story = {
   args: {
     imageUrl: undefined,
     blurUpscaledImage: false,
     title: 'Laura',
     children: (
-      <>
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-xs text-white/70">Forma parte de la historia familiar</span>
-        </div>
-        <p className="mt-3 max-w-sm rounded-2xl bg-black/35 px-3 py-2 text-xs leading-relaxed text-white/90 backdrop-blur-sm">
-          Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.
-        </p>
-      </>
+      <div className="flex items-center gap-2 mt-2">
+        <span className="text-xs text-white/70">Todavía no se ha unido</span>
+      </div>
     ),
   },
 };

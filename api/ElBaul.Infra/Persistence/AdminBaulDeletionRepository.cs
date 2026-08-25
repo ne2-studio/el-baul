@@ -28,7 +28,6 @@ public class AdminBaulDeletionRepository(
     IPhotoRepository photoRepository,
     IRecuerdoRepository recuerdoRepository,
     ISharedLinkRepository sharedLinkRepository,
-    IBaulInviteLinkRepository baulInviteLinkRepository,
     ITvSessionRepository tvSessionRepository,
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     IRemovalRequestRepository removalRequestRepository,
@@ -47,7 +46,6 @@ public class AdminBaulDeletionRepository(
         {
             await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
             await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
-            await baulInviteLinkRepository.DeleteByBaulIdAsync(baulId);
             await tvSessionRepository.DeleteByBaulIdAsync(baulId);
             await recuerdoRepository.DeleteByBaulIdAsync(baulId);
             await photoRepository.DeleteByBaulIdAsync(baulId);

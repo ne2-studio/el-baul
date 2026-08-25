@@ -66,7 +66,6 @@ export const PersonaDetailRoute: React.FC = () => {
 
   const displayName = persona.name || persona.nickname;
   const isPersonaPending = persona.status === 'pending';
-  const hasNoAccess = persona.role === 'sin_acceso' || persona.status === 'sin_acceso';
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,14 +89,9 @@ export const PersonaDetailRoute: React.FC = () => {
             <RoleBadge role={persona.role} isCustodio={persona.isCustodio} tone="onImage" />
           )}
           <span className="text-xs text-white/70">
-            {hasNoAccess ? 'Forma parte de la historia familiar' : isPersonaPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
+            {isPersonaPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
           </span>
         </div>
-        {hasNoAccess && (
-          <p className="mt-3 max-w-sm rounded-2xl bg-black/35 px-3 py-2 text-xs leading-relaxed text-white/90 backdrop-blur-sm">
-            Forma parte de la historia familiar, pero no puede ver ni colaborar en el contenido.
-          </p>
-        )}
       </Hero>
 
       <Tabbar

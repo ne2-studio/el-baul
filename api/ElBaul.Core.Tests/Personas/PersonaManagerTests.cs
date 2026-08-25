@@ -383,7 +383,11 @@ public class PersonaManagerTests
         var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.NotNull(persona);
         Assert.Null(persona.UserId);
-        Assert.Equal(BaulRole.SinAcceso, persona.Role);
+        // No more sin_acceso role — RemovePersonaAsync clears the account link (and invite
+        // token) but leaves the persona's assignable role untouched, so it falls back to
+        // Pending and can be re-invited normally.
+        Assert.Equal(BaulRole.Colaborador, persona.Role);
+        Assert.Equal(PersonaAccessStatus.Pending, persona.AccessStatus);
     }
 
     [Fact]

@@ -46,6 +46,11 @@ public class InMemoryPersonaRepository : IPersonaRepository
         lock (_lock) return Task.FromResult(_personas.Values.FirstOrDefault(s => s.BaulId == baulId && s.UserId == userId));
     }
 
+    public Task<Persona?> GetPersonaByInviteTokenAsync(string token)
+    {
+        lock (_lock) return Task.FromResult(_personas.Values.FirstOrDefault(s => s.InviteToken == token));
+    }
+
     public Task<IEnumerable<Persona>> GetByUserIdAsync(UserId userId)
     {
         lock (_lock) return Task.FromResult(_personas.Values.Where(s => s.UserId == userId).ToList().AsEnumerable());

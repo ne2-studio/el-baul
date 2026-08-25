@@ -173,9 +173,9 @@ describe('api adapters', () => {
       personaAvatarUrls: [],
     }));
 
-    await api.baulInvites.getPreview('token/con espacios');
+    await api.personaInvites.getPreview('token/con espacios');
 
-    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE}/api/baul-invites/token%2Fcon%20espacios/preview`, {
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE}/api/persona-invites/token%2Fcon%20espacios/preview`, {
       headers: {},
     });
   });

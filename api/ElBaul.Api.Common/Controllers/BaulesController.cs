@@ -1,7 +1,6 @@
 using ElBaul.Api.Models;
 using ElBaul.Api.Scope;
 using ElBaul.Core.Bauls;
-using ElBaul.Core.Sharing;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -13,8 +12,7 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules")]
-public class BaulesController(
-    IBaulManager baulManager, IBaulInviteLinkManager baulInviteLinkManager, BaulScopeAggregator baulScopeAggregator)
+public class BaulesController(IBaulManager baulManager, BaulScopeAggregator baulScopeAggregator)
     : ControllerBase
 {
     // Aggregates everything /baules/:id's routes need into one request — see
@@ -68,22 +66,6 @@ public class BaulesController(
     public async Task<IActionResult> Update(BaulId baulId, [FromBody] UpdateBaulRequest request)
     {
         var result = await baulManager.UpdateAsync(baulId, request.Name, request.Description);
-        return result.ToActionResult();
-    }
-
-    [HttpGet("{baulId:guid}/invite-link")]
-    [ProducesResponseType(typeof(BaulInviteLinkDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetInviteLink(BaulId baulId)
-    {
-        var result = await baulInviteLinkManager.GetOrCreateAsync(baulId);
-        return result.ToActionResult();
-    }
-
-    [HttpPost("{baulId:guid}/invite-link/regenerate")]
-    [ProducesResponseType(typeof(BaulInviteLinkDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> RegenerateInviteLink(BaulId baulId)
-    {
-        var result = await baulInviteLinkManager.RegenerateAsync(baulId);
         return result.ToActionResult();
     }
 }

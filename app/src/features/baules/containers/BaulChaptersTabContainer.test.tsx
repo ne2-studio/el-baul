@@ -82,23 +82,11 @@ describe('BaulChaptersTabContainer', () => {
     useBaulesStore.setState({ chapters: { [baulId]: [chapter()] } });
 
     renderContainer(onSelectChapter);
-    await user.click(screen.getByRole('button', { name: 'Acciones' }));
-    await user.click(screen.getByText('Nuevo capítulo'));
+    await user.click(screen.getByRole('button', { name: 'Nuevo capítulo' }));
     await user.type(screen.getByPlaceholderText('Verano 2018'), 'Navidad');
     await user.click(screen.getByRole('button', { name: /crear capítulo/i }));
 
     expect(createChapter).toHaveBeenCalledWith(baulId, 'Navidad');
     expect(onSelectChapter).toHaveBeenCalledWith(newChapter);
-  });
-
-  it('navigates to the upload flow from the FAB', async () => {
-    const user = userEvent.setup();
-    useBaulesStore.setState({ chapters: { [baulId]: [chapter()] } });
-
-    renderContainer();
-    await user.click(screen.getByRole('button', { name: 'Acciones' }));
-    await user.click(screen.getByText('Subir fotos'));
-
-    expect(screen.getByText('Confirmar subida')).toBeInTheDocument();
   });
 });

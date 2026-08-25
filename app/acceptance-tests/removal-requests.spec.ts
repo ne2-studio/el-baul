@@ -3,11 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { test, expect, type Page, type Browser, type BrowserContext } from '@playwright/test';
-import { loginAs, createBaulViaApi, dismissContributionSuggestionIfShown, API_BASE_URL } from './helpers';
+import {
+  loginAs, createBaulViaApi, createPersonaViaApi, invitePersonaViaApi, dismissContributionSuggestionIfShown, API_BASE_URL,
+} from './helpers';
 
 const FIXTURE_PHOTO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/test-photo.png');
 
-// Needs two identities, same reason as personas.spec.ts's global-invite-link join step:
+// Needs two identities, same reason as personas.spec.ts's persona-invite join step:
 // submitting a removal request is only possible for a non-admin member (PhotoViewer.tsx only
 // shows "Solicitar retirada" when !isAdmin), and the baúl's creator/custodian is always admin
 // on their own baúl — they can never see that option, only the direct "Borrar foto" delete.
@@ -31,19 +33,13 @@ async function uploadLoosePhotoViaApi(page: Page, accessToken: string, baulId: s
 
 async function inviteAndAcceptCollaborator(
   adminPage: Page,
+  accessToken: string,
   baulId: string,
   browser: Browser,
 ): Promise<{ guestContext: BrowserContext; guestPage: Page }> {
-  await adminPage.goto(`/baules/${baulId}`);
-  await dismissContributionSuggestionIfShown(adminPage);
-  await adminPage.getByRole('button', { name: 'Menú' }).click();
-  await adminPage.getByRole('menuitem', { name: 'Invitar a la familia' }).click();
-  const linkLocator = adminPage.getByText(/\/invitacion\/baul\//);
-  await expect(linkLocator).toBeVisible();
-  const linkText = (await linkLocator.textContent())!;
-  const token = linkText.match(/\/invitacion\/baul\/([^\s"']+)/)?.[1];
-  expect(token, `expected to find an invite token in "${linkText}"`).toBeTruthy();
-  await adminPage.getByRole('button', { name: 'Cerrar' }).click();
+  const nickname = `Colaborador ${Date.now()}`;
+  const personaId = await createPersonaViaApi(adminPage, accessToken, baulId, nickname);
+  const { token } = await invitePersonaViaApi(adminPage, accessToken, baulId, personaId);
 
   const guestContext = await browser.newContext();
   const guestPage = await guestContext.newPage();
@@ -76,7 +72,7 @@ test('submit removal request → approve (photo is removed)', async ({ page, bro
   const accessToken = await loginAs(page, 'Admin User');
   const baulId = await createBaulViaApi(page, accessToken, `Removal approve test baúl ${Date.now()}`);
   const photoId = await uploadLoosePhotoViaApi(page, accessToken, baulId);
-  const { guestContext, guestPage } = await inviteAndAcceptCollaborator(page, baulId, browser);
+  const { guestContext, guestPage } = await inviteAndAcceptCollaborator(page, accessToken, baulId, browser);
 
   await submitRemovalRequest(guestPage, baulId, photoId);
   await guestContext.close();
@@ -95,7 +91,7 @@ test('submit removal request → reject (photo is kept)', async ({ page, browser
   const accessToken = await loginAs(page, 'Admin User');
   const baulId = await createBaulViaApi(page, accessToken, `Removal reject test baúl ${Date.now()}`);
   const photoId = await uploadLoosePhotoViaApi(page, accessToken, baulId);
-  const { guestContext, guestPage } = await inviteAndAcceptCollaborator(page, baulId, browser);
+  const { guestContext, guestPage } = await inviteAndAcceptCollaborator(page, accessToken, baulId, browser);
 
   await submitRemovalRequest(guestPage, baulId, photoId);
   await guestContext.close();

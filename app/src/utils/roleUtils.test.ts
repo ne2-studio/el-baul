@@ -46,20 +46,6 @@ describe('roleUtils baul permissions', () => {
         canDeleteChapter: false,
       },
     },
-    {
-      role: 'sin_acceso' as BaulRole,
-      isCustodio: false,
-      expected: {
-        isAdmin: false,
-        isCustodio: false,
-        canManageBaulInvite: false,
-        canEditBaul: false,
-        canRequestBaulDeletion: false,
-        canReviewRemovalRequests: false,
-        canSetBaulCover: false,
-        canDeleteChapter: false,
-      },
-    },
   ])('maps $role/isCustodio=$isCustodio to baul capabilities', ({ role, isCustodio, expected }) => {
     expect(getBaulPermissions({ role, isCustodio })).toMatchObject(expected);
     expect(isAdminRole(role)).toBe(role === 'administrador');
@@ -99,7 +85,6 @@ describe('roleUtils persona permissions', () => {
         canManagePersona: true,
         canChangePersonaRole: true,
         canRevokePersonaAccess: true,
-        canRestorePersonaAccess: false,
       },
     },
     {
@@ -110,7 +95,6 @@ describe('roleUtils persona permissions', () => {
         canManagePersona: true,
         canChangePersonaRole: false,
         canRevokePersonaAccess: true,
-        canRestorePersonaAccess: false,
       },
     },
     {
@@ -121,18 +105,6 @@ describe('roleUtils persona permissions', () => {
         canManagePersona: false,
         canChangePersonaRole: false,
         canRevokePersonaAccess: false,
-        canRestorePersonaAccess: false,
-      },
-    },
-    {
-      currentBaulRole: 'administrador' as BaulRole,
-      currentIsCustodio: false,
-      target: persona({ role: 'sin_acceso', status: 'sin_acceso' }),
-      expected: {
-        canManagePersona: true,
-        canChangePersonaRole: false,
-        canRevokePersonaAccess: false,
-        canRestorePersonaAccess: true,
       },
     },
     {
@@ -143,7 +115,6 @@ describe('roleUtils persona permissions', () => {
         canManagePersona: false,
         canChangePersonaRole: false,
         canRevokePersonaAccess: false,
-        canRestorePersonaAccess: false,
       },
     },
   ])('maps current $currentBaulRole (isCustodio=$currentIsCustodio) and target persona to manage capabilities', ({ currentBaulRole, currentIsCustodio, target, expected }) => {
@@ -169,10 +140,6 @@ describe('roleUtils persona permissions', () => {
   it('lets any baúl member edit biography regardless of backend canEdit', () => {
     expect(getPersonaPermissions({ currentBaulRole: 'colaborador', persona: persona({ canEdit: false }) })).toMatchObject({
       canEditPersonaBiography: true,
-    });
-
-    expect(getPersonaPermissions({ currentBaulRole: 'sin_acceso', persona: persona({ canEdit: false }) })).toMatchObject({
-      canEditPersonaBiography: false,
     });
 
     expect(getPersonaPermissions({ currentBaulRole: undefined, persona: persona({ canEdit: false }) })).toMatchObject({

@@ -7,12 +7,6 @@ import { Baul } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { BaulSettingsMenuContainer } from './BaulSettingsMenuContainer';
 
-vi.mock('@/api', () => ({
-  api: {
-    baules: { getInviteLink: vi.fn(), regenerateInviteLink: vi.fn() },
-  },
-}));
-
 function baul(overrides: Partial<Baul> = {}): Baul {
   return {
     id: 'baul-1', name: 'Familia García', chapterCount: 3, lastUpdated: 'hace 2 días',
@@ -26,6 +20,7 @@ function renderContainer(b: Baul) {
       <Routes>
         <Route path="/baules/:baulId" element={<BaulSettingsMenuContainer baul={b} />} />
         <Route path="/baules/:baulId/ajustes" element={<div>Ajustes del baúl</div>} />
+        <Route path="/baules/:baulId/invitar" element={<div>Invitar a la familia</div>} />
         <Route path="/cuenta" element={<div>Mi cuenta</div>} />
         <Route path="/ayuda" element={<div>Ayuda</div>} />
       </Routes>
@@ -54,6 +49,16 @@ describe('BaulSettingsMenuContainer', () => {
     expect(screen.queryByText('Ajustes del baúl')).not.toBeInTheDocument();
     expect(await screen.findByText('Mi cuenta')).toBeInTheDocument();
     expect(screen.getByText('Ayuda')).toBeInTheDocument();
+  });
+
+  it('navigates to the "Invitar a la familia" page for a custodio', async () => {
+    const user = userEvent.setup();
+    renderContainer(baul());
+
+    await user.click(screen.getByRole('button', { name: 'Menú' }));
+    await user.click(await screen.findByText('Invitar a la familia'));
+
+    expect(await screen.findByText('Invitar a la familia')).toBeInTheDocument();
   });
 
   it('navigates to the baúl settings screen for a custodio', async () => {

@@ -6,42 +6,19 @@ import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { api } from '@/api';
 import { Button } from '@/design-system/components/actions/Button';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
-import { ClaimPersonaScreen } from '@/features/sharing/components/ClaimPersonaScreen';
-import { ClaimablePersona } from '@/types';
 
+// Accepts a persona-scoped invite token — unlike the old global invite link, the token
+// resolves directly to exactly one target persona, so there is no "¿Quién eres tú?" step
+// (see PersonaInviteManager.AcceptAsync / the old ClaimPersonaScreen, removed).
 export const AcceptBaulInviteRoute: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const auth = useAuth();
   const { showToastMessage } = useUIStore();
   const [error, setError] = useState<string | null>(null);
-  const [claimablePersonas, setClaimablePersonas] = useState<ClaimablePersona[] | null>(null);
-  const [baulNombre, setBaulNombre] = useState('el baúl');
-  const [isJoining, setIsJoining] = useState(false);
-
-  const performAccept = async (personaId?: string) => {
-    if (!token) return;
-
-    setIsJoining(true);
-    try {
-      const persona = await api.baulInvites.accept(token, personaId);
-      // El baúl al que se acaba de unir pasa a ser el CurrentBaul — es el que quiere usar
-      // a continuación, no el que tuviera activo antes de aceptar la invitación.
-      useCurrentBaulStore.getState().setCurrentBaulId(persona.baulId);
-      // Pequeño delay para que se vea el estado de carga y sea más natural
-      setTimeout(() => {
-        navigate(`/baules/${persona.baulId}`);
-      }, 1500);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error al unirse al baúl';
-      setError(message);
-      showToastMessage(message, 'error');
-      setIsJoining(false);
-    }
-  };
 
   useEffect(() => {
-    const loadClaimablePersonas = async () => {
+    const performAccept = async () => {
       if (!token || !auth.isAuthenticated) {
         if (!auth.isAuthenticated) {
           navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/baul/${token}/aceptar`)}`);
@@ -52,27 +29,22 @@ export const AcceptBaulInviteRoute: React.FC = () => {
       }
 
       try {
-        const [personas, preview] = await Promise.all([
-          api.baulInvites.getClaimablePersonas(token),
-          // Solo para el subtítulo de la pantalla de selección — si falla, se muestra un
-          // nombre genérico en vez de bloquear el flujo de unirse por un detalle cosmético.
-          api.baulInvites.getPreview(token).catch(() => null),
-        ]);
-
-        if (personas.length === 0) {
-          await performAccept();
-        } else {
-          if (preview) setBaulNombre(preview.name);
-          setClaimablePersonas(personas);
-        }
-      } catch {
-        // El listado es solo para ofrecer el paso de "¿quién eres?" — si falla, seguimos
-        // directamente al alta (que valida el token de nuevo y ya sabe mostrar su propio error).
-        await performAccept();
+        const persona = await api.personaInvites.accept(token);
+        // El baúl al que se acaba de unir pasa a ser el CurrentBaul — es el que quiere usar
+        // a continuación, no el que tuviera activo antes de aceptar la invitación.
+        useCurrentBaulStore.getState().setCurrentBaulId(persona.baulId);
+        // Pequeño delay para que se vea el estado de carga y sea más natural
+        setTimeout(() => {
+          navigate(`/baules/${persona.baulId}`);
+        }, 1500);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Error al unirse al baúl';
+        setError(message);
+        showToastMessage(message, 'error');
       }
     };
 
-    loadClaimablePersonas();
+    performAccept();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, auth.isAuthenticated, navigate]);
 
@@ -100,19 +72,5 @@ export const AcceptBaulInviteRoute: React.FC = () => {
     );
   }
 
-  return (
-    <>
-      {claimablePersonas && (
-        <ClaimPersonaScreen
-          baulNombre={baulNombre}
-          personas={claimablePersonas}
-          onSelectPersona={(persona) => performAccept(persona.id)}
-          onNotListed={() => performAccept()}
-          onCancel={() => navigate(`/invitacion/baul/${token}`)}
-          isSubmitting={isJoining}
-        />
-      )}
-      {(isJoining || !claimablePersonas) && <BlockingLoadingOverlay message="Uniéndose al baúl..." />}
-    </>
-  );
+  return <BlockingLoadingOverlay message="Uniéndose al baúl..." />;
 };

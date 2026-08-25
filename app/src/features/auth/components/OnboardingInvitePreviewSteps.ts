@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaulInviteLinkPreview } from '@/types';
+import { PersonaInvitePreview } from '@/types';
 import type { OnboardingStep } from '@/features/auth/components/OnboardingCarousel';
 import { introStepsCopy } from '@/features/auth/components/OnboardingSteps';
 import {
@@ -9,7 +9,7 @@ import {
   InvitePreviewPhotosIllustration,
 } from '@/features/auth/components/OnboardingInvitePreviewIllustrations';
 
-export function buildInvitePreviewSteps(preview: BaulInviteLinkPreview): OnboardingStep[] {
+export function buildInvitePreviewSteps(preview: PersonaInvitePreview): OnboardingStep[] {
   const illustrations = [
     React.createElement(InvitePreviewPhotosIllustration, { key: 'photos', photos: preview.previewPhotos }),
     React.createElement(InvitePeopleIllustration, { key: 'people', avatarUrls: preview.personaAvatarUrls }),

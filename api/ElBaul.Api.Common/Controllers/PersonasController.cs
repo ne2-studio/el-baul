@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Api.Scope;
 using ElBaul.Core.Personas;
+using ElBaul.Core.Sharing;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +13,9 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules/{baulId:guid}/personas")]
-public class PersonasController(IPersonaManager personaManager, PersonaScopeAggregator personaScopeAggregator) : ControllerBase
+public class PersonasController(
+    IPersonaManager personaManager, IPersonaInviteManager personaInviteManager, PersonaScopeAggregator personaScopeAggregator)
+    : ControllerBase
 {
     // Aggregates everything PersonaDetailRoute/PersonaPhotoViewerRoute need into one request —
     // see BaulScopeAggregator's doc comment (same rationale, no async-flag race here, just fewer
@@ -120,5 +123,16 @@ public class PersonasController(IPersonaManager personaManager, PersonaScopeAggr
     {
         var result = await personaManager.RemovePersonaAsync(baulId, personaId);
         return result.ToActionResult(Ok(new { success = true }));
+    }
+
+    // "Invitar" on the "Invitar a la familia" page — issues this persona's invite token the
+    // first time, re-shares the same one on later taps while it stays Pending. See
+    // IPersonaInviteManager.InviteAsync.
+    [HttpPost("{personaId:guid}/invite")]
+    [ProducesResponseType(typeof(PersonaInviteDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Invite(BaulId baulId, PersonaId personaId)
+    {
+        var result = await personaInviteManager.InviteAsync(baulId, personaId);
+        return result.ToActionResult();
     }
 }

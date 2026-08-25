@@ -563,6 +563,10 @@ namespace ElBaul.Infra.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
+                    b.Property<string>("InviteToken")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
                     b.Property<DateTime>("InvitedDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -615,6 +619,10 @@ namespace ElBaul.Infra.Migrations
                     b.HasIndex("AvatarPhotoId");
 
                     b.HasIndex("BaulId");
+
+                    b.HasIndex("InviteToken")
+                        .IsUnique()
+                        .HasFilter("\"InviteToken\" IS NOT NULL");
 
                     b.HasIndex("UserId");
 
@@ -832,44 +840,6 @@ namespace ElBaul.Infra.Migrations
                     b.HasIndex("BaulId");
 
                     b.ToTable("RecuerdoEmbeddings", (string)null);
-                });
-
-            modelBuilder.Entity("ElBaul.Core.Sharing.Domain.BaulInviteLink", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BaulId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BaulId")
-                        .IsUnique()
-                        .HasFilter("\"RevokedAt\" IS NULL");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.ToTable("BaulInviteLinks", (string)null);
                 });
 
             modelBuilder.Entity("ElBaul.Core.Sharing.Domain.SharedLink", b =>
@@ -1242,21 +1212,6 @@ namespace ElBaul.Infra.Migrations
                         .WithOne()
                         .HasForeignKey("ElBaul.Core.Recuerdos.Domain.RecuerdoEmbedding", "RecuerdoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ElBaul.Core.Sharing.Domain.BaulInviteLink", b =>
-                {
-                    b.HasOne("ElBaul.Core.Bauls.Domain.Baul", null)
-                        .WithMany()
-                        .HasForeignKey("BaulId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ElBaul.Core.Users.Domain.User", null)
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

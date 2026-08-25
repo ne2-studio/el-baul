@@ -31,6 +31,9 @@ public class PersonaRepository(ElBaulDbContext dbContext) : IPersonaRepository
     public Task<Persona?> GetPersonaByUserIdAsync(BaulId baulId, UserId userId) =>
         dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.BaulId == baulId && s.UserId == userId);
 
+    public Task<Persona?> GetPersonaByInviteTokenAsync(string token) =>
+        dbContext.Personas.AsNoTracking().FirstOrDefaultAsync(s => s.InviteToken == token);
+
     public async Task<IEnumerable<Persona>> GetByUserIdAsync(UserId userId) =>
         await dbContext.Personas.AsNoTracking().Where(s => s.UserId == userId).ToListAsync();
 

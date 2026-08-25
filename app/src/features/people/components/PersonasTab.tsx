@@ -3,7 +3,6 @@ import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { Persona } from '@/types';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
-import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 import { PersonaCard } from './PersonaCard';
 
 interface PersonasTabProps {
@@ -13,9 +12,7 @@ interface PersonasTabProps {
 }
 
 export function PersonasTab({ personas, currentUserEmail, onSelectPersona }: PersonasTabProps) {
-  const hasNoAccess = (persona: Persona) => persona.role === 'sin_acceso' || persona.status === 'sin_acceso';
-  const personasWithAccess = personas.filter((persona) => !hasNoAccess(persona));
-  const personasWithoutAccess = personas.filter(hasNoAccess);
+  const isMe = (persona: Persona) => !!currentUserEmail && persona.email === currentUserEmail;
 
   if (personas.length === 0) {
     return (
@@ -27,55 +24,18 @@ export function PersonasTab({ personas, currentUserEmail, onSelectPersona }: Per
     );
   }
 
+  // No more "Sin acceso" swimlane — a persona is either in the baúl (active) or still
+  // Pending, both shown together, same as before this ticket removed that third state.
   return (
-    <div className="space-y-6">
-      <PersonaSwimlane
-        title="Con acceso"
-        personas={personasWithAccess}
-        currentUserEmail={currentUserEmail}
-        onSelectPersona={onSelectPersona}
-      />
-      {personasWithoutAccess.length > 0 && (
-        <PersonaSwimlane
-          title="Sin acceso"
-          personas={personasWithoutAccess}
-          currentUserEmail={currentUserEmail}
-          onSelectPersona={onSelectPersona}
-          muted
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      {personas.map((persona) => (
+        <PersonaCard
+          key={persona.id}
+          persona={persona}
+          onClick={() => onSelectPersona(persona)}
+          isMe={isMe(persona)}
         />
-      )}
-    </div>
-  );
-}
-
-interface PersonaSwimlaneProps {
-  title: string;
-  personas: Persona[];
-  currentUserEmail?: string;
-  onSelectPersona: (persona: Persona) => void;
-  muted?: boolean;
-}
-
-function PersonaSwimlane({ title, personas, currentUserEmail, onSelectPersona, muted = false }: PersonaSwimlaneProps) {
-  const isMe = (persona: Persona) => !!currentUserEmail && persona.email === currentUserEmail;
-
-  if (personas.length === 0) return null;
-
-  return (
-    <div>
-      <SwimlaneLabel>{title}</SwimlaneLabel>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {personas.map((persona) => (
-          <PersonaCard
-            key={persona.id}
-            persona={persona}
-            onClick={() => onSelectPersona(persona)}
-            isMe={isMe(persona)}
-            muted={muted}
-          />
-        ))}
-      </div>
+      ))}
     </div>
   );
 }

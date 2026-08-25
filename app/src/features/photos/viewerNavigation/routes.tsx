@@ -1,4 +1,5 @@
 import { ProtectedRoute } from '@/app/routes/AuthGuards';
+import { BaulPhotoViewerRoute } from '@/features/photos/routes/BaulPhotoViewerRoute';
 import { ChapterPhotoViewerRoute } from '@/features/photos/routes/ChapterPhotoViewerRoute';
 import { PersonaPhotoViewerRoute } from '@/features/photos/routes/PersonaPhotoViewerRoute';
 import { PhotoBatchViewerRoute } from '@/features/photos/routes/PhotoBatchViewerRoute';
@@ -14,6 +15,10 @@ export const photoViewerRoutes = [
   {
     path: '/baules/:baulId/fotos-sueltas/foto/:photoId',
     element: <ProtectedRoute><ChapterPhotoViewerRoute /></ProtectedRoute>,
+  },
+  {
+    path: '/baules/:baulId/fotos/foto/:photoId',
+    element: <ProtectedRoute><BaulPhotoViewerRoute /></ProtectedRoute>,
   },
   {
     path: '/baules/:baulId/personas/:personaId/foto/:photoId',

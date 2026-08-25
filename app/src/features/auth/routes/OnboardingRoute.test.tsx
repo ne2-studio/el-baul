@@ -8,7 +8,7 @@ import { OnboardingRoute } from './OnboardingRoute';
 import { api } from '@/api';
 import { markOnboardingSeen } from '@/features/auth/useCases';
 import { useAuth } from 'react-oidc-context';
-import type { BaulInviteLinkPreview } from '@/types';
+import type { PersonaInvitePreview } from '@/types';
 
 vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(() => ({ isAuthenticated: true })),
@@ -16,7 +16,7 @@ vi.mock('react-oidc-context', () => ({
 
 vi.mock('@/api', () => ({
   api: {
-    baulInvites: {
+    personaInvites: {
       getPreview: vi.fn(),
     },
   },
@@ -57,7 +57,7 @@ vi.mock('@/features/auth/components/OnboardingSteps', () => ({
 }));
 
 vi.mock('@/features/auth/components/OnboardingInvitePreviewSteps', () => ({
-  buildInvitePreviewSteps: vi.fn((preview: BaulInviteLinkPreview) => [
+  buildInvitePreviewSteps: vi.fn((preview: PersonaInvitePreview) => [
     {
       title: preview.name,
       description: 'Te han invitado a formar parte de este Baúl.',
@@ -87,12 +87,12 @@ describe('OnboardingRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
-    vi.mocked(api.baulInvites.getPreview).mockResolvedValue({
+    vi.mocked(api.personaInvites.getPreview).mockResolvedValue({
       baulId: 'baul-1',
       name: 'Baúl de los García',
       previewPhotos: [],
       personaAvatarUrls: [],
-    } as BaulInviteLinkPreview);
+    } as PersonaInvitePreview);
   });
 
   it('uses the generic signup onboarding and marks it as seen before creating the first baúl', async () => {
@@ -115,13 +115,13 @@ describe('OnboardingRoute', () => {
 
     await user.click(screen.getByRole('button', { name: 'Entrar al Baúl' }));
 
-    expect(api.baulInvites.getPreview).toHaveBeenCalledWith('invite-token');
+    expect(api.personaInvites.getPreview).toHaveBeenCalledWith('invite-token');
     expect(markOnboardingSeen).not.toHaveBeenCalled();
     expect(screen.getByText('/invitacion/baul/invite-token/aceptar')).toBeInTheDocument();
   });
 
   it('falls back to the generic invite final step when preview loading fails', async () => {
-    vi.mocked(api.baulInvites.getPreview).mockRejectedValue(new Error('revoked'));
+    vi.mocked(api.personaInvites.getPreview).mockRejectedValue(new Error('revoked'));
 
     renderRoute('/onboarding?baulNombre=Familia&redirectTo=%2Finvitacion%2Fbaul%2Finvite-token%2Faceptar&token=invite-token');
 

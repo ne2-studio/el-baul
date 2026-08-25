@@ -50,7 +50,6 @@ export const Role: Story = {
       <RoleBadge role="administrador" isCustodio />
       <RoleBadge role="administrador" />
       <RoleBadge role="colaborador" />
-      <RoleBadge role="sin_acceso" />
     </div>
   ),
 };

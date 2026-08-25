@@ -5,9 +5,8 @@ type ApiSchemas = components['schemas'];
 type RawBaulDto = ApiSchemas['BaulDto'];
 type BaulDto = Omit<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'> &
   Partial<Pick<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'>>;
-type BaulInviteLinkDto = ApiSchemas['BaulInviteLinkDto'];
-type BaulInviteLinkPreviewDto = ApiSchemas['BaulInviteLinkPreviewDto'];
-type ClaimablePersonaDto = ApiSchemas['ClaimablePersonaDto'];
+type PersonaInviteDto = ApiSchemas['PersonaInviteDto'];
+type PersonaInvitePreviewDto = ApiSchemas['PersonaInvitePreviewDto'];
 type RawChapterDto = ApiSchemas['ChapterDto'];
 type ChapterDto = Omit<RawChapterDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'> &
   Partial<Pick<RawChapterDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'>>;
@@ -31,8 +30,10 @@ type UserProfileDto = ApiSchemas['UserProfileDto'];
 
 // Custodio isn't a role — it's the baúl's singular legal-custody relationship, carried
 // separately as `isCustodio` on Baul/Persona (see roleUtils.ts). A BaulRole value is always an
-// assignable permission tier.
-export type BaulRole = 'administrador' | 'colaborador' | 'sin_acceso';
+// assignable permission tier. There is no more "sin_acceso" — a Persona either belongs to the
+// baúl (Pending/Active, see Persona.status below) or the account link has been revoked, but
+// its role is always one of these two.
+export type BaulRole = 'administrador' | 'colaborador';
 
 export type SupportCategory = 'Support' | 'Bug' | 'Suggestion' | 'BaulDeletion';
 
@@ -63,7 +64,7 @@ export class Persona {
   email?: string;
   name?: string;
   nickname: string;
-  status: 'active' | 'pending' | 'sin_acceso';
+  status: 'active' | 'pending';
   role: BaulRole;
   isCustodio: boolean;
   invitedDate: string;
@@ -81,7 +82,7 @@ export class Persona {
     this.email = data.email ?? undefined;
     this.name = data.name ?? undefined;
     this.nickname = data.nickname;
-    this.status = data.status as 'active' | 'pending' | 'sin_acceso';
+    this.status = data.status as 'active' | 'pending';
     this.role = data.role as BaulRole;
     this.isCustodio = data.isCustodio;
     this.invitedDate = getRelativeTime(new Date(data.invitedDate));
@@ -435,19 +436,19 @@ export class TvPairingStatus {
   }
 }
 
-export class BaulInviteLink {
+// A persona's directed invite link — issued lazily and re-shared (never regenerated) while
+// the persona stays Pending. See PersonasController.Invite.
+export class PersonaInvite {
   token: string;
   url: string;
-  createdAt: string;
 
-  constructor(data: BaulInviteLinkDto) {
+  constructor(data: PersonaInviteDto) {
     this.token = data.token;
     this.url = data.url;
-    this.createdAt = data.createdAt;
   }
 }
 
-export class BaulInviteLinkPreview {
+export class PersonaInvitePreview {
   baulId: string;
   name: string;
   description?: string;
@@ -455,27 +456,13 @@ export class BaulInviteLinkPreview {
   coverPhotoUrl?: string;
   personaAvatarUrls: string[];
 
-  constructor(data: BaulInviteLinkPreviewDto) {
+  constructor(data: PersonaInvitePreviewDto) {
     this.baulId = data.baulId;
     this.name = data.name;
     this.description = data.description ?? undefined;
     this.previewPhotos = data.previewPhotos;
     this.coverPhotoUrl = data.coverPhotoUrl ?? undefined;
     this.personaAvatarUrls = data.personaAvatarUrls;
-  }
-}
-
-export class ClaimablePersona {
-  id: string;
-  nickname: string;
-  name?: string;
-  avatarUrl?: string;
-
-  constructor(data: ClaimablePersonaDto) {
-    this.id = data.id;
-    this.nickname = data.nickname;
-    this.name = data.name ?? undefined;
-    this.avatarUrl = data.avatarUrl ?? undefined;
   }
 }
 

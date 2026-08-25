@@ -30,7 +30,7 @@ public class InMemoryBaulRepository(IPersonaRepository personaRepository) : IBau
         lock (_lock)
         {
             return personas
-                .Where(s => s.Role != BaulRole.SinAcceso && _baules[s.BaulId].CustodioId != userId)
+                .Where(s => _baules[s.BaulId].CustodioId != userId)
                 .Select(s => new BaulAccess(_baules[s.BaulId], s.Role))
                 .ToList();
         }

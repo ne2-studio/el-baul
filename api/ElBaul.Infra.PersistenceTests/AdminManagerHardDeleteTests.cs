@@ -47,7 +47,6 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var photos = new PhotoRepository(dbContext);
         var recuerdos = new RecuerdoRepository(dbContext);
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
-        var inviteLinks = new BaulInviteLinkRepository(dbContext);
         var removalRequests = new RemovalRequestRepository(dbContext);
         var personas = new PersonaRepository(dbContext);
 
@@ -57,7 +56,6 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             photos,
             recuerdos,
             new SharedLinkRepository(dbContext),
-            inviteLinks,
             new TvSessionRepository(dbContext),
             photoPersonaTags,
             removalRequests,
@@ -108,13 +106,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         await personas.AddPersonaAsync(persona);
         await photoPersonaTags.SetTagsAsync(photo.Id, baul.Id, [persona.Id], DateTime.UtcNow);
 
-        // 3. A baúl invite link — a Restrict FK straight to Baul itself (like SharedLink,
-        // deliberately not exercised here since the deletion repository unconditionally calls
-        // sharedLinkRepository.DeleteByBaulIdAsync regardless, it just has nothing to delete).
-        await inviteLinks.CreateAsync(new BaulInviteLink(new BaulInviteLinkId(Guid.NewGuid()), "test-token",
-            baul.Id, new UserId(custodioId), DateTime.UtcNow));
-
-        // 4. A pending removal request — Cascade at the DB level, but the deletion repository deletes it
+        // 3. A pending removal request — Cascade at the DB level, but the deletion repository deletes it
         // explicitly anyway (see its own doc comment) so behavior doesn't depend on which
         // backend is running; included so this test covers every entity type that comment
         // names, not just the two Restrict-FK cases above.
@@ -128,13 +120,13 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         // instances setup already tracked, without truly exercising a query against Postgres.
         dbContext.ChangeTracker.Clear();
 
-        // 5. Hard-delete the whole baúl. Success here — not an unhandled Postgres foreign-key
+        // 4. Hard-delete the whole baúl. Success here — not an unhandled Postgres foreign-key
         // violation — is the direct proof that the infrastructure deletion order is
         // still correct against the real schema, for every child entity type it names.
         var result = await admin.DeleteBaulAsync(baul.Id);
         result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error.Message : string.Empty);
 
-        // 6. The baúl itself is genuinely gone, not just reported as deleted.
+        // 5. The baúl itself is genuinely gone, not just reported as deleted.
         (await baules.GetByIdAsync(baul.Id)).Should().BeNull();
     }
 
@@ -161,7 +153,6 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             photos,
             recuerdos,
             new SharedLinkRepository(dbContext),
-            new BaulInviteLinkRepository(dbContext),
             new TvSessionRepository(dbContext),
             photoPersonaTags,
             new RemovalRequestRepository(dbContext),

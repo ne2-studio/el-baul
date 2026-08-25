@@ -61,7 +61,7 @@ describe('BaulPersonasTabContainer', () => {
 
   it('creates a persona and closes the modal on success', async () => {
     const user = userEvent.setup();
-    vi.mocked(createPersona).mockResolvedValue(undefined);
+    vi.mocked(createPersona).mockResolvedValue(persona({ id: 'p-new', nickname: 'Tío Juan' }));
 
     renderContainer();
     await user.click(screen.getByRole('button', { name: /nueva persona/i }));

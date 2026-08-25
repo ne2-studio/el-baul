@@ -1,10 +1,12 @@
 using ElBaul.Core.Photos.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Personas.Domain;
-// The three observable phases of a Persona's access: invited but unclaimed, claimed by an
-// account, or revoked. Derived from (Role, UserId) rather than stored, because BaulRoleParser
-// never accepts "sin_acceso" from the wire — Revoked is only ever reached via Persona.Revoke().
-public enum PersonaAccessStatus { Pending, Active, Revoked }
+// The two observable phases of a Persona's access: invited but unclaimed, or claimed by an
+// account. Derived from UserId nullity rather than stored. There used to be a third,
+// Revoked, phase (Role == SinAcceso) — removed along with the global invite-link model: a
+// Persona is either in the baúl or not, revoking access now just clears UserId/InviteToken
+// (see Persona.RevokeAccess) and the row falls straight back to Pending.
+public enum PersonaAccessStatus { Pending, Active }
 
 public sealed class Persona : Entity<PersonaId>
 {
@@ -23,6 +25,11 @@ public sealed class Persona : Entity<PersonaId>
     public string? Biografia { get; private set; }
     public PhotoId? AvatarPhotoId { get; private set; }
     public ImageCrop AvatarCrop { get; private set; }
+    // Persona-scoped invite link token — replaces the old baúl-scoped, regenerable
+    // BaulInviteLink. Null until an admin taps "Invitar" for the first time (issued lazily,
+    // see PersonaInviteManager.InviteAsync), and cleared again by RevokeAccess/Unlink so a
+    // revoked or unlinked persona always needs a fresh token before it can be invited again.
+    public string? InviteToken { get; private set; }
 
     public Persona(
     PersonaId Id,
@@ -34,34 +41,28 @@ public sealed class Persona : Entity<PersonaId>
     ImageCrop AvatarCrop,
     string? Name = null,
     string? Biografia = null,
-    PhotoId? AvatarPhotoId = null) : base(Id)
+    PhotoId? AvatarPhotoId = null,
+    string? InviteToken = null) : base(Id)
     {
         this.BaulId = BaulId; this.UserId = UserId; this.Nickname = Nickname; this.Role = Role;
         this.InvitedDate = InvitedDate; this.Name = Name; this.Biografia = Biografia;
-        this.AvatarPhotoId = AvatarPhotoId; this.AvatarCrop = AvatarCrop;
+        this.AvatarPhotoId = AvatarPhotoId; this.AvatarCrop = AvatarCrop; this.InviteToken = InviteToken;
     }
 
     public Persona(
         PersonaId Id, BaulId BaulId, UserId? UserId, string Nickname, BaulRole Role, DateTime InvitedDate,
         string? Name = null, string? Biografia = null, PhotoId? AvatarPhotoId = null,
-        decimal AvatarCropX = 0.5m, decimal AvatarCropY = 0.5m, decimal AvatarCropScale = 1m)
+        decimal AvatarCropX = 0.5m, decimal AvatarCropY = 0.5m, decimal AvatarCropScale = 1m,
+        string? InviteToken = null)
         : this(Id, BaulId, UserId, Nickname, Role, InvitedDate,
-            new ImageCrop(AvatarCropX, AvatarCropY, AvatarCropScale), Name, Biografia, AvatarPhotoId)
+            new ImageCrop(AvatarCropX, AvatarCropY, AvatarCropScale), Name, Biografia, AvatarPhotoId, InviteToken)
     {
     }
     // The single interpretation of "is this Persona row linked to an authenticated account" —
     // callers should ask this instead of re-deriving it from UserId nullity by hand.
     public bool IsClaimed => UserId is not null;
 
-    public PersonaAccessStatus AccessStatus => Role == BaulRole.SinAcceso
-        ? PersonaAccessStatus.Revoked
-        : IsClaimed ? PersonaAccessStatus.Active : PersonaAccessStatus.Pending;
-
-    // Whether a joining account can link itself to this row instead of getting a brand new
-    // Persona — offered during the global invite link's "who are you" step. Equivalent to
-    // AccessStatus == Pending, spelled out separately because this is the one call site that
-    // cares about the claim capability itself, not the wider status tri-state.
-    public bool IsClaimable => AccessStatus == PersonaAccessStatus.Pending;
+    public PersonaAccessStatus AccessStatus => IsClaimed ? PersonaAccessStatus.Active : PersonaAccessStatus.Pending;
 
     // The custodio's own access can never be revoked — RemovePersonaAsync and
     // UpdatePersonaRoleAsync check this before touching a row. Custody lives solely on
@@ -69,12 +70,19 @@ public sealed class Persona : Entity<PersonaId>
     // comparison, not a fallback across two signals.
     public bool IsCustodioProtected(UserId custodioUserId) => UserId == custodioUserId;
 
-    // Links a Pending Persona to an authenticated account claiming to be that family member —
-    // called from BaulInviteLinkManager.AcceptAsync once the caller picks this row from the
-    // claimable list. Name is only backfilled, never overwritten, so an admin-provided name
-    // always wins.
+    // Links a Pending Persona to the authenticated account that just accepted its per-person
+    // invite token — called from PersonaInviteManager.AcceptAsync once the token has been
+    // resolved back to this row. Name is only backfilled, never overwritten, so an
+    // admin-provided name always wins.
     public Persona AcceptInvite(UserId userId, string? fallbackName) =>
         Mutate(() => { UserId = userId; Name ??= fallbackName; });
+
+    // Issues this persona's invite token the first time an admin taps "Invitar" — idempotent:
+    // if a token is already set (still-Pending persona re-shared, or somehow raced), the
+    // existing one wins and the freshly generated candidate is discarded, so re-inviting never
+    // silently swaps out a link that may already be in someone's hands.
+    public Persona IssueInviteToken(string candidateToken) =>
+        Mutate(() => InviteToken ??= candidateToken);
 
     public Persona WithIdentity(string? name, string nickname) =>
         Mutate(() => { Name = name; Nickname = nickname; });
@@ -96,15 +104,18 @@ public sealed class Persona : Entity<PersonaId>
     public Persona WithAvatarPhotoId(PhotoId photoId) =>
         Mutate(() => AvatarPhotoId = photoId);
 
-    // The only way a Persona reaches Revoked — clears the account link alongside the role so
-    // the two never drift out of sync (see PersonaAccessStatus).
-    public Persona Revoke() => Mutate(() => { UserId = null; Role = BaulRole.SinAcceso; });
+    // "Revocar acceso" — clears the account link and the invite token together, so the old
+    // per-person link stops working immediately (explicit exception to invite tokens otherwise
+    // being permanent/non-regenerable). Role is left untouched: there is no more sin_acceso
+    // state to move into, the row just falls back to Pending and can be re-invited normally,
+    // which lazily issues it a fresh token.
+    public Persona RevokeAccess() => Mutate(() => { UserId = null; InviteToken = null; });
 
     // Admin-only escape hatch for accounts that ended up claiming the wrong Persona (e.g. a
     // family member with several email addresses who created duplicate Personas in the same
-    // baúl). Unlike Revoke, this keeps Role as-is, so AccessStatus falls back to Pending — the
-    // row becomes claimable again by another account instead of turning into sin_acceso.
-    public Persona Unlink() => Mutate(() => UserId = null);
+    // baúl). Clears the invite token for the same reason as RevokeAccess — the row is
+    // Pending again and needs a fresh link before it can be (re-)invited.
+    public Persona Unlink() => Mutate(() => { UserId = null; InviteToken = null; });
 
     private Persona Mutate(Action action) { action(); return this; }
 }

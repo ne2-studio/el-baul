@@ -55,7 +55,6 @@ public static class ServiceRegistration
         services.AddSingleton<IRecuerdoRepository, InMemoryRecuerdoRepository>();
         services.AddScoped<IRecuerdoListReadModel, InMemoryRecuerdoListReadModel>();
         services.AddSingleton<ISharedLinkRepository, InMemorySharedLinkRepository>();
-        services.AddSingleton<IBaulInviteLinkRepository, InMemoryBaulInviteLinkRepository>();
         services.AddSingleton<ITvSessionRepository, InMemoryTvSessionRepository>();
         services.AddSingleton<ITvPairingRepository, InMemoryTvPairingRepository>();
         services.AddSingleton<IChatMessageRepository, InMemoryChatMessageRepository>();

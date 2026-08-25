@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
+import { BackButton } from '@/design-system/components/navigation/BackButton';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { Tabbar } from '@/design-system/layouts/Tabbar';
@@ -9,34 +10,95 @@ import { BaulChaptersTabContainer } from '@/features/baules/containers/BaulChapt
 import { ContributionSuggestionGateContainer } from '@/features/contributions/containers/ContributionSuggestionGateContainer';
 import { BaulPersonasTabContainer } from '@/features/people/containers/BaulPersonasTabContainer';
 import { BaulFeedTabContainer } from '@/features/memories/containers/BaulFeedTabContainer';
+import { BaulPhotosTabContainer } from '@/features/photos/containers/BaulPhotosTabContainer';
+import { BatchPhotoActionsContainer } from '@/features/photos/containers/BatchPhotoActionsContainer';
 import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSettingsMenuContainer';
 import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
+import { Photo } from '@/types';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useUIStore } from '@/store/uiStore';
 import { getEntrySource } from '@/utils/entrySource';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { getBaulPermissions } from '@/utils/roleUtils';
+import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { readBaulScrollPosition, saveBaulScrollPosition } from './baulScrollRestoration';
 
-type BaulTab = 'capitulos' | 'personas' | 'recuerdos';
+type BaulTab = 'capitulos' | 'personas' | 'recuerdos' | 'fotos';
 
-// BaulRoute ensambla el chrome (PageHeader/Tabbar) directamente y compone las 3 pestañas como
+// BaulRoute ensambla el chrome (PageHeader/Tabbar) directamente y compone las pestañas como
 // containers autosuficientes — no hay un componente "shell" intermedio en components/, porque
 // su único trabajo habría sido recomponer containers, lo cual ya no es presentacional de
 // verdad aunque viva ahí — ver la regla de containers/ en docs/architecture/frontend.md.
 // A diferencia de Capítulo/Persona, no lleva Hero: el selector de workspace en el PageHeader
 // ya hace de "título" de la pantalla — ver docs/DESIGN.md, "Content screen composition".
+//
+// La pestaña "Fotos" (todas las fotos del baúl, todos los capítulos + sueltas) es la única
+// con selección múltiple — ese estado (selectionMode/selectedIds) necesita el header
+// compartido (icono de ajustes vs. contador de selección) y la barra de acciones en lote, así
+// que se queda inline aquí en vez de en BaulPhotosTabContainer — mismo motivo que
+// ChapterRoute mantiene su propio selectionMode inline en vez de en un container.
 export const BaulRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { baulId } = useParams();
   const auth = useAuth();
 
+  const baulPhotosIds = useBaulesStore((state) => state.baulPhotos);
+  const photosById = usePhotosStore((state) => state.photosById);
+
   const startContributionSuggestionCooldown = useUIStore((state) => state.startContributionSuggestionCooldown);
 
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
   const initialTab = (location.state as { activeTab?: BaulTab } | null)?.activeTab ?? 'recuerdos';
   const [activeTab, setActiveTab] = useState<BaulTab>(initialTab);
+
+  // Selección múltiple de la pestaña "Fotos" — ver el comentario de cabecera. Se resetea al
+  // cambiar de pestaña (más abajo) para que no quede "colgada" si la persona vuelve más tarde.
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      setSelectionMode(next.size > 0);
+      return next;
+    });
+  };
+
+  const handleLongPress = (photoId: string) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([photoId]));
+  };
+
+  // Selecciona/deselecciona un swimlane entero de golpe — mismo comportamiento que
+  // ChapterRoute.handleToggleGroup.
+  const handleToggleGroup = (groupPhotos: Photo[]) => {
+    const groupIds = groupPhotos.map(p => p.id);
+    const allSelected = groupIds.length > 0 && groupIds.every(id => selectedIds.has(id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      groupIds.forEach(id => allSelected ? next.delete(id) : next.add(id));
+      setSelectionMode(next.size > 0);
+      return next;
+    });
+  };
+
+  const exitSelection = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleChangeTab = (key: string) => {
+    exitSelection();
+    setActiveTab(key as BaulTab);
+  };
   // Solo hay algo que restaurar cuando se llega con un activeTab explícito en el state — eso
   // solo pasa al volver de un Capítulo o de una Persona (ver returnTab en handleSelectChapter
   // y en el "Volver" de ChapterRoute/PersonaDetailRoute), nunca en una entrada nueva al baúl.
@@ -104,6 +166,9 @@ export const BaulRoute: React.FC = () => {
   const { baul } = guard;
 
   const baulPermissions = getBaulPermissions(baul);
+  // Solo para la barra de acciones en lote de la pestaña "Fotos" — BaulPhotosTabContainer lee
+  // esta misma store slice él mismo para pintar el grid, ver ese archivo.
+  const baulPhotosList = hydratePhotos(baulPhotosIds[baul.id], photosById) || [];
 
   const resolveContributionSuggestion = () => {
     startContributionSuggestionCooldown(baul.id);
@@ -131,16 +196,29 @@ export const BaulRoute: React.FC = () => {
     navigate(`/baules/${baul.id}/capitulos/${chapter.id}`, { state: { returnTab: activeTab } });
   };
 
+  const handleSelectPhoto = (photo: Photo) =>
+    openPhotoViewer(navigate, location, photoViewerPath(`/baules/${baul.id}/fotos`, photo.id));
+
   return (
     <div className="min-h-screen bg-background">
       <PageHeader
         ref={headerRef}
         variant="row"
-        leading={<WorkspaceSwitcherContainer activeBaul={baul} />}
+        leading={
+          activeTab === 'fotos' && selectionMode
+            ? <BackButton onClick={exitSelection} label="Cancelar" />
+            : <WorkspaceSwitcherContainer activeBaul={baul} />
+        }
         trailing={
-          <div className="flex items-center gap-1">
-            <BaulSettingsMenuContainer baul={baul} />
-          </div>
+          activeTab === 'fotos' && selectionMode ? (
+            <span className="text-sm font-medium text-foreground">
+              {selectedIds.size} {selectedIds.size === 1 ? 'seleccionada' : 'seleccionadas'}
+            </span>
+          ) : (
+            <div className="flex items-center gap-1">
+              <BaulSettingsMenuContainer baul={baul} />
+            </div>
+          )
         }
       />
 
@@ -157,13 +235,15 @@ export const BaulRoute: React.FC = () => {
             // distingue lo nuevo con su propia swimlane (ver FeedTab).
             label: 'Historia',
           },
+          { key: 'fotos', label: 'Fotos' },
           { key: 'capitulos', label: 'Capítulos' },
           // "Familia" solo aquí, en la Tabbar del baúl — mismo motivo que "Historia" arriba.
           { key: 'personas', label: 'Familia' },
         ]}
         active={activeTab}
-        onChange={(key) => setActiveTab(key as BaulTab)}
+        onChange={handleChangeTab}
         top={headerHeight}
+        hideStrip={activeTab === 'fotos' && selectionMode}
       >
         <PageContainer className="py-6 pb-28">
           {activeTab === 'recuerdos' && (
@@ -171,6 +251,18 @@ export const BaulRoute: React.FC = () => {
               baulId={baul.id}
               baulName={baul.name}
               onOpenChapter={(chapterId) => handleSelectChapter({ id: chapterId })}
+            />
+          )}
+
+          {activeTab === 'fotos' && (
+            <BaulPhotosTabContainer
+              baulId={baul.id}
+              selectionMode={selectionMode}
+              selectedIds={selectedIds}
+              onSelectPhoto={handleSelectPhoto}
+              onToggleSelect={toggleSelect}
+              onLongPress={handleLongPress}
+              onToggleGroup={handleToggleGroup}
             />
           )}
 
@@ -183,6 +275,17 @@ export const BaulRoute: React.FC = () => {
           )}
         </PageContainer>
       </Tabbar>
+
+      <BatchPhotoActionsContainer
+        active={activeTab === 'fotos' && selectionMode}
+        baulId={baul.id}
+        chapterId={null}
+        photos={baulPhotosList}
+        selectedIds={selectedIds}
+        moveableChapters={[]}
+        allowMoveActions={false}
+        onDone={exitSelection}
+      />
     </div>
   );
 };

@@ -42,7 +42,6 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<RecuerdoEmbedding> RecuerdoEmbeddings => Set<RecuerdoEmbedding>();
     public DbSet<SharedLink> SharedLinks => Set<SharedLink>();
-    public DbSet<BaulInviteLink> BaulInviteLinks => Set<BaulInviteLink>();
     public DbSet<PushToken> PushTokens => Set<PushToken>();
     public DbSet<BaulFeedCursor> BaulFeedCursors => Set<BaulFeedCursor>();
     public DbSet<ChatMemory> ChatMemories => Set<ChatMemory>();

@@ -1,4 +1,4 @@
-import { Baul, BaulInviteLink, Chapter, FeedItem, Persona, Photo, Recuerdo, RemovalRequest, feedItemFrom } from '../../types';
+import { Baul, Chapter, FeedItem, Persona, PersonaInvite, Photo, Recuerdo, RemovalRequest, feedItemFrom } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { API_BASE, apiFetch, authHeaders, get, handleResponse, post, put, del } from '../http';
 import type { PhotoCrop } from '../publicTypes';
@@ -16,8 +16,7 @@ const PERSONA_ROLE = '/api/baules/{baulId}/personas/{personaId}/role' satisfies 
 const PERSONA_PHOTOS = '/api/baules/{baulId}/personas/{personaId}/photos' satisfies PathTemplate;
 const LOOSE_PHOTOS = '/api/baules/{baulId}/photos/sueltas' satisfies PathTemplate;
 const BAUL_FEED = '/api/baules/{baulId}/feed' satisfies PathTemplate;
-const INVITE_LINK = '/api/baules/{baulId}/invite-link' satisfies PathTemplate;
-const REGENERATE_INVITE_LINK = '/api/baules/{baulId}/invite-link/regenerate' satisfies PathTemplate;
+const PERSONA_INVITE = '/api/baules/{baulId}/personas/{personaId}/invite' satisfies PathTemplate;
 const REMOVAL_REQUESTS = '/api/baules/{baulId}/removal-requests' satisfies PathTemplate;
 const APPROVE_REMOVAL_REQUEST = '/api/baules/{baulId}/removal-requests/{requestId}/approve' satisfies PathTemplate;
 
@@ -27,7 +26,6 @@ type PersonaScopeDto = JsonResponse<typeof PERSONA_SCOPE, 'get'>;
 type PersonaDto = JsonResponse<typeof BAUL_PERSONA, 'get'>;
 type PhotoDto = JsonResponse<typeof LOOSE_PHOTOS, 'get'>[number];
 type FeedPageDto = JsonResponse<typeof BAUL_FEED, 'get'>;
-type InviteLinkDto = JsonResponse<typeof INVITE_LINK, 'get'>;
 type RemovalRequestDto = JsonResponse<typeof REMOVAL_REQUESTS, 'get'>[number];
 type SuccessResponse = JsonResponse<typeof APPROVE_REMOVAL_REQUEST, 'post'>;
 
@@ -121,9 +119,8 @@ export const baulesApi = {
     };
   },
 
-  getInviteLink: async (baulId: string) => new BaulInviteLink(await get<InviteLinkDto>(path(INVITE_LINK, { baulId }))),
-  regenerateInviteLink: async (baulId: string) =>
-    new BaulInviteLink(await post<JsonResponse<typeof REGENERATE_INVITE_LINK, 'post'>>(path(REGENERATE_INVITE_LINK, { baulId }))),
+  invitePersona: async (baulId: string, personaId: string) =>
+    new PersonaInvite(await post<JsonResponse<typeof PERSONA_INVITE, 'post'>>(path(PERSONA_INVITE, { baulId, personaId }))),
 
   getRemovalRequests: async (baulId: string) =>
     (await get<RemovalRequestDto[]>(path(REMOVAL_REQUESTS, { baulId }))).map((r) => new RemovalRequest(r)),

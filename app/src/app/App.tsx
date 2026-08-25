@@ -37,6 +37,7 @@ import { RemovalRequestsRoute } from '../features/moderation/routes/RemovalReque
 import { PhotoBatchGridRoute } from '../features/photos/routes/PhotoBatchGridRoute';
 import { PersonaDetailRoute } from '../features/people/routes/PersonaDetailRoute';
 import { BaulGlobalInvitacionRoute } from '../features/sharing/routes/BaulGlobalInvitacionRoute';
+import { InvitarFamiliaRoute } from '../features/sharing/routes/InvitarFamiliaRoute';
 import { TvLandingRoute } from '../features/tv/routes/TvLandingRoute';
 import { TvPairingRoute } from '../features/tv/routes/TvPairingRoute';
 import { TvSessionRoute } from '../features/tv/routes/TvSessionRoute';
@@ -289,6 +290,11 @@ function App() {
         <Route path="/baules/:baulId/ajustes" element={
           <ProtectedRoute>
             <BaulSettingsRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/baules/:baulId/invitar" element={
+          <ProtectedRoute>
+            <InvitarFamiliaRoute />
           </ProtectedRoute>
         } />
         <Route path="/baules/:baulId/capitulos/:chapterId" element={
