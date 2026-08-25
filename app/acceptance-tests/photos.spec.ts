@@ -39,8 +39,8 @@ test('create baúl → create chapter → upload photo → move photo → delete
   await page.locator('input[type="file"]').setInputFiles(FIXTURE_PHOTO);
   await page.getByRole('button', { name: 'Subir fotos' }).click();
   await expect(page.getByText(/ya está a salvo/)).toBeVisible({ timeout: 15_000 });
-  await page.waitForURL(/\/capitulos\/[^/]+$/);
-  await page.getByRole('button', { name: /Fotos/ }).click();
+  // A finished upload now lands on its own batch grid screen instead of back on the chapter.
+  await page.waitForURL(/\/subida\//);
 
   // Move to chapter 2.
   await page.locator('button:has(img[alt="Foto"])').first().click();
