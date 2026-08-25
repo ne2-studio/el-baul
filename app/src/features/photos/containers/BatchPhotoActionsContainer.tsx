@@ -16,6 +16,13 @@ interface BatchPhotoActionsContainerProps {
   selectedIds: Set<string>;
   moveableChapters: Chapter[];
   onDone: () => void;
+  /** false only for the baúl-wide "Fotos" tab (BaulRoute): a single selection there can span
+   * several chapters plus fotos sueltas at once, so there's neither one source chapter for
+   * "mover a otro capítulo" nor a clear "crear capítulo desde selección" (it would move
+   * photos already spread across different origins) — v1 only offers fecha/etiquetar/borrar
+   * for that tab. See issue #57's refinement. Defaults to true, i.e. every other caller
+   * (chapter, fotos sueltas, upload batch) keeps today's behavior unchanged. */
+  allowMoveActions?: boolean;
 }
 
 // Self-sufficient multi-select action bar: owns move/change-date/create-chapter/tag-personas
@@ -23,7 +30,7 @@ interface BatchPhotoActionsContainerProps {
 // baulId + the result's id, nothing route-context-dependent — see
 // docs/architecture/frontend.md's containers/ rule.
 export function BatchPhotoActionsContainer({
-  active, baulId, chapterId, photos, selectedIds, moveableChapters, onDone,
+  active, baulId, chapterId, photos, selectedIds, moveableChapters, onDone, allowMoveActions = true,
 }: BatchPhotoActionsContainerProps) {
   const navigate = useNavigate();
   const { personas } = usePersonasStore();
@@ -96,10 +103,10 @@ export function BatchPhotoActionsContainer({
       selectedIds={selectedIds}
       moveableChapters={moveableChapters}
       personas={personas[baulId] || []}
-      onBatchMove={handleBatchMove}
+      onBatchMove={allowMoveActions ? handleBatchMove : undefined}
       onBatchChangeDate={handleBatchChangeDate}
       onBatchClearDate={handleBatchClearDate}
-      onBatchCreateChapter={chapterId === null ? handleBatchCreateChapter : undefined}
+      onBatchCreateChapter={allowMoveActions && chapterId === null ? handleBatchCreateChapter : undefined}
       onBatchTagPersonas={handleBatchTagPersonas}
       onBatchDelete={handleBatchDelete}
       onDone={onDone}

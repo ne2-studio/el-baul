@@ -12,6 +12,13 @@ export interface BaulesState {
   // Keyed by UploadBatchId — a batch's own photo ids, for the feed card's grid/gallery
   // drill-down. See features/photos/useCases.loadPhotoBatchPhotos.
   photoBatchPhotos: Record<string, string[]>;
+  // Baúl-wide "Fotos" tab (every chapter + loose, chronological) — accumulated ids loaded so
+  // far via scroll infinito, keyed by baulId. Unlike photos/loosePhotos (eager, whole-list),
+  // this only ever grows forward through loadBaulPhotos/loadMoreBaulPhotos — see
+  // features/photos/useCases.loadBaulPhotos. baulPhotosHasMore mirrors baulFeedHasMore's role
+  // for the recuerdos feed (useRecuerdosStore).
+  baulPhotos: Record<string, string[]>;
+  baulPhotosHasMore: Record<string, boolean>;
   isLoading: boolean;
 
   reset: () => void;
@@ -29,6 +36,8 @@ export const useBaulesStore = create<BaulesState>((set) => ({
   photos: {},
   loosePhotos: {},
   photoBatchPhotos: {},
+  baulPhotos: {},
+  baulPhotosHasMore: {},
   isLoading: true,
 
   reset: () => set({
@@ -37,6 +46,8 @@ export const useBaulesStore = create<BaulesState>((set) => ({
     photos: {},
     loosePhotos: {},
     photoBatchPhotos: {},
+    baulPhotos: {},
+    baulPhotosHasMore: {},
     isLoading: true,
   }),
 }));
