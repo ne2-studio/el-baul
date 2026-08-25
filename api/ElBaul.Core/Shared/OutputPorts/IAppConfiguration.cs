@@ -110,6 +110,15 @@ public interface IAppConfiguration
     bool AndroidAppBannerEnabled { get; }
 
     /// <summary>
+    /// Kill switch for the Biografía tab on a persona's ficha. Checked server-side too — both
+    /// by PersonaManager.UpdatePersonaBiografiaAsync (rejects writes while off) and by
+    /// ChatContextBuilder (omits Biografía from the AI's context while off) — so hiding the
+    /// frontend tab is not the only protection. Defaults to false, same rollout shape as the
+    /// other feature toggles here.
+    /// </summary>
+    bool BiografiaEnabled { get; }
+
+    /// <summary>
     /// Probability (0-1) that ContributionsManager picks "write a memory" over "tag people" when
     /// choosing which contribution suggestion to offer on entering a baúl. Same key/default
     /// (0.2) as AppConfigController's own copy, which still reads it from IConfiguration

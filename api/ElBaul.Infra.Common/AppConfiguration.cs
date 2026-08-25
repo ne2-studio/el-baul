@@ -26,5 +26,6 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public bool TvModeEnabled => configuration.GetValue<bool>("Features:TvModeEnabled");
     public bool MaintenanceModeEnabled => configuration.GetValue<bool>("Features:MaintenanceModeEnabled");
     public bool AndroidAppBannerEnabled => configuration.GetValue<bool>("Features:AndroidAppBannerEnabled");
+    public bool BiografiaEnabled => configuration.GetValue<bool>("Features:BiografiaEnabled");
     public double WriteMemorySuggestionRatio => configuration.GetValue("Features:WriteMemorySuggestionRatio", 0.2);
 }

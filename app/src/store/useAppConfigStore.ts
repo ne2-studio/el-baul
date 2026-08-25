@@ -26,6 +26,10 @@ interface AppConfigState {
   // other backend request 503s while this is on, so it's fetched from the one endpoint the
   // backend still serves during maintenance (see MaintenanceModeMiddleware).
   maintenanceModeEnabled: boolean;
+  // Defaults to false so the Biografía tab (and any biografía content) never flashes visible
+  // before the backend confirms the rollout is on — the backend also enforces this server-side
+  // (write endpoint, AI context), so hiding the tab is not the only protection.
+  biografiaEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -52,6 +56,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   chatMemoryEnabled: false,
   tvModeEnabled: false,
   maintenanceModeEnabled: false,
+  biografiaEnabled: false,
   helpCenterUrl: '',
   appUrl: window.location.origin,
   googlePlayUrl: '',
@@ -69,6 +74,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         chatMemoryEnabled: config.features.chatMemoryEnabled ?? false,
         tvModeEnabled: config.features.tvModeEnabled ?? false,
         maintenanceModeEnabled: config.features.maintenanceModeEnabled ?? false,
+        biografiaEnabled: config.features.biografiaEnabled ?? false,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
         googlePlayUrl: config.googlePlayUrl ?? '',

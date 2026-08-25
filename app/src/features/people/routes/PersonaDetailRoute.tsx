@@ -16,6 +16,7 @@ import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 // PersonaDetailRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las
 // pestañas fotos/recuerdos/biografía como containers autosuficientes — no hay un componente "shell"
@@ -35,6 +36,7 @@ export const PersonaDetailRoute: React.FC = () => {
   // recuento del Tabbar sean correctos desde el primer render y no haya un hueco de carga al
   // cambiar de pestaña — ver docs/architecture/frontend.md y usePersonaScope.
   const { persona, photos, isLoading, loadFailed, retry } = usePersonaScope(baulId, personaId);
+  const { biografiaEnabled } = useAppConfigStore();
 
   // Mismo filtro que PersonaRecuerdosTabContainer (recuerdos de las fotos en las que esta
   // persona está etiquetada) solo para el badge de recuento del Tabbar — igual que el badge de
@@ -102,7 +104,8 @@ export const PersonaDetailRoute: React.FC = () => {
         tabs={[
           { key: 'fotos', label: 'Fotos', count: (photos || []).length },
           { key: 'recuerdos', label: 'Recuerdos', count: recuerdosCount },
-          { key: 'biografia', label: 'Biografía' },
+          // Solo se muestra con el feature toggle activo — ver useAppConfigStore.biografiaEnabled.
+          ...(biografiaEnabled ? [{ key: 'biografia', label: 'Biografía' }] : []),
         ]}
         active={activeTab}
         onChange={(key) => setActiveTab(key as 'fotos' | 'recuerdos' | 'biografia')}
@@ -120,7 +123,7 @@ export const PersonaDetailRoute: React.FC = () => {
             <PersonaRecuerdosTabContainer baulId={baulId} personaId={personaId} />
           )}
 
-          {activeTab === 'biografia' && (
+          {biografiaEnabled && activeTab === 'biografia' && (
             <PersonaBiografiaTabContainer baulId={baulId} persona={persona} />
           )}
         </PageContainer>

@@ -240,6 +240,36 @@ public class ChatContextBuilderTests
     }
 
     [Fact]
+    public async Task BuildAsync_ShouldOmitAPersonasBiografia_WhenBiografiaIsDisabled()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow(), Biografia: "Nació en Asturias en 1945."));
+
+        var builder = new ChatContextBuilder(
+            _personaRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
+            _relevantRecuerdoSelector, _relevantChatMemorySelector, new StaticAppConfiguration(biografiaEnabled: false));
+        var context = await builder.BuildAsync(baul, CurrentUserId, "¿Qué sabemos del abuelo?");
+
+        Assert.DoesNotContain("Nació en Asturias en 1945.", context);
+    }
+
+    [Fact]
+    public async Task BuildSummaryAsync_ShouldOmitAPersonasBiografia_WhenBiografiaIsDisabled()
+    {
+        var baulId = Guid.NewGuid();
+        var baul = await SeedBaulAsync(baulId, "Familia");
+        await _personaRepository.AddPersonaAsync(new Persona(new PersonaId(Guid.NewGuid()), new BaulId(baulId), null, "Abuelo Antonio", BaulRole.Colaborador, _clock.UtcNow(), Biografia: "Nació en Asturias en 1945."));
+
+        var builder = new ChatContextBuilder(
+            _personaRepository, _chapterRepository, _recuerdoRepository, _photoRepository,
+            _relevantRecuerdoSelector, _relevantChatMemorySelector, new StaticAppConfiguration(biografiaEnabled: false));
+        var summary = await builder.BuildSummaryAsync(baul);
+
+        Assert.DoesNotContain("Nació en Asturias en 1945.", summary);
+    }
+
+    [Fact]
     public async Task BuildSummaryAsync_ShouldIncludePersonasAndChapters_ButNotRecuerdos()
     {
         var baulId = Guid.NewGuid();

@@ -43,5 +43,6 @@ public class UnleashAppConfiguration(IUnleash unleash, IConfiguration configurat
     public bool TvModeEnabled => unleash.IsEnabled("elbaul.tv-mode-enabled");
     public bool MaintenanceModeEnabled => unleash.IsEnabled("elbaul.maintenance-mode-enabled");
     public bool AndroidAppBannerEnabled => unleash.IsEnabled("elbaul.android-app-banner-enabled");
+    public bool BiografiaEnabled => unleash.IsEnabled("elbaul.biografia-enabled");
     public double WriteMemorySuggestionRatio => configuration.GetValue("Features:WriteMemorySuggestionRatio", 0.2);
 }

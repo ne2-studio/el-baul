@@ -83,7 +83,7 @@ public class ChatContextBuilder(
             }
         }
 
-        AppendHeader(sb, baul, personas, chapters, photosByChapter);
+        AppendHeader(sb, baul, personas, chapters, photosByChapter, appConfiguration.BiografiaEnabled);
 
         sb.AppendLine();
         if (relevantRecuerdos.Count < recuerdos.Count)
@@ -130,13 +130,13 @@ public class ChatContextBuilder(
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var sb = new StringBuilder();
-        AppendHeader(sb, baul, personas, chapters, photosByChapter);
+        AppendHeader(sb, baul, personas, chapters, photosByChapter, appConfiguration.BiografiaEnabled);
         return sb.ToString();
     }
 
     private static void AppendHeader(
         StringBuilder sb, Baul baul, List<Persona> personas, List<Chapter> chapters,
-        IReadOnlyDictionary<ChapterId, List<Photo>> photosByChapter)
+        IReadOnlyDictionary<ChapterId, List<Photo>> photosByChapter, bool biografiaEnabled)
     {
         sb.AppendLine($"Nombre del baúl: {baul.Name}");
         if (!string.IsNullOrWhiteSpace(baul.Description))
@@ -147,7 +147,7 @@ public class ChatContextBuilder(
         foreach (var persona in personas)
         {
             sb.AppendLine($"- {persona.Nickname}" + (persona.Name is { Length: > 0 } ? $" ({persona.Name})" : ""));
-            if (persona.Biografia is { Length: > 0 })
+            if (biografiaEnabled && persona.Biografia is { Length: > 0 })
                 sb.AppendLine($"  Biografía: {persona.Biografia}");
         }
 

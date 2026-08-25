@@ -8374,6 +8374,7 @@ export interface components {
             chatMemoryEnabled: boolean;
             tvModeEnabled: boolean;
             maintenanceModeEnabled: boolean;
+            biografiaEnabled: boolean;
         };
         AppConfigResponse: {
             features: components["schemas"]["AppConfigFeatures"];

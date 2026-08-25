@@ -29,7 +29,7 @@ public class PersonaManagerTests
         _fixture.Users.Seed(new User(new UserId(OtherUserId), "other@test.com", "Other", null, _fixture.Clock.UtcNow()));
     }
 
-    private PersonaManager CreateManager(string currentUserId, Guid? nextId = null) =>
+    private PersonaManager CreateManager(string currentUserId, Guid? nextId = null, bool biografiaEnabled = true) =>
         new(NullLogger<PersonaManager>.Instance, _fixture.BaulPhotoCoverListener, _fixture.Personas, _fixture.Photos, _fixture.Users,
             new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
@@ -39,7 +39,8 @@ public class PersonaManagerTests
                 new PhotoFileService(NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()), _photoDateExtractor,
                     new FakePhotoImageNormalizer(), new FakeImageProcessor(), new ImagePolicy()),
                 new StaticIdGenerator(nextId ?? Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork()),
-            new PersonaDtoProjector(_fixture.Photos, _photoStorage, _fixture.Users), new FakeUnitOfWork());
+            new PersonaDtoProjector(_fixture.Photos, _photoStorage, _fixture.Users), new FakeUnitOfWork(),
+            new StaticAppConfiguration(biografiaEnabled: biografiaEnabled));
 
     [Fact]
     public async Task CreatePersonaAsync_ShouldDenyAccess_WhenCallerIsNotAdmin()
@@ -280,6 +281,21 @@ public class PersonaManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaBiografiaAsync_ShouldReject_WhenBiografiaIsNotEnabled()
+    {
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuela");
+
+        var manager = CreateManager(CustodioId, biografiaEnabled: false);
+        var result = await manager.UpdatePersonaBiografiaAsync(baulId, personaId, "Nació en Asturias en 1945.");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Biografia is not enabled", result.Error.Message);
+        var persisted = await _fixture.Personas.GetPersonaByIdAsync(personaId);
+        Assert.Null(persisted!.Biografia);
     }
 
     [Fact]

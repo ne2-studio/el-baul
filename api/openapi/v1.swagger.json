@@ -9668,6 +9668,7 @@
         "required": [
           "androidAppBannerEnabled",
           "baulFeedEnabled",
+          "biografiaEnabled",
           "chatEnabled",
           "chatMemoryEnabled",
           "chatSuggestionsEnabled",
@@ -9699,6 +9700,9 @@
             "type": "boolean"
           },
           "maintenanceModeEnabled": {
+            "type": "boolean"
+          },
+          "biografiaEnabled": {
             "type": "boolean"
           }
         },

@@ -26,7 +26,8 @@ public class PersonaManager(
     IPhotoPersonaTagRepository photoPersonaTagRepository,
     PhotoUploadWorkflow photoUploadWorkflow,
     IPersonaDtoProjector personaDtoProjector,
-    IUnitOfWork unitOfWork) : IPersonaManager
+    IUnitOfWork unitOfWork,
+    IAppConfiguration appConfiguration) : IPersonaManager
 {
     public async Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(BaulId baulId)
     {
@@ -128,6 +129,12 @@ public class PersonaManager(
     // requires baúl membership, not CanEditPersona's identity-edit permission.
     public async Task<Result<PersonaDto>> UpdatePersonaBiografiaAsync(BaulId baulId, PersonaId personaId, string? biografia)
     {
+        if (!appConfiguration.BiografiaEnabled)
+        {
+            logger.LogWarning("Persona biografia update rejected: biografia is not enabled");
+            return Result.Failure<PersonaDto>(ApplicationError.Validation("Biografia is not enabled"));
+        }
+
         var userId = currentUserProvider.GetUserId();
 
         var auth = await baulAccess.AuthorizeAsync(
