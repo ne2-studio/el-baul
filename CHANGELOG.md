@@ -13,6 +13,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+## [beta-v0.4.3] - 2026-08-26
+
 ### Cambiado
 
 - En la pestaña "Recuerdos" de la ficha de una persona, los recuerdos ahora se ordenan por la fecha de la foto a la que pertenecen (de más reciente a más antigua), en vez de por la fecha en que se escribió el recuerdo.
@@ -79,76 +81,6 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la pantalla de sugerencia de contribución de una foto, el botón "No hay nadie en esta foto" aparecía antes que "Guardar"; ahora aparece debajo, como en el resto de pantallas.
 - Al compartir una foto con El Baúl desde el share nativo de Android nada más abrir la aplicación, a veces se veía brevemente un baúl (y su sugerencia de contribución) antes de la pantalla para elegir a qué baúl compartir; ahora se va directamente a esa pantalla.
 - Al confirmar "No hay nadie en esta foto" en la sugerencia de contribución, si la foto ya tenía algún recuerdo, se pedía escribir uno de todas formas; ahora, en ese caso, se cierra la sugerencia sin pedir nada más.
-
-## [beta-v0.4.1] - 2026-08-18
-
-### Añadido
-
-- Ahora es posible poner El Baúl en mantenimiento: mientras dura, la app muestra una pantalla explicándolo y ninguna acción está disponible.
-- En la selección múltiple de fotos, ahora puedes borrar la fecha de todas las fotos seleccionadas a la vez.
-- La pantalla de una subida de fotos (la que abres desde "y N más" en el feed) ahora tiene selección múltiple, con las mismas acciones en lote que ya había en capítulos: cambiar fecha, borrar fecha, mover, crear un capítulo nuevo y etiquetar personas.
-- Si subes una foto que ya estaba en el baúl, ya no se duplica: la app la reconoce y avisa de que esa foto ya estaba, sin que cuente como un error ni interrumpa la subida del resto de fotos seleccionadas.
-- En la app nativa de Android, si aún no has activado las notificaciones push, aparece un aviso ofreciendo activarlas. Si lo cierras, no vuelve a aparecer hasta pasada una semana (y se resetea si desinstalas/reinstalas la app o la usas en otro dispositivo).
-- El selector de baúles ahora muestra un punto junto a cada baúl con novedades desde tu última visita, y otro junto al propio selector si hay novedades en cualquiera de tus baúles.
-- En la sugerencia de etiquetar personas en una foto, al pulsar "No hay nadie en esta foto" ahora se propone escribir un recuerdo sobre esa misma foto, en vez de no hacer nada.
-- Ahora cada subida de fotos admite como máximo 30; si seleccionas más, la selección se recorta automáticamente y se avisa con un mensaje.
-
-### Arreglado
-
-- Al abrir un baúl, ya no aparece un segundo aviso de carga del feed: ahora toda la entrada queda bajo "Abriendo baúl...".
-- Al crear un capítulo nuevo, ahora navega directamente a ese capítulo y muestra un aviso de éxito, en vez de volver a la vista del baúl sin confirmación.
-- En la pantalla de "¿nos ayudas con esta foto?" (etiquetar personas o escribir un recuerdo), el panel de la foto ya no tiene un alto fijo: ahora se ajusta a la proporción real de la foto, así una foto panorámica deja más sitio a la lista de debajo en vez de mostrarse con franjas negras. Además, el alto máximo es algo menor, para que los botones de seleccionar personas se vean mejor.
-- Las pestañas de "Recuerdos" y "Fotos" en la pantalla de Capítulo ya no muestran el número entre paréntesis, no aportaba nada.
-- Al abrir la app (por ejemplo, al compartir una foto con El Baúl desde otra app en Android), ya no se ve una pantalla en negro mientras carga: ahora se muestra una pantalla de carga.
-- En la pantalla de subida de fotos, al añadir muchas fotos de golpe ya no parece que la app se haya quedado colgada mientras se preparan las previsualizaciones: ahora se muestra un aviso de carga.
-- En la pantalla "Guardando tus recuerdos…", al subir muchas fotos a la vez ya no se bloquea el scroll ni el título y el progreso quedan fuera de la pantalla: ahora se quedan siempre visibles y solo se desplaza la cuadrícula de fotos.
-- Si la sesión se cae mientras estabas usando la app, ahora se intenta volver a iniciarla automáticamente en vez de mandarte directamente a la pantalla de "Continuar con Google".
-- Corregido un caso en el que, tras recargar la app con una sesión ya inválida, el reintento automático de inicio de sesión podía repetirse en vez de llevarte a la pantalla de "Continuar con Google" tras un único intento.
-- Se ha corregido un fallo por el que el email de resumen semanal dejaba de llegar a algunas personas usuarias de forma silenciosa e intermitente.
-- Se ha corregido que, al abrir la app en el navegador, a veces se recargara sola sin avisar (por ejemplo, cambiando de golpe una recomendación que ya estabas viendo). Ahora, si hay una versión nueva disponible, aparece un aviso para actualizar cuando tú quieras.
-- En las pantallas de subida de fotos, al seleccionar fotos muy pesadas la app se quedaba pillada mientras las previsualizaba. Ahora las previsualizaciones se muestran a un tamaño reducido, sin afectar a la calidad de la foto que se sube y se guarda.
-- La pantalla de "Sin conexión" saltaba con demasiada facilidad ante un fallo de red puntual que se resolvía solo. Ahora se reintenta antes de mostrarla y, si llega a aparecer, la app se recupera sola en cuanto vuelve la conexión, sin necesidad de recargar la página.
-- Al abrir un capítulo, ya no se ven dos avisos de carga distintos y seguidos ("Cargando fotos..." y "Cargando capítulo..."): ahora se muestra un único "Abriendo capítulo...".
-
-### Seguridad
-
-- Al subir una foto, ya no se confía en el nombre de archivo ni en el tipo declarado por quien la sube para decidir cómo tratarla: ahora se examina el propio contenido del archivo. Esto evita que un archivo mal etiquetado o manipulado a propósito pueda saltarse las comprobaciones de imagen válida.
-
-## [beta-v0.4.0] - 2026-08-13
-
-### Añadido
-
-- El feed del baúl ahora separa "Nueva actividad" desde tu última visita de lo que ya habías visto, y marca esas tarjetas con un hint visual. Cada baúl lleva su propio marcador de última visita.
-- Nueva tarjeta en el feed cuando se crea un capítulo.
-- Si entras desde el navegador de un móvil Android, un aviso te ofrece abrir o descargar la app.
-- El logo de El Baúl aparece ahora en la cabecera de todos los emails (bienvenida y resumen semanal).
-- Al elegir foto de portada de un capítulo o de un baúl, ahora puedes recortarla (zoom y centrado horizontal/vertical), igual que ya podías hacer con la foto de perfil.
-- Ahora puedes borrar tú mismo una foto que hayas subido, durante la primera hora tras subirla, por si te equivocas al subirla.
-- Nueva recomendación de contribución "escribe un recuerdo": al abrir un baúl, a veces te propone una foto al azar y te anima a contar qué recuerdas de ese momento, como alternativa a "¿nos ayudas con esta foto?".
-- El chat ahora aprende en silencio información relevante que le cuentas (personas, apodos, historias familiares) y la recuerda en conversaciones futuras dentro del mismo baúl. Desde el menú del chat puedes entrar en "Gestionar memoria" para ver, corregir o eliminar lo que recuerda de ti.
-- Nuevo Modo TV: abre el navegador de tu televisión en la dirección de El Baúl seguida de `/tv` y aparecerá un código QR; escanéalo con el móvil (con la sesión iniciada), elige el baúl que quieres mostrar y la TV lo abrirá sola, sin tener que teclear ningún enlace. Una vez abierto, las fotos del baúl se ven a pantalla completa y se navegan con las flechas y Enter del mando (o tocando/haciendo clic a los lados y en el centro de la pantalla, para televisores con mando de ratón), mostrando la fecha, el capítulo, las personas etiquetadas y el último recuerdo de cada foto. El acceso caduca solo pasadas unas horas.
-
-### Cambiado
-
-- El panel para gestionar el acceso de una persona ahora tiene el mismo estilo que el resto de paneles, y muestra botones de "Guardar cambios" y "Cancelar" en vez de aplicar el cambio de rol al instante.
-- Las pestañas Historia, Capítulos y Familia del baúl ya no muestran un número de recuento — no aportaba información útil.
-- Las notificaciones push diarias ya no avisan de actividad que ya habías visto en el feed de un baúl concreto (el resumen semanal por email sigue incluyéndola, como recopilatorio que es).
-- La recomendación de "¿nos ayudas con esta foto?" ya no aparece la primera vez que abres la app, ni al entrar desde una notificación push o desde un enlace de email.
-- El botón para eliminar una foto ahora se llama "Borrar foto" en vez de "Retirar foto", para que quede más claro qué hace.
-- El botón para confirmar la subida de fotos ahora se llama "Subir fotos" en vez de "Guardar recuerdos", para que quede más claro qué hace.
-
-### Arreglado
-
-- Las fotos de resolución muy alta ya no fallaban al mostrarse dentro de la app: ahora se ajustan automáticamente a un tamaño manejable al subirlas, conservando la proporción original.
-- Los enlaces de los emails (resumen semanal, bienvenida) daban un error al pulsarlos en vez de llevarte a la página correspondiente.
-- Editar un recuerdo desde el visor de fotos ya no descuadra el diseño al abrir el teclado en móvil: ahora se edita en una ventana aparte.
-- El selector de baúl (y el resto de menús desplegables) ya no se quedaba con el foco visualmente atascado en el botón tras pinchar fuera para cerrarlo — antes hacía falta pinchar fuera dos veces.
-- El texto de las filas del selector de baúl aparecía en negro al pasar el ratón por encima, en vez de en blanco como el resto de menús desplegables.
-- La lista de solicitudes de retirada de fotos ocupaba todo el ancho de la pantalla en ordenador, en vez de mantener el mismo ancho que el resto de páginas.
-- Las flechas del campo de año (al añadir una fecha) empezaban a contar desde 0 en vez de partir de un año real.
-- Si ya habías solicitado la retirada de una foto, el menú volvía a ofrecer "Solicitar retirada" como si nada — ahora aparece deshabilitado con el texto "Ya has solicitado la retirada".
-- Borrar un capítulo daba error si tenía alguna foto ya borrada con personas etiquetadas.
-- En Android, los enlaces de los emails ya abren la app instalada en vez de siempre el navegador.
 
 ## Versiones anteriores
 
