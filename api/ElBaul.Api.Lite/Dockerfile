@@ -21,7 +21,8 @@ WORKDIR /app
 
 # Alpine ships no tzdata by default — TimeZoneInfo.FindSystemTimeZoneById("Europe/Madrid")
 # (UserSessionManager, the daily aggregation jobs) throws TimeZoneNotFoundException without it.
-RUN apk add --no-cache tzdata
+RUN apk upgrade --no-cache \
+    && apk add --no-cache tzdata
 
 COPY --from=build /app/publish .
 

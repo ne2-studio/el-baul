@@ -14,6 +14,8 @@ RUN npm run build-storybook
 
 FROM nginx:alpine
 
+RUN apk upgrade --no-cache
+
 COPY app/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/storybook-static/ /usr/share/nginx/html/
 
