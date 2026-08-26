@@ -61,6 +61,13 @@ public class ListReadModelContractTests(PostgresFixture fixture) : PersistenceTe
     }
 
     [Fact]
+    public async Task Recuerdo_list_resolves_a_photo_scoped_rows_chapter_live_when_the_photo_later_moves()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        await ListReadModelContractScenarios.Recuerdo_list_resolves_a_photo_scoped_rows_chapter_live_when_the_photo_later_moves(new EfStore(dbContext));
+    }
+
+    [Fact]
     public async Task Photo_upload_batch_groups_active_photos_and_returns_chronological_batch_photos()
     {
         await using var dbContext = Fixture.CreateDbContext();
@@ -107,6 +114,7 @@ public class ListReadModelContractTests(PostgresFixture fixture) : PersistenceTe
         }
         public Task AddChapterAsync(Chapter chapter) => _chapters.CreateAsync(chapter);
         public Task AddPhotoAsync(Photo photo) => _photos.CreateAsync(photo);
+        public Task UpdatePhotoAsync(Photo photo) => _photos.UpdateAsync(photo);
         public Task AddRecuerdoAsync(Recuerdo recuerdo) => _recuerdos.CreateAsync(recuerdo);
         public Task AddPersonaAsync(Persona persona) => _personas.AddPersonaAsync(persona);
 

@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Core.Recuerdos.OutputPorts;
 using Microsoft.EntityFrameworkCore;
@@ -29,18 +30,24 @@ public class RecuerdoListReadModel(ElBaulDbContext dbContext) : IRecuerdoListRea
         if (recuerdos.Count == 0) return [];
 
         // Not status-filtered — matches IPhotoRepository.GetByIdsAsync, which this replaces:
-        // a recuerdo attached to a since-removed photo still resolves whatever storage key
-        // that photo row has.
+        // a recuerdo attached to a since-removed photo still resolves whatever storage key/
+        // chapter that photo row has. Full Photo rows (not just storage keys) so the factory
+        // can also resolve each photo-scoped row's *current* chapter live, instead of trusting
+        // the recuerdo's own possibly-stale ChapterId snapshot — see #60.
         var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
-        var photoKeysById = photoIds.Count == 0
-            ? new Dictionary<PhotoId, string>()
-            : await dbContext.Photos.AsNoTracking().Where(p => photoIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.StorageKey);
+        var photosById = photoIds.Count == 0
+            ? new Dictionary<PhotoId, Photo>()
+            : await dbContext.Photos.AsNoTracking().Where(p => photoIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
 
-        var chapterIds = recuerdos.Where(r => r.ChapterId is not null).Select(r => r.ChapterId!.Value).Distinct().ToList();
+        // Chapter names are needed both for chapter-scoped recuerdos' own ChapterId and for
+        // photo-scoped recuerdos' live-resolved chapter (from photosById above).
+        var chapterIds = recuerdos.Where(r => r.PhotoId is null && r.ChapterId is not null).Select(r => r.ChapterId!.Value)
+            .Concat(photosById.Values.Where(p => p.ChapterId is not null).Select(p => p.ChapterId!.Value))
+            .Distinct().ToList();
         var chapterNamesById = chapterIds.Count == 0
             ? new Dictionary<ChapterId, string>()
             : await dbContext.Chapters.AsNoTracking().Where(c => chapterIds.Contains(c.Id)).ToDictionaryAsync(c => c.Id, c => c.Name);
 
-        return RecuerdoListRowFactory.Build(recuerdos, photoKeysById, chapterNamesById);
+        return RecuerdoListRowFactory.Build(recuerdos, photosById, chapterNamesById);
     }
 }

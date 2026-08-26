@@ -184,6 +184,36 @@ public class RecuerdoManagerTests
     }
 
     [Fact]
+    public async Task GetRecuerdosAsync_ShouldReportThePhotosCurrentChapter_WhenThePhotoMovedAfterTheRecuerdoWasWritten()
+    {
+        // Regression for #60: a recuerdo's ChapterId is baked in at creation time and never
+        // updated afterwards. If the photo is later moved to a different chapter, every read
+        // path must resolve the *current* chapter live from the photo — not keep serving the
+        // stale snapshot, which sends the baúl feed's photo click to a chapter the photo is no
+        // longer in ("No se ha encontrado la foto.").
+        var (baulId, originalChapterId) = await SeedBaulWithChapterAsync();
+        var newChapterId = Guid.NewGuid();
+        await _chapterRepository.CreateAsync(new Chapter(new ChapterId(newChapterId), new BaulId(baulId), "Nuevo capítulo", 1, _clock.UtcNow(), _clock.UtcNow()));
+        var photoId = Guid.NewGuid();
+        var photo = PhotoMother.Create(new PhotoId(photoId), new ChapterId(originalChapterId), new BaulId(baulId), "key", null, new UserId(CustodioId), _clock.UtcNow());
+        await _photoRepository.CreateAsync(photo);
+
+        var manager = CreateManager(CustodioId);
+        var created = await manager.CreateRecuerdoAsync(new PhotoId(photoId), "Que buen recuerdo");
+        Assert.True(created.IsSuccess);
+        Assert.Equal(originalChapterId.ToString(), created.Value.ChapterId);
+
+        // The photo moves to a different chapter after the recuerdo was written.
+        await _photoRepository.UpdateAsync(photo.InChapter(new ChapterId(newChapterId)));
+
+        var result = await manager.GetRecuerdosAsync(new BaulId(baulId));
+
+        Assert.True(result.IsSuccess);
+        var recuerdo = result.Value.Single(r => r.Text == "Que buen recuerdo");
+        Assert.Equal(newChapterId.ToString(), recuerdo.ChapterId);
+    }
+
+    [Fact]
     public async Task GetRecuerdosAsync_ShouldMarkIsOwn_OnlyForCurrentUsersEntries()
     {
         var (baulId, chapterId) = await SeedBaulWithChapterAsync();

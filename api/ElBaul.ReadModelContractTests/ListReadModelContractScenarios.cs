@@ -22,6 +22,7 @@ public interface IListReadModelContractStore
     Task AddBaulAsync(Baul baul);
     Task AddChapterAsync(Chapter chapter);
     Task AddPhotoAsync(Photo photo);
+    Task UpdatePhotoAsync(Photo photo);
     Task AddRecuerdoAsync(Recuerdo recuerdo);
     Task AddPersonaAsync(Persona persona);
     Task AddPhotoPersonaTagAsync(PhotoId photoId, PersonaId personaId, BaulId baulId, DateTime createdAt);
@@ -194,6 +195,41 @@ public static class ListReadModelContractScenarios
         Assert.Equal(new[] { older.Id }, photoRows.Select(r => r.Id));
         Assert.Equal("photo-key", photoRows[0].PhotoStorageKey);
         Assert.Equal("Viaje", photoRows[0].ChapterName);
+    }
+
+    // Regression for #60: a photo-scoped recuerdo's ChapterId is baked in once, at creation
+    // time, and never updated afterwards. If the photo is later moved to a different chapter,
+    // every listing must resolve the row's chapter *live* from the photo's current chapter —
+    // not keep serving the stale ChapterId the recuerdo was created with, which would send the
+    // baúl feed's photo click to a chapter the photo is no longer in. A chapter-scoped recuerdo
+    // (no photo) has nothing to resolve live from, so it keeps reporting its own ChapterId.
+    public static async Task Recuerdo_list_resolves_a_photo_scoped_rows_chapter_live_when_the_photo_later_moves(IListReadModelContractStore store)
+    {
+        var baulId = B(45);
+        var originalChapterId = C(45);
+        var newChapterId = C(46);
+        await SeedBaulAsync(store, baulId);
+        await store.AddChapterAsync(NewChapter(originalChapterId, baulId, "Antiguo"));
+        await store.AddChapterAsync(NewChapter(newChapterId, baulId, "Nuevo"));
+        var photo = NewPhoto(P(45), baulId, originalChapterId, "photo-key", T0, null);
+        await store.AddPhotoAsync(photo);
+
+        var photoRecuerdo = NewRecuerdo(R(45), baulId, photo.Id, originalChapterId, "de la foto", T0);
+        var chapterRecuerdo = NewRecuerdo(R(46), baulId, null, originalChapterId, "del capitulo", T0.AddMinutes(1));
+        await store.AddRecuerdoAsync(photoRecuerdo);
+        await store.AddRecuerdoAsync(chapterRecuerdo);
+
+        await store.UpdatePhotoAsync(photo.InChapter(newChapterId));
+
+        var baulRows = await store.RecuerdoLists.GetByBaulIdAsync(baulId);
+
+        var photoRow = baulRows.Single(r => r.Id == photoRecuerdo.Id);
+        Assert.Equal(newChapterId, photoRow.ChapterId);
+        Assert.Equal("Nuevo", photoRow.ChapterName);
+
+        var chapterRow = baulRows.Single(r => r.Id == chapterRecuerdo.Id);
+        Assert.Equal(originalChapterId, chapterRow.ChapterId);
+        Assert.Equal("Antiguo", chapterRow.ChapterName);
     }
 
     public static async Task Photo_upload_batch_groups_active_photos_and_returns_chronological_batch_photos(IListReadModelContractStore store)

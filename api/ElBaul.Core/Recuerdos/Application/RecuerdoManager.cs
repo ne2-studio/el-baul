@@ -113,12 +113,19 @@ public class RecuerdoManager(
         });
 
         var (nickname, avatarUrl, personaId) = await authorInfoProjector.GetAsync(updated.BaulId, updated.UserId);
-        var photoThumbnailUrl = await GetPhotoThumbnailUrlAsync(updated.PhotoId);
-        var chapterName = await GetChapterNameAsync(updated.ChapterId);
+
+        // A photo-scoped recuerdo's chapter is resolved live from the photo's *current* chapter
+        // (it may have been moved to a different chapter since the recuerdo was written), not
+        // from the recuerdo's own persisted ChapterId snapshot — mirrors RecuerdoListRowFactory.
+        // A chapter-scoped recuerdo has no photo to resolve from, so its own ChapterId stays
+        // authoritative. See #60.
+        var (photoThumbnailUrl, livePhotoChapterId) = await GetPhotoContextAsync(updated.PhotoId);
+        var effectiveChapterId = updated.PhotoId is not null ? livePhotoChapterId : updated.ChapterId;
+        var chapterName = await GetChapterNameAsync(effectiveChapterId);
 
         logger.LogInformation("Recuerdo updated {BaulId} {RecuerdoId}", updated.BaulId, updated.Id);
 
-        return ToDto(updated, nickname, avatarUrl, personaId, isOwn: true, photoThumbnailUrl, chapterName);
+        return ToDto(updated, nickname, avatarUrl, personaId, isOwn: true, photoThumbnailUrl, chapterName, effectiveChapterId);
     }
 
     // --- Scope resolution ---------------------------------------------------------------
@@ -218,12 +225,19 @@ public class RecuerdoManager(
         : scope.ChapterId is { } chapterId ? recuerdoListReadModel.GetByChapterIdAsync(chapterId)
         : recuerdoListReadModel.GetByBaulIdAsync(scope.BaulId);
 
-    private async Task<string?> GetPhotoThumbnailUrlAsync(PhotoId? photoId)
+    // Used by UpdateRecuerdoAsync, which (unlike CreateRecuerdoCoreAsync) reads back an
+    // already-persisted Recuerdo whose ChapterId snapshot may be stale if the photo moved since
+    // creation — this also hands back the photo's *current* chapter so the caller can resolve
+    // the DTO's ChapterId/ChapterName live instead of trusting that snapshot. See #60.
+    private async Task<(string? ThumbnailUrl, ChapterId? ChapterId)> GetPhotoContextAsync(PhotoId? photoId)
     {
-        if (photoId is null) return null;
+        if (photoId is null) return (null, null);
 
         var photo = await photoRepository.GetByIdAsync(photoId.Value);
-        return photo is null ? null : await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+        if (photo is null) return (null, null);
+
+        var thumbnailUrl = await photoStorage.GetImageUrl(photo.StorageKey, ImagePlacement.PhotoGridThumbnail);
+        return (thumbnailUrl, photo.ChapterId);
     }
 
     private async Task<string?> GetChapterNameAsync(ChapterId? chapterId)
@@ -236,9 +250,10 @@ public class RecuerdoManager(
 
     private static RecuerdoDto ToDto(
         Recuerdo recuerdo, string userName, string? userAvatar, string? personaId, bool isOwn,
-        string? photoThumbnailUrl = null, string? chapterName = null) =>
+        string? photoThumbnailUrl = null, string? chapterName = null, ChapterId? chapterId = null) =>
         new(recuerdo.Id.ToString(), recuerdo.PhotoId?.ToString(), recuerdo.UserId, recuerdo.Text, userName,
-            recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, personaId, recuerdo.ChapterId?.ToString(), chapterName);
+            recuerdo.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, personaId,
+            (chapterId ?? recuerdo.ChapterId)?.ToString(), chapterName);
 
     // List path — turns an already-batched IRecuerdoListReadModel row into a RecuerdoDto (see
     // GetRecuerdosCoreAsync). Mirrors the Recuerdo overload above field for field.

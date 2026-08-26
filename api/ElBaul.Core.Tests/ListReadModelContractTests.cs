@@ -41,6 +41,10 @@ public class ListReadModelContractTests
         ListReadModelContractScenarios.Recuerdo_list_orders_and_resolves_photo_key_and_chapter_name(new LiteStore());
 
     [Fact]
+    public Task Recuerdo_list_resolves_a_photo_scoped_rows_chapter_live_when_the_photo_later_moves() =>
+        ListReadModelContractScenarios.Recuerdo_list_resolves_a_photo_scoped_rows_chapter_live_when_the_photo_later_moves(new LiteStore());
+
+    [Fact]
     public Task Photo_upload_batch_groups_active_photos_and_returns_chronological_batch_photos() =>
         ListReadModelContractScenarios.Photo_upload_batch_groups_active_photos_and_returns_chronological_batch_photos(new LiteStore());
 
@@ -70,6 +74,7 @@ public class ListReadModelContractTests
         public Task AddBaulAsync(Baul baul) => _baules.CreateAsync(baul);
         public Task AddChapterAsync(Chapter chapter) => _chapters.CreateAsync(chapter);
         public Task AddPhotoAsync(Photo photo) => _photos.CreateAsync(photo);
+        public Task UpdatePhotoAsync(Photo photo) => _photos.UpdateAsync(photo);
         public Task AddRecuerdoAsync(Recuerdo recuerdo) => _recuerdos.CreateAsync(recuerdo);
         public Task AddPersonaAsync(Persona persona) => _personas.AddPersonaAsync(persona);
 

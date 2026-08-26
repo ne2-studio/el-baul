@@ -1,3 +1,4 @@
+using ElBaul.Core.Photos.Domain;
 using ElBaul.Core.Recuerdos.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Recuerdos.OutputPorts;
@@ -40,17 +41,29 @@ public sealed record RecuerdoListRow(
 );
 
 // Assembles a batch of IRecuerdoListReadModel rows from already-fetched recuerdos plus
-// already-batched photo-storage-key/chapter-name lookups. Shared by RecuerdoListReadModel (EF)
-// and InMemoryRecuerdoListReadModel (Lite) so the two can't drift on how a row gets built.
+// already-batched photos/chapter-name lookups. Shared by RecuerdoListReadModel (EF) and
+// InMemoryRecuerdoListReadModel (Lite) so the two can't drift on how a row gets built.
 public static class RecuerdoListRowFactory
 {
     public static IReadOnlyList<RecuerdoListRow> Build(
         IReadOnlyCollection<Recuerdo> recuerdos,
-        IReadOnlyDictionary<PhotoId, string> photoStorageKeysById,
+        IReadOnlyDictionary<PhotoId, Photo> photosById,
         IReadOnlyDictionary<ChapterId, string> chapterNamesById) =>
-        recuerdos.Select(r => new RecuerdoListRow(
-            r.Id, r.PhotoId, r.ChapterId, r.BaulId, r.UserId, r.Text, r.CreatedAt,
-            r.PhotoId is { } photoId ? photoStorageKeysById.GetValueOrDefault(photoId) : null,
-            r.ChapterId is { } chapterId ? chapterNamesById.GetValueOrDefault(chapterId) : null))
+        recuerdos.Select(r =>
+        {
+            var photo = r.PhotoId is { } photoId ? photosById.GetValueOrDefault(photoId) : null;
+
+            // A photo-scoped recuerdo's chapter is resolved live from the photo's *current*
+            // chapter, not the recuerdo's own persisted ChapterId snapshot — the photo may have
+            // been moved to a different chapter (or out of any chapter) since the recuerdo was
+            // written. A chapter-scoped recuerdo has no photo to resolve from, so its own
+            // ChapterId stays authoritative. See #60.
+            var effectiveChapterId = r.PhotoId is not null ? photo?.ChapterId : r.ChapterId;
+
+            return new RecuerdoListRow(
+                r.Id, r.PhotoId, effectiveChapterId, r.BaulId, r.UserId, r.Text, r.CreatedAt,
+                photo?.StorageKey,
+                effectiveChapterId is { } chapterId ? chapterNamesById.GetValueOrDefault(chapterId) : null);
+        })
         .ToList();
 }
