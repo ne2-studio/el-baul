@@ -47,9 +47,14 @@ vi.mock('@/features/people/containers/BaulPersonasTabContainer', () => ({
 
 const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 0 } as Baul;
 
-function renderAt(path: string) {
+function renderAt(path: string, state?: unknown) {
+  // Entry-object en vez de un string plano: solo así MemoryRouter le puede adjuntar el
+  // state (location.state) que consume canShowContributionSuggestion — pero pathname/search
+  // hay que separarlos a mano, si no la query string entera se cuela en el pathname.
+  const [pathname, search] = path.split('?');
+  const entry = state !== undefined ? { pathname, search: search ? `?${search}` : '', state } : path;
   return render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path="/baules/:baulId" element={<BaulRoute />} />
       </Routes>
@@ -98,6 +103,16 @@ describe('BaulRoute — cuándo se suprime la recomendación de contribución', 
 
   it('se suprime al llegar desde un email (?entry=email)', async () => {
     renderAt(`/baules/${baul.id}?entry=email`);
+
+    expect(await screen.findByText('Contenido de Recuerdos')).toBeInTheDocument();
+    expect(screen.queryByText('Sugerencia de contribución')).not.toBeInTheDocument();
+  });
+
+  it('se suprime al volver a "recuerdos" desde otra pantalla (p.ej. "Volver" tras subir fotos)', async () => {
+    // PhotoBatchGridRoute, sin un returnTo propio, navega de vuelta con state.activeTab:
+    // 'recuerdos' explícito — indistinguible de initialTab por defecto si no se comprobara
+    // cameBackFromChildRoute (ver el comentario junto a canShowContributionSuggestion).
+    renderAt(`/baules/${baul.id}`, { activeTab: 'recuerdos' });
 
     expect(await screen.findByText('Contenido de Recuerdos')).toBeInTheDocument();
     expect(screen.queryByText('Sugerencia de contribución')).not.toBeInTheDocument();

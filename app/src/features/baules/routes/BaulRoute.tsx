@@ -108,29 +108,24 @@ export const BaulRoute: React.FC = () => {
   // solo pasa al volver de un Capítulo o de una Persona (ver returnTab en handleSelectChapter
   // y en el "Volver" de ChapterRoute/PersonaDetailRoute), nunca en una entrada nueva al baúl.
   const cameBackFromChildRoute = Boolean((location.state as { activeTab?: BaulTab } | null)?.activeTab);
-  // Solo se intenta cuando el punto de entrada es el feed ('recuerdos', el valor por defecto
-  // de initialTab — cualquier otra pestaña llega por un state.activeTab explícito, es decir
-  // por navegación directa, no por una entrada nueva al baúl), el baúl no está en cooldown
-  // (ver uiStore: por baulId, persistido en localStorage, duración configurable vía appsettings
-  // — ver useAppConfigStore.contributionSuggestionCooldownMinutes), no es la
-  // primerísima sesión en la app (isFirstAppLaunch: la persona aún no ha visto cómo funciona
-  // el resto de la app) y la navegación no viene de una notificación push ni de un email (ver
-  // utils/entrySource): en ambos casos la persona llega con una intención propia (ver una
-  // foto o capítulo concreto) y no toca interrumpirla con esto.
   // Qué tipo de sugerencia ofrecer (etiquetar personas, escribir un recuerdo) y con qué foto —
   // o si hay alguna en absoluto — lo decide el backend (dominio Contributions, ver
   // ContributionSuggestionGateContainer); aquí solo se decide *cuándo* preguntarle, que es
   // estado de navegación/dispositivo: solo se intenta cuando el punto de entrada es el feed
-  // ('recuerdos', el valor por defecto de initialTab — cualquier otra pestaña llega por un
-  // state.activeTab explícito, es decir por navegación directa, no por una entrada nueva al
-  // baúl), el baúl no está en cooldown (ver uiStore: por baulId, persistido en localStorage,
-  // duración configurable vía appsettings — ver useAppConfigStore.contributionSuggestionCooldownMinutes),
-  // no es la primerísima sesión en la app (isFirstAppLaunch: la persona aún no ha visto cómo
-  // funciona el resto de la app) y la navegación no viene de una notificación push ni de un
-  // email (ver utils/entrySource): en ambos casos la persona llega con una intención propia (ver
-  // una foto o capítulo concreto) y no toca interrumpirla con esto.
+  // ('recuerdos', el valor por defecto de initialTab) Y ADEMÁS no es un "volver" a esa misma
+  // pestaña — !cameBackFromChildRoute, definido arriba — porque algunos "Volver" (p.ej. desde
+  // la subida de fotos sin un returnTo propio, ver PhotoBatchGridRoute) navegan de vuelta con
+  // state.activeTab: 'recuerdos' explícito, así que initialTab === 'recuerdos' por sí solo no
+  // basta para distinguir una entrada nueva al baúl de un regreso. El baúl tampoco debe estar
+  // en cooldown (ver uiStore: por baulId, persistido en localStorage, duración configurable vía
+  // appsettings — ver useAppConfigStore.contributionSuggestionCooldownMinutes), no debe ser la
+  // primerísima sesión en la app (isFirstAppLaunch: la persona aún no ha visto cómo funciona
+  // el resto de la app) y la navegación no debe venir de una notificación push ni de un email
+  // (ver utils/entrySource): en todos esos casos la persona llega con una intención propia (ver
+  // una foto o capítulo concreto, o retomar donde estaba) y no toca interrumpirla con esto.
   const canShowContributionSuggestion = () =>
     initialTab === 'recuerdos' &&
+    !cameBackFromChildRoute &&
     !useUIStore.getState().isContributionSuggestionOnCooldown(baulId ?? '') &&
     !useUIStore.getState().isFirstAppLaunch &&
     !getEntrySource(location.search);
