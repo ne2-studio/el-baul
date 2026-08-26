@@ -60,9 +60,6 @@ jobs:
         uses: ./.github/actions/release-ghcr-image
         with:
           image: ${{ env.IMAGE_NAME }}
-          context: .
-          dockerfile: storybook/Dockerfile
-          cache-scope: storybook
           sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}

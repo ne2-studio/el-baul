@@ -1,19 +1,9 @@
 name: Release GHCR image
-description: Push an image to GHCR tagged both :latest and :sha-<commit>, reusing the GHA build cache.
+description: Push the already-built and verified image to GHCR tagged both :latest and :sha-<commit>.
 
 inputs:
   image:
     description: Base image ref without a tag, e.g. ghcr.io/org/repo-api.
-    required: true
-  context:
-    description: Docker build context.
-    required: true
-  dockerfile:
-    description: Optional Dockerfile path.
-    required: false
-    default: ""
-  cache-scope:
-    description: Cache scope key used by the earlier build step. Must match to get a cache hit.
     required: true
   sha:
     description: Commit SHA to tag the image with, for rollback and audit.
@@ -38,17 +28,12 @@ runs:
         username: ${{ inputs.username }}
         password: ${{ inputs.token }}
 
-    # Reuses the cache populated by the earlier "Build image" step, so this is a cache hit
-    # (no recompilation) unless the image changed since then - it just pushes what was
-    # already built and verified.
-    - name: Push image
-      uses: docker/build-push-action@v6
-      with:
-        context: ${{ inputs.context }}
-        file: ${{ inputs.dockerfile }}
-        tags: |
-          ${{ inputs.image }}:latest
-          ${{ inputs.image }}:sha-${{ inputs.sha }}
-        push: true
-        cache-from: type=gha,scope=${{ inputs.cache-scope }}
-        cache-to: type=gha,mode=max,scope=${{ inputs.cache-scope }}
+    - name: Tag image with commit SHA
+      shell: bash
+      run: docker tag "${{ inputs.image }}:latest" "${{ inputs.image }}:sha-${{ inputs.sha }}"
+
+    - name: Push image tags
+      shell: bash
+      run: |
+        docker push "${{ inputs.image }}:latest"
+        docker push "${{ inputs.image }}:sha-${{ inputs.sha }}"

@@ -73,8 +73,6 @@ jobs:
         uses: ./.github/actions/release-ghcr-image
         with:
           image: ${{ env.IMAGE_NAME }}
-          context: api
-          cache-scope: backend-api
           sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
