@@ -23,17 +23,18 @@ Commands:
   list               List queued (refined/unrefined split)/done/failed
                       tickets (GitHub issues).
   requeue <number>   Move a failed/blocked issue back into the queue.
-  run [--yolo]       Start the orchestrator (tmux session with a worker pane
-                      and a watcher pane) and attach to it. The worker polls
-                      the queue every 30s (BACKLOG_POLL_INTERVAL to override)
-                      and keeps running, picking up tickets labeled both
-                      "backlog" and "refined" — no need to restart it per
-                      ticket. Safe to detach (Ctrl-b d) and reattach later
-                      with:
+  run --yolo         Start the orchestrator (tmux session running the worker)
+                      and attach to it. The worker polls the queue every 30s
+                      (BACKLOG_POLL_INTERVAL to override) and keeps running,
+                      picking up tickets labeled both "backlog" and "refined"
+                      — no need to restart it per ticket. Safe to detach
+                      (Ctrl-b d) and reattach later with:
                         tmux attach -t backlog
-                      --yolo runs claude with --dangerously-skip-permissions:
-                      no prompts at all, including git commit/push. Only use it
-                      when you're comfortable leaving it fully unattended.
+                      --yolo is mandatory: every ticket runs headless via
+                      `claude --print --dangerously-skip-permissions`, so
+                      there is never anyone to answer a prompt — only run
+                      this when you're comfortable leaving it fully
+                      unattended.
   stop               Kill the orchestrator tmux session.
 
 The worker stops polling (leaving the tmux session up) if a ticket ends
@@ -51,11 +52,10 @@ not this worker) to turn queued tickets into refined ones before `run` picks
 them up — that's also the only place in the pipeline where clarifying
 questions get asked; this worker never asks anything.
 
-Each refined ticket runs in its own fresh `claude` session (the work-ticket
-skill). git commit/push are not in the permission allow-list, so they always
-prompt for approval — forward it to your phone with Remote Control (/rc)
-before running `run` (unless you passed --yolo). Requires `gh` authenticated
-against this repo.
+Each refined ticket runs in its own fresh, non-interactive `claude --print`
+session (the work-ticket skill) with permission prompts skipped entirely, so
+git commit/push happen straight to `main` with no approval step. Requires
+`gh` authenticated against this repo.
 EOF
 }
 
@@ -119,12 +119,8 @@ POLL_INTERVAL="${BACKLOG_POLL_INTERVAL:-30}"
 # Runs inside the worker tmux pane. Polls the queue forever, processing
 # issues as they appear.
 _worker() {
-  local yolo=0
-  [[ "${1:-}" == "--yolo" ]] && yolo=1
-
   ensure_dirs
-  local claude_flags=()
-  (( yolo )) && claude_flags+=(--dangerously-skip-permissions)
+  local claude_flags=(--print --dangerously-skip-permissions)
 
   echo "Escuchando issues con label '$QUEUE_LABEL' (cada ${POLL_INTERVAL}s). Ctrl-C o './scripts/backlog stop' para parar."
   while true; do
@@ -210,26 +206,8 @@ _process_queue() {
   return 0
 }
 
-# Runs inside the watcher tmux pane. Injects /exit into the worker pane once
-# the skill signals it has finished, since a session can't end itself.
-_watcher() {
-  while true; do
-    if [[ -f "$SIGNAL_FILE" ]]; then
-      sleep 1
-      tmux send-keys -t "${TMUX_SESSION}:0.0" "/exit" Enter
-      while [[ -f "$SIGNAL_FILE" ]]; do sleep 1; done
-    fi
-    sleep 2
-  done
-}
-
 cmd_run() {
-  local yolo=0
-  case "${1:-}" in
-    --yolo) yolo=1 ;;
-    "") ;;
-    *) echo "Opción desconocida: $1" >&2; usage; exit 1 ;;
-  esac
+  [[ "${1:-}" == "--yolo" ]] || { echo "Uso: ./scripts/backlog run --yolo" >&2; usage; exit 1; }
 
   ensure_dirs
   ensure_labels
@@ -237,17 +215,8 @@ cmd_run() {
     echo "Ya hay una sesión '$TMUX_SESSION' corriendo. Conectando..."
     exec tmux attach -t "$TMUX_SESSION"
   fi
-  local worker_cmd=("$0" __worker)
-  (( yolo )) && worker_cmd+=(--yolo)
-  tmux new-session -d -s "$TMUX_SESSION" -n main "${worker_cmd[@]}"
-  tmux split-window -t "${TMUX_SESSION}:0" -v -l 3 "$0 __watcher"
-  tmux select-pane -t "${TMUX_SESSION}:0.0"
-  echo "Orquestador arrancado en tmux '$TMUX_SESSION'."
-  if (( yolo )); then
-    echo "--yolo activo: claude corre con --dangerously-skip-permissions, sin prompts."
-  else
-    echo "Recuerda tener /rc activo en la sesión de Claude para aprobar commit/push desde el móvil."
-  fi
+  tmux new-session -d -s "$TMUX_SESSION" -n main "$0" __worker
+  echo "Orquestador arrancado en tmux '$TMUX_SESSION': claude corre con --print --dangerously-skip-permissions, sin prompts."
   exec tmux attach -t "$TMUX_SESSION"
 }
 
@@ -262,7 +231,6 @@ case "${1:-}" in
   run) shift; cmd_run "$@" ;;
   stop) cmd_stop ;;
   __worker) shift; _worker "$@" ;;
-  __watcher) _watcher ;;
   -h|--help|"") usage ;;
   *) echo "Comando desconocido: $1" >&2; usage; exit 1 ;;
 esac
