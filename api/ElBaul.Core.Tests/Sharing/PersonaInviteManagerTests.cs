@@ -116,6 +116,19 @@ public class PersonaInviteManagerTests
     }
 
     [Fact]
+    public async Task InviteAsync_ShouldFail_WhenPersonaHasNoAccess()
+    {
+        var baulId = await SeedBaulAsync();
+        var persona = new Persona(new PersonaId(Guid.NewGuid()), baulId, null, "Sin acceso", BaulRole.SinAcceso, Now);
+        await _personas.AddPersonaAsync(persona);
+
+        var result = await CreateManager(CustodioId).InviteAsync(baulId, persona.Id);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ApplicationErrorCode.Validation, result.Error.Code);
+    }
+
+    [Fact]
     public async Task InviteAsync_ShouldFail_WhenPersonaNotFound()
     {
         var baulId = await SeedBaulAsync();

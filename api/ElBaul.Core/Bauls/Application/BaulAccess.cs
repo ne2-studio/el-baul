@@ -15,9 +15,9 @@ namespace ElBaul.Core.Bauls.Application;
 public sealed record BaulAccess(Baul Baul, bool IsCustodio, Persona? Persona)
 {
     // Persona here always comes from GetPersonaByUserIdAsync, which only ever returns a row
-    // whose UserId already matches this user — i.e. a claimed (Active) Persona. There is no
-    // more sin_acceso status to exclude (see PersonaAccessStatus), so a non-null Persona is
-    // membership, full stop.
+    // whose UserId already matches this user — i.e. a claimed (Active) Persona. An Active
+    // persona's role is never SinAcceso (enforced elsewhere, see BaulRole.cs), so a non-null
+    // Persona is membership, full stop — no need to also check Role here.
     public bool IsMember => IsCustodio || Persona is not null;
     public bool IsAdmin => IsCustodio || (Persona?.Role.IsAdmin() ?? false);
 

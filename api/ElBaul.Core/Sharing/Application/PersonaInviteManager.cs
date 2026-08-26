@@ -54,6 +54,12 @@ public class PersonaInviteManager(
             return Result.Failure<PersonaInviteDto>(ApplicationError.Validation("This persona already belongs to the baúl"));
         }
 
+        if (persona.Role == BaulRole.SinAcceso)
+        {
+            logger.LogWarning("Persona invite rejected: persona has no access {PersonaId}", personaId);
+            return Result.Failure<PersonaInviteDto>(ApplicationError.Validation("This persona does not have access to the baúl"));
+        }
+
         var token = persona.InviteToken;
         if (token is null)
         {

@@ -15,13 +15,14 @@ vi.mock('@/features/people/useCases', () => ({
   setPersonaAvatarPhoto: vi.fn(),
   updateUserRole: vi.fn(),
   revokeAccess: vi.fn(),
+  sharePersonaInvite: vi.fn(),
 }));
 
 vi.mock('@/api', () => ({
   api: { photos: { getPage: vi.fn() } },
 }));
 
-import { revokeAccess, updatePersona, updateUserRole } from '@/features/people/useCases';
+import { revokeAccess, sharePersonaInvite, updatePersona, updateUserRole } from '@/features/people/useCases';
 
 const baulId = 'baul-1';
 
@@ -124,11 +125,36 @@ describe('PersonaSettingsMenuContainer', () => {
 
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
 
-    // A pending persona has never been invited, so neither "Gestionar permisos" nor "Revocar
-    // acceso" is available (there's no access to change or revoke until it's claimed), and no
-    // separator should render for the empty groups.
-    expect(screen.queryByText('Gestionar permisos')).not.toBeInTheDocument();
+    // A pending persona can still have its access level managed and be invited, but there is
+    // nothing to revoke yet ("Revocar acceso" needs a claimed account) — so only one separator
+    // should render, between the info group and the access group.
+    expect(screen.queryByText('Gestionar permisos')).toBeInTheDocument();
+    expect(screen.queryByText('Enviar invitación')).toBeInTheDocument();
     expect(screen.queryByText('Revocar acceso')).not.toBeInTheDocument();
-    expect(document.querySelectorAll('[data-slot="dropdown-menu-separator"]')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-slot="dropdown-menu-separator"]')).toHaveLength(1);
+  });
+
+  it('sends an invitation for a pending, invitable persona', async () => {
+    const user = userEvent.setup();
+    vi.mocked(sharePersonaInvite).mockResolvedValue(undefined);
+
+    renderContainer(persona({ status: 'pending', role: 'colaborador' }));
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+    await user.click(await screen.findByText('Enviar invitación'));
+
+    expect(sharePersonaInvite).toHaveBeenCalledWith(
+      expect.objectContaining({ id: baulId }),
+      expect.objectContaining({ id: 'p1' }),
+      expect.any(Function)
+    );
+  });
+
+  it('never offers "Enviar invitación" for a persona with no access', async () => {
+    const user = userEvent.setup();
+    renderContainer(persona({ status: 'pending', role: 'sin_acceso' }));
+
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+
+    expect(screen.queryByText('Enviar invitación')).not.toBeInTheDocument();
   });
 });

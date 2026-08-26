@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Loader2, MoreVertical, Pencil, UserCog, UserX } from 'lucide-react';
+import { Camera, Loader2, MoreVertical, Pencil, Send, UserCog, UserX } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaInfoModal';
 import { PersonaAvatarPickerModal } from '@/features/people/components/PersonaAvatarPickerModal';
@@ -14,12 +14,20 @@ import {
 } from '@/design-system/components/ui/dropdown-menu';
 import { PhotoCrop, api } from '@/api';
 import { BaulRole, Persona, Photo } from '@/types';
-import { getPersonaPermissions } from '@/utils/roleUtils';
+import { getBaulPermissions, getPersonaPermissions } from '@/utils/roleUtils';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { updatePersona, uploadPersonaAvatar, setPersonaAvatarPhoto, updateUserRole, revokeAccess } from '@/features/people/useCases';
+import { useUIStore } from '@/store/uiStore';
+import {
+  updatePersona,
+  uploadPersonaAvatar,
+  setPersonaAvatarPhoto,
+  updateUserRole,
+  revokeAccess,
+  sharePersonaInvite,
+} from '@/features/people/useCases';
 
 interface PersonaSettingsMenuContainerProps {
   baulId: string;
@@ -35,13 +43,18 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
   const { personaPhotos } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const { run, isPending } = useAsyncAction();
+  const showToastMessage = useUIStore((state) => state.showToastMessage);
   const currentBaul = baules.find((b) => b.id === baulId);
   const permissions = getPersonaPermissions({ currentBaulRole: currentBaul?.role, currentIsCustodio: currentBaul?.isCustodio, persona });
+  const baulPermissions = getBaulPermissions(currentBaul);
+  // Same permission InvitarFamiliaRoute already requires to invite a persona, plus the persona
+  // itself being invitable: not yet joined, and never for a "sin acceso" persona.
+  const canSendInvite = baulPermissions.canManageBaulInvite && persona.status === 'pending' && persona.role !== 'sin_acceso';
   // Separators must reflect whether the groups they sit between actually render items, not just
   // the raw permission flags — otherwise an empty group (e.g. a pending persona, whose "manage
   // access" actions are both hidden) leaves two adjacent separators with nothing in between.
   const showsInfoGroup = permissions.canEditPersonaInfo || permissions.canUploadPersonaAvatar;
-  const showsAccessGroup = permissions.canChangePersonaRole;
+  const showsAccessGroup = permissions.canChangePersonaRole || canSendInvite;
   const showsRevokeGroup = permissions.canRevokePersonaAccess;
 
   const [showEditInfoModal, setShowEditInfoModal] = useState(false);
@@ -87,6 +100,13 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       errorMessage: 'Error al actualizar el rol',
     });
     if (result.ok) setShowManageAccessModal(false);
+  };
+
+  const handleSendInvite = () => {
+    run(() => sharePersonaInvite(currentBaul!, persona, () => showToastMessage('Enlace copiado al portapapeles')), {
+      key: 'invite',
+      errorMessage: 'Error al invitar',
+    });
   };
 
   const handleConfirmRevoke = async () => {
@@ -137,6 +157,17 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
             </DropdownMenuItem>
           )}
 
+          {canSendInvite && (
+            <DropdownMenuItem onClick={handleSendInvite} disabled={isPending('invite')}>
+              {isPending('invite') ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              Enviar invitación
+            </DropdownMenuItem>
+          )}
+
           {(showsInfoGroup || showsAccessGroup) && showsRevokeGroup && <DropdownMenuSeparator />}
 
           {permissions.canRevokePersonaAccess && (
@@ -172,6 +203,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       {showManageAccessModal && (
         <ManageAccessModal
           role={persona.role}
+          isActive={persona.status === 'active'}
           onSave={handleChangeRole}
           onCancel={() => setShowManageAccessModal(false)}
           isSubmitting={isPending('role')}

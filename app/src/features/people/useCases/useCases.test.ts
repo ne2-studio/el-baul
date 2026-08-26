@@ -77,8 +77,20 @@ describe('createPersona', () => {
 
     await createPersona(baulId, 'Tío Juan');
 
-    expect(api.baules.createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan');
+    expect(api.baules.createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan', undefined);
     expect(usePersonasStore.getState().personas[baulId]).toEqual([existing, created]);
+  });
+
+  it('forwards the chosen access level to the API', async () => {
+    const created = new Persona({
+      id: 'p-new', baulId, nickname: 'Tío Juan', status: 'pending', role: 'administrador',
+      isCustodio: false, invitedDate: new Date().toISOString(), canEdit: true,
+    });
+    vi.mocked(api.baules.createPersona).mockResolvedValue(created);
+
+    await createPersona(baulId, 'Tío Juan', 'administrador');
+
+    expect(api.baules.createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan', 'administrador');
   });
 });
 

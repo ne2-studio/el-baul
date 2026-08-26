@@ -1,5 +1,6 @@
 import { PhotoCrop, api } from '@/api';
-import { BaulRole, Persona, Photo } from '@/types';
+import { Baul, BaulRole, Persona, Photo } from '@/types';
+import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { withOptimisticUpdate } from '@/store/withOptimisticUpdate';
@@ -8,12 +9,29 @@ import { withOptimisticUpdate } from '@/store/withOptimisticUpdate';
 // InvitarFamiliaRoute (features/sharing/routes) — moved here from features/baules/useCases
 // when the former took over the baúl's Personas tab. Returns the created Persona so
 // InvitarFamiliaRoute can immediately start its invite flow without a second round trip.
-export async function createPersona(baulId: string, nickname: string): Promise<Persona> {
-  const persona = await api.baules.createPersona(baulId, nickname);
+export async function createPersona(baulId: string, nickname: string, role?: BaulRole): Promise<Persona> {
+  const persona = await api.baules.createPersona(baulId, nickname, role);
   usePersonasStore.setState((state) => ({
     personas: { ...state.personas, [baulId]: [...(state.personas[baulId] || []), persona] },
   }));
   return persona;
+}
+
+// Issues (or re-shares) a persona's 1:1 invite link — shared between "Invitar a la familia"
+// (InvitarFamiliaRoute) and the "Enviar invitación" action on the persona ficha
+// (PersonaSettingsMenuContainer), so both go through the exact same invite + share flow.
+export async function sharePersonaInvite(
+  baul: Pick<Baul, 'id' | 'name'>,
+  persona: Pick<Persona, 'id' | 'nickname'>,
+  onCopied: () => void
+): Promise<void> {
+  const invite = await api.baules.invitePersona(baul.id, persona.id);
+  await sharePublicLink({
+    title: `Invitación a ${baul.name}`,
+    text: `Te invito a unirte a mi baúl de recuerdos "${baul.name}" en El Baúl, ${persona.nickname}.`,
+    url: invite.url,
+    onCopied,
+  });
 }
 
 export async function loadPersonas(baulId: string): Promise<void> {
@@ -96,9 +114,10 @@ export async function updateUserRole(baulId: string, personaId: string, role: Ba
   });
 }
 
-// "Revocar acceso" — clears the account link (and its invite token, server-side) but leaves
-// the persona's role untouched: there is no more sin_acceso status, the row just falls back
-// to Pending and can be re-invited normally (see Persona.RevokeAccess).
+// "Revocar acceso" — clears the account link (and its invite token, server-side) and sets the
+// persona's role to sin_acceso, so a revoked member ends up in exactly the state an admin
+// would get by picking "Sin acceso" directly. The row falls back to Pending and needs a
+// different role picked before it can be invited again (see Persona.RevokeAccess).
 export async function revokeAccess(baulId: string, personaId: string): Promise<void> {
   await api.baules.revokeAccess(baulId, personaId);
   usePersonasStore.setState((state) => ({
@@ -106,7 +125,7 @@ export async function revokeAccess(baulId: string, personaId: string): Promise<v
       ...state.personas,
       [baulId]: (state.personas[baulId] || []).map((persona) =>
         persona.id === personaId
-          ? { ...persona, email: undefined, status: 'pending' }
+          ? { ...persona, email: undefined, status: 'pending', role: 'sin_acceso' }
           : persona
       ),
     },

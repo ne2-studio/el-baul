@@ -6,7 +6,7 @@ public interface IPersonaManager
 {
     Task<Result<IEnumerable<PersonaDto>>> GetPersonasAsync(BaulId baulId);
     Task<Result<PersonaDto>> GetPersonaAsync(BaulId baulId, PersonaId personaId);
-    Task<Result<PersonaDto>> CreatePersonaAsync(BaulId baulId, string nickname);
+    Task<Result<PersonaDto>> CreatePersonaAsync(BaulId baulId, string nickname, BaulRole role = BaulRole.Colaborador);
     Task<Result<PersonaDto>> UpdatePersonaAsync(BaulId baulId, PersonaId personaId, string? name, string nickname);
     Task<Result<PersonaDto>> UpdatePersonaBiografiaAsync(BaulId baulId, PersonaId personaId, string? biografia);
     Task<Result<PersonaDto>> UpdatePersonaAvatarAsync(

@@ -2,10 +2,13 @@ using ElBaul.Core.Photos.Domain;
 using ElBaul.Domain;
 namespace ElBaul.Core.Personas.Domain;
 // The two observable phases of a Persona's access: invited but unclaimed, or claimed by an
-// account. Derived from UserId nullity rather than stored. There used to be a third,
-// Revoked, phase (Role == SinAcceso) — removed along with the global invite-link model: a
-// Persona is either in the baúl or not, revoking access now just clears UserId/InviteToken
-// (see Persona.RevokeAccess) and the row falls straight back to Pending.
+// account. Derived from UserId nullity rather than stored, independent of Role: BaulRole.SinAcceso
+// is a pre-selectable tier for personas nobody intends to ever invite, not a third access
+// status — an Active (claimed) persona's role is never SinAcceso (enforced in
+// PersonaManager/PersonaInviteManager), so this stays a plain two-way split either way.
+// Revoking access (see RevokeAccess) now also moves Role to SinAcceso, but that's a
+// side-effect of revocation, not a third AccessStatus value — the row still falls back to
+// Pending and can be re-invited normally (after picking a different role first).
 public enum PersonaAccessStatus { Pending, Active }
 
 public sealed class Persona : Entity<PersonaId>
@@ -106,10 +109,11 @@ public sealed class Persona : Entity<PersonaId>
 
     // "Revocar acceso" — clears the account link and the invite token together, so the old
     // per-person link stops working immediately (explicit exception to invite tokens otherwise
-    // being permanent/non-regenerable). Role is left untouched: there is no more sin_acceso
-    // state to move into, the row just falls back to Pending and can be re-invited normally,
-    // which lazily issues it a fresh token.
-    public Persona RevokeAccess() => Mutate(() => { UserId = null; InviteToken = null; });
+    // being permanent/non-regenerable), and sets Role to SinAcceso so a revoked member ends up
+    // in exactly the state an admin would get by picking "Sin acceso" directly. The row falls
+    // back to Pending and can be re-invited normally, but only after an admin picks a different
+    // role first (PersonaInviteManager.InviteAsync rejects inviting a SinAcceso persona).
+    public Persona RevokeAccess() => Mutate(() => { UserId = null; InviteToken = null; Role = BaulRole.SinAcceso; });
 
     // Admin-only escape hatch for accounts that ended up claiming the wrong Persona (e.g. a
     // family member with several email addresses who created duplicate Personas in the same

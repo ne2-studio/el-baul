@@ -30,10 +30,10 @@ type UserProfileDto = ApiSchemas['UserProfileDto'];
 
 // Custodio isn't a role — it's the baúl's singular legal-custody relationship, carried
 // separately as `isCustodio` on Baul/Persona (see roleUtils.ts). A BaulRole value is always an
-// assignable permission tier. There is no more "sin_acceso" — a Persona either belongs to the
-// baúl (Pending/Active, see Persona.status below) or the account link has been revoked, but
-// its role is always one of these two.
-export type BaulRole = 'administrador' | 'colaborador';
+// assignable permission tier. 'sin_acceso' is a pre-selectable tier for a persona who's part
+// of the family's story but should never be invited into the baúl — only assignable while the
+// persona is Pending (see roleUtils.canChangePersonaRole / getPersonaPermissions).
+export type BaulRole = 'administrador' | 'colaborador' | 'sin_acceso';
 
 export type SupportCategory = 'Support' | 'Bug' | 'Suggestion' | 'BaulDeletion';
 

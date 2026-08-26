@@ -8,7 +8,15 @@ namespace ElBaul.Domain;
 public enum BaulRole
 {
     Colaborador,
-    Administrador
+    Administrador,
+    // Reintroduced after being fully removed when 1:1 invitations shipped (see the historical
+    // comment that used to live on PersonaAccessStatus). This time it's a first-class,
+    // pre-selectable tier for people who are part of the family's story but should never be
+    // invited into the baúl — not, as before, something a persona could only be moved into by
+    // having their access revoked. An Active (claimed) persona's role must never be SinAcceso:
+    // PersonaManager.UpdatePersonaRoleAsync and PersonaInviteManager.InviteAsync both guard this
+    // server-side, behind the UI already refusing to offer it for Active personas.
+    SinAcceso
 }
 
 // Wire-string <-> BaulRole, public (unlike DtoMapping) so the Presentation layer can parse a
@@ -21,6 +29,7 @@ public static class BaulRoleParser
         {
             "colaborador" => Result.Success(BaulRole.Colaborador),
             "administrador" => Result.Success(BaulRole.Administrador),
+            "sin_acceso" => Result.Success(BaulRole.SinAcceso),
             _ => Result.Failure<BaulRole>(ApplicationError.Validation($"'{value}' is not a valid role."))
         };
 }

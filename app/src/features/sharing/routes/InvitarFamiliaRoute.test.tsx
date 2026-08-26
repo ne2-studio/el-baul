@@ -106,7 +106,8 @@ describe('InvitarFamiliaRoute', () => {
     await user.type(screen.getByPlaceholderText('Ej. Abuela, Tío Juan…'), 'Tío Juan');
     await user.click(screen.getByRole('button', { name: /añadir/i }));
 
-    await waitFor(() => expect(api.baules.createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan'));
+    // No access selector shown from this flow — always created as Colaborador under the hood.
+    await waitFor(() => expect(api.baules.createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan', undefined));
     await waitFor(() => expect(api.baules.invitePersona).toHaveBeenCalledWith(baulId, 'p-new'));
   });
 

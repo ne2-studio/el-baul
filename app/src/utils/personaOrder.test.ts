@@ -28,6 +28,18 @@ describe('sortPersonasForInvite', () => {
 
     expect(result).toEqual(['Álvaro', 'Bea', 'Ana', 'Zoe']);
   });
+
+  it('never includes personas with no access, regardless of status', () => {
+    const personas = [
+      persona({ nickname: 'Bea', status: 'pending', role: 'sin_acceso' }),
+      persona({ nickname: 'Ana', status: 'active', role: 'sin_acceso' }),
+      persona({ nickname: 'Zoe', status: 'pending', role: 'colaborador' }),
+    ];
+
+    const result = sortPersonasForInvite(personas).map((p) => p.nickname);
+
+    expect(result).toEqual(['Zoe']);
+  });
 });
 
 describe('sortPersonasForTagging', () => {

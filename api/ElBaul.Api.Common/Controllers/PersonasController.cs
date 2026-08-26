@@ -40,7 +40,15 @@ public class PersonasController(
     [ProducesResponseType(typeof(PersonaDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create(BaulId baulId, [FromBody] CreatePersonaRequest request)
     {
-        var result = await personaManager.CreatePersonaAsync(baulId, request.Nickname);
+        var role = BaulRole.Colaborador;
+        if (request.Role is not null)
+        {
+            var parsed = BaulRoleParser.Parse(request.Role);
+            if (parsed.IsFailure) return ErrorMapping.ToActionResult(parsed.Error);
+            role = parsed.Value;
+        }
+
+        var result = await personaManager.CreatePersonaAsync(baulId, request.Nickname, role);
         return result.ToActionResult();
     }
 

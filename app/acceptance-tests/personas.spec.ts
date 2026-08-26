@@ -110,13 +110,21 @@ test('revoke access on an active persona → its old invite link stops working �
   });
   const revokedPersonas = await revokedResponse.json();
   const revoked = revokedPersonas.find((p: { id: string }) => p.id === personaId);
-  // No more sin_acceso — role stays as whatever it was (administrador, set above), only the
-  // account link (and its invite token) are cleared, so the row falls back to Pending.
-  expect(revoked).toMatchObject({ id: personaId, nickname, role: 'administrador', status: 'pending', userId: null });
+  // "Revocar acceso" now also sets the role to sin_acceso (on top of clearing the account
+  // link and its invite token), so the persona ends up in exactly the state an admin would get
+  // by picking "Sin acceso" directly — the row falls back to Pending.
+  expect(revoked).toMatchObject({ id: personaId, nickname, role: 'sin_acceso', status: 'pending', userId: null });
 
   // The old link is dead — the preview endpoint 404s, same as an unknown token.
   const oldPreviewResponse = await page.request.get(`${API_BASE_URL}/api/persona-invites/${firstInvite.token}/preview`);
   expect(oldPreviewResponse.status()).toBe(404);
+
+  // A sin_acceso persona can't be (re-)invited until an admin picks a real access level again.
+  await page.getByRole('button', { name: 'Opciones de la persona' }).click();
+  await page.getByRole('menuitem', { name: 'Gestionar permisos' }).click();
+  await page.getByRole('combobox').selectOption('colaborador');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('Gestionar permisos')).toBeHidden({ timeout: 10_000 });
 
   // Re-inviting the same, now-Pending persona issues a brand new token.
   const secondInvite = await invitePersonaViaApi(page, accessToken, baulId, personaId);

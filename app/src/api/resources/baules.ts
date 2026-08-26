@@ -64,8 +64,8 @@ export const baulesApi = {
 
   getPersonas: async (baulId: string) =>
     (await get<JsonResponse<typeof BAUL_PERSONAS, 'get'>>(path(BAUL_PERSONAS, { baulId }))).map((u) => new Persona(u)),
-  createPersona: async (baulId: string, nickname: string) =>
-    new Persona(await post<PersonaDto>(path(BAUL_PERSONAS, { baulId }), { nickname } satisfies JsonRequest<typeof BAUL_PERSONAS, 'post'>)),
+  createPersona: async (baulId: string, nickname: string, role?: string) =>
+    new Persona(await post<PersonaDto>(path(BAUL_PERSONAS, { baulId }), { nickname, role } satisfies JsonRequest<typeof BAUL_PERSONAS, 'post'>)),
   getPersona: async (baulId: string, personaId: string) => new Persona(await get<PersonaDto>(personaPath(baulId, personaId))),
   updatePersona: async (baulId: string, personaId: string, name: string, nickname: string) =>
     new Persona(await put<PersonaDto>(personaPath(baulId, personaId), { name, nickname } satisfies JsonRequest<typeof BAUL_PERSONA, 'put'>)),

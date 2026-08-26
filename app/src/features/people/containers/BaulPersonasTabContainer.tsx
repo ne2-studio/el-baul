@@ -8,7 +8,7 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { createPersona } from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { Persona } from '@/types';
+import { BaulRole, Persona } from '@/types';
 
 interface BaulPersonasTabContainerProps {
   baulId: string;
@@ -30,8 +30,8 @@ export function BaulPersonasTabContainer({ baulId, canCreatePersona }: BaulPerso
     navigate(`/baules/${baulId}/personas/${persona.id}`, { state: { returnTab: 'personas' } });
   };
 
-  const handleSaveNuevaPersona = async (nickname: string) => {
-    const result = await run(() => createPersona(baulId, nickname), { errorMessage: 'Error al añadir la persona' });
+  const handleSaveNuevaPersona = async (nickname: string, role: BaulRole) => {
+    const result = await run(() => createPersona(baulId, nickname, role), { errorMessage: 'Error al añadir la persona' });
     if (result.ok) setShowNuevaPersonaModal(false);
   };
 

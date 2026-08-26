@@ -1,22 +1,34 @@
 import React, { useState } from 'react';
+import { BaulRole } from '@/types';
+import { getRoleAccessDescription } from '@/utils/roleUtils';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
+import { Select } from '@/design-system/components/forms/Select';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 
 interface NuevaPersonaModalProps {
   onCancel: () => void;
-  onSave: (nickname: string) => void;
+  onSave: (nickname: string, role: BaulRole) => void;
   isSubmitting?: boolean;
+  // Hidden when this modal is reused from "Invitar a la familia" (InvitarFamiliaRoute): that
+  // flow always creates a Colaborador under the hood, no access choice shown.
+  showAccessSelector?: boolean;
 }
 
-export function NuevaPersonaModal({ onCancel, onSave, isSubmitting = false }: NuevaPersonaModalProps) {
+export function NuevaPersonaModal({
+  onCancel,
+  onSave,
+  isSubmitting = false,
+  showAccessSelector = true,
+}: NuevaPersonaModalProps) {
   const [nickname, setNickname] = useState('');
+  const [role, setRole] = useState<BaulRole>('colaborador');
 
   const handleSave = () => {
     const trimmed = nickname.trim();
     if (!trimmed || isSubmitting) return;
-    onSave(trimmed);
+    onSave(trimmed, role);
   };
 
   return (
@@ -31,6 +43,23 @@ export function NuevaPersonaModal({ onCancel, onSave, isSubmitting = false }: Nu
         variant="modal"
         autoFocus
       />
+      {showAccessSelector && (
+        <>
+          <Select
+            label="Acceso"
+            value={role}
+            onChange={(value) => setRole(value as BaulRole)}
+            options={[
+              { value: 'colaborador', label: 'Colaborador' },
+              { value: 'administrador', label: 'Administrador' },
+              { value: 'sin_acceso', label: 'Sin acceso' },
+            ]}
+          />
+          <div className="bg-secondary rounded-lg p-3 text-sm text-muted-foreground">
+            {getRoleAccessDescription(role)}
+          </div>
+        </>
+      )}
       <ModalActions>
         <Button variant="secondary"
           onClick={onCancel}

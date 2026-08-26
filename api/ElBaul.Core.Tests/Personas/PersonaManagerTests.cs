@@ -72,6 +72,18 @@ public class PersonaManagerTests
     }
 
     [Fact]
+    public async Task CreatePersonaAsync_ShouldCreateWithTheRequestedRole()
+    {
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.CreatePersonaAsync(baulId, "Tío sin acceso", BaulRole.SinAcceso);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("sin_acceso", result.Value.Role);
+    }
+
+    [Fact]
     public async Task CreatePersonaAsync_ShouldAllow_ForAdministradorRole()
     {
         var baulId = await _fixture.CreateBaulAsync("Familia");
@@ -216,6 +228,35 @@ public class PersonaManagerTests
 
         var persona = await _fixture.Personas.GetPersonaByIdAsync(foreignPersonaId);
         Assert.Equal(BaulRole.Colaborador, persona!.Role);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaRoleAsync_ShouldRejectSinAcceso_ForAnActivePersona()
+    {
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+        var personaId = await _fixture.AddColaboradorAsync(baulId, OtherUserId, "Other");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdatePersonaRoleAsync(baulId, personaId, BaulRole.SinAcceso);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Cannot remove access from a persona who already joined", result.Error.Message);
+
+        var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
+        Assert.Equal(BaulRole.Colaborador, persona!.Role);
+    }
+
+    [Fact]
+    public async Task UpdatePersonaRoleAsync_ShouldAllowSinAcceso_ForAPendingPersona()
+    {
+        var baulId = await _fixture.CreateBaulAsync("Familia");
+        var personaId = await _fixture.AddPendingPersonaAsync(baulId, "Abuela");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.UpdatePersonaRoleAsync(baulId, personaId, BaulRole.SinAcceso);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("sin_acceso", result.Value.Role);
     }
 
     // There used to be a test here for rejecting BaulRole.Custodio as a grantable role — now
@@ -383,10 +424,11 @@ public class PersonaManagerTests
         var persona = await _fixture.Personas.GetPersonaByIdAsync(personaId);
         Assert.NotNull(persona);
         Assert.Null(persona.UserId);
-        // No more sin_acceso role — RemovePersonaAsync clears the account link (and invite
-        // token) but leaves the persona's assignable role untouched, so it falls back to
-        // Pending and can be re-invited normally.
-        Assert.Equal(BaulRole.Colaborador, persona.Role);
+        // RemovePersonaAsync ("Revocar acceso") clears the account link (and invite token) and
+        // sets the persona's role to SinAcceso, so it ends up in exactly the state an admin
+        // would get by picking "Sin acceso" directly — falls back to Pending, but needs a
+        // different role picked before it can be invited again.
+        Assert.Equal(BaulRole.SinAcceso, persona.Role);
         Assert.Equal(PersonaAccessStatus.Pending, persona.AccessStatus);
     }
 

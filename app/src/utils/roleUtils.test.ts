@@ -93,7 +93,7 @@ describe('roleUtils persona permissions', () => {
       target: persona({ role: 'colaborador', status: 'pending' }),
       expected: {
         canManagePersona: true,
-        canChangePersonaRole: false,
+        canChangePersonaRole: true,
         canRevokePersonaAccess: false,
       },
     },

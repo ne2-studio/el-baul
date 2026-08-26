@@ -61,16 +61,22 @@ given action.
 
 ## Authorization / roles
 
-Baúl access roles: `custodio`, `administrador`, `colaborador`. A custodio is just the
-administrador marked as the baúl's original creator — identical permissions otherwise.
-There is no read-only access role: every member with access can add chapters/photos and post
-recuerdos. Only custodio/administrador can manage Personas (invite, change role, revoke
-access), resolve removal requests, delete a photo directly, or set the baúl's cover.
+Baúl access roles: `custodio`, `administrador`, `colaborador`, `sin_acceso`. A custodio is
+just the administrador marked as the baúl's original creator — identical permissions
+otherwise. There is no read-only access role among the roles that grant access: every member
+with access can add chapters/photos and post recuerdos. Only custodio/administrador can
+manage Personas (invite, change role, revoke access), resolve removal requests, delete a
+photo directly, or set the baúl's cover.
 
-There is no "sin_acceso"/revoked role anymore: a Persona either belongs to the baúl or it
-doesn't. "Revocar acceso" (`DELETE /api/baules/{baulId}/personas/{personaId}`) clears the
-account link and invalidates that persona's invite token, but leaves its assignable role
-untouched — the row simply falls back to Pending and can be re-invited normally.
+`sin_acceso` is a pre-selectable tier for a Persona who's part of the family's story but
+should never be invited into the baúl — not a status a Persona can be left in only as a
+byproduct of something else. It's only assignable to a Persona who hasn't joined yet
+(`PersonaAccessStatus.Pending`); the role-update endpoint rejects setting it on a Persona who
+already has an account linked (`Active`), and the invite endpoint rejects inviting a
+`sin_acceso` Persona. "Revocar acceso" (`DELETE /api/baules/{baulId}/personas/{personaId}`)
+clears the account link, invalidates that persona's invite token, and sets its role to
+`sin_acceso` — the row falls back to Pending in exactly the state a fresh `sin_acceso`
+Persona would be in, and can only be invited again after an admin picks a different role.
 
 ## Invitations
 

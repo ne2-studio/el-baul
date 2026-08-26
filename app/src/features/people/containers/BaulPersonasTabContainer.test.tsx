@@ -68,7 +68,7 @@ describe('BaulPersonasTabContainer', () => {
     await user.type(screen.getByPlaceholderText('Ej. Abuela, Tío Juan…'), 'Tío Juan');
     await user.click(screen.getByRole('button', { name: /añadir/i }));
 
-    expect(createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan');
+    expect(createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan', 'colaborador');
     await waitFor(() => expect(screen.queryByPlaceholderText('Ej. Abuela, Tío Juan…')).not.toBeInTheDocument());
   });
 

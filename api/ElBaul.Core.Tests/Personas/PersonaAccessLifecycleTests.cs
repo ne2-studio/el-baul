@@ -112,13 +112,13 @@ public class PersonaAccessLifecycleTests
     }
 
     [Fact]
-    public void RevokeAccess_ShouldLeaveRoleUntouched()
+    public void RevokeAccess_ShouldSetRoleToSinAcceso()
     {
         var persona = MakePersona(BaulRole.Administrador, OwnerUserId);
 
         var revoked = persona.RevokeAccess();
 
-        Assert.Equal(BaulRole.Administrador, revoked.Role);
+        Assert.Equal(BaulRole.SinAcceso, revoked.Role);
     }
 
     // --- Unlink ---

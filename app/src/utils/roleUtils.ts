@@ -25,14 +25,18 @@ export function getRoleDisplayName(role: BaulRole): string {
   const roleNames: Record<BaulRole, string> = {
     administrador: 'Administrador',
     colaborador: 'Colaborador',
+    sin_acceso: 'Sin acceso',
   };
   return roleNames[role];
 }
 
-export function getRoleDescription(role: BaulRole): string {
+// Subtext shown under the access-level selector in NuevaPersonaModal/ManageAccessModal, one
+// line per option, for whichever one is currently selected.
+export function getRoleAccessDescription(role: BaulRole): string {
   const descriptions: Record<BaulRole, string> = {
-    administrador: 'Gestiona el baúl, igual que el custodio',
-    colaborador: 'Puede añadir fotos',
+    administrador: 'Podrá ver, contribuir y gestionar el baúl cuando lo invites.',
+    colaborador: 'Podrá ver y contribuir al baúl cuando lo invites.',
+    sin_acceso: 'Formará parte de la historia, pero no podrá acceder al baúl.',
   };
   return descriptions[role];
 }
@@ -82,7 +86,9 @@ export function getPersonaPermissions({
     canEditPersonaBiography: canEditAnyBiography,
     canUploadPersonaAvatar: canEditOwnPersona,
     canManagePersona,
-    canChangePersonaRole: canManagePersona && !isPending,
+    // "Gestionar acceso" is available at any point before a persona joins, not just once
+    // they're Active, so an admin can pick their access level upfront.
+    canChangePersonaRole: canManagePersona,
     canRevokePersonaAccess: canManagePersona && !isPending,
   };
 }

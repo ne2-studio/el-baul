@@ -5,10 +5,13 @@ function byNickname(a: Persona, b: Persona): number {
 }
 
 // "Invitar a la familia": personas not yet in the baúl come first (they're the ones needing
-// action), already-active personas trail below. Alphabetical within each group.
+// action), already-active personas trail below. Alphabetical within each group. Personas with
+// no access (role 'sin_acceso') never appear here, regardless of status — they're never meant
+// to be invited.
 export function sortPersonasForInvite(personas: Persona[]): Persona[] {
-  const pending = personas.filter((p) => p.status !== 'active').sort(byNickname);
-  const active = personas.filter((p) => p.status === 'active').sort(byNickname);
+  const invitable = personas.filter((p) => p.role !== 'sin_acceso');
+  const pending = invitable.filter((p) => p.status !== 'active').sort(byNickname);
+  const active = invitable.filter((p) => p.status === 'active').sort(byNickname);
   return [...pending, ...active];
 }
 

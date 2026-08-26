@@ -8352,6 +8352,7 @@ export interface components {
         };
         CreatePersonaRequest: {
             nickname: string;
+            role?: string | null;
         };
         CreateRecuerdoRequest: {
             text: string;

@@ -78,7 +78,7 @@ public class PersonaManager(
         return await personaDtoProjector.ProjectAsync(persona, canEdit, access.CustodioId);
     }
 
-    public async Task<Result<PersonaDto>> CreatePersonaAsync(BaulId baulId, string nickname)
+    public async Task<Result<PersonaDto>> CreatePersonaAsync(BaulId baulId, string nickname, BaulRole role = BaulRole.Colaborador)
     {
         var userId = currentUserProvider.GetUserId();
 
@@ -86,7 +86,7 @@ public class PersonaManager(
         if (auth.IsFailure) return Result.Failure<PersonaDto>(auth.Error);
 
         var persona = new Persona(
-            new PersonaId(idGenerator.NewId()), baulId, null, nickname, BaulRole.Colaborador, clock.UtcNow());
+            new PersonaId(idGenerator.NewId()), baulId, null, nickname, role, clock.UtcNow());
 
         await personaRepository.AddPersonaAsync(persona);
         logger.LogInformation("Persona created {PersonaId} {Nickname}", persona.Id, nickname);
@@ -242,6 +242,16 @@ public class PersonaManager(
         {
             logger.LogWarning("Persona role update rejected: custodio role cannot be changed {PersonaId}", personaId);
             return Result.Failure<PersonaDto>(ApplicationError.Validation("The custodio role cannot be changed"));
+        }
+
+        // "Sin acceso" is only selectable for personas who haven't joined yet — an Active
+        // (claimed) persona already has an account linked to this baúl, so leaving them without
+        // access requires "Revocar acceso" instead (RemovePersonaAsync), which also unlinks the
+        // account. The UI already hides this option for Active personas; this is the backstop.
+        if (role == BaulRole.SinAcceso && persona.AccessStatus == PersonaAccessStatus.Active)
+        {
+            logger.LogWarning("Persona role update rejected: cannot set SinAcceso on an Active persona {PersonaId}", personaId);
+            return Result.Failure<PersonaDto>(ApplicationError.Validation("Cannot remove access from a persona who already joined"));
         }
 
         var updated = persona.WithRole(role);

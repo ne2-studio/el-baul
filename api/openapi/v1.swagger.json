@@ -10032,6 +10032,10 @@
         "properties": {
           "nickname": {
             "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

@@ -40,9 +40,10 @@ public class PersonaAccessRevocationTests(ElBaulAcceptanceFixture fixture)
         revokeResponse.StatusCode.Should().Be(HttpStatusCode.OK, await revokeResponse.Content.ReadAsStringAsync());
 
         var revokedPersona = await GetPersonaAsync(adminClient, baulId, personaId);
-        // No more sin_acceso — role is untouched (still colaborador, the default new personas
-        // get), only the account link is cleared, so the row falls back to Pending.
-        revokedPersona.GetProperty("role").GetString().Should().Be("colaborador");
+        // "Revocar acceso" now also sets the role to sin_acceso — a revoked persona ends up in
+        // exactly the state an admin would get by picking "Sin acceso" directly — on top of
+        // clearing the account link, so the row falls back to Pending.
+        revokedPersona.GetProperty("role").GetString().Should().Be("sin_acceso");
         revokedPersona.GetProperty("status").GetString().Should().Be("pending");
         revokedPersona.GetProperty("userId").ValueKind.Should().Be(JsonValueKind.Null);
         revokedPersona.GetProperty("nickname").GetString().Should().Be("Segunda persona de aceptación");
@@ -54,6 +55,13 @@ public class PersonaAccessRevocationTests(ElBaulAcceptanceFixture fixture)
         // permanent/non-regenerable (see the ticket's refinement Q&A).
         var oldPreviewAfterRevocation = await anonymousClient.GetAsync($"/api/persona-invites/{firstToken}/preview");
         oldPreviewAfterRevocation.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        // A sin_acceso persona can't be invited — the admin must pick a real access level
+        // again first (same rule PersonaManager.UpdatePersonaRoleAsync enforces the other
+        // direction: sin_acceso can't be set back on an Active persona).
+        var roleUpdateResponse = await adminClient.PutAsJsonAsync(
+            $"/api/baules/{baulId}/personas/{personaId}/role", new { role = "colaborador" });
+        roleUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK, await roleUpdateResponse.Content.ReadAsStringAsync());
 
         // Re-inviting the same, now-Pending persona lazily issues a brand new token and lets
         // the (or another) guest claim it again.

@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '@/api';
 import { InvitarFamiliaScreen } from '@/features/sharing/components/InvitarFamiliaScreen';
 import { NuevaPersonaModal } from '@/features/people/components/NuevaPersonaModal';
-import { createPersona } from '@/features/people/useCases';
-import { sharePublicLink } from '@/features/sharing/sharePublicLink';
+import { createPersona, sharePersonaInvite } from '@/features/people/useCases';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -28,19 +26,12 @@ export const InvitarFamiliaRoute: React.FC = () => {
   const { baul } = guard;
   const personas = baulScope.personas || [];
 
-  const shareInvite = async (persona: Persona) => {
-    const invite = await api.baules.invitePersona(baul.id, persona.id);
-    await sharePublicLink({
-      title: `Invitación a ${baul.name}`,
-      text: `Te invito a unirte a mi baúl de recuerdos "${baul.name}" en El Baúl, ${persona.nickname}.`,
-      url: invite.url,
-      onCopied: () => showToastMessage('Enlace copiado al portapapeles'),
-    });
-  };
-
   const handleInvite = async (persona: Persona) => {
     setInvitingPersonaId(persona.id);
-    await run(() => shareInvite(persona), { key: `invite:${persona.id}`, errorMessage: 'Error al invitar' });
+    await run(() => sharePersonaInvite(baul, persona, () => showToastMessage('Enlace copiado al portapapeles')), {
+      key: `invite:${persona.id}`,
+      errorMessage: 'Error al invitar',
+    });
     setInvitingPersonaId(null);
   };
 
@@ -66,6 +57,7 @@ export const InvitarFamiliaRoute: React.FC = () => {
           onCancel={() => setShowNuevaPersonaModal(false)}
           onSave={handleSaveNuevaPersona}
           isSubmitting={isPending()}
+          showAccessSelector={false}
         />
       )}
     </>
