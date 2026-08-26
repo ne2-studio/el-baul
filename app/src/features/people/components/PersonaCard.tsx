@@ -9,12 +9,16 @@ interface PersonaCardProps {
   onClick: () => void;
   /** true cuando la persona es el usuario actual, para mostrar "Tú" en lugar de su nickname. */
   isMe?: boolean;
+  /** true para personas sin acceso al baúl, se muestran atenuadas. */
+  muted?: boolean;
 }
 
-export function PersonaCard({ persona, onClick, isMe = false }: PersonaCardProps) {
+export function PersonaCard({ persona, onClick, isMe = false, muted = false }: PersonaCardProps) {
   return (
     <Card onClick={onClick} className="!p-0 overflow-hidden">
-      <div className="aspect-square bg-secondary flex items-center justify-center overflow-hidden">
+      <div
+        className={`aspect-square bg-secondary flex items-center justify-center overflow-hidden ${muted ? 'opacity-70 grayscale' : ''}`}
+      >
         {persona.avatarUrl ? (
           <img src={persona.avatarUrl} alt={persona.nickname} className="w-full h-full object-cover" />
         ) : persona.isCustodio ? (

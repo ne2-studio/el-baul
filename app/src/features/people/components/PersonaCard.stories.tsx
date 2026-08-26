@@ -72,6 +72,23 @@ export const Pending: Story = {
   },
 };
 
+export const Muted: Story = {
+  args: {
+    ...Default.args,
+    persona: new Persona({
+      id: '5',
+      baulId: 'b1',
+      nickname: 'Primo lejano',
+      status: 'pending',
+      role: 'sin_acceso',
+      isCustodio: false,
+      invitedDate: fixedStorybookDateIso,
+      canEdit: true,
+    }),
+    muted: true,
+  },
+};
+
 export const LongNameWithoutAvatar: Story = {
   args: {
     ...Default.args,

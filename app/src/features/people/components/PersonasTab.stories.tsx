@@ -57,12 +57,50 @@ const personas = [
     invitedDate: fixedStorybookDateIso,
     canEdit: true,
   }),
+  new Persona({
+    id: '5',
+    baulId: 'b1',
+    nickname: 'Primo lejano',
+    status: 'pending',
+    role: 'sin_acceso',
+    isCustodio: false,
+    invitedDate: fixedStorybookDateIso,
+    canEdit: true,
+  }),
 ];
 
 export const Default: Story = {
   args: {
     personas,
     currentUserEmail: 'yo@example.com',
+    onSelectPersona: () => alert('onSelectPersona clicked'),
+  },
+};
+
+export const OnlySinAcceso: Story = {
+  args: {
+    personas: [
+      new Persona({
+        id: '1',
+        baulId: 'b1',
+        nickname: 'Primo lejano',
+        status: 'pending',
+        role: 'sin_acceso',
+        isCustodio: false,
+        invitedDate: fixedStorybookDateIso,
+        canEdit: true,
+      }),
+      new Persona({
+        id: '2',
+        baulId: 'b1',
+        nickname: 'Tía Rosa',
+        status: 'pending',
+        role: 'sin_acceso',
+        isCustodio: false,
+        invitedDate: fixedStorybookDateIso,
+        canEdit: true,
+      }),
+    ],
     onSelectPersona: () => alert('onSelectPersona clicked'),
   },
 };
