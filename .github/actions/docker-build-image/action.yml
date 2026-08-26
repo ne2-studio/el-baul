@@ -30,5 +30,6 @@ runs:
         tags: ${{ inputs.image }}
         load: true
         push: false
+        pull: true
         cache-from: type=gha,scope=${{ inputs.cache-scope }}
         cache-to: type=gha,mode=max,scope=${{ inputs.cache-scope }}
