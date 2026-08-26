@@ -5,7 +5,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from 'react-oidc-context';
 import type { IncomingShare } from '@/features/sharing/native/shareReceiver';
-import { ProtectedRoute, PublicRoute } from './AuthGuards';
+import { ProtectedRoute, PublicRoute, RequireAuth } from './AuthGuards';
 
 vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(),
@@ -59,6 +59,81 @@ describe('ProtectedRoute', () => {
     );
 
     expect(screen.getByText('contenido protegido')).toBeInTheDocument();
+  });
+});
+
+describe('RequireAuth', () => {
+  it('renders children once authenticated, ignoring any pending native share', async () => {
+    // RequireAuth deliberately has no pending-share logic at all — see /compartir's route
+    // regression test below for why that matters.
+    mockUseAuth.mockReturnValue({ isLoading: false, isAuthenticated: true } as ReturnType<typeof useAuth>);
+    const { useIncomingShareStore } = await import('@/store/useIncomingShareStore');
+    useIncomingShareStore.setState({
+      share: { shareId: 'share-1', files: [{ path: '/a.jpg', mimeType: 'image/jpeg', name: 'a.jpg' }] },
+      selectedPhotos: [],
+    });
+
+    render(
+      <MemoryRouter>
+        <RequireAuth>
+          <div>contenido protegido</div>
+        </RequireAuth>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('contenido protegido')).toBeInTheDocument();
+
+    useIncomingShareStore.setState({ share: null, selectedPhotos: [] });
+  });
+});
+
+describe('/compartir route guard (regression: infinite self-redirect)', () => {
+  afterEach(async () => {
+    const { __resetPendingShareCheckForTests } = await import('@/features/sharing/native/pendingShareGate');
+    __resetPendingShareCheckForTests();
+    const { useIncomingShareStore } = await import('@/store/useIncomingShareStore');
+    useIncomingShareStore.setState({ share: null, selectedPhotos: [] });
+  });
+
+  it('renders /compartir directly instead of bouncing to itself when a pending share is already loaded', async () => {
+    // Reproduces the real App.tsx route wiring: /compartir must use RequireAuth (auth-only),
+    // never ProtectedRoute. ProtectedRoute's "hasPendingShare -> Navigate('/compartir')" would
+    // otherwise redirect this exact route to itself on every render, so SelectBaulForShareRoute
+    // (the only screen that clears the pending share) would never mount — the user would be
+    // stuck on a blank screen with no way out. This can't be covered end-to-end since it only
+    // reproduces via a real Android share-sheet cold start, so this is the highest-level test
+    // we can write for it.
+    mockUseAuth.mockReturnValue({ isLoading: false, isAuthenticated: true } as ReturnType<typeof useAuth>);
+    const { useIncomingShareStore } = await import('@/store/useIncomingShareStore');
+    useIncomingShareStore.setState({
+      share: { shareId: 'share-1', files: [{ path: '/a.jpg', mimeType: 'image/jpeg', name: 'a.jpg' }] },
+      selectedPhotos: [],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/compartir']}>
+        <Routes>
+          <Route
+            path="/compartir"
+            element={
+              <RequireAuth>
+                <div>elegir baúl</div>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/baules"
+            element={
+              <ProtectedRoute>
+                <div>baúl por defecto</div>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('elegir baúl')).toBeInTheDocument();
   });
 });
 

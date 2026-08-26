@@ -8,10 +8,15 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+// Auth-only guard: no pending-share redirect. Use this (instead of ProtectedRoute) for any
+// route that a pending share can itself resolve to — currently just /compartir. ProtectedRoute's
+// "hasPendingShare -> Navigate('/compartir')" would otherwise redirect that route to itself on
+// every render, since it never learns it's already there: SelectBaulForShareRoute (the only
+// place that clears the pending share) would never get a chance to mount, trapping the user on
+// a blank screen with no way out. See CHANGELOG for the regression this fixes.
+export const RequireAuth: React.FC<ProtectedRouteProps> = ({ children }) => {
   const auth = useAuth();
   const location = useLocation();
-  const { isChecking: isCheckingPendingShare, hasPendingShare } = usePendingShareGate(auth.isAuthenticated);
 
   // auth.isAuthenticated starts false while the OIDC user is still being rehydrated from
   // localStorage (see main.tsx's WebStorageStateStore) — without this guard, a hard refresh
@@ -29,13 +34,27 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to={`/?redirectTo=${redirectTo}`} replace />;
   }
 
-  // See pendingShareGate.ts: on native Android, a pending share must win over whatever this
-  // route would normally render, so a share-sheet cold start (or a share arriving while already
-  // past "/") lands on /compartir without ever rendering a baúl in between.
-  if (isCheckingPendingShare) return <FullScreenLoading message="Cargando…" />;
-  if (hasPendingShare) return <Navigate to="/compartir" replace />;
-
   return <>{children}</>;
+};
+
+// Auth guard + pending-share redirect: use for every protected route except /compartir itself
+// (see RequireAuth above for why /compartir is special-cased).
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const auth = useAuth();
+  const { isChecking: isCheckingPendingShare, hasPendingShare } = usePendingShareGate(auth.isAuthenticated);
+
+  return (
+    <RequireAuth>
+      {(() => {
+        // See pendingShareGate.ts: on native Android, a pending share must win over whatever
+        // this route would normally render, so a share-sheet cold start (or a share arriving
+        // while already past "/") lands on /compartir without ever rendering a baúl in between.
+        if (isCheckingPendingShare) return <FullScreenLoading message="Cargando…" />;
+        if (hasPendingShare) return <Navigate to="/compartir" replace />;
+        return children;
+      })()}
+    </RequireAuth>
+  );
 };
 
 export const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {

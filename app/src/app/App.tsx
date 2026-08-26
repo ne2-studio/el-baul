@@ -16,7 +16,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useConnectivityLost } from '@/hooks/useConnectivityLost';
 
 // Auth and Route Guards
-import { ProtectedRoute, PublicRoute } from './routes/AuthGuards';
+import { ProtectedRoute, PublicRoute, RequireAuth } from './routes/AuthGuards';
 
 // Route Components
 import { WelcomeRoute } from '../features/auth/routes/WelcomeRoute';
@@ -362,9 +362,11 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/compartir" element={
-          <ProtectedRoute>
+          // Auth-only guard — see RequireAuth in AuthGuards.tsx for why this route must not go
+          // through ProtectedRoute's pending-share redirect (it would redirect to itself).
+          <RequireAuth>
             <SelectBaulForShareRoute />
-          </ProtectedRoute>
+          </RequireAuth>
         } />
 
         <Route path="/cuenta" element={
