@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { ConnectivityLostScreen } from '@/design-system/components/feedback/ConnectivityLostScreen';
 import { MaintenanceScreen } from '@/design-system/components/feedback/MaintenanceScreen';
-import { NativeShareHandler } from '@/features/sharing/native/NativeShareHandler';
+import { IncomingShareController } from '@/features/sharing/native/incomingShareController';
 import { PushNotificationsHandler } from '@/features/profile/native/PushNotificationsHandler';
 import { PushNotificationsBanner } from '@/features/profile/native/PushNotificationsBanner';
 import { ScrollToTop } from '@/app/ScrollToTop';
@@ -54,6 +54,7 @@ import { getBackgroundLocation } from '../features/photos/viewerNavigation';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppConfigStore } from '../store/useAppConfigStore';
+import { useIncomingShareStore } from '../store/useIncomingShareStore';
 import { loadUserData, resetAllStores } from '@/features/auth/useCases';
 import { reportSessionOpen } from './sessionAnalytics';
 import { attemptAutoRelogin, clearAutoReloginAttempt } from '@/features/auth/autoRelogin';
@@ -76,6 +77,16 @@ function App() {
   const { run, isPending } = useAsyncAction();
 
   const backgroundLocation = getBackgroundLocation(location);
+
+  // See incomingShareController.ts: on native Android, a pending share must win over whatever
+  // the current route would normally render, so a share-sheet cold start (or a share arriving
+  // while several screens deep) lands on /compartir without the user having to navigate back
+  // through intervening screens first. Checked here, at the App root, rather than inside a route
+  // guard, so it re-asserts itself on every render — it can't be raced/overwritten by some other
+  // screen's own navigate()/replace the way a one-shot imperative redirect could.
+  const pendingShare = useIncomingShareStore((state) => state.share);
+  const effectivePathname = (backgroundLocation || location).pathname;
+  const shouldForceShareRoute = Boolean(pendingShare) && auth.isAuthenticated && effectivePathname !== '/compartir';
 
   // Loaded once per session; features gated by it stay off until the fetch resolves.
   useEffect(() => {
@@ -227,7 +238,7 @@ function App() {
   return (
     <div className="h-screen w-full bg-background">
       <ScrollToTop />
-      <NativeShareHandler />
+      <IncomingShareController />
       <PushNotificationsHandler />
       <AndroidAppBanner />
       <PushNotificationsBanner />
@@ -240,6 +251,10 @@ function App() {
       ) : (
         <>
 
+      {shouldForceShareRoute ? (
+        <Navigate to="/compartir" replace />
+      ) : (
+        <>
       <Routes location={backgroundLocation || location}>
         {/* Public Routes */}
         <Route path="/" element={
@@ -415,6 +430,8 @@ function App() {
         <Routes>
           {photoViewerRoutes.map(({ path, element }) => <Route key={path} path={path} element={element} />)}
         </Routes>
+      )}
+        </>
       )}
         </>
       )}

@@ -37,9 +37,10 @@ verify iOS changes manually on a Mac before merging.
   `native-android.md`) has no iOS implementation — there's no Share Extension target, App Group,
   or Swift plugin under `app/ios/`, only the Android `ShareReceiverPlugin.java`. On iOS,
   `registerPlugin('ShareReceiver')` resolves to a stub that rejects every call, so
-  `NativeShareHandler` guards on `Capacitor.isPluginAvailable('ShareReceiver')` (in addition to
-  `isNativePlatform()`) to skip it there instead of surfacing a "no se pudo comprobar..." error
-  toast right after every native login. Building this for real on iOS means adding a Share
+  `useIncomingShareController` guards on `Capacitor.isPluginAvailable('ShareReceiver')` (in
+  addition to `isNativePlatform()`) to skip it there instead of surfacing a "no se pudo
+  comprobar..." error toast right after every native login. Building this for real on iOS means
+  adding a Share
   Extension app target plus an App Group container to hand files to the main app — not yet done.
 - `npm run ios:build` (in `app/`) builds with a separate `.env.ios` and runs `cap sync ios`.
 - **App icon and splash screen** come from the same master assets already used for Android/PWA

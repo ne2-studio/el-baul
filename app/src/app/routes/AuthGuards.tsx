@@ -2,18 +2,15 @@ import React from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { FullScreenLoading } from '@/design-system/components/feedback/FullScreenLoading';
-import { usePendingShareGate } from '@/features/sharing/native/pendingShareGate';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-// Auth-only guard: no pending-share redirect. Use this (instead of ProtectedRoute) for any
-// route that a pending share can itself resolve to — currently just /compartir. ProtectedRoute's
-// "hasPendingShare -> Navigate('/compartir')" would otherwise redirect that route to itself on
-// every render, since it never learns it's already there: SelectBaulForShareRoute (the only
-// place that clears the pending share) would never get a chance to mount, trapping the user on
-// a blank screen with no way out. See CHANGELOG for the regression this fixes.
+// Auth-only guard, used by every protected route (including /compartir itself). The pending
+// native-share redirect used to live partly in here (see git history / CHANGELOG for the
+// pendingShareGate.ts removal) — it now lives entirely in App.tsx, next to backgroundLocation,
+// as a single render-time check that isn't tied to which guard happens to be mounted.
 export const RequireAuth: React.FC<ProtectedRouteProps> = ({ children }) => {
   const auth = useAuth();
   const location = useLocation();
@@ -37,44 +34,25 @@ export const RequireAuth: React.FC<ProtectedRouteProps> = ({ children }) => {
   return <>{children}</>;
 };
 
-// Auth guard + pending-share redirect: use for every protected route except /compartir itself
-// (see RequireAuth above for why /compartir is special-cased).
+// Plain auth guard: use for every protected route. A pending native share, if any, is handled by
+// App.tsx's own render-time redirect — it wins over whatever this route would normally render
+// regardless of which guard is mounted, so this component doesn't need to know about it at all.
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const auth = useAuth();
-  const { isChecking: isCheckingPendingShare, hasPendingShare } = usePendingShareGate(auth.isAuthenticated);
-
-  return (
-    <RequireAuth>
-      {(() => {
-        // See pendingShareGate.ts: on native Android, a pending share must win over whatever
-        // this route would normally render, so a share-sheet cold start (or a share arriving
-        // while already past "/") lands on /compartir without ever rendering a baúl in between.
-        if (isCheckingPendingShare) return <FullScreenLoading message="Cargando…" />;
-        if (hasPendingShare) return <Navigate to="/compartir" replace />;
-        return children;
-      })()}
-    </RequireAuth>
-  );
+  return <RequireAuth>{children}</RequireAuth>;
 };
 
 export const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const auth = useAuth();
   const [searchParams] = useSearchParams();
-  const { isChecking: isCheckingPendingShare, hasPendingShare } = usePendingShareGate(auth.isAuthenticated);
 
   if (auth.isLoading) return <FullScreenLoading message="Cargando…" />;
 
   if (auth.isAuthenticated) {
-    // See pendingShareGate.ts: this must resolve before committing to the normal authenticated
-    // destination below — otherwise an Android share-sheet cold start reliably wins the race and
-    // flashes the default baúl before the app catches up and navigates to /compartir.
-    if (isCheckingPendingShare) return <FullScreenLoading message="Cargando…" />;
-    if (hasPendingShare) return <Navigate to="/compartir" replace />;
-
     // A user who's already signed in (e.g. clicking an email CTA from their phone with the
     // app already open) still needs to land on the intended destination, not just /baules —
     // otherwise every deep link that carries a redirectTo is silently dropped for anyone
-    // with an active session.
+    // with an active session. (A pending native share overriding this is App.tsx's job, same
+    // as for ProtectedRoute above.)
     return <Navigate to={searchParams.get('redirectTo') || '/baules'} replace />;
   }
 

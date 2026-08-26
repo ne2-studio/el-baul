@@ -6,7 +6,7 @@ import { isPushNotificationsSupported } from '@/features/profile/native/pushNoti
 import { ENTRY_SOURCE_PARAM } from '@/utils/entrySource';
 import { api } from '@/api';
 
-// Mounted once inside <BrowserRouter> (needs useNavigate), same shape as NativeShareHandler.
+// Mounted once inside <BrowserRouter> (needs useNavigate).
 // Handles tapping a delivered push notification: if the admin included a deep link when
 // sending it (see AdminController's push-notifications/test endpoint), navigate there.
 export function PushNotificationsHandler() {

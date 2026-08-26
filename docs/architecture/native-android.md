@@ -10,9 +10,23 @@ trigger to reconsider a shared home for plugin *bridges* specifically (not for t
 that calls them) — not before:
 
 - `features/sharing/native/shareReceiver.ts` + `useIncomingShareStore.ts` handle Android's native
-  "share photos into El Baúl" intent; `features/sharing/native/NativeShareHandler.tsx` wires the
-  two together (mounted once in `App.tsx`). The orchestration itself (`loadShare`/`clear`) lives
-  in `features/sharing/useCases`, per [`frontend.md`](frontend.md)'s use-case layer.
+  "share photos into El Baúl" intent; `features/sharing/native/incomingShareController.ts` (its
+  `useIncomingShareController` hook, mounted once in `App.tsx` via the `IncomingShareController`
+  component) is the single point that learns about an incoming share, whether the app was already
+  running (`shareReceived` event) or not (`getPendingShare()`). It re-polls `getPendingShare()` on
+  every native `resume` (`@capacitor/app`'s `App.addListener('resume', ...)`), not just once per
+  session: the native side (`ShareReceiverPlugin.java`) keeps the pending share in memory until
+  `clearPendingShare()` is called, so re-asking on every resume is what makes this robust against
+  `onNewIntent` firing before React/OIDC finish rehydrating — the previous design (a `getPendingShare()`
+  poll memoized for the whole session, gated on `auth.isAuthenticated` at the exact instant the
+  poll or the live event fired) could silently drop a share in that window with nothing left to
+  retry. Receiving a share is deliberately not auth-gated (it only touches an in-memory store);
+  only the redirect to `/compartir` needs auth, and that's a single render-time check in `App.tsx`
+  next to `backgroundLocation` (`pendingShare && auth.isAuthenticated && pathname !== '/compartir'`)
+  rather than logic duplicated inside `ProtectedRoute`/`PublicRoute` — it re-asserts itself on
+  every render, so it can't be raced/overwritten by some other screen's own navigation the way an
+  imperative one-shot `navigate()` could. The orchestration itself (`loadShare`/`clear`) lives in
+  `features/sharing/useCases`, per [`frontend.md`](frontend.md)'s use-case layer.
 - `main.tsx` special-cases the OIDC redirect on native — see [`native-ios.md`](native-ios.md) for
   why this is shared logic rather than an Android-only concern, and for a platform asymmetry in
   the underlying Capacitor plugin that shaped how it's written: `react-oidc-context` expects
