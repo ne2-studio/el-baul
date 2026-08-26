@@ -12,5 +12,6 @@ public record RecuerdoDto
     string? UserAvatar = null,
     string? PersonaId = null,
     string? ChapterId = null,
-    string? ChapterName = null
+    string? ChapterName = null,
+    DateTime? SubjectDate = null
 );

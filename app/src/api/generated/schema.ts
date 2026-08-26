@@ -8514,6 +8514,8 @@ export interface components {
             personaId?: string | null;
             chapterId?: string | null;
             chapterName?: string | null;
+            /** Format: date-time */
+            subjectDate?: string | null;
         };
         RegisterPushTokenRequest: {
             token: string;

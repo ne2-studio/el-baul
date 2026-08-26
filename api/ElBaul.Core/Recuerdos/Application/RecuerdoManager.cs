@@ -256,10 +256,13 @@ public class RecuerdoManager(
             (chapterId ?? recuerdo.ChapterId)?.ToString(), chapterName);
 
     // List path — turns an already-batched IRecuerdoListReadModel row into a RecuerdoDto (see
-    // GetRecuerdosCoreAsync). Mirrors the Recuerdo overload above field for field.
+    // GetRecuerdosCoreAsync). Mirrors the Recuerdo overload above field for field, plus
+    // SubjectDate (only ever populated here — the row already carries it from the batched
+    // photo lookup; the Recuerdo overload above has no Photo in hand, so it leaves it null).
     private static RecuerdoDto ToDto(
         RecuerdoListRow row, string userName, string? userAvatar, string? personaId, bool isOwn,
         string? photoThumbnailUrl, string? chapterName) =>
         new(row.Id.ToString(), row.PhotoId?.ToString(), row.UserId, row.Text, userName,
-            row.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, personaId, row.ChapterId?.ToString(), chapterName);
+            row.CreatedAt, isOwn, photoThumbnailUrl, userAvatar, personaId, row.ChapterId?.ToString(), chapterName,
+            row.SubjectDate);
 }

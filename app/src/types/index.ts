@@ -224,6 +224,7 @@ export class Recuerdo {
   photoThumbnailUrl?: string;
   chapterId?: string;
   chapterName?: string;
+  subjectDate?: string;
 
   constructor(data: RecuerdoDto) {
     this.id = data.id;
@@ -237,6 +238,7 @@ export class Recuerdo {
     this.photoThumbnailUrl = data.photoThumbnailUrl ?? undefined;
     this.chapterId = data.chapterId ?? undefined;
     this.chapterName = data.chapterName ?? undefined;
+    this.subjectDate = data.subjectDate ?? undefined;
   }
 }
 

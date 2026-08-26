@@ -37,7 +37,8 @@ public sealed record RecuerdoListRow(
     string Text,
     DateTime CreatedAt,
     string? PhotoStorageKey,
-    string? ChapterName
+    string? ChapterName,
+    DateTime? SubjectDate
 );
 
 // Assembles a batch of IRecuerdoListReadModel rows from already-fetched recuerdos plus
@@ -60,10 +61,19 @@ public static class RecuerdoListRowFactory
             // ChapterId stays authoritative. See #60.
             var effectiveChapterId = r.PhotoId is not null ? photo?.ChapterId : r.ChapterId;
 
+            // SubjectDate is only ever computed for photo-scoped recuerdos (a chapter-/baúl-
+            // scoped recuerdo has no photo to date itself by) — null when the photo itself is
+            // undated. Same Year/Month??1/Day??1 collapse PhotoOrdering.OrderByChronology()
+            // uses to turn a partial PhotoDate into a comparable DateTime.
+            var subjectDate = photo?.TakenAt is { } takenAt
+                ? new DateTime(takenAt.Year, takenAt.Month ?? 1, takenAt.Day ?? 1)
+                : (DateTime?)null;
+
             return new RecuerdoListRow(
                 r.Id, r.PhotoId, effectiveChapterId, r.BaulId, r.UserId, r.Text, r.CreatedAt,
                 photo?.StorageKey,
-                effectiveChapterId is { } chapterId ? chapterNamesById.GetValueOrDefault(chapterId) : null);
+                effectiveChapterId is { } chapterId ? chapterNamesById.GetValueOrDefault(chapterId) : null,
+                subjectDate);
         })
         .ToList();
 }

@@ -10639,6 +10639,11 @@
           "chapterName": {
             "type": "string",
             "nullable": true
+          },
+          "subjectDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false

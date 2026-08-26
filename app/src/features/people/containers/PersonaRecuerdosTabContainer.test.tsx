@@ -86,6 +86,37 @@ describe('PersonaRecuerdosTabContainer', () => {
     expect(screen.getByText('De otra persona')).toBeInTheDocument();
   });
 
+  it('orders recuerdos by their photo subjectDate descending, not by createdAt', () => {
+    usePersonasStore.setState({ personaPhotos: { [personaId]: ['photo-1', 'photo-2', 'photo-3'] } });
+    useRecuerdosStore.setState({
+      baulRecuerdos: {
+        [baulId]: [
+          recuerdo({
+            id: 'written-recently-about-old-photo', text: 'Recuerdo antiguo escrito hace poco', photoId: 'photo-1',
+            createdAt: '2024-01-01T00:00:00.000Z', subjectDate: '1990-06-01T00:00:00.000Z',
+          }),
+          recuerdo({
+            id: 'written-long-ago-about-recent-photo', text: 'Recuerdo reciente escrito hace tiempo', photoId: 'photo-2',
+            createdAt: '2018-01-01T00:00:00.000Z', subjectDate: '2020-01-01T00:00:00.000Z',
+          }),
+          recuerdo({
+            id: 'undated-photo', text: 'Recuerdo de foto sin fecha', photoId: 'photo-3',
+            createdAt: '2022-01-01T00:00:00.000Z', subjectDate: undefined,
+          }),
+        ],
+      },
+    });
+
+    renderContainer();
+
+    const texts = screen.getAllByText(/Recuerdo/).map((el) => el.textContent);
+    expect(texts).toEqual([
+      'Recuerdo de foto sin fecha', // no subjectDate, falls back to createdAt 2022
+      'Recuerdo reciente escrito hace tiempo', // subjectDate 2020
+      'Recuerdo antiguo escrito hace poco', // subjectDate 1990
+    ]);
+  });
+
   it('shows the empty state when there are no matching recuerdos', () => {
     usePersonasStore.setState({ personaPhotos: { [personaId]: [] } });
     useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });

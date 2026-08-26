@@ -37,7 +37,15 @@ export function PersonaRecuerdosTabContainer({ baulId, personaId }: PersonaRecue
   const { editRecuerdo, shareRecuerdo } = useRecuerdoActions(baulName);
 
   const taggedPhotoIds = new Set(personaPhotos[personaId] || []);
-  const recuerdos = (baulRecuerdos[baulId] || []).filter((recuerdo) => !!recuerdo.photoId && taggedPhotoIds.has(recuerdo.photoId));
+  // Ordered by the depicted photo's own date (SubjectDate), newest first, so this timeline
+  // matches the person's life rather than when each recuerdo happened to be written — a
+  // recuerdo on an undated photo (subjectDate == null) falls back to sorting by its own
+  // CreatedAt, interleaving naturally with dated ones instead of being pushed to the bottom.
+  // Client-side only: the backend feed/chapter orderings stay CreatedAt-based, unchanged.
+  const recuerdos = (baulRecuerdos[baulId] || [])
+    .filter((recuerdo) => !!recuerdo.photoId && taggedPhotoIds.has(recuerdo.photoId))
+    .slice()
+    .sort((a, b) => new Date(b.subjectDate ?? b.createdAt).getTime() - new Date(a.subjectDate ?? a.createdAt).getTime());
 
   if (recuerdos.length === 0) {
     return (
