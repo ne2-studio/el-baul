@@ -97,3 +97,49 @@ describe('PersonaDetailRoute biografía tab visibility', () => {
     expect(screen.getByText('Contenido · Fotos')).toBeInTheDocument();
   });
 });
+
+describe('PersonaDetailRoute Hero badge and subtext', () => {
+  beforeEach(() => {
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
+    useAppConfigStore.setState({ biografiaEnabled: false });
+    vi.clearAllMocks();
+  });
+
+  it('shows "Ya pertenece al baúl" for an active persona', () => {
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona({ status: 'active', role: 'colaborador' })] },
+      personaPhotos: { [personaId]: [] },
+    });
+
+    renderRoute();
+
+    expect(screen.getByText('Ya pertenece al baúl')).toBeInTheDocument();
+    expect(screen.getByText('Colaborador')).toBeInTheDocument();
+  });
+
+  it('shows "Aún no se ha unido" for a pending persona with access', () => {
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona({ status: 'pending', role: 'colaborador' })] },
+      personaPhotos: { [personaId]: [] },
+    });
+
+    renderRoute();
+
+    expect(screen.getByText('Aún no se ha unido')).toBeInTheDocument();
+    expect(screen.getByText('Colaborador')).toBeInTheDocument();
+  });
+
+  it('shows the "Sin acceso" copy and badge for a pending persona without access', () => {
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona({ status: 'pending', role: 'sin_acceso' })] },
+      personaPhotos: { [personaId]: [] },
+    });
+
+    renderRoute();
+
+    expect(
+      screen.getByText('Forma parte de la historia de la familia, pero no tiene acceso al baúl')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Sin acceso')).toBeInTheDocument();
+  });
+});

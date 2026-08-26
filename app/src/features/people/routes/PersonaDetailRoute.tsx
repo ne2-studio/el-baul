@@ -85,11 +85,13 @@ export const PersonaDetailRoute: React.FC = () => {
           <p className="text-sm text-white/80 mt-1 italic">"{persona.nickname}"</p>
         )}
         <div className="flex items-center gap-2 mt-2">
-          {!isPersonaPending && (
-            <RoleBadge role={persona.role} isCustodio={persona.isCustodio} tone="onImage" />
-          )}
+          <RoleBadge role={persona.role} isCustodio={persona.isCustodio} tone="onImage" />
           <span className="text-xs text-white/70">
-            {isPersonaPending ? 'Todavía no se ha unido' : 'Ya pertenece al baúl'}
+            {!isPersonaPending
+              ? 'Ya pertenece al baúl'
+              : persona.role === 'sin_acceso'
+                ? 'Forma parte de la historia de la familia, pero no tiene acceso al baúl'
+                : 'Aún no se ha unido'}
           </span>
         </div>
       </Hero>
