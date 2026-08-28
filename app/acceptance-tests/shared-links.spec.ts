@@ -35,7 +35,10 @@ test('share recuerdo from the feed → public landing renders Open Graph metadat
 
   await page.goto(shared.url);
   await expect(page.locator('blockquote')).toContainText(recuerdoText);
-  await expect(page.getByRole('link', { name: 'Ver en El Baúl' })).toHaveAttribute('href', new RegExp(`/baules/${baulId}$`));
+  await expect(page.getByRole('link', { name: 'Ver en El Baúl' })).toHaveAttribute(
+    'href',
+    new RegExp(`/baules/${baulId}\\?entry=link$`),
+  );
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', `Un recuerdo de ${baulName}`);
   await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', recuerdoText);
 });
@@ -59,7 +62,7 @@ test('share photo from the viewer → public landing includes the shared image p
   await expect(page.locator('img.photo')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Ver en El Baúl' })).toHaveAttribute(
     'href',
-    new RegExp(`/baules/${baulId}/capitulos/${chapterId}/foto/${photo.id}$`),
+    new RegExp(`/baules/${baulId}/capitulos/${chapterId}/foto/${photo.id}\\?entry=link$`),
   );
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', `Una foto de ${baulName}`);
   const ogImage = await page.locator('meta[property="og:image"]').getAttribute('content');
