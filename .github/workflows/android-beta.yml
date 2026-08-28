@@ -34,7 +34,7 @@ jobs:
 
       # Must match capacitor.build.gradle's sourceCompatibility/targetCompatibility (21).
       - name: Setup JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
