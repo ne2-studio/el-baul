@@ -171,6 +171,9 @@ public class PersonaInviteManager(
     private string BuildPublicUrl(string token) =>
         $"{appConfiguration.ApiPublicUrl.TrimEnd('/')}/invitacion/baul/{Uri.EscapeDataString(token)}";
 
+    // entry=link marca la sesión como llegada por enlace compartido para analytics.session-open
+    // (ver app/src/utils/entrySource.ts). Es el CTA de la landing pública el que entra a la app,
+    // así que es aquí donde se estampa, no en BuildPublicUrl (esa URL la abren también crawlers).
     private string BuildAppUrl(string token) =>
-        $"{appConfiguration.PublicUrl.TrimEnd('/')}/invitacion/baul/{Uri.EscapeDataString(token)}";
+        $"{appConfiguration.PublicUrl.TrimEnd('/')}/invitacion/baul/{Uri.EscapeDataString(token)}?entry=link";
 }

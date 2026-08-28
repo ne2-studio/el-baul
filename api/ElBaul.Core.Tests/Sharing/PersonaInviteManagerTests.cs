@@ -177,7 +177,7 @@ public class PersonaInviteManagerTests
         var landing = await manager.GetLandingAsync(invite.Value.Token);
 
         Assert.True(landing.IsSuccess);
-        Assert.Equal($"https://app.el-baul.test/invitacion/baul/{invite.Value.Token}", landing.Value.AppUrl);
+        Assert.Equal($"https://app.el-baul.test/invitacion/baul/{invite.Value.Token}?entry=link", landing.Value.AppUrl);
     }
 
     // --- AcceptAsync ---

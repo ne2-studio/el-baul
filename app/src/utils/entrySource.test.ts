@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ENTRY_SOURCE_PARAM, getEntrySource, resolveEntrySourceForSessionOpen } from './entrySource';
+import { appendEntrySource, ENTRY_SOURCE_PARAM, getEntrySource, resolveEntrySourceForSessionOpen } from './entrySource';
 
 describe('getEntrySource', () => {
   it('reconoce entry=push', () => {
@@ -32,23 +32,33 @@ describe('getEntrySource', () => {
 });
 
 describe('resolveEntrySourceForSessionOpen', () => {
-  it('respeta un entry=push explícito aunque la ruta no sea la raíz', () => {
-    expect(resolveEntrySourceForSessionOpen('/baules/123', `?${ENTRY_SOURCE_PARAM}=push`)).toBe('push');
+  it('respeta un entry=push explícito', () => {
+    expect(resolveEntrySourceForSessionOpen(`?${ENTRY_SOURCE_PARAM}=push`)).toBe('push');
   });
 
   it('respeta un entry=email explícito', () => {
-    expect(resolveEntrySourceForSessionOpen('/baules/123', `?${ENTRY_SOURCE_PARAM}=email`)).toBe('email');
+    expect(resolveEntrySourceForSessionOpen(`?${ENTRY_SOURCE_PARAM}=email`)).toBe('email');
   });
 
-  it('infiere direct al aterrizar en la raíz sin query', () => {
-    expect(resolveEntrySourceForSessionOpen('/', '')).toBe('direct');
+  it('respeta un entry=link explícito', () => {
+    expect(resolveEntrySourceForSessionOpen(`?foo=bar&${ENTRY_SOURCE_PARAM}=link`)).toBe('link');
   });
 
-  it('infiere link al aterrizar en cualquier otra ruta sin entry explícito', () => {
-    expect(resolveEntrySourceForSessionOpen('/s/abc123', '')).toBe('link');
+  it('trata como direct cualquier apertura sin entry explícito', () => {
+    expect(resolveEntrySourceForSessionOpen('')).toBe('direct');
   });
 
-  it('ignora un entry no reconocido y sigue infiriendo por la ruta', () => {
-    expect(resolveEntrySourceForSessionOpen('/', `?${ENTRY_SOURCE_PARAM}=utm_campaign`)).toBe('direct');
+  it('trata como direct un entry no reconocido', () => {
+    expect(resolveEntrySourceForSessionOpen(`?${ENTRY_SOURCE_PARAM}=utm_campaign`)).toBe('direct');
+  });
+});
+
+describe('appendEntrySource', () => {
+  it('usa ? cuando la ruta no tiene query', () => {
+    expect(appendEntrySource('/invitacion/baul/tok/aceptar', 'link')).toBe('/invitacion/baul/tok/aceptar?entry=link');
+  });
+
+  it('usa & cuando la ruta ya tiene query', () => {
+    expect(appendEntrySource('/baules/1?tab=fotos', 'link')).toBe('/baules/1?tab=fotos&entry=link');
   });
 });

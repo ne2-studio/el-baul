@@ -65,7 +65,7 @@ describe('AcceptBaulInviteRoute', () => {
 
     renderRoute();
 
-    expect(screen.getByText('/?redirectTo=%2Finvitacion%2Fbaul%2Finvite-token%2Faceptar')).toBeInTheDocument();
+    expect(screen.getByText('/?redirectTo=%2Finvitacion%2Fbaul%2Finvite-token%2Faceptar%3Fentry%3Dlink')).toBeInTheDocument();
     expect(api.personaInvites.accept).not.toHaveBeenCalled();
   });
 

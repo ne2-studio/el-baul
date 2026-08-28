@@ -56,7 +56,7 @@ describe('BaulGlobalInvitacionRoute', () => {
     await user.click(await screen.findByRole('button', { name: 'Unirme al Baúl' }));
 
     expect(api.personaInvites.getPreview).toHaveBeenCalledWith('invite-token');
-    expect(screen.getByText('/onboarding?baulNombre=Ba%C3%BAl+de+los+Garc%C3%ADa&redirectTo=%2Finvitacion%2Fbaul%2Finvite-token%2Faceptar&token=invite-token')).toBeInTheDocument();
+    expect(screen.getByText('/onboarding?baulNombre=Ba%C3%BAl+de+los+Garc%C3%ADa&redirectTo=%2Finvitacion%2Fbaul%2Finvite-token%2Faceptar%3Fentry%3Dlink&token=invite-token')).toBeInTheDocument();
   });
 
   it('shows the invalid invitation fallback when preview loading fails', async () => {

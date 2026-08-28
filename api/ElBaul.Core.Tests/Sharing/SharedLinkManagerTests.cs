@@ -70,7 +70,7 @@ public class SharedLinkManagerTests
         Assert.Equal("Un recuerdo familiar", landing.Value.RecuerdoText);
         Assert.Equal("Pedro", landing.Value.AuthorName);
         Assert.Equal("https://imgproxy.test/PhotoFull/photo-key", landing.Value.ImageUrl);
-        Assert.Equal($"https://app.el-baul.test/baules/{photo.BaulId}/capitulos/{photo.ChapterId}/foto/{photo.Id}", landing.Value.AppUrl);
+        Assert.Equal($"https://app.el-baul.test/baules/{photo.BaulId}/capitulos/{photo.ChapterId}/foto/{photo.Id}?entry=link", landing.Value.AppUrl);
     }
 
     [Fact]

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { InvitacionScreen } from '@/features/sharing/components/InvitacionScreen';
 import { usePostHog } from 'posthog-js/react';
 import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
+import { appendEntrySource } from '@/utils/entrySource';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 import { PersonaInvitePreview } from '@/types';
@@ -72,7 +73,9 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
     const params = new URLSearchParams();
     if (preview && token) {
       params.set('baulNombre', preview.name);
-      params.set('redirectTo', `/invitacion/baul/${token}/aceptar`);
+      // Llegar a esta pantalla == se abrió un enlace de invitación: propaga entry=link por el
+      // salto a onboarding (y de ahí al login) para que reportSessionOpen lo vea al final.
+      params.set('redirectTo', appendEntrySource(`/invitacion/baul/${token}/aceptar`, 'link'));
       // Lets OnboardingRoute re-fetch the full public preview (real photos, cover, persona
       // avatars) to personalize the carousel instead of the generic signup version.
       params.set('token', token);

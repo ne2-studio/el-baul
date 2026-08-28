@@ -130,16 +130,18 @@ public class SharedLinkManager(
     private string BuildPublicUrl(string token) =>
         $"{appConfiguration.ApiPublicUrl.TrimEnd('/')}/s/{Uri.EscapeDataString(token)}";
 
+    // entry=link marca la sesión como llegada por enlace compartido para analytics.session-open
+    // (ver app/src/utils/entrySource.ts). Va en el CTA de la landing pública (BuildPublicUrl),
+    // que es lo que de verdad entra a la app; ninguna de estas rutas lleva query propio.
     private string BuildAppUrl(SharedLink sharedLink, Photo? photo)
     {
         var baseUrl = appConfiguration.PublicUrl.TrimEnd('/');
-        if (photo is not null)
-        {
-            return photo.ChapterId is { } chapterId
-                ? $"{baseUrl}/baules/{sharedLink.BaulId}/capitulos/{chapterId}/foto/{photo.Id}"
-                : $"{baseUrl}/baules/{sharedLink.BaulId}/fotos-sueltas/foto/{photo.Id}";
-        }
-        return $"{baseUrl}/baules/{sharedLink.BaulId}";
+        var path = photo is not null
+            ? photo.ChapterId is { } chapterId
+                ? $"/baules/{sharedLink.BaulId}/capitulos/{chapterId}/foto/{photo.Id}"
+                : $"/baules/{sharedLink.BaulId}/fotos-sueltas/foto/{photo.Id}"
+            : $"/baules/{sharedLink.BaulId}";
+        return $"{baseUrl}{path}?entry=link";
     }
 
     private static string Truncate(string text, int maxLength) =>

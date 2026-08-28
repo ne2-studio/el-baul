@@ -22,6 +22,14 @@ describe('reportSessionOpen', () => {
     expect(api.analytics.reportSessionOpen).toHaveBeenCalledWith('desktop_browser', 'direct');
   });
 
+  it('reports the entry source from the current URL', async () => {
+    window.history.pushState({}, '', '/invitacion/baul/tok/aceptar?entry=link');
+
+    await reportSessionOpen(10_000_000_000);
+
+    expect(api.analytics.reportSessionOpen).toHaveBeenCalledWith('desktop_browser', 'link');
+  });
+
   it('does not report again within 30 minutes of the last report', async () => {
     const now = 10_000_000_000;
     await reportSessionOpen(now);

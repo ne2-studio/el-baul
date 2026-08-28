@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { usePostHog } from 'posthog-js/react';
 import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
+import { appendEntrySource } from '@/utils/entrySource';
 import { useUIStore } from '@/store/uiStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { api } from '@/api';
@@ -24,7 +25,7 @@ export const AcceptBaulInviteRoute: React.FC = () => {
     const performAccept = async () => {
       if (!token || !auth.isAuthenticated) {
         if (!auth.isAuthenticated) {
-          navigate(`/?redirectTo=${encodeURIComponent(`/invitacion/baul/${token}/aceptar`)}`);
+          navigate(`/?redirectTo=${encodeURIComponent(appendEntrySource(`/invitacion/baul/${token}/aceptar`, 'link'))}`);
         } else {
           navigate('/baules');
         }

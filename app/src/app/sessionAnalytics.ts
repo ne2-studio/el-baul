@@ -20,7 +20,7 @@ export async function reportSessionOpen(now: number = Date.now()): Promise<void>
 
   try {
     const platform = getClientPlatform();
-    const entrySource = resolveEntrySourceForSessionOpen(window.location.pathname, window.location.search);
+    const entrySource = resolveEntrySourceForSessionOpen(window.location.search);
     await api.analytics.reportSessionOpen(platform, entrySource);
     writeString(LAST_REPORTED_AT_STORAGE_KEY, String(now));
   } catch (error) {
