@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { usePostHog } from 'posthog-js/react';
+import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
 import { useUIStore } from '@/store/uiStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { api } from '@/api';
@@ -32,7 +33,14 @@ export const AcceptBaulInviteRoute: React.FC = () => {
 
       try {
         const persona = await api.personaInvites.accept(token);
-        posthog.capture('invite_accepted');
+        // Fire-and-forget: keep the hash off the join/navigation path.
+        void hashInviteToken(token).then((inviteTokenHash) =>
+          posthog.capture('invite_accepted', {
+            baulId: persona.baulId,
+            personaId: persona.id,
+            inviteTokenHash,
+          })
+        );
         // El baúl al que se acaba de unir pasa a ser el CurrentBaul — es el que quiere usar
         // a continuación, no el que tuviera activo antes de aceptar la invitación.
         useCurrentBaulStore.getState().setCurrentBaulId(persona.baulId);

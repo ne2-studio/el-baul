@@ -1,5 +1,5 @@
 import { PhotoCrop, api } from '@/api';
-import { Baul, BaulRole, Persona, Photo } from '@/types';
+import { Baul, BaulRole, Persona, PersonaInvite, Photo } from '@/types';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
@@ -24,7 +24,7 @@ export async function sharePersonaInvite(
   baul: Pick<Baul, 'id' | 'name'>,
   persona: Pick<Persona, 'id' | 'nickname'>,
   onCopied: () => void
-): Promise<void> {
+): Promise<PersonaInvite> {
   const invite = await api.baules.invitePersona(baul.id, persona.id);
   await sharePublicLink({
     title: `Invitación a ${baul.name}`,
@@ -32,6 +32,7 @@ export async function sharePersonaInvite(
     url: invite.url,
     onCopied,
   });
+  return invite;
 }
 
 export async function loadPersonas(baulId: string): Promise<void> {

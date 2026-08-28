@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvitacionScreen } from '@/features/sharing/components/InvitacionScreen';
 import { usePostHog } from 'posthog-js/react';
+import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 import { PersonaInvitePreview } from '@/types';
@@ -24,7 +25,12 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
         setLoading(true);
         const previewData = await api.personaInvites.getPreview(token);
         setPreview(previewData);
-        posthog.capture('invite_viewed');
+        // Fire-and-forget: the hash isn't on the render path, so we don't await it here.
+        // personaId is deliberately absent — the public preview never exposes which persona
+        // the token targets (see PersonaInviteManager.GetPreviewAsync).
+        void hashInviteToken(token).then((inviteTokenHash) =>
+          posthog.capture('invite_viewed', { baulId: previewData.baulId, inviteTokenHash })
+        );
       } catch (error) {
         console.error('Error loading invitation data:', error);
         showToastMessage('Error al cargar la invitación', 'error');

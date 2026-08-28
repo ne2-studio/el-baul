@@ -8,6 +8,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { Persona } from '@/types';
+import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
 import { usePostHog } from 'posthog-js/react';
 
 // "Invitar a la familia" full page — replaces the old InviteFamilyModal's single, baúl-wide
@@ -34,7 +35,14 @@ export const InvitarFamiliaRoute: React.FC = () => {
       () => sharePersonaInvite(baul, persona, () => showToastMessage('Enlace copiado al portapapeles')),
       { key: `invite:${persona.id}`, errorMessage: 'Error al invitar' },
     );
-    if (result.ok) posthog.capture('family_invite_shared', { context: 'new' });
+    if (result.ok) {
+      posthog.capture('family_invite_shared', {
+        context: 'new',
+        baulId: baul.id,
+        personaId: persona.id,
+        inviteTokenHash: await hashInviteToken(result.value.token),
+      });
+    }
     setInvitingPersonaId(null);
   };
 

@@ -15,6 +15,7 @@ import {
 } from '@/design-system/components/ui/dropdown-menu';
 import { PhotoCrop, api } from '@/api';
 import { BaulRole, Persona, Photo } from '@/types';
+import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
 import { getBaulPermissions, getPersonaPermissions } from '@/utils/roleUtils';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
@@ -120,8 +121,15 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
     run(() => sharePersonaInvite(currentBaul!, persona, () => showToastMessage('Enlace copiado al portapapeles')), {
       key: 'invite',
       errorMessage: 'Error al invitar',
-    }).then((result) => {
-      if (result.ok) posthog.capture('family_invite_shared', { context: 'resend' });
+    }).then(async (result) => {
+      if (result.ok) {
+        posthog.capture('family_invite_shared', {
+          context: 'resend',
+          baulId,
+          personaId: persona.id,
+          inviteTokenHash: await hashInviteToken(result.value.token),
+        });
+      }
     });
   };
 

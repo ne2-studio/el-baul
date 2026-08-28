@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Baul, Persona } from '@/types';
+import { Baul, Persona, PersonaInvite } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
@@ -136,7 +136,9 @@ describe('PersonaSettingsMenuContainer', () => {
 
   it('sends an invitation for a pending, invitable persona', async () => {
     const user = userEvent.setup();
-    vi.mocked(sharePersonaInvite).mockResolvedValue(undefined);
+    vi.mocked(sharePersonaInvite).mockResolvedValue(
+      new PersonaInvite({ token: 'tok', url: 'https://api.el-baul.test/invitacion/baul/tok' })
+    );
 
     renderContainer(persona({ status: 'pending', role: 'colaborador' }));
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
