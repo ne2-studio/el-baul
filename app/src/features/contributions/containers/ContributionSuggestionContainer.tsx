@@ -5,6 +5,7 @@ import { confirmPhotoHasNoPersonas, setTaggedPersonas } from '@/features/photos/
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { Photo } from '@/types';
+import { usePostHog } from 'posthog-js/react';
 
 // Subtexto de WriteMemorySuggestionScreen cuando esta pantalla se reconvierte en ella tras "no
 // hay nadie en esta foto" — ver handleConfirmNoPersonas más abajo.
@@ -32,6 +33,7 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
   // ya sabe que no tiene personas (confirmPhotoHasNoPersonas ya se llamó).
   const [showMemoryFallback, setShowMemoryFallback] = useState(false);
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
 
   const toggle = (personaId: string) =>
     setSelectedIds((ids) => (ids.includes(personaId) ? ids.filter((id) => id !== personaId) : [...ids, personaId]));
@@ -42,7 +44,10 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
       successMessage: 'Gracias por ayudar a recordar. Tu familia te lo agradece',
       errorMessage: 'No se pudieron guardar las personas etiquetadas',
     });
-    if (result.ok) onResolved();
+    if (result.ok) {
+      posthog.capture('contribution_suggestion_accepted', { type: 'tag_personas' });
+      onResolved();
+    }
   };
 
   const handleConfirmNoPersonas = async () => {
@@ -54,6 +59,7 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
       errorMessage: 'No se pudo guardar',
     });
     if (!result.ok) return;
+    posthog.capture('contribution_suggestion_accepted', { type: 'no_personas' });
     if (photo.recuerdoCount > 0) {
       onResolved();
       return;
@@ -78,7 +84,10 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
       personas={baulPersonas}
       selectedIds={selectedIds}
       onToggle={toggle}
-      onSkip={onResolved}
+      onSkip={() => {
+        posthog.capture('contribution_suggestion_rejected', { type: 'tag_personas' });
+        onResolved();
+      }}
       onSave={handleSave}
       onConfirmNoPersonas={handleConfirmNoPersonas}
       isSubmitting={isPending()}

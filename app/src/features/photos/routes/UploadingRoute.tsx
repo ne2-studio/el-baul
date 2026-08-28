@@ -6,6 +6,7 @@ import { uploadPhotosWithChapter } from '@/features/photos/useCases';
 import { UploadItemResult } from '@/features/photos/uploadFlow';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from 'react-oidc-context';
+import { usePostHog } from 'posthog-js/react';
 import {
   PhotoUploadDestination,
   resolvePhotoRouteContext,
@@ -29,6 +30,7 @@ export const UploadingRoute: React.FC = () => {
   const auth = useAuth();
   const { baules } = useBaulesStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
+  const posthog = usePostHog();
 
   const baul = baules.find(b => b.id === baulId);
   const { selectedPhotos, chapter, succeededCount: succeededSoFar = 0, returnTo } =
@@ -72,6 +74,11 @@ export const UploadingRoute: React.FC = () => {
       loosePhotos: [],
     });
     const errorPath = `${chapterPath}/error`;
+
+    posthog.capture('photos_upload_completed', {
+      succeeded_count: newlyUploaded.length + alreadyExisted.length,
+      failed_count: failed.length,
+    });
 
     if (failed.length === 0) {
       // Aterriza en la pantalla del batch recién subido (PhotoBatchGridRoute), no en el

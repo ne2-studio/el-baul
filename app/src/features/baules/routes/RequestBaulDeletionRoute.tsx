@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RequestBaulDeletionScreen } from '@/features/baules/components/RequestBaulDeletionScreen';
+import { usePostHog } from 'posthog-js/react';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { api } from '@/api';
@@ -11,6 +12,7 @@ export const RequestBaulDeletionRoute: React.FC = () => {
   const { baulId } = useParams();
   const { baules } = useBaulesStore();
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
 
   const baul = baules.find((b) => b.id === baulId);
   const canRequestBaulDeletion = getBaulPermissions(baul).canRequestBaulDeletion;
@@ -29,7 +31,10 @@ export const RequestBaulDeletionRoute: React.FC = () => {
       successMessage: 'Hemos recibido tu solicitud. Nuestro equipo de soporte se pondrá en contacto contigo.',
       errorMessage: 'No se pudo enviar la solicitud. Inténtalo de nuevo.',
     });
-    if (result.ok) navigate(`/baules/${baul.id}`);
+    if (result.ok) {
+      posthog.capture('baul_deletion_requested');
+      navigate(`/baules/${baul.id}`);
+    }
   };
 
   return (

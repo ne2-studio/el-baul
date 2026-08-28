@@ -72,7 +72,10 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       successMessage: 'Ficha actualizada',
       errorMessage: 'Error al actualizar la ficha',
     });
-    if (result.ok) setShowEditInfoModal(false);
+    if (result.ok) {
+      posthog.capture('persona_edited');
+      setShowEditInfoModal(false);
+    }
   };
 
   const handleUploadAvatar = (file: File, crop: PhotoCrop) => {
@@ -81,7 +84,10 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       successMessage: 'Foto de perfil actualizada',
       errorMessage: 'Error al subir la foto',
     }).then((result) => {
-      if (result.ok) setShowAvatarPicker(false);
+      if (result.ok) {
+        posthog.capture('persona_avatar_changed', { source: 'upload' });
+        setShowAvatarPicker(false);
+      }
     });
   };
 
@@ -91,7 +97,10 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       successMessage: 'Foto de perfil actualizada',
       errorMessage: 'Error al actualizar la foto',
     }).then((result) => {
-      if (result.ok) setShowAvatarPicker(false);
+      if (result.ok) {
+        posthog.capture('persona_avatar_changed', { source: 'existing_photo' });
+        setShowAvatarPicker(false);
+      }
     });
   };
 
@@ -112,7 +121,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       key: 'invite',
       errorMessage: 'Error al invitar',
     }).then((result) => {
-      if (result.ok) posthog.capture('family_invite_shared');
+      if (result.ok) posthog.capture('family_invite_shared', { context: 'resend' });
     });
   };
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from 'react-oidc-context';
+import { usePostHog } from 'posthog-js/react';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
@@ -22,6 +23,7 @@ const IS_ANDROID_WEB_BROWSER = isAndroidWebBrowser();
 // muestra. Ver androidAppBanner.ts para el enlace de apertura y el cooldown de cierre.
 export function AndroidAppBanner() {
   const auth = useAuth();
+  const posthog = usePostHog();
   const androidAppBannerEnabled = useAppConfigStore((state) => state.androidAppBannerEnabled);
   const googlePlayUrl = useAppConfigStore((state) => state.googlePlayUrl);
   const [dismissed, setDismissed] = useState(() => isAndroidAppBannerDismissed());
@@ -40,6 +42,7 @@ export function AndroidAppBanner() {
 
   const handleDismiss = () => {
     dismissAndroidAppBanner();
+    posthog.capture('native_app_banner_dismissed');
     setDismissed(true);
   };
 
@@ -55,6 +58,7 @@ export function AndroidAppBanner() {
         </div>
         <a
           href={buildAndroidAppIntentUrl(googlePlayUrl)}
+          onClick={() => posthog.capture('native_app_download_clicked')}
           className="shrink-0 bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Abrir

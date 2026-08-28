@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvitacionScreen } from '@/features/sharing/components/InvitacionScreen';
+import { usePostHog } from 'posthog-js/react';
 import { useUIStore } from '@/store/uiStore';
 import { api } from '@/api';
 import { PersonaInvitePreview } from '@/types';
@@ -10,6 +11,7 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
   const showToastMessage = useUIStore(state => state.showToastMessage);
+  const posthog = usePostHog();
 
   const [preview, setPreview] = useState<PersonaInvitePreview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,7 @@ export const BaulGlobalInvitacionRoute: React.FC = () => {
         setLoading(true);
         const previewData = await api.personaInvites.getPreview(token);
         setPreview(previewData);
+        posthog.capture('invite_viewed');
       } catch (error) {
         console.error('Error loading invitation data:', error);
         showToastMessage('Error al cargar la invitación', 'error');

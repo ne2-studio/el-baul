@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/design-system/components/ui/dropdown-menu';
 import { Photo } from '@/types';
+import { usePostHog } from 'posthog-js/react';
 import { getBaulPermissions } from '@/utils/roleUtils';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -38,6 +39,7 @@ export function ChapterSettingsMenuContainer({
   const navigate = useNavigate();
   const { baules } = useBaulesStore();
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
   const baulPermissions = getBaulPermissions(baules.find((b) => b.id === baulId));
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -49,13 +51,18 @@ export function ChapterSettingsMenuContainer({
       successMessage: 'Información del capítulo actualizada',
       errorMessage: 'Error al actualizar la información del capítulo',
     });
-    if (result.ok) setShowEditModal(false);
+    if (result.ok) {
+      posthog.capture('chapter_renamed');
+      setShowEditModal(false);
+    }
   };
 
   const handleSetChapterCover = (photo: Photo, crop: PhotoCrop) => {
     run(() => setChapterCover(baulId, chapterId, photo.id, crop, photo.thumbnailUrl), {
       successMessage: 'Portada del capítulo actualizada',
       errorMessage: 'Error al establecer la portada',
+    }).then((result) => {
+      if (result.ok) posthog.capture('chapter_cover_changed');
     });
   };
 
@@ -65,6 +72,7 @@ export function ChapterSettingsMenuContainer({
       errorMessage: 'Error al eliminar el capítulo',
     });
     if (result.ok) {
+      posthog.capture('chapter_deleted');
       navigate(`/baules/${baulId}`);
       setShowDeleteModal(false);
     }

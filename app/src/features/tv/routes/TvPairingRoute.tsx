@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, Tv } from 'lucide-react';
+import { usePostHog } from 'posthog-js/react';
 import { Button } from '@/design-system/components/actions/Button';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { BaulesLoadingScreen } from '@/features/baules/components/BaulesLoadingScreen';
@@ -25,6 +26,7 @@ export function TvPairingRoute() {
   const { code } = useParams<{ code: string }>();
   const { baules, isLoading: isLoadingBaules } = useBaulesStore();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
+  const posthog = usePostHog();
   const [screen, setScreen] = useState<Screen>({ status: 'picking' });
 
   if (isLoadingBaules) {
@@ -37,6 +39,7 @@ export function TvPairingRoute() {
     setScreen({ status: 'claiming' });
     try {
       await api.tvPairings.claim(code, baul.id);
+      posthog.capture('tv_paired');
       setScreen({ status: 'done', baulName: baul.name });
     } catch (error) {
       if (isApiErrorWithStatus(error, 404)) {

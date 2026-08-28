@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from 'react-oidc-context';
+import { usePostHog } from 'posthog-js/react';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -21,6 +22,7 @@ const IS_PUSH_NOTIFICATIONS_SUPPORTED = isPushNotificationsSupported();
 // NotificationPreferencesRoute. Ver pushNotificationsBannerUtils.ts para el cooldown de cierre.
 export function PushNotificationsBanner() {
   const auth = useAuth();
+  const posthog = usePostHog();
   const pushNotificationsEnabled = useAuthStore((state) => state.pushNotificationsEnabled);
   const { run, isPending } = useAsyncAction();
   const [dismissed, setDismissed] = useState(() => isPushNotificationsBannerDismissed());
@@ -32,6 +34,7 @@ export function PushNotificationsBanner() {
 
   const handleDismiss = () => {
     dismissPushNotificationsBanner();
+    posthog.capture('push_notifications_banner_dismissed');
     setDismissed(true);
   };
 
@@ -43,6 +46,8 @@ export function PushNotificationsBanner() {
         error instanceof PushPermissionDeniedError
           ? 'Activa los permisos de notificaciones desde los ajustes del sistema.'
           : 'No se pudieron activar las notificaciones push.',
+    }).then((result) => {
+      if (result.ok) posthog.capture('push_notifications_enabled');
     });
   };
 

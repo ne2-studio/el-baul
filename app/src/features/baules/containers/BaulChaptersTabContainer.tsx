@@ -39,7 +39,7 @@ export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChapte
       errorMessage: 'Error al crear el capítulo',
     });
     if (result.ok) {
-      posthog.capture('chapter_created');
+      posthog.capture('chapter_created', { source: 'chapters_tab' });
       setShowCreateChapterModal(false);
       onSelectChapter(result.value);
     }

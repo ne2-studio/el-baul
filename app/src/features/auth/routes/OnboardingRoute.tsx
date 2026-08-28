@@ -5,6 +5,7 @@ import { buildOnboardingSteps } from '@/features/auth/components/OnboardingSteps
 import { buildInvitePreviewSteps } from '@/features/auth/components/OnboardingInvitePreviewSteps';
 import { markOnboardingSeen } from '@/features/auth/useCases';
 import { useAuth } from 'react-oidc-context';
+import { usePostHog } from 'posthog-js/react';
 import { api } from '@/api';
 import { PersonaInvitePreview } from '@/types';
 
@@ -12,6 +13,7 @@ export const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const auth = useAuth();
+  const posthog = usePostHog();
   const baulNombre = searchParams.get('baulNombre') || 'Tu Primer Baúl';
   // The actual "accept this invite" path (persona- or token-scoped) the caller wants to land
   // on once onboarding is done — not just the baúl id, since accepting needs the specific
@@ -28,6 +30,13 @@ export const OnboardingRoute: React.FC = () => {
   // below rather than blocking or erroring the "ver más" detour.
   const [invitePreview, setInvitePreview] = useState<PersonaInvitePreview | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(isInvite && inviteToken !== null);
+
+  useEffect(() => {
+    // Solo el carrusel de alta cuenta como "onboarding" propiamente dicho — el detour de
+    // vista previa de invitación (isInvite) es una pantalla distinta, no el intro de la app.
+    if (!isInvite) posthog.capture('onboarding_started');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!isInvite || !inviteToken) return;
@@ -74,8 +83,14 @@ export const OnboardingRoute: React.FC = () => {
     navigate(nextTarget);
   };
 
-  const handleComplete = goToNextStep;
-  const handleSkip = goToNextStep;
+  const handleComplete = () => {
+    if (!isInvite) posthog.capture('onboarding_completed');
+    goToNextStep();
+  };
+  const handleSkip = () => {
+    if (!isInvite) posthog.capture('onboarding_skipped');
+    goToNextStep();
+  };
 
   if (isPreviewLoading) {
     return (

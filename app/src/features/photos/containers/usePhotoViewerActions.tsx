@@ -17,6 +17,7 @@ import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
+import { usePostHog } from 'posthog-js/react';
 
 interface UsePhotoViewerActionsOptions {
   baulId: string;
@@ -56,6 +57,7 @@ export function usePhotoViewerActions({
 }: UsePhotoViewerActionsOptions): UsePhotoViewerActionsResult {
   const auth = useAuth();
   const { run } = useAsyncAction();
+  const posthog = usePostHog();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   const hasRequestedRemoval = useUIStore((state) => state.hasRequestedPhotoRemoval(photo.id));
   const markPhotoRemovalRequested = useUIStore((state) => state.markPhotoRemovalRequested);
@@ -89,7 +91,10 @@ export function usePhotoViewerActions({
       errorMessage: 'Error al etiquetar personas',
     });
     setIsSubmittingTags(false);
-    if (result.ok) setShowTagModal(false);
+    if (result.ok) {
+      posthog.capture('person_tagged', { photo_count: 1 });
+      setShowTagModal(false);
+    }
   };
 
   const handleSharePhoto = async () => {
@@ -98,6 +103,7 @@ export function usePhotoViewerActions({
       errorMessage: 'Error al crear el enlace',
     });
     if (!result.ok) return;
+    posthog.capture('photo_shared');
     await sharePublicLink({
       title: `Foto de ${baulName}`,
       text: `Te comparto una foto de "${baulName}" en El Baúl.`,
@@ -107,13 +113,14 @@ export function usePhotoViewerActions({
   };
 
   const handleDownloadPhoto = async () => {
-    await run(async () => {
+    const result = await run(async () => {
       const { blob, fileName } = await api.photos.download(photo.id);
       await saveDownloadedPhoto(blob, fileName);
     }, {
       successMessage: Capacitor.isNativePlatform() ? 'Foto guardada en la galería' : undefined,
       errorMessage: 'Error al descargar la foto',
     });
+    if (result.ok) posthog.capture('photo_downloaded');
   };
 
   const handleDateSubmit = async (date: PhotoDate) => {
@@ -123,7 +130,10 @@ export function usePhotoViewerActions({
       errorMessage: 'Error al cambiar la fecha',
     });
     setIsSubmittingDate(false);
-    if (result.ok) setShowDateModal(false);
+    if (result.ok) {
+      posthog.capture('photo_date_changed', { action: 'set' });
+      setShowDateModal(false);
+    }
   };
 
   const handleClearDateConfirm = async () => {
@@ -133,7 +143,10 @@ export function usePhotoViewerActions({
       errorMessage: 'Error al borrar la fecha',
     });
     setIsClearingDate(false);
-    if (result.ok) setShowClearDateModal(false);
+    if (result.ok) {
+      posthog.capture('photo_date_changed', { action: 'clear' });
+      setShowClearDateModal(false);
+    }
   };
 
   const handleDeleteSubmit = async (reason: string) => {
@@ -144,6 +157,7 @@ export function usePhotoViewerActions({
     });
     setIsDeletingPhoto(false);
     if (result.ok) {
+      posthog.capture('photo_deleted');
       setShowDeleteModal(false);
       onDeleted();
     }
@@ -157,6 +171,7 @@ export function usePhotoViewerActions({
     });
     setIsSubmittingRemoval(false);
     if (result.ok) {
+      posthog.capture('photo_removal_requested');
       setShowRemovalModal(false);
       markPhotoRemovalRequested(photo.id);
     }
@@ -164,7 +179,10 @@ export function usePhotoViewerActions({
 
   const handleAddRecuerdo = (text: string) => {
     if (!auth.isAuthenticated) return;
-    run(() => addRecuerdoUseCase(baulId, photo.id, text), { errorMessage: 'Error al añadir el recuerdo' });
+    run(() => addRecuerdoUseCase(baulId, photo.id, text), { errorMessage: 'Error al añadir el recuerdo' })
+      .then((result) => {
+        if (result.ok) posthog.capture('recuerdo_created', { source: 'photo_viewer' });
+      });
   };
 
   const handleEditRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
@@ -173,6 +191,7 @@ export function usePhotoViewerActions({
       successMessage: 'Recuerdo actualizado',
       errorMessage: 'Error al guardar el recuerdo',
     });
+    if (result.ok) posthog.capture('recuerdo_edited');
     return result.ok;
   };
 
@@ -182,6 +201,7 @@ export function usePhotoViewerActions({
       errorMessage: 'Error al crear el enlace',
     });
     if (!result.ok) return;
+    posthog.capture('recuerdo_shared');
     await sharePublicLink({
       title: `Recuerdo de ${baulName}`,
       text: `Te comparto un recuerdo de "${baulName}" en El Baúl.`,

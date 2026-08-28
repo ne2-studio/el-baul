@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { usePostHog } from 'posthog-js/react';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { CoverPhotoPickerModal } from '@/features/photos/components/CoverPhotoPickerModal';
 import { BaulSettingsScreen } from '@/features/baules/components/BaulSettingsScreen';
@@ -22,6 +23,7 @@ export const BaulSettingsRoute: React.FC = () => {
   const { baulId } = useParams();
   const { removalRequests } = usePersonasStore();
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
@@ -40,13 +42,18 @@ export const BaulSettingsRoute: React.FC = () => {
       successMessage: 'Información del baúl actualizada',
       errorMessage: 'Error al actualizar la información del baúl',
     });
-    if (result.ok) setShowEditModal(false);
+    if (result.ok) {
+      posthog.capture('baul_renamed');
+      setShowEditModal(false);
+    }
   };
 
   const handleSetBaulCover = (photo: Photo, crop: PhotoCrop) => {
     run(() => setBaulCover(baul.id, photo.id, crop, photo.thumbnailUrl), {
       successMessage: 'Portada del baúl actualizada',
       errorMessage: 'Error al establecer la portada',
+    }).then((result) => {
+      if (result.ok) posthog.capture('baul_cover_changed');
     });
   };
 

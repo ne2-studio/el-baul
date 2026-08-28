@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { usePostHog } from 'posthog-js/react';
 import { Hero } from '@/design-system/layouts/Hero';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
@@ -26,7 +27,13 @@ import { useAppConfigStore } from '@/store/useAppConfigStore';
 export const PersonaDetailRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const posthog = usePostHog();
   const { baulId, personaId } = useParams();
+
+  useEffect(() => {
+    if (personaId) posthog.capture('person_viewed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personaId]);
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
 
   const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos' | 'biografia'>('fotos');

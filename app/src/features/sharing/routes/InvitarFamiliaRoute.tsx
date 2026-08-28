@@ -34,7 +34,7 @@ export const InvitarFamiliaRoute: React.FC = () => {
       () => sharePersonaInvite(baul, persona, () => showToastMessage('Enlace copiado al portapapeles')),
       { key: `invite:${persona.id}`, errorMessage: 'Error al invitar' },
     );
-    if (result.ok) posthog.capture('family_invite_shared');
+    if (result.ok) posthog.capture('family_invite_shared', { context: 'new' });
     setInvitingPersonaId(null);
   };
 

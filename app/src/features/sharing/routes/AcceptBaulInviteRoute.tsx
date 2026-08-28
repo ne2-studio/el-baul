@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
+import { usePostHog } from 'posthog-js/react';
 import { useUIStore } from '@/store/uiStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 import { api } from '@/api';
@@ -15,6 +16,7 @@ export const AcceptBaulInviteRoute: React.FC = () => {
   const navigate = useNavigate();
   const auth = useAuth();
   const { showToastMessage } = useUIStore();
+  const posthog = usePostHog();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,6 +32,7 @@ export const AcceptBaulInviteRoute: React.FC = () => {
 
       try {
         const persona = await api.personaInvites.accept(token);
+        posthog.capture('invite_accepted');
         // El baúl al que se acaba de unir pasa a ser el CurrentBaul — es el que quiere usar
         // a continuación, no el que tuviera activo antes de aceptar la invitación.
         useCurrentBaulStore.getState().setCurrentBaulId(persona.baulId);

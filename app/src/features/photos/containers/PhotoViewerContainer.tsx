@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useNavigate } from 'react-router-dom';
+import { usePostHog } from 'posthog-js/react';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
 import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { Photo } from '@/types';
@@ -43,10 +44,19 @@ export function PhotoViewerContainer({
 }: PhotoViewerContainerProps) {
   const auth = useAuth();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const { run, isPending } = useAsyncAction();
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
   const { personas, taggedPersonas } = usePersonasStore();
   const { recuerdos } = useRecuerdosStore();
+
+  // Se dispara al abrir el visor y en cada cambio de foto dentro de él (siguiente/anterior) —
+  // ambos son aperturas explícitas de contenido, no renders pasivos de una lista de miniaturas.
+  // Sin deduplicar: volver a una foto ya vista es comportamiento real, no ruido.
+  useEffect(() => {
+    posthog.capture('photo_viewed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photo.id]);
 
   useEffect(() => {
     if (auth.isAuthenticated) {

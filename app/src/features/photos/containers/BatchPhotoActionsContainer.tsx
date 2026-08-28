@@ -6,6 +6,7 @@ import { deletePhotosBatch, movePhotos } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, changePhotoDateBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Chapter, Photo, PhotoDate } from '@/types';
+import { usePostHog } from 'posthog-js/react';
 
 interface BatchPhotoActionsContainerProps {
   active: boolean;
@@ -35,6 +36,7 @@ export function BatchPhotoActionsContainer({
   const navigate = useNavigate();
   const { personas } = usePersonasStore();
   const { run } = useAsyncAction();
+  const posthog = usePostHog();
 
   const handleBatchMove = async (
     photoIds: string[],
@@ -45,7 +47,10 @@ export function BatchPhotoActionsContainer({
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto movida' : 'fotos movidas'}`,
       errorMessage: 'Algunas fotos no se pudieron mover',
     });
-    if (result.ok) navigate(`/baules/${baulId}/capitulos/${targetChapterId}`);
+    if (result.ok) {
+      posthog.capture('photos_batch_moved', { photo_count: photoIds.length });
+      navigate(`/baules/${baulId}/capitulos/${targetChapterId}`);
+    }
   };
 
   // Rama "Nuevo capítulo …" inline de MoveModal (issue #59): crea el capítulo y mueve la
@@ -68,7 +73,11 @@ export function BatchPhotoActionsContainer({
         errorMessage: 'Error al mover las fotos',
       }
     );
-    if (result.ok) navigate(`/baules/${baulId}/capitulos/${result.value.id}`);
+    if (result.ok) {
+      posthog.capture('chapter_created', { source: 'photos_batch_move' });
+      posthog.capture('photos_batch_moved', { photo_count: photoIds.length });
+      navigate(`/baules/${baulId}/capitulos/${result.value.id}`);
+    }
   };
 
   const handleBatchChangeDate = async (photoIds: string[], date: PhotoDate): Promise<boolean> => {
@@ -76,6 +85,7 @@ export function BatchPhotoActionsContainer({
       successMessage: `Fecha actualizada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
       errorMessage: 'Error al cambiar la fecha',
     });
+    if (result.ok) posthog.capture('photos_batch_date_changed', { photo_count: photoIds.length, action: 'set' });
     return result.ok;
   };
 
@@ -84,6 +94,7 @@ export function BatchPhotoActionsContainer({
       successMessage: `Fecha borrada en ${photoIds.length} ${photoIds.length === 1 ? 'foto' : 'fotos'}`,
       errorMessage: 'Error al borrar la fecha',
     });
+    if (result.ok) posthog.capture('photos_batch_date_changed', { photo_count: photoIds.length, action: 'clear' });
     return result.ok;
   };
 
@@ -99,7 +110,10 @@ export function BatchPhotoActionsContainer({
         errorMessage: 'Error al crear el capítulo',
       }
     );
-    if (result.ok) navigate(`/baules/${baulId}/capitulos/${result.value.id}`);
+    if (result.ok) {
+      posthog.capture('chapter_created', { source: 'photos_batch_selection' });
+      navigate(`/baules/${baulId}/capitulos/${result.value.id}`);
+    }
     return result.ok;
   };
 
@@ -108,6 +122,7 @@ export function BatchPhotoActionsContainer({
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto etiquetada' : 'fotos etiquetadas'}`,
       errorMessage: 'Error al etiquetar las fotos',
     });
+    if (result.ok) posthog.capture('photos_batch_tagged', { photo_count: photoIds.length });
     return result.ok;
   };
 
@@ -116,6 +131,7 @@ export function BatchPhotoActionsContainer({
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto borrada' : 'fotos borradas'}`,
       errorMessage: 'Error al borrar las fotos',
     });
+    if (result.ok) posthog.capture('photos_batch_deleted', { photo_count: photoIds.length });
     return result.ok;
   };
 

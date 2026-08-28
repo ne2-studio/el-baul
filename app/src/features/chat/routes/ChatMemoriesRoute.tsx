@@ -4,11 +4,13 @@ import { ChatMemoriesScreen } from '@/features/chat/components/ChatMemoriesScree
 import { deleteChatMemory, loadChatMemories, updateChatMemory } from '@/features/chat/useCases';
 import { useChatMemoriesStore } from '@/store/useChatMemoriesStore';
 import { ChatMemory } from '@/types';
+import { usePostHog } from 'posthog-js/react';
 
 export const ChatMemoriesRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
   const { baulId: activeBaulId, memories, isLoading, hasError } = useChatMemoriesStore();
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (!baulId) return;
@@ -19,12 +21,16 @@ export const ChatMemoriesRoute: React.FC = () => {
 
   const handleEdit = async (memory: ChatMemory, content: string) => {
     if (!baulId) return false;
-    return updateChatMemory(baulId, memory.id, content);
+    const ok = await updateChatMemory(baulId, memory.id, content);
+    if (ok) posthog.capture('chat_memory_edited');
+    return ok;
   };
 
   const handleDelete = async (memory: ChatMemory) => {
     if (!baulId) return false;
-    return deleteChatMemory(baulId, memory.id);
+    const ok = await deleteChatMemory(baulId, memory.id);
+    if (ok) posthog.capture('chat_memory_deleted');
+    return ok;
   };
 
   return (

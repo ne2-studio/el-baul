@@ -5,6 +5,7 @@ import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerCo
 import { MoveModal } from '@/features/photos/components/MoveModal';
 import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { Chapter, Photo } from '@/types';
+import { usePostHog } from 'posthog-js/react';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { movePhotos } from '@/features/photos/useCases';
 import { createChapter } from '@/features/chapters/useCases';
@@ -39,6 +40,7 @@ export function ChapterPhotoViewerContainer({
 }: ChapterPhotoViewerContainerProps) {
   const navigate = useNavigate();
   const { run } = useAsyncAction();
+  const posthog = usePostHog();
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
@@ -55,6 +57,7 @@ export function ChapterPhotoViewerContainer({
     const result = await run(async () => {
       if (newChapterName) {
         const newChapter = await createChapter(baulId, newChapterName);
+        posthog.capture('chapter_created', { source: 'photo_viewer' });
         await movePhotos(baulId, apiChapterId, [photo.id], newChapter.id);
         return newChapter.id;
       }

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { usePostHog } from 'posthog-js/react';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { Hero } from '@/design-system/layouts/Hero';
@@ -45,7 +46,13 @@ export const ChapterRoute: React.FC = () => {
   const location = useLocation();
   const { returnTab = 'capitulos' } = (location.state as LocationState) || {};
   const { baulId, chapterId } = useParams();
+  const posthog = usePostHog();
   const { photos } = useBaulesStore();
+
+  useEffect(() => {
+    if (chapterId) posthog.capture('chapter_viewed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterId]);
   const photosById = usePhotosStore((state) => state.photosById);
   // Solo para el badge de recuento del Tabbar y el modal de borrado — ChapterRecuerdosFeedContainer
   // lee los datos completos él mismo.

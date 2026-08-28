@@ -36,7 +36,7 @@ export function ChapterRecuerdosFeedContainer({
 
   const handleAddRecuerdo = (text: string) => {
     addChapterRecuerdo(baulId, chapterId, text)
-      .then(() => posthog.capture('memory_created'))
+      .then(() => posthog.capture('recuerdo_created', { source: 'chapter' }))
       .catch((error) => {
         console.error('Error adding recuerdo:', error);
         showToastMessage('Error al guardar el recuerdo', 'error');

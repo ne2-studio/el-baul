@@ -8,6 +8,7 @@ import { getPersonaPermissions } from '@/utils/roleUtils';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { updatePersonaBiografia } from '@/features/people/useCases';
+import { usePostHog } from 'posthog-js/react';
 
 interface PersonaBiografiaTabContainerProps {
   baulId: string;
@@ -21,6 +22,7 @@ interface PersonaBiografiaTabContainerProps {
 export function PersonaBiografiaTabContainer({ baulId, persona }: PersonaBiografiaTabContainerProps) {
   const { baules } = useBaulesStore();
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
   const [isEditingBiografia, setIsEditingBiografia] = useState(false);
 
   const currentBaul = baules.find((b) => b.id === baulId);
@@ -36,7 +38,10 @@ export function PersonaBiografiaTabContainer({ baulId, persona }: PersonaBiograf
       successMessage: 'Biografía actualizada',
       errorMessage: 'Error al actualizar la biografía',
     });
-    if (result.ok) setIsEditingBiografia(false);
+    if (result.ok) {
+      posthog.capture('persona_biografia_edited');
+      setIsEditingBiografia(false);
+    }
   };
 
   return (

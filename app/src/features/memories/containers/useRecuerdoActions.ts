@@ -4,6 +4,7 @@ import { editRecuerdo as editRecuerdoUseCase } from '@/features/memories/useCase
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
+import { usePostHog } from 'posthog-js/react';
 
 // Shared by BaulFeedTabContainer and ChapterRecuerdosFeedContainer — identical logic used to
 // be duplicated verbatim in BaulRoute and ChapterRoute. Not exported outside containers/: it's
@@ -11,12 +12,14 @@ import { useUIStore } from '@/store/uiStore';
 export function useRecuerdoActions(baulName: string) {
   const { run } = useAsyncAction();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
+  const posthog = usePostHog();
 
   const editRecuerdo = async (recuerdo: Recuerdo, text: string): Promise<boolean> => {
     const result = await run(() => editRecuerdoUseCase(recuerdo.id, text), {
       successMessage: 'Recuerdo actualizado',
       errorMessage: 'Error al guardar el recuerdo',
     });
+    if (result.ok) posthog.capture('recuerdo_edited');
     return result.ok;
   };
 
@@ -26,6 +29,7 @@ export function useRecuerdoActions(baulName: string) {
       errorMessage: 'Error al crear el enlace',
     });
     if (!result.ok) return;
+    posthog.capture('recuerdo_shared');
 
     await sharePublicLink({
       title: `Recuerdo de ${baulName}`,

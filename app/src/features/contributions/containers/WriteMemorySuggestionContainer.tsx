@@ -2,6 +2,7 @@ import { WriteMemorySuggestionScreen } from '@/features/contributions/components
 import { addRecuerdo } from '@/features/memories/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Photo } from '@/types';
+import { usePostHog } from 'posthog-js/react';
 
 interface WriteMemorySuggestionContainerProps {
   baulId: string;
@@ -22,19 +23,27 @@ interface WriteMemorySuggestionContainerProps {
 // cómo se elige entre las dos (decisión del backend, no de aquí).
 export function WriteMemorySuggestionContainer({ baulId, photo, onResolved, subtitle }: WriteMemorySuggestionContainerProps) {
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
 
   const handleSave = async (text: string) => {
     const result = await run(() => addRecuerdo(baulId, photo.id, text), {
       successMessage: 'Gracias por ayudar a recordar. Tu familia te lo agradece',
       errorMessage: 'No se pudo guardar el recuerdo',
     });
-    if (result.ok) onResolved();
+    if (result.ok) {
+      posthog.capture('contribution_suggestion_accepted', { type: 'recuerdo' });
+      posthog.capture('recuerdo_created', { source: 'contribution_suggestion' });
+      onResolved();
+    }
   };
 
   return (
     <WriteMemorySuggestionScreen
       photo={photo}
-      onSkip={onResolved}
+      onSkip={() => {
+        posthog.capture('contribution_suggestion_rejected', { type: 'recuerdo' });
+        onResolved();
+      }}
       onSave={handleSave}
       isSubmitting={isPending()}
       subtitle={subtitle}

@@ -1,15 +1,21 @@
 import React, { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { usePostHog } from 'posthog-js/react';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 
 export const CallbackRoute: React.FC = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (auth.isAuthenticated) {
+      // This route is only reached via the OIDC provider's redirect back after an actual
+      // login — a rehydrated/persisted session on page reload never routes through here — so
+      // this fires exactly once per real sign-in, not on every app load.
+      posthog.capture('user_signed_in');
       const redirectTo = (auth.user?.state as { redirectTo?: string } | undefined)?.redirectTo;
       navigate(redirectTo || '/baules', { replace: true });
       return;
