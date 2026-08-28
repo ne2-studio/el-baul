@@ -8,6 +8,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
 import { Persona } from '@/types';
+import { usePostHog } from 'posthog-js/react';
 
 // "Invitar a la familia" full page — replaces the old InviteFamilyModal's single, baúl-wide
 // link with a per-persona directed flow: one "Invitar" per Persona row, sharing that
@@ -17,6 +18,7 @@ export const InvitarFamiliaRoute: React.FC = () => {
   const { baulId } = useParams();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
   const [invitingPersonaId, setInvitingPersonaId] = useState<string | null>(null);
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
 
@@ -28,10 +30,11 @@ export const InvitarFamiliaRoute: React.FC = () => {
 
   const handleInvite = async (persona: Persona) => {
     setInvitingPersonaId(persona.id);
-    await run(() => sharePersonaInvite(baul, persona, () => showToastMessage('Enlace copiado al portapapeles')), {
-      key: `invite:${persona.id}`,
-      errorMessage: 'Error al invitar',
-    });
+    const result = await run(
+      () => sharePersonaInvite(baul, persona, () => showToastMessage('Enlace copiado al portapapeles')),
+      { key: `invite:${persona.id}`, errorMessage: 'Error al invitar' },
+    );
+    if (result.ok) posthog.capture('family_invite_shared');
     setInvitingPersonaId(null);
   };
 

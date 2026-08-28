@@ -9,6 +9,7 @@ import { Chapter } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { createChapter } from '@/features/chapters/useCases';
+import { usePostHog } from 'posthog-js/react';
 
 interface BaulChaptersTabContainerProps {
   baulId: string;
@@ -26,6 +27,7 @@ interface BaulChaptersTabContainerProps {
 export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChaptersTabContainerProps) {
   const { chapters } = useBaulesStore();
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
   const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
 
   const baulChapters = chapters[baulId] || [];
@@ -37,6 +39,7 @@ export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChapte
       errorMessage: 'Error al crear el capítulo',
     });
     if (result.ok) {
+      posthog.capture('chapter_created');
       setShowCreateChapterModal(false);
       onSelectChapter(result.value);
     }

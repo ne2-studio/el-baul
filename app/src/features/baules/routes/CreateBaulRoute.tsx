@@ -8,6 +8,7 @@ import { createBaul as storeCreateBaul } from '@/features/baules/useCases';
 import { useAuth } from 'react-oidc-context';
 import { useUIStore } from '@/store/uiStore';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { usePostHog } from 'posthog-js/react';
 
 function suggestBaulName(userFullName: string): string {
   const lastName = userFullName.trim().split(/\s+/).pop();
@@ -21,6 +22,7 @@ export const CreateBaulRoute: React.FC = () => {
   const { baules } = useBaulesStore();
   const { showToastMessage } = useUIStore();
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
 
   const handleCreateBaul = async (name: string) => {
     if (!auth.isAuthenticated) return;
@@ -30,6 +32,8 @@ export const CreateBaulRoute: React.FC = () => {
       errorMessage: 'Error al crear el baúl',
     });
     if (!result.ok) return;
+
+    posthog.capture('baul_created', { is_first_baul: isFirstBaul });
 
     // El baúl recién creado es el que el usuario va a usar a continuación — se convierte en el
     // CurrentBaul para que la app abra ahí la próxima vez, no en el que tuviera activo antes.

@@ -5,6 +5,7 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useUIStore } from '@/store/uiStore';
 import { resolvePhotoRouteContext, SelectedPhoto, UploadReturnTo } from '@/features/photos/uploadFlow';
+import { usePostHog } from 'posthog-js/react';
 
 interface LocationState {
   selectedPhotos?: SelectedPhoto[];
@@ -23,6 +24,7 @@ export const UploadConfirmationRoute: React.FC = () => {
   const { baules, chapters, loosePhotos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const showToastMessage = useUIStore(state => state.showToastMessage);
+  const posthog = usePostHog();
   const baul = baules.find(b => b.id === baulId);
   const existingChapters = chapters[baulId!] || [];
   const looseChapterPhotos = hydratePhotos(loosePhotos[baulId!], photosById) || [];
@@ -43,6 +45,10 @@ export const UploadConfirmationRoute: React.FC = () => {
       }
       onPhotosLimitExceeded={() => showToastMessage('Se ha limitado la selección a 30 fotos por subida.', 'error')}
       onUpload={(photos) => {
+        posthog.capture('photos_upload_started', {
+          photo_count: photos.length,
+          destination_type: destination.type,
+        });
         navigate(`${basePath}/subiendo`, { state: { selectedPhotos: photos, chapter: destination, returnTo } });
       }}
     />

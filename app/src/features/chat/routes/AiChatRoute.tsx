@@ -5,11 +5,13 @@ import { ChatMenuContainer } from '@/features/chat/containers/ChatMenuContainer'
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { useChatStore } from '@/store/useChatStore';
 import { loadChatConversation, sendChatMessage } from '@/features/chat/useCases';
+import { usePostHog } from 'posthog-js/react';
 
 export const AiChatRoute: React.FC = () => {
   const navigate = useNavigate();
   const { baulId } = useParams();
   const chatSuggestionsEnabled = useAppConfigStore(state => state.chatSuggestionsEnabled);
+  const posthog = usePostHog();
   const {
     activeBaulId,
     messages,
@@ -28,6 +30,7 @@ export const AiChatRoute: React.FC = () => {
   const handleSend = async (text: string) => {
     if (!baulId) return;
     await sendChatMessage(baulId, text);
+    if (!useChatStore.getState().hasError) posthog.capture('chat_message_sent');
   };
 
   const isCurrentBaul = baulId === activeBaulId;

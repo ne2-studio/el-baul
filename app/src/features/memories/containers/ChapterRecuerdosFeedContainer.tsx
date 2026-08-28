@@ -7,6 +7,7 @@ import { useUIStore } from '@/store/uiStore';
 import { addChapterRecuerdo } from '@/features/memories/useCases';
 import { Photo } from '@/types';
 import { useRecuerdoActions } from './useRecuerdoActions';
+import { usePostHog } from 'posthog-js/react';
 
 interface ChapterRecuerdosFeedContainerProps {
   active: boolean;
@@ -31,12 +32,15 @@ export function ChapterRecuerdosFeedContainer({
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   const { editRecuerdo, shareRecuerdo } = useRecuerdoActions(baulName);
+  const posthog = usePostHog();
 
   const handleAddRecuerdo = (text: string) => {
-    addChapterRecuerdo(baulId, chapterId, text).catch((error) => {
-      console.error('Error adding recuerdo:', error);
-      showToastMessage('Error al guardar el recuerdo', 'error');
-    });
+    addChapterRecuerdo(baulId, chapterId, text)
+      .then(() => posthog.capture('memory_created'))
+      .catch((error) => {
+        console.error('Error adding recuerdo:', error);
+        showToastMessage('Error al guardar el recuerdo', 'error');
+      });
   };
 
   const handleUserClick = (personaId: string) => {

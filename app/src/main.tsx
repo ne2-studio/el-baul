@@ -6,6 +6,8 @@ import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 
 import * as Sentry from "@sentry/react";
+import posthog from "posthog-js";
+import { PostHogErrorBoundary, PostHogProvider } from "posthog-js/react";
 
 import App from "./app/App.tsx";
 import { CrashFallback } from "@/design-system/components/feedback/CrashFallback";
@@ -20,6 +22,23 @@ initSentry();
 
 const isNative = Capacitor.isNativePlatform();
 const organizationId = getEnv('VITE_ZITADEL_ORGANIZATION_ID');
+const posthogProjectToken = getEnv('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN');
+const posthogHost = getEnv('VITE_PUBLIC_POSTHOG_HOST');
+
+if (!posthogProjectToken) {
+  if (import.meta.env.DEV) {
+    throw new Error('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
+  }
+} else if (!posthogHost) {
+  if (import.meta.env.DEV) {
+    throw new Error('VITE_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_HOST is configured');
+  }
+} else {
+  posthog.init(posthogProjectToken, {
+    api_host: posthogHost,
+    defaults: '2026-01-30',
+  });
+}
 
 // Instanciado nosotros mismos (en vez de dejar que <AuthProvider> lo construya) para poder
 // alimentarlo directamente con la URL de un deep link nativo — ver handleNativeCallback.
@@ -122,16 +141,20 @@ async function bootstrap() {
 
   createRoot(document.getElementById("root")!).render(
     <Sentry.ErrorBoundary fallback={<CrashFallback />}>
-      <AuthProvider
-        userManager={userManager}
-        onSigninCallback={() => {
-          window.history.replaceState({}, document.title, "/");
-        }}
-      >
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </AuthProvider>
+      <PostHogProvider client={posthog}>
+        <PostHogErrorBoundary>
+          <AuthProvider
+            userManager={userManager}
+            onSigninCallback={() => {
+              window.history.replaceState({}, document.title, "/");
+            }}
+          >
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </AuthProvider>
+        </PostHogErrorBoundary>
+      </PostHogProvider>
     </Sentry.ErrorBoundary>,
   );
 }

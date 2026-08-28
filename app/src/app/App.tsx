@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
+import { usePostHog } from 'posthog-js/react';
 import { Toast } from '@/design-system/components/feedback/Toast';
 import { AccessDeniedScreen } from '@/design-system/components/feedback/AccessDeniedScreen';
 import { ConnectivityLostScreen } from '@/design-system/components/feedback/ConnectivityLostScreen';
@@ -63,6 +64,8 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
+  const posthog = usePostHog();
+  const identifiedUserId = useRef<string | null>(null);
   const [isAccessDenied, setIsAccessDenied] = React.useState(false);
   const {
     showToast,
@@ -120,6 +123,7 @@ function App() {
   // dumping the user straight on the manual WelcomeScreen — see attemptAutoRelogin.
   useEffect(() => {
     const handleUnauthorized = () => {
+      posthog.reset();
       resetAllStores();
       auth.removeUser();
       const redirectTo = window.location.pathname + window.location.search;
@@ -144,6 +148,7 @@ function App() {
   // automático de un solo tiro.
   useEffect(() => {
     const handleSessionDrop = () => {
+      posthog.reset();
       const redirectTo = window.location.pathname + window.location.search;
       void attemptAutoRelogin(auth.signinRedirect, redirectTo).then((retried) => {
         if (!retried) {
@@ -159,6 +164,26 @@ function App() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // `sub` is the immutable subject returned by the OIDC provider, so it is the stable
+  // PostHog distinct ID. This runs once after login (and once when a persisted user is
+  // rehydrated), allowing errors and subsequent events to inherit the person automatically.
+  useEffect(() => {
+    if (!auth.isAuthenticated) {
+      identifiedUserId.current = null;
+      return;
+    }
+
+    const { sub, email, name } = auth.user?.profile ?? {};
+    if (typeof sub !== 'string' || !sub || identifiedUserId.current === sub) return;
+
+    if (identifiedUserId.current) posthog.reset();
+    posthog.identify(sub, {
+      ...(typeof email === 'string' && email ? { email } : {}),
+      ...(typeof name === 'string' && name ? { name } : {}),
+    });
+    identifiedUserId.current = sub;
+  }, [auth.isAuthenticated, auth.user?.profile, posthog]);
 
   // (Re)load domain data whenever the OIDC user changes.
   useEffect(() => {
@@ -215,6 +240,7 @@ function App() {
     // navega fuera de la app antes de que la promesa se cumpla.
     const result = await run(
       async () => {
+        posthog.reset();
         try {
           await auth.signoutRedirect();
         } catch (error) {

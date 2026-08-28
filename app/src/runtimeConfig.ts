@@ -10,7 +10,9 @@ type RuntimeEnvKey =
   | 'VITE_OIDC_CLIENT_ID'
   | 'VITE_OIDC_CALLBACK_URI'
   | 'VITE_ZITADEL_ORGANIZATION_ID'
-  | 'VITE_SENTRY_DSN';
+  | 'VITE_SENTRY_DSN'
+  | 'VITE_PUBLIC_POSTHOG_PROJECT_TOKEN'
+  | 'VITE_PUBLIC_POSTHOG_HOST';
 
 // Runtime override (window.__ENV__, set by the nginx entrypoint — see
 // docker-entrypoint.d/95-generate-runtime-env.sh) wins when present and non-empty; otherwise
