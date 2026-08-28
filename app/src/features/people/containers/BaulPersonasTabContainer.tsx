@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePostHog } from 'posthog-js/react';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
 import { UserPlus } from 'lucide-react';
 import { PersonasTab } from '@/features/people/components/PersonasTab';
@@ -24,6 +25,7 @@ export function BaulPersonasTabContainer({ baulId, canCreatePersona }: BaulPerso
   const { personas } = usePersonasStore();
   const { userProfile } = useAuthStore();
   const { run, isPending } = useAsyncAction();
+  const posthog = usePostHog();
   const [showNuevaPersonaModal, setShowNuevaPersonaModal] = useState(false);
 
   const handleSelectPersona = (persona: Persona) => {
@@ -32,7 +34,10 @@ export function BaulPersonasTabContainer({ baulId, canCreatePersona }: BaulPerso
 
   const handleSaveNuevaPersona = async (nickname: string, role: BaulRole) => {
     const result = await run(() => createPersona(baulId, nickname, role), { errorMessage: 'Error al añadir la persona' });
-    if (result.ok) setShowNuevaPersonaModal(false);
+    if (result.ok) {
+      posthog.capture('persona_created', { role });
+      setShowNuevaPersonaModal(false);
+    }
   };
 
   return (

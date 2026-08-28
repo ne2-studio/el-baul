@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usePostHog } from 'posthog-js/react';
 import { Camera, Loader2, MoreVertical, Pencil, Send, UserCog, UserX } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaInfoModal';
@@ -44,6 +45,7 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
   const photosById = usePhotosStore((state) => state.photosById);
   const { run, isPending } = useAsyncAction();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
+  const posthog = usePostHog();
   const currentBaul = baules.find((b) => b.id === baulId);
   const permissions = getPersonaPermissions({ currentBaulRole: currentBaul?.role, currentIsCustodio: currentBaul?.isCustodio, persona });
   const baulPermissions = getBaulPermissions(currentBaul);
@@ -99,13 +101,18 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       successMessage: 'Rol actualizado',
       errorMessage: 'Error al actualizar el rol',
     });
-    if (result.ok) setShowManageAccessModal(false);
+    if (result.ok) {
+      posthog.capture('persona_role_changed', { role });
+      setShowManageAccessModal(false);
+    }
   };
 
   const handleSendInvite = () => {
     run(() => sharePersonaInvite(currentBaul!, persona, () => showToastMessage('Enlace copiado al portapapeles')), {
       key: 'invite',
       errorMessage: 'Error al invitar',
+    }).then((result) => {
+      if (result.ok) posthog.capture('family_invite_shared');
     });
   };
 
@@ -115,7 +122,10 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
       successMessage: 'Acceso revocado',
       errorMessage: 'Error al revocar el acceso',
     });
-    if (result.ok) setShowRevokeModal(false);
+    if (result.ok) {
+      posthog.capture('persona_access_revoked');
+      setShowRevokeModal(false);
+    }
   };
 
   return (
