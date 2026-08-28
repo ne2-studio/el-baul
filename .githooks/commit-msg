@@ -12,6 +12,10 @@ header="$(
   sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; p; q' "$commit_msg_file"
 )"
 
+if [[ "$header" =~ ^Merge\  ]]; then
+  exit 0
+fi
+
 pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]._-]+\))?!?: [^[:space:]].*$'
 
 if [[ "$header" =~ $pattern ]]; then
