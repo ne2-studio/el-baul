@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# The repo being worked on — where .ne2-factory.env and git live. Resolved
+# from the working directory, not this script's location, so the factory
+# bundle can sit anywhere under the repo (or be moved) without edits.
+ROOT_DIR="${NE2_FACTORY_ROOT:-$(git rev-parse --show-toplevel)}"
 cd "$ROOT_DIR"
 
 # Shell-only project config (tmux session, scan scopes). Absent is fine —
@@ -16,7 +19,7 @@ ALLOWED_TOOLS="Agent Bash(gh issue list *) Bash(gh issue create *) Bash(gh issue
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/gap-scout <command>
+Usage: bin/gap-scout <command>   (from the root of the repo being worked on)
 
 Commands:
   scan <scope|all> [--yolo]
@@ -24,7 +27,7 @@ Commands:
                           given scope(s), one `claude` session per scope,
                           each in its own window inside the tmux session
                           (creating it if needed) — same session
-                          ./scripts/backlog run uses. Scopes, and what "all"
+                          bin/backlog run uses. Scopes, and what "all"
                           expands to, come from GAP_SCOUT_SCOPES in
                           .ne2-factory.env (default: app api admin). Returns as soon as the
                           session(s) are launched; doesn't wait for them to
@@ -59,11 +62,11 @@ content tried to steer the agent.
 
 Filed issues are not queued for execution by themselves. Review one, and if
 you want it done, add the "backlog" label — that hands it to
-./scripts/backlog's existing worker, same as any other ticket. Leaving it
+bin/backlog's existing worker, same as any other ticket. Leaving it
 unlabeled (or closing it) means "not now"; it won't be re-filed verbatim on
 the next scan.
 
-Requires `gh` and `tmux`. See docs/backlog/gap-scout.md for how to schedule
+Requires `gh` and `tmux`. See the factory's docs/backlog/gap-scout.md for how to schedule
 this with a systemd timer.
 EOF
 }
@@ -104,7 +107,7 @@ _dispatch_one() {
 cmd_scan() {
   local target="${1:-}"
   local yolo=0
-  local usage="Uso: ./scripts/gap-scout scan <scope|all> [--yolo]  (scopes: $GAP_SCOUT_SCOPES)"
+  local usage="Uso: bin/gap-scout scan <scope|all> [--yolo]  (scopes: $GAP_SCOUT_SCOPES)"
   case "${2:-}" in
     --yolo) yolo=1 ;;
     "") ;;
