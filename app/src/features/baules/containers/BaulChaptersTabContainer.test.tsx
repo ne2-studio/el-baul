@@ -46,7 +46,7 @@ describe('BaulChaptersTabContainer', () => {
   it('renders the empty state when there are no chapters', () => {
     renderContainer();
 
-    expect(screen.getByText('Este baúl está vacío')).toBeInTheDocument();
+    expect(screen.getByText('Todavía no hay capítulos')).toBeInTheDocument();
   });
 
   it('renders chapters and calls onSelectChapter on click', async () => {

@@ -13,6 +13,10 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Cambiado
+
+- En la pestaña "Capítulos" de un baúl sin capítulos, el texto vacío ahora explica qué es un capítulo y anima a crear el primero, en vez de decir que el baúl está vacío.
+
 ## [beta-v0.4.4] - 2026-08-28
 
 ### Añadido

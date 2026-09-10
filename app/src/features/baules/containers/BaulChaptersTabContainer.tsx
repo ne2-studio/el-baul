@@ -50,8 +50,8 @@ export function BaulChaptersTabContainer({ baulId, onSelectChapter }: BaulChapte
       {baulChapters.length === 0 ? (
         <EmptyState
           icon={<BookImage className="w-20 h-20" strokeWidth={1.5} />}
-          title="Este baúl está vacío"
-          subtitle="Crea tu primer capítulo para empezar a guardar recuerdos"
+          title="Todavía no hay capítulos"
+          subtitle="Los capítulos son cómo tu familia ordena su historia: una etapa, un evento o un tema. Crea el primero para empezar."
         />
       ) : (
         <div className="space-y-6">
