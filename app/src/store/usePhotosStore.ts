@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { Photo } from '@/types';
 
+// Filtro de pills de la pestaña "Fotos" de un baúl. 'todas' = todos los capítulos + sueltas;
+// 'sin-capitulo' = solo las fotos sueltas.
+export type BaulPhotosFilter = 'todas' | 'sin-capitulo';
+
 // Fuente canónica de los campos de una Photo. useBaulesStore (photos/loosePhotos/
 // photoBatchPhotos) y usePersonasStore (personaPhotos) solo guardan listas de ids — qué fotos
 // pertenecen a qué capítulo/baúl/lote/persona — y se hidratan contra este store con
@@ -9,7 +13,17 @@ import { Photo } from '@/types';
 export interface PhotosState {
   photosById: Record<string, Photo>;
 
+  // Filtro activo de la pestaña "Fotos" de un baúl ("Todas" por defecto). Vive aquí, y no en el
+  // useState de BaulPhotosTabContainer, para que la elección sobreviva a salir y volver a la
+  // pestaña: BaulRoute se desmonta al navegar a un capítulo o al visor de fotos, y la propia
+  // tab se desmonta al cambiar de pestaña dentro del baúl. Es estado de sesión en memoria: SIN
+  // persist/localStorage, así que una recarga completa vuelve a "Todas". Un único valor para
+  // toda la sesión (no se distingue por baulId) — ver BaulPhotosTabContainer.
+  baulPhotosFilter: BaulPhotosFilter;
+
   reset: () => void;
+
+  setBaulPhotosFilter: (filter: BaulPhotosFilter) => void;
 
   // Fusiona por id, preservando cualquier entrada no incluida en `photos`.
   upsertPhotos: (photos: Photo[]) => void;
@@ -22,8 +36,11 @@ export interface PhotosState {
 
 export const usePhotosStore = create<PhotosState>((set) => ({
   photosById: {},
+  baulPhotosFilter: 'todas',
 
-  reset: () => set({ photosById: {} }),
+  reset: () => set({ photosById: {}, baulPhotosFilter: 'todas' }),
+
+  setBaulPhotosFilter: (baulPhotosFilter) => set({ baulPhotosFilter }),
 
   upsertPhotos: (photos) => set((state) => ({
     photosById: photos.reduce(

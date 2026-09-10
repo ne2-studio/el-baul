@@ -75,16 +75,20 @@ describe('BaulRoute — pestaña Fotos', () => {
       baules: [baul],
       chapters: { [baul.id]: [] },
       photos: {},
-      // El filtro "Sin capítulo" (activo por defecto en la pestaña Fotos) lee loosePhotos, no
-      // baulPhotos — ver BaulPhotosTabContainer. photo1 se registra en ambos para que estos
-      // tests (centrados en el chrome del header/selección, no en el filtro) vean la misma
-      // foto sin tener que cambiar de filtro.
+      // El filtro "Todas" (activo por defecto en la pestaña Fotos) lee baulPhotos; "Sin
+      // capítulo" lee loosePhotos — ver BaulPhotosTabContainer. photo1 se registra en ambos
+      // para que estos tests (centrados en el chrome del header/selección, no en el filtro)
+      // vean la misma foto con cualquiera de los dos filtros. baulPhotosHasMore: false evita
+      // que "Todas" intente paginar.
       loosePhotos: { [baul.id]: [photo1.id] },
       baulPhotos: { [baul.id]: [photo1.id] },
       baulPhotosHasMore: { [baul.id]: false },
       isLoading: false,
     });
-    usePhotosStore.setState({ photosById: { [photo1.id]: photo1 } });
+    // baulPhotosFilter vive a nivel de sesión en usePhotosStore y setState hace merge, no
+    // replace — hay que devolverlo a su valor por defecto entre tests para que la elección de
+    // uno no se filtre al siguiente.
+    usePhotosStore.setState({ photosById: { [photo1.id]: photo1 }, baulPhotosFilter: 'todas' });
     useRecuerdosStore.setState({ baulRecuerdos: { [baul.id]: [] }, chapterRecuerdos: {} });
     usePersonasStore.setState({ personas: { [baul.id]: [] } });
     useUIStore.setState({ isFirstAppLaunch: true });
@@ -108,6 +112,39 @@ describe('BaulRoute — pestaña Fotos', () => {
     await user.click(screen.getByRole('button', { name: 'Fotos' }));
 
     expect(await screen.findByAltText('Foto')).toBeInTheDocument();
+  });
+
+  it('shows the photo filter pills in order: Todas, then Sin capítulo', async () => {
+    const user = userEvent.setup();
+    renderAt(`/baules/${baul.id}`);
+    await screen.findByText('Contenido de Historia');
+    await user.click(screen.getByRole('button', { name: 'Fotos' }));
+    await screen.findByAltText('Foto');
+
+    const todas = screen.getByRole('button', { name: 'Todas' });
+    const sinCapitulo = screen.getByRole('button', { name: 'Sin capítulo' });
+    expect(todas).toHaveAttribute('aria-pressed', 'true');
+    expect(todas.compareDocumentPosition(sinCapitulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('keeps the chosen photo filter when leaving the Fotos tab and returning', async () => {
+    const user = userEvent.setup();
+    renderAt(`/baules/${baul.id}`);
+    await screen.findByText('Contenido de Historia');
+
+    await user.click(screen.getByRole('button', { name: 'Fotos' }));
+    await screen.findByAltText('Foto');
+    await user.click(screen.getByRole('button', { name: 'Sin capítulo' }));
+    expect(screen.getByRole('button', { name: 'Sin capítulo' })).toHaveAttribute('aria-pressed', 'true');
+
+    // Cambiar de pestaña desmonta BaulPhotosTabContainer; al volver, la elección persiste
+    // porque vive en usePhotosStore, no en un useState de la tab.
+    await user.click(screen.getByRole('button', { name: 'Historia' }));
+    await screen.findByText('Contenido de Historia');
+    await user.click(screen.getByRole('button', { name: 'Fotos' }));
+
+    expect(await screen.findByRole('button', { name: 'Sin capítulo' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('long-pressing a photo swaps the header for "Cancelar" and a selection count', async () => {

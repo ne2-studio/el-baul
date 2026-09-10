@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Photo } from '@/types';
@@ -68,36 +68,8 @@ function renderContainer(overrides: Partial<React.ComponentProps<typeof BaulPhot
   );
 }
 
-// El filtro "Sin capítulo" está activo por defecto y lee useBaulesStore.loosePhotos, ya
-// cargado por BaulRoute/useBaulScope antes de que esta tab se monte (ver comentario de
-// cabecera de BaulPhotosTabContainer) — no dispara ningún fetch propio.
-describe('BaulPhotosTabContainer — filtro "Sin capítulo" (por defecto)', () => {
-  it('renders the already-loaded loose photos without fetching anything', async () => {
-    useBaulesStore.setState({ loosePhotos: { [baulId]: ['p1'] } });
-    usePhotosStore.getState().upsertPhotos([photo('p1')]);
-
-    renderContainer();
-
-    expect(await screen.findByAltText('Foto')).toBeInTheDocument();
-    expect(loadBaulPhotos).not.toHaveBeenCalled();
-  });
-
-  it('shows the empty state when there are no loose photos', async () => {
-    useBaulesStore.setState({ loosePhotos: { [baulId]: [] } });
-
-    renderContainer();
-
-    expect(await screen.findByText('Todavía no hay fotos aquí')).toBeInTheDocument();
-  });
-});
-
-describe('BaulPhotosTabContainer — filtro "Todas"', () => {
-  async function switchToTodas() {
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Todas' }));
-  }
-
-  it('loads the first page on switching and renders it grouped by swimlane', async () => {
+describe('BaulPhotosTabContainer — filtro "Todas" (por defecto)', () => {
+  it('loads the first page on entry and renders it grouped by swimlane', async () => {
     useBaulesStore.setState({ loosePhotos: { [baulId]: [] } });
     vi.mocked(loadBaulPhotos).mockImplementation(async () => {
       usePhotosStore.getState().upsertPhotos([photo('p1')]);
@@ -105,10 +77,18 @@ describe('BaulPhotosTabContainer — filtro "Todas"', () => {
     });
 
     renderContainer();
-    await switchToTodas();
 
     await waitFor(() => expect(loadBaulPhotos).toHaveBeenCalledWith(baulId));
     expect(await screen.findByAltText('Foto')).toBeInTheDocument();
+  });
+
+  it('shows a spinner on entry while the first page is in flight', async () => {
+    useBaulesStore.setState({ loosePhotos: { [baulId]: [] } });
+    vi.mocked(loadBaulPhotos).mockImplementation(() => new Promise(() => {}));
+
+    renderContainer();
+
+    expect(await screen.findByText('Cargando fotos...')).toBeInTheDocument();
   });
 
   it('shows the empty state once the first page resolves with no photos', async () => {
@@ -118,7 +98,6 @@ describe('BaulPhotosTabContainer — filtro "Todas"', () => {
     });
 
     renderContainer();
-    await switchToTodas();
 
     expect(await screen.findByText('Todavía no hay fotos aquí')).toBeInTheDocument();
   });
@@ -136,7 +115,6 @@ describe('BaulPhotosTabContainer — filtro "Todas"', () => {
     });
 
     renderContainer();
-    await switchToTodas();
     await screen.findByAltText('Foto');
 
     act(() => triggerIntersection(true));
@@ -153,7 +131,6 @@ describe('BaulPhotosTabContainer — filtro "Todas"', () => {
     vi.mocked(loadBaulPhotos).mockRejectedValueOnce(new Error('network error'));
 
     renderContainer();
-    await switchToTodas();
 
     expect(await screen.findByText('No se han podido cargar las fotos')).toBeInTheDocument();
 
@@ -168,9 +145,91 @@ describe('BaulPhotosTabContainer — filtro "Todas"', () => {
   });
 });
 
+// "Sin capítulo" es la segunda pill, todavía seleccionable: lee useBaulesStore.loosePhotos, ya
+// cargado por BaulRoute/useBaulScope antes de que esta tab se monte (ver comentario de cabecera
+// de BaulPhotosTabContainer) — no pagina ni dispara ningún fetch propio.
+describe('BaulPhotosTabContainer — filtro "Sin capítulo"', () => {
+  // baulPhotos se siembra vacío (no undefined) para que "Todas" no dispare su fetch de entrada
+  // y las pills se pinten de inmediato, listas para cambiar a "Sin capítulo".
+  function seedLoose(ids: string[]) {
+    useBaulesStore.setState({
+      loosePhotos: { [baulId]: ids },
+      baulPhotos: { [baulId]: [] },
+      baulPhotosHasMore: { [baulId]: false },
+    });
+  }
+
+  async function switchToSinCapitulo() {
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Sin capítulo' }));
+  }
+
+  it('renders the already-loaded loose photos without fetching anything', async () => {
+    seedLoose(['p1']);
+    usePhotosStore.getState().upsertPhotos([photo('p1')]);
+
+    renderContainer();
+    await switchToSinCapitulo();
+
+    expect(await screen.findByAltText('Foto')).toBeInTheDocument();
+    expect(loadBaulPhotos).not.toHaveBeenCalled();
+    expect(loadMoreBaulPhotos).not.toHaveBeenCalled();
+  });
+
+  it('shows the empty state when there are no loose photos', async () => {
+    seedLoose([]);
+
+    renderContainer();
+    await switchToSinCapitulo();
+
+    expect(await screen.findByText('Todavía no hay fotos aquí')).toBeInTheDocument();
+  });
+});
+
+describe('BaulPhotosTabContainer — pills', () => {
+  it('shows the filter pills in order: Todas, Sin capítulo', async () => {
+    useBaulesStore.setState({
+      loosePhotos: { [baulId]: [] },
+      baulPhotos: { [baulId]: [] },
+      baulPhotosHasMore: { [baulId]: false },
+    });
+
+    renderContainer();
+
+    const group = await screen.findByRole('group');
+    const labels = within(group).getAllByRole('button').map((b) => b.textContent);
+    expect(labels).toEqual(['Todas', 'Sin capítulo']);
+  });
+
+  it('keeps the selected filter when the tab is left and re-entered', async () => {
+    useBaulesStore.setState({
+      loosePhotos: { [baulId]: ['p1'] },
+      baulPhotos: { [baulId]: [] },
+      baulPhotosHasMore: { [baulId]: false },
+    });
+    usePhotosStore.getState().upsertPhotos([photo('p1')]);
+    const user = userEvent.setup();
+
+    const { unmount } = renderContainer();
+    await user.click(await screen.findByRole('button', { name: 'Sin capítulo' }));
+    expect(screen.getByRole('button', { name: 'Sin capítulo' })).toHaveAttribute('aria-pressed', 'true');
+
+    unmount();
+    renderContainer();
+
+    expect(await screen.findByRole('button', { name: 'Sin capítulo' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'false');
+    expect(loadBaulPhotos).not.toHaveBeenCalled();
+  });
+});
+
 describe('BaulPhotosTabContainer', () => {
   it('navigates to the loose-photos upload flow from the FAB', async () => {
-    useBaulesStore.setState({ loosePhotos: { [baulId]: ['p1'] } });
+    useBaulesStore.setState({
+      loosePhotos: { [baulId]: [] },
+      baulPhotos: { [baulId]: ['p1'] },
+      baulPhotosHasMore: { [baulId]: false },
+    });
     usePhotosStore.getState().upsertPhotos([photo('p1')]);
 
     const user = userEvent.setup();
@@ -182,7 +241,11 @@ describe('BaulPhotosTabContainer', () => {
   });
 
   it('hides the upload FAB and the filter pills while in selection mode', async () => {
-    useBaulesStore.setState({ loosePhotos: { [baulId]: ['p1'] } });
+    useBaulesStore.setState({
+      loosePhotos: { [baulId]: ['p1'] },
+      baulPhotos: { [baulId]: ['p1'] },
+      baulPhotosHasMore: { [baulId]: false },
+    });
     usePhotosStore.getState().upsertPhotos([photo('p1')]);
 
     renderContainer({ selectionMode: true, selectedIds: new Set(['p1']) });

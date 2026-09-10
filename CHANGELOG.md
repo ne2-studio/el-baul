@@ -16,6 +16,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Cambiado
 
 - En la pestaña "Capítulos" de un baúl sin capítulos, el texto vacío ahora explica qué es un capítulo y anima a crear el primero, en vez de decir que el baúl está vacío.
+- En la pestaña "Fotos" de un baúl, el filtro ahora empieza mostrando "Todas" las fotos del baúl en vez de solo las que no tienen capítulo, y "Todas" pasa a ser la primera opción. "Sin capítulo" sigue disponible como segunda opción, y la elección se mantiene mientras dure la sesión.
 
 ## [beta-v0.4.4] - 2026-08-28
 

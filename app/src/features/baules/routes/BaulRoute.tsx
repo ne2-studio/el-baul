@@ -16,7 +16,7 @@ import { BaulSettingsMenuContainer } from '@/features/baules/containers/BaulSett
 import { WorkspaceSwitcherContainer } from '@/features/baules/containers/WorkspaceSwitcherContainer';
 import { Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
+import { BaulPhotosFilter, hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useUIStore } from '@/store/uiStore';
 import { getEntrySource } from '@/utils/entrySource';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -59,10 +59,11 @@ export const BaulRoute: React.FC = () => {
   // cambiar de pestaña (más abajo) para que no quede "colgada" si la persona vuelve más tarde.
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  // Filtro activo de BaulPhotosTabContainer ('sin-capitulo' | 'todas'), notificado vía
-  // onFilterChange — determina si la barra de acciones en lote ofrece Mover/Crear capítulo
-  // (ver su montaje más abajo).
-  const [photosFilter, setPhotosFilter] = useState<'sin-capitulo' | 'todas'>('sin-capitulo');
+  // Filtro activo de BaulPhotosTabContainer ('todas' por defecto | 'sin-capitulo'), notificado
+  // vía onFilterChange — determina si la barra de acciones en lote ofrece Mover/Crear capítulo
+  // (ver su montaje más abajo). El valor canónico vive en usePhotosStore.baulPhotosFilter; este
+  // useState solo lo espeja, y su valor inicial debe coincidir con el de aquel store.
+  const [photosFilter, setPhotosFilter] = useState<BaulPhotosFilter>('todas');
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {

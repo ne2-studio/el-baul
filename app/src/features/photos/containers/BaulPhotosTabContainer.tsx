@@ -10,7 +10,7 @@ import { FilterPills } from '@/design-system/components/navigation/FilterPills';
 import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
 import { Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
+import { BaulPhotosFilter, hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { loadBaulPhotos, loadMoreBaulPhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel';
@@ -29,33 +29,35 @@ interface BaulPhotosTabContainerProps {
   onToggleGroup: (photos: Photo[]) => void;
   // Notifica a BaulRoute qué filtro está activo — lo necesita para decidir si la selección
   // múltiple ofrece "Mover"/"Crear capítulo" (solo tiene sentido con "Sin capítulo": con
-  // "Todas" la selección puede abarcar varios capítulos a la vez). El filtro en sí sigue
-  // viviendo aquí dentro, esto es solo una notificación hacia arriba.
-  onFilterChange?: (filter: PhotosFilter) => void;
+  // "Todas" la selección puede abarcar varios capítulos a la vez). El filtro en sí vive en
+  // usePhotosStore.baulPhotosFilter, esto es solo una notificación hacia arriba.
+  onFilterChange?: (filter: BaulPhotosFilter) => void;
 }
 
 // Self-sufficient tab (owns su propia carga): agrupa por swimlane igual que la vista de fotos
 // de un capítulo (PhotoSwimlanes/groupPhotosByYear, orden cronológico ascendente), con un
-// filtro de pills ("Sin capítulo"/"Todas") arriba.
+// filtro de pills ("Todas"/"Sin capítulo") arriba.
+//
+// "Todas" es el filtro por defecto y el comportamiento original de esta tab: scroll infinito de
+// TODAS las fotos del baúl — todos los capítulos + sueltas —, paginando contra
+// GET /api/baules/{baulId}/photos sin chapterId (ya devuelve todo el baúl, ya ordenado
+// server-side — ver PhotoOrdering.OrderByChronology), acumulando en
+// useBaulesStore.baulPhotos/baulPhotosHasMore en vez de en estado local, para que
+// BaulPhotoViewerRoute (montada como un árbol de rutas aparte, ver
+// features/photos/viewerNavigation) pueda leer exactamente lo que esta pestaña ya cargó sin
+// duplicar el fetch — mismo patrón que baulFeed/baulFeedHasMore para el feed de recuerdos. Solo
+// se pagina cuando el filtro activo es "Todas".
 //
 // "Sin capítulo" reutiliza useBaulesStore.loosePhotos[baulId] tal cual — el mismo estado que
 // alimenta la pantalla de fotos sueltas (ChapterRoute sin chapterId) — sin fetch propio: para
 // cuando esta tab se monta, BaulRoute ya esperó (guardBaulScope) a que useBaulScope terminara
 // de cargar el scope completo del baúl, que incluye loosePhotos.
 //
-// "Todas" es el comportamiento original de esta tab: scroll infinito de TODAS las fotos del
-// baúl — todos los capítulos + sueltas —, paginando contra GET /api/baules/{baulId}/photos sin
-// chapterId (ya devuelve todo el baúl, ya ordenado server-side — ver
-// PhotoOrdering.OrderByChronology), acumulando en useBaulesStore.baulPhotos/baulPhotosHasMore
-// en vez de en estado local, para que BaulPhotoViewerRoute (montada como un árbol de rutas
-// aparte, ver features/photos/viewerNavigation) pueda leer exactamente lo que esta pestaña ya
-// cargó sin duplicar el fetch — mismo patrón que baulFeed/baulFeedHasMore para el feed de
-// recuerdos. Solo se pagina cuando el filtro activo es "Todas".
-type PhotosFilter = 'sin-capitulo' | 'todas';
-
-const FILTER_OPTIONS: { value: PhotosFilter; label: string }[] = [
-  { value: 'sin-capitulo', label: 'Sin capítulo' },
+// El filtro elegido vive en usePhotosStore.baulPhotosFilter (estado de sesión en memoria, sin
+// persist) para que sobreviva a salir y volver a la pestaña — ver ese store.
+const FILTER_OPTIONS: { value: BaulPhotosFilter; label: string }[] = [
   { value: 'todas', label: 'Todas' },
+  { value: 'sin-capitulo', label: 'Sin capítulo' },
 ];
 
 export function BaulPhotosTabContainer({
@@ -66,14 +68,16 @@ export function BaulPhotosTabContainer({
   const { run, isPending } = useAsyncAction();
   const { baulPhotos, baulPhotosHasMore, loosePhotos } = useBaulesStore();
   const photosById = usePhotosStore((state) => state.photosById);
+  const filter = usePhotosStore((state) => state.baulPhotosFilter);
+  const setBaulPhotosFilter = usePhotosStore((state) => state.setBaulPhotosFilter);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [filter, setFilterState] = useState<PhotosFilter>('sin-capitulo');
-  const setFilter = (next: PhotosFilter) => {
-    setFilterState(next);
+  const setFilter = (next: BaulPhotosFilter) => {
+    setBaulPhotosFilter(next);
     onFilterChange?.(next);
   };
-  // Notifica el valor inicial ('sin-capitulo') al montar — BaulRoute no tiene forma de
-  // conocerlo hasta que este container se lo dice, ver la prop.
+  // Notifica el valor inicial al montar ('todas' por defecto, o lo que quedara elegido antes en
+  // la sesión) — BaulRoute no tiene forma de conocerlo hasta que este container se lo dice, ver
+  // la prop.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { onFilterChange?.(filter); }, []);
 
