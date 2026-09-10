@@ -1,6 +1,7 @@
 using ElBaul.Api.Models;
 using ElBaul.Api.Scope;
 using ElBaul.Core.Chapters;
+using ElBaul.Core.Feed;
 using ElBaul.Core.Recuerdos;
 
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +14,9 @@ namespace ElBaul.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/baules/{baulId:guid}/chapters")]
-public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager recuerdoManager, ChapterScopeAggregator chapterScopeAggregator)
+public class ChaptersController(
+    IChapterManager chapterManager, IRecuerdoManager recuerdoManager, ChapterScopeAggregator chapterScopeAggregator,
+    IBaulFeedManager baulFeedManager)
     : ControllerBase
 {
     // Aggregates everything ChapterRoute needs into one request — see
@@ -40,6 +43,9 @@ public class ChaptersController(IChapterManager chapterManager, IRecuerdoManager
     public async Task<IActionResult> Create(BaulId baulId, [FromBody] CreateChapterRequest request)
     {
         var result = await chapterManager.CreateAsync(baulId, request.Name);
+        // Creating a chapter bumps baul.UpdatedAt — advance the author's own watermark so they
+        // aren't shown their own new chapter as a novedad on the switcher.
+        if (result.IsSuccess) await baulFeedManager.MarkBaulSeenAsync(baulId);
         return result.ToActionResult();
     }
 

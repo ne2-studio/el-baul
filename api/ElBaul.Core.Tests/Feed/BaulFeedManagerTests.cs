@@ -291,4 +291,64 @@ public class BaulFeedManagerTests
         Assert.False(result.Value.HasMore);
     }
 
+    // Regression (GitHub #69): "seen / unseen" for a baúl must be per-user and
+    // server-authoritative — driven by the same BaulFeedCursor, not by device-local
+    // localStorage. MarkBaulSeenAsync is the entry the workspace switcher / BaulScopeAggregator
+    // use to advance that watermark on every baúl entry, on any tab, regardless of the feed
+    // feature flag.
+
+    [Fact]
+    public async Task MarkBaulSeenAsync_ShouldAdvanceTheCursor_SoAlreadySeenActivityIsNotRemarkedNew()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var recuerdoManager = CreateRecuerdoManager(CustodioId);
+        Assert.True((await recuerdoManager.CreateRecuerdoAsync(baulId, "Un recuerdo")).IsSuccess);
+
+        var manager = CreateManager(CustodioId);
+
+        // Opening the baúl on any tab (not just Historia) marks it seen for this user.
+        Assert.True((await manager.MarkBaulSeenAsync(baulId)).IsSuccess);
+
+        // A later feed read for the same user — from any device — now tags nothing as new.
+        var feed = await manager.GetFeedAsync(baulId, 0, 20);
+        Assert.True(feed.IsSuccess);
+        Assert.NotEmpty(feed.Value.Items);
+        Assert.All(feed.Value.Items, item => Assert.False(item.IsNew));
+    }
+
+    [Fact]
+    public async Task MarkBaulSeenAsync_ShouldAdvanceTheCursor_EvenWhenTheFeedFeatureIsDisabled()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var manager = CreateManager(CustodioId, baulFeedEnabled: false);
+
+        var result = await manager.MarkBaulSeenAsync(baulId);
+
+        Assert.True(result.IsSuccess);
+        var watermarks = await manager.GetSeenWatermarksAsync();
+        Assert.True(watermarks.ContainsKey(baulId));
+    }
+
+    [Fact]
+    public async Task MarkBaulSeenAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var stranger = CreateManager("stranger");
+
+        var result = await stranger.MarkBaulSeenAsync(baulId);
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task GetSeenWatermarksAsync_ShouldReturnOnlyTheCurrentUsersWatermarks()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        Assert.True((await CreateManager(CustodioId).MarkBaulSeenAsync(baulId)).IsSuccess);
+
+        var otherUsersView = await CreateManager("someone-else").GetSeenWatermarksAsync();
+
+        Assert.False(otherUsersView.ContainsKey(baulId));
+    }
+
 }

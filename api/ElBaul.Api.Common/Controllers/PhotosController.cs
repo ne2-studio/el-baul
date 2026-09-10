@@ -1,4 +1,5 @@
 using ElBaul.Api.Models;
+using ElBaul.Core.Feed;
 using ElBaul.Core.Personas;
 using ElBaul.Core.Photos;
 using ElBaul.Core.Recuerdos;
@@ -15,9 +16,17 @@ namespace ElBaul.Api.Controllers;
 [ApiController]
 [Route("api")]
 public class PhotosController(
-    IPhotoManager photoManager, IPhotoReadManager photoReadManager, IRecuerdoManager recuerdoManager, IPhotoPersonaTagManager photoPersonaTagManager)
+    IPhotoManager photoManager, IPhotoReadManager photoReadManager, IRecuerdoManager recuerdoManager,
+    IPhotoPersonaTagManager photoPersonaTagManager, IBaulFeedManager baulFeedManager)
     : ControllerBase
 {
+    // Uploading a photo bumps its baúl's UpdatedAt — advance the uploader's own watermark so
+    // they aren't shown their own upload as a novedad on the switcher.
+    private async Task MarkUploaderSeenAsync(Result<PhotoDto> uploadResult)
+    {
+        if (uploadResult.IsSuccess && Guid.TryParse(uploadResult.Value.BaulId, out var baulId))
+            await baulFeedManager.MarkBaulSeenAsync(new BaulId(baulId));
+    }
     [HttpGet("chapters/{chapterId:guid}/photos")]
     [ProducesResponseType(typeof(IEnumerable<PhotoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByChapter(ChapterId chapterId)
@@ -43,6 +52,7 @@ public class PhotosController(
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadAsync(chapterId, stream, clientUploadId, request.UploadBatchId);
 
+        await MarkUploaderSeenAsync(result);
         return result.ToActionResult();
     }
 
@@ -181,6 +191,7 @@ public class PhotosController(
         await using var stream = request.File.OpenReadStream();
         var result = await photoManager.UploadToBaulAsync(baulId, stream, clientUploadId, request.UploadBatchId);
 
+        await MarkUploaderSeenAsync(result);
         return result.ToActionResult();
     }
 

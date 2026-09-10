@@ -3,8 +3,11 @@ import type { components } from '@/api/generated/schema';
 
 type ApiSchemas = components['schemas'];
 type RawBaulDto = ApiSchemas['BaulDto'];
-type BaulDto = Omit<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'> &
-  Partial<Pick<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale'>>;
+// hasUnseenActivity is relaxed to optional here (the API always sends it) so the many test
+// fixtures that hand-build a BaulDto literal don't each have to set it — the Baul constructor
+// defaults a missing value to false.
+type BaulDto = Omit<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale' | 'hasUnseenActivity'> &
+  Partial<Pick<RawBaulDto, 'coverCropX' | 'coverCropY' | 'coverCropScale' | 'hasUnseenActivity'>>;
 type PersonaInviteDto = ApiSchemas['PersonaInviteDto'];
 type PersonaInvitePreviewDto = ApiSchemas['PersonaInvitePreviewDto'];
 type RawChapterDto = ApiSchemas['ChapterDto'];
@@ -115,10 +118,13 @@ export class Baul {
   coverCropY?: number;
   coverCropScale?: number;
   lastUpdated: string;
-  // ISO timestamp crudo detrás de lastUpdated — necesario para comparar contra
-  // uiStore.baulActivitySeenAt (ver hasUnseenBaulActivity) y decidir el dot de novedades del
-  // selector de baúles; lastUpdated ya está formateado como texto relativo y no sirve para eso.
+  // ISO timestamp crudo detrás de lastUpdated (lastUpdated ya está formateado como texto
+  // relativo). Se conserva por si algún consumidor necesita el instante exacto.
   updatedAt: string;
+  // Server-authoritative y por usuario: el baúl tiene actividad que esta persona todavía no ha
+  // visto (en cualquier dispositivo). Lo calcula GET /api/baules contra su BaulFeedCursor —
+  // ver WorkspaceSwitcherContainer, que dibuja el dot de novedades a partir de esto.
+  hasUnseenActivity: boolean;
   role?: BaulRole;
   isCustodio?: boolean;
   memberCount?: number;
@@ -134,6 +140,7 @@ export class Baul {
     this.coverCropScale = data.coverCropScale ?? 1;
     this.lastUpdated = getRelativeTime(new Date(data.updatedAt));
     this.updatedAt = data.updatedAt;
+    this.hasUnseenActivity = data.hasUnseenActivity ?? false;
     this.role = data.role as BaulRole;
     this.isCustodio = data.isCustodio;
     this.memberCount = data.memberCount;

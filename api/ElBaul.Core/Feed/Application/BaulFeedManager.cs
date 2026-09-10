@@ -97,6 +97,19 @@ public class BaulFeedManager(
         return Result.Success(new FeedPageDto(pageItems, hasMore));
     }
 
+    public async Task<Result> MarkBaulSeenAsync(BaulId baulId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Mark baul seen");
+        if (auth.IsFailure) return Result.Failure(auth.Error);
+
+        await feedCursorRepository.UpsertAsync(userId, baulId, clock.UtcNow());
+        return Result.Success();
+    }
+
+    public async Task<IReadOnlyDictionary<BaulId, DateTime>> GetSeenWatermarksAsync() =>
+        await feedCursorRepository.GetAllForUserAsync(currentUserProvider.GetUserId());
+
     private async Task<List<PhotoBatchDto>> BuildPhotoBatchDtosAsync(BaulId baulId, bool isAdmin, UserId currentUserId)
     {
         var rows = await photoUploadBatchReadModel.GetByBaulIdAsync(baulId);

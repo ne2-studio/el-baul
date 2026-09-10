@@ -5,7 +5,6 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
-import { useUIStore } from '@/store/uiStore';
 import { loadUserData } from '@/features/auth/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useScopeOutcome } from '@/hooks/useScopeOutcome';
@@ -127,15 +126,10 @@ export function useBaulScope(baulId: string | undefined, options: UseBaulScopeOp
   }, [baulId, isLoading]);
 
   // "Entrar" a un baúl —sea por el selector de workspace, un deep link o una recarga— cuenta
-  // como haberlo visto: apaga su dot de novedades (ver hasUnseenBaulActivity en uiStore) para
-  // esta persona en este dispositivo. Se dispara en cuanto el baúl está resuelto (no hace falta
-  // esperar al resto del scope), keyed por baul.updatedAt además de su id para que una
-  // actualización posterior mientras la persona sigue dentro del mismo baúl también se marque
-  // como vista sin necesidad de salir y volver a entrar.
-  useEffect(() => {
-    if (!baul) return;
-    useUIStore.getState().markBaulActivitySeen(baul.id, baul.updatedAt);
-  }, [baul?.id, baul?.updatedAt]);
+  // como haberlo visto y apaga su dot de novedades. Eso ya no se hace aquí: el servidor avanza
+  // el BaulFeedCursor de esta persona en la propia petición de scope (ver BaulScopeAggregator),
+  // de modo que el estado "visto/no visto" es único por usuario y coherente entre dispositivos
+  // (antes era local a este navegador vía localStorage).
 
   return {
     baul,

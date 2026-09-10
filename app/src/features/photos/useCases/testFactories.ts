@@ -25,6 +25,7 @@ export function newBaul(
     chapterCount: 1,
     createdAt: now,
     updatedAt: now,
+    hasUnseenActivity: false,
     role: 'administrador',
     isCustodio: true,
     memberCount: 1,

@@ -9555,6 +9555,7 @@
           "coverCropX",
           "coverCropY",
           "createdAt",
+          "hasUnseenActivity",
           "id",
           "isCustodio",
           "memberCount",
@@ -9611,6 +9612,9 @@
           "coverCropScale": {
             "type": "number",
             "format": "double"
+          },
+          "hasUnseenActivity": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

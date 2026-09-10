@@ -15,7 +15,6 @@ import { NewDot } from '@/design-system/components/data-display/Badges';
 import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
-import { hasUnseenBaulActivity, useUIStore } from '@/store/uiStore';
 
 interface WorkspaceSwitcherContainerProps {
   activeBaul: Baul;
@@ -31,11 +30,12 @@ interface WorkspaceSwitcherContainerProps {
 export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherContainerProps) {
   const navigate = useNavigate();
   const baules = useBaulesStore((state) => state.baules);
-  const baulActivitySeenAt = useUIStore((state) => state.baulActivitySeenAt);
-  // El propio activeBaul se marca como visto por useBaulScope en cuanto se resuelve (ver ese
-  // hook), así que en la práctica solo aporta al agregado del trigger justo tras cambiar de
-  // baúl, antes de que ese efecto corra — no hace falta excluirlo aquí a mano.
-  const hasAnyUnseenActivity = baules.some((baul) => hasUnseenBaulActivity(baul, baulActivitySeenAt));
+  // Server-authoritative y por usuario: GET /api/baules calcula baul.hasUnseenActivity contra el
+  // BaulFeedCursor de esta persona (ver BaulesController.GetAll), así que el dot es coherente
+  // entre dispositivos. El propio activeBaul se marca como visto en el servidor al entrar (ver
+  // useBaulScope / BaulScopeAggregator); su hasUnseenActivity aquí puede ir un instante por
+  // detrás hasta el siguiente GET /api/baules, sin efecto práctico.
+  const hasAnyUnseenActivity = baules.some((baul) => baul.hasUnseenActivity);
 
   const handleSwitch = (baul: Baul) => {
     if (baul.id === activeBaul.id) return;
@@ -86,7 +86,7 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
                   {baul.chapterCount} {baul.chapterCount === 1 ? 'capítulo' : 'capítulos'}
                 </p>
               </div>
-              {hasUnseenBaulActivity(baul, baulActivitySeenAt) && <NewDot className="shrink-0" />}
+              {baul.hasUnseenActivity && <NewDot className="shrink-0" />}
               {isActive && <Check className="w-4 h-4 text-primary shrink-0" aria-label="Baúl activo" />}
             </DropdownMenuItem>
           );

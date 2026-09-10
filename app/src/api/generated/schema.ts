@@ -8235,6 +8235,7 @@ export interface components {
             coverCropY: number;
             /** Format: double */
             coverCropScale: number;
+            hasUnseenActivity: boolean;
         };
         BaulScopeDto: {
             baul: components["schemas"]["BaulDto"];

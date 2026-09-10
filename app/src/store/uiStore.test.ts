@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { hasUnseenBaulActivity, useUIStore } from './uiStore';
-import { newBaul } from '@/features/photos/useCases/testFactories';
+import { useUIStore } from './uiStore';
 
 describe('uiStore — cooldown de la recomendación de contribución', () => {
   beforeEach(() => {
@@ -114,48 +113,6 @@ describe('uiStore — retirada de fotos ya solicitada', () => {
   });
 });
 
-describe('uiStore — novedades del selector de baúles', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    useUIStore.setState({ baulActivitySeenAt: {} });
-  });
-
-  it('un baúl nunca visto en este dispositivo cuenta como con novedades', () => {
-    const baul = newBaul({ updatedAt: '2026-08-01T10:00:00Z' });
-
-    expect(hasUnseenBaulActivity(baul, useUIStore.getState().baulActivitySeenAt)).toBe(true);
-  });
-
-  it('marcarlo visto con su updatedAt actual lo deja sin novedades', () => {
-    const baul = newBaul({ updatedAt: '2026-08-01T10:00:00Z' });
-    useUIStore.getState().markBaulActivitySeen(baul.id, baul.updatedAt);
-
-    expect(hasUnseenBaulActivity(baul, useUIStore.getState().baulActivitySeenAt)).toBe(false);
-  });
-
-  it('una actividad posterior a la última vista vuelve a marcarlo con novedades', () => {
-    const baul = newBaul({ updatedAt: '2026-08-01T10:00:00Z' }, 'baul-1');
-    useUIStore.getState().markBaulActivitySeen(baul.id, baul.updatedAt);
-
-    const updatedBaul = newBaul({ updatedAt: '2026-08-02T10:00:00Z' }, 'baul-1');
-
-    expect(hasUnseenBaulActivity(updatedBaul, useUIStore.getState().baulActivitySeenAt)).toBe(true);
-  });
-
-  it('marcar un baúl visto no afecta a otro', () => {
-    const seenBaul = newBaul({ updatedAt: '2026-08-01T10:00:00Z' }, 'baul-1');
-    const otherBaul = newBaul({ updatedAt: '2026-08-01T10:00:00Z' }, 'baul-2');
-    useUIStore.getState().markBaulActivitySeen(seenBaul.id, seenBaul.updatedAt);
-
-    expect(hasUnseenBaulActivity(otherBaul, useUIStore.getState().baulActivitySeenAt)).toBe(true);
-  });
-
-  it('sobrevive a un "reinicio" — el estado se lee de localStorage, no de memoria en proceso', () => {
-    const baul = newBaul({ updatedAt: '2026-08-01T10:00:00Z' });
-    useUIStore.getState().markBaulActivitySeen(baul.id, baul.updatedAt);
-
-    vi.resetModules();
-
-    expect(hasUnseenBaulActivity(baul, useUIStore.getState().baulActivitySeenAt)).toBe(false);
-  });
-});
+// El dot de "novedades" del selector de baúles ya no vive aquí: pasó a ser server-authoritative
+// y por usuario (baul.hasUnseenActivity, calculado en GET /api/baules contra el BaulFeedCursor).
+// Su cobertura está en WorkspaceSwitcherContainer.test.tsx y BaulFeedManagerTests.

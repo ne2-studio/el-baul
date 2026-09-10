@@ -68,6 +68,13 @@ public class BaulScopeAggregator(
         var baulFeedResult = wantsFeed ? await baulFeedManager.GetFeedAsync(baulId, 0, 20) : (Result<FeedPageDto>?)null;
         var baulFeed = baulFeedResult is { IsSuccess: true } ? baulFeedResult.Value.Value : null;
 
+        // Entering a baúl on ANY tab counts as "seen" for the workspace switcher's novedades dots
+        // (see BaulesController.GetAll). GetFeedAsync already advances the current user's cursor
+        // when the feed was included — cover the other entry paths (any non-Recuerdos tab, or the
+        // feature flag being off) here so the dot clears regardless of how the baúl was opened.
+        if (!wantsFeed)
+            await baulFeedManager.MarkBaulSeenAsync(baulId);
+
         return Result.Success(new BaulScopeDto(
             baulResult.Value,
             chaptersResult.Value,

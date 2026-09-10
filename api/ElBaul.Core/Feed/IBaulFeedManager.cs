@@ -16,4 +16,17 @@ public interface IBaulFeedManager
     /// same items as new again. Calls with skip &gt; 0 ("load more") never touch the cursor and
     /// never tag IsNew (by construction, skip 0 already returned every new item).</summary>
     Task<Result<FeedPageDto>> GetFeedAsync(BaulId baulId, int skip, int take);
+
+    /// <summary>Advances the current user's BaulFeedCursor for this baúl to "now" — the single,
+    /// server-authoritative "the current user has seen everything in this baúl up to now" signal
+    /// behind the workspace switcher's novedades dots and the feed's IsNew tags. Unlike
+    /// GetFeedAsync this does NOT require Features:BaulFeedEnabled and never reads/returns the
+    /// feed: it's called on every baúl entry (any tab — see BaulScopeAggregator) and after every
+    /// write that bumps baul.UpdatedAt by its own actor, so a user is never shown their own
+    /// activity as new. Fails only if the user can't access the baúl.</summary>
+    Task<Result> MarkBaulSeenAsync(BaulId baulId);
+
+    /// <summary>Every baúl the current user has a "last seen" watermark for. Used by
+    /// GET /api/baules to derive each baúl's HasUnseenActivity without a query per baúl.</summary>
+    Task<IReadOnlyDictionary<BaulId, DateTime>> GetSeenWatermarksAsync();
 }
