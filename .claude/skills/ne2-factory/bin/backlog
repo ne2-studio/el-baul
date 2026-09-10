@@ -1,18 +1,28 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# The repo being worked on — where .backlog/, .ne2-factory.env and git live.
+# Resolved from the working directory, not this script's location, so the
+# factory bundle can sit anywhere under the repo (or be moved) without edits.
+ROOT_DIR="${NE2_FACTORY_ROOT:-$(git rev-parse --show-toplevel)}"
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$ROOT_DIR"
+
+# Shell-only project config (tmux session, gap-scout scopes). Absent is fine —
+# every value below has a default.
+# shellcheck source=/dev/null
+[[ -f "$ROOT_DIR/.ne2-factory.env" ]] && source "$ROOT_DIR/.ne2-factory.env"
+
 BACKLOG_DIR="$ROOT_DIR/.backlog"
 SIGNAL_FILE="$BACKLOG_DIR/.signal"
-TMUX_SESSION="backlog"
+TMUX_SESSION="${TMUX_SESSION:-backlog}"
 QUEUE_LABEL="backlog"
 REFINED_LABEL="refined"
 FAILED_LABEL="backlog:failed"
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/backlog <command>
+Usage: bin/backlog <command>   (from the root of the repo being worked on)
 
 Commands:
   add [file]        Create a GitHub issue and add it to the queue (label
@@ -39,7 +49,7 @@ Commands:
 
 The worker stops polling (leaving the tmux session up) if a ticket ends
 without a clear done/blocked signal — that needs a human look before
-resuming; requeue/fix the issue and `./scripts/backlog stop && run` again.
+resuming; requeue/fix the issue and `bin/backlog stop && run` again.
 
 Tickets live as GitHub issues on this repo, not on the local filesystem:
   queued, not yet refined   open issue,   label "backlog", no "refined"
@@ -54,8 +64,8 @@ questions get asked; this worker never asks anything.
 
 Each refined ticket runs in its own fresh, non-interactive `claude --print`
 session (the work-ticket skill) with permission prompts skipped entirely, so
-git commit/push happen straight to `main` with no approval step. Requires
-`gh` authenticated against this repo.
+git commit/push happen straight to the project's default branch with no
+approval step. Requires `gh` authenticated against this repo.
 EOF
 }
 
@@ -65,9 +75,9 @@ ensure_dirs() {
 
 ensure_labels() {
   gh label create "$QUEUE_LABEL" --color "0E8A16" \
-    --description "Backlog ticket queued for ./scripts/backlog" >/dev/null 2>&1 || true
+    --description "Backlog ticket queued for bin/backlog" >/dev/null 2>&1 || true
   gh label create "$REFINED_LABEL" --color "0E8A16" \
-    --description "Ticket refinado, listo para ./scripts/backlog" >/dev/null 2>&1 || true
+    --description "Ticket refinado, listo para bin/backlog" >/dev/null 2>&1 || true
   gh label create "$FAILED_LABEL" --color "B60205" \
     --description "Backlog ticket blocked, needs review before requeuing" >/dev/null 2>&1 || true
 }
@@ -109,7 +119,7 @@ cmd_list() {
 
 cmd_requeue() {
   local n="${1:-}"
-  [[ "$n" =~ ^[0-9]+$ ]] || { echo "Uso: ./scripts/backlog requeue <número-de-issue>" >&2; exit 1; }
+  [[ "$n" =~ ^[0-9]+$ ]] || { echo "Uso: bin/backlog requeue <número-de-issue>" >&2; exit 1; }
   gh issue edit "$n" --remove-label "$FAILED_LABEL" --add-label "$QUEUE_LABEL" >/dev/null
   echo "Reencolado: #$n"
 }
@@ -122,7 +132,7 @@ _worker() {
   ensure_dirs
   local claude_flags=(--print --dangerously-skip-permissions)
 
-  echo "Escuchando issues con label '$QUEUE_LABEL' (cada ${POLL_INTERVAL}s). Ctrl-C o './scripts/backlog stop' para parar."
+  echo "Escuchando issues con label '$QUEUE_LABEL' (cada ${POLL_INTERVAL}s). Ctrl-C o 'bin/backlog stop' para parar."
   while true; do
     if ! _process_queue "${claude_flags[@]}"; then
       echo "Worker detenido (revisión manual necesaria antes de reanudar)."
@@ -162,7 +172,7 @@ _process_queue() {
     title="$(jq -r '.title' <<<"$issue_json")"
     body="$(jq -r '.body // ""' <<<"$issue_json")"
     url="$(jq -r '.url' <<<"$issue_json")"
-    # Comment block shape matches the .claude/skills/read-github-ticket convention —
+    # Comment block shape matches the read-github-ticket skill's convention —
     # keep both in sync if this ever changes.
     comments="$(jq -r '.comments[]? | "-- comment by \(.author.login) (\(.createdAt)) --\n\(.body)"' <<<"$issue_json")"
 
@@ -207,7 +217,7 @@ _process_queue() {
 }
 
 cmd_run() {
-  [[ "${1:-}" == "--yolo" ]] || { echo "Uso: ./scripts/backlog run --yolo" >&2; usage; exit 1; }
+  [[ "${1:-}" == "--yolo" ]] || { echo "Uso: bin/backlog run --yolo" >&2; usage; exit 1; }
 
   ensure_dirs
   ensure_labels
@@ -215,7 +225,7 @@ cmd_run() {
     echo "Ya hay una sesión '$TMUX_SESSION' corriendo. Conectando..."
     exec tmux attach -t "$TMUX_SESSION"
   fi
-  tmux new-session -d -s "$TMUX_SESSION" -n main "$0" __worker
+  tmux new-session -d -s "$TMUX_SESSION" -n main "$SELF" __worker
   echo "Orquestador arrancado en tmux '$TMUX_SESSION': claude corre con --print --dangerously-skip-permissions, sin prompts."
   exec tmux attach -t "$TMUX_SESSION"
 }
