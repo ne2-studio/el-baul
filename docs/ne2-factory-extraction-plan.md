@@ -188,16 +188,18 @@ para el contexto del proyecto (reviewer, rama, servicios, docs) antes de continu
 - La factory tendría sentido copiada tal cual a un repo sin relación que aportara su
   propio `.ne2-factory/` y sus skills `run`/`verify`.
 
-### Slice 4 — Extraer físicamente el repo
+### Slice 4 — Consolidar la factory como bundle autocontenido, dentro del repo
 
 Solo cuando los slices 1-3 estén hechos y el pipeline demostrablemente sin cambios.
+Este slice **no saca nada a otro repo**: reorganiza los ficheros de la factory bajo un
+único root dentro de El Baúl, de forma que ya sea extraíble.
 
 ```text
-github.com/ne2-studio/ne2-factory
-  .claude-plugin/       plugin.json (+ marketplace.json)
+.claude/skills/ne2-factory/       (o donde acabe montándose el plugin)
+  .claude-plugin/       plugin.json
   agents/
   skills/
-  bin/                  backlog, gap-scout (movidos aquí, parametrizados por .ne2-factory.env)
+  bin/                  backlog, gap-scout (movidos aquí desde scripts/, parametrizados por .ne2-factory.env)
   docs/                 environment-contract.md, agent-system-design-constitution.md, backlog/*.md
 ```
 
@@ -208,16 +210,29 @@ el-baul/
   .claude/skills/{run,verify,update-changelog}/
   .ne2-factory/project.md
   .ne2-factory.env
-  # plugin ne2-factory instalado
 ```
 
-El método de instalación puede ser lo más cutre que funcione (una ruta versionada en
-el repo o un submódulo de git al principio). El riesgo no es la distribución, es la
-interfaz. Un marketplace pulido es una mejora posterior y aparte.
+**Aceptación:**
+- El pipeline se comporta exactamente igual que hoy.
+- Ninguna ruta dentro del bundle apunta fuera de su root salvo por el contrato de
+  entorno; un `git mv` del directorio del plugin a cualquier sitio —u otro repo— seguiría
+  funcionando sin editar nada dentro.
+
+### Slice 5 — Sacar a `github.com/ne2-studio/ne2-factory`
+
+Puro empaquetado y distribución, cero cambios de lógica.
+
+- Crear el repo, mover el árbol del Slice 4 tal cual.
+- Método de instalación: lo más cutre que funcione (ruta versionada o submódulo de git
+  al principio).
+- `.claude-plugin/marketplace.json` si procede.
+
+El riesgo no es la distribución, es la interfaz —ya resuelta en los slices 1-4—. Un
+marketplace pulido es una mejora posterior y aparte.
 
 **Aceptación:** el pipeline de El Baúl se comporta igual con la factory fuera del repo.
 
-### Slice 5 — Probar en un segundo proyecto (la definición real de éxito)
+### Slice 6 — Probar en un segundo proyecto (la definición real de éxito)
 
 Instalar `ne2-factory` en Terd BNPL: .NET / AWS / Shopify / Postgres / Terraform /
 CloudWatch — otra arquitectura, otros comandos, otros riesgos, el mismo workflow
@@ -260,12 +275,13 @@ Cada una es un follow-up, disparado por una necesidad real, no por esta extracci
    ejecución específico de El Baúl.
 4. Verificar que `verifier` se comporta igual sobre un diff real.
 
-**No-objetivo:** migrar `implementer` / `bug-fixer`, tocar la orquestación, crear el
-repo externo, introducir un manifiesto de capabilities.
+**No-objetivo:** migrar `implementer` / `bug-fixer`, tocar la orquestación, mover
+ficheros, crear el repo externo, introducir un manifiesto de capabilities.
 
 Cuando este ticket esté hecho habrás demostrado el camino `factory → contrato de
 entorno → El Baúl verify` con el mínimo de cambios. Los slices 2 y 3 lo extienden al
-resto; el 4 mueve los ficheros; el 5 lo valida en BNPL.
+resto; el 4 consolida el bundle dentro del repo; el 5 lo saca a su propio repo; el 6
+lo valida en BNPL.
 
 ## Por qué este orden
 
