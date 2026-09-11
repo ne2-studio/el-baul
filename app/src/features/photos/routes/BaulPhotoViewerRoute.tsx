@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerContainer';
+import { CrossChapterPhotoViewerContainer } from '@/features/chapters/containers/CrossChapterPhotoViewerContainer';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
 import { useBaulScope } from '@/hooks/useBaulScope';
@@ -9,10 +9,11 @@ import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photo
 
 // Visor para la pestaña "Fotos" del baúl (todas las fotos, todos los capítulos + sueltas) —
 // variante de PersonaPhotoViewerRoute: igual que las fotos de una persona, cruza capítulos
-// libremente, así que no hay apiChapterId/allChapters que ofrecer y por tanto no hay mover ni
-// portada de capítulo (esas viven en ChapterPhotoViewerContainer). Todo lo demás — tag/share/
-// download, portada de baúl, fecha, retirar/solicitar retirada, recuerdos — es universal y
-// vive en PhotoViewerContainer, el mismo que usa el resto de visores.
+// libremente, así que en vez de ChapterPhotoViewerContainer (scoped a un único capítulo fijo)
+// monta CrossChapterPhotoViewerContainer, que resuelve el capítulo de "mover" foto a foto a
+// partir de photo.chapterId. Todo lo demás — tag/share/download, portada de baúl, fecha,
+// retirar/solicitar retirada, recuerdos — es universal y vive en PhotoViewerContainer, que
+// CrossChapterPhotoViewerContainer envuelve.
 //
 // A diferencia de los demás visores, no hace fetch propio: solo muestra las fotos que la
 // pestaña ya cargó (useBaulesStore.baulPhotos/loosePhotos, según qué filtro — "Todas" o "Sin
@@ -57,11 +58,12 @@ export const BaulPhotoViewerRoute: React.FC = () => {
   const chapterName = photo.chapterId ? chapters?.find((c) => c.id === photo.chapterId)?.name : undefined;
 
   return (
-    <PhotoViewerContainer
+    <CrossChapterPhotoViewerContainer
       photo={photo}
       photos={photos}
       baulId={baul.id}
       baulName={baul.name}
+      allChapters={chapters || []}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
       chapterName={chapterName}

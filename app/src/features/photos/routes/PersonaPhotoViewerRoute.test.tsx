@@ -2,14 +2,14 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Baul, Chapter, Photo } from '@/types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Baul, Chapter, Persona, Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useUIStore } from '@/store/uiStore';
-import { BaulPhotoViewerRoute } from './BaulPhotoViewerRoute';
+import { PersonaPhotoViewerRoute } from './PersonaPhotoViewerRoute';
 import { movePhotos } from '@/features/photos/useCases';
 
 vi.mock('react-oidc-context', () => ({
@@ -38,13 +38,14 @@ vi.mock('@/api', () => ({
   api: {
     photos: { download: vi.fn(), createShareLink: vi.fn() },
     recuerdos: { getAll: vi.fn().mockResolvedValue([]), createShareLink: vi.fn() },
-    baules: { getScope: vi.fn() },
+    baules: { getPersonaScope: vi.fn() },
   },
   isForbiddenError: () => false,
   isUnauthorizedError: () => false,
 }));
 
 const baul = { id: 'baul-1', name: 'Familia García', chapterCount: 2, role: 'administrador' } as Baul;
+const persona = { id: 'persona-1', baulId: 'baul-1', nickname: 'Abuela', status: 'active', role: 'colaborador', isCustodio: false, invitedDate: 'hace 1 día' } as Persona;
 
 const chapters: Chapter[] = [
   { id: 'c1', name: 'Verano 2024', photoCount: 3, lastUpdated: 'hace 1 día', recuerdoCount: 0, undatedPhotoCount: 0 },
@@ -64,64 +65,49 @@ function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/baules/:baulId/fotos/foto/:photoId" element={<BaulPhotoViewerRoute />} />
+        <Route path="/baules/:baulId/personas/:personaId/foto/:photoId" element={<PersonaPhotoViewerRoute />} />
       </Routes>
     </MemoryRouter>
   );
 }
 
-describe('BaulPhotoViewerRoute', () => {
+async function openMenu(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole('button', { name: 'Más opciones' }));
+}
+
+describe('PersonaPhotoViewerRoute', () => {
   beforeEach(() => {
-    // The chapter badge these tests check for lives in the recuerdos panel content, which is
-    // only mounted where that panel is visible — always on desktop — so stub a desktop-sized
-    // viewport; the viewer's mobile/desktop layout switch isn't what's under test here.
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
-    );
+    vi.clearAllMocks();
     useBaulesStore.setState({
       baules: [baul],
       chapters: { 'baul-1': chapters },
       loosePhotos: { 'baul-1': [] },
-      baulPhotos: { 'baul-1': [chapterPhoto.id, loosePhoto.id] },
     });
     usePhotosStore.setState({ photosById: { [chapterPhoto.id]: chapterPhoto, [loosePhoto.id]: loosePhoto } });
-    usePersonasStore.setState({ personas: { 'baul-1': [] }, taggedPersonas: {}, personaPhotos: {}, removalRequests: { 'baul-1': [] } });
+    usePersonasStore.setState({
+      personas: { 'baul-1': [persona] },
+      taggedPersonas: {},
+      personaPhotos: { 'persona-1': [chapterPhoto.id, loosePhoto.id] },
+      removalRequests: { 'baul-1': [] },
+    });
     useRecuerdosStore.setState({ baulRecuerdos: { 'baul-1': [] }, recuerdos: {} });
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('shows a photo already loaded by the "Fotos" tab, with its chapter badge', async () => {
-    renderAt('/baules/baul-1/fotos/foto/photo-1');
-
-    expect(await screen.findByText('en «Verano 2024»')).toBeInTheDocument();
-  });
-
-  it('shows no chapter badge for a loose photo', async () => {
-    renderAt('/baules/baul-1/fotos/foto/photo-2');
-
-    await screen.findByRole('button', { name: 'Más opciones' });
-    expect(screen.queryByText('en «Verano 2024»')).not.toBeInTheDocument();
   });
 
   // Regression for the bug reported in issue #68: this viewer used to mount PhotoViewerContainer
   // directly, which never offers "Mover a otro capítulo" — the option was entirely missing from
-  // the Baúl-wide "Fotos" tab viewer regardless of entry point.
-  it('offers "Mover a otro capítulo" for a photo already in a chapter', async () => {
+  // the persona photos viewer regardless of entry point.
+  it('offers "Mover a otro capítulo" for a tagged photo already in a chapter', async () => {
     const user = userEvent.setup();
-    renderAt('/baules/baul-1/fotos/foto/photo-1');
-    await user.click(await screen.findByRole('button', { name: 'Más opciones' }));
+    renderAt('/baules/baul-1/personas/persona-1/foto/photo-1');
+    await openMenu(user);
 
     expect(screen.getByText('Mover a otro capítulo')).toBeInTheDocument();
   });
 
-  it('offers "Mover a otro capítulo" for a loose photo too', async () => {
+  it('offers "Mover a otro capítulo" for a loose tagged photo too', async () => {
     const user = userEvent.setup();
-    renderAt('/baules/baul-1/fotos/foto/photo-2');
-    await user.click(await screen.findByRole('button', { name: 'Más opciones' }));
+    renderAt('/baules/baul-1/personas/persona-1/foto/photo-2');
+    await openMenu(user);
 
     expect(screen.getByText('Mover a otro capítulo')).toBeInTheDocument();
   });
@@ -131,35 +117,15 @@ describe('BaulPhotoViewerRoute', () => {
   it('moves the photo and stays on it, without navigating away', async () => {
     const user = userEvent.setup();
     vi.mocked(movePhotos).mockResolvedValue(undefined);
-    renderAt('/baules/baul-1/fotos/foto/photo-1');
-    await user.click(await screen.findByRole('button', { name: 'Más opciones' }));
+    renderAt('/baules/baul-1/personas/persona-1/foto/photo-1');
+    await openMenu(user);
     await user.click(screen.getByText('Mover a otro capítulo'));
     await user.click(screen.getByText('Navidad'));
     await user.click(screen.getByRole('button', { name: /mover aquí/i }));
 
     expect(movePhotos).toHaveBeenCalledWith('baul-1', 'c1', ['photo-1'], 'c2');
     await waitFor(() => expect(useUIStore.getState().toastMessage).toBe('Foto movida'));
-    // Stays on the same photo/viewer — no navigation to the destination chapter, and the move
-    // modal has closed.
     expect(screen.getByRole('button', { name: 'Más opciones' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /mover aquí/i })).not.toBeInTheDocument();
-  });
-
-  it('falls back to "not found" for a photo the tab has not loaded yet', async () => {
-    renderAt('/baules/baul-1/fotos/foto/unknown-photo');
-
-    expect(await screen.findByText('No se ha encontrado la foto.')).toBeInTheDocument();
-  });
-
-  // Con el filtro "Sin capítulo" activo, BaulPhotosTabContainer nunca llega a pedir la página
-  // paginada de "Todas" — baulPhotos[baulId] se queda sin cargar y solo loosePhotos tiene la
-  // foto. Antes esto hacía caer siempre en "no encontrada" — ver el bug que arregla este test.
-  it('shows a loose photo opened with only "Sin capítulo" loaded (baulPhotos never fetched)', async () => {
-    useBaulesStore.setState({ loosePhotos: { 'baul-1': [loosePhoto.id] }, baulPhotos: {} });
-
-    renderAt('/baules/baul-1/fotos/foto/photo-2');
-
-    await screen.findByRole('button', { name: 'Más opciones' });
-    expect(screen.queryByText('No se ha encontrado la foto.')).not.toBeInTheDocument();
   });
 });

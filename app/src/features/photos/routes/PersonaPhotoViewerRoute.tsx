@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerContainer';
+import { CrossChapterPhotoViewerContainer } from '@/features/chapters/containers/CrossChapterPhotoViewerContainer';
 import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
 import { useBaulScope } from '@/hooks/useBaulScope';
 import { guardBaulScope } from '@/hooks/baulScopeGuard';
@@ -8,11 +8,12 @@ import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { closePhotoViewer, getBackgroundLocation, navigateToPhotoInViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 // Variante de ChapterPhotoViewerRoute que recorre las fotos etiquetadas de una persona
-// concreta en vez de las de un capítulo — cruza capítulos libremente, así que no hay
-// apiChapterId/allChapters que ofrecer, y por tanto no hay mover ni portada de capítulo (ver
-// ChapterPhotoViewerContainer, que es quien añade esas dos). Todo lo demás — tag/share/
-// download, portada de baúl, fecha, retirar/solicitar retirada, recuerdos — es universal y
-// vive en PhotoViewerContainer, el mismo que usa el visor de capítulo.
+// concreta en vez de las de un capítulo — cruza capítulos libremente, así que en vez de
+// ChapterPhotoViewerContainer (scoped a un único capítulo fijo) monta
+// CrossChapterPhotoViewerContainer, que resuelve el capítulo de "mover" foto a foto a partir de
+// photo.chapterId. Todo lo demás — tag/share/download, portada de baúl, fecha, retirar/
+// solicitar retirada, recuerdos — es universal y vive en PhotoViewerContainer, que
+// CrossChapterPhotoViewerContainer envuelve.
 export const PersonaPhotoViewerRoute: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,11 +65,12 @@ export const PersonaPhotoViewerRoute: React.FC = () => {
   const chapterName = photo.chapterId ? chapters?.find((c) => c.id === photo.chapterId)?.name : undefined;
 
   return (
-    <PhotoViewerContainer
+    <CrossChapterPhotoViewerContainer
       photo={photo}
       photos={photos}
       baulId={baul.id}
       baulName={baul.name}
+      allChapters={chapters || []}
       onClose={closeViewer}
       onPhotoChange={(newPhoto) => navigateToPhotoInViewer(navigate, backgroundLocation, photoViewerPath(basePath, newPhoto.id))}
       chapterName={chapterName}

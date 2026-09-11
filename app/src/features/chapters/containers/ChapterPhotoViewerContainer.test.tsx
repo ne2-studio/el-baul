@@ -118,12 +118,13 @@ describe('ChapterPhotoViewerContainer', () => {
     expect(screen.getByText('Mover a otro capítulo')).toBeInTheDocument();
   });
 
-  it('hides move when there is nowhere else to move to', async () => {
+  it('still offers move when there is nowhere else to move to — MoveModal lets you create one', async () => {
     const user = userEvent.setup();
     renderContainer({ allChapters: [chapters[0]] });
     await openMenu(user);
+    await user.click(screen.getByText('Mover a otro capítulo'));
 
-    expect(screen.queryByText('Mover a otro capítulo')).not.toBeInTheDocument();
+    expect(screen.getByText('No se encontraron capítulos.')).toBeInTheDocument();
   });
 
   it('moves the photo and self-navigates to the target chapter', async () => {

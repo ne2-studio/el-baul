@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FolderInput } from 'lucide-react';
 import { PhotoViewerContainer } from '@/features/photos/containers/PhotoViewerContainer';
 import { MoveModal } from '@/features/photos/components/MoveModal';
@@ -10,47 +9,41 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { movePhotos } from '@/features/photos/useCases';
 import { createChapter } from '@/features/chapters/useCases';
 
-interface ChapterPhotoViewerContainerProps {
+interface CrossChapterPhotoViewerContainerProps {
   photo: Photo;
   photos: Photo[];
   baulId: string;
   baulName: string;
-  /** null = la foto no pertenece a ningún capítulo (fotos sueltas) — sigue siendo un scope
-   * válido para mover. */
-  apiChapterId: string | null;
   allChapters: Chapter[];
-  currentChapter?: Chapter;
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
   /** Nombre del capítulo de la foto actual — forwardeado a PhotoViewerContainer, ver ahí. */
   chapterName?: string;
-  /** true si el visor ya está dentro de ese capítulo — forwardeado, ver PhotoViewerContainer. */
-  hideChapterBadge?: boolean;
 }
 
-// Envuelve el PhotoViewerContainer universal añadiendo la única acción que sí necesita saber
-// "en qué capítulo estoy": mover a otro capítulo. Se inyecta como extraMenuItems — ver
-// usePhotoViewerActions.buildMenuItems para la garantía de que las acciones destructivas
-// siguen yendo siempre al final. Navega ella misma tras un movimiento con éxito: solo necesita
-// baulId + el id del capítulo destino, ambos ya conocidos, así que no hace falta que la Route
-// se lo inyecte (ver docs/architecture/frontend.md, regla de navegación de containers/).
-export function ChapterPhotoViewerContainer({
-  photo, photos, baulId, baulName, apiChapterId, allChapters, currentChapter, onClose, onPhotoChange,
-  chapterName, hideChapterBadge,
-}: ChapterPhotoViewerContainerProps) {
-  const navigate = useNavigate();
+// Variante de ChapterPhotoViewerContainer para visores que cruzan capítulos libremente (el
+// "Fotos" del baúl y las fotos de una persona) — a diferencia de aquel, no recibe un
+// apiChapterId/currentChapter fijos desde la Route porque cada foto de la lista puede
+// pertenecer a un capítulo distinto (o a ninguno): se resuelven aquí, foto a foto, a partir de
+// photo.chapterId, el mismo campo que ya trae cualquier Photo. Por lo demás reusa el mismo
+// MoveModal + movePhotos + createChapter que ChapterPhotoViewerContainer.
+//
+// Difiere de ChapterPhotoViewerContainer en qué pasa tras un movimiento con éxito: aquel navega
+// al capítulo destino (tiene sentido, el visor ya estaba scoped a un único capítulo); este se
+// queda donde está — el usuario puede seguir deslizando por la misma lista de fotos mixta en la
+// que ya estaba — y se apoya en el toast de éxito de useAsyncAction para confirmar el movimiento.
+export function CrossChapterPhotoViewerContainer({
+  photo, photos, baulId, baulName, allChapters, onClose, onPhotoChange, chapterName,
+}: CrossChapterPhotoViewerContainerProps) {
   const { run } = useAsyncAction();
   const posthog = usePostHog();
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
 
-  const moveableChapters = allChapters.filter((chapter) => chapter.id !== currentChapter?.id);
+  const apiChapterId = photo.chapterId ?? null;
+  const moveableChapters = allChapters.filter((chapter) => chapter.id !== apiChapterId);
 
-  // newChapterName es distinto de undefined cuando el usuario eligió la fila "Nuevo capítulo
-  // …" de MoveModal en vez de un capítulo existente — ver MoveModal.NEW_CHAPTER_OPTION_ID.
-  // En ese caso se crea el capítulo primero y luego se mueve la foto a él, como 2 peticiones
-  // secuenciales (mismo patrón que BatchPhotoActionsContainer.handleBatchCreateChapter).
   const handleMoveSubmit = async (newChapterName?: string) => {
     if (!moveTargetId) return;
     setIsSubmittingMove(true);
@@ -71,14 +64,9 @@ export function ChapterPhotoViewerContainer({
     if (result.ok) {
       setShowMoveModal(false);
       setMoveTargetId('');
-      navigate(`/baules/${baulId}/capitulos/${result.value}`, { replace: true });
     }
   };
 
-  // Se ofrece siempre, incluso cuando moveableChapters está vacío (baúl de un solo capítulo, o
-  // fotos sueltas en un baúl sin capítulos reales): MoveModal permite crear el capítulo destino
-  // ahí mismo vía su fila "Nuevo capítulo …", así que nunca hace falta ocultar la opción por
-  // falta de destinos existentes.
   const extraMenuItems: PhotoViewerMenuItem[] = [
     {
       key: 'move',
@@ -99,7 +87,6 @@ export function ChapterPhotoViewerContainer({
         onPhotoChange={onPhotoChange}
         extraMenuItems={extraMenuItems}
         chapterName={chapterName}
-        hideChapterBadge={hideChapterBadge}
       />
 
       {showMoveModal && (

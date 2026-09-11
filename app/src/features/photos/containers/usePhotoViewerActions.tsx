@@ -35,9 +35,9 @@ interface UsePhotoViewerActionsOptions {
 interface UsePhotoViewerActionsResult {
   /** Construye el array final de items del menú "···". `extraItems` son las acciones que
    * solo tienen sentido para quien nos monta (p.ej. mover de capítulo — exclusiva de
-   * ChapterPhotoViewerContainer, que no conoce esta hook en absoluto). Se intercalan antes de
-   * las acciones destructivas, que van siempre al final sin importar qué se les pase — así
-   * ningún caller puede romper ese orden por accidente. */
+   * ChapterPhotoViewerContainer/CrossChapterPhotoViewerContainer, que no conocen esta hook en
+   * absoluto). Se intercalan antes de las acciones destructivas, que van siempre al final sin
+   * importar qué se les pase — así ningún caller puede romper ese orden por accidente. */
   buildMenuItems: (extraItems?: PhotoViewerMenuItem[]) => PhotoViewerMenuItem[];
   canChangeDate: boolean;
   openDateModal: () => void;
@@ -49,7 +49,8 @@ interface UsePhotoViewerActionsResult {
 
 // Acciones "···" del visor de fotos, más añadir/editar/compartir recuerdo (antes duplicadas
 // en cada XxxPhotoViewerRoute) — todo en un único sitio, sin saber nada de capítulos: mover
-// vive en ChapterPhotoViewerContainer, un nivel por encima, y se intercala vía buildMenuItems.
+// vive en ChapterPhotoViewerContainer/CrossChapterPhotoViewerContainer, un nivel por encima, y
+// se intercala vía buildMenuItems.
 // Ni PhotoViewer (puro) ni PhotoViewerContainer (universal) importan store/useCases/router
 // para nada de esto.
 export function usePhotoViewerActions({

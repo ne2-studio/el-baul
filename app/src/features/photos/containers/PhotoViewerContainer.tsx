@@ -22,8 +22,8 @@ interface PhotoViewerContainerProps {
   onClose: () => void;
   onPhotoChange: (photo: Photo) => void;
   /** Acciones que solo tienen sentido para quien nos monta (p.ej. mover de capítulo, portada
-   * de capítulo — exclusivas de ChapterPhotoViewerContainer). Este container es universal:
-   * no sabe nada de capítulos, ni recibe ningún chapterId. */
+   * de capítulo — exclusivas de ChapterPhotoViewerContainer/CrossChapterPhotoViewerContainer).
+   * Este container es universal: no sabe nada de capítulos, ni recibe ningún chapterId. */
   extraMenuItems?: PhotoViewerMenuItem[];
   /** Nombre del capítulo de photo.chapterId — quien nos monta lo resuelve (ya conoce la lista
    * de capítulos del baúl), este container solo lo pinta y arma la navegación con el id que
@@ -38,7 +38,7 @@ interface PhotoViewerContainerProps {
 // etiquetadas de una persona, o cualquier filtro futuro) — habla con servidor y deja
 // PhotoViewer (su único caller) 100% puro. Solo recibe la lista de fotos a mostrar; nunca un
 // chapterId — si alguna acción lo necesita, quien nos monta la inyecta vía extraMenuItems
-// (ver ChapterPhotoViewerContainer).
+// (ver ChapterPhotoViewerContainer/CrossChapterPhotoViewerContainer).
 export function PhotoViewerContainer({
   photo, photos, baulId, baulName, onClose, onPhotoChange, extraMenuItems, chapterName, hideChapterBadge = false,
 }: PhotoViewerContainerProps) {
