@@ -2,7 +2,7 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
 import { Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
@@ -99,12 +99,23 @@ describe('PhotoViewerContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // These tests interact with the recuerdos panel content directly (spinner, add, tagged
+    // persona click), not with the viewer's mobile/desktop layout switch — stub a desktop-sized
+    // viewport so that content is always mounted, instead of behind the mobile collapsed bar.
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
+    );
     usePersonasStore.setState({ personas: {}, taggedPersonas: {}, personaPhotos: {}, removalRequests: {} });
     useRecuerdosStore.setState({ recuerdos: {} });
     useAppConfigStore.setState({ sharedLinksEnabled: false });
     useUIStore.setState({ removalRequestedPhotoIds: [] });
     vi.mocked(loadRecuerdos).mockResolvedValue(undefined);
     vi.mocked(loadTaggedPersonas).mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('loads recuerdos and tagged personas for the open photo on mount', async () => {

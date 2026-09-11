@@ -15,6 +15,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Arreglado
 
+- Al ver una foto apaisada a pantalla completa en el móvil, girar el teléfono a horizontal ya no la encoge: ahora aprovecha el ancho extra en vez de pasar al diseño de escritorio (con panel lateral) en móviles grandes cuya pantalla en horizontal es ancha pero sigue siendo baja.
 - El punto de "novedades" del selector de baúles (y los avisos de contenido nuevo en la Historia) ahora es único por persona y se comparte entre todos tus dispositivos: lo que ya has visto en un móvil deja de aparecer como nuevo cuando entras desde otro. Antes cada dispositivo llevaba su propia cuenta y un baúl ya visitado volvía a marcarse como nuevo al abrirlo desde otro sitio.
 
 ### Cambiado

@@ -8,10 +8,12 @@ import { RecuerdoInput } from '@/features/memories/components/RecuerdoInput';
 import { RecuerdosList } from '@/features/memories/components/RecuerdosList';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useVisualViewportInset } from '@/hooks/useVisualViewportInset';
+import { useIsDesktopViewport } from '@/hooks/useIsDesktopViewport';
 import { Button } from '@/design-system/components/actions/Button';
 import { IconButton } from '@/design-system/components/actions/IconButton';
 import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { ChapterBadge, PersonBadge } from '@/design-system/components/data-display/Badges';
+import { cn } from '@/design-system/components/ui/utils';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -79,6 +81,11 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   useScrollLock();
   const viewportInset = useVisualViewportInset();
+  // Gates the desktop layout (static header, side panel) on width AND height, not just
+  // Tailwind's `md:` width-only breakpoint — a phone rotated to landscape can cross 768px in
+  // width while staying short, and must keep the full-bleed mobile layout instead of losing
+  // space to a header bar and side panel it doesn't have room for.
+  const isDesktopLayout = useIsDesktopViewport();
   // El panel de recuerdos empieza contraído para que la foto ocupe todo el visor — el usuario
   // lo despliega a demanda (barra inferior en móvil, franja lateral en escritorio).
   const [panelExpanded, setPanelExpanded] = useState(false);
@@ -225,7 +232,12 @@ export function PhotoViewer({
       >
         {/* Header: en móvil flota sobre la foto a pantalla completa; en escritorio vuelve a ser
             una barra normal que empuja la foto hacia abajo, como en el diseño original. */}
-        <div className="absolute inset-x-0 top-0 z-30 pt-safe pointer-events-none md:static md:pt-0 md:pointer-events-auto md:z-auto">
+        <div
+          className={cn(
+            'absolute inset-x-0 top-0 z-30 pt-safe pointer-events-none',
+            isDesktopLayout && 'static pt-0 pointer-events-auto z-auto'
+          )}
+        >
           <PhotoViewerHeader
             currentIndex={currentIndex}
             totalCount={photos.length}
@@ -237,8 +249,13 @@ export function PhotoViewer({
         {/* Cuerpo: en móvil la foto ocupa todo el visor y el panel de recuerdos flota encima,
             colapsado por defecto (barra inferior desplegable). En escritorio vuelve al layout
             de siempre: foto a la izquierda, panel de recuerdos siempre visible a la derecha. */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0 relative">
-          <div className="absolute inset-0 flex md:static md:flex-1 md:h-full overflow-hidden">
+        <div className={cn('flex-1 flex flex-col min-h-0 relative', isDesktopLayout && 'flex-row')}>
+          <div
+            className={cn(
+              'absolute inset-0 flex overflow-hidden',
+              isDesktopLayout && 'static flex-1 h-full'
+            )}
+          >
             <PhotoStage
               photoKey={photo.id}
               src={photo.fullUrl}
@@ -252,68 +269,72 @@ export function PhotoViewer({
           </div>
 
           {/* Panel de escritorio: siempre visible, sin colapsar. */}
-          <div className="hidden md:flex md:flex-col md:flex-none md:w-1/3 md:h-full md:border-l md:border-background/15">
-            {infoContent}
-          </div>
+          {isDesktopLayout && (
+            <div className="flex flex-col flex-none w-1/3 h-full border-l border-background/15">
+              {infoContent}
+            </div>
+          )}
 
           {/* Panel de móvil: colapsado por defecto (barra inferior); desplegado, hoja flotante
               sobre la foto que sube desde abajo. */}
-          <div className="md:hidden">
-            {panelExpanded ? (
-              <div className="absolute z-20 flex flex-col bg-foreground/95 backdrop-blur-sm inset-x-0 bottom-0 max-h-[50%] rounded-t-2xl pb-safe">
-                <div className="flex items-center justify-between gap-2 px-6 pt-5 pb-1 flex-shrink-0">
-                  <h2 className="text-background font-semibold">Recuerdos</h2>
-                  <IconButton
-                    onClick={() => setPanelExpanded(false)}
-                    aria-label="Contraer panel de recuerdos"
-                    tone="inverse"
-                  >
-                    <ChevronDown className="w-5 h-5 text-background" aria-hidden />
-                  </IconButton>
+          {!isDesktopLayout && (
+            <>
+              {panelExpanded ? (
+                <div className="absolute z-20 flex flex-col bg-foreground/95 backdrop-blur-sm inset-x-0 bottom-0 max-h-[50%] rounded-t-2xl pb-safe">
+                  <div className="flex items-center justify-between gap-2 px-6 pt-5 pb-1 flex-shrink-0">
+                    <h2 className="text-background font-semibold">Recuerdos</h2>
+                    <IconButton
+                      onClick={() => setPanelExpanded(false)}
+                      aria-label="Contraer panel de recuerdos"
+                      tone="inverse"
+                    >
+                      <ChevronDown className="w-5 h-5 text-background" aria-hidden />
+                    </IconButton>
+                  </div>
+
+                  {infoContent}
                 </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPanelExpanded(true)}
+                  aria-label="Ver recuerdos"
+                  className="absolute z-20 bg-foreground/90 backdrop-blur-sm text-left inset-x-0 bottom-0 rounded-t-2xl pb-safe"
+                >
+                  {/* padding visual en su propio wrapper: si compartiera elemento con pb-safe, ese
+                      padding-bottom (0 fuera de iOS nativo) le ganaría en cascada al de aquí, por
+                      venir declarado después en index.css — ver BottomSheetModal/AiChatScreen para
+                      el mismo patrón de separar ambos paddings. */}
+                  <div className="flex items-center gap-3 h-16 px-4">
+                    {taggedPersonas.length > 0 && (
+                      <div className="flex -space-x-2">
+                        {taggedPersonas.slice(0, 3).map((persona) => (
+                          <Avatar
+                            key={persona.id}
+                            name={persona.nickname}
+                            src={persona.avatarUrl}
+                            size={8}
+                            className="bg-background/20 text-background/70 ring-2 ring-foreground"
+                          />
+                        ))}
+                        {extraTaggedCount > 0 && (
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium bg-background/20 text-background/70 ring-2 ring-foreground">
+                            +{extraTaggedCount}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                {infoContent}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPanelExpanded(true)}
-                aria-label="Ver recuerdos"
-                className="absolute z-20 bg-foreground/90 backdrop-blur-sm text-left inset-x-0 bottom-0 rounded-t-2xl pb-safe"
-              >
-                {/* padding visual en su propio wrapper: si compartiera elemento con pb-safe, ese
-                    padding-bottom (0 fuera de iOS nativo) le ganaría en cascada al de aquí, por
-                    venir declarado después en index.css — ver BottomSheetModal/AiChatScreen para
-                    el mismo patrón de separar ambos paddings. */}
-                <div className="flex items-center gap-3 h-16 px-4">
-                  {taggedPersonas.length > 0 && (
-                    <div className="flex -space-x-2">
-                      {taggedPersonas.slice(0, 3).map((persona) => (
-                        <Avatar
-                          key={persona.id}
-                          name={persona.nickname}
-                          src={persona.avatarUrl}
-                          size={8}
-                          className="bg-background/20 text-background/70 ring-2 ring-foreground"
-                        />
-                      ))}
-                      {extraTaggedCount > 0 && (
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium bg-background/20 text-background/70 ring-2 ring-foreground">
-                          +{extraTaggedCount}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    <span className="flex-1 text-background/70 text-sm">
+                      {photo.date ? formatPartialDate(photo.date) : 'Sin fecha'}
+                    </span>
 
-                  <span className="flex-1 text-background/70 text-sm">
-                    {photo.date ? formatPartialDate(photo.date) : 'Sin fecha'}
-                  </span>
-
-                  <ChevronUp className="w-5 h-5 text-background" aria-hidden />
-                </div>
-              </button>
-            )}
-          </div>
+                    <ChevronUp className="w-5 h-5 text-background" aria-hidden />
+                  </div>
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 

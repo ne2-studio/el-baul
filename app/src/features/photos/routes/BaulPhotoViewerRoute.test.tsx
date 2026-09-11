@@ -2,7 +2,7 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Baul, Chapter, Photo } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
@@ -64,6 +64,13 @@ function renderAt(path: string) {
 
 describe('BaulPhotoViewerRoute', () => {
   beforeEach(() => {
+    // The chapter badge these tests check for lives in the recuerdos panel content, which is
+    // only mounted where that panel is visible — always on desktop — so stub a desktop-sized
+    // viewport; the viewer's mobile/desktop layout switch isn't what's under test here.
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
+    );
     useBaulesStore.setState({
       baules: [baul],
       chapters: { 'baul-1': chapters },
@@ -73,6 +80,10 @@ describe('BaulPhotoViewerRoute', () => {
     usePhotosStore.setState({ photosById: { [chapterPhoto.id]: chapterPhoto, [loosePhoto.id]: loosePhoto } });
     usePersonasStore.setState({ personas: { 'baul-1': [] }, taggedPersonas: {}, personaPhotos: {}, removalRequests: { 'baul-1': [] } });
     useRecuerdosStore.setState({ baulRecuerdos: { 'baul-1': [] }, recuerdos: {} });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('shows a photo already loaded by the "Fotos" tab, with its chapter badge', async () => {
