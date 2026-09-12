@@ -31,8 +31,13 @@ export const PersonaDetailRoute: React.FC = () => {
   const posthog = usePostHog();
   const { baulId, personaId } = useParams();
 
+  // source: 'family_tree' cuando se llega aquí desde el árbol genealógico de Familia — ver
+  // BaulPersonasTabContainer.handleSelectPersona. Se reutiliza person_viewed en vez de un evento
+  // nuevo (family_tree_person_clicked): la acción de dominio sigue siendo ver una persona, ver
+  // la spec del árbol genealógico, sección Analytics.
+  const navigationSource = (location.state as { source?: 'family_tree' } | null)?.source;
   useEffect(() => {
-    if (personaId) posthog.capture('person_viewed');
+    if (personaId) posthog.capture('person_viewed', navigationSource ? { source: navigationSource } : undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personaId]);
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
