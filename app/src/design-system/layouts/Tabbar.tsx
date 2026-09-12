@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { motion, type PanInfo } from 'motion/react';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { TabButton } from '@/design-system/components/navigation/TabButton';
 
@@ -16,24 +15,20 @@ interface TabbarProps {
   /** Altura del header/hero de encima, para desplazar el offset del sticky — normalmente
    * viene de `useElementHeight` sobre el `PageHeader`. */
   top?: number;
-  /** Oculta solo la franja de pestañas manteniendo el swipe del contenido — usado por
-   * PhotosView mientras está en modo de selección de fotos. */
+  /** Oculta solo la franja de pestañas, manteniendo el contenido — usado por PhotosView
+   * mientras está en modo de selección de fotos. */
   hideStrip?: boolean;
   children: React.ReactNode;
 }
 
-const SWIPE_THRESHOLD = 80;
-
-// Franja de pestañas sticky + contenedor con swipe horizontal para cambiar de pestaña,
-// igual que hacían por separado ChaptersView/PhotosView/PersonaDetailScreen antes de esta
-// extracción. El swipe queda restringido al eje X (dragConstraints en 0) para no desplazar
-// visualmente el contenido — solo se usa para detectar el gesto, igual que PhotoStage.
+// Franja de pestañas sticky + contenido. Antes el contenido también tenía swipe horizontal
+// (arrastrar para cambiar de pestaña, vía motion.div drag="x") pero ese gesto nunca llegó a
+// usarse y competía con el scroll/pan horizontal interno de contenido como el árbol
+// genealógico (ver FamilyTreeView) — se quitó por completo en vez de intentar coordinarlos.
 export function Tabbar({ tabs, active, onChange, top = 0, hideStrip, children }: TabbarProps) {
-  const activeIndex = tabs.findIndex((tab) => tab.key === active);
-
   // Cada pestaña recuerda su propio scroll — sin esto, cambiar de pestaña dejaba el scroll de
   // la pestaña de origen tal cual, así que la de destino aparecía a mitad de camino en vez de
-  // arriba. Se guarda en el propio gesto de cambio (clic o swipe), el único momento en que
+  // arriba. Se guarda en el propio clic de cambio de pestaña, el único momento en que
   // `active` todavía es la pestaña saliente y window.scrollY todavía refleja su posición — un
   // efecto sobre el cambio de `active` llegaría tarde, después de que React ya haya pintado el
   // contenido de la nueva pestaña. Vive en memoria del componente, no en localStorage: no hace
@@ -50,14 +45,6 @@ export function Tabbar({ tabs, active, onChange, top = 0, hideStrip, children }:
   useEffect(() => {
     window.scrollTo(0, scrollPositions.current[active] ?? 0);
   }, [active]);
-
-  const handleDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.x < -SWIPE_THRESHOLD && activeIndex < tabs.length - 1) {
-      switchTab(tabs[activeIndex + 1].key);
-    } else if (info.offset.x > SWIPE_THRESHOLD && activeIndex > 0) {
-      switchTab(tabs[activeIndex - 1].key);
-    }
-  };
 
   return (
     <>
@@ -79,14 +66,7 @@ export function Tabbar({ tabs, active, onChange, top = 0, hideStrip, children }:
         </div>
       )}
 
-      <motion.div
-        drag={tabs.length > 1 ? 'x' : false}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handleDragEnd}
-      >
-        {children}
-      </motion.div>
+      {children}
     </>
   );
 }

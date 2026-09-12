@@ -122,7 +122,7 @@ export const PersonaDetailTwoTabs: Story = {
 };
 
 // Uso real en PhotosView.tsx durante el modo de selección de fotos: la franja de pestañas
-// se oculta (hideStrip) pero el contenido conserva el swipe horizontal.
+// se oculta (hideStrip) pero el contenido se sigue renderizando.
 export const HiddenStripDuringSelection: Story = {
   args: {
     tabs: [
