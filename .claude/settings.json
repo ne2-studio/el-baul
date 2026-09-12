@@ -47,5 +47,16 @@
       "Bash(./scripts/openapi accept-contract *)",
       "Bash(./scripts/openapi generate-types *)"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "ne2": {
+      "source": {
+        "source": "github",
+        "repo": "ne2-studio/ne2-factory"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ne2-factory@ne2": true
   }
 }
