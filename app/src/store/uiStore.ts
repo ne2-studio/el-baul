@@ -74,6 +74,15 @@ interface UIState {
   removalRequestedPhotoIds: string[];
   hasRequestedPhotoRemoval: (photoId: string) => boolean;
   markPhotoRemovalRequested: (photoId: string) => void;
+
+  // "Invitar a la familia" attention banner (Historia tab, see BaulFeedTabContainer): dismissing
+  // it only hides it for the rest of this app session, reappearing the next time the app is
+  // opened — so, unlike the cooldowns/flags above, this is plain in-memory state, never written
+  // to localStorage. Keyed by baulId, same reasoning as the contribution-suggestion cooldown:
+  // dismissing it in one baúl shouldn't hide it in another.
+  dismissedInviteBannerBaulIds: string[];
+  isInviteBannerDismissed: (baulId: string) => boolean;
+  dismissInviteBanner: (baulId: string) => void;
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -115,5 +124,12 @@ export const useUIStore = create<UIState>((set, get) => ({
     const ids = [...get().removalRequestedPhotoIds, photoId];
     writeRemovalRequestedPhotoIds(ids);
     set({ removalRequestedPhotoIds: ids });
+  },
+
+  dismissedInviteBannerBaulIds: [],
+  isInviteBannerDismissed: (baulId) => get().dismissedInviteBannerBaulIds.includes(baulId),
+  dismissInviteBanner: (baulId) => {
+    if (get().dismissedInviteBannerBaulIds.includes(baulId)) return;
+    set({ dismissedInviteBannerBaulIds: [...get().dismissedInviteBannerBaulIds, baulId] });
   },
 }));

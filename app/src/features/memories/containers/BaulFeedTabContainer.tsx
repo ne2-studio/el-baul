@@ -2,16 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { SimpleFAB } from '@/design-system/components/actions/FAB';
+import { AttentionBanner } from '@/design-system/components/feedback/AttentionBanner';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { Sparkles } from 'lucide-react';
 import { FeedTab } from '@/features/memories/components/FeedTab';
 import { FeedItem, Photo, PhotoBatch } from '@/types';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { useUIStore } from '@/store/uiStore';
 import { loadBaulFeed, loadMoreBaulFeed } from '@/features/memories/useCases';
 import { loadChapterPhotos } from '@/features/photos/useCases';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { getBaulPermissions } from '@/utils/roleUtils';
+import { countPendingInvites } from '@/utils/personaOrder';
 import { useRecuerdoActions } from './useRecuerdoActions';
 
 interface BaulFeedTabContainerProps {
@@ -40,6 +46,16 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
   const { editRecuerdo, shareRecuerdo } = useRecuerdoActions(baulName);
   const { run, isPending } = useAsyncAction();
+
+  // "Invitar a la familia" attention banner: only for someone who can actually send invites,
+  // and only while there's still someone to invite — see countPendingInvites/AttentionBanner
+  // (uiStore) for what "pending" and "dismissed" mean here.
+  const baul = useBaulesStore((state) => state.baules.find((b) => b.id === baulId));
+  const personas = usePersonasStore((state) => state.personas[baulId]) || [];
+  const isInviteBannerDismissed = useUIStore((state) => state.isInviteBannerDismissed(baulId));
+  const dismissInviteBanner = useUIStore((state) => state.dismissInviteBanner);
+  const pendingInvitesCount = countPendingInvites(personas);
+  const showInviteBanner = getBaulPermissions(baul).canManageBaulInvite && pendingInvitesCount > 0 && !isInviteBannerDismissed;
   // Tracks how many handleOpenPhoto() calls are in flight, independent of useAsyncAction's
   // per-photo keys (see below) — the overlay just needs "is some photo opening right now",
   // not which one.
@@ -110,8 +126,22 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
     navigate(`/baules/${baulId}/subida/${batch.batchId}`);
   };
 
+  const pendingInvitesMessage = pendingInvitesCount === 1
+    ? 'Aún hay 1 persona en tu familia que no está invitada.'
+    : `Aún hay ${pendingInvitesCount} personas en tu familia que no están invitadas.`;
+
   return (
     <>
+      {showInviteBanner && (
+        <AttentionBanner
+          message={pendingInvitesMessage}
+          ctaLabel="Invitar"
+          dismissLabel="Ocultar"
+          onCta={() => navigate(`/baules/${baulId}/invitar`)}
+          onDismiss={() => dismissInviteBanner(baulId)}
+          className="mb-4"
+        />
+      )}
       <FeedTab
         feedItems={feedItems}
         onOpenChapter={onOpenChapter}

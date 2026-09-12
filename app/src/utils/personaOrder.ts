@@ -15,6 +15,13 @@ export function sortPersonasForInvite(personas: Persona[]): Persona[] {
   return [...pending, ...active];
 }
 
+// How many personas are still missing an invite — the same "pending" half sortPersonasForInvite
+// puts first, counted rather than sorted. Exported on its own so BaulFeedTabContainer's
+// attention banner derives its count from the exact same rule instead of re-deriving the filter.
+export function countPendingInvites(personas: Persona[]): number {
+  return personas.filter((p) => p.role !== 'sin_acceso' && p.status !== 'active').length;
+}
+
 // Tagging pickers (photo tagging, contribution suggestions): personas already in the baúl are
 // the likely picks, so they lead; pending invitees trail below. Alphabetical within each group.
 export function sortPersonasForTagging(personas: Persona[]): Persona[] {

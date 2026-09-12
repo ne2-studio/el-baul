@@ -3,9 +3,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { FeedItem, Photo, PhotoBatch, Recuerdo } from '@/types';
+import { Baul, FeedItem, Persona, Photo, PhotoBatch, Recuerdo } from '@/types';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { useUIStore } from '@/store/uiStore';
 import { BaulFeedTabContainer } from './BaulFeedTabContainer';
 
 vi.mock('react-oidc-context', () => ({
@@ -60,6 +63,20 @@ function recuerdo(overrides: Partial<Recuerdo> = {}): Recuerdo {
   } as Recuerdo;
 }
 
+function baul(overrides: Partial<Baul> = {}): Baul {
+  return {
+    id: baulId, name: 'Familia García', chapterCount: 3, lastUpdated: 'hace 2 días',
+    role: 'administrador', isCustodio: true, ...overrides,
+  } as Baul;
+}
+
+function persona(overrides: Partial<Persona> = {}): Persona {
+  return {
+    id: 'p1', baulId, nickname: 'Tita Vito', status: 'pending', role: 'colaborador',
+    isCustodio: false, invitedDate: 'hace 2 meses', ...overrides,
+  } as Persona;
+}
+
 function photoBatch(overrides: Partial<PhotoBatch> = {}): PhotoBatch {
   return {
     batchId: 'batch-1', userId: 'user-1', userName: 'Ana', photoCount: 2,
@@ -81,6 +98,7 @@ function renderContainer() {
         <Route path="/baules/:baulId/capitulos/:chapterId/foto/:photoId" element={<div>Visor · capítulo</div>} />
         <Route path="/baules/:baulId/subida/:batchId" element={<div>Grid del lote</div>} />
         <Route path="/baules/:baulId/subida/:batchId/foto/:photoId" element={<div>Visor · lote</div>} />
+        <Route path="/baules/:baulId/invitar" element={<div>Invitar a la familia</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -90,6 +108,9 @@ describe('BaulFeedTabContainer', () => {
   beforeEach(() => {
     useRecuerdosStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {}, baulFeed: {}, baulFeedHasMore: {} });
     useAppConfigStore.setState({ chatEnabled: false, sharedLinksEnabled: false, baulFeedEnabled: false });
+    useBaulesStore.getState().reset();
+    usePersonasStore.getState().reset();
+    useUIStore.setState({ dismissedInviteBannerBaulIds: [] });
     vi.clearAllMocks();
     // A test whose sentinel never mounts (no onLoadMore/hasMore) never constructs a new
     // IntersectionObserver, so without this reset triggerIntersection would still point at
@@ -331,5 +352,74 @@ describe('BaulFeedTabContainer', () => {
     act(() => triggerIntersection(true));
 
     expect(loadMoreBaulFeed).not.toHaveBeenCalled();
+  });
+
+  describe('invite banner', () => {
+    beforeEach(() => {
+      useBaulesStore.setState({ baules: [baul()] });
+      useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+    });
+
+    it('shows the banner when the role can invite and someone is still pending', () => {
+      usePersonasStore.setState({ personas: { [baulId]: [persona()] } });
+
+      renderContainer();
+
+      expect(screen.getByText('Aún hay 1 persona en tu familia que no está invitada.')).toBeInTheDocument();
+    });
+
+    it('pluralizes the message for more than one pending persona', () => {
+      usePersonasStore.setState({ personas: { [baulId]: [persona({ id: 'p1' }), persona({ id: 'p2' })] } });
+
+      renderContainer();
+
+      expect(screen.getByText('Aún hay 2 personas en tu familia que no están invitadas.')).toBeInTheDocument();
+    });
+
+    it('hides the banner for a role that cannot manage invites', () => {
+      useBaulesStore.setState({ baules: [baul({ role: 'colaborador', isCustodio: false })] });
+      usePersonasStore.setState({ personas: { [baulId]: [persona()] } });
+
+      renderContainer();
+
+      expect(screen.queryByText(/no está invitada/)).not.toBeInTheDocument();
+    });
+
+    it('hides the banner when a persona with no access is the only one pending', () => {
+      usePersonasStore.setState({ personas: { [baulId]: [persona({ role: 'sin_acceso' })] } });
+
+      renderContainer();
+
+      expect(screen.queryByText(/no está invitada/)).not.toBeInTheDocument();
+    });
+
+    it('hides the banner once everyone has joined', () => {
+      usePersonasStore.setState({ personas: { [baulId]: [persona({ status: 'active' })] } });
+
+      renderContainer();
+
+      expect(screen.queryByText(/no está invitada/)).not.toBeInTheDocument();
+    });
+
+    it('navigates to "Invitar a la familia" from the CTA', async () => {
+      const user = userEvent.setup();
+      usePersonasStore.setState({ personas: { [baulId]: [persona()] } });
+
+      renderContainer();
+      await user.click(screen.getByRole('button', { name: 'Invitar' }));
+
+      expect(screen.getByText('Invitar a la familia')).toBeInTheDocument();
+    });
+
+    it('hides the banner once dismissed, without touching any other baúl', async () => {
+      const user = userEvent.setup();
+      usePersonasStore.setState({ personas: { [baulId]: [persona()] } });
+
+      renderContainer();
+      await user.click(screen.getByRole('button', { name: 'Ocultar' }));
+
+      expect(screen.queryByText(/no está invitada/)).not.toBeInTheDocument();
+      expect(useUIStore.getState().isInviteBannerDismissed('otro-baul')).toBe(false);
+    });
   });
 });
