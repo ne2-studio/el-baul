@@ -364,10 +364,65 @@ function assignSlots(
 
   reorderPass(parentsOf);
   reorderPass(childrenOf);
-  // Spouses last: pulls them adjacent to each other without undoing the parent/child ordering
-  // that just settled (a couple with shared children is already adjacent via parentsOf/
-  // childrenOf agreement; this pass only matters for a childless — or blended-family — couple).
-  reorderPass(spousesOf);
+
+  // Spouses last, and not via reorderPass/barycenter: two mutual spouses each ranking by the
+  // other's PRE-pass order don't converge, they swap (Jaime ranks where Pedro was and vice
+  // versa, so both move but land just as far apart) — see the regression this replaced.
+  // Instead this splices each pair together as a genuinely adjacent block: whichever spouse has
+  // fewer blood connections of their own in this row (parents/children — a childless couple
+  // already agrees via parentsOf/childrenOf, so this only matters for a "married into a
+  // different branch" pair) is relocated to sit immediately after their partner, who keeps their
+  // own place in the row.
+  const coalesceSpouses = () => {
+    const next = new Map<string, number>();
+    for (const gen of generations) {
+      const ids = byGeneration.get(gen)!;
+      const idsInGen = new Set(ids);
+      const sorted = ids.slice().sort((a, b) => orderById.get(a)! - orderById.get(b)!);
+      const bloodConnections = (id: string) => (parentsOf.get(id)?.length ?? 0) + (childrenOf.get(id)?.length ?? 0);
+
+      // anchor stays at its current place in the row; mover gets spliced in right after it.
+      const moverOfAnchor = new Map<string, string>();
+      const anchorOfMover = new Map<string, string>();
+      const resolved = new Set<string>();
+      for (const id of sorted) {
+        const spouseId = spousesOf.get(id)?.find((s) => idsInGen.has(s));
+        if (!spouseId || resolved.has(id) || resolved.has(spouseId)) continue;
+        resolved.add(id);
+        resolved.add(spouseId);
+        const [anchor, mover] = bloodConnections(id) >= bloodConnections(spouseId) ? [id, spouseId] : [spouseId, id];
+        moverOfAnchor.set(anchor, mover);
+        anchorOfMover.set(mover, anchor);
+      }
+
+      const placed = new Set<string>();
+      let index = 0;
+      for (const id of sorted) {
+        if (placed.has(id)) continue;
+        // A mover is only ever placed via its anchor's turn (right below) — visiting it here
+        // first (it can sort earlier than its anchor, e.g. two cousins from different branches
+        // marrying) must not let it grab its own standalone slot, or the couple ends up exactly
+        // as split apart as before the fix.
+        if (anchorOfMover.has(id)) continue;
+        next.set(id, index++);
+        placed.add(id);
+        const mover = moverOfAnchor.get(id);
+        if (mover && !placed.has(mover)) {
+          next.set(mover, index++);
+          placed.add(mover);
+        }
+      }
+      // Safety net, not expected to ever trigger: a mover whose anchor was somehow never placed.
+      for (const id of sorted) {
+        if (!placed.has(id)) {
+          next.set(id, index++);
+          placed.add(id);
+        }
+      }
+    }
+    orderById = next;
+  };
+  coalesceSpouses();
 
   // Step 2: relax continuous positions towards parents'/children's positions, order fixed above.
   const positionById = new Map<string, number>();

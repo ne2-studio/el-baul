@@ -213,6 +213,63 @@ describe('buildFamilyTree', () => {
     expect(tree.nodes).toEqual([]);
     expect(tree.spouseEdges).toEqual([]);
   });
+
+  // Regression: two cousins from different branches of the same family who are a couple —
+  // each has their own parents recorded, so the barycenter ordering (which only looks at each
+  // person's own parents/children) placed them at opposite ends of their generation, with every
+  // unrelated cousin in between. A naive "reorder by spouse's rank" pass made this worse: both
+  // members re-rank off the other's PRE-pass position in the same pass, so they swap places
+  // instead of converging (see the coalesceSpouses doc comment in familyTree.ts).
+  it('places two cousins from different branches next to each other when they are a couple', () => {
+    const personas = ['abuela', 'abuelo', 'gloria', 'antonio', 'rosi', 'pepe', 'pedro', 'sara', 'javi', 'jaime'].map(
+      (id) => persona(id)
+    );
+    const tree = buildFamilyTree(
+      personas,
+      [
+        rel('abuela', 'gloria'), rel('abuelo', 'gloria'),
+        rel('abuela', 'antonio'), rel('abuelo', 'antonio'),
+        rel('abuela', 'rosi'), rel('abuelo', 'rosi'),
+        rel('abuela', 'pepe'), rel('abuelo', 'pepe'),
+        rel('gloria', 'pedro'),
+        rel('antonio', 'sara'),
+        rel('rosi', 'javi'),
+        rel('pepe', 'jaime'),
+      ],
+      [spouseRel('pedro', 'jaime')]
+    );
+    const slot = (id: string) => tree.nodes.find((n) => n.persona.id === id)!.slot;
+    expect(Math.abs(slot('pedro') - slot('jaime'))).toBeCloseTo(1);
+  });
+
+  // Regression: when the couple member that ends up being relocated ("mover") happens to sort
+  // BEFORE its anchor in the row (here: jaime, alphabetically first, sorts left of pedro), the
+  // coalescing pass must not let it grab its own standalone slot when visited first — that was
+  // the actual bug (a mover placed itself before ever being skipped in favour of its anchor),
+  // and it reproduced with five cousins in the row, not just two.
+  it('places a couple adjacent even when the relocated spouse sorts before their anchor, among several cousins', () => {
+    const personas = [
+      'abuela', 'abuelo', 'gloria', 'antonio', 'rosi', 'pepe',
+      'jaime', 'loren', 'sara', 'javi', 'pedro',
+    ].map((id) => persona(id));
+    const tree = buildFamilyTree(
+      personas,
+      [
+        rel('abuela', 'gloria'), rel('abuelo', 'gloria'),
+        rel('abuela', 'antonio'), rel('abuelo', 'antonio'),
+        rel('abuela', 'rosi'), rel('abuelo', 'rosi'),
+        rel('abuela', 'pepe'), rel('abuelo', 'pepe'),
+        rel('pepe', 'jaime'),
+        rel('antonio', 'sara'),
+        rel('rosi', 'javi'),
+        rel('gloria', 'pedro'),
+      ],
+      [spouseRel('sara', 'loren'), spouseRel('jaime', 'pedro')]
+    );
+    const slot = (id: string) => tree.nodes.find((n) => n.persona.id === id)!.slot;
+    expect(Math.abs(slot('jaime') - slot('pedro'))).toBeCloseTo(1);
+    expect(Math.abs(slot('sara') - slot('loren'))).toBeCloseTo(1);
+  });
 });
 
 describe('buildPersonaFamilyTree', () => {
