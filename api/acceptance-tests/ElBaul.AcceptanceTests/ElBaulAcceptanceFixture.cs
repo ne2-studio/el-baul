@@ -96,7 +96,7 @@ public sealed class ElBaulAcceptanceFixture : IAsyncLifetime
                 "pg_isready", "-U", PostgresUser, "-d", PostgresDatabase))
             .Build();
 
-        Minio = new ContainerBuilder("minio/minio")
+        Minio = new ContainerBuilder("quay.io/minio/minio")
             .WithNetwork(Network)
             .WithNetworkAliases("minio")
             .WithPortBinding(9000, true)

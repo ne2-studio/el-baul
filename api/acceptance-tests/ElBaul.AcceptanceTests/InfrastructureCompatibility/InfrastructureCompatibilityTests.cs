@@ -49,7 +49,7 @@ public class InfrastructureCompatibilityTests(ElBaulAcceptanceFixture fixture)
         // backend already created this bucket itself on startup (IPhotoStorage.
         // EnsureBucketExistsAsync), this only confirms that from outside, over the network,
         // the same way an operator checking MinIO directly would.
-        await using var mc = new ContainerBuilder("minio/mc")
+        await using var mc = new ContainerBuilder("quay.io/minio/mc")
             .WithNetwork(fixture.Network)
             .WithEntrypoint("tail", "-f", "/dev/null")
             .Build();
