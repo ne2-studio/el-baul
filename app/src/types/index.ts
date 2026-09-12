@@ -18,6 +18,7 @@ type ChatMemoryDto = ApiSchemas['ChatMemoryDto'];
 type RawPersonaDto = ApiSchemas['PersonaDto'];
 type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'> &
   Partial<Pick<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'>>;
+type PersonaRelationshipDto = ApiSchemas['PersonaRelationshipDto'];
 type PhotoDto = ApiSchemas['PhotoDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
 type CreateTvSessionResultDto = ApiSchemas['CreateTvSessionResult'];
@@ -96,6 +97,21 @@ export class Persona {
     this.avatarCropScale = data.avatarCropScale ?? 1;
     this.canEdit = data.canEdit;
     this.biografia = data.biografia ?? undefined;
+  }
+}
+
+// The single family relationship primitive — see PersonaRelationship (api/) for why this is the
+// only stored shape: "padre de"/"madre de"/"hijo de"/"hija de" are UI phrasing over this one
+// directed edge, and the inverse is always derived (utils/personaRelationships.ts), never a
+// second row. Not scoped to one persona: PersonasState.relationships holds every relationship
+// in the baúl, same as `personas` holds every persona.
+export class PersonaRelationship {
+  parentId: string;
+  childId: string;
+
+  constructor(data: PersonaRelationshipDto) {
+    this.parentId = data.parentId;
+    this.childId = data.childId;
   }
 }
 

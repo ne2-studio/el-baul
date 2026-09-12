@@ -13,6 +13,10 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Añadido
+
+- Desde "Editar relaciones" en la ficha de una persona, ahora se pueden añadir o quitar relaciones de padre/madre e hijo/hija con otras personas del baúl. La ficha de persona muestra una nueva pestaña "Familia" con sus padres e hijos, cada uno navegable a su propia ficha.
+
 ### Arreglado
 
 - Al ver una foto apaisada a pantalla completa en el móvil, girar el teléfono a horizontal ya no la encoge: ahora aprovecha el ancho extra en vez de pasar al diseño de escritorio (con panel lateral) en móviles grandes cuya pantalla en horizontal es ancha pero sigue siendo baja.

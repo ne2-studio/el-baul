@@ -8,29 +8,31 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 
 // PersonaDetailRoute y PersonaPhotoViewerRoute dependen de que la persona, sus fotos
-// etiquetadas y los recuerdos del baúl (la pestaña Recuerdos de la ficha filtra estos últimos
-// por las fotos en las que la persona está etiquetada, no por autor) estén en el store. La
-// navegación normal desde BaulRoute ya deja `personas`
+// etiquetadas, los recuerdos del baúl (la pestaña Recuerdos de la ficha filtra estos últimos
+// por las fotos en las que la persona está etiquetada, no por autor) y las relaciones
+// familiares del baúl (pestaña Familia) estén en el store. La navegación normal desde BaulRoute
+// ya deja `personas`
 // precargado (loadChapters carga personas como efecto colateral — ver features/baules/useCases)
 // y normalmente también `baulRecuerdos`, pero un refresco o deep link puede aterrizar aquí con
-// el store vacío, y las fotos de la persona nunca se precargan desde BaulRoute. Este hook
-// centraliza esa carga — bloqueando hasta tener las tres piezas — para que ninguna de las dos
-// rutas tenga que duplicarla ni mostrar un hueco de carga al cambiar de tab. Mismo patrón que
+// el store vacío, y las fotos/relaciones de la persona nunca se precargan desde BaulRoute. Este
+// hook centraliza esa carga — bloqueando hasta tener las cuatro piezas — para que ninguna de las
+// dos rutas tenga que duplicarla ni mostrar un hueco de carga al cambiar de tab. Mismo patrón que
 // useBaulScope/useChapterScope, a nivel de persona — incluida la misma máquina de estados
 // (useScopeOutcome): isLoading se deriva del store en cada render en vez de ser un flag
 // actualizado por un efecto, porque PersonaDetailRoute no se desmonta al cambiar de personaId
 // (mismo componente, solo cambia el param) y un flag así siempre llegaría un frame tarde,
-// dejando ver un instante la ficha anterior (o un hueco vacío) aplicado a la nueva. Las tres
+// dejando ver un instante la ficha anterior (o un hueco vacío) aplicado a la nueva. Las cuatro
 // piezas se piden con una única api.baules.getPersonaScope — ver PersonaScopeAggregator (api/).
 export function usePersonaScope(baulId: string | undefined, personaId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
-  const { personas, personaPhotos } = usePersonasStore();
+  const { personas, personaPhotos, relationships } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const { baulRecuerdos } = useRecuerdosStore();
 
   const persona = (baulId ? personas[baulId] : undefined)?.find((p) => p.id === personaId);
-  const hasScope = !!persona && !!personaId && !!personaPhotos[personaId] && !!(baulId && baulRecuerdos[baulId]);
+  const hasScope = !!persona && !!personaId && !!personaPhotos[personaId] && !!(baulId && baulRecuerdos[baulId]) &&
+    !!(baulId && relationships[baulId]);
 
   const { result, setOutcome, reset } = useScopeOutcome(`${baulId ?? ''}:${personaId ?? ''}`);
 
@@ -38,9 +40,9 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
   const loadFailed = result === 'failed';
 
   const load = async (forBaulId: string, forPersonaId: string) => {
-    const { personas, personaPhotos } = usePersonasStore.getState();
+    const { personas, personaPhotos, relationships } = usePersonasStore.getState();
     const { baulRecuerdos } = useRecuerdosStore.getState();
-    if (personas[forBaulId] && personaPhotos[forPersonaId] && baulRecuerdos[forBaulId]) {
+    if (personas[forBaulId] && personaPhotos[forPersonaId] && baulRecuerdos[forBaulId] && relationships[forBaulId]) {
       setOutcome(`${forBaulId}:${forPersonaId}`, null);
       return;
     }
@@ -65,6 +67,7 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
     usePersonasStore.setState((state) => ({
       personas: { ...state.personas, [forBaulId]: scope.personas },
       personaPhotos: { ...state.personaPhotos, [forPersonaId]: scope.personaPhotos.map((photo) => photo.id) },
+      relationships: { ...state.relationships, [forBaulId]: scope.relationships },
     }));
     useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [forBaulId]: scope.baulRecuerdos } }));
 

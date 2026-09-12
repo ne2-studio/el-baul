@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Baul, Persona, PersonaInvite } from '@/types';
+import { Baul, Persona, PersonaInvite, PersonaRelationship } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useUIStore } from '@/store/uiStore';
@@ -16,13 +16,22 @@ vi.mock('@/features/people/useCases', () => ({
   updateUserRole: vi.fn(),
   revokeAccess: vi.fn(),
   sharePersonaInvite: vi.fn(),
+  addPersonaRelationship: vi.fn(),
+  removePersonaRelationship: vi.fn(),
 }));
 
 vi.mock('@/api', () => ({
   api: { photos: { getPage: vi.fn() } },
 }));
 
-import { revokeAccess, sharePersonaInvite, updatePersona, updateUserRole } from '@/features/people/useCases';
+import {
+  addPersonaRelationship,
+  removePersonaRelationship,
+  revokeAccess,
+  sharePersonaInvite,
+  updatePersona,
+  updateUserRole,
+} from '@/features/people/useCases';
 
 const baulId = 'baul-1';
 
@@ -48,15 +57,34 @@ function renderContainer(p: Persona, currentBaulRole: Baul['role'] = 'administra
 
 describe('PersonaSettingsMenuContainer', () => {
   beforeEach(() => {
-    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {}, relationships: {} });
     useUIStore.setState({ showToast: false, toastMessage: '' });
     vi.clearAllMocks();
   });
 
-  it('renders nothing for a non-admin viewer of a non-editable persona', () => {
-    renderContainer(persona({ canEdit: false }), 'colaborador');
+  it('renders nothing for a viewer with no baúl membership at all', () => {
+    useBaulesStore.setState({ baules: [] });
+    render(
+      <MemoryRouter>
+        <PersonaSettingsMenuContainer baulId={baulId} persona={persona({ canEdit: false })} />
+      </MemoryRouter>
+    );
 
     expect(screen.queryByRole('button', { name: 'Opciones de la persona' })).not.toBeInTheDocument();
+  });
+
+  // A colaborador can't edit another persona's info/avatar nor manage their access, but family
+  // relationships are open to any member — see roleUtils.getPersonaPermissions.
+  it('shows only "Editar relaciones" for a non-admin viewer of a non-editable persona', async () => {
+    const user = userEvent.setup();
+    renderContainer(persona({ canEdit: false }), 'colaborador');
+
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+
+    expect(screen.getByText('Editar relaciones')).toBeInTheDocument();
+    expect(screen.queryByText('Editar información')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cambiar foto de perfil')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gestionar permisos')).not.toBeInTheDocument();
   });
 
   it('shows the menu trigger when the viewer can manage the persona', () => {
@@ -158,5 +186,43 @@ describe('PersonaSettingsMenuContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
 
     expect(screen.queryByText('Enviar invitación')).not.toBeInTheDocument();
+  });
+
+  it('adds a relationship as parent from the "Editar relaciones" flow', async () => {
+    const user = userEvent.setup();
+    const other = persona({ id: 'p2', nickname: 'Nieto Pablo' });
+    usePersonasStore.setState({ personas: { [baulId]: [persona(), other] } });
+    vi.mocked(addPersonaRelationship).mockResolvedValue({ parentId: 'p1', childId: 'p2' } as PersonaRelationship);
+
+    renderContainer(persona());
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+    await user.click(await screen.findByText('Editar relaciones'));
+
+    await user.click(screen.getByRole('button', { name: /Añadir relación/ }));
+    await user.click(screen.getByText('Nieto Pablo'));
+    await user.click(screen.getByRole('button', { name: 'Añadir' }));
+
+    // Default direction is "Padre/madre de" — the persona whose ficha this is (p1) becomes
+    // the parent of the picked candidate (p2).
+    expect(addPersonaRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
+  });
+
+  it('removes a relationship from the "Editar relaciones" list', async () => {
+    const user = userEvent.setup();
+    const child = persona({ id: 'p2', nickname: 'Nieta Vero' });
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona(), child] },
+      relationships: { [baulId]: [{ parentId: 'p1', childId: 'p2' } as PersonaRelationship] },
+    });
+    vi.mocked(removePersonaRelationship).mockResolvedValue(undefined);
+
+    renderContainer(persona());
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+    await user.click(await screen.findByText('Editar relaciones'));
+
+    expect(screen.getByText('Nieta Vero')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Eliminar relación con Nieta Vero' }));
+
+    expect(removePersonaRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
   });
 });

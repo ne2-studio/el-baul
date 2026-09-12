@@ -146,4 +146,14 @@ describe('roleUtils persona permissions', () => {
       canEditPersonaBiography: false,
     });
   });
+
+  it('lets any baúl member edit family relationships regardless of backend canEdit', () => {
+    expect(getPersonaPermissions({ currentBaulRole: 'colaborador', persona: persona({ canEdit: false }) })).toMatchObject({
+      canEditPersonaRelationships: true,
+    });
+
+    expect(getPersonaPermissions({ currentBaulRole: undefined, persona: persona({ canEdit: false }) })).toMatchObject({
+      canEditPersonaRelationships: false,
+    });
+  });
 });

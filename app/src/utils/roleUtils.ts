@@ -15,6 +15,7 @@ export interface BaulPermissions {
 export interface PersonaPermissions {
   canEditPersonaInfo: boolean;
   canEditPersonaBiography: boolean;
+  canEditPersonaRelationships: boolean;
   canUploadPersonaAvatar: boolean;
   canManagePersona: boolean;
   canChangePersonaRole: boolean;
@@ -76,6 +77,10 @@ export function getPersonaPermissions({
   // Biografía is shared, wiki-like family content: any member of the baúl can write it for any
   // persona, unlike name/nickname/avatar which stay tied to identity-edit permission.
   const canEditAnyBiography = currentBaulRole !== undefined;
+  // Family relationships, same rationale as biografía: any member can narrate how personas
+  // relate to each other, not just an admin — see the feature spec's "quién puede editar"
+  // decision. Personas management itself (invite, change role) stays admin-only below.
+  const canEditRelationships = currentBaulRole !== undefined;
   // The custodio's own row is never manageable by another admin — it's protected server-side
   // too, see Persona.IsCustodioProtected.
   const canManagePersona = currentBaulPermissions.isAdmin && !persona.isCustodio;
@@ -84,6 +89,7 @@ export function getPersonaPermissions({
   return {
     canEditPersonaInfo: canEditOwnPersona,
     canEditPersonaBiography: canEditAnyBiography,
+    canEditPersonaRelationships: canEditRelationships,
     canUploadPersonaAvatar: canEditOwnPersona,
     canManagePersona,
     // "Gestionar acceso" is available at any point before a persona joins, not just once

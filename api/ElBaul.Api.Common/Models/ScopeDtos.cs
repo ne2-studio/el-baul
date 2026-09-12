@@ -30,4 +30,5 @@ public record ChapterScopeDto(
 public record PersonaScopeDto(
     IEnumerable<PersonaDto> Personas,
     IEnumerable<PhotoDto> PersonaPhotos,
-    IEnumerable<RecuerdoDto> BaulRecuerdos);
+    IEnumerable<RecuerdoDto> BaulRecuerdos,
+    IEnumerable<PersonaRelationshipDto> Relationships);

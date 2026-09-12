@@ -258,6 +258,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IPersonaDtoProjector, PersonaDtoProjector>();
         builder.Services.AddScoped<IBaulManager, BaulManager>();
         builder.Services.AddScoped<IPersonaManager, PersonaManager>();
+        builder.Services.AddScoped<IPersonaRelationshipManager, PersonaRelationshipManager>();
         builder.Services.AddScoped<IRemovalRequestManager, RemovalRequestManager>();
         builder.Services.AddScoped<IChapterManager, ChapterManager>();
         builder.Services.AddScoped<IPhotoManager, PhotoManager>();

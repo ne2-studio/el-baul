@@ -66,7 +66,9 @@ function renderRoute() {
 
 describe('PersonaDetailRoute biografía tab visibility', () => {
   beforeEach(() => {
-    usePersonasStore.setState({ personas: { [baulId]: [persona()] }, personaPhotos: { [personaId]: [] } });
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona()] }, personaPhotos: { [personaId]: [] }, relationships: { [baulId]: [] },
+    });
     useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
     useAppConfigStore.setState({ biografiaEnabled: false });
     vi.clearAllMocks();
@@ -109,6 +111,7 @@ describe('PersonaDetailRoute Hero badge and subtext', () => {
     usePersonasStore.setState({
       personas: { [baulId]: [persona({ status: 'active', role: 'colaborador' })] },
       personaPhotos: { [personaId]: [] },
+      relationships: { [baulId]: [] },
     });
 
     renderRoute();
@@ -121,6 +124,7 @@ describe('PersonaDetailRoute Hero badge and subtext', () => {
     usePersonasStore.setState({
       personas: { [baulId]: [persona({ status: 'pending', role: 'colaborador' })] },
       personaPhotos: { [personaId]: [] },
+      relationships: { [baulId]: [] },
     });
 
     renderRoute();
@@ -133,6 +137,7 @@ describe('PersonaDetailRoute Hero badge and subtext', () => {
     usePersonasStore.setState({
       personas: { [baulId]: [persona({ status: 'pending', role: 'sin_acceso' })] },
       personaPhotos: { [personaId]: [] },
+      relationships: { [baulId]: [] },
     });
 
     renderRoute();

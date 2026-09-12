@@ -12,6 +12,7 @@ import { PersonaSettingsMenuContainer } from '@/features/people/containers/Perso
 import { PersonaBiografiaTabContainer } from '@/features/people/containers/PersonaBiografiaTabContainer';
 import { PersonaFotosTabContainer } from '@/features/people/containers/PersonaFotosTabContainer';
 import { PersonaRecuerdosTabContainer } from '@/features/people/containers/PersonaRecuerdosTabContainer';
+import { PersonaFamiliaTabContainer } from '@/features/people/containers/PersonaFamiliaTabContainer';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { usePersonaScope } from '@/hooks/usePersonaScope';
 import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
@@ -20,7 +21,7 @@ import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 // PersonaDetailRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las
-// pestañas fotos/recuerdos/biografía como containers autosuficientes — no hay un componente "shell"
+// pestañas fotos/recuerdos/familia/biografía como containers autosuficientes — no hay un componente "shell"
 // intermedio en components/, porque su único trabajo habría sido recomponer containers, lo
 // cual ya no es presentacional de verdad aunque viva ahí — ver la regla de containers/ en
 // docs/architecture/frontend.md.
@@ -36,7 +37,7 @@ export const PersonaDetailRoute: React.FC = () => {
   }, [personaId]);
   const returnTab = (location.state as { returnTab?: 'capitulos' | 'personas' | 'recuerdos' } | null)?.returnTab ?? 'personas';
 
-  const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos' | 'biografia'>('fotos');
+  const [activeTab, setActiveTab] = useState<'fotos' | 'recuerdos' | 'familia' | 'biografia'>('fotos');
   const [headerRef, headerHeight] = useElementHeight<HTMLDivElement>();
 
   // Bloquea hasta tener la persona, sus fotos y los recuerdos del baúl, para que los badges de
@@ -48,11 +49,14 @@ export const PersonaDetailRoute: React.FC = () => {
   // Mismo filtro que PersonaRecuerdosTabContainer (recuerdos de las fotos en las que esta
   // persona está etiquetada) solo para el badge de recuento del Tabbar — igual que el badge de
   // Fotos ya recalcula `photos` desde el store en vez de que el container se lo devuelva.
-  const { personaPhotos } = usePersonasStore();
+  const { personaPhotos, relationships } = usePersonasStore();
   const { baulRecuerdos } = useRecuerdosStore();
   const taggedPhotoIds = new Set(personaId ? personaPhotos[personaId] : undefined);
   const recuerdosCount = ((baulId && baulRecuerdos[baulId]) || []).filter(
     (recuerdo) => !!recuerdo.photoId && taggedPhotoIds.has(recuerdo.photoId)
+  ).length;
+  const familiaCount = ((baulId && relationships[baulId]) || []).filter(
+    (relationship) => relationship.parentId === personaId || relationship.childId === personaId
   ).length;
 
   if (isLoading) return <FullScreenLoading message="Abriendo ficha..." />;
@@ -107,11 +111,12 @@ export const PersonaDetailRoute: React.FC = () => {
         tabs={[
           { key: 'fotos', label: 'Fotos', count: (photos || []).length },
           { key: 'recuerdos', label: 'Recuerdos', count: recuerdosCount },
+          { key: 'familia', label: 'Familia', count: familiaCount },
           // Solo se muestra con el feature toggle activo — ver useAppConfigStore.biografiaEnabled.
           ...(biografiaEnabled ? [{ key: 'biografia', label: 'Biografía' }] : []),
         ]}
         active={activeTab}
-        onChange={(key) => setActiveTab(key as 'fotos' | 'recuerdos' | 'biografia')}
+        onChange={(key) => setActiveTab(key as 'fotos' | 'recuerdos' | 'familia' | 'biografia')}
         top={headerHeight}
       >
         <PageContainer className="py-8 space-y-6 pb-28">
@@ -124,6 +129,10 @@ export const PersonaDetailRoute: React.FC = () => {
 
           {activeTab === 'recuerdos' && (
             <PersonaRecuerdosTabContainer baulId={baulId} personaId={personaId} />
+          )}
+
+          {activeTab === 'familia' && (
+            <PersonaFamiliaTabContainer baulId={baulId} personaId={personaId} />
           )}
 
           {biografiaEnabled && activeTab === 'biografia' && (

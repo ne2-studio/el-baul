@@ -47,6 +47,7 @@ public static class ServiceRegistration
         services.AddSingleton<IBaulRepository, InMemoryBaulRepository>();
         services.AddSingleton<IRemovalRequestRepository, InMemoryRemovalRequestRepository>();
         services.AddSingleton<IPersonaRepository, InMemoryPersonaRepository>();
+        services.AddSingleton<IPersonaRelationshipRepository, InMemoryPersonaRelationshipRepository>();
         services.AddSingleton<IChapterRepository, InMemoryChapterRepository>();
         services.AddScoped<IChapterListReadModel, InMemoryChapterListReadModel>();
         services.AddSingleton<IPhotoRepository, InMemoryPhotoRepository>();

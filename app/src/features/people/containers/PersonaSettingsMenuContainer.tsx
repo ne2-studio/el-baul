@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { usePostHog } from 'posthog-js/react';
-import { Camera, Loader2, MoreVertical, Pencil, Send, UserCog, UserX } from 'lucide-react';
+import { Camera, Loader2, MoreVertical, Pencil, Send, UserCog, Users, UserX } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { EditPersonaInfoModal } from '@/features/people/components/EditPersonaInfoModal';
 import { PersonaAvatarPickerModal } from '@/features/people/components/PersonaAvatarPickerModal';
 import { ManageAccessModal } from '@/features/people/components/ManageAccessModal';
 import { RevokeAccessModal } from '@/features/people/components/RevokeAccessModal';
+import { EditRelationshipsModal } from '@/features/people/components/EditRelationshipsModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import { PhotoCrop, api } from '@/api';
 import { BaulRole, Persona, Photo } from '@/types';
 import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
 import { getBaulPermissions, getPersonaPermissions } from '@/utils/roleUtils';
+import { getChildren, getParents } from '@/utils/personaRelationships';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
@@ -29,6 +31,8 @@ import {
   updateUserRole,
   revokeAccess,
   sharePersonaInvite,
+  addPersonaRelationship,
+  removePersonaRelationship,
 } from '@/features/people/useCases';
 
 interface PersonaSettingsMenuContainerProps {
@@ -42,7 +46,7 @@ interface PersonaSettingsMenuContainerProps {
 // in-place mutation with a toast — see docs/architecture/frontend.md's containers/ rule.
 export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSettingsMenuContainerProps) {
   const { baules } = useBaulesStore();
-  const { personaPhotos } = usePersonasStore();
+  const { personaPhotos, personas, relationships } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const { run, isPending } = useAsyncAction();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
@@ -56,16 +60,21 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
   // Separators must reflect whether the groups they sit between actually render items, not just
   // the raw permission flags — otherwise an empty group (e.g. a pending persona, whose "manage
   // access" actions are both hidden) leaves two adjacent separators with nothing in between.
-  const showsInfoGroup = permissions.canEditPersonaInfo || permissions.canUploadPersonaAvatar;
+  const showsInfoGroup = permissions.canEditPersonaInfo || permissions.canUploadPersonaAvatar || permissions.canEditPersonaRelationships;
   const showsAccessGroup = permissions.canChangePersonaRole || canSendInvite;
   const showsRevokeGroup = permissions.canRevokePersonaAccess;
 
+  const baulPersonas = personas[baulId] || [];
+  const baulRelationships = relationships[baulId] || [];
+
   const [showEditInfoModal, setShowEditInfoModal] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showRelationshipsModal, setShowRelationshipsModal] = useState(false);
+  const [removingRelationshipId, setRemovingRelationshipId] = useState<string | null>(null);
   const [showManageAccessModal, setShowManageAccessModal] = useState(false);
   const [showRevokeModal, setShowRevokeModal] = useState(false);
 
-  if (!permissions.canEditPersonaInfo && !permissions.canManagePersona) return null;
+  if (!permissions.canEditPersonaInfo && !permissions.canManagePersona && !permissions.canEditPersonaRelationships) return null;
 
   const handleSaveInfo = async (name: string, nickname: string) => {
     const result = await run(() => updatePersona(baulId, persona.id, name, nickname), {
@@ -103,6 +112,25 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
         setShowAvatarPicker(false);
       }
     });
+  };
+
+  const handleAddRelationship = async (parentId: string, childId: string): Promise<boolean> => {
+    const result = await run(() => addPersonaRelationship(baulId, parentId, childId), {
+      key: 'relationship-add',
+      errorMessage: 'Error al añadir la relación',
+    });
+    if (result.ok) posthog.capture('persona_relationship_added');
+    return result.ok;
+  };
+
+  const handleRemoveRelationship = async (relatedPersonaId: string) => {
+    setRemovingRelationshipId(relatedPersonaId);
+    const result = await run(() => removePersonaRelationship(baulId, persona.id, relatedPersonaId), {
+      key: `relationship-remove-${relatedPersonaId}`,
+      errorMessage: 'Error al eliminar la relación',
+    });
+    if (result.ok) posthog.capture('persona_relationship_removed');
+    setRemovingRelationshipId(null);
   };
 
   const handleChangeRole = async (role: BaulRole) => {
@@ -175,6 +203,13 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
             </DropdownMenuItem>
           )}
 
+          {permissions.canEditPersonaRelationships && (
+            <DropdownMenuItem onClick={() => setShowRelationshipsModal(true)}>
+              <Users className="w-4 h-4 mr-2" />
+              Editar relaciones
+            </DropdownMenuItem>
+          )}
+
           {showsInfoGroup && showsAccessGroup && <DropdownMenuSeparator />}
 
           {permissions.canChangePersonaRole && (
@@ -224,6 +259,21 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
           onUploadNew={handleUploadAvatar}
           onCancel={() => setShowAvatarPicker(false)}
           isSubmitting={isPending('avatar')}
+        />
+      )}
+
+      {showRelationshipsModal && (
+        <EditRelationshipsModal
+          personaId={persona.id}
+          personaName={persona.name || persona.nickname}
+          parents={getParents(baulRelationships, baulPersonas, persona.id)}
+          children={getChildren(baulRelationships, baulPersonas, persona.id)}
+          candidates={baulPersonas.filter((candidate) => candidate.id !== persona.id)}
+          onRemove={handleRemoveRelationship}
+          removingId={removingRelationshipId}
+          onAdd={handleAddRelationship}
+          isSubmittingAdd={isPending('relationship-add')}
+          onCancel={() => setShowRelationshipsModal(false)}
         />
       )}
 

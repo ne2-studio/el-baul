@@ -44,6 +44,7 @@ public static class ServiceRegistration
         services.AddScoped<IBaulRepository, BaulRepository>();
         services.AddScoped<IRemovalRequestRepository, RemovalRequestRepository>();
         services.AddScoped<IPersonaRepository, PersonaRepository>();
+        services.AddScoped<IPersonaRelationshipRepository, PersonaRelationshipRepository>();
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IChapterListReadModel, ChapterListReadModel>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();

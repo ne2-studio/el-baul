@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Persona, RemovalRequest, TaggedPersona } from '@/types';
+import { Persona, PersonaRelationship, RemovalRequest, TaggedPersona } from '@/types';
 
 export interface PersonasState {
   personas: Record<string, Persona[]>;
@@ -9,6 +9,10 @@ export interface PersonasState {
   // photo's own fields. Hydrate with hydratePhotos (see that store) wherever a component needs
   // the actual Photo[]. Keyed by personaId; a photo can be tagged with several personas at once.
   personaPhotos: Record<string, string[]>;
+  // Every parent/child relationship in the baúl, keyed by baulId — same "whole collection, not
+  // per-entity" shape as `personas`. utils/personaRelationships.ts derives one persona's
+  // parents/children from this list.
+  relationships: Record<string, PersonaRelationship[]>;
 
   reset: () => void;
 }
@@ -24,11 +28,13 @@ export const usePersonasStore = create<PersonasState>((set) => ({
   removalRequests: {},
   taggedPersonas: {},
   personaPhotos: {},
+  relationships: {},
 
   reset: () => set({
     personas: {},
     removalRequests: {},
     taggedPersonas: {},
     personaPhotos: {},
+    relationships: {},
   }),
 }));

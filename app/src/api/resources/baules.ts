@@ -1,4 +1,4 @@
-import { Baul, Chapter, FeedItem, Persona, PersonaInvite, Photo, Recuerdo, RemovalRequest, feedItemFrom } from '../../types';
+import { Baul, Chapter, FeedItem, Persona, PersonaInvite, PersonaRelationship, Photo, Recuerdo, RemovalRequest, feedItemFrom } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { API_BASE, apiFetch, authHeaders, get, handleResponse, post, put, del } from '../http';
 import type { PhotoCrop } from '../publicTypes';
@@ -17,6 +17,8 @@ const PERSONA_PHOTOS = '/api/baules/{baulId}/personas/{personaId}/photos' satisf
 const LOOSE_PHOTOS = '/api/baules/{baulId}/photos/sueltas' satisfies PathTemplate;
 const BAUL_FEED = '/api/baules/{baulId}/feed' satisfies PathTemplate;
 const PERSONA_INVITE = '/api/baules/{baulId}/personas/{personaId}/invite' satisfies PathTemplate;
+const PERSONA_RELATIONSHIPS = '/api/baules/{baulId}/persona-relationships' satisfies PathTemplate;
+const PERSONA_RELATIONSHIP = '/api/baules/{baulId}/persona-relationships/{parentId}/{childId}' satisfies PathTemplate;
 const REMOVAL_REQUESTS = '/api/baules/{baulId}/removal-requests' satisfies PathTemplate;
 const APPROVE_REMOVAL_REQUEST = '/api/baules/{baulId}/removal-requests/{requestId}/approve' satisfies PathTemplate;
 
@@ -28,6 +30,7 @@ type PhotoDto = JsonResponse<typeof LOOSE_PHOTOS, 'get'>[number];
 type FeedPageDto = JsonResponse<typeof BAUL_FEED, 'get'>;
 type RemovalRequestDto = JsonResponse<typeof REMOVAL_REQUESTS, 'get'>[number];
 type SuccessResponse = JsonResponse<typeof APPROVE_REMOVAL_REQUEST, 'post'>;
+type PersonaRelationshipDto = JsonResponse<typeof PERSONA_RELATIONSHIPS, 'get'>[number];
 
 const feedPageFrom = (dto: FeedPageDto) => ({ feedItems: dto.items.map(feedItemFrom), hasMore: dto.hasMore });
 
@@ -116,11 +119,27 @@ export const baulesApi = {
       personas: dto.personas.map((u) => new Persona(u)),
       personaPhotos: dto.personaPhotos.map((p) => new Photo(p)),
       baulRecuerdos: dto.baulRecuerdos.map((r) => new Recuerdo(r)),
+      relationships: dto.relationships.map((r) => new PersonaRelationship(r)),
     };
   },
 
   invitePersona: async (baulId: string, personaId: string) =>
     new PersonaInvite(await post<JsonResponse<typeof PERSONA_INVITE, 'post'>>(path(PERSONA_INVITE, { baulId, personaId }))),
+
+  // "Familia" — see PersonaRelationshipsController (api/): baúl-scoped, not persona-scoped, so
+  // this is fetched once per baúl (same shape as getPersonas) rather than once per persona.
+  getPersonaRelationships: async (baulId: string) =>
+    (await get<JsonResponse<typeof PERSONA_RELATIONSHIPS, 'get'>>(path(PERSONA_RELATIONSHIPS, { baulId })))
+      .map((r) => new PersonaRelationship(r)),
+  addPersonaRelationship: async (baulId: string, parentId: string, childId: string) =>
+    new PersonaRelationship(await post<PersonaRelationshipDto>(
+      path(PERSONA_RELATIONSHIPS, { baulId }),
+      { parentId, childId } satisfies JsonRequest<typeof PERSONA_RELATIONSHIPS, 'post'>
+    )),
+  // Callable with either end of the pair — there is only one relationship between two
+  // personas, so the backend resolves it regardless of which id is parentId/childId here.
+  removePersonaRelationship: (baulId: string, parentId: string, childId: string) =>
+    del<SuccessResponse>(path(PERSONA_RELATIONSHIP, { baulId, parentId, childId })),
 
   getRemovalRequests: async (baulId: string) =>
     (await get<RemovalRequestDto[]>(path(REMOVAL_REQUESTS, { baulId }))).map((r) => new RemovalRequest(r)),

@@ -28,6 +28,7 @@ public class BaulFixture
     public InMemoryChapterRepository Chapters { get; } = new();
     public InMemoryPhotoRepository Photos { get; } = new();
     public InMemoryPhotoPersonaTagRepository PhotoPersonaTags { get; } = new();
+    public InMemoryPersonaRelationshipRepository PersonaRelationships { get; } = new();
     public InMemoryRecuerdoRepository Recuerdos { get; } = new();
     public InMemoryUserRepository Users { get; } = new();
     public StaticClock Clock { get; } = new();

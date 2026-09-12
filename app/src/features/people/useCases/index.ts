@@ -1,5 +1,5 @@
 import { PhotoCrop, api } from '@/api';
-import { Baul, BaulRole, Persona, PersonaInvite, Photo } from '@/types';
+import { Baul, BaulRole, Persona, PersonaInvite, PersonaRelationship, Photo } from '@/types';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
@@ -113,6 +113,37 @@ export async function updateUserRole(baulId: string, personaId: string, role: Ba
     rollback: (previous) => usePersonasStore.setState((state) => ({ personas: { ...state.personas, [baulId]: previous } })),
     operation: () => api.baules.updatePersonaRole(baulId, personaId, role),
   });
+}
+
+export async function loadPersonaRelationships(baulId: string): Promise<void> {
+  const relationships = await api.baules.getPersonaRelationships(baulId);
+  usePersonasStore.setState((state) => ({ relationships: { ...state.relationships, [baulId]: relationships } }));
+}
+
+// "Editar relaciones" — creates the single Parent->Child edge; callable from either end (the
+// caller has already resolved which of the two ids is the parent, see EditRelationshipsModal),
+// see PersonaRelationship's doc comment for why there's no separate "child of" creation path.
+export async function addPersonaRelationship(baulId: string, parentId: string, childId: string): Promise<PersonaRelationship> {
+  const relationship = await api.baules.addPersonaRelationship(baulId, parentId, childId);
+  usePersonasStore.setState((state) => ({
+    relationships: { ...state.relationships, [baulId]: [...(state.relationships[baulId] || []), relationship] },
+  }));
+  return relationship;
+}
+
+// Removable from either end — there's only one relationship between two personas, so the pair
+// order passed here doesn't need to match how it was originally stored (see
+// PersonaRelationshipsController.Remove, api/).
+export async function removePersonaRelationship(baulId: string, parentId: string, childId: string): Promise<void> {
+  await api.baules.removePersonaRelationship(baulId, parentId, childId);
+  usePersonasStore.setState((state) => ({
+    relationships: {
+      ...state.relationships,
+      [baulId]: (state.relationships[baulId] || []).filter(
+        (r) => !(r.parentId === parentId && r.childId === childId) && !(r.parentId === childId && r.childId === parentId)
+      ),
+    },
+  }));
 }
 
 // "Revocar acceso" — clears the account link (and its invite token, server-side) and sets the
