@@ -112,6 +112,39 @@ describe('buildFamilyTree', () => {
     }
   });
 
+  it('aligns a co-parent with no ancestors of their own to their partner\'s generation', () => {
+    // Abuela -> Tita Gloria -> (Prima Sara). Tito Paco is Prima Sara's other parent but has no
+    // parents recorded in this baúl at all — he must still land on Tita Gloria's row, not
+    // generation 0, since they co-parent a child together.
+    const personas = [persona('abuela'), persona('gloria'), persona('paco'), persona('sara')];
+    const tree = buildFamilyTree(personas, [
+      rel('abuela', 'gloria'),
+      rel('gloria', 'sara'),
+      rel('paco', 'sara'),
+    ]);
+    expect(generationOf(tree, 'abuela')).toBe(0);
+    expect(generationOf(tree, 'gloria')).toBe(1);
+    expect(generationOf(tree, 'paco')).toBe(1);
+    expect(generationOf(tree, 'sara')).toBe(2);
+  });
+
+  it('keeps a chain of co-parenting couples each on their own row', () => {
+    // grandma+grandpa -> (mum, aunt); mum+dad -> kid. `dad` has no parents recorded, `aunt` has
+    // no children — both must still resolve to sane, non-overlapping generations.
+    const personas = ['grandma', 'grandpa', 'mum', 'aunt', 'dad', 'kid'].map((id) => persona(id));
+    const tree = buildFamilyTree(personas, [
+      rel('grandma', 'mum'), rel('grandpa', 'mum'),
+      rel('grandma', 'aunt'), rel('grandpa', 'aunt'),
+      rel('mum', 'kid'), rel('dad', 'kid'),
+    ]);
+    expect(generationOf(tree, 'grandma')).toBe(0);
+    expect(generationOf(tree, 'grandpa')).toBe(0);
+    expect(generationOf(tree, 'mum')).toBe(1);
+    expect(generationOf(tree, 'aunt')).toBe(1);
+    expect(generationOf(tree, 'dad')).toBe(1);
+    expect(generationOf(tree, 'kid')).toBe(2);
+  });
+
   it('centers a child of two parents exactly between them', () => {
     const personas = [persona('a'), persona('b'), persona('c')];
     const tree = buildFamilyTree(personas, [rel('a', 'c'), rel('b', 'c')]);

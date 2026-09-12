@@ -129,44 +129,93 @@ function groupIntoComponents(
   return components;
 }
 
-/** Kahn's algorithm restricted to `component`'s own ids, cycle-safe. */
+/**
+ * Kahn's algorithm restricted to `component`'s own ids, cycle-safe — but run at the granularity
+ * of "couples" (a union-find group of everyone who co-parents at least one child together), not
+ * individual people. Without this, a person with no parents recorded in this baúl always lands
+ * on generation 0, even when their partner (the child's other parent) has parents of their own
+ * placing them deeper in the tree — the two would end up on different rows despite having
+ * children together. Grouping co-parents first means the whole couple takes the deepest
+ * generation either of them would get on their own, and every one of their shared children still
+ * lands exactly one row below that.
+ */
 function assignGenerations(component: string[], parentsOf: Map<string, string[]>): Map<string, number> {
   const componentSet = new Set(component);
-  const generationById = new Map<string, number>();
-  const remainingParents = new Map<string, number>();
+  const coParentsOf = (id: string) => (parentsOf.get(id) ?? []).filter((p) => componentSet.has(p));
+
+  // Union-find over co-parents of the same child.
+  const unionParent = new Map<string, string>();
+  for (const id of component) unionParent.set(id, id);
+  const find = (id: string): string => {
+    let root = id;
+    while (unionParent.get(root) !== root) root = unionParent.get(root)!;
+    let cur = id;
+    while (unionParent.get(cur) !== root) {
+      const next = unionParent.get(cur)!;
+      unionParent.set(cur, root);
+      cur = next;
+    }
+    return root;
+  };
+  const union = (a: string, b: string) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) unionParent.set(ra, rb);
+  };
   for (const id of component) {
-    const parents = (parentsOf.get(id) ?? []).filter((p) => componentSet.has(p));
-    remainingParents.set(id, parents.length);
+    const parents = coParentsOf(id);
+    for (let i = 1; i < parents.length; i += 1) union(parents[0], parents[i]);
   }
 
-  let queue = component.filter((id) => remainingParents.get(id) === 0);
+  const groupOf = new Map(component.map((id) => [id, find(id)]));
+
+  // Group-level parent edges: an edge landing back inside the same group (e.g. anomalous data
+  // where someone is recorded as their own co-parent's ancestor) is dropped rather than trusted,
+  // the same "must not crash" guarantee the per-person version had.
+  const groupParentsOf = new Map<string, Set<string>>();
+  for (const id of component) {
+    const group = groupOf.get(id)!;
+    for (const p of coParentsOf(id)) {
+      const parentGroup = groupOf.get(p)!;
+      if (parentGroup === group) continue;
+      if (!groupParentsOf.has(group)) groupParentsOf.set(group, new Set());
+      groupParentsOf.get(group)!.add(parentGroup);
+    }
+  }
+
+  const groups = [...new Set(component.map((id) => groupOf.get(id)!))];
+  const remainingParents = new Map(groups.map((g) => [g, groupParentsOf.get(g)?.size ?? 0]));
+
+  let queue = groups.filter((g) => remainingParents.get(g) === 0);
   let generation = 0;
   const placed = new Set<string>();
+  const levelOf = new Map<string, number>();
   while (queue.length > 0) {
-    const next: string[] = [];
-    for (const id of queue) {
-      generationById.set(id, generation);
-      placed.add(id);
+    for (const g of queue) {
+      levelOf.set(g, generation);
+      placed.add(g);
     }
-    // Re-derive newly-unblocked nodes: any not-yet-placed node whose every within-component
-    // parent is now placed.
-    for (const id of component) {
-      if (placed.has(id)) continue;
-      const parents = (parentsOf.get(id) ?? []).filter((p) => componentSet.has(p));
-      if (parents.every((p) => placed.has(p))) next.push(id);
+    const next: string[] = [];
+    for (const g of groups) {
+      if (placed.has(g)) continue;
+      const parentGroups = groupParentsOf.get(g) ?? new Set();
+      if ([...parentGroups].every((p) => placed.has(p))) next.push(g);
     }
     queue = next;
     generation += 1;
   }
 
-  // Cycle fallback: anything left unplaced sits one generation below the deepest placed node,
-  // in stable (component) order — good enough for "must not crash", which is all the spec
-  // asks of anomalous data.
-  const unplaced = component.filter((id) => !placed.has(id));
-  if (unplaced.length > 0) {
+  // Cycle fallback: anything left unplaced sits one generation below the deepest placed group,
+  // in stable (component) order — good enough for "must not crash", which is all the spec asks
+  // of anomalous data.
+  const unplacedGroups = groups.filter((g) => !placed.has(g));
+  if (unplacedGroups.length > 0) {
     const fallbackGeneration = generation; // one past the last generation actually assigned
-    for (const id of unplaced) generationById.set(id, fallbackGeneration);
+    for (const g of unplacedGroups) levelOf.set(g, fallbackGeneration);
   }
+
+  const generationById = new Map<string, number>();
+  for (const id of component) generationById.set(id, levelOf.get(groupOf.get(id)!)!);
 
   return generationById;
 }
