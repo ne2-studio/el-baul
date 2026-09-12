@@ -49,6 +49,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
         var removalRequests = new RemovalRequestRepository(dbContext);
         var personas = new PersonaRepository(dbContext);
+        var personaRelationships = new PersonaRelationshipRepository(dbContext);
 
         var deletion = new AdminBaulDeletionRepository(
             baules,
@@ -60,6 +61,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             photoPersonaTags,
             removalRequests,
             personas,
+            personaRelationships,
             new UnitOfWork(dbContext));
 
         var admin = new AdminManager(
@@ -146,6 +148,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
         var recuerdos = new RecuerdoRepository(dbContext);
         var photoPersonaTags = new PhotoPersonaTagRepository(dbContext);
         var personas = new PersonaRepository(dbContext);
+        var personaRelationships = new PersonaRelationshipRepository(dbContext);
 
         var deletion = new AdminBaulDeletionRepository(
             baules,
@@ -157,6 +160,7 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             photoPersonaTags,
             new RemovalRequestRepository(dbContext),
             personas,
+            personaRelationships,
             new UnitOfWork(dbContext));
 
         var admin = new AdminManager(
