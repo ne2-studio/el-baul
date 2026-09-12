@@ -10,7 +10,11 @@ import { Persona, PersonaRelationship } from '@/types';
 export interface FamilyTreeNode {
   persona: Persona;
   generation: number;
-  /** Horizontal slot within its generation row, 0-based, already offset so no two components overlap. */
+  /**
+   * Horizontal position within its generation row, already offset so no two components overlap.
+   * Not necessarily an integer: a child of two parents (or a group of siblings) is centred
+   * between/under them, which can land it halfway between two whole slots — see assignSlots.
+   */
   slot: number;
 }
 
@@ -91,7 +95,7 @@ export function buildFamilyTree(personas: Persona[], relationships: PersonaRelat
   }
 
   const generationCount = allNodes.reduce((max, n) => Math.max(max, n.generation + 1), 0);
-  const slotCount = allNodes.reduce((max, n) => Math.max(max, n.slot + 1), 0);
+  const slotCount = Math.ceil(allNodes.reduce((max, n) => Math.max(max, n.slot + 1), 0));
 
   return { nodes: allNodes, edges, generationCount, slotCount };
 }
@@ -168,11 +172,18 @@ function assignGenerations(component: string[], parentsOf: Map<string, string[]>
 }
 
 /**
- * Orders nodes within each generation left-to-right. Two passes of a barycenter heuristic
- * (average parent slot, then average child slot) pull related nodes together and keep couples'
- * children roughly centered under them; a final stable sort by that barycenter (falling back to
- * nickname for determinism) turns it into concrete integer slots with no two nodes in the same
- * generation sharing one.
+ * Positions nodes within each generation, left-to-right. Two steps:
+ *
+ * 1. Fix the left-to-right ORDER with the usual barycenter heuristic (average parent rank, then
+ *    average child rank) — this is what keeps related nodes together and avoids crossed edges.
+ * 2. With that order locked in, relax each node's actual x position towards the average position
+ *    of its parents/children — see the spec's rule that a child of two parents must land
+ *    centred between them (and a group of siblings centred as a block under a couple), not just
+ *    "somewhere in the right order". Positions are therefore not necessarily whole numbers.
+ *
+ * A left-to-right sweep followed by a right-to-left sweep (averaged) keeps every node as close
+ * as possible to that centred target while never crossing a neighbour or landing closer than one
+ * slot to it.
  */
 function assignSlots(
   component: string[],
@@ -188,38 +199,85 @@ function assignSlots(
   }
   const generations = [...byGeneration.keys()].sort((a, b) => a - b);
 
-  // Seed order: alphabetical by nickname, for a deterministic starting layout.
-  let slotById = new Map<string, number>();
+  // Step 1: seed order alphabetically, then two barycenter passes to fix a good left-to-right
+  // order — this part never changes a node's generation-mates' relative order again.
+  let orderById = new Map<string, number>();
   for (const gen of generations) {
     byGeneration.get(gen)!
       .slice()
       .sort((a, b) => (personaById.get(a)?.nickname ?? '').localeCompare(personaById.get(b)?.nickname ?? '', 'es'))
-      .forEach((id, index) => slotById.set(id, index));
+      .forEach((id, index) => orderById.set(id, index));
   }
 
-  const barycenter = (id: string, relatives: Map<string, string[]>): number | null => {
-    const relatedSlots = (relatives.get(id) ?? []).map((r) => slotById.get(r)).filter((s): s is number => s !== undefined);
-    if (relatedSlots.length === 0) return null;
-    return relatedSlots.reduce((sum, s) => sum + s, 0) / relatedSlots.length;
+  const barycenterRank = (id: string, relatives: Map<string, string[]>): number | null => {
+    const relatedRanks = (relatives.get(id) ?? []).map((r) => orderById.get(r)).filter((r): r is number => r !== undefined);
+    if (relatedRanks.length === 0) return null;
+    return relatedRanks.reduce((sum, r) => sum + r, 0) / relatedRanks.length;
   };
 
   const reorderPass = (relatives: Map<string, string[]>) => {
     const next = new Map<string, number>();
     for (const gen of generations) {
       const ids = byGeneration.get(gen)!;
-      const withKey = ids.map((id) => ({ id, key: barycenter(id, relatives) ?? slotById.get(id)! }));
+      const withKey = ids.map((id) => ({ id, key: barycenterRank(id, relatives) ?? orderById.get(id)! }));
       withKey
         .sort((a, b) => a.key - b.key || (personaById.get(a.id)?.nickname ?? '').localeCompare(personaById.get(b.id)?.nickname ?? '', 'es'))
         .forEach(({ id }, index) => next.set(id, index));
     }
-    slotById = next;
+    orderById = next;
   };
 
-  // Down pass (align with parents), then up pass (align with children) — two passes are enough
-  // for the shallow, small family trees this product deals with.
   reorderPass(parentsOf);
   reorderPass(childrenOf);
 
-  const width = generations.reduce((max, gen) => Math.max(max, byGeneration.get(gen)!.length), 0);
-  return { slotById, width };
+  // Step 2: relax continuous positions towards parents'/children's positions, order fixed above.
+  const positionById = new Map<string, number>();
+  for (const gen of generations) {
+    byGeneration.get(gen)!.forEach((id) => positionById.set(id, orderById.get(id)!));
+  }
+
+  const orderedIdsOf = (gen: number) => byGeneration.get(gen)!.slice().sort((a, b) => orderById.get(a)! - orderById.get(b)!);
+
+  const relaxPass = (relatives: Map<string, string[]>, gensInOrder: number[]) => {
+    for (const gen of gensInOrder) {
+      const ids = orderedIdsOf(gen);
+      const desired = ids.map((id) => {
+        const relatedPositions = (relatives.get(id) ?? []).map((r) => positionById.get(r)).filter((p): p is number => p !== undefined);
+        return relatedPositions.length > 0
+          ? relatedPositions.reduce((sum, p) => sum + p, 0) / relatedPositions.length
+          : positionById.get(id)!;
+      });
+
+      const leftPass: number[] = [];
+      let prev = -Infinity;
+      for (const d of desired) {
+        const p = Math.max(d, prev + 1);
+        leftPass.push(p);
+        prev = p;
+      }
+      const rightPass: number[] = new Array(ids.length);
+      let next = Infinity;
+      for (let i = ids.length - 1; i >= 0; i -= 1) {
+        const p = Math.min(desired[i], next - 1);
+        rightPass[i] = p;
+        next = p;
+      }
+      ids.forEach((id, i) => positionById.set(id, (leftPass[i] + rightPass[i]) / 2));
+    }
+  };
+
+  // Down pass (centre children under parents), up pass (centre parents over children), then one
+  // more down pass to settle — enough for the shallow, small family trees this product deals with.
+  relaxPass(parentsOf, generations);
+  relaxPass(childrenOf, [...generations].reverse());
+  relaxPass(parentsOf, generations);
+
+  // A relax pass can push a node's position below 0 (e.g. a lone child centred under two
+  // parents that got pulled the other way by their own siblings) — shift everything so the
+  // leftmost node in the component sits at 0, keeping slots non-negative for the caller.
+  const minPosition = Math.min(...positionById.values());
+  for (const [id, position] of positionById) positionById.set(id, position - minPosition);
+
+  const width = Math.max(...positionById.values()) + 1;
+  return { slotById: positionById, width };
 }

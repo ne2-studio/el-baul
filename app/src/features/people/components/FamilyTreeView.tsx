@@ -22,14 +22,20 @@ const COL_GAP = 28;
 const ROW_GAP = 56;
 const COL_WIDTH = NODE_WIDTH + COL_GAP;
 const ROW_HEIGHT = NODE_HEIGHT + ROW_GAP;
+// Margen mínimo entre el lienzo del árbol y el marco del visor — sin esto, las tarjetas de la
+// primera/última fila o columna quedan pegadas al borde (ver feedback: "las tarjetas no tienen
+// margen"). Nota: no basta con darle padding al div del lienzo, porque los hijos con position
+// absolute se posicionan respecto al padding box, no al content box — por eso el margen se suma
+// directamente a cada coordenada en nodeCenter en vez de vía CSS padding.
+const CANVAS_MARGIN = 32;
 // Cuánto se mueve el puntero antes de considerar que es un arrastre (pan) y no un tap sobre
 // un nodo — evita que arrastrar el árbol dispare accidentalmente la navegación a una ficha.
 const DRAG_THRESHOLD_PX = 6;
 
 function nodeCenter(node: FamilyTreeNode) {
   return {
-    x: node.slot * COL_WIDTH + NODE_WIDTH / 2,
-    y: node.generation * ROW_HEIGHT,
+    x: node.slot * COL_WIDTH + NODE_WIDTH / 2 + CANVAS_MARGIN,
+    y: node.generation * ROW_HEIGHT + CANVAS_MARGIN,
   };
 }
 
@@ -53,7 +59,7 @@ export function FamilyTreeView({ personas, relationships, onSelectPersona, onBac
         subtitle={
           <>
             Añade relaciones entre las personas de tu familia para empezar a ver aquí vuestro árbol genealógico.
-            <span className="block mt-4">
+            <span className="flex justify-center mt-4">
               <Button variant="secondary" onClick={onBackToMosaico}>Volver a Mosaico</Button>
             </span>
           </>
@@ -62,8 +68,13 @@ export function FamilyTreeView({ personas, relationships, onSelectPersona, onBac
     );
   }
 
-  const canvasWidth = tree.slotCount * COL_WIDTH;
-  const canvasHeight = tree.generationCount * ROW_HEIGHT + NODE_HEIGHT;
+  // Espacio justo para el contenido: el tamaño de una tarjeta más (slotCount/generationCount -
+  // 1) separaciones completas entre columnas/filas, más el margen del lienzo a cada lado. Antes
+  // se reservaba una columna/fila de más (slotCount * COL_WIDTH en vez de (slotCount-1) *
+  // COL_WIDTH + NODE_WIDTH), lo que no se notaba mientras el árbol quedaba pegado arriba a la
+  // izquierda, pero descentraba visiblemente el árbol al centrarlo en el visor.
+  const canvasWidth = (tree.slotCount - 1) * COL_WIDTH + NODE_WIDTH + CANVAS_MARGIN * 2;
+  const canvasHeight = (tree.generationCount - 1) * ROW_HEIGHT + NODE_HEIGHT + CANVAS_MARGIN * 2;
 
   // Arrastre con ratón para paisajes anchos en escritorio (el scroll táctil nativo ya cubre
   // móvil/tablet por sí solo, y el trackpad/rueda también funciona sin esto). Solo se activa
@@ -117,45 +128,52 @@ export function FamilyTreeView({ personas, relationships, onSelectPersona, onBac
       onPointerUp={handlePointerUpWithDragFlag}
       onPointerLeave={handlePointerUpWithDragFlag}
     >
-      <div className="relative" style={{ width: canvasWidth, height: canvasHeight, padding: `${NODE_HEIGHT / 2}px ${NODE_WIDTH / 2}px` }}>
-        <svg
-          className="absolute inset-0 pointer-events-none"
-          width={canvasWidth}
-          height={canvasHeight}
-          aria-hidden
-        >
-          {tree.edges.map((edge) => {
-            const parentNode = tree.nodes.find((n) => n.persona.id === edge.parentId);
-            const childNode = tree.nodes.find((n) => n.persona.id === edge.childId);
-            if (!parentNode || !childNode) return null;
-            const from = nodeCenter(parentNode);
-            const to = nodeCenter(childNode);
-            const midY = from.y + NODE_HEIGHT + ROW_GAP / 2;
-            const offset = NODE_WIDTH / 2;
+      {/* min-w-full/min-h-full + flex centrado: si el árbol es más pequeño que el visor queda
+          centrado en el medio; si es más grande, este wrapper crece con el contenido y el
+          overflow-auto del contenedor padre se encarga del scroll con el árbol ya centrado. */}
+      <div className="min-w-full min-h-full flex items-center justify-center">
+        <div className="relative" style={{ width: canvasWidth, height: canvasHeight }}>
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            width={canvasWidth}
+            height={canvasHeight}
+            aria-hidden
+          >
+            {tree.edges.map((edge) => {
+              const parentNode = tree.nodes.find((n) => n.persona.id === edge.parentId);
+              const childNode = tree.nodes.find((n) => n.persona.id === edge.childId);
+              if (!parentNode || !childNode) return null;
+              const from = nodeCenter(parentNode);
+              const to = nodeCenter(childNode);
+              const midY = from.y + NODE_HEIGHT + ROW_GAP / 2;
+              // from.x/to.x ya son el centro horizontal de cada tarjeta (ver nodeCenter) — el
+              // trazo entra y sale por el punto medio del borde inferior/superior, nunca por
+              // una esquina.
+              return (
+                <path
+                  key={`${edge.parentId}>${edge.childId}`}
+                  d={`M ${from.x} ${from.y + NODE_HEIGHT} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${to.y}`}
+                  fill="none"
+                  stroke="var(--color-border)"
+                  strokeWidth={2}
+                />
+              );
+            })}
+          </svg>
+
+          {tree.nodes.map((node) => {
+            const { x, y } = nodeCenter(node);
             return (
-              <path
-                key={`${edge.parentId}>${edge.childId}`}
-                d={`M ${from.x + offset} ${from.y + NODE_HEIGHT} L ${from.x + offset} ${midY} L ${to.x + offset} ${midY} L ${to.x + offset} ${to.y}`}
-                fill="none"
-                stroke="var(--color-border)"
-                strokeWidth={2}
-              />
+              <div
+                key={node.persona.id}
+                className="absolute"
+                style={{ left: x - NODE_WIDTH / 2, top: y, width: NODE_WIDTH }}
+              >
+                <FamilyTreeNodeCard persona={node.persona} onClick={() => handleSelect(node.persona)} />
+              </div>
             );
           })}
-        </svg>
-
-        {tree.nodes.map((node) => {
-          const { x, y } = nodeCenter(node);
-          return (
-            <div
-              key={node.persona.id}
-              className="absolute"
-              style={{ left: x - NODE_WIDTH / 2, top: y, width: NODE_WIDTH }}
-            >
-              <FamilyTreeNodeCard persona={node.persona} onClick={() => handleSelect(node.persona)} />
-            </div>
-          );
-        })}
+        </div>
       </div>
     </div>
   );

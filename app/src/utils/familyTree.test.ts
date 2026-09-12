@@ -106,8 +106,28 @@ describe('buildFamilyTree', () => {
     // Every node got some generation number assigned (no NaN/undefined leaking out).
     for (const node of tree.nodes) {
       expect(Number.isInteger(node.generation)).toBe(true);
-      expect(Number.isInteger(node.slot)).toBe(true);
+      // Slots aren't always whole numbers (a child centred between two parents lands halfway
+      // between them — see the "centers a child of two parents..." test), just finite.
+      expect(Number.isFinite(node.slot)).toBe(true);
     }
+  });
+
+  it('centers a child of two parents exactly between them', () => {
+    const personas = [persona('a'), persona('b'), persona('c')];
+    const tree = buildFamilyTree(personas, [rel('a', 'c'), rel('b', 'c')]);
+    const slot = (id: string) => tree.nodes.find((n) => n.persona.id === id)!.slot;
+    expect(slot('c')).toBeCloseTo((slot('a') + slot('b')) / 2);
+  });
+
+  it('centers a couple over their two children as a block', () => {
+    const personas = [persona('a'), persona('b'), persona('c'), persona('d')];
+    const tree = buildFamilyTree(personas, [rel('a', 'c'), rel('b', 'c'), rel('a', 'd'), rel('b', 'd')]);
+    const slot = (id: string) => tree.nodes.find((n) => n.persona.id === id)!.slot;
+    // The couple sits centred over the midpoint of their two children, and the children stay
+    // symmetric around that same midpoint.
+    const parentsMid = (slot('a') + slot('b')) / 2;
+    const childrenMid = (slot('c') + slot('d')) / 2;
+    expect(parentsMid).toBeCloseTo(childrenMid);
   });
 
   it('ignores relationships pointing at a persona that no longer exists in this baúl', () => {
