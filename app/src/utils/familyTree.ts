@@ -100,6 +100,39 @@ export function buildFamilyTree(personas: Persona[], relationships: PersonaRelat
   return { nodes: allNodes, edges, generationCount, slotCount };
 }
 
+/**
+ * Narrow projection for a persona's own "Familia" tab: just personaId, their parents, their
+ * siblings (the other children of those same parents), and their children — never grandparents,
+ * grandchildren, nieces/nephews, or their children's other parent. Not the whole branch they
+ * belong to, deliberately: this is meant to answer "who is this person's immediate family",
+ * not "show me their entire family tree" (that's what the baúl-wide Árbol genealógico is for).
+ * Laying it out is just buildFamilyTree again, but over this trimmed-down persona/relationship
+ * subset — which also means a couple's children still end up centred between them, etc., same
+ * as the full tree. Returns an empty tree when personaId has no relationships at all.
+ */
+export function buildPersonaFamilyTree(personas: Persona[], relationships: PersonaRelationship[], personaId: string): FamilyTree {
+  const personaById = new Map(personas.map((p) => [p.id, p]));
+  if (!personaById.has(personaId)) return { nodes: [], edges: [], generationCount: 0, slotCount: 0 };
+
+  const validEdges = relationships.filter(
+    (r) => personaById.has(r.parentId) && personaById.has(r.childId) && r.parentId !== r.childId
+  );
+
+  const parentIds = new Set(validEdges.filter((e) => e.childId === personaId).map((e) => e.parentId));
+  const siblingIds = new Set(
+    validEdges.filter((e) => parentIds.has(e.parentId) && e.childId !== personaId).map((e) => e.childId)
+  );
+  const childIds = new Set(validEdges.filter((e) => e.parentId === personaId).map((e) => e.childId));
+
+  const scopeIds = new Set<string>([personaId, ...parentIds, ...siblingIds, ...childIds]);
+  if (scopeIds.size === 1) return { nodes: [], edges: [], generationCount: 0, slotCount: 0 };
+
+  const scopedPersonas = personas.filter((p) => scopeIds.has(p.id));
+  const scopedRelationships = validEdges.filter((e) => scopeIds.has(e.parentId) && scopeIds.has(e.childId));
+
+  return buildFamilyTree(scopedPersonas, scopedRelationships);
+}
+
 function groupIntoComponents(
   connectedIds: Set<string>,
   childrenOf: Map<string, string[]>,

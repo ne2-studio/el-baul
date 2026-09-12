@@ -81,3 +81,36 @@ export const DisconnectedComponents: Story = {
     relationships: [rel('a', 'b'), rel('c', 'd')],
   },
 };
+
+// Uso real en la pestaña "Familia" de la ficha de una persona (PersonaFamiliaTabContainer):
+// focusPersonaId recorta el árbol a la familia inmediata de "Pedro" — sus padres, su hermana
+// Marta y su hija Laura — dejando fuera tanto a su sobrino (hijo de Marta, no de Pedro) como a
+// la familia de Manolo/Rosa, sin relación con él, y sin botón "Volver a Mosaico" en el empty
+// state.
+export const FocusedOnOnePersona: Story = {
+  args: {
+    ...sharedArgs,
+    personas: [
+      persona('a', 'Carmen'), persona('b', 'Antonio'), persona('c', 'Pedro'),
+      persona('m', 'Marta'), persona('n', 'Sobrino'),
+      persona('d', 'Laura'), persona('e', 'Manolo'), persona('f', 'Rosa'),
+    ],
+    relationships: [
+      rel('a', 'c'), rel('b', 'c'),
+      rel('a', 'm'), rel('b', 'm'),
+      rel('m', 'n'),
+      rel('c', 'd'),
+      rel('e', 'f'),
+    ],
+    focusPersonaId: 'c',
+  },
+};
+
+export const FocusedOnOnePersonaEmpty: Story = {
+  args: {
+    ...sharedArgs,
+    personas: [persona('a', 'Manolo')],
+    relationships: [],
+    focusPersonaId: 'a',
+  },
+};

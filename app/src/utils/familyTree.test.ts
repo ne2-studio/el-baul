@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Persona, PersonaRelationship } from '@/types';
-import { buildFamilyTree } from './familyTree';
+import { buildFamilyTree, buildPersonaFamilyTree } from './familyTree';
 
 function persona(id: string, nickname = id): Persona {
   return { id, baulId: 'baul-1', nickname, status: 'active', role: 'colaborador', invitedDate: '' } as Persona;
@@ -168,5 +168,50 @@ describe('buildFamilyTree', () => {
     const tree = buildFamilyTree(personas, [rel('a', 'b'), rel('a', 'ghost')]);
     expect(tree.nodes.map((n) => n.persona.id).sort()).toEqual(['a', 'b']);
     expect(tree.edges).toEqual([{ parentId: 'a', childId: 'b' }]);
+  });
+});
+
+describe('buildPersonaFamilyTree', () => {
+  it('returns an empty tree for a persona with no relationships at all', () => {
+    const tree = buildPersonaFamilyTree([persona('a'), persona('b')], [], 'a');
+    expect(tree.nodes).toEqual([]);
+  });
+
+  it('only includes the branch the persona belongs to, leaving other families out', () => {
+    const personas = ['a', 'b', 'c', 'd'].map((id) => persona(id));
+    const tree = buildPersonaFamilyTree(personas, [rel('a', 'b'), rel('c', 'd')], 'a');
+    expect(tree.nodes.map((n) => n.persona.id).sort()).toEqual(['a', 'b']);
+  });
+
+  it('includes parents, siblings and children, but never grandparents, grandchildren, nieces/nephews or a child\'s other parent', () => {
+    const personas = ['grandma', 'mum', 'dad', 'me', 'sister', 'nephew', 'my-kid'].map((id) => persona(id));
+    const tree = buildPersonaFamilyTree(personas, [
+      rel('grandma', 'mum'), // mum's own parent — my grandparent, must be excluded
+      rel('mum', 'me'), rel('dad', 'me'), // my parents
+      rel('mum', 'sister'), rel('dad', 'sister'), // my sibling, same two parents
+      rel('sister', 'nephew'), // sister's child — my nephew, must be excluded
+      rel('me', 'my-kid'), // my own child
+    ], 'me');
+    expect(tree.nodes.map((n) => n.persona.id).sort()).toEqual(['dad', 'me', 'mum', 'my-kid', 'sister']);
+  });
+
+  it('does not include a half-sibling\'s other parent, only the parent shared with this persona', () => {
+    const personas = ['mum', 'dad', 'me', 'half-sister', 'other-parent'].map((id) => persona(id));
+    const tree = buildPersonaFamilyTree(personas, [
+      rel('mum', 'me'), rel('dad', 'me'),
+      rel('mum', 'half-sister'), rel('other-parent', 'half-sister'),
+    ], 'me');
+    expect(tree.nodes.map((n) => n.persona.id).sort()).toEqual(['dad', 'half-sister', 'me', 'mum']);
+  });
+
+  it('re-normalises generation and slot to start at 0 for the trimmed-down branch', () => {
+    const personas = ['a', 'b', 'c', 'd'].map((id) => persona(id));
+    // "c" -> "d" is a second, disconnected component that buildFamilyTree would offset to the
+    // right of "a" -> "b" — buildPersonaFamilyTree('b') must undo that offset.
+    const tree = buildPersonaFamilyTree(personas, [rel('a', 'b'), rel('c', 'd')], 'b');
+    const slotA = tree.nodes.find((n) => n.persona.id === 'a')!.slot;
+    const slotB = tree.nodes.find((n) => n.persona.id === 'b')!.slot;
+    expect(Math.min(slotA, slotB)).toBe(0);
+    expect(tree.nodes.find((n) => n.persona.id === 'a')!.generation).toBe(0);
   });
 });
