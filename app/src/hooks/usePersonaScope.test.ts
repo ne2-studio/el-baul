@@ -45,7 +45,7 @@ describe('usePersonaScope', () => {
     useRecuerdosStore.getState().reset();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     vi.mocked(api.baules.getPersonaScope).mockReset().mockResolvedValue({
-      personas: [persona], personaPhotos: [], baulRecuerdos: [], relationships: [],
+      personas: [persona], personaPhotos: [], baulRecuerdos: [], relationships: [], spouseRelationships: [],
     });
   });
 
@@ -65,7 +65,7 @@ describe('usePersonaScope', () => {
     // from the store — can actually be observed as true before this resolves, same as a real
     // network call would behave.
     vi.mocked(api.baules.getPersonaScope).mockImplementation(() => Promise.resolve().then(() => ({
-      personas: [persona], personaPhotos: [photo()], baulRecuerdos: [], relationships: [],
+      personas: [persona], personaPhotos: [photo()], baulRecuerdos: [], relationships: [], spouseRelationships: [],
     })));
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
@@ -84,7 +84,7 @@ describe('usePersonaScope', () => {
     usePersonasStore.setState({ personas: { [baulId]: [persona] } });
     seedPersonaPhotos(personaId, [photo()]);
     useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
-    usePersonasStore.setState({ relationships: { [baulId]: [] } });
+    usePersonasStore.setState({ relationships: { [baulId]: [] }, spouseRelationships: { [baulId]: [] } });
 
     const { result } = renderHook(() => usePersonaScope(baulId, personaId));
 
@@ -105,7 +105,7 @@ describe('usePersonaScope', () => {
     expect(result.current.isLoading).toBe(false);
 
     vi.mocked(api.baules.getPersonaScope).mockResolvedValueOnce({
-      personas: [persona], personaPhotos: [photo()], baulRecuerdos: [], relationships: [],
+      personas: [persona], personaPhotos: [photo()], baulRecuerdos: [], relationships: [], spouseRelationships: [],
     });
 
     await act(async () => {
@@ -137,10 +137,10 @@ describe('usePersonaScope', () => {
     vi.mocked(api.baules.getPersonaScope).mockImplementation((_baulId: string, pId: string) => {
       if (pId === personaA.id) {
         return new Promise((resolve) => {
-          resolveA = () => resolve({ personas: [personaA, personaB], personaPhotos: [photo()], baulRecuerdos: [], relationships: [] });
+          resolveA = () => resolve({ personas: [personaA, personaB], personaPhotos: [photo()], baulRecuerdos: [], relationships: [], spouseRelationships: [] });
         });
       }
-      return Promise.resolve({ personas: [personaA, personaB], personaPhotos: [photo()], baulRecuerdos: [], relationships: [] });
+      return Promise.resolve({ personas: [personaA, personaB], personaPhotos: [photo()], baulRecuerdos: [], relationships: [], spouseRelationships: [] });
     });
 
     const { result, rerender } = renderHook(
@@ -172,7 +172,7 @@ describe('usePersonaScope', () => {
         });
       }
       return Promise.resolve({
-        personas: [personaA, personaB], personaPhotos: [photo({ id: `photo-${pId}` })], baulRecuerdos: [], relationships: [],
+        personas: [personaA, personaB], personaPhotos: [photo({ id: `photo-${pId}` })], baulRecuerdos: [], relationships: [], spouseRelationships: [],
       });
     });
 

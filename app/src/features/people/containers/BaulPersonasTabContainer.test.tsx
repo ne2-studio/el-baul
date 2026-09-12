@@ -11,9 +11,10 @@ import { BaulPersonasTabContainer } from './BaulPersonasTabContainer';
 vi.mock('@/features/people/useCases', () => ({
   createPersona: vi.fn(),
   loadPersonaRelationships: vi.fn().mockResolvedValue(undefined),
+  loadPersonaSpouseRelationships: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { createPersona, loadPersonaRelationships } from '@/features/people/useCases';
+import { createPersona, loadPersonaRelationships, loadPersonaSpouseRelationships } from '@/features/people/useCases';
 
 const baulId = 'baul-1';
 
@@ -43,11 +44,12 @@ function renderContainer(canCreatePersona = true) {
 
 describe('BaulPersonasTabContainer', () => {
   beforeEach(() => {
-    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {}, relationships: {} });
+    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {}, relationships: {}, spouseRelationships: {} });
     useAuthStore.setState({ userProfile: { photoUrl: '', name: '', email: 'me@example.com' } });
     localStorage.clear();
     vi.clearAllMocks();
     vi.mocked(loadPersonaRelationships).mockResolvedValue(undefined);
+    vi.mocked(loadPersonaSpouseRelationships).mockResolvedValue(undefined);
   });
 
   it('loads the baúl relationships once on mount', () => {
@@ -56,14 +58,20 @@ describe('BaulPersonasTabContainer', () => {
     renderContainer();
 
     expect(loadPersonaRelationships).toHaveBeenCalledWith(baulId);
+    expect(loadPersonaSpouseRelationships).toHaveBeenCalledWith(baulId);
   });
 
   it('does not reload relationships already cached for this baúl', () => {
-    usePersonasStore.setState({ personas: { [baulId]: [persona()] }, relationships: { [baulId]: [] } });
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona()] },
+      relationships: { [baulId]: [] },
+      spouseRelationships: { [baulId]: [] },
+    });
 
     renderContainer();
 
     expect(loadPersonaRelationships).not.toHaveBeenCalled();
+    expect(loadPersonaSpouseRelationships).not.toHaveBeenCalled();
   });
 
   it('switches to the family tree view, persists the choice and tracks family_view_changed', async () => {

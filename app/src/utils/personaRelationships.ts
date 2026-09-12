@@ -1,4 +1,4 @@
-import { Persona, PersonaRelationship } from '../types';
+import { Persona, PersonaRelationship, PersonaSpouseRelationship } from '../types';
 
 // The inverse of a stored Parent->Child edge is always derived here, never a second stored
 // row — see PersonaRelationship's doc comment. These are the only two ways the rest of the app
@@ -14,4 +14,14 @@ export function getParents(relationships: PersonaRelationship[], personas: Perso
 export function getChildren(relationships: PersonaRelationship[], personas: Persona[], personaId: string): Persona[] {
   const childIds = relationships.filter((r) => r.parentId === personaId).map((r) => r.childId);
   return personas.filter((p) => childIds.includes(p.id));
+}
+
+/** personaId's one spouse, if any — El Baúl models monogamous families only, so at most one
+ * PersonaSpouseRelationship ever involves a given persona (see PersonaSpouseRelationship's doc
+ * comment). Resolved against the baúl's full persona list, same as getParents/getChildren. */
+export function getSpouse(spouseRelationships: PersonaSpouseRelationship[], personas: Persona[], personaId: string): Persona | undefined {
+  const relationship = spouseRelationships.find((r) => r.personaId1 === personaId || r.personaId2 === personaId);
+  if (!relationship) return undefined;
+  const spouseId = relationship.personaId1 === personaId ? relationship.personaId2 : relationship.personaId1;
+  return personas.find((p) => p.id === spouseId);
 }

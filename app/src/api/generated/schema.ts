@@ -4581,6 +4581,244 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/baules/{baulId}/persona-spouse-relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PersonaSpouseRelationshipDto"][];
+                        "application/json": components["schemas"]["PersonaSpouseRelationshipDto"][];
+                        "text/json": components["schemas"]["PersonaSpouseRelationshipDto"][];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AddPersonaSpouseRelationshipRequest"];
+                    "text/json": components["schemas"]["AddPersonaSpouseRelationshipRequest"];
+                    "application/*+json": components["schemas"]["AddPersonaSpouseRelationshipRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PersonaSpouseRelationshipDto"];
+                        "application/json": components["schemas"]["PersonaSpouseRelationshipDto"];
+                        "text/json": components["schemas"]["PersonaSpouseRelationshipDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/baules/{baulId}/persona-spouse-relationships/{personaId1}/{personaId2}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    baulId: string;
+                    personaId1: string;
+                    personaId2: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SuccessResponse"];
+                        "application/json": components["schemas"]["SuccessResponse"];
+                        "text/json": components["schemas"]["SuccessResponse"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chapters/{chapterId}/photos": {
         parameters: {
             query?: never;
@@ -8299,6 +8537,12 @@ export interface components {
             /** Format: uuid */
             childId: string;
         };
+        AddPersonaSpouseRelationshipRequest: {
+            /** Format: uuid */
+            personaId1: string;
+            /** Format: uuid */
+            personaId2: string;
+        };
         AdminBaulChapterDto: {
             id: string;
             name: string;
@@ -8697,6 +8941,11 @@ export interface components {
             personaPhotos: components["schemas"]["PhotoDto"][];
             baulRecuerdos: components["schemas"]["RecuerdoDto"][];
             relationships: components["schemas"]["PersonaRelationshipDto"][];
+            spouseRelationships: components["schemas"]["PersonaSpouseRelationshipDto"][];
+        };
+        PersonaSpouseRelationshipDto: {
+            personaId1: string;
+            personaId2: string;
         };
         PhotoBatchDto: {
             batchId: string;

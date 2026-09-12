@@ -3,12 +3,13 @@ import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { Button } from '@/design-system/components/actions/Button';
-import { Persona, PersonaRelationship } from '@/types';
+import { Persona, PersonaRelationship, PersonaSpouseRelationship } from '@/types';
 import { buildFamilyTree, buildPersonaFamilyTree, FamilyTreeNode } from '@/utils/familyTree';
 
 interface FamilyTreeViewProps {
   personas: Persona[];
   relationships: PersonaRelationship[];
+  spouseRelationships?: PersonaSpouseRelationship[];
   onSelectPersona: (persona: Persona) => void;
   /**
    * Si se pasa, el árbol se recorta a la familia inmediata de esta persona (ella misma, sus
@@ -42,6 +43,10 @@ const CANVAS_MARGIN = 32;
 // Cuánto se mueve el puntero antes de considerar que es un arrastre (pan) y no un tap sobre
 // un nodo — evita que arrastrar el árbol dispare accidentalmente la navegación a una ficha.
 const DRAG_THRESHOLD_PX = 6;
+// Radio y separación de los "dos anillos entrelazados" que representan la relación de
+// cónyuges — ver el conector en el <svg> más abajo.
+const SPOUSE_RING_RADIUS = 8;
+const SPOUSE_RING_OFFSET = 6;
 
 function nodeCenter(node: FamilyTreeNode) {
   return {
@@ -51,12 +56,23 @@ function nodeCenter(node: FamilyTreeNode) {
 }
 
 // v1 del árbol genealógico: solo consulta y navegación — ver el "Alcance V1" de la spec para
-// por qué no hay edición, drag & drop ni parejas/matrimonios aquí. Es una proyección pura de
-// personas + relaciones (buildFamilyTree), nunca una segunda fuente de verdad.
-export function FamilyTreeView({ personas, relationships, onSelectPersona, focusPersonaId, onBackToMosaico }: FamilyTreeViewProps) {
+// por qué no hay edición ni drag & drop aquí. Es una proyección pura de personas + relaciones
+// (buildFamilyTree), nunca una segunda fuente de verdad. Los cónyuges se muestran en la misma
+// fila, unidos por el conector de "dos anillos entrelazados" (ver spouseEdges más abajo).
+export function FamilyTreeView({
+  personas,
+  relationships,
+  spouseRelationships = [],
+  onSelectPersona,
+  focusPersonaId,
+  onBackToMosaico,
+}: FamilyTreeViewProps) {
   const tree = useMemo(
-    () => (focusPersonaId ? buildPersonaFamilyTree(personas, relationships, focusPersonaId) : buildFamilyTree(personas, relationships)),
-    [personas, relationships, focusPersonaId]
+    () =>
+      focusPersonaId
+        ? buildPersonaFamilyTree(personas, relationships, focusPersonaId, spouseRelationships)
+        : buildFamilyTree(personas, relationships, spouseRelationships),
+    [personas, relationships, spouseRelationships, focusPersonaId]
   );
   const scrollRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number; moved: boolean } | null>(null);
@@ -70,7 +86,7 @@ export function FamilyTreeView({ personas, relationships, onSelectPersona, focus
       <EmptyState
         icon={<Icon icon={icons.users} className="w-20 h-20" strokeWidth={1.5} aria-hidden />}
         title="Todavía no hay relaciones familiares"
-        subtitle='Añade padres, madres, hijos o hijas desde "Editar relaciones"'
+        subtitle='Añade padres, madres, hijos, hijas o cónyuge desde "Editar relaciones"'
       />
     ) : (
       <EmptyState
@@ -174,6 +190,29 @@ export function FamilyTreeView({ personas, relationships, onSelectPersona, focus
                   stroke="var(--color-border)"
                   strokeWidth={2}
                 />
+              );
+            })}
+
+            {tree.spouseEdges.map((edge) => {
+              const nodeA = tree.nodes.find((n) => n.persona.id === edge.personaId1);
+              const nodeB = tree.nodes.find((n) => n.persona.id === edge.personaId2);
+              if (!nodeA || !nodeB) return null;
+              const centerA = nodeCenter(nodeA);
+              const centerB = nodeCenter(nodeB);
+              // Ordenados de izquierda a derecha: el conector siempre sale del borde derecho de
+              // la tarjeta de la izquierda y entra por el borde izquierdo de la de la derecha,
+              // a la altura vertical media de ambas tarjetas.
+              const [left, right] = centerA.x <= centerB.x ? [centerA, centerB] : [centerB, centerA];
+              const y = left.y + NODE_HEIGHT / 2;
+              const lineStartX = left.x + NODE_WIDTH / 2;
+              const lineEndX = right.x - NODE_WIDTH / 2;
+              const midX = (lineStartX + lineEndX) / 2;
+              return (
+                <g key={[edge.personaId1, edge.personaId2].sort().join('~')}>
+                  <line x1={lineStartX} y1={y} x2={lineEndX} y2={y} stroke="var(--color-border)" strokeWidth={2} />
+                  <circle cx={midX - SPOUSE_RING_OFFSET} cy={y} r={SPOUSE_RING_RADIUS} fill="none" stroke="var(--color-primary)" strokeWidth={2} />
+                  <circle cx={midX + SPOUSE_RING_OFFSET} cy={y} r={SPOUSE_RING_RADIUS} fill="none" stroke="var(--color-primary)" strokeWidth={2} />
+                </g>
               );
             })}
           </svg>

@@ -26,13 +26,13 @@ import { useScopeOutcome } from '@/hooks/useScopeOutcome';
 export function usePersonaScope(baulId: string | undefined, personaId: string | undefined) {
   const auth = useAuth();
   const { run } = useAsyncAction();
-  const { personas, personaPhotos, relationships } = usePersonasStore();
+  const { personas, personaPhotos, relationships, spouseRelationships } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const { baulRecuerdos } = useRecuerdosStore();
 
   const persona = (baulId ? personas[baulId] : undefined)?.find((p) => p.id === personaId);
   const hasScope = !!persona && !!personaId && !!personaPhotos[personaId] && !!(baulId && baulRecuerdos[baulId]) &&
-    !!(baulId && relationships[baulId]);
+    !!(baulId && relationships[baulId]) && !!(baulId && spouseRelationships[baulId]);
 
   const { result, setOutcome, reset } = useScopeOutcome(`${baulId ?? ''}:${personaId ?? ''}`);
 
@@ -40,9 +40,10 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
   const loadFailed = result === 'failed';
 
   const load = async (forBaulId: string, forPersonaId: string) => {
-    const { personas, personaPhotos, relationships } = usePersonasStore.getState();
+    const { personas, personaPhotos, relationships, spouseRelationships } = usePersonasStore.getState();
     const { baulRecuerdos } = useRecuerdosStore.getState();
-    if (personas[forBaulId] && personaPhotos[forPersonaId] && baulRecuerdos[forBaulId] && relationships[forBaulId]) {
+    if (personas[forBaulId] && personaPhotos[forPersonaId] && baulRecuerdos[forBaulId] &&
+        relationships[forBaulId] && spouseRelationships[forBaulId]) {
       setOutcome(`${forBaulId}:${forPersonaId}`, null);
       return;
     }
@@ -68,6 +69,7 @@ export function usePersonaScope(baulId: string | undefined, personaId: string | 
       personas: { ...state.personas, [forBaulId]: scope.personas },
       personaPhotos: { ...state.personaPhotos, [forPersonaId]: scope.personaPhotos.map((photo) => photo.id) },
       relationships: { ...state.relationships, [forBaulId]: scope.relationships },
+      spouseRelationships: { ...state.spouseRelationships, [forBaulId]: scope.spouseRelationships },
     }));
     useRecuerdosStore.setState((state) => ({ baulRecuerdos: { ...state.baulRecuerdos, [forBaulId]: scope.baulRecuerdos } }));
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Persona, PersonaRelationship } from '@/types';
+import { Persona, PersonaRelationship, PersonaSpouseRelationship } from '@/types';
 import { buildFamilyTree, buildPersonaFamilyTree } from './familyTree';
 
 function persona(id: string, nickname = id): Persona {
@@ -8,6 +8,10 @@ function persona(id: string, nickname = id): Persona {
 
 function rel(parentId: string, childId: string): PersonaRelationship {
   return { parentId, childId } as PersonaRelationship;
+}
+
+function spouseRel(personaId1: string, personaId2: string): PersonaSpouseRelationship {
+  return { personaId1, personaId2 } as PersonaSpouseRelationship;
 }
 
 function generationOf(tree: ReturnType<typeof buildFamilyTree>, id: string) {
@@ -168,6 +172,46 @@ describe('buildFamilyTree', () => {
     const tree = buildFamilyTree(personas, [rel('a', 'b'), rel('a', 'ghost')]);
     expect(tree.nodes.map((n) => n.persona.id).sort()).toEqual(['a', 'b']);
     expect(tree.edges).toEqual([{ parentId: 'a', childId: 'b' }]);
+  });
+
+  it('places a childless couple on the same generation, adjacent to each other', () => {
+    const personas = [persona('a'), persona('b')];
+    const tree = buildFamilyTree(personas, [], [spouseRel('a', 'b')]);
+    expect(generationOf(tree, 'a')).toBe(0);
+    expect(generationOf(tree, 'b')).toBe(0);
+    expect(tree.spouseEdges).toEqual([{ personaId1: 'a', personaId2: 'b' }]);
+    const slotA = tree.nodes.find((n) => n.persona.id === 'a')!.slot;
+    const slotB = tree.nodes.find((n) => n.persona.id === 'b')!.slot;
+    expect(Math.abs(slotA - slotB)).toBeCloseTo(1);
+  });
+
+  it("aligns a spouse with no ancestors of their own to their partner's generation, even without a shared child", () => {
+    const personas = [persona('abuela'), persona('nieto'), persona('conyuge')];
+    const tree = buildFamilyTree(personas, [rel('abuela', 'nieto')], [spouseRel('nieto', 'conyuge')]);
+    expect(generationOf(tree, 'abuela')).toBe(0);
+    expect(generationOf(tree, 'nieto')).toBe(1);
+    expect(generationOf(tree, 'conyuge')).toBe(1);
+  });
+
+  it('keeps a couple on the same row as their shared child\'s generation dictates', () => {
+    const personas = [persona('a'), persona('b'), persona('c')];
+    const tree = buildFamilyTree(personas, [rel('a', 'c'), rel('b', 'c')], [spouseRel('a', 'b')]);
+    expect(generationOf(tree, 'a')).toBe(0);
+    expect(generationOf(tree, 'b')).toBe(0);
+    expect(generationOf(tree, 'c')).toBe(1);
+  });
+
+  it('deduplicates a spouse relationship regardless of which id comes first', () => {
+    const personas = [persona('a'), persona('b')];
+    const tree = buildFamilyTree(personas, [], [spouseRel('a', 'b'), spouseRel('b', 'a')]);
+    expect(tree.spouseEdges).toHaveLength(1);
+  });
+
+  it('ignores a spouse relationship pointing at a persona that no longer exists in this baúl', () => {
+    const personas = [persona('a')];
+    const tree = buildFamilyTree(personas, [], [spouseRel('a', 'ghost')]);
+    expect(tree.nodes).toEqual([]);
+    expect(tree.spouseEdges).toEqual([]);
   });
 });
 

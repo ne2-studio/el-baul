@@ -18,6 +18,8 @@ vi.mock('@/features/people/useCases', () => ({
   sharePersonaInvite: vi.fn(),
   addPersonaRelationship: vi.fn(),
   removePersonaRelationship: vi.fn(),
+  addPersonaSpouseRelationship: vi.fn(),
+  removePersonaSpouseRelationship: vi.fn(),
 }));
 
 vi.mock('@/api', () => ({
@@ -27,6 +29,8 @@ vi.mock('@/api', () => ({
 import {
   addPersonaRelationship,
   removePersonaRelationship,
+  addPersonaSpouseRelationship,
+  removePersonaSpouseRelationship,
   revokeAccess,
   sharePersonaInvite,
   updatePersona,
@@ -57,7 +61,9 @@ function renderContainer(p: Persona, currentBaulRole: Baul['role'] = 'administra
 
 describe('PersonaSettingsMenuContainer', () => {
   beforeEach(() => {
-    usePersonasStore.setState({ personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {}, relationships: {} });
+    usePersonasStore.setState({
+      personas: {}, removalRequests: {}, personaPhotos: {}, taggedPersonas: {}, relationships: {}, spouseRelationships: {},
+    });
     useUIStore.setState({ showToast: false, toastMessage: '' });
     vi.clearAllMocks();
   });
@@ -224,5 +230,60 @@ describe('PersonaSettingsMenuContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Eliminar relación con Nieta Vero' }));
 
     expect(removePersonaRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
+  });
+
+  it('adds a spouse relationship from the "Editar relaciones" flow', async () => {
+    const user = userEvent.setup();
+    const other = persona({ id: 'p2', nickname: 'Cónyuge Marta' });
+    usePersonasStore.setState({ personas: { [baulId]: [persona(), other] } });
+    vi.mocked(addPersonaSpouseRelationship).mockResolvedValue({ personaId1: 'p1', personaId2: 'p2' } as never);
+
+    renderContainer(persona());
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+    await user.click(await screen.findByText('Editar relaciones'));
+
+    await user.click(screen.getByRole('button', { name: /Añadir relación/ }));
+    await user.click(screen.getByRole('button', { name: 'Cónyuge de' }));
+    await user.click(screen.getByText('Cónyuge Marta'));
+    await user.click(screen.getByRole('button', { name: 'Añadir' }));
+
+    expect(addPersonaSpouseRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
+  });
+
+  it('removes a spouse relationship from the "Editar relaciones" list', async () => {
+    const user = userEvent.setup();
+    const spouse = persona({ id: 'p2', nickname: 'Cónyuge Marta' });
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona(), spouse] },
+      spouseRelationships: { [baulId]: [{ personaId1: 'p1', personaId2: 'p2' } as never] },
+    });
+    vi.mocked(removePersonaSpouseRelationship).mockResolvedValue(undefined);
+
+    renderContainer(persona());
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+    await user.click(await screen.findByText('Editar relaciones'));
+
+    expect(screen.getByText('Cónyuge Marta')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Eliminar relación con Cónyuge Marta' }));
+
+    expect(removePersonaSpouseRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
+  });
+
+  it('disables the "Cónyuge de" direction once the persona already has a spouse', async () => {
+    const user = userEvent.setup();
+    const spouse = persona({ id: 'p2', nickname: 'Cónyuge Marta' });
+    const other = persona({ id: 'p3', nickname: 'Amigo Luis' });
+    usePersonasStore.setState({
+      personas: { [baulId]: [persona(), spouse, other] },
+      spouseRelationships: { [baulId]: [{ personaId1: 'p1', personaId2: 'p2' } as never] },
+    });
+
+    renderContainer(persona());
+    await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
+    await user.click(await screen.findByText('Editar relaciones'));
+
+    await user.click(screen.getByRole('button', { name: /Añadir relación/ }));
+
+    expect(screen.getByRole('button', { name: 'Cónyuge de' })).toBeDisabled();
   });
 });

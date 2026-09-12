@@ -18,7 +18,7 @@ import { PhotoCrop, api } from '@/api';
 import { BaulRole, Persona, Photo } from '@/types';
 import { hashInviteToken } from '@/features/sharing/inviteTokenHash';
 import { getBaulPermissions, getPersonaPermissions } from '@/utils/roleUtils';
-import { getChildren, getParents } from '@/utils/personaRelationships';
+import { getChildren, getParents, getSpouse } from '@/utils/personaRelationships';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { hydratePhotos, usePhotosStore } from '@/store/usePhotosStore';
@@ -33,6 +33,8 @@ import {
   sharePersonaInvite,
   addPersonaRelationship,
   removePersonaRelationship,
+  addPersonaSpouseRelationship,
+  removePersonaSpouseRelationship,
 } from '@/features/people/useCases';
 
 interface PersonaSettingsMenuContainerProps {
@@ -46,7 +48,7 @@ interface PersonaSettingsMenuContainerProps {
 // in-place mutation with a toast — see docs/architecture/frontend.md's containers/ rule.
 export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSettingsMenuContainerProps) {
   const { baules } = useBaulesStore();
-  const { personaPhotos, personas, relationships } = usePersonasStore();
+  const { personaPhotos, personas, relationships, spouseRelationships } = usePersonasStore();
   const photosById = usePhotosStore((state) => state.photosById);
   const { run, isPending } = useAsyncAction();
   const showToastMessage = useUIStore((state) => state.showToastMessage);
@@ -66,6 +68,8 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
 
   const baulPersonas = personas[baulId] || [];
   const baulRelationships = relationships[baulId] || [];
+  const baulSpouseRelationships = spouseRelationships[baulId] || [];
+  const personaSpouse = getSpouse(baulSpouseRelationships, baulPersonas, persona.id);
 
   const [showEditInfoModal, setShowEditInfoModal] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
@@ -125,12 +129,29 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
 
   const handleRemoveRelationship = async (relatedPersonaId: string) => {
     setRemovingRelationshipId(relatedPersonaId);
-    const result = await run(() => removePersonaRelationship(baulId, persona.id, relatedPersonaId), {
-      key: `relationship-remove-${relatedPersonaId}`,
-      errorMessage: 'Error al eliminar la relación',
-    });
+    // relatedPersonaId can name either kind of edge — the modal's list groups Padres/Hijos and
+    // Cónyuge together behind one onRemove, so this dispatches to whichever removal endpoint
+    // actually owns that pair (see EditRelationshipsModal).
+    const result = relatedPersonaId === personaSpouse?.id
+      ? await run(() => removePersonaSpouseRelationship(baulId, persona.id, relatedPersonaId), {
+        key: `relationship-remove-${relatedPersonaId}`,
+        errorMessage: 'Error al eliminar la relación',
+      })
+      : await run(() => removePersonaRelationship(baulId, persona.id, relatedPersonaId), {
+        key: `relationship-remove-${relatedPersonaId}`,
+        errorMessage: 'Error al eliminar la relación',
+      });
     if (result.ok) posthog.capture('persona_relationship_removed');
     setRemovingRelationshipId(null);
+  };
+
+  const handleAddSpouseRelationship = async (spouseId: string): Promise<boolean> => {
+    const result = await run(() => addPersonaSpouseRelationship(baulId, persona.id, spouseId), {
+      key: 'relationship-add',
+      errorMessage: 'Error al añadir la relación',
+    });
+    if (result.ok) posthog.capture('persona_relationship_added');
+    return result.ok;
   };
 
   const handleChangeRole = async (role: BaulRole) => {
@@ -268,10 +289,12 @@ export function PersonaSettingsMenuContainer({ baulId, persona }: PersonaSetting
           personaName={persona.name || persona.nickname}
           parents={getParents(baulRelationships, baulPersonas, persona.id)}
           children={getChildren(baulRelationships, baulPersonas, persona.id)}
+          spouse={personaSpouse ?? null}
           candidates={baulPersonas.filter((candidate) => candidate.id !== persona.id)}
           onRemove={handleRemoveRelationship}
           removingId={removingRelationshipId}
           onAdd={handleAddRelationship}
+          onAddSpouse={handleAddSpouseRelationship}
           isSubmittingAdd={isPending('relationship-add')}
           onCancel={() => setShowRelationshipsModal(false)}
         />

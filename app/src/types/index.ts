@@ -19,6 +19,7 @@ type RawPersonaDto = ApiSchemas['PersonaDto'];
 type PersonaDto = Omit<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'> &
   Partial<Pick<RawPersonaDto, 'avatarCropX' | 'avatarCropY' | 'avatarCropScale'>>;
 type PersonaRelationshipDto = ApiSchemas['PersonaRelationshipDto'];
+type PersonaSpouseRelationshipDto = ApiSchemas['PersonaSpouseRelationshipDto'];
 type PhotoDto = ApiSchemas['PhotoDto'];
 type RecuerdoDto = ApiSchemas['RecuerdoDto'];
 type CreateTvSessionResultDto = ApiSchemas['CreateTvSessionResult'];
@@ -112,6 +113,21 @@ export class PersonaRelationship {
   constructor(data: PersonaRelationshipDto) {
     this.parentId = data.parentId;
     this.childId = data.childId;
+  }
+}
+
+// The "cónyuge" edge — unlike PersonaRelationship, symmetric: personaId1/personaId2 carry no
+// meaning beyond "the two personas". El Baúl models monogamous families only, so at most one of
+// these ever exists per persona at a time (enforced server-side, see
+// PersonaSpouseRelationshipManager). PersonasState.spouseRelationships holds every one in the
+// baúl, same "whole collection" shape as `relationships`.
+export class PersonaSpouseRelationship {
+  personaId1: string;
+  personaId2: string;
+
+  constructor(data: PersonaSpouseRelationshipDto) {
+    this.personaId1 = data.personaId1;
+    this.personaId2 = data.personaId2;
   }
 }
 

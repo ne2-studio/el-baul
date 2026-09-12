@@ -68,6 +68,7 @@ describe('PersonaDetailRoute biografía tab visibility', () => {
   beforeEach(() => {
     usePersonasStore.setState({
       personas: { [baulId]: [persona()] }, personaPhotos: { [personaId]: [] }, relationships: { [baulId]: [] },
+      spouseRelationships: { [baulId]: [] },
     });
     useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
     useAppConfigStore.setState({ biografiaEnabled: false });
@@ -112,6 +113,7 @@ describe('PersonaDetailRoute Hero badge and subtext', () => {
       personas: { [baulId]: [persona({ status: 'active', role: 'colaborador' })] },
       personaPhotos: { [personaId]: [] },
       relationships: { [baulId]: [] },
+      spouseRelationships: { [baulId]: [] },
     });
 
     renderRoute();
@@ -125,6 +127,7 @@ describe('PersonaDetailRoute Hero badge and subtext', () => {
       personas: { [baulId]: [persona({ status: 'pending', role: 'colaborador' })] },
       personaPhotos: { [personaId]: [] },
       relationships: { [baulId]: [] },
+      spouseRelationships: { [baulId]: [] },
     });
 
     renderRoute();
@@ -138,6 +141,7 @@ describe('PersonaDetailRoute Hero badge and subtext', () => {
       personas: { [baulId]: [persona({ status: 'pending', role: 'sin_acceso' })] },
       personaPhotos: { [personaId]: [] },
       relationships: { [baulId]: [] },
+      spouseRelationships: { [baulId]: [] },
     });
 
     renderRoute();

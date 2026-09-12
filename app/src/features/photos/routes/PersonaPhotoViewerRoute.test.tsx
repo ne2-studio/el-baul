@@ -90,6 +90,7 @@ describe('PersonaPhotoViewerRoute', () => {
       personaPhotos: { 'persona-1': [chapterPhoto.id, loosePhoto.id] },
       removalRequests: { 'baul-1': [] },
       relationships: { 'baul-1': [] },
+      spouseRelationships: { 'baul-1': [] },
     });
     useRecuerdosStore.setState({ baulRecuerdos: { 'baul-1': [] }, recuerdos: {} });
   });

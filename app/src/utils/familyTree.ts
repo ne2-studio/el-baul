@@ -1,11 +1,11 @@
-import { Persona, PersonaRelationship } from '@/types';
+import { Persona, PersonaRelationship, PersonaSpouseRelationship } from '@/types';
 
-// Pure projection of Personas + PersonaRelationship (Parent -> Child) into a layout the
-// tree view can render — no new "FamilyTree"/"TreeNode" domain model, see the feature spec's
-// "Consideraciones de dominio". Deliberately dependency-free (no graph-layout library): the
-// layout only needs to (a) group people into generations and (b) order them within a
-// generation well enough to avoid crossed edges for the common family shapes, not solve
-// general DAG layout optimally.
+// Pure projection of Personas + PersonaRelationship (Parent -> Child) + PersonaSpouseRelationship
+// (symmetric "cónyuge" edge) into a layout the tree view can render — no new
+// "FamilyTree"/"TreeNode" domain model, see the feature spec's "Consideraciones de dominio".
+// Deliberately dependency-free (no graph-layout library): the layout only needs to (a) group
+// people into generations and (b) order them within a generation well enough to avoid crossed
+// edges for the common family shapes, not solve general DAG layout optimally.
 
 export interface FamilyTreeNode {
   persona: Persona;
@@ -23,9 +23,18 @@ export interface FamilyTreeEdge {
   childId: string;
 }
 
+/** A "cónyuge" edge between two nodes already placed on the same generation row — rendered as
+ * the two-interlocked-rings connector, see FamilyTreeView. Unordered, same as
+ * PersonaSpouseRelationship: personaId1/personaId2 carry no meaning. */
+export interface FamilySpouseEdge {
+  personaId1: string;
+  personaId2: string;
+}
+
 export interface FamilyTree {
   nodes: FamilyTreeNode[];
   edges: FamilyTreeEdge[];
+  spouseEdges: FamilySpouseEdge[];
   /** Number of generation rows and the widest row's slot count — for the caller to size its canvas. */
   generationCount: number;
   slotCount: number;
@@ -41,8 +50,14 @@ export interface FamilyTree {
  *   data (which the domain should prevent, but the UI must not trust blindly) is broken by
  *   ignoring whichever edges would otherwise revisit a node already placed — see the
  *   toposort loop below, which visits each node at most once.
+ * - Spouses always land on the same generation row, next to each other — see spousesOf's use
+ *   in assignGenerations (co-parent grouping) and assignSlots (barycenter/relax passes).
  */
-export function buildFamilyTree(personas: Persona[], relationships: PersonaRelationship[]): FamilyTree {
+export function buildFamilyTree(
+  personas: Persona[],
+  relationships: PersonaRelationship[],
+  spouseRelationships: PersonaSpouseRelationship[] = []
+): FamilyTree {
   const personaById = new Map(personas.map((p) => [p.id, p]));
 
   // Only keep edges between personas that actually exist in this baúl's persona list, and
@@ -58,10 +73,21 @@ export function buildFamilyTree(personas: Persona[], relationships: PersonaRelat
     edges.push({ parentId: r.parentId, childId: r.childId });
   }
 
-  if (edges.length === 0) return { nodes: [], edges: [], generationCount: 0, slotCount: 0 };
+  const seenSpouseEdges = new Set<string>();
+  const spouseEdges: FamilySpouseEdge[] = [];
+  for (const r of spouseRelationships) {
+    if (!personaById.has(r.personaId1) || !personaById.has(r.personaId2) || r.personaId1 === r.personaId2) continue;
+    const key = [r.personaId1, r.personaId2].sort().join('>');
+    if (seenSpouseEdges.has(key)) continue;
+    seenSpouseEdges.add(key);
+    spouseEdges.push({ personaId1: r.personaId1, personaId2: r.personaId2 });
+  }
+
+  if (edges.length === 0 && spouseEdges.length === 0) return { nodes: [], edges: [], spouseEdges: [], generationCount: 0, slotCount: 0 };
 
   const childrenOf = new Map<string, string[]>();
   const parentsOf = new Map<string, string[]>();
+  const spousesOf = new Map<string, string[]>();
   const connectedIds = new Set<string>();
   for (const { parentId, childId } of edges) {
     childrenOf.set(parentId, [...(childrenOf.get(parentId) ?? []), childId]);
@@ -69,10 +95,17 @@ export function buildFamilyTree(personas: Persona[], relationships: PersonaRelat
     connectedIds.add(parentId);
     connectedIds.add(childId);
   }
+  for (const { personaId1, personaId2 } of spouseEdges) {
+    spousesOf.set(personaId1, [...(spousesOf.get(personaId1) ?? []), personaId2]);
+    spousesOf.set(personaId2, [...(spousesOf.get(personaId2) ?? []), personaId1]);
+    connectedIds.add(personaId1);
+    connectedIds.add(personaId2);
+  }
 
-  // 1. Split the connected personas into components (undirected connectivity) so unrelated
-  // branches of the family never get forced into the same generation numbering.
-  const components = groupIntoComponents(connectedIds, childrenOf, parentsOf);
+  // 1. Split the connected personas into components (undirected connectivity, over parent/child
+  // AND spouse edges) so unrelated branches of the family never get forced into the same
+  // generation numbering.
+  const components = groupIntoComponents(connectedIds, childrenOf, parentsOf, spousesOf);
 
   // 2. Within each component, assign a generation to every node via Kahn's algorithm
   // (topological order by in-degree, counting only edges within this component) — a node's
@@ -82,8 +115,8 @@ export function buildFamilyTree(personas: Persona[], relationships: PersonaRelat
   const allNodes: FamilyTreeNode[] = [];
   let slotOffset = 0;
   for (const component of components) {
-    const generationById = assignGenerations(component, parentsOf);
-    const { slotById, width } = assignSlots(component, generationById, parentsOf, childrenOf, personaById);
+    const generationById = assignGenerations(component, parentsOf, spousesOf);
+    const { slotById, width } = assignSlots(component, generationById, parentsOf, childrenOf, spousesOf, personaById);
 
     for (const id of component) {
       const persona = personaById.get(id);
@@ -97,7 +130,7 @@ export function buildFamilyTree(personas: Persona[], relationships: PersonaRelat
   const generationCount = allNodes.reduce((max, n) => Math.max(max, n.generation + 1), 0);
   const slotCount = Math.ceil(allNodes.reduce((max, n) => Math.max(max, n.slot + 1), 0));
 
-  return { nodes: allNodes, edges, generationCount, slotCount };
+  return { nodes: allNodes, edges, spouseEdges, generationCount, slotCount };
 }
 
 /**
@@ -110,12 +143,21 @@ export function buildFamilyTree(personas: Persona[], relationships: PersonaRelat
  * subset — which also means a couple's children still end up centred between them, etc., same
  * as the full tree. Returns an empty tree when personaId has no relationships at all.
  */
-export function buildPersonaFamilyTree(personas: Persona[], relationships: PersonaRelationship[], personaId: string): FamilyTree {
+export function buildPersonaFamilyTree(
+  personas: Persona[],
+  relationships: PersonaRelationship[],
+  personaId: string,
+  spouseRelationships: PersonaSpouseRelationship[] = []
+): FamilyTree {
   const personaById = new Map(personas.map((p) => [p.id, p]));
-  if (!personaById.has(personaId)) return { nodes: [], edges: [], generationCount: 0, slotCount: 0 };
+  const emptyTree: FamilyTree = { nodes: [], edges: [], spouseEdges: [], generationCount: 0, slotCount: 0 };
+  if (!personaById.has(personaId)) return emptyTree;
 
   const validEdges = relationships.filter(
     (r) => personaById.has(r.parentId) && personaById.has(r.childId) && r.parentId !== r.childId
+  );
+  const validSpouseEdges = spouseRelationships.filter(
+    (r) => personaById.has(r.personaId1) && personaById.has(r.personaId2) && r.personaId1 !== r.personaId2
   );
 
   const parentIds = new Set(validEdges.filter((e) => e.childId === personaId).map((e) => e.parentId));
@@ -123,20 +165,24 @@ export function buildPersonaFamilyTree(personas: Persona[], relationships: Perso
     validEdges.filter((e) => parentIds.has(e.parentId) && e.childId !== personaId).map((e) => e.childId)
   );
   const childIds = new Set(validEdges.filter((e) => e.parentId === personaId).map((e) => e.childId));
+  const spouseId = validSpouseEdges.find((e) => e.personaId1 === personaId || e.personaId2 === personaId);
+  const spouseIds = new Set<string>(spouseId ? [spouseId.personaId1 === personaId ? spouseId.personaId2 : spouseId.personaId1] : []);
 
-  const scopeIds = new Set<string>([personaId, ...parentIds, ...siblingIds, ...childIds]);
-  if (scopeIds.size === 1) return { nodes: [], edges: [], generationCount: 0, slotCount: 0 };
+  const scopeIds = new Set<string>([personaId, ...parentIds, ...siblingIds, ...childIds, ...spouseIds]);
+  if (scopeIds.size === 1) return emptyTree;
 
   const scopedPersonas = personas.filter((p) => scopeIds.has(p.id));
   const scopedRelationships = validEdges.filter((e) => scopeIds.has(e.parentId) && scopeIds.has(e.childId));
+  const scopedSpouseRelationships = validSpouseEdges.filter((e) => scopeIds.has(e.personaId1) && scopeIds.has(e.personaId2));
 
-  return buildFamilyTree(scopedPersonas, scopedRelationships);
+  return buildFamilyTree(scopedPersonas, scopedRelationships, scopedSpouseRelationships);
 }
 
 function groupIntoComponents(
   connectedIds: Set<string>,
   childrenOf: Map<string, string[]>,
-  parentsOf: Map<string, string[]>
+  parentsOf: Map<string, string[]>,
+  spousesOf: Map<string, string[]>
 ): string[][] {
   const visited = new Set<string>();
   const components: string[][] = [];
@@ -149,7 +195,7 @@ function groupIntoComponents(
     while (queue.length > 0) {
       const id = queue.shift()!;
       component.push(id);
-      for (const neighbour of [...(childrenOf.get(id) ?? []), ...(parentsOf.get(id) ?? [])]) {
+      for (const neighbour of [...(childrenOf.get(id) ?? []), ...(parentsOf.get(id) ?? []), ...(spousesOf.get(id) ?? [])]) {
         if (!visited.has(neighbour)) {
           visited.add(neighbour);
           queue.push(neighbour);
@@ -170,13 +216,18 @@ function groupIntoComponents(
  * placing them deeper in the tree — the two would end up on different rows despite having
  * children together. Grouping co-parents first means the whole couple takes the deepest
  * generation either of them would get on their own, and every one of their shared children still
- * lands exactly one row below that.
+ * lands exactly one row below that. Spouses are unioned the same way — even a childless couple
+ * must land on the same row (see spousesOf).
  */
-function assignGenerations(component: string[], parentsOf: Map<string, string[]>): Map<string, number> {
+function assignGenerations(
+  component: string[],
+  parentsOf: Map<string, string[]>,
+  spousesOf: Map<string, string[]>
+): Map<string, number> {
   const componentSet = new Set(component);
   const coParentsOf = (id: string) => (parentsOf.get(id) ?? []).filter((p) => componentSet.has(p));
 
-  // Union-find over co-parents of the same child.
+  // Union-find over co-parents of the same child, and over spouses.
   const unionParent = new Map<string, string>();
   for (const id of component) unionParent.set(id, id);
   const find = (id: string): string => {
@@ -198,6 +249,7 @@ function assignGenerations(component: string[], parentsOf: Map<string, string[]>
   for (const id of component) {
     const parents = coParentsOf(id);
     for (let i = 1; i < parents.length; i += 1) union(parents[0], parents[i]);
+    for (const spouseId of spousesOf.get(id) ?? []) if (componentSet.has(spouseId)) union(id, spouseId);
   }
 
   const groupOf = new Map(component.map((id) => [id, find(id)]));
@@ -272,6 +324,7 @@ function assignSlots(
   generationById: Map<string, number>,
   parentsOf: Map<string, string[]>,
   childrenOf: Map<string, string[]>,
+  spousesOf: Map<string, string[]>,
   personaById: Map<string, Persona>
 ): { slotById: Map<string, number>; width: number } {
   const byGeneration = new Map<number, string[]>();
@@ -311,6 +364,10 @@ function assignSlots(
 
   reorderPass(parentsOf);
   reorderPass(childrenOf);
+  // Spouses last: pulls them adjacent to each other without undoing the parent/child ordering
+  // that just settled (a couple with shared children is already adjacent via parentsOf/
+  // childrenOf agreement; this pass only matters for a childless — or blended-family — couple).
+  reorderPass(spousesOf);
 
   // Step 2: relax continuous positions towards parents'/children's positions, order fixed above.
   const positionById = new Map<string, number>();
@@ -350,9 +407,12 @@ function assignSlots(
 
   // Down pass (centre children under parents), up pass (centre parents over children), then one
   // more down pass to settle — enough for the shallow, small family trees this product deals with.
+  // Final spouse pass: pulls a couple's positions together last, so it wins the tie-break without
+  // undoing how their shared children got centred under them.
   relaxPass(parentsOf, generations);
   relaxPass(childrenOf, [...generations].reverse());
   relaxPass(parentsOf, generations);
+  relaxPass(spousesOf, generations);
 
   // A relax pass can push a node's position below 0 (e.g. a lone child centred under two
   // parents that got pulled the other way by their own siblings) — shift everything so the

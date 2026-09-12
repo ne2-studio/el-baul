@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Persona, PersonaRelationship, RemovalRequest, TaggedPersona } from '@/types';
+import { Persona, PersonaRelationship, PersonaSpouseRelationship, RemovalRequest, TaggedPersona } from '@/types';
 
 export interface PersonasState {
   personas: Record<string, Persona[]>;
@@ -13,6 +13,9 @@ export interface PersonasState {
   // per-entity" shape as `personas`. utils/personaRelationships.ts derives one persona's
   // parents/children from this list.
   relationships: Record<string, PersonaRelationship[]>;
+  // Every spouse relationship in the baúl, keyed by baulId — same shape as `relationships`, see
+  // utils/personaRelationships.ts's getSpouse.
+  spouseRelationships: Record<string, PersonaSpouseRelationship[]>;
 
   reset: () => void;
 }
@@ -29,6 +32,7 @@ export const usePersonasStore = create<PersonasState>((set) => ({
   taggedPersonas: {},
   personaPhotos: {},
   relationships: {},
+  spouseRelationships: {},
 
   reset: () => set({
     personas: {},
@@ -36,5 +40,6 @@ export const usePersonasStore = create<PersonasState>((set) => ({
     taggedPersonas: {},
     personaPhotos: {},
     relationships: {},
+    spouseRelationships: {},
   }),
 }));

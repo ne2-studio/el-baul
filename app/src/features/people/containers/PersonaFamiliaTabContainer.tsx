@@ -17,9 +17,10 @@ interface PersonaFamiliaTabContainerProps {
 // ficha to open next), same pattern as BaulPersonasTabContainer.
 export function PersonaFamiliaTabContainer({ baulId, personaId }: PersonaFamiliaTabContainerProps) {
   const navigate = useNavigate();
-  const { personas, relationships } = usePersonasStore();
+  const { personas, relationships, spouseRelationships } = usePersonasStore();
   const baulPersonas = personas[baulId] || [];
   const baulRelationships = relationships[baulId] || [];
+  const baulSpouseRelationships = spouseRelationships[baulId] || [];
 
   const handleSelectPersona = (persona: Persona) => {
     navigate(`/baules/${baulId}/personas/${persona.id}`, { state: { returnTab: 'personas' } });
@@ -29,6 +30,7 @@ export function PersonaFamiliaTabContainer({ baulId, personaId }: PersonaFamilia
     <FamilyTreeView
       personas={baulPersonas}
       relationships={baulRelationships}
+      spouseRelationships={baulSpouseRelationships}
       focusPersonaId={personaId}
       onSelectPersona={handleSelectPersona}
     />

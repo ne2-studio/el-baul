@@ -7,7 +7,7 @@ import { FamiliaTab, FamiliaView } from '@/features/people/components/FamiliaTab
 import { NuevaPersonaModal } from '@/features/people/components/NuevaPersonaModal';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { createPersona, loadPersonaRelationships } from '@/features/people/useCases';
+import { createPersona, loadPersonaRelationships, loadPersonaSpouseRelationships } from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { readString, writeString } from '@/utils/safeLocalStorage';
 import { BaulRole, Persona } from '@/types';
@@ -32,7 +32,7 @@ function isFamiliaView(value: string | null): value is FamiliaView {
 // nothing route-context-dependent — see docs/architecture/frontend.md's containers/ rule.
 export function BaulPersonasTabContainer({ baulId, canCreatePersona }: BaulPersonasTabContainerProps) {
   const navigate = useNavigate();
-  const { personas, relationships } = usePersonasStore();
+  const { personas, relationships, spouseRelationships } = usePersonasStore();
   const { userProfile } = useAuthStore();
   const { run, isPending } = useAsyncAction();
   const posthog = usePostHog();
@@ -43,13 +43,15 @@ export function BaulPersonasTabContainer({ baulId, canCreatePersona }: BaulPerso
   });
 
   const baulRelationships = relationships[baulId];
+  const baulSpouseRelationships = spouseRelationships[baulId];
   useEffect(() => {
     // El Mosaico no necesita las relaciones — solo se piden para que el Árbol genealógico
     // pueda proyectarlas (ver FamilyTreeView/buildFamilyTree), pero se cargan de una vez al
     // entrar en "Familia" en vez de esperar a que se cambie de vista, igual que el resto de
     // pestañas del baúl precargan su propio scope.
     if (baulRelationships === undefined) loadPersonaRelationships(baulId).catch(() => undefined);
-  }, [baulId, baulRelationships]);
+    if (baulSpouseRelationships === undefined) loadPersonaSpouseRelationships(baulId).catch(() => undefined);
+  }, [baulId, baulRelationships, baulSpouseRelationships]);
 
   const handleViewChange = (nextView: FamiliaView) => {
     setView(nextView);
@@ -76,6 +78,7 @@ export function BaulPersonasTabContainer({ baulId, canCreatePersona }: BaulPerso
       <FamiliaTab
         personas={personas[baulId] || []}
         relationships={baulRelationships || []}
+        spouseRelationships={baulSpouseRelationships || []}
         currentUserEmail={userProfile.email}
         view={view}
         onViewChange={handleViewChange}

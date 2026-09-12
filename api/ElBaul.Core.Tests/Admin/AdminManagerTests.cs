@@ -37,6 +37,7 @@ public class AdminManagerTests
     private readonly InMemoryTvSessionRepository _tvSessionRepository = new();
     private readonly InMemoryPhotoPersonaTagRepository _photoPersonaTagRepository = new();
     private readonly InMemoryPersonaRelationshipRepository _personaRelationshipRepository = new();
+    private readonly InMemoryPersonaSpouseRelationshipRepository _personaSpouseRelationshipRepository = new();
     private readonly InMemoryRemovalRequestRepository _removalRequestRepository = new();
     private readonly IAdminBaulDeletionRepository _baulDeletionRepository;
     private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
@@ -58,6 +59,7 @@ public class AdminManagerTests
             _removalRequestRepository,
             _personaRepository,
             _personaRelationshipRepository,
+            _personaSpouseRelationshipRepository,
             new FakeUnitOfWork());
     }
 

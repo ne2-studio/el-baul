@@ -24,6 +24,7 @@ public class InMemoryAdminBaulDeletionRepository(
     IRemovalRequestRepository removalRequestRepository,
     IPersonaRepository personaRepository,
     IPersonaRelationshipRepository personaRelationshipRepository,
+    IPersonaSpouseRelationshipRepository personaSpouseRelationshipRepository,
     IUnitOfWork unitOfWork)
     : IAdminBaulDeletionRepository
 {
@@ -39,6 +40,7 @@ public class InMemoryAdminBaulDeletionRepository(
         {
             await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
             await personaRelationshipRepository.DeleteByBaulIdAsync(baulId);
+            await personaSpouseRelationshipRepository.DeleteByBaulIdAsync(baulId);
             await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
             await tvSessionRepository.DeleteByBaulIdAsync(baulId);
             await recuerdoRepository.DeleteByBaulIdAsync(baulId);

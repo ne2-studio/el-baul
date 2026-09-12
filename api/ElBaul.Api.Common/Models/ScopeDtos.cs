@@ -31,4 +31,5 @@ public record PersonaScopeDto(
     IEnumerable<PersonaDto> Personas,
     IEnumerable<PhotoDto> PersonaPhotos,
     IEnumerable<RecuerdoDto> BaulRecuerdos,
-    IEnumerable<PersonaRelationshipDto> Relationships);
+    IEnumerable<PersonaRelationshipDto> Relationships,
+    IEnumerable<PersonaSpouseRelationshipDto> SpouseRelationships);

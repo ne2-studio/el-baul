@@ -1,5 +1,5 @@
 import { PhotoCrop, api } from '@/api';
-import { Baul, BaulRole, Persona, PersonaInvite, PersonaRelationship, Photo } from '@/types';
+import { Baul, BaulRole, Persona, PersonaInvite, PersonaRelationship, PersonaSpouseRelationship, Photo } from '@/types';
 import { sharePublicLink } from '@/features/sharing/sharePublicLink';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
@@ -141,6 +141,37 @@ export async function removePersonaRelationship(baulId: string, parentId: string
       ...state.relationships,
       [baulId]: (state.relationships[baulId] || []).filter(
         (r) => !(r.parentId === parentId && r.childId === childId) && !(r.parentId === childId && r.childId === parentId)
+      ),
+    },
+  }));
+}
+
+export async function loadPersonaSpouseRelationships(baulId: string): Promise<void> {
+  const spouseRelationships = await api.baules.getPersonaSpouseRelationships(baulId);
+  usePersonasStore.setState((state) => ({ spouseRelationships: { ...state.spouseRelationships, [baulId]: spouseRelationships } }));
+}
+
+// "Editar relaciones" — creates the single symmetric spouse edge; callable with the two ids in
+// either order, see PersonaSpouseRelationship's doc comment. El Baúl models monogamous families
+// only: the backend rejects this if either persona already has a spouse.
+export async function addPersonaSpouseRelationship(baulId: string, personaId1: string, personaId2: string): Promise<PersonaSpouseRelationship> {
+  const relationship = await api.baules.addPersonaSpouseRelationship(baulId, personaId1, personaId2);
+  usePersonasStore.setState((state) => ({
+    spouseRelationships: { ...state.spouseRelationships, [baulId]: [...(state.spouseRelationships[baulId] || []), relationship] },
+  }));
+  return relationship;
+}
+
+// Removable from either end — there's only one spouse relationship between two personas, so the
+// pair order passed here doesn't need to match how it was originally stored (see
+// PersonaSpouseRelationshipsController.Remove, api/).
+export async function removePersonaSpouseRelationship(baulId: string, personaId1: string, personaId2: string): Promise<void> {
+  await api.baules.removePersonaSpouseRelationship(baulId, personaId1, personaId2);
+  usePersonasStore.setState((state) => ({
+    spouseRelationships: {
+      ...state.spouseRelationships,
+      [baulId]: (state.spouseRelationships[baulId] || []).filter(
+        (r) => !(r.personaId1 === personaId1 && r.personaId2 === personaId2) && !(r.personaId1 === personaId2 && r.personaId2 === personaId1)
       ),
     },
   }));

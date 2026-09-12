@@ -12,7 +12,8 @@ public class PersonaScopeAggregator(
     IPersonaManager personaManager,
     IPhotoReadManager photoReadManager,
     IRecuerdoManager recuerdoManager,
-    IPersonaRelationshipManager personaRelationshipManager)
+    IPersonaRelationshipManager personaRelationshipManager,
+    IPersonaSpouseRelationshipManager personaSpouseRelationshipManager)
 {
     public async Task<Result<PersonaScopeDto>> GetScopeAsync(BaulId baulId, PersonaId personaId)
     {
@@ -34,7 +35,10 @@ public class PersonaScopeAggregator(
         var relationshipsResult = await personaRelationshipManager.GetRelationshipsAsync(baulId);
         if (relationshipsResult.IsFailure) return Result.Failure<PersonaScopeDto>(relationshipsResult.Error);
 
+        var spouseRelationshipsResult = await personaSpouseRelationshipManager.GetSpouseRelationshipsAsync(baulId);
+        if (spouseRelationshipsResult.IsFailure) return Result.Failure<PersonaScopeDto>(spouseRelationshipsResult.Error);
+
         return Result.Success(new PersonaScopeDto(
-            personasResult.Value, photosResult.Value, recuerdosResult.Value, relationshipsResult.Value));
+            personasResult.Value, photosResult.Value, recuerdosResult.Value, relationshipsResult.Value, spouseRelationshipsResult.Value));
     }
 }

@@ -10,13 +10,15 @@ import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { Persona } from '@/types';
 import { sortPersonasForTagging } from '@/utils/personaOrder';
 
-type Direction = 'parent' | 'child';
+type Direction = 'parent' | 'child' | 'spouse';
 
 interface EditRelationshipsModalProps {
   personaId: string;
   personaName: string;
   parents: Persona[];
   children: Persona[];
+  /** El Baúl models monogamous families only — at most one spouse, never a list. */
+  spouse: Persona | null;
   /** Every other persona in the baúl, for the "añadir relación" picker — the caller already
    * excludes personaId itself. */
   candidates: Persona[];
@@ -26,23 +28,28 @@ interface EditRelationshipsModalProps {
    * error the backend rejected, already toasted by the caller) keeps the "add" view open with
    * the current pick intact instead of bouncing back to the list. */
   onAdd: (parentId: string, childId: string) => Promise<boolean>;
+  /** Same contract as onAdd, for the symmetric "cónyuge" edge — see
+   * PersonaSpouseRelationshipManager.AddSpouseRelationshipAsync. */
+  onAddSpouse: (spouseId: string) => Promise<boolean>;
   isSubmittingAdd?: boolean;
   onCancel: () => void;
 }
 
 // Two views in one modal instead of two separate ones stacked on top of each other: "list"
-// (the ficha's Padres/Hijos, each removable) and "add" (direction + persona picker) — see the
-// feature spec's "Editar relaciones" / "Añadir relación" mockups. Going back from "add" just
-// discards the in-progress pick, it never partially applies anything.
+// (the ficha's Padres/Hijos/Cónyuge, each removable) and "add" (direction + persona picker) —
+// see the feature spec's "Editar relaciones" / "Añadir relación" mockups. Going back from "add"
+// just discards the in-progress pick, it never partially applies anything.
 export function EditRelationshipsModal({
   personaId,
   personaName,
   parents,
   children,
+  spouse,
   candidates,
   onRemove,
   removingId = null,
   onAdd,
+  onAddSpouse,
   isSubmittingAdd = false,
   onCancel,
 }: EditRelationshipsModalProps) {
@@ -60,6 +67,11 @@ export function EditRelationshipsModal({
 
   const handleAdd = async () => {
     if (!selectedId) return;
+    if (direction === 'spouse') {
+      const added = await onAddSpouse(selectedId);
+      if (added) setView('list');
+      return;
+    }
     // "Pedro es padre/madre de X" -> Pedro is the parent; "Pedro es hijo/hija de X" -> X is
     // the parent. Either way the backend only ever sees a plain (parentId, childId) pair — see
     // PersonaRelationshipManager.AddRelationshipAsync.
@@ -92,7 +104,18 @@ export function EditRelationshipsModal({
           >
             Hijo/hija de
           </Button>
+          <Button
+            variant={direction === 'spouse' ? 'primary' : 'secondary'}
+            className="flex-1 text-sm"
+            onClick={() => setDirection('spouse')}
+            disabled={!!spouse}
+          >
+            Cónyuge de
+          </Button>
         </div>
+        {direction === 'spouse' && spouse && (
+          <p className="text-xs text-muted-foreground mb-3">{personaName} ya tiene un cónyuge asignado.</p>
+        )}
 
         <Input
           value={search}
@@ -154,6 +177,14 @@ export function EditRelationshipsModal({
         title="Hijos"
         emptyLabel="Sin hijos añadidos todavía"
         personas={children}
+        removingId={removingId}
+        onRemove={onRemove}
+      />
+
+      <RelationshipGroup
+        title="Cónyuge"
+        emptyLabel="Sin cónyuge añadido todavía"
+        personas={spouse ? [spouse] : []}
         removingId={removingId}
         onRemove={onRemove}
       />

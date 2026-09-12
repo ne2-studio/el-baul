@@ -33,6 +33,7 @@ public class AdminBaulDeletionRepository(
     IRemovalRequestRepository removalRequestRepository,
     IPersonaRepository personaRepository,
     IPersonaRelationshipRepository personaRelationshipRepository,
+    IPersonaSpouseRelationshipRepository personaSpouseRelationshipRepository,
     IUnitOfWork unitOfWork) : IAdminBaulDeletionRepository
 {
     public async Task<DeletedBaulStorageObjects?> DeleteBaulGraphAsync(BaulId baulId)
@@ -47,6 +48,7 @@ public class AdminBaulDeletionRepository(
         {
             await photoPersonaTagRepository.DeleteByBaulIdAsync(baulId);
             await personaRelationshipRepository.DeleteByBaulIdAsync(baulId);
+            await personaSpouseRelationshipRepository.DeleteByBaulIdAsync(baulId);
             await sharedLinkRepository.DeleteByBaulIdAsync(baulId);
             await tvSessionRepository.DeleteByBaulIdAsync(baulId);
             await recuerdoRepository.DeleteByBaulIdAsync(baulId);

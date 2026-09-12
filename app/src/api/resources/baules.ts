@@ -1,4 +1,4 @@
-import { Baul, Chapter, FeedItem, Persona, PersonaInvite, PersonaRelationship, Photo, Recuerdo, RemovalRequest, feedItemFrom } from '../../types';
+import { Baul, Chapter, FeedItem, Persona, PersonaInvite, PersonaRelationship, PersonaSpouseRelationship, Photo, Recuerdo, RemovalRequest, feedItemFrom } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { API_BASE, apiFetch, authHeaders, get, handleResponse, post, put, del } from '../http';
 import type { PhotoCrop } from '../publicTypes';
@@ -19,6 +19,8 @@ const BAUL_FEED = '/api/baules/{baulId}/feed' satisfies PathTemplate;
 const PERSONA_INVITE = '/api/baules/{baulId}/personas/{personaId}/invite' satisfies PathTemplate;
 const PERSONA_RELATIONSHIPS = '/api/baules/{baulId}/persona-relationships' satisfies PathTemplate;
 const PERSONA_RELATIONSHIP = '/api/baules/{baulId}/persona-relationships/{parentId}/{childId}' satisfies PathTemplate;
+const PERSONA_SPOUSE_RELATIONSHIPS = '/api/baules/{baulId}/persona-spouse-relationships' satisfies PathTemplate;
+const PERSONA_SPOUSE_RELATIONSHIP = '/api/baules/{baulId}/persona-spouse-relationships/{personaId1}/{personaId2}' satisfies PathTemplate;
 const REMOVAL_REQUESTS = '/api/baules/{baulId}/removal-requests' satisfies PathTemplate;
 const APPROVE_REMOVAL_REQUEST = '/api/baules/{baulId}/removal-requests/{requestId}/approve' satisfies PathTemplate;
 
@@ -31,6 +33,7 @@ type FeedPageDto = JsonResponse<typeof BAUL_FEED, 'get'>;
 type RemovalRequestDto = JsonResponse<typeof REMOVAL_REQUESTS, 'get'>[number];
 type SuccessResponse = JsonResponse<typeof APPROVE_REMOVAL_REQUEST, 'post'>;
 type PersonaRelationshipDto = JsonResponse<typeof PERSONA_RELATIONSHIPS, 'get'>[number];
+type PersonaSpouseRelationshipDto = JsonResponse<typeof PERSONA_SPOUSE_RELATIONSHIPS, 'get'>[number];
 
 const feedPageFrom = (dto: FeedPageDto) => ({ feedItems: dto.items.map(feedItemFrom), hasMore: dto.hasMore });
 
@@ -120,6 +123,7 @@ export const baulesApi = {
       personaPhotos: dto.personaPhotos.map((p) => new Photo(p)),
       baulRecuerdos: dto.baulRecuerdos.map((r) => new Recuerdo(r)),
       relationships: dto.relationships.map((r) => new PersonaRelationship(r)),
+      spouseRelationships: dto.spouseRelationships.map((r) => new PersonaSpouseRelationship(r)),
     };
   },
 
@@ -140,6 +144,21 @@ export const baulesApi = {
   // personas, so the backend resolves it regardless of which id is parentId/childId here.
   removePersonaRelationship: (baulId: string, parentId: string, childId: string) =>
     del<SuccessResponse>(path(PERSONA_RELATIONSHIP, { baulId, parentId, childId })),
+
+  // "Cónyuge" — see PersonaSpouseRelationshipsController (api/): baúl-scoped, same shape as
+  // getPersonaRelationships above, but symmetric (no parent/child ordering).
+  getPersonaSpouseRelationships: async (baulId: string) =>
+    (await get<JsonResponse<typeof PERSONA_SPOUSE_RELATIONSHIPS, 'get'>>(path(PERSONA_SPOUSE_RELATIONSHIPS, { baulId })))
+      .map((r) => new PersonaSpouseRelationship(r)),
+  addPersonaSpouseRelationship: async (baulId: string, personaId1: string, personaId2: string) =>
+    new PersonaSpouseRelationship(await post<PersonaSpouseRelationshipDto>(
+      path(PERSONA_SPOUSE_RELATIONSHIPS, { baulId }),
+      { personaId1, personaId2 } satisfies JsonRequest<typeof PERSONA_SPOUSE_RELATIONSHIPS, 'post'>
+    )),
+  // Callable with either end of the pair — there is only one spouse relationship between two
+  // personas, so the backend resolves it regardless of which id is personaId1/personaId2 here.
+  removePersonaSpouseRelationship: (baulId: string, personaId1: string, personaId2: string) =>
+    del<SuccessResponse>(path(PERSONA_SPOUSE_RELATIONSHIP, { baulId, personaId1, personaId2 })),
 
   getRemovalRequests: async (baulId: string) =>
     (await get<RemovalRequestDto[]>(path(REMOVAL_REQUESTS, { baulId }))).map((r) => new RemovalRequest(r)),
