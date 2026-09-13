@@ -15,6 +15,7 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { submitRemovalRequest } from '@/features/moderation/useCases';
 import { setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate, addPhotoToBaul } from '@/features/photos/useCases';
 import { addRecuerdo as addRecuerdoUseCase, editRecuerdo as editRecuerdoUseCase } from '@/features/memories/useCases';
+import { createPersona } from '@/features/people/useCases';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 import { Capacitor } from '@capacitor/core';
@@ -108,6 +109,17 @@ export function usePhotoViewerActions({
       posthog.capture('person_tagged', { photo_count: 1 });
       setShowTagModal(false);
     }
+  };
+
+  // "Crear nueva persona"/"Crear y etiquetar" inline de TagPersonasModal (alternativa 1d) — key
+  // propia para no bloquearse con otra acción en curso bajo la key por defecto.
+  const handleCreatePersona = async (nickname: string): Promise<Persona | undefined> => {
+    const result = await run(() => createPersona(baulId, nickname), {
+      key: 'create-persona',
+      errorMessage: 'Error al añadir la persona',
+    });
+    if (result.ok) posthog.capture('persona_created', { source: 'tag_personas' });
+    return result.ok ? result.value : undefined;
   };
 
   const handleSharePhoto = async () => {
@@ -333,6 +345,7 @@ export function usePhotoViewerActions({
           personas={baulPersonas}
           selectedIds={selectedPersonaIds}
           onToggle={toggleTaggedPersona}
+          onCreatePersona={handleCreatePersona}
           onCancel={() => setShowTagModal(false)}
           onConfirm={handleTagsSubmit}
           isSubmitting={isSubmittingTags}

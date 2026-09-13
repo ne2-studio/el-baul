@@ -33,6 +33,10 @@ vi.mock('@/features/moderation/useCases', () => ({
   submitRemovalRequest: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/features/people/useCases', () => ({
+  createPersona: vi.fn(),
+}));
+
 vi.mock('@/api', () => ({
   api: {
     photos: { download: vi.fn(), createShareLink: vi.fn() },
@@ -52,6 +56,7 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
 import { loadRecuerdos, addRecuerdo } from '@/features/memories/useCases';
 import { loadTaggedPersonas, setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
 import { submitRemovalRequest } from '@/features/moderation/useCases';
+import { createPersona } from '@/features/people/useCases';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
 
@@ -263,6 +268,35 @@ describe('PhotoViewerContainer', () => {
     await user.click(screen.getByRole('button', { name: /guardar/i }));
 
     expect(setTaggedPersonas).toHaveBeenCalledWith('photo-2', ['p1']);
+  });
+
+  // Alternativa 1d de TagPersonasModal: crear una persona nueva sin salir del selector, escribiendo
+  // un nombre sin coincidencia en el buscador.
+  it('creates and tags a new persona typed in the tag modal search', async () => {
+    const user = userEvent.setup();
+    vi.mocked(setTaggedPersonas).mockResolvedValue(undefined);
+    // El mock reproduce la escritura en el store que hace el createPersona real, ya que
+    // TagPersonasModal renderiza a partir de baulPersonas del store, no de la respuesta de la
+    // llamada.
+    vi.mocked(createPersona).mockImplementation(async (bId, nickname) => {
+      const created = { id: 'p2', baulId: bId, nickname, status: 'active', role: 'colaborador', invitedDate: '' } as Persona;
+      usePersonasStore.setState((state) => ({
+        personas: { ...state.personas, [bId]: [...(state.personas[bId] || []), created] },
+      }));
+      return created;
+    });
+    usePersonasStore.setState({ personas: { 'baul-1': baulPersonas }, taggedPersonas: { 'photo-2': [] } });
+    renderContainer();
+    await openMenu(user);
+    await user.click(screen.getByText('Etiquetar personas'));
+    await user.type(screen.getByLabelText('Buscar persona'), 'Tío Juan');
+    await user.click(screen.getByRole('button', { name: /Crear y etiquetar "Tío Juan"/ }));
+
+    expect(createPersona).toHaveBeenCalledWith('baul-1', 'Tío Juan');
+    expect(await screen.findByRole('button', { name: 'Quitar a Tío Juan' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    expect(setTaggedPersonas).toHaveBeenCalledWith('photo-2', ['p2']);
   });
 
   it('downloads the photo', async () => {

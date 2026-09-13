@@ -14,6 +14,9 @@ interface NuevaPersonaModalProps {
   // Hidden when this modal is reused from "Invitar a la familia" (InvitarFamiliaRoute): that
   // flow always creates a Colaborador under the hood, no access choice shown.
   showAccessSelector?: boolean;
+  // True when opened from inside another BottomSheetModal (PersonaTaggingPicker's inline
+  // "crear persona" step) instead of directly from a screen — see BottomSheetModal's `stacked`.
+  stacked?: boolean;
 }
 
 export function NuevaPersonaModal({
@@ -21,6 +24,7 @@ export function NuevaPersonaModal({
   onSave,
   isSubmitting = false,
   showAccessSelector = true,
+  stacked = false,
 }: NuevaPersonaModalProps) {
   const [nickname, setNickname] = useState('');
   const [role, setRole] = useState<BaulRole>('colaborador');
@@ -32,7 +36,7 @@ export function NuevaPersonaModal({
   };
 
   return (
-    <BottomSheetModal onCancel={onCancel} size="lg">
+    <BottomSheetModal onCancel={onCancel} size="lg" stacked={stacked}>
       <h2 className="text-xl font-serif text-foreground">Nueva persona</h2>
       <Input
         label="Apodo"

@@ -5,8 +5,9 @@ import { usePersonasStore } from '@/store/usePersonasStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { deletePhotosBatch, movePhotos, addPhotosToBaul } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, changePhotoDateBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
+import { createPersona } from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { Chapter, Photo, PhotoDate } from '@/types';
+import { Chapter, Persona, Photo, PhotoDate } from '@/types';
 import { usePostHog } from 'posthog-js/react';
 
 interface BatchPhotoActionsContainerProps {
@@ -132,6 +133,17 @@ export function BatchPhotoActionsContainer({
     return result.ok;
   };
 
+  // "Crear nueva persona"/"Crear y etiquetar" inline de TagPersonasModal (alternativa 1d) — key
+  // propia para no bloquearse con otra acción en curso bajo la key por defecto.
+  const handleCreatePersona = async (nickname: string): Promise<Persona | undefined> => {
+    const result = await run(() => createPersona(baulId, nickname), {
+      key: 'create-persona',
+      errorMessage: 'Error al añadir la persona',
+    });
+    if (result.ok) posthog.capture('persona_created', { source: 'photos_batch_tag' });
+    return result.ok ? result.value : undefined;
+  };
+
   const handleBatchAddToBaul = async (
     photoIds: string[],
     targetBaulId: string,
@@ -167,6 +179,7 @@ export function BatchPhotoActionsContainer({
       onBatchClearDate={handleBatchClearDate}
       onBatchCreateChapter={allowMoveActions && chapterId === null ? handleBatchCreateChapter : undefined}
       onBatchTagPersonas={handleBatchTagPersonas}
+      onCreatePersona={handleCreatePersona}
       onBatchAddToBaul={handleBatchAddToBaul}
       onBatchDelete={handleBatchDelete}
       onDone={onDone}

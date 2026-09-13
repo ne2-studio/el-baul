@@ -1,7 +1,7 @@
 import { Button } from '@/design-system/components/actions/Button';
 import { BottomSheetModal } from '@/design-system/components/overlays/BottomSheetModal';
 import { ModalActions } from '@/design-system/components/overlays/ModalActions';
-import { PersonaSelectionList } from '@/features/photos/components/PersonaSelectionList';
+import { PersonaTaggingPicker } from '@/features/photos/components/PersonaTaggingPicker';
 import { Persona } from '@/types';
 
 interface TagPersonasModalProps {
@@ -9,6 +9,7 @@ interface TagPersonasModalProps {
   personas: Persona[];
   selectedIds: string[];
   onToggle: (personaId: string) => void;
+  onCreatePersona: (nickname: string) => Promise<Persona | undefined>;
   onCancel: () => void;
   onConfirm: () => void;
   isSubmitting?: boolean;
@@ -23,6 +24,7 @@ export function TagPersonasModal({
   personas,
   selectedIds,
   onToggle,
+  onCreatePersona,
   onCancel,
   onConfirm,
   isSubmitting = false,
@@ -30,8 +32,14 @@ export function TagPersonasModal({
   return (
     <BottomSheetModal onCancel={onCancel} backdropOpacity={40}>
       <h2 className="text-lg font-medium text-foreground mb-4">{title}</h2>
-      <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
-        <PersonaSelectionList personas={personas} selectedIds={selectedIds} onToggle={onToggle} disabled={isSubmitting} />
+      <div className="mb-6">
+        <PersonaTaggingPicker
+          personas={personas}
+          selectedIds={selectedIds}
+          onToggle={onToggle}
+          onCreatePersona={onCreatePersona}
+          disabled={isSubmitting}
+        />
       </div>
       <ModalActions className="pt-0">
         <Button variant="secondary"

@@ -38,6 +38,9 @@ interface BatchPhotoActionsBarProps {
   onBatchClearDate?: (photoIds: string[]) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
   onBatchTagPersonas?: (photoIds: string[], personaIds: string[]) => Promise<boolean>;
+  // Crea una persona nueva desde dentro de TagPersonasModal (alternativa 1d: buscar/crear sin
+  // salir del selector) — solo se usa cuando onBatchTagPersonas también está presente.
+  onCreatePersona?: (nickname: string) => Promise<Persona | undefined>;
   onBatchAddToBaul?: (
     photoIds: string[],
     targetBaulId: string,
@@ -55,7 +58,9 @@ interface BatchPhotoActionsBarProps {
 // no perder el patrón de gating explícito que tenía PhotosView antes de la extracción.
 export function BatchPhotoActionsBar({
   active, photos, selectedIds, moveableChapters, otherBaules = [], personas = [], onBatchMove, onBatchMoveToNewChapter,
-  onBatchChangeDate, onBatchClearDate, onBatchCreateChapter, onBatchTagPersonas, onBatchAddToBaul, onBatchDelete, onDone,
+  onBatchChangeDate, onBatchClearDate, onBatchCreateChapter, onBatchTagPersonas,
+  onCreatePersona = () => Promise.resolve(undefined),
+  onBatchAddToBaul, onBatchDelete, onDone,
 }: BatchPhotoActionsBarProps) {
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
@@ -384,6 +389,7 @@ export function BatchPhotoActionsBar({
           personas={personas}
           selectedIds={tagPersonaIds}
           onToggle={toggleTagPersona}
+          onCreatePersona={onCreatePersona}
           onCancel={() => { setShowTagModal(false); setTagPersonaIds([]); }}
           onConfirm={handleTagSubmit}
           isSubmitting={isTaggingSubmitting}

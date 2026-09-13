@@ -21,8 +21,13 @@ vi.mock('@/features/chapters/useCases', () => ({
   createChapter: vi.fn(),
 }));
 
+vi.mock('@/features/people/useCases', () => ({
+  createPersona: vi.fn(),
+}));
+
 import { deletePhotosBatch, movePhotos, addPhotosToBaul } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
+import { createPersona } from '@/features/people/useCases';
 
 const baulId = 'baul-1';
 const otherBaulId = 'baul-2';
@@ -85,6 +90,34 @@ describe('BatchPhotoActionsContainer', () => {
     await user.click(screen.getByRole('button', { name: /guardar/i }));
 
     expect(addTaggedPersonasBatch).toHaveBeenCalledWith(baulId, ['photo-1'], ['p1']);
+  });
+
+  // Alternativa 1d de TagPersonasModal: crear una persona nueva sin salir del selector, escribiendo
+  // un nombre sin coincidencia en el buscador.
+  it('creates and tags a new persona typed in the tag modal search', async () => {
+    const user = userEvent.setup();
+    const created = { id: 'p2', baulId, nickname: 'Tío Juan' } as Persona;
+    // El mock reproduce la escritura en el store que hace el createPersona real, ya que
+    // BatchPhotoActionsBar renderiza a partir de personas[baulId] del store, no de la
+    // respuesta de la llamada.
+    vi.mocked(createPersona).mockImplementation(async (bId, nickname) => {
+      usePersonasStore.setState((state) => ({
+        personas: { ...state.personas, [bId]: [...(state.personas[bId] || []), { ...created, nickname }] },
+      }));
+      return { ...created, nickname };
+    });
+    vi.mocked(addTaggedPersonasBatch).mockResolvedValue(undefined);
+
+    renderContainer('chapter-1');
+    await user.click(screen.getByRole('button', { name: /etiquetar personas/i }));
+    await user.type(screen.getByLabelText('Buscar persona'), 'Tío Juan');
+    await user.click(screen.getByRole('button', { name: /Crear y etiquetar "Tío Juan"/ }));
+
+    expect(createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan');
+    expect(await screen.findByRole('button', { name: 'Quitar a Tío Juan' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    expect(addTaggedPersonasBatch).toHaveBeenCalledWith(baulId, ['photo-1'], ['p2']);
   });
 
   it('clears the date of the selected photos', async () => {

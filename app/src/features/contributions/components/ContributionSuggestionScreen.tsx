@@ -2,7 +2,7 @@ import { Button } from '@/design-system/components/actions/Button';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
-import { PersonaSelectionList } from '@/features/photos/components/PersonaSelectionList';
+import { PersonaTaggingPicker } from '@/features/photos/components/PersonaTaggingPicker';
 import { useElementHeight } from '@/hooks/useElementHeight';
 import { photoStageHeight, usePhotoAspectRatio } from '@/hooks/usePhotoAspectRatio';
 import { Persona, Photo } from '@/types';
@@ -12,6 +12,7 @@ interface ContributionSuggestionScreenProps {
   personas: Persona[];
   selectedIds: string[];
   onToggle: (personaId: string) => void;
+  onCreatePersona: (nickname: string) => Promise<Persona | undefined>;
   onSkip: () => void;
   onSave: () => void;
   onConfirmNoPersonas: () => void;
@@ -22,8 +23,9 @@ interface ContributionSuggestionScreenProps {
 // baúl, antes del propio feed: la única recomendación de contribución del MVP (identificar
 // personas en una foto sin etiquetar), pensada para completarse en segundos o ignorarse sin
 // fricción con "Ahora no" — nunca se presenta como una tarea pendiente. Reutiliza
-// PersonaSelectionList tal cual, el mismo selector que TagPersonasModal usa para etiquetar
-// desde el visor de fotos, sin ningún paso intermedio entre la foto y el selector.
+// PersonaTaggingPicker tal cual, el mismo selector (con buscar/crear persona) que TagPersonasModal
+// usa para etiquetar desde el visor de fotos, sin ningún paso intermedio entre la foto y el
+// selector.
 //
 // La página sigue teniendo scroll normal (no una región interna aparte) — la foto y el botón
 // se quedan fijos por el mismo mecanismo que Tabbar ya usa para apilarse debajo de PageHeader:
@@ -47,6 +49,7 @@ export function ContributionSuggestionScreen({
   personas,
   selectedIds,
   onToggle,
+  onCreatePersona,
   onSkip,
   onSave,
   onConfirmNoPersonas,
@@ -96,9 +99,14 @@ export function ContributionSuggestionScreen({
       <PageContainer className="py-6">
         <h2 className="text-base font-medium text-foreground mb-3">¿Quién sale en esta foto?</h2>
 
-        <div className="space-y-2">
-          <PersonaSelectionList personas={personas} selectedIds={selectedIds} onToggle={onToggle} disabled={isSubmitting} />
-        </div>
+        <PersonaTaggingPicker
+          personas={personas}
+          selectedIds={selectedIds}
+          onToggle={onToggle}
+          onCreatePersona={onCreatePersona}
+          disabled={isSubmitting}
+          scrollable={false}
+        />
       </PageContainer>
 
       {/* Sticky abajo, mismo patrón que el input de AiChatScreen. El ghost "No hay nadie en

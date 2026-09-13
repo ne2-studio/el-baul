@@ -33,6 +33,13 @@ interface BottomSheetModalProps {
    * quedaban por encima de ella.
    */
   header?: React.ReactNode;
+  /** True when this sheet is opened from within another, already-open BottomSheetModal (e.g.
+   * TagPersonasModal's inline "crear persona" step, on top of the tagging sheet itself) — bumps
+   * the z-index above a 'sm' sheet's z-[60] instead of 'lg''s usual z-50, so the nested sheet
+   * renders above the one that opened it rather than underneath. z-[65] keeps it below Toast
+   * (z-[70]), same as every other sheet. No effect on 'sm', which is already the higher of the
+   * two default values. */
+  stacked?: boolean;
 }
 
 // Contenedor compartido por todas las hojas ("bottom sheets") que se abren desde abajo de
@@ -48,6 +55,7 @@ export function BottomSheetModal({
   desktopCentered = false,
   backdropOpacity = 50,
   header,
+  stacked = false,
 }: BottomSheetModalProps) {
   const isLg = size === 'lg';
   const viewportInset = useVisualViewportInset();
@@ -67,7 +75,7 @@ export function BottomSheetModal({
   // z-index se compare siempre al nivel raíz, sea cual sea el componente que abra el modal.
   return createPortal(
     <div
-      className={`fixed left-0 right-0 ${overlayBg} ${isLg ? 'z-50' : 'z-[60]'} flex items-end pb-safe ${
+      className={`fixed left-0 right-0 ${overlayBg} ${isLg ? (stacked ? 'z-[65]' : 'z-50') : 'z-[60]'} flex items-end pb-safe ${
         isLg ? 'md:items-stretch md:justify-end md:pb-0' : desktopCentered ? 'md:items-center md:pb-0' : ''
       } justify-center`}
       style={{ top: viewportInset.top, height: viewportInset.height }}

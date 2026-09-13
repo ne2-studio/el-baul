@@ -25,6 +25,7 @@ export const Default: Story = {
     personas,
     selectedIds: ['1'],
     onToggle: fn(),
+    onCreatePersona: fn(),
     onCancel: fn(),
     onConfirm: fn(),
   },
@@ -55,13 +56,15 @@ export const Interactive: Story = {
     // comment) instead of rendering inside canvasElement.
     const body = within(document.body);
 
+    // Marcar a "Papá" lo saca de la lista y lo convierte en chip arriba (alternativa 1d) —
+    // nunca se ve dos veces.
     const papaButton = body.getByRole('button', { name: /Papá/ });
-    const martaButton = body.getByRole('button', { name: /Marta/ });
-
     await userEvent.click(papaButton);
     await expect(args.onToggle).toHaveBeenCalledWith('2');
-    await expect(papaButton).toHaveClass('border-primary/40');
+    await expect(body.queryByRole('button', { name: /^Papá$/ })).not.toBeInTheDocument();
+    await expect(body.getByRole('button', { name: 'Quitar a Papá' })).toBeInTheDocument();
 
+    const martaButton = body.getByRole('button', { name: /Marta/ });
     martaButton.focus();
     await expect(martaButton).toHaveFocus();
     await userEvent.keyboard('{Enter}');

@@ -32,6 +32,7 @@ export const Default: Story = {
     personas,
     selectedIds: [],
     onToggle: fn(),
+    onCreatePersona: fn(),
     onSkip: fn(),
     onSave: fn(),
     onConfirmNoPersonas: fn(),

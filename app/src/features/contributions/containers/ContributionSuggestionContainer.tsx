@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { ContributionSuggestionScreen } from '@/features/contributions/components/ContributionSuggestionScreen';
 import { WriteMemorySuggestionContainer } from '@/features/contributions/containers/WriteMemorySuggestionContainer';
 import { confirmPhotoHasNoPersonas, setTaggedPersonas } from '@/features/photos/useCases';
+import { createPersona } from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { Photo } from '@/types';
+import { Persona, Photo } from '@/types';
 import { usePostHog } from 'posthog-js/react';
 
 // Subtexto de WriteMemorySuggestionScreen cuando esta pantalla se reconvierte en ella tras "no
@@ -37,6 +38,17 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
 
   const toggle = (personaId: string) =>
     setSelectedIds((ids) => (ids.includes(personaId) ? ids.filter((id) => id !== personaId) : [...ids, personaId]));
+
+  // "Crear nueva persona"/"Crear y etiquetar" inline del selector (alternativa 1d) — key propia
+  // para no bloquearse con otra acción en curso bajo la key por defecto.
+  const handleCreatePersona = async (nickname: string): Promise<Persona | undefined> => {
+    const result = await run(() => createPersona(baulId, nickname), {
+      key: 'create-persona',
+      errorMessage: 'Error al añadir la persona',
+    });
+    if (result.ok) posthog.capture('persona_created', { source: 'contribution_suggestion' });
+    return result.ok ? result.value : undefined;
+  };
 
   const handleSave = async () => {
     if (selectedIds.length === 0) return;
@@ -84,6 +96,7 @@ export function ContributionSuggestionContainer({ baulId, photo, onResolved }: C
       personas={baulPersonas}
       selectedIds={selectedIds}
       onToggle={toggle}
+      onCreatePersona={handleCreatePersona}
       onSkip={() => {
         posthog.capture('contribution_suggestion_rejected', { type: 'tag_personas' });
         onResolved();
