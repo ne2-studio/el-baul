@@ -31,6 +31,7 @@ public class PhotoAssetTests
 
         // Asset-intrinsic fields are owned by the linked PhotoAsset...
         Assert.Equal(photo.PhotoAssetId, photo.PhotoAsset.Id);
+        Assert.Equal(uploadedBy, photo.PhotoAsset.UploadedBy);
         Assert.Equal("vault/key.jpg", photo.PhotoAsset.StorageKey);
         Assert.Equal(999, photo.PhotoAsset.SizeBytes);
         Assert.Equal(new ImageDimensions(1920, 1080), photo.PhotoAsset.Dimensions);
@@ -65,14 +66,21 @@ public class PhotoAssetTests
         // Nothing in the domain model prevents this — see Photo's public constructor, which
         // takes a PhotoAsset directly rather than only ever building a new one (that's
         // Photo.Create's job). No current application workflow does this yet (Slice 2+).
-        var sharedAsset = PhotoAsset.Create(new PhotoAssetId(Guid.NewGuid()), "shared.jpg", new ImageDimensions(10, 10), DateTime.UtcNow);
+        var originalUploader = new UserId("user-1");
+        var sharedAsset = PhotoAsset.Create(
+            new PhotoAssetId(Guid.NewGuid()), "shared.jpg", new ImageDimensions(10, 10), DateTime.UtcNow, originalUploader);
         var baulId = new BaulId(Guid.NewGuid());
 
-        var photoA = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, sharedAsset, null, new UserId("user-1"), DateTime.UtcNow);
+        var photoA = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, sharedAsset, null, originalUploader, DateTime.UtcNow);
         var photoB = new Photo(new PhotoId(Guid.NewGuid()), null, baulId, sharedAsset, null, new UserId("user-2"), DateTime.UtcNow);
 
         Assert.Equal(photoA.PhotoAssetId, photoB.PhotoAssetId);
         Assert.Equal("shared.jpg", photoA.StorageKey);
         Assert.Equal("shared.jpg", photoB.StorageKey);
+        // The asset's own UploadedBy stays pinned to whoever originally created it (user-1),
+        // regardless of which Photo/UploadedBy is asking to read it — photoB's own UploadedBy
+        // (user-2, "added it to this baúl") never leaks onto the shared asset.
+        Assert.Equal(originalUploader, photoA.PhotoAsset.UploadedBy);
+        Assert.Equal(originalUploader, photoB.PhotoAsset.UploadedBy);
     }
 }

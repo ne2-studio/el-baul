@@ -25,6 +25,14 @@ public sealed class PhotoAsset : Entity<PhotoAssetId>
     public ImageDimensions Dimensions { get; private set; } = new(1, 1);
     public DateTime CreatedAt { get; private set; }
 
+    // Who originally contributed this asset — set once, here, at creation time, and never
+    // touched again. Deliberately distinct from Photo.UploadedBy: once Photo.CreateFromExistingAsset
+    // (docs/.backlog issue #62, Slice 2) lets an existing asset back a brand-new Photo in another
+    // baúl, that Photo gets its own fresh UploadedBy for "who added it to *this* baúl" — this
+    // field is the only reliable answer to "who uploaded the underlying photo in the first
+    // place", which the user-scoped "Mis fotos" cross-baúl view is keyed on.
+    public UserId UploadedBy { get; private set; }
+
     // Dimensions/size of the asset as it actually sits in storage today. Never the *display*
     // orientation — raw pixel dimensions of the stored bytes. Set only when the stored asset is
     // a normalized (downscaled) version of what the user uploaded — the pre-normalization
@@ -42,7 +50,7 @@ public sealed class PhotoAsset : Entity<PhotoAssetId>
     public string? OriginalContentHash { get; private set; }
 
     public PhotoAsset(
-        PhotoAssetId Id, string StorageKey, ImageDimensions Dimensions, DateTime CreatedAt,
+        PhotoAssetId Id, string StorageKey, ImageDimensions Dimensions, DateTime CreatedAt, UserId UploadedBy,
         long SizeBytes = 0, ImageDimensions? OriginalDimensions = null, long? OriginalSizeBytes = null,
         string? OriginalContentHash = null) : base(Id)
     {
@@ -50,13 +58,14 @@ public sealed class PhotoAsset : Entity<PhotoAssetId>
             throw new ArgumentOutOfRangeException(nameof(Dimensions), "Photo asset dimensions must be positive.");
 
         this.StorageKey = StorageKey; this.Dimensions = Dimensions; this.CreatedAt = CreatedAt;
+        this.UploadedBy = UploadedBy;
         this.SizeBytes = SizeBytes; this.OriginalDimensions = OriginalDimensions;
         this.OriginalSizeBytes = OriginalSizeBytes; this.OriginalContentHash = OriginalContentHash;
     }
 
     public static PhotoAsset Create(
-        PhotoAssetId id, string storageKey, ImageDimensions dimensions, DateTime createdAt,
+        PhotoAssetId id, string storageKey, ImageDimensions dimensions, DateTime createdAt, UserId uploadedBy,
         long sizeBytes = 0, ImageDimensions? originalDimensions = null, long? originalSizeBytes = null,
         string? originalContentHash = null) =>
-        new(id, storageKey, dimensions, createdAt, sizeBytes, originalDimensions, originalSizeBytes, originalContentHash);
+        new(id, storageKey, dimensions, createdAt, uploadedBy, sizeBytes, originalDimensions, originalSizeBytes, originalContentHash);
 }

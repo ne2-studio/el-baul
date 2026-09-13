@@ -1,23 +1,27 @@
 import React, { useRef } from 'react';
 import { Check, MessageCircle } from 'lucide-react';
-import type { Photo } from '@/types';
+import type { GalleryPhoto } from '@/types';
 import { Button } from '@/design-system/components/actions/Button';
 import { SwimlaneLabel } from '@/design-system/components/data-display/SwimlaneLabel';
 import { groupPhotosByYear } from '@/features/photos/components/photoGrouping';
 
-interface PhotoSwimlanesProps {
-  photos: Photo[];
-  onSelectPhoto: (photo: Photo) => void;
+// Generic over GalleryPhoto — only id/thumbnailUrl/date/recuerdoCount are read anywhere below
+// — so both the baúl-scoped "Fotos" tab (Photo) and the cross-baúl "Mis fotos" gallery
+// (PhotoAsset) reuse the exact same grid instead of duplicating it.
+interface PhotoSwimlanesProps<T extends GalleryPhoto> {
+  photos: T[];
+  onSelectPhoto: (photo: T) => void;
   /** Selection-mode props are optional — screens without batch selection (e.g. the
-   * persona sheet) can omit them entirely and just get a plain grouped grid. */
+   * persona sheet, or Mis fotos this slice) can omit them entirely and just get a plain
+   * grouped grid. */
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
   onLongPress?: (id: string) => void;
-  onToggleGroup?: (photos: Photo[]) => void;
+  onToggleGroup?: (photos: T[]) => void;
 }
 
-export function PhotoSwimlanes({
+export function PhotoSwimlanes<T extends GalleryPhoto>({
   photos,
   onSelectPhoto,
   selectionMode = false,
@@ -25,7 +29,7 @@ export function PhotoSwimlanes({
   onToggleSelect,
   onLongPress,
   onToggleGroup,
-}: PhotoSwimlanesProps) {
+}: PhotoSwimlanesProps<T>) {
   const ids = selectedIds ?? new Set<string>();
 
   return (
@@ -56,7 +60,7 @@ export function PhotoSwimlanes({
 }
 
 // ─── Photo Grid ───────────────────────────────────────────────────────────────
-function PhotoGrid({
+function PhotoGrid<T extends GalleryPhoto>({
   photos,
   selectionMode,
   selectedIds,
@@ -64,10 +68,10 @@ function PhotoGrid({
   onToggleSelect,
   onLongPress,
 }: {
-  photos: Photo[];
+  photos: T[];
   selectionMode: boolean;
   selectedIds: Set<string>;
-  onSelectPhoto: (p: Photo) => void;
+  onSelectPhoto: (p: T) => void;
   onToggleSelect: (id: string) => void;
   onLongPress: (id: string) => void;
 }) {
@@ -88,7 +92,7 @@ function PhotoGrid({
   );
 }
 
-function PhotoCell({
+function PhotoCell<T extends GalleryPhoto>({
   photo,
   selectionMode,
   isSelected,
@@ -96,10 +100,10 @@ function PhotoCell({
   onToggleSelect,
   onLongPress,
 }: {
-  photo: Photo;
+  photo: T;
   selectionMode: boolean;
   isSelected: boolean;
-  onOpen: (p: Photo) => void;
+  onOpen: (p: T) => void;
   onToggleSelect: (id: string) => void;
   onLongPress: (id: string) => void;
 }) {

@@ -80,4 +80,14 @@ public interface IPhotoRepository
     Task UpdateAsync(Photo photo);
     Task DeleteAsync(PhotoId id);
     Task DeleteByBaulIdAsync(BaulId baulId);
+
+    /// <summary>Every PhotoAsset originally contributed by this user (PhotoAsset.UploadedBy),
+    /// regardless of which baúl(es) it currently appears in or whether the user still has
+    /// access to any of them — the read model behind the user-scoped "Mis fotos" view.</summary>
+    Task<IReadOnlyList<PhotoAsset>> GetByUploaderAsync(UserId userId);
+
+    /// <summary>Every active Photo referencing any of these assets, across every baúl — batched
+    /// in one query instead of one per asset. Used by "Mis fotos" both to find each asset's
+    /// originating Photo (for its intrinsic date) and to compute which baúles it appears in.</summary>
+    Task<IReadOnlyList<Photo>> GetActiveByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds);
 }

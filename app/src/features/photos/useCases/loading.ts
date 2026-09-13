@@ -1,6 +1,7 @@
 import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
+import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 
 export async function loadChapterPhotos(chapterId: string): Promise<void> {
   const photos = await api.photos.getAll(chapterId);
@@ -48,4 +49,19 @@ export async function loadMoreBaulPhotos(baulId: string): Promise<void> {
     baulPhotos: { ...state.baulPhotos, [baulId]: [...(state.baulPhotos[baulId] || []), ...photos.map((photo) => photo.id)] },
     baulPhotosHasMore: { ...state.baulPhotosHasMore, [baulId]: hasMore },
   }));
+}
+
+// "Mis fotos" (docs/.backlog issue #62) — user-scoped, not keyed by baulId. Unlike
+// loadBaulPhotos/loadMoreBaulPhotos, PhotoAsset isn't normalized into a shared by-id store: it's
+// only ever consumed within this one feature, so useMyPhotosStore.assets holds the objects
+// directly instead of ids + a lookup table.
+export async function loadMyPhotos(): Promise<void> {
+  const { assets, hasMore } = await api.myPhotos.getPage({ skip: 0, take: BAUL_PHOTOS_PAGE_SIZE });
+  useMyPhotosStore.setState({ assets, hasMore });
+}
+
+export async function loadMoreMyPhotos(): Promise<void> {
+  const alreadyLoaded = useMyPhotosStore.getState().assets?.length ?? 0;
+  const { assets, hasMore } = await api.myPhotos.getPage({ skip: alreadyLoaded, take: BAUL_PHOTOS_PAGE_SIZE });
+  useMyPhotosStore.setState((state) => ({ assets: [...(state.assets ?? []), ...assets], hasMore }));
 }

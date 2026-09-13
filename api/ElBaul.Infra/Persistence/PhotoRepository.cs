@@ -90,13 +90,14 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
         // way the Photos insert below does.
         await dbContext.Database.ExecuteSqlRawAsync(
             """
-            INSERT INTO "PhotoAssets" ("Id", "StorageKey", "SizeBytes", "Width", "Height", "OriginalWidth", "OriginalHeight", "OriginalSizeBytes", "OriginalContentHash", "CreatedAt")
-            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9})
+            INSERT INTO "PhotoAssets" ("Id", "StorageKey", "SizeBytes", "Width", "Height", "OriginalWidth", "OriginalHeight", "OriginalSizeBytes", "OriginalContentHash", "CreatedAt", "UploadedBy")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10})
             """,
             photo.PhotoAsset.Id.Value, photo.PhotoAsset.StorageKey, photo.PhotoAsset.SizeBytes,
             photo.PhotoAsset.Dimensions.Width, photo.PhotoAsset.Dimensions.Height,
             photo.PhotoAsset.OriginalDimensions?.Width, photo.PhotoAsset.OriginalDimensions?.Height,
-            photo.PhotoAsset.OriginalSizeBytes!, photo.PhotoAsset.OriginalContentHash!, photo.PhotoAsset.CreatedAt);
+            photo.PhotoAsset.OriginalSizeBytes!, photo.PhotoAsset.OriginalContentHash!, photo.PhotoAsset.CreatedAt,
+            photo.PhotoAsset.UploadedBy.Value);
 
         // The PhotoAsset above just got persisted outside EF's change tracker — attach it as
         // Unchanged so that if this Photo loses the race below and later goes through a normal
@@ -161,4 +162,12 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
 
     public async Task DeleteByBaulIdAsync(BaulId baulId) =>
         await dbContext.Photos.Where(p => p.BaulId == baulId).ExecuteDeleteAsync();
+
+    public async Task<IReadOnlyList<PhotoAsset>> GetByUploaderAsync(UserId userId) =>
+        await dbContext.PhotoAssets.AsNoTracking().Where(a => a.UploadedBy == userId).ToListAsync();
+
+    public async Task<IReadOnlyList<Photo>> GetActiveByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds) =>
+        await dbContext.Photos.AsNoTracking()
+            .Where(p => assetIds.Contains(p.PhotoAssetId) && p.Status == PhotoStatus.Active)
+            .ToListAsync();
 }

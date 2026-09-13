@@ -14,11 +14,12 @@ function baul(overrides: Partial<Baul> = {}): Baul {
   } as Baul;
 }
 
-function renderContainer(b: Baul) {
+function renderContainer(b: Baul | undefined) {
   return render(
-    <MemoryRouter initialEntries={[`/baules/${b.id}`]}>
+    <MemoryRouter initialEntries={[b ? `/baules/${b.id}` : '/mis-fotos']}>
       <Routes>
         <Route path="/baules/:baulId" element={<BaulSettingsMenuContainer baul={b} />} />
+        <Route path="/mis-fotos" element={<BaulSettingsMenuContainer baul={b} />} />
         <Route path="/baules/:baulId/ajustes" element={<div>Ajustes del baúl</div>} />
         <Route path="/baules/:baulId/invitar" element={<div>Invitar a la familia</div>} />
         <Route path="/cuenta" element={<div>Mi cuenta</div>} />
@@ -89,5 +90,18 @@ describe('BaulSettingsMenuContainer', () => {
     await user.click(await screen.findByText('Ayuda'));
 
     expect(await screen.findByText('Ayuda')).toBeInTheDocument();
+  });
+
+  // "Mis fotos" (docs/.backlog issue #62) — the first screen with no baúl at all.
+  it('without a baúl (Mis fotos), still shows Mi cuenta/Ayuda but hides every baúl-only item', async () => {
+    const user = userEvent.setup();
+    renderContainer(undefined);
+
+    await user.click(screen.getByRole('button', { name: 'Menú' }));
+
+    expect(screen.queryByText('Ajustes del baúl')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitar a la familia')).not.toBeInTheDocument();
+    expect(await screen.findByText('Mi cuenta')).toBeInTheDocument();
+    expect(screen.getByText('Ayuda')).toBeInTheDocument();
   });
 });

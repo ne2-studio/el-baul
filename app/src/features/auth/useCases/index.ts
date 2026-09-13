@@ -3,6 +3,7 @@ import { UserProfile } from '@/types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useChatStore } from '@/store/useChatStore';
@@ -64,6 +65,7 @@ export function resetAllStores(): void {
   useBaulesStore.getState().reset();
   usePersonasStore.getState().reset();
   usePhotosStore.getState().reset();
+  useMyPhotosStore.getState().reset();
   useRecuerdosStore.getState().reset();
   useChatStore.getState().reset();
   useChatMemoriesStore.getState().reset();

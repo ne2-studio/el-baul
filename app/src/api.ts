@@ -20,6 +20,7 @@ import { chaptersApi } from './api/resources/chapters';
 import { chatApi } from './api/resources/chat';
 import { chatMemoriesApi } from './api/resources/chatMemories';
 import { contributionsApi } from './api/resources/contributions';
+import { myPhotosApi } from './api/resources/myPhotos';
 import { personaInvitesApi } from './api/resources/personaInvites';
 import { photoBatchesApi } from './api/resources/photoBatches';
 import { photosApi } from './api/resources/photos';
@@ -35,6 +36,7 @@ export const api = {
   chapters: chaptersApi,
   photos: photosApi,
   photoBatches: photoBatchesApi,
+  myPhotos: myPhotosApi,
   recuerdos: recuerdosApi,
   sharedLinks: sharedLinksApi,
   tvSessions: tvSessionsApi,

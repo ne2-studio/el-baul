@@ -215,7 +215,23 @@ export class Chapter {
   }
 }
 
-export class Photo {
+// The minimal shape the shared gallery/grid/viewer pieces (groupPhotosByYear, PhotoSwimlanes,
+// PhotoViewer) actually read off a photo — everything else they need (menu actions, chapter
+// badge, recuerdos, baúl appearances…) arrives as separately-resolved props from whichever
+// container mounts them (see those files' own doc comments). Both the baúl-scoped Photo below
+// and the cross-baúl PhotoAsset satisfy this structurally, so those pieces are reusable by
+// "Mis fotos" without pretending a PhotoAsset is a Photo.
+export interface GalleryPhoto {
+  id: string;
+  thumbnailUrl: string;
+  fullUrl: string;
+  date?: PhotoDate;
+  /** Optional: PhotoAsset (Mis fotos) has no recuerdo concept yet, so it simply omits this —
+   * PhotoGrid's badge naturally never renders for it (see `(photo.recuerdoCount || 0) > 0`). */
+  recuerdoCount?: number;
+}
+
+export class Photo implements GalleryPhoto {
   id: string;
   thumbnailUrl: string;
   fullUrl: string;
@@ -248,6 +264,44 @@ export class Photo {
     this.canDelete = data.canDelete;
     this.canRequestRemoval = data.canRequestRemoval;
     this.alreadyExisted = data.alreadyExisted ?? undefined;
+  }
+}
+
+type PhotoAssetDto = ApiSchemas['PhotoAssetDto'];
+type BaulAppearanceDto = ApiSchemas['BaulAppearanceDto'];
+
+export class BaulAppearance {
+  baulId: string;
+  baulName: string;
+
+  constructor(data: BaulAppearanceDto) {
+    this.baulId = data.baulId;
+    this.baulName = data.baulName;
+  }
+}
+
+// The "Mis fotos" domain type — one row per unique PhotoAsset the current user originally
+// uploaded, deduplicated across every baúl it appears in (see PhotoAssetDto on the backend).
+// Deliberately has no baulId/chapterId of its own, unlike Photo: it's not scoped to one baúl.
+export class PhotoAsset implements GalleryPhoto {
+  id: string;
+  thumbnailUrl: string;
+  fullUrl: string;
+  date?: PhotoDate;
+  width: number;
+  height: number;
+  /** Baúles this asset currently appears in, limited to ones the current user may know about
+   * — see MyPhotosReadManager.GetMyPhotosAsync's authorization step on the backend. */
+  baules: BaulAppearance[];
+
+  constructor(data: PhotoAssetDto) {
+    this.id = data.id;
+    this.thumbnailUrl = data.thumbnailUrl;
+    this.fullUrl = data.fullUrl;
+    this.date = photoDateFrom(data.dateYear, data.dateMonth, data.dateDay);
+    this.width = data.width;
+    this.height = data.height;
+    this.baules = data.baules.map((b) => new BaulAppearance(b));
   }
 }
 

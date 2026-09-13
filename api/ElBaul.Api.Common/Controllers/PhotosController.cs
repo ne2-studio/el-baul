@@ -2,6 +2,7 @@ using ElBaul.Api.Models;
 using ElBaul.Core.Feed;
 using ElBaul.Core.Personas;
 using ElBaul.Core.Photos;
+using ElBaul.Core.Photos.Application;
 using ElBaul.Core.Recuerdos;
 using Ne2Studio.Common;
 
@@ -17,9 +18,21 @@ namespace ElBaul.Api.Controllers;
 [Route("api")]
 public class PhotosController(
     IPhotoManager photoManager, IPhotoReadManager photoReadManager, IRecuerdoManager recuerdoManager,
-    IPhotoPersonaTagManager photoPersonaTagManager, IBaulFeedManager baulFeedManager)
+    IPhotoPersonaTagManager photoPersonaTagManager, IBaulFeedManager baulFeedManager,
+    IMyPhotosReadManager myPhotosReadManager)
     : ControllerBase
 {
+    // User-scoped, not baúl-scoped — "Mis fotos" (docs/.backlog issue #62). Follows the same
+    // users/me/... convention as UsersController; the caller is derived from the auth token
+    // inside MyPhotosReadManager, never from a route/query parameter.
+    [HttpGet("users/me/photos")]
+    [ProducesResponseType(typeof(PhotoAssetPageDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyPhotos([FromQuery] int skip = 0, [FromQuery] int take = 60)
+    {
+        var result = await myPhotosReadManager.GetMyPhotosAsync(skip, take);
+        return result.ToActionResult();
+    }
+
     // Uploading a photo bumps its baúl's UpdatedAt — advance the uploader's own watermark so
     // they aren't shown their own upload as a novedad on the switcher.
     private async Task MarkUploaderSeenAsync(Result<PhotoDto> uploadResult)

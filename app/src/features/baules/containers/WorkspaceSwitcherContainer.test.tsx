@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -21,9 +21,9 @@ function baul(overrides: Partial<Baul> = {}): Baul {
   } as Baul;
 }
 
-function renderSwitcher(active: Baul) {
+function renderSwitcher(active: Baul | null) {
   return render(
-    <MemoryRouter initialEntries={[`/baules/${active.id}`]}>
+    <MemoryRouter initialEntries={[active ? `/baules/${active.id}` : '/mis-fotos']}>
       <WorkspaceSwitcherContainer activeBaul={active} />
     </MemoryRouter>
   );
@@ -59,7 +59,7 @@ describe('WorkspaceSwitcherContainer — novedad dots', () => {
 
     renderSwitcher(a);
 
-    const trigger = screen.getByRole('button', { name: 'Cambiar de baúl' });
+    const trigger = screen.getByRole('button', { name: 'Cambiar de espacio' });
     expect(trigger.querySelectorAll('span.rounded-full.bg-primary')).toHaveLength(1);
 
     await userEvent.click(trigger);
@@ -69,5 +69,68 @@ describe('WorkspaceSwitcherContainer — novedad dots', () => {
     const garciaRow = within(menu).getByText('Familia García').closest('[role="menuitem"]') as HTMLElement;
     expect(abuelosRow.querySelectorAll('span.rounded-full.bg-primary')).toHaveLength(1);
     expect(garciaRow.querySelectorAll('span.rounded-full.bg-primary')).toHaveLength(0);
+  });
+});
+
+function LocationDisplay() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
+}
+
+function renderSwitcherWithRoutes(active: Baul | null) {
+  return render(
+    <MemoryRouter initialEntries={[active ? `/baules/${active.id}` : '/mis-fotos']}>
+      <LocationDisplay />
+      <Routes>
+        <Route path="/baules/:baulId" element={<WorkspaceSwitcherContainer activeBaul={active} />} />
+        <Route path="/mis-fotos" element={<WorkspaceSwitcherContainer activeBaul={active} />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
+describe('WorkspaceSwitcherContainer — PERSONAL / Mis baúles sections', () => {
+  beforeEach(() => {
+    useBaulesStore.getState().reset();
+  });
+
+  it('groups "Mis fotos" under PERSONAL and every baúl under Mis baúles', async () => {
+    useBaulesStore.setState({ baules: [baul({ id: 'baul-1', name: 'Familia García' })] });
+    renderSwitcherWithRoutes(baul({ id: 'baul-1', name: 'Familia García' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar de espacio' }));
+    const menu = await screen.findByRole('menu');
+
+    expect(within(menu).getByText('Personal')).toBeInTheDocument();
+    expect(within(menu).getByText('Mis baúles')).toBeInTheDocument();
+    expect(within(menu).getByText('Mis fotos')).toBeInTheDocument();
+    expect(within(menu).getByText('Familia García')).toBeInTheDocument();
+  });
+
+  it('selecting "Mis fotos" navigates to /mis-fotos', async () => {
+    const a = baul({ id: 'baul-1', name: 'Familia García' });
+    useBaulesStore.setState({ baules: [a] });
+    renderSwitcherWithRoutes(a);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar de espacio' }));
+    await userEvent.click(await screen.findByText('Mis fotos'));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/mis-fotos');
+  });
+
+  it('selecting a baúl still navigates to it as before, even from Mis fotos', async () => {
+    const a = baul({ id: 'baul-1', name: 'Familia García' });
+    useBaulesStore.setState({ baules: [a] });
+    renderSwitcherWithRoutes(null);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar de espacio' }));
+    await userEvent.click(await screen.findByText('Familia García'));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/baules/baul-1');
+  });
+
+  it('shows "Mis fotos" (not any baúl name) as the trigger label when activeBaul is null', () => {
+    renderSwitcherWithRoutes(null);
+    expect(screen.getByRole('button', { name: 'Cambiar de espacio' })).toHaveTextContent('Mis fotos');
   });
 });

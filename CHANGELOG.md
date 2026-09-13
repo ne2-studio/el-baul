@@ -19,6 +19,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - "Editar relaciones" permite ahora asignar también el cónyuge de una persona (como máximo uno, ya que El Baúl representa familias monógamas). En el árbol genealógico, los cónyuges aparecen en la misma fila, unidos por un conector con dos anillos entrelazados.
 - En la pestaña "Historia" de un baúl, quien puede invitar a la familia ve ahora un aviso mientras queden personas por invitar, con acceso directo a "Invitar a la familia". Al ocultarlo, no vuelve a aparecer hasta la próxima vez que se abre la app.
 - La pestaña "Familia" del baúl ahora tiene un selector Mosaico / Árbol genealógico. El árbol genealógico representa gráficamente las relaciones de padre/madre e hijo/hija entre las personas del baúl, organizadas por generaciones y navegable con scroll o arrastre; tocar una persona abre su ficha. Las personas sin relaciones familiares siguen disponibles solo en Mosaico. La vista elegida se recuerda para la próxima visita.
+- Nueva pantalla "Mis fotos", accesible desde el selector de baúles (ahora con una sección "Personal" además de "Mis baúles"): muestra, en un único lugar, todas las fotos que has subido a cualquiera de tus baúles, sin repetir la misma foto si aparece en varios. Al abrir una foto desde aquí se indica en qué baúles aparece.
 
 ### Arreglado
 

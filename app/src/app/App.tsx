@@ -45,6 +45,7 @@ import { TvSessionRoute } from '../features/tv/routes/TvSessionRoute';
 import { AcceptBaulInviteRoute } from '../features/sharing/routes/AcceptBaulInviteRoute';
 import { SelectBaulForShareRoute } from '../features/sharing/routes/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/routes/ProfileRoute';
+import { MisFotosRoute } from '../features/photos/routes/MisFotosRoute';
 import { MyAccountRoute } from '../features/profile/routes/MyAccountRoute';
 import { NotificationPreferencesRoute } from '../features/profile/routes/NotificationPreferencesRoute';
 import { HelpSupportRoute } from '../features/support/routes/HelpSupportRoute';
@@ -418,6 +419,13 @@ function App() {
         <Route path="/perfil" element={
           <ProtectedRoute>
             <ProfileRoute />
+          </ProtectedRoute>
+        } />
+        {/* "Mis fotos" (docs/.backlog issue #62) — the first route that belongs to the
+            authenticated app but not to any one baúl; see MisFotosRoute's own doc comment. */}
+        <Route path="/mis-fotos" element={
+          <ProtectedRoute>
+            <MisFotosRoute />
           </ProtectedRoute>
         } />
         <Route path="/configuracion/notificaciones" element={

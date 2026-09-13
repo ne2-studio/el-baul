@@ -4819,6 +4819,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    skip?: number;
+                    take?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PhotoAssetPageDto"];
+                        "application/json": components["schemas"]["PhotoAssetPageDto"];
+                        "text/json": components["schemas"]["PhotoAssetPageDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chapters/{chapterId}/photos": {
         parameters: {
             query?: never;
@@ -8794,6 +8877,10 @@ export interface components {
             /** Format: double */
             writeMemorySuggestionRatio: number;
         };
+        BaulAppearanceDto: {
+            baulId: string;
+            baulName: string;
+        };
         BaulDto: {
             id: string;
             name: string;
@@ -9038,6 +9125,28 @@ export interface components {
         PersonaSpouseRelationshipDto: {
             personaId1: string;
             personaId2: string;
+        };
+        PhotoAssetDto: {
+            id: string;
+            thumbnailUrl: string;
+            fullUrl: string;
+            /** Format: int32 */
+            dateYear?: number | null;
+            /** Format: int32 */
+            dateMonth?: number | null;
+            /** Format: int32 */
+            dateDay?: number | null;
+            /** Format: int32 */
+            width: number;
+            /** Format: int32 */
+            height: number;
+            /** Format: date-time */
+            createdAt: string;
+            baules: components["schemas"]["BaulAppearanceDto"][];
+        };
+        PhotoAssetPageDto: {
+            items: components["schemas"]["PhotoAssetDto"][];
+            hasMore: boolean;
         };
         PhotoBatchDto: {
             batchId: string;

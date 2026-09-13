@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import { Photo, Recuerdo, TaggedPersona } from '@/types';
+import { GalleryPhoto, Recuerdo, TaggedPersona } from '@/types';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
 import { formatPartialDate } from '@/app/utils/timeUtils';
@@ -15,11 +15,16 @@ import { Avatar } from '@/design-system/components/data-display/Avatar';
 import { ChapterBadge, PersonBadge } from '@/design-system/components/data-display/Badges';
 import { cn } from '@/design-system/components/ui/utils';
 
-interface PhotoViewerProps {
-  photo: Photo;
-  photos: Photo[];
+// Generic over GalleryPhoto — only photo.id/date/thumbnailUrl/fullUrl are ever read directly
+// below; everything baúl-specific (menu actions, chapter badge, recuerdos) arrives as
+// already-resolved props from whichever container mounts this. That's what lets
+// MyPhotoViewerContainer ("Mis fotos", no single baúl) reuse this same component instead of
+// PhotoViewer pretending a PhotoAsset is a Photo.
+interface PhotoViewerProps<T extends GalleryPhoto> {
+  photo: T;
+  photos: T[];
   onClose: () => void;
-  onPhotoChange: (photo: Photo) => void;
+  onPhotoChange: (photo: T) => void;
   /** Menú "···" ya resuelto — construido por usePhotoViewerActions (vía buildMenuItems), a
    * través de PhotoViewerContainer/ChapterPhotoViewerContainer. Este componente no sabe qué
    * acciones hay ni de dónde vienen. */
@@ -47,6 +52,10 @@ interface PhotoViewerProps {
   onUserClick?: (personaId: string) => void;
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
   onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
+  /** Baúles this PhotoAsset appears in — only used by "Mis fotos" (MyPhotoViewerContainer),
+   * which has no single baúl to hang a ChapterBadge off of. Already limited to baúles the
+   * current user can access — see MyPhotosReadManager.GetMyPhotosAsync on the backend. */
+  baulNames?: string[];
 }
 
 function isEditableKeyTarget(target: EventTarget | null) {
@@ -59,7 +68,7 @@ function isEditableKeyTarget(target: EventTarget | null) {
 // 100% puro: nada de store/useCases/router aquí — todo lo que habla con servidor vive en
 // PhotoViewerContainer (su único caller, junto con ChapterPhotoViewerContainer que lo
 // envuelve). Ver docs/architecture/frontend.md.
-export function PhotoViewer({
+export function PhotoViewer<T extends GalleryPhoto>({
   photo,
   photos,
   onClose,
@@ -78,7 +87,8 @@ export function PhotoViewer({
   onUserClick,
   onShareRecuerdo,
   onEditRecuerdo,
-}: PhotoViewerProps) {
+  baulNames,
+}: PhotoViewerProps<T>) {
   useScrollLock();
   const viewportInset = useVisualViewportInset();
   // Gates the desktop layout (static header, side panel) on width AND height, not just
@@ -190,6 +200,13 @@ export function PhotoViewer({
               <ChapterBadge chapterName={chapterName} onClick={onChapterClick} />
             )}
           </div>
+        )}
+
+        {/* Baúl appearances — "Mis fotos" only, see baulNames' doc comment. */}
+        {baulNames && baulNames.length > 0 && (
+          <p className="text-xs text-background/60">
+            Aparece en: {baulNames.join(', ')}
+          </p>
         )}
 
         {/* Recuerdos List */}

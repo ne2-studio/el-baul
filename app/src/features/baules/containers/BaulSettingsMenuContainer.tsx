@@ -15,7 +15,9 @@ import { getBaulPermissions } from '@/utils/roleUtils';
 import { usePersonasStore } from '@/store/usePersonasStore';
 
 interface BaulSettingsMenuContainerProps {
-  baul: Baul;
+  // undefined on a user-scoped screen that isn't any baúl (currently only "Mis fotos", see
+  // docs/.backlog issue #62) — the baúl-only items below simply don't render then.
+  baul?: Baul;
 }
 
 // Self-sufficient "···" menu: navigates to the "Invitar a la familia"/"Ajustes del
@@ -27,16 +29,16 @@ interface BaulSettingsMenuContainerProps {
 export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerProps) {
   const navigate = useNavigate();
   const { removalRequests } = usePersonasStore();
-  const permissions = getBaulPermissions(baul);
-  const pendingRemovalRequestsCount = (removalRequests[baul.id] || []).filter((r) => r.status === 'pending').length;
+  const permissions = baul ? getBaulPermissions(baul) : undefined;
+  const pendingRemovalRequestsCount = baul ? (removalRequests[baul.id] || []).filter((r) => r.status === 'pending').length : 0;
 
-  const canManageInvite = permissions.canManageBaulInvite;
+  const canManageInvite = permissions?.canManageBaulInvite ?? false;
   const canReviewRemovalRequests = pendingRemovalRequestsCount > 0;
   const canManageBaulSettings =
-    permissions.canSetBaulCover ||
-    permissions.canEditBaul ||
-    canReviewRemovalRequests ||
-    permissions.canRequestBaulDeletion;
+    (permissions?.canSetBaulCover ||
+      permissions?.canEditBaul ||
+      canReviewRemovalRequests ||
+      permissions?.canRequestBaulDeletion) ?? false;
 
   return (
       <DropdownMenu>
@@ -46,7 +48,7 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
           </IconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          {canManageInvite && (
+          {baul && canManageInvite && (
             <DropdownMenuItem onClick={() => navigate(`/baules/${baul.id}/invitar`)}>
               <Share2 className="w-4 h-4 mr-2" />
               Invitar a la familia
@@ -55,7 +57,7 @@ export function BaulSettingsMenuContainer({ baul }: BaulSettingsMenuContainerPro
 
           {canManageInvite && canManageBaulSettings && <DropdownMenuSeparator />}
 
-          {canManageBaulSettings && (
+          {baul && canManageBaulSettings && (
             <DropdownMenuItem onClick={() => navigate(`/baules/${baul.id}/ajustes`)}>
               <BaulIcon className="w-4 h-4 mr-2" />
               <span>Ajustes del baúl</span>

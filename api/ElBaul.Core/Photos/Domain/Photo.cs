@@ -95,7 +95,7 @@ public sealed class Photo : Entity<PhotoId>
         string? originalContentHash = null)
     {
         var photoAsset = PhotoAsset.Create(
-            new PhotoAssetId(id.Value), storageKey, dimensions, createdAt,
+            new PhotoAssetId(id.Value), storageKey, dimensions, createdAt, uploadedBy,
             sizeBytes, originalDimensions, originalSizeBytes, originalContentHash);
 
         return new(id, chapterId, baulId, photoAsset, date, uploadedBy, createdAt, clientUploadId,

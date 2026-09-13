@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, Plus } from 'lucide-react';
+import { Check, ChevronDown, Images, Plus } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import {
@@ -17,7 +17,10 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 
 interface WorkspaceSwitcherContainerProps {
-  activeBaul: Baul;
+  // null = we're on a user-scoped screen that isn't any baúl (currently only "Mis fotos") —
+  // see docs/.backlog issue #62. The switcher still renders every baúl either way; null just
+  // means none of them is "the current one".
+  activeBaul: Baul | null;
 }
 
 // Sustituye el título estático de BaulRoute — es el selector de workspace del PRD. Self-
@@ -27,6 +30,12 @@ interface WorkspaceSwitcherContainerProps {
 // deliberadamente discretas (miniatura + nombre + capítulos), no la BaulCard grande de la Home
 // que existía antes — mismo lenguaje visual/compacto que ya usa ShareTargetBaulScreen para
 // elegir baúl al compartir fotos.
+//
+// Ya no es solo un "BaulSwitcher": con "Mis fotos" (docs/.backlog issue #62, primer contexto
+// de aplicación que no es un baúl) pasa a ser el selector entre espacios/contextos en general
+// — de ahí el nombre genérico que ya tenía. La sección PERSONAL de arriba es deliberadamente
+// pequeña: solo "Mis fotos" por ahora, sin generalizar a un framework de "espacios" hasta que
+// haga falta una segunda entrada.
 export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherContainerProps) {
   const navigate = useNavigate();
   const baules = useBaulesStore((state) => state.baules);
@@ -38,9 +47,14 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
   const hasAnyUnseenActivity = baules.some((baul) => baul.hasUnseenActivity);
 
   const handleSwitch = (baul: Baul) => {
-    if (baul.id === activeBaul.id) return;
+    if (baul.id === activeBaul?.id) return;
     useCurrentBaulStore.getState().setCurrentBaulId(baul.id);
     navigate(`/baules/${baul.id}`);
+  };
+
+  const handleSelectMyPhotos = () => {
+    if (activeBaul === null) return;
+    navigate('/mis-fotos');
   };
 
   const handleCreateBaul = () => {
@@ -53,16 +67,37 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
         <Button
           variant="plain"
           className="flex items-center gap-1 -ml-2 px-2 py-1.5 rounded-lg hover:bg-primary/5 max-w-[65vw]"
-          aria-label="Cambiar de baúl"
+          aria-label="Cambiar de espacio"
         >
-          <span className="text-xl font-serif text-foreground truncate">{activeBaul.name}</span>
+          <span className="text-xl font-serif text-foreground truncate">{activeBaul ? activeBaul.name : 'Mis fotos'}</span>
           <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
-          {hasAnyUnseenActivity && <NewDot className="shrink-0" />}
+          {activeBaul && hasAnyUnseenActivity && <NewDot className="shrink-0" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72 p-2">
+        <p className="px-2 pt-1 pb-1.5 text-[0.6875rem] font-medium tracking-wide uppercase text-muted-foreground">
+          Personal
+        </p>
+        <DropdownMenuItem
+          onSelect={handleSelectMyPhotos}
+          className={cn('group gap-3 py-2.5 px-2 rounded-xl', activeBaul === null && 'bg-primary/10')}
+        >
+          <div className="w-10 h-10 rounded-lg bg-secondary shrink-0 flex items-center justify-center">
+            <Images className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <p className="font-serif text-foreground group-focus:text-accent-foreground text-sm leading-tight flex-1">
+            Mis fotos
+          </p>
+          {activeBaul === null && <Check className="w-4 h-4 text-primary shrink-0" aria-label="Espacio activo" />}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <p className="px-2 pt-1 pb-1.5 text-[0.6875rem] font-medium tracking-wide uppercase text-muted-foreground">
+          Mis baúles
+        </p>
         {baules.map((baul) => {
-          const isActive = baul.id === activeBaul.id;
+          const isActive = baul.id === activeBaul?.id;
           return (
             <DropdownMenuItem
               key={baul.id}

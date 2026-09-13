@@ -264,6 +264,7 @@ public static class ElBaulApiHost
         builder.Services.AddScoped<IChapterManager, ChapterManager>();
         builder.Services.AddScoped<IPhotoManager, PhotoManager>();
         builder.Services.AddScoped<IPhotoReadManager, PhotoReadManager>();
+        builder.Services.AddScoped<IMyPhotosReadManager, MyPhotosReadManager>();
         builder.Services.AddScoped<IRecuerdoManager, RecuerdoManager>();
         builder.Services.AddScoped<IBaulFeedManager, BaulFeedManager>();
         builder.Services.AddScoped<IPhotoPersonaTagManager, PhotoPersonaTagManager>();

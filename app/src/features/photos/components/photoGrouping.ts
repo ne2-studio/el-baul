@@ -1,16 +1,18 @@
-import type { Photo } from '@/types';
+import type { GalleryPhoto } from '@/types';
 
 // Groups photos by year+month (or by year alone, when only a year is known — never
 // assume a month for display, that defaulting only applies to sorting), oldest first so
 // the baúl reads like a story, with a trailing "Sin fecha" group for anything undated.
-export function groupPhotosByYear(photos: Photo[]): { label: string; photos: Photo[] }[] {
+// Generic over GalleryPhoto (only `date` is read) so both baúl-scoped Photo and cross-baúl
+// PhotoAsset ("Mis fotos") can reuse the same grouping instead of duplicating it.
+export function groupPhotosByYear<T extends GalleryPhoto>(photos: T[]): { label: string; photos: T[] }[] {
   const MONTH_NAMES = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
 
-  const groups = new Map<string, { year: number; month?: number; photos: Photo[] }>();
-  const undated: Photo[] = [];
+  const groups = new Map<string, { year: number; month?: number; photos: T[] }>();
+  const undated: T[] = [];
 
   for (const photo of photos) {
     if (!photo.date) {

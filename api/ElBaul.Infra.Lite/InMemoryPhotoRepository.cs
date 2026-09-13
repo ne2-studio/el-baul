@@ -165,4 +165,25 @@ public class InMemoryPhotoRepository : IPhotoRepository
         }
         return Task.CompletedTask;
     }
+
+    public Task<IReadOnlyList<PhotoAsset>> GetByUploaderAsync(UserId userId)
+    {
+        lock (_lock)
+            return Task.FromResult<IReadOnlyList<PhotoAsset>>(_photos.Values
+                .Select(p => p.PhotoAsset)
+                .Where(a => a.UploadedBy == userId)
+                .DistinctBy(a => a.Id)
+                .ToList());
+    }
+
+    public Task<IReadOnlyList<Photo>> GetActiveByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds)
+    {
+        lock (_lock)
+        {
+            var idSet = assetIds.ToHashSet();
+            return Task.FromResult<IReadOnlyList<Photo>>(_photos.Values
+                .Where(p => idSet.Contains(p.PhotoAssetId) && p.Status == PhotoStatus.Active)
+                .ToList());
+        }
+    }
 }

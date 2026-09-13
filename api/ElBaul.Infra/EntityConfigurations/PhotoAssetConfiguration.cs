@@ -12,6 +12,7 @@ public class PhotoAssetConfiguration : IEntityTypeConfiguration<PhotoAsset>
         builder.HasKey(a => a.Id);
         builder.Property(a => a.Id).HasConversion(IdValueConverters.PhotoAssetId);
         builder.Property(a => a.StorageKey).IsRequired().HasMaxLength(1000);
+        builder.Property(a => a.UploadedBy).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(a => a.SizeBytes).HasDefaultValue(0L);
         builder.Property(a => a.CreatedAt).HasColumnType("timestamp with time zone");
         builder.ComplexProperty(a => a.Dimensions, dimensions =>

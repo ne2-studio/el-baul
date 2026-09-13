@@ -5470,6 +5470,98 @@
         }
       }
     },
+    "/api/users/me/photos": {
+      "get": {
+        "tags": [
+          "Photos"
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 60
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoAssetPageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoAssetPageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoAssetPageDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication token."
+          },
+          "403": {
+            "description": "The caller does not have access to this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A downstream dependency is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/chapters/{chapterId}/photos": {
       "get": {
         "tags": [
@@ -10285,6 +10377,22 @@
         },
         "additionalProperties": false
       },
+      "BaulAppearanceDto": {
+        "required": [
+          "baulId",
+          "baulName"
+        ],
+        "type": "object",
+        "properties": {
+          "baulId": {
+            "type": "string"
+          },
+          "baulName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "BaulDto": {
         "required": [
           "chapterCount",
@@ -11189,6 +11297,82 @@
           },
           "personaId2": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PhotoAssetDto": {
+        "required": [
+          "baules",
+          "createdAt",
+          "fullUrl",
+          "height",
+          "id",
+          "thumbnailUrl",
+          "width"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "type": "string"
+          },
+          "fullUrl": {
+            "type": "string"
+          },
+          "dateYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "dateMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "dateDay": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "baules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaulAppearanceDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PhotoAssetPageDto": {
+        "required": [
+          "hasMore",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoAssetDto"
+            }
+          },
+          "hasMore": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
