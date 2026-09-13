@@ -51,6 +51,7 @@ public class DiWiringTests
         services.AddScoped<IPhotoMergeListener, PhotoPersonaTagMergeListener>();
         services.AddScoped<IPhotoMergeListener, RecuerdoPhotoMergeListener>();
         services.AddScoped<PhotoDuplicateMergeService>();
+        services.AddScoped<PhotoAssetMergeService>();
 
         services.AddSingleton(new MaintenanceCommandArguments([]));
 

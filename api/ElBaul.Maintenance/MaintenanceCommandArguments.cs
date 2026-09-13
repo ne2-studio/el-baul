@@ -11,4 +11,12 @@ public sealed record MaintenanceCommandArguments(IReadOnlyList<string> Values)
             ? value
             : null;
     }
+
+    /// <summary>Reads an `--optionName value` pair — null if the flag wasn't passed. Used by
+    /// commands accepting e.g. `--hash <hash>` or `--asset-id <id>`.</summary>
+    public string? TryGetString(string optionName)
+    {
+        var index = Values.ToList().IndexOf(optionName);
+        return index >= 0 && index + 1 < Values.Count ? Values[index + 1] : null;
+    }
 }

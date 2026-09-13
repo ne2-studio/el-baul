@@ -68,4 +68,14 @@ public sealed class PhotoAsset : Entity<PhotoAssetId>
         long sizeBytes = 0, ImageDimensions? originalDimensions = null, long? originalSizeBytes = null,
         string? originalContentHash = null) =>
         new(id, storageKey, dimensions, createdAt, uploadedBy, sizeBytes, originalDimensions, originalSizeBytes, originalContentHash);
+
+    // Used only by the deduplicate-photo-assets maintenance command to persist a canonical
+    // asset's freshly recomputed content hash when it was historically null (see that command's
+    // doc comment for why the OriginalContentHash column alone can't be trusted to find
+    // historical duplicates). Never called from any request-serving path — every other
+    // PhotoAsset gets its hash exactly once, at construction, from PhotoFileService.
+    public PhotoAsset WithOriginalContentHash(string originalContentHash) =>
+        Mutate(() => OriginalContentHash = originalContentHash);
+
+    private PhotoAsset Mutate(Action action) { action(); return this; }
 }
