@@ -187,4 +187,45 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
 
     public async Task DeleteAssetAsync(PhotoAssetId id) =>
         await dbContext.PhotoAssets.Where(a => a.Id == id).ExecuteDeleteAsync();
+
+    public async Task<IReadOnlyList<PhotoAsset>> GetAllAssetsAsync() =>
+        await dbContext.PhotoAssets.AsNoTracking().ToListAsync();
+
+    public async Task<IReadOnlyList<Photo>> GetAllByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds) =>
+        await dbContext.Photos.AsNoTracking().Where(p => assetIds.Contains(p.PhotoAssetId)).ToListAsync();
+
+    public async Task<IReadOnlyList<UserPhotoAsset>> GetUserPhotoAssetsByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds) =>
+        await dbContext.UserPhotoAssets.AsNoTracking().Where(r => assetIds.Contains(r.PhotoAssetId)).ToListAsync();
+
+    public async Task RepointPhotoAssetIdAsync(IEnumerable<PhotoId> photoIds, PhotoAssetId newAssetId, string? newOriginalContentHash)
+    {
+        var ids = photoIds.ToList();
+        if (ids.Count == 0) return;
+
+        await dbContext.Photos.Where(p => ids.Contains(p.Id))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(p => p.PhotoAssetId, newAssetId)
+                .SetProperty(p => p.OriginalContentHash, newOriginalContentHash));
+    }
+
+    // Native INSERT ... ON CONFLICT DO UPDATE — same rationale as TryCreateUserPhotoAssetAsync:
+    // always runs inside the caller's own transaction (PhotoAssetMergeService), where a caught
+    // DbUpdateException would poison it.
+    public async Task RedirectUserPhotoAssetAsync(UserId userId, PhotoAssetId newAssetId, DateTime addedAt) =>
+        await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "UserPhotoAssets" ("UserId", "PhotoAssetId", "AddedAt")
+            VALUES ({0}, {1}, {2})
+            ON CONFLICT ("UserId", "PhotoAssetId") DO UPDATE SET "AddedAt" = LEAST("UserPhotoAssets"."AddedAt", EXCLUDED."AddedAt")
+            """,
+            userId.Value, newAssetId.Value, addedAt);
+
+    public async Task DeleteUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId) =>
+        await dbContext.UserPhotoAssets
+            .Where(r => r.UserId == userId && r.PhotoAssetId == assetId)
+            .ExecuteDeleteAsync();
+
+    public async Task SetAssetContentHashAsync(PhotoAssetId id, string originalContentHash) =>
+        await dbContext.PhotoAssets.Where(a => a.Id == id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.OriginalContentHash, originalContentHash));
 }

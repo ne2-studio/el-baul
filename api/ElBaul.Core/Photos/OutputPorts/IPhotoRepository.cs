@@ -126,4 +126,56 @@ public interface IPhotoRepository
     /// photo-assets maintenance command, once it has confirmed (via GetOrphanedAssetsAsync) that
     /// nothing still references it. Never called from any request-serving path.</summary>
     Task DeleteAssetAsync(PhotoAssetId id);
+
+    /// <summary>Every PhotoAsset row, both canonical (non-null hash) and legacy/historical
+    /// (null hash) — the starting point for the deduplicate-photo-assets maintenance command.
+    /// IX_PhotoAssets_OriginalContentHash's uniqueness alone can't find historical duplicates:
+    /// colliding legacy rows already lost their hash to migration
+    /// 20260913154323_AddUserPhotoAssetsAndGlobalContentHash, so the command has to recompute
+    /// content hashes from storage for every null-hash row before it can group them.</summary>
+    Task<IReadOnlyList<PhotoAsset>> GetAllAssetsAsync();
+
+    /// <summary>Every Photo referencing any of these assets, regardless of status — unlike
+    /// GetActiveByAssetIdsAsync (Active-only), used by deduplicate-photo-assets to repoint every
+    /// last reference (including soft-deleted photos) off a duplicate PhotoAsset before it's safe
+    /// to delete the row: Photo.PhotoAssetId is a Restrict FK, so even a soft-deleted Photo still
+    /// pointing at a duplicate would block its deletion.</summary>
+    Task<IReadOnlyList<Photo>> GetAllByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds);
+
+    /// <summary>Every UserPhotoAsset relation for any of these assets — used by
+    /// deduplicate-photo-assets to find every (UserId, AddedAt) pair that needs redirecting/
+    /// merging onto a duplicate group's canonical asset.</summary>
+    Task<IReadOnlyList<UserPhotoAsset>> GetUserPhotoAssetsByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds);
+
+    /// <summary>Repoints every listed Photo onto a different PhotoAsset in one statement, keeping
+    /// each Photo's own denormalized OriginalContentHash column in lockstep with the new asset's
+    /// trustworthy content hash (see Photo.OriginalContentHash's doc comment on why that copy
+    /// exists at all) — used only by deduplicate-photo-assets, once it has confirmed (by merging
+    /// any same-baúl active conflicts through PhotoDuplicateMergeService first) that no two of
+    /// these photos will collide on IX_Photos_BaulId_PhotoAssetId_Active or
+    /// IX_Photos_BaulId_OriginalContentHash_Active. Bypasses the change tracker
+    /// (ExecuteUpdateAsync) like TryAddExistingAssetAsync's raw-SQL siblings — ordinary Update()
+    /// would require loading and tracking every row first for what's otherwise a pure bulk
+    /// column rewrite.</summary>
+    Task RepointPhotoAssetIdAsync(IEnumerable<PhotoId> photoIds, PhotoAssetId newAssetId, string? newOriginalContentHash);
+
+    /// <summary>Idempotently redirects one user's UserPhotoAsset relation onto a different
+    /// (canonical) PhotoAsset, keeping the earliest AddedAt if the user already has a relation to
+    /// that asset — used by deduplicate-photo-assets to collapse e.g. "Pedro → duplicate A" and
+    /// "Pedro → duplicate B" into a single "Pedro → canonical" relation without violating the
+    /// (UserId, PhotoAssetId) primary key. Native INSERT ... ON CONFLICT DO UPDATE, same
+    /// rationale as TryCreateUserPhotoAssetAsync: always runs inside the caller's own
+    /// transaction, where a caught DbUpdateException would poison it.</summary>
+    Task RedirectUserPhotoAssetAsync(UserId userId, PhotoAssetId newAssetId, DateTime addedAt);
+
+    /// <summary>Deletes a single UserPhotoAsset relation — used by deduplicate-photo-assets to
+    /// remove a duplicate asset's relation once it has been merged onto the canonical asset via
+    /// RedirectUserPhotoAssetAsync.</summary>
+    Task DeleteUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId);
+
+    /// <summary>Sets a PhotoAsset's OriginalContentHash directly — used only by
+    /// deduplicate-photo-assets to persist the freshly recomputed content hash onto a group's
+    /// canonical asset when it was historically null. Never called from any request-serving
+    /// path — PhotoAsset's own constructor is the only writer everywhere else.</summary>
+    Task SetAssetContentHashAsync(PhotoAssetId id, string originalContentHash);
 }

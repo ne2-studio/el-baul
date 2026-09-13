@@ -11,9 +11,21 @@ namespace ElBaul.Maintenance.Tests;
 // project reference between test projects, see docs/architecture/backend.md).
 internal sealed class FakePhotoStorage : IPhotoStorage
 {
+    // Keyed content deduplicate-photo-assets rehashes from — never seeded by the tests here,
+    // which never call OpenReadForDownloadAsync.
+    private readonly Dictionary<string, byte[]> _contents = new();
+
     public List<string> DeletedKeys { get; } = [];
+
+    public void Seed(string key, byte[] bytes) => _contents[key] = bytes;
+
     public Task SaveAsync(string key, Stream content, string contentType) => Task.CompletedTask;
-    public Task<PhotoContent> OpenReadForDownloadAsync(string key) => throw new NotSupportedException();
+
+    public Task<PhotoContent> OpenReadForDownloadAsync(string key) =>
+        _contents.TryGetValue(key, out var bytes)
+            ? Task.FromResult(new PhotoContent(new MemoryStream(bytes), "image/jpeg"))
+            : throw new FileNotFoundException($"No content seeded for storage key '{key}'.");
+
     public Task<string> GetImageUrl(string key, ImagePlacement placement, ImageCrop? crop = null, ImageDimensions? sourceDimensions = null) =>
         Task.FromResult($"https://imgproxy.test/{placement}/{key}");
     public Task DeleteAsync(string key)

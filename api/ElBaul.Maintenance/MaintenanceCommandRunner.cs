@@ -92,6 +92,10 @@ public static class MaintenanceCommandRunner
         builder.Services.AddScoped<IPhotoMergeListener, PhotoPersonaTagMergeListener>();
         builder.Services.AddScoped<IPhotoMergeListener, RecuerdoPhotoMergeListener>();
         builder.Services.AddScoped<PhotoDuplicateMergeService>();
+        // deduplicate-photo-assets needs the real merge/redirect domain behavior too, and reuses
+        // PhotoDuplicateMergeService above for its own same-baúl conflict resolution — see
+        // PhotoAssetMergeService's doc comment.
+        builder.Services.AddScoped<PhotoAssetMergeService>();
 
         builder.Services.AddSingleton(new MaintenanceCommandArguments(args.Skip(1).Where(arg => arg != "--dry-run").ToArray()));
         foreach (var (name, type) in Commands.Value)
