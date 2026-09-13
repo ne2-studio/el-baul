@@ -156,4 +156,78 @@ public class MyPhotosReadManagerTests
             [older.ToString(), newer.ToString(), undated.ToString()],
             result.Value.Items.Select(i => i.Id));
     }
+
+    // "Sin compartir" (Slice 3, docs/.backlog issue #62).
+    [Fact]
+    public async Task GetMyPhotosAsync_Unshared_ReturnsAssetsWithNoBaulAppearance()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var shared = await _fixture.AddPhotoAsync(baulId, storageKey: "shared.jpg", uploadedBy: CustodioId);
+        var asset = (await _fixture.Photos.GetByIdAsync(shared))!.PhotoAssetId;
+        var unsharedAssetId = new PhotoAssetId(Guid.NewGuid());
+        await _fixture.Photos.TryCreateAssetAsync(PhotoAsset.Create(
+            unsharedAssetId, "unshared.jpg", new ImageDimensions(10, 10), _fixture.Clock.UtcNow(), new UserId(CustodioId)));
+        await _fixture.Photos.TryCreateUserPhotoAssetAsync(new UserId(CustodioId), unsharedAssetId, _fixture.Clock.UtcNow());
+
+        var all = await CreateManager().GetMyPhotosAsync(0, 60);
+        var unshared = await CreateManager().GetMyPhotosAsync(0, 60, unsharedOnly: true);
+
+        Assert.Equal(2, all.Value.Items.Count);
+        var unsharedItem = Assert.Single(unshared.Value.Items);
+        Assert.Equal(unsharedAssetId.ToString(), unsharedItem.Id);
+        Assert.Empty(unsharedItem.Baules);
+        Assert.NotEqual(asset.ToString(), unsharedItem.Id);
+    }
+
+    [Fact]
+    public async Task GetMyPhotosAsync_Unshared_ExcludesAnAssetSharedIntoABaulTheCallerCanAccess()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        await _fixture.AddPhotoAsync(baulId, storageKey: "shared.jpg", uploadedBy: CustodioId);
+
+        var unshared = await CreateManager().GetMyPhotosAsync(0, 60, unsharedOnly: true);
+
+        Assert.Empty(unshared.Value.Items);
+    }
+
+    [Fact]
+    public async Task GetMyPhotosAsync_Unshared_TreatsAnAppearanceInAnInaccessibleBaul_AsStillUnshared()
+    {
+        // The important domain rule (Slice 3, ticket §4): another user's independent contribution
+        // of the exact same canonical PhotoAsset into a baúl the caller can't access must never
+        // make the caller's own personal asset count as "shared" — see MyPhotosReadManager's own
+        // doc comment. CustodioId has his own UserPhotoAsset relation to this asset (e.g. via
+        // exact-duplicate reuse), but the only Photo referencing it lives in a baúl only
+        // OtherUserId belongs to.
+        var assetId = new PhotoAssetId(Guid.NewGuid());
+        await _fixture.Photos.TryCreateAssetAsync(PhotoAsset.Create(
+            assetId, "shared-elsewhere.jpg", new ImageDimensions(10, 10), _fixture.Clock.UtcNow(), new UserId(OtherUserId)));
+        await _fixture.Photos.TryCreateUserPhotoAssetAsync(new UserId(CustodioId), assetId, _fixture.Clock.UtcNow());
+
+        var inaccessibleBaul = await _fixture.CreateBaulAsync("Baúl ajeno", OtherUserId);
+        var asset = (await _fixture.Photos.GetAssetByIdAsync(assetId))!;
+        var photoInInaccessibleBaul = Photo.CreateFromExistingAsset(
+            new PhotoId(Guid.NewGuid()), inaccessibleBaul, asset, null, new UserId(OtherUserId), _fixture.Clock.UtcNow());
+        await _fixture.Photos.TryAddExistingAssetAsync(photoInInaccessibleBaul);
+
+        var unshared = await CreateManager().GetMyPhotosAsync(0, 60, unsharedOnly: true);
+
+        var item = Assert.Single(unshared.Value.Items);
+        Assert.Equal(assetId.ToString(), item.Id);
+        Assert.Empty(item.Baules);
+    }
+
+    [Fact]
+    public async Task ProjectAsync_ReturnsTheSameShape_IncludingAnyExistingBaulAppearances()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, storageKey: "asset.jpg", uploadedBy: CustodioId);
+        var asset = (await _fixture.Photos.GetByIdAsync(photoId))!.PhotoAsset;
+
+        var dto = await CreateManager().ProjectAsync(asset, new UserId(CustodioId));
+
+        Assert.Equal(asset.Id.ToString(), dto.Id);
+        var appearance = Assert.Single(dto.Baules);
+        Assert.Equal(baulId.ToString(), appearance.BaulId);
+    }
 }

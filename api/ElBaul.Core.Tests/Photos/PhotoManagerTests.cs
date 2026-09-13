@@ -42,11 +42,17 @@ public class PhotoManagerTests
     private IPhotoListReadModel CreatePhotoListReadModel() =>
         new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.PhotoPersonaTags);
 
+    private MyPhotosReadManager CreateMyPhotosReadManager(string currentUserId, IPhotoStorage? photoStorage = null) =>
+        new(_fixture.Photos, new StaticCurrentUserProvider(currentUserId),
+            new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            photoStorage ?? _photoStorage);
+
     private PhotoManager CreateManager(
         string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null, Guid? nextAddToBaulId = null) =>
         new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(nextId: nextId),
+            CreateMyPhotosReadManager(currentUserId),
             new StaticIdGenerator(nextAddToBaulId ?? Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
@@ -137,6 +143,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage),
+            CreateMyPhotosReadManager(CustodioId),
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
@@ -159,6 +166,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository),
+            CreateMyPhotosReadManager(CustodioId),
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
@@ -184,6 +192,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository),
+            CreateMyPhotosReadManager(CustodioId),
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
@@ -332,7 +341,8 @@ public class PhotoManagerTests
                 NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
                 new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
                 CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
-                new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork())
+                CreateMyPhotosReadManager(CustodioId),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork())
             .UploadAsync(chapterA, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
         Assert.True(pedroResult.IsSuccess);
 
@@ -342,6 +352,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(jaimeId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+            CreateMyPhotosReadManager(jaimeId),
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
 
         var jaimeResult = await jaimeManager.UploadAsync(chapterB, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
@@ -371,6 +382,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(jaimeId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+            CreateMyPhotosReadManager(jaimeId),
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
         await jaimeManager.UploadAsync(chapterB, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
 
@@ -397,6 +409,7 @@ public class PhotoManagerTests
             NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(jaimeId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+            CreateMyPhotosReadManager(jaimeId),
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
         await jaimeManager.UploadAsync(chapterB, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
         var jaimesAssetId = (await _fixture.Photos.GetByContributorAsync(new UserId(jaimeId)))[0].Id;
@@ -1446,6 +1459,101 @@ public class PhotoManagerTests
         var result = await readManager.GetBatchPhotosAsync(baulId, Guid.NewGuid());
 
         Assert.True(result.IsFailure);
+    }
+
+    // Direct upload into "Mis fotos" (Slice 3, docs/.backlog issue #62) — no chapter/baúl in
+    // the loop at all.
+    [Fact]
+    public async Task UploadToMyPhotosAsync_CreatesAPhotoAssetAndUserPhotoAsset_ButNoPhoto()
+    {
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([1, 2, 3]);
+
+        var result = await manager.UploadToMyPhotosAsync(content, new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value.Baules);
+        var assetId = new PhotoAssetId(Guid.Parse(result.Value.Id));
+        Assert.NotNull(await _fixture.Photos.GetAssetByIdAsync(assetId));
+        Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetId));
+        // No Photo was ever created for this asset.
+        Assert.Null(await _fixture.Photos.GetByIdAsync(new PhotoId(assetId.Value)));
+    }
+
+    [Fact]
+    public async Task UploadToMyPhotosAsync_AppearsInMisFotos_AndInSinCompartir()
+    {
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([4, 5, 6]);
+        var uploadResult = await manager.UploadToMyPhotosAsync(content, new ClientUploadId(Guid.NewGuid()));
+
+        var myPhotos = await CreateMyPhotosReadManager(CustodioId, _photoStorage).GetMyPhotosAsync(0, 60);
+        var unshared = await CreateMyPhotosReadManager(CustodioId, _photoStorage).GetMyPhotosAsync(0, 60, unsharedOnly: true);
+
+        Assert.Contains(myPhotos.Value.Items, i => i.Id == uploadResult.Value.Id);
+        Assert.Contains(unshared.Value.Items, i => i.Id == uploadResult.Value.Id);
+    }
+
+    [Fact]
+    public async Task UploadToMyPhotosAsync_ReusesTheAsset_WhenTheExactSameBytesAreAlreadyInMisFotos()
+    {
+        var manager = CreateManager(CustodioId);
+        var bytes = new byte[] { 7, 7, 7 };
+        var first = await manager.UploadToMyPhotosAsync(new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        var second = await manager.UploadToMyPhotosAsync(new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(second.IsSuccess);
+        Assert.Equal(first.Value.Id, second.Value.Id);
+        // Only one PhotoAsset, only one UserPhotoAsset relation, only one stored blob.
+        Assert.Single(_photoStorage.SavedKeys);
+        Assert.Single(await _fixture.Photos.GetByContributorAsync(new UserId(CustodioId)));
+    }
+
+    [Fact]
+    public async Task UploadToMyPhotosAsync_ReusesTheCanonicalAsset_WhenAnotherUserAlreadyHasIt_WithoutLeaking()
+    {
+        var bytes = new byte[] { 8, 8, 8 };
+        const string jaimeId = "jaime";
+        var jaimeManager = new PhotoManager(
+            NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
+            new StaticCurrentUserProvider(jaimeId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+            CreateMyPhotosReadManager(jaimeId),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
+        var jaimeUpload = await jaimeManager.UploadToMyPhotosAsync(new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        var pedroManager = CreateManager(CustodioId);
+        var pedroUpload = await pedroManager.UploadToMyPhotosAsync(new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(pedroUpload.IsSuccess);
+        Assert.Equal(jaimeUpload.Value.Id, pedroUpload.Value.Id, ignoreCase: true);
+        Assert.Single(_photoStorage.SavedKeys);
+        Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(
+            new UserId(CustodioId), new PhotoAssetId(Guid.Parse(pedroUpload.Value.Id))));
+        Assert.DoesNotContain("jaime", pedroUpload.Value.Id, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UploadToMyPhotosAsync_OfAnAssetAlreadyInABaul_DoesNotCreateANewPhoto_AndIsNotUnshared()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var bytes = new byte[] { 9, 9, 9 };
+        var manager = CreateManager(CustodioId);
+        using var uploadContent = new MemoryStream(bytes);
+        var baulUpload = await manager.UploadAsync(chapterId, uploadContent, new ClientUploadId(Guid.NewGuid()));
+        Assert.True(baulUpload.IsSuccess);
+
+        var myFotosUpload = await manager.UploadToMyPhotosAsync(new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(myFotosUpload.IsSuccess);
+        var appearance = Assert.Single(myFotosUpload.Value.Baules);
+        Assert.Equal(baulId.ToString(), appearance.BaulId);
+        // Still exactly one Photo in the chapter — the Mis fotos upload didn't create a second one.
+        Assert.Single(await _fixture.Photos.GetByChapterIdAsync(chapterId));
+
+        var unshared = await CreateMyPhotosReadManager(CustodioId, _photoStorage).GetMyPhotosAsync(0, 60, unsharedOnly: true);
+        Assert.DoesNotContain(unshared.Value.Items, i => i.Id == myFotosUpload.Value.Id);
     }
 
     private sealed class CapturingLogger<T> : ILogger<T>

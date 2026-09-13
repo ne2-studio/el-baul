@@ -15,6 +15,10 @@ interface UseMyPhotoViewerActionsOptions {
 interface UseMyPhotoViewerActionsResult {
   menuItems: PhotoViewerMenuItem[];
   modals: React.ReactNode;
+  // Exposed separately from menuItems so the "Todavía no aparece en ningún baúl" empty state
+  // (Slice 3, docs/.backlog issue #62) can trigger the same picker as the "···" menu — undefined
+  // when there's genuinely nowhere left to add this asset to.
+  openAddToBaulModal?: () => void;
 }
 
 // Mis fotos' own (much smaller) counterpart to usePhotoViewerActions — asset-scoped instead of
@@ -74,5 +78,5 @@ export function useMyPhotoViewerActions({ photo }: UseMyPhotoViewerActionsOption
     />
   );
 
-  return { menuItems, modals };
+  return { menuItems, modals, openAddToBaulModal: otherBaules.length > 0 ? openAddToBaulModal : undefined };
 }

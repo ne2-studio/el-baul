@@ -48,7 +48,7 @@ describe('UploadConfirmationScreen — 30-photo cap per upload (issue #37)', () 
 
     render(
       <UploadConfirmationScreen
-        currentChapter={currentChapter}
+        subtitle={currentChapter.name}
         selectedPhotos={makePhotos(28)}
         onBack={vi.fn()}
         onPhotosLimitExceeded={onPhotosLimitExceeded}
@@ -76,7 +76,7 @@ describe('UploadConfirmationScreen — 30-photo cap per upload (issue #37)', () 
 
     render(
       <UploadConfirmationScreen
-        currentChapter={currentChapter}
+        subtitle={currentChapter.name}
         selectedPhotos={makePhotos(3)}
         onBack={vi.fn()}
         onPhotosLimitExceeded={onPhotosLimitExceeded}
@@ -102,7 +102,7 @@ describe('UploadConfirmationScreen — drag and drop (issue #41)', () => {
 
     render(
       <UploadConfirmationScreen
-        currentChapter={currentChapter}
+        subtitle={currentChapter.name}
         selectedPhotos={makePhotos(3)}
         onBack={vi.fn()}
         onUpload={vi.fn()}

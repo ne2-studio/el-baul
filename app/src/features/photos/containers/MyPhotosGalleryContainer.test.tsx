@@ -45,6 +45,7 @@ function renderContainer() {
       <Routes>
         <Route path="/mis-fotos" element={<MyPhotosGalleryContainer />} />
         <Route path="/mis-fotos/foto/:assetId" element={<div>Foto abierta</div>} />
+        <Route path="/mis-fotos/subir/confirmar" element={<div>Confirmar subida</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -77,7 +78,7 @@ describe('MyPhotosGalleryContainer', () => {
 
     renderContainer();
 
-    expect(await screen.findByText('Todavía no tienes fotos aquí')).toBeInTheDocument();
+    expect(await screen.findByText('Tus fotos pueden empezar aquí')).toBeInTheDocument();
   });
 
   it('fetches the next page once the sentinel intersects, and stops once hasMore is false', async () => {
@@ -121,5 +122,34 @@ describe('MyPhotosGalleryContainer', () => {
     await user.click(photos[0]);
 
     expect(await screen.findByText('Foto abierta')).toBeInTheDocument();
+  });
+
+  // Slice 3 (docs/.backlog issue #62): "Sin compartir" filter + upload FAB.
+  it('switching to "Sin compartir" resets the page and re-fetches with that filter', async () => {
+    useMyPhotosStore.setState({ assets: [asset('a1')], hasMore: false, filter: 'todas' });
+    vi.mocked(loadMyPhotos).mockImplementation(async () => {
+      useMyPhotosStore.setState({ assets: [], hasMore: false });
+    });
+    const user = userEvent.setup();
+
+    renderContainer();
+    await screen.findByAltText('Foto');
+
+    await user.click(screen.getByRole('button', { name: 'Sin compartir' }));
+
+    expect(useMyPhotosStore.getState().filter).toBe('sin-compartir');
+    await waitFor(() => expect(loadMyPhotos).toHaveBeenCalled());
+    expect(await screen.findByText('Todo está compartido')).toBeInTheDocument();
+  });
+
+  it('navigates to the Mis fotos upload flow when the FAB is clicked', async () => {
+    useMyPhotosStore.setState({ assets: [], hasMore: false });
+    const user = userEvent.setup();
+
+    renderContainer();
+    await screen.findByText('Tus fotos pueden empezar aquí');
+    await user.click(screen.getByRole('button', { name: 'Subir fotos' }));
+
+    expect(await screen.findByText('Confirmar subida')).toBeInTheDocument();
   });
 });

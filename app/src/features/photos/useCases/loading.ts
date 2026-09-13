@@ -54,14 +54,17 @@ export async function loadMoreBaulPhotos(baulId: string): Promise<void> {
 // "Mis fotos" (docs/.backlog issue #62) — user-scoped, not keyed by baulId. Unlike
 // loadBaulPhotos/loadMoreBaulPhotos, PhotoAsset isn't normalized into a shared by-id store: it's
 // only ever consumed within this one feature, so useMyPhotosStore.assets holds the objects
-// directly instead of ids + a lookup table.
+// directly instead of ids + a lookup table. Always loads the currently active filter
+// (Slice 3, docs/.backlog issue #62) — see useMyPhotosStore's own doc comment on why only one
+// filter's page is cached at a time.
 export async function loadMyPhotos(): Promise<void> {
-  const { assets, hasMore } = await api.myPhotos.getPage({ skip: 0, take: BAUL_PHOTOS_PAGE_SIZE });
-  useMyPhotosStore.setState({ assets, hasMore });
+  const filter = useMyPhotosStore.getState().filter;
+  const { assets, hasMore } = await api.myPhotos.getPage({ skip: 0, take: BAUL_PHOTOS_PAGE_SIZE, filter });
+  useMyPhotosStore.getState().setPage(assets, hasMore);
 }
 
 export async function loadMoreMyPhotos(): Promise<void> {
-  const alreadyLoaded = useMyPhotosStore.getState().assets?.length ?? 0;
-  const { assets, hasMore } = await api.myPhotos.getPage({ skip: alreadyLoaded, take: BAUL_PHOTOS_PAGE_SIZE });
-  useMyPhotosStore.setState((state) => ({ assets: [...(state.assets ?? []), ...assets], hasMore }));
+  const { filter, assets: loaded } = useMyPhotosStore.getState();
+  const { assets, hasMore } = await api.myPhotos.getPage({ skip: loaded?.length ?? 0, take: BAUL_PHOTOS_PAGE_SIZE, filter });
+  useMyPhotosStore.getState().appendPage(assets, hasMore);
 }

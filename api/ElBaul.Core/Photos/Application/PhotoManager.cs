@@ -23,6 +23,7 @@ public class PhotoManager(
     PhotoLifecycleService photoLifecycle,
     IPhotoDtoProjector photoDtoProjector,
     PhotoUploadWorkflow photoUploadWorkflow,
+    IMyPhotosReadManager myPhotosReadManager,
     IIdGenerator idGenerator,
     IClock clock,
     IUnitOfWork unitOfWork) : IPhotoManager
@@ -101,6 +102,25 @@ public class PhotoManager(
         }
 
         return await photoDtoProjector.ProjectAsync(outcome.Photo, isAdmin, userId, outcome.AlreadyExisted);
+    }
+
+    // Direct upload into "Mis fotos" (Slice 3, docs/.backlog issue #62) — no chapter/baúl to
+    // authorize against at all, unlike UploadAsync/UploadToBaulAsync above: the caller only
+    // needs to be authenticated. clientUploadId is accepted for symmetry with the other upload
+    // endpoints (same request shape the frontend already builds) but unused here — retries are
+    // already idempotent via PhotoUploadWorkflow's content-hash dedup, with no Photo/
+    // ClientUploadId row for a second attempt to collide against.
+    public async Task<Result<PhotoAssetDto>> UploadToMyPhotosAsync(Stream content, ClientUploadId clientUploadId)
+    {
+        var userId = currentUserProvider.GetUserId();
+
+        var ingestResult = await photoUploadWorkflow.IngestAssetAsync(userId, content);
+        if (ingestResult.IsFailure) return Result.Failure<PhotoAssetDto>(ingestResult.Error);
+        var asset = ingestResult.Value;
+
+        logger.LogInformation("Photo ingested directly into Mis fotos {UserId} {PhotoAssetId}", userId, asset.Id);
+
+        return Result.Success(await myPhotosReadManager.ProjectAsync(asset, userId));
     }
 
     public async Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId)

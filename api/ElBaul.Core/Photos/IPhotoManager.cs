@@ -16,6 +16,13 @@ public interface IPhotoManager
         ClientUploadId clientUploadId,
         Guid? uploadBatchId = null);
 
+    /// <summary>Uploads directly into "Mis fotos" (Slice 3, docs/.backlog issue #62): resolves/
+    /// creates the caller's canonical PhotoAsset and their UserPhotoAsset relation, but creates
+    /// no Photo and involves no baúl at all — the asset starts out belonging to zero baúles, a
+    /// legitimate first-class state (see PhotoUploadWorkflow.IngestAssetAsync). The caller is
+    /// always derived from the auth token, never a client-supplied UserId.</summary>
+    Task<Result<PhotoAssetDto>> UploadToMyPhotosAsync(Stream content, ClientUploadId clientUploadId);
+
     Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId);
 
     /// <summary>"Add to another baúl" (docs/.backlog issue #62, Slice 2): creates a new Photo in

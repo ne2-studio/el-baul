@@ -25,11 +25,34 @@ public class PhotosController(
     // User-scoped, not baúl-scoped — "Mis fotos" (docs/.backlog issue #62). Follows the same
     // users/me/... convention as UsersController; the caller is derived from the auth token
     // inside MyPhotosReadManager, never from a route/query parameter.
+    // filter: "todas" (default) or "sin-compartir" (Slice 3, docs/.backlog issue #62) — the
+    // asset currently appears in zero baúles the caller can access. Any other/missing value is
+    // treated as "todas" rather than rejected, same tolerance as BaulPhotosFilter server-side.
     [HttpGet("users/me/photos")]
     [ProducesResponseType(typeof(PhotoAssetPageDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMyPhotos([FromQuery] int skip = 0, [FromQuery] int take = 60)
+    public async Task<IActionResult> GetMyPhotos(
+        [FromQuery] int skip = 0, [FromQuery] int take = 60, [FromQuery] string? filter = null)
     {
-        var result = await myPhotosReadManager.GetMyPhotosAsync(skip, take);
+        var result = await myPhotosReadManager.GetMyPhotosAsync(skip, take, unsharedOnly: filter == "sin-compartir");
+        return result.ToActionResult();
+    }
+
+    // Direct upload into "Mis fotos" (Slice 3, docs/.backlog issue #62) — same request shape as
+    // the baúl upload endpoints below, no chapter/baúl in the route at all. Creates/reuses the
+    // canonical PhotoAsset and the caller's UserPhotoAsset relation; never a Photo.
+    [HttpPost("users/me/photos")]
+    [RequestSizeLimit(25_000_000)]
+    [ProducesResponseType(typeof(PhotoAssetDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UploadToMyPhotos([FromForm] UploadPhotoRequest request)
+    {
+        if (request.File is null || request.File.Length == 0)
+            return BadRequest(new { error = "No file provided" });
+
+        if (request.ClientUploadId is not { } clientUploadId)
+            return BadRequest(new { error = "ClientUploadId is required" });
+
+        await using var stream = request.File.OpenReadStream();
+        var result = await photoManager.UploadToMyPhotosAsync(stream, clientUploadId);
         return result.ToActionResult();
     }
 

@@ -130,6 +130,94 @@ public class PhotoUploadWorkflow(
         }
     }
 
+    // "Ingest asset" half of the pipeline, with no "project into baúl" half at all — the upload
+    // entry point for Mis fotos (Slice 3, docs/.backlog issue #62): resolves/creates the
+    // canonical PhotoAsset and ensures the caller's UserPhotoAsset relation, then stops. No
+    // Photo is created, so this asset may legitimately end up with zero Photo projections — see
+    // PhotoAsset's own doc comment and MyPhotosReadManager. Shares every step with
+    // CreatePhotoAsync above (buffering/hashing, the global exact-duplicate lookup, storage,
+    // TryCreateAssetAsync's race handling) except the Photo itself; kept as its own method
+    // rather than folded into CreatePhotoAsync because splitting "ingest" from "project" there
+    // would also split what today is one atomic transaction into two, which is unnecessary risk
+    // for the baúl-upload path this doesn't touch.
+    public async Task<Result<PhotoAsset>> IngestAssetAsync(UserId userId, Stream content)
+    {
+        Result<BufferedUpload> bufferResult;
+        try
+        {
+            bufferResult = await photoFileService.BufferAndHashAsync(content);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Asset ingestion failed while buffering the upload {UserId}", userId);
+            throw;
+        }
+
+        if (bufferResult.IsFailure) return Result.Failure<PhotoAsset>(bufferResult.Error);
+        using var buffered = bufferResult.Value;
+
+        var now = clock.UtcNow();
+
+        // Same global exact-duplicate lookup CreatePhotoAsync uses — reusing an existing
+        // canonical PhotoAsset never costs a second stored copy here either.
+        var existingAsset = await photoRepository.GetAssetByContentHashAsync(buffered.OriginalContentHash);
+        if (existingAsset is not null)
+        {
+            // Idempotent — a no-op if the user already has this asset (re-uploading their own
+            // file, or the exact bytes already sitting in one of their baúles). Never reveals
+            // whether some other user already had this asset (see UserPhotoAsset's doc comment).
+            await photoRepository.TryCreateUserPhotoAssetAsync(userId, existingAsset.Id, now);
+            logger.LogInformation(
+                "Asset ingestion reused an existing canonical PhotoAsset {UserId} {PhotoAssetId}", userId, existingAsset.Id);
+            return Result.Success(existingAsset);
+        }
+
+        Result<StoredPhotoFile> storedFileResult;
+        try
+        {
+            storedFileResult = await photoFileService.ProcessAndStoreAsync(userId, buffered);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Asset ingestion failed while saving to storage {UserId}", userId);
+            throw;
+        }
+
+        if (storedFileResult.IsFailure) return Result.Failure<PhotoAsset>(storedFileResult.Error);
+        var storedFile = storedFileResult.Value;
+
+        var asset = PhotoAsset.Create(
+            new PhotoAssetId(idGenerator.NewId()), storedFile.StorageKey, storedFile.Dimensions, now, userId,
+            storedFile.SizeBytes, storedFile.OriginalDimensions, storedFile.OriginalSizeBytes,
+            storedFile.OriginalContentHash);
+
+        try
+        {
+            return await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                if (!await photoRepository.TryCreateAssetAsync(asset))
+                {
+                    // Lost the race — same recovery as CreatePhotoAsync's equivalent branch.
+                    await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
+                    var winner = await photoRepository.GetAssetByContentHashAsync(storedFile.OriginalContentHash)
+                        ?? throw new InvalidOperationException(
+                            $"TryCreateAssetAsync reported a hash conflict for hash {storedFile.OriginalContentHash} but no PhotoAsset with that hash was found.");
+                    await photoRepository.TryCreateUserPhotoAssetAsync(userId, winner.Id, now);
+                    return Result.Success(winner);
+                }
+
+                await photoRepository.TryCreateUserPhotoAssetAsync(userId, asset.Id, now);
+                return Result.Success(asset);
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Asset ingestion failed while persisting metadata {UserId} {StorageKey}", userId, storedFile.StorageKey);
+            await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
+            throw;
+        }
+    }
+
     // Wraps ReuseAssetCoreAsync in its own transaction — used when the exact-duplicate lookup
     // finds the existing PhotoAsset up front, with no storage write of its own to compensate for.
     private async Task<Result<PhotoUploadOutcome>> ReuseExistingAssetAsync(

@@ -17,7 +17,7 @@ interface MyPhotoViewerContainerProps {
 // same presentational PhotoViewer, with baulNames filled in from the asset's own Photo
 // appearances instead of a ChapterBadge.
 export function MyPhotoViewerContainer({ photo, photos, onClose, onPhotoChange }: MyPhotoViewerContainerProps) {
-  const { menuItems, modals } = useMyPhotoViewerActions({ photo });
+  const { menuItems, modals, openAddToBaulModal } = useMyPhotoViewerActions({ photo });
 
   return (
     <PhotoViewer
@@ -30,6 +30,7 @@ export function MyPhotoViewerContainer({ photo, photos, onClose, onPhotoChange }
       openDateModal={() => {}}
       modals={modals}
       baulNames={photo.baules.map((b) => b.baulName)}
+      onAddToBaul={openAddToBaulModal}
     />
   );
 }

@@ -37,7 +37,7 @@ export const UploadConfirmationRoute: React.FC = () => {
 
   return (
     <UploadConfirmationScreen
-      currentChapter={currentChapter}
+      subtitle={currentChapter.name}
       selectedPhotos={selectedPhotos}
       onBack={() => navigate(basePath)}
       onPhotosDropped={(count) =>

@@ -46,6 +46,9 @@ import { AcceptBaulInviteRoute } from '../features/sharing/routes/AcceptBaulInvi
 import { SelectBaulForShareRoute } from '../features/sharing/routes/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/routes/ProfileRoute';
 import { MisFotosRoute } from '../features/photos/routes/MisFotosRoute';
+import { MyPhotosUploadConfirmationRoute } from '../features/photos/routes/MyPhotosUploadConfirmationRoute';
+import { MyPhotosUploadingRoute } from '../features/photos/routes/MyPhotosUploadingRoute';
+import { MyPhotosUploadErrorRoute } from '../features/photos/routes/MyPhotosUploadErrorRoute';
 import { MyAccountRoute } from '../features/profile/routes/MyAccountRoute';
 import { NotificationPreferencesRoute } from '../features/profile/routes/NotificationPreferencesRoute';
 import { HelpSupportRoute } from '../features/support/routes/HelpSupportRoute';
@@ -426,6 +429,23 @@ function App() {
         <Route path="/mis-fotos" element={
           <ProtectedRoute>
             <MisFotosRoute />
+          </ProtectedRoute>
+        } />
+        {/* Subida directa a Mis fotos (Slice 3, docs/.backlog issue #62) — mismo wizard de
+            confirmar/subiendo/error que la subida a un baúl, sin baulId/chapterId en la ruta. */}
+        <Route path="/mis-fotos/subir/confirmar" element={
+          <ProtectedRoute>
+            <MyPhotosUploadConfirmationRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/mis-fotos/subir/subiendo" element={
+          <ProtectedRoute>
+            <MyPhotosUploadingRoute />
+          </ProtectedRoute>
+        } />
+        <Route path="/mis-fotos/subir/error" element={
+          <ProtectedRoute>
+            <MyPhotosUploadErrorRoute />
           </ProtectedRoute>
         } />
         <Route path="/configuracion/notificaciones" element={

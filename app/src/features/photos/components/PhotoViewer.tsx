@@ -54,8 +54,13 @@ interface PhotoViewerProps<T extends GalleryPhoto> {
   onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
   /** Baúles this PhotoAsset appears in — only used by "Mis fotos" (MyPhotoViewerContainer),
    * which has no single baúl to hang a ChapterBadge off of. Already limited to baúles the
-   * current user can access — see MyPhotosReadManager.GetMyPhotosAsync on the backend. */
+   * current user can access — see MyPhotosReadManager.GetMyPhotosAsync on the backend. An empty
+   * array (as opposed to undefined) is a valid first-class state since Slice 3 (docs/.backlog
+   * issue #62): a photo uploaded directly into Mis fotos starts out in zero baúles. */
   baulNames?: string[];
+  /** "Añadir a un baúl" CTA shown in the zero-baúles empty state below — undefined when there's
+   * nowhere left to add this asset to (see useMyPhotoViewerActions). */
+  onAddToBaul?: () => void;
 }
 
 function isEditableKeyTarget(target: EventTarget | null) {
@@ -88,6 +93,7 @@ export function PhotoViewer<T extends GalleryPhoto>({
   onShareRecuerdo,
   onEditRecuerdo,
   baulNames,
+  onAddToBaul,
 }: PhotoViewerProps<T>) {
   useScrollLock();
   const viewportInset = useVisualViewportInset();
@@ -202,11 +208,25 @@ export function PhotoViewer<T extends GalleryPhoto>({
           </div>
         )}
 
-        {/* Baúl appearances — "Mis fotos" only, see baulNames' doc comment. */}
+        {/* Baúl appearances — "Mis fotos" only, see baulNames' doc comment. Zero baúles is a
+            valid first-class state (Slice 3), not an error — see onAddToBaul's doc comment. */}
         {baulNames && baulNames.length > 0 && (
           <p className="text-xs text-background/60">
             Aparece en: {baulNames.join(', ')}
           </p>
+        )}
+        {baulNames && baulNames.length === 0 && (
+          <div className="space-y-1">
+            <p className="text-xs text-background/60">Todavía no aparece en ningún baúl.</p>
+            {onAddToBaul && (
+              <Button variant="plain"
+                onClick={onAddToBaul}
+                className="text-xs text-background/80 underline hover:text-background"
+              >
+                Añadir a un baúl
+              </Button>
+            )}
+          </div>
         )}
 
         {/* Recuerdos List */}

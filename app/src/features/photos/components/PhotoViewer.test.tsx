@@ -123,3 +123,44 @@ describe('PhotoViewer recuerdos loading state', () => {
     expect(screen.getByText('Sé el primero en añadir un recuerdo')).toBeInTheDocument();
   });
 });
+
+// "Mis fotos" baúl appearances (Slice 3, docs/.backlog issue #62): zero baúles is a valid
+// first-class state, not an error.
+describe('PhotoViewer baúl appearances (Mis fotos)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows the "Aparece en" list when baulNames is non-empty', () => {
+    stubMatchMedia(true);
+    renderViewer({ baulNames: ['Familia Pardal'] });
+
+    expect(screen.getByText('Aparece en: Familia Pardal')).toBeInTheDocument();
+  });
+
+  it('shows an empty state with an "Añadir a un baúl" CTA when baulNames is empty', () => {
+    stubMatchMedia(true);
+    const onAddToBaul = vi.fn();
+    renderViewer({ baulNames: [], onAddToBaul });
+
+    expect(screen.getByText('Todavía no aparece en ningún baúl.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir a un baúl' }));
+    expect(onAddToBaul).toHaveBeenCalled();
+  });
+
+  it('omits the CTA when there is nowhere left to add the asset to', () => {
+    stubMatchMedia(true);
+    renderViewer({ baulNames: [] });
+
+    expect(screen.getByText('Todavía no aparece en ningún baúl.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Añadir a un baúl' })).not.toBeInTheDocument();
+  });
+
+  it('renders neither the list nor the empty state when baulNames is undefined (ordinary baúl photo)', () => {
+    stubMatchMedia(true);
+    renderViewer();
+
+    expect(screen.queryByText('Todavía no aparece en ningún baúl.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Aparece en:/)).not.toBeInTheDocument();
+  });
+});

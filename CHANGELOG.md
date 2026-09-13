@@ -21,6 +21,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - La pestaña "Familia" del baúl ahora tiene un selector Mosaico / Árbol genealógico. El árbol genealógico representa gráficamente las relaciones de padre/madre e hijo/hija entre las personas del baúl, organizadas por generaciones y navegable con scroll o arrastre; tocar una persona abre su ficha. Las personas sin relaciones familiares siguen disponibles solo en Mosaico. La vista elegida se recuerda para la próxima visita.
 - Nueva pantalla "Mis fotos", accesible desde el selector de baúles (ahora con una sección "Personal" además de "Mis baúles"): muestra, en un único lugar, todas las fotos que has subido a cualquiera de tus baúles, sin repetir la misma foto si aparece en varios. Al abrir una foto desde aquí se indica en qué baúles aparece.
 - Desde "Mis fotos", ahora se puede añadir una foto a otro baúl al que tengas acceso, sin volver a subirla: al abrirla, "Aparece en" permite elegir un baúl adicional donde mostrarla.
+- "Mis fotos" ahora tiene su propio botón para subir fotos directamente, sin elegir ni crear un baúl primero: se puede decidir más adelante en qué baúl compartirlas, con el mismo selector de fotos y progreso de subida de siempre. Un nuevo filtro "Sin compartir" muestra las fotos que todavía no están en ningún baúl. Al ver una foto que aún no aparece en ningún baúl, se ofrece añadirla a uno directamente desde el visor.
 
 ### Arreglado
 

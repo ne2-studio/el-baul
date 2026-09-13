@@ -26,7 +26,7 @@ const selectedPhotos = [
 
 export const Empty: Story = {
   args: {
-    currentChapter,
+    subtitle: currentChapter.name,
     selectedPhotos: [],
     onBack: fn(),
     onUpload: fn(),
@@ -41,7 +41,7 @@ export const Empty: Story = {
 
 export const WithSelectedPhotos: Story = {
   args: {
-    currentChapter,
+    subtitle: currentChapter.name,
     selectedPhotos,
     onBack: fn(),
     onUpload: fn(),
@@ -72,7 +72,7 @@ const maxPhotos = Array.from({ length: 30 }, (_, i) => ({
 
 export const AtMaxPhotos: Story = {
   args: {
-    currentChapter,
+    subtitle: currentChapter.name,
     selectedPhotos: maxPhotos,
     onBack: fn(),
     onUpload: fn(),
@@ -88,7 +88,7 @@ export const AtMaxPhotos: Story = {
 
 export const RemovingAllPhotosReturnsToEmptyState: Story = {
   args: {
-    currentChapter,
+    subtitle: currentChapter.name,
     selectedPhotos: [selectedPhotos[0]],
     onBack: fn(),
     onUpload: fn(),

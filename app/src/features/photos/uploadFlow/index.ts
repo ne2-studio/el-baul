@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react';
-import { Chapter, Photo } from '@/types';
+import { Chapter, Photo, PhotoAsset } from '@/types';
 
 const LOOSE_PHOTOS_CHAPTER_ID = 'sueltas';
 const LOOSE_PHOTOS_CHAPTER_NAME = 'Fotos sueltas';
@@ -25,6 +25,10 @@ export interface UploadItem {
 export interface UploadItemResult {
   clientUploadId: string;
   photo?: Photo;
+  // Populated instead of `photo` by uploadToMyPhotos (Slice 3, docs/.backlog issue #62) — Mis
+  // fotos ingests a PhotoAsset, never a baúl-scoped Photo. UploadingScreen itself never reads
+  // either field, only onSettled callers do.
+  asset?: PhotoAsset;
   error?: string;
   // true cuando el backend detectó que estos bytes ya estaban en el baúl (ver
   // Photo.alreadyExisted) — un resultado exitoso, nunca un error: nunca cuenta como fallo, ni

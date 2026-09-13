@@ -31,6 +31,9 @@ vi.mock('@/api', () => ({
     photoBatches: {
       getPhotos: vi.fn(),
     },
+    myPhotos: {
+      upload: vi.fn(),
+    },
   },
 }));
 
@@ -38,9 +41,10 @@ import * as Sentry from '@sentry/react';
 import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
+import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 import { UploadItem } from '@/features/photos/uploadFlow';
-import { uploadPhotos, uploadPhotosWithChapter } from './index';
-import { fakeFile, newBaul, newChapter, newPhoto } from './testFactories';
+import { uploadPhotos, uploadPhotosWithChapter, uploadToMyPhotos } from './index';
+import { fakeFile, newBaul, newChapter, newPhoto, newPhotoAsset } from './testFactories';
 
 // Regression coverage for upload workflow partial failures and post-upload reconciliation.
 describe('photos useCases uploads', () => {
@@ -266,6 +270,53 @@ describe('photos useCases uploads', () => {
       expect(resolvedChapterId).toBeNull();
       expect(results).toEqual([{ clientUploadId: 'c1', photo: photo1, alreadyExisted: false }]);
       expect(api.photos.upload).toHaveBeenCalledWith(baulId, null, expect.anything(), 'c1', 'batch-1');
+    });
+  });
+
+  // Slice 3 (docs/.backlog issue #62): direct upload into Mis fotos.
+  describe('uploadToMyPhotos', () => {
+    const items: UploadItem[] = [{ clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') }];
+
+    beforeEach(() => {
+      useMyPhotosStore.getState().reset();
+    });
+
+    it('uploads every file and prepends the resulting assets onto the already-loaded page', async () => {
+      useMyPhotosStore.setState({ assets: [], hasMore: false, filter: 'todas' });
+      const asset1 = newPhotoAsset('asset-1');
+      vi.mocked(api.myPhotos.upload).mockResolvedValueOnce(asset1);
+
+      const results = await uploadToMyPhotos(items);
+
+      expect(results).toEqual([{ clientUploadId: 'c1', asset: asset1 }]);
+      expect(api.myPhotos.upload).toHaveBeenCalledWith(expect.anything(), 'c1');
+      expect(useMyPhotosStore.getState().assets).toEqual([asset1]);
+    });
+
+    it('never prepends an already-shared asset while "Sin compartir" is the active filter', async () => {
+      useMyPhotosStore.setState({ assets: [], hasMore: false, filter: 'sin-compartir' });
+      const shared = newPhotoAsset('asset-1', { baules: [{ baulId: 'b1', baulName: 'Baúl' }] });
+      vi.mocked(api.myPhotos.upload).mockResolvedValueOnce(shared);
+
+      await uploadToMyPhotos(items);
+
+      expect(useMyPhotosStore.getState().assets).toEqual([]);
+    });
+
+    it('reports a per-file error without aborting the rest of the batch', async () => {
+      const twoItems: UploadItem[] = [
+        { clientUploadId: 'c1', uploadBatchId: 'batch-1', file: fakeFile('a.jpg') },
+        { clientUploadId: 'c2', uploadBatchId: 'batch-1', file: fakeFile('b.jpg', { readable: false }) },
+      ];
+      useMyPhotosStore.setState({ assets: [], hasMore: false, filter: 'todas' });
+      const asset1 = newPhotoAsset('asset-1');
+      vi.mocked(api.myPhotos.upload).mockResolvedValueOnce(asset1);
+
+      const results = await uploadToMyPhotos(twoItems);
+
+      expect(results[0]).toEqual({ clientUploadId: 'c1', asset: asset1 });
+      expect(results[1].error).toBeDefined();
+      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalled();
     });
   });
 });

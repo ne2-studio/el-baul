@@ -1,4 +1,4 @@
-import { Baul, Chapter, Photo } from '@/types';
+import { Baul, Chapter, Photo, PhotoAsset } from '@/types';
 
 export const defaultBaulId = 'baul-1';
 
@@ -48,6 +48,25 @@ export function newChapter(
     updatedAt: now,
     recuerdoCount: 0,
     undatedPhotoCount: 0,
+    ...overrides,
+  });
+}
+
+export function newPhotoAsset(
+  id: string,
+  overrides: Partial<ConstructorParameters<typeof PhotoAsset>[0]> = {}
+): PhotoAsset {
+  return new PhotoAsset({
+    id,
+    thumbnailUrl: `${id}-thumb`,
+    fullUrl: `${id}-full`,
+    dateYear: null,
+    dateMonth: null,
+    dateDay: null,
+    width: 100,
+    height: 100,
+    createdAt: new Date().toISOString(),
+    baules: [],
     ...overrides,
   });
 }

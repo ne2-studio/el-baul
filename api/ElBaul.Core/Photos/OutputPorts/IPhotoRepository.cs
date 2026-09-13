@@ -112,4 +112,18 @@ public interface IPhotoRepository
     /// in one query instead of one per asset. Used by "Mis fotos" both to find each asset's
     /// originating Photo (for its intrinsic date) and to compute which baúles it appears in.</summary>
     Task<IReadOnlyList<Photo>> GetActiveByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds);
+
+    /// <summary>Every PhotoAsset with zero referencing Photo rows (any status — a soft-deleted
+    /// Photo still needs its asset's storage to render) and zero UserPhotoAsset relations,
+    /// created before <paramref name="olderThan"/> — the true orphan set the cleanup-orphaned-
+    /// photo-assets maintenance command (Slice 3, docs/.backlog issue #62) hard-deletes, both
+    /// row and storage object. The age cutoff is a grace period, not correctness: it keeps this
+    /// from racing an in-flight upload between minting the PhotoAsset row and the same
+    /// transaction adding its Photo/UserPhotoAsset a moment later.</summary>
+    Task<IReadOnlyList<PhotoAsset>> GetOrphanedAssetsAsync(DateTime olderThan);
+
+    /// <summary>Hard-deletes a single PhotoAsset row — used only by the cleanup-orphaned-
+    /// photo-assets maintenance command, once it has confirmed (via GetOrphanedAssetsAsync) that
+    /// nothing still references it. Never called from any request-serving path.</summary>
+    Task DeleteAssetAsync(PhotoAssetId id);
 }

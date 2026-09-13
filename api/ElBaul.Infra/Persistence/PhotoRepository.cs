@@ -173,4 +173,18 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
 
         return inserted == 1;
     }
+
+    // Anti-joins against both Photos and UserPhotoAssets — a PhotoAsset referenced by either
+    // is not orphaned (see PhotoAsset's/UserPhotoAssetConfiguration's doc comments on why
+    // neither FK cascades into it). CreatedAt-scoped so an asset mid-upload (already inserted,
+    // its Photo/UserPhotoAsset row not committed yet) is never picked up mid-race.
+    public async Task<IReadOnlyList<PhotoAsset>> GetOrphanedAssetsAsync(DateTime olderThan) =>
+        await dbContext.PhotoAssets.AsNoTracking()
+            .Where(a => a.CreatedAt < olderThan)
+            .Where(a => !dbContext.Photos.Any(p => p.PhotoAssetId == a.Id))
+            .Where(a => !dbContext.UserPhotoAssets.Any(r => r.PhotoAssetId == a.Id))
+            .ToListAsync();
+
+    public async Task DeleteAssetAsync(PhotoAssetId id) =>
+        await dbContext.PhotoAssets.Where(a => a.Id == id).ExecuteDeleteAsync();
 }

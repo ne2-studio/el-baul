@@ -206,4 +206,27 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock)
             return Task.FromResult(_userPhotoAssets.Add((userId, assetId)));
     }
+
+    public Task<IReadOnlyList<PhotoAsset>> GetOrphanedAssetsAsync(DateTime olderThan)
+    {
+        lock (_lock)
+        {
+            var referencedAssetIds = _photos.Values.Select(p => p.PhotoAssetId)
+                .Concat(_userPhotoAssets.Select(r => r.PhotoAssetId))
+                .ToHashSet();
+            IReadOnlyList<PhotoAsset> orphaned = _assets.Values
+                .Where(a => a.CreatedAt < olderThan && !referencedAssetIds.Contains(a.Id))
+                .ToList();
+            return Task.FromResult(orphaned);
+        }
+    }
+
+    public Task DeleteAssetAsync(PhotoAssetId id)
+    {
+        lock (_lock)
+        {
+            _assets.Remove(id);
+            return Task.CompletedTask;
+        }
+    }
 }

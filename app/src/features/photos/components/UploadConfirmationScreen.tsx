@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Icon } from '@/design-system/foundations/icons/Icon';
 import { icons } from '@/design-system/foundations/icons/icons';
-import { Chapter } from '@/types';
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
@@ -15,7 +14,10 @@ import { useFileInputSelection } from '@/hooks/useFileInputSelection';
 const MAX_PHOTOS_PER_UPLOAD = 30;
 
 interface UploadConfirmationScreenProps {
-  currentChapter: Chapter;
+  // Subtitle under "Subir fotos" — a chapter/baúl name for a baúl upload, "Mis fotos" for the
+  // Slice 3 direct-to-Mis-fotos entry point (docs/.backlog issue #62). This component has no
+  // notion of Chapter/baúl itself, only of what to display.
+  subtitle: string;
   selectedPhotos: SelectedPhoto[];
   onBack: () => void;
   /** Se llama cuando alguna foto elegida no se pudo leer (p. ej. el permiso content:// de
@@ -28,7 +30,7 @@ interface UploadConfirmationScreenProps {
 }
 
 export function UploadConfirmationScreen({
-  currentChapter,
+  subtitle,
   selectedPhotos,
   onBack,
   onPhotosDropped,
@@ -88,7 +90,7 @@ export function UploadConfirmationScreen({
         variant="stacked"
         onBack={onBack}
         title="Subir fotos"
-        subtitle={currentChapter.name}
+        subtitle={subtitle}
       />
 
       <input
