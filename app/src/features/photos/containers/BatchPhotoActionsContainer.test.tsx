@@ -12,6 +12,7 @@ vi.mock('@/features/photos/useCases', () => ({
   movePhotos: vi.fn(),
   deletePhotosBatch: vi.fn(),
   addPhotosToBaul: vi.fn(),
+  saveToMyPhotosBatch: vi.fn(),
 }));
 
 vi.mock('@/features/chapters/useCases', () => ({
@@ -25,7 +26,7 @@ vi.mock('@/features/people/useCases', () => ({
   createPersona: vi.fn(),
 }));
 
-import { deletePhotosBatch, movePhotos, addPhotosToBaul } from '@/features/photos/useCases';
+import { deletePhotosBatch, movePhotos, addPhotosToBaul, saveToMyPhotosBatch } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 import { createPersona } from '@/features/people/useCases';
 
@@ -87,7 +88,7 @@ describe('BatchPhotoActionsContainer', () => {
     renderContainer('chapter-1');
     await user.click(screen.getByRole('button', { name: /etiquetar personas/i }));
     await user.click(screen.getByText('Abuela Rosa'));
-    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
 
     expect(addTaggedPersonasBatch).toHaveBeenCalledWith(baulId, ['photo-1'], ['p1']);
   });
@@ -116,7 +117,7 @@ describe('BatchPhotoActionsContainer', () => {
     expect(createPersona).toHaveBeenCalledWith(baulId, 'Tío Juan');
     expect(await screen.findByRole('button', { name: 'Quitar a Tío Juan' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(addTaggedPersonasBatch).toHaveBeenCalledWith(baulId, ['photo-1'], ['p2']);
   });
 
@@ -205,6 +206,20 @@ describe('BatchPhotoActionsContainer', () => {
     await user.click(screen.getByRole('button', { name: /^añadir$/i }));
 
     await waitFor(() => expect(addPhotosToBaul).toHaveBeenCalledWith(['photo-1'], otherBaulId, expect.any(Function)));
+  });
+
+  // "Guardar en Mis fotos" en lote (Slice 5, docs/.backlog issue #62) — sin modal de
+  // confirmación, es aditiva.
+  it('saves the selected photos to Mis fotos', async () => {
+    const user = userEvent.setup();
+    vi.mocked(saveToMyPhotosBatch).mockResolvedValue(undefined);
+    const onDone = vi.fn();
+
+    renderContainer('chapter-1', { onDone });
+    await user.click(screen.getByRole('button', { name: /guardar en mis fotos/i }));
+
+    await waitFor(() => expect(saveToMyPhotosBatch).toHaveBeenCalledWith(['photo-1']));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
   });
 
   it('hides "Añadir a otro baúl" when there is no other baúl to add to', () => {

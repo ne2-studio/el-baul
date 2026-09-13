@@ -1,4 +1,4 @@
-import { Photo, PhotoDate } from '../../types';
+import { Photo, PhotoAsset, PhotoDate } from '../../types';
 import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
 import { toTaggedPersona } from '../mappers';
 import { API_BASE, apiFetch, authHeaders, del, get, handleResponse, post, put } from '../http';
@@ -9,6 +9,8 @@ const BAUL_PHOTOS = '/api/baules/{baulId}/photos' satisfies PathTemplate;
 const LOOSE_PHOTOS = '/api/baules/{baulId}/photos/sueltas' satisfies PathTemplate;
 const PHOTO_CHAPTER = '/api/photos/{photoId}/chapter' satisfies PathTemplate;
 const PHOTO_ADD_TO_BAUL = '/api/photos/{photoId}/add-to-baul' satisfies PathTemplate;
+const PHOTO_SAVE_TO_MY_PHOTOS = '/api/photos/{photoId}/save-to-my-photos' satisfies PathTemplate;
+const PHOTOS_SAVE_TO_MY_PHOTOS_BATCH = '/api/photos/save-to-my-photos-batch' satisfies PathTemplate;
 const PHOTO = '/api/photos/{photoId}' satisfies PathTemplate;
 const PHOTO_DATE = '/api/photos/{photoId}/date' satisfies PathTemplate;
 const PHOTO_DATE_BATCH = '/api/photos/date-batch' satisfies PathTemplate;
@@ -62,6 +64,18 @@ export const photosApi = {
   addToBaul: async (photoId: string, targetBaulId: string) =>
     new Photo(await post<JsonResponse<typeof PHOTO_ADD_TO_BAUL, 'post'>>(
       path(PHOTO_ADD_TO_BAUL, { photoId }), { targetBaulId } satisfies JsonRequest<typeof PHOTO_ADD_TO_BAUL, 'post'>)),
+  // "Guardar en Mis fotos" desde un baúl (Slice 5, docs/.backlog issue #62): crea o reactiva la
+  // relación UserPhotoAsset del usuario actual con el PhotoAsset de esta foto — nunca copia el
+  // archivo ni crea un PhotoAsset nuevo.
+  saveToMyPhotos: async (photoId: string) =>
+    new PhotoAsset(await post<JsonResponse<typeof PHOTO_SAVE_TO_MY_PHOTOS, 'post'>>(path(PHOTO_SAVE_TO_MY_PHOTOS, { photoId }))),
+  // Contraparte en lote, para la selección múltiple de un baúl — una sola petición al backend
+  // (docs/.backlog issue #62 §9), que deduplica por PhotoAsset aunque la selección contenga
+  // varias Photos que compartan el mismo asset (ver PhotoManager.SaveToMyPhotosBatchAsync).
+  saveToMyPhotosBatch: async (photoIds: string[]) =>
+    (await post<JsonResponse<typeof PHOTOS_SAVE_TO_MY_PHOTOS_BATCH, 'post'>>(
+      PHOTOS_SAVE_TO_MY_PHOTOS_BATCH, { photoIds } satisfies JsonRequest<typeof PHOTOS_SAVE_TO_MY_PHOTOS_BATCH, 'post'>))
+      .map((a) => new PhotoAsset(a)),
   delete: (photoId: string, reason?: string) =>
     del<SuccessResponse>(photoPath(photoId), { reason } satisfies JsonRequest<typeof PHOTO, 'delete'>),
   deleteBatch: (photoIds: string[], reason?: string) =>

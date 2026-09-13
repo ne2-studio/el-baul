@@ -75,7 +75,7 @@ public class CleanupOrphanedPhotoAssetsCommandTests
         // treated as orphaned.
         var asset = SeedOldAsset("mis-fotos-only.jpg");
         await _photos.TryCreateAssetAsync(asset);
-        await _photos.TryCreateUserPhotoAssetAsync(new UserId("user-1"), asset.Id, _now - TimeSpan.FromDays(2));
+        await _photos.EnsureUserPhotoAssetActiveAsync(new UserId("user-1"), asset.Id, _now - TimeSpan.FromDays(2));
 
         await CreateCommand().RunAsync(dryRun: false);
 

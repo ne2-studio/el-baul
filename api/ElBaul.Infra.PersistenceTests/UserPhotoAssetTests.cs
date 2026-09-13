@@ -16,7 +16,7 @@ namespace ElBaul.Infra.PersistenceTests;
 /// that replaces PhotoAsset.UploadedBy as the source of truth for "Mis fotos". These tests
 /// exercise both database-level invariants (IX_PhotoAssets_OriginalContentHash,
 /// IX_UserPhotoAssets_UserId_PhotoAssetId) and the race-safety of TryCreateAssetAsync /
-/// TryCreateUserPhotoAssetAsync against real Postgres, since an in-memory fake can't prove either.
+/// EnsureUserPhotoAssetActiveAsync against real Postgres, since an in-memory fake can't prove either.
 /// </summary>
 [Collection(PersistenceTestCollection.Name)]
 public class UserPhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(fixture)
@@ -99,7 +99,7 @@ public class UserPhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(
     }
 
     [Fact]
-    public async Task TryCreateUserPhotoAssetAsync_RejectsADuplicateRelation_ForTheSameUserAndAsset()
+    public async Task EnsureUserPhotoAssetActiveAsync_RejectsADuplicateRelation_ForTheSameUserAndAsset()
     {
         await using var dbContext = Fixture.CreateDbContext();
         var baulId = await SeedBaulAsync(dbContext);
@@ -108,15 +108,15 @@ public class UserPhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(
             new PhotoId(Guid.NewGuid()), null, baulId, "asset.jpg", null, new UserId("custodio-1"), DateTime.UtcNow, new ImageDimensions(1, 1));
         await photos.CreateAsync(photo);
 
-        (await photos.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeTrue();
-        (await photos.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeFalse(
+        (await photos.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeTrue();
+        (await photos.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeFalse(
             "(UserId, PhotoAssetId) must be unique");
 
         (await dbContext.UserPhotoAssets.CountAsync()).Should().Be(1);
     }
 
     [Fact]
-    public async Task TryCreateUserPhotoAssetAsync_AllowsDifferentUsers_ToEachHoldTheirOwnRelation_ToTheSameAsset()
+    public async Task EnsureUserPhotoAssetActiveAsync_AllowsDifferentUsers_ToEachHoldTheirOwnRelation_ToTheSameAsset()
     {
         await using var dbContext = Fixture.CreateDbContext();
         var baulId = await SeedBaulAsync(dbContext);
@@ -125,15 +125,15 @@ public class UserPhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(
             new PhotoId(Guid.NewGuid()), null, baulId, "asset.jpg", null, new UserId("custodio-1"), DateTime.UtcNow, new ImageDimensions(1, 1));
         await photos.CreateAsync(photo);
 
-        (await photos.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeTrue();
-        (await photos.TryCreateUserPhotoAssetAsync(new UserId("jaime"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeTrue();
+        (await photos.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeTrue();
+        (await photos.EnsureUserPhotoAssetActiveAsync(new UserId("jaime"), photo.PhotoAssetId, DateTime.UtcNow)).Should().BeTrue();
 
         (await photos.GetByContributorAsync(new UserId("custodio-1"))).Should().ContainSingle(a => a.Id == photo.PhotoAssetId);
         (await photos.GetByContributorAsync(new UserId("jaime"))).Should().ContainSingle(a => a.Id == photo.PhotoAssetId);
     }
 
     [Fact]
-    public async Task TryCreateUserPhotoAssetAsync_IsRaceSafe_ForConcurrentRelationCreation()
+    public async Task EnsureUserPhotoAssetActiveAsync_IsRaceSafe_ForConcurrentRelationCreation()
     {
         await using var dbContext = Fixture.CreateDbContext();
         var baulId = await SeedBaulAsync(dbContext);
@@ -146,7 +146,7 @@ public class UserPhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(
         {
             await using var raceDbContext = Fixture.CreateDbContext();
             var repo = new PhotoRepository(raceDbContext);
-            return await repo.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow);
+            return await repo.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow);
         });
 
         var results = await Task.WhenAll(attempts);
@@ -184,7 +184,7 @@ public class UserPhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(
         var photo = Photo.Create(
             new PhotoId(Guid.NewGuid()), null, baulId, "asset.jpg", null, new UserId("custodio-1"), DateTime.UtcNow, new ImageDimensions(1, 1));
         await photos.CreateAsync(photo);
-        await photos.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow);
 
         await photos.DeleteAsync(photo.Id);
 
@@ -206,9 +206,111 @@ public class UserPhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(
         (await photos.HasUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId)).Should().BeFalse(
             "CreateAsync alone never creates the UserPhotoAsset relation");
 
-        await photos.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), photo.PhotoAssetId, DateTime.UtcNow);
 
         (await photos.HasUserPhotoAssetAsync(new UserId("custodio-1"), photo.PhotoAssetId)).Should().BeTrue();
         (await photos.HasUserPhotoAssetAsync(new UserId("jaime"), photo.PhotoAssetId)).Should().BeFalse();
+    }
+
+    // Slice 5 (docs/.backlog issue #62): soft-delete/reactivation of UserPhotoAsset ("Quitar de
+    // Mis fotos" and its reversal), and the invariant that this never creates a second row for
+    // the same (UserId, PhotoAssetId) pair.
+    [Fact]
+    public async Task SoftDeleteUserPhotoAssetAsync_HidesTheRelation_ButLeavesTheRowAndOtherState()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var baulId = await SeedBaulAsync(dbContext);
+        var photos = new PhotoRepository(dbContext);
+        var pedro = new UserId("custodio-1");
+        var jaime = new UserId("jaime");
+        var photo = Photo.Create(
+            new PhotoId(Guid.NewGuid()), null, baulId, "asset.jpg", null, pedro, DateTime.UtcNow, new ImageDimensions(1, 1));
+        await photos.CreateAsync(photo);
+        await photos.EnsureUserPhotoAssetActiveAsync(pedro, photo.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(jaime, photo.PhotoAssetId, DateTime.UtcNow);
+
+        await photos.SoftDeleteUserPhotoAssetAsync(pedro, photo.PhotoAssetId, DateTime.UtcNow);
+
+        (await photos.HasUserPhotoAssetAsync(pedro, photo.PhotoAssetId)).Should().BeFalse(
+            "the asset must disappear from Pedro's Mis fotos");
+        (await photos.GetByContributorAsync(pedro)).Should().BeEmpty();
+        (await photos.HasUserPhotoAssetAsync(jaime, photo.PhotoAssetId)).Should().BeTrue(
+            "removing Pedro's relation must never touch Jaime's own relation to the same asset");
+        (await dbContext.PhotoAssets.CountAsync(a => a.Id == photo.PhotoAssetId)).Should().Be(1,
+            "the canonical asset must survive — no garbage collection in this slice");
+        (await dbContext.UserPhotoAssets.CountAsync(r => r.UserId == pedro.Value && r.PhotoAssetId == photo.PhotoAssetId.Value))
+            .Should().Be(1, "the row itself must survive soft-deleted, for later reactivation");
+    }
+
+    [Fact]
+    public async Task EnsureUserPhotoAssetActiveAsync_ReactivatesTheSameRow_InsteadOfCreatingASecondOne()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var baulId = await SeedBaulAsync(dbContext);
+        var photos = new PhotoRepository(dbContext);
+        var pedro = new UserId("custodio-1");
+        var photo = Photo.Create(
+            new PhotoId(Guid.NewGuid()), null, baulId, "asset.jpg", null, pedro, DateTime.UtcNow, new ImageDimensions(1, 1));
+        await photos.CreateAsync(photo);
+        var originalAddedAt = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        await photos.EnsureUserPhotoAssetActiveAsync(pedro, photo.PhotoAssetId, originalAddedAt);
+        await photos.SoftDeleteUserPhotoAssetAsync(pedro, photo.PhotoAssetId, DateTime.UtcNow);
+
+        var reactivatedAt = DateTime.UtcNow;
+        var changed = await photos.EnsureUserPhotoAssetActiveAsync(pedro, photo.PhotoAssetId, reactivatedAt);
+
+        changed.Should().BeTrue("reactivating a soft-deleted relation is a real state change");
+        (await photos.HasUserPhotoAssetAsync(pedro, photo.PhotoAssetId)).Should().BeTrue();
+        (await dbContext.UserPhotoAssets.CountAsync(r => r.UserId == pedro.Value && r.PhotoAssetId == photo.PhotoAssetId.Value))
+            .Should().Be(1, "(UserId, PhotoAssetId) must stay unique even across a remove/re-add cycle");
+        var row = await dbContext.UserPhotoAssets.AsNoTracking()
+            .SingleAsync(r => r.UserId == pedro.Value && r.PhotoAssetId == photo.PhotoAssetId.Value);
+        row.AddedAt.Should().Be(originalAddedAt, "reactivating preserves the original AddedAt, not the reactivation time");
+    }
+
+    [Fact]
+    public async Task EnsureUserPhotoAssetActiveAsync_IsANoOp_WhenTheRelationIsAlreadyActive()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var baulId = await SeedBaulAsync(dbContext);
+        var photos = new PhotoRepository(dbContext);
+        var pedro = new UserId("custodio-1");
+        var photo = Photo.Create(
+            new PhotoId(Guid.NewGuid()), null, baulId, "asset.jpg", null, pedro, DateTime.UtcNow, new ImageDimensions(1, 1));
+        await photos.CreateAsync(photo);
+        await photos.EnsureUserPhotoAssetActiveAsync(pedro, photo.PhotoAssetId, DateTime.UtcNow);
+
+        var changed = await photos.EnsureUserPhotoAssetActiveAsync(pedro, photo.PhotoAssetId, DateTime.UtcNow);
+
+        changed.Should().BeFalse("an already-active relation is left untouched");
+    }
+
+    [Fact]
+    public async Task SoftDeleteUserPhotoAssetsAsync_OnlyAffectsTheGivenUserAndAssets()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var baulId = await SeedBaulAsync(dbContext);
+        var photos = new PhotoRepository(dbContext);
+        var pedro = new UserId("custodio-1");
+        var jaime = new UserId("jaime");
+        var photoA = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "a.jpg", null, pedro, DateTime.UtcNow, new ImageDimensions(1, 1));
+        var photoB = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "b.jpg", null, pedro, DateTime.UtcNow, new ImageDimensions(1, 1));
+        var photoC = Photo.Create(new PhotoId(Guid.NewGuid()), null, baulId, "c.jpg", null, pedro, DateTime.UtcNow, new ImageDimensions(1, 1));
+        await photos.CreateAsync(photoA);
+        await photos.CreateAsync(photoB);
+        await photos.CreateAsync(photoC);
+        await photos.EnsureUserPhotoAssetActiveAsync(pedro, photoA.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(pedro, photoB.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(pedro, photoC.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(jaime, photoA.PhotoAssetId, DateTime.UtcNow);
+
+        await photos.SoftDeleteUserPhotoAssetsAsync(pedro, [photoA.PhotoAssetId, photoB.PhotoAssetId], DateTime.UtcNow);
+
+        (await photos.HasUserPhotoAssetAsync(pedro, photoA.PhotoAssetId)).Should().BeFalse();
+        (await photos.HasUserPhotoAssetAsync(pedro, photoB.PhotoAssetId)).Should().BeFalse();
+        (await photos.HasUserPhotoAssetAsync(pedro, photoC.PhotoAssetId)).Should().BeTrue(
+            "an asset not in the batch must be left active");
+        (await photos.HasUserPhotoAssetAsync(jaime, photoA.PhotoAssetId)).Should().BeTrue(
+            "another user's relation to one of the same assets must never be affected");
     }
 }

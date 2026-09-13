@@ -1556,6 +1556,230 @@ public class PhotoManagerTests
         Assert.DoesNotContain(unshared.Value.Items, i => i.Id == myFotosUpload.Value.Id);
     }
 
+    // ─── "Quitar de Mis fotos" / reactivation (Slice 5, docs/.backlog issue #62) ──────────────
+
+    [Fact]
+    public async Task RemoveFromMyPhotosAsync_SoftDeletesOnlyTheCallersOwnRelation()
+    {
+        const string jaimeId = "jaime";
+        var manager = CreateManager(CustodioId);
+        var upload = await manager.UploadToMyPhotosAsync(new MemoryStream([1, 1, 1]), new ClientUploadId(Guid.NewGuid()));
+        var assetId = new PhotoAssetId(Guid.Parse(upload.Value.Id));
+        await _fixture.Photos.EnsureUserPhotoAssetActiveAsync(new UserId(jaimeId), assetId, _fixture.Clock.UtcNow());
+
+        var result = await manager.RemoveFromMyPhotosAsync(assetId);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetId));
+        Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(jaimeId), assetId),
+            "another user's relation to the same asset must be untouched");
+        Assert.NotNull(await _fixture.Photos.GetAssetByIdAsync(assetId));
+    }
+
+    [Fact]
+    public async Task RemoveFromMyPhotosAsync_RemovesTheAssetFromMisFotosQueries()
+    {
+        var manager = CreateManager(CustodioId);
+        var upload = await manager.UploadToMyPhotosAsync(new MemoryStream([2, 2, 2]), new ClientUploadId(Guid.NewGuid()));
+        var assetId = new PhotoAssetId(Guid.Parse(upload.Value.Id));
+
+        await manager.RemoveFromMyPhotosAsync(assetId);
+
+        var myPhotos = await CreateMyPhotosReadManager(CustodioId, _photoStorage).GetMyPhotosAsync(0, 60);
+        Assert.DoesNotContain(myPhotos.Value.Items, i => i.Id == upload.Value.Id);
+    }
+
+    [Fact]
+    public async Task RemoveFromMyPhotosAsync_IsIdempotent_ForAnUnknownOrAlreadyRemovedAsset()
+    {
+        var manager = CreateManager(CustodioId);
+        var assetId = new PhotoAssetId(Guid.NewGuid());
+
+        var result = await manager.RemoveFromMyPhotosAsync(assetId);
+
+        Assert.True(result.IsSuccess, "removing an asset never in Mis fotos must never fail or leak that fact");
+    }
+
+    [Fact]
+    public async Task RemoveFromMyPhotosBatchAsync_OnlyAffectsTheSelectedAssets_AndTheCurrentUser()
+    {
+        const string jaimeId = "jaime";
+        var manager = CreateManager(CustodioId);
+        var uploadA = await manager.UploadToMyPhotosAsync(new MemoryStream([3, 3, 3]), new ClientUploadId(Guid.NewGuid()));
+        var uploadB = await manager.UploadToMyPhotosAsync(new MemoryStream([4, 4, 4]), new ClientUploadId(Guid.NewGuid()));
+        var uploadC = await manager.UploadToMyPhotosAsync(new MemoryStream([5, 5, 5]), new ClientUploadId(Guid.NewGuid()));
+        var assetA = new PhotoAssetId(Guid.Parse(uploadA.Value.Id));
+        var assetB = new PhotoAssetId(Guid.Parse(uploadB.Value.Id));
+        var assetC = new PhotoAssetId(Guid.Parse(uploadC.Value.Id));
+        await _fixture.Photos.EnsureUserPhotoAssetActiveAsync(new UserId(jaimeId), assetA, _fixture.Clock.UtcNow());
+
+        var result = await manager.RemoveFromMyPhotosBatchAsync([assetA, assetB]);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetA));
+        Assert.False(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetB));
+        Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetC),
+            "an asset not in the batch must remain active");
+        Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(jaimeId), assetA),
+            "another user's relation to a batch-selected asset must be untouched");
+    }
+
+    [Fact]
+    public async Task SaveToMyPhotosAsync_CreatesTheRelation_WhenItNeverExisted()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: "owner");
+        var manager = CreateManager(CustodioId);
+
+        var result = await manager.SaveToMyPhotosAsync(photoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), new PhotoAssetId(photoId.Value)));
+        var myPhotos = await CreateMyPhotosReadManager(CustodioId, _photoStorage).GetMyPhotosAsync(0, 60);
+        Assert.Contains(myPhotos.Value.Items, i => i.Id == result.Value.Id);
+    }
+
+    [Fact]
+    public async Task SaveToMyPhotosAsync_ReactivatesTheSameRelation_WhenPreviouslyRemoved()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(photoId.Value);
+        var manager = CreateManager(CustodioId);
+        await manager.RemoveFromMyPhotosAsync(assetId);
+        Assert.False(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetId));
+
+        var result = await manager.SaveToMyPhotosAsync(photoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetId));
+        var relations = await _fixture.Photos.GetUserPhotoAssetsByAssetIdsAsync([assetId]);
+        Assert.Single(relations, r => r.UserId == new UserId(CustodioId));
+    }
+
+    [Fact]
+    public async Task SaveToMyPhotosAsync_IsANoOp_WhenAlreadyActive()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: CustodioId);
+        var manager = CreateManager(CustodioId);
+
+        var first = await manager.SaveToMyPhotosAsync(photoId);
+        var second = await manager.SaveToMyPhotosAsync(photoId);
+
+        Assert.True(first.IsSuccess);
+        Assert.True(second.IsSuccess);
+        var relations = await _fixture.Photos.GetUserPhotoAssetsByAssetIdsAsync([new PhotoAssetId(photoId.Value)]);
+        Assert.Single(relations);
+    }
+
+    [Fact]
+    public async Task SaveToMyPhotosAsync_NeverCreatesAPhotoAsset_OrAltersTheSourcePhoto()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: "owner");
+        var beforeSourcePhoto = await _fixture.Photos.GetByIdAsync(photoId);
+        var manager = CreateManager(CustodioId);
+
+        await manager.SaveToMyPhotosAsync(photoId);
+
+        var afterSourcePhoto = await _fixture.Photos.GetByIdAsync(photoId);
+        Assert.Equal(beforeSourcePhoto!.PhotoAssetId, afterSourcePhoto!.PhotoAssetId);
+        Assert.Equal(beforeSourcePhoto.UploadedBy, afterSourcePhoto.UploadedBy);
+        // Only the one PhotoAsset the upload already created — none minted by saving it.
+        Assert.Single(await _fixture.Photos.GetAllAssetsAsync());
+    }
+
+    [Fact]
+    public async Task SaveToMyPhotosAsync_DeniesAccess_ForAUserWithNoRelationToTheSourceBaul()
+    {
+        var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, chapterId, uploadedBy: "owner");
+        var manager = CreateManager("stranger");
+
+        var result = await manager.SaveToMyPhotosAsync(photoId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task SaveToMyPhotosBatchAsync_DeduplicatesToOneRelation_WhenSeveralSelectedPhotosShareAnAsset()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+        var manager = CreateManager(CustodioId);
+        // Two different Photo rows in different baúles, same underlying PhotoAsset — mirrors a
+        // multi-selection where the same asset appears twice (Slice 2's cross-baúl reuse).
+        await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+        var otherPhoto = await _fixture.Photos.GetActiveByAssetIdAsync(targetBaulId, assetId);
+
+        var result = await manager.SaveToMyPhotosBatchAsync([sourcePhotoId, otherPhoto!.Id]);
+
+        Assert.True(result.IsSuccess);
+        // Both selected photos are processed successfully (each references the same asset) —
+        // the dedup guarantee is that only one UserPhotoAsset relation ever results, not that
+        // the second photo is skipped.
+        Assert.Equal(2, result.Value.Count());
+        var relations = await _fixture.Photos.GetUserPhotoAssetsByAssetIdsAsync([assetId]);
+        Assert.Single(relations, r => r.UserId == new UserId(CustodioId));
+    }
+
+    [Fact]
+    public async Task SaveToMyPhotosBatchAsync_SkipsUnauthorizedPhotos_WithoutFailingTheRest()
+    {
+        var (ownBaulId, ownChapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var (otherBaulId, otherChapterId) = await _fixture.CreateBaulWithChapterAsync(custodioId: "someone-else");
+        var ownPhotoId = await _fixture.AddPhotoAsync(ownBaulId, ownChapterId, uploadedBy: CustodioId);
+        var forbiddenPhotoId = await _fixture.AddPhotoAsync(otherBaulId, otherChapterId, uploadedBy: "someone-else");
+        var manager = CreateManager(CustodioId);
+
+        var result = await manager.SaveToMyPhotosBatchAsync([ownPhotoId, forbiddenPhotoId]);
+
+        Assert.True(result.IsSuccess);
+        var saved = Assert.Single(result.Value);
+        Assert.Equal(ownPhotoId.Value.ToString(), saved.Id);
+    }
+
+    // ─── Bulk "Añadir a un baúl" from Mis fotos (Slice 5, docs/.backlog issue #62) ────────────
+
+    [Fact]
+    public async Task AddAssetsToBaulBatchAsync_AddsEachAsset_AndTreatsAlreadyPresentAssetsAsSuccess()
+    {
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var manager = CreateManager(CustodioId);
+        var uploadA = await manager.UploadToMyPhotosAsync(new MemoryStream([6, 6, 6]), new ClientUploadId(Guid.NewGuid()));
+        var uploadB = await manager.UploadToMyPhotosAsync(new MemoryStream([7, 7, 7]), new ClientUploadId(Guid.NewGuid()));
+        var assetA = new PhotoAssetId(Guid.Parse(uploadA.Value.Id));
+        var assetB = new PhotoAssetId(Guid.Parse(uploadB.Value.Id));
+        // assetA already active in the target baúl before the batch call — must be a no-op success.
+        await manager.AddAssetToBaulAsync(assetA, targetBaulId);
+
+        var result = await manager.AddAssetsToBaulBatchAsync([assetA, assetB], targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.Count());
+        Assert.Equal(2, (await _fixture.Photos.GetActiveByBaulIdAsync(targetBaulId)).Count());
+    }
+
+    [Fact]
+    public async Task AddAssetsToBaulBatchAsync_SkipsAssetsTheCallerDoesNotOwnInMisFotos()
+    {
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var manager = CreateManager(CustodioId);
+        var ownUpload = await manager.UploadToMyPhotosAsync(new MemoryStream([8, 8, 8]), new ClientUploadId(Guid.NewGuid()));
+        var ownAssetId = new PhotoAssetId(Guid.Parse(ownUpload.Value.Id));
+        var foreignAssetId = new PhotoAssetId(Guid.NewGuid());
+
+        var result = await manager.AddAssetsToBaulBatchAsync([ownAssetId, foreignAssetId], targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        var appearance = Assert.Single(result.Value);
+        Assert.Equal(targetBaulId.ToString(), appearance.BaulId);
+    }
+
     private sealed class CapturingLogger<T> : ILogger<T>
     {
         public List<(LogLevel Level, string Message)> Entries { get; } = [];

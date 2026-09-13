@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
-import { deletePhotosBatch, movePhotos, addPhotosToBaul } from '@/features/photos/useCases';
+import { deletePhotosBatch, movePhotos, addPhotosToBaul, saveToMyPhotosBatch } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, changePhotoDateBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 import { createPersona } from '@/features/people/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -156,6 +156,15 @@ export function BatchPhotoActionsContainer({
     if (result.ok) posthog.capture('photos_batch_added_to_baul', { photo_count: photoIds.length });
   };
 
+  const handleBatchSaveToMyPhotos = async (photoIds: string[]): Promise<boolean> => {
+    const result = await run(() => saveToMyPhotosBatch(photoIds), {
+      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto guardada' : 'fotos guardadas'} en Mis fotos`,
+      errorMessage: 'Algunas fotos no se pudieron guardar en Mis fotos',
+    });
+    if (result.ok) posthog.capture('photos_bulk_saved_to_personal', { photo_count: photoIds.length });
+    return result.ok;
+  };
+
   const handleBatchDelete = async (photoIds: string[], reason?: string): Promise<boolean> => {
     const result = await run(() => deletePhotosBatch(baulId, photoIds, reason), {
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto borrada' : 'fotos borradas'}`,
@@ -181,6 +190,7 @@ export function BatchPhotoActionsContainer({
       onBatchTagPersonas={handleBatchTagPersonas}
       onCreatePersona={handleCreatePersona}
       onBatchAddToBaul={handleBatchAddToBaul}
+      onBatchSaveToMyPhotos={handleBatchSaveToMyPhotos}
       onBatchDelete={handleBatchDelete}
       onDone={onDone}
     />

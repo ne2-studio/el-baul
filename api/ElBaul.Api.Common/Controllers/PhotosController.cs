@@ -37,6 +37,55 @@ public class PhotosController(
         return result.ToActionResult();
     }
 
+    // "Quitar de Mis fotos" (Slice 5, docs/.backlog issue #62) — soft-deletes only the caller's
+    // own UserPhotoAsset relation to this asset. Never a hard delete, never touches the
+    // PhotoAsset or any Photo projection — see IPhotoManager.RemoveFromMyPhotosAsync.
+    [HttpDelete("users/me/photos/{assetId:guid}")]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RemoveFromMyPhotos(PhotoAssetId assetId)
+    {
+        var result = await photoManager.RemoveFromMyPhotosAsync(assetId);
+        return result.ToActionResult(Ok(new { success = true }));
+    }
+
+    // Batch counterpart to RemoveFromMyPhotos, for "Quitar de Mis fotos" over a multi-selection.
+    [HttpDelete("users/me/photos/remove-batch")]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RemoveFromMyPhotosBatch([FromBody] RemovePhotoAssetsBatchRequest request)
+    {
+        var result = await photoManager.RemoveFromMyPhotosBatchAsync(request.AssetIds);
+        return result.ToActionResult(Ok(new { success = true }));
+    }
+
+    // Bulk "Añadir a un baúl" from a Mis fotos multi-selection (Slice 5, docs/.backlog issue
+    // #62) — reuses AddAssetToBaulAsync once per distinct asset, see IPhotoManager's doc comment.
+    [HttpPost("users/me/photos/add-to-baul-batch")]
+    [ProducesResponseType(typeof(IEnumerable<BaulAppearanceDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> AddPhotoAssetsToBaulBatch([FromBody] AddPhotoAssetsToBaulBatchRequest request)
+    {
+        var result = await photoManager.AddAssetsToBaulBatchAsync(request.AssetIds, request.TargetBaulId);
+        return result.ToActionResult();
+    }
+
+    // "Guardar en Mis fotos" from inside a baúl (Slice 5, docs/.backlog issue #62) — creates or
+    // reactivates the caller's own UserPhotoAsset relation to this Photo's asset.
+    [HttpPost("photos/{photoId:guid}/save-to-my-photos")]
+    [ProducesResponseType(typeof(PhotoAssetDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SaveToMyPhotos(PhotoId photoId)
+    {
+        var result = await photoManager.SaveToMyPhotosAsync(photoId);
+        return result.ToActionResult();
+    }
+
+    // Batch counterpart to SaveToMyPhotos, for a baúl's multi-selection.
+    [HttpPost("photos/save-to-my-photos-batch")]
+    [ProducesResponseType(typeof(IEnumerable<PhotoAssetDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SaveToMyPhotosBatch([FromBody] SavePhotosToMyPhotosBatchRequest request)
+    {
+        var result = await photoManager.SaveToMyPhotosBatchAsync(request.PhotoIds);
+        return result.ToActionResult();
+    }
+
     // Direct upload into "Mis fotos" (Slice 3, docs/.backlog issue #62) — same request shape as
     // the baúl upload endpoints below, no chapter/baúl in the route at all. Creates/reuses the
     // canonical PhotoAsset and the caller's UserPhotoAsset relation; never a Photo.

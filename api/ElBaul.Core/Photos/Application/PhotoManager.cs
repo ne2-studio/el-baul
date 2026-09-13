@@ -479,4 +479,107 @@ public class PhotoManager(
 
         return await photoDtoProjector.ProjectAsync(updatedPhoto, auth.Value.IsAdmin, userId);
     }
+
+    // "Quitar de Mis fotos" (Slice 5, docs/.backlog issue #62). Deliberately no lookup/existence
+    // check before the write: SoftDeleteUserPhotoAssetAsync is itself scoped to (userId, assetId)
+    // and idempotent, so there's nothing an existence check would add except an extra query —
+    // see IPhotoManager's doc comment on why this never fails for an unknown/foreign assetId.
+    public async Task<Result> RemoveFromMyPhotosAsync(PhotoAssetId assetId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        await photoRepository.SoftDeleteUserPhotoAssetAsync(userId, assetId, clock.UtcNow());
+
+        logger.LogInformation("Photo asset removed from Mis fotos {UserId} {PhotoAssetId}", userId, assetId);
+        return Result.Success();
+    }
+
+    public async Task<Result> RemoveFromMyPhotosBatchAsync(IEnumerable<PhotoAssetId> assetIds)
+    {
+        var userId = currentUserProvider.GetUserId();
+        await photoRepository.SoftDeleteUserPhotoAssetsAsync(userId, assetIds, clock.UtcNow());
+
+        logger.LogInformation("Photo assets removed from Mis fotos in batch {UserId}", userId);
+        return Result.Success();
+    }
+
+    // "Guardar en Mis fotos" from a baúl (Slice 5, docs/.backlog issue #62). Authorization rule
+    // (issue #62 §13): reuses the exact same AccessLevel.Member gate every other photo action on
+    // this Photo already requires (view via GetByChapterIdAsync/GetPageAsync, AddToBaulAsync,
+    // Download, ...) rather than inventing a narrower "can save personally" permission — this
+    // codebase has only Member/Admin (see AccessLevel), no read-only member tier, and every
+    // member who can already view/download a photo has every bit of "copy" capability this
+    // action grants; a permission that exists nowhere else in the product would be pure
+    // speculation. Revisit if/when a genuine read-only role is introduced.
+    public async Task<Result<PhotoAssetDto>> SaveToMyPhotosAsync(PhotoId sourcePhotoId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var photoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(sourcePhotoId),
+            logger,
+            "Save to Mis fotos rejected: photo not found {PhotoId}",
+            "Photo not found",
+            sourcePhotoId);
+        if (photoResult.IsFailure) return Result.Failure<PhotoAssetDto>(photoResult.Error);
+        var photo = photoResult.Value;
+
+        var auth = await baulAccess.AuthorizeAsync(
+            photo.BaulId, userId, AccessLevel.Member, "Save photo to Mis fotos", new { photo.BaulId, PhotoId = sourcePhotoId });
+        if (auth.IsFailure) return Result.Failure<PhotoAssetDto>(auth.Error);
+
+        var now = clock.UtcNow();
+        await photoRepository.EnsureUserPhotoAssetActiveAsync(userId, photo.PhotoAssetId, now);
+
+        logger.LogInformation(
+            "Photo saved to Mis fotos {UserId} {PhotoAssetId} {SourcePhotoId}", userId, photo.PhotoAssetId, sourcePhotoId);
+        return Result.Success(await myPhotosReadManager.ProjectAsync(photo.PhotoAsset, userId));
+    }
+
+    // Same best-effort skip-and-log semantics as ChangeDateBatchAsync — see its comment. Several
+    // selected Photos sharing the same PhotoAsset (Slice 2's cross-baúl reuse) is safe here for
+    // free: SaveToMyPhotosAsync/EnsureUserPhotoAssetActiveAsync is idempotent on (UserId,
+    // PhotoAssetId), so a repeated asset id just reactivates/no-ops the same row again instead of
+    // ever creating a second one.
+    public async Task<Result<IEnumerable<PhotoAssetDto>>> SaveToMyPhotosBatchAsync(IEnumerable<PhotoId> sourcePhotoIds)
+    {
+        var saved = new List<PhotoAssetDto>();
+        foreach (var photoId in sourcePhotoIds)
+        {
+            var result = await SaveToMyPhotosAsync(photoId);
+            if (result.IsSuccess)
+            {
+                saved.Add(result.Value);
+            }
+            else
+            {
+                logger.LogWarning("Skipping photo in batch save-to-Mis-fotos {PhotoId}: {Error}", photoId, result.Error);
+            }
+        }
+
+        return Result.Success<IEnumerable<PhotoAssetDto>>(saved);
+    }
+
+    // Same best-effort skip-and-log semantics as ChangeDateBatchAsync — see its comment. Reuses
+    // AddAssetToBaulAsync unchanged per asset (issue #62's "reuse Slice 2 single-photo
+    // distribution semantics, do NOT duplicate logic"), so authorization (the caller's own active
+    // UserPhotoAsset + target baúl access) and idempotency (an asset already active in the
+    // target baúl is a success, not an error) both come for free.
+    public async Task<Result<IEnumerable<BaulAppearanceDto>>> AddAssetsToBaulBatchAsync(
+        IEnumerable<PhotoAssetId> assetIds, BaulId targetBaulId)
+    {
+        var appearances = new List<BaulAppearanceDto>();
+        foreach (var assetId in assetIds.Distinct())
+        {
+            var result = await AddAssetToBaulAsync(assetId, targetBaulId);
+            if (result.IsSuccess)
+            {
+                appearances.Add(result.Value);
+            }
+            else
+            {
+                logger.LogWarning("Skipping asset in batch add-to-baul {PhotoAssetId}: {Error}", assetId, result.Error);
+            }
+        }
+
+        return Result.Success<IEnumerable<BaulAppearanceDto>>(appearances);
+    }
 }

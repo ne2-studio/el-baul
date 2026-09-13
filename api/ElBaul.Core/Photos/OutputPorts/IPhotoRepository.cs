@@ -65,13 +65,16 @@ public interface IPhotoRepository
     Task DeleteAsync(PhotoId id);
     Task DeleteByBaulIdAsync(BaulId baulId);
 
-    /// <summary>Every PhotoAsset this user has an explicit UserPhotoAsset relation to (Slice
-    /// 2.5, docs/.backlog issue #62), regardless of which baúl(es) it currently appears in or
-    /// whether the user still has access to any of them — the read model behind the user-scoped
-    /// "Mis fotos" view. Replaces the old PhotoAsset.UploadedBy-based lookup: that field only
-    /// ever named the single user who happened to create the asset row, which breaks once two
-    /// different users can each independently contribute the exact same bytes (see
-    /// TryCreateUserPhotoAssetAsync).</summary>
+    /// <summary>Every PhotoAsset this user has an explicit, currently-ACTIVE UserPhotoAsset
+    /// relation to (Slice 2.5, docs/.backlog issue #62), regardless of which baúl(es) it
+    /// currently appears in or whether the user still has access to any of them — the read
+    /// model behind the user-scoped "Mis fotos" view. Never includes a soft-deleted relation
+    /// (Slice 5 — "Quitar de Mis fotos"): a removed asset must disappear from every Mis fotos
+    /// listing ("Todas", "Sin compartir", ...) even though its row survives for reactivation.
+    /// Replaces the old PhotoAsset.UploadedBy-based lookup: that field only ever named the
+    /// single user who happened to create the asset row, which breaks once two different users
+    /// can each independently contribute the exact same bytes (see
+    /// EnsureUserPhotoAssetActiveAsync).</summary>
     Task<IReadOnlyList<PhotoAsset>> GetByContributorAsync(UserId userId);
 
     /// <summary>A single PhotoAsset by id, with no Photo/baúl in the loop at all — used by
@@ -96,17 +99,40 @@ public interface IPhotoRepository
     /// never conflicts with anything.</summary>
     Task<bool> TryCreateAssetAsync(PhotoAsset asset);
 
-    /// <summary>Whether this user already has an explicit UserPhotoAsset relation to this
-    /// asset — used by PhotoManager.AddAssetToBaulAsync's authorization check (see its doc
-    /// comment) instead of the old PhotoAsset.UploadedBy equality check.</summary>
+    /// <summary>Whether this user already has an explicit, currently-ACTIVE UserPhotoAsset
+    /// relation to this asset — used by PhotoManager.AddAssetToBaulAsync's authorization check
+    /// (see its doc comment) instead of the old PhotoAsset.UploadedBy equality check. A
+    /// soft-deleted relation (Slice 5) never counts: once removed from Mis fotos, the asset must
+    /// be reactivated (SaveToMyPhotosAsync/EnsureUserPhotoAssetActiveAsync) before it can be
+    /// distributed from Mis fotos again.</summary>
     Task<bool> HasUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId);
 
-    /// <summary>Idempotently records that this user has this PhotoAsset in their personal photo
-    /// space — race-safe via a unique (UserId, PhotoAssetId) constraint (ON CONFLICT DO
-    /// NOTHING), same shape as TryCreateActiveAsync. Returns false, without throwing, if the
-    /// relation already existed; either way the relation is guaranteed to exist once this
-    /// returns.</summary>
-    Task<bool> TryCreateUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt);
+    /// <summary>Idempotently ensures this user has this PhotoAsset ACTIVE in their personal
+    /// photo space — race-safe via a unique (UserId, PhotoAssetId) constraint: an
+    /// INSERT ... ON CONFLICT DO UPDATE that reactivates (clears DeletedAt on) an existing
+    /// soft-deleted relation instead of ever inserting a second row for the same pair (Slice 5,
+    /// docs/.backlog issue #62 — "Quitar de Mis fotos" and its reactivation, see
+    /// UserPhotoAsset's own doc comment). AddedAt is only ever written on the original insert —
+    /// reactivating an existing row leaves its AddedAt untouched, the simplest reading of
+    /// "when this was first added" surviving a remove/re-add cycle. Returns false, without
+    /// throwing, if the relation was already active (no write happened); either way the relation
+    /// is guaranteed to be active once this returns.</summary>
+    Task<bool> EnsureUserPhotoAssetActiveAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt);
+
+    /// <summary>Soft-deletes one user's own UserPhotoAsset relation — "Quitar de Mis fotos"
+    /// (Slice 5, docs/.backlog issue #62). Scoped to (userId, assetId) by construction, so a
+    /// caller can never reach another user's relation through this method regardless of what a
+    /// client sends. Idempotent: a no-op if the relation doesn't exist or is already removed.
+    /// Never touches the PhotoAsset itself, any Photo projection, or any other user's
+    /// relation — see PhotoManager.RemoveFromMyPhotosAsync.</summary>
+    Task SoftDeleteUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime deletedAt);
+
+    /// <summary>Batch counterpart to SoftDeleteUserPhotoAssetAsync, for "Quitar de Mis fotos"
+    /// over a multi-selection — one statement scoped to (userId, assetIds), so it can never
+    /// affect a relation belonging to a different user no matter what ids the client sends (see
+    /// PhotoManager.RemoveFromMyPhotosBatchAsync). Already-removed or unknown ids are silently
+    /// ignored, same idempotent tolerance as the single-item version.</summary>
+    Task SoftDeleteUserPhotoAssetsAsync(UserId userId, IEnumerable<PhotoAssetId> assetIds, DateTime deletedAt);
 
     /// <summary>Every active Photo referencing any of these assets, across every baúl — batched
     /// in one query instead of one per asset. Used by "Mis fotos" both to find each asset's

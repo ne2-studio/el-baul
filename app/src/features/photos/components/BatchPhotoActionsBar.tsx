@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, CalendarOff, FolderInput, Plus, Tag, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Calendar, CalendarOff, FolderInput, Plus, Tag, Trash2 } from 'lucide-react';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { MoveModal } from '@/features/photos/components/MoveModal';
 import { AddToBaulModal } from '@/features/photos/components/AddToBaulModal';
@@ -46,6 +46,10 @@ interface BatchPhotoActionsBarProps {
     targetBaulId: string,
     onItemSettled?: (result: { photoId: string; error?: string }) => void
   ) => Promise<void>;
+  /** "Guardar en Mis fotos" en lote (Slice 5, docs/.backlog issue #62) — crea/reactiva una
+   * UserPhotoAsset del usuario actual por cada PhotoAsset seleccionado. Sin modal de
+   * confirmación, igual que la versión de una sola foto: es aditiva, nunca destructiva. */
+  onBatchSaveToMyPhotos?: (photoIds: string[]) => Promise<boolean>;
   /** No hay equivalente "Solicitar retirada" para lote — a diferencia del visor de una sola
    * foto, "Borrar fotos" en lote sólo borra, nunca solicita retirada (fuera de alcance). */
   onBatchDelete?: (photoIds: string[], reason?: string) => Promise<boolean>;
@@ -60,7 +64,7 @@ export function BatchPhotoActionsBar({
   active, photos, selectedIds, moveableChapters, otherBaules = [], personas = [], onBatchMove, onBatchMoveToNewChapter,
   onBatchChangeDate, onBatchClearDate, onBatchCreateChapter, onBatchTagPersonas,
   onCreatePersona = () => Promise.resolve(undefined),
-  onBatchAddToBaul, onBatchDelete, onDone,
+  onBatchAddToBaul, onBatchSaveToMyPhotos, onBatchDelete, onDone,
 }: BatchPhotoActionsBarProps) {
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
@@ -79,6 +83,7 @@ export function BatchPhotoActionsBar({
   const [isTaggingSubmitting, setIsTaggingSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingToMyPhotos, setIsSavingToMyPhotos] = useState(false);
 
   // Solo se ofrece si alguna de las fotos seleccionadas tiene fecha — igual que el menú de
   // una sola foto, que oculta "Borrar fecha" cuando photo.date es null (usePhotoViewerActions).
@@ -204,6 +209,14 @@ export function BatchPhotoActionsBar({
     }
   };
 
+  const handleSaveToMyPhotos = async () => {
+    if (!onBatchSaveToMyPhotos) return;
+    setIsSavingToMyPhotos(true);
+    const ok = await onBatchSaveToMyPhotos(Array.from(selectedIds));
+    setIsSavingToMyPhotos(false);
+    if (ok) onDone();
+  };
+
   const handleDeleteConfirm = async (reason?: string) => {
     if (!onBatchDelete) return;
     setIsDeleting(true);
@@ -219,7 +232,7 @@ export function BatchPhotoActionsBar({
     <>
       {active && selectedIds.size > 0 &&
         (onBatchChangeDate || onBatchClearDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas ||
-          (onBatchAddToBaul && otherBaules.length > 0) || onBatchDelete) && (
+          (onBatchAddToBaul && otherBaules.length > 0) || onBatchSaveToMyPhotos || onBatchDelete) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 pb-safe">
           {/* w-max en el contenedor interno evita que los botones se compriman: con muchas
               acciones el PageContainer hace scroll lateral en vez de aplastar la barra. */}
@@ -271,6 +284,15 @@ export function BatchPhotoActionsBar({
                   icon={<FolderInput aria-hidden />}
                 >
                   Añadir a otro baúl
+                </ActionBarButton>
+              )}
+              {onBatchSaveToMyPhotos && (
+                <ActionBarButton
+                  onClick={handleSaveToMyPhotos}
+                  icon={<BookmarkPlus aria-hidden />}
+                  disabled={isSavingToMyPhotos}
+                >
+                  Guardar en Mis fotos
                 </ActionBarButton>
               )}
               {onBatchDelete && (

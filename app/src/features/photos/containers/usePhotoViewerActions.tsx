@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { Download, Calendar, CalendarOff, Flag, Trash2, Tag, Share2, FolderInput } from 'lucide-react';
+import { Download, Calendar, CalendarOff, Flag, Trash2, Tag, Share2, FolderInput, BookmarkPlus } from 'lucide-react';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
 import { ConfirmActionModal } from '@/design-system/patterns/forms/ConfirmActionModal';
 import { AddToBaulModal } from '@/features/photos/components/AddToBaulModal';
@@ -13,7 +13,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { submitRemovalRequest } from '@/features/moderation/useCases';
-import { setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate, addPhotoToBaul } from '@/features/photos/useCases';
+import { setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate, addPhotoToBaul, saveToMyPhotos } from '@/features/photos/useCases';
 import { addRecuerdo as addRecuerdoUseCase, editRecuerdo as editRecuerdoUseCase } from '@/features/memories/useCases';
 import { createPersona } from '@/features/people/useCases';
 import { api } from '@/api';
@@ -87,6 +87,12 @@ export function usePhotoViewerActions({
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
   const [isSubmittingTags, setIsSubmittingTags] = useState(false);
   const [isAddingToBaul, setIsAddingToBaul] = useState(false);
+  // "Guardar en Mis fotos" (Slice 5, docs/.backlog issue #62) — sin flag precomputado por el
+  // backend (ver el comentario de PhotoDto): este estado local solo refleja si el usuario ya
+  // pulsó la acción en esta misma sesión de visor, para evitar una escritura redundante visible
+  // y mostrar "Guardada en Mis fotos"; el backend es igualmente idempotente si se pulsa de nuevo.
+  const [savedToMyPhotos, setSavedToMyPhotos] = useState(false);
+  const [isSavingToMyPhotos, setIsSavingToMyPhotos] = useState(false);
 
   const openTagModal = () => {
     setSelectedPersonaIds(taggedPersonas.map((p) => p.id));
@@ -207,6 +213,19 @@ export function usePhotoViewerActions({
     }
   };
 
+  const handleSaveToMyPhotos = async () => {
+    setIsSavingToMyPhotos(true);
+    const result = await run(() => saveToMyPhotos(photo.id), {
+      successMessage: 'Foto guardada en Mis fotos',
+      errorMessage: 'Error al guardar la foto en Mis fotos',
+    });
+    setIsSavingToMyPhotos(false);
+    if (result.ok) {
+      posthog.capture('photo_saved_to_personal');
+      setSavedToMyPhotos(true);
+    }
+  };
+
   const handleSubmitRemoval = async (reason: string) => {
     setIsSubmittingRemoval(true);
     const result = await run(() => submitRemovalRequest(baulId, photo, reason), {
@@ -262,6 +281,13 @@ export function usePhotoViewerActions({
       items.push({ key: 'share', label: 'Compartir foto', icon: Share2, onSelect: handleSharePhoto });
     }
     items.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: handleDownloadPhoto });
+    items.push({
+      key: 'save-to-my-photos',
+      label: savedToMyPhotos ? 'Guardada en Mis fotos' : 'Guardar en Mis fotos',
+      icon: BookmarkPlus,
+      onSelect: handleSaveToMyPhotos,
+      disabled: savedToMyPhotos || isSavingToMyPhotos,
+    });
     if (otherBaules.length > 0) {
       items.push({ key: 'add-to-baul', label: 'Añadir a otro baúl', icon: FolderInput, onSelect: openAddToBaulModal });
     }

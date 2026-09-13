@@ -115,7 +115,7 @@ public class PhotoUploadWorkflow(
                     throw new InvalidOperationException(
                         $"TryAddExistingAssetAsync failed right after minting a brand-new PhotoAsset {photo.PhotoAssetId} for baúl {baulId} — should be impossible.");
 
-                await photoRepository.TryCreateUserPhotoAssetAsync(userId, photo.PhotoAssetId, now);
+                await photoRepository.EnsureUserPhotoAssetActiveAsync(userId, photo.PhotoAssetId, now);
                 await persistRelatedStateAsync(photo, now);
                 return Result.Success(PhotoUploadOutcome.Created(photo));
             });
@@ -166,7 +166,7 @@ public class PhotoUploadWorkflow(
             // Idempotent — a no-op if the user already has this asset (re-uploading their own
             // file, or the exact bytes already sitting in one of their baúles). Never reveals
             // whether some other user already had this asset (see UserPhotoAsset's doc comment).
-            await photoRepository.TryCreateUserPhotoAssetAsync(userId, existingAsset.Id, now);
+            await photoRepository.EnsureUserPhotoAssetActiveAsync(userId, existingAsset.Id, now);
             logger.LogInformation(
                 "Asset ingestion reused an existing canonical PhotoAsset {UserId} {PhotoAssetId}", userId, existingAsset.Id);
             return Result.Success(existingAsset);
@@ -202,11 +202,11 @@ public class PhotoUploadWorkflow(
                     var winner = await photoRepository.GetAssetByContentHashAsync(storedFile.OriginalContentHash)
                         ?? throw new InvalidOperationException(
                             $"TryCreateAssetAsync reported a hash conflict for hash {storedFile.OriginalContentHash} but no PhotoAsset with that hash was found.");
-                    await photoRepository.TryCreateUserPhotoAssetAsync(userId, winner.Id, now);
+                    await photoRepository.EnsureUserPhotoAssetActiveAsync(userId, winner.Id, now);
                     return Result.Success(winner);
                 }
 
-                await photoRepository.TryCreateUserPhotoAssetAsync(userId, asset.Id, now);
+                await photoRepository.EnsureUserPhotoAssetActiveAsync(userId, asset.Id, now);
                 return Result.Success(asset);
             });
         }
@@ -237,7 +237,7 @@ public class PhotoUploadWorkflow(
         // Ensures the current user shows up in Mis fotos for this asset even though they didn't
         // create the PhotoAsset row — the whole point of Slice 2.5's UserPhotoAsset relation.
         // Idempotent: a no-op if the user already has this asset (e.g. re-uploading their own file).
-        await photoRepository.TryCreateUserPhotoAssetAsync(userId, asset.Id, now);
+        await photoRepository.EnsureUserPhotoAssetActiveAsync(userId, asset.Id, now);
 
         // Recovers the asset's own intrinsic date the same way MyPhotosReadManager and
         // PhotoManager.AddAssetToBaulAsync do: its originating Photo shares its Guid (see

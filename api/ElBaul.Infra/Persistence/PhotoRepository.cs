@@ -116,7 +116,7 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
 
     public async Task<IReadOnlyList<PhotoAsset>> GetByContributorAsync(UserId userId) =>
         await dbContext.UserPhotoAssets.AsNoTracking()
-            .Where(r => r.UserId == userId)
+            .Where(r => r.UserId == userId && r.DeletedAt == null)
             .Join(dbContext.PhotoAssets.AsNoTracking(), r => r.PhotoAssetId, a => a.Id, (r, a) => a)
             .ToListAsync();
 
@@ -156,22 +156,46 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
     }
 
     public async Task<bool> HasUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId) =>
-        await dbContext.UserPhotoAssets.AsNoTracking().AnyAsync(r => r.UserId == userId && r.PhotoAssetId == assetId);
+        await dbContext.UserPhotoAssets.AsNoTracking()
+            .AnyAsync(r => r.UserId == userId && r.PhotoAssetId == assetId && r.DeletedAt == null);
 
-    // Native INSERT ... ON CONFLICT DO NOTHING against IX_UserPhotoAssets_UserId_PhotoAssetId —
-    // same rationale as TryCreateActiveAsync: this always runs inside the caller's ambient
-    // transaction (upload, add-to-baúl), where a caught DbUpdateException would poison it.
-    public async Task<bool> TryCreateUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt)
+    // Native INSERT ... ON CONFLICT DO UPDATE against IX_UserPhotoAssets_UserId_PhotoAssetId
+    // (the primary key itself) — same rationale as TryCreateActiveAsync: this always runs inside
+    // the caller's ambient transaction (upload, add-to-baúl, save-from-baúl), where a caught
+    // DbUpdateException would poison it. The WHERE on the DO UPDATE clause (Slice 5,
+    // docs/.backlog issue #62) means an already-active relation is left untouched — this only
+    // ever writes on a genuine insert or a reactivation, never a no-op rewrite of the same value,
+    // matching the "false = no state change happened" contract the interface documents.
+    public async Task<bool> EnsureUserPhotoAssetActiveAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt)
     {
-        var inserted = await dbContext.Database.ExecuteSqlRawAsync(
+        var affected = await dbContext.Database.ExecuteSqlRawAsync(
             """
             INSERT INTO "UserPhotoAssets" ("UserId", "PhotoAssetId", "AddedAt")
             VALUES ({0}, {1}, {2})
-            ON CONFLICT ("UserId", "PhotoAssetId") DO NOTHING
+            ON CONFLICT ("UserId", "PhotoAssetId") DO UPDATE SET "DeletedAt" = NULL
+            WHERE "UserPhotoAssets"."DeletedAt" IS NOT NULL
             """,
             userId.Value, assetId.Value, addedAt);
 
-        return inserted == 1;
+        return affected == 1;
+    }
+
+    // Scoped to (userId, assetId) by construction — no query parameter path lets this touch a
+    // different user's relation. ExecuteUpdateAsync rather than load+Update: a plain column
+    // rewrite, same rationale as RepointPhotoAssetIdAsync/SetAssetContentHashAsync.
+    public async Task SoftDeleteUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime deletedAt) =>
+        await dbContext.UserPhotoAssets
+            .Where(r => r.UserId == userId && r.PhotoAssetId == assetId && r.DeletedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(r => r.DeletedAt, deletedAt));
+
+    public async Task SoftDeleteUserPhotoAssetsAsync(UserId userId, IEnumerable<PhotoAssetId> assetIds, DateTime deletedAt)
+    {
+        var ids = assetIds.ToList();
+        if (ids.Count == 0) return;
+
+        await dbContext.UserPhotoAssets
+            .Where(r => r.UserId == userId && ids.Contains(r.PhotoAssetId) && r.DeletedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(r => r.DeletedAt, deletedAt));
     }
 
     // Anti-joins against both Photos and UserPhotoAssets — a PhotoAsset referenced by either

@@ -108,7 +108,7 @@ public class BaulFixture
         await Photos.CreateAsync(photo);
         // Mirrors the AddUserPhotoAssets migration's backfill rule: the uploader of an asset's
         // own originating Photo (same Guid as the asset — see Photo.Create) is a contributor.
-        await Photos.TryCreateUserPhotoAssetAsync(new UserId(uploadedBy), photo.PhotoAssetId, photo.CreatedAt);
+        await Photos.EnsureUserPhotoAssetActiveAsync(new UserId(uploadedBy), photo.PhotoAssetId, photo.CreatedAt);
         return photoId;
     }
 }

@@ -13,6 +13,7 @@ public class UserPhotoAssetConfiguration : IEntityTypeConfiguration<UserPhotoAss
         builder.Property(r => r.UserId).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(r => r.PhotoAssetId).HasConversion(IdValueConverters.PhotoAssetId);
         builder.Property(r => r.AddedAt).HasColumnType("timestamp with time zone");
+        builder.Property(r => r.DeletedAt).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(r => r.PhotoAssetId);
 

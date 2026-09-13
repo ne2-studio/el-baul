@@ -27,6 +27,8 @@ vi.mock('@/features/photos/useCases', () => ({
   deletePhoto: vi.fn().mockResolvedValue(undefined),
   changePhotoDate: vi.fn().mockResolvedValue(undefined),
   clearPhotoDate: vi.fn().mockResolvedValue(undefined),
+  addPhotoToBaul: vi.fn().mockResolvedValue(undefined),
+  saveToMyPhotos: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/moderation/useCases', () => ({
@@ -54,7 +56,7 @@ vi.mock('@/features/sharing/sharePublicLink', () => ({
 }));
 
 import { loadRecuerdos, addRecuerdo } from '@/features/memories/useCases';
-import { loadTaggedPersonas, setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
+import { loadTaggedPersonas, setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate, saveToMyPhotos } from '@/features/photos/useCases';
 import { submitRemovalRequest } from '@/features/moderation/useCases';
 import { createPersona } from '@/features/people/useCases';
 import { api } from '@/api';
@@ -153,6 +155,19 @@ describe('PhotoViewerContainer', () => {
     expect(screen.getByText('Etiquetar personas')).toBeInTheDocument();
     expect(screen.getByText('Descargar foto original')).toBeInTheDocument();
     expect(screen.queryByText('Compartir foto')).not.toBeInTheDocument();
+  });
+
+  // "Guardar en Mis fotos" (Slice 5, docs/.backlog issue #62).
+  it('saves the photo to Mis fotos, then shows it as already saved', async () => {
+    const user = userEvent.setup();
+    renderContainer();
+    await openMenu(user);
+
+    await user.click(screen.getByText('Guardar en Mis fotos'));
+
+    await waitFor(() => expect(saveToMyPhotos).toHaveBeenCalledWith('photo-2'));
+    await openMenu(user);
+    expect(screen.getByText('Guardada en Mis fotos')).toBeInTheDocument();
   });
 
   it('offers date change, and removal-request, universally with no chapter scope at all', async () => {

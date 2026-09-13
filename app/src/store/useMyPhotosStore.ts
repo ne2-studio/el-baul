@@ -33,6 +33,12 @@ export interface MyPhotosState {
   // Slice 2 — Mis fotos wiring) — a no-op if the appearance is already there, mirroring the
   // backend's own idempotency instead of trusting the caller never to double-add.
   addBaulAppearance: (assetId: string, appearance: BaulAppearance) => void;
+
+  // "Quitar de Mis fotos" (Slice 5, docs/.backlog issue #62) — drops the given assets from the
+  // loaded page(s) after the backend soft-deletes their UserPhotoAsset relation, single and
+  // batch alike. A no-op for any id not currently loaded (already scrolled past, or the store
+  // hasn't fetched yet) — nothing to reconcile against in that case.
+  removeAssets: (assetIds: string[]) => void;
 }
 
 export const useMyPhotosStore = create<MyPhotosState>((set) => ({
@@ -56,4 +62,8 @@ export const useMyPhotosStore = create<MyPhotosState>((set) => ({
       return { ...asset, baules: [...asset.baules, appearance] };
     }),
   })),
+
+  removeAssets: (assetIds) => set((state) => (
+    state.assets === undefined ? state : { assets: state.assets.filter((asset) => !assetIds.includes(asset.id)) }
+  )),
 }));

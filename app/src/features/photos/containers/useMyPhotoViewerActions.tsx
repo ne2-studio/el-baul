@@ -1,15 +1,20 @@
 import React, { useMemo, useState } from 'react';
-import { FolderInput } from 'lucide-react';
+import { usePostHog } from 'posthog-js/react';
+import { FolderInput, Trash2 } from 'lucide-react';
 import { AddToBaulModal } from '@/features/photos/components/AddToBaulModal';
+import { ConfirmActionModal } from '@/design-system/patterns/forms/ConfirmActionModal';
 import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoAsset } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { addPhotoAssetToBaul } from '@/features/photos/useCases/sharing';
-import { usePostHog } from 'posthog-js/react';
+import { removeFromMyPhotos } from '@/features/photos/useCases/personalCollection';
 
 interface UseMyPhotoViewerActionsOptions {
   photo: PhotoAsset;
+  /** Se invoca tras quitar la foto de Mis fotos con éxito, para cerrar el visor (el asset ya no
+   * aparece en esta galería) — mismo patrón que onDeleted en usePhotoViewerActions. */
+  onRemoved: () => void;
 }
 
 interface UseMyPhotoViewerActionsResult {
@@ -22,10 +27,10 @@ interface UseMyPhotoViewerActionsResult {
 }
 
 // Mis fotos' own (much smaller) counterpart to usePhotoViewerActions — asset-scoped instead of
-// baúl-scoped: "Añadir a otro baúl" is the only action Mis fotos exposes this slice (docs/.backlog
-// issue #62, Slice 2 — Mis fotos wiring). No tagging, recuerdos, date editing or delete here,
-// same as before — see MyPhotoViewerContainer's own comment.
-export function useMyPhotoViewerActions({ photo }: UseMyPhotoViewerActionsOptions): UseMyPhotoViewerActionsResult {
+// baúl-scoped. "Añadir a otro baúl" (Slice 2) and "Quitar de Mis fotos" (Slice 5, docs/.backlog
+// issue #62) are the only two actions Mis fotos exposes. No tagging, recuerdos, date editing or
+// baúl-photo delete here — those stay baúl-scoped, see MyPhotoViewerContainer's own comment.
+export function useMyPhotoViewerActions({ photo, onRemoved }: UseMyPhotoViewerActionsOptions): UseMyPhotoViewerActionsResult {
   const { run } = useAsyncAction();
   const posthog = usePostHog();
   // Baúles a los que este usuario puede añadir contenido, excluyendo aquellos en los que este
@@ -41,6 +46,8 @@ export function useMyPhotoViewerActions({ photo }: UseMyPhotoViewerActionsOption
   const [showAddToBaulModal, setShowAddToBaulModal] = useState(false);
   const [selectedTargetBaulId, setSelectedTargetBaulId] = useState('');
   const [isAddingToBaul, setIsAddingToBaul] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const openAddToBaulModal = () => {
     setSelectedTargetBaulId('');
@@ -63,19 +70,53 @@ export function useMyPhotoViewerActions({ photo }: UseMyPhotoViewerActionsOption
     }
   };
 
-  const menuItems: PhotoViewerMenuItem[] = otherBaules.length > 0
-    ? [{ key: 'add-to-baul', label: 'Añadir a otro baúl', icon: FolderInput, onSelect: openAddToBaulModal }]
-    : [];
+  const handleRemoveConfirm = async () => {
+    setIsRemoving(true);
+    const result = await run(() => removeFromMyPhotos(photo.id), {
+      successMessage: 'Foto quitada de Mis fotos',
+      errorMessage: 'Error al quitar la foto de Mis fotos',
+    });
+    setIsRemoving(false);
+    if (result.ok) {
+      posthog.capture('personal_photo_removed');
+      setShowRemoveModal(false);
+      onRemoved();
+    }
+  };
 
-  const modals = showAddToBaulModal && (
-    <AddToBaulModal
-      baules={otherBaules}
-      selectedId={selectedTargetBaulId}
-      onSelect={setSelectedTargetBaulId}
-      onCancel={() => setShowAddToBaulModal(false)}
-      onConfirm={handleAddToBaulConfirm}
-      isSubmitting={isAddingToBaul}
-    />
+  const menuItems: PhotoViewerMenuItem[] = [
+    ...(otherBaules.length > 0
+      ? [{ key: 'add-to-baul', label: 'Añadir a otro baúl', icon: FolderInput, onSelect: openAddToBaulModal }]
+      : []),
+    { key: 'remove', label: 'Quitar de Mis fotos', icon: Trash2, onSelect: () => setShowRemoveModal(true), variant: 'destructive' as const },
+  ];
+
+  const modals = (
+    <>
+      {showAddToBaulModal && (
+        <AddToBaulModal
+          baules={otherBaules}
+          selectedId={selectedTargetBaulId}
+          onSelect={setSelectedTargetBaulId}
+          onCancel={() => setShowAddToBaulModal(false)}
+          onConfirm={handleAddToBaulConfirm}
+          isSubmitting={isAddingToBaul}
+        />
+      )}
+
+      {showRemoveModal && (
+        <ConfirmActionModal
+          title="Quitar esta foto de Mis fotos"
+          tone="plain"
+          description="Seguirá apareciendo en los baúles donde esté compartida."
+          confirmLabel="Sí, quitar"
+          confirmVariant="primary"
+          onCancel={() => setShowRemoveModal(false)}
+          onConfirm={handleRemoveConfirm}
+          isSubmitting={isRemoving}
+        />
+      )}
+    </>
   );
 
   return { menuItems, modals, openAddToBaulModal: otherBaules.length > 0 ? openAddToBaulModal : undefined };

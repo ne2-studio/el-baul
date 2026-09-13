@@ -152,4 +152,36 @@ describe('MyPhotosGalleryContainer', () => {
 
     expect(await screen.findByText('Confirmar subida')).toBeInTheDocument();
   });
+
+  // Multi-selection (Slice 5, docs/.backlog issue #62) reuses PhotoSwimlanes' existing
+  // selection primitives — same selectionMode/selectedIds/onToggleSelect shape BaulRoute already
+  // passes to BaulPhotosTabContainer.
+  it('hides the filter pills and the upload FAB while in selection mode', async () => {
+    useMyPhotosStore.setState({ assets: [asset('a1')], hasMore: false });
+
+    render(
+      <MemoryRouter initialEntries={['/mis-fotos']}>
+        <MyPhotosGalleryContainer selectionMode selectedIds={new Set(['a1'])} onToggleSelect={vi.fn()} onLongPress={vi.fn()} />
+      </MemoryRouter>
+    );
+    await screen.findByAltText('Foto');
+
+    expect(screen.queryByRole('button', { name: 'Todas' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Subir fotos' })).not.toBeInTheDocument();
+  });
+
+  it('toggles selection instead of opening the viewer while in selection mode', async () => {
+    useMyPhotosStore.setState({ assets: [asset('a1')], hasMore: false });
+    const onToggleSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={['/mis-fotos']}>
+        <MyPhotosGalleryContainer selectionMode selectedIds={new Set()} onToggleSelect={onToggleSelect} onLongPress={vi.fn()} />
+      </MemoryRouter>
+    );
+    await user.click(await screen.findByAltText('Foto'));
+
+    expect(onToggleSelect).toHaveBeenCalledWith('a1');
+  });
 });

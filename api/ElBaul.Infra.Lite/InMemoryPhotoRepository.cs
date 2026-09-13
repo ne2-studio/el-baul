@@ -9,7 +9,7 @@ public class InMemoryPhotoRepository : IPhotoRepository
 {
     private readonly Dictionary<PhotoId, Photo> _photos = new();
     private readonly Dictionary<PhotoAssetId, PhotoAsset> _assets = new();
-    private readonly Dictionary<(UserId UserId, PhotoAssetId PhotoAssetId), DateTime> _userPhotoAssets = new();
+    private readonly Dictionary<(UserId UserId, PhotoAssetId PhotoAssetId), (DateTime AddedAt, DateTime? DeletedAt)> _userPhotoAssets = new();
     private readonly Lock _lock = new();
 
     public Task<Photo?> GetByIdAsync(PhotoId id)
@@ -148,9 +148,9 @@ public class InMemoryPhotoRepository : IPhotoRepository
     public Task<IReadOnlyList<PhotoAsset>> GetByContributorAsync(UserId userId)
     {
         lock (_lock)
-            return Task.FromResult<IReadOnlyList<PhotoAsset>>(_userPhotoAssets.Keys
-                .Where(r => r.UserId == userId)
-                .Select(r => _assets[r.PhotoAssetId])
+            return Task.FromResult<IReadOnlyList<PhotoAsset>>(_userPhotoAssets
+                .Where(kv => kv.Key.UserId == userId && kv.Value.DeletedAt == null)
+                .Select(kv => _assets[kv.Key.PhotoAssetId])
                 .ToList());
     }
 
@@ -196,19 +196,52 @@ public class InMemoryPhotoRepository : IPhotoRepository
     public Task<bool> HasUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId)
     {
         lock (_lock)
-            return Task.FromResult(_userPhotoAssets.ContainsKey((userId, assetId)));
+            return Task.FromResult(
+                _userPhotoAssets.TryGetValue((userId, assetId), out var relation) && relation.DeletedAt == null);
     }
 
-    // Mirrors the real PhotoRepository's ON CONFLICT DO NOTHING semantics without a real unique
-    // index to enforce it — see IX_UserPhotoAssets_UserId_PhotoAssetId.
-    public Task<bool> TryCreateUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt)
+    // Mirrors the real PhotoRepository's ON CONFLICT DO UPDATE ... WHERE semantics without a
+    // real unique index to enforce it — see IX_UserPhotoAssets_UserId_PhotoAssetId.
+    public Task<bool> EnsureUserPhotoAssetActiveAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt)
     {
         lock (_lock)
         {
-            if (_userPhotoAssets.ContainsKey((userId, assetId))) return Task.FromResult(false);
-            _userPhotoAssets[(userId, assetId)] = addedAt;
+            var key = (userId, assetId);
+            if (_userPhotoAssets.TryGetValue(key, out var existing))
+            {
+                if (existing.DeletedAt is null) return Task.FromResult(false); // already active — no-op
+                _userPhotoAssets[key] = (existing.AddedAt, null); // reactivate, AddedAt untouched
+                return Task.FromResult(true);
+            }
+
+            _userPhotoAssets[key] = (addedAt, null);
             return Task.FromResult(true);
         }
+    }
+
+    public Task SoftDeleteUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime deletedAt)
+    {
+        lock (_lock)
+        {
+            var key = (userId, assetId);
+            if (_userPhotoAssets.TryGetValue(key, out var existing) && existing.DeletedAt is null)
+                _userPhotoAssets[key] = (existing.AddedAt, deletedAt);
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task SoftDeleteUserPhotoAssetsAsync(UserId userId, IEnumerable<PhotoAssetId> assetIds, DateTime deletedAt)
+    {
+        lock (_lock)
+        {
+            foreach (var assetId in assetIds)
+            {
+                var key = (userId, assetId);
+                if (_userPhotoAssets.TryGetValue(key, out var existing) && existing.DeletedAt is null)
+                    _userPhotoAssets[key] = (existing.AddedAt, deletedAt);
+            }
+        }
+        return Task.CompletedTask;
     }
 
     public Task<IReadOnlyList<PhotoAsset>> GetOrphanedAssetsAsync(DateTime olderThan)
@@ -255,7 +288,7 @@ public class InMemoryPhotoRepository : IPhotoRepository
             var idSet = assetIds.ToHashSet();
             return Task.FromResult<IReadOnlyList<UserPhotoAsset>>(_userPhotoAssets
                 .Where(kv => idSet.Contains(kv.Key.PhotoAssetId))
-                .Select(kv => new UserPhotoAsset(kv.Key.UserId, kv.Key.PhotoAssetId, kv.Value))
+                .Select(kv => new UserPhotoAsset(kv.Key.UserId, kv.Key.PhotoAssetId, kv.Value.AddedAt, kv.Value.DeletedAt))
                 .ToList());
         }
     }
@@ -285,9 +318,9 @@ public class InMemoryPhotoRepository : IPhotoRepository
         lock (_lock)
         {
             var key = (userId, newAssetId);
-            _userPhotoAssets[key] = _userPhotoAssets.TryGetValue(key, out var existing) && existing < addedAt
-                ? existing
-                : addedAt;
+            _userPhotoAssets[key] = _userPhotoAssets.TryGetValue(key, out var existing)
+                ? (existing.AddedAt < addedAt ? existing.AddedAt : addedAt, existing.DeletedAt)
+                : (addedAt, null);
         }
         return Task.CompletedTask;
     }

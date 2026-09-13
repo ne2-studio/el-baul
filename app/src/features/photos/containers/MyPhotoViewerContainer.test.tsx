@@ -11,7 +11,12 @@ vi.mock('@/features/photos/useCases/sharing', () => ({
   addPhotoAssetToBaul: vi.fn(),
 }));
 
+vi.mock('@/features/photos/useCases/personalCollection', () => ({
+  removeFromMyPhotos: vi.fn(),
+}));
+
 import { addPhotoAssetToBaul } from '@/features/photos/useCases/sharing';
+import { removeFromMyPhotos } from '@/features/photos/useCases/personalCollection';
 
 function asset(id: string, baules: { baulId: string; baulName: string }[] = []): PhotoAsset {
   return { id, thumbnailUrl: `/${id}-thumb.jpg`, fullUrl: `/${id}.jpg`, width: 100, height: 100, baules } as PhotoAsset;
@@ -31,8 +36,9 @@ describe('MyPhotoViewerContainer', () => {
     useUIStore.setState({ toastMessage: '', showToast: false });
   });
 
-  it('does not offer "Añadir a otro baúl" when there are no other accessible baúles', () => {
+  it('does not offer "Añadir a otro baúl" when there are no other accessible baúles', async () => {
     useBaulesStore.setState({ baules: [baul('b1', 'Familia Pardal')] });
+    const user = userEvent.setup();
 
     render(
       <MyPhotoViewerContainer
@@ -43,8 +49,33 @@ describe('MyPhotoViewerContainer', () => {
       />
     );
 
-    // Sin acciones que ofrecer, PhotoViewerHeader ni siquiera pinta el botón "···".
-    expect(screen.queryByRole('button', { name: 'Más opciones' })).not.toBeInTheDocument();
+    // "Quitar de Mis fotos" (Slice 5) siempre está disponible, así que el botón "···" sigue
+    // pintándose — solo "Añadir a otro baúl" desaparece al no haber baúles accesibles.
+    await openMenu(user);
+    expect(screen.queryByText('Añadir a otro baúl')).not.toBeInTheDocument();
+    expect(screen.getByText('Quitar de Mis fotos')).toBeInTheDocument();
+  });
+
+  it('removes the asset from Mis fotos and closes the viewer', async () => {
+    useBaulesStore.setState({ baules: [] });
+    vi.mocked(removeFromMyPhotos).mockResolvedValue(undefined);
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MyPhotoViewerContainer
+        photo={asset('a1', [{ baulId: 'b1', baulName: 'Familia Pardal' }])}
+        photos={[]}
+        onClose={onClose}
+        onPhotoChange={vi.fn()}
+      />
+    );
+    await openMenu(user);
+    await user.click(screen.getByText('Quitar de Mis fotos'));
+    await user.click(screen.getByRole('button', { name: 'Sí, quitar' }));
+
+    await waitFor(() => expect(removeFromMyPhotos).toHaveBeenCalledWith('a1'));
+    expect(onClose).toHaveBeenCalled();
   });
 
   it('offers, and adds the asset to, a baúl it does not yet appear in', async () => {

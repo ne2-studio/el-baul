@@ -86,7 +86,7 @@ public class PhotoAssetDeduplicationTests(PostgresFixture fixture) : Persistence
         await photos.CreateAsync(canonical);
         var laterAddedAt = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc);
         var earlierAddedAt = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        await photos.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), canonical.PhotoAssetId, laterAddedAt);
+        await photos.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), canonical.PhotoAssetId, laterAddedAt);
 
         await photos.RedirectUserPhotoAssetAsync(new UserId("custodio-1"), canonical.PhotoAssetId, earlierAddedAt);
 
@@ -120,8 +120,8 @@ public class PhotoAssetDeduplicationTests(PostgresFixture fixture) : Persistence
         var asset = Photo.Create(
             new PhotoId(Guid.NewGuid()), null, baulId, "a.jpg", null, new UserId("custodio-1"), DateTime.UtcNow, new ImageDimensions(1, 1));
         await photos.CreateAsync(asset);
-        await photos.TryCreateUserPhotoAssetAsync(new UserId("custodio-1"), asset.PhotoAssetId, DateTime.UtcNow);
-        await photos.TryCreateUserPhotoAssetAsync(new UserId("jaime"), asset.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(new UserId("custodio-1"), asset.PhotoAssetId, DateTime.UtcNow);
+        await photos.EnsureUserPhotoAssetActiveAsync(new UserId("jaime"), asset.PhotoAssetId, DateTime.UtcNow);
 
         await photos.DeleteUserPhotoAssetAsync(new UserId("custodio-1"), asset.PhotoAssetId);
 

@@ -126,8 +126,8 @@ public class MyPhotosReadManagerTests
         var source = (await _fixture.Photos.GetByIdAsync(sourcePhotoId))!;
 
         // OtherUserId independently contributes the exact same asset (mirrors
-        // PhotoUploadWorkflow.ReuseAssetCoreAsync's TryCreateUserPhotoAssetAsync call).
-        await _fixture.Photos.TryCreateUserPhotoAssetAsync(new UserId(OtherUserId), source.PhotoAssetId, _fixture.Clock.UtcNow());
+        // PhotoUploadWorkflow.ReuseAssetCoreAsync's EnsureUserPhotoAssetActiveAsync call).
+        await _fixture.Photos.EnsureUserPhotoAssetActiveAsync(new UserId(OtherUserId), source.PhotoAssetId, _fixture.Clock.UtcNow());
 
         var pedrosResult = await CreateManager().GetMyPhotosAsync(0, 60);
         var otherResult = await new MyPhotosReadManager(
@@ -167,7 +167,7 @@ public class MyPhotosReadManagerTests
         var unsharedAssetId = new PhotoAssetId(Guid.NewGuid());
         await _fixture.Photos.TryCreateAssetAsync(PhotoAsset.Create(
             unsharedAssetId, "unshared.jpg", new ImageDimensions(10, 10), _fixture.Clock.UtcNow(), new UserId(CustodioId)));
-        await _fixture.Photos.TryCreateUserPhotoAssetAsync(new UserId(CustodioId), unsharedAssetId, _fixture.Clock.UtcNow());
+        await _fixture.Photos.EnsureUserPhotoAssetActiveAsync(new UserId(CustodioId), unsharedAssetId, _fixture.Clock.UtcNow());
 
         var all = await CreateManager().GetMyPhotosAsync(0, 60);
         var unshared = await CreateManager().GetMyPhotosAsync(0, 60, unsharedOnly: true);
@@ -202,7 +202,7 @@ public class MyPhotosReadManagerTests
         var assetId = new PhotoAssetId(Guid.NewGuid());
         await _fixture.Photos.TryCreateAssetAsync(PhotoAsset.Create(
             assetId, "shared-elsewhere.jpg", new ImageDimensions(10, 10), _fixture.Clock.UtcNow(), new UserId(OtherUserId)));
-        await _fixture.Photos.TryCreateUserPhotoAssetAsync(new UserId(CustodioId), assetId, _fixture.Clock.UtcNow());
+        await _fixture.Photos.EnsureUserPhotoAssetActiveAsync(new UserId(CustodioId), assetId, _fixture.Clock.UtcNow());
 
         var inaccessibleBaul = await _fixture.CreateBaulAsync("Baúl ajeno", OtherUserId);
         var asset = (await _fixture.Photos.GetAssetByIdAsync(assetId))!;

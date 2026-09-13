@@ -122,8 +122,8 @@ public class DeduplicatePhotoAssetsCommandTests
         var latest = _now.AddDays(-5);
         var canonical = await SeedTrustedAssetAsync("a.jpg", bytes, createdAt: _now.AddDays(-10));
         var legacy = await SeedLegacyNullHashAssetAsync("b.jpg", bytes, createdAt: _now);
-        await _photos.TryCreateUserPhotoAssetAsync(Pedro, canonical.Id, latest);
-        await _photos.TryCreateUserPhotoAssetAsync(Pedro, legacy.Id, earliest);
+        await _photos.EnsureUserPhotoAssetActiveAsync(Pedro, canonical.Id, latest);
+        await _photos.EnsureUserPhotoAssetActiveAsync(Pedro, legacy.Id, earliest);
 
         var exitCode = await CreateCommand().RunAsync(dryRun: false);
 
@@ -140,8 +140,8 @@ public class DeduplicatePhotoAssetsCommandTests
         var bytes = Bytes("shared by two people");
         var canonical = await SeedTrustedAssetAsync("a.jpg", bytes, createdAt: _now.AddDays(-10));
         var legacy = await SeedLegacyNullHashAssetAsync("b.jpg", bytes, createdAt: _now);
-        await _photos.TryCreateUserPhotoAssetAsync(Pedro, canonical.Id, _now);
-        await _photos.TryCreateUserPhotoAssetAsync(Jaime, legacy.Id, _now);
+        await _photos.EnsureUserPhotoAssetActiveAsync(Pedro, canonical.Id, _now);
+        await _photos.EnsureUserPhotoAssetActiveAsync(Jaime, legacy.Id, _now);
 
         var exitCode = await CreateCommand().RunAsync(dryRun: false);
 
@@ -387,8 +387,12 @@ public class DeduplicatePhotoAssetsCommandTests
         public Task<PhotoAsset?> GetAssetByContentHashAsync(string originalContentHash) => inner.GetAssetByContentHashAsync(originalContentHash);
         public Task<bool> TryCreateAssetAsync(PhotoAsset asset) => inner.TryCreateAssetAsync(asset);
         public Task<bool> HasUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId) => inner.HasUserPhotoAssetAsync(userId, assetId);
-        public Task<bool> TryCreateUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt) =>
-            inner.TryCreateUserPhotoAssetAsync(userId, assetId, addedAt);
+        public Task<bool> EnsureUserPhotoAssetActiveAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt) =>
+            inner.EnsureUserPhotoAssetActiveAsync(userId, assetId, addedAt);
+        public Task SoftDeleteUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime deletedAt) =>
+            inner.SoftDeleteUserPhotoAssetAsync(userId, assetId, deletedAt);
+        public Task SoftDeleteUserPhotoAssetsAsync(UserId userId, IEnumerable<PhotoAssetId> assetIds, DateTime deletedAt) =>
+            inner.SoftDeleteUserPhotoAssetsAsync(userId, assetIds, deletedAt);
         public Task<IReadOnlyList<Photo>> GetActiveByAssetIdsAsync(IEnumerable<PhotoAssetId> assetIds) => inner.GetActiveByAssetIdsAsync(assetIds);
         public Task<IReadOnlyList<PhotoAsset>> GetOrphanedAssetsAsync(DateTime olderThan) => inner.GetOrphanedAssetsAsync(olderThan);
         public Task DeleteAssetAsync(PhotoAssetId id) => inner.DeleteAssetAsync(id);

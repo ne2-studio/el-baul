@@ -22,6 +22,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Nueva pantalla "Mis fotos", accesible desde el selector de baúles (ahora con una sección "Personal" además de "Mis baúles"): muestra, en un único lugar, todas las fotos que has subido a cualquiera de tus baúles, sin repetir la misma foto si aparece en varios. Al abrir una foto desde aquí se indica en qué baúles aparece.
 - Desde "Mis fotos", ahora se puede añadir una foto a otro baúl al que tengas acceso, sin volver a subirla: al abrirla, "Aparece en" permite elegir un baúl adicional donde mostrarla.
 - "Mis fotos" ahora tiene su propio botón para subir fotos directamente, sin elegir ni crear un baúl primero: se puede decidir más adelante en qué baúl compartirlas, con el mismo selector de fotos y progreso de subida de siempre. Un nuevo filtro "Sin compartir" muestra las fotos que todavía no están en ningún baúl. Al ver una foto que aún no aparece en ningún baúl, se ofrece añadirla a uno directamente desde el visor.
+- Desde "Mis fotos" ahora se puede quitar una foto de esta galería personal ("Quitar de Mis fotos"), tanto una a una como seleccionando varias a la vez. La foto sigue apareciendo con normalidad en los baúles donde ya esté compartida, y se puede volver a guardar en Mis fotos más adelante.
+- Al ver una foto dentro de un baúl (una a una o en selección múltiple), ahora se puede "Guardar en Mis fotos" para tenerla también en tu galería personal, sin duplicar el archivo ni afectar a la foto original del baúl.
 
 ### Arreglado
 

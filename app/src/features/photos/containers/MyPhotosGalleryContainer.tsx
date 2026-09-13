@@ -23,11 +23,25 @@ const FILTER_OPTIONS: { value: MyPhotosFilter; label: string }[] = [
   { value: 'sin-compartir', label: 'Sin compartir' },
 ];
 
+interface MyPhotosGalleryContainerProps {
+  /** Selection-mode props mirror BaulPhotosTabContainer's own shape (Slice 5, docs/.backlog
+   * issue #62): the header (icon/counter) and the batch action bar both need this state, so it
+   * lives one level up in MisFotosRoute — same reasoning as BaulRoute keeping selectionMode
+   * inline instead of inside the tab container. */
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onLongPress?: (id: string) => void;
+  onToggleGroup?: (photos: PhotoAsset[]) => void;
+}
+
 // Self-sufficient (see the containers/ rule in docs/architecture/frontend.md): "Mis fotos"'s
 // own gallery, built on the read-only grid from Slice 1 — now with an upload FAB (Slice 3,
-// docs/.backlog issue #62) and the "Todas"/"Sin compartir" filter pills. Still no selection
-// mode: batch actions over PhotoAsset are out of scope for this slice.
-export function MyPhotosGalleryContainer() {
+// docs/.backlog issue #62), the "Todas"/"Sin compartir" filter pills, and multi-selection
+// (Slice 5) reusing PhotoSwimlanes' existing selection primitives instead of a separate one.
+export function MyPhotosGalleryContainer({
+  selectionMode = false, selectedIds, onToggleSelect, onLongPress, onToggleGroup,
+}: MyPhotosGalleryContainerProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
@@ -88,7 +102,9 @@ export function MyPhotosGalleryContainer() {
 
   return (
     <>
-      <FilterPills options={FILTER_OPTIONS} value={filter} onChange={handleFilterChange} className="mb-4" />
+      {!selectionMode && (
+        <FilterPills options={FILTER_OPTIONS} value={filter} onChange={handleFilterChange} className="mb-4" />
+      )}
 
       {assets.length === 0 ? (
         filter === 'sin-compartir' ? (
@@ -106,13 +122,21 @@ export function MyPhotosGalleryContainer() {
         )
       ) : (
         <>
-          <PhotoSwimlanes photos={assets} onSelectPhoto={handleSelectPhoto} />
+          <PhotoSwimlanes
+            photos={assets}
+            onSelectPhoto={handleSelectPhoto}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            onToggleSelect={onToggleSelect}
+            onLongPress={onLongPress}
+            onToggleGroup={onToggleGroup}
+          />
           <div ref={sentinelRef} className="h-1" />
           {isPending('my-photos-more') && <LoadingSpinner size="sm" />}
         </>
       )}
 
-      <SimpleFAB label="Subir fotos" icon={<Plus className="w-5 h-5" />} onClick={handleUploadPhotos} />
+      <SimpleFAB label="Subir fotos" icon={<Plus className="w-5 h-5" />} onClick={handleUploadPhotos} hidden={selectionMode} />
     </>
   );
 }
