@@ -152,8 +152,8 @@ public class PhotoManagerTests
     {
         var (_, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var failingRepository = Substitute.For<IPhotoRepository>();
-        failingRepository.CreateAsync(Arg.Any<Photo>())
-            .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
+        failingRepository.TryCreateAssetAsync(Arg.Any<PhotoAsset>())
+            .Returns<Task<bool>>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
@@ -177,8 +177,8 @@ public class PhotoManagerTests
     {
         var (baulId, _) = await _fixture.CreateBaulWithChapterAsync();
         var failingRepository = Substitute.For<IPhotoRepository>();
-        failingRepository.CreateAsync(Arg.Any<Photo>())
-            .Returns<Task>(_ => throw new InvalidOperationException("database unavailable"));
+        failingRepository.TryCreateAssetAsync(Arg.Any<PhotoAsset>())
+            .Returns<Task<bool>>(_ => throw new InvalidOperationException("database unavailable"));
 
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
@@ -250,8 +250,12 @@ public class PhotoManagerTests
     }
 
     [Fact]
-    public async Task UploadAsync_StoresTheDuplicateAsAnAlreadySoftDeletedRow_KeepingItsOwnStorageKey()
+    public async Task UploadAsync_ReusesTheExistingCanonicalAsset_AndNeverWritesToStorage_WhenBytesExactlyMatchAnActivePhotoInTheSameBaul()
     {
+        // Slice 2.5 (docs/.backlog issue #62): exact-duplicate detection is now global and runs
+        // off the content hash before any normalization/storage write — a re-upload of bytes
+        // that already back an active Photo in this exact baúl never touches storage at all, and
+        // never creates a second (even soft-deleted) Photo row for it.
         var (baulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
         var bytes = new byte[] { 11, 22, 33 };
         var hash = Convert.ToHexStringLower(SHA256.HashData(bytes));
@@ -261,14 +265,9 @@ public class PhotoManagerTests
         using var content = new MemoryStream(bytes);
         await manager.UploadAsync(chapterId, content, new ClientUploadId(Guid.NewGuid()));
 
-        // The upload's own bytes really were written to storage (PhotoFileService always saves
-        // before the duplicate check runs) — never overwritten, moved, or left blob-orphaned:
-        // it's tracked by a real, soft-deleted Photo row instead.
-        Assert.Single(_photoStorage.SavedKeys);
+        Assert.Empty(_photoStorage.SavedKeys);
         var allPhotosInChapter = await _fixture.Photos.GetAllByChapterIdAsync(chapterId);
-        var duplicateRow = Assert.Single(allPhotosInChapter, p => p.StorageKey == _photoStorage.SavedKeys[0]);
-        Assert.Equal(PhotoStatus.Deleted, duplicateRow.Status);
-        Assert.Equal(PhotoDeletionReasons.FlaggedAsDuplicate, duplicateRow.DeletionReason);
+        Assert.Single(allPhotosInChapter);
     }
 
     [Fact]
@@ -320,6 +319,108 @@ public class PhotoManagerTests
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.AlreadyExisted);
         Assert.NotEqual(deletedId.ToString(), result.Value.Id);
+    }
+
+    // Slice 2.5 (docs/.backlog issue #62): global exact-duplicate reuse across users. See
+    // MyPhotosReadManagerTests for the "Mis fotos" read-side counterpart of these scenarios.
+    [Fact]
+    public async Task UploadAsync_ReusesTheCanonicalAsset_WhenADifferentUserUploadsTheExactSameBytes()
+    {
+        var bytes = new byte[] { 71, 72, 73 };
+        var (baulA, chapterA) = await _fixture.CreateBaulWithChapterAsync(baulName: "Baúl A");
+        var pedroResult = await new PhotoManager(
+                NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
+                new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+                CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+                new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork())
+            .UploadAsync(chapterA, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+        Assert.True(pedroResult.IsSuccess);
+
+        const string jaimeId = "jaime";
+        var (baulB, chapterB) = await _fixture.CreateBaulWithChapterAsync(custodioId: jaimeId, baulName: "Baúl B");
+        var jaimeManager = new PhotoManager(
+            NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
+            new StaticCurrentUserProvider(jaimeId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
+
+        var jaimeResult = await jaimeManager.UploadAsync(chapterB, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(jaimeResult.IsSuccess);
+        Assert.False(jaimeResult.Value.AlreadyExisted, "a genuinely new Photo for Jaime's own baúl, even though the asset is shared");
+        // No second PhotoAsset was minted, and no second stored blob — only one upload's worth of
+        // bytes ever reached storage.
+        Assert.Single(_photoStorage.SavedKeys);
+        var pedroAsset = (await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(pedroResult.Value.Id))))!.PhotoAssetId;
+        var jaimeAsset = (await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(jaimeResult.Value.Id))))!.PhotoAssetId;
+        Assert.Equal(pedroAsset, jaimeAsset);
+        // Jaime's own upload, nowhere in the response, ever names Pedro or Baúl A.
+        Assert.DoesNotContain("Pedro", jaimeResult.Value.Id, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UploadAsync_GivesEachIndependentContributor_TheirOwnUserPhotoAssetRelation()
+    {
+        var bytes = new byte[] { 81, 82, 83 };
+        var (baulA, chapterA) = await _fixture.CreateBaulWithChapterAsync(baulName: "Baúl A");
+        await CreateManager(CustodioId).UploadAsync(chapterA, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        const string jaimeId = "jaime";
+        var (baulB, chapterB) = await _fixture.CreateBaulWithChapterAsync(custodioId: jaimeId, baulName: "Baúl B");
+        var jaimeManager = new PhotoManager(
+            NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
+            new StaticCurrentUserProvider(jaimeId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
+        await jaimeManager.UploadAsync(chapterB, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        var pedrosAssets = await _fixture.Photos.GetByContributorAsync(new UserId(CustodioId));
+        var jaimesAssets = await _fixture.Photos.GetByContributorAsync(new UserId(jaimeId));
+        Assert.Single(pedrosAssets);
+        Assert.Single(jaimesAssets);
+        Assert.Equal(pedrosAssets[0].Id, jaimesAssets[0].Id);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_AllowsAContributor_WhoOnlyHasAUserPhotoAssetRelation_FromDedup()
+    {
+        // Jaime never created this PhotoAsset row (Pedro did) — his ability to add it into
+        // another baúl from Mis fotos must come from his own UserPhotoAsset relation, not from
+        // PhotoAsset.UploadedBy (see PhotoManager.AddAssetToBaulAsync).
+        var bytes = new byte[] { 91, 92, 93 };
+        var (baulA, chapterA) = await _fixture.CreateBaulWithChapterAsync(baulName: "Baúl A");
+        var pedroUpload = await CreateManager(CustodioId).UploadAsync(chapterA, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+
+        const string jaimeId = "jaime";
+        var (baulB, chapterB) = await _fixture.CreateBaulWithChapterAsync(custodioId: jaimeId, baulName: "Baúl B");
+        var jaimeManager = new PhotoManager(
+            NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
+            new StaticCurrentUserProvider(jaimeId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
+        await jaimeManager.UploadAsync(chapterB, new MemoryStream(bytes), new ClientUploadId(Guid.NewGuid()));
+        var jaimesAssetId = (await _fixture.Photos.GetByContributorAsync(new UserId(jaimeId)))[0].Id;
+
+        var baulC = await _fixture.CreateBaulAsync("Baúl C", jaimeId);
+        var addResult = await jaimeManager.AddAssetToBaulAsync(jaimesAssetId, baulC);
+
+        Assert.True(addResult.IsSuccess);
+        Assert.Equal("Baúl C", addResult.Value.BaulName);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_DeniesAUser_WithNoUserPhotoAssetRelationToTheAsset()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var photoId = await _fixture.AddPhotoAsync(baulId, storageKey: "someone-elses.jpg");
+        var assetId = (await _fixture.Photos.GetByIdAsync(photoId))!.PhotoAssetId;
+        var targetBaul = await _fixture.CreateBaulAsync("Otro baúl", "stranger");
+
+        var manager = CreateManager("stranger");
+        var result = await manager.AddAssetToBaulAsync(assetId, targetBaul);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(Ne2Studio.Common.ApplicationErrorCode.Forbidden, result.Error.Code);
     }
 
     [Fact]

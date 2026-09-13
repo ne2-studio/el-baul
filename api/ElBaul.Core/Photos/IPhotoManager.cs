@@ -28,8 +28,8 @@ public interface IPhotoManager
     Task<Result<PhotoDto>> AddToBaulAsync(PhotoId sourcePhotoId, BaulId targetBaulId);
 
     /// <summary>The Mis fotos counterpart to AddToBaulAsync: same domain factory, DB constraint
-    /// and idempotent-ish semantics, but authorized off PhotoAsset.UploadedBy (the "you
-    /// originally contributed this asset" rule Mis fotos itself is keyed on) instead of an
+    /// and idempotent-ish semantics, but authorized off the caller's own UserPhotoAsset relation
+    /// (the "you have this asset in Mis fotos" rule Mis fotos itself is keyed on) instead of an
     /// accessible source Photo, since Mis fotos has no single baúl to prove access through.
     /// Returns just the new/existing appearance rather than a full PhotoDto — Mis fotos only
     /// needs to patch its "Aparece en" list, not re-render a baúl-scoped photo.</summary>

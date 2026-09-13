@@ -39,11 +39,6 @@ public interface IPhotoRepository
     /// deleted (Photo.BaulId is a Restrict FK).</summary>
     Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId);
 
-    /// <summary>The active photo (if any) in this baúl already carrying this content hash —
-    /// used by PhotoUploadWorkflow's app-level duplicate check and by the merge flow to look up
-    /// the survivor of a race they lost. Never matches a soft-deleted duplicate.</summary>
-    Task<Photo?> GetActiveByContentHashAsync(BaulId baulId, string originalContentHash);
-
     /// <summary>Every active photo that already has a content hash — the candidate set the
     /// deduplicate-photos maintenance command groups by (BaulId, OriginalContentHash) to find
     /// duplicate groups.</summary>
@@ -56,17 +51,6 @@ public interface IPhotoRepository
     Task<Photo?> GetActiveByAssetIdAsync(BaulId baulId, PhotoAssetId assetId);
 
     Task CreateAsync(Photo photo);
-
-    /// <summary>Inserts a new Active photo, honoring the same (BaulId, OriginalContentHash)
-    /// uniqueness that IX_Photos_BaulId_OriginalContentHash_Active enforces (or, until that
-    /// migration has been applied, an application-level equivalent of it) — the final
-    /// concurrency guard against two uploads of the same exact file racing each other. Returns
-    /// false, without throwing and without persisting anything, if another Active photo in the
-    /// same baúl already carries this hash; the caller is responsible for treating that as a
-    /// duplicate (see PhotoUploadWorkflow.CreatePhotoAsync). A null/OriginalContentHash never
-    /// conflicts with anything, so this is safe to use unconditionally for every photo
-    /// insert.</summary>
-    Task<bool> TryCreateActiveAsync(Photo photo);
 
     /// <summary>Inserts a new Active photo that references an already-existing PhotoAsset — the
     /// "Add to another baúl" write path (see Photo.CreateFromExistingAsset). Race-safe against
@@ -81,15 +65,48 @@ public interface IPhotoRepository
     Task DeleteAsync(PhotoId id);
     Task DeleteByBaulIdAsync(BaulId baulId);
 
-    /// <summary>Every PhotoAsset originally contributed by this user (PhotoAsset.UploadedBy),
-    /// regardless of which baúl(es) it currently appears in or whether the user still has
-    /// access to any of them — the read model behind the user-scoped "Mis fotos" view.</summary>
-    Task<IReadOnlyList<PhotoAsset>> GetByUploaderAsync(UserId userId);
+    /// <summary>Every PhotoAsset this user has an explicit UserPhotoAsset relation to (Slice
+    /// 2.5, docs/.backlog issue #62), regardless of which baúl(es) it currently appears in or
+    /// whether the user still has access to any of them — the read model behind the user-scoped
+    /// "Mis fotos" view. Replaces the old PhotoAsset.UploadedBy-based lookup: that field only
+    /// ever named the single user who happened to create the asset row, which breaks once two
+    /// different users can each independently contribute the exact same bytes (see
+    /// TryCreateUserPhotoAssetAsync).</summary>
+    Task<IReadOnlyList<PhotoAsset>> GetByContributorAsync(UserId userId);
 
     /// <summary>A single PhotoAsset by id, with no Photo/baúl in the loop at all — used by
-    /// PhotoManager.AddAssetToBaulAsync, which authorizes off PhotoAsset.UploadedBy directly
-    /// instead of an accessible source Photo (see IPhotoManager's doc comment).</summary>
+    /// PhotoManager.AddAssetToBaulAsync, which authorizes off the caller's own UserPhotoAsset
+    /// relation instead of an accessible source Photo (see IPhotoManager's doc comment).</summary>
     Task<PhotoAsset?> GetAssetByIdAsync(PhotoAssetId id);
+
+    /// <summary>The canonical PhotoAsset (if any) already carrying this exact content hash,
+    /// regardless of baúl, user or Photo status — the global exact-duplicate lookup Slice 2.5
+    /// (docs/.backlog issue #62) uses so a re-uploaded file reuses the existing asset instead of
+    /// creating a new one. Never scoped to a baúl or a user: canonical identity is global (see
+    /// PhotoAsset's doc comment), even though *access* to the asset never is.</summary>
+    Task<PhotoAsset?> GetAssetByContentHashAsync(string originalContentHash);
+
+    /// <summary>Inserts a new PhotoAsset row, honoring the global uniqueness that
+    /// IX_PhotoAssets_OriginalContentHash enforces (a partial unique index over non-null
+    /// hashes) — the database-level guard against two concurrent uploads of the same
+    /// previously-unseen binary both minting their own canonical PhotoAsset. Returns false,
+    /// without throwing or persisting anything, if another PhotoAsset already carries this
+    /// hash; the caller is responsible for deleting whatever it already wrote to storage and
+    /// falling back to the winning asset (see PhotoUploadWorkflow). A null OriginalContentHash
+    /// never conflicts with anything.</summary>
+    Task<bool> TryCreateAssetAsync(PhotoAsset asset);
+
+    /// <summary>Whether this user already has an explicit UserPhotoAsset relation to this
+    /// asset — used by PhotoManager.AddAssetToBaulAsync's authorization check (see its doc
+    /// comment) instead of the old PhotoAsset.UploadedBy equality check.</summary>
+    Task<bool> HasUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId);
+
+    /// <summary>Idempotently records that this user has this PhotoAsset in their personal photo
+    /// space — race-safe via a unique (UserId, PhotoAssetId) constraint (ON CONFLICT DO
+    /// NOTHING), same shape as TryCreateActiveAsync. Returns false, without throwing, if the
+    /// relation already existed; either way the relation is guaranteed to exist once this
+    /// returns.</summary>
+    Task<bool> TryCreateUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt);
 
     /// <summary>Every active Photo referencing any of these assets, across every baúl — batched
     /// in one query instead of one per asset. Used by "Mis fotos" both to find each asset's

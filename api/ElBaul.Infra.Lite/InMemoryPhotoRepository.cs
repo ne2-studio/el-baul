@@ -8,6 +8,8 @@ namespace ElBaul.Infra.Lite;
 public class InMemoryPhotoRepository : IPhotoRepository
 {
     private readonly Dictionary<PhotoId, Photo> _photos = new();
+    private readonly Dictionary<PhotoAssetId, PhotoAsset> _assets = new();
+    private readonly HashSet<(UserId UserId, PhotoAssetId PhotoAssetId)> _userPhotoAssets = new();
     private readonly Lock _lock = new();
 
     public Task<Photo?> GetByIdAsync(PhotoId id)
@@ -77,13 +79,6 @@ public class InMemoryPhotoRepository : IPhotoRepository
         }
     }
 
-    public Task<Photo?> GetActiveByContentHashAsync(BaulId baulId, string originalContentHash)
-    {
-        lock (_lock)
-            return Task.FromResult(_photos.Values.FirstOrDefault(p =>
-                p.BaulId == baulId && p.OriginalContentHash == originalContentHash && p.Status == PhotoStatus.Active));
-    }
-
     public Task<IEnumerable<Photo>> GetActiveWithContentHashAsync()
     {
         lock (_lock)
@@ -101,25 +96,8 @@ public class InMemoryPhotoRepository : IPhotoRepository
 
     public Task CreateAsync(Photo photo)
     {
-        lock (_lock) _photos[photo.Id] = photo;
+        lock (_lock) { _photos[photo.Id] = photo; _assets[photo.PhotoAssetId] = photo.PhotoAsset; }
         return Task.CompletedTask;
-    }
-
-    // Mirrors the real PhotoRepository's ON CONFLICT DO NOTHING semantics without a real unique
-    // index to enforce it — see IX_Photos_BaulId_OriginalContentHash_Active.
-    public Task<bool> TryCreateActiveAsync(Photo photo)
-    {
-        lock (_lock)
-        {
-            if (photo.OriginalContentHash is { } hash && _photos.Values.Any(p =>
-                    p.BaulId == photo.BaulId && p.OriginalContentHash == hash && p.Status == PhotoStatus.Active))
-            {
-                return Task.FromResult(false);
-            }
-
-            _photos[photo.Id] = photo;
-            return Task.FromResult(true);
-        }
     }
 
     // Mirrors the real PhotoRepository's ON CONFLICT DO NOTHING semantics without a real unique
@@ -135,6 +113,7 @@ public class InMemoryPhotoRepository : IPhotoRepository
             }
 
             _photos[photo.Id] = photo;
+            _assets[photo.PhotoAssetId] = photo.PhotoAsset;
             return Task.FromResult(true);
         }
     }
@@ -166,13 +145,12 @@ public class InMemoryPhotoRepository : IPhotoRepository
         return Task.CompletedTask;
     }
 
-    public Task<IReadOnlyList<PhotoAsset>> GetByUploaderAsync(UserId userId)
+    public Task<IReadOnlyList<PhotoAsset>> GetByContributorAsync(UserId userId)
     {
         lock (_lock)
-            return Task.FromResult<IReadOnlyList<PhotoAsset>>(_photos.Values
-                .Select(p => p.PhotoAsset)
-                .Where(a => a.UploadedBy == userId)
-                .DistinctBy(a => a.Id)
+            return Task.FromResult<IReadOnlyList<PhotoAsset>>(_userPhotoAssets
+                .Where(r => r.UserId == userId)
+                .Select(r => _assets[r.PhotoAssetId])
                 .ToList());
     }
 
@@ -190,6 +168,42 @@ public class InMemoryPhotoRepository : IPhotoRepository
     public Task<PhotoAsset?> GetAssetByIdAsync(PhotoAssetId id)
     {
         lock (_lock)
-            return Task.FromResult(_photos.Values.Select(p => p.PhotoAsset).FirstOrDefault(a => a.Id == id));
+            return Task.FromResult(_assets.GetValueOrDefault(id));
+    }
+
+    public Task<PhotoAsset?> GetAssetByContentHashAsync(string originalContentHash)
+    {
+        lock (_lock)
+            return Task.FromResult(_assets.Values.FirstOrDefault(a => a.OriginalContentHash == originalContentHash));
+    }
+
+    // Mirrors the real PhotoRepository's ON CONFLICT DO NOTHING semantics without a real unique
+    // index to enforce it — see IX_PhotoAssets_OriginalContentHash.
+    public Task<bool> TryCreateAssetAsync(PhotoAsset asset)
+    {
+        lock (_lock)
+        {
+            if (asset.OriginalContentHash is { } hash && _assets.Values.Any(a => a.OriginalContentHash == hash))
+            {
+                return Task.FromResult(false);
+            }
+
+            _assets[asset.Id] = asset;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task<bool> HasUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId)
+    {
+        lock (_lock)
+            return Task.FromResult(_userPhotoAssets.Contains((userId, assetId)));
+    }
+
+    // Mirrors the real PhotoRepository's ON CONFLICT DO NOTHING semantics without a real unique
+    // index to enforce it — see IX_UserPhotoAssets_UserId_PhotoAssetId.
+    public Task<bool> TryCreateUserPhotoAssetAsync(UserId userId, PhotoAssetId assetId, DateTime addedAt)
+    {
+        lock (_lock)
+            return Task.FromResult(_userPhotoAssets.Add((userId, assetId)));
     }
 }

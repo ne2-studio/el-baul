@@ -27,5 +27,16 @@ public class PhotoAssetConfiguration : IEntityTypeConfiguration<PhotoAsset>
         });
         // Lowercase hex-encoded SHA-256 is always exactly 64 characters.
         builder.Property(a => a.OriginalContentHash).HasMaxLength(64);
+
+        // The global exact-duplicate invariant (Slice 2.5, docs/.backlog issue #62): "same exact
+        // bytes → same PhotoAsset" is meaningless without a database-level guarantee that no two
+        // PhotoAssets ever carry the same hash. Partial (non-null only) so legacy PhotoAssets
+        // created before OriginalContentHash existed — which all share the same null value —
+        // never collide with each other or block new uploads; see PhotoAsset's doc comment on
+        // legacy assets that can't yet participate in deduplication.
+        builder.HasIndex(a => a.OriginalContentHash)
+            .IsUnique()
+            .HasFilter("\"OriginalContentHash\" IS NOT NULL")
+            .HasDatabaseName("IX_PhotoAssets_OriginalContentHash");
     }
 }

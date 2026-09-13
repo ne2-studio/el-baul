@@ -7,9 +7,10 @@ using Ne2Studio.Common;
 using ElBaul.Domain;
 namespace ElBaul.Core.Photos.Application;
 
-// Created(photo, AlreadyExisted: false) for a genuinely new upload; Duplicate(existingActivePhoto,
-// AlreadyExisted: true) when the upload turned out to be an exact-content duplicate of an
-// already-active photo in the same baúl — Photo is then the *survivor* (the pre-existing active
+// Created(photo, AlreadyExisted: false) for a genuinely new Photo — either brand-new bytes, or an
+// existing canonical PhotoAsset (Slice 2.5, docs/.backlog issue #62) seeing this baúl for the
+// first time. Duplicate(existingActivePhoto, AlreadyExisted: true) whenever the upload turns out
+// to already be active in this exact baúl — Photo is then the *survivor* (the pre-existing active
 // photo), never the just-uploaded bytes, so callers always project the same photo a second
 // upload of that same file would keep returning.
 public record PhotoUploadOutcome(Photo Photo, bool AlreadyExisted)
@@ -35,10 +36,40 @@ public class PhotoUploadWorkflow(
         Guid? uploadBatchId,
         Func<Photo, DateTime, Task> persistRelatedStateAsync)
     {
+        Result<BufferedUpload> bufferResult;
+        try
+        {
+            bufferResult = await photoFileService.BufferAndHashAsync(content);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Photo upload failed while buffering the upload {BaulId} {ChapterId}", baulId, chapterId);
+            throw;
+        }
+
+        // Rejected by ImagePolicy (oversized file) — an expected validation outcome, not a
+        // storage/infra failure, so it never touched storage and there's nothing to compensate for.
+        if (bufferResult.IsFailure) return Result.Failure<PhotoUploadOutcome>(bufferResult.Error);
+        using var buffered = bufferResult.Value;
+
+        var now = clock.UtcNow();
+
+        // Global exact-duplicate lookup (Slice 2.5, docs/.backlog issue #62) — ahead of any
+        // normalization or storage write, so reusing an existing canonical PhotoAsset never
+        // costs a second stored copy or a second round of derived-data computation (dimensions,
+        // normalization). This is the common-case, non-concurrent check; two uploads of the same
+        // previously-unseen bytes can still race past it, which is exactly why
+        // TryCreateAssetAsync's database-level uniqueness further down is still required.
+        var existingAsset = await photoRepository.GetAssetByContentHashAsync(buffered.OriginalContentHash);
+        if (existingAsset is not null)
+        {
+            return await ReuseExistingAssetAsync(existingAsset, baulId, chapterId, userId, now, persistRelatedStateAsync);
+        }
+
         Result<StoredPhotoFile> storedFileResult;
         try
         {
-            storedFileResult = await photoFileService.SaveForUploadAsync(userId, content);
+            storedFileResult = await photoFileService.ProcessAndStoreAsync(userId, buffered);
         }
         catch (Exception ex)
         {
@@ -48,51 +79,45 @@ public class PhotoUploadWorkflow(
             throw;
         }
 
-        // Rejected by ImagePolicy (oversized file, resolution over the hard limit, or not a
-        // valid image) — an expected validation outcome, not a storage/infra failure, so it
-        // never touched storage and there's nothing to compensate for.
         if (storedFileResult.IsFailure) return Result.Failure<PhotoUploadOutcome>(storedFileResult.Error);
         var storedFile = storedFileResult.Value;
 
-        var now = clock.UtcNow();
         var photo = Photo.Create(
             new PhotoId(idGenerator.NewId()), chapterId, baulId, storedFile.StorageKey, storedFile.TakenAt, userId, now,
             storedFile.Dimensions, clientUploadId, storedFile.SizeBytes, uploadBatchId,
             storedFile.OriginalDimensions, storedFile.OriginalSizeBytes,
             storedFile.OriginalContentHash);
 
-        // Cheap app-level check ahead of the transaction below — the common, non-concurrent case
-        // (this exact file is already in the baúl) never needs to open a transaction at all. Not
-        // itself the concurrency guard: two uploads of the same file racing each other can both
-        // pass this check, which is exactly why TryCreateActiveAsync's database-level uniqueness
-        // (see IX_Photos_BaulId_OriginalContentHash_Active) is still required below.
-        var preCheckDuplicate = await photoRepository.GetActiveByContentHashAsync(baulId, storedFile.OriginalContentHash);
-        if (preCheckDuplicate is not null)
-        {
-            return await RecordDuplicateAsync(photo, preCheckDuplicate, now, baulId, storedFile.StorageKey);
-        }
-
         try
         {
-            // The photo row and its related aggregate bookkeeping commit together; if metadata
-            // persistence fails after the storage object is already saved, compensate below.
+            // The new PhotoAsset, its UserPhotoAsset relation, the new Photo row and its related
+            // aggregate bookkeeping all commit together; if any of it fails after the storage
+            // object is already saved, compensate below.
             return await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                if (await photoRepository.TryCreateActiveAsync(photo))
+                if (!await photoRepository.TryCreateAssetAsync(photo.PhotoAsset))
                 {
-                    await persistRelatedStateAsync(photo, now);
-                    return Result.Success(PhotoUploadOutcome.Created(photo));
+                    // Lost the race: another upload of these exact previously-unseen bytes
+                    // created the canonical PhotoAsset first, between the pre-check above and
+                    // this insert (see IX_PhotoAssets_OriginalContentHash). The bytes we just
+                    // wrote to storage are now redundant — clean them up and fall back to the
+                    // same reuse path GetAssetByContentHashAsync above would have taken had it
+                    // run a moment later.
+                    await photoFileService.TryDeleteOrphanedStorageObjectAsync(storedFile.StorageKey);
+                    var winner = await photoRepository.GetAssetByContentHashAsync(storedFile.OriginalContentHash)
+                        ?? throw new InvalidOperationException(
+                            $"TryCreateAssetAsync reported a hash conflict for hash {storedFile.OriginalContentHash} but no PhotoAsset with that hash was found.");
+                    var reused = await ReuseAssetCoreAsync(winner, baulId, chapterId, userId, now, persistRelatedStateAsync);
+                    return Result.Success(reused);
                 }
 
-                // Lost the race: another upload of the same exact file for this baúl committed
-                // first, between the pre-check above and this insert. Reuse the exact same
-                // duplicate-recording behavior as the pre-check case instead of a second, subtly
-                // different code path for what is domain-wise the same outcome.
-                var winner = await photoRepository.GetActiveByContentHashAsync(baulId, storedFile.OriginalContentHash)
-                    ?? throw new InvalidOperationException(
-                        $"TryCreateActiveAsync reported a hash conflict for baúl {baulId} but no active photo with that hash was found.");
-                var outcomeResult = await RecordDuplicateAsync(photo, winner, now, baulId, storedFile.StorageKey);
-                return outcomeResult;
+                if (!await photoRepository.TryAddExistingAssetAsync(photo))
+                    throw new InvalidOperationException(
+                        $"TryAddExistingAssetAsync failed right after minting a brand-new PhotoAsset {photo.PhotoAssetId} for baúl {baulId} — should be impossible.");
+
+                await photoRepository.TryCreateUserPhotoAssetAsync(userId, photo.PhotoAssetId, now);
+                await persistRelatedStateAsync(photo, now);
+                return Result.Success(PhotoUploadOutcome.Created(photo));
             });
         }
         catch (Exception ex)
@@ -105,20 +130,53 @@ public class PhotoUploadWorkflow(
         }
     }
 
-    // Persists the just-uploaded (but never-active) bytes as an already soft-deleted duplicate
-    // row — its storage key stays tracked and auditable (see PhotoDeletionReasons.FlaggedAsDuplicate)
-    // rather than becoming an orphaned blob no row points at. It never went through
-    // persistRelatedStateAsync (chapter/baúl PhotoCount, cover), so there's nothing to undo there.
-    private async Task<Result<PhotoUploadOutcome>> RecordDuplicateAsync(
-        Photo uploadedPhoto, Photo existingActivePhoto, DateTime now, BaulId baulId, string storageKey)
+    // Wraps ReuseAssetCoreAsync in its own transaction — used when the exact-duplicate lookup
+    // finds the existing PhotoAsset up front, with no storage write of its own to compensate for.
+    private async Task<Result<PhotoUploadOutcome>> ReuseExistingAssetAsync(
+        PhotoAsset asset, BaulId baulId, ChapterId? chapterId, UserId userId, DateTime now,
+        Func<Photo, DateTime, Task> persistRelatedStateAsync) =>
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+            Result.Success(await ReuseAssetCoreAsync(asset, baulId, chapterId, userId, now, persistRelatedStateAsync)));
+
+    // The actual "reuse an existing canonical PhotoAsset" logic (Slice 2.5, docs/.backlog issue
+    // #62), shared by the up-front exact-duplicate lookup and the race-lost branch above — always
+    // called from inside an ambient transaction (never opens its own). No PhotoAsset is created
+    // and no storage write happens here: the asset and its stored bytes already exist.
+    private async Task<PhotoUploadOutcome> ReuseAssetCoreAsync(
+        PhotoAsset asset, BaulId baulId, ChapterId? chapterId, UserId userId, DateTime now,
+        Func<Photo, DateTime, Task> persistRelatedStateAsync)
     {
+        // Ensures the current user shows up in Mis fotos for this asset even though they didn't
+        // create the PhotoAsset row — the whole point of Slice 2.5's UserPhotoAsset relation.
+        // Idempotent: a no-op if the user already has this asset (e.g. re-uploading their own file).
+        await photoRepository.TryCreateUserPhotoAssetAsync(userId, asset.Id, now);
+
+        // Recovers the asset's own intrinsic date the same way MyPhotosReadManager and
+        // PhotoManager.AddAssetToBaulAsync do: its originating Photo shares its Guid (see
+        // Photo.Create's doc comment). Missing only if that Photo was hard-deleted.
+        var originatingPhoto = await photoRepository.GetByIdAsync(new PhotoId(asset.Id.Value));
+
+        var newPhoto = Photo.CreateFromExistingAsset(
+            new PhotoId(idGenerator.NewId()), baulId, asset, originatingPhoto?.TakenAt, userId, now, chapterId);
+
+        if (await photoRepository.TryAddExistingAssetAsync(newPhoto))
+        {
+            await persistRelatedStateAsync(newPhoto, now);
+            logger.LogInformation(
+                "Photo upload reused an existing canonical PhotoAsset {BaulId} {ChapterId} {PhotoAssetId} {NewPhotoId}",
+                baulId, chapterId, asset.Id, newPhoto.Id);
+            return PhotoUploadOutcome.Created(newPhoto);
+        }
+
+        // Idempotent: this asset is already active in the target baúl (this user or someone else
+        // already uploaded/added the exact same bytes here) — surface the existing Photo instead
+        // of creating a second projection or surfacing a conflict.
+        var existingInBaul = await photoRepository.GetActiveByAssetIdAsync(baulId, asset.Id)
+            ?? throw new InvalidOperationException(
+                $"TryAddExistingAssetAsync reported a conflict for baúl {baulId} asset {asset.Id} but no active photo was found.");
         logger.LogInformation(
-            "Duplicate photo upload detected {BaulId} {UploadedPhotoId} {ExistingPhotoId} {StorageKey}",
-            baulId, uploadedPhoto.Id, existingActivePhoto.Id, storageKey);
-
-        var flaggedDuplicate = uploadedPhoto.MarkDeleted(PhotoDeletionReasons.FlaggedAsDuplicate, now);
-        await photoRepository.CreateAsync(flaggedDuplicate);
-
-        return Result.Success(PhotoUploadOutcome.Duplicate(existingActivePhoto));
+            "Photo upload was an exact duplicate already active in this baúl {BaulId} {ChapterId} {PhotoAssetId} {ExistingPhotoId}",
+            baulId, chapterId, asset.Id, existingInBaul.Id);
+        return PhotoUploadOutcome.Duplicate(existingInBaul);
     }
 }

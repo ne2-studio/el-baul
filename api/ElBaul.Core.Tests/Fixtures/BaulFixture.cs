@@ -102,9 +102,13 @@ public class BaulFixture
         Guid? uploadBatchId = null, DateTime? createdAt = null, string? originalContentHash = null)
     {
         var photoId = new PhotoId(id ?? Guid.NewGuid());
-        await Photos.CreateAsync(PhotoMother.Create(
+        var photo = PhotoMother.Create(
             photoId, chapterId, baulId, storageKey, date, new UserId(uploadedBy), createdAt ?? Clock.UtcNow(), clientUploadId, sizeBytes,
-            uploadBatchId, originalContentHash: originalContentHash));
+            uploadBatchId, originalContentHash: originalContentHash);
+        await Photos.CreateAsync(photo);
+        // Mirrors the AddUserPhotoAssets migration's backfill rule: the uploader of an asset's
+        // own originating Photo (same Guid as the asset — see Photo.Create) is a contributor.
+        await Photos.TryCreateUserPhotoAssetAsync(new UserId(uploadedBy), photo.PhotoAssetId, photo.CreatedAt);
         return photoId;
     }
 }

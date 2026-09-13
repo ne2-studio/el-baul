@@ -28,22 +28,50 @@ public class PhotoFileService(
         ["image/webp"] = "webp",
     };
 
-    public async Task<Result<StoredPhotoFile>> SaveForUploadAsync(UserId userId, Stream content)
+    // Split out of SaveForUploadAsync (Slice 2.5, docs/.backlog issue #62): the global
+    // exact-duplicate lookup in PhotoUploadWorkflow needs the content hash *before* deciding
+    // whether to normalize/store anything at all — reusing an existing canonical PhotoAsset
+    // must not cost a second normalization pass or a second stored copy (see PhotoAsset's doc
+    // comment on derived-data reuse). Buffers `content` exactly once; callers that already have
+    // a BufferedUpload never re-read the original stream.
+    public async Task<Result<BufferedUpload>> BufferAndHashAsync(Stream content)
     {
-        using var buffered = new MemoryStream();
+        var buffered = new MemoryStream();
         await content.CopyToAsync(buffered);
         buffered.Position = 0;
 
         if (imagePolicy.ExceedsUploadBytes(buffered.Length))
-            return Result.Failure<StoredPhotoFile>(ApplicationError.Validation(
+        {
+            await buffered.DisposeAsync();
+            return Result.Failure<BufferedUpload>(ApplicationError.Validation(
                 $"El archivo supera el tamaño máximo permitido ({imagePolicy.MaxUploadBytes / 1_000_000} MB)"));
+        }
 
         // SHA-256 of exactly the bytes the server received, before any of the processing below
         // (HEIC conversion, normalization, re-encoding) touches them — see Photo.OriginalContentHash.
-        // Hashed off the buffer already read above rather than re-reading `content`, so this never
-        // costs a second in-memory copy of the upload.
         var originalContentHash = Convert.ToHexStringLower(await SHA256.HashDataAsync(buffered));
         buffered.Position = 0;
+
+        return Result.Success(new BufferedUpload(buffered, originalContentHash));
+    }
+
+    public async Task<Result<StoredPhotoFile>> SaveForUploadAsync(UserId userId, Stream content)
+    {
+        var bufferResult = await BufferAndHashAsync(content);
+        if (bufferResult.IsFailure) return Result.Failure<StoredPhotoFile>(bufferResult.Error);
+
+        using var buffered = bufferResult.Value;
+        return await ProcessAndStoreAsync(userId, buffered);
+    }
+
+    // The normalize/identify/store half of the old SaveForUploadAsync — runs only once a caller
+    // has established (via BufferAndHashAsync + a hash lookup) that this content is genuinely
+    // new, i.e. no existing PhotoAsset already carries BufferedUpload.OriginalContentHash.
+    public async Task<Result<StoredPhotoFile>> ProcessAndStoreAsync(UserId userId, BufferedUpload buffered)
+    {
+        var content = buffered.Content;
+        var originalContentHash = buffered.OriginalContentHash;
+        content.Position = 0;
 
         // Runs before EXIF extraction so ResolvePhotoDate reads dates off web-safe (e.g.
         // normalized-from-HEIC) bytes rather than a source format the date extractor may not
@@ -52,7 +80,7 @@ public class PhotoFileService(
         // support the web-safe formats this already produces, not HEIC as well, which keeps
         // that abstraction narrow. HEIC/HEIF conversion has always run unconditionally here;
         // this ticket only adds a limit downstream of it, not a new cost.
-        var normalized = await photoImageNormalizer.NormalizeAsync(buffered);
+        var normalized = await photoImageNormalizer.NormalizeAsync(content);
 
         // Reads the date before anything below strips metadata (NormalizeAsync, when the image
         // policy needs it, drops EXIF entirely — see IImageProcessor) — must not move after it.
@@ -140,3 +168,12 @@ public class PhotoFileService(
 public record StoredPhotoFile(
     string StorageKey, PhotoDate? TakenAt, long SizeBytes, ImageDimensions Dimensions,
     ImageDimensions? OriginalDimensions, long? OriginalSizeBytes, string OriginalContentHash);
+
+// The buffered, already-hashed upload — everything PhotoUploadWorkflow needs to decide whether
+// this content is an exact duplicate of an existing PhotoAsset *before* paying for normalization
+// or a storage write (see PhotoFileService.BufferAndHashAsync). Owns Content and must be
+// disposed by whoever calls BufferAndHashAsync.
+public sealed record BufferedUpload(Stream Content, string OriginalContentHash) : IDisposable
+{
+    public void Dispose() => Content.Dispose();
+}

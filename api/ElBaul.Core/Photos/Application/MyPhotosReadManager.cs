@@ -27,7 +27,7 @@ public class MyPhotosReadManager(
         var accessibleBaulNames = (await baulAccess.GetAccessibleAsync(userId))
             .ToDictionary(a => a.Baul.Id, a => a.Baul.Name);
 
-        var assets = await photoRepository.GetByUploaderAsync(userId);
+        var assets = await photoRepository.GetByContributorAsync(userId);
         if (assets.Count == 0) return Result.Success(new PhotoAssetPageDto([], false));
 
         var assetIds = assets.Select(a => a.Id).ToList();

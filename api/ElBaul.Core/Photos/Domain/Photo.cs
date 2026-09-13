@@ -109,9 +109,15 @@ public sealed class Photo : Entity<PhotoId>
     // initial value for the same photograph in a new context is carried over — never the source
     // Photo's chapter, tags, memories, upload-batch or client-upload identity, all of which are
     // specific to the baúl it's coming from. See PhotoManager.AddToBaulAsync for the full rule.
+    // chapterId defaults to null for "Add to another baúl" (PhotoManager.AddToBaulAsync/
+    // AddAssetToBaulAsync), which never targets a chapter. Slice 2.5's exact-duplicate upload
+    // reuse (PhotoUploadWorkflow) is the one caller that does pass a chapter, since uploading
+    // into a chapter must still land there even when the bytes turn out to already have a
+    // canonical PhotoAsset.
     public static Photo CreateFromExistingAsset(
-        PhotoId id, BaulId baulId, PhotoAsset asset, PhotoDate? takenAt, UserId uploadedBy, DateTime createdAt) =>
-        new(id, ChapterId: null, baulId, asset, takenAt, uploadedBy, createdAt);
+        PhotoId id, BaulId baulId, PhotoAsset asset, PhotoDate? takenAt, UserId uploadedBy, DateTime createdAt,
+        ChapterId? chapterId = null) =>
+        new(id, chapterId, baulId, asset, takenAt, uploadedBy, createdAt);
 
     public Photo WithDate(PhotoDate? date) =>
         Mutate(() => TakenAt = date);

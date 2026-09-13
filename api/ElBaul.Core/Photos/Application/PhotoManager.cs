@@ -221,7 +221,12 @@ public class PhotoManager(
         if (assetResult.IsFailure) return Result.Failure<BaulAppearanceDto>(assetResult.Error);
         var asset = assetResult.Value;
 
-        if (asset.UploadedBy != userId)
+        // Slice 2.5 (docs/.backlog issue #62): authorizes off the caller's own UserPhotoAsset
+        // relation, not PhotoAsset.UploadedBy — several users can each independently contribute
+        // the exact same bytes (see PhotoUploadWorkflow's exact-duplicate reuse), and every one
+        // of them must be able to add "their" asset from Mis fotos, not just whoever happened to
+        // create the PhotoAsset row first.
+        if (!await photoRepository.HasUserPhotoAssetAsync(userId, assetId))
         {
             logger.LogWarning(
                 "Add asset to baul rejected: access denied {@Context}", new { PhotoAssetId = assetId, TargetBaulId = targetBaulId });

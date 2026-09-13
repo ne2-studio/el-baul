@@ -116,6 +116,33 @@ public class MyPhotosReadManagerTests
     }
 
     [Fact]
+    public async Task GetMyPhotosAsync_ShowsAnAssetSharedByExactDuplicateUpload_ToEveryIndependentContributor()
+    {
+        // Slice 2.5 (docs/.backlog issue #62): both the original uploader and a later, unrelated
+        // contributor who happened to upload the exact same bytes must each see the asset in
+        // their own Mis fotos — neither one's UserPhotoAsset relation depends on the other's.
+        var baulA = await _fixture.CreateBaulAsync("Baúl A", CustodioId);
+        var sourcePhotoId = await _fixture.AddPhotoAsync(baulA, storageKey: "shared.jpg", uploadedBy: CustodioId);
+        var source = (await _fixture.Photos.GetByIdAsync(sourcePhotoId))!;
+
+        // OtherUserId independently contributes the exact same asset (mirrors
+        // PhotoUploadWorkflow.ReuseAssetCoreAsync's TryCreateUserPhotoAssetAsync call).
+        await _fixture.Photos.TryCreateUserPhotoAssetAsync(new UserId(OtherUserId), source.PhotoAssetId, _fixture.Clock.UtcNow());
+
+        var pedrosResult = await CreateManager().GetMyPhotosAsync(0, 60);
+        var otherResult = await new MyPhotosReadManager(
+                _fixture.Photos, new StaticCurrentUserProvider(OtherUserId),
+                new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance), _photoStorage)
+            .GetMyPhotosAsync(0, 60);
+
+        Assert.Single(pedrosResult.Value.Items);
+        Assert.Single(otherResult.Value.Items);
+        Assert.Equal(pedrosResult.Value.Items[0].Id, otherResult.Value.Items[0].Id);
+        // OtherUserId isn't a member of baulA, so it never appears in their own view of it.
+        Assert.Empty(otherResult.Value.Items[0].Baules);
+    }
+
+    [Fact]
     public async Task GetMyPhotosAsync_OrdersChronologically_UndatedLast()
     {
         var baulId = await _fixture.CreateBaulAsync();
