@@ -58,7 +58,7 @@ test('user can log in with Google (fake-oidc) and reach their baúl', async ({ p
   // the same "land directly in a baúl by id" path deep links rely on.
   await page.goto(`/baules/${createdBaul.id}`);
 
-  await expect(page.getByRole('button', { name: 'Cambiar de baúl' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cambiar de espacio' })).toBeVisible();
   await expect(page.getByText(baulName)).toBeVisible();
   // El baúl abre en Historia (la pestaña de recuerdos) por defecto.
   await expect(page.getByText('Todavía no hay recuerdos')).toBeVisible();
