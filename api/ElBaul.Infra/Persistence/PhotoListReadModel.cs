@@ -15,15 +15,15 @@ namespace ElBaul.Infra.Persistence;
 public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
 {
     public Task<IReadOnlyList<PhotoListRow>> GetByChapterIdAsync(ChapterId chapterId) =>
-        BuildRowsAsync(dbContext.Photos.AsNoTracking()
+        BuildRowsAsync(dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.ChapterId == chapterId && p.Status == PhotoStatus.Active));
 
     public Task<IReadOnlyList<PhotoListRow>> GetLooseByBaulIdAsync(BaulId baulId) =>
-        BuildRowsAsync(dbContext.Photos.AsNoTracking()
+        BuildRowsAsync(dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.BaulId == baulId && p.ChapterId == null && p.Status == PhotoStatus.Active));
 
     public Task<IReadOnlyList<PhotoListRow>> GetPageAsync(BaulId baulId, ChapterId? chapterId, int skip, int take) =>
-        BuildRowsAsync(dbContext.Photos.AsNoTracking()
+        BuildRowsAsync(dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && (chapterId == null || p.ChapterId == chapterId))
             .OrderByChronology()
             .Skip(skip)
@@ -32,7 +32,7 @@ public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
     public Task<IReadOnlyList<PhotoListRow>> GetActiveByIdsAsync(BaulId baulId, IEnumerable<PhotoId> photoIds)
     {
         var ids = photoIds.ToList();
-        return BuildRowsAsync(dbContext.Photos.AsNoTracking()
+        return BuildRowsAsync(dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && ids.Contains(p.Id))
             .OrderByChronology());
     }
@@ -42,7 +42,7 @@ public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
         // OrderBy(EF.Functions.Random()) becomes `ORDER BY random()` on Postgres — the
         // suggestion should vary between visits instead of always landing on the same
         // (e.g. oldest) untagged photo, so this can't be an OrderBy on any stored column.
-        var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking()
+        var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && !p.ConfirmedNoPersonas)
             .Where(p => !dbContext.PhotoPersonaTags.Any(t => t.PhotoId == p.Id))
             .OrderBy(_ => EF.Functions.Random())
@@ -53,7 +53,7 @@ public class PhotoListReadModel(ElBaulDbContext dbContext) : IPhotoListReadModel
     public async Task<PhotoListRow?> GetMemorySuggestionAsync(BaulId baulId)
     {
         // Same `ORDER BY random()` reasoning as GetUntaggedSuggestionAsync above.
-        var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking()
+        var rows = await BuildRowsAsync(dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active)
             .Where(p => !dbContext.Recuerdos.Any(r => r.PhotoId == p.Id))
             .OrderBy(_ => EF.Functions.Random())

@@ -11,6 +11,7 @@ internal static class IdValueConverters
     public static readonly ValueConverter<BaulId, Guid> BaulId = new(id => id.Value, v => new BaulId(v));
     public static readonly ValueConverter<ChapterId, Guid> ChapterId = new(id => id.Value, v => new ChapterId(v));
     public static readonly ValueConverter<PhotoId, Guid> PhotoId = new(id => id.Value, v => new PhotoId(v));
+    public static readonly ValueConverter<PhotoAssetId, Guid> PhotoAssetId = new(id => id.Value, v => new PhotoAssetId(v));
     public static readonly ValueConverter<PersonaId, Guid> PersonaId = new(id => id.Value, v => new PersonaId(v));
     public static readonly ValueConverter<RecuerdoId, Guid> RecuerdoId = new(id => id.Value, v => new RecuerdoId(v));
     public static readonly ValueConverter<SharedLinkId, Guid> SharedLinkId = new(id => id.Value, v => new SharedLinkId(v));

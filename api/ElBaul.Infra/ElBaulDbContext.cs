@@ -32,6 +32,7 @@ public class ElBaulDbContext(DbContextOptions<ElBaulDbContext> options) : DbCont
     public DbSet<Baul> Baules => Set<Baul>();
     public DbSet<Chapter> Chapters => Set<Chapter>();
     public DbSet<Photo> Photos => Set<Photo>();
+    public DbSet<PhotoAsset> PhotoAssets => Set<PhotoAsset>();
     public DbSet<Recuerdo> Recuerdos => Set<Recuerdo>();
     public DbSet<Persona> Personas => Set<Persona>();
     public DbSet<PhotoPersonaTag> PhotoPersonaTags => Set<PhotoPersonaTag>();

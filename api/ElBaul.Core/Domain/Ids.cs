@@ -51,6 +51,16 @@ public readonly record struct PhotoId(Guid Value) : IParsableId<PhotoId>
     public static Result<PhotoId> Parse(string? raw) => IdParsing.Parse(raw, v => new PhotoId(v), "photo id");
 }
 
+// Identifies the stored image/file behind one or more Photo rows (see
+// ElBaul.Core.Photos.Domain.PhotoAsset). Not currently exposed to any client-facing
+// contract — Photo remains the aggregate root API callers interact with.
+public readonly record struct PhotoAssetId(Guid Value) : IParsableId<PhotoAssetId>
+{
+    public static implicit operator Guid(PhotoAssetId id) => id.Value;
+    public override string ToString() => Value.ToString();
+    public static Result<PhotoAssetId> Parse(string? raw) => IdParsing.Parse(raw, v => new PhotoAssetId(v), "photo asset id");
+}
+
 public readonly record struct PersonaId(Guid Value) : IParsableId<PersonaId>
 {
     public static implicit operator Guid(PersonaId id) => id.Value;

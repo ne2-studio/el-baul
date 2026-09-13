@@ -12,7 +12,7 @@ public class PhotoUploadBatchReadModel(ElBaulDbContext dbContext) : IPhotoUpload
 {
     public async Task<IReadOnlyList<PhotoUploadBatchRow>> GetByBaulIdAsync(BaulId baulId)
     {
-        var photos = await dbContext.Photos.AsNoTracking()
+        var photos = await dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && p.UploadBatchId != null)
             .ToListAsync();
         if (photos.Count == 0) return [];
@@ -25,7 +25,7 @@ public class PhotoUploadBatchReadModel(ElBaulDbContext dbContext) : IPhotoUpload
 
     public async Task<IReadOnlyList<PhotoListRow>> GetPhotosByBatchIdAsync(BaulId baulId, Guid batchId)
     {
-        var photos = await dbContext.Photos.AsNoTracking()
+        var photos = await dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
             .Where(p => p.BaulId == baulId && p.Status == PhotoStatus.Active && p.UploadBatchId == batchId)
             .OrderBy(p => p.CreatedAt)
             .ToListAsync();

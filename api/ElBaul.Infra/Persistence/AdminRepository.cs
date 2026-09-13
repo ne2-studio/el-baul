@@ -134,7 +134,7 @@ public class AdminRepository(ElBaulDbContext dbContext) : IAdminRepository
         // Deliberately not Active-only, unlike photoCount above: a soft-deleted photo's file is
         // still in storage (see API-CONVENTIONS.md), so it still counts toward the baúl's actual
         // storage usage.
-        var totalSizeBytes = await dbContext.Photos.Where(p => p.BaulId == baulId).SumAsync(p => p.SizeBytes);
+        var totalSizeBytes = await dbContext.Photos.Where(p => p.BaulId == baulId).SumAsync(p => p.PhotoAsset.SizeBytes);
 
         var recuerdoCount = await dbContext.Recuerdos.CountAsync(r => r.BaulId == baulId);
 

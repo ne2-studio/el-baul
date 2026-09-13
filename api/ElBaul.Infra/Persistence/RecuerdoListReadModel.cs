@@ -37,7 +37,7 @@ public class RecuerdoListReadModel(ElBaulDbContext dbContext) : IRecuerdoListRea
         var photoIds = recuerdos.Where(r => r.PhotoId is not null).Select(r => r.PhotoId!.Value).Distinct().ToList();
         var photosById = photoIds.Count == 0
             ? new Dictionary<PhotoId, Photo>()
-            : await dbContext.Photos.AsNoTracking().Where(p => photoIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
+            : await dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset).Where(p => photoIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
 
         // Chapter names are needed both for chapter-scoped recuerdos' own ChapterId and for
         // photo-scoped recuerdos' live-resolved chapter (from photosById above).

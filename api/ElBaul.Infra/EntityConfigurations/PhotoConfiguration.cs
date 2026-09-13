@@ -18,24 +18,19 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.Property(p => p.Id).HasConversion(IdValueConverters.PhotoId);
         builder.Property(p => p.ChapterId).HasConversion(IdValueConverters.ChapterId);
         builder.Property(p => p.BaulId).HasConversion(IdValueConverters.BaulId);
-        builder.Property(p => p.StorageKey).IsRequired().HasMaxLength(1000);
+        builder.Property(p => p.PhotoAssetId).HasConversion(IdValueConverters.PhotoAssetId);
         builder.Property(p => p.UploadedBy).HasConversion(IdValueConverters.UserId).IsRequired().HasMaxLength(255);
         builder.Property(p => p.CreatedAt).HasColumnType("timestamp with time zone");
         builder.Property(p => p.Status).HasConversion<string>().HasMaxLength(20).HasDefaultValue(PhotoStatus.Active);
         builder.Property(p => p.DeletedAt).HasColumnType("timestamp with time zone");
         builder.Property(p => p.DeletionReason).HasMaxLength(2000);
-        builder.Property(p => p.SizeBytes).HasDefaultValue(0L);
         builder.Property(p => p.ConfirmedNoPersonas).HasDefaultValue(false);
-        builder.ComplexProperty(p => p.Dimensions, dimensions =>
-        {
-            dimensions.Property(d => d.Width).HasColumnName("Width").IsRequired();
-            dimensions.Property(d => d.Height).HasColumnName("Height").IsRequired();
-        });
-        builder.ComplexProperty(p => p.OriginalDimensions, dimensions =>
-        {
-            dimensions.Property(d => d.Width).HasColumnName("OriginalWidth");
-            dimensions.Property(d => d.Height).HasColumnName("OriginalHeight");
-        });
+        builder.Ignore(p => p.StorageKey);
+        builder.Ignore(p => p.SizeBytes);
+        builder.Ignore(p => p.Dimensions);
+        builder.Ignore(p => p.OriginalDimensions);
+        builder.Ignore(p => p.OriginalSizeBytes);
+        builder.Ignore(p => p.WasResized);
         builder.ComplexProperty(p => p.TakenAt, date =>
         {
             date.Property(d => d.Year).HasColumnName("DateYear");
@@ -49,6 +44,10 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.HasIndex(p => p.BaulId);
         builder.HasIndex(p => p.ClientUploadId).IsUnique();
         builder.HasIndex(p => p.UploadBatchId);
+        // Deliberately NOT unique — see docs/.backlog issue #62: nothing in the schema should
+        // prevent two Photos from eventually pointing at the same PhotoAsset (Slice 2+), even
+        // though every current write path still creates a fresh 1:1 asset per photo.
+        builder.HasIndex(p => p.PhotoAssetId);
         // The database-level enforcement of "no two active photos in the same baúl share an
         // exact-duplicate hash" (see PhotoDuplicateMergeService) — application-level checks in
         // PhotoUploadWorkflow exist for normal-flow UX, but this index is what actually resolves
@@ -60,6 +59,17 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
             .IsUnique()
             .HasFilter("\"Status\" = 'Active' AND \"OriginalContentHash\" IS NOT NULL")
             .HasDatabaseName("IX_Photos_BaulId_OriginalContentHash_Active");
+
+        // Restrict, not Cascade: deleting a Photo must never cascade-delete the PhotoAsset it
+        // points at — a later slice can have another Photo still pointing at the same asset.
+        // For this slice's strict 1:1 usage, PhotoLifecycleService/PhotoManager remain the ones
+        // deciding whether to also clean up the asset/storage object on delete (see Photo.cs's
+        // doc comment) rather than the database doing it implicitly.
+        builder.HasOne(p => p.PhotoAsset)
+            .WithMany()
+            .HasForeignKey(p => p.PhotoAssetId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Chapter>()
             .WithMany()
