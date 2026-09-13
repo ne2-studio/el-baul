@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BatchPhotoActionsBar } from '@/features/photos/components/BatchPhotoActionsBar';
 import { usePersonasStore } from '@/store/usePersonasStore';
-import { deletePhotosBatch, movePhotos } from '@/features/photos/useCases';
+import { useBaulesStore } from '@/store/useBaulesStore';
+import { deletePhotosBatch, movePhotos, addPhotosToBaul } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, changePhotoDateBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Chapter, Photo, PhotoDate } from '@/types';
@@ -37,6 +38,11 @@ export function BatchPhotoActionsContainer({
   const { personas } = usePersonasStore();
   const { run } = useAsyncAction();
   const posthog = usePostHog();
+  // Mismo criterio de elegibilidad que otherBaules en usePhotoViewerActions (docs/.backlog
+  // issue #62): baúles distintos del actual, el backend autoriza de verdad cada uno al
+  // confirmar. useMemo evita que Zustand vea una referencia nueva en cada render.
+  const allBaules = useBaulesStore((state) => state.baules);
+  const otherBaules = useMemo(() => allBaules.filter((b) => b.id !== baulId), [allBaules, baulId]);
 
   const handleBatchMove = async (
     photoIds: string[],
@@ -126,6 +132,18 @@ export function BatchPhotoActionsContainer({
     return result.ok;
   };
 
+  const handleBatchAddToBaul = async (
+    photoIds: string[],
+    targetBaulId: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => {
+    const result = await run(() => addPhotosToBaul(photoIds, targetBaulId, onItemSettled), {
+      successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto añadida' : 'fotos añadidas'}`,
+      errorMessage: 'Algunas fotos no se pudieron añadir',
+    });
+    if (result.ok) posthog.capture('photos_batch_added_to_baul', { photo_count: photoIds.length });
+  };
+
   const handleBatchDelete = async (photoIds: string[], reason?: string): Promise<boolean> => {
     const result = await run(() => deletePhotosBatch(baulId, photoIds, reason), {
       successMessage: `${photoIds.length} ${photoIds.length === 1 ? 'foto borrada' : 'fotos borradas'}`,
@@ -141,6 +159,7 @@ export function BatchPhotoActionsContainer({
       photos={photos}
       selectedIds={selectedIds}
       moveableChapters={moveableChapters}
+      otherBaules={otherBaules}
       personas={personas[baulId] || []}
       onBatchMove={allowMoveActions ? handleBatchMove : undefined}
       onBatchMoveToNewChapter={allowMoveActions ? handleBatchMoveToNewChapter : undefined}
@@ -148,6 +167,7 @@ export function BatchPhotoActionsContainer({
       onBatchClearDate={handleBatchClearDate}
       onBatchCreateChapter={allowMoveActions && chapterId === null ? handleBatchCreateChapter : undefined}
       onBatchTagPersonas={handleBatchTagPersonas}
+      onBatchAddToBaul={handleBatchAddToBaul}
       onBatchDelete={handleBatchDelete}
       onDone={onDone}
     />

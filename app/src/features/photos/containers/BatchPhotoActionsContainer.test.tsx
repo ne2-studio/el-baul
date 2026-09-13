@@ -3,13 +3,15 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Chapter, Persona, Photo } from '@/types';
+import { Baul, Chapter, Persona, Photo } from '@/types';
 import { usePersonasStore } from '@/store/usePersonasStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
 import { BatchPhotoActionsContainer } from './BatchPhotoActionsContainer';
 
 vi.mock('@/features/photos/useCases', () => ({
   movePhotos: vi.fn(),
   deletePhotosBatch: vi.fn(),
+  addPhotosToBaul: vi.fn(),
 }));
 
 vi.mock('@/features/chapters/useCases', () => ({
@@ -19,13 +21,15 @@ vi.mock('@/features/chapters/useCases', () => ({
   createChapter: vi.fn(),
 }));
 
-import { deletePhotosBatch, movePhotos } from '@/features/photos/useCases';
+import { deletePhotosBatch, movePhotos, addPhotosToBaul } from '@/features/photos/useCases';
 import { addTaggedPersonasBatch, clearPhotoDateBatch, createChapter } from '@/features/chapters/useCases';
 
 const baulId = 'baul-1';
+const otherBaulId = 'baul-2';
 const photos = [{ id: 'photo-1', thumbnailUrl: 't1', date: { year: 2020 }, canDelete: true }] as Photo[];
 const persona = { id: 'p1', baulId, nickname: 'Abuela Rosa' } as Persona;
 const chapters = [{ id: 'c2', name: 'Navidad' }] as Chapter[];
+const otherBaul = { id: otherBaulId, name: 'Baúl de la abuela' } as Baul;
 
 function renderContainer(
   chapterId: string | null,
@@ -57,6 +61,7 @@ function renderContainer(
 describe('BatchPhotoActionsContainer', () => {
   beforeEach(() => {
     usePersonasStore.setState({ personas: { [baulId]: [persona] }, removalRequests: {}, personaPhotos: {}, taggedPersonas: {} });
+    useBaulesStore.setState({ baules: [otherBaul], chapters: {}, photos: {}, loosePhotos: {}, isLoading: false });
     vi.clearAllMocks();
   });
 
@@ -155,6 +160,26 @@ describe('BatchPhotoActionsContainer', () => {
     await user.click(screen.getByRole('button', { name: /sí, borrar fotos/i }));
 
     await waitFor(() => expect(deletePhotosBatch).toHaveBeenCalledWith(baulId, ['photo-1'], 'duplicadas'));
+  });
+
+  it('adds the selected photos to the chosen baúl', async () => {
+    const user = userEvent.setup();
+    vi.mocked(addPhotosToBaul).mockResolvedValue(undefined);
+
+    renderContainer('chapter-1');
+    await user.click(screen.getByRole('button', { name: /añadir a otro baúl/i }));
+    await user.click(screen.getByText('Baúl de la abuela'));
+    await user.click(screen.getByRole('button', { name: /^añadir$/i }));
+
+    await waitFor(() => expect(addPhotosToBaul).toHaveBeenCalledWith(['photo-1'], otherBaulId, expect.any(Function)));
+  });
+
+  it('hides "Añadir a otro baúl" when there is no other baúl to add to', () => {
+    useBaulesStore.setState({ baules: [] });
+
+    renderContainer('chapter-1');
+
+    expect(screen.queryByRole('button', { name: /añadir a otro baúl/i })).not.toBeInTheDocument();
   });
 
   it('disables "Borrar fotos" rather than hiding it when none of the selection is deletable', () => {

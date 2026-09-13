@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Calendar, CalendarOff, FolderInput, Plus, Tag, Trash2 } from 'lucide-react';
 import { EditInfoModal } from '@/design-system/patterns/forms/EditInfoModal';
 import { MoveModal } from '@/features/photos/components/MoveModal';
+import { AddToBaulModal } from '@/features/photos/components/AddToBaulModal';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
 import { ConfirmActionModal } from '@/design-system/patterns/forms/ConfirmActionModal';
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
 import { BatchOperationProgress, BatchOperationItem } from '@/design-system/components/feedback/BatchOperationProgress';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
-import { Chapter, Photo, PhotoDate, Persona } from '@/types';
+import { Baul, Chapter, Photo, PhotoDate, Persona } from '@/types';
 import { ActionBarButton } from '@/design-system/components/actions/ActionBarButton';
 
 interface BatchPhotoActionsBarProps {
@@ -15,6 +16,10 @@ interface BatchPhotoActionsBarProps {
   photos: Photo[];
   selectedIds: Set<string>;
   moveableChapters: Chapter[];
+  /** Baúles distintos del actual a los que el usuario puede añadir contenido — mismo criterio
+   * que otherBaules en usePhotoViewerActions, solo que aquí decide si se ofrece "Añadir a otro
+   * baúl" para el lote entero en vez de para una sola foto. */
+  otherBaules?: Baul[];
   personas?: Persona[];
   onBatchMove?: (
     photoIds: string[],
@@ -33,6 +38,11 @@ interface BatchPhotoActionsBarProps {
   onBatchClearDate?: (photoIds: string[]) => Promise<boolean>;
   onBatchCreateChapter?: (photoIds: string[], name: string) => Promise<boolean>;
   onBatchTagPersonas?: (photoIds: string[], personaIds: string[]) => Promise<boolean>;
+  onBatchAddToBaul?: (
+    photoIds: string[],
+    targetBaulId: string,
+    onItemSettled?: (result: { photoId: string; error?: string }) => void
+  ) => Promise<void>;
   /** No hay equivalente "Solicitar retirada" para lote — a diferencia del visor de una sola
    * foto, "Borrar fotos" en lote sólo borra, nunca solicita retirada (fuera de alcance). */
   onBatchDelete?: (photoIds: string[], reason?: string) => Promise<boolean>;
@@ -44,12 +54,15 @@ interface BatchPhotoActionsBarProps {
 // selección del padre; se mantiene como prop en vez de desmontar el componente para
 // no perder el patrón de gating explícito que tenía PhotosView antes de la extracción.
 export function BatchPhotoActionsBar({
-  active, photos, selectedIds, moveableChapters, personas = [], onBatchMove, onBatchMoveToNewChapter, onBatchChangeDate,
-  onBatchClearDate, onBatchCreateChapter, onBatchTagPersonas, onBatchDelete, onDone,
+  active, photos, selectedIds, moveableChapters, otherBaules = [], personas = [], onBatchMove, onBatchMoveToNewChapter,
+  onBatchChangeDate, onBatchClearDate, onBatchCreateChapter, onBatchTagPersonas, onBatchAddToBaul, onBatchDelete, onDone,
 }: BatchPhotoActionsBarProps) {
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState('');
   const [moveItems, setMoveItems] = useState<BatchOperationItem[] | null>(null);
+  const [showAddToBaulModal, setShowAddToBaulModal] = useState(false);
+  const [addToBaulTargetId, setAddToBaulTargetId] = useState('');
+  const [addToBaulItems, setAddToBaulItems] = useState<BatchOperationItem[] | null>(null);
   const [showDateModal, setShowDateModal] = useState(false);
   const [isDateSubmitting, setIsDateSubmitting] = useState(false);
   const [showClearDateModal, setShowClearDateModal] = useState(false);
@@ -105,6 +118,34 @@ export function BatchPhotoActionsBar({
     }
 
     setMoveItems(null);
+    onDone();
+  };
+
+  const handleAddToBaulSubmit = async () => {
+    if (!onBatchAddToBaul || !addToBaulTargetId) return;
+    const targetBaulId = addToBaulTargetId;
+    const ids = Array.from(selectedIds);
+    setShowAddToBaulModal(false);
+    setAddToBaulTargetId('');
+    setAddToBaulItems(
+      ids.map((id) => ({
+        id,
+        thumbnailUrl: photos.find((p) => p.id === id)?.thumbnailUrl ?? '',
+        status: 'pending' as const,
+      }))
+    );
+
+    const onItemSettled = (result: { photoId: string; error?: string }) => {
+      setAddToBaulItems((prev) =>
+        prev?.map((item) =>
+          item.id === result.photoId ? { ...item, status: result.error ? ('error' as const) : ('success' as const) } : item
+        ) ?? prev
+      );
+    };
+
+    await onBatchAddToBaul(ids, targetBaulId, onItemSettled);
+
+    setAddToBaulItems(null);
     onDone();
   };
 
@@ -172,7 +213,8 @@ export function BatchPhotoActionsBar({
   return (
     <>
       {active && selectedIds.size > 0 &&
-        (onBatchChangeDate || onBatchClearDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas || onBatchDelete) && (
+        (onBatchChangeDate || onBatchClearDate || moveableChapters.length > 0 || onBatchCreateChapter || onBatchTagPersonas ||
+          (onBatchAddToBaul && otherBaules.length > 0) || onBatchDelete) && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 pb-safe">
           {/* w-max en el contenedor interno evita que los botones se compriman: con muchas
               acciones el PageContainer hace scroll lateral en vez de aplastar la barra. */}
@@ -216,6 +258,14 @@ export function BatchPhotoActionsBar({
                   icon={<Tag aria-hidden />}
                 >
                   Etiquetar personas
+                </ActionBarButton>
+              )}
+              {onBatchAddToBaul && otherBaules.length > 0 && (
+                <ActionBarButton
+                  onClick={() => setShowAddToBaulModal(true)}
+                  icon={<FolderInput aria-hidden />}
+                >
+                  Añadir a otro baúl
                 </ActionBarButton>
               )}
               {onBatchDelete && (
@@ -300,6 +350,21 @@ export function BatchPhotoActionsBar({
       {/* Progreso ítem a ítem mientras se mueve el lote (una petición por foto) */}
       {moveItems && (
         <BatchOperationProgress title="Moviendo fotos..." items={moveItems} />
+      )}
+
+      {showAddToBaulModal && (
+        <AddToBaulModal
+          baules={otherBaules}
+          selectedId={addToBaulTargetId}
+          onSelect={setAddToBaulTargetId}
+          onCancel={() => setShowAddToBaulModal(false)}
+          onConfirm={handleAddToBaulSubmit}
+        />
+      )}
+
+      {/* Progreso ítem a ítem mientras se añade el lote a otro baúl (una petición por foto) */}
+      {addToBaulItems && (
+        <BatchOperationProgress title="Añadiendo fotos..." items={addToBaulItems} />
       )}
 
       {showCreateChapterModal && (
