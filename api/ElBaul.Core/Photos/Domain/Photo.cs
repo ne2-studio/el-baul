@@ -102,6 +102,17 @@ public sealed class Photo : Entity<PhotoId>
             UploadBatchId: uploadBatchId);
     }
 
+    // Builds a Photo that reuses an existing PhotoAsset instead of creating a new one — the
+    // "Add to another baúl" operation (docs/.backlog issue #62, Slice 2). Deliberately bypasses
+    // Create: no new PhotoAsset, no storage write, so the physical file is genuinely shared
+    // between the source Photo and this new one. Only the metadata that makes sense as an
+    // initial value for the same photograph in a new context is carried over — never the source
+    // Photo's chapter, tags, memories, upload-batch or client-upload identity, all of which are
+    // specific to the baúl it's coming from. See PhotoManager.AddToBaulAsync for the full rule.
+    public static Photo CreateFromExistingAsset(
+        PhotoId id, BaulId baulId, PhotoAsset asset, PhotoDate? takenAt, UserId uploadedBy, DateTime createdAt) =>
+        new(id, ChapterId: null, baulId, asset, takenAt, uploadedBy, createdAt);
+
     public Photo WithDate(PhotoDate? date) =>
         Mutate(() => TakenAt = date);
 

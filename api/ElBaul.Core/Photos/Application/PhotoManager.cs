@@ -23,6 +23,7 @@ public class PhotoManager(
     PhotoLifecycleService photoLifecycle,
     IPhotoDtoProjector photoDtoProjector,
     PhotoUploadWorkflow photoUploadWorkflow,
+    IIdGenerator idGenerator,
     IClock clock,
     IUnitOfWork unitOfWork) : IPhotoManager
 {
@@ -149,6 +150,75 @@ public class PhotoManager(
             photo.BaulId, photoId, photo.ChapterId, targetChapterId);
 
         return await photoDtoProjector.ProjectAsync(updatedPhoto, auth.Value.IsAdmin, userId);
+    }
+
+    // "Add to another baúl" (docs/.backlog issue #62, Slice 2). Deliberately takes only
+    // SourcePhotoId + TargetBaulId, never a PhotoAssetId directly — the capability comes from
+    // being authorized to view an existing Photo, not from knowing an internal asset identifier
+    // (see IPhotoManager's doc comment).
+    public async Task<Result<PhotoDto>> AddToBaulAsync(PhotoId sourcePhotoId, BaulId targetBaulId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var sourcePhotoResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetByIdAsync(sourcePhotoId),
+            logger,
+            "Add photo to baul rejected: source photo not found {PhotoId}",
+            "Photo not found",
+            sourcePhotoId);
+        if (sourcePhotoResult.IsFailure) return Result.Failure<PhotoDto>(sourcePhotoResult.Error);
+        var sourcePhoto = sourcePhotoResult.Value;
+
+        // 1. the caller must be allowed to view the source photo...
+        var sourceAuth = await baulAccess.AuthorizeAsync(
+            sourcePhoto.BaulId, userId, AccessLevel.Member, "Add photo to baul (source)",
+            new { sourcePhoto.BaulId, PhotoId = sourcePhotoId });
+        if (sourceAuth.IsFailure) return Result.Failure<PhotoDto>(sourceAuth.Error);
+
+        // 2. ...and allowed to add content to the target baúl — the same level a normal upload
+        // requires (see UploadToBaulAsync). Never PhotoAsset authorization: access is always
+        // mediated by an authorized Photo, PhotoAsset itself has none of its own.
+        var targetAuth = await baulAccess.AuthorizeAsync(
+            targetBaulId, userId, AccessLevel.Member, "Add photo to baul (target)",
+            new { SourcePhotoId = sourcePhotoId, TargetBaulId = targetBaulId });
+        if (targetAuth.IsFailure) return Result.Failure<PhotoDto>(targetAuth.Error);
+
+        var now = clock.UtcNow();
+        var newPhoto = Photo.CreateFromExistingAsset(
+            new PhotoId(idGenerator.NewId()), targetBaulId, sourcePhoto.PhotoAsset, sourcePhoto.TakenAt, userId, now);
+
+        // TryAddExistingAssetAsync + the chapter/cover bookkeeping it triggers commit together —
+        // same shape as UploadAsync's transaction below.
+        var addResult = await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            if (await photoRepository.TryAddExistingAssetAsync(newPhoto))
+            {
+                await photoLifecycle.AddAsync(newPhoto, chapterId: null, targetBaulId, now);
+                return Result.Success((Photo: newPhoto, IsNew: true));
+            }
+
+            // Lost the race, or simply already there: reject/no-op rather than leak a database
+            // constraint error — see IPhotoManager's doc comment. Reuses the same
+            // already-active Photo a client retrying this action would expect to land on.
+            var existing = await photoRepository.GetActiveByAssetIdAsync(targetBaulId, sourcePhoto.PhotoAssetId)
+                ?? throw new InvalidOperationException(
+                    $"TryAddExistingAssetAsync reported a conflict for baúl {targetBaulId} asset {sourcePhoto.PhotoAssetId} but no active photo was found.");
+            return Result.Success((Photo: existing, IsNew: false));
+        });
+        var (resultPhoto, isNew) = addResult.Value;
+
+        if (isNew)
+        {
+            logger.LogInformation(
+                "Photo added to another baúl {SourcePhotoId} {TargetBaulId} {NewPhotoId}", sourcePhotoId, targetBaulId, resultPhoto.Id);
+        }
+        else
+        {
+            logger.LogInformation(
+                "Add photo to baul was a no-op: asset already active in target baúl {SourcePhotoId} {TargetBaulId} {ExistingPhotoId}",
+                sourcePhotoId, targetBaulId, resultPhoto.Id);
+        }
+
+        return await photoDtoProjector.ProjectAsync(resultPhoto, targetAuth.Value.IsAdmin, userId);
     }
 
     public async Task<Result> DeleteAsync(PhotoId photoId, string? reason)

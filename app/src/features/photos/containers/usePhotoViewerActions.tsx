@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { Download, Calendar, CalendarOff, Flag, Trash2, Tag, Share2 } from 'lucide-react';
+import { Download, Calendar, CalendarOff, Flag, Trash2, Tag, Share2, FolderInput } from 'lucide-react';
 import { DateModal } from '@/design-system/patterns/forms/DateModal';
 import { ConfirmActionModal } from '@/design-system/patterns/forms/ConfirmActionModal';
+import { AddToBaulModal } from '@/features/photos/components/AddToBaulModal';
 import { DeletePhotoModal } from '@/features/photos/components/DeletePhotoModal';
 import { RemovalRequestModal } from '@/features/moderation/components/RemovalRequestModal';
 import { TagPersonasModal } from '@/features/photos/components/TagPersonasModal';
@@ -10,8 +11,9 @@ import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHea
 import { Persona, Photo, PhotoDate, Recuerdo, TaggedPersona } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useUIStore } from '@/store/uiStore';
+import { useBaulesStore } from '@/store/useBaulesStore';
 import { submitRemovalRequest } from '@/features/moderation/useCases';
-import { setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate } from '@/features/photos/useCases';
+import { setTaggedPersonas, deletePhoto, changePhotoDate, clearPhotoDate, addPhotoToBaul } from '@/features/photos/useCases';
 import { addRecuerdo as addRecuerdoUseCase, editRecuerdo as editRecuerdoUseCase } from '@/features/memories/useCases';
 import { api } from '@/api';
 import { saveDownloadedPhoto } from '@/utils/downloadFile';
@@ -62,18 +64,28 @@ export function usePhotoViewerActions({
   const showToastMessage = useUIStore((state) => state.showToastMessage);
   const hasRequestedRemoval = useUIStore((state) => state.hasRequestedPhotoRemoval(photo.id));
   const markPhotoRemovalRequested = useUIStore((state) => state.markPhotoRemovalRequested);
+  // Baúles a los que este usuario puede añadir contenido, excluyendo el que ya tiene esta foto —
+  // ver docs/.backlog issue #62 §"Authorization": el backend es quien de verdad autoriza cada
+  // baúl al confirmar, esta lista solo evita ofrecer opciones sin sentido en el picker.
+  // useMemo (no derivar el array directamente en el selector) evita que Zustand vea una
+  // referencia nueva en cada render y entre en bucle de re-renders.
+  const allBaules = useBaulesStore((state) => state.baules);
+  const otherBaules = useMemo(() => allBaules.filter((b) => b.id !== baulId), [allBaules, baulId]);
 
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showClearDateModal, setShowClearDateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
+  const [showAddToBaulModal, setShowAddToBaulModal] = useState(false);
   const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
+  const [selectedTargetBaulId, setSelectedTargetBaulId] = useState('');
   const [isSubmittingRemoval, setIsSubmittingRemoval] = useState(false);
   const [isSubmittingDate, setIsSubmittingDate] = useState(false);
   const [isClearingDate, setIsClearingDate] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
   const [isSubmittingTags, setIsSubmittingTags] = useState(false);
+  const [isAddingToBaul, setIsAddingToBaul] = useState(false);
 
   const openTagModal = () => {
     setSelectedPersonaIds(taggedPersonas.map((p) => p.id));
@@ -164,6 +176,25 @@ export function usePhotoViewerActions({
     }
   };
 
+  const openAddToBaulModal = () => {
+    setSelectedTargetBaulId('');
+    setShowAddToBaulModal(true);
+  };
+
+  const handleAddToBaulConfirm = async () => {
+    if (!selectedTargetBaulId) return;
+    setIsAddingToBaul(true);
+    const result = await run(() => addPhotoToBaul(photo.id, selectedTargetBaulId), {
+      successMessage: 'Foto añadida al baúl',
+      errorMessage: 'Error al añadir la foto al baúl',
+    });
+    setIsAddingToBaul(false);
+    if (result.ok) {
+      posthog.capture('photo_added_to_baul');
+      setShowAddToBaulModal(false);
+    }
+  };
+
   const handleSubmitRemoval = async (reason: string) => {
     setIsSubmittingRemoval(true);
     const result = await run(() => submitRemovalRequest(baulId, photo, reason), {
@@ -219,6 +250,9 @@ export function usePhotoViewerActions({
       items.push({ key: 'share', label: 'Compartir foto', icon: Share2, onSelect: handleSharePhoto });
     }
     items.push({ key: 'download', label: 'Descargar foto original', icon: Download, onSelect: handleDownloadPhoto });
+    if (otherBaules.length > 0) {
+      items.push({ key: 'add-to-baul', label: 'Añadir a otro baúl', icon: FolderInput, onSelect: openAddToBaulModal });
+    }
     items.push(...extraItems);
     items.push({ key: 'date', label: 'Cambiar fecha', icon: Calendar, onSelect: () => setShowDateModal(true) });
     if (photo.date) {
@@ -280,6 +314,17 @@ export function usePhotoViewerActions({
           onCancel={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteSubmit}
           isSubmitting={isDeletingPhoto}
+        />
+      )}
+
+      {showAddToBaulModal && (
+        <AddToBaulModal
+          baules={otherBaules}
+          selectedId={selectedTargetBaulId}
+          onSelect={setSelectedTargetBaulId}
+          onCancel={() => setShowAddToBaulModal(false)}
+          onConfirm={handleAddToBaulConfirm}
+          isSubmitting={isAddingToBaul}
         />
       )}
 

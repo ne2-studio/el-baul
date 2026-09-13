@@ -5066,6 +5066,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/photos/{photoId}/add-to-baul": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    photoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AddPhotoToBaulRequest"];
+                    "text/json": components["schemas"]["AddPhotoToBaulRequest"];
+                    "application/*+json": components["schemas"]["AddPhotoToBaulRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PhotoDto"];
+                        "application/json": components["schemas"]["PhotoDto"];
+                        "text/json": components["schemas"]["PhotoDto"];
+                    };
+                };
+                /** @description The request was invalid. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Missing or invalid authentication token. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The caller does not have access to this resource. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The resource does not exist. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A downstream dependency is unavailable. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/photos/{photoId}": {
         parameters: {
             query?: never;
@@ -8542,6 +8630,10 @@ export interface components {
             personaId1: string;
             /** Format: uuid */
             personaId2: string;
+        };
+        AddPhotoToBaulRequest: {
+            /** Format: uuid */
+            targetBaulId: string;
         };
         AdminBaulChapterDto: {
             id: string;

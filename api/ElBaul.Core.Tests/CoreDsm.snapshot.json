@@ -46,11 +46,6 @@
     },
     {
       "From": "Admin",
-      "To": "Photos",
-      "Kind": "Deep"
-    },
-    {
-      "From": "Admin",
       "To": "Shared",
       "Kind": "Deep"
     },

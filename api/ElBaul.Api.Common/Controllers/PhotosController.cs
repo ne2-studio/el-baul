@@ -64,6 +64,16 @@ public class PhotosController(
         return result.ToActionResult();
     }
 
+    // "Add to another baúl" (docs/.backlog issue #62, Slice 2) — creates a new Photo in the
+    // target baúl sharing the source photo's PhotoAsset, no image copy/re-upload involved.
+    [HttpPost("photos/{photoId:guid}/add-to-baul")]
+    [ProducesResponseType(typeof(PhotoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> AddToBaul(PhotoId photoId, [FromBody] AddPhotoToBaulRequest request)
+    {
+        var result = await photoManager.AddToBaulAsync(photoId, request.TargetBaulId);
+        return result.ToActionResult();
+    }
+
     [HttpDelete("photos/{photoId:guid}")]
     [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Delete(PhotoId photoId, [FromBody] DeletePhotoRequest request)

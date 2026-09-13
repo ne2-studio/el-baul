@@ -74,9 +74,6 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             baules,
             personas,
             new PushTokenRepository(dbContext),
-            // Nothing in DeleteBaulAsync's storage cleanup depends on these two — they only
-            // get exercised for real in ElBaul.Tests/AdminManagerTests.
-            Substitute.For<IPhotoStorage>(),
             Substitute.For<IChatContextBuilder>(),
             new FixedClock(),
             NullLogger<AdminManager>.Instance);
@@ -175,7 +172,6 @@ public class AdminManagerHardDeleteTests(PostgresFixture fixture) : PersistenceT
             baules,
             personas,
             new PushTokenRepository(dbContext),
-            Substitute.For<IPhotoStorage>(),
             Substitute.For<IChatContextBuilder>(),
             new FixedClock(),
             NullLogger<AdminManager>.Instance);

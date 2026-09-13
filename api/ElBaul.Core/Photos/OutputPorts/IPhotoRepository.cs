@@ -49,6 +49,12 @@ public interface IPhotoRepository
     /// duplicate groups.</summary>
     Task<IEnumerable<Photo>> GetActiveWithContentHashAsync();
 
+    /// <summary>The active photo (if any) in this baúl already referencing this PhotoAsset —
+    /// used by PhotoManager.AddToBaulAsync's app-level pre-check and to look up the survivor when
+    /// TryAddExistingAssetAsync loses the race (see docs/.backlog issue #62, Slice 2). Never
+    /// matches a soft-deleted photo.</summary>
+    Task<Photo?> GetActiveByAssetIdAsync(BaulId baulId, PhotoAssetId assetId);
+
     Task CreateAsync(Photo photo);
 
     /// <summary>Inserts a new Active photo, honoring the same (BaulId, OriginalContentHash)
@@ -61,6 +67,15 @@ public interface IPhotoRepository
     /// conflicts with anything, so this is safe to use unconditionally for every photo
     /// insert.</summary>
     Task<bool> TryCreateActiveAsync(Photo photo);
+
+    /// <summary>Inserts a new Active photo that references an already-existing PhotoAsset — the
+    /// "Add to another baúl" write path (see Photo.CreateFromExistingAsset). Race-safe against
+    /// the (BaulId, PhotoAssetId) partial-unique index the same way TryCreateActiveAsync is
+    /// race-safe against (BaulId, OriginalContentHash): returns false, without throwing or
+    /// persisting anything, if another active photo in the target baúl already references this
+    /// asset. Never creates a PhotoAsset row — the caller is responsible for it already
+    /// existing.</summary>
+    Task<bool> TryAddExistingAssetAsync(Photo photo);
 
     Task UpdateAsync(Photo photo);
     Task DeleteAsync(PhotoId id);

@@ -36,13 +36,10 @@ public class AdminBaulDeletionRepository(
     IPersonaSpouseRelationshipRepository personaSpouseRelationshipRepository,
     IUnitOfWork unitOfWork) : IAdminBaulDeletionRepository
 {
-    public async Task<DeletedBaulStorageObjects?> DeleteBaulGraphAsync(BaulId baulId)
+    public async Task<bool> DeleteBaulGraphAsync(BaulId baulId)
     {
         var baul = await baulRepository.GetByIdAsync(baulId);
-        if (baul is null) return null;
-
-        var photos = (await photoRepository.GetAllByBaulIdAsync(baulId)).ToList();
-        var storageObjects = new DeletedBaulStorageObjects(photos.Select(p => p.StorageKey).ToList());
+        if (baul is null) return false;
 
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
@@ -60,6 +57,6 @@ public class AdminBaulDeletionRepository(
             return Result.Success();
         });
 
-        return storageObjects;
+        return true;
     }
 }

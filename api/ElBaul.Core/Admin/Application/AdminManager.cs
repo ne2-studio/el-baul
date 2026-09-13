@@ -7,7 +7,6 @@ using ElBaul.Core.Bauls.Application;
 using ElBaul.Core.Bauls.OutputPorts;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Personas.OutputPorts;
-using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
@@ -31,7 +30,6 @@ public class AdminManager(
     IBaulRepository baulRepository,
     IPersonaRepository personaRepository,
     IPushTokenRepository pushTokenRepository,
-    IPhotoStorage photoStorage,
     IChatContextBuilder chatContextBuilder,
     IClock clock,
     ILogger<AdminManager> logger) : IAdminManager
@@ -91,25 +89,16 @@ public class AdminManager(
         return new AdminBaulDetailDto(row.Baul.Id.ToString(), row.Baul.Name, row.Baul.CreatedAt, personas, chapters, stats);
     }
 
+    // Deliberately does not touch object storage or PhotoAssets — see
+    // IAdminBaulDeletionRepository's doc comment (docs/.backlog issue #62, Slice 2): a Photo's
+    // asset may be shared with a Photo in another baúl, so this baúl being hard-deleted must
+    // never assume it's safe to delete the files behind its photos.
     public async Task<Result> DeleteBaulAsync(BaulId baulId)
     {
-        var deletedStorageObjects = await baulDeletionRepository.DeleteBaulGraphAsync(baulId);
-        if (deletedStorageObjects is null) return Result.Failure(ApplicationError.NotFound("Baul not found"));
+        var deleted = await baulDeletionRepository.DeleteBaulGraphAsync(baulId);
+        if (!deleted) return Result.Failure(ApplicationError.NotFound("Baul not found"));
 
-        logger.LogWarning("Baul hard-deleted ({PhotoCount} photos)", deletedStorageObjects.PhotoStorageKeys.Count);
-
-        foreach (var key in deletedStorageObjects.PhotoStorageKeys)
-        {
-            try
-            {
-                await photoStorage.DeleteAsync(key);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to clean up storage object after baul hard-delete {StorageKey}", key);
-            }
-        }
-
+        logger.LogWarning("Baul hard-deleted {BaulId}", baulId);
         return Result.Success();
     }
 

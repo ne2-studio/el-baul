@@ -92,6 +92,13 @@ public class InMemoryPhotoRepository : IPhotoRepository
                 .ToList().AsEnumerable());
     }
 
+    public Task<Photo?> GetActiveByAssetIdAsync(BaulId baulId, PhotoAssetId assetId)
+    {
+        lock (_lock)
+            return Task.FromResult(_photos.Values.FirstOrDefault(p =>
+                p.BaulId == baulId && p.PhotoAssetId == assetId && p.Status == PhotoStatus.Active));
+    }
+
     public Task CreateAsync(Photo photo)
     {
         lock (_lock) _photos[photo.Id] = photo;
@@ -106,6 +113,23 @@ public class InMemoryPhotoRepository : IPhotoRepository
         {
             if (photo.OriginalContentHash is { } hash && _photos.Values.Any(p =>
                     p.BaulId == photo.BaulId && p.OriginalContentHash == hash && p.Status == PhotoStatus.Active))
+            {
+                return Task.FromResult(false);
+            }
+
+            _photos[photo.Id] = photo;
+            return Task.FromResult(true);
+        }
+    }
+
+    // Mirrors the real PhotoRepository's ON CONFLICT DO NOTHING semantics without a real unique
+    // index to enforce it — see IX_Photos_BaulId_PhotoAssetId_Active.
+    public Task<bool> TryAddExistingAssetAsync(Photo photo)
+    {
+        lock (_lock)
+        {
+            if (_photos.Values.Any(p =>
+                    p.BaulId == photo.BaulId && p.PhotoAssetId == photo.PhotoAssetId && p.Status == PhotoStatus.Active))
             {
                 return Task.FromResult(false);
             }

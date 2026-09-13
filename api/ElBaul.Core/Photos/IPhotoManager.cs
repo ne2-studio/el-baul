@@ -18,6 +18,15 @@ public interface IPhotoManager
 
     Task<Result<PhotoDto>> MoveAsync(PhotoId photoId, ChapterId targetChapterId);
 
+    /// <summary>"Add to another baúl" (docs/.backlog issue #62, Slice 2): creates a new Photo in
+    /// <paramref name="targetBaulId"/> that references the exact same PhotoAsset as
+    /// <paramref name="sourcePhotoId"/> — no image is copied, re-uploaded or duplicated in
+    /// storage. The caller must be able to view the source photo and add content to the target
+    /// baúl (same AccessLevel.Member gate as a normal upload). Idempotent-ish: if that asset is
+    /// already active in the target baúl, returns the existing Photo there instead of creating a
+    /// second one or failing.</summary>
+    Task<Result<PhotoDto>> AddToBaulAsync(PhotoId sourcePhotoId, BaulId targetBaulId);
+
     Task<Result> DeleteAsync(PhotoId photoId, string? reason);
 
     /// <summary>Batch counterpart to DeleteAsync, for deleting a multi-selection of photos at

@@ -44,10 +44,20 @@ public class PhotoConfiguration : IEntityTypeConfiguration<Photo>
         builder.HasIndex(p => p.BaulId);
         builder.HasIndex(p => p.ClientUploadId).IsUnique();
         builder.HasIndex(p => p.UploadBatchId);
-        // Deliberately NOT unique — see docs/.backlog issue #62: nothing in the schema should
-        // prevent two Photos from eventually pointing at the same PhotoAsset (Slice 2+), even
-        // though every current write path still creates a fresh 1:1 asset per photo.
+        // Non-unique on its own — see IX_Photos_BaulId_PhotoAssetId_Active below for the actual
+        // uniqueness rule now that Slice 2 lets several Photos across different baúles point at
+        // the same PhotoAsset (docs/.backlog issue #62).
         builder.HasIndex(p => p.PhotoAssetId);
+
+        // The database-level enforcement of "the same PhotoAsset can be active at most once
+        // within a given baúl" (see PhotoManager.AddToBaulAsync) — mirrors
+        // IX_Photos_BaulId_OriginalContentHash_Active's shape/rationale, just keyed on the asset
+        // instead of the hash. Scoped to Active so re-adding a previously soft-deleted copy of
+        // the same asset to the same baúl is never blocked by it.
+        builder.HasIndex(p => new { p.BaulId, p.PhotoAssetId })
+            .IsUnique()
+            .HasFilter("\"Status\" = 'Active'")
+            .HasDatabaseName("IX_Photos_BaulId_PhotoAssetId_Active");
         // The database-level enforcement of "no two active photos in the same baúl share an
         // exact-duplicate hash" (see PhotoDuplicateMergeService) — application-level checks in
         // PhotoUploadWorkflow exist for normal-flow UX, but this index is what actually resolves

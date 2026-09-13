@@ -64,6 +64,10 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
             .Where(p => p.Status == PhotoStatus.Active && p.OriginalContentHash != null)
             .ToListAsync();
 
+    public Task<Photo?> GetActiveByAssetIdAsync(BaulId baulId, PhotoAssetId assetId) =>
+        dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset)
+            .FirstOrDefaultAsync(p => p.BaulId == baulId && p.PhotoAssetId == assetId && p.Status == PhotoStatus.Active);
+
     public async Task CreateAsync(Photo photo)
     {
         dbContext.Photos.Add(photo);
@@ -114,6 +118,29 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
         return inserted == 1;
     }
 
+    // Mirrors TryCreateActiveAsync above but never touches PhotoAssets — the asset behind
+    // `photo` already exists (it's the source photo's own asset; see
+    // PhotoManager.AddToBaulAsync/Photo.CreateFromExistingAsset), so this only ever inserts the new
+    // Photos row. Attach it Unchanged first so EF doesn't try to (re)insert it as a side effect
+    // of the Photo insert below.
+    public async Task<bool> TryAddExistingAssetAsync(Photo photo)
+    {
+        dbContext.Attach(photo.PhotoAsset).State = EntityState.Unchanged;
+
+        var inserted = await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "Photos" ("Id", "BaulId", "ChapterId", "PhotoAssetId", "DateYear", "DateMonth", "DateDay", "UploadedBy", "CreatedAt", "ClientUploadId", "Status", "DeletedAt", "DeletionReason", "UploadBatchId", "ConfirmedNoPersonas", "OriginalContentHash")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
+            ON CONFLICT ("BaulId", "PhotoAssetId") WHERE "Status" = 'Active' DO NOTHING
+            """,
+            photo.Id.Value, photo.BaulId.Value, photo.ChapterId?.Value!, photo.PhotoAssetId.Value,
+            photo.TakenAt?.Year, photo.TakenAt?.Month, photo.TakenAt?.Day, photo.UploadedBy.Value, photo.CreatedAt,
+            photo.ClientUploadId!, photo.Status.ToString(), photo.DeletedAt!, photo.DeletionReason!,
+            photo.UploadBatchId!, photo.ConfirmedNoPersonas, photo.OriginalContentHash!);
+
+        return inserted == 1;
+    }
+
     public async Task UpdateAsync(Photo photo)
     {
         dbContext.Photos.Update(photo);
@@ -123,30 +150,15 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
     public async Task<IEnumerable<Photo>> GetAllByBaulIdAsync(BaulId baulId) =>
         await dbContext.Photos.AsNoTracking().Include(p => p.PhotoAsset).Where(p => p.BaulId == baulId).ToListAsync();
 
-    public async Task DeleteAsync(PhotoId id)
-    {
-        var assetIds = await dbContext.Photos.Where(p => p.Id == id).Select(p => p.PhotoAssetId).ToListAsync();
+    // Slice 2 (docs/.backlog issue #62) made PhotoAsset sharable across Photos in different
+    // baúles ("Add to another baúl"), so a Photo's own asset can no longer be assumed exclusively
+    // theirs — deleting it here as a side effect of deleting this Photo could silently break
+    // another baúl's Photo still pointing at it. PhotoAsset lifetime is deliberately decoupled
+    // from Photo lifetime from this slice onward: deleting the last Photo referencing an asset
+    // leaves it orphaned on purpose. Slice 3 is expected to add garbage collection for those.
+    public async Task DeleteAsync(PhotoId id) =>
         await dbContext.Photos.Where(p => p.Id == id).ExecuteDeleteAsync();
-        await DeleteUnreferencedAssetsAsync(assetIds);
-    }
 
-    public async Task DeleteByBaulIdAsync(BaulId baulId)
-    {
-        // Every asset behind this baúl's photos is exclusively theirs in this slice's strict
-        // 1:1 model — see Photo.Create — so it's safe to delete them here too instead of leaving
-        // them to accumulate with no photo left pointing at them. A later slice where a
-        // PhotoAsset can be shared across baúles will need this to check for other referencing
-        // Photos first (see docs/.backlog issue #62).
-        var assetIds = await dbContext.Photos.Where(p => p.BaulId == baulId).Select(p => p.PhotoAssetId).ToListAsync();
+    public async Task DeleteByBaulIdAsync(BaulId baulId) =>
         await dbContext.Photos.Where(p => p.BaulId == baulId).ExecuteDeleteAsync();
-        await DeleteUnreferencedAssetsAsync(assetIds);
-    }
-
-    private async Task DeleteUnreferencedAssetsAsync(List<PhotoAssetId> candidateAssetIds)
-    {
-        if (candidateAssetIds.Count == 0) return;
-        await dbContext.PhotoAssets
-            .Where(a => candidateAssetIds.Contains(a.Id) && !dbContext.Photos.Any(p => p.PhotoAssetId == a.Id))
-            .ExecuteDeleteAsync();
-    }
 }

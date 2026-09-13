@@ -8,6 +8,7 @@ const CHAPTER_PHOTOS = '/api/chapters/{chapterId}/photos' satisfies PathTemplate
 const BAUL_PHOTOS = '/api/baules/{baulId}/photos' satisfies PathTemplate;
 const LOOSE_PHOTOS = '/api/baules/{baulId}/photos/sueltas' satisfies PathTemplate;
 const PHOTO_CHAPTER = '/api/photos/{photoId}/chapter' satisfies PathTemplate;
+const PHOTO_ADD_TO_BAUL = '/api/photos/{photoId}/add-to-baul' satisfies PathTemplate;
 const PHOTO = '/api/photos/{photoId}' satisfies PathTemplate;
 const PHOTO_DATE = '/api/photos/{photoId}/date' satisfies PathTemplate;
 const PHOTO_DATE_BATCH = '/api/photos/date-batch' satisfies PathTemplate;
@@ -56,6 +57,11 @@ export const photosApi = {
   },
   move: async (photoId: string, chapterId: string) =>
     new Photo(await put<PhotoDto>(path(PHOTO_CHAPTER, { photoId }), { chapterId } satisfies JsonRequest<typeof PHOTO_CHAPTER, 'put'>)),
+  // "Añadir a otro baúl" (docs/.backlog issue #62, Slice 2) — crea una foto nueva en el baúl
+  // destino que apunta al mismo PhotoAsset, sin subir ni copiar el archivo.
+  addToBaul: async (photoId: string, targetBaulId: string) =>
+    new Photo(await post<JsonResponse<typeof PHOTO_ADD_TO_BAUL, 'post'>>(
+      path(PHOTO_ADD_TO_BAUL, { photoId }), { targetBaulId } satisfies JsonRequest<typeof PHOTO_ADD_TO_BAUL, 'post'>)),
   delete: (photoId: string, reason?: string) =>
     del<SuccessResponse>(photoPath(photoId), { reason } satisfies JsonRequest<typeof PHOTO, 'delete'>),
   deleteBatch: (photoIds: string[], reason?: string) =>

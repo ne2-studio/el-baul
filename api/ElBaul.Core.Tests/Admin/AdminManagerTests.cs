@@ -41,7 +41,6 @@ public class AdminManagerTests
     private readonly InMemoryRemovalRequestRepository _removalRequestRepository = new();
     private readonly IAdminBaulDeletionRepository _baulDeletionRepository;
     private readonly InMemoryPushTokenRepository _pushTokenRepository = new();
-    private readonly FakePhotoStorage _photoStorage = new();
     private readonly FakeChatContextBuilder _chatContextBuilder = new();
     private readonly StaticClock _clock = new();
 
@@ -65,7 +64,7 @@ public class AdminManagerTests
 
     private AdminManager CreateManager() => new(
         _adminRepository, _baulDeletionRepository, _sentEmailRepository, _sentPushNotificationRepository, _baulRepository, _personaRepository, _pushTokenRepository,
-        _photoStorage, _chatContextBuilder, _clock, NullLogger<AdminManager>.Instance);
+        _chatContextBuilder, _clock, NullLogger<AdminManager>.Instance);
 
     [Fact]
     public async Task GetDashboardCountsAsync_ShouldMapCountsAndUseTodaysDateAsBoundary()
@@ -282,7 +281,7 @@ public class AdminManagerTests
     }
 
     [Fact]
-    public async Task DeleteBaulAsync_ShouldRemoveEverythingInTheBaulAndCleanUpStorage()
+    public async Task DeleteBaulAsync_ShouldRemoveEverythingInTheBaulButLeaveStorageAndPhotoAssetsAlone()
     {
         var baulId = new BaulId(Guid.NewGuid());
         var baul = new Baul(baulId, "Familia Pérez", null, new UserId("custodio-1"), ChapterCount: 1, _clock.UtcNow(), _clock.UtcNow());
@@ -316,8 +315,12 @@ public class AdminManagerTests
         Assert.Empty(await _recuerdoRepository.GetByBaulIdAsync(baulId));
         Assert.Empty(await _personaRepository.GetPersonasAsync(baulId));
         Assert.Empty(await _photoPersonaTagRepository.GetPersonaIdsByPhotoIdAsync(photo.Id));
-        Assert.Contains("photos/one.jpg", _photoStorage.DeletedKeys);
-        Assert.Contains("avatars/abuela.jpg", _photoStorage.DeletedKeys);
+        // Slice 2 (docs/.backlog issue #62): a Photo's asset may be shared with another baúl, so
+        // hard-deleting this baúl must never delete its photos' storage objects or PhotoAssets —
+        // see IAdminBaulDeletionRepository's doc comment. AdminManager no longer even depends on
+        // IPhotoStorage (nothing left here to call it); PhotoAssetTests in
+        // ElBaul.Infra.PersistenceTests covers the persistence-level "asset survives" guarantee
+        // against a real database. Left as an intentional orphan for Slice 3's garbage collection.
     }
 
     [Fact]

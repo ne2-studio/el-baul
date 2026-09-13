@@ -42,10 +42,12 @@ public class PhotoManagerTests
     private IPhotoListReadModel CreatePhotoListReadModel() =>
         new InMemoryPhotoListReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.PhotoPersonaTags);
 
-    private PhotoManager CreateManager(string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null) =>
+    private PhotoManager CreateManager(
+        string currentUserId, Guid? nextId = null, ILogger<PhotoManager>? logger = null, Guid? nextAddToBaulId = null) =>
         new(logger ?? NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(currentUserId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
-            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(nextId: nextId), _fixture.Clock,
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(nextId: nextId),
+            new StaticIdGenerator(nextAddToBaulId ?? Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
     private PhotoReadManager CreateReadManager(string currentUserId, ILogger<PhotoReadManager>? logger = null) =>
@@ -134,7 +136,8 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
-            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage), _fixture.Clock,
+            CreatePhotoLifecycleService(), CreatePhotoDtoProjector(failingStorage), CreatePhotoUploadWorkflow(photoStorage: failingStorage),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -155,7 +158,8 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
-            CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
+            CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -179,7 +183,8 @@ public class PhotoManagerTests
         var manager = new PhotoManager(
             NullLogger<PhotoManager>.Instance, failingRepository, _fixture.Chapters,
             new StaticCurrentUserProvider(CustodioId), new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
-            CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository), _fixture.Clock,
+            CreatePhotoLifecycleService(failingRepository), CreatePhotoDtoProjector(), CreatePhotoUploadWorkflow(failingRepository),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock,
             new FakeUnitOfWork());
 
         using var content = new MemoryStream([1, 2, 3]);
@@ -396,6 +401,134 @@ public class PhotoManagerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Target chapter not found", result.Error.Message);
+    }
+
+    // "Add to another baúl" (docs/.backlog issue #62, Slice 2).
+    [Fact]
+    public async Task AddToBaulAsync_CreatesANewPhoto_SharingTheSamePhotoAsset()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, storageKey: "shared/key.jpg");
+
+        var manager = CreateManager(CustodioId, nextAddToBaulId: Guid.NewGuid());
+        var result = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        var newPhotoDto = result.Value;
+        Assert.NotEqual(sourcePhotoId.ToString(), newPhotoDto.Id);
+        Assert.Equal(targetBaulId.ToString(), newPhotoDto.BaulId);
+
+        var sourcePhoto = await _fixture.Photos.GetByIdAsync(sourcePhotoId);
+        var newPhoto = await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(newPhotoDto.Id)));
+        Assert.Equal(sourcePhoto!.PhotoAssetId, newPhoto!.PhotoAssetId);
+        Assert.Equal("shared/key.jpg", newPhoto.StorageKey);
+    }
+
+    [Fact]
+    public async Task AddToBaulAsync_DoesNotCopySourceBaulSpecificContext()
+    {
+        var (sourceBaulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var date = PhotoDate.Parse(2019, 6, 1).Value;
+        var sourcePhotoId = await _fixture.AddPhotoAsync(
+            sourceBaulId, chapterId, date: date, clientUploadId: Guid.NewGuid(), uploadBatchId: Guid.NewGuid());
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        var newPhoto = await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
+        // TakenAt is the one deliberate exception — copied as a convenience initial value.
+        Assert.Equal(date, newPhoto!.TakenAt);
+        Assert.Null(newPhoto.ChapterId);
+        Assert.Null(newPhoto.ClientUploadId);
+        Assert.Null(newPhoto.UploadBatchId);
+        Assert.Equal(PhotoStatus.Active, newPhoto.Status);
+        Assert.NotEqual(default, newPhoto.CreatedAt);
+    }
+
+    [Fact]
+    public async Task AddToBaulAsync_ChangingTheNewPhotosContext_DoesNotAffectTheSourcePhoto()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, date: PhotoDate.Parse(2020, 1, 1).Value);
+
+        var manager = CreateManager(CustodioId);
+        var addResult = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+        var newPhotoId = new PhotoId(Guid.Parse(addResult.Value.Id));
+
+        var newDate = PhotoDate.Parse(2021, 12, 25).Value;
+        await manager.ChangeDateAsync(newPhotoId, newDate);
+
+        var sourcePhoto = await _fixture.Photos.GetByIdAsync(sourcePhotoId);
+        Assert.Equal(PhotoDate.Parse(2020, 1, 1).Value, sourcePhoto!.TakenAt);
+    }
+
+    [Fact]
+    public async Task AddToBaulAsync_ShouldBeIdempotent_WhenTheAssetIsAlreadyActiveInTheTargetBaul()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId);
+
+        var manager = CreateManager(CustodioId);
+        var first = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+        var second = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+
+        Assert.True(first.IsSuccess);
+        Assert.True(second.IsSuccess);
+        Assert.Equal(first.Value.Id, second.Value.Id);
+
+        var sourcePhoto = await _fixture.Photos.GetByIdAsync(sourcePhotoId);
+        var activeInTarget = (await _fixture.Photos.GetActiveByBaulIdAsync(targetBaulId))
+            .Where(p => p.PhotoAssetId == sourcePhoto!.PhotoAssetId)
+            .ToList();
+        Assert.Single(activeInTarget);
+    }
+
+    [Fact]
+    public async Task AddToBaulAsync_ShouldFail_WhenCallerCannotAccessTheSourcePhoto()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen", custodioId: "custodio-owner");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino", custodioId: "stranger");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: "custodio-owner");
+
+        var manager = CreateManager("stranger");
+        var result = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task AddToBaulAsync_ShouldFail_WhenCallerCannotAddContentToTheTargetBaul()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId);
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino", custodioId: "other-custodio");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task AddToBaulAsync_ShouldSucceed_WhenCallerIsAMemberOfBothBaules()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen", custodioId: "owner");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino", custodioId: "owner");
+        await _fixture.AddColaboradorAsync(sourceBaulId, "colaborador-1");
+        await _fixture.AddColaboradorAsync(targetBaulId, "colaborador-1");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: "owner");
+
+        var manager = CreateManager("colaborador-1");
+        var result = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+
+        Assert.True(result.IsSuccess);
     }
 
     [Fact]
