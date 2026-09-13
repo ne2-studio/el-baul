@@ -119,6 +119,7 @@ public static class ElBaulApiHost
             MapIdSchema<BaulId>(c);
             MapIdSchema<ChapterId>(c);
             MapIdSchema<PhotoId>(c);
+            MapIdSchema<PhotoAssetId>(c);
             MapIdSchema<PersonaId>(c);
             MapIdSchema<RecuerdoId>(c);
             MapIdSchema<SharedLinkId>(c);
@@ -378,6 +379,7 @@ public static class ElBaulApiHost
             RegisterIdTypeConverter<BaulId>();
             RegisterIdTypeConverter<ChapterId>();
             RegisterIdTypeConverter<PhotoId>();
+            RegisterIdTypeConverter<PhotoAssetId>();
             RegisterIdTypeConverter<PersonaId>();
             RegisterIdTypeConverter<RecuerdoId>();
             RegisterIdTypeConverter<SharedLinkId>();

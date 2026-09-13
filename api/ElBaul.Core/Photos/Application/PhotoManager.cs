@@ -186,25 +186,7 @@ public class PhotoManager(
         var newPhoto = Photo.CreateFromExistingAsset(
             new PhotoId(idGenerator.NewId()), targetBaulId, sourcePhoto.PhotoAsset, sourcePhoto.TakenAt, userId, now);
 
-        // TryAddExistingAssetAsync + the chapter/cover bookkeeping it triggers commit together —
-        // same shape as UploadAsync's transaction below.
-        var addResult = await unitOfWork.ExecuteInTransactionAsync(async () =>
-        {
-            if (await photoRepository.TryAddExistingAssetAsync(newPhoto))
-            {
-                await photoLifecycle.AddAsync(newPhoto, chapterId: null, targetBaulId, now);
-                return Result.Success((Photo: newPhoto, IsNew: true));
-            }
-
-            // Lost the race, or simply already there: reject/no-op rather than leak a database
-            // constraint error — see IPhotoManager's doc comment. Reuses the same
-            // already-active Photo a client retrying this action would expect to land on.
-            var existing = await photoRepository.GetActiveByAssetIdAsync(targetBaulId, sourcePhoto.PhotoAssetId)
-                ?? throw new InvalidOperationException(
-                    $"TryAddExistingAssetAsync reported a conflict for baúl {targetBaulId} asset {sourcePhoto.PhotoAssetId} but no active photo was found.");
-            return Result.Success((Photo: existing, IsNew: false));
-        });
-        var (resultPhoto, isNew) = addResult.Value;
+        var (resultPhoto, isNew) = await AddExistingAssetAsync(newPhoto, targetBaulId, sourcePhoto.PhotoAssetId);
 
         if (isNew)
         {
@@ -219,6 +201,86 @@ public class PhotoManager(
         }
 
         return await photoDtoProjector.ProjectAsync(resultPhoto, targetAuth.Value.IsAdmin, userId);
+    }
+
+    // "Add to another baúl" from Mis fotos (docs/.backlog issue #62, Slice 2 — Mis fotos
+    // wiring). Same domain factory/transaction/DB constraint as AddToBaulAsync above, but
+    // authorized differently: there is no source Photo to prove access through, since Mis fotos
+    // shows a PhotoAsset with no baúl of its own. Instead the caller must be the asset's
+    // original uploader — the same rule MyPhotosReadManager uses to decide what belongs in Mis
+    // fotos at all — never PhotoAsset access mediated by some other baúl's Photo.
+    public async Task<Result<BaulAppearanceDto>> AddAssetToBaulAsync(PhotoAssetId assetId, BaulId targetBaulId)
+    {
+        var userId = currentUserProvider.GetUserId();
+        var assetResult = await EntityLookup.ResolveAsync(
+            () => photoRepository.GetAssetByIdAsync(assetId),
+            logger,
+            "Add asset to baul rejected: asset not found {PhotoAssetId}",
+            "Photo not found",
+            assetId);
+        if (assetResult.IsFailure) return Result.Failure<BaulAppearanceDto>(assetResult.Error);
+        var asset = assetResult.Value;
+
+        if (asset.UploadedBy != userId)
+        {
+            logger.LogWarning(
+                "Add asset to baul rejected: access denied {@Context}", new { PhotoAssetId = assetId, TargetBaulId = targetBaulId });
+            return Result.Failure<BaulAppearanceDto>(ApplicationError.Forbidden("Access denied"));
+        }
+
+        var targetAuth = await baulAccess.AuthorizeAsync(
+            targetBaulId, userId, AccessLevel.Member, "Add asset to baul (target)",
+            new { PhotoAssetId = assetId, TargetBaulId = targetBaulId });
+        if (targetAuth.IsFailure) return Result.Failure<BaulAppearanceDto>(targetAuth.Error);
+
+        // The asset's own originating Photo shares its Guid (see Photo.Create) — same trick
+        // MyPhotosReadManager uses to recover the asset's intrinsic date. Missing only if every
+        // Photo that ever referenced this asset was hard-deleted; TakenAt then just starts
+        // unset, same as any other brand-new projection.
+        var originatingPhoto = await photoRepository.GetByIdAsync(new PhotoId(assetId.Value));
+
+        var now = clock.UtcNow();
+        var newPhoto = Photo.CreateFromExistingAsset(
+            new PhotoId(idGenerator.NewId()), targetBaulId, asset, originatingPhoto?.TakenAt, userId, now);
+
+        var (resultPhoto, isNew) = await AddExistingAssetAsync(newPhoto, targetBaulId, assetId);
+
+        if (isNew)
+        {
+            logger.LogInformation(
+                "Asset added to another baúl {PhotoAssetId} {TargetBaulId} {NewPhotoId}", assetId, targetBaulId, resultPhoto.Id);
+        }
+        else
+        {
+            logger.LogInformation(
+                "Add asset to baul was a no-op: asset already active in target baúl {PhotoAssetId} {TargetBaulId} {ExistingPhotoId}",
+                assetId, targetBaulId, resultPhoto.Id);
+        }
+
+        return Result.Success(new BaulAppearanceDto(targetBaulId.ToString(), targetAuth.Value.Baul.Name));
+    }
+
+    // Shared by AddToBaulAsync and AddAssetToBaulAsync — TryAddExistingAssetAsync + the
+    // chapter/cover bookkeeping it triggers commit together, same shape as UploadAsync's
+    // transaction. Both callers land on the exact same race-safe idempotency: a lost race, or
+    // simply already being there, resolves to the existing active Photo rather than a database
+    // constraint error leaking out — see IPhotoManager's doc comments.
+    private async Task<(Photo Photo, bool IsNew)> AddExistingAssetAsync(Photo newPhoto, BaulId targetBaulId, PhotoAssetId assetId)
+    {
+        var addResult = await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            if (await photoRepository.TryAddExistingAssetAsync(newPhoto))
+            {
+                await photoLifecycle.AddAsync(newPhoto, chapterId: null, targetBaulId, newPhoto.CreatedAt);
+                return Result.Success((Photo: newPhoto, IsNew: true));
+            }
+
+            var existing = await photoRepository.GetActiveByAssetIdAsync(targetBaulId, assetId)
+                ?? throw new InvalidOperationException(
+                    $"TryAddExistingAssetAsync reported a conflict for baúl {targetBaulId} asset {assetId} but no active photo was found.");
+            return Result.Success((Photo: existing, IsNew: false));
+        });
+        return addResult.Value;
     }
 
     public async Task<Result> DeleteAsync(PhotoId photoId, string? reason)

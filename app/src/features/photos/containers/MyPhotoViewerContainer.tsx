@@ -1,5 +1,6 @@
 import React from 'react';
 import { PhotoViewer } from '@/features/photos/components/PhotoViewer';
+import { useMyPhotoViewerActions } from '@/features/photos/containers/useMyPhotoViewerActions';
 import { PhotoAsset } from '@/types';
 
 interface MyPhotoViewerContainerProps {
@@ -9,23 +10,25 @@ interface MyPhotoViewerContainerProps {
   onPhotoChange: (photo: PhotoAsset) => void;
 }
 
-// The read-only "Mis fotos" counterpart to PhotoViewerContainer (docs/.backlog issue #62,
-// Slice 1) — no usePhotoViewerActions here at all: no tagging, recuerdos, date editing,
-// delete, or "add to another baúl" this slice, and there's no single baúl to hang any of that
-// off of anyway. Reuses the same presentational PhotoViewer, just with every action slot
-// empty and baulNames filled in from the asset's own Photo appearances instead of a
-// ChapterBadge.
+// The "Mis fotos" counterpart to PhotoViewerContainer (docs/.backlog issue #62) — still no
+// tagging, recuerdos, date editing or delete this slice, and still no single baúl to hang any
+// of that off of, but "Añadir a otro baúl" (Slice 2) is now wired in via
+// useMyPhotoViewerActions, its own asset-scoped sibling of usePhotoViewerActions. Reuses the
+// same presentational PhotoViewer, with baulNames filled in from the asset's own Photo
+// appearances instead of a ChapterBadge.
 export function MyPhotoViewerContainer({ photo, photos, onClose, onPhotoChange }: MyPhotoViewerContainerProps) {
+  const { menuItems, modals } = useMyPhotoViewerActions({ photo });
+
   return (
     <PhotoViewer
       photo={photo}
       photos={photos}
       onClose={onClose}
       onPhotoChange={onPhotoChange}
-      menuItems={[]}
+      menuItems={menuItems}
       canChangeDate={false}
       openDateModal={() => {}}
-      modals={null}
+      modals={modals}
       baulNames={photo.baules.map((b) => b.baulName)}
     />
   );

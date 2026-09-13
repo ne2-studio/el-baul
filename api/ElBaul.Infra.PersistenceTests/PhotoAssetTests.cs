@@ -114,6 +114,28 @@ public class PhotoAssetTests(PostgresFixture fixture) : PersistenceTestBase(fixt
     }
 
     [Fact]
+    public async Task Slice2_GetAssetByIdAsync_ResolvesThePhotoAsset_WithNoPhotoOrBaulInTheLoop()
+    {
+        // PhotoManager.AddAssetToBaulAsync (Mis fotos wiring) authorizes off PhotoAsset.UploadedBy
+        // directly, with no accessible source Photo to go through — this is the lookup that makes
+        // that possible.
+        await using var dbContext = Fixture.CreateDbContext();
+        var baulId = await SeedBaulAsync(dbContext);
+        var photos = new PhotoRepository(dbContext);
+
+        var photo = Photo.Create(
+            new PhotoId(Guid.NewGuid()), null, baulId, "asset-lookup.jpg", null,
+            new UserId("custodio-1"), DateTime.UtcNow, new ImageDimensions(10, 10));
+        await photos.CreateAsync(photo);
+
+        var asset = await photos.GetAssetByIdAsync(photo.PhotoAssetId);
+
+        asset.Should().NotBeNull();
+        asset!.Id.Should().Be(photo.PhotoAssetId);
+        asset.UploadedBy.Should().Be(new UserId("custodio-1"));
+    }
+
+    [Fact]
     public async Task Slice2_TryAddExistingAssetAsync_SharesThePhotoAssetAcrossTwoDifferentBaules()
     {
         await using var dbContext = Fixture.CreateDbContext();

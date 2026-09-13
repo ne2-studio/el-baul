@@ -1,4 +1,15 @@
 import { api } from '@/api';
+import { useMyPhotosStore } from '@/store/useMyPhotosStore';
+
+// "Añadir a otro baúl" desde Mis fotos (docs/.backlog issue #62, Slice 2 — wiring de Mis
+// fotos): a diferencia de addPhotoToBaul de abajo, Mis fotos SÍ es la caché local del propio
+// asset que se está mostrando, así que aquí sí hay que fusionar la nueva aparición en
+// useMyPhotosStore para que "Aparece en" se actualice sin recargar la pantalla.
+export async function addPhotoAssetToBaul(assetId: string, targetBaulId: string) {
+  const appearance = await api.myPhotos.addToBaul(assetId, targetBaulId);
+  useMyPhotosStore.getState().addBaulAppearance(assetId, appearance);
+  return appearance;
+}
 
 // "Añadir a otro baúl" (docs/.backlog issue #62, Slice 2): crea una foto nueva en el baúl
 // destino que comparte el mismo archivo/PhotoAsset que la foto de origen — nada se sube ni se

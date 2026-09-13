@@ -170,4 +170,7 @@ public class PhotoRepository(ElBaulDbContext dbContext) : IPhotoRepository
         await dbContext.Photos.AsNoTracking()
             .Where(p => assetIds.Contains(p.PhotoAssetId) && p.Status == PhotoStatus.Active)
             .ToListAsync();
+
+    public async Task<PhotoAsset?> GetAssetByIdAsync(PhotoAssetId id) =>
+        await dbContext.PhotoAssets.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
 }

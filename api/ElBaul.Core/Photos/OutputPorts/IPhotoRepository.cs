@@ -86,6 +86,11 @@ public interface IPhotoRepository
     /// access to any of them — the read model behind the user-scoped "Mis fotos" view.</summary>
     Task<IReadOnlyList<PhotoAsset>> GetByUploaderAsync(UserId userId);
 
+    /// <summary>A single PhotoAsset by id, with no Photo/baúl in the loop at all — used by
+    /// PhotoManager.AddAssetToBaulAsync, which authorizes off PhotoAsset.UploadedBy directly
+    /// instead of an accessible source Photo (see IPhotoManager's doc comment).</summary>
+    Task<PhotoAsset?> GetAssetByIdAsync(PhotoAssetId id);
+
     /// <summary>Every active Photo referencing any of these assets, across every baúl — batched
     /// in one query instead of one per asset. Used by "Mis fotos" both to find each asset's
     /// originating Photo (for its intrinsic date) and to compute which baúles it appears in.</summary>

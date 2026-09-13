@@ -87,6 +87,17 @@ public class PhotosController(
         return result.ToActionResult();
     }
 
+    // Mis fotos counterpart to AddToBaul above — keyed on the PhotoAsset itself rather than a
+    // source Photo, since Mis fotos has no single baúl to hang authorization off of (see
+    // IPhotoManager.AddAssetToBaulAsync). Reuses the same request DTO.
+    [HttpPost("photo-assets/{assetId:guid}/add-to-baul")]
+    [ProducesResponseType(typeof(BaulAppearanceDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> AddAssetToBaul(PhotoAssetId assetId, [FromBody] AddPhotoToBaulRequest request)
+    {
+        var result = await photoManager.AddAssetToBaulAsync(assetId, request.TargetBaulId);
+        return result.ToActionResult();
+    }
+
     [HttpDelete("photos/{photoId:guid}")]
     [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Delete(PhotoId photoId, [FromBody] DeletePhotoRequest request)

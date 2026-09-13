@@ -1,8 +1,9 @@
-import { PhotoAsset } from '../../types';
-import { path, type JsonResponse, type PathTemplate } from '../contract';
-import { get } from '../http';
+import { BaulAppearance, PhotoAsset } from '../../types';
+import { path, type JsonRequest, type JsonResponse, type PathTemplate } from '../contract';
+import { get, post } from '../http';
 
 const MY_PHOTOS = '/api/users/me/photos' satisfies PathTemplate;
+const PHOTO_ASSET_ADD_TO_BAUL = '/api/photo-assets/{assetId}/add-to-baul' satisfies PathTemplate;
 
 type PhotoAssetPageDto = JsonResponse<typeof MY_PHOTOS, 'get'>;
 
@@ -16,4 +17,11 @@ export const myPhotosApi = {
     const result = await get<PhotoAssetPageDto>(path(MY_PHOTOS, {}, params));
     return { assets: result.items.map((a) => new PhotoAsset(a)), hasMore: result.hasMore };
   },
+  // "Añadir a otro baúl" desde Mis fotos (docs/.backlog issue #62, Slice 2 — wiring de Mis
+  // fotos): mismo efecto que photosApi.addToBaul, pero autorizado sobre el PhotoAsset (haberlo
+  // subido originalmente) en vez de sobre una foto de origen, ya que aquí no hay un baúl actual
+  // del que partir. Devuelve solo la nueva aparición, para fusionarla en el asset ya cargado.
+  addToBaul: async (assetId: string, targetBaulId: string) =>
+    new BaulAppearance(await post<JsonResponse<typeof PHOTO_ASSET_ADD_TO_BAUL, 'post'>>(
+      path(PHOTO_ASSET_ADD_TO_BAUL, { assetId }), { targetBaulId } satisfies JsonRequest<typeof PHOTO_ASSET_ADD_TO_BAUL, 'post'>)),
 };

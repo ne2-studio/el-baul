@@ -186,4 +186,10 @@ public class InMemoryPhotoRepository : IPhotoRepository
                 .ToList());
         }
     }
+
+    public Task<PhotoAsset?> GetAssetByIdAsync(PhotoAssetId id)
+    {
+        lock (_lock)
+            return Task.FromResult(_photos.Values.Select(p => p.PhotoAsset).FirstOrDefault(a => a.Id == id));
+    }
 }

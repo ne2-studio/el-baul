@@ -531,6 +531,140 @@ public class PhotoManagerTests
         Assert.True(result.IsSuccess);
     }
 
+    // "Add to another baúl" from Mis fotos (docs/.backlog issue #62, Slice 2 — Mis fotos
+    // wiring): same domain factory/DB constraint as AddToBaulAsync above, but authorized off
+    // PhotoAsset.UploadedBy instead of a source Photo — see AddAssetToBaulAsync's own comment.
+    [Fact]
+    public async Task AddAssetToBaulAsync_CreatesANewPhoto_SharingTheSamePhotoAsset()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, storageKey: "shared/key.jpg", uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+
+        var manager = CreateManager(CustodioId, nextAddToBaulId: Guid.NewGuid());
+        var result = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(targetBaulId.ToString(), result.Value.BaulId);
+
+        var sourcePhoto = await _fixture.Photos.GetByIdAsync(sourcePhotoId);
+        var newPhoto = await _fixture.Photos.GetActiveByAssetIdAsync(targetBaulId, assetId);
+        Assert.NotNull(newPhoto);
+        Assert.Equal(sourcePhoto!.PhotoAssetId, newPhoto!.PhotoAssetId);
+        Assert.Equal("shared/key.jpg", newPhoto.StorageKey);
+        Assert.NotEqual(sourcePhotoId, newPhoto.Id);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_DoesNotCopySourceBaulSpecificContext()
+    {
+        var (sourceBaulId, chapterId) = await _fixture.CreateBaulWithChapterAsync();
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var date = PhotoDate.Parse(2019, 6, 1).Value;
+        var sourcePhotoId = await _fixture.AddPhotoAsync(
+            sourceBaulId, chapterId, date: date, clientUploadId: Guid.NewGuid(), uploadBatchId: Guid.NewGuid(), uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        var newPhoto = await _fixture.Photos.GetActiveByAssetIdAsync(targetBaulId, assetId);
+        // TakenAt is the one deliberate exception — copied as a convenience initial value.
+        Assert.Equal(date, newPhoto!.TakenAt);
+        Assert.Null(newPhoto.ChapterId);
+        Assert.Null(newPhoto.ClientUploadId);
+        Assert.Null(newPhoto.UploadBatchId);
+        Assert.Equal(PhotoStatus.Active, newPhoto.Status);
+        Assert.NotEqual(default, newPhoto.CreatedAt);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_ShouldNotCreateANewPhotoAsset()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+
+        var manager = CreateManager(CustodioId);
+        await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        var appearances = await _fixture.Photos.GetActiveByAssetIdsAsync([assetId]);
+        Assert.All(appearances, p => Assert.Equal(assetId, p.PhotoAssetId));
+        Assert.Equal(2, appearances.Count);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_ShouldBeIdempotent_WhenTheAssetIsAlreadyActiveInTheTargetBaul()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+
+        var manager = CreateManager(CustodioId);
+        var first = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+        var second = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        Assert.True(first.IsSuccess);
+        Assert.True(second.IsSuccess);
+
+        var activeInTarget = (await _fixture.Photos.GetActiveByBaulIdAsync(targetBaulId))
+            .Where(p => p.PhotoAssetId == assetId)
+            .ToList();
+        Assert.Single(activeInTarget);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_ShouldFail_WhenCallerDidNotOriginallyUploadTheAsset()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen", custodioId: "custodio-owner");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino", custodioId: "custodio-owner");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: "custodio-owner");
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+
+        // "stranger" is even a member of the target baúl — access must still be denied, because
+        // this asset isn't theirs to begin with (arbitrary/inaccessible PhotoAssetId).
+        await _fixture.AddColaboradorAsync(targetBaulId, "stranger");
+        var manager = CreateManager("stranger");
+        var result = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_ShouldFail_WhenCallerCannotAddContentToTheTargetBaul()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino", custodioId: "other-custodio");
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Access denied", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task AddAssetToBaulAsync_ShouldSucceed_WhenCallerUploadedTheAssetAndIsMemberOfTheTargetBaul()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen", custodioId: "owner");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino", custodioId: "other-owner");
+        await _fixture.AddColaboradorAsync(targetBaulId, "colaborador-1");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: "colaborador-1");
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+
+        var manager = CreateManager("colaborador-1");
+        var result = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        Assert.True(result.IsSuccess);
+    }
+
     [Fact]
     public async Task DeleteAsync_ShouldHidePhotoFromChapterListing()
     {
