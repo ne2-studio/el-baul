@@ -146,7 +146,7 @@ async function downscaleForPreview(source: Blob, file: File): Promise<Blob> {
   } catch (error) {
     Sentry.captureException(error, {
       tags: { phase: 'preview-downscale' },
-      extra: { name: file.name, size: file.size, type: file.type },
+      extra: { name: file.name, size: file.size, type: file.type, ...(await diagnosticFingerprint(source)) },
     });
     return source;
   }
@@ -154,6 +154,76 @@ async function downscaleForPreview(source: Blob, file: File): Promise<Blob> {
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+}
+
+// How many bytes of the undecodable blob's head/tail to hex-dump alongside the Sentry event
+// above — enough to see the magic bytes, an APP0/APP1 header, and (from the tail) whether the
+// stream was cut off before EOI, without ballooning the event payload.
+const DIAGNOSTIC_BYTES = 64;
+
+// Temporary forensic snapshot attached to downscaleForPreview's Sentry event, for diagnosing why
+// a real, on-device "createImageBitmap can't decode this" image is undecodable — see docs/
+// .backlog issue #82. By the time a picked file reaches here it can't be re-obtained afterwards
+// (an Android content:// picker hands out transient, re-encoded-on-demand bytes — see
+// materializeSelectedPhoto below — so even the same-looking photo downloaded normally afterwards
+// is provably different bytes), so this is the only way to see what's actually wrong with them.
+// Never throws: a failure here must not mask the original decode error it's attached to.
+async function diagnosticFingerprint(blob: Blob): Promise<Record<string, unknown>> {
+  try {
+    const buffer = new Uint8Array(await blob.arrayBuffer());
+    return {
+      byteLength: buffer.length,
+      headHex: toHex(buffer.subarray(0, DIAGNOSTIC_BYTES)),
+      tailHex: toHex(buffer.subarray(Math.max(0, buffer.length - DIAGNOSTIC_BYTES))),
+      jpegMarkers: walkJpegMarkers(buffer),
+    };
+  } catch (fingerprintError) {
+    return { fingerprintError: String(fingerprintError) };
+  }
+}
+
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// Walks JPEG segment markers from SOI up to (and including) the first SOS — enough to see how
+// this image is actually encoded (baseline vs progressive vs one of the rarer/unsupported SOF
+// variants — arithmetic-coded, lossless, 12-bit — plus chroma subsampling and any APPn/ICC/COM
+// segments in between) without decoding a single pixel. Returns a short label instead of walking
+// garbage when the buffer isn't even a JPEG (wrong magic bytes) or the walk runs off the rails.
+function walkJpegMarkers(buffer: Uint8Array): string[] | string {
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return 'not a JPEG (bad SOI)';
+
+  const markers: string[] = [];
+  let i = 2;
+  while (i < buffer.length - 1) {
+    if (buffer[i] !== 0xff) return [...markers, `desync at offset ${i}`];
+    const marker = buffer[i + 1];
+
+    // Markers with no length-prefixed payload: RST0-7 and the bare TEM marker.
+    if ((marker >= 0xd0 && marker <= 0xd7) || marker === 0x01) {
+      markers.push(`0xFF${marker.toString(16).padStart(2, '0')}@${i}`);
+      i += 2;
+      continue;
+    }
+    if (marker === 0xd9) {
+      markers.push(`EOI@${i}`);
+      break;
+    }
+    if (i + 3 >= buffer.length) return [...markers, `truncated segment header at offset ${i}`];
+
+    const length = (buffer[i + 2] << 8) | buffer[i + 3];
+    // SOFn markers (0xC0-0xCF) except DHT/JPG/DAC (0xC4/0xC8/0xCC) carry precision/dimensions —
+    // exactly what distinguishes a plain baseline JPEG from the exotic variants above.
+    const isSof = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+    const detail = isSof && i + 9 < buffer.length
+      ? ` precision=${buffer[i + 4]} ${(buffer[i + 7] << 8) | buffer[i + 8]}x${(buffer[i + 5] << 8) | buffer[i + 6]} components=${buffer[i + 9]}`
+      : '';
+    markers.push(`0xFF${marker.toString(16).padStart(2, '0')}@${i} len=${length}${detail}`);
+    if (marker === 0xda) break; // SOS reached — entropy-coded data follows, stop walking segments
+    i += 2 + length;
+  }
+  return markers;
 }
 
 // Reads a just-picked file into memory right away and wraps it in a fresh, Blob-backed

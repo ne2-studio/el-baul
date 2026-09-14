@@ -154,9 +154,20 @@ describe('uploadFlow', () => {
       const selected = await materializeSelectedPhoto(original);
 
       expect(URL.createObjectURL).toHaveBeenCalledWith(selected?.file);
+      // The forensic fingerprint (see diagnosticFingerprint) rides along on the same Sentry
+      // event: 'broken-bytes' isn't a JPEG at all, so the marker walk says exactly that instead
+      // of a byte-by-byte breakdown.
       expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
         tags: { phase: 'preview-downscale' },
-        extra: { name: 'foto.jpg', size: expect.any(Number), type: 'image/jpeg' },
+        extra: {
+          name: 'foto.jpg',
+          size: expect.any(Number),
+          type: 'image/jpeg',
+          byteLength: 12,
+          headHex: '62726f6b656e2d6279746573',
+          tailHex: '62726f6b656e2d6279746573',
+          jpegMarkers: 'not a JPEG (bad SOI)',
+        },
       });
     });
   });
