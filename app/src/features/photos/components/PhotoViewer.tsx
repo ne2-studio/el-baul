@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, MessageCircle } from 'lucide-react';
 import { GalleryPhoto, Recuerdo, TaggedPersona } from '@/types';
 import { PhotoViewerHeader, PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHeader';
 import { PhotoStage } from '@/design-system/patterns/media/PhotoStage';
@@ -350,6 +350,15 @@ export function PhotoViewer<T extends GalleryPhoto>({
                       venir declarado después en index.css — ver BottomSheetModal/AiChatScreen para
                       el mismo patrón de separar ambos paddings. */}
                   <div className="flex items-center gap-3 h-16 px-4">
+                    {(photo.recuerdoCount || 0) > 0 && (
+                      <MessageCircle
+                        data-testid="recuerdos-hint-icon"
+                        className="w-4 h-4 text-background/70 flex-shrink-0"
+                        strokeWidth={1.5}
+                        aria-hidden
+                      />
+                    )}
+
                     {taggedPersonas.length > 0 && (
                       <div className="flex -space-x-2">
                         {taggedPersonas.slice(0, 3).map((persona) => (

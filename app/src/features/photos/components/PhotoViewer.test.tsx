@@ -199,3 +199,39 @@ describe('PhotoViewer without recuerdos support (Mis fotos)', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 });
+
+// Issue #77: the collapsed mobile bottom bar gave no hint that a photo had recuerdos until
+// tapping it open — this icon surfaces that up front, next to the tagged-people avatars.
+describe('PhotoViewer collapsed bottom bar recuerdos hint', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows the recuerdos hint icon when the photo has recuerdos', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 2 } });
+
+    expect(screen.getByTestId('recuerdos-hint-icon')).toBeInTheDocument();
+  });
+
+  it('hides the recuerdos hint icon when the photo has no recuerdos', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 0 } });
+
+    expect(screen.queryByTestId('recuerdos-hint-icon')).not.toBeInTheDocument();
+  });
+
+  it('shows the hint icon even without tagged personas', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 1 }, taggedPersonas: [] });
+
+    expect(screen.getByTestId('recuerdos-hint-icon')).toBeInTheDocument();
+  });
+
+  it('does not gate the hint on the async recuerdos list or loading state', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 1 }, recuerdos: undefined, recuerdosLoading: false });
+
+    expect(screen.getByTestId('recuerdos-hint-icon')).toBeInTheDocument();
+  });
+});
