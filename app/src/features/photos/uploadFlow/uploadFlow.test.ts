@@ -123,7 +123,7 @@ describe('uploadFlow', () => {
         tag === 'canvas' ? fakeCanvas : originalCreateElement(tag)) as typeof document.createElement);
       nextBitmapDims = { width: 4000, height: 3000 };
 
-      const selected = await materializeSelectedPhoto(original);
+      await materializeSelectedPhoto(original);
 
       // Longer side capped at 480px, aspect ratio preserved.
       expect(fakeCanvas.width).toBe(480);
