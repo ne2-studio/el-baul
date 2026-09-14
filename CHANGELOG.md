@@ -31,6 +31,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - El punto de "novedades" del selector de baúles (y los avisos de contenido nuevo en la Historia) ahora es único por persona y se comparte entre todos tus dispositivos: lo que ya has visto en un móvil deja de aparecer como nuevo cuando entras desde otro. Antes cada dispositivo llevaba su propia cuenta y un baúl ya visitado volvía a marcarse como nuevo al abrirlo desde otro sitio.
 - "Mover a otro capítulo" ya aparece siempre en el menú del visor de fotos: antes faltaba al ver una foto desde la pestaña "Fotos" del baúl o desde la ficha de una persona, y también desaparecía al ver una foto de un capítulo si el baúl no tenía ningún otro capítulo al que moverla (ahora se puede crear uno nuevo desde el mismo selector).
 - Al elegir una foto desde Google Fotos en el selector de archivos de Android, la miniatura de previsualización antes de subirla ya no aparece completamente negra en algunos móviles.
+- Al seleccionar muchas fotos para subir, el botón "Subir fotos" ahora se queda siempre visible en la parte inferior de la pantalla en vez de quedar oculto debajo de la cuadrícula de fotos seleccionadas.
 
 ### Cambiado
 

@@ -92,6 +92,25 @@ describe('UploadConfirmationScreen — 30-photo cap per upload (issue #37)', () 
   });
 });
 
+describe('UploadConfirmationScreen — sticky upload footer (issue #73)', () => {
+  it('keeps the "Subir fotos"/"Cancelar" footer pinned to the bottom of the viewport, independent of grid scroll', () => {
+    render(
+      <UploadConfirmationScreen
+        subtitle={currentChapter.name}
+        selectedPhotos={makePhotos(30)}
+        onBack={vi.fn()}
+        onUpload={vi.fn()}
+      />
+    );
+
+    const uploadButton = screen.getByRole('button', { name: 'Subir fotos' });
+    const footer = uploadButton.closest('.sticky.bottom-0');
+
+    expect(footer).not.toBeNull();
+    expect(footer).toContainElement(screen.getByRole('button', { name: 'Cancelar' }));
+  });
+});
+
 describe('UploadConfirmationScreen — drag and drop (issue #41)', () => {
   it('adds dropped files on the "Añadir más fotos" tile once photos are already selected', async () => {
     const newFiles = makeFiles(2);

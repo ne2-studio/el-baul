@@ -168,18 +168,25 @@ export function UploadConfirmationScreen({
                 <Icon icon={icons.add} size="lg" aria-hidden />
               </button>
             </div>
-
-            <div className="space-y-3">
-              <Button variant="primary" fullWidth onClick={handleConfirm}>
-                Subir fotos
-              </Button>
-              <Button variant="ghost" fullWidth onClick={onBack}>
-                Cancelar
-              </Button>
-            </div>
           </>
         )}
       </PageContainer>
+
+      {photos.length > 0 && (
+        // Sticky footer, same pattern as ContributionSuggestionScreen/AiChatScreen — with up to
+        // MAX_PHOTOS_PER_UPLOAD photos the grid grows tall enough to push these buttons out of
+        // view (issue #73).
+        <div className="sticky bottom-0 pb-safe bg-background/80 backdrop-blur-sm border-t border-border">
+          <PageContainer className="py-4 space-y-3">
+            <Button variant="primary" fullWidth onClick={handleConfirm}>
+              Subir fotos
+            </Button>
+            <Button variant="ghost" fullWidth onClick={onBack}>
+              Cancelar
+            </Button>
+          </PageContainer>
+        </div>
+      )}
     </div>
   );
 }
