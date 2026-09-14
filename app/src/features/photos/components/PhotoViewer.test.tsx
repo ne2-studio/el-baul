@@ -164,3 +164,38 @@ describe('PhotoViewer baúl appearances (Mis fotos)', () => {
     expect(screen.queryByText(/^Aparece en:/)).not.toBeInTheDocument();
   });
 });
+
+// Issue #75: Mis fotos has no recuerdos (see useMyPhotoViewerActions doc comment), so
+// MyPhotoViewerContainer never passes onAddRecuerdo — this must not surface any recuerdos-only
+// UI (title, empty state, list, input), which has no way to actually add a recuerdo there.
+describe('PhotoViewer without recuerdos support (Mis fotos)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('titles the mobile panel "Información" and hides the recuerdos empty state', () => {
+    stubMatchMedia(false);
+    renderViewer({ onAddRecuerdo: undefined });
+
+    fireEvent.click(screen.getByLabelText('Ver información'));
+
+    expect(screen.getByRole('heading', { name: 'Información' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Recuerdos' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Sé el primero en añadir un recuerdo')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Ver recuerdos')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Contraer panel de información'));
+    expect(screen.queryByRole('heading', { name: 'Información' })).not.toBeInTheDocument();
+  });
+
+  it('still titles the mobile panel "Recuerdos" and shows recuerdos UI when onAddRecuerdo is provided', () => {
+    stubMatchMedia(false);
+    renderViewer();
+
+    fireEvent.click(screen.getByLabelText('Ver recuerdos'));
+
+    expect(screen.getByRole('heading', { name: 'Recuerdos' })).toBeInTheDocument();
+    expect(screen.getByText('Sé el primero en añadir un recuerdo')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
+});

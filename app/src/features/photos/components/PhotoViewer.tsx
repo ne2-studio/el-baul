@@ -107,6 +107,11 @@ export function PhotoViewer<T extends GalleryPhoto>({
   const [panelExpanded, setPanelExpanded] = useState(false);
 
   const currentIndex = photos.findIndex(p => p.id === photo.id);
+  // Mis fotos (MyPhotoViewerContainer) never passes onAddRecuerdo — see this component's
+  // top-of-file comment and useMyPhotoViewerActions (Slice 5, docs/.backlog issue #62): no
+  // tagging, recuerdos or date editing there. Its presence is the natural signal for whether
+  // the recuerdos-specific UI (title, empty state, list, input) applies to this viewer context.
+  const recuerdosEnabled = onAddRecuerdo !== undefined;
   const hasRecuerdos = recuerdos.length > 0;
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < photos.length - 1;
@@ -229,24 +234,26 @@ export function PhotoViewer<T extends GalleryPhoto>({
           </div>
         )}
 
-        {/* Recuerdos List */}
-        {recuerdosLoading ? (
-          <div className="flex justify-center py-2">
-            <Loader2 className="w-5 h-5 text-background/40 animate-spin" aria-label="Cargando recuerdos" />
-          </div>
-        ) : !hasRecuerdos ? (
-          <div className="text-center">
-            <p className="text-background/50 text-sm mb-2">
-              Sé el primero en añadir un recuerdo
-            </p>
-          </div>
-        ) : (
-          <RecuerdosList
-            recuerdos={recuerdos}
-            onUserClick={onUserClick}
-            onShareRecuerdo={onShareRecuerdo}
-            onEditRecuerdo={onEditRecuerdo}
-          />
+        {/* Recuerdos List — not applicable to Mis fotos, see recuerdosEnabled's doc comment. */}
+        {recuerdosEnabled && (
+          recuerdosLoading ? (
+            <div className="flex justify-center py-2">
+              <Loader2 className="w-5 h-5 text-background/40 animate-spin" aria-label="Cargando recuerdos" />
+            </div>
+          ) : !hasRecuerdos ? (
+            <div className="text-center">
+              <p className="text-background/50 text-sm mb-2">
+                Sé el primero en añadir un recuerdo
+              </p>
+            </div>
+          ) : (
+            <RecuerdosList
+              recuerdos={recuerdos}
+              onUserClick={onUserClick}
+              onShareRecuerdo={onShareRecuerdo}
+              onEditRecuerdo={onEditRecuerdo}
+            />
+          )
         )}
       </div>
 
@@ -319,10 +326,10 @@ export function PhotoViewer<T extends GalleryPhoto>({
               {panelExpanded ? (
                 <div className="absolute z-20 flex flex-col bg-foreground/95 backdrop-blur-sm inset-x-0 bottom-0 max-h-[50%] rounded-t-2xl pb-safe">
                   <div className="flex items-center justify-between gap-2 px-6 pt-5 pb-1 flex-shrink-0">
-                    <h2 className="text-background font-semibold">Recuerdos</h2>
+                    <h2 className="text-background font-semibold">{recuerdosEnabled ? 'Recuerdos' : 'Información'}</h2>
                     <IconButton
                       onClick={() => setPanelExpanded(false)}
-                      aria-label="Contraer panel de recuerdos"
+                      aria-label={recuerdosEnabled ? 'Contraer panel de recuerdos' : 'Contraer panel de información'}
                       tone="inverse"
                     >
                       <ChevronDown className="w-5 h-5 text-background" aria-hidden />
@@ -335,7 +342,7 @@ export function PhotoViewer<T extends GalleryPhoto>({
                 <button
                   type="button"
                   onClick={() => setPanelExpanded(true)}
-                  aria-label="Ver recuerdos"
+                  aria-label={recuerdosEnabled ? 'Ver recuerdos' : 'Ver información'}
                   className="absolute z-20 bg-foreground/90 backdrop-blur-sm text-left inset-x-0 bottom-0 rounded-t-2xl pb-safe"
                 >
                   {/* padding visual en su propio wrapper: si compartiera elemento con pb-safe, ese
