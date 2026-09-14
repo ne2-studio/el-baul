@@ -42,6 +42,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En la pestaña "Capítulos" de un baúl sin capítulos, el texto vacío ahora explica qué es un capítulo y anima a crear el primero, en vez de decir que el baúl está vacío.
 - En la pestaña "Fotos" de un baúl, el filtro ahora empieza mostrando "Todas" las fotos del baúl en vez de solo las que no tienen capítulo, y "Todas" pasa a ser la primera opción. "Sin capítulo" sigue disponible como segunda opción, y la elección se mantiene mientras dure la sesión.
 - Al etiquetar personas en una foto (desde el visor, la selección múltiple o la sugerencia "¿Quién sale en esta foto?"), ahora se puede buscar por nombre y crear una persona nueva sin salir del selector, sin necesidad de cerrarlo para ir a "Familia". Las personas ya etiquetadas se muestran como chips arriba de la lista en vez de mezcladas con el resto.
+- En "Editar relaciones" de una persona, ahora hay un botón "Añadir" independiente junto a cada sección (Padres, Hijos, Cónyuge) en vez de un único botón que primero pedía elegir el tipo de relación. Cada botón lleva directamente a buscar y añadir a la persona correspondiente, y deja de mostrarse cuando esa relación ya no admite más personas (por ejemplo, al llegar a 2 padres o al tener ya un cónyuge asignado), volviendo a aparecer si se elimina alguna.
 
 ## [beta-v0.4.4] - 2026-08-28
 

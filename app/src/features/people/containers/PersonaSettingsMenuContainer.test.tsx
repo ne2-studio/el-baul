@@ -204,12 +204,12 @@ describe('PersonaSettingsMenuContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
     await user.click(await screen.findByText('Editar relaciones'));
 
-    await user.click(screen.getByRole('button', { name: /Añadir relación/ }));
+    await user.click(screen.getByRole('button', { name: 'Añadir padre/madre' }));
     await user.click(screen.getByText('Nieto Pablo'));
     await user.click(screen.getByRole('button', { name: 'Añadir' }));
 
-    // Default direction is "Padre/madre de" — the persona whose ficha this is (p1) becomes
-    // the parent of the picked candidate (p2).
+    // "Añadir padre/madre" fixes direction to "parent" — the persona whose ficha this is (p1)
+    // becomes the parent of the picked candidate (p2).
     expect(addPersonaRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
   });
 
@@ -242,8 +242,7 @@ describe('PersonaSettingsMenuContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
     await user.click(await screen.findByText('Editar relaciones'));
 
-    await user.click(screen.getByRole('button', { name: /Añadir relación/ }));
-    await user.click(screen.getByRole('button', { name: 'Cónyuge de' }));
+    await user.click(screen.getByRole('button', { name: 'Añadir cónyuge' }));
     await user.click(screen.getByText('Cónyuge Marta'));
     await user.click(screen.getByRole('button', { name: 'Añadir' }));
 
@@ -269,7 +268,7 @@ describe('PersonaSettingsMenuContainer', () => {
     expect(removePersonaSpouseRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
   });
 
-  it('disables the "Cónyuge de" direction once the persona already has a spouse', async () => {
+  it('hides "Añadir cónyuge" once the persona already has a spouse', async () => {
     const user = userEvent.setup();
     const spouse = persona({ id: 'p2', nickname: 'Cónyuge Marta' });
     const other = persona({ id: 'p3', nickname: 'Amigo Luis' });
@@ -282,8 +281,6 @@ describe('PersonaSettingsMenuContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Opciones de la persona' }));
     await user.click(await screen.findByText('Editar relaciones'));
 
-    await user.click(screen.getByRole('button', { name: /Añadir relación/ }));
-
-    expect(screen.getByRole('button', { name: 'Cónyuge de' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Añadir cónyuge' })).not.toBeInTheDocument();
   });
 });

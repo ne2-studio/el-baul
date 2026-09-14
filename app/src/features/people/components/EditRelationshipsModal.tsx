@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Loader2, Trash2, UserPlus } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { Input } from '@/design-system/components/forms/Input';
 import { Avatar } from '@/design-system/components/data-display/Avatar';
@@ -55,12 +55,14 @@ export function EditRelationshipsModal({
   onCancel,
 }: EditRelationshipsModalProps) {
   const [view, setView] = useState<'list' | 'add'>('list');
+  // Fixed for the lifetime of a single "add" flow instance — set once by whichever of the 3
+  // list-view buttons opened it, never toggled from within the add view itself.
   const [direction, setDirection] = useState<Direction>('parent');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const openAddView = (initialDirection: Direction) => {
-    setDirection(initialDirection);
+  const openAddView = (fixedDirection: Direction) => {
+    setDirection(fixedDirection);
     setSearch('');
     setSelectedId(null);
     setView('add');
@@ -86,38 +88,18 @@ export function EditRelationshipsModal({
       `${p.name ?? ''} ${p.nickname}`.toLowerCase().includes(search.trim().toLowerCase())
     );
 
+    const directionCopy: Record<Direction, string> = {
+      parent: 'es padre/madre de',
+      child: 'es hijo/hija de',
+      spouse: 'es cónyuge de',
+    };
+
     return (
       <BottomSheetModal onCancel={onCancel} size="lg">
         <h2 className="text-xl font-serif text-foreground mb-1">Añadir relación</h2>
-        <p className="text-sm text-muted-foreground mb-4">{personaName} es...</p>
-
-        <div className="flex gap-2 mb-4">
-          <Button
-            variant={direction === 'parent' ? 'primary' : 'secondary'}
-            className="flex-1 text-sm"
-            onClick={() => setDirection('parent')}
-          >
-            Padre/madre de
-          </Button>
-          <Button
-            variant={direction === 'child' ? 'primary' : 'secondary'}
-            className="flex-1 text-sm"
-            onClick={() => setDirection('child')}
-          >
-            Hijo/hija de
-          </Button>
-          <Button
-            variant={direction === 'spouse' ? 'primary' : 'secondary'}
-            className="flex-1 text-sm"
-            onClick={() => setDirection('spouse')}
-            disabled={!!spouse}
-          >
-            Cónyuge de
-          </Button>
-        </div>
-        {direction === 'spouse' && spouse && (
-          <p className="text-xs text-muted-foreground mb-3">{personaName} ya tiene un cónyuge asignado.</p>
-        )}
+        <p className="text-sm text-muted-foreground mb-4">
+          {personaName} {directionCopy[direction]}...
+        </p>
 
         <Input
           value={search}
@@ -173,7 +155,13 @@ export function EditRelationshipsModal({
         personas={parents}
         removingId={removingId}
         onRemove={onRemove}
-      />
+      >
+        {parents.length < 2 && (
+          <Button variant="secondary" onClick={() => openAddView('parent')} className="w-full text-sm">
+            Añadir padre/madre
+          </Button>
+        )}
+      </RelationshipGroup>
 
       <RelationshipGroup
         title="Hijos"
@@ -181,7 +169,11 @@ export function EditRelationshipsModal({
         personas={children}
         removingId={removingId}
         onRemove={onRemove}
-      />
+      >
+        <Button variant="secondary" onClick={() => openAddView('child')} className="w-full text-sm">
+          Añadir hijo/a
+        </Button>
+      </RelationshipGroup>
 
       <RelationshipGroup
         title="Cónyuge"
@@ -189,16 +181,13 @@ export function EditRelationshipsModal({
         personas={spouse ? [spouse] : []}
         removingId={removingId}
         onRemove={onRemove}
-      />
-
-      <Button
-        variant="secondary"
-        onClick={() => openAddView('parent')}
-        className="w-full text-sm mb-6"
       >
-        <UserPlus className="w-4 h-4 mr-2" />
-        Añadir relación
-      </Button>
+        {!spouse && (
+          <Button variant="secondary" onClick={() => openAddView('spouse')} className="w-full text-sm">
+            Añadir cónyuge
+          </Button>
+        )}
+      </RelationshipGroup>
 
       <ModalActions className="pt-0">
         <Button variant="secondary" onClick={onCancel} className="text-sm">
@@ -215,14 +204,18 @@ interface RelationshipGroupProps {
   personas: Persona[];
   removingId?: string | null;
   onRemove: (relatedPersonaId: string) => void;
+  /** This section's "Añadir..." button — omitted by the caller once the relationship type is
+   * at its cap, so it simply doesn't render (not merely disabled). Rendered after the persona
+   * list, or in place of the empty-state text when the group is empty. */
+  children?: React.ReactNode;
 }
 
-function RelationshipGroup({ title, emptyLabel, personas, removingId, onRemove }: RelationshipGroupProps) {
+function RelationshipGroup({ title, emptyLabel, personas, removingId, onRemove, children }: RelationshipGroupProps) {
   return (
     <div className="mb-6">
       <SwimlaneLabel>{title}</SwimlaneLabel>
       {personas.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+        children ?? <p className="text-sm text-muted-foreground">{emptyLabel}</p>
       ) : (
         <div className="space-y-2">
           {personas.map((persona) => (
@@ -244,6 +237,7 @@ function RelationshipGroup({ title, emptyLabel, personas, removingId, onRemove }
               </Button>
             </div>
           ))}
+          {children && <div className="mt-2">{children}</div>}
         </div>
       )}
     </div>
