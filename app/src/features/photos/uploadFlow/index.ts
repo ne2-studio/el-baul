@@ -98,9 +98,9 @@ async function resolvePreviewSource(file: File, previewSource: Blob | MediaSourc
 }
 
 // Downscales an already-decoded HEIC bitmap straight to preview size in a single canvas pass —
-// used instead of round-tripping through downscaleForPreview's <img>-based path, which exists to
-// handle already-compressed Blob sources (see below) and would otherwise require encoding the
-// full-resolution bitmap to a Blob first just to decode it again.
+// shared by downscaleForPreview (see below), which decodes every other already-compressed Blob
+// source to a bitmap the same way; this skips that redundant decode step for HEIC, whose source
+// heic-to already handed us as a bitmap.
 async function downscaleBitmap(bitmap: ImageBitmap): Promise<Blob> {
   const { width, height } = bitmap;
   const scale = Math.min(1, PREVIEW_MAX_DIMENSION / Math.max(width, height));
@@ -127,43 +127,29 @@ const PREVIEW_MAX_DIMENSION = 480;
 // here keeps those two screens fast without touching either of them, and without touching
 // `file`/the upload itself, which stays the untouched original for storage. Falls back to the
 // un-downscaled source on any failure so a bad/unsupported image never blocks the flow.
+//
+// Decodes via createImageBitmap rather than an <img>-element load: a file picked from Android's
+// Google Photos provider can resolve, on the native side, to a "hardware bitmap" that some
+// WebViews composite as solid black when an <img> sourced from it is drawn into a 2D <canvas> —
+// createImageBitmap decodes the blob's own bytes entirely inside Chromium instead, never
+// touching that native Bitmap, so it isn't exposed to that failure mode. It also surfaces a
+// corrupt/incomplete decode as a rejected promise instead of a silently-black <img>.load().
 async function downscaleForPreview(source: Blob, file: File): Promise<Blob> {
-  const sourceUrl = URL.createObjectURL(source);
   try {
-    const image = await loadImage(sourceUrl);
-    const { naturalWidth: width, naturalHeight: height } = image;
-    if (!width || !height) return source;
-
-    const scale = Math.min(1, PREVIEW_MAX_DIMENSION / Math.max(width, height));
-    if (scale === 1) return source;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(width * scale);
-    canvas.height = Math.round(height * scale);
-    const context = canvas.getContext('2d');
-    if (!context) return source;
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-    const thumbnail = await canvasToBlob(canvas);
-    return thumbnail ?? source;
+    const bitmap = await createImageBitmap(source);
+    try {
+      if (Math.max(bitmap.width, bitmap.height) <= PREVIEW_MAX_DIMENSION) return source;
+      return await downscaleBitmap(bitmap);
+    } finally {
+      bitmap.close();
+    }
   } catch (error) {
     Sentry.captureException(error, {
       tags: { phase: 'preview-downscale' },
       extra: { name: file.name, size: file.size, type: file.type },
     });
     return source;
-  } finally {
-    URL.revokeObjectURL(sourceUrl);
   }
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('Image failed to load for preview downscaling'));
-    image.src = src;
-  });
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
