@@ -9,8 +9,9 @@ import { BottomSheetModal } from '@/design-system/components/overlays/BottomShee
 import { ModalActions } from '@/design-system/components/overlays/ModalActions';
 import { Persona } from '@/types';
 import { sortPersonasForTagging } from '@/utils/personaOrder';
+import { filterCandidatesForDirection, RelationshipDirection } from '@/utils/personaRelationships';
 
-type Direction = 'parent' | 'child' | 'spouse';
+type Direction = RelationshipDirection;
 
 interface EditRelationshipsModalProps {
   personaId: string;
@@ -80,7 +81,8 @@ export function EditRelationshipsModal({
   };
 
   if (view === 'add') {
-    const filtered = sortPersonasForTagging(candidates).filter((p) =>
+    const eligibleCandidates = filterCandidatesForDirection(candidates, direction, parents, children, spouse);
+    const filtered = sortPersonasForTagging(eligibleCandidates).filter((p) =>
       `${p.name ?? ''} ${p.nickname}`.toLowerCase().includes(search.trim().toLowerCase())
     );
 
