@@ -36,8 +36,17 @@ public class BaulRepository(ElBaulDbContext dbContext) : IBaulRepository
 
     public async Task UpdateAsync(Baul baul)
     {
-        dbContext.Baules.Update(baul);
+        var entry = dbContext.Baules.Update(baul);
         await dbContext.SaveChangesAsync();
+        // GetByIdAsync is AsNoTracking, so every caller (e.g. BaulPhotoCoverListener) that reads,
+        // mutates, then updates the same Baul gets a fresh untracked instance each time. Without
+        // detaching here, that instance stays attached to this request-scoped DbContext, and a
+        // second UpdateAsync for the same Id later in the same request (e.g. a batch loop over
+        // several photos into the same baúl) throws — EF Core refuses to track two different
+        // instances with the same key. Detaching makes UpdateAsync safe to call repeatedly for
+        // the same entity within one DbContext lifetime, matching how every *NoTracking read in
+        // this repository already behaves.
+        entry.State = EntityState.Detached;
     }
 
     public async Task DeleteAsync(BaulId id)

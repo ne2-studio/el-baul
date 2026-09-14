@@ -34,6 +34,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al elegir una foto desde Google Fotos en el selector de archivos de Android, la miniatura de previsualización antes de subirla ya no aparece completamente negra en algunos móviles.
 - Al seleccionar muchas fotos para subir, el botón "Subir fotos" ahora se queda siempre visible en la parte inferior de la pantalla en vez de quedar oculto debajo de la cuadrícula de fotos seleccionadas.
 - En "Mis fotos", el panel de información de una foto ya no se llama "Recuerdos" ni muestra el aviso "Sé el primero en añadir un recuerdo": ahora se llama "Información" y solo muestra la fecha, las personas etiquetadas y en qué baúles aparece, ya que en Mis fotos no se pueden añadir recuerdos.
+- Al seleccionar varias fotos en "Mis fotos" y añadirlas todas a un baúl a la vez, ya no aparece un error de conexión que solo añadía la primera foto y dejaba el resto sin añadir: ahora se añaden correctamente todas las fotos seleccionadas.
 
 ### Cambiado
 
