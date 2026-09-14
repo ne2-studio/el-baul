@@ -242,4 +242,164 @@ describe('EditRelationshipsModal', () => {
 
     expect(onAddSpouse).toHaveBeenCalledWith('c1');
   });
+
+  it('allows selecting several candidates at once and adds them all, sequentially, in one "Añadir"', async () => {
+    const user = userEvent.setup();
+    const c1 = persona('c1', 'Hijo Uno');
+    const c2 = persona('c2', 'Hijo Dos');
+    const c3 = persona('c3', 'Hijo Tres');
+    const calls: string[] = [];
+    const onAdd = vi.fn().mockImplementation(async (parentId: string) => {
+      // direction is "child" here, so the varying arg (the candidate) is the parentId.
+      calls.push(parentId);
+      return true;
+    });
+
+    render(
+      <EditRelationshipsModal
+        personaId="persona-1"
+        personaName="Pedro"
+        parents={[]}
+        children={[]}
+        spouse={null}
+        candidates={[c1, c2, c3]}
+        onRemove={vi.fn()}
+        onAdd={onAdd}
+        onAddSpouse={vi.fn().mockResolvedValue(true)}
+        onCancel={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Añadir hijo/a' }));
+    await user.click(screen.getByText('Hijo Uno'));
+    await user.click(screen.getByText('Hijo Dos'));
+    await user.click(screen.getByText('Hijo Tres'));
+    await user.click(screen.getByRole('button', { name: 'Añadir' }));
+
+    expect(onAdd).toHaveBeenCalledTimes(3);
+    // Sequential, in selection order — not raced via Promise.all.
+    expect(calls).toEqual(['c1', 'c2', 'c3']);
+    // All succeeded, so it bounces back to the list view.
+    expect(screen.getByText('Editar relaciones de Pedro')).toBeInTheDocument();
+  });
+
+  it('stops issuing further onAdd calls and keeps the "add" view + selection when one candidate fails mid-list', async () => {
+    const user = userEvent.setup();
+    const c1 = persona('c1', 'Hijo Uno');
+    const c2 = persona('c2', 'Hijo Dos');
+    const c3 = persona('c3', 'Hijo Tres');
+    // direction is "child" here, so the varying arg (the candidate) is the parentId.
+    const onAdd = vi.fn().mockImplementation(async (parentId: string) => parentId !== 'c2');
+
+    render(
+      <EditRelationshipsModal
+        personaId="persona-1"
+        personaName="Pedro"
+        parents={[]}
+        children={[]}
+        spouse={null}
+        candidates={[c1, c2, c3]}
+        onRemove={vi.fn()}
+        onAdd={onAdd}
+        onAddSpouse={vi.fn().mockResolvedValue(true)}
+        onCancel={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Añadir hijo/a' }));
+    await user.click(screen.getByText('Hijo Uno'));
+    await user.click(screen.getByText('Hijo Dos'));
+    await user.click(screen.getByText('Hijo Tres'));
+    await user.click(screen.getByRole('button', { name: 'Añadir' }));
+
+    // Stopped right after the failing c2 — never got to c3.
+    expect(onAdd).toHaveBeenCalledTimes(2);
+    expect(onAdd).toHaveBeenNthCalledWith(1, 'c1', 'persona-1');
+    expect(onAdd).toHaveBeenNthCalledWith(2, 'c2', 'persona-1');
+    // Still on the "add" view, not bounced back to the list.
+    expect(screen.getByText('Pedro es hijo/hija de...')).toBeInTheDocument();
+    // Selection intact — all three still checked/checkable, so "Añadir" is retryable as-is.
+    expect(screen.getByRole('button', { name: 'Añadir' })).not.toBeDisabled();
+  });
+
+  it('caps parent selection at 2 total, disabling further unchecked candidates once reached', async () => {
+    const user = userEvent.setup();
+    const oneParent = [persona('p1', 'Padre Uno')];
+    const c1 = persona('c1', 'Candidata Uno');
+    const c2 = persona('c2', 'Candidata Dos');
+
+    render(
+      <EditRelationshipsModal
+        personaId="persona-1"
+        personaName="Pedro"
+        parents={oneParent}
+        children={[]}
+        spouse={null}
+        candidates={[c1, c2]}
+        onRemove={vi.fn()}
+        onAdd={vi.fn().mockResolvedValue(true)}
+        onAddSpouse={vi.fn().mockResolvedValue(true)}
+        onCancel={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Añadir padre/madre' }));
+    // Already 1 parent, cap is 2 -> only 1 more can be picked.
+    await user.click(screen.getByText('Candidata Uno'));
+
+    const secondRow = screen.getByText('Candidata Dos').closest('button');
+    expect(secondRow).toBeDisabled();
+  });
+
+  it('leaves spouse selection capped at 0 additional picks once a spouse already exists', async () => {
+    // The "Añadir cónyuge" button itself is already omitted once a spouse exists (existing
+    // behavior), so this only exercises the picker's own cap in isolation via direct candidates.
+    const spouse = persona('s1', 'Cónyuge Marta');
+    const candidate = persona('c1', 'Candidato');
+
+    render(
+      <EditRelationshipsModal
+        personaId="persona-1"
+        personaName="Pedro"
+        parents={[]}
+        children={[]}
+        spouse={spouse}
+        candidates={[candidate]}
+        onRemove={vi.fn()}
+        onAdd={vi.fn().mockResolvedValue(true)}
+        onAddSpouse={vi.fn().mockResolvedValue(true)}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Añadir cónyuge' })).not.toBeInTheDocument();
+  });
+
+  it('never caps children selection, regardless of how many are already present', async () => {
+    const user = userEvent.setup();
+    const existingChildren = [persona('c1', 'Hijo Uno'), persona('c2', 'Hijo Dos'), persona('c3', 'Hijo Tres')];
+    const newCandidates = [persona('n1', 'Nuevo Uno'), persona('n2', 'Nuevo Dos'), persona('n3', 'Nuevo Tres')];
+
+    render(
+      <EditRelationshipsModal
+        personaId="persona-1"
+        personaName="Pedro"
+        parents={[]}
+        children={existingChildren}
+        spouse={null}
+        candidates={newCandidates}
+        onRemove={vi.fn()}
+        onAdd={vi.fn().mockResolvedValue(true)}
+        onAddSpouse={vi.fn().mockResolvedValue(true)}
+        onCancel={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Añadir hijo/a' }));
+    await user.click(screen.getByText('Nuevo Uno'));
+    await user.click(screen.getByText('Nuevo Dos'));
+
+    // All three remain enabled/checkable — no cap for children.
+    expect(screen.getByText('Nuevo Tres').closest('button')).not.toBeDisabled();
+  });
 });

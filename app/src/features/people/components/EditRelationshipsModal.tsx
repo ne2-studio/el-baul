@@ -59,27 +59,49 @@ export function EditRelationshipsModal({
   // list-view buttons opened it, never toggled from within the add view itself.
   const [direction, setDirection] = useState<Direction>('parent');
   const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const openAddView = (fixedDirection: Direction) => {
     setDirection(fixedDirection);
     setSearch('');
-    setSelectedId(null);
+    setSelectedIds([]);
     setView('add');
   };
 
+  // How many more candidates can still be picked in this "add" flow instance, on top of what's
+  // already related — 2 total for parents, 1 total for spouse (mirrors the backend's monogamy /
+  // two-parents constraints), unlimited for children. Independent of the in-progress selection:
+  // it caps how many can be *added this time*, not how many rows can be checked at once beyond
+  // that (those two coincide since nothing is pre-checked).
+  const maxSelectable = direction === 'parent' ? Math.max(0, 2 - parents.length) : direction === 'spouse' ? (spouse ? 0 : 1) : Infinity;
+
+  const toggleCandidate = (candidateId: string) => {
+    setSelectedIds((current) => {
+      if (current.includes(candidateId)) return current.filter((id) => id !== candidateId);
+      if (current.length >= maxSelectable) return current;
+      return [...current, candidateId];
+    });
+  };
+
   const handleAdd = async () => {
-    if (!selectedId) return;
-    if (direction === 'spouse') {
-      const added = await onAddSpouse(selectedId);
-      if (added) setView('list');
-      return;
+    if (selectedIds.length === 0) return;
+    // Sequential, not Promise.all: relationships must be created one at a time so a mid-list
+    // failure (e.g. hitting the parents/spouse cap server-side) doesn't race with still-pending
+    // adds — see PersonaRelationshipManager/PersonaSpouseRelationshipManager.
+    for (const candidateId of selectedIds) {
+      const added =
+        direction === 'spouse'
+          ? await onAddSpouse(candidateId)
+          : // "Pedro es padre/madre de X" -> Pedro is the parent; "Pedro es hijo/hija de X" -> X is
+            // the parent. Either way the backend only ever sees a plain (parentId, childId) pair —
+            // see PersonaRelationshipManager.AddRelationshipAsync.
+            await onAdd(direction === 'parent' ? personaId : candidateId, direction === 'parent' ? candidateId : personaId);
+      // A failure (already toasted by the caller) keeps the "add" view open with the current
+      // selection intact instead of bouncing back to the list — matching the pre-multi-select
+      // contract, just extended to "stop at the first failure" for a batch.
+      if (!added) return;
     }
-    // "Pedro es padre/madre de X" -> Pedro is the parent; "Pedro es hijo/hija de X" -> X is
-    // the parent. Either way the backend only ever sees a plain (parentId, childId) pair — see
-    // PersonaRelationshipManager.AddRelationshipAsync.
-    const added = await onAdd(direction === 'parent' ? personaId : selectedId, direction === 'parent' ? selectedId : personaId);
-    if (added) setView('list');
+    setView('list');
   };
 
   if (view === 'add') {
@@ -87,6 +109,7 @@ export function EditRelationshipsModal({
     const filtered = sortPersonasForTagging(eligibleCandidates).filter((p) =>
       `${p.name ?? ''} ${p.nickname}`.toLowerCase().includes(search.trim().toLowerCase())
     );
+    const capReached = selectedIds.length >= maxSelectable;
 
     const directionCopy: Record<Direction, string> = {
       parent: 'es padre/madre de',
@@ -113,18 +136,22 @@ export function EditRelationshipsModal({
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No se ha encontrado ninguna persona</p>
           ) : (
-            filtered.map((candidate) => (
-              <SelectionRow
-                key={candidate.id}
-                selected={selectedId === candidate.id}
-                control="radio"
-                controlPosition="right"
-                onClick={() => setSelectedId(candidate.id)}
-                leading={<Avatar name={candidate.nickname} src={candidate.avatarUrl} size={8} />}
-              >
-                <span className="text-sm text-foreground flex-1">{candidate.nickname}</span>
-              </SelectionRow>
-            ))
+            filtered.map((candidate) => {
+              const isSelected = selectedIds.includes(candidate.id);
+              return (
+                <SelectionRow
+                  key={candidate.id}
+                  selected={isSelected}
+                  control="checkbox"
+                  controlPosition="right"
+                  disabled={!isSelected && capReached}
+                  onClick={() => toggleCandidate(candidate.id)}
+                  leading={<Avatar name={candidate.nickname} src={candidate.avatarUrl} size={8} />}
+                >
+                  <span className="text-sm text-foreground flex-1">{candidate.nickname}</span>
+                </SelectionRow>
+              );
+            })
           )}
         </div>
 
@@ -134,7 +161,7 @@ export function EditRelationshipsModal({
           </Button>
           <Button
             onClick={handleAdd}
-            disabled={!selectedId || isSubmittingAdd}
+            disabled={selectedIds.length === 0 || isSubmittingAdd}
             isLoading={isSubmittingAdd}
             className="text-sm"
           >
