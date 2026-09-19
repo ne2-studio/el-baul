@@ -121,24 +121,27 @@ public class DevicePhotosPlugin extends Plugin {
             MediaStore.Images.Media.WIDTH,
             MediaStore.Images.Media.HEIGHT,
         };
-        // LIMIT/OFFSET baked into the sort order string — the Bundle-based paging overload of
-        // ContentResolver.query needs API 26+, but this app's minSdk is 24; this is a
-        // long-standing, widely-relied-on trick against the MediaStore SQLite-backed provider.
-        String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC, " + MediaStore.Images.Media._ID + " DESC"
-            + " LIMIT " + limit + " OFFSET " + offset;
+        // No LIMIT/OFFSET in the sort order: since Android 10 (API 29), MediaProvider validates
+        // sortOrder against a strict grammar and rejects raw SQL clauses like these, throwing an
+        // IllegalArgumentException. Paging is instead done by skipping to `offset` via
+        // moveToPosition() below, which is a cheap seek against the cursor's CursorWindow rather
+        // than a full re-scan, and works uniformly all the way back to minSdk 24.
+        String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC, " + MediaStore.Images.Media._ID + " DESC";
 
         ContentResolver resolver = getContext().getContentResolver();
         JSArray photos = new JSArray();
 
         try (Cursor c = resolver.query(collection, projection, null, null, sortOrder)) {
-            if (c != null) {
+            if (c != null && c.moveToPosition(offset)) {
                 int idCol = c.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
                 int dateTakenCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                 int dateAddedCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED);
                 int widthCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH);
                 int heightCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT);
 
-                while (c.moveToNext()) {
+                int remaining = limit;
+                do {
+                    if (remaining-- <= 0) break;
                     long id = c.getLong(idCol);
                     Uri contentUri = ContentUris.withAppendedId(collection, id);
 
@@ -157,7 +160,7 @@ public class DevicePhotosPlugin extends Plugin {
                     photo.put("width", c.getInt(widthCol));
                     photo.put("height", c.getInt(heightCol));
                     photos.put(photo);
-                }
+                } while (c.moveToNext());
             }
         } catch (Exception e) {
             call.reject("Failed to query device photos", e);
