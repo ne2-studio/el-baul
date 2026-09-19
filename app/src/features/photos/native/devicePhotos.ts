@@ -1,0 +1,70 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
+import type { GalleryPhoto, PhotoDate } from '@/types';
+
+// "En este dispositivo" — Android-only (see docs/architecture/native-android.md): the device's
+// photo library is a native MediaStore concept, and this app only ships an Android build (iOS
+// is out of scope for this slice, same reasoning as isPushNotificationsSupported). Gated on both
+// isNativePlatform() and the platform name, not just plugin availability, for the same reason
+// isPushNotificationsSupported is: a stale iOS build that happened to have this plugin
+// registered shouldn't attempt it too.
+export function isDevicePhotosSupported(): boolean {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+}
+
+export interface DevicePhotoDto {
+  id: string;
+  /** Absolute file:// path to a cached, already-downsized thumbnail — never the original full
+   * resolution asset. Feed it through Capacitor.convertFileSrc() before use in an <img src>,
+   * same convention as ShareReceiver's SharedFile.path (see features/sharing/useCases). */
+  uri: string;
+  /** Epoch milliseconds — MediaStore's DATE_TAKEN (falls back to DATE_ADDED when a photo has no
+   * EXIF capture date), never a full EXIF extraction — see DevicePhotosPlugin.java. */
+  takenAt: number;
+  width: number;
+  height: number;
+}
+
+interface GetPhotosResult {
+  photos: DevicePhotoDto[];
+  /** Opaque — pass back verbatim as the next call's cursor. Absent once there's nothing left. */
+  nextCursor?: string;
+}
+
+interface DevicePhotosPlugin {
+  checkPermissions(): Promise<{ granted: boolean }>;
+  requestPermissions(): Promise<{ granted: boolean }>;
+  getPhotos(options: { cursor?: string; limit: number }): Promise<GetPhotosResult>;
+}
+
+export const DevicePhotos = registerPlugin<DevicePhotosPlugin>('DevicePhotos');
+
+function dateFromTakenAt(takenAtMs: number): PhotoDate | undefined {
+  if (!takenAtMs) return undefined;
+  const d = new Date(takenAtMs);
+  return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+}
+
+// "En este dispositivo"'s own GalleryPhoto — a read-only projection of a MediaStore row, not a
+// domain entity (see this feature's top-of-file boundary note in EnEsteDispositivoRoute.tsx).
+// thumbnailUrl and fullUrl deliberately point at the exact same cached file: the native side
+// only ever decodes one grid-sized thumbnail per photo (see DevicePhotosPlugin.java), so opening
+// PhotoViewer on a device photo shows that same thumbnail rather than fetching the full-
+// resolution original — acceptable for this validation slice, which never claims to be a
+// pixel-perfect viewer.
+export class DevicePhoto implements GalleryPhoto {
+  id: string;
+  thumbnailUrl: string;
+  fullUrl: string;
+  date?: PhotoDate;
+  width: number;
+  height: number;
+
+  constructor(data: DevicePhotoDto) {
+    this.id = data.id;
+    this.thumbnailUrl = Capacitor.convertFileSrc(data.uri);
+    this.fullUrl = this.thumbnailUrl;
+    this.date = dateFromTakenAt(data.takenAt);
+    this.width = data.width;
+    this.height = data.height;
+  }
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, Images, Plus } from 'lucide-react';
+import { Check, ChevronDown, Images, Plus, Smartphone } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { BaulIcon } from '@/design-system/foundations/icons/BaulIcon';
 import {
@@ -16,11 +16,34 @@ import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
 
+type PersonalKey = 'mis-fotos' | 'en-este-dispositivo';
+
+interface PersonalEntry {
+  key: PersonalKey;
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+// The PERSONAL section's own small, static list — same shape as "Mis baúles" below it now that
+// there are two entries (see this file's own doc comment for why one entry stayed a single
+// static item instead of a list). "Mis fotos" is the user's own El Baúl-hosted photos;
+// "En este dispositivo" is a read-only projection of the Android photo library that doesn't
+// belong to El Baúl at all yet — see EnEsteDispositivoRoute's boundary note.
+const PERSONAL_ENTRIES: PersonalEntry[] = [
+  { key: 'mis-fotos', label: 'Mis fotos', path: '/mis-fotos', icon: Images },
+  { key: 'en-este-dispositivo', label: 'En este dispositivo', path: '/en-este-dispositivo', icon: Smartphone },
+];
+
 interface WorkspaceSwitcherContainerProps {
-  // null = we're on a user-scoped screen that isn't any baúl (currently only "Mis fotos") —
-  // see docs/.backlog issue #62. The switcher still renders every baúl either way; null just
-  // means none of them is "the current one".
+  // null = we're on a user-scoped screen that isn't any baúl (currently "Mis fotos" and "En
+  // este dispositivo") — see docs/.backlog issue #62. The switcher still renders every baúl
+  // either way; null just means none of them is "the current one".
   activeBaul: Baul | null;
+  /** Which PERSONAL entry is active — only meaningful (and only read) while activeBaul is
+   * null. Defaults to 'mis-fotos' so BaulRoute's existing activeBaul={baul} call site (where
+   * this prop never applies) doesn't need touching. */
+  activePersonalKey?: PersonalKey;
 }
 
 // Sustituye el título estático de BaulRoute — es el selector de workspace del PRD. Self-
@@ -33,10 +56,10 @@ interface WorkspaceSwitcherContainerProps {
 //
 // Ya no es solo un "BaulSwitcher": con "Mis fotos" (docs/.backlog issue #62, primer contexto
 // de aplicación que no es un baúl) pasa a ser el selector entre espacios/contextos en general
-// — de ahí el nombre genérico que ya tenía. La sección PERSONAL de arriba es deliberadamente
-// pequeña: solo "Mis fotos" por ahora, sin generalizar a un framework de "espacios" hasta que
-// haga falta una segunda entrada.
-export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherContainerProps) {
+// — de ahí el nombre genérico que ya tenía. La sección PERSONAL creció de un único item estático
+// a la misma lista mapeada que "Mis baúles" el día que llegó una segunda entrada
+// ("En este dispositivo" — ver PERSONAL_ENTRIES).
+export function WorkspaceSwitcherContainer({ activeBaul, activePersonalKey = 'mis-fotos' }: WorkspaceSwitcherContainerProps) {
   const navigate = useNavigate();
   const baules = useBaulesStore((state) => state.baules);
   // Server-authoritative y por usuario: GET /api/baules calcula baul.hasUnseenActivity contra el
@@ -52,9 +75,9 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
     navigate(`/baules/${baul.id}`);
   };
 
-  const handleSelectMyPhotos = () => {
-    if (activeBaul === null) return;
-    navigate('/mis-fotos');
+  const handleSelectPersonal = (entry: PersonalEntry) => {
+    if (activeBaul === null && activePersonalKey === entry.key) return;
+    navigate(entry.path);
   };
 
   const handleCreateBaul = () => {
@@ -69,7 +92,9 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
           className="flex items-center gap-1 -ml-2 px-2 py-1.5 rounded-lg hover:bg-primary/5 max-w-[65vw]"
           aria-label="Cambiar de espacio"
         >
-          <span className="text-xl font-serif text-foreground truncate">{activeBaul ? activeBaul.name : 'Mis fotos'}</span>
+          <span className="text-xl font-serif text-foreground truncate">
+            {activeBaul ? activeBaul.name : PERSONAL_ENTRIES.find((e) => e.key === activePersonalKey)!.label}
+          </span>
           <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
           {activeBaul && hasAnyUnseenActivity && <NewDot className="shrink-0" />}
         </Button>
@@ -78,18 +103,25 @@ export function WorkspaceSwitcherContainer({ activeBaul }: WorkspaceSwitcherCont
         <p className="px-2 pt-1 pb-1.5 text-[0.6875rem] font-medium tracking-wide uppercase text-muted-foreground">
           Personal
         </p>
-        <DropdownMenuItem
-          onSelect={handleSelectMyPhotos}
-          className={cn('group gap-3 py-2.5 px-2 rounded-xl', activeBaul === null && 'bg-primary/10')}
-        >
-          <div className="w-10 h-10 rounded-lg bg-secondary shrink-0 flex items-center justify-center">
-            <Images className="w-4 h-4 text-muted-foreground" />
-          </div>
-          <p className="font-serif text-foreground group-focus:text-accent-foreground text-sm leading-tight flex-1">
-            Mis fotos
-          </p>
-          {activeBaul === null && <Check className="w-4 h-4 text-primary shrink-0" aria-label="Espacio activo" />}
-        </DropdownMenuItem>
+        {PERSONAL_ENTRIES.map((entry) => {
+          const isActive = activeBaul === null && activePersonalKey === entry.key;
+          const Icon = entry.icon;
+          return (
+            <DropdownMenuItem
+              key={entry.key}
+              onSelect={() => handleSelectPersonal(entry)}
+              className={cn('group gap-3 py-2.5 px-2 rounded-xl', isActive && 'bg-primary/10')}
+            >
+              <div className="w-10 h-10 rounded-lg bg-secondary shrink-0 flex items-center justify-center">
+                <Icon className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <p className="font-serif text-foreground group-focus:text-accent-foreground text-sm leading-tight flex-1">
+                {entry.label}
+              </p>
+              {isActive && <Check className="w-4 h-4 text-primary shrink-0" aria-label="Espacio activo" />}
+            </DropdownMenuItem>
+          );
+        })}
 
         <DropdownMenuSeparator />
 

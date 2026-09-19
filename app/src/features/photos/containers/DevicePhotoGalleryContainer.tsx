@@ -1,0 +1,113 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { useAuth } from 'react-oidc-context';
+import { usePostHog } from 'posthog-js/react';
+import { Images, Smartphone } from 'lucide-react';
+import { Button } from '@/design-system/components/actions/Button';
+import { EmptyState } from '@/design-system/components/feedback/EmptyState';
+import { ErrorScreen } from '@/design-system/components/feedback/ErrorScreen';
+import { LoadingSpinner } from '@/design-system/components/feedback/LoadingSpinner';
+import { PhotoSwimlanes } from '@/features/photos/components/PhotoSwimlanes';
+import { DevicePhoto, isDevicePhotosSupported } from '@/features/photos/native/devicePhotos';
+import { useDevicePhotosStore } from '@/store/useDevicePhotosStore';
+import { ensureDevicePhotosPermission, loadDevicePhotos, loadMoreDevicePhotos } from '@/features/photos/useCases';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel';
+
+// Self-sufficient (see the containers/ rule in docs/architecture/frontend.md): "En este
+// dispositivo"'s own gallery — a read-only projection of the Android photo library (see this
+// route's own boundary note). Deliberately has no filter pills, no upload FAB, and no
+// selection: none of those make sense for assets that don't exist in El Baúl yet (that's the
+// entire point of this being a sibling of "Mis fotos", not a filter inside it).
+export function DevicePhotoGalleryContainer() {
+  const auth = useAuth();
+  const posthog = usePostHog();
+  const { run, isPending } = useAsyncAction();
+  const permission = useDevicePhotosStore((state) => state.permission);
+  const photos = useDevicePhotosStore((state) => state.photos);
+  const hasMore = useDevicePhotosStore((state) => state.hasMore);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { posthog.capture('device_photos_opened'); }, []);
+
+  const requestAccess = useCallback(async () => {
+    const result = await run(() => ensureDevicePhotosPermission(), { key: 'device-photos-permission' });
+    setLoadFailed(!result.ok);
+  }, [run]);
+
+  const fetchFirstPage = useCallback(async () => {
+    const result = await run(() => loadDevicePhotos(), { key: 'device-photos', errorMessage: 'Error al cargar las fotos del dispositivo' });
+    setLoadFailed(!result.ok);
+  }, [run]);
+
+  useEffect(() => {
+    if (!auth.isAuthenticated || !isDevicePhotosSupported()) return;
+    if (permission === 'unknown') requestAccess();
+    else if (permission === 'granted' && !photos) fetchFirstPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.isAuthenticated, permission, photos]);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore) return;
+    run(() => loadMoreDevicePhotos(), { key: 'device-photos-more', errorMessage: 'Error al cargar más fotos' });
+  }, [hasMore, run]);
+
+  const sentinelRef = useLoadMoreSentinel(loadMore, photos !== undefined);
+
+  if (!isDevicePhotosSupported()) {
+    return (
+      <EmptyState
+        icon={<Smartphone className="w-20 h-20" strokeWidth={1.5} />}
+        title="Solo disponible en la app de Android"
+        subtitle="Instala El Baúl en tu móvil Android para ver aquí las fotos de tu dispositivo."
+      />
+    );
+  }
+
+  if (permission === 'denied') {
+    return (
+      <div className="text-center">
+        <EmptyState
+          icon={<Smartphone className="w-20 h-20" strokeWidth={1.5} />}
+          title="Sin acceso a tus fotos"
+          subtitle="El Baúl necesita permiso para ver las fotos de este dispositivo. Concédelo desde los ajustes de la app."
+        />
+        <Button variant="plain" onClick={requestAccess} className="text-primary font-medium">
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+
+  if (permission !== 'granted' || photos === undefined) {
+    if (loadFailed) {
+      return (
+        <ErrorScreen
+          title="No se han podido cargar las fotos"
+          message="Comprueba los permisos e inténtalo de nuevo."
+          actionLabel="Reintentar"
+          onAction={permission === 'granted' ? fetchFirstPage : requestAccess}
+        />
+      );
+    }
+    return <LoadingSpinner message="Cargando fotos del dispositivo..." />;
+  }
+
+  if (photos.length === 0) {
+    return (
+      <EmptyState
+        icon={<Images className="w-20 h-20" strokeWidth={1.5} />}
+        title="No hay fotos en este dispositivo"
+        subtitle="Cuando tengas fotos en tu móvil, aparecerán aquí."
+      />
+    );
+  }
+
+  return (
+    <>
+      <PhotoSwimlanes<DevicePhoto> photos={photos} onSelectPhoto={() => {}} />
+      <div ref={sentinelRef} className="h-1" />
+      {isPending('device-photos-more') && <LoadingSpinner size="sm" />}
+    </>
+  );
+}

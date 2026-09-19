@@ -46,6 +46,7 @@ import { AcceptBaulInviteRoute } from '../features/sharing/routes/AcceptBaulInvi
 import { SelectBaulForShareRoute } from '../features/sharing/routes/SelectBaulForShareRoute';
 import { ProfileRoute } from '../features/profile/routes/ProfileRoute';
 import { MisFotosRoute } from '../features/photos/routes/MisFotosRoute';
+import { EnEsteDispositivoRoute } from '../features/photos/routes/EnEsteDispositivoRoute';
 import { MyPhotosUploadConfirmationRoute } from '../features/photos/routes/MyPhotosUploadConfirmationRoute';
 import { MyPhotosUploadingRoute } from '../features/photos/routes/MyPhotosUploadingRoute';
 import { MyPhotosUploadErrorRoute } from '../features/photos/routes/MyPhotosUploadErrorRoute';
@@ -446,6 +447,13 @@ function App() {
         <Route path="/mis-fotos/subir/error" element={
           <ProtectedRoute>
             <MyPhotosUploadErrorRoute />
+          </ProtectedRoute>
+        } />
+        {/* "En este dispositivo" — sibling of "Mis fotos" under PERSONAL, a read-only view of
+            the Android photo library; see EnEsteDispositivoRoute's own boundary note. */}
+        <Route path="/en-este-dispositivo" element={
+          <ProtectedRoute>
+            <EnEsteDispositivoRoute />
           </ProtectedRoute>
         } />
         <Route path="/configuracion/notificaciones" element={

@@ -2,6 +2,8 @@ import { api } from '@/api';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { useMyPhotosStore } from '@/store/useMyPhotosStore';
+import { useDevicePhotosStore } from '@/store/useDevicePhotosStore';
+import { DevicePhoto, DevicePhotos } from '@/features/photos/native/devicePhotos';
 
 export async function loadChapterPhotos(chapterId: string): Promise<void> {
   const photos = await api.photos.getAll(chapterId);
@@ -67,4 +69,32 @@ export async function loadMoreMyPhotos(): Promise<void> {
   const { filter, assets: loaded } = useMyPhotosStore.getState();
   const { assets, hasMore } = await api.myPhotos.getPage({ skip: loaded?.length ?? 0, take: BAUL_PHOTOS_PAGE_SIZE, filter });
   useMyPhotosStore.getState().appendPage(assets, hasMore);
+}
+
+// "En este dispositivo" — same page size as the rest of the photo grids above, but sourced from
+// the native MediaStore bridge instead of the API (see docs' native-android.md and this
+// feature's boundary note in EnEsteDispositivoRoute.tsx). Never keyed by anything beyond "the
+// device's own library" — there's only ever one of those per install.
+export async function ensureDevicePhotosPermission(): Promise<boolean> {
+  const store = useDevicePhotosStore.getState();
+  const { granted } = await DevicePhotos.checkPermissions();
+  if (granted) {
+    store.setPermission('granted');
+    return true;
+  }
+
+  const requested = await DevicePhotos.requestPermissions();
+  store.setPermission(requested.granted ? 'granted' : 'denied');
+  return requested.granted;
+}
+
+export async function loadDevicePhotos(): Promise<void> {
+  const { photos, nextCursor } = await DevicePhotos.getPhotos({ limit: BAUL_PHOTOS_PAGE_SIZE });
+  useDevicePhotosStore.getState().setPage(photos.map((p) => new DevicePhoto(p)), nextCursor !== undefined, nextCursor);
+}
+
+export async function loadMoreDevicePhotos(): Promise<void> {
+  const cursor = useDevicePhotosStore.getState().nextCursor;
+  const { photos, nextCursor } = await DevicePhotos.getPhotos({ cursor, limit: BAUL_PHOTOS_PAGE_SIZE });
+  useDevicePhotosStore.getState().appendPage(photos.map((p) => new DevicePhoto(p)), nextCursor !== undefined, nextCursor);
 }

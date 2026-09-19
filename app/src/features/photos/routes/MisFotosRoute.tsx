@@ -64,7 +64,7 @@ export const MisFotosRoute: React.FC = () => {
         leading={
           selectionMode
             ? <BackButton onClick={exitSelection} label="Cancelar" />
-            : <WorkspaceSwitcherContainer activeBaul={null} />
+            : <WorkspaceSwitcherContainer activeBaul={null} activePersonalKey="mis-fotos" />
         }
         trailing={
           selectionMode ? (
