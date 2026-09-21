@@ -164,3 +164,74 @@ describe('PhotoViewer baúl appearances (Mis fotos)', () => {
     expect(screen.queryByText(/^Aparece en:/)).not.toBeInTheDocument();
   });
 });
+
+// Issue #75: Mis fotos has no recuerdos (see useMyPhotoViewerActions doc comment), so
+// MyPhotoViewerContainer never passes onAddRecuerdo — this must not surface any recuerdos-only
+// UI (title, empty state, list, input), which has no way to actually add a recuerdo there.
+describe('PhotoViewer without recuerdos support (Mis fotos)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('titles the mobile panel "Información" and hides the recuerdos empty state', () => {
+    stubMatchMedia(false);
+    renderViewer({ onAddRecuerdo: undefined });
+
+    fireEvent.click(screen.getByLabelText('Ver información'));
+
+    expect(screen.getByRole('heading', { name: 'Información' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Recuerdos' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Sé el primero en añadir un recuerdo')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Ver recuerdos')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Contraer panel de información'));
+    expect(screen.queryByRole('heading', { name: 'Información' })).not.toBeInTheDocument();
+  });
+
+  it('still titles the mobile panel "Recuerdos" and shows recuerdos UI when onAddRecuerdo is provided', () => {
+    stubMatchMedia(false);
+    renderViewer();
+
+    fireEvent.click(screen.getByLabelText('Ver recuerdos'));
+
+    expect(screen.getByRole('heading', { name: 'Recuerdos' })).toBeInTheDocument();
+    expect(screen.getByText('Sé el primero en añadir un recuerdo')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
+});
+
+// Issue #77: the collapsed mobile bottom bar gave no hint that a photo had recuerdos until
+// tapping it open — this icon surfaces that up front, next to the tagged-people avatars.
+describe('PhotoViewer collapsed bottom bar recuerdos hint', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows the recuerdos hint icon when the photo has recuerdos', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 2 } });
+
+    expect(screen.getByTestId('recuerdos-hint-icon')).toBeInTheDocument();
+  });
+
+  it('hides the recuerdos hint icon when the photo has no recuerdos', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 0 } });
+
+    expect(screen.queryByTestId('recuerdos-hint-icon')).not.toBeInTheDocument();
+  });
+
+  it('shows the hint icon even without tagged personas', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 1 }, taggedPersonas: [] });
+
+    expect(screen.getByTestId('recuerdos-hint-icon')).toBeInTheDocument();
+  });
+
+  it('does not gate the hint on the async recuerdos list or loading state', () => {
+    stubMatchMedia(false);
+    renderViewer({ photo: { ...photos[1], recuerdoCount: 1 }, recuerdos: undefined, recuerdosLoading: false });
+
+    expect(screen.getByTestId('recuerdos-hint-icon')).toBeInTheDocument();
+  });
+});

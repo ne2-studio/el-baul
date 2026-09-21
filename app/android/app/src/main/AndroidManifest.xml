@@ -93,4 +93,12 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- "En este dispositivo" (DevicePhotosPlugin) — READ_MEDIA_IMAGES covers full access on
+         API 33+; READ_MEDIA_VISUAL_USER_SELECTED covers Android 14's "select photos" partial
+         access; READ_EXTERNAL_STORAGE is the pre-33 fallback, capped at API 32 since scoped
+         storage makes it unnecessary (and generally ungrantable) from 33 onward. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 </manifest>

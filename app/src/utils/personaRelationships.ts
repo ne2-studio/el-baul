@@ -25,3 +25,28 @@ export function getSpouse(spouseRelationships: PersonaSpouseRelationship[], pers
   const spouseId = relationship.personaId1 === personaId ? relationship.personaId2 : relationship.personaId1;
   return personas.find((p) => p.id === spouseId);
 }
+
+export type RelationshipDirection = 'parent' | 'child' | 'spouse';
+
+/** Excludes candidates who already hold the relationship being added with this Persona in the
+ * given direction — the backend rejects those as duplicates (see PersonaRelationshipManager
+ * .AddRelationshipAsync / PersonaSpouseRelationshipManager.AddSpouseRelationshipAsync), so a
+ * picker shouldn't offer them at all. */
+export function filterCandidatesForDirection(
+  candidates: Persona[],
+  direction: RelationshipDirection,
+  parents: Persona[],
+  children: Persona[],
+  spouse: Persona | null
+): Persona[] {
+  const excludedIds = new Set(
+    direction === 'parent'
+      ? children.map((p) => p.id)
+      : direction === 'child'
+        ? parents.map((p) => p.id)
+        : spouse
+          ? [spouse.id]
+          : []
+  );
+  return candidates.filter((p) => !excludedIds.has(p.id));
+}

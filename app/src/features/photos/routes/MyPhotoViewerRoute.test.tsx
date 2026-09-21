@@ -44,8 +44,10 @@ describe('MyPhotoViewerRoute', () => {
     const user = userEvent.setup();
 
     renderAt('/mis-fotos/foto/a1');
-    // Info panel starts collapsed on mobile layout — see PhotoViewer's own doc comment.
-    await user.click(screen.getByRole('button', { name: 'Ver recuerdos' }));
+    // Info panel starts collapsed on mobile layout — see PhotoViewer's own doc comment. Mis
+    // fotos has no recuerdos (issue #75), so this panel is labelled "Información", not
+    // "Recuerdos".
+    await user.click(screen.getByRole('button', { name: 'Ver información' }));
 
     expect(screen.getByText(/Aparece en: Familia Pardal, Familia Jimena/)).toBeInTheDocument();
   });
