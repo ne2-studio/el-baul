@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { usePostHog } from 'posthog-js/react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -34,22 +34,19 @@ export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryConta
   const { run, isPending } = useAsyncAction();
   const permission = useDevicePhotosStore((state) => state.permission);
   const photos = useDevicePhotosStore((state) => state.photos);
+  const loadedAlbumId = useDevicePhotosStore((state) => state.loadedAlbumId);
   const hasMore = useDevicePhotosStore((state) => state.hasMore);
   const [loadFailed, setLoadFailed] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { posthog.capture('device_photos_opened'); }, []);
 
-  // Different albumId means a different photo set — drop whatever the previous album (or the
-  // flat list) left cached so the effect below refetches instead of showing stale photos. Skips
-  // the first run (ref starts equal to albumId) so mounting doesn't wipe out state the caller
-  // already put there (e.g. a previous visit to the same album still in the store).
-  const previousAlbumId = useRef(albumId);
-  useEffect(() => {
-    if (previousAlbumId.current === albumId) return;
-    previousAlbumId.current = albumId;
-    useDevicePhotosStore.getState().reset();
-  }, [albumId]);
+  // `photos` belongs to whichever album's setPage last ran, which can be a previous mount of
+  // this same container (e.g. back to the folder grid, then into a different album) — compared
+  // against the store's own loadedAlbumId rather than a component-local ref, since a ref resets
+  // on every fresh mount and can't tell "stale data from another album" apart from "nothing
+  // loaded yet".
+  const isCurrentAlbumLoaded = photos !== undefined && loadedAlbumId === albumId;
 
   const requestAccess = useCallback(async () => {
     const result = await run(() => ensureDevicePhotosPermission(), { key: 'device-photos-permission' });
@@ -64,16 +61,16 @@ export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryConta
   useEffect(() => {
     if (!auth.isAuthenticated || !isDevicePhotosSupported()) return;
     if (permission === 'unknown') requestAccess();
-    else if (permission === 'granted' && !photos) fetchFirstPage();
+    else if (permission === 'granted' && !isCurrentAlbumLoaded) fetchFirstPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, permission, photos]);
+  }, [auth.isAuthenticated, permission, isCurrentAlbumLoaded]);
 
   const loadMore = useCallback(() => {
     if (!hasMore) return;
     run(() => loadMoreDevicePhotos(albumId), { key: 'device-photos-more', errorMessage: 'Error al cargar más fotos' });
   }, [hasMore, run, albumId]);
 
-  const sentinelRef = useLoadMoreSentinel(loadMore, photos !== undefined);
+  const sentinelRef = useLoadMoreSentinel(loadMore, isCurrentAlbumLoaded);
 
   // Same base path this gallery is mounted at (album-scoped from EnEsteDispositivoAlbumRoute
   // today; falls back to the flat list for parity with this container's own albumId? doc above,
@@ -107,7 +104,7 @@ export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryConta
     );
   }
 
-  if (permission !== 'granted' || photos === undefined) {
+  if (permission !== 'granted' || !isCurrentAlbumLoaded || photos === undefined) {
     if (loadFailed) {
       return (
         <ErrorScreen

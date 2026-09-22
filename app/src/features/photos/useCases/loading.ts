@@ -74,8 +74,10 @@ export async function loadMoreMyPhotos(): Promise<void> {
 
 // "En este dispositivo" — same page size as the rest of the photo grids above, but sourced from
 // the native MediaStore bridge instead of the API (see docs' native-android.md and this
-// feature's boundary note in EnEsteDispositivoRoute.tsx). Never keyed by anything beyond "the
-// device's own library" — there's only ever one of those per install.
+// feature's boundary note in EnEsteDispositivoRoute.tsx). albumId scopes the fetch to one
+// MediaStore bucket (or the flat library when omitted) and is recorded as the store's
+// loadedAlbumId so a later mount for a different album knows to refetch instead of reusing
+// stale photos.
 export async function ensureDevicePhotosPermission(): Promise<boolean> {
   const store = useDevicePhotosStore.getState();
   const { granted } = await DevicePhotos.checkPermissions();
@@ -93,7 +95,7 @@ export async function ensureDevicePhotosPermission(): Promise<boolean> {
 // this is the flat all-photos load used before that grid existed.
 export async function loadDevicePhotos(albumId?: string): Promise<void> {
   const { photos, nextCursor } = await DevicePhotos.getPhotos({ limit: BAUL_PHOTOS_PAGE_SIZE, albumId });
-  useDevicePhotosStore.getState().setPage(photos.map((p) => new DevicePhoto(p)), nextCursor !== undefined, nextCursor);
+  useDevicePhotosStore.getState().setPage(photos.map((p) => new DevicePhoto(p)), nextCursor !== undefined, nextCursor, albumId);
 }
 
 export async function loadMoreDevicePhotos(albumId?: string): Promise<void> {

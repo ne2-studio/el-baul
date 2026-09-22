@@ -124,12 +124,28 @@ describe('DevicePhotoGalleryContainer', () => {
   });
 
   it('opens the photo viewer, scoped to the current album, when a photo is clicked', async () => {
-    useDevicePhotosStore.setState({ permission: 'granted', photos: [photo('p1')], hasMore: false });
+    useDevicePhotosStore.setState({ permission: 'granted', photos: [photo('p1')], hasMore: false, loadedAlbumId: 'album-1' });
     const user = userEvent.setup();
 
     renderContainer('album-1');
     await user.click(await screen.findByAltText('Foto'));
 
     expect(await screen.findByText('Foto abierta')).toBeInTheDocument();
+  });
+
+  it('refetches instead of showing the previous album\'s photos after leaving one album and opening another', async () => {
+    // Simulates the bug repro: album-1 was open and left photos (+ its id) in the store, then
+    // the user went back to the folder grid and into album-2 — a fresh mount, not a re-render.
+    useDevicePhotosStore.setState({ permission: 'granted', photos: [photo('from-album-1')], hasMore: false, loadedAlbumId: 'album-1' });
+    vi.mocked(loadDevicePhotos).mockImplementation(async (albumId) => {
+      useDevicePhotosStore.getState().setPage([photo('from-album-2')], false, undefined, albumId);
+    });
+
+    renderContainer('album-2');
+
+    await waitFor(() => expect(loadDevicePhotos).toHaveBeenCalledWith('album-2'));
+    const img = await screen.findByAltText('Foto');
+    expect(img).toHaveAttribute('src', expect.stringContaining('from-album-2'));
+    expect(useDevicePhotosStore.getState().photos?.[0].id).toBe('from-album-2');
   });
 });

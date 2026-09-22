@@ -14,10 +14,15 @@ export interface DevicePhotosState {
   photos: DevicePhoto[] | undefined;
   hasMore: boolean;
   nextCursor?: string;
+  // Which album (undefined = the flat list) `photos` was fetched for. Lets a fresh mount of
+  // DevicePhotoGalleryContainer for a different album tell "stale photos from another album"
+  // apart from "already-loaded photos for this album" without relying on component lifecycle,
+  // since the store outlives individual mounts (back to the folder grid, then into another album).
+  loadedAlbumId?: string;
 
   reset: () => void;
   setPermission: (permission: DevicePhotosPermission) => void;
-  setPage: (photos: DevicePhoto[], hasMore: boolean, nextCursor?: string) => void;
+  setPage: (photos: DevicePhoto[], hasMore: boolean, nextCursor?: string, albumId?: string) => void;
   appendPage: (photos: DevicePhoto[], hasMore: boolean, nextCursor?: string) => void;
 }
 
@@ -26,12 +31,13 @@ export const useDevicePhotosStore = create<DevicePhotosState>((set) => ({
   photos: undefined,
   hasMore: true,
   nextCursor: undefined,
+  loadedAlbumId: undefined,
 
-  reset: () => set({ permission: 'unknown', photos: undefined, hasMore: true, nextCursor: undefined }),
+  reset: () => set({ permission: 'unknown', photos: undefined, hasMore: true, nextCursor: undefined, loadedAlbumId: undefined }),
 
   setPermission: (permission) => set({ permission }),
 
-  setPage: (photos, hasMore, nextCursor) => set({ photos, hasMore, nextCursor }),
+  setPage: (photos, hasMore, nextCursor, albumId) => set({ photos, hasMore, nextCursor, loadedAlbumId: albumId }),
 
   appendPage: (photos, hasMore, nextCursor) => set((state) => ({
     photos: [...(state.photos ?? []), ...photos],

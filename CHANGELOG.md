@@ -41,6 +41,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - En "Mis fotos", el panel de información de una foto ya no se llama "Recuerdos" ni muestra el aviso "Sé el primero en añadir un recuerdo": ahora se llama "Información" y solo muestra la fecha, las personas etiquetadas y en qué baúles aparece, ya que en Mis fotos no se pueden añadir recuerdos.
 - Al seleccionar varias fotos en "Mis fotos" y añadirlas todas a un baúl a la vez, ya no aparece un error de conexión que solo añadía la primera foto y dejaba el resto sin añadir: ahora se añaden correctamente todas las fotos seleccionadas.
 - En "En este dispositivo", el scroll infinito ya no pinta las fotos recién cargadas por encima de las que ya se veían: ahora se mantienen ordenadas de más reciente a más antigua, igual que se piden al dispositivo.
+- En "En este dispositivo", al volver a la lista de carpetas y abrir una carpeta distinta, ya no se ven durante un instante (ni se quedan pegadas) las fotos de la carpeta abierta justo antes.
 
 ### Cambiado
 
