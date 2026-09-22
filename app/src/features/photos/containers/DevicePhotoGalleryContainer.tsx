@@ -105,7 +105,7 @@ export function DevicePhotoGalleryContainer() {
 
   return (
     <>
-      <PhotoSwimlanes<DevicePhoto> photos={photos} onSelectPhoto={() => {}} />
+      <PhotoSwimlanes<DevicePhoto> photos={photos} onSelectPhoto={() => {}} order="desc" />
       <div ref={sentinelRef} className="h-1" />
       {isPending('device-photos-more') && <LoadingSpinner size="sm" />}
     </>

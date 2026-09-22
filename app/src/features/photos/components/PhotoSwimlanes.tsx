@@ -19,6 +19,10 @@ interface PhotoSwimlanesProps<T extends GalleryPhoto> {
   onToggleSelect?: (id: string) => void;
   onLongPress?: (id: string) => void;
   onToggleGroup?: (photos: T[]) => void;
+  /** Grouping order — defaults to oldest-first ("Mis fotos"). Pass 'desc' for sources that
+   * already arrive newest-first (e.g. the device photo library) so infinite-scroll pages
+   * keep appending below instead of resorting above. */
+  order?: 'asc' | 'desc';
 }
 
 export function PhotoSwimlanes<T extends GalleryPhoto>({
@@ -29,12 +33,13 @@ export function PhotoSwimlanes<T extends GalleryPhoto>({
   onToggleSelect,
   onLongPress,
   onToggleGroup,
+  order = 'asc',
 }: PhotoSwimlanesProps<T>) {
   const ids = selectedIds ?? new Set<string>();
 
   return (
     <div className="space-y-6">
-      {groupPhotosByYear(photos).map((group) => {
+      {groupPhotosByYear(photos, order).map((group) => {
         const groupAllSelected = group.photos.every((p) => ids.has(p.id));
         return (
           <div key={group.label}>
