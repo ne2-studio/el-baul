@@ -4,7 +4,7 @@ import { ContentCard } from '@/design-system/components/data-display/ContentCard
 import { storybookPhotos } from '@/storybook/fixtures';
 
 const meta = {
-  title: 'DesignSystem/DataDisplay/ContentCard',
+  title: 'Components/DataDisplay/ContentCard',
   component: ContentCard,
   tags: ['autodocs'],
 } satisfies Meta<typeof ContentCard>;
