@@ -24,6 +24,8 @@ import com.getcapacitor.annotation.PermissionCallback;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 // "En este dispositivo" (see docs/architecture/native-android.md and
 // EnEsteDispositivoRoute.tsx's boundary note) — a read-only, paginated projection of the
@@ -113,6 +115,8 @@ public class DevicePhotosPlugin extends Plugin {
             }
         }
 
+        String albumId = call.getString("albumId");
+
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {
             MediaStore.Images.Media._ID,
@@ -127,11 +131,13 @@ public class DevicePhotosPlugin extends Plugin {
         // moveToPosition() below, which is a cheap seek against the cursor's CursorWindow rather
         // than a full re-scan, and works uniformly all the way back to minSdk 24.
         String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC, " + MediaStore.Images.Media._ID + " DESC";
+        String selection = albumId != null ? MediaStore.Images.Media.BUCKET_ID + " = ?" : null;
+        String[] selectionArgs = albumId != null ? new String[] { albumId } : null;
 
         ContentResolver resolver = getContext().getContentResolver();
         JSArray photos = new JSArray();
 
-        try (Cursor c = resolver.query(collection, projection, null, null, sortOrder)) {
+        try (Cursor c = resolver.query(collection, projection, selection, selectionArgs, sortOrder)) {
             if (c != null && c.moveToPosition(offset)) {
                 int idCol = c.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
                 int dateTakenCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
@@ -172,6 +178,88 @@ public class DevicePhotosPlugin extends Plugin {
         if (photos.length() == limit) {
             result.put("nextCursor", String.valueOf(offset + photos.length()));
         }
+        call.resolve(result);
+    }
+
+    // Folders/albums grid (Google Photos-style "carpetas primero") — one row per MediaStore
+    // bucket (Android's notion of "the folder a photo's file lives in"), newest photo first as
+    // the cover. Aggregated by hand over a cursor sorted by bucket rather than via SQL GROUP BY:
+    // MediaProvider's queryArg-based grouping needs API 30+, and this plugin's minSdk is 24 (see
+    // getPhotos' own sortOrder comment for the same constraint).
+    @PluginMethod
+    public void getAlbums(PluginCall call) {
+        if (!hasPhotoAccess()) {
+            call.reject("Permission not granted");
+            return;
+        }
+
+        Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] projection = {
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.BUCKET_ID,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+            MediaStore.Images.Media.DATE_TAKEN,
+            MediaStore.Images.Media.DATE_ADDED,
+        };
+        String sortOrder = MediaStore.Images.Media.BUCKET_ID + " ASC, "
+            + MediaStore.Images.Media.DATE_TAKEN + " DESC, " + MediaStore.Images.Media._ID + " DESC";
+
+        ContentResolver resolver = getContext().getContentResolver();
+        // LinkedHashMap: preserves first-seen order while we re-sort by cover recency below.
+        Map<String, JSObject> albumsById = new LinkedHashMap<>();
+
+        try (Cursor c = resolver.query(collection, projection, null, null, sortOrder)) {
+            if (c != null && c.moveToFirst()) {
+                int idCol = c.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                int bucketIdCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
+                int bucketNameCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+                int dateTakenCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
+                int dateAddedCol = c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED);
+
+                do {
+                    String bucketId = c.getString(bucketIdCol);
+                    if (bucketId == null) continue;
+
+                    JSObject album = albumsById.get(bucketId);
+                    if (album == null) {
+                        // First row seen for this bucket is also its most recent photo (rows
+                        // arrive sorted DATE_TAKEN DESC within each bucket), i.e. the cover.
+                        long id = c.getLong(idCol);
+                        Uri contentUri = ContentUris.withAppendedId(collection, id);
+                        long dateTakenMs = c.getLong(dateTakenCol);
+                        long takenAt = dateTakenMs > 0 ? dateTakenMs : c.getLong(dateAddedCol) * 1000L;
+
+                        File thumbnailFile = thumbnailFileFor(id);
+                        if (!thumbnailFile.exists() && !writeThumbnail(resolver, contentUri, thumbnailFile)) {
+                            continue;
+                        }
+
+                        album = new JSObject();
+                        album.put("albumId", bucketId);
+                        album.put("displayName", c.getString(bucketNameCol));
+                        album.put("count", 0);
+                        album.put("coverPhotoUri", thumbnailFile.getAbsolutePath());
+                        album.put("coverTakenAt", takenAt);
+                        albumsById.put(bucketId, album);
+                    }
+                    album.put("count", album.optInt("count", 0) + 1);
+                } while (c.moveToNext());
+            }
+        } catch (Exception e) {
+            call.reject("Failed to query device albums", e);
+            return;
+        }
+
+        JSArray albums = new JSArray();
+        albumsById.values().stream()
+            .sorted((a, b) -> Long.compare(b.optLong("coverTakenAt", 0), a.optLong("coverTakenAt", 0)))
+            .forEach(album -> {
+                album.remove("coverTakenAt");
+                albums.put(album);
+            });
+
+        JSObject result = new JSObject();
+        result.put("albums", albums);
         call.resolve(result);
     }
 

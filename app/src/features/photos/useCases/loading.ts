@@ -3,7 +3,8 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 import { useDevicePhotosStore } from '@/store/useDevicePhotosStore';
-import { DevicePhoto, DevicePhotos } from '@/features/photos/native/devicePhotos';
+import { useDeviceAlbumsStore } from '@/store/useDeviceAlbumsStore';
+import { DeviceAlbum, DevicePhoto, DevicePhotos } from '@/features/photos/native/devicePhotos';
 
 export async function loadChapterPhotos(chapterId: string): Promise<void> {
   const photos = await api.photos.getAll(chapterId);
@@ -88,13 +89,23 @@ export async function ensureDevicePhotosPermission(): Promise<boolean> {
   return requested.granted;
 }
 
-export async function loadDevicePhotos(): Promise<void> {
-  const { photos, nextCursor } = await DevicePhotos.getPhotos({ limit: BAUL_PHOTOS_PAGE_SIZE });
+// albumId scopes both to a single MediaStore bucket (see the "carpetas" grid below) — omitted,
+// this is the flat all-photos load used before that grid existed.
+export async function loadDevicePhotos(albumId?: string): Promise<void> {
+  const { photos, nextCursor } = await DevicePhotos.getPhotos({ limit: BAUL_PHOTOS_PAGE_SIZE, albumId });
   useDevicePhotosStore.getState().setPage(photos.map((p) => new DevicePhoto(p)), nextCursor !== undefined, nextCursor);
 }
 
-export async function loadMoreDevicePhotos(): Promise<void> {
+export async function loadMoreDevicePhotos(albumId?: string): Promise<void> {
   const cursor = useDevicePhotosStore.getState().nextCursor;
-  const { photos, nextCursor } = await DevicePhotos.getPhotos({ cursor, limit: BAUL_PHOTOS_PAGE_SIZE });
+  const { photos, nextCursor } = await DevicePhotos.getPhotos({ cursor, limit: BAUL_PHOTOS_PAGE_SIZE, albumId });
   useDevicePhotosStore.getState().appendPage(photos.map((p) => new DevicePhoto(p)), nextCursor !== undefined, nextCursor);
+}
+
+// "Carpetas" grid shown before any album is opened — one row per MediaStore bucket (see
+// DevicePhotosPlugin.getAlbums). Same one-per-device-library cardinality note as
+// ensureDevicePhotosPermission above.
+export async function loadDeviceAlbums(): Promise<void> {
+  const { albums } = await DevicePhotos.getAlbums();
+  useDeviceAlbumsStore.getState().setAlbums(albums.map((a) => new DeviceAlbum(a)));
 }

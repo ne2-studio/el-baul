@@ -26,6 +26,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al ver una foto dentro de un baúl (una a una o en selección múltiple), ahora se puede "Guardar en Mis fotos" para tenerla también en tu galería personal, sin duplicar el archivo ni afectar a la foto original del baúl.
 - Al ver una foto en el móvil, ahora la barra inferior muestra un pequeño icono junto a las personas etiquetadas cuando la foto tiene recuerdos, sin necesidad de desplegar el panel para saberlo.
 - En la app de Android, el selector de baúles tiene ahora una nueva entrada personal "En este dispositivo" que muestra las fotos del propio móvil (pidiendo permiso de acceso si hace falta), sin necesidad de subirlas antes a El Baúl.
+- "En este dispositivo" ahora muestra primero las carpetas de fotos del móvil, con su portada y número de fotos; al entrar en una se ven solo las fotos de esa carpeta.
 
 ### Arreglado
 

@@ -47,6 +47,7 @@ import { SelectBaulForShareRoute } from '../features/sharing/routes/SelectBaulFo
 import { ProfileRoute } from '../features/profile/routes/ProfileRoute';
 import { MisFotosRoute } from '../features/photos/routes/MisFotosRoute';
 import { EnEsteDispositivoRoute } from '../features/photos/routes/EnEsteDispositivoRoute';
+import { EnEsteDispositivoAlbumRoute } from '../features/photos/routes/EnEsteDispositivoAlbumRoute';
 import { MyPhotosUploadConfirmationRoute } from '../features/photos/routes/MyPhotosUploadConfirmationRoute';
 import { MyPhotosUploadingRoute } from '../features/photos/routes/MyPhotosUploadingRoute';
 import { MyPhotosUploadErrorRoute } from '../features/photos/routes/MyPhotosUploadErrorRoute';
@@ -454,6 +455,13 @@ function App() {
         <Route path="/en-este-dispositivo" element={
           <ProtectedRoute>
             <EnEsteDispositivoRoute />
+          </ProtectedRoute>
+        } />
+        {/* One "carpeta" opened from the grid above — see EnEsteDispositivoAlbumRoute's own
+            boundary note. */}
+        <Route path="/en-este-dispositivo/:albumId" element={
+          <ProtectedRoute>
+            <EnEsteDispositivoAlbumRoute />
           </ProtectedRoute>
         } />
         <Route path="/configuracion/notificaciones" element={

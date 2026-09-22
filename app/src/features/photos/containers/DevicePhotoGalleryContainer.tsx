@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { usePostHog } from 'posthog-js/react';
 import { Images, Smartphone } from 'lucide-react';
@@ -13,12 +13,18 @@ import { ensureDevicePhotosPermission, loadDevicePhotos, loadMoreDevicePhotos } 
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel';
 
+interface DevicePhotoGalleryContainerProps {
+  /** Scopes the grid to one MediaStore bucket (see the "carpetas" grid this is opened from).
+   * Undefined keeps the original flat, all-photos behavior. */
+  albumId?: string;
+}
+
 // Self-sufficient (see the containers/ rule in docs/architecture/frontend.md): "En este
 // dispositivo"'s own gallery — a read-only projection of the Android photo library (see this
 // route's own boundary note). Deliberately has no filter pills, no upload FAB, and no
 // selection: none of those make sense for assets that don't exist in El Baúl yet (that's the
 // entire point of this being a sibling of "Mis fotos", not a filter inside it).
-export function DevicePhotoGalleryContainer() {
+export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryContainerProps) {
   const auth = useAuth();
   const posthog = usePostHog();
   const { run, isPending } = useAsyncAction();
@@ -30,15 +36,26 @@ export function DevicePhotoGalleryContainer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { posthog.capture('device_photos_opened'); }, []);
 
+  // Different albumId means a different photo set — drop whatever the previous album (or the
+  // flat list) left cached so the effect below refetches instead of showing stale photos. Skips
+  // the first run (ref starts equal to albumId) so mounting doesn't wipe out state the caller
+  // already put there (e.g. a previous visit to the same album still in the store).
+  const previousAlbumId = useRef(albumId);
+  useEffect(() => {
+    if (previousAlbumId.current === albumId) return;
+    previousAlbumId.current = albumId;
+    useDevicePhotosStore.getState().reset();
+  }, [albumId]);
+
   const requestAccess = useCallback(async () => {
     const result = await run(() => ensureDevicePhotosPermission(), { key: 'device-photos-permission' });
     setLoadFailed(!result.ok);
   }, [run]);
 
   const fetchFirstPage = useCallback(async () => {
-    const result = await run(() => loadDevicePhotos(), { key: 'device-photos', errorMessage: 'Error al cargar las fotos del dispositivo' });
+    const result = await run(() => loadDevicePhotos(albumId), { key: 'device-photos', errorMessage: 'Error al cargar las fotos del dispositivo' });
     setLoadFailed(!result.ok);
-  }, [run]);
+  }, [run, albumId]);
 
   useEffect(() => {
     if (!auth.isAuthenticated || !isDevicePhotosSupported()) return;
@@ -49,8 +66,8 @@ export function DevicePhotoGalleryContainer() {
 
   const loadMore = useCallback(() => {
     if (!hasMore) return;
-    run(() => loadMoreDevicePhotos(), { key: 'device-photos-more', errorMessage: 'Error al cargar más fotos' });
-  }, [hasMore, run]);
+    run(() => loadMoreDevicePhotos(albumId), { key: 'device-photos-more', errorMessage: 'Error al cargar más fotos' });
+  }, [hasMore, run, albumId]);
 
   const sentinelRef = useLoadMoreSentinel(loadMore, photos !== undefined);
 

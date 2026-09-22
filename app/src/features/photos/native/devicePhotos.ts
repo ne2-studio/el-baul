@@ -30,10 +30,24 @@ interface GetPhotosResult {
   nextCursor?: string;
 }
 
+export interface DeviceAlbumDto {
+  /** MediaStore's BUCKET_ID — the folder a photo's file lives in, not an El Baúl concept. */
+  albumId: string;
+  displayName: string;
+  count: number;
+  /** Same cached-thumbnail convention as DevicePhotoDto.uri — its most recently taken photo. */
+  coverPhotoUri: string;
+}
+
+interface GetAlbumsResult {
+  albums: DeviceAlbumDto[];
+}
+
 interface DevicePhotosPlugin {
   checkPermissions(): Promise<{ granted: boolean }>;
   requestPermissions(): Promise<{ granted: boolean }>;
-  getPhotos(options: { cursor?: string; limit: number }): Promise<GetPhotosResult>;
+  getPhotos(options: { cursor?: string; limit: number; albumId?: string }): Promise<GetPhotosResult>;
+  getAlbums(): Promise<GetAlbumsResult>;
 }
 
 export const DevicePhotos = registerPlugin<DevicePhotosPlugin>('DevicePhotos');
@@ -66,5 +80,21 @@ export class DevicePhoto implements GalleryPhoto {
     this.date = dateFromTakenAt(data.takenAt);
     this.width = data.width;
     this.height = data.height;
+  }
+}
+
+// One MediaStore folder/bucket — the "carpetas" view a user sees before drilling into
+// DevicePhoto results scoped to albumId (see getPhotos' albumId option above).
+export class DeviceAlbum {
+  albumId: string;
+  displayName: string;
+  count: number;
+  coverImageUrl: string;
+
+  constructor(data: DeviceAlbumDto) {
+    this.albumId = data.albumId;
+    this.displayName = data.displayName;
+    this.count = data.count;
+    this.coverImageUrl = Capacitor.convertFileSrc(data.coverPhotoUri);
   }
 }
