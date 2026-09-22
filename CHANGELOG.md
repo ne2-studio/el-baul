@@ -13,6 +13,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+## [beta-v0.5.0] - 2026-09-22
+
 ### Añadido
 
 - Desde "Editar relaciones" en la ficha de una persona, ahora se pueden añadir o quitar relaciones de padre/madre e hijo/hija con otras personas del baúl. La ficha de persona muestra una nueva pestaña "Familia" con sus padres e hijos, cada uno navegable a su propia ficha.
@@ -68,22 +70,6 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Arreglado
 
 - Al compartir una foto con El Baúl desde el selector nativo de Android, ahora aparece directamente la pantalla para elegir baúl, sin tener que volver atrás por varias pantallas ni hacer scroll para que se vea.
-
-## [beta-v0.4.3] - 2026-08-26
-
-### Cambiado
-
-- En la pestaña "Recuerdos" de la ficha de una persona, los recuerdos ahora se ordenan por la fecha de la foto a la que pertenecen (de más reciente a más antigua), en vez de por la fecha en que se escribió el recuerdo.
-
-### Arreglado
-
-- Al pulsar "Volver" tras subir fotos (cuando esa subida no venía de un capítulo o pantalla previa concreta), ya no se quedaba la pantalla en blanco.
-- Al compartir una foto desde otra app (por ejemplo Google Fotos) hacia El Baúl en Android, ya no se quedaba la app en una pantalla en blanco sin salida.
-- En el feed del baúl, al tocar la foto de un recuerdo cuya foto se había movido de capítulo después de escribir el recuerdo, ya no aparecía "No se ha encontrado la foto." (se abría el capítulo antiguo en vez del actual).
-
-### Seguridad
-
-- Actualizadas las librerías del sistema incluidas en las imágenes de El Baúl para corregir vulnerabilidades conocidas.
 
 ## Versiones anteriores
 

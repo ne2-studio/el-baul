@@ -4,6 +4,22 @@ Versiones antiguas movidas fuera de [`CHANGELOG.md`](./CHANGELOG.md) para que
 ese archivo se mantenga corto y legible. Ver ese fichero para el formato y
 las versiones recientes.
 
+## [beta-v0.4.3] - 2026-08-26
+
+### Cambiado
+
+- En la pestaña "Recuerdos" de la ficha de una persona, los recuerdos ahora se ordenan por la fecha de la foto a la que pertenecen (de más reciente a más antigua), en vez de por la fecha en que se escribió el recuerdo.
+
+### Arreglado
+
+- Al pulsar "Volver" tras subir fotos (cuando esa subida no venía de un capítulo o pantalla previa concreta), ya no se quedaba la pantalla en blanco.
+- Al compartir una foto desde otra app (por ejemplo Google Fotos) hacia El Baúl en Android, ya no se quedaba la app en una pantalla en blanco sin salida.
+- En el feed del baúl, al tocar la foto de un recuerdo cuya foto se había movido de capítulo después de escribir el recuerdo, ya no aparecía "No se ha encontrado la foto." (se abría el capítulo antiguo en vez del actual).
+
+### Seguridad
+
+- Actualizadas las librerías del sistema incluidas en las imágenes de El Baúl para corregir vulnerabilidades conocidas.
+
 ## [beta-v0.4.2] - 2026-08-25
 
 ### Añadido
