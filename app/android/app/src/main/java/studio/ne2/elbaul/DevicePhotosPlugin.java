@@ -25,6 +25,8 @@ import com.getcapacitor.annotation.PermissionCallback;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 // "En este dispositivo" (see docs/architecture/native-android.md and
@@ -41,6 +43,12 @@ import java.util.Map;
 // gets a single granted/not-granted boolean, which is also all this read-only slice needs (the
 // UI must not assume MediaStore exposes every photo on the device — partial access is a valid,
 // unremarkable state here, not an error).
+//
+// The actual MediaStore querying/aggregation lives in package-private static methods
+// (queryPhotos/queryAlbums) that take a ContentResolver + cache dir instead of a PluginCall —
+// @PluginMethod entry points are thin wrappers around them. This is what lets
+// DevicePhotosPluginInstrumentedTest exercise real MediaStore queries against a real
+// ContentResolver without launching an Activity/Bridge to obtain a PluginCall.
 @CapacitorPlugin(
     name = "DevicePhotos",
     permissions = {
@@ -116,7 +124,57 @@ public class DevicePhotosPlugin extends Plugin {
         }
 
         String albumId = call.getString("albumId");
+        ContentResolver resolver = getContext().getContentResolver();
 
+        List<JSObject> photos;
+        try {
+            photos = queryPhotos(resolver, getContext().getCacheDir(), limit, offset, albumId);
+        } catch (Exception e) {
+            call.reject("Failed to query device photos", e);
+            return;
+        }
+
+        JSObject result = new JSObject();
+        JSArray photosArray = new JSArray();
+        photos.forEach(photosArray::put);
+        result.put("photos", photosArray);
+        if (photos.size() == limit) {
+            result.put("nextCursor", String.valueOf(offset + photos.size()));
+        }
+        call.resolve(result);
+    }
+
+    // Folders/albums grid (Google Photos-style "carpetas primero") — one row per MediaStore
+    // bucket (Android's notion of "the folder a photo's file lives in"), newest photo first as
+    // the cover. Aggregated by hand over a cursor sorted by bucket rather than via SQL GROUP BY:
+    // MediaProvider's queryArg-based grouping needs API 30+, and this plugin's minSdk is 24 (see
+    // getPhotos' own sortOrder comment for the same constraint).
+    @PluginMethod
+    public void getAlbums(PluginCall call) {
+        if (!hasPhotoAccess()) {
+            call.reject("Permission not granted");
+            return;
+        }
+
+        ContentResolver resolver = getContext().getContentResolver();
+        List<JSObject> albums;
+        try {
+            albums = queryAlbums(resolver, getContext().getCacheDir());
+        } catch (Exception e) {
+            call.reject("Failed to query device albums", e);
+            return;
+        }
+
+        JSObject result = new JSObject();
+        JSArray albumsArray = new JSArray();
+        albums.forEach(albumsArray::put);
+        result.put("albums", albumsArray);
+        call.resolve(result);
+    }
+
+    // Package-private + static: no PluginCall/Plugin instance involved, so instrumented tests
+    // can call this directly against a real ContentResolver (see class-level comment above).
+    static List<JSObject> queryPhotos(ContentResolver resolver, File cacheDir, int limit, int offset, String albumId) throws Exception {
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {
             MediaStore.Images.Media._ID,
@@ -134,8 +192,7 @@ public class DevicePhotosPlugin extends Plugin {
         String selection = albumId != null ? MediaStore.Images.Media.BUCKET_ID + " = ?" : null;
         String[] selectionArgs = albumId != null ? new String[] { albumId } : null;
 
-        ContentResolver resolver = getContext().getContentResolver();
-        JSArray photos = new JSArray();
+        List<JSObject> photos = new ArrayList<>();
 
         try (Cursor c = resolver.query(collection, projection, selection, selectionArgs, sortOrder)) {
             if (c != null && c.moveToPosition(offset)) {
@@ -154,9 +211,9 @@ public class DevicePhotosPlugin extends Plugin {
                     long dateTakenMs = c.getLong(dateTakenCol);
                     long takenAt = dateTakenMs > 0 ? dateTakenMs : c.getLong(dateAddedCol) * 1000L;
 
-                    File thumbnailFile = thumbnailFileFor(id);
-                    if (!thumbnailFile.exists()) {
-                        if (!writeThumbnail(resolver, contentUri, thumbnailFile)) continue;
+                    File thumbnailFile = thumbnailFileFor(cacheDir, id);
+                    if (!thumbnailFile.exists() && !writeThumbnail(resolver, contentUri, thumbnailFile)) {
+                        continue;
                     }
 
                     JSObject photo = new JSObject();
@@ -165,34 +222,15 @@ public class DevicePhotosPlugin extends Plugin {
                     photo.put("takenAt", takenAt);
                     photo.put("width", c.getInt(widthCol));
                     photo.put("height", c.getInt(heightCol));
-                    photos.put(photo);
+                    photos.add(photo);
                 } while (c.moveToNext());
             }
-        } catch (Exception e) {
-            call.reject("Failed to query device photos", e);
-            return;
         }
 
-        JSObject result = new JSObject();
-        result.put("photos", photos);
-        if (photos.length() == limit) {
-            result.put("nextCursor", String.valueOf(offset + photos.length()));
-        }
-        call.resolve(result);
+        return photos;
     }
 
-    // Folders/albums grid (Google Photos-style "carpetas primero") — one row per MediaStore
-    // bucket (Android's notion of "the folder a photo's file lives in"), newest photo first as
-    // the cover. Aggregated by hand over a cursor sorted by bucket rather than via SQL GROUP BY:
-    // MediaProvider's queryArg-based grouping needs API 30+, and this plugin's minSdk is 24 (see
-    // getPhotos' own sortOrder comment for the same constraint).
-    @PluginMethod
-    public void getAlbums(PluginCall call) {
-        if (!hasPhotoAccess()) {
-            call.reject("Permission not granted");
-            return;
-        }
-
+    static List<JSObject> queryAlbums(ContentResolver resolver, File cacheDir) throws Exception {
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {
             MediaStore.Images.Media._ID,
@@ -204,7 +242,6 @@ public class DevicePhotosPlugin extends Plugin {
         String sortOrder = MediaStore.Images.Media.BUCKET_ID + " ASC, "
             + MediaStore.Images.Media.DATE_TAKEN + " DESC, " + MediaStore.Images.Media._ID + " DESC";
 
-        ContentResolver resolver = getContext().getContentResolver();
         // LinkedHashMap: preserves first-seen order while we re-sort by cover recency below.
         Map<String, JSObject> albumsById = new LinkedHashMap<>();
 
@@ -229,7 +266,7 @@ public class DevicePhotosPlugin extends Plugin {
                         long dateTakenMs = c.getLong(dateTakenCol);
                         long takenAt = dateTakenMs > 0 ? dateTakenMs : c.getLong(dateAddedCol) * 1000L;
 
-                        File thumbnailFile = thumbnailFileFor(id);
+                        File thumbnailFile = thumbnailFileFor(cacheDir, id);
                         if (!thumbnailFile.exists() && !writeThumbnail(resolver, contentUri, thumbnailFile)) {
                             continue;
                         }
@@ -245,32 +282,22 @@ public class DevicePhotosPlugin extends Plugin {
                     album.put("count", album.optInt("count", 0) + 1);
                 } while (c.moveToNext());
             }
-        } catch (Exception e) {
-            call.reject("Failed to query device albums", e);
-            return;
         }
 
-        JSArray albums = new JSArray();
-        albumsById.values().stream()
-            .sorted((a, b) -> Long.compare(b.optLong("coverTakenAt", 0), a.optLong("coverTakenAt", 0)))
-            .forEach(album -> {
-                album.remove("coverTakenAt");
-                albums.put(album);
-            });
-
-        JSObject result = new JSObject();
-        result.put("albums", albums);
-        call.resolve(result);
+        List<JSObject> albums = new ArrayList<>(albumsById.values());
+        albums.sort((a, b) -> Long.compare(b.optLong("coverTakenAt", 0), a.optLong("coverTakenAt", 0)));
+        albums.forEach(album -> album.remove("coverTakenAt"));
+        return albums;
     }
 
-    private File thumbnailFileFor(long mediaStoreId) {
-        File dir = new File(getContext().getCacheDir(), "device-photos-thumbnails");
+    private static File thumbnailFileFor(File cacheDir, long mediaStoreId) {
+        File dir = new File(cacheDir, "device-photos-thumbnails");
         if (!dir.exists()) dir.mkdirs();
         return new File(dir, mediaStoreId + ".jpg");
     }
 
     @SuppressWarnings("deprecation")
-    private boolean writeThumbnail(ContentResolver resolver, Uri contentUri, File outFile) {
+    private static boolean writeThumbnail(ContentResolver resolver, Uri contentUri, File outFile) {
         try {
             Bitmap bitmap;
             if (Build.VERSION.SDK_INT >= 29) {
