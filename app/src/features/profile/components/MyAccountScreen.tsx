@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Bell, LogOut, Loader2, User } from 'lucide-react';
 import { ActionListItem } from '@/design-system/components/data-display/ActionListItem';
 import { PageContainer } from '@/design-system/layouts/PageContainer';
 import { PageHeader } from '@/design-system/layouts/PageHeader';
+import { getAppVersion } from '@/features/profile/native/appVersion';
 
 interface MyAccountScreenProps {
   onBack: () => void;
@@ -18,6 +20,12 @@ export function MyAccountScreen({
   onSignOut,
   isSigningOut = false,
 }: MyAccountScreenProps) {
+  const [appVersion, setAppVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAppVersion().then(setAppVersion);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <PageHeader variant="inline" onBack={onBack} backDisabled={isSigningOut} title="Mi cuenta" />
@@ -48,6 +56,8 @@ export function MyAccountScreen({
             title={isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
           />
         </div>
+
+        {appVersion && <p className="mt-8 text-xs text-muted-foreground text-center">Versión {appVersion}</p>}
       </PageContainer>
     </div>
   );

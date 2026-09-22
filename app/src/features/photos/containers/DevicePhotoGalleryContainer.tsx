@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { usePostHog } from 'posthog-js/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Images, Smartphone } from 'lucide-react';
 import { Button } from '@/design-system/components/actions/Button';
 import { EmptyState } from '@/design-system/components/feedback/EmptyState';
@@ -12,6 +13,7 @@ import { useDevicePhotosStore } from '@/store/useDevicePhotosStore';
 import { ensureDevicePhotosPermission, loadDevicePhotos, loadMoreDevicePhotos } from '@/features/photos/useCases';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel';
+import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNavigation';
 
 interface DevicePhotoGalleryContainerProps {
   /** Scopes the grid to one MediaStore bucket (see the "carpetas" grid this is opened from).
@@ -25,6 +27,8 @@ interface DevicePhotoGalleryContainerProps {
 // selection: none of those make sense for assets that don't exist in El Baúl yet (that's the
 // entire point of this being a sibling of "Mis fotos", not a filter inside it).
 export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryContainerProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const auth = useAuth();
   const posthog = usePostHog();
   const { run, isPending } = useAsyncAction();
@@ -70,6 +74,13 @@ export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryConta
   }, [hasMore, run, albumId]);
 
   const sentinelRef = useLoadMoreSentinel(loadMore, photos !== undefined);
+
+  // Same base path this gallery is mounted at (album-scoped from EnEsteDispositivoAlbumRoute
+  // today; falls back to the flat list for parity with this container's own albumId? doc above,
+  // even though no route currently opens it un-scoped).
+  const basePath = albumId ? `/en-este-dispositivo/${albumId}` : '/en-este-dispositivo';
+  const handleSelectPhoto = (photo: DevicePhoto) =>
+    openPhotoViewer(navigate, location, photoViewerPath(basePath, photo.id));
 
   if (!isDevicePhotosSupported()) {
     return (
@@ -122,7 +133,7 @@ export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryConta
 
   return (
     <>
-      <PhotoSwimlanes<DevicePhoto> photos={photos} onSelectPhoto={() => {}} order="desc" />
+      <PhotoSwimlanes<DevicePhoto> photos={photos} onSelectPhoto={handleSelectPhoto} order="desc" />
       <div ref={sentinelRef} className="h-1" />
       {isPending('device-photos-more') && <LoadingSpinner size="sm" />}
     </>

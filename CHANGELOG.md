@@ -27,6 +27,8 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al ver una foto en el móvil, ahora la barra inferior muestra un pequeño icono junto a las personas etiquetadas cuando la foto tiene recuerdos, sin necesidad de desplegar el panel para saberlo.
 - En la app de Android, el selector de baúles tiene ahora una nueva entrada personal "En este dispositivo" que muestra las fotos del propio móvil (pidiendo permiso de acceso si hace falta), sin necesidad de subirlas antes a El Baúl.
 - "En este dispositivo" ahora muestra primero las carpetas de fotos del móvil, con su portada y número de fotos; al entrar en una se ven solo las fotos de esa carpeta.
+- Ahora se puede tocar una foto en "En este dispositivo" para verla a pantalla completa, con el mismo visor que el resto de la app.
+- En "Mi cuenta" ahora se muestra la versión de la app, al final de la pantalla.
 
 ### Arreglado
 

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -48,10 +48,15 @@ function photo(id: string): DevicePhoto {
   return { id, thumbnailUrl: `/${id}-thumb.jpg`, fullUrl: `/${id}-thumb.jpg`, width: 100, height: 100 } as DevicePhoto;
 }
 
-function renderContainer() {
+function renderContainer(albumId?: string) {
+  const path = albumId ? `/en-este-dispositivo/${albumId}` : '/en-este-dispositivo';
   return render(
-    <MemoryRouter initialEntries={['/en-este-dispositivo']}>
-      <DevicePhotoGalleryContainer />
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/en-este-dispositivo" element={<DevicePhotoGalleryContainer />} />
+        <Route path="/en-este-dispositivo/:albumId" element={<DevicePhotoGalleryContainer albumId={albumId} />} />
+        <Route path="/en-este-dispositivo/:albumId/foto/:photoId" element={<div>Foto abierta</div>} />
+      </Routes>
     </MemoryRouter>
   );
 }
@@ -116,5 +121,15 @@ describe('DevicePhotoGalleryContainer', () => {
 
     triggerIntersection(true);
     await waitFor(() => expect(loadMoreDevicePhotos).toHaveBeenCalled());
+  });
+
+  it('opens the photo viewer, scoped to the current album, when a photo is clicked', async () => {
+    useDevicePhotosStore.setState({ permission: 'granted', photos: [photo('p1')], hasMore: false });
+    const user = userEvent.setup();
+
+    renderContainer('album-1');
+    await user.click(await screen.findByAltText('Foto'));
+
+    expect(await screen.findByText('Foto abierta')).toBeInTheDocument();
   });
 });
