@@ -49,7 +49,12 @@ serialization, or built-image behavior.
 - MinIO console: `http://localhost:9001`
 - Mailpit: `http://localhost:8025`
 
-Ports are fixed. The helper must fail on ambiguous conflicts instead of silently
+These are the main checkout's ports — `run-env` uses them unchanged there. From a
+linked `git worktree`, `run-env` derives a different, deterministic port offset (and
+Compose project name) for that same checkout path, so multiple worktrees can run any
+combination of modes at once without colliding; the helper's own summary output and
+`usage` text report the actual ports/URLs in use. Ports are never silently reassigned
+within a single checkout: the helper must fail on ambiguous conflicts instead of
 switching ports.
 
 Starting a mode must leave only the requested repository-owned environment
@@ -136,8 +141,9 @@ Use the helper instead of ad hoc `docker ps` inspection:
 ./scripts/run-env cleanup
 ```
 
-`cleanup` stops local dev processes and compose stacks started by the helper while
-keeping named volumes.
+`cleanup` stops local dev processes and the compose stack started by the helper for
+the current worktree only, while keeping named volumes. It does not touch another
+worktree's running environment.
 
 ## Advanced details
 

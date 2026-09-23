@@ -21,7 +21,15 @@
 
 # Pinned explicitly (rather than left to default to the checkout directory's basename)
 # so image tags stay predictable — CI builds these images in one job and loads them by
-# name (el-baul-api, el-baul-app, el-baul-imgproxy) in later jobs.
+# name (el-baul-api, el-baul-app, el-baul-imgproxy) in later jobs. `scripts/run-env`
+# overrides this with `-p` for linked git worktrees (see that script) so two checkouts
+# don't collide on project/container/volume names; this default only applies to the
+# main checkout, CI, and e2e-tests, none of which go through run-env.
+#
+# The published host ports below all default to today's fixed values so this file's
+# behavior is unchanged for anyone invoking `docker compose` directly (CI, e2e-tests,
+# `docker compose up`). `scripts/run-env` sets the *_PORT variables to per-worktree
+# values for linked worktrees; see that script for the derivation.
 name: el-baul
 
 services:
@@ -32,7 +40,7 @@ services:
       POSTGRES_PASSWORD: devpass
       POSTGRES_DB: elbaul
     ports:
-      - "5432:5432"
+      - "${PG_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -48,8 +56,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - miniodata:/data
     healthcheck:
@@ -72,7 +80,7 @@ services:
       IMGPROXY_KEY: "de60801120d03c14c8f17cfc7f8e77c4ee21712606163c1ef4c8ea45a80173a4"
       IMGPROXY_SALT: "bbf343c1d3a7def2db1faa30c446fe815e2b87add292ab65c30ce8e774bcc96c"
     ports:
-      - "8081:8080"
+      - "${IMGPROXY_PORT:-8081}:8080"
     depends_on:
       minio:
         condition: service_healthy
@@ -80,16 +88,16 @@ services:
   fake-oidc:
     image: ghcr.io/ne2-studio/fake-oidc:latest
     environment:
-      OIDC_ISSUER: "http://localhost:5000"
+      OIDC_ISSUER: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       OIDC_CLIENTS: >-
-        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"],"postLogoutRedirectUris":["http://localhost:3000/callback","http://localhost:5173/callback"]},
-        {"clientId":"el-baul-admin","redirectUris":["http://localhost:3001/callback"]}]
+        [{"clientId":"el-baul-app","redirectUris":["http://localhost:${APP_PORT:-3000}/callback","http://localhost:${VITE_PORT:-5173}/callback"],"postLogoutRedirectUris":["http://localhost:${APP_PORT:-3000}/callback","http://localhost:${VITE_PORT:-5173}/callback"]},
+        {"clientId":"el-baul-admin","redirectUris":["http://localhost:${ADMIN_PORT:-3001}/callback"]}]
       OIDC_USERS: >-
         [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]},
         {"key":"user","sub":"normal-user","email":"user@test.local","name":"Normal User","roles":["user"]}]
       OIDC_DEFAULT_USER: "admin"
     ports:
-      - "5000:5000"
+      - "${FAKE_OIDC_PORT:-5000}:5000"
     healthcheck:
       # No curl/wget in this image (minimal Ubuntu + .NET runtime) — bash's /dev/tcp is a
       # TCP-connect-only check, but confirmed sufficient: the gap between "container
@@ -109,8 +117,8 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - "8025:8025"
-      - "1025:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
 
   api:
     build:
@@ -120,7 +128,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=elbaul;Username=devuser;Password=devpass"
       Auth__JwksUri: "http://fake-oidc:5000/.well-known/jwks.json"
-      Auth__ValidIssuer: "http://localhost:5000"
+      Auth__ValidIssuer: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       Auth__Audience: "el-baul-app"
       # el-baul-admin (the backoffice SPA) is a separate Zitadel client id, so its tokens
       # carry a different "aud" than the consumer app's — both need to validate.
@@ -131,21 +139,21 @@ services:
       Storage__AccessKey: "minioadmin"
       Storage__SecretKey: "minioadmin"
       Storage__BucketName: "el-baul-photos"
-      Imgproxy__BaseUrl: "http://localhost:8081"
+      Imgproxy__BaseUrl: "http://localhost:${IMGPROXY_PORT:-8081}"
       Imgproxy__Key: "de60801120d03c14c8f17cfc7f8e77c4ee21712606163c1ef4c8ea45a80173a4"
       Imgproxy__Salt: "bbf343c1d3a7def2db1faa30c446fe815e2b87add292ab65c30ce8e774bcc96c"
       EmailLinkSigning__Key: "e4fba7d5a78a5f266963b6a0a2dbc57070cb66a70aa273c63b7e4270be3e6d8c"
       # The API's own public URL — used to build absolute email tracking links
       # (/email/click/{token}) from background jobs, which have no HttpContext to infer it from.
-      Api__PublicUrl: "http://localhost:5050"
+      Api__PublicUrl: "http://localhost:${BACKEND_PORT:-5050}"
       # Backoffice dashboard quick-links — blank locally, filled in on the real deployment.
       ExternalTools__Metabase: ""
       ExternalTools__Sentry: ""
-      ExternalTools__Hangfire: "http://localhost:5050/hangfire"
+      ExternalTools__Hangfire: "http://localhost:${BACKEND_PORT:-5050}/hangfire"
       ExternalTools__Seq: ""
       ExternalTools__Beszel: ""
-      ExternalTools__MinioConsole: "http://localhost:9001"
-      ExternalTools__Mailpit: "http://localhost:8025"
+      ExternalTools__MinioConsole: "http://localhost:${MINIO_CONSOLE_PORT:-9001}"
+      ExternalTools__Mailpit: "http://localhost:${MAILPIT_UI_PORT:-8025}"
       # Blank locally — set the real key here when testing the AI chat feature end-to-end.
       OpenAi__ApiKey: ""
       OpenAi__Model: "gpt-4o-mini"
@@ -167,7 +175,7 @@ services:
       Hangfire__DashboardUsername: ""
       Hangfire__DashboardPassword: ""
     ports:
-      - "5050:8080"
+      - "${BACKEND_PORT:-5050}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -189,12 +197,12 @@ services:
     # runtime-config mechanism and still needs build args), this is the same config app/'s
     # image reads in Coolify too, just with local values.
     environment:
-      VITE_API_URL: "http://localhost:5050"
-      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_API_URL: "http://localhost:${BACKEND_PORT:-5050}"
+      VITE_OIDC_AUTHORITY: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       VITE_OIDC_CLIENT_ID: "el-baul-app"
-      VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:${APP_PORT:-3000}/callback"
     ports:
-      - "3000:80"
+      - "${APP_PORT:-3000}:80"
     depends_on:
       - api
 
@@ -205,13 +213,13 @@ services:
     # VITE_* is read at container start, not baked at build time — see
     # admin/src/runtimeConfig.ts + admin/docker-entrypoint.d/. Same mechanism as app/ above.
     environment:
-      VITE_API_URL: "http://localhost:5050"
-      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_API_URL: "http://localhost:${BACKEND_PORT:-5050}"
+      VITE_OIDC_AUTHORITY: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       VITE_OIDC_CLIENT_ID: "el-baul-admin"
-      VITE_OIDC_CALLBACK_URI: "http://localhost:3001/callback"
-      VITE_APP_URL: "http://localhost:3000"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:${ADMIN_PORT:-3001}/callback"
+      VITE_APP_URL: "http://localhost:${APP_PORT:-3000}"
     ports:
-      - "3001:80"
+      - "${ADMIN_PORT:-3001}:80"
     depends_on:
       - api
 

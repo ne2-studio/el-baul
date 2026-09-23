@@ -1,5 +1,12 @@
 # Local development
 
+For day-to-day work, prefer `./scripts/run-env <mode>` (see the `run` skill) over the
+raw commands below — it wraps the same compose files with readiness checks and, when
+invoked from a linked `git worktree`, automatically uses a different Compose project
+and port offset so multiple worktrees can run at once without colliding. The commands
+in this doc talk to `docker-compose.yaml`/`docker-compose.lite.yml` directly and always
+use the fixed ports/project names below, regardless of worktree.
+
 ## Everything via Docker Compose
 
 `docker-compose.yaml` at the repo root runs Postgres, MinIO, imgproxy,

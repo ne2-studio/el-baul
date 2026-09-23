@@ -18,6 +18,11 @@
 #
 # fake-oidc (https://github.com/ne2-studio/fake-oidc) is the same throwaway OIDC provider
 # docker-compose.yaml uses for local dev — see that file's header comment for how to sign in.
+#
+# Published host ports default to today's fixed values, unchanged for direct `docker
+# compose` use (e.g. app/admin acceptance tests). `scripts/run-env` sets the *_PORT
+# variables (and overrides the project name with `-p`) to per-worktree values for
+# linked git worktrees — see that script.
 
 name: el-baul-lite
 
@@ -25,15 +30,15 @@ services:
   fake-oidc:
     image: ghcr.io/ne2-studio/fake-oidc:latest
     environment:
-      OIDC_ISSUER: "http://localhost:5000"
+      OIDC_ISSUER: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       OIDC_CLIENTS: >-
-        [{"clientId":"el-baul-app","redirectUris":["http://localhost:3000/callback","http://localhost:3001/callback","http://localhost:5173/callback"],"postLogoutRedirectUris":["http://localhost:3000/callback","http://localhost:3001/callback","http://localhost:5173/callback"]}]
+        [{"clientId":"el-baul-app","redirectUris":["http://localhost:${APP_PORT:-3000}/callback","http://localhost:${ADMIN_PORT:-3001}/callback","http://localhost:${VITE_PORT:-5173}/callback"],"postLogoutRedirectUris":["http://localhost:${APP_PORT:-3000}/callback","http://localhost:${ADMIN_PORT:-3001}/callback","http://localhost:${VITE_PORT:-5173}/callback"]}]
       OIDC_USERS: >-
         [{"key":"admin","sub":"admin-user","email":"admin@test.local","name":"Admin User","roles":["admin"]},
         {"key":"user","sub":"normal-user","email":"user@test.local","name":"Normal User","roles":["user"]}]
       OIDC_DEFAULT_USER: "admin"
     ports:
-      - "5000:5000"
+      - "${FAKE_OIDC_PORT:-5000}:5000"
     healthcheck:
       # No curl/wget in this image — see docker-compose.yaml's identical healthcheck comment.
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000"]
@@ -45,12 +50,12 @@ services:
     image: ${API_LITE_IMAGE:-el-baul-api-lite:local}
     environment:
       Auth__JwksUri: "http://fake-oidc:5000/.well-known/jwks.json"
-      Auth__ValidIssuer: "http://localhost:5000"
+      Auth__ValidIssuer: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       Auth__Audience: "el-baul-app"
       Auth__UserInfoEndpoint: "http://fake-oidc:5000/oidc/v1/userinfo"
       # The API's own public URL — LitePhotoStorage uses it to build /lite/photos/{key} URLs
       # the browser can actually reach (see api/ElBaul.Infra.Lite/LitePhotoStorage.cs).
-      Api__PublicUrl: "http://localhost:5051"
+      Api__PublicUrl: "http://localhost:${API_LITE_PORT:-5051}"
       # Every page.goto() in the app/acceptance-tests specs is a full reload, and each one
       # re-fetches /api/app-config (PublicLimiter-gated, unauthenticated) — across ~4 spec
       # files that adds up well past the real backend's 20/min default within one IP (all test
@@ -59,7 +64,7 @@ services:
       RateLimiter__PublicLimiter__PermitLimit: "1000"
       RateLimiter__ChatLimiter__PermitLimit: "1000"
     ports:
-      - "5051:8080"
+      - "${API_LITE_PORT:-5051}:8080"
     depends_on:
       fake-oidc:
         condition: service_healthy
@@ -71,12 +76,12 @@ services:
       # app/docker-entrypoint.d/95-generate-runtime-env.sh. This is what lets the exact image
       # built for real deployment be redirected at this local stack instead of production,
       # without rebuilding it.
-      VITE_API_URL: "http://localhost:5051"
-      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_API_URL: "http://localhost:${API_LITE_PORT:-5051}"
+      VITE_OIDC_AUTHORITY: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       VITE_OIDC_CLIENT_ID: "el-baul-app"
-      VITE_OIDC_CALLBACK_URI: "http://localhost:3000/callback"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:${APP_PORT:-3000}/callback"
     ports:
-      - "3000:80"
+      - "${APP_PORT:-3000}:80"
     depends_on:
       - api-lite
 
@@ -86,12 +91,12 @@ services:
     environment:
       # Runtime overrides - see admin/src/runtimeConfig.ts and
       # admin/docker-entrypoint.d/95-generate-runtime-env.sh.
-      VITE_API_URL: "http://localhost:5051"
-      VITE_OIDC_AUTHORITY: "http://localhost:5000"
+      VITE_API_URL: "http://localhost:${API_LITE_PORT:-5051}"
+      VITE_OIDC_AUTHORITY: "http://localhost:${FAKE_OIDC_PORT:-5000}"
       VITE_OIDC_CLIENT_ID: "el-baul-app"
-      VITE_OIDC_CALLBACK_URI: "http://localhost:3001/callback"
+      VITE_OIDC_CALLBACK_URI: "http://localhost:${ADMIN_PORT:-3001}/callback"
       VITE_ZITADEL_ORGANIZATION_ID: "fake-org"
     ports:
-      - "3001:80"
+      - "${ADMIN_PORT:-3001}:80"
     depends_on:
       - api-lite
