@@ -31,14 +31,14 @@ run() {
 
 ensure_root() {
   [[ -f "$ROOT_DIR/docker-compose.yaml" ]] || die "cannot locate repo root"
-  [[ -f "$ROOT_DIR/api/ElBaul.Api.Tests/ElBaul.Api.Tests.csproj" ]] || die "cannot locate API test project"
+  [[ -f "$ROOT_DIR/api/ElBaul.Api/Tests/ElBaul.Api.Tests.csproj" ]] || die "cannot locate API test project"
   [[ -f "$ROOT_DIR/app/package.json" ]] || die "cannot locate app package"
   [[ -f "$ROOT_DIR/admin/package.json" ]] || die "cannot locate admin package"
 }
 
 accept_contract() {
   need dotnet
-  run env UPDATE_OPENAPI_SNAPSHOT=1 dotnet test "$ROOT_DIR/api/ElBaul.Api.Tests/ElBaul.Api.Tests.csproj" --configuration Release
+  run env UPDATE_OPENAPI_SNAPSHOT=1 dotnet test "$ROOT_DIR/api/ElBaul.Api/Tests/ElBaul.Api.Tests.csproj" --configuration Release
 }
 
 generate_app_types() {
