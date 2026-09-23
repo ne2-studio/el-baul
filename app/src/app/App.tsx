@@ -48,6 +48,7 @@ import { ProfileRoute } from '../features/profile/routes/ProfileRoute';
 import { MisFotosRoute } from '../features/photos/routes/MisFotosRoute';
 import { EnEsteDispositivoRoute } from '../features/photos/routes/EnEsteDispositivoRoute';
 import { EnEsteDispositivoAlbumRoute } from '../features/photos/routes/EnEsteDispositivoAlbumRoute';
+import { DevicePhotosGate } from '../features/photos/routes/DevicePhotosGate';
 import { MyPhotosUploadConfirmationRoute } from '../features/photos/routes/MyPhotosUploadConfirmationRoute';
 import { MyPhotosUploadingRoute } from '../features/photos/routes/MyPhotosUploadingRoute';
 import { MyPhotosUploadErrorRoute } from '../features/photos/routes/MyPhotosUploadErrorRoute';
@@ -451,17 +452,24 @@ function App() {
           </ProtectedRoute>
         } />
         {/* "En este dispositivo" — sibling of "Mis fotos" under PERSONAL, a read-only view of
-            the Android photo library; see EnEsteDispositivoRoute's own boundary note. */}
+            the Android photo library; see EnEsteDispositivoRoute's own boundary note.
+            DevicePhotosGate covers direct navigation/deep links while the ops kill switch
+            (docs/.backlog issue #83) is off — WorkspaceSwitcherContainer already hides the
+            menu entry, but that alone doesn't stop a URL. */}
         <Route path="/en-este-dispositivo" element={
           <ProtectedRoute>
-            <EnEsteDispositivoRoute />
+            <DevicePhotosGate>
+              <EnEsteDispositivoRoute />
+            </DevicePhotosGate>
           </ProtectedRoute>
         } />
         {/* One "carpeta" opened from the grid above — see EnEsteDispositivoAlbumRoute's own
             boundary note. */}
         <Route path="/en-este-dispositivo/:albumId" element={
           <ProtectedRoute>
-            <EnEsteDispositivoAlbumRoute />
+            <DevicePhotosGate>
+              <EnEsteDispositivoAlbumRoute />
+            </DevicePhotosGate>
           </ProtectedRoute>
         } />
         <Route path="/configuracion/notificaciones" element={

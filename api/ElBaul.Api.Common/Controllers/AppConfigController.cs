@@ -36,6 +36,7 @@ public class AppConfigController(IAppConfiguration appConfiguration, IConfigurat
                 chatMemoryEnabled = appConfiguration.ChatMemoryEnabled,
                 tvModeEnabled = appConfiguration.TvModeEnabled,
                 biografiaEnabled = appConfiguration.BiografiaEnabled,
+                devicePhotosEnabled = appConfiguration.DevicePhotosEnabled,
                 // Exposed even while maintenance mode is on: this endpoint is the one exception
                 // MaintenanceModeMiddleware carves out, so the frontend can learn the flag is set
                 // (and learn it's back off) without a deploy.

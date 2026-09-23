@@ -15,6 +15,7 @@ import { NewDot } from '@/design-system/components/data-display/Badges';
 import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { useCurrentBaulStore } from '@/store/useCurrentBaulStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 
 type PersonalKey = 'mis-fotos' | 'en-este-dispositivo';
 
@@ -30,7 +31,7 @@ interface PersonalEntry {
 // static item instead of a list). "Mis fotos" is the user's own El Baúl-hosted photos;
 // "En este dispositivo" is a read-only projection of the Android photo library that doesn't
 // belong to El Baúl at all yet — see EnEsteDispositivoRoute's boundary note.
-const PERSONAL_ENTRIES: PersonalEntry[] = [
+const ALL_PERSONAL_ENTRIES: PersonalEntry[] = [
   { key: 'mis-fotos', label: 'Mis fotos', path: '/mis-fotos', icon: Images },
   { key: 'en-este-dispositivo', label: 'En este dispositivo', path: '/en-este-dispositivo', icon: Smartphone },
 ];
@@ -62,6 +63,13 @@ interface WorkspaceSwitcherContainerProps {
 export function WorkspaceSwitcherContainer({ activeBaul, activePersonalKey = 'mis-fotos' }: WorkspaceSwitcherContainerProps) {
   const navigate = useNavigate();
   const baules = useBaulesStore((state) => state.baules);
+  // Global ops kill switch (docs/.backlog issue #83) — while off, "En este dispositivo" is
+  // dropped from the list entirely (not just disabled) so it doesn't invite a tap that would
+  // then have to be redirected away; App.tsx guards the routes themselves for direct navigation.
+  const devicePhotosEnabled = useAppConfigStore((state) => state.devicePhotosEnabled);
+  const PERSONAL_ENTRIES = devicePhotosEnabled
+    ? ALL_PERSONAL_ENTRIES
+    : ALL_PERSONAL_ENTRIES.filter((entry) => entry.key !== 'en-este-dispositivo');
   // Server-authoritative y por usuario: GET /api/baules calcula baul.hasUnseenActivity contra el
   // BaulFeedCursor de esta persona (ver BaulesController.GetAll), así que el dot es coherente
   // entre dispositivos. El propio activeBaul se marca como visto en el servidor al entrar (ver

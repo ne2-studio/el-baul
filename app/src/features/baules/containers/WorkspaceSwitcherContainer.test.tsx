@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Baul } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { useAppConfigStore } from '@/store/useAppConfigStore';
 import { WorkspaceSwitcherContainer } from './WorkspaceSwitcherContainer';
 
 function baul(overrides: Partial<Baul> = {}): Baul {
@@ -132,5 +133,32 @@ describe('WorkspaceSwitcherContainer — PERSONAL / Mis baúles sections', () =>
   it('shows "Mis fotos" (not any baúl name) as the trigger label when activeBaul is null', () => {
     renderSwitcherWithRoutes(null);
     expect(screen.getByRole('button', { name: 'Cambiar de espacio' })).toHaveTextContent('Mis fotos');
+  });
+});
+
+describe('WorkspaceSwitcherContainer — "En este dispositivo" / devicePhotosEnabled (docs/.backlog issue #83)', () => {
+  beforeEach(() => {
+    useBaulesStore.getState().reset();
+    useAppConfigStore.setState({ devicePhotosEnabled: true });
+  });
+
+  it('shows "En este dispositivo" under PERSONAL while the flag is on', async () => {
+    renderSwitcherWithRoutes(null);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar de espacio' }));
+    const menu = await screen.findByRole('menu');
+
+    expect(within(menu).getByText('En este dispositivo')).toBeInTheDocument();
+  });
+
+  it('hides "En este dispositivo" from PERSONAL once the ops kill switch is off', async () => {
+    useAppConfigStore.setState({ devicePhotosEnabled: false });
+    renderSwitcherWithRoutes(null);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar de espacio' }));
+    const menu = await screen.findByRole('menu');
+
+    expect(within(menu).queryByText('En este dispositivo')).not.toBeInTheDocument();
+    expect(within(menu).getByText('Mis fotos')).toBeInTheDocument();
   });
 });

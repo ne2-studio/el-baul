@@ -2,6 +2,7 @@ import { ProtectedRoute } from '@/app/routes/AuthGuards';
 import { BaulPhotoViewerRoute } from '@/features/photos/routes/BaulPhotoViewerRoute';
 import { ChapterPhotoViewerRoute } from '@/features/photos/routes/ChapterPhotoViewerRoute';
 import { DevicePhotoViewerRoute } from '@/features/photos/routes/DevicePhotoViewerRoute';
+import { DevicePhotosGate } from '@/features/photos/routes/DevicePhotosGate';
 import { MyPhotoViewerRoute } from '@/features/photos/routes/MyPhotoViewerRoute';
 import { PersonaPhotoViewerRoute } from '@/features/photos/routes/PersonaPhotoViewerRoute';
 import { PhotoBatchViewerRoute } from '@/features/photos/routes/PhotoBatchViewerRoute';
@@ -36,6 +37,6 @@ export const photoViewerRoutes = [
   },
   {
     path: '/en-este-dispositivo/:albumId/foto/:photoId',
-    element: <ProtectedRoute><DevicePhotoViewerRoute /></ProtectedRoute>,
+    element: <ProtectedRoute><DevicePhotosGate><DevicePhotoViewerRoute /></DevicePhotosGate></ProtectedRoute>,
   },
 ] as const;

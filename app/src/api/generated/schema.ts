@@ -9457,6 +9457,7 @@ export interface components {
             tvModeEnabled: boolean;
             maintenanceModeEnabled: boolean;
             biografiaEnabled: boolean;
+            devicePhotosEnabled: boolean;
         };
         AppConfigResponse: {
             features: components["schemas"]["AppConfigFeatures"];

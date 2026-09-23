@@ -45,4 +45,9 @@ public class UnleashAppConfiguration(IUnleash unleash, IConfiguration configurat
     public bool AndroidAppBannerEnabled => unleash.IsEnabled("elbaul.android-app-banner-enabled");
     public bool BiografiaEnabled => unleash.IsEnabled("elbaul.biografia-enabled");
     public double WriteMemorySuggestionRatio => configuration.GetValue("Features:WriteMemorySuggestionRatio", 0.2);
+
+    // Explicit true default (unlike every IsEnabled call above, which relies on the false
+    // default) — see IAppConfiguration.DevicePhotosEnabled's doc comment for why this one flag
+    // ships opt-out rather than opt-in.
+    public bool DevicePhotosEnabled => unleash.IsEnabled("elbaul.device-photos-enabled", true);
 }

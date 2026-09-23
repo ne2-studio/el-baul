@@ -28,4 +28,9 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public bool AndroidAppBannerEnabled => configuration.GetValue<bool>("Features:AndroidAppBannerEnabled");
     public bool BiografiaEnabled => configuration.GetValue<bool>("Features:BiografiaEnabled");
     public double WriteMemorySuggestionRatio => configuration.GetValue("Features:WriteMemorySuggestionRatio", 0.2);
+
+    // Explicit true default (unlike the plain GetValue<bool> calls above, which default to
+    // false) — see IAppConfiguration.DevicePhotosEnabled's doc comment for why this one flag
+    // ships opt-out rather than opt-in.
+    public bool DevicePhotosEnabled => configuration.GetValue("Features:DevicePhotosEnabled", true);
 }

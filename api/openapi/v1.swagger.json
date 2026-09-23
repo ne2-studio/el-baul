@@ -10998,6 +10998,7 @@
           "chatEnabled",
           "chatMemoryEnabled",
           "chatSuggestionsEnabled",
+          "devicePhotosEnabled",
           "maintenanceModeEnabled",
           "sharedLinksEnabled",
           "tvModeEnabled"
@@ -11029,6 +11030,9 @@
             "type": "boolean"
           },
           "biografiaEnabled": {
+            "type": "boolean"
+          },
+          "devicePhotosEnabled": {
             "type": "boolean"
           }
         },

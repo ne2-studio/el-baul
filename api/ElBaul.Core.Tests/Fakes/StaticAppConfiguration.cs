@@ -28,7 +28,9 @@ public class StaticAppConfiguration(
     bool biografiaEnabled = true,
     // Matches the real appsettings.json default (20% "write a memory") — tests about the ratio
     // itself construct this explicitly to force a branch.
-    double writeMemorySuggestionRatio = 0.2)
+    double writeMemorySuggestionRatio = 0.2,
+    // Matches the real default (opt-out, not opt-in) — see IAppConfiguration.DevicePhotosEnabled.
+    bool devicePhotosEnabled = true)
     : IAppConfiguration
 {
     public string PublicUrl { get; } = publicUrl;
@@ -52,4 +54,5 @@ public class StaticAppConfiguration(
     public bool AndroidAppBannerEnabled { get; } = androidAppBannerEnabled;
     public bool BiografiaEnabled { get; } = biografiaEnabled;
     public double WriteMemorySuggestionRatio { get; } = writeMemorySuggestionRatio;
+    public bool DevicePhotosEnabled { get; } = devicePhotosEnabled;
 }

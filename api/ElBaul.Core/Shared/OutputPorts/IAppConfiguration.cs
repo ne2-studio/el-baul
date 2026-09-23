@@ -126,4 +126,14 @@ public interface IAppConfiguration
     /// this port is only for the new server-side decision in Contributions.
     /// </summary>
     double WriteMemorySuggestionRatio { get; }
+
+    /// <summary>
+    /// Global ops kill switch for "En este dispositivo" (the Android-only read-only projection
+    /// of the device's own photo library — no backend data of its own, so there is nothing to
+    /// gate server-side besides this switch itself, same shape as AndroidAppBannerEnabled).
+    /// Defaults to true (opt-out rollout, unlike every other flag above): the feature already
+    /// ships to every Android user, this toggle exists purely so ops can turn it off quickly if
+    /// it misbehaves, not to gate a staged rollout.
+    /// </summary>
+    bool DevicePhotosEnabled { get; }
 }

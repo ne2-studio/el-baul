@@ -30,6 +30,11 @@ interface AppConfigState {
   // before the backend confirms the rollout is on — the backend also enforces this server-side
   // (write endpoint, AI context), so hiding the tab is not the only protection.
   biografiaEnabled: boolean;
+  // Defaults to true — unlike every other flag here, this is an opt-out ops kill switch (the
+  // feature already ships to every Android user), not a staged rollout: "En este dispositivo"
+  // must stay visible/reachable until the backend explicitly reports it off, not the other way
+  // around. See IAppConfiguration.DevicePhotosEnabled.
+  devicePhotosEnabled: boolean;
   helpCenterUrl: string;
   // Falls back to the current origin until the backend-configured value loads, so
   // sharing still produces a usable (if not canonical) link rather than a broken one.
@@ -57,6 +62,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   tvModeEnabled: false,
   maintenanceModeEnabled: false,
   biografiaEnabled: false,
+  devicePhotosEnabled: true,
   helpCenterUrl: '',
   appUrl: window.location.origin,
   googlePlayUrl: '',
@@ -75,6 +81,7 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         tvModeEnabled: config.features.tvModeEnabled ?? false,
         maintenanceModeEnabled: config.features.maintenanceModeEnabled ?? false,
         biografiaEnabled: config.features.biografiaEnabled ?? false,
+        devicePhotosEnabled: config.features.devicePhotosEnabled ?? true,
         helpCenterUrl: config.helpCenterUrl ?? '',
         appUrl: config.appUrl ?? window.location.origin,
         googlePlayUrl: config.googlePlayUrl ?? '',

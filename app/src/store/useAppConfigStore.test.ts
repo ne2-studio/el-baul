@@ -67,3 +67,31 @@ describe('useAppConfigStore.fetchAppConfig biografiaEnabled', () => {
     expect(useAppConfigStore.getState().biografiaEnabled).toBe(false);
   });
 });
+
+describe('useAppConfigStore.fetchAppConfig devicePhotosEnabled (docs/.backlog issue #83)', () => {
+  beforeEach(() => {
+    useAppConfigStore.setState({ devicePhotosEnabled: true });
+    vi.clearAllMocks();
+  });
+
+  it('sets devicePhotosEnabled to false when the backend reports the ops kill switch off', async () => {
+    vi.mocked(api.appConfig.get).mockResolvedValue({
+      features: { devicePhotosEnabled: false },
+    } as Awaited<ReturnType<typeof api.appConfig.get>>);
+
+    await useAppConfigStore.getState().fetchAppConfig();
+
+    expect(useAppConfigStore.getState().devicePhotosEnabled).toBe(false);
+  });
+
+  it('defaults devicePhotosEnabled to true (opt-out, not opt-in) when the backend omits it', async () => {
+    useAppConfigStore.setState({ devicePhotosEnabled: false });
+    vi.mocked(api.appConfig.get).mockResolvedValue({
+      features: {},
+    } as Awaited<ReturnType<typeof api.appConfig.get>>);
+
+    await useAppConfigStore.getState().fetchAppConfig();
+
+    expect(useAppConfigStore.getState().devicePhotosEnabled).toBe(true);
+  });
+});
