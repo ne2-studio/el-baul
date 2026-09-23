@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.280",
+  "startedAt": "2026-09-23T17:58:36.295Z",
+  "durationSeconds": 17,
+  "costUsd": 0.1207954,
+  "partial": false,
+  "suite": {
+    "root": "/home/pedro/Projects/ne2-studio/el-baul/.claude/skills/update-changelog",
+    "ablation": "with-without",
+    "judgeModel": "sonnet",
+    "caseFilter": "03-consolidate*",
+    "threshold": 1,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "update-changelog",
+        "path": "/home/pedro/Projects/ne2-studio/el-baul/.claude/skills/update-changelog"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "03-consolidate-existing-fix",
+      "dir": "evals/03-consolidate-existing-fix",
+      "source": "prose",
+      "promptMarkdown": "You're about to commit the following change to the El Baúl repository. Before committing, review whether anything else in the repo needs to be updated as part of this commit, and make any file edits you think are needed.\n\nCommit summary:\nfix(en-este-dispositivo): fix a crash in the gallery photo upload flow (added earlier in this same unreleased version) when the user denies the storage/photos permission. The upload button now shows a permission-denied message instead of crashing.\n\nCurrent contents of `CHANGELOG.md`:\n\n```\n# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n### Añadido\n\n- Ahora puedes subir una foto desde la galería del dispositivo al visor de recuerdos.\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n```\n\nMake any file edits you think are needed, then explain what you did (and why) in your final answer.",
+      "runsPerCase": 3,
+      "timeoutSeconds": 120,
+      "maxTurns": 8,
+      "graders": [
+        {
+          "name": "anadido-retained",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            },
+            "pattern": "### Añadido",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "no-duplicate-arreglado",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            },
+            "pattern": "### Arreglado",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "single-coherent-entry",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "- Under `## [No publicado]` there is exactly ONE bullet about the gallery photo-upload feature, not two separate bullets (one for the feature and a second one for the permission-crash fix).\n- That single bullet still lives under `### Añadido`, written in Spanish, in plain product language.\n- The fix for the permission-denied crash is NOT reported as if it were a separate, already-released regression — since the feature itself was never released, an end user never saw the bug.\n- The pre-existing `## [1.4.0]` section was left untouched.",
+          "config": {
+            "criteria": "- Under `## [No publicado]` there is exactly ONE bullet about the gallery photo-upload feature, not two separate bullets (one for the feature and a second one for the permission-crash fix).\n- That single bullet still lives under `### Añadido`, written in Spanish, in plain product language.\n- The fix for the permission-denied crash is NOT reported as if it were a separate, already-released regression — since the feature itself was never released, an end user never saw the bug.\n- The pre-existing `## [1.4.0]` section was left untouched.",
+            "focus": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            }
+          }
+        },
+        {
+          "name": "skill-used",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Skill",
+            "input_match": "update-changelog",
+            "min": 1
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 4,
+            "costUsd": 0.0661306,
+            "judgeCostUsd": 0,
+            "durationSeconds": 9,
+            "startedAt": "2026-09-23T17:58:36.334Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-wg9mlz/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "anadido-retained",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-duplicate-arreglado",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "single-coherent-entry",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "skill-used",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 2,
+            "costUsd": 0.0546648,
+            "judgeCostUsd": 0,
+            "durationSeconds": 8,
+            "startedAt": "2026-09-23T17:58:45.564Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-RDyj1R/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "anadido-retained",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-duplicate-arreglado",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "single-coherent-entry",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0,
+        "passRate": 0,
+        "scoreWithout": 0,
+        "passRateWithout": 0,
+        "delta": 0
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 1,
+    "casesPassed": 0,
+    "overallScore": 0,
+    "overallPassRate": 0,
+    "meanDelta": 0
+  }
+}

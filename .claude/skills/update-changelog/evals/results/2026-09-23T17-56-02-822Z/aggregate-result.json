@@ -1,0 +1,682 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.280",
+  "startedAt": "2026-09-23T17:56:02.822Z",
+  "durationSeconds": 130,
+  "costUsd": 0.6444007999999999,
+  "partial": true,
+  "partialReason": "interrupted",
+  "suite": {
+    "root": "/home/pedro/Projects/ne2-studio/el-baul/.claude/skills/update-changelog",
+    "ablation": "with-without",
+    "judgeModel": "sonnet",
+    "threshold": 1,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "update-changelog",
+        "path": "/home/pedro/Projects/ne2-studio/el-baul/.claude/skills/update-changelog"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "01-new-feature",
+      "dir": "evals/01-new-feature",
+      "source": "prose",
+      "promptMarkdown": "You're about to commit the following change to the El Baúl repository. Before committing, review whether anything else in the repo needs to be updated as part of this commit, and make any file edits you think are needed.\n\nCommit summary:\nfeat(en-este-dispositivo): allow uploading a photo from the device gallery in the memory viewer. Adds a new \"Subir foto\" menu item that opens the native gallery picker and attaches the selected photo to the current Recuerdo.\n\nCurrent contents of `CHANGELOG.md`:\n\n```\n# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n```\n\nMake any file edits you think are needed, then explain what you did (and why) in your final answer.",
+      "runsPerCase": 3,
+      "timeoutSeconds": 120,
+      "maxTurns": 8,
+      "graders": [
+        {
+          "name": "anadido-section",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            },
+            "pattern": "### Añadido",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "bullet-quality",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "- Under the `## [No publicado]` section there is a new bullet under a `### Añadido` heading describing the ability to upload a photo from the device gallery.\n- The bullet is written in Spanish.\n- The bullet uses plain product language a end user would understand — it does not mention class/file names, ticket IDs, or internal implementation details (e.g. it does not say \"en-este-dispositivo\", \"Capacitor\", or similar).\n- The existing `## [1.4.0]` section and its content were left untouched.",
+          "config": {
+            "criteria": "- Under the `## [No publicado]` section there is a new bullet under a `### Añadido` heading describing the ability to upload a photo from the device gallery.\n- The bullet is written in Spanish.\n- The bullet uses plain product language a end user would understand — it does not mention class/file names, ticket IDs, or internal implementation details (e.g. it does not say \"en-este-dispositivo\", \"Capacitor\", or similar).\n- The existing `## [1.4.0]` section and its content were left untouched.",
+            "focus": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            }
+          }
+        },
+        {
+          "name": "changelog-exists",
+          "type": "file_exists",
+          "weight": 1,
+          "config": {
+            "path": "CHANGELOG.md",
+            "exists": true
+          }
+        },
+        {
+          "name": "skill-used",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Skill",
+            "input_match": "update-changelog",
+            "min": 1
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 6,
+            "costUsd": 0.08566399999999999,
+            "judgeCostUsd": 0.00285,
+            "durationSeconds": 16,
+            "startedAt": "2026-09-23T17:56:02.870Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-46TXen/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "anadido-section",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ### Añadido",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "bullet-quality",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n### Añadido\n\n- Ahora puedes subir una foto desde la galería de tu dispositivo a un Recuerdo con la nueva opción «Subir foto» del menú.\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n"
+              },
+              {
+                "name": "changelog-exists",
+                "passed": true,
+                "weight": 1,
+                "explanation": "CHANGELOG.md exists as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "skill-used",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 5,
+            "costUsd": 0.0758046,
+            "judgeCostUsd": 0.0028920000000000005,
+            "durationSeconds": 19,
+            "startedAt": "2026-09-23T17:56:18.722Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-2eURn6/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "anadido-section",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ### Añadido",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "bullet-quality",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n### Añadido\n\n- Ahora puedes subir una foto desde la galería del dispositivo a un Recuerdo. En el visor de recuerdos, abre el menú y elige «Subir foto».\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n"
+              },
+              {
+                "name": "changelog-exists",
+                "passed": true,
+                "weight": 1,
+                "explanation": "CHANGELOG.md exists as expected",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1,
+        "scoreWithout": 1,
+        "passRateWithout": 1,
+        "delta": 0
+      }
+    },
+    {
+      "name": "02-new-bugfix",
+      "dir": "evals/02-new-bugfix",
+      "source": "prose",
+      "promptMarkdown": "You're about to commit the following change to the El Baúl repository. Before committing, review whether anything else in the repo needs to be updated as part of this commit, and make any file edits you think are needed.\n\nCommit summary:\nfix(sharing): fix a crash on Android when opening a shared Recuerdo link from outside the app. The deep link handler was not initialized before the activity read its intent extras.\n\nCurrent contents of `CHANGELOG.md`:\n\n```\n# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n```\n\nMake any file edits you think are needed, then explain what you did (and why) in your final answer.",
+      "runsPerCase": 3,
+      "timeoutSeconds": 120,
+      "maxTurns": 8,
+      "graders": [
+        {
+          "name": "arreglado-section",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            },
+            "pattern": "### Arreglado",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "bullet-quality",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "- Under `## [No publicado]` there is a new bullet under a `### Arreglado` heading describing that opening a shared Recuerdo link from outside the app no longer crashes.\n- The bullet is written in Spanish, in plain product language — no mention of \"deep link\", \"activity\", \"intent extras\" or other implementation detail.\n- The pre-existing `### Arreglado` bullet under `## [1.4.0]` was left untouched and the new bullet was not merged into it (they describe unrelated fixes in different releases).",
+          "config": {
+            "criteria": "- Under `## [No publicado]` there is a new bullet under a `### Arreglado` heading describing that opening a shared Recuerdo link from outside the app no longer crashes.\n- The bullet is written in Spanish, in plain product language — no mention of \"deep link\", \"activity\", \"intent extras\" or other implementation detail.\n- The pre-existing `### Arreglado` bullet under `## [1.4.0]` was left untouched and the new bullet was not merged into it (they describe unrelated fixes in different releases).",
+            "focus": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            }
+          }
+        },
+        {
+          "name": "changelog-exists",
+          "type": "file_exists",
+          "weight": 1,
+          "config": {
+            "path": "CHANGELOG.md",
+            "exists": true
+          }
+        },
+        {
+          "name": "skill-used",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Skill",
+            "input_match": "update-changelog",
+            "min": 1
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 7,
+            "costUsd": 0.0953688,
+            "judgeCostUsd": 0.0028380000000000002,
+            "durationSeconds": 23,
+            "startedAt": "2026-09-23T17:56:37.999Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-x8P9CC/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "arreglado-section",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ### Arreglado",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "bullet-quality",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n### Arreglado\n\n- La app ya no se cierra en Android al abrir un enlace a un Recuerdo compartido desde fuera de la aplicación.\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n"
+              },
+              {
+                "name": "changelog-exists",
+                "passed": true,
+                "weight": 1,
+                "explanation": "CHANGELOG.md exists as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "skill-used",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 4,
+            "costUsd": 0.07153480000000001,
+            "judgeCostUsd": 0.0028499999999999984,
+            "durationSeconds": 14,
+            "startedAt": "2026-09-23T17:57:01.053Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-fNzgz1/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "arreglado-section",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ### Arreglado",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "bullet-quality",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n### Arreglado\n\n- Se corrigió un cierre inesperado en Android al abrir un enlace compartido de un Recuerdo desde fuera de la app.\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n"
+              },
+              {
+                "name": "changelog-exists",
+                "passed": true,
+                "weight": 1,
+                "explanation": "CHANGELOG.md exists as expected",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1,
+        "scoreWithout": 1,
+        "passRateWithout": 1,
+        "delta": 0
+      }
+    },
+    {
+      "name": "03-consolidate-existing-fix",
+      "dir": "evals/03-consolidate-existing-fix",
+      "source": "prose",
+      "promptMarkdown": "You're about to commit the following change to the El Baúl repository. Before committing, review whether anything else in the repo needs to be updated as part of this commit, and make any file edits you think are needed.\n\nCommit summary:\nfix(en-este-dispositivo): fix a crash in the gallery photo upload flow (added earlier in this same unreleased version) when the user denies the storage/photos permission. The upload button now shows a permission-denied message instead of crashing.\n\nCurrent contents of `CHANGELOG.md`:\n\n```\n# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n### Añadido\n\n- Ahora puedes subir una foto desde la galería del dispositivo al visor de recuerdos.\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n```\n\nMake any file edits you think are needed, then explain what you did (and why) in your final answer.",
+      "runsPerCase": 3,
+      "timeoutSeconds": 120,
+      "maxTurns": 8,
+      "graders": [
+        {
+          "name": "anadido-retained",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            },
+            "pattern": "### Añadido",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "no-duplicate-arreglado",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            },
+            "pattern": "### Arreglado",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "single-coherent-entry",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "- Under `## [No publicado]` there is exactly ONE bullet about the gallery photo-upload feature, not two separate bullets (one for the feature and a second one for the permission-crash fix).\n- That single bullet still lives under `### Añadido`, written in Spanish, in plain product language.\n- The fix for the permission-denied crash is NOT reported as if it were a separate, already-released regression — since the feature itself was never released, an end user never saw the bug.\n- The pre-existing `## [1.4.0]` section was left untouched.",
+          "config": {
+            "criteria": "- Under `## [No publicado]` there is exactly ONE bullet about the gallery photo-upload feature, not two separate bullets (one for the feature and a second one for the permission-crash fix).\n- That single bullet still lives under `### Añadido`, written in Spanish, in plain product language.\n- The fix for the permission-denied crash is NOT reported as if it were a separate, already-released regression — since the feature itself was never released, an end user never saw the bug.\n- The pre-existing `## [1.4.0]` section was left untouched.",
+            "focus": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            }
+          }
+        },
+        {
+          "name": "skill-used",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Skill",
+            "input_match": "update-changelog",
+            "min": 1
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 4,
+            "costUsd": 0.06497,
+            "judgeCostUsd": 0,
+            "durationSeconds": 9,
+            "startedAt": "2026-09-23T17:57:14.736Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-546Nv8/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "anadido-retained",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-duplicate-arreglado",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "single-coherent-entry",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "skill-used",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 3,
+            "costUsd": 0.070413,
+            "judgeCostUsd": 0,
+            "durationSeconds": 13,
+            "startedAt": "2026-09-23T17:57:23.950Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-ynqkoq/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "anadido-retained",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-duplicate-arreglado",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "single-coherent-entry",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: case \"03-consolidate-existing-fix\" grader focus file \"CHANGELOG.md\": path \"CHANGELOG.md\" does not exist",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0,
+        "passRate": 0,
+        "scoreWithout": 0,
+        "passRateWithout": 0,
+        "delta": 0
+      }
+    },
+    {
+      "name": "04-removal",
+      "dir": "evals/04-removal",
+      "source": "prose",
+      "promptMarkdown": "You're about to commit the following change to the El Baúl repository. Before committing, review whether anything else in the repo needs to be updated as part of this commit, and make any file edits you think are needed.\n\nCommit summary:\nchore(admin): remove the legacy \"Exportar a PDF\" button from the admin settings page. The feature has been unused since the new reporting dashboard shipped, and admin staff no longer see it in the settings menu.\n\nCurrent contents of `CHANGELOG.md`:\n\n```\n# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n```\n\nMake any file edits you think are needed, then explain what you did (and why) in your final answer.",
+      "runsPerCase": 3,
+      "timeoutSeconds": 120,
+      "maxTurns": 8,
+      "graders": [
+        {
+          "name": "bullet-quality",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "- Under `## [No publicado]` there is a new bullet under a `### Eliminado` heading describing that the \"Exportar a PDF\" button was removed from the admin settings page.\n- The bullet is written in Spanish, in plain product language. Naming the settings page or the button itself is fine; it should NOT mention route paths, component/class names, or ticket IDs.\n- The pre-existing `## [1.4.0]` section was left untouched.",
+          "config": {
+            "criteria": "- Under `## [No publicado]` there is a new bullet under a `### Eliminado` heading describing that the \"Exportar a PDF\" button was removed from the admin settings page.\n- The bullet is written in Spanish, in plain product language. Naming the settings page or the button itself is fine; it should NOT mention route paths, component/class names, or ticket IDs.\n- The pre-existing `## [1.4.0]` section was left untouched.",
+            "focus": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            }
+          }
+        },
+        {
+          "name": "changelog-exists",
+          "type": "file_exists",
+          "weight": 1,
+          "config": {
+            "path": "CHANGELOG.md",
+            "exists": true
+          }
+        },
+        {
+          "name": "eliminado-section",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "CHANGELOG.md"
+            },
+            "pattern": "### Eliminado",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "skill-used",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Skill",
+            "input_match": "update-changelog",
+            "min": 1
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 7,
+            "costUsd": 0.0991016,
+            "judgeCostUsd": 0.002729999999999998,
+            "durationSeconds": 22,
+            "startedAt": "2026-09-23T17:57:37.109Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-124YO4/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "bullet-quality",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "# Changelog\n\nFormato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).\n\n## [No publicado]\n\n### Eliminado\n\n- Se eliminó el botón «Exportar a PDF» de la página de ajustes de administración. Los informes ahora se consultan desde el panel de informes.\n\n## [1.4.0] - 2026-08-15\n\n### Arreglado\n\n- Se corrigió un error que impedía compartir un Recuerdo desde el móvil.\n"
+              },
+              {
+                "name": "changelog-exists",
+                "passed": true,
+                "weight": 1,
+                "explanation": "CHANGELOG.md exists as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "eliminado-section",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ### Eliminado",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "skill-used",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 0.3333333333333333,
+            "passed": false,
+            "turns": 5,
+            "costUsd": 0.08154399999999999,
+            "judgeCostUsd": 0.0008999999999999998,
+            "durationSeconds": 15,
+            "startedAt": "2026-09-23T17:57:58.670Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-qFDZPq/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "bullet-quality",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: Request was aborted.",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "changelog-exists",
+                "passed": true,
+                "weight": 1,
+                "explanation": "CHANGELOG.md exists as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "eliminado-section",
+                "passed": false,
+                "weight": 1,
+                "explanation": "grader threw: The operation was aborted.",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1,
+        "scoreWithout": 0.3333333333333333,
+        "passRateWithout": 0,
+        "delta": 0.6666666666666667
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 4,
+    "casesPassed": 3,
+    "overallScore": 0.75,
+    "overallPassRate": 0.75,
+    "meanDelta": 0.16666666666666669
+  }
+}
