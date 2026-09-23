@@ -213,7 +213,7 @@ backend_persistence() {
   # Deliberately not part of ElBaul.slnx (see the project's own .csproj comment) — this is the
   # one backend command besides backend-acceptance that needs a running Docker daemon, so it
   # stays a separate opt-in command instead of silently becoming a `backend` requirement.
-  run dotnet test "$ROOT_DIR/api/ElBaul.Infra.PersistenceTests/ElBaul.Infra.PersistenceTests.csproj"
+  run dotnet test "$ROOT_DIR/api/ElBaul.Infra/PersistenceTests/ElBaul.Infra.PersistenceTests.csproj"
 }
 
 backend_acceptance() {
@@ -223,7 +223,7 @@ backend_acceptance() {
   local image="${BACKEND_IMAGE:-el-baul-api:verify-$RUN_ID}"
 
   if [[ "$build_images" == "1" ]]; then
-    docker_build_fresh "$image" "$ROOT_DIR/api"
+    docker_build_fresh "$image" --build-context "lib=$ROOT_DIR/lib/Ne2Studio.Common" "$ROOT_DIR/api"
   else
     require_image "$image"
   fi
@@ -335,7 +335,7 @@ frontend_acceptance() {
 
   if [[ "$build_images" == "1" ]]; then
     docker_build_fresh "$app_image" "$ROOT_DIR/app"
-    docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" "$ROOT_DIR/api"
+    docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" --build-context "lib=$ROOT_DIR/lib/Ne2Studio.Common" "$ROOT_DIR/api"
   else
     require_image "$app_image"
     require_image "$api_lite_image"
@@ -359,7 +359,7 @@ admin_acceptance() {
 
   if [[ "$build_images" == "1" ]]; then
     docker_build_fresh "$admin_image" "$ROOT_DIR/admin"
-    docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" "$ROOT_DIR/api"
+    docker_build_fresh "$api_lite_image" -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" --build-context "lib=$ROOT_DIR/lib/Ne2Studio.Common" "$ROOT_DIR/api"
   else
     require_image "$admin_image"
     require_image "$api_lite_image"

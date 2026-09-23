@@ -33,11 +33,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ElBaul.Infra\ElBaul.Infra.csproj" />
+    <ProjectReference Include="..\ElBaul.Infra.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\ElBaul.ReadModelContractTests\ListReadModelContractScenarios.cs" Link="ReadModelContractTests\ListReadModelContractScenarios.cs" />
+    <Compile Include="..\..\ElBaul.ReadModelContractTests\ListReadModelContractScenarios.cs" Link="ReadModelContractTests\ListReadModelContractScenarios.cs" />
   </ItemGroup>
 
 </Project>

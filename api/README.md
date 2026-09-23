@@ -96,11 +96,14 @@ ElBaul.Api          — HTTP entry point for el-baul-api: real infra registratio
 ElBaul.Api.Lite     — HTTP entry point for el-baul-api-lite: in-memory infra + Program.cs
 ElBaul.Api.Common   — shared with both: controllers, JWT validation, CORS, rate limiting, manager DI
 ElBaul.Infra        — real adapters (EF Core repositories, MinIO photo storage, Hangfire)
-ElBaul.Infra.Lite   — in-memory adapters (backs el-baul-api-lite and ElBaul.Core.Tests' fakes)
+ElBaul.Infra.Lite   — in-memory adapters (backs el-baul-api-lite and ElBaul.Core/Tests' fakes)
 ElBaul.Infra.Common — shared with both: auth/user-sync logic that doesn't touch real infra
 ElBaul.Maintenance  — one-off maintenance CLI commands + the framework that runs them
-ElBaul.Maintenance.Tests — unit tests for maintenance command behavior
+ElBaul.Maintenance/Tests — unit tests for maintenance command behavior
 api/acceptance-tests  — separate solution, black-box tests for the built image
+
+Each of the above pairs its own Tests/ subfolder alongside its source (e.g. ElBaul.Core/Tests,
+ElBaul.Api/Tests) — excluded from the parent project's own build, referenced as its own project.
 ```
 
 See [`docs/architecture/backend.md`](../docs/architecture/backend.md) for dependency rules and

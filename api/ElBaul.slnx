@@ -2,15 +2,15 @@
   <Project Path="ElBaul.Api/ElBaul.Api.csproj" />
   <Project Path="ElBaul.Api.Common/ElBaul.Api.Common.csproj" />
   <Project Path="ElBaul.Api.Lite/ElBaul.Api.Lite.csproj" />
-  <Project Path="ElBaul.Api.Tests/ElBaul.Api.Tests.csproj" />
+  <Project Path="ElBaul.Api/Tests/ElBaul.Api.Tests.csproj" />
   <Project Path="ElBaul.Infra.Common/ElBaul.Infra.Common.csproj" />
   <Project Path="ElBaul.Infra.Lite/ElBaul.Infra.Lite.csproj" />
-  <Project Path="ElBaul.Infra.Tests/ElBaul.Infra.Tests.csproj" />
+  <Project Path="ElBaul.Infra/Tests/ElBaul.Infra.Tests.csproj" />
   <Project Path="ElBaul.Infra/ElBaul.Infra.csproj" />
   <Project Path="ElBaul.Maintenance/ElBaul.Maintenance.csproj" />
-  <Project Path="ElBaul.Maintenance.Tests/ElBaul.Maintenance.Tests.csproj" />
-  <Project Path="ElBaul.Core.Tests/ElBaul.Core.Tests.csproj" />
+  <Project Path="ElBaul.Maintenance/Tests/ElBaul.Maintenance.Tests.csproj" />
+  <Project Path="ElBaul.Core/Tests/ElBaul.Core.Tests.csproj" />
   <Project Path="ElBaul.Core/ElBaul.Core.csproj" />
   <Project Path="../lib/Ne2Studio.Common/Ne2Studio.Common.csproj" />
-  <Project Path="../lib/Ne2Studio.Common.Tests/Ne2Studio.Common.Tests.csproj" />
+  <Project Path="../lib/Ne2Studio.Common/Tests/Ne2Studio.Common.Tests.csproj" />
 </Solution>

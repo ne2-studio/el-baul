@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ElBaul.Infra\ElBaul.Infra.csproj" />
+    <ProjectReference Include="..\ElBaul.Infra.csproj" />
   </ItemGroup>
 
 </Project>

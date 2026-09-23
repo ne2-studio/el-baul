@@ -9,7 +9,7 @@ Usage: ./scripts/dsm <command>
 
 Commands:
   approve   Regenerate the reviewed ElBaul.Core cross-feature dependency snapshot
-            (api/ElBaul.Core.Tests/CoreDsm.snapshot.json) and the human-readable
+            (api/ElBaul.Core/Tests/CoreDsm.snapshot.json) and the human-readable
             docs/architecture/core-dsm.md together, from the same graph, after reviewing the
             diff DsmApprovalTests reported (CoreDsm.snapshot.json vs. CoreDsm.received.json).
 EOF
@@ -31,12 +31,12 @@ run() {
 
 ensure_root() {
   [[ -f "$ROOT_DIR/docker-compose.yaml" ]] || die "cannot locate repo root"
-  [[ -f "$ROOT_DIR/api/ElBaul.Core.Tests/ElBaul.Core.Tests.csproj" ]] || die "cannot locate ElBaul.Core.Tests project"
+  [[ -f "$ROOT_DIR/api/ElBaul.Core/Tests/ElBaul.Core.Tests.csproj" ]] || die "cannot locate ElBaul.Core.Tests project"
 }
 
 approve() {
   need dotnet
-  run env UPDATE_DSM_SNAPSHOT=1 dotnet test "$ROOT_DIR/api/ElBaul.Core.Tests/ElBaul.Core.Tests.csproj" \
+  run env UPDATE_DSM_SNAPSHOT=1 dotnet test "$ROOT_DIR/api/ElBaul.Core/Tests/ElBaul.Core.Tests.csproj" \
     --filter "FullyQualifiedName~DsmApprovalTests"
 }
 
