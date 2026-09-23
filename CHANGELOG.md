@@ -13,6 +13,10 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Añadido
+
+- En "En este dispositivo" (app Android), ahora se puede borrar una foto del propio dispositivo desde el visor a pantalla completa, con confirmación previa. Esto no afecta a si esa foto está o no subida a El Baúl.
+
 ### Cambiado
 
 - El feed del baúl está ahora siempre disponible, también en las instalaciones autoalojadas de El Baúl.

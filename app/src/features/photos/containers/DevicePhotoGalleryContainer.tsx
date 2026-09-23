@@ -22,10 +22,13 @@ interface DevicePhotoGalleryContainerProps {
 }
 
 // Self-sufficient (see the containers/ rule in docs/architecture/frontend.md): "En este
-// dispositivo"'s own gallery — a read-only projection of the Android photo library (see this
-// route's own boundary note). Deliberately has no filter pills, no upload FAB, and no
-// selection: none of those make sense for assets that don't exist in El Baúl yet (that's the
-// entire point of this being a sibling of "Mis fotos", not a filter inside it).
+// dispositivo"'s own gallery — a projection of the Android photo library (see this route's own
+// boundary note). Deliberately has no filter pills, no upload FAB, and no selection here: none
+// of those make sense for assets that don't exist in El Baúl yet (that's the entire point of
+// this being a sibling of "Mis fotos", not a filter inside it) — selection/batch actions land in
+// #88. Opening a photo (DevicePhotoViewerContainer) does allow the single-photo "Borrar de este
+// dispositivo" action (GitHub issue #86), so this grid is no longer strictly read-only end to
+// end, even though the grid itself still has no per-item affordances of its own.
 export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryContainerProps) {
   const navigate = useNavigate();
   const location = useLocation();

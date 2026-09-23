@@ -43,11 +43,27 @@ interface GetAlbumsResult {
   albums: DeviceAlbumDto[];
 }
 
+export interface DeletePhotosResult {
+  /** Whether the Android system's own consent dialog (unavoidable, see DevicePhotosPlugin.java's
+   * deletePhotos — the app's ConfirmActionModal shown before calling this is a separate, earlier
+   * confirmation) was granted. False on API 30+ means nothing was deleted (that path is
+   * all-or-nothing); on the pre-30 fallback it means the chain stopped at the first denied item,
+   * so `deletedIds` may still be non-empty for ids processed before that point. */
+  granted: boolean;
+  /** Ids actually removed from MediaStore — always check this rather than assuming `granted`
+   * implies every requested id was deleted. */
+  deletedIds: string[];
+}
+
 interface DevicePhotosPlugin {
   checkPermissions(): Promise<{ granted: boolean }>;
   requestPermissions(): Promise<{ granted: boolean }>;
   getPhotos(options: { cursor?: string; limit: number; albumId?: string }): Promise<GetPhotosResult>;
   getAlbums(): Promise<GetAlbumsResult>;
+  /** Batch-capable from the start (GitHub issue #86's own single-photo "···" menu always passes
+   * one id; #88's multi-select batch delete reuses this same method verbatim) — see
+   * DevicePhotosPlugin.java's deletePhotos for what happens on each Android version. */
+  deletePhotos(options: { ids: string[] }): Promise<DeletePhotosResult>;
 }
 
 export const DevicePhotos = registerPlugin<DevicePhotosPlugin>('DevicePhotos');
