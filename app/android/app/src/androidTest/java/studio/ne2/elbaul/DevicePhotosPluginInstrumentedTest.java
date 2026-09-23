@@ -2,6 +2,7 @@ package studio.ne2.elbaul;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
@@ -27,8 +28,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 // Exercises DevicePhotosPlugin.queryPhotos/queryAlbums against the real, on-device MediaStore
@@ -117,6 +123,76 @@ public class DevicePhotosPluginInstrumentedTest {
         List<JSObject> photos = DevicePhotosPlugin.queryPhotos(resolver, context.getCacheDir(), 50, 0, albumId);
 
         assertEquals(1, photos.size());
+    }
+
+    // GitHub issue #87 ("Subir foto"): readOriginal must hand back the actual MediaStore file
+    // bytes, not the downscaled grid thumbnail queryPhotos/queryAlbums cache — asserted here by
+    // comparing byte-for-byte against what was actually inserted, rather than just checking a
+    // file exists.
+    @Test
+    public void readOriginal_copiesTheActualMediaStoreFileBytes() throws Exception {
+        Uri uri = insertTestPhoto(testBucket);
+        long id = ContentUris.parseId(uri);
+
+        byte[] expectedBytes;
+        try (InputStream in = resolver.openInputStream(uri)) {
+            expectedBytes = readAllBytes(in);
+        }
+
+        JSObject original = DevicePhotosPlugin.readOriginal(resolver, context.getCacheDir(), String.valueOf(id));
+
+        assertNotNull("Expected readOriginal to find the just-inserted photo", original);
+        assertEquals("image/jpeg", original.getString("mimeType"));
+        File originalFile = new File(original.getString("uri"));
+        assertTrue("Original file should have been copied to cache", originalFile.exists());
+        assertTrue("Copied original should be a real, non-empty file", originalFile.length() > 0);
+
+        byte[] actualBytes;
+        try (InputStream in = new FileInputStream(originalFile)) {
+            actualBytes = readAllBytes(in);
+        }
+        assertTrue("Copied original bytes should match the source MediaStore file", Arrays.equals(expectedBytes, actualBytes));
+
+        File tempFile = new File(originalFile.getParentFile(), originalFile.getName() + ".tmp");
+        assertTrue("A successful copy must not leave its .tmp staging file behind", !tempFile.exists());
+    }
+
+    // Guards against the atomic-copy fix regressing into "first call wins forever": a second
+    // request for the same id must re-copy from MediaStore rather than silently reusing whatever
+    // is already in cache — readOriginal deliberately doesn't try to detect an in-place edit
+    // (see its own comment), so always re-copying is what keeps a stale cached original from
+    // ever being served to "Subir foto".
+    @Test
+    public void readOriginal_reCopiesOnEveryCallRatherThanReusingACachedFile() throws Exception {
+        Uri uri = insertTestPhoto(testBucket);
+        long id = ContentUris.parseId(uri);
+
+        JSObject first = DevicePhotosPlugin.readOriginal(resolver, context.getCacheDir(), String.valueOf(id));
+        JSObject second = DevicePhotosPlugin.readOriginal(resolver, context.getCacheDir(), String.valueOf(id));
+
+        assertNotNull(first);
+        assertNotNull(second);
+        File originalFile = new File(second.getString("uri"));
+        assertTrue("Second call should still produce a real, non-empty file", originalFile.length() > 0);
+        File tempFile = new File(originalFile.getParentFile(), originalFile.getName() + ".tmp");
+        assertTrue("A successful re-copy must not leave its .tmp staging file behind", !tempFile.exists());
+    }
+
+    @Test
+    public void readOriginal_returnsNullForAnUnknownId() throws Exception {
+        JSObject original = DevicePhotosPlugin.readOriginal(resolver, context.getCacheDir(), "999999999999");
+
+        assertNull(original);
+    }
+
+    private static byte[] readAllBytes(InputStream in) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
     }
 
     @Test

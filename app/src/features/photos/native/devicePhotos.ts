@@ -43,11 +43,21 @@ interface GetAlbumsResult {
   albums: DeviceAlbumDto[];
 }
 
+export interface OriginalDevicePhotoDto {
+  /** Absolute file:// path to a full-resolution copy of the original MediaStore file — unlike
+   * DevicePhotoDto.uri, never downscaled. Feed it through Capacitor.convertFileSrc() before use,
+   * same convention as DevicePhotoDto.uri. Only requested on demand (e.g. "Subir foto" — GitHub
+   * issue #87), never for every photo in the grid. */
+  uri: string;
+  mimeType: string;
+}
+
 interface DevicePhotosPlugin {
   checkPermissions(): Promise<{ granted: boolean }>;
   requestPermissions(): Promise<{ granted: boolean }>;
   getPhotos(options: { cursor?: string; limit: number; albumId?: string }): Promise<GetPhotosResult>;
   getAlbums(): Promise<GetAlbumsResult>;
+  getOriginalPhoto(options: { id: string }): Promise<OriginalDevicePhotoDto>;
 }
 
 export const DevicePhotos = registerPlugin<DevicePhotosPlugin>('DevicePhotos');

@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.webkit.MimeTypeMap;
 
 import androidx.core.content.ContextCompat;
 
@@ -24,6 +25,8 @@ import com.getcapacitor.annotation.PermissionCallback;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -172,8 +175,106 @@ public class DevicePhotosPlugin extends Plugin {
         call.resolve(result);
     }
 
+    // "Subir foto" (GitHub issue #87) — the one caller that needs the actual, full-resolution
+    // MediaStore file rather than the cached grid thumbnail above. Deliberately a separate
+    // on-demand copy (its own cache subdir, never touched by queryPhotos/queryAlbums) instead of
+    // widening THUMBNAIL_SIZE_PX or reusing thumbnailFileFor: the grid still only ever needs to
+    // decode/cache the small size for every photo it lists, while this is a full-size copy of
+    // just the one photo the user chose to upload.
+    @PluginMethod
+    public void getOriginalPhoto(PluginCall call) {
+        if (!hasPhotoAccess()) {
+            call.reject("Permission not granted");
+            return;
+        }
+
+        String id = call.getString("id");
+        if (id == null) {
+            call.reject("Missing id");
+            return;
+        }
+
+        ContentResolver resolver = getContext().getContentResolver();
+        JSObject result;
+        try {
+            result = readOriginal(resolver, getContext().getCacheDir(), id);
+        } catch (Exception e) {
+            call.reject("Failed to read original device photo", e);
+            return;
+        }
+
+        if (result == null) {
+            call.reject("Device photo not found");
+            return;
+        }
+
+        call.resolve(result);
+    }
+
     // Package-private + static: no PluginCall/Plugin instance involved, so instrumented tests
     // can call this directly against a real ContentResolver (see class-level comment above).
+    // Always re-copies rather than reusing a previous copy keyed by MediaStore id: "Subir foto"
+    // is a rare, user-initiated action (unlike the grid thumbnails, decoded/cached once per
+    // photo up front), so there's no meaningful cost to paying for a fresh copy every time —
+    // and it sidesteps having to detect an in-place edit (MediaStore keeps the same _ID when a
+    // photo is edited, only DATE_MODIFIED/SIZE change) to know a cached copy is stale.
+    static JSObject readOriginal(ContentResolver resolver, File cacheDir, String id) throws Exception {
+        long mediaStoreId;
+        try {
+            mediaStoreId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
+        Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mediaStoreId);
+        String mimeType = resolver.getType(contentUri);
+        if (mimeType == null) mimeType = "image/jpeg";
+
+        File dir = new File(cacheDir, "device-photos-originals");
+        if (!dir.exists()) dir.mkdirs();
+        String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
+        File outFile = new File(dir, mediaStoreId + (extension != null ? "." + extension : ""));
+
+        if (!copyUriToFile(resolver, contentUri, outFile)) {
+            return null;
+        }
+
+        JSObject result = new JSObject();
+        result.put("uri", outFile.getAbsolutePath());
+        result.put("mimeType", mimeType);
+        return result;
+    }
+
+    // Copies into a sibling ".tmp" file first and only renames it into place once the copy has
+    // fully succeeded, deleting the temp file on any failure — a caller that reads outFile never
+    // observes a partially-written (truncated/corrupt) copy, whether from a failed or an
+    // in-progress concurrent copy. Overwrites any previous outFile atomically via File.renameTo.
+    private static boolean copyUriToFile(ContentResolver resolver, Uri uri, File outFile) {
+        File tempFile = new File(outFile.getParentFile(), outFile.getName() + ".tmp");
+        try (InputStream in = resolver.openInputStream(uri); OutputStream out = new FileOutputStream(tempFile)) {
+            if (in == null) {
+                tempFile.delete();
+                return false;
+            }
+
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            out.flush();
+        } catch (Exception e) {
+            tempFile.delete();
+            return false;
+        }
+
+        if (!tempFile.renameTo(outFile)) {
+            tempFile.delete();
+            return false;
+        }
+        return true;
+    }
+
     static List<JSObject> queryPhotos(ContentResolver resolver, File cacheDir, int limit, int offset, String albumId) throws Exception {
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {

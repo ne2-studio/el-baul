@@ -1,8 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
+}));
+
+vi.mock('@capacitor/core', () => ({
+  Capacitor: {
+    convertFileSrc: vi.fn((path: string) => `capacitor://localhost/_capacitor_file_${path}`),
+  },
+}));
+
+vi.mock('@/features/photos/native/devicePhotos', () => ({
+  DevicePhotos: {
+    getOriginalPhoto: vi.fn(),
+  },
 }));
 
 vi.mock('@/api', () => ({
@@ -43,8 +55,22 @@ import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePhotosStore } from '@/store/usePhotosStore';
 import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 import { UploadItem } from '@/features/photos/uploadFlow';
-import { uploadPhotos, uploadPhotosWithChapter, uploadToMyPhotos } from './index';
+import { DevicePhoto, DevicePhotos } from '@/features/photos/native/devicePhotos';
+import { uploadDevicePhotosToMyPhotos, uploadPhotos, uploadPhotosWithChapter, uploadToMyPhotos } from './index';
 import { fakeFile, newBaul, newChapter, newPhoto, newPhotoAsset } from './testFactories';
+
+function devicePhoto(id: string): DevicePhoto {
+  return { id, thumbnailUrl: `${id}-thumb`, fullUrl: `${id}-thumb`, width: 100, height: 100 } as DevicePhoto;
+}
+
+function okBlobResponse(contents: string, type = 'image/jpeg') {
+  return {
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    blob: vi.fn(() => Promise.resolve(new Blob([contents], { type }))),
+  };
+}
 
 // Regression coverage for upload workflow partial failures and post-upload reconciliation.
 describe('photos useCases uploads', () => {
@@ -317,6 +343,62 @@ describe('photos useCases uploads', () => {
       expect(results[0]).toEqual({ clientUploadId: 'c1', asset: asset1 });
       expect(results[1].error).toBeDefined();
       expect(vi.mocked(Sentry.captureException)).toHaveBeenCalled();
+    });
+  });
+
+  // GitHub issue #87: "Subir foto" from "En este dispositivo"'s 3-dot menu.
+  describe('uploadDevicePhotosToMyPhotos', () => {
+    beforeEach(() => {
+      useMyPhotosStore.getState().reset();
+      vi.stubGlobal('fetch', vi.fn());
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('reads the original file for each photo, then uploads it to Mis fotos', async () => {
+      useMyPhotosStore.setState({ assets: [], hasMore: false, filter: 'todas' });
+      const asset1 = newPhotoAsset('asset-1');
+      vi.mocked(DevicePhotos.getOriginalPhoto).mockResolvedValueOnce({ uri: '/originals/p1.jpg', mimeType: 'image/jpeg' });
+      vi.mocked(fetch).mockResolvedValueOnce(okBlobResponse('bytes') as unknown as Response);
+      vi.mocked(api.myPhotos.upload).mockResolvedValueOnce(asset1);
+
+      const results = await uploadDevicePhotosToMyPhotos([devicePhoto('p1')]);
+
+      expect(DevicePhotos.getOriginalPhoto).toHaveBeenCalledWith({ id: 'p1' });
+      expect(fetch).toHaveBeenCalledWith('capacitor://localhost/_capacitor_file_/originals/p1.jpg');
+      expect(results).toEqual([{ clientUploadId: 'p1', asset: asset1 }]);
+      expect(useMyPhotosStore.getState().assets).toEqual([asset1]);
+    });
+
+    it('reports a per-photo error, tagged in Sentry, when the original cannot be read, without failing the rest', async () => {
+      const asset2 = newPhotoAsset('asset-2');
+      vi.mocked(DevicePhotos.getOriginalPhoto)
+        .mockRejectedValueOnce(new Error('plugin unavailable'))
+        .mockResolvedValueOnce({ uri: '/originals/p2.jpg', mimeType: 'image/jpeg' });
+      vi.mocked(fetch).mockResolvedValueOnce(okBlobResponse('bytes') as unknown as Response);
+      vi.mocked(api.myPhotos.upload).mockResolvedValueOnce(asset2);
+
+      const results = await uploadDevicePhotosToMyPhotos([devicePhoto('p1'), devicePhoto('p2')]);
+
+      expect(results[0]).toEqual({ clientUploadId: 'p1', error: expect.any(String) });
+      expect(results[1]).toEqual({ clientUploadId: 'p2', asset: asset2 });
+      expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
+        tags: { phase: 'read-device-photo-original' },
+        extra: { id: 'p1' },
+      });
+      expect(api.myPhotos.upload).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports an empty original fetch as a per-photo error', async () => {
+      vi.mocked(DevicePhotos.getOriginalPhoto).mockResolvedValueOnce({ uri: '/originals/p1.jpg', mimeType: 'image/jpeg' });
+      vi.mocked(fetch).mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', blob: vi.fn(() => Promise.resolve(new Blob([]))) } as unknown as Response);
+
+      const results = await uploadDevicePhotosToMyPhotos([devicePhoto('p1')]);
+
+      expect(results).toEqual([{ clientUploadId: 'p1', error: expect.any(String) }]);
+      expect(api.myPhotos.upload).not.toHaveBeenCalled();
     });
   });
 });

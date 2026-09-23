@@ -13,6 +13,10 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Añadido
+
+- En "En este dispositivo" (app de Android), al ver una foto ahora se puede "Subir foto" para guardarla en Mis fotos sin borrarla del propio dispositivo.
+
 ### Cambiado
 
 - El feed del baúl está ahora siempre disponible, también en las instalaciones autoalojadas de El Baúl.

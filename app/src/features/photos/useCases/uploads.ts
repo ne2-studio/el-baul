@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import * as Sentry from '@sentry/react';
 import { api } from '@/api';
 import { Photo, PhotoAsset } from '@/types';
@@ -6,6 +7,7 @@ import { usePhotosStore } from '@/store/usePhotosStore';
 import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 import { PhotoUploadDestination, UploadItem, UploadItemResult } from '@/features/photos/uploadFlow';
 import { applyUploadedPhotos } from '@/store/baulesCacheReconciliation';
+import { DevicePhoto, DevicePhotos } from '@/features/photos/native/devicePhotos';
 
 // Confirms the File/Blob still has readable bytes before we try to upload it. Files
 // picked a while ago (the chapter/date step can add a real delay before the user hits
@@ -140,6 +142,55 @@ export async function uploadToMyPhotos(
     const filter = useMyPhotosStore.getState().filter;
     const eligible = filter === 'sin-compartir' ? uploaded.filter((asset) => asset.baules.length === 0) : uploaded;
     useMyPhotosStore.getState().prependUploaded(eligible);
+  }
+
+  return results;
+}
+
+// "Subir foto" from "En este dispositivo"'s 3-dot menu (GitHub issue #87) — per
+// EnEsteDispositivoRoute's boundary note, a device photo is saved into Mis fotos, never
+// straight into a baúl (the user can share it to a baúl afterwards from there, same as any
+// other Mis fotos asset). Takes an array (not a single DevicePhoto) so #88's later multi-select
+// batch upload can call this same function unchanged. Fully independent of "Borrar de este
+// dispositivo" (#86): uploading never touches the device copy either way.
+//
+// Unlike every other upload entry point, there's no <input type=file> handing us a File/Blob to
+// start from — DevicePhoto.fullUrl deliberately points at the cached grid thumbnail, never the
+// original (see DevicePhoto's own doc comment), so this reads the actual original file via the
+// new DevicePhotos.getOriginalPhoto plugin method first, then turns it into a File the same way
+// loadShare (features/sharing/useCases) turns a SharedFile's native path into one.
+export async function uploadDevicePhotosToMyPhotos(photos: DevicePhoto[]): Promise<UploadItemResult[]> {
+  const uploadBatchId = crypto.randomUUID();
+  const results: UploadItemResult[] = [];
+  const uploadable: UploadItem[] = [];
+
+  for (const photo of photos) {
+    try {
+      const original = await DevicePhotos.getOriginalPhoto({ id: photo.id });
+      const webPath = Capacitor.convertFileSrc(original.uri);
+      const response = await fetch(webPath);
+      if (!response.ok) {
+        throw new Error(`Device photo original fetch failed: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        throw new Error('Device photo original fetch returned an empty blob');
+      }
+
+      const file = new File([blob], `device-photo-${photo.id}`, { type: original.mimeType });
+      uploadable.push({ clientUploadId: photo.id, uploadBatchId, file });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { phase: 'read-device-photo-original' },
+        extra: { id: photo.id },
+      });
+      results.push({ clientUploadId: photo.id, error: 'No se pudo leer la foto original (puede que ya no esté disponible)' });
+    }
+  }
+
+  if (uploadable.length > 0) {
+    results.push(...(await uploadToMyPhotos(uploadable)));
   }
 
   return results;
