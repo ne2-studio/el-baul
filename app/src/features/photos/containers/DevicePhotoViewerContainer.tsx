@@ -10,14 +10,15 @@ interface DevicePhotoViewerContainerProps {
   onPhotoChange: (photo: DevicePhoto) => void;
 }
 
-// The "En este dispositivo" counterpart to MyPhotoViewerContainer — no date editing, no
-// recuerdos/baúles: none of that applies to photos that aren't El Baúl entities (see
 // EnEsteDispositivoRoute's boundary note). "Subir foto" (GitHub issue #87, via
-// useDevicePhotoViewerActions) is the one exception — it saves a copy into Mis fotos, which is
-// an El Baúl entity, without turning this into a full read/write viewer. Reuses the same
-// presentational PhotoViewer with everything else optional left out.
+// useDevicePhotoViewerActions) is one exception — it saves a copy into Mis fotos, which is an
+// El Baúl entity, without turning this into a full read/write viewer. Still no selection/batch
+// actions (that stays out of scope until #88) — but no longer read-only: "Borrar de este
+// dispositivo" (GitHub issue #86) is this feature's first destructive single-photo action, also
+// wired in via useDevicePhotoViewerActions. Reuses the same presentational PhotoViewer, with
+// everything else optional left out.
 export function DevicePhotoViewerContainer({ photo, photos, onClose, onPhotoChange }: DevicePhotoViewerContainerProps) {
-  const { menuItems } = useDevicePhotoViewerActions({ photo });
+  const { menuItems, modals } = useDevicePhotoViewerActions({ photo, onDeleted: onClose });
 
   return (
     <PhotoViewer
@@ -28,7 +29,7 @@ export function DevicePhotoViewerContainer({ photo, photos, onClose, onPhotoChan
       menuItems={menuItems}
       canChangeDate={false}
       openDateModal={() => {}}
-      modals={null}
+      modals={modals}
     />
   );
 }

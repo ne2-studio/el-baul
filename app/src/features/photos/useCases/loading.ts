@@ -4,7 +4,7 @@ import { usePhotosStore } from '@/store/usePhotosStore';
 import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 import { useDevicePhotosStore } from '@/store/useDevicePhotosStore';
 import { useDeviceAlbumsStore } from '@/store/useDeviceAlbumsStore';
-import { DeviceAlbum, DevicePhoto, DevicePhotos } from '@/features/photos/native/devicePhotos';
+import { DeletePhotosResult, DeviceAlbum, DevicePhoto, DevicePhotos } from '@/features/photos/native/devicePhotos';
 
 export async function loadChapterPhotos(chapterId: string): Promise<void> {
   const photos = await api.photos.getAll(chapterId);
@@ -110,4 +110,35 @@ export async function loadMoreDevicePhotos(albumId?: string): Promise<void> {
 export async function loadDeviceAlbums(): Promise<void> {
   const { albums } = await DevicePhotos.getAlbums();
   useDeviceAlbumsStore.getState().setAlbums(albums.map((a) => new DeviceAlbum(a)));
+}
+
+// "Borrar de este dispositivo" (GitHub issue #86) — actually performs the MediaStore delete
+// (which itself triggers Android's own unavoidable system consent dialog, see
+// DevicePhotosPlugin.java's deletePhotos; the app's own ConfirmActionModal is shown by the
+// caller *before* this runs). Fully independent of El Baúl's upload status: this never touches
+// the API, same boundary as every other function in this file — see EnEsteDispositivoRoute's
+// own note. Batch-capable from the start even though today's only caller (the viewer's "···"
+// menu) always passes one id, since #88's multi-select batch delete reuses this verbatim.
+//
+// There's no server round trip to refresh useDevicePhotosStore/useDeviceAlbumsStore from, so
+// this patches both itself: removes the deleted ids from the currently loaded photo list, and
+// — when that list belongs to one album (loadedAlbumId) — decrements that album's count and
+// recomputes its cover if one of the deleted photos was it.
+export async function deleteDevicePhotos(ids: string[]): Promise<DeletePhotosResult> {
+  const result = await DevicePhotos.deletePhotos({ ids });
+  if (result.deletedIds.length === 0) return result;
+
+  const { photos, loadedAlbumId, removePhotos } = useDevicePhotosStore.getState();
+  const deletedPhotos = (photos ?? []).filter((photo) => result.deletedIds.includes(photo.id));
+  removePhotos(result.deletedIds);
+
+  if (loadedAlbumId) {
+    const album = useDeviceAlbumsStore.getState().albums?.find((a) => a.albumId === loadedAlbumId);
+    const coverWasDeleted = !!album && deletedPhotos.some((photo) => photo.thumbnailUrl === album.coverImageUrl);
+    const remainingPhotos = useDevicePhotosStore.getState().photos ?? [];
+    const newCoverImageUrl = coverWasDeleted ? remainingPhotos[0]?.thumbnailUrl : undefined;
+    useDeviceAlbumsStore.getState().applyPhotoDeletion(loadedAlbumId, result.deletedIds.length, newCoverImageUrl);
+  }
+
+  return result;
 }

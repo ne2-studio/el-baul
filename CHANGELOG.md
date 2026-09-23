@@ -16,6 +16,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Añadido
 
 - En "En este dispositivo" (app de Android), al ver una foto ahora se puede "Subir foto" para guardarla en Mis fotos sin borrarla del propio dispositivo.
+- En "En este dispositivo" (app Android), ahora se puede borrar una foto del propio dispositivo desde el visor a pantalla completa, con confirmación previa. Esto no afecta a si esa foto está o no subida a El Baúl.
 
 ### Cambiado
 

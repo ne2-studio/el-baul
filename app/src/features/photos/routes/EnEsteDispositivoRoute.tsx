@@ -18,7 +18,9 @@ import { DeviceAlbumsGalleryContainer } from '@/features/photos/containers/Devic
 //
 // Modeled on MisFotosRoute's header (workspace switcher, no Hero/Tabbar), but deliberately
 // simpler: no settings menu (nothing here belongs to this screen to configure) and no
-// selection/batch actions (out of scope for this read-only slice).
+// selection/batch actions on this grid (that's #88's multi-select — single-photo actions like
+// "Borrar de este dispositivo", GitHub issue #86, live one level down in the full-screen viewer's
+// "···" menu, see DevicePhotoViewerContainer).
 export const EnEsteDispositivoRoute: React.FC = () => {
   const navigate = useNavigate();
 

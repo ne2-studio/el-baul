@@ -24,6 +24,10 @@ export interface DevicePhotosState {
   setPermission: (permission: DevicePhotosPermission) => void;
   setPage: (photos: DevicePhoto[], hasMore: boolean, nextCursor?: string, albumId?: string) => void;
   appendPage: (photos: DevicePhoto[], hasMore: boolean, nextCursor?: string) => void;
+  /** "Borrar de este dispositivo" (GitHub issue #86) — there's no server round trip to refresh
+   * from once photos are actually deleted from MediaStore, so the use case that just deleted
+   * them removes them from this cache itself. */
+  removePhotos: (ids: string[]) => void;
 }
 
 export const useDevicePhotosStore = create<DevicePhotosState>((set) => ({
@@ -43,5 +47,9 @@ export const useDevicePhotosStore = create<DevicePhotosState>((set) => ({
     photos: [...(state.photos ?? []), ...photos],
     hasMore,
     nextCursor,
+  })),
+
+  removePhotos: (ids) => set((state) => ({
+    photos: state.photos?.filter((photo) => !ids.includes(photo.id)),
   })),
 }));

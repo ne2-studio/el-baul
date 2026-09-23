@@ -101,4 +101,11 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <!-- "Borrar de este dispositivo" (DevicePhotosPlugin#deletePhotos, GitHub issue #86) on API
+         24-28: that's what actually authorizes deleting a MediaStore row this app doesn't own on
+         those versions (API 29 uses RecoverableSecurityException instead, API 30+ uses
+         MediaStore.createDeleteRequest — neither needs this permission). Capped at 28: scoped
+         storage makes it ungrantable from 29 onward. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 </manifest>

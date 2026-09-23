@@ -1,9 +1,13 @@
 package studio.ne2.elbaul;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.app.RecoverableSecurityException;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -12,6 +16,10 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.webkit.MimeTypeMap;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSArray;
@@ -27,9 +35,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 
 // "En este dispositivo" (see docs/architecture/native-android.md and
@@ -66,6 +76,37 @@ public class DevicePhotosPlugin extends Plugin {
     // once per photo and cached on disk keyed by MediaStore id, so re-entering the screen or
     // scrolling back up never re-decodes what's already there.
     private static final int THUMBNAIL_SIZE_PX = 512;
+
+    // deletePhotos state (GitHub issue #86) — a single MediaStore delete/consent flow spans one
+    // or more Activity results, so it can't be resolved synchronously inside the @PluginMethod
+    // itself. There's only ever one delete in flight at a time (the JS side awaits the promise
+    // before allowing another), so one set of fields is enough; a second concurrent call would
+    // overwrite these, which callers must not do.
+    private ActivityResultLauncher<IntentSenderRequest> deleteRequestLauncher;
+    private PluginCall pendingDeleteCall;
+    private List<String> pendingDeletedIds;
+    // Non-null only while an API 30+ batch createDeleteRequest() is awaiting its single system
+    // dialog — see deletePhotos().
+    private List<String> pendingBatchIds;
+    // Non-empty only on the API 24-29 fallback path — see processNextLegacyDelete().
+    private final Deque<String> remainingLegacyIds = new ArrayDeque<>();
+    private String pendingLegacyRetryId;
+
+    @Override
+    public void load() {
+        // Registered here rather than via the @ActivityCallback annotation: that mechanism only
+        // wires up ActivityResultContracts.StartActivityForResult() (a plain Intent), but both the
+        // API 30+ MediaStore.createDeleteRequest() PendingIntent and the API 29
+        // RecoverableSecurityException PendingIntent must be launched via
+        // StartIntentSenderForResult() instead. Bridge#registerForActivityResult accepts any
+        // contract, so this reuses the same underlying AndroidX mechanism, just registered by hand
+        // at the same lifecycle point (load(), just before initializeActivityLaunchers() runs —
+        // see PluginHandle#load) rather than through the annotation.
+        deleteRequestLauncher = getBridge().registerForActivityResult(
+            new ActivityResultContracts.StartIntentSenderForResult(),
+            this::onDeleteRequestResult
+        );
+    }
 
     private boolean hasPhotoAccess() {
         Context ctx = getContext();
@@ -209,6 +250,131 @@ public class DevicePhotosPlugin extends Plugin {
         }
 
         call.resolve(result);
+    }
+
+    // "Borrar de este dispositivo" (GitHub issue #86) — deletes one or more MediaStore rows this
+    // plugin itself doesn't own, which Android never lets an app do silently. Batch-capable from
+    // the start even though today's only caller (the single-photo "···" menu) always passes one
+    // id, since #88's multi-select batch delete reuses this same method verbatim.
+    //
+    // This is on top of, not instead of, the app's own ConfirmActionModal that the JS side shows
+    // first (see useDeviceDeleteAction/useMyPhotoViewerActions' "Quitar de Mis fotos" for the
+    // precedent) — the dialog this method triggers is the second, unavoidable step: Android's own
+    // system consent, which no app can skip or auto-confirm.
+    //
+    // - API 30+: MediaStore.createDeleteRequest() covers the whole batch behind a single system
+    //   dialog and deletes all-or-nothing (see onDeleteRequestResult's pendingBatchIds branch).
+    // - API 29: no batch API exists yet; ContentResolver.delete() on a row this app doesn't own
+    //   throws RecoverableSecurityException, which carries its own per-item system consent
+    //   PendingIntent — chased one id at a time (see processNextLegacyDelete()).
+    // - API 24-28 (this plugin's minSdk): no RecoverableSecurityException either — a granted
+    //   WRITE_EXTERNAL_STORAGE (declared maxSdkVersion=28 in AndroidManifest.xml, since scoped
+    //   storage makes it ungrantable from 29 onward) is what actually authorizes
+    //   ContentResolver.delete() on another app's row; without it, delete() just returns 0 rather
+    //   than throwing, which processNextLegacyDelete() treats as "not deleted", not an error.
+    @PluginMethod
+    public void deletePhotos(PluginCall call) {
+        JSArray idsArray = call.getArray("ids");
+        List<String> ids = new ArrayList<>();
+        if (idsArray != null) {
+            for (int i = 0; i < idsArray.length(); i++) {
+                try {
+                    ids.add(idsArray.getString(i));
+                } catch (Exception ignored) {
+                    // skip malformed entries rather than failing the whole batch
+                }
+            }
+        }
+        if (ids.isEmpty()) {
+            call.reject("No ids provided");
+            return;
+        }
+
+        bridge.saveCall(call);
+        pendingDeleteCall = call;
+        pendingDeletedIds = new ArrayList<>();
+
+        if (Build.VERSION.SDK_INT >= 30) {
+            List<Uri> uris = new ArrayList<>();
+            for (String id : ids) uris.add(photoUri(id));
+            PendingIntent pendingIntent = MediaStore.createDeleteRequest(getContext().getContentResolver(), uris);
+            pendingBatchIds = new ArrayList<>(ids);
+            deleteRequestLauncher.launch(new IntentSenderRequest.Builder(pendingIntent.getIntentSender()).build());
+            return;
+        }
+
+        remainingLegacyIds.clear();
+        remainingLegacyIds.addAll(ids);
+        processNextLegacyDelete();
+    }
+
+    // Processes remainingLegacyIds synchronously until either the queue drains or one id needs
+    // the user's consent via a RecoverableSecurityException — at which point this suspends
+    // (returns) and resumes from onDeleteRequestResult once that consent is answered, since a
+    // launched IntentSender can't be awaited inline.
+    private void processNextLegacyDelete() {
+        ContentResolver resolver = getContext().getContentResolver();
+        while (!remainingLegacyIds.isEmpty()) {
+            String id = remainingLegacyIds.poll();
+            try {
+                int rows = resolver.delete(photoUri(id), null, null);
+                if (rows > 0) pendingDeletedIds.add(id);
+            } catch (RecoverableSecurityException e) {
+                pendingLegacyRetryId = id;
+                IntentSender sender = e.getUserAction().getActionIntent().getIntentSender();
+                deleteRequestLauncher.launch(new IntentSenderRequest.Builder(sender).build());
+                return;
+            } catch (Exception e) {
+                // Leave this one undeleted and keep going — same "don't fail the whole batch for
+                // one bad id" stance as the malformed-id skip above.
+            }
+        }
+        finishDelete(true);
+    }
+
+    private void onDeleteRequestResult(ActivityResult result) {
+        boolean granted = result.getResultCode() == Activity.RESULT_OK;
+
+        if (pendingBatchIds != null) {
+            List<String> batchIds = pendingBatchIds;
+            pendingBatchIds = null;
+            if (granted) pendingDeletedIds.addAll(batchIds);
+            finishDelete(granted);
+            return;
+        }
+
+        if (pendingLegacyRetryId != null) {
+            String id = pendingLegacyRetryId;
+            pendingLegacyRetryId = null;
+            if (granted) {
+                pendingDeletedIds.add(id);
+                processNextLegacyDelete();
+            } else {
+                // The user denied this one item's consent dialog — stop the chain rather than
+                // silently skipping to the next id, so the JS side can report a clear denial
+                // instead of a partial, unexplained result.
+                remainingLegacyIds.clear();
+                finishDelete(false);
+            }
+        }
+    }
+
+    private void finishDelete(boolean granted) {
+        PluginCall call = pendingDeleteCall;
+        pendingDeleteCall = null;
+        if (call == null) return;
+
+        JSObject result = new JSObject();
+        result.put("granted", granted);
+        JSArray deletedArray = new JSArray();
+        pendingDeletedIds.forEach(deletedArray::put);
+        result.put("deletedIds", deletedArray);
+        call.resolve(result);
+        bridge.releaseCall(call);
+    }
+
+    private static Uri photoUri(String id) {
+        return ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Long.parseLong(id));
     }
 
     // Package-private + static: no PluginCall/Plugin instance involved, so instrumented tests

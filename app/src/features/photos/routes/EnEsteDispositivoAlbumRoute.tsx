@@ -5,8 +5,9 @@ import { PageHeader } from '@/design-system/layouts/PageHeader';
 import { DevicePhotoGalleryContainer } from '@/features/photos/containers/DevicePhotoGalleryContainer';
 import { useDeviceAlbumsStore } from '@/store/useDeviceAlbumsStore';
 
-// One MediaStore folder opened from EnEsteDispositivoRoute's "carpetas" grid — same read-only,
-// API-free boundary as that route. Title falls back to a generic label rather than blocking on
+// One MediaStore folder opened from EnEsteDispositivoRoute's "carpetas" grid — same API-free
+// boundary as that route (single-photo actions like "Borrar de este dispositivo", GitHub issue
+// #86, stay entirely client/native-side). Title falls back to a generic label rather than blocking on
 // re-fetching albums: the album list only lives in memory (useDeviceAlbumsStore), so a deep link
 // or a refresh landing straight here wouldn't have it yet, and the photos below don't need it to
 // load.
