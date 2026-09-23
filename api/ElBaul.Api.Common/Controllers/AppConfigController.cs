@@ -31,7 +31,10 @@ public class AppConfigController(IAppConfiguration appConfiguration, IConfigurat
                 chatEnabled = appConfiguration.ChatEnabled,
                 chatSuggestionsEnabled = appConfiguration.ChatSuggestionsEnabled,
                 sharedLinksEnabled = appConfiguration.SharedLinksEnabled,
-                baulFeedEnabled = appConfiguration.BaulFeedEnabled,
+                // Always true: the baúl feed flag was removed (it will never be disabled again),
+                // but the field stays hardcoded here for backwards compatibility with app builds
+                // that still branch on it.
+                baulFeedEnabled = true,
                 androidAppBannerEnabled = appConfiguration.AndroidAppBannerEnabled,
                 chatMemoryEnabled = appConfiguration.ChatMemoryEnabled,
                 tvModeEnabled = appConfiguration.TvModeEnabled,

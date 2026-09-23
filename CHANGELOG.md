@@ -13,6 +13,10 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Cambiado
+
+- El feed del baúl está ahora siempre disponible, también en las instalaciones autoalojadas de El Baúl.
+
 ### Arreglado
 
 - En el email de resumen semanal de un baúl, ya no aparece repetida la nota que explica por qué se recibe el correo; ahora solo figura una vez, al pie.

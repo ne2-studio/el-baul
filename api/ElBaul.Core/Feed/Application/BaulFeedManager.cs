@@ -8,8 +8,6 @@ using ElBaul.Core.Photos.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
-using Microsoft.Extensions.Logging;
-
 using ElBaul.Domain;
 using ElBaul.Core.Photos.Domain;
 namespace ElBaul.Core.Feed.Application;
@@ -19,7 +17,6 @@ namespace ElBaul.Core.Feed.Application;
 // authorization/DTO-shaping logic. A batch's own photos are fetched separately, via
 // IPhotoReadManager.GetBatchPhotosAsync.
 public class BaulFeedManager(
-    ILogger<BaulFeedManager> logger,
     IRecuerdoManager recuerdoManager,
     IPhotoUploadBatchReadModel photoUploadBatchReadModel,
     IPhotoDtoProjector photoDtoProjector,
@@ -28,19 +25,12 @@ public class BaulFeedManager(
     IPhotoRepository photoRepository,
     CoverUrlResolver coverUrlResolver,
     IBaulFeedCursorRepository feedCursorRepository,
-    IAppConfiguration appConfiguration,
     ICurrentUserProvider currentUserProvider,
     IBaulAuthorizer baulAccess,
     IClock clock) : IBaulFeedManager
 {
     public async Task<Result<FeedPageDto>> GetFeedAsync(BaulId baulId, int skip, int take)
     {
-        if (!appConfiguration.BaulFeedEnabled)
-        {
-            logger.LogWarning("Baul feed rejected: feed is not enabled");
-            return Result.Failure<FeedPageDto>(ApplicationError.Validation("Baul feed is not enabled"));
-        }
-
         var userId = currentUserProvider.GetUserId();
         var auth = await baulAccess.AuthorizeAsync(baulId, userId, AccessLevel.Member, "Baul feed");
         if (auth.IsFailure) return Result.Failure<FeedPageDto>(auth.Error);

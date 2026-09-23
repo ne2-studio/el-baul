@@ -6,7 +6,6 @@ using ElBaul.Core.Moderation;
 using ElBaul.Core.Personas;
 using ElBaul.Core.Photos;
 using ElBaul.Core.Recuerdos;
-using ElBaul.Core.Shared.OutputPorts;
 using Ne2Studio.Common;
 
 using ElBaul.Domain;
@@ -14,10 +13,8 @@ namespace ElBaul.Api.Scope;
 
 // Replaces the client having to make 5-6 separate requests (baúl, chapters, loose photos,
 // recuerdos, personas, removal requests, feed) to paint /baules/:id — see
-// app/src/hooks/useBaulScope.ts for the bug this was written to fix at the root: the client-side
-// version of this needed a bounded retry loop because Features:BaulFeedEnabled could flip on
-// between two of those separate requests. Doing the equivalent check once, server-side, inside a
-// single request makes that race structurally impossible instead of retried around.
+// app/src/hooks/useBaulScope.ts. Doing the equivalent work once, server-side, inside a single
+// request avoids that fan-out entirely.
 //
 // Deliberately lives outside ElBaul.Core: "everything a baúl screen needs" isn't a domain concept
 // any single feature owns, and a Core-level orchestrator would need edges to nearly every
@@ -31,8 +28,7 @@ public class BaulScopeAggregator(
     IRecuerdoManager recuerdoManager,
     IPersonaManager personaManager,
     IRemovalRequestManager removalRequestManager,
-    IBaulFeedManager baulFeedManager,
-    IAppConfiguration appConfiguration)
+    IBaulFeedManager baulFeedManager)
 {
     public async Task<Result<BaulScopeDto>> GetScopeAsync(BaulId baulId, bool includeBaulFeed)
     {
@@ -61,18 +57,14 @@ public class BaulScopeAggregator(
         var removalRequestsResult = await removalRequestManager.GetRemovalRequestsAsync(baulId);
         var removalRequests = removalRequestsResult.IsSuccess ? removalRequestsResult.Value : null;
 
-        // Checked here, once, instead of trusting the caller's includeBaulFeed alone — this is
-        // exactly the read that used to happen in a second, separately-timed request on the
-        // client (see the class doc comment above).
-        var wantsFeed = includeBaulFeed && appConfiguration.BaulFeedEnabled;
-        var baulFeedResult = wantsFeed ? await baulFeedManager.GetFeedAsync(baulId, 0, 20) : (Result<FeedPageDto>?)null;
+        var baulFeedResult = includeBaulFeed ? await baulFeedManager.GetFeedAsync(baulId, 0, 20) : (Result<FeedPageDto>?)null;
         var baulFeed = baulFeedResult is { IsSuccess: true } ? baulFeedResult.Value.Value : null;
 
         // Entering a baúl on ANY tab counts as "seen" for the workspace switcher's novedades dots
         // (see BaulesController.GetAll). GetFeedAsync already advances the current user's cursor
-        // when the feed was included — cover the other entry paths (any non-Recuerdos tab, or the
-        // feature flag being off) here so the dot clears regardless of how the baúl was opened.
-        if (!wantsFeed)
+        // when the feed was included — cover the other entry paths (any non-Recuerdos tab) here
+        // so the dot clears regardless of how the baúl was opened.
+        if (!includeBaulFeed)
             await baulFeedManager.MarkBaulSeenAsync(baulId);
 
         return Result.Success(new BaulScopeDto(

@@ -64,8 +64,7 @@ export async function addBaulRecuerdo(baulId: string, text: string): Promise<voi
 
 const FEED_PAGE_SIZE = 20;
 
-// Feed behind Features:BaulFeedEnabled — recuerdos + photo-upload-batch cards, merged and
-// sorted server-side (see BaulFeedManager). loadBaulRecuerdos above stays the toggle-off path.
+// Recuerdos + photo-upload-batch cards, merged and sorted server-side (see BaulFeedManager).
 // Loads (and replaces) the first page — see loadMoreBaulFeed for subsequent ones.
 export async function loadBaulFeed(baulId: string): Promise<void> {
   const { feedItems, hasMore } = await api.baules.getFeed(baulId, { skip: 0, take: FEED_PAGE_SIZE });

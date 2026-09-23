@@ -5,9 +5,8 @@ namespace ElBaul.Core.Feed;
 public interface IBaulFeedManager
 {
     /// <summary>One page of recuerdo, photo-upload-batch and chapter-created cards for a baúl's
-    /// feed, newest first. Fails with a Validation error while Features:BaulFeedEnabled is off —
-    /// see IAppConfiguration.BaulFeedEnabled. skip/take mirror PhotoManager.GetPageAsync (take is
-    /// clamped server-side).
+    /// feed, newest first. skip/take mirror PhotoManager.GetPageAsync (take is clamped
+    /// server-side).
     ///
     /// A skip of 0 is treated as "the caller just opened this baúl's feed": items are tagged
     /// IsNew against the caller's BaulFeedCursor (everything since their last visit; a first-ever
@@ -20,10 +19,10 @@ public interface IBaulFeedManager
     /// <summary>Advances the current user's BaulFeedCursor for this baúl to "now" — the single,
     /// server-authoritative "the current user has seen everything in this baúl up to now" signal
     /// behind the workspace switcher's novedades dots and the feed's IsNew tags. Unlike
-    /// GetFeedAsync this does NOT require Features:BaulFeedEnabled and never reads/returns the
-    /// feed: it's called on every baúl entry (any tab — see BaulScopeAggregator) and after every
-    /// write that bumps baul.UpdatedAt by its own actor, so a user is never shown their own
-    /// activity as new. Fails only if the user can't access the baúl.</summary>
+    /// GetFeedAsync this never reads/returns the feed: it's called on every baúl entry (any tab —
+    /// see BaulScopeAggregator) and after every write that bumps baul.UpdatedAt by its own actor,
+    /// so a user is never shown their own activity as new. Fails only if the user can't access
+    /// the baúl.</summary>
     Task<Result> MarkBaulSeenAsync(BaulId baulId);
 
     /// <summary>Every baúl the current user has a "last seen" watermark for. Used by

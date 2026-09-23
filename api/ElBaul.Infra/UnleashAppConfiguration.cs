@@ -36,7 +36,6 @@ public class UnleashAppConfiguration(IUnleash unleash, IConfiguration configurat
     public bool ChatEnabled => unleash.IsEnabled("elbaul.chat-enabled");
     public bool ChatSuggestionsEnabled => unleash.IsEnabled("elbaul.chat-suggestions-enabled");
     public bool SharedLinksEnabled => unleash.IsEnabled("elbaul.shared-links-enabled");
-    public bool BaulFeedEnabled => unleash.IsEnabled("elbaul.baul-feed-enabled");
     public bool PushDigestEnabled => unleash.IsEnabled("elbaul.push-digest-enabled");
     public bool ChatMemoryEnabled => unleash.IsEnabled("elbaul.chat-memory-enabled");
     public int ChatMemoryRetrievalLimit => configuration.GetValue("Features:ChatMemoryRetrievalLimit", 5);

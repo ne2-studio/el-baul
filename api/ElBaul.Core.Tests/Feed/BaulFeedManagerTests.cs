@@ -51,27 +51,15 @@ public class BaulFeedManagerTests
                 new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance), _photoStorage),
             new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
 
-    private BaulFeedManager CreateManager(string currentUserId, bool baulFeedEnabled = true) =>
-        new(NullLogger<BaulFeedManager>.Instance, CreateRecuerdoManager(currentUserId),
+    private BaulFeedManager CreateManager(string currentUserId) =>
+        new(CreateRecuerdoManager(currentUserId),
             new InMemoryPhotoUploadBatchReadModel(_fixture.Photos, _fixture.Recuerdos, _fixture.Chapters),
             new PhotoDtoProjector(_photoStorage, _fixture.Recuerdos, _fixture.Clock),
             new AuthorInfoProjector(_fixture.Personas, _fixture.Photos, _photoStorage),
             _fixture.Chapters, _fixture.Photos, new CoverUrlResolver(_photoStorage), _feedCursors,
-            new StaticAppConfiguration(baulFeedEnabled: baulFeedEnabled),
             new StaticCurrentUserProvider(currentUserId),
             new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             _fixture.Clock);
-
-    [Fact]
-    public async Task GetFeedAsync_ShouldFail_WhenFeatureDisabled()
-    {
-        var baulId = await _fixture.CreateBaulAsync();
-        var manager = CreateManager(CustodioId, baulFeedEnabled: false);
-
-        var result = await manager.GetFeedAsync(baulId, 0, 20);
-
-        Assert.True(result.IsFailure);
-    }
 
     [Fact]
     public async Task GetFeedAsync_ShouldDenyAccess_ForUserWithNoRelationToBaul()
@@ -403,19 +391,6 @@ public class BaulFeedManagerTests
         Assert.True(feed.IsSuccess);
         Assert.NotEmpty(feed.Value.Items);
         Assert.All(feed.Value.Items, item => Assert.False(item.IsNew));
-    }
-
-    [Fact]
-    public async Task MarkBaulSeenAsync_ShouldAdvanceTheCursor_EvenWhenTheFeedFeatureIsDisabled()
-    {
-        var baulId = await _fixture.CreateBaulAsync();
-        var manager = CreateManager(CustodioId, baulFeedEnabled: false);
-
-        var result = await manager.MarkBaulSeenAsync(baulId);
-
-        Assert.True(result.IsSuccess);
-        var watermarks = await manager.GetSeenWatermarksAsync();
-        Assert.True(watermarks.ContainsKey(baulId));
     }
 
     [Fact]

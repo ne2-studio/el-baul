@@ -6,7 +6,7 @@ import { AttentionBanner } from '@/design-system/components/feedback/AttentionBa
 import { BlockingLoadingOverlay } from '@/design-system/components/feedback/BlockingLoadingOverlay';
 import { Sparkles } from 'lucide-react';
 import { FeedTab } from '@/features/memories/components/FeedTab';
-import { FeedItem, Photo, PhotoBatch } from '@/types';
+import { Photo, PhotoBatch } from '@/types';
 import { useBaulesStore } from '@/store/useBaulesStore';
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
@@ -29,19 +29,14 @@ interface BaulFeedTabContainerProps {
   onOpenChapter?: (chapterId: string) => void;
 }
 
-// Self-sufficient tab: with Features:BaulFeedEnabled off, reads baulRecuerdos (already
-// preloaded by useBaulScope for every /baules/:baulId route) and shows recuerdo cards only,
-// against the same GET /baules/{baulId}/recuerdos endpoint as before. With the toggle on, it
-// lazily loads and reads the merged baulFeed instead (recuerdos + photo-upload-batch cards,
-// sorted server-side by BaulFeedManager) — a genuinely new endpoint, not just a client-side
-// filter, per the API-conventions "no breaking changes" rule. Either way FeedTab renders the
-// same FeedItem[] shape, so the toggle only decides which source feeds it.
+// Lazily loads and reads the merged baulFeed (recuerdos + photo-upload-batch cards, sorted
+// server-side by BaulFeedManager) — a genuinely new endpoint, not just a client-side filter,
+// per the API-conventions "no breaking changes" rule.
 export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFeedTabContainerProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
-  const { baulRecuerdos, baulFeed, baulFeedHasMore } = useRecuerdosStore();
-  const baulFeedEnabled = useAppConfigStore((state) => state.baulFeedEnabled);
+  const { baulFeed, baulFeedHasMore } = useRecuerdosStore();
   const chatEnabled = useAppConfigStore((state) => state.chatEnabled);
   const sharedLinksEnabled = useAppConfigStore((state) => state.sharedLinksEnabled);
   const { editRecuerdo, shareRecuerdo } = useRecuerdoActions(baulName);
@@ -62,23 +57,19 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
   const [openingPhotoCount, setOpeningPhotoCount] = useState(0);
 
   useEffect(() => {
-    if (auth.isAuthenticated && baulFeedEnabled && !baulFeed[baulId]) {
+    if (auth.isAuthenticated && !baulFeed[baulId]) {
       run(() => loadBaulFeed(baulId), { key: 'baul-feed', errorMessage: 'Error al cargar el feed' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, baulFeedEnabled, baulId, baulFeed]);
+  }, [auth.isAuthenticated, baulId, baulFeed]);
 
-  // isNew: false — the toggle-off fallback has no seen-cursor concept, so nothing is "new".
-  const feedItems: FeedItem[] = baulFeedEnabled
-    ? (baulFeed[baulId] || [])
-    : (baulRecuerdos[baulId] || []).map((recuerdo): FeedItem => ({ type: 'recuerdo', createdAt: recuerdo.createdAt, isNew: false, recuerdo }));
+  const feedItems = baulFeed[baulId] || [];
 
-  // Scroll infinito: solo con el toggle activo — la ruta antigua (baulRecuerdos) sigue sin
-  // paginar, como siempre. 'baul-feed-more' es una key propia (distinta de 'baul-feed', la
-  // carga inicial) para que cargar la siguiente página no dispare el overlay a pantalla
-  // completa, solo el spinner en línea al final de la lista (ver FeedTab).
+  // 'baul-feed-more' es una key propia (distinta de 'baul-feed', la carga inicial) para que
+  // cargar la siguiente página no dispare el overlay a pantalla completa, solo el spinner en
+  // línea al final de la lista (ver FeedTab).
   const handleLoadMore = () => {
-    if (!baulFeedEnabled || !baulFeedHasMore[baulId]) return;
+    if (!baulFeedHasMore[baulId]) return;
     run(() => loadMoreBaulFeed(baulId), { key: 'baul-feed-more', errorMessage: 'Error al cargar más' });
   };
 
@@ -151,8 +142,8 @@ export function BaulFeedTabContainer({ baulId, baulName, onOpenChapter }: BaulFe
         onEditRecuerdo={editRecuerdo}
         onOpenBatchPhoto={handleOpenBatchPhoto}
         onOpenBatchGrid={handleOpenBatchGrid}
-        onLoadMore={baulFeedEnabled ? handleLoadMore : undefined}
-        hasMore={baulFeedEnabled ? (baulFeedHasMore[baulId] ?? false) : false}
+        onLoadMore={handleLoadMore}
+        hasMore={baulFeedHasMore[baulId] ?? false}
         isLoadingMore={isPending('baul-feed-more')}
       />
       <SimpleFAB

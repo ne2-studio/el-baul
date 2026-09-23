@@ -63,6 +63,11 @@ function recuerdo(overrides: Partial<Recuerdo> = {}): Recuerdo {
   } as Recuerdo;
 }
 
+function recuerdoFeedItem(overrides: Partial<Recuerdo> = {}): FeedItem {
+  const r = recuerdo(overrides);
+  return { type: 'recuerdo', createdAt: r.createdAt, isNew: false, recuerdo: r };
+}
+
 function baul(overrides: Partial<Baul> = {}): Baul {
   return {
     id: baulId, name: 'Familia García', chapterCount: 3, lastUpdated: 'hace 2 días',
@@ -107,7 +112,7 @@ function renderContainer() {
 describe('BaulFeedTabContainer', () => {
   beforeEach(() => {
     useRecuerdosStore.setState({ recuerdos: {}, chapterRecuerdos: {}, baulRecuerdos: {}, baulFeed: {}, baulFeedHasMore: {} });
-    useAppConfigStore.setState({ chatEnabled: false, sharedLinksEnabled: false, baulFeedEnabled: false });
+    useAppConfigStore.setState({ chatEnabled: false, sharedLinksEnabled: false });
     useBaulesStore.getState().reset();
     usePersonasStore.getState().reset();
     useUIStore.setState({ dismissedInviteBannerBaulIds: [] });
@@ -119,17 +124,36 @@ describe('BaulFeedTabContainer', () => {
     triggerIntersection = () => {};
   });
 
-  it('renders the recuerdos cached for this baúl', () => {
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+  it('renders the feed cached for this baúl', () => {
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem()] } });
 
     renderContainer();
 
     expect(screen.getByText('Un buen día')).toBeInTheDocument();
   });
 
+  it('does not render from baulRecuerdos even if cached — only from baulFeed', () => {
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo({ text: 'texto viejo' })] } });
+
+    renderContainer();
+
+    expect(screen.queryByText('texto viejo')).not.toBeInTheDocument();
+  });
+
+  it('loads the feed when not yet cached, and skips loading when it is', () => {
+    renderContainer();
+    expect(loadBaulFeed).toHaveBeenCalledWith(baulId);
+
+    vi.mocked(loadBaulFeed).mockClear();
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [] } });
+    renderContainer();
+
+    expect(loadBaulFeed).not.toHaveBeenCalled();
+  });
+
   it('navigates to the persona detail screen on user click', async () => {
     const user = userEvent.setup();
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem()] } });
 
     renderContainer();
     await user.click(screen.getByRole('button', { name: 'Ver perfil de Papá' }));
@@ -140,7 +164,7 @@ describe('BaulFeedTabContainer', () => {
   it('shares a recuerdo through the sharing flow only when links are enabled', async () => {
     const user = userEvent.setup();
     useAppConfigStore.setState({ sharedLinksEnabled: true });
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem()] } });
     vi.mocked(api.recuerdos.createShareLink).mockResolvedValue({ url: 'https://el-baul.app/r/r1', token: 'tok' });
 
     renderContainer();
@@ -151,7 +175,7 @@ describe('BaulFeedTabContainer', () => {
   });
 
   it('does not offer sharing when links are disabled', () => {
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem()] } });
 
     renderContainer();
 
@@ -161,7 +185,7 @@ describe('BaulFeedTabContainer', () => {
   it('navigates to the AI chat via the FAB only when chat is enabled', async () => {
     const user = userEvent.setup();
     useAppConfigStore.setState({ chatEnabled: true });
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem()] } });
 
     renderContainer();
     await user.click(screen.getByRole('button', { name: /recordemos juntos/i }));
@@ -170,7 +194,7 @@ describe('BaulFeedTabContainer', () => {
   });
 
   it('hides the chat FAB when chat is disabled', () => {
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem()] } });
 
     renderContainer();
 
@@ -179,7 +203,7 @@ describe('BaulFeedTabContainer', () => {
 
   it('opens a loose photo directly, without loading chapter photos first', async () => {
     const user = userEvent.setup();
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo({ photoId: 'photo-1', chapterId: undefined })] } });
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem({ photoId: 'photo-1', chapterId: undefined })] } });
 
     renderContainer();
     await user.click(screen.getByRole('button', { name: 'Ver foto' }));
@@ -191,7 +215,7 @@ describe('BaulFeedTabContainer', () => {
   it('loads the chapter photos before opening a photo that belongs to a chapter', async () => {
     const user = userEvent.setup();
     vi.mocked(loadChapterPhotos).mockResolvedValue(undefined);
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo({ photoId: 'photo-1', chapterId: 'chapter-1' })] } });
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem({ photoId: 'photo-1', chapterId: 'chapter-1' })] } });
 
     renderContainer();
     await user.click(screen.getByRole('button', { name: 'Ver foto' }));
@@ -214,10 +238,10 @@ describe('BaulFeedTabContainer', () => {
       return Promise.resolve(undefined);
     });
     useRecuerdosStore.setState({
-      baulRecuerdos: {
+      baulFeed: {
         [baulId]: [
-          recuerdo({ id: 'r1', photoId: 'photo-1', chapterId: 'chapter-1' }),
-          recuerdo({ id: 'r2', photoId: 'photo-1', chapterId: 'chapter-2' }),
+          recuerdoFeedItem({ id: 'r1', photoId: 'photo-1', chapterId: 'chapter-1' }),
+          recuerdoFeedItem({ id: 'r2', photoId: 'photo-1', chapterId: 'chapter-2' }),
         ],
       },
     });
@@ -237,116 +261,79 @@ describe('BaulFeedTabContainer', () => {
     expect(screen.getByText('Visor · capítulo')).toBeInTheDocument();
   });
 
-  // Behind Features:BaulFeedEnabled: the mixed feed (recuerdos + photo-upload-batch cards)
-  // instead of the recuerdos-only endpoint/cache.
-  describe('with baulFeedEnabled on', () => {
-    beforeEach(() => {
-      useAppConfigStore.setState({ baulFeedEnabled: true });
-    });
+  it('renders both recuerdo and photo-batch cards from the merged feed', () => {
+    const feed: FeedItem[] = [
+      { type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo({ text: 'Un recuerdo del feed' }) },
+      { type: 'photo_batch', createdAt: new Date().toISOString(), isNew: false, photoBatch: photoBatch({ userName: 'Tita Loli', photoCount: 6 }) },
+    ];
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: feed } });
 
-    it('does not render from baulRecuerdos even if cached — only from baulFeed', () => {
-      useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo({ text: 'texto viejo' })] } });
+    renderContainer();
 
-      renderContainer();
-
-      expect(screen.queryByText('texto viejo')).not.toBeInTheDocument();
-    });
-
-    it('loads the feed when not yet cached, and skips loading when it is', () => {
-      renderContainer();
-      expect(loadBaulFeed).toHaveBeenCalledWith(baulId);
-
-      vi.mocked(loadBaulFeed).mockClear();
-      useRecuerdosStore.setState({ baulFeed: { [baulId]: [] } });
-      renderContainer();
-
-      expect(loadBaulFeed).not.toHaveBeenCalled();
-    });
-
-    it('renders both recuerdo and photo-batch cards from the merged feed', () => {
-      const feed: FeedItem[] = [
-        { type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo({ text: 'Un recuerdo del feed' }) },
-        { type: 'photo_batch', createdAt: new Date().toISOString(), isNew: false, photoBatch: photoBatch({ userName: 'Tita Loli', photoCount: 6 }) },
-      ];
-      useRecuerdosStore.setState({ baulFeed: { [baulId]: feed } });
-
-      renderContainer();
-
-      expect(screen.getByText('Un recuerdo del feed')).toBeInTheDocument();
-      expect(screen.getByText('Tita Loli')).toBeInTheDocument();
-      expect(screen.getByText('subió 6 fotos', { exact: false })).toBeInTheDocument();
-    });
-
-    it('opens the batch grid from the "y N más" tile', async () => {
-      const user = userEvent.setup();
-      const feed: FeedItem[] = [{
-        type: 'photo_batch',
-        createdAt: new Date().toISOString(),
-        isNew: false,
-        photoBatch: photoBatch({
-          batchId: 'batch-42',
-          photoCount: 10,
-          previewPhotos: [
-            new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false }),
-          ],
-        }),
-      }];
-      useRecuerdosStore.setState({ baulFeed: { [baulId]: feed } });
-
-      renderContainer();
-      await user.click(screen.getByRole('button', { name: 'y 9 más' }));
-
-      expect(screen.getByText('Grid del lote')).toBeInTheDocument();
-    });
-
-    it('opens the batch gallery directly from a preview thumbnail', async () => {
-      const user = userEvent.setup();
-      const feed: FeedItem[] = [{
-        type: 'photo_batch',
-        createdAt: new Date().toISOString(),
-        isNew: false,
-        photoBatch: photoBatch({
-          batchId: 'batch-42',
-          photoCount: 1,
-          previewPhotos: [
-            new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false }),
-          ],
-        }),
-      }];
-      useRecuerdosStore.setState({ baulFeed: { [baulId]: feed } });
-
-      renderContainer();
-      await user.click(screen.getByRole('button', { name: 'Ver foto' }));
-
-      expect(screen.getByText('Visor · lote')).toBeInTheDocument();
-    });
-
-    it('loads the next page when the scroll sentinel intersects and hasMore is true', async () => {
-      stubIntersectionObserver();
-      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo() }];
-      useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: true } });
-
-      renderContainer();
-      act(() => triggerIntersection(true));
-
-      expect(loadMoreBaulFeed).toHaveBeenCalledWith(baulId);
-    });
-
-    it('does not load more once hasMore is false', async () => {
-      stubIntersectionObserver();
-      const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo() }];
-      useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: false } });
-
-      renderContainer();
-      act(() => triggerIntersection(true));
-
-      expect(loadMoreBaulFeed).not.toHaveBeenCalled();
-    });
+    expect(screen.getByText('Un recuerdo del feed')).toBeInTheDocument();
+    expect(screen.getByText('Tita Loli')).toBeInTheDocument();
+    expect(screen.getByText('subió 6 fotos', { exact: false })).toBeInTheDocument();
   });
 
-  it('never offers infinite scroll (no sentinel wired) while the toggle is off', () => {
+  it('opens the batch grid from the "y N más" tile', async () => {
+    const user = userEvent.setup();
+    const feed: FeedItem[] = [{
+      type: 'photo_batch',
+      createdAt: new Date().toISOString(),
+      isNew: false,
+      photoBatch: photoBatch({
+        batchId: 'batch-42',
+        photoCount: 10,
+        previewPhotos: [
+          new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false }),
+        ],
+      }),
+    }];
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: feed } });
+
+    renderContainer();
+    await user.click(screen.getByRole('button', { name: 'y 9 más' }));
+
+    expect(screen.getByText('Grid del lote')).toBeInTheDocument();
+  });
+
+  it('opens the batch gallery directly from a preview thumbnail', async () => {
+    const user = userEvent.setup();
+    const feed: FeedItem[] = [{
+      type: 'photo_batch',
+      createdAt: new Date().toISOString(),
+      isNew: false,
+      photoBatch: photoBatch({
+        batchId: 'batch-42',
+        photoCount: 1,
+        previewPhotos: [
+          new Photo({ id: 'p1', baulId, thumbnailUrl: 't1', fullUrl: 'f1', uploadedBy: 'user-1', createdAt: new Date().toISOString(), recuerdoCount: 0, canDelete: false, canRequestRemoval: true, alreadyExisted: false }),
+        ],
+      }),
+    }];
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: feed } });
+
+    renderContainer();
+    await user.click(screen.getByRole('button', { name: 'Ver foto' }));
+
+    expect(screen.getByText('Visor · lote')).toBeInTheDocument();
+  });
+
+  it('loads the next page when the scroll sentinel intersects and hasMore is true', async () => {
     stubIntersectionObserver();
-    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+    const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo() }];
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: true } });
+
+    renderContainer();
+    act(() => triggerIntersection(true));
+
+    expect(loadMoreBaulFeed).toHaveBeenCalledWith(baulId);
+  });
+
+  it('does not load more once hasMore is false', async () => {
+    stubIntersectionObserver();
+    const feed: FeedItem[] = [{ type: 'recuerdo', createdAt: new Date().toISOString(), isNew: false, recuerdo: recuerdo() }];
+    useRecuerdosStore.setState({ baulFeed: { [baulId]: feed }, baulFeedHasMore: { [baulId]: false } });
 
     renderContainer();
     act(() => triggerIntersection(true));
@@ -357,7 +344,7 @@ describe('BaulFeedTabContainer', () => {
   describe('invite banner', () => {
     beforeEach(() => {
       useBaulesStore.setState({ baules: [baul()] });
-      useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [recuerdo()] } });
+      useRecuerdosStore.setState({ baulFeed: { [baulId]: [recuerdoFeedItem()] } });
     });
 
     it('shows the banner when the role can invite and someone is still pending', () => {

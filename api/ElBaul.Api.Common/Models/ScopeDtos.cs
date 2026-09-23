@@ -12,8 +12,7 @@ namespace ElBaul.Api.Models;
 // why these live outside ElBaul.Core. RemovalRequests is null (not an empty list) when the
 // current user isn't an admin, mirroring the frontend's own canReviewRemovalRequests gate rather
 // than surfacing that as a 403 for a section the screen never asked to show. BaulFeed is null
-// both when the caller didn't ask for it (includeBaulFeed=false) and when Features:BaulFeedEnabled
-// is off — the caller can't tell those apart from this shape alone, same as it couldn't before.
+// when the caller didn't ask for it (includeBaulFeed=false).
 public record BaulScopeDto(
     BaulDto Baul,
     IEnumerable<ChapterDto> Chapters,

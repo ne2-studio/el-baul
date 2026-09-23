@@ -10,9 +10,6 @@ interface AppConfigState {
   chatSuggestionsEnabled: boolean;
   // Defaults to false so public sharing UI only appears after the backend enables the rollout.
   sharedLinksEnabled: boolean;
-  // Defaults to false so the feed keeps using the old recuerdos-only endpoint/card data until
-  // the backend explicitly enables it — see docs/architecture "baúl feed" toggle.
-  baulFeedEnabled: boolean;
   // Defaults to false so the "download the app" overlay (AndroidAppBanner) never flashes
   // visible before the backend confirms the rollout is on.
   androidAppBannerEnabled: boolean;
@@ -56,7 +53,6 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
   chatEnabled: false,
   chatSuggestionsEnabled: false,
   sharedLinksEnabled: false,
-  baulFeedEnabled: false,
   androidAppBannerEnabled: false,
   chatMemoryEnabled: false,
   tvModeEnabled: false,
@@ -75,7 +71,6 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
         chatEnabled: config.features.chatEnabled,
         chatSuggestionsEnabled: config.features.chatSuggestionsEnabled,
         sharedLinksEnabled: config.features.sharedLinksEnabled ?? false,
-        baulFeedEnabled: config.features.baulFeedEnabled ?? false,
         androidAppBannerEnabled: config.features.androidAppBannerEnabled ?? false,
         chatMemoryEnabled: config.features.chatMemoryEnabled ?? false,
         tvModeEnabled: config.features.tvModeEnabled ?? false,

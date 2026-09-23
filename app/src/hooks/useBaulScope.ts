@@ -38,14 +38,10 @@ export function useBaulScope(baulId: string | undefined, options: UseBaulScopeOp
   // canReviewRemovalRequests solo depende de baul.role/isCustodio, ya disponibles en cuanto
   // el propio baúl está en el store — no hace falta esperar a nada más para decidirlo.
   const needsRemovalRequestsScope = getBaulPermissions(baul).canReviewRemovalRequests;
-  // Sin gate propio para baulFeed (a diferencia de la versión anterior de este hook): al llegar
-  // todo en una única respuesta de api.baules.getScope (ver más abajo), chapters/recuerdos/
-  // personas/baulFeed se escriben en el store juntos, en el mismo callback — no hay ningún
-  // instante intermedio en el que unos ya estén y baulFeed todavía no, así que no hace falta
-  // que hasScope lo espere por separado. Antes sí hacía falta porque baulFeed dependía de un
-  // flag (baulFeedEnabled) que llegaba por una petición aparte y podía resolver a mitad de la
-  // carga — ver BaulRoute.baulFeedRace.test.tsx y BaulScopeAggregator (api/) para el porqué esa
-  // carrera ahora se resuelve una única vez, en el servidor, dentro de esta misma petición.
+  // Sin gate propio para baulFeed: al llegar todo en una única respuesta de api.baules.getScope
+  // (ver más abajo), chapters/recuerdos/personas/baulFeed se escriben en el store juntos, en el
+  // mismo callback — no hay ningún instante intermedio en el que unos ya estén y baulFeed
+  // todavía no, así que no hace falta que hasScope lo espere por separado.
   const hasScope = !!baul && !!baulId && !!chapters[baulId] && !!baulRecuerdos[baulId]
     && !!personas[baulId] && (!needsRemovalRequestsScope || !!removalRequests[baulId]);
 
@@ -78,11 +74,7 @@ export function useBaulScope(baulId: string | undefined, options: UseBaulScopeOp
     }
 
     // Una única petición para todo el scope — ver BaulScopeAggregator (api/) para por qué esto
-    // sustituye al Promise.all de 5-6 peticiones sueltas que tenía esta función antes, y por qué
-    // eso era necesario (no solo una optimización) para eliminar de raíz la carrera con
-    // baulFeedEnabled: al resolverse ese flag también en el servidor, dentro de esta misma
-    // petición, no puede quedar "a medias" como sí podía cuando era una llamada aparte en el
-    // cliente.
+    // sustituye al Promise.all de 5-6 peticiones sueltas que tenía esta función antes.
     const scopeResult = await run(
       () => api.baules.getScope(id, options.includeBaulFeed === true),
       { key: `baul-scope:${id}:load`, errorMessage: 'Error al cargar los capítulos del baúl' }
@@ -101,9 +93,7 @@ export function useBaulScope(baulId: string | undefined, options: UseBaulScopeOp
     }));
     useRecuerdosStore.setState((state) => ({
       baulRecuerdos: { ...state.baulRecuerdos, [id]: scope.recuerdos },
-      // Solo se escribe cuando el servidor de verdad lo incluyó (includeBaulFeed pedido y la
-      // feature encendida) — null aquí no distingue entre "no se pidió" y "está apagada", pero
-      // el hook no necesita esa distinción: en ambos casos no hay nada que escribir.
+      // Solo se escribe cuando el servidor de verdad lo incluyó (includeBaulFeed pedido).
       ...(scope.baulFeed && {
         baulFeed: { ...state.baulFeed, [id]: scope.baulFeed.feedItems },
         baulFeedHasMore: { ...state.baulFeedHasMore, [id]: scope.baulFeed.hasMore },

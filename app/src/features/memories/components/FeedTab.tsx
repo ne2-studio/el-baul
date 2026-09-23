@@ -16,13 +16,12 @@ interface FeedTabProps {
   onShareRecuerdo?: (recuerdo: Recuerdo) => void;
   onEditRecuerdo?: (recuerdo: Recuerdo, text: string) => Promise<boolean> | boolean | void;
   /** Abre la galería directamente en esa foto, acotada al lote. Solo hace falta cuando el
-   * feed incluye tarjetas de subida (toggle Features:BaulFeedEnabled activo). */
+   * feed incluye tarjetas de subida. */
   onOpenBatchPhoto?: (batch: PhotoBatch, photo: Photo) => void;
   /** Abre la grid propia del lote — solo alcanzable cuando hay más fotos que las del collage. */
   onOpenBatchGrid?: (batch: PhotoBatch) => void;
   /** Scroll infinito: si se pasa, se pinta un sentinel al final de la lista que dispara esta
-   * función al entrar en el viewport, mientras hasMore sea true — solo tiene sentido con el
-   * toggle activo, ya que la ruta antigua (recuerdos sin paginar) no pasa estas props. */
+   * función al entrar en el viewport, mientras hasMore sea true. */
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;

@@ -23,7 +23,6 @@ public interface IPhotoReadManager
     Task<Result<PhotoDto?>> GetMemorySuggestionAsync(BaulId baulId);
 
     /// <summary>Every active photo in one upload batch, chronologically ascending — backs the
-    /// batch's own grid/gallery reached from a feed card. Fails with a Validation error while
-    /// Features:BaulFeedEnabled is off — see IAppConfiguration.BaulFeedEnabled.</summary>
+    /// batch's own grid/gallery reached from a feed card.</summary>
     Task<Result<IEnumerable<PhotoDto>>> GetBatchPhotosAsync(BaulId baulId, Guid batchId);
 }

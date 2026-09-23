@@ -19,7 +19,6 @@ public class AppConfiguration(IConfiguration configuration) : IAppConfiguration
     public bool ChatEnabled => configuration.GetValue<bool>("Features:ChatEnabled");
     public bool ChatSuggestionsEnabled => configuration.GetValue<bool>("Features:ChatSuggestionsEnabled");
     public bool SharedLinksEnabled => configuration.GetValue<bool>("Features:SharedLinksEnabled");
-    public bool BaulFeedEnabled => configuration.GetValue<bool>("Features:BaulFeedEnabled");
     public bool PushDigestEnabled => configuration.GetValue<bool>("Features:PushDigestEnabled");
     public bool ChatMemoryEnabled => configuration.GetValue<bool>("Features:ChatMemoryEnabled");
     public int ChatMemoryRetrievalLimit => configuration.GetValue("Features:ChatMemoryRetrievalLimit", 5);
