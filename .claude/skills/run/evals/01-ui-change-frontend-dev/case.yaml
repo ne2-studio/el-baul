@@ -1,4 +1,0 @@
-schema_version: "1.1"
-name: 01-ui-change-frontend-dev
-context:
-  scaffold_script: fixture.sh

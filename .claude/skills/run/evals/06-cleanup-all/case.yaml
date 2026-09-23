@@ -1,4 +1,0 @@
-schema_version: "1.1"
-name: 06-cleanup-all
-context:
-  scaffold_script: fixture.sh
