@@ -552,12 +552,18 @@ public class PhotoManagerTests
         var result = await manager.AddToBaulAsync(sourcePhotoId, targetBaulId);
 
         Assert.True(result.IsSuccess);
+        var sourcePhoto = await _fixture.Photos.GetByIdAsync(sourcePhotoId);
         var newPhoto = await _fixture.Photos.GetByIdAsync(new PhotoId(Guid.Parse(result.Value.Id)));
         // TakenAt is the one deliberate exception — copied as a convenience initial value.
         Assert.Equal(date, newPhoto!.TakenAt);
         Assert.Null(newPhoto.ChapterId);
         Assert.Null(newPhoto.ClientUploadId);
-        Assert.Null(newPhoto.UploadBatchId);
+        // UploadBatchId IS set, unlike every other baúl-specific field above — issue #81: a
+        // photo added to another baúl still needs a "photo added" feed card there. But it's a
+        // fresh id of its own (a batch of one), never the source photo's own batch, which
+        // belongs to a different action in a different baúl.
+        Assert.NotNull(newPhoto.UploadBatchId);
+        Assert.NotEqual(sourcePhoto!.UploadBatchId, newPhoto.UploadBatchId);
         Assert.Equal(PhotoStatus.Active, newPhoto.Status);
         Assert.NotEqual(default, newPhoto.CreatedAt);
     }
@@ -684,12 +690,18 @@ public class PhotoManagerTests
         var result = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
 
         Assert.True(result.IsSuccess);
+        var sourcePhoto = await _fixture.Photos.GetByIdAsync(sourcePhotoId);
         var newPhoto = await _fixture.Photos.GetActiveByAssetIdAsync(targetBaulId, assetId);
         // TakenAt is the one deliberate exception — copied as a convenience initial value.
         Assert.Equal(date, newPhoto!.TakenAt);
         Assert.Null(newPhoto.ChapterId);
         Assert.Null(newPhoto.ClientUploadId);
-        Assert.Null(newPhoto.UploadBatchId);
+        // UploadBatchId IS set, unlike every other baúl-specific field above — issue #81: a
+        // photo added from Mis fotos still needs a "photo added" feed card there. But it's a
+        // fresh id of its own (a batch of one) unless the caller shares one across a multi-select
+        // (see AddAssetsToBaulBatchAsync), never the source photo's own batch.
+        Assert.NotNull(newPhoto.UploadBatchId);
+        Assert.NotEqual(sourcePhoto!.UploadBatchId, newPhoto.UploadBatchId);
         Assert.Equal(PhotoStatus.Active, newPhoto.Status);
         Assert.NotEqual(default, newPhoto.CreatedAt);
     }
@@ -1762,6 +1774,28 @@ public class PhotoManagerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Count());
         Assert.Equal(2, (await _fixture.Photos.GetActiveByBaulIdAsync(targetBaulId)).Count());
+    }
+
+    // Issue #81: several assets added together in one multi-select must share a single
+    // UploadBatchId, so the target baúl's feed groups them into one "photo batch" card instead
+    // of one per asset — see Photo.CreateFromExistingAsset's doc comment.
+    [Fact]
+    public async Task AddAssetsToBaulBatchAsync_GivesEveryAddedPhoto_TheSameUploadBatchId()
+    {
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var manager = CreateManager(CustodioId);
+        var uploadA = await manager.UploadToMyPhotosAsync(new MemoryStream([9, 9, 9]), new ClientUploadId(Guid.NewGuid()));
+        var uploadB = await manager.UploadToMyPhotosAsync(new MemoryStream([10, 10, 10]), new ClientUploadId(Guid.NewGuid()));
+        var assetA = new PhotoAssetId(Guid.Parse(uploadA.Value.Id));
+        var assetB = new PhotoAssetId(Guid.Parse(uploadB.Value.Id));
+
+        var result = await manager.AddAssetsToBaulBatchAsync([assetA, assetB], targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        var photos = await _fixture.Photos.GetActiveByBaulIdAsync(targetBaulId);
+        Assert.Equal(2, photos.Count());
+        Assert.All(photos, p => Assert.NotNull(p.UploadBatchId));
+        Assert.Single(photos.Select(p => p.UploadBatchId).Distinct());
     }
 
     [Fact]

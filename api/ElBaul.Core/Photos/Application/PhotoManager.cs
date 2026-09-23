@@ -203,8 +203,13 @@ public class PhotoManager(
         if (targetAuth.IsFailure) return Result.Failure<PhotoDto>(targetAuth.Error);
 
         var now = clock.UtcNow();
+        // A fresh UploadBatchId (batch of one) — see Photo.CreateFromExistingAsset's doc
+        // comment on why this photo needs one of its own to ever show up in the target baúl's
+        // feed (issue #81). No multi-select entry point calls this method yet, so every call
+        // here is its own standalone batch.
         var newPhoto = Photo.CreateFromExistingAsset(
-            new PhotoId(idGenerator.NewId()), targetBaulId, sourcePhoto.PhotoAsset, sourcePhoto.TakenAt, userId, now);
+            new PhotoId(idGenerator.NewId()), targetBaulId, sourcePhoto.PhotoAsset, sourcePhoto.TakenAt, userId, now,
+            uploadBatchId: idGenerator.NewId());
 
         var (resultPhoto, isNew) = await AddExistingAssetAsync(newPhoto, targetBaulId, sourcePhoto.PhotoAssetId);
 
@@ -229,7 +234,13 @@ public class PhotoManager(
     // shows a PhotoAsset with no baúl of its own. Instead the caller must be the asset's
     // original uploader — the same rule MyPhotosReadManager uses to decide what belongs in Mis
     // fotos at all — never PhotoAsset access mediated by some other baúl's Photo.
-    public async Task<Result<BaulAppearanceDto>> AddAssetToBaulAsync(PhotoAssetId assetId, BaulId targetBaulId)
+    // uploadBatchId lets AddAssetsToBaulBatchAsync below pass one shared id across several
+    // assets added together in one Mis fotos multi-select, so they render as a single grouped
+    // feed card (issue #81) instead of one card per asset. Left null (and a fresh one generated
+    // below) by every other caller, i.e. the controller's single-asset endpoint — see
+    // Photo.CreateFromExistingAsset's doc comment.
+    public async Task<Result<BaulAppearanceDto>> AddAssetToBaulAsync(
+        PhotoAssetId assetId, BaulId targetBaulId, Guid? uploadBatchId = null)
     {
         var userId = currentUserProvider.GetUserId();
         var assetResult = await EntityLookup.ResolveAsync(
@@ -266,7 +277,8 @@ public class PhotoManager(
 
         var now = clock.UtcNow();
         var newPhoto = Photo.CreateFromExistingAsset(
-            new PhotoId(idGenerator.NewId()), targetBaulId, asset, originatingPhoto?.TakenAt, userId, now);
+            new PhotoId(idGenerator.NewId()), targetBaulId, asset, originatingPhoto?.TakenAt, userId, now,
+            uploadBatchId: uploadBatchId ?? idGenerator.NewId());
 
         var (resultPhoto, isNew) = await AddExistingAssetAsync(newPhoto, targetBaulId, assetId);
 
@@ -566,10 +578,15 @@ public class PhotoManager(
     public async Task<Result<IEnumerable<BaulAppearanceDto>>> AddAssetsToBaulBatchAsync(
         IEnumerable<PhotoAssetId> assetIds, BaulId targetBaulId)
     {
+        // Every asset added together in this one action shares a single UploadBatchId (issue
+        // #81), so the target baúl's feed renders one grouped "photo batch" card instead of one
+        // per asset — same as a multi-photo upload does today.
+        var uploadBatchId = idGenerator.NewId();
+
         var appearances = new List<BaulAppearanceDto>();
         foreach (var assetId in assetIds.Distinct())
         {
-            var result = await AddAssetToBaulAsync(assetId, targetBaulId);
+            var result = await AddAssetToBaulAsync(assetId, targetBaulId, uploadBatchId);
             if (result.IsSuccess)
             {
                 appearances.Add(result.Value);

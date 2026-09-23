@@ -9,6 +9,7 @@ using ElBaul.Tests.Fakes;
 using ElBaul.Tests.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using ElBaul.Domain;
 namespace ElBaul.Tests;
 
 public class BaulFeedManagerTests
@@ -28,6 +29,27 @@ public class BaulFeedManagerTests
             new StaticCurrentUserProvider(currentUserId), _photoStorage,
             new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
             new AuthorInfoProjector(_fixture.Personas, _fixture.Photos, _photoStorage), new FakeUnitOfWork());
+
+    // Mirrors PhotoManagerTests.CreateManager — needed here to exercise AddToBaulAsync/
+    // AddAssetToBaulAsync/AddAssetsToBaulBatchAsync through the real PhotoManager and observe
+    // their effect on the feed, which is where issue #81 (missing feed card for photos added
+    // from Mis fotos / another baúl) is actually observable.
+    private PhotoManager CreatePhotoManager(string currentUserId) =>
+        new(NullLogger<PhotoManager>.Instance, _fixture.Photos, _fixture.Chapters,
+            new StaticCurrentUserProvider(currentUserId),
+            new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance),
+            new PhotoLifecycleService(_fixture.Photos, _fixture.ChapterPhotoCountListener, _fixture.BaulPhotoCoverListener, _fixture.Clock),
+            new PhotoDtoProjector(_photoStorage, _fixture.Recuerdos, _fixture.Clock),
+            new PhotoUploadWorkflow(
+                NullLogger<PhotoUploadWorkflow>.Instance, _fixture.Photos,
+                new PhotoFileService(
+                    NullLogger<PhotoFileService>.Instance, _photoStorage, new StaticIdGenerator(Guid.NewGuid()),
+                    new FakePhotoDateExtractor(), new FakePhotoImageNormalizer(), new FakeImageProcessor(), new ImagePolicy()),
+                new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork()),
+            new MyPhotosReadManager(
+                _fixture.Photos, new StaticCurrentUserProvider(currentUserId),
+                new BaulAccessService(_fixture.Baules, _fixture.Personas, NullLogger<BaulAccessService>.Instance), _photoStorage),
+            new StaticIdGenerator(Guid.NewGuid()), _fixture.Clock, new FakeUnitOfWork());
 
     private BaulFeedManager CreateManager(string currentUserId, bool baulFeedEnabled = true) =>
         new(NullLogger<BaulFeedManager>.Instance, CreateRecuerdoManager(currentUserId),
@@ -95,6 +117,73 @@ public class BaulFeedManagerTests
         Assert.Equal(2, items[2].PhotoBatch!.PhotoCount);
         Assert.Equal(batchId.ToString(), items[2].PhotoBatch!.BatchId);
         Assert.Equal(chapterId.ToString(), items[2].PhotoBatch!.ChapterId);
+    }
+
+    // GitHub issue #81: publishing a photo from "Mis fotos" (or from another baúl) into a baúl
+    // never showed up in that baúl's feed, because CreateFromExistingAsset never set
+    // UploadBatchId and GetFeedAsync only surfaces photos that have one (via
+    // IPhotoUploadBatchReadModel).
+    [Fact]
+    public async Task GetFeedAsync_ShouldShowAPhotoBatchCard_ForAPhotoAddedFromMisFotos()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var otherBaulId = await _fixture.CreateBaulAsync("Otro");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(otherBaulId, uploadedBy: CustodioId);
+        var assetId = new PhotoAssetId(sourcePhotoId.Value);
+
+        var photoManager = CreatePhotoManager(CustodioId);
+        var addResult = await photoManager.AddAssetToBaulAsync(assetId, baulId);
+        Assert.True(addResult.IsSuccess);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetFeedAsync(baulId, 0, 20);
+
+        Assert.True(result.IsSuccess);
+        var batchItem = Assert.Single(result.Value.Items, i => i.Type == "photo_batch");
+        Assert.Equal(1, batchItem.PhotoBatch!.PhotoCount);
+    }
+
+    // Same root cause, baúl-to-baúl flow (PhotoManager.AddToBaulAsync, issue #62 Slice 2).
+    [Fact]
+    public async Task GetFeedAsync_ShouldShowAPhotoBatchCard_ForAPhotoAddedFromAnotherBaul()
+    {
+        var sourceBaulId = await _fixture.CreateBaulAsync("Origen");
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+        var sourcePhotoId = await _fixture.AddPhotoAsync(sourceBaulId, uploadedBy: CustodioId);
+
+        var photoManager = CreatePhotoManager(CustodioId);
+        var addResult = await photoManager.AddToBaulAsync(sourcePhotoId, targetBaulId);
+        Assert.True(addResult.IsSuccess);
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetFeedAsync(targetBaulId, 0, 20);
+
+        Assert.True(result.IsSuccess);
+        var batchItem = Assert.Single(result.Value.Items, i => i.Type == "photo_batch");
+        Assert.Equal(1, batchItem.PhotoBatch!.PhotoCount);
+    }
+
+    // Several assets added together in one Mis fotos multi-select must render as a single
+    // grouped card, sharing one UploadBatchId — same grouping a multi-photo upload gets today.
+    [Fact]
+    public async Task GetFeedAsync_ShouldGroupAssetsAddedTogetherFromMisFotos_IntoOneBatchCard()
+    {
+        var baulId = await _fixture.CreateBaulAsync();
+        var otherBaulId = await _fixture.CreateBaulAsync("Otro");
+        var assetIdA = new PhotoAssetId((await _fixture.AddPhotoAsync(otherBaulId, uploadedBy: CustodioId)).Value);
+        var assetIdB = new PhotoAssetId((await _fixture.AddPhotoAsync(otherBaulId, uploadedBy: CustodioId)).Value);
+
+        var photoManager = CreatePhotoManager(CustodioId);
+        var batchResult = await photoManager.AddAssetsToBaulBatchAsync([assetIdA, assetIdB], baulId);
+        Assert.True(batchResult.IsSuccess);
+        Assert.Equal(2, batchResult.Value.Count());
+
+        var manager = CreateManager(CustodioId);
+        var result = await manager.GetFeedAsync(baulId, 0, 20);
+
+        Assert.True(result.IsSuccess);
+        var batchItem = Assert.Single(result.Value.Items, i => i.Type == "photo_batch");
+        Assert.Equal(2, batchItem.PhotoBatch!.PhotoCount);
     }
 
     [Fact]
