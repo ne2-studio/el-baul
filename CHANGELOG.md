@@ -13,6 +13,10 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ## [No publicado]
 
+### Arreglado
+
+- En el email de resumen semanal de un baúl, ya no aparece repetida la nota que explica por qué se recibe el correo; ahora solo figura una vez, al pie.
+
 ## [beta-v0.5.0] - 2026-09-22
 
 ### Añadido

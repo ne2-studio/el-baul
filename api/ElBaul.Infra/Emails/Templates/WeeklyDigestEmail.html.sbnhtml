@@ -21,9 +21,5 @@
 <p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">{{ "Todavía no tienes ningún baúl. Crea el tuyo para empezar a guardar fotos y recuerdos con tu familia." | html.escape }}</p>
 {{~ end ~}}
 {{ include "Button.html" url: primary_cta_url label: primary_cta_label margin_top: "16px" }}
-<p style="margin:28px 0 0 0;font-size:12px;line-height:1.5;color:#8a7a6d;">
-  Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de
-  email desde la <a href="{{ notification_settings_url | html.escape }}" style="color:#8a7a6d;">configuración de notificaciones</a>.
-</p>
 {{~ end ~}}
 {{ include "Layout.html" }}

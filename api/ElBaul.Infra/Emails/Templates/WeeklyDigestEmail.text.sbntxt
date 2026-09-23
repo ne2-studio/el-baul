@@ -21,7 +21,4 @@ Todavía no tienes ningún baúl. Crea el tuyo para empezar a guardar fotos y re
 {{~ end ~}}
 
 {{ primary_cta_label }}: {{ primary_cta_url }}
-
-Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de
-email desde la configuración de notificaciones: {{ notification_settings_url }}
 {{ include "Footer.text" footer: footer notification_settings_url: notification_settings_url }}

@@ -105,7 +105,21 @@ public class WeeklyDigestTemplateRendererTests
         var result = _renderer.RenderWeeklyDigest(EmptyModel(true));
 
         Assert.Contains("https://el-baul.test/perfil", result.Html);
-        Assert.Contains("configuración de notificaciones", WebUtility.HtmlDecode(result.Html));
+        Assert.Contains("Preferencias de notificación", WebUtility.HtmlDecode(result.Html));
         Assert.Contains("https://el-baul.test/perfil", result.PlainText);
+    }
+
+    [Fact]
+    public void RenderWeeklyDigest_ShouldNotDuplicateTheWhyYouReceiveThisEmailNoteInTheBody()
+    {
+        var result = _renderer.RenderWeeklyDigest(EmptyModel(true));
+        const string BodyOnlyReceivesNote = "Recibes este resumen porque formas parte de El Baúl";
+
+        // The shared footer already explains why the user receives the email and links to
+        // notification preferences; the digest body must not repeat its own version of that note.
+        Assert.DoesNotContain(BodyOnlyReceivesNote, WebUtility.HtmlDecode(result.Html));
+        Assert.DoesNotContain(BodyOnlyReceivesNote, result.PlainText);
+        Assert.Contains("Preferencias de notificación", WebUtility.HtmlDecode(result.Html));
+        Assert.Contains("Preferencias de notificación", result.PlainText);
     }
 }

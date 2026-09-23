@@ -33,10 +33,6 @@
                 </tr>
               </table>
               
-              <p style="margin:28px 0 0 0;font-size:12px;line-height:1.5;color:#8a7a6d;">
-                Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de
-                email desde la <a href="https://el-baul.test/perfil" style="color:#8a7a6d;">configuración de notificaciones</a>.
-              </p>
 
             </td>
           </tr>
@@ -75,9 +71,6 @@ Esto es lo que ha pasado esta semana en tus baúles:
 - <img src=x onerror=alert(1)>: https://el-baul.test/capitulos/1
 
 Añadir un recuerdo: https://el-baul.test/cta
-
-Recibes este resumen porque formas parte de El Baúl. Puedes cambiar tus preferencias de
-email desde la configuración de notificaciones: https://el-baul.test/perfil
 
 El Baúl
 
