@@ -7,13 +7,16 @@ import { PhotoViewerMenuItem } from '@/features/photos/components/PhotoViewerHea
 import { PhotoAsset } from '@/types';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBaulesStore } from '@/store/useBaulesStore';
+import { useMyPhotosStore } from '@/store/useMyPhotosStore';
 import { addPhotoAssetToBaul } from '@/features/photos/useCases/sharing';
 import { removeFromMyPhotos } from '@/features/photos/useCases/personalCollection';
 
 interface UseMyPhotoViewerActionsOptions {
   photo: PhotoAsset;
-  /** Se invoca tras quitar la foto de Mis fotos con éxito, para cerrar el visor (el asset ya no
-   * aparece en esta galería) — mismo patrón que onDeleted en usePhotoViewerActions. */
+  /** Se invoca cuando el asset deja de estar en la galería cargada — tras quitarlo de Mis fotos,
+   * o tras añadirlo a un baúl estando en "Sin compartir" (GitHub issue #80: deja de estar sin
+   * compartir, así que useMyPhotosStore lo descarta) — para cerrar el visor, mismo patrón que
+   * onDeleted en usePhotoViewerActions. */
   onRemoved: () => void;
 }
 
@@ -64,9 +67,15 @@ export function useMyPhotoViewerActions({ photo, onRemoved }: UseMyPhotoViewerAc
     setIsAddingToBaul(false);
     if (result.ok) {
       posthog.capture('photo_added_to_baul', { source: 'mis_fotos' });
-      // Cierra solo el modal, no el visor: el usuario puede querer añadir esta misma foto a
-      // otro baúl más (ver punto 7 del ticket) — "Aparece en" ya se actualizó vía el store.
       setShowAddToBaulModal(false);
+      if (useMyPhotosStore.getState().filter === 'sin-compartir') {
+        // La foto acaba de dejar de estar "sin compartir": addPhotoAssetToBaul ya la sacó de
+        // useMyPhotosStore (GitHub issue #80), así que el visor no tiene nada que seguir
+        // mostrando — cierra/navega fuera, igual que "Quitar de Mis fotos".
+        onRemoved();
+      }
+      // En "Todas" se queda abierto: el usuario puede querer añadir esta misma foto a otro baúl
+      // más (ver punto 7 del ticket) — "Aparece en" ya se actualizó vía el store.
     }
   };
 

@@ -31,7 +31,9 @@ export interface MyPhotosState {
 
   // Patches one asset's "Aparece en" list after "Añadir a otro baúl" (docs/.backlog issue #62,
   // Slice 2 — Mis fotos wiring) — a no-op if the appearance is already there, mirroring the
-  // backend's own idempotency instead of trusting the caller never to double-add.
+  // backend's own idempotency instead of trusting the caller never to double-add. On "Sin
+  // compartir" (GitHub issue #80) the asset is dropped from the loaded list instead, since it's
+  // no longer unshared — same effect as removeAssets.
   addBaulAppearance: (assetId: string, appearance: BaulAppearance) => void;
 
   // "Quitar de Mis fotos" (Slice 5, docs/.backlog issue #62) — drops the given assets from the
@@ -56,12 +58,22 @@ export const useMyPhotosStore = create<MyPhotosState>((set) => ({
 
   prependUploaded: (assets) => set((state) => (state.assets === undefined ? state : { assets: [...assets, ...state.assets] })),
 
-  addBaulAppearance: (assetId, appearance) => set((state) => ({
-    assets: state.assets?.map((asset) => {
-      if (asset.id !== assetId || asset.baules.some((b) => b.baulId === appearance.baulId)) return asset;
-      return { ...asset, baules: [...asset.baules, appearance] };
-    }),
-  })),
+  addBaulAppearance: (assetId, appearance) => set((state) => {
+    const asset = state.assets?.find((a) => a.id === assetId);
+    if (!asset || asset.baules.some((b) => b.baulId === appearance.baulId)) return {};
+
+    // On "Sin compartir" the asset is no longer unshared once it gains a baúl appearance, so it
+    // must drop out of the loaded list immediately (GitHub issue #80) — same effect as
+    // removeAssets for "Quitar de Mis fotos". On "Todas" the asset stays visible, just with the
+    // new appearance merged in.
+    if (state.filter === 'sin-compartir') {
+      return { assets: state.assets?.filter((a) => a.id !== assetId) };
+    }
+
+    return {
+      assets: state.assets?.map((a) => (a.id === assetId ? { ...a, baules: [...a.baules, appearance] } : a)),
+    };
+  }),
 
   removeAssets: (assetIds) => set((state) => (
     state.assets === undefined ? state : { assets: state.assets.filter((asset) => !assetIds.includes(asset.id)) }

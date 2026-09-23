@@ -16,6 +16,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 ### Arreglado
 
 - En el email de resumen semanal de un baúl, ya no aparece repetida la nota que explica por qué se recibe el correo; ahora solo figura una vez, al pie.
+- En "Mis fotos" > "Sin compartir", al añadir una o varias fotos a un baúl ahora desaparecen inmediatamente de ese filtro, ya que dejan de estar sin compartir. Si se añade desde el visor de una sola foto, este se cierra automáticamente en ese caso.
 
 ## [beta-v0.5.0] - 2026-09-22
 
