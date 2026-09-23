@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ElBaul.Core\ElBaul.Core.csproj" />
     <ProjectReference Include="..\ElBaul.Infra\ElBaul.Infra.csproj" />
     <ProjectReference Include="..\ElBaul.Api.Common\ElBaul.Api.Common.csproj" />

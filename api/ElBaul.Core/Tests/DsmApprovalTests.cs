@@ -22,8 +22,8 @@ public class DsmApprovalTests
     public void CoreDependencyGraph_MatchesApprovedSnapshot()
     {
         var repoRoot = RepositoryRoot();
-        var snapshotPath = Path.Combine(repoRoot, "api", "ElBaul.Core.Tests", "CoreDsm.snapshot.json");
-        var receivedPath = Path.Combine(repoRoot, "api", "ElBaul.Core.Tests", "CoreDsm.received.json");
+        var snapshotPath = Path.Combine(repoRoot, "api", "ElBaul.Core", "Tests", "CoreDsm.snapshot.json");
+        var receivedPath = Path.Combine(repoRoot, "api", "ElBaul.Core", "Tests", "CoreDsm.received.json");
         var docsPath = Path.Combine(repoRoot, "docs", "architecture", "core-dsm.md");
 
         var dsm = DsmGenerator.Generate();

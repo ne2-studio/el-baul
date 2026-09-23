@@ -13,6 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Runner bootstraps config via WebApplication.CreateBuilder (see
          MaintenanceCommandRunner.cs) purely for its appsettings/ASPNETCORE_ENVIRONMENT/env
          var resolution — same reason ElBaul.Infra declares this despite being otherwise a

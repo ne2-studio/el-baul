@@ -16,4 +16,10 @@
     <ProjectReference Include="..\..\lib\Ne2Studio.Common\Ne2Studio.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+
 </Project>

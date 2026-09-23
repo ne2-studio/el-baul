@@ -40,7 +40,7 @@ Run verification from the repository root through `./scripts/verify`:
   Most state-bearing fakes live in `ElBaul.Infra.Lite` (`InMemory*Repository` and related
   collaborators) — they're the same classes that back `el-baul-api-lite`, so a unit test and the
   lite image can never quietly disagree on what a fake does. Test-local fakes live under
-  `ElBaul.Core.Tests/Fakes` for deterministic ports such as storage, clocks, IDs, and external
+  `ElBaul.Core/Tests/Fakes` for deterministic ports such as storage, clocks, IDs, and external
   services.
 - **`lib/Ne2Studio.Common.Tests`** — unit tests for `Ne2Studio.Common` itself (`Result`/
   `ApplicationError`), kept in their own project since `Ne2Studio.Common` has no dependency on
@@ -71,7 +71,7 @@ Run verification from the repository root through `./scripts/verify`:
   behavior a fake would let through.
 
   Run with `./scripts/verify backend-persistence`. See
-  `api/ElBaul.Infra.PersistenceTests/README.md`.
+  `api/ElBaul.Infra/PersistenceTests/README.md`.
 - **`api/acceptance-tests/`** — a separate solution (excluded from `ElBaul.slnx` — plain
   `dotnet test` does not run it). Black-box acceptance tests for the *built Docker image*, run
   via Testcontainers against a real Postgres + MinIO + fake-oidc stack: no `ProjectReference` to

@@ -35,7 +35,7 @@ public static class DsmGenerator
     public static Dsm Generate()
     {
         var files = Directory.EnumerateFiles(CoreSourceRoot, "*.cs", SearchOption.AllDirectories)
-            .Where(f => !IsBuildOutput(f));
+            .Where(f => !IsExcludedFromScan(f));
 
         // (from, to) -> strongest kind seen (Deep wins over Public if both occur)
         var edgeKinds = new Dictionary<(string From, string To), ImportKind>();
@@ -155,10 +155,12 @@ public static class DsmGenerator
             .ToList();
     }
 
-    private static bool IsBuildOutput(string path)
+    // Excludes build output and the co-located Tests/ project — ElBaul.Core/Tests now lives
+    // under CoreSourceRoot, but the DSM is a picture of production code only.
+    private static bool IsExcludedFromScan(string path)
     {
         var segments = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        return segments.Contains("bin") || segments.Contains("obj");
+        return segments.Contains("bin") || segments.Contains("obj") || segments.Contains("Tests");
     }
 
     // Resolves ElBaul.Core's source directory relative to this file rather than the process's
@@ -166,9 +168,9 @@ public static class DsmGenerator
     private static string ResolveCoreSourceRoot([CallerFilePath] string here = "")
     {
         var testsProjectDir = Path.GetDirectoryName(here)!;
-        var coreProjectDir = Path.GetFullPath(Path.Combine(testsProjectDir, "..", "ElBaul.Core"));
-        if (!Directory.Exists(coreProjectDir))
-            throw new DirectoryNotFoundException($"Expected ElBaul.Core next to ElBaul.Core.Tests, not found at {coreProjectDir}");
+        var coreProjectDir = Path.GetFullPath(Path.Combine(testsProjectDir, ".."));
+        if (!Directory.Exists(coreProjectDir) || !File.Exists(Path.Combine(coreProjectDir, "ElBaul.Core.csproj")))
+            throw new DirectoryNotFoundException($"Expected ElBaul.Core.csproj one level above ElBaul.Core/Tests, not found at {coreProjectDir}");
 
         return coreProjectDir;
     }

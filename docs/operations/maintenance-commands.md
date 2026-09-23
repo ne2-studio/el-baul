@@ -25,7 +25,7 @@ run that first, always.
    `0` if everything succeeded, non-zero otherwise. The runner already handles hosting, config,
    logging, and an unhandled exception around the whole call — a command only needs the
    per-item loop.
-4. Add unit tests in `api/ElBaul.Maintenance.Tests/` covering dry-run behavior, the write path,
+4. Add unit tests in `api/ElBaul.Maintenance/Tests/` covering dry-run behavior, the write path,
    and failure handling for the new command.
 5. Document what the command does, whether it's safe to re-run, and any deploy-order gate it
    creates (e.g. "must reach zero remaining candidates before deploying migration X") in that
@@ -34,7 +34,7 @@ run that first, always.
 
 ## Testing commands
 
-Maintenance command unit tests live in `api/ElBaul.Maintenance.Tests/` and are included in
+Maintenance command unit tests live in `api/ElBaul.Maintenance/Tests/` and are included in
 `api/ElBaul.slnx`, so the normal backend verification command runs them:
 
 ```bash

@@ -19,6 +19,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <Compile Remove="PersistenceTests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <EmbeddedResource Remove="PersistenceTests\**" />
+    <None Remove="Tests\**" />
+    <None Remove="PersistenceTests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="4.0.102.2" />
     <PackageReference Include="FirebaseAdmin" Version="3.6.0" />
     <PackageReference Include="Hangfire.Core" Version="1.8.24" />
