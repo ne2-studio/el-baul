@@ -87,6 +87,7 @@ jobs:
           image: el-baul-api-lite:ci
           context: api
           dockerfile: api/ElBaul.Api.Lite/Dockerfile
+          build-contexts: lib=lib/Ne2Studio.Common
           cache-scope: api-lite
 
       - name: Verify packaged admin

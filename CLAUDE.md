@@ -13,6 +13,7 @@ app/android/ # Capacitor Android shell
 app/ios/     # Capacitor iPhone shell
 admin/       # Internal administration React application
 e2e-tests/   # Whole-repo Playwright e2e suite
+lib/         # Standalone supporting libraries, not part of any one service
 ```
 
 ## Documentation

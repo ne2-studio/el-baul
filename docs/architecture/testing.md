@@ -5,7 +5,7 @@ Choose the smallest test that can detect the failure.
 | Change | Primary verification |
 |---|---|
 | Backend application/domain logic | `api/ElBaul.Core.Tests` (unit, fake-first, NSubstitute for narrow seams) |
-| `Ne2Studio.Common` vocabulary (`Result`/`ApplicationError`) | `api/Ne2Studio.Common.Tests` |
+| `Ne2Studio.Common` vocabulary (`Result`/`ApplicationError`) | `lib/Ne2Studio.Common.Tests` |
 | Backend infra-layer logic (URL building, middleware) | `api/ElBaul.Infra.Tests` |
 | Backend controller/authorization concerns | `api/ElBaul.Api.Tests` |
 | Backend maintenance command logic | `api/ElBaul.Maintenance.Tests` |
@@ -42,7 +42,7 @@ Run verification from the repository root through `./scripts/verify`:
   lite image can never quietly disagree on what a fake does. Test-local fakes live under
   `ElBaul.Core.Tests/Fakes` for deterministic ports such as storage, clocks, IDs, and external
   services.
-- **`Ne2Studio.Common.Tests`** — unit tests for `Ne2Studio.Common` itself (`Result`/
+- **`lib/Ne2Studio.Common.Tests`** — unit tests for `Ne2Studio.Common` itself (`Result`/
   `ApplicationError`), kept in their own project since `Ne2Studio.Common` has no dependency on
   `ElBaul.Core` and shouldn't gain one just to be tested.
 - Use **NSubstitute** only for narrow cases where a full fake would add noise: injecting a

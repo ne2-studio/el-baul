@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ne2Studio.Common\Ne2Studio.Common.csproj" />
+    <ProjectReference Include="..\..\lib\Ne2Studio.Common\Ne2Studio.Common.csproj" />
   </ItemGroup>
 
 </Project>

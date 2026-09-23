@@ -124,6 +124,8 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
+      additional_contexts:
+        - lib=./lib/Ne2Studio.Common
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=elbaul;Username=devuser;Password=devpass"

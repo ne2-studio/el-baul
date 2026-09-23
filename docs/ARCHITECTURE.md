@@ -19,6 +19,8 @@ them:
 - `admin/` — React operations backoffice
 - `imgproxy/` — image transformation service
 - `e2e-tests/` — whole-system Playwright smoke tests
+- `lib/` — standalone supporting libraries, not part of any one service (currently
+  `Ne2Studio.Common`, referenced by `api/`)
 
 El Baúl is a private, shared photo archive: a **baúl** (trunk) is a family archive owned by a
 **custodio** (custodian), containing **chapters** (capítulos), each holding **photos**. A baúl is

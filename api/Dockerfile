@@ -6,10 +6,18 @@ COPY ["ElBaul.Api/ElBaul.Api.csproj", "ElBaul.Api/"]
 COPY ["ElBaul.Core/ElBaul.Core.csproj", "ElBaul.Core/"]
 COPY ["ElBaul.Infra/ElBaul.Infra.csproj", "ElBaul.Infra/"]
 COPY ["ElBaul.Maintenance/ElBaul.Maintenance.csproj", "ElBaul.Maintenance/"]
+# Ne2Studio.Common lives outside the api/ build context (lib/), so it's brought in from a
+# named build context instead of the default one — an explicit seam to repoint if it ever
+# moves to its own repo or a NuGet feed, rather than widening this image's context to the
+# whole monorepo.
+COPY --from=lib ["Ne2Studio.Common.csproj", "/lib/Ne2Studio.Common/"]
 RUN dotnet restore "ElBaul.Api/ElBaul.Api.csproj"
 
 # Copy the rest of the code
 COPY . .
+# Ne2Studio.Common is a flat source directory (no subfolders) — copied by extension so
+# this doesn't also pick up any local bin/obj a host dotnet build left behind.
+COPY --from=lib ["*.cs", "/lib/Ne2Studio.Common/"]
 
 # Build and publish
 RUN dotnet publish "ElBaul.Api/ElBaul.Api.csproj" -c Release -o /app/publish

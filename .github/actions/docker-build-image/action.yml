@@ -15,6 +15,13 @@ inputs:
   cache-scope:
     description: Cache scope key. Keeps unrelated images from colliding in the shared GHA cache.
     required: true
+  build-contexts:
+    description: |
+      Optional extra named build contexts (docker/build-push-action's build-contexts input,
+      one "name=path" per line) for Dockerfiles that COPY --from=<name> a directory outside
+      their primary context.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -27,6 +34,7 @@ runs:
       with:
         context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile }}
+        build-contexts: ${{ inputs.build-contexts }}
         tags: ${{ inputs.image }}
         load: true
         push: false
