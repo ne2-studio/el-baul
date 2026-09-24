@@ -127,5 +127,5 @@ jobs:
         uses: ./.github/actions/deploy-coolify
         with:
           service: admin
-          webhook: ${{ secrets.COOLIFY_WEBHOOK_ADMIN }}
+          webhook: ${{ vars.COOLIFY_WEBHOOK_ADMIN }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}

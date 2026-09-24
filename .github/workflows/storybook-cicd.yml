@@ -78,5 +78,5 @@ jobs:
         uses: ./.github/actions/deploy-coolify
         with:
           service: storybook
-          webhook: ${{ secrets.COOLIFY_WEBHOOK_STORYBOOK }}
+          webhook: ${{ vars.COOLIFY_WEBHOOK_STORYBOOK }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}

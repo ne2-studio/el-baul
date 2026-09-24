@@ -93,5 +93,5 @@ jobs:
         uses: ./.github/actions/deploy-coolify
         with:
           service: backend
-          webhook: ${{ secrets.COOLIFY_WEBHOOK_BACKEND }}
+          webhook: ${{ vars.COOLIFY_WEBHOOK_BACKEND }}
           token: ${{ secrets.COOLIFY_API_TOKEN }}
