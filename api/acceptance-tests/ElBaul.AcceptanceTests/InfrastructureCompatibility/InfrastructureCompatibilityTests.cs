@@ -49,7 +49,10 @@ public class InfrastructureCompatibilityTests(ElBaulAcceptanceFixture fixture)
         // backend already created this bucket itself on startup (IPhotoStorage.
         // EnsureBucketExistsAsync), this only confirms that from outside, over the network,
         // the same way an operator checking MinIO directly would.
-        await using var mc = new ContainerBuilder("quay.io/minio/mc")
+        // The minimal (non-dev) chainguard/minio-client image ships no shell or coreutils, so
+        // the "tail -f /dev/null" keep-alive trick below needs the -dev variant, which pairs
+        // the mc binary with a busybox ash shell.
+        await using var mc = new ContainerBuilder("cgr.dev/chainguard/minio-client:latest-dev")
             .WithNetwork(fixture.Network)
             .WithEntrypoint("tail", "-f", "/dev/null")
             .Build();
