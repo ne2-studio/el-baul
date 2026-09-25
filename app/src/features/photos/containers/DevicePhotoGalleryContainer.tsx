@@ -19,17 +19,30 @@ interface DevicePhotoGalleryContainerProps {
   /** Scopes the grid to one MediaStore bucket (see the "carpetas" grid this is opened from).
    * Undefined keeps the original flat, all-photos behavior. */
   albumId?: string;
+  /** Selection-mode props mirror MyPhotosGalleryContainer's own shape (GitHub issue #88): the
+   * header (icon/counter) and the batch action bar both need this state, so it lives one level
+   * up in EnEsteDispositivoAlbumRoute — same reasoning as MisFotosRoute keeping it inline instead
+   * of inside this container. Selection is deliberately scoped to whatever's already loaded on
+   * screen (this container's own infinite scroll) — no cross-page selection, same as Mis fotos. */
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onLongPress?: (id: string) => void;
 }
 
 // Self-sufficient (see the containers/ rule in docs/architecture/frontend.md): "En este
 // dispositivo"'s own gallery — a projection of the Android photo library (see this route's own
-// boundary note). Deliberately has no filter pills, no upload FAB, and no selection here: none
-// of those make sense for assets that don't exist in El Baúl yet (that's the entire point of
-// this being a sibling of "Mis fotos", not a filter inside it) — selection/batch actions land in
-// #88. Opening a photo (DevicePhotoViewerContainer) does allow the single-photo "Borrar de este
-// dispositivo" action (GitHub issue #86), so this grid is no longer strictly read-only end to
-// end, even though the grid itself still has no per-item affordances of its own.
-export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryContainerProps) {
+// boundary note). Deliberately has no filter pills and no upload FAB: neither makes sense for
+// assets that don't exist in El Baúl yet (that's the entire point of this being a sibling of
+// "Mis fotos", not a filter inside it). Multi-selection (GitHub issue #88) reuses PhotoSwimlanes'
+// existing selection primitives, same as MyPhotosGalleryContainer — batching the same two
+// single-photo actions the viewer already offered (issues #86/#87), never anything new. Opening
+// a photo (DevicePhotoViewerContainer) still allows those same single-photo actions, so this grid
+// is no longer strictly read-only end to end, even though the grid itself has no other per-item
+// affordances of its own.
+export function DevicePhotoGalleryContainer({
+  albumId, selectionMode = false, selectedIds, onToggleSelect, onLongPress,
+}: DevicePhotoGalleryContainerProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
@@ -133,7 +146,15 @@ export function DevicePhotoGalleryContainer({ albumId }: DevicePhotoGalleryConta
 
   return (
     <>
-      <PhotoSwimlanes<DevicePhoto> photos={photos} onSelectPhoto={handleSelectPhoto} order="desc" />
+      <PhotoSwimlanes<DevicePhoto>
+        photos={photos}
+        onSelectPhoto={handleSelectPhoto}
+        order="desc"
+        selectionMode={selectionMode}
+        selectedIds={selectedIds}
+        onToggleSelect={onToggleSelect}
+        onLongPress={onLongPress}
+      />
       <div ref={sentinelRef} className="h-1" />
       {isPending('device-photos-more') && <LoadingSpinner size="sm" />}
     </>

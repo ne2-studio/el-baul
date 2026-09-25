@@ -148,4 +148,34 @@ describe('DevicePhotoGalleryContainer', () => {
     expect(img).toHaveAttribute('src', expect.stringContaining('from-album-2'));
     expect(useDevicePhotosStore.getState().photos?.[0].id).toBe('from-album-2');
   });
+
+  // Multi-selection (GitHub issue #88) reuses PhotoSwimlanes' existing selection primitives —
+  // same selectionMode/selectedIds/onToggleSelect shape MyPhotosGalleryContainer already has.
+  it('toggles selection instead of opening the viewer while in selection mode', async () => {
+    useDevicePhotosStore.setState({ permission: 'granted', photos: [photo('p1')], hasMore: false, loadedAlbumId: 'album-1' });
+    const onToggleSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={['/en-este-dispositivo/album-1']}>
+        <Routes>
+          <Route
+            path="/en-este-dispositivo/:albumId"
+            element={
+              <DevicePhotoGalleryContainer
+                albumId="album-1"
+                selectionMode
+                selectedIds={new Set()}
+                onToggleSelect={onToggleSelect}
+                onLongPress={vi.fn()}
+              />
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+    await user.click(await screen.findByAltText('Foto'));
+
+    expect(onToggleSelect).toHaveBeenCalledWith('p1');
+  });
 });
