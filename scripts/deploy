@@ -42,7 +42,7 @@ trigger_deploy() {
   local token="$2"
 
   local response
-  response=$(curl -f -sS -X GET "$webhook" -H "Authorization: Bearer $token") \
+  response=$(curl -f -sS -X POST "$webhook" -H "Authorization: Bearer $token") \
     || die "failed to call Coolify webhook"
   echo "$response" >&2
 
