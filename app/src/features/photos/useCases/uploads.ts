@@ -165,6 +165,11 @@ export async function uploadDevicePhotosToMyPhotos(photos: DevicePhoto[]): Promi
   const uploadable: UploadItem[] = [];
 
   for (const photo of photos) {
+    // clientUploadId must be a GUID (backend-enforced, see api/ElBaul.Core/Domain/Ids.cs), so it's
+    // generated here independently of photo.id, which is Android MediaStore's row _ID (a plain
+    // integer string) and not a valid GUID. photo.id itself is left untouched for its other uses
+    // below (DevicePhotos.getOriginalPhoto, Sentry tagging).
+    const clientUploadId = crypto.randomUUID();
     try {
       const original = await DevicePhotos.getOriginalPhoto({ id: photo.id });
       const webPath = Capacitor.convertFileSrc(original.uri);
@@ -179,13 +184,13 @@ export async function uploadDevicePhotosToMyPhotos(photos: DevicePhoto[]): Promi
       }
 
       const file = new File([blob], `device-photo-${photo.id}`, { type: original.mimeType });
-      uploadable.push({ clientUploadId: photo.id, uploadBatchId, file });
+      uploadable.push({ clientUploadId, uploadBatchId, file });
     } catch (error) {
       Sentry.captureException(error, {
         tags: { phase: 'read-device-photo-original' },
         extra: { id: photo.id },
       });
-      results.push({ clientUploadId: photo.id, error: 'No se pudo leer la foto original (puede que ya no esté disponible)' });
+      results.push({ clientUploadId, error: 'No se pudo leer la foto original (puede que ya no esté disponible)' });
     }
   }
 

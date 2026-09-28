@@ -368,7 +368,10 @@ describe('photos useCases uploads', () => {
 
       expect(DevicePhotos.getOriginalPhoto).toHaveBeenCalledWith({ id: 'p1' });
       expect(fetch).toHaveBeenCalledWith('capacitor://localhost/_capacitor_file_/originals/p1.jpg');
-      expect(results).toEqual([{ clientUploadId: 'p1', asset: asset1 }]);
+      // clientUploadId must be a client-generated GUID (backend-enforced), never the device's
+      // MediaStore row id, which is a plain integer string.
+      expect(results).toEqual([{ clientUploadId: expect.any(String), asset: asset1 }]);
+      expect(results[0].clientUploadId).not.toBe('p1');
       expect(useMyPhotosStore.getState().assets).toEqual([asset1]);
     });
 
@@ -382,8 +385,8 @@ describe('photos useCases uploads', () => {
 
       const results = await uploadDevicePhotosToMyPhotos([devicePhoto('p1'), devicePhoto('p2')]);
 
-      expect(results[0]).toEqual({ clientUploadId: 'p1', error: expect.any(String) });
-      expect(results[1]).toEqual({ clientUploadId: 'p2', asset: asset2 });
+      expect(results[0]).toEqual({ clientUploadId: expect.any(String), error: expect.any(String) });
+      expect(results[1]).toEqual({ clientUploadId: expect.any(String), asset: asset2 });
       expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
         tags: { phase: 'read-device-photo-original' },
         extra: { id: 'p1' },
@@ -397,7 +400,7 @@ describe('photos useCases uploads', () => {
 
       const results = await uploadDevicePhotosToMyPhotos([devicePhoto('p1')]);
 
-      expect(results).toEqual([{ clientUploadId: 'p1', error: expect.any(String) }]);
+      expect(results).toEqual([{ clientUploadId: expect.any(String), error: expect.any(String) }]);
       expect(api.myPhotos.upload).not.toHaveBeenCalled();
     });
   });
