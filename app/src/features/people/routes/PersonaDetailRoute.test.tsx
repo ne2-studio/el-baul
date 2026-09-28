@@ -152,3 +152,46 @@ describe('PersonaDetailRoute Hero badge and subtext', () => {
     expect(screen.getByText('Sin acceso')).toBeInTheDocument();
   });
 });
+
+describe('PersonaDetailRoute Familia tab badge count', () => {
+  beforeEach(() => {
+    useRecuerdosStore.setState({ baulRecuerdos: { [baulId]: [] } });
+    useAppConfigStore.setState({ biografiaEnabled: false });
+    vi.clearAllMocks();
+  });
+
+  // Regression for #95: the badge used to only count direct parent/child edges to personaId,
+  // missing siblings (children of the same parent, not a direct edge to personaId) and the
+  // spouse (a separate PersonaSpouseRelationship collection) — disagreeing with the sub-tree
+  // rendered by PersonaFamiliaTabContainer, which scopes to parents ∪ siblings ∪ children ∪
+  // spouse. Here that scope is 4 relatives (1 parent + 1 sibling + 1 child + 1 spouse).
+  it('counts siblings and the spouse alongside parents and children', () => {
+    usePersonasStore.setState({
+      personas: {
+        [baulId]: [
+          persona(),
+          { id: 'parent-1', baulId, nickname: 'Padre', status: 'active', role: 'colaborador', isCustodio: false, invitedDate: 'hace 1 día' } as Persona,
+          { id: 'sibling-1', baulId, nickname: 'Hermana', status: 'active', role: 'colaborador', isCustodio: false, invitedDate: 'hace 1 día' } as Persona,
+          { id: 'child-1', baulId, nickname: 'Hijo', status: 'active', role: 'colaborador', isCustodio: false, invitedDate: 'hace 1 día' } as Persona,
+          { id: 'spouse-1', baulId, nickname: 'Cónyuge', status: 'active', role: 'colaborador', isCustodio: false, invitedDate: 'hace 1 día' } as Persona,
+        ],
+      },
+      personaPhotos: { [personaId]: [] },
+      relationships: {
+        [baulId]: [
+          { parentId: 'parent-1', childId: personaId },
+          { parentId: 'parent-1', childId: 'sibling-1' },
+          { parentId: personaId, childId: 'child-1' },
+        ],
+      },
+      spouseRelationships: {
+        [baulId]: [{ personaId1: personaId, personaId2: 'spouse-1' }],
+      },
+    });
+
+    renderRoute();
+
+    const familiaTab = screen.getByRole('button', { name: /Familia/ });
+    expect(familiaTab).toHaveTextContent('4');
+  });
+});

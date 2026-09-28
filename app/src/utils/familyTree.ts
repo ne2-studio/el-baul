@@ -134,24 +134,23 @@ export function buildFamilyTree(
 }
 
 /**
- * Narrow projection for a persona's own "Familia" tab: just personaId, their parents, their
- * siblings (the other children of those same parents), and their children — never grandparents,
- * grandchildren, nieces/nephews, or their children's other parent. Not the whole branch they
- * belong to, deliberately: this is meant to answer "who is this person's immediate family",
- * not "show me their entire family tree" (that's what the baúl-wide Árbol genealógico is for).
- * Laying it out is just buildFamilyTree again, but over this trimmed-down persona/relationship
- * subset — which also means a couple's children still end up centred between them, etc., same
- * as the full tree. Returns an empty tree when personaId has no relationships at all.
+ * The "immediate family" scope for a persona's own "Familia" tab: personaId itself, their
+ * parents, their siblings (the other children of those same parents), their children, and their
+ * spouse — never grandparents, grandchildren, nieces/nephews, or their children's other parent.
+ * Shared by buildPersonaFamilyTree (to lay out the sub-tree) and by callers that just need the
+ * count of relatives without building a tree (e.g. the Familia tab badge — see
+ * PersonaDetailRoute) so both always agree on who counts as "family" here. Returns a set
+ * containing only personaId when they have no relationships at all, or an empty set when
+ * personaId isn't in `personas`.
  */
-export function buildPersonaFamilyTree(
+export function personaFamilyScopeIds(
   personas: Persona[],
   relationships: PersonaRelationship[],
   personaId: string,
   spouseRelationships: PersonaSpouseRelationship[] = []
-): FamilyTree {
+): Set<string> {
   const personaById = new Map(personas.map((p) => [p.id, p]));
-  const emptyTree: FamilyTree = { nodes: [], edges: [], spouseEdges: [], generationCount: 0, slotCount: 0 };
-  if (!personaById.has(personaId)) return emptyTree;
+  if (!personaById.has(personaId)) return new Set();
 
   const validEdges = relationships.filter(
     (r) => personaById.has(r.parentId) && personaById.has(r.childId) && r.parentId !== r.childId
@@ -168,8 +167,36 @@ export function buildPersonaFamilyTree(
   const spouseId = validSpouseEdges.find((e) => e.personaId1 === personaId || e.personaId2 === personaId);
   const spouseIds = new Set<string>(spouseId ? [spouseId.personaId1 === personaId ? spouseId.personaId2 : spouseId.personaId1] : []);
 
-  const scopeIds = new Set<string>([personaId, ...parentIds, ...siblingIds, ...childIds, ...spouseIds]);
-  if (scopeIds.size === 1) return emptyTree;
+  return new Set<string>([personaId, ...parentIds, ...siblingIds, ...childIds, ...spouseIds]);
+}
+
+/**
+ * Narrow projection for a persona's own "Familia" tab: just personaId, their parents, their
+ * siblings (the other children of those same parents), and their children — never grandparents,
+ * grandchildren, nieces/nephews, or their children's other parent. Not the whole branch they
+ * belong to, deliberately: this is meant to answer "who is this person's immediate family",
+ * not "show me their entire family tree" (that's what the baúl-wide Árbol genealógico is for).
+ * Laying it out is just buildFamilyTree again, but over this trimmed-down persona/relationship
+ * subset — which also means a couple's children still end up centred between them, etc., same
+ * as the full tree. Returns an empty tree when personaId has no relationships at all.
+ */
+export function buildPersonaFamilyTree(
+  personas: Persona[],
+  relationships: PersonaRelationship[],
+  personaId: string,
+  spouseRelationships: PersonaSpouseRelationship[] = []
+): FamilyTree {
+  const emptyTree: FamilyTree = { nodes: [], edges: [], spouseEdges: [], generationCount: 0, slotCount: 0 };
+  const scopeIds = personaFamilyScopeIds(personas, relationships, personaId, spouseRelationships);
+  if (scopeIds.size <= 1) return emptyTree;
+
+  const personaById = new Map(personas.map((p) => [p.id, p]));
+  const validEdges = relationships.filter(
+    (r) => personaById.has(r.parentId) && personaById.has(r.childId) && r.parentId !== r.childId
+  );
+  const validSpouseEdges = spouseRelationships.filter(
+    (r) => personaById.has(r.personaId1) && personaById.has(r.personaId2) && r.personaId1 !== r.personaId2
+  );
 
   const scopedPersonas = personas.filter((p) => scopeIds.has(p.id));
   const scopedRelationships = validEdges.filter((e) => scopeIds.has(e.parentId) && scopeIds.has(e.childId));

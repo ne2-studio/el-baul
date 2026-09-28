@@ -19,6 +19,7 @@ import { openPhotoViewer, photoViewerPath } from '@/features/photos/viewerNaviga
 import { usePersonasStore } from '@/store/usePersonasStore';
 import { useRecuerdosStore } from '@/store/useRecuerdosStore';
 import { useAppConfigStore } from '@/store/useAppConfigStore';
+import { personaFamilyScopeIds } from '@/utils/familyTree';
 
 // PersonaDetailRoute ensambla el chrome (PageHeader/Hero/Tabbar) directamente y compone las
 // pestañas fotos/recuerdos/familia/biografía como containers autosuficientes — no hay un componente "shell"
@@ -54,15 +55,28 @@ export const PersonaDetailRoute: React.FC = () => {
   // Mismo filtro que PersonaRecuerdosTabContainer (recuerdos de las fotos en las que esta
   // persona está etiquetada) solo para el badge de recuento del Tabbar — igual que el badge de
   // Fotos ya recalcula `photos` desde el store en vez de que el container se lo devuelva.
-  const { personaPhotos, relationships } = usePersonasStore();
+  const { personas, personaPhotos, relationships, spouseRelationships } = usePersonasStore();
   const { baulRecuerdos } = useRecuerdosStore();
   const taggedPhotoIds = new Set(personaId ? personaPhotos[personaId] : undefined);
   const recuerdosCount = ((baulId && baulRecuerdos[baulId]) || []).filter(
     (recuerdo) => !!recuerdo.photoId && taggedPhotoIds.has(recuerdo.photoId)
   ).length;
-  const familiaCount = ((baulId && relationships[baulId]) || []).filter(
-    (relationship) => relationship.parentId === personaId || relationship.childId === personaId
-  ).length;
+  // Same "immediate family" scope as the sub-tree rendered by PersonaFamiliaTabContainer
+  // (parents ∪ siblings ∪ children ∪ spouse, via buildPersonaFamilyTree) so the badge count and
+  // the number of cards shown never disagree — see ticket #95. -1 excludes personaId itself,
+  // since the tree draws one extra card for the focus persona that isn't one of their own
+  // "familiares".
+  const familiaCount = personaId
+    ? Math.max(
+        0,
+        personaFamilyScopeIds(
+          (baulId && personas[baulId]) || [],
+          (baulId && relationships[baulId]) || [],
+          personaId,
+          (baulId && spouseRelationships[baulId]) || []
+        ).size - 1
+      )
+    : 0;
 
   if (isLoading) return <FullScreenLoading message="Abriendo ficha..." />;
 
