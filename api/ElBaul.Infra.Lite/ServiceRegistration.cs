@@ -76,6 +76,7 @@ public static class ServiceRegistration
 
         services.AddSingleton<IPhotoStorage, LitePhotoStorage>();
         services.AddSingleton<IEmailSender, FakeEmailSender>();
+        services.AddSingleton<INewsletterSubscriber, FakeNewsletterSubscriber>();
         services.AddSingleton<IPushNotificationSender, FakePushNotificationSender>();
         services.AddSingleton<IBackgroundJobScheduler, FakeBackgroundJobScheduler>();
         services.AddSingleton<IAiChatBackend, FakeAiChatBackend>();

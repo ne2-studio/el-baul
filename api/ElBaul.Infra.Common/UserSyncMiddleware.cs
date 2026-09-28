@@ -1,4 +1,5 @@
 using ElBaul.Domain;
+using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 using ElBaul.Core.Users.Domain;
@@ -29,6 +30,7 @@ public class UserSyncMiddleware(RequestDelegate next)
         HttpContext context,
         IUserRepository userRepository,
         IUserInfoClient userInfoClient,
+        INewsletterSubscriber newsletterSubscriber,
         IClock clock,
         ILogger<UserSyncMiddleware> logger)
     {
@@ -47,6 +49,24 @@ public class UserSyncMiddleware(RequestDelegate next)
                     {
                         var (nombre, apellidos) = PersonNameNormalizer.Split(userInfo.Name);
                         await userRepository.UpsertAsync(new User(userId.Value, userInfo.Email, nombre, apellidos, clock.UtcNow()));
+
+                        // Newsletter subscription must never block/fail the login flow — a user
+                        // only ever gets their first non-empty email once, so this can't
+                        // double-subscribe on subsequent requests. Failures are logged and
+                        // swallowed by the subscriber itself (see ResendNewsletterSubscriber);
+                        // this catch is a last-resort guard against anything unexpected.
+                        try
+                        {
+                            var subscribeResult = await newsletterSubscriber.SubscribeAsync(userInfo.Email, nombre);
+                            if (subscribeResult.IsFailure)
+                            {
+                                logger.LogWarning("Newsletter subscription failed for {Sub}: {Error}", sub, subscribeResult.Error.Message);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Newsletter subscription threw for {Sub}", sub);
+                        }
                     }
                     else
                     {

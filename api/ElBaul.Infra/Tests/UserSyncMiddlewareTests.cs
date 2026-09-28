@@ -1,9 +1,11 @@
 using ElBaul.Core.Users.Domain;
 using ElBaul.Domain;
+using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
 using ElBaul.Core.Users.OutputPorts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Ne2Studio.Common;
 using NSubstitute;
 using System.Security.Claims;
 
@@ -13,17 +15,19 @@ public class UserSyncMiddlewareTests
 {
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IUserInfoClient _userInfoClient = Substitute.For<IUserInfoClient>();
+    private readonly INewsletterSubscriber _newsletterSubscriber = Substitute.For<INewsletterSubscriber>();
     private readonly IClock _clock = Substitute.For<IClock>();
     private readonly UserSyncMiddleware _middleware;
 
     public UserSyncMiddlewareTests()
     {
         _clock.UtcNow().Returns(new DateTime(2026, 7, 13, 0, 0, 0, DateTimeKind.Utc));
+        _newsletterSubscriber.SubscribeAsync(Arg.Any<string>(), Arg.Any<string?>()).Returns(Result.Success());
         _middleware = new UserSyncMiddleware(_ => Task.CompletedTask);
     }
 
     private async Task InvokeAsync(HttpContext context) =>
-        await _middleware.InvokeAsync(context, _userRepository, _userInfoClient, _clock, Substitute.For<ILogger<UserSyncMiddleware>>());
+        await _middleware.InvokeAsync(context, _userRepository, _userInfoClient, _newsletterSubscriber, _clock, Substitute.For<ILogger<UserSyncMiddleware>>());
 
     private static HttpContext BuildContext(string sub, string? bearerToken = null)
     {
@@ -49,6 +53,7 @@ public class UserSyncMiddlewareTests
         await _userInfoClient.Received(1).GetUserInfoAsync("the-access-token");
         await _userRepository.Received(1).UpsertAsync(Arg.Is<User>(u =>
             u.Id == new UserId("user-1") && u.Email == "fetched@test.local" && u.Nombre == "Fetched" && u.Apellidos == "Name"));
+        await _newsletterSubscriber.Received(1).SubscribeAsync("fetched@test.local", "Fetched");
     }
 
     [Fact]
@@ -61,6 +66,7 @@ public class UserSyncMiddlewareTests
 
         await _userInfoClient.DidNotReceive().GetUserInfoAsync(Arg.Any<string>());
         await _userRepository.DidNotReceive().UpsertAsync(Arg.Any<User>());
+        await _newsletterSubscriber.DidNotReceive().SubscribeAsync(Arg.Any<string>(), Arg.Any<string?>());
     }
 
     [Fact]
@@ -78,6 +84,23 @@ public class UserSyncMiddlewareTests
         await _userInfoClient.Received(1).GetUserInfoAsync("the-access-token");
         await _userRepository.Received(1).UpsertAsync(Arg.Is<User>(u =>
             u.Id == new UserId("user-2") && u.Email == "resynced@test.local" && u.Nombre == "Resynced" && u.Apellidos == "Name"));
+        await _newsletterSubscriber.Received(1).SubscribeAsync("resynced@test.local", "Resynced");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldNotThrow_WhenNewsletterSubscriptionFails()
+    {
+        // Newsletter subscription must never block/fail the login flow — a failed or throwing
+        // subscribe call is logged and swallowed, never propagated to the caller.
+        var context = BuildContext("user-8", bearerToken: "the-access-token");
+        _userRepository.GetByIdAsync(new UserId("user-8")).Returns((User?)null);
+        _userInfoClient.GetUserInfoAsync("the-access-token").Returns(new UserInfo("fetched@test.local", "Fetched Name"));
+        _newsletterSubscriber.SubscribeAsync(Arg.Any<string>(), Arg.Any<string?>())
+            .Returns<Task<Result>>(_ => throw new HttpRequestException("boom"));
+
+        await InvokeAsync(context);
+
+        await _userRepository.Received(1).UpsertAsync(Arg.Any<User>());
     }
 
     [Fact]

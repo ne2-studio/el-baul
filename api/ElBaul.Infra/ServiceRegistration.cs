@@ -164,6 +164,18 @@ public static class ServiceRegistration
             services.AddScoped<IEmailSender, LoggingEmailSender>();
         }
 
+        // Newsletter subscription only makes sense once there's both an audience to add
+        // contacts to and a key to call Resend with; otherwise fall back to a no-op so
+        // UserSyncMiddleware's call is always safe to make unconditionally.
+        if (!string.IsNullOrEmpty(configuration["Resend:ApiKey"]) && !string.IsNullOrEmpty(configuration["Resend:NewsletterAudienceId"]))
+        {
+            services.AddHttpClient<INewsletterSubscriber, ResendNewsletterSubscriber>();
+        }
+        else
+        {
+            services.AddScoped<INewsletterSubscriber, NoOpNewsletterSubscriber>();
+        }
+
         services.Configure<FirebaseOptions>(configuration.GetSection("Firebase"));
         if (!string.IsNullOrEmpty(configuration["Firebase:ServiceAccountJson"]))
         {
