@@ -170,6 +170,69 @@ describe('PhotoViewerContainer', () => {
     expect(screen.getByText('Guardada en Mis fotos')).toBeInTheDocument();
   });
 
+  // Regresión #92 — el hook se monta una única vez por sesión del visor y `photo` cambia al
+  // deslizar sin remontar, así que guardar una foto no debía dejar la opción deshabilitada para
+  // el resto de fotos de la sesión.
+  it('re-enables "Guardar en Mis fotos" for a different photo after saving one, and keeps it saved when coming back', async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderContainer({ photo: photos[0] });
+    await openMenu(user);
+
+    await user.click(screen.getByText('Guardar en Mis fotos'));
+
+    await waitFor(() => expect(saveToMyPhotos).toHaveBeenCalledWith('photo-1'));
+    await openMenu(user);
+    expect(screen.getByText('Guardada en Mis fotos')).toBeInTheDocument();
+
+    // Deslizar a otra foto aún no guardada, en la misma sesión del visor.
+    rerender(
+      <MemoryRouter initialEntries={['/baules/baul-1/fotos-sueltas/foto/photo-2']}>
+        <Routes>
+          <Route
+            path="/baules/:baulId/fotos-sueltas/foto/:photoId"
+            element={
+              <PhotoViewerContainer
+                photo={photos[1]}
+                photos={photos}
+                baulId="baul-1"
+                baulName="Familia García"
+                onClose={vi.fn()}
+                onPhotoChange={vi.fn()}
+              />
+            }
+          />
+          <Route path="/baules/:baulId/personas/:personaId" element={<div>Ficha de persona</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    // El menú "···" queda abierto tras el rerender (mismo árbol, deslizar no lo cierra).
+    expect(screen.getByText('Guardar en Mis fotos')).toBeInTheDocument();
+    expect(screen.queryByText('Guardada en Mis fotos')).not.toBeInTheDocument();
+
+    // Volver a la foto ya guardada previamente en esta misma sesión.
+    rerender(
+      <MemoryRouter initialEntries={['/baules/baul-1/fotos-sueltas/foto/photo-1']}>
+        <Routes>
+          <Route
+            path="/baules/:baulId/fotos-sueltas/foto/:photoId"
+            element={
+              <PhotoViewerContainer
+                photo={photos[0]}
+                photos={photos}
+                baulId="baul-1"
+                baulName="Familia García"
+                onClose={vi.fn()}
+                onPhotoChange={vi.fn()}
+              />
+            }
+          />
+          <Route path="/baules/:baulId/personas/:personaId" element={<div>Ficha de persona</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(screen.getByText('Guardada en Mis fotos')).toBeInTheDocument();
+  });
+
   it('offers date change, and removal-request, universally with no chapter scope at all', async () => {
     const user = userEvent.setup();
     renderContainer();

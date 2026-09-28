@@ -88,11 +88,16 @@ export function usePhotoViewerActions({
   const [isSubmittingTags, setIsSubmittingTags] = useState(false);
   const [isAddingToBaul, setIsAddingToBaul] = useState(false);
   // "Guardar en Mis fotos" (Slice 5, docs/.backlog issue #62) — sin flag precomputado por el
-  // backend (ver el comentario de PhotoDto): este estado local solo refleja si el usuario ya
-  // pulsó la acción en esta misma sesión de visor, para evitar una escritura redundante visible
-  // y mostrar "Guardada en Mis fotos"; el backend es igualmente idempotente si se pulsa de nuevo.
-  const [savedToMyPhotos, setSavedToMyPhotos] = useState(false);
-  const [isSavingToMyPhotos, setIsSavingToMyPhotos] = useState(false);
+  // backend (ver el comentario de PhotoDto): este estado local solo refleja qué fotos ya se
+  // pulsaron en esta misma sesión de visor, para evitar una escritura redundante visible y
+  // mostrar "Guardada en Mis fotos"; el backend es igualmente idempotente si se pulsa de nuevo.
+  // Indexado por photo.id (no un único booleano) — este hook se monta una sola vez por sesión
+  // de visor (ver PhotoViewerContainer) y `photo` cambia al deslizar entre fotos sin remontar,
+  // así que un booleano sin ámbito se arrastraría indefinidamente a cualquier otra foto (#92).
+  const [savedPhotoIds, setSavedPhotoIds] = useState<Set<string>>(new Set());
+  const [savingPhotoId, setSavingPhotoId] = useState<string | null>(null);
+  const savedToMyPhotos = savedPhotoIds.has(photo.id);
+  const isSavingToMyPhotos = savingPhotoId === photo.id;
 
   const openTagModal = () => {
     setSelectedPersonaIds(taggedPersonas.map((p) => p.id));
@@ -214,15 +219,16 @@ export function usePhotoViewerActions({
   };
 
   const handleSaveToMyPhotos = async () => {
-    setIsSavingToMyPhotos(true);
-    const result = await run(() => saveToMyPhotos(photo.id), {
+    const savedPhotoId = photo.id;
+    setSavingPhotoId(savedPhotoId);
+    const result = await run(() => saveToMyPhotos(savedPhotoId), {
       successMessage: 'Foto guardada en Mis fotos',
       errorMessage: 'Error al guardar la foto en Mis fotos',
     });
-    setIsSavingToMyPhotos(false);
+    setSavingPhotoId((current) => (current === savedPhotoId ? null : current));
     if (result.ok) {
       posthog.capture('photo_saved_to_personal');
-      setSavedToMyPhotos(true);
+      setSavedPhotoIds((current) => new Set(current).add(savedPhotoId));
     }
   };
 
