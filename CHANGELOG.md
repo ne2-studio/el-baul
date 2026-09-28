@@ -26,6 +26,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 
 ### Arreglado
 
+- El tamaño del título en pantallas sin subtítulo (como "Ajustes del baúl") es ahora homogéneo entre sí e igual al del selector de baúl, en lugar de aparecer desproporcionadamente grande.
 - Al añadir un padre/madre o un hijo/a desde "Editar relaciones" de una persona, el texto del selector y la relación creada ya no aparecían intercambiados entre sí.
 - En el email de resumen semanal de un baúl, ya no aparece repetida la nota que explica por qué se recibe el correo; ahora solo figura una vez, al pie.
 - En "Mis fotos" > "Sin compartir", al añadir una o varias fotos a un baúl ahora desaparecen inmediatamente de ese filtro, ya que dejan de estar sin compartir. Si se añade desde el visor de una sola foto, este se cierra automáticamente en ese caso.

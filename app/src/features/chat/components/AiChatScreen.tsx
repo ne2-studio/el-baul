@@ -51,7 +51,6 @@ export function AiChatScreen({
         variant="inline"
         onBack={onBack}
         title="Recordemos juntos"
-        titleClassName="text-2xl"
         trailing={menu}
       />
 

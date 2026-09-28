@@ -57,7 +57,7 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(func
         <PageContainer className={cn('py-5 flex items-center gap-4', className)}>
           <BackButton onClick={onBack!} disabled={backDisabled} />
           <div className="flex-1">
-            <h1 className={cn('text-3xl text-foreground', titleClassName)}>{title}</h1>
+            <h1 className={cn(subtitle ? 'text-3xl' : 'text-xl', 'text-foreground', titleClassName)}>{title}</h1>
             {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
           </div>
           {trailing}
@@ -70,7 +70,7 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(func
     <StickyHeader ref={ref}>
       <PageContainer className={cn('py-5', className)}>
         <BackButton onClick={onBack!} label={backLabel} disabled={backDisabled} className="mb-3" />
-        <h1 className={cn('text-3xl text-foreground', subtitle && 'mb-1', titleClassName)}>{title}</h1>
+        <h1 className={cn(subtitle ? 'text-3xl' : 'text-xl', 'text-foreground', subtitle && 'mb-1', titleClassName)}>{title}</h1>
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </PageContainer>
     </StickyHeader>
