@@ -33,6 +33,7 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al añadir una o varias fotos a un baúl desde "Mis fotos" o desde otro baúl, ahora aparece correctamente en el feed del baúl de destino un aviso de que se añadió una foto (o un bloque de fotos, si se añadieron varias a la vez).
 - En el menú "···" del visor de fotos, "Guardar en Mis fotos" ya no permanecía desactivado para el resto de fotos al deslizar tras guardar una; ahora vuelve a estar disponible para cada foto no guardada todavía.
 - En la ficha de una persona, el número que aparece en la pestaña "Familia" ahora coincide con la cantidad de familiares mostrados en su árbol genealógico; antes no tenía en cuenta a hermanos ni cónyuge.
+- Al subir una foto desde "En este dispositivo" directamente a Mis fotos, ahora se conserva la fecha de la foto (si la tenía); antes aparecía sin fecha en Mis fotos.
 
 ## [beta-v0.5.0] - 2026-09-22
 

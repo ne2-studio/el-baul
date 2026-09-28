@@ -676,6 +676,27 @@ public class PhotoManagerTests
         Assert.NotEqual(sourcePhotoId, newPhoto.Id);
     }
 
+    // Regression test for issue #97: an asset ingested straight into Mis fotos (no originating
+    // Photo to fall back to) must still carry its EXIF date once shared into a baúl, now that the
+    // date lives on the asset itself.
+    [Fact]
+    public async Task AddAssetToBaulAsync_CarriesTheAssetsOwnExifDate_WhenIngestedDirectlyIntoMisFotos()
+    {
+        _photoDateExtractor.NextResult = (2019, 8, 3);
+        var manager = CreateManager(CustodioId);
+        var ingestResult = await manager.UploadToMyPhotosAsync(
+            new MemoryStream([21, 22, 23]), new ClientUploadId(Guid.NewGuid()));
+        var assetId = new PhotoAssetId(Guid.Parse(ingestResult.Value.Id));
+        var targetBaulId = await _fixture.CreateBaulAsync("Destino");
+
+        var result = await manager.AddAssetToBaulAsync(assetId, targetBaulId);
+
+        Assert.True(result.IsSuccess);
+        var newPhoto = await _fixture.Photos.GetActiveByAssetIdAsync(targetBaulId, assetId);
+        Assert.NotNull(newPhoto);
+        Assert.Equal(PhotoDate.Parse(2019, 8, 3).Value, newPhoto!.TakenAt);
+    }
+
     [Fact]
     public async Task AddAssetToBaulAsync_DoesNotCopySourceBaulSpecificContext()
     {
@@ -1490,6 +1511,33 @@ public class PhotoManagerTests
         Assert.True(await _fixture.Photos.HasUserPhotoAssetAsync(new UserId(CustodioId), assetId));
         // No Photo was ever created for this asset.
         Assert.Null(await _fixture.Photos.GetByIdAsync(new PhotoId(assetId.Value)));
+    }
+
+    // Regression test for the bug where a device photo uploaded straight into "Mis fotos" lost
+    // its EXIF-derived date (issue #97): IngestAssetAsync extracts it just like the baúl-upload
+    // path does, but with no Photo ever created for this asset, the date used to have nowhere to
+    // live and was silently discarded.
+    [Fact]
+    public async Task UploadToMyPhotosAsync_KeepsTheExifDate()
+    {
+        _photoDateExtractor.NextResult = (2019, 8, 3);
+        var manager = CreateManager(CustodioId);
+        using var content = new MemoryStream([11, 12, 13]);
+
+        var result = await manager.UploadToMyPhotosAsync(content, new ClientUploadId(Guid.NewGuid()));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2019, result.Value.DateYear);
+        Assert.Equal(8, result.Value.DateMonth);
+        Assert.Equal(3, result.Value.DateDay);
+
+        // The date also survives a subsequent GetMyPhotosAsync read, not just the immediately
+        // returned projection.
+        var myPhotos = await CreateMyPhotosReadManager(CustodioId, _photoStorage).GetMyPhotosAsync(0, 60);
+        var item = Assert.Single(myPhotos.Value.Items, i => i.Id == result.Value.Id);
+        Assert.Equal(2019, item.DateYear);
+        Assert.Equal(8, item.DateMonth);
+        Assert.Equal(3, item.DateDay);
     }
 
     [Fact]

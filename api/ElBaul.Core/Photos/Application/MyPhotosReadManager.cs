@@ -96,12 +96,17 @@ public class MyPhotosReadManager(
         {
             var asset = assetsById[id];
             var originatingPhoto = originatingPhotosById.GetValueOrDefault(id);
+            // The asset's own TakenAt (populated only for assets ingested straight into Mis fotos
+            // — see PhotoUploadWorkflow.IngestAssetAsync) takes priority; otherwise fall back to
+            // the originating-Photo trick above, which is the only place the date lives for
+            // assets created alongside a Photo (normal baúl uploads).
+            var takenAt = asset.TakenAt ?? originatingPhoto?.TakenAt;
             var thumbnailUrl = await photoStorage.GetImageUrl(asset.StorageKey, ImagePlacement.PhotoGridThumbnail);
             var fullUrl = await photoStorage.GetImageUrl(asset.StorageKey, ImagePlacement.PhotoFull);
 
             dtos.Add(new PhotoAssetDto(
                 asset.Id.ToString(), thumbnailUrl, fullUrl,
-                originatingPhoto?.TakenAt?.Year, originatingPhoto?.TakenAt?.Month, originatingPhoto?.TakenAt?.Day,
+                takenAt?.Year, takenAt?.Month, takenAt?.Day,
                 asset.Dimensions.Width, asset.Dimensions.Height, asset.CreatedAt,
                 appearancesByAsset.GetValueOrDefault(id, [])));
         }
@@ -118,11 +123,11 @@ public class MyPhotosReadManager(
         var accessibleBaulNames = (await baulAccess.GetAccessibleAsync(userId))
             .ToDictionary(a => a.Baul.Id, a => a.Baul.Name);
 
-        // Same "originating Photo shares the asset's Guid" trick GetMyPhotosAsync uses to
-        // recover the asset's intrinsic date — absent for an asset ingested directly here with
-        // no Photo ever created for it, which just leaves it undated (see PhotoUploadWorkflow.
-        // IngestAssetAsync's doc comment on why the EXIF date has nowhere else to live yet).
+        // The asset's own TakenAt covers an asset ingested directly here (see PhotoUploadWorkflow.
+        // IngestAssetAsync); otherwise fall back to the "originating Photo shares the asset's
+        // Guid" trick GetMyPhotosAsync also uses, for assets created alongside a Photo instead.
         var originatingPhoto = await photoRepository.GetByIdAsync(new PhotoId(asset.Id.Value));
+        var takenAt = asset.TakenAt ?? originatingPhoto?.TakenAt;
 
         var appearances = (await photoRepository.GetActiveByAssetIdsAsync([asset.Id]))
             .Where(p => accessibleBaulNames.ContainsKey(p.BaulId))
@@ -135,7 +140,7 @@ public class MyPhotosReadManager(
 
         return new PhotoAssetDto(
             asset.Id.ToString(), thumbnailUrl, fullUrl,
-            originatingPhoto?.TakenAt?.Year, originatingPhoto?.TakenAt?.Month, originatingPhoto?.TakenAt?.Day,
+            takenAt?.Year, takenAt?.Month, takenAt?.Day,
             asset.Dimensions.Width, asset.Dimensions.Height, asset.CreatedAt, appearances);
     }
 }

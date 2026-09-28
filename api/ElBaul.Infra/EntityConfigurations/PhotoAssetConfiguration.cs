@@ -27,6 +27,12 @@ public class PhotoAssetConfiguration : IEntityTypeConfiguration<PhotoAsset>
         });
         // Lowercase hex-encoded SHA-256 is always exactly 64 characters.
         builder.Property(a => a.OriginalContentHash).HasMaxLength(64);
+        builder.ComplexProperty(a => a.TakenAt, date =>
+        {
+            date.Property(d => d.Year).HasColumnName("DateYear");
+            date.Property(d => d.Month).HasColumnName("DateMonth");
+            date.Property(d => d.Day).HasColumnName("DateDay");
+        });
 
         // The global exact-duplicate invariant (Slice 2.5, docs/.backlog issue #62): "same exact
         // bytes → same PhotoAsset" is meaningless without a database-level guarantee that no two

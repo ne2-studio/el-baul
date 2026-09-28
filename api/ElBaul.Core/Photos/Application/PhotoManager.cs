@@ -269,15 +269,17 @@ public class PhotoManager(
             new { PhotoAssetId = assetId, TargetBaulId = targetBaulId });
         if (targetAuth.IsFailure) return Result.Failure<BaulAppearanceDto>(targetAuth.Error);
 
-        // The asset's own originating Photo shares its Guid (see Photo.Create) — same trick
-        // MyPhotosReadManager uses to recover the asset's intrinsic date. Missing only if every
-        // Photo that ever referenced this asset was hard-deleted; TakenAt then just starts
-        // unset, same as any other brand-new projection.
+        // The asset's own TakenAt when it was ingested straight into Mis fotos (PhotoUploadWorkflow.
+        // IngestAssetAsync), or else its originating Photo sharing its Guid (see Photo.Create) —
+        // same trick MyPhotosReadManager uses to recover the asset's intrinsic date. Missing only
+        // if every Photo that ever referenced this asset was hard-deleted; TakenAt then just
+        // starts unset, same as any other brand-new projection.
         var originatingPhoto = await photoRepository.GetByIdAsync(new PhotoId(assetId.Value));
+        var takenAt = asset.TakenAt ?? originatingPhoto?.TakenAt;
 
         var now = clock.UtcNow();
         var newPhoto = Photo.CreateFromExistingAsset(
-            new PhotoId(idGenerator.NewId()), targetBaulId, asset, originatingPhoto?.TakenAt, userId, now,
+            new PhotoId(idGenerator.NewId()), targetBaulId, asset, takenAt, userId, now,
             uploadBatchId: uploadBatchId ?? idGenerator.NewId());
 
         var (resultPhoto, isNew) = await AddExistingAssetAsync(newPhoto, targetBaulId, assetId);

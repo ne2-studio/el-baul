@@ -189,7 +189,7 @@ public class PhotoUploadWorkflow(
         var asset = PhotoAsset.Create(
             new PhotoAssetId(idGenerator.NewId()), storedFile.StorageKey, storedFile.Dimensions, now, userId,
             storedFile.SizeBytes, storedFile.OriginalDimensions, storedFile.OriginalSizeBytes,
-            storedFile.OriginalContentHash);
+            storedFile.OriginalContentHash, storedFile.TakenAt);
 
         try
         {
@@ -239,13 +239,16 @@ public class PhotoUploadWorkflow(
         // Idempotent: a no-op if the user already has this asset (e.g. re-uploading their own file).
         await photoRepository.EnsureUserPhotoAssetActiveAsync(userId, asset.Id, now);
 
-        // Recovers the asset's own intrinsic date the same way MyPhotosReadManager and
-        // PhotoManager.AddAssetToBaulAsync do: its originating Photo shares its Guid (see
-        // Photo.Create's doc comment). Missing only if that Photo was hard-deleted.
+        // Recovers the asset's own intrinsic date: its own TakenAt when it was ingested straight
+        // into Mis fotos (PhotoUploadWorkflow.IngestAssetAsync), or else the same trick
+        // MyPhotosReadManager and PhotoManager.AddAssetToBaulAsync use — its originating Photo
+        // shares its Guid (see Photo.Create's doc comment), missing only if that Photo was
+        // hard-deleted.
         var originatingPhoto = await photoRepository.GetByIdAsync(new PhotoId(asset.Id.Value));
+        var takenAt = asset.TakenAt ?? originatingPhoto?.TakenAt;
 
         var newPhoto = Photo.CreateFromExistingAsset(
-            new PhotoId(idGenerator.NewId()), baulId, asset, originatingPhoto?.TakenAt, userId, now, chapterId);
+            new PhotoId(idGenerator.NewId()), baulId, asset, takenAt, userId, now, chapterId);
 
         if (await photoRepository.TryAddExistingAssetAsync(newPhoto))
         {

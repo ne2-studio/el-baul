@@ -49,10 +49,19 @@ public sealed class PhotoAsset : Entity<PhotoAssetId>
     // BaulId — a Photo-context concept this asset deliberately knows nothing about.
     public string? OriginalContentHash { get; private set; }
 
+    // The asset's own intrinsic date — EXIF-derived when available, same as Photo.TakenAt for a
+    // baúl upload. Set once, at creation time, only by PhotoUploadWorkflow.IngestAssetAsync (the
+    // direct-to-"Mis fotos" ingestion path, docs/.backlog issue #62, Slice 3), which creates no
+    // Photo of its own for this date to otherwise live on. Left null for every asset created
+    // through Photo.Create/CreateFromExistingAsset instead — those already carry their date on
+    // the Photo, and MyPhotosReadManager's "originating Photo shares this asset's Guid" lookup
+    // keeps recovering it for them, so there's no need to duplicate it here too.
+    public PhotoDate? TakenAt { get; private set; }
+
     public PhotoAsset(
         PhotoAssetId Id, string StorageKey, ImageDimensions Dimensions, DateTime CreatedAt, UserId UploadedBy,
         long SizeBytes = 0, ImageDimensions? OriginalDimensions = null, long? OriginalSizeBytes = null,
-        string? OriginalContentHash = null) : base(Id)
+        string? OriginalContentHash = null, PhotoDate? TakenAt = null) : base(Id)
     {
         if (Dimensions.Width <= 0 || Dimensions.Height <= 0)
             throw new ArgumentOutOfRangeException(nameof(Dimensions), "Photo asset dimensions must be positive.");
@@ -61,13 +70,14 @@ public sealed class PhotoAsset : Entity<PhotoAssetId>
         this.UploadedBy = UploadedBy;
         this.SizeBytes = SizeBytes; this.OriginalDimensions = OriginalDimensions;
         this.OriginalSizeBytes = OriginalSizeBytes; this.OriginalContentHash = OriginalContentHash;
+        this.TakenAt = TakenAt;
     }
 
     public static PhotoAsset Create(
         PhotoAssetId id, string storageKey, ImageDimensions dimensions, DateTime createdAt, UserId uploadedBy,
         long sizeBytes = 0, ImageDimensions? originalDimensions = null, long? originalSizeBytes = null,
-        string? originalContentHash = null) =>
-        new(id, storageKey, dimensions, createdAt, uploadedBy, sizeBytes, originalDimensions, originalSizeBytes, originalContentHash);
+        string? originalContentHash = null, PhotoDate? takenAt = null) =>
+        new(id, storageKey, dimensions, createdAt, uploadedBy, sizeBytes, originalDimensions, originalSizeBytes, originalContentHash, takenAt);
 
     // Used only by the deduplicate-photo-assets maintenance command to persist a canonical
     // asset's freshly recomputed content hash when it was historically null (see that command's
