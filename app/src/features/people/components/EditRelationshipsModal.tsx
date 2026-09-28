@@ -92,10 +92,12 @@ export function EditRelationshipsModal({
       const added =
         direction === 'spouse'
           ? await onAddSpouse(candidateId)
-          : // "Pedro es padre/madre de X" -> Pedro is the parent; "Pedro es hijo/hija de X" -> X is
-            // the parent. Either way the backend only ever sees a plain (parentId, childId) pair —
-            // see PersonaRelationshipManager.AddRelationshipAsync.
-            await onAdd(direction === 'parent' ? personaId : candidateId, direction === 'parent' ? candidateId : personaId);
+          : // direction='parent' comes from the "Añadir padre/madre" button: the candidate being
+            // picked becomes the parent, personaName the child. direction='child' comes from
+            // "Añadir hijo/a": personaName is the parent, the candidate the child. Either way the
+            // backend only ever sees a plain (parentId, childId) pair — see
+            // PersonaRelationshipManager.AddRelationshipAsync.
+            await onAdd(direction === 'parent' ? candidateId : personaId, direction === 'parent' ? personaId : candidateId);
       // A failure (already toasted by the caller) keeps the "add" view open with the current
       // selection intact instead of bouncing back to the list — matching the pre-multi-select
       // contract, just extended to "stop at the first failure" for a batch.
@@ -112,8 +114,8 @@ export function EditRelationshipsModal({
     const capReached = selectedIds.length >= maxSelectable;
 
     const directionCopy: Record<Direction, string> = {
-      parent: 'es padre/madre de',
-      child: 'es hijo/hija de',
+      parent: 'es hijo/hija de',
+      child: 'es padre/madre de',
       spouse: 'es cónyuge de',
     };
 

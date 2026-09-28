@@ -208,9 +208,9 @@ describe('PersonaSettingsMenuContainer', () => {
     await user.click(screen.getByText('Nieto Pablo'));
     await user.click(screen.getByRole('button', { name: 'Añadir' }));
 
-    // "Añadir padre/madre" fixes direction to "parent" — the persona whose ficha this is (p1)
-    // becomes the parent of the picked candidate (p2).
-    expect(addPersonaRelationship).toHaveBeenCalledWith(baulId, 'p1', 'p2');
+    // "Añadir padre/madre" fixes direction to "parent" — the picked candidate (p2) becomes the
+    // parent of the persona whose ficha this is (p1).
+    expect(addPersonaRelationship).toHaveBeenCalledWith(baulId, 'p2', 'p1');
   });
 
   it('removes a relationship from the "Editar relaciones" list', async () => {

@@ -67,7 +67,7 @@ describe('EditRelationshipsModal', () => {
     expect(screen.queryByRole('button', { name: 'Padre/madre de' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Hijo/hija de' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cónyuge de' })).not.toBeInTheDocument();
-    expect(screen.getByText('Pedro es padre/madre de...')).toBeInTheDocument();
+    expect(screen.getByText('Pedro es hijo/hija de...')).toBeInTheDocument();
   });
 
   it('shows direction-specific copy per add flow', async () => {
@@ -88,7 +88,7 @@ describe('EditRelationshipsModal', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Añadir hijo/a' }));
-    expect(screen.getByText('Ana es hijo/hija de...')).toBeInTheDocument();
+    expect(screen.getByText('Ana es padre/madre de...')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Atrás' }));
 
     await user.click(screen.getByRole('button', { name: 'Añadir cónyuge' }));
@@ -212,8 +212,8 @@ describe('EditRelationshipsModal', () => {
     await user.click(screen.getByText('Candidato'));
     await user.click(screen.getByRole('button', { name: 'Añadir' }));
 
-    // "Pedro es hijo/hija de Candidato" -> Candidato is the parent, Pedro the child.
-    expect(onAdd).toHaveBeenCalledWith('c1', 'persona-1');
+    // "Añadir hijo/a" -> direction='child' -> Pedro is the parent, Candidato the child.
+    expect(onAdd).toHaveBeenCalledWith('persona-1', 'c1');
   });
 
   it('calls onAddSpouse with the selected candidate id', async () => {
@@ -249,9 +249,9 @@ describe('EditRelationshipsModal', () => {
     const c2 = persona('c2', 'Hijo Dos');
     const c3 = persona('c3', 'Hijo Tres');
     const calls: string[] = [];
-    const onAdd = vi.fn().mockImplementation(async (parentId: string) => {
-      // direction is "child" here, so the varying arg (the candidate) is the parentId.
-      calls.push(parentId);
+    const onAdd = vi.fn().mockImplementation(async (_parentId: string, childId: string) => {
+      // direction is "child" here, so the varying arg (the candidate) is the childId.
+      calls.push(childId);
       return true;
     });
 
@@ -288,8 +288,8 @@ describe('EditRelationshipsModal', () => {
     const c1 = persona('c1', 'Hijo Uno');
     const c2 = persona('c2', 'Hijo Dos');
     const c3 = persona('c3', 'Hijo Tres');
-    // direction is "child" here, so the varying arg (the candidate) is the parentId.
-    const onAdd = vi.fn().mockImplementation(async (parentId: string) => parentId !== 'c2');
+    // direction is "child" here, so the varying arg (the candidate) is the childId.
+    const onAdd = vi.fn().mockImplementation(async (_parentId: string, childId: string) => childId !== 'c2');
 
     render(
       <EditRelationshipsModal
@@ -314,10 +314,10 @@ describe('EditRelationshipsModal', () => {
 
     // Stopped right after the failing c2 — never got to c3.
     expect(onAdd).toHaveBeenCalledTimes(2);
-    expect(onAdd).toHaveBeenNthCalledWith(1, 'c1', 'persona-1');
-    expect(onAdd).toHaveBeenNthCalledWith(2, 'c2', 'persona-1');
+    expect(onAdd).toHaveBeenNthCalledWith(1, 'persona-1', 'c1');
+    expect(onAdd).toHaveBeenNthCalledWith(2, 'persona-1', 'c2');
     // Still on the "add" view, not bounced back to the list.
-    expect(screen.getByText('Pedro es hijo/hija de...')).toBeInTheDocument();
+    expect(screen.getByText('Pedro es padre/madre de...')).toBeInTheDocument();
     // Selection intact — all three still checked/checkable, so "Añadir" is retryable as-is.
     expect(screen.getByRole('button', { name: 'Añadir' })).not.toBeDisabled();
   });
