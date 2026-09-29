@@ -41,9 +41,9 @@ export function filterCandidatesForDirection(
 ): Persona[] {
   const excludedIds = new Set(
     direction === 'parent'
-      ? children.map((p) => p.id)
+      ? [...children.map((p) => p.id), ...(spouse ? [spouse.id] : [])]
       : direction === 'child'
-        ? parents.map((p) => p.id)
+        ? [...parents.map((p) => p.id), ...(spouse ? [spouse.id] : [])]
         : spouse
           ? [spouse.id]
           : []

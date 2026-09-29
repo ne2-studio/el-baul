@@ -11,14 +11,14 @@ describe('filterCandidatesForDirection', () => {
   const stranger = persona('stranger-1', 'Desconocido');
   const candidates = [child, parent, spouse, stranger];
 
-  it('excludes existing children for the parent direction', () => {
-    const result = filterCandidatesForDirection(candidates, 'parent', [parent], [child], null);
-    expect(result).toEqual([parent, spouse, stranger]);
+  it('excludes existing children and the existing spouse for the parent direction', () => {
+    const result = filterCandidatesForDirection(candidates, 'parent', [parent], [child], spouse);
+    expect(result).toEqual([parent, stranger]);
   });
 
-  it('excludes existing parents for the child direction', () => {
-    const result = filterCandidatesForDirection(candidates, 'child', [parent], [child], null);
-    expect(result).toEqual([child, spouse, stranger]);
+  it('excludes existing parents and the existing spouse for the child direction', () => {
+    const result = filterCandidatesForDirection(candidates, 'child', [parent], [child], spouse);
+    expect(result).toEqual([child, stranger]);
   });
 
   it('excludes the existing spouse for the spouse direction', () => {
