@@ -8,3 +8,7 @@
 store-assets/screenshots/
 store-assets/featured-graphic/*.png
 store-assets/featured-graphic/*.jpg
+
+node_modules/
+.claude/worktrees/
+.ne2-factory/database.db*
