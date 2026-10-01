@@ -1,5 +1,9 @@
 name: Setup Playwright
-description: Restore Playwright browser cache and install Chromium dependencies.
+description: Restore the Playwright browser cache and install Chromium.
+
+# No `install-deps` / `--with-deps`: the ubuntu-latest runner image already ships every
+# library Chromium needs. On top of that, apt only adds CJK/Thai fonts and xfonts, while
+# fetching them from the runner's Ubuntu mirror sometimes took minutes.
 
 inputs:
   working-directory:
@@ -19,14 +23,8 @@ runs:
         path: ~/.cache/ms-playwright
         key: playwright-${{ runner.os }}-${{ hashFiles(inputs.cache-dependency-path) }}
 
-    - name: Install Playwright browsers (+ OS deps)
+    - name: Install Playwright browsers
       if: steps.playwright-cache.outputs.cache-hit != 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: npx playwright install --with-deps chromium
-
-    - name: Install Playwright OS deps only (browsers already cached)
-      if: steps.playwright-cache.outputs.cache-hit == 'true'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: npx playwright install-deps chromium
+      run: npx playwright install chromium
