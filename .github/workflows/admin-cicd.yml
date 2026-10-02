@@ -2,8 +2,20 @@ name: Admin CI/CD
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - '.github/workflows/admin-cicd.yml'
+      - 'admin/**'
+      # Admin acceptance runs el-baul-api-lite next to the admin image, so changes to the lite
+      # stack can break this pipeline even when admin/ itself still builds.
+      - 'api/ElBaul.Core/**'
+      - 'api/ElBaul.Api.Common/**'
+      - 'api/ElBaul.Api.Lite/**'
+      - 'api/ElBaul.Infra.Common/**'
+      - 'api/ElBaul.Infra.Lite/**'
+      - 'api/openapi/**'
+      - 'docker-compose.lite.yml'
+      - 'scripts/**'
+  pull_request:
     paths:
       - '.github/workflows/admin-cicd.yml'
       - 'admin/**'
@@ -20,11 +32,11 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 concurrency:
   group: admin-cicd-${{ github.ref }}
-  cancel-in-progress: false
+  # Never cancel a main run (it may be mid-deploy); supersede stale runs on other refs.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-admin
@@ -105,6 +117,27 @@ jobs:
           path: admin/playwright-report/
           retention-days: 7
 
+  # Only main deploys: builds the image again (layers come from the build job's cache),
+  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: admin-production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build deploy admin image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: admin
+          cache-scope: admin-app
+
       - name: Release admin image
         uses: ./.github/actions/release-ghcr-image
         with:
@@ -112,16 +145,6 @@ jobs:
           sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: admin-production
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v7
 
       - name: Deploy admin
         uses: ./.github/actions/deploy-coolify
