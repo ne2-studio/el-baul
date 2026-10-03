@@ -2,19 +2,21 @@ name: Imgproxy CI/CD
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - '.github/workflows/imgproxy-cicd.yml'
+      - 'imgproxy/**'
+  pull_request:
     paths:
       - '.github/workflows/imgproxy-cicd.yml'
       - 'imgproxy/**'
 
 permissions:
   contents: read
-  packages: write
 
 concurrency:
   group: imgproxy-cicd-${{ github.ref }}
-  cancel-in-progress: false
+  # Never cancel a main run (it may be mid-deploy); supersede stale runs on other refs.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-imgproxy
@@ -39,6 +41,27 @@ jobs:
           image: ${{ env.IMAGE_NAME }}:latest
           trivyignores: imgproxy/.trivyignore
 
+  # Only main deploys: builds the image again (layers come from the build job's cache),
+  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: imgproxy-production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build deploy imgproxy image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: imgproxy
+          cache-scope: imgproxy
+
       - name: Release imgproxy image
         uses: ./.github/actions/release-ghcr-image
         with:
@@ -46,16 +69,6 @@ jobs:
           sha: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: imgproxy-production
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v7
 
       - name: Deploy imgproxy
         uses: ./.github/actions/deploy-coolify

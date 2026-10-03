@@ -2,8 +2,21 @@ name: Frontend CI/CD
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - '.github/workflows/frontend-cicd.yml'
+      - 'app/**'
+      - 'docker-compose.lite.yml'
+      - 'scripts/**'
+      # Everything el-baul-api-lite is built from (see api/ElBaul.Api.Lite/Dockerfile) — this
+      # pipeline builds and runs that image as part of its acceptance test, so a change to any
+      # of these can break it just as much as a change under app/ can.
+      - 'api/ElBaul.Core/**'
+      - 'api/ElBaul.Api.Common/**'
+      - 'api/ElBaul.Api.Lite/**'
+      - 'api/ElBaul.Infra.Common/**'
+      - 'api/ElBaul.Infra.Lite/**'
+      - 'api/openapi/**'
+  pull_request:
     paths:
       - '.github/workflows/frontend-cicd.yml'
       - 'app/**'
@@ -21,11 +34,11 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 concurrency:
   group: frontend-cicd-${{ github.ref }}
-  cancel-in-progress: false
+  # Never cancel a main run (it may be mid-deploy); supersede stale runs on other refs.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-app
@@ -103,6 +116,27 @@ jobs:
           path: app/playwright-report/
           retention-days: 7
 
+  # Only main deploys: builds the image again (layers come from the build job's cache),
+  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: frontend-production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build deploy frontend image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: app
+          cache-scope: frontend-app
+
       - name: Release frontend image
         uses: ./.github/actions/release-ghcr-image
         with:
@@ -118,21 +152,16 @@ jobs:
           docker cp extract:/usr/share/nginx/html ./dist
           docker rm extract
 
+      - name: Release setup
+        uses: ./.github/actions/setup-node-package
+        with:
+          working-directory: app
+
       - name: Release Sentry sourcemaps
         working-directory: app
         run: npm run sentry:upload-sourcemaps
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: frontend-production
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v7
 
       - name: Deploy frontend
         uses: ./.github/actions/deploy-coolify
