@@ -1,0 +1,18 @@
+{{ define "main" }}
+<article class="max-w-3xl mx-auto px-6 pt-32 pb-20 prose-legal">
+  <h1 class="font-serif text-3xl md:text-4xl font-bold text-[#4A3B32] mb-8">{{ .Title }}</h1>
+  <div class="font-sans text-[#4A3B32]/80 leading-relaxed">
+    {{ .Content }}
+  </div>
+</article>
+
+<style>
+  .prose-legal h1 { margin-bottom: 1.5rem; }
+  .prose-legal :where(h2, h3) { font-family: 'Merriweather', serif; font-weight: 700; color: #4A3B32; margin-top: 2rem; margin-bottom: 0.75rem; }
+  .prose-legal p { margin-bottom: 1.1rem; }
+  .prose-legal ul, .prose-legal ol { margin: 0 0 1.1rem 1.25rem; }
+  .prose-legal ul { list-style: disc; }
+  .prose-legal ol { list-style: decimal; }
+  .prose-legal a { color: #4A3B32; text-decoration: underline; text-underline-offset: 2px; }
+</style>
+{{ end }}

@@ -1,0 +1,10 @@
+title: El Baúl
+baseURL: https://el-baul-web.ne2.studio/
+languageCode: es-es
+defaultContentLanguage: es
+languages:
+  es:
+    weight: 1
+metaDataFormat: yaml
+params:
+  gtm_id: GTM-WK82NHDN

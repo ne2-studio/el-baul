@@ -1,0 +1,19 @@
+{{ define "main" }}
+<div class="bg-[#F5F1ED] min-h-screen flex items-center">
+  <div class="max-w-lg mx-auto px-6 py-32 text-center">
+    <div class="w-16 h-16 mx-auto rounded-full bg-[#C67B5C]/10 flex items-center justify-center text-[#C67B5C] mb-8">
+      <i data-lucide="check" class="w-8 h-8"></i>
+    </div>
+    <h1 class="font-lora text-3xl md:text-4xl font-medium text-[#3A3230] mb-4">
+      {{ .Title }}
+    </h1>
+    <div class="font-sans text-lg text-[#8B7E79] leading-relaxed mb-10">
+      {{ .Content }}
+    </div>
+    <a href="/ayuda/" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#C67B5C] text-white rounded-xl font-sans font-medium hover:opacity-90 transition-opacity">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      Volver al centro de ayuda
+    </a>
+  </div>
+</div>
+{{ end }}

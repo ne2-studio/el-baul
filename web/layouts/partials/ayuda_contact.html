@@ -1,0 +1,57 @@
+<section class="border-t border-[rgba(58,50,48,0.12)] bg-white">
+  <div class="max-w-xl mx-auto px-6 py-20 text-center">
+    <div class="w-12 h-12 mx-auto rounded-full bg-[#C67B5C]/10 flex items-center justify-center text-[#C67B5C] mb-6">
+      <i data-lucide="message-circle-question" class="w-6 h-6"></i>
+    </div>
+    <h2 class="font-lora text-2xl md:text-3xl font-medium text-[#3A3230] mb-3">
+      ¿No encuentras lo que buscas?
+    </h2>
+    <p class="font-sans text-[#8B7E79] mb-10">
+      Contacta con nosotros y te respondemos lo antes posible.
+    </p>
+
+    <form action="https://leadhub-backend.ne2.studio/api/forms/el-baul-ayuda/submit" method="POST" class="text-left space-y-4">
+      <div>
+        <label for="ayuda-contact-name" class="block font-sans text-sm text-[#3A3230] mb-1.5">Nombre</label>
+        <input
+          id="ayuda-contact-name"
+          name="name"
+          type="text"
+          required
+          autocomplete="name"
+          class="w-full px-4 py-3 rounded-xl border border-[rgba(58,50,48,0.12)] bg-white text-[#3A3230] placeholder:text-[#8B7E79]/60 focus:outline-none focus:ring-2 focus:ring-[#C67B5C]/30 transition-all"
+          placeholder="Tu nombre"
+        />
+      </div>
+      <div>
+        <label for="ayuda-contact-email" class="block font-sans text-sm text-[#3A3230] mb-1.5">Email</label>
+        <input
+          id="ayuda-contact-email"
+          name="email"
+          type="email"
+          required
+          autocomplete="email"
+          class="w-full px-4 py-3 rounded-xl border border-[rgba(58,50,48,0.12)] bg-white text-[#3A3230] placeholder:text-[#8B7E79]/60 focus:outline-none focus:ring-2 focus:ring-[#C67B5C]/30 transition-all"
+          placeholder="tu@email.com"
+        />
+      </div>
+      <div>
+        <label for="ayuda-contact-message" class="block font-sans text-sm text-[#3A3230] mb-1.5">Mensaje</label>
+        <textarea
+          id="ayuda-contact-message"
+          name="message"
+          rows="4"
+          required
+          class="w-full px-4 py-3 rounded-xl border border-[rgba(58,50,48,0.12)] bg-white text-[#3A3230] placeholder:text-[#8B7E79]/60 focus:outline-none focus:ring-2 focus:ring-[#C67B5C]/30 transition-all resize-none"
+          placeholder="Cuéntanos en qué podemos ayudarte"
+        ></textarea>
+      </div>
+      <button
+        type="submit"
+        class="w-full px-6 py-3 bg-[#C67B5C] text-white rounded-xl font-sans font-medium hover:opacity-90 transition-opacity"
+      >
+        Enviar mensaje
+      </button>
+    </form>
+  </div>
+</section>

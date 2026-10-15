@@ -1,0 +1,104 @@
+{{ define "main" }}
+{{ $isRoot := eq .RelPermalink "/ayuda/" }}
+{{ $ayuda := cond $isRoot . .Parent }}
+{{ $categories := $ayuda.Sections.ByWeight }}
+{{ $allArticles := where site.RegularPages "Section" "ayuda" }}
+{{ $featured := first 3 (where $allArticles "Params.featured" true).ByWeight }}
+
+<div class="bg-[#F5F1ED] min-h-screen">
+  <section class="pt-32 pb-16 border-b border-[rgba(58,50,48,0.12)]">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C67B5C]/10 text-[#C67B5C] text-xs font-medium uppercase tracking-wider mb-6">
+        <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i>
+        Centro de ayuda
+      </div>
+      <h1 class="font-lora text-4xl md:text-5xl font-medium text-[#3A3230] leading-tight mb-4">
+        {{ if $isRoot }}¿En qué podemos ayudarte?{{ else }}{{ .Title }}{{ end }}
+      </h1>
+      <p class="font-sans text-lg text-[#8B7E79] max-w-xl mx-auto">
+        {{ if $isRoot }}
+          Preguntas frecuentes sobre El Baúl: cómo empezar, quién puede ver tus recuerdos y cómo cuidamos tu privacidad.
+        {{ else }}
+          {{ with .Description }}{{ . }}{{ else }}Artículos de ayuda sobre {{ $ayuda.Title | lower }}.{{ end }}
+        {{ end }}
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-5xl mx-auto px-6 py-16">
+    <div class="grid md:grid-cols-[220px_1fr] gap-12">
+
+      <!-- Sidebar -->
+      <aside>
+        <nav class="sticky top-24 space-y-1">
+          <a href="{{ $ayuda.RelPermalink }}"
+             class="block px-4 py-2.5 rounded-xl font-sans text-sm font-medium transition-colors {{ if $isRoot }}bg-[#C67B5C] text-white{{ else }}text-[#3A3230] hover:bg-white{{ end }}">
+            Todas las categorías
+          </a>
+          {{ range $categories }}
+            {{ $active := eq $.RelPermalink .RelPermalink }}
+            <a href="{{ .RelPermalink }}"
+               class="block px-4 py-2.5 rounded-xl font-sans text-sm font-medium transition-colors {{ if $active }}bg-[#C67B5C] text-white{{ else }}text-[#3A3230] hover:bg-white{{ end }}">
+              {{ .Title }}
+              <span class="{{ if $active }}text-white/70{{ else }}text-[#8B7E79]{{ end }} text-xs">({{ len .RegularPages }})</span>
+            </a>
+          {{ end }}
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <div>
+        {{ if $isRoot }}
+          {{ if gt (len $featured) 0 }}
+          <div class="mb-14">
+            <h2 class="font-lora text-xl font-medium text-[#3A3230] mb-1">Las más consultadas</h2>
+            <p class="font-sans text-sm text-[#8B7E79] mb-6">Empieza por aquí si es tu primera visita.</p>
+            <div class="grid sm:grid-cols-3 gap-4">
+              {{ range $featured }}
+              <a href="{{ .RelPermalink }}" class="block bg-white rounded-2xl p-5 border border-[rgba(58,50,48,0.12)] shadow-sm hover:shadow-md transition-shadow">
+                <span class="inline-flex items-center gap-1 text-[#C67B5C] text-xs font-medium mb-3">
+                  <i data-lucide="star" class="w-3.5 h-3.5"></i> Más consultado
+                </span>
+                <h3 class="font-lora text-base font-medium text-[#3A3230] leading-snug mb-2">{{ .Title }}</h3>
+                <p class="font-sans text-sm text-[#8B7E79] line-clamp-2">{{ with .Params.description }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 90 }}{{ end }}</p>
+              </a>
+              {{ end }}
+            </div>
+          </div>
+          {{ end }}
+
+          <h2 class="font-lora text-xl font-medium text-[#3A3230] mb-6">Categorías</h2>
+          <div class="grid sm:grid-cols-2 gap-5">
+            {{ range $categories }}
+            <a href="{{ .RelPermalink }}" class="block bg-white rounded-2xl p-6 border border-[rgba(58,50,48,0.12)] shadow-sm hover:shadow-md transition-shadow">
+              <div class="w-10 h-10 rounded-full bg-[#C67B5C]/10 flex items-center justify-center text-[#C67B5C] mb-4">
+                <i data-lucide="{{ .Params.icon | default "folder" }}" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-lora text-lg font-medium text-[#3A3230] mb-2">{{ .Title }}</h3>
+              <p class="font-sans text-sm text-[#8B7E79] mb-3">{{ .Description }}</p>
+              <span class="font-sans text-xs font-medium text-[#C67B5C]">{{ len .RegularPages }} artículo{{ if ne (len .RegularPages) 1 }}s{{ end }}</span>
+            </a>
+            {{ end }}
+          </div>
+        {{ else }}
+          <div class="space-y-4">
+            {{ range .RegularPages.ByWeight }}
+            <a href="{{ .RelPermalink }}" class="flex items-start gap-4 bg-white rounded-2xl p-6 border border-[rgba(58,50,48,0.12)] shadow-sm hover:shadow-md transition-shadow">
+              <div class="mt-1 shrink-0 w-9 h-9 rounded-full bg-[#C67B5C]/10 flex items-center justify-center text-[#C67B5C]">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-lora text-lg font-medium text-[#3A3230] mb-1">{{ .Title }}</h3>
+                <p class="font-sans text-sm text-[#8B7E79]">{{ with .Params.description }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 140 }}{{ end }}</p>
+              </div>
+            </a>
+            {{ end }}
+          </div>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+
+  {{ partial "ayuda_contact.html" . }}
+</div>
+{{ end }}
