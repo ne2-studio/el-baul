@@ -1,6 +1,6 @@
 # El Baúl Website
 
-[![CI](https://github.com/ppardalj/el-baul-web/actions/workflows/deploy.yml/badge.svg)](https://github.com/ppardalj/el-baul-web/actions)
+[![CI](https://github.com/ne2-studio/el-baul/actions/workflows/web-cicd.yml/badge.svg)](https://github.com/ne2-studio/el-baul/actions/workflows/web-cicd.yml)
 
 ## :pick: Requirements
 

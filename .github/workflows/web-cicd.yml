@@ -1,0 +1,96 @@
+name: Web CI/CD
+
+on:
+  push:
+    paths:
+      - '.github/workflows/web-cicd.yml'
+      - 'web/**'
+  pull_request:
+    paths:
+      - '.github/workflows/web-cicd.yml'
+      - 'web/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-cicd-${{ github.ref }}
+  # Never cancel a main run (it may be mid-deploy); supersede stale runs on other refs.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}-web
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "latest"
+          extended: true
+
+      - name: Build Hugo site
+        working-directory: web
+        run: hugo --minify --environment production
+
+      - name: Package web image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: web
+          cache-scope: web
+
+      - name: Scan web image
+        uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+
+  # Only main deploys: builds the image again (layers come from the build job's cache),
+  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: web-production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "latest"
+          extended: true
+
+      - name: Build Hugo site
+        working-directory: web
+        run: hugo --minify --environment production
+
+      - name: Build deploy web image
+        uses: ./.github/actions/docker-build-image
+        with:
+          image: ${{ env.IMAGE_NAME }}:latest
+          context: web
+          cache-scope: web
+
+      - name: Release web image
+        uses: ./.github/actions/release-ghcr-image
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          sha: ${{ github.sha }}
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy web
+        uses: ./.github/actions/deploy-coolify
+        with:
+          service: web
+          webhook: ${{ vars.COOLIFY_WEBHOOK_WEB }}
+          token: ${{ secrets.COOLIFY_API_TOKEN }}

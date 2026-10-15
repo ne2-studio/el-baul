@@ -14,7 +14,7 @@ per resource, see Configuration > Health Check) gates when a deployment is
 marked finished, so this doesn't re-check health itself — see
 docs/architecture/deployment.md.
 
-Services: backend, frontend, admin, imgproxy, storybook
+Services: backend, frontend, admin, imgproxy, storybook, web
 
 Environment:
   COOLIFY_WEBHOOK_<SERVICE>   Deployment webhook URL for <service> (required),
@@ -113,7 +113,7 @@ need curl
 need jq
 
 case "${1:-}" in
-  backend|frontend|admin|imgproxy|storybook) deploy "$1" ;;
+  backend|frontend|admin|imgproxy|storybook|web) deploy "$1" ;;
   -h|--help|help|"") usage ;;
   *) usage >&2; die "unknown service: $1" ;;
 esac

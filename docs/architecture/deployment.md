@@ -1,9 +1,9 @@
 # Deployment (CI/CD)
 
-- **Per-service workflows**: five independent, path-filtered GitHub Actions workflows —
+- **Per-service workflows**: six independent, path-filtered GitHub Actions workflows —
   `backend-cicd.yml` (`api/**`), `frontend-cicd.yml` (`app/**`), `admin-cicd.yml` (`admin/**`),
-  `imgproxy-cicd.yml` (`imgproxy/**`), `storybook-cicd.yml` (`app/**`, `storybook/**`). Each has
-  two stages:
+  `imgproxy-cicd.yml` (`imgproxy/**`), `storybook-cicd.yml` (`app/**`, `storybook/**`),
+  `web-cicd.yml` (`web/**`, Hugo marketing/help site). Each has two stages:
   - `build` (build/test): runs on every push to any branch and every PR touching its paths, with
     read-only permissions. Includes building and scanning the Docker image, which is only loaded
     locally — never pushed. Runs superseded on non-`main` refs are cancelled.

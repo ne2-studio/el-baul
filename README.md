@@ -23,6 +23,7 @@ app/ios/        Capacitor iOS wrapper around app/'s built dist/
 admin/          React ops backoffice
 e2e-tests/      Whole-repo Playwright smoke suite
 imgproxy/       Image-resizing sidecar
+web/            Hugo static website (landing, help center, legal)
 docs/           Architecture standard, API conventions, design system
 ```
 

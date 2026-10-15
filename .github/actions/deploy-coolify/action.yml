@@ -3,7 +3,7 @@ description: Trigger a Coolify deployment webhook and wait for it to finish. Thi
 
 inputs:
   service:
-    description: Service name (backend, frontend, admin, imgproxy, storybook).
+    description: Service name (backend, frontend, admin, imgproxy, storybook, web).
     required: true
   webhook:
     description: Coolify deployment webhook URL for this service.
