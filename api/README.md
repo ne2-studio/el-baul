@@ -97,7 +97,7 @@ ElBaul.Api.Lite     — HTTP entry point for el-baul-api-lite: in-memory infra +
 ElBaul.Api.Common   — shared with both: controllers, JWT validation, CORS, rate limiting, manager DI
 ElBaul.Infra        — real adapters (EF Core repositories, MinIO photo storage, Hangfire)
 ElBaul.Infra.Lite   — in-memory adapters (backs el-baul-api-lite and ElBaul.Core/Tests' fakes)
-ElBaul.Infra.Common — shared with both: auth/user-sync logic that doesn't touch real infra
+ElBaul.Infra.Shared — shared with both: auth/user-sync logic that doesn't touch real infra
 ElBaul.Maintenance  — one-off maintenance CLI commands + the framework that runs them
 ElBaul.Maintenance/Tests — unit tests for maintenance command behavior
 api/acceptance-tests  — separate solution, black-box tests for the built image

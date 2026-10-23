@@ -4,7 +4,7 @@ WORKDIR /src
 # Copy csproj and restore dependencies
 COPY ["ElBaul.Api.Lite/ElBaul.Api.Lite.csproj", "ElBaul.Api.Lite/"]
 COPY ["ElBaul.Core/ElBaul.Core.csproj", "ElBaul.Core/"]
-COPY ["ElBaul.Infra.Common/ElBaul.Infra.Common.csproj", "ElBaul.Infra.Common/"]
+COPY ["ElBaul.Infra.Shared/ElBaul.Infra.Shared.csproj", "ElBaul.Infra.Shared/"]
 COPY ["ElBaul.Infra.Lite/ElBaul.Infra.Lite.csproj", "ElBaul.Infra.Lite/"]
 COPY ["ElBaul.Api.Common/ElBaul.Api.Common.csproj", "ElBaul.Api.Common/"]
 # Ne2Studio.Common lives outside the api/ build context (lib/), so it's brought in from a

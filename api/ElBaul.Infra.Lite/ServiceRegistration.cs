@@ -91,7 +91,7 @@ public static class ServiceRegistration
         services.AddSingleton(new ImagePolicy());
         services.AddSingleton<IImageProcessor, FakeImageProcessor>();
 
-        // These are the real (ElBaul.Infra.Common) implementations, not fakes — none of them
+        // These are the real (ElBaul.Infra.Shared) implementations, not fakes — none of them
         // touch Postgres/S3/Hangfire. The HTTP-bound ones (current user, OIDC user-info client)
         // are registered by ElBaulApiHost, so both hosts run the same auth/user-sync logic.
         services.AddScoped<IClock, SystemClock>();

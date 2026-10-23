@@ -8,7 +8,7 @@ against a fast, deterministic, disposable backend instead of the full compose st
 `admin/acceptance-tests/` use it.
 
 It is a **separate image**, not a flag: there's no `ASPNETCORE_ENVIRONMENT`-style switch that
-turns `el-baul-api` into this. `ElBaul.Api.Common`/`ElBaul.Infra.Common` hold everything that
+turns `el-baul-api` into this. `ElBaul.Api.Common`/`ElBaul.Infra.Shared` hold everything that
 must stay identical between the two (auth, CORS, rate limiting, controllers, the manager DI
 graph, user-sync logic) precisely so the HTTP pipeline and auth/user-sync logic can never
 silently diverge between images — only the project graph differs:
@@ -16,7 +16,7 @@ silently diverge between images — only the project graph differs:
 ```
 ElBaul.Api.Lite ──┐
                   ├──→  ElBaul.Api.Common  ──┐
-                  │                          ├──→  ElBaul.Infra.Common  ──→  ElBaul.Core
+                  │                          ├──→  ElBaul.Infra.Shared  ──→  ElBaul.Core
                   └──→  ElBaul.Infra.Lite  ──┘
 ```
 
@@ -26,7 +26,7 @@ ElBaul.Api.Lite ──┐
 | `IPhotoStorage` | MinIO + signed imgproxy URLs | `LitePhotoStorage` — an in-memory byte dictionary; `GetImageUrl` points at this image's own unauthenticated `GET /lite/photos/{*key}` endpoint instead of imgproxy |
 | `IEmailSender`, `IAiChatBackend`, `IEmbeddingBackend`, `ISupportBackend`, `IEmailTemplateRenderer`, `IPhotoDateExtractor` | Real providers (Resend/SMTP, OpenAI, LeadHub, HTML templates, EXIF) | Deterministic fakes (`ElBaul.Core.Tests`'s `Fake*` classes) — no real network calls, no cost, no flaky third parties |
 | `IBackgroundJobScheduler` | Hangfire + Postgres storage | `FakeBackgroundJobScheduler` — records the call and does nothing else. **Welcome/weekly-digest emails are never actually sent in this image** — no Hangfire at all, not even an in-memory storage provider |
-| `IClock`, `IIdGenerator`, `ICurrentUserProvider`, `IAppConfiguration`, `IUserInfoClient` | Real implementations | The **same** real implementations (`ElBaul.Infra.Common`) — these don't touch Postgres/S3/Hangfire, so there's nothing to fake |
+| `IClock`, `IIdGenerator`, `ICurrentUserProvider`, `IAppConfiguration`, `IUserInfoClient` | Real implementations | The **same** real implementations (`ElBaul.Infra.Shared`) — these don't touch Postgres/S3/Hangfire, so there's nothing to fake |
 | Auth (JWT/OIDC) | fake-oidc / Zitadel | Unchanged — still needs a real fake-oidc container to mint tokens against |
 
 Build and run it (paired with `fake-oidc` for login):

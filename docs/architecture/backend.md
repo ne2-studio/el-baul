@@ -17,7 +17,7 @@ images can't silently diverge on anything but which adapter backs each port:
 ElBaul.Api ──────┐                          ElBaul.Api.Lite ──────┐
                  ├──→  ElBaul.Api.Common  ──┤                     │
 ElBaul.Infra ────┤            │            ├──→  ElBaul.Infra.Lite┤
-                 ├──→  ElBaul.Infra.Common ─┴─────────────────────┤
+                 ├──→  ElBaul.Infra.Shared ─┴─────────────────────┤
 ElBaul.Maintenance ───┘                                           │
                                                                    ↓
                                                     ElBaul.Core (core: Application + Ports)
@@ -47,7 +47,7 @@ ElBaul.Maintenance ───┘                                           │
   Core repositories, MinIO, Hangfire) or in-memory ones, respectively. `ElBaul.Infra.Lite` never
   references `ElBaul.Infra` — no Npgsql/AWSSDK/Hangfire dependency at all. Each exposes its own
   composition-root method (`AddInfrastructure()`/`AddLiteInfrastructure()`).
-- **`ElBaul.Infra.Common`** — the output-port implementations that don't depend on
+- **`ElBaul.Infra.Shared`** — the output-port implementations that don't depend on
   Postgres/S3/Hangfire and so are identical in both images (clock, id generator, current-user
   provider, user-sync middleware, OIDC userinfo client). Referenced by both Infra projects.
 - **`ElBaul.Maintenance`** — one-off maintenance CLI commands, with its own `Program.cs`
@@ -103,7 +103,7 @@ the frontend can learn the flag's state without a deploy. Defaults to false.
   under the same hostname (e.g. `fake-oidc:5000` internally vs `localhost:5000` from the
   browser) — `Auth:JwksUri` (backend-reachable) and `Auth:ValidIssuer` (browser/token-`iss`
   address) are configured independently instead of letting the library auto-discover.
-- `UserSyncMiddleware` (`ElBaul.Infra.Common`, shared with `el-baul-api-lite`) just-in-time syncs
+- `UserSyncMiddleware` (`ElBaul.Infra.Shared`, shared with `el-baul-api-lite`) just-in-time syncs
   the local `Users` row for the authenticated `sub` claim, since OIDC access tokens only carry
   `sub` and baúl-sharing needs a local user row to exist.
 - `UserLogContextMiddleware` (`ElBaul.Api.Common`) pushes the authenticated user id onto
