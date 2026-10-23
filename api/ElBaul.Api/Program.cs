@@ -1,5 +1,5 @@
 using ElBaul.Api;
-using ElBaul.Api.Common;
+using ElBaul.Core;
 using ElBaul.Infra;
 using ElBaul.Core.Analytics;
 using ElBaul.Core.Notifications;
@@ -16,6 +16,12 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Reconfigure logging now that appsettings/environment config is available.
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+builder.Host.UseSerilog();
+
 // Register infrastructure services
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -26,9 +32,19 @@ builder.Services.AddHangfire(config => config
     .UsePostgreSqlStorage(o => o.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"))));
 builder.Services.AddHangfireServer();
 
-// Everything infra-agnostic (auth, CORS, rate limiting, manager DI, middleware pipeline) is
-// shared with el-baul-api-lite via ElBaul.Api.Common — see ElBaulApiHost for what this does.
-var app = ElBaulApiHost.Build(builder);
+// The application layer and the HTTP surface (auth, CORS, rate limiting, controllers, pipeline)
+// are the same ones ElBaul.Host.Lite composes; only the infrastructure above differs.
+builder.Services.AddElBaulCore(builder.Configuration);
+builder.Services.AddElBaulApi(builder.Configuration);
+builder.Services.AddElBaulApiSwaggerGen();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+app.UseElBaulApiSwagger();
+app.UseSerilogRequestLogging();
+app.UseElBaulApi();
 
 // Run database migrations and ensure the photo storage bucket exists on startup
 using (var scope = app.Services.CreateScope())

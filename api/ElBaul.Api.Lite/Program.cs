@@ -1,4 +1,5 @@
-using ElBaul.Api.Common;
+using ElBaul.Api;
+using ElBaul.Core;
 using ElBaul.Infra.Lite;
 using ElBaul.Core.Photos.OutputPorts;
 using Serilog;
@@ -10,14 +11,29 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Reconfigure logging now that appsettings/environment config is available.
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+builder.Host.UseSerilog();
+
 // The only infrastructure this image knows about: everything in-memory. No Postgres, no S3,
 // no Hangfire, no real OpenAI — see ElBaul.Infra.Lite.ServiceRegistration.
 builder.Services.AddLiteInfrastructure(builder.Configuration);
 
-// Everything infra-agnostic (auth, CORS, rate limiting, manager DI, middleware pipeline) is
-// shared with el-baul-api via ElBaul.Api.Common — see ElBaulApiHost for what this does. Same
-// compiled pipeline as the real image, just backed by different ports underneath.
-var app = ElBaulApiHost.Build(builder);
+// The application layer and the HTTP surface (auth, CORS, rate limiting, controllers, pipeline)
+// are the same ones ElBaul.Host composes; only the infrastructure above differs.
+builder.Services.AddElBaulCore(builder.Configuration);
+builder.Services.AddElBaulApi(builder.Configuration);
+builder.Services.AddElBaulApiSwaggerGen();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+app.UseElBaulApiSwagger();
+app.UseSerilogRequestLogging();
+app.UseElBaulApi();
 
 // Lite-only: the frontend renders photo URLs as a plain <img src>, with no bearer token
 // attached, so LitePhotoStorage.GetImageUrl points here instead of at a real imgproxy (which

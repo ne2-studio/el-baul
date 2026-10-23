@@ -93,7 +93,7 @@ public static class ServiceRegistration
 
         // These are the real (ElBaul.Infra.Shared) implementations, not fakes — none of them
         // touch Postgres/S3/Hangfire. The HTTP-bound ones (current user, OIDC user-info client)
-        // are registered by ElBaulApiHost, so both hosts run the same auth/user-sync logic.
+        // are registered by AddElBaulApi, so both hosts run the same auth/user-sync logic.
         services.AddScoped<IClock, SystemClock>();
         services.AddScoped<IIdGenerator, GuidIdGenerator>();
         // Singleton here (unlike ElBaul.Infra's AddInfrastructure, which registers this

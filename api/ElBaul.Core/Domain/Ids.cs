@@ -20,7 +20,7 @@ internal static class IdParsing
 
 // Implemented by every id struct below so ElBaul.Api.Common can bind route/query/form/JSON-body
 // values to these types directly (IdJsonConverter, IdTypeConverter — both registered from
-// ElBaulApiHost, not referenced from here) through the exact same Parse rule their manual
+// AddElBaulApi, not referenced from here) through the exact same Parse rule their manual
 // Result<T>-returning callers already use. Deliberately just a marker interface plus a static
 // Parse — nothing in this file references JSON, HTTP, or ASP.NET Core, so this project's "no
 // ASP.NET Core" rule (see docs/architecture/backend.md) stays intact; all of that wiring lives
