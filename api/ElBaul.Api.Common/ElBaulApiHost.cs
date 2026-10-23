@@ -3,40 +3,8 @@ using ElBaul.Api.Middleware;
 using ElBaul.Api.Models;
 using ElBaul.Api.Scope;
 using ElBaul.Api.Swagger;
-using ElBaul.Core.Admin.Application;
-using ElBaul.Core.Analytics.Application;
-using ElBaul.Core.Bauls.Application;
-using ElBaul.Core.Chapters.Application;
-using ElBaul.Core.Chat.Application;
-using ElBaul.Core.Contributions.Application;
-using ElBaul.Core.Feed.Application;
-using ElBaul.Core.Moderation.Application;
-using ElBaul.Core.Notifications.Application;
-using ElBaul.Core.Personas.Application;
-using ElBaul.Core.Photos.Application;
-using ElBaul.Core.Photos.OutputPorts;
-using ElBaul.Core.Recuerdos.Application;
-using ElBaul.Core.Sharing.Application;
-using ElBaul.Core.Support.Application;
-using ElBaul.Core.TvMode.Application;
-using ElBaul.Core.Users.Application;
+using ElBaul.Core;
 using ElBaul.Infra;
-using ElBaul.Core.Admin;
-using ElBaul.Core.Analytics;
-using ElBaul.Core.Bauls;
-using ElBaul.Core.Chapters;
-using ElBaul.Core.Chat;
-using ElBaul.Core.Contributions;
-using ElBaul.Core.Feed;
-using ElBaul.Core.Moderation;
-using ElBaul.Core.Notifications;
-using ElBaul.Core.Personas;
-using ElBaul.Core.Photos;
-using ElBaul.Core.Recuerdos;
-using ElBaul.Core.Sharing;
-using ElBaul.Core.Support;
-using ElBaul.Core.TvMode;
-using ElBaul.Core.Users;
 using Ne2Studio.Common;
 using System.ComponentModel;
 using System.Security.Claims;
@@ -235,76 +203,12 @@ public static class ElBaulApiHost
             };
         });
 
-        // Register application services
-        builder.Services.AddScoped<BaulAccessService>();
-        builder.Services.AddScoped<IBaulAuthorizer>(sp => sp.GetRequiredService<BaulAccessService>());
-        builder.Services.AddScoped<AuthorInfoProjector>();
-        builder.Services.AddScoped<CoverUrlResolver>();
-        builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
-        builder.Services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
-        builder.Services.AddScoped<PhotoLifecycleService>();
-        builder.Services.AddScoped<PhotoFileService>();
-        builder.Services.AddScoped<PhotoUploadWorkflow>();
-        // IPhotoMergeListener: every feature that reacts to a duplicate-photo merge — see its own
-        // doc comment for why these are several registrations of one shared interface, resolved
-        // as a collection, rather than one interface per feature.
-        builder.Services.AddScoped<IPhotoMergeListener, SharedLinkPhotoMergeListener>();
-        builder.Services.AddScoped<IPhotoMergeListener, BaulCoverPhotoMergeListener>();
-        builder.Services.AddScoped<IPhotoMergeListener, ChapterCoverPhotoMergeListener>();
-        builder.Services.AddScoped<IPhotoMergeListener, PersonaAvatarPhotoMergeListener>();
-        builder.Services.AddScoped<IPhotoMergeListener, PhotoPersonaTagMergeListener>();
-        builder.Services.AddScoped<IPhotoMergeListener, RecuerdoPhotoMergeListener>();
-        builder.Services.AddScoped<PhotoDuplicateMergeService>();
-        builder.Services.AddScoped<IPhotoDtoProjector, PhotoDtoProjector>();
-        builder.Services.AddScoped<IPersonaDtoProjector, PersonaDtoProjector>();
-        builder.Services.AddScoped<IBaulManager, BaulManager>();
-        builder.Services.AddScoped<IPersonaManager, PersonaManager>();
-        builder.Services.AddScoped<IPersonaRelationshipManager, PersonaRelationshipManager>();
-        builder.Services.AddScoped<IPersonaSpouseRelationshipManager, PersonaSpouseRelationshipManager>();
-        builder.Services.AddScoped<IRemovalRequestManager, RemovalRequestManager>();
-        builder.Services.AddScoped<IChapterManager, ChapterManager>();
-        builder.Services.AddScoped<IPhotoManager, PhotoManager>();
-        builder.Services.AddScoped<IPhotoReadManager, PhotoReadManager>();
-        builder.Services.AddScoped<IMyPhotosReadManager, MyPhotosReadManager>();
-        builder.Services.AddScoped<IRecuerdoManager, RecuerdoManager>();
-        builder.Services.AddScoped<IBaulFeedManager, BaulFeedManager>();
-        builder.Services.AddScoped<IPhotoPersonaTagManager, PhotoPersonaTagManager>();
-        builder.Services.AddScoped<IUserManager, UserManager>();
-        builder.Services.AddScoped<IPushNotificationManager, PushNotificationManager>();
-        builder.Services.AddScoped<ISupportManager, SupportManager>();
-        builder.Services.AddScoped<IContributionsManager, ContributionsManager>();
-        builder.Services.AddScoped<IRelevantRecuerdoSelector, RelevantRecuerdoSelector>();
-        builder.Services.AddScoped<IRelevantChatMemorySelector, RelevantChatMemorySelector>();
-        builder.Services.AddScoped<IChatContextBuilder, ChatContextBuilder>();
-        builder.Services.AddScoped<IChatManager, ChatManager>();
-        builder.Services.AddScoped<IChatMemoryManager, ChatMemoryManager>();
-        builder.Services.AddScoped<IChatMemoryExtractionManager, ChatMemoryExtractionManager>();
-        builder.Services.AddScoped<ISharedLinkManager, SharedLinkManager>();
-        builder.Services.AddScoped<IPersonaInviteManager, PersonaInviteManager>();
-        builder.Services.AddScoped<ITvSessionManager, TvSessionManager>();
-        builder.Services.AddScoped<ITvPairingManager, TvPairingManager>();
+        builder.Services.AddElBaulCore(builder.Configuration);
+
+        // HTTP-layer aggregators over the application services above.
         builder.Services.AddScoped<BaulScopeAggregator>();
         builder.Services.AddScoped<ChapterScopeAggregator>();
         builder.Services.AddScoped<PersonaScopeAggregator>();
-
-        // "Ai" costs a real AI call every time the chat opens with no history and can fail;
-        // "Static" (the default) is deterministic templates filled from the baúl's own
-        // personas/capítulos and never fails. See ISuggestedQuestionsStrategy.
-        if (string.Equals(builder.Configuration["Features:ChatSuggestionsStrategy"], "Ai", StringComparison.OrdinalIgnoreCase))
-            builder.Services.AddScoped<ISuggestedQuestionsStrategy, AiSuggestedQuestionsStrategy>();
-        else
-            builder.Services.AddScoped<ISuggestedQuestionsStrategy, StaticSuggestedQuestionsStrategy>();
-        builder.Services.AddScoped<IAdminManager, AdminManager>();
-        builder.Services.AddScoped<IDailyUserBaulActivityAggregationJob, DailyUserBaulActivityAggregationJob>();
-        builder.Services.AddScoped<IDailyUserActivityAggregationJob, DailyUserActivityAggregationJob>();
-        builder.Services.AddScoped<IDailyNotificationPreferencesAggregationJob, DailyNotificationPreferencesAggregationJob>();
-        builder.Services.AddScoped<IUserSessionManager, UserSessionManager>();
-        builder.Services.AddScoped<IWelcomeEmailManager, WelcomeEmailManager>();
-        builder.Services.AddScoped<DigestActivityPolicy>();
-        builder.Services.AddScoped<DigestAttributionResolver>();
-        builder.Services.AddScoped<IWeeklyDigestManager, WeeklyDigestManager>();
-        builder.Services.AddScoped<IPushDigestManager, PushDigestManager>();
-        builder.Services.AddScoped<EmailDeliveryCoordinator>();
 
         var app = builder.Build();
 
