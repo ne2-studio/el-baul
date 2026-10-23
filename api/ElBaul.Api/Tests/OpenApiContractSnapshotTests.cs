@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using ElBaul.Api.Common;
 using ElBaul.Api.Controllers;
 using ElBaul.Infra.Lite;
 using Microsoft.AspNetCore.Builder;
@@ -71,7 +70,7 @@ public class OpenApiContractSnapshotTests
         builder.Services.AddLiteInfrastructure(builder.Configuration);
         builder.Services.AddControllers().AddApplicationPart(typeof(BaulesController).Assembly);
 
-        await using var app = ElBaulApiHost.Build(builder);
+        await using var app = TestApiHost.Build(builder);
         var swaggerProvider = app.Services.GetRequiredService<ISwaggerProvider>();
         var swagger = swaggerProvider.GetSwagger("v1");
 

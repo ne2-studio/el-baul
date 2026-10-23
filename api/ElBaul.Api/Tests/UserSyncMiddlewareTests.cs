@@ -1,3 +1,4 @@
+using ElBaul.Api.Middleware;
 using ElBaul.Core.Users.Domain;
 using ElBaul.Domain;
 using ElBaul.Core.Notifications.OutputPorts;
@@ -9,7 +10,7 @@ using Ne2Studio.Common;
 using NSubstitute;
 using System.Security.Claims;
 
-namespace ElBaul.Infra.Tests;
+namespace ElBaul.Api.Tests;
 
 public class UserSyncMiddlewareTests
 {

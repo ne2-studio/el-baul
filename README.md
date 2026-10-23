@@ -53,7 +53,7 @@ for the Docker/Vite frontend port contract and the fake-oidc login flow.
 ```bash
 cd api
 dotnet restore
-dotnet run --project ElBaul.Api
+dotnet run --project ElBaul.Host
 ```
 
 See [`api/README.md`](api/README.md) for running dependencies locally, environment

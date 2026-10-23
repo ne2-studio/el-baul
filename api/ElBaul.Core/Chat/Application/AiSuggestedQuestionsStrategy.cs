@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ElBaul.Core.Chat.Application;
 // Alternative to StaticSuggestedQuestionsStrategy, selected via Features:ChatSuggestionsStrategy
-// = "Ai" (see ElBaulApiHost's registration). Costs a real AI call every time the chat opens with
+// = "Ai" (see AddElBaulCore's registration). Costs a real AI call every time the chat opens with
 // no history, and can fail (unlike the static default), so it's opt-in rather than the default.
 public class AiSuggestedQuestionsStrategy(
     ILogger<AiSuggestedQuestionsStrategy> logger,

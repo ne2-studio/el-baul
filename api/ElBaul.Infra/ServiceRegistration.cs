@@ -117,11 +117,6 @@ public static class ServiceRegistration
         services.AddScoped<IIdGenerator, GuidIdGenerator>();
         services.AddScoped<IClock, SystemClock>();
 
-        services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
-
-        services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
-
         // LeadHub responds to a successful submission with a redirect to a "thanks"
         // page we have no use for — don't waste a round trip following it.
         services.AddHttpClient<ISupportBackend, LeadHubSupportBackend>()

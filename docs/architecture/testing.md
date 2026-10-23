@@ -54,7 +54,11 @@ Run verification from the repository root through `./scripts/verify`:
   output against a committed baseline — a mismatch writes a `.received.txt` next to it for
   diffing; re-approve an intentional change by reviewing and overwriting the `.verified.txt`.
 - **`ElBaul.Api.Tests`** — concerns that need the ASP.NET pipeline itself (authorization
-  policies), not just the `Application/` logic behind it.
+  policies, the pipeline order, the OpenAPI contract snapshot), not just the `Application/`
+  logic behind it.
+- **`ElBaul.Host.Lite.Tests`** — boots `ElBaul.Host.Lite` in-process and resolves every
+  controller from its container, so a port added without an in-memory adapter fails here
+  instead of as a 500 on one route in the frontend acceptance suites.
 - **`ElBaul.Maintenance.Tests`** — one-off maintenance command behavior with the same
   fake-first convention as `ElBaul.Core.Tests`: use `ElBaul.Infra.Lite`'s `InMemory*Repository`
   implementations for stateful ports and small test-local fakes for deterministic storage,

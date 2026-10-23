@@ -9,19 +9,28 @@ API-surface semantics.
 The backend builds into **two independent Docker images** — `el-baul-api` (real infra) and
 `el-baul-api-lite` (everything in memory, for frontend/Playwright testing — see
 [`../operations/api-lite.md`](../operations/api-lite.md)). They are never the same image behind
-an `ASPNETCORE_ENVIRONMENT` switch; everything that must stay identical between them (the HTTP
-pipeline, auth, the manager DI graph) lives in shared projects both hosts reference, so the two
-images can't silently diverge on anything but which adapter backs each port:
+an `ASPNETCORE_ENVIRONMENT` switch. Each image is a **host**: a `Program.cs` that composes the
+same three building blocks and differs only in the adapters it registers for the output ports.
+There is deliberately no `Common` project — the API is a library of its own, and the hosts
+call it:
 
 ```
-ElBaul.Api ──────┐                          ElBaul.Api.Lite ──────┐
-                 ├──→  ElBaul.Api.Common  ──┤                     │
-ElBaul.Infra ────┤            │            ├──→  ElBaul.Infra.Lite┤
-                 ├──→  ElBaul.Infra.Common ─┴─────────────────────┤
-ElBaul.Maintenance ───┘                                           │
-                                                                   ↓
-                                                    ElBaul.Core (core: Application + Ports)
+ElBaul.Host ───────┬──→ ElBaul.Api ──────→ ElBaul.Core
+                   └──→ ElBaul.Infra ─┬──→ ElBaul.Infra.Shared ─→ ElBaul.Core
+ElBaul.Host.Lite ──┬──→ ElBaul.Api    │
+                   └──→ ElBaul.Infra.Lite ─→ ElBaul.Infra.Shared
+ElBaul.Maintenance ────→ ElBaul.Infra, ElBaul.Core
 ```
+
+A host's `Program.cs` reads top to bottom as its composition:
+
+| Step | Real host | Lite host |
+|---|---|---|
+| Output-port adapters | `AddInfrastructure()` + Hangfire | `AddLiteInfrastructure()` |
+| Application layer | `AddElBaulCore()` | `AddElBaulCore()` |
+| HTTP surface | `AddElBaulApi()`, `AddElBaulApiSwaggerGen()` | same |
+| Pipeline | `UseElBaulApiSwagger()`, `UseElBaulApi()` | same |
+| Host-only | migrations, recurring jobs, Hangfire dashboard | `/lite/photos/{*key}` |
 
 - **`ElBaul.Core`** — domain/use-case core, organized by feature (`Bauls/`, `Photos/`, `Chapters/`,
   `Sharing/`, `Shared/`, …), plus a cross-cutting `Domain/` for value objects/ids shared across
@@ -30,29 +39,35 @@ ElBaul.Maintenance ───┘                                           │
   `OutputPorts/` (everything that feature needs from the outside world — repositories, `IClock`,
   `IIdGenerator`, `ICurrentUserProvider`, `IPhotoStorage`, etc.; cross-feature ones live in
   `Shared/OutputPorts/`). Every fallible operation — use cases and output ports alike — returns
-  `Shared.Result`/`Result<T>`, the one outcome vocabulary for the whole core. References only
-  `Microsoft.Extensions.Logging.Abstractions` — **no ASP.NET Core, no DB driver, no ORM.** Fully
-  unit-testable in isolation.
-- **`ElBaul.Api` / `ElBaul.Api.Lite`** — thin `Program.cs` per image: register that image's own
-  infrastructure, call the shared host bootstrap, then handle whatever's genuinely
-  infra-specific (migrations/Hangfire dashboard for the real image; nothing extra for Lite).
-  Neither references `ElBaul.Maintenance` (see below) — it's a separate executable, not
-  something either web app dispatches into.
-- **`ElBaul.Api.Common`** — everything about the HTTP host that doesn't depend on which
-  infrastructure is behind it: controllers, request DTOs, `ErrorMapping`, JWT auth setup, CORS,
-  rate limiting, the manager DI registrations, the middleware pipeline. Controllers depend only
-  on input-port interfaces (`ElBaul.Core`'s per-feature `I*Manager` etc.), never on
-  `Infra`/`Infra.Lite` or `Application` concrete types.
+  `Shared.Result`/`Result<T>`, the one outcome vocabulary for the whole core. `AddElBaulCore()`
+  wires the application layer onto those ports. References only the `Microsoft.Extensions`
+  logging, configuration and dependency-injection *abstractions* — **no ASP.NET Core, no DB
+  driver, no ORM.** Fully unit-testable in isolation.
+- **`ElBaul.Api`** — the HTTP surface, and nothing about which infrastructure is behind it:
+  controllers, request DTOs, `ErrorMapping`, id binding, JWT auth, CORS, rate limiting, the
+  HTTP-bound adapters of the ports that identify the caller (`HttpContextCurrentUserProvider`,
+  `OidcUserInfoClient`, `UserSyncMiddleware`) and the middleware pipeline. It is exposed as
+  `Add…`/`Use…` extension pairs (`AddElBaulApi`/`UseElBaulApi`,
+  `AddElBaulApiSwaggerGen`/`UseElBaulApiSwagger`) that each host calls explicitly, so what a host
+  runs is visible in its `Program.cs`. Controllers depend only on input-port interfaces
+  (`ElBaul.Core`'s per-feature `I*Manager` etc.), never on `Infra`/`Infra.Lite` or
+  `Application` concrete types. References `ElBaul.Core` only.
+- **`ElBaul.Host` / `ElBaul.Host.Lite`** — the composition roots, one per image. Neither
+  references `ElBaul.Maintenance` (see below) — it's a separate executable, not something either
+  web app dispatches into. `ElBaul.Host.Lite` also carries its own Dockerfile and
+  `ElBaul.Host.Lite/Tests`, which resolve every controller from its container so a port added
+  without a Lite adapter fails in `./scripts/verify backend`.
 - **`ElBaul.Infra` / `ElBaul.Infra.Lite`** — implement every output port with real adapters (EF
   Core repositories, MinIO, Hangfire) or in-memory ones, respectively. `ElBaul.Infra.Lite` never
-  references `ElBaul.Infra` — no Npgsql/AWSSDK/Hangfire dependency at all. Each exposes its own
-  composition-root method (`AddInfrastructure()`/`AddLiteInfrastructure()`).
-- **`ElBaul.Infra.Common`** — the output-port implementations that don't depend on
-  Postgres/S3/Hangfire and so are identical in both images (clock, id generator, current-user
-  provider, user-sync middleware, OIDC userinfo client). Referenced by both Infra projects.
+  references `ElBaul.Infra` — no Npgsql/AWSSDK/Hangfire dependency at all — and doubles as the
+  fakes the test projects use. Each exposes its own composition-root method
+  (`AddInfrastructure()`/`AddLiteInfrastructure()`).
+- **`ElBaul.Infra.Shared`** — the output-port implementations that don't depend on
+  Postgres/S3/Hangfire and are identical in both images (clock, id generator, app configuration,
+  email and push link signers). Referenced by both Infra projects.
 - **`ElBaul.Maintenance`** — one-off maintenance CLI commands, with its own `Program.cs`
   (`OutputType=Exe`). References `ElBaul.Infra` and `ElBaul.Core`, never `ElBaul.Api`. Published
-  alongside `ElBaul.Api` into the same `el-baul-api` image/container so it can be invoked via
+  alongside `ElBaul.Host` into the same `el-baul-api` image/container so it can be invoked via
   `docker exec ... dotnet ElBaul.Maintenance.dll <command>`, but the two are independent
   executables — there's no compile-time or runtime dependency between them. See
   [`../operations/maintenance-commands.md`](../operations/maintenance-commands.md).
@@ -83,14 +98,14 @@ the few explicitly anonymous ones documented in [`../API-CONVENTIONS.md`](../API
 The caller's identity is never a controller parameter — use cases call
 `ICurrentUserProvider.GetUserId()` themselves.
 
-**Error mapping**: `ErrorMapping.ToActionResult` (`api/ElBaul.Api.Common/ErrorMapping.cs`) maps
+**Error mapping**: `ErrorMapping.ToActionResult` (`api/ElBaul.Api/ErrorMapping.cs`) maps
 an input-port `Result`/`Result<T>` failure's `ApplicationError.Code` to a status code. The
 observable body remains `{ "error": "..." }`, but the status no longer depends on the message
 text: `Validation` → 400, `Forbidden` → 403, `NotFound` → 404, and
 `ExternalDependencyUnavailable` → 503. See [`../API-CONVENTIONS.md`](../API-CONVENTIONS.md) for
 the resulting observable semantics.
 
-**Maintenance mode**: `MaintenanceModeMiddleware` (`ElBaul.Api.Common`) runs early in the
+**Maintenance mode**: `MaintenanceModeMiddleware` (`ElBaul.Api`) runs early in the
 pipeline — after CORS, before rate limiting/auth — and, while `IAppConfiguration.MaintenanceModeEnabled`
 is true, short-circuits every request with 503 except `GET /api/app-config`, which stays up so
 the frontend can learn the flag's state without a deploy. Defaults to false.
@@ -103,10 +118,10 @@ the frontend can learn the flag's state without a deploy. Defaults to false.
   under the same hostname (e.g. `fake-oidc:5000` internally vs `localhost:5000` from the
   browser) — `Auth:JwksUri` (backend-reachable) and `Auth:ValidIssuer` (browser/token-`iss`
   address) are configured independently instead of letting the library auto-discover.
-- `UserSyncMiddleware` (`ElBaul.Infra.Common`, shared with `el-baul-api-lite`) just-in-time syncs
+- `UserSyncMiddleware` (`ElBaul.Api`, so both images run it) just-in-time syncs
   the local `Users` row for the authenticated `sub` claim, since OIDC access tokens only carry
   `sub` and baúl-sharing needs a local user row to exist.
-- `UserLogContextMiddleware` (`ElBaul.Api.Common`) pushes the authenticated user id onto
+- `UserLogContextMiddleware` (`ElBaul.Api`) pushes the authenticated user id onto
   Serilog's `LogContext` so every log line for a request carries `{UserId}` without call sites
   threading it through explicitly.
 - `Application/` use-case code never reads `HttpContext`/claims directly — `UserSyncMiddleware`,
@@ -161,7 +176,7 @@ the frontend can learn the flag's state without a deploy. Defaults to false.
 ## Maintenance commands
 
 `ElBaul.Maintenance` is its own executable, with its own `Program.cs`, entirely separate from
-`ElBaul.Api`'s. A command is a class holding only business logic, registered by name
+`ElBaul.Host`'s. A command is a class holding only business logic, registered by name
 (`MaintenanceCommandRunner` discovers it via reflection) so it can be run standalone against an
 already-running deployment via `docker exec ... dotnet ElBaul.Maintenance.dll <command>`. See
 [`../operations/maintenance-commands.md`](../operations/maintenance-commands.md) for how to add

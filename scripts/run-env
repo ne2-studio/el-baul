@@ -279,7 +279,7 @@ Mode: backend-dev
 Frontend: none
 Backend: http://localhost:$BACKEND_PORT
 Frontend source: none
-Backend source: local api/ElBaul.Api via dotnet run
+Backend source: local api/ElBaul.Host via dotnet run
 Docker components: postgres, minio, imgproxy, fake-oidc, mailpit
 Development components: backend
 Health: ready
@@ -330,7 +330,7 @@ frontend_dev() {
     require_port_free "$VITE_PORT" "Vite frontend"
   fi
 
-  docker build -f "$ROOT_DIR/api/ElBaul.Api.Lite/Dockerfile" -t "$API_LITE_IMAGE" "$ROOT_DIR/api"
+  docker build -f "$ROOT_DIR/api/ElBaul.Host.Lite/Dockerfile" -t "$API_LITE_IMAGE" "$ROOT_DIR/api"
   API_LITE_IMAGE="$API_LITE_IMAGE" compose_lite up -d fake-oidc api-lite
 
   wait_http "http://localhost:$FAKE_OIDC_PORT/.well-known/jwks.json" 120 "fake-oidc"
@@ -392,7 +392,7 @@ backend_dev() {
         Api__PublicUrl="http://localhost:$BACKEND_PORT" \
         ExternalTools__Hangfire="http://localhost:$BACKEND_PORT/hangfire" \
         ExternalTools__MinioConsole="http://localhost:$MINIO_CONSOLE_PORT" \
-        dotnet run --no-launch-profile --project ElBaul.Api/ElBaul.Api.csproj >"$BACKEND_LOG" 2>&1 &
+        dotnet run --no-launch-profile --project ElBaul.Host/ElBaul.Host.csproj >"$BACKEND_LOG" 2>&1 &
       echo $! >"$BACKEND_PID"
     )
   fi

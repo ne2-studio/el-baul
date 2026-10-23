@@ -36,6 +36,9 @@ public class DiWiringTests
         }).Build();
 
         services.AddSingleton<IConfiguration>(configuration);
+        // MaintenanceCommandRunner's WebApplicationBuilder provides logging; a bare
+        // ServiceCollection doesn't, and commands take ILogger<T>.
+        services.AddLogging();
         services.AddLiteInfrastructure(configuration);
 
         // Kept in lockstep with MaintenanceCommandRunner.RunAsync's own Application-layer

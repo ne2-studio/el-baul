@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ElBaul.Core\ElBaul.Core.csproj" />
-    <ProjectReference Include="..\ElBaul.Infra.Common\ElBaul.Infra.Common.csproj" />
+    <ProjectReference Include="..\ElBaul.Infra.Shared\ElBaul.Infra.Shared.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
