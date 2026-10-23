@@ -8,8 +8,8 @@ Antes de la primera versión etiquetada (`beta-v0.1.0`), los cambios se agrupan
 por día de trabajo bajo `alpha-v0.0.0-AAAAMMDD`, ya que el producto aún no
 tenía versiones formales.
 
-Este archivo solo mantiene lo no publicado y las últimas versiones. El
-histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
+Este archivo contiene solo la serie en curso (`0.5.x`). Cada serie anterior
+vive en su propio `CHANGELOG-X.Y.x.md`.
 
 ## [No publicado]
 
@@ -75,26 +75,3 @@ histórico completo está en [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md).
 - Al etiquetar personas en una foto (desde el visor, la selección múltiple o la sugerencia "¿Quién sale en esta foto?"), ahora se puede buscar por nombre y crear una persona nueva sin salir del selector, sin necesidad de cerrarlo para ir a "Familia". Las personas ya etiquetadas se muestran como chips arriba de la lista en vez de mezcladas con el resto.
 - En "Editar relaciones" de una persona, ahora hay un botón "Añadir" independiente junto a cada sección (Padres, Hijos, Cónyuge) en vez de un único botón que primero pedía elegir el tipo de relación. Cada botón lleva directamente a buscar y añadir a la persona correspondiente, y deja de mostrarse cuando esa relación ya no admite más personas (por ejemplo, al llegar a 2 padres o al tener ya un cónyuge asignado), volviendo a aparecer si se elimina alguna.
 - En "Editar relaciones" de una persona, el buscador para añadir una relación ahora permite marcar varias personas a la vez y añadirlas todas con un solo "Añadir", en vez de tener que repetir la búsqueda para cada una. Al añadir padre/madre deja de poder marcarse más gente en cuanto se llegan a 2 en total; al añadir cónyuge sigue admitiendo como máximo uno; al añadir hijos no hay límite.
-
-## [beta-v0.4.4] - 2026-08-28
-
-### Añadido
-
-- Al crear una persona (o al gestionar su acceso) ahora se puede elegir su nivel de acceso: Colaborador, Administrador o Sin acceso, con una breve explicación de lo que implica cada opción. "Sin acceso" es para quienes forman parte de la historia familiar pero no deben poder entrar al baúl, y solo se puede elegir mientras la persona todavía no se ha unido.
-- En la ficha de una persona que aún no se ha unido al baúl, ahora hay una opción "Enviar invitación" para compartirle directamente su enlace de invitación.
-
-### Cambiado
-
-- Al revocar el acceso de alguien, ahora su nivel pasa a "Sin acceso" (antes se mantenía el que tuviera); para volver a invitarla hay que elegirle antes un nivel de acceso distinto.
-- El menú "Invitar a la familia" ya no muestra a las personas marcadas como "Sin acceso".
-- En la pestaña de Personas ("Familia"), ahora las personas marcadas como "Sin acceso" aparecen en su propio grupo, aparte de las que están pendientes de unirse, mostradas de forma atenuada y plegado por defecto.
-- En la ficha de una persona, ahora la insignia de nivel de acceso se muestra siempre, incluyendo "Sin acceso", y el texto de debajo distingue con más precisión su situación: si ya se unió al baúl, si aún no se ha unido, o si forma parte de la historia familiar pero no tiene acceso.
-
-### Arreglado
-
-- Al compartir una foto con El Baúl desde el selector nativo de Android, ahora aparece directamente la pantalla para elegir baúl, sin tener que volver atrás por varias pantallas ni hacer scroll para que se vea.
-
-## Versiones anteriores
-
-Ver [`CHANGELOG-ARCHIVE.md`](./CHANGELOG-ARCHIVE.md) para el histórico de la
-fase alfa (`alpha-v0.0.0-*`, previa a `beta-v0.1.0`).

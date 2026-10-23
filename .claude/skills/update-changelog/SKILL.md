@@ -22,14 +22,22 @@ Keep `CHANGELOG.md` an accurate, user-facing record — without noise.
    internal names, or implementation detail) — the audience is end users.
 4. Commit the changelog update together with the change.
 
-When a new tag is cut, `[No publicado]` gets renamed to that tag (with
+When a patch tag is cut, `[No publicado]` gets renamed to that tag (with
 today's date) and a fresh empty `[No publicado]` is added above it — do this
 as part of the release, not as part of a feature commit.
 
-## Keep CHANGELOG.md short
+## One file per minor series
 
-`CHANGELOG.md` must only hold `[No publicado]` plus the **last 2 tagged
-versions**. Older ones live in `CHANGELOG-ARCHIVE.md` (newest first there
-too). When cutting a release pushes the file past 2 tagged versions, move the
-oldest tagged section from `CHANGELOG.md` to the top of `CHANGELOG-ARCHIVE.md`
-verbatim.
+`CHANGELOG.md` only holds the **current minor series** (`[No publicado]` plus
+every tag of that series, newest first). Closed series live in
+`CHANGELOG-X.Y.x.md` (e.g. `CHANGELOG-0.4.x.md`; `CHANGELOG-0.0.x.md` is the
+alpha phase).
+
+When cutting a new minor (e.g. `beta-v0.6.0`):
+
+1. `git mv CHANGELOG.md CHANGELOG-0.5.x.md`, and change its title/intro to
+   `Changelog 0.5.x` (copy the intro from any existing `CHANGELOG-X.Y.x.md`).
+2. Create a fresh `CHANGELOG.md` (same header as before, intro mentioning
+   `0.6.x`) with the `[No publicado]` content that goes into the new minor,
+   renamed to `[beta-v0.6.0] - <date>`, and an empty `[No publicado]` above it.
+   Anything unreleased that belongs to the previous series is released there first.
