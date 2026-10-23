@@ -20,7 +20,7 @@ namespace ElBaul.Maintenance;
 /// Entry point for the maintenance-command micro-framework. ElBaul.Maintenance's own
 /// `Program.cs` calls <see cref="RunAsync"/> with the process args — this project builds to a
 /// standalone executable (`dotnet ElBaul.Maintenance.dll <command>`), published alongside
-/// `el-baul-api` in the same image/container but never referenced by `ElBaul.Api` itself. This
+/// `el-baul-api` in the same image/container but never referenced by `ElBaul.Host` itself. This
 /// is the only place that touches hosting/DI/config/logging for maintenance work; command
 /// classes hold nothing but business logic (see <see cref="IMaintenanceCommand"/>).
 ///

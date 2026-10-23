@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
 
 # Copy csproj and restore dependencies
-COPY ["ElBaul.Api/ElBaul.Api.csproj", "ElBaul.Api/"]
+COPY ["ElBaul.Host/ElBaul.Host.csproj", "ElBaul.Host/"]
 COPY ["ElBaul.Core/ElBaul.Core.csproj", "ElBaul.Core/"]
 COPY ["ElBaul.Infra/ElBaul.Infra.csproj", "ElBaul.Infra/"]
 COPY ["ElBaul.Maintenance/ElBaul.Maintenance.csproj", "ElBaul.Maintenance/"]
@@ -11,7 +11,7 @@ COPY ["ElBaul.Maintenance/ElBaul.Maintenance.csproj", "ElBaul.Maintenance/"]
 # moves to its own repo or a NuGet feed, rather than widening this image's context to the
 # whole monorepo.
 COPY --from=lib ["Ne2Studio.Common.csproj", "/lib/Ne2Studio.Common/"]
-RUN dotnet restore "ElBaul.Api/ElBaul.Api.csproj"
+RUN dotnet restore "ElBaul.Host/ElBaul.Host.csproj"
 
 # Copy the rest of the code
 COPY . .
@@ -20,7 +20,7 @@ COPY . .
 COPY --from=lib ["*.cs", "/lib/Ne2Studio.Common/"]
 
 # Build and publish
-RUN dotnet publish "ElBaul.Api/ElBaul.Api.csproj" -c Release -o /app/publish
+RUN dotnet publish "ElBaul.Host/ElBaul.Host.csproj" -c Release -o /app/publish
 
 # ElBaul.Maintenance is a separate executable (see docs/operations/maintenance-commands.md) —
 # published into the same output directory so it ships in the same image/container as the web
@@ -49,4 +49,4 @@ COPY --from=build /app/publish .
 EXPOSE 8080
 
 # Set the entry point
-ENTRYPOINT ["dotnet", "ElBaul.Api.dll"]
+ENTRYPOINT ["dotnet", "ElBaul.Host.dll"]
