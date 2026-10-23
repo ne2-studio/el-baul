@@ -39,13 +39,13 @@ Without building the image, against host-run dependencies:
 
 ```bash
 docker compose up postgres minio fake-oidc
-dotnet run --project ElBaul.Api
+dotnet run --project ElBaul.Host
 ```
 
 ### `el-baul-api-lite` (in-memory backend, for frontend/E2E testing)
 
 ```bash
-docker build -f ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite .
+docker build -f ElBaul.Host.Lite/Dockerfile -t el-baul-api-lite .
 docker run -p 5051:8080 \
   -e Auth__JwksUri="<oidc-issuer>/.well-known/jwks.json" \
   -e Auth__ValidIssuer="<oidc-issuer>" \
@@ -92,18 +92,18 @@ codes, invitations, photos, display names) are in
 
 ```
 ElBaul.Core         — domain core, organized by feature (input ports + DTOs, Application/ use cases, OutputPorts/)
-ElBaul.Api          — HTTP entry point for el-baul-api: real infra registration + Program.cs
-ElBaul.Api.Lite     — HTTP entry point for el-baul-api-lite: in-memory infra + Program.cs
-ElBaul.Api.Common   — shared with both: controllers, JWT validation, CORS, rate limiting, manager DI
+ElBaul.Api          — the HTTP surface as a library: controllers, JWT validation, CORS, rate limiting, pipeline
+ElBaul.Host         — composition root of el-baul-api: real infra + Hangfire + Program.cs
+ElBaul.Host.Lite    — composition root of el-baul-api-lite: in-memory infra + Program.cs
 ElBaul.Infra        — real adapters (EF Core repositories, MinIO photo storage, Hangfire)
 ElBaul.Infra.Lite   — in-memory adapters (backs el-baul-api-lite and ElBaul.Core/Tests' fakes)
-ElBaul.Infra.Shared — shared with both: auth/user-sync logic that doesn't touch real infra
+ElBaul.Infra.Shared — adapters both Infra projects share: clock, id generator, link signers
 ElBaul.Maintenance  — one-off maintenance CLI commands + the framework that runs them
 ElBaul.Maintenance/Tests — unit tests for maintenance command behavior
 api/acceptance-tests  — separate solution, black-box tests for the built image
 
 Each of the above pairs its own Tests/ subfolder alongside its source (e.g. ElBaul.Core/Tests,
-ElBaul.Api/Tests) — excluded from the parent project's own build, referenced as its own project.
+ElBaul.Api/Tests, ElBaul.Host.Lite/Tests) — excluded from the parent project's own build, referenced as its own project.
 ```
 
 See [`docs/architecture/backend.md`](../docs/architecture/backend.md) for dependency rules and

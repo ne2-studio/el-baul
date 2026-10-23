@@ -43,7 +43,7 @@ docker compose up postgres minio fake-oidc
 
 ```bash
 cd api
-dotnet run --project ElBaul.Api
+dotnet run --project ElBaul.Host
 ```
 
 The API is then available at http://localhost:5050, expecting fake-oidc at

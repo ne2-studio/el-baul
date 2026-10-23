@@ -6,7 +6,7 @@ The published `el-baul-api` image includes `ElBaul.Maintenance.dll`, a standalon
 published alongside the web app: passing a recognized command name as its first argument runs
 that command and exits. This is safe to run against an **already-running** deployment (Coolify,
 docker-compose, etc.) via `docker exec` — it's a separate process inside the same container, so
-it can't crash or interrupt the running server. `ElBaul.Api` doesn't reference `ElBaul.Maintenance`
+it can't crash or interrupt the running server. `ElBaul.Host` doesn't reference `ElBaul.Maintenance`
 at all; the two are independent entry points that happen to ship in the same image. See
 [`../architecture/backend.md`](../architecture/backend.md#maintenance-commands) for how the
 dispatch mechanism (`MaintenanceCommandRunner`) fits into the project structure.
