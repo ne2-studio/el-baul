@@ -5,7 +5,7 @@ using ElBaul.Core.Users.OutputPorts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Api.Auth;
 
 public class OidcUserInfoClient(HttpClient httpClient, IConfiguration configuration, ILogger<OidcUserInfoClient> logger)
     : IUserInfoClient

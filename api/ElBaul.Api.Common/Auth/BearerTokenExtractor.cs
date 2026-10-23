@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Api.Auth;
 
 /// <summary>
 /// Pulls the raw bearer token off the Authorization header — shared by UserSyncMiddleware

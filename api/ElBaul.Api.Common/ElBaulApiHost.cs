@@ -1,10 +1,12 @@
+using ElBaul.Api.Auth;
 using ElBaul.Api.Logging;
 using ElBaul.Api.Middleware;
 using ElBaul.Api.Models;
 using ElBaul.Api.Scope;
 using ElBaul.Api.Swagger;
 using ElBaul.Core;
-using ElBaul.Infra;
+using ElBaul.Core.Shared.OutputPorts;
+using ElBaul.Core.Users.OutputPorts;
 using Ne2Studio.Common;
 using System.ComponentModel;
 using System.Security.Claims;
@@ -204,6 +206,11 @@ public static class ElBaulApiHost
         });
 
         builder.Services.AddElBaulCore(builder.Configuration);
+
+        // The HTTP-bound adapters of the Core ports that identify the caller.
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
+        builder.Services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
 
         // HTTP-layer aggregators over the application services above.
         builder.Services.AddScoped<BaulScopeAggregator>();

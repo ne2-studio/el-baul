@@ -1,3 +1,4 @@
+using ElBaul.Api.Auth;
 using ElBaul.Domain;
 using ElBaul.Core.Notifications.OutputPorts;
 using ElBaul.Core.Shared.OutputPorts;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Api.Middleware;
 
 /// <summary>
 /// Just-in-time syncs the local Users row for the authenticated "sub". OIDC gives no admin
