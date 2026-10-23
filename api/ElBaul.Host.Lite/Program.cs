@@ -48,3 +48,6 @@ app.MapGet("/lite/photos/{*key}", async (string key, IPhotoStorage storage) =>
 });
 
 app.Run();
+
+// Exposed so ElBaul.Host.Lite.Tests can boot the host through WebApplicationFactory.
+public partial class Program;
