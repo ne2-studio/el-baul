@@ -21,6 +21,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The Web SDK globs *.json and wwwroot as Content, which the Compile/None removes above
+         don't cover: without this, the nested Tests project's bin/ is copied into this
+         project's output, recursively on every build. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);Tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
 </Project>
