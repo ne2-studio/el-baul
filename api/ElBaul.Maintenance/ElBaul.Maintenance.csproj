@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Mirrors ElBaul.Api's Serilog packages: commands must log to the same sinks
+    <!-- Mirrors ElBaul.Host's Serilog packages: commands must log to the same sinks
          (console + Seq) via the same appsettings-driven config the web app uses. -->
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.1" />

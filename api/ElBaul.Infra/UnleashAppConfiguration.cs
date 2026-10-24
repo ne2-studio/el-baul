@@ -7,7 +7,7 @@ namespace ElBaul.Infra;
 /// <summary>
 /// Unleash-backed IAppConfiguration — el-baul-api (SaaS) only, wired up when UNLEASH_ENABLED is
 /// true (see ServiceRegistration). el-baul-api-lite keeps the static appsettings/env-var
-/// AppConfiguration in ElBaul.Infra.Common unconditionally: third-party self-hosters have no
+/// AppConfiguration in ElBaul.Infra.Shared unconditionally: third-party self-hosters have no
 /// access to our Unleash server.
 ///
 /// Flag names are namespaced "elbaul.&lt;kebab-case-property&gt;" because the free/OSS Unleash

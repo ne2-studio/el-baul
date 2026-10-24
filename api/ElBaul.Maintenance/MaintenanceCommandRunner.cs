@@ -20,7 +20,7 @@ namespace ElBaul.Maintenance;
 /// Entry point for the maintenance-command micro-framework. ElBaul.Maintenance's own
 /// `Program.cs` calls <see cref="RunAsync"/> with the process args — this project builds to a
 /// standalone executable (`dotnet ElBaul.Maintenance.dll <command>`), published alongside
-/// `el-baul-api` in the same image/container but never referenced by `ElBaul.Api` itself. This
+/// `el-baul-api` in the same image/container but never referenced by `ElBaul.Host` itself. This
 /// is the only place that touches hosting/DI/config/logging for maintenance work; command
 /// classes hold nothing but business logic (see <see cref="IMaintenanceCommand"/>).
 ///
@@ -74,16 +74,15 @@ public static class MaintenanceCommandRunner
 
         builder.Services.AddInfrastructure(builder.Configuration);
 
-        // Application-layer managers aren't part of AddInfrastructure (they live in
-        // ElBaul.Api.Common's manager DI graph, which this project deliberately never
-        // references — see docs/architecture/backend.md). Register here, one by one, only the
-        // managers a command actually needs; DeduplicatePhotosCommand needs the real
+        // Application-layer managers aren't part of AddInfrastructure, and AddElBaulCore would
+        // register the whole graph (see docs/architecture/backend.md). Register here, one by one,
+        // only the managers a command actually needs; DeduplicatePhotosCommand needs the real
         // merge/soft-delete domain behavior (PhotoDuplicateMergeService, and the
         // PhotoLifecycleService it composes) rather than reimplementing it.
         builder.Services.AddScoped<IChapterPhotoCountListener, ChapterPhotoCountListener>();
         builder.Services.AddScoped<IBaulPhotoCoverListener, BaulPhotoCoverListener>();
         builder.Services.AddScoped<PhotoLifecycleService>();
-        // IPhotoMergeListener: kept in lockstep with ElBaulApiHost's own registrations — see
+        // IPhotoMergeListener: kept in lockstep with AddElBaulCore's own registrations — see
         // IPhotoMergeListener's doc comment.
         builder.Services.AddScoped<IPhotoMergeListener, SharedLinkPhotoMergeListener>();
         builder.Services.AddScoped<IPhotoMergeListener, BaulCoverPhotoMergeListener>();

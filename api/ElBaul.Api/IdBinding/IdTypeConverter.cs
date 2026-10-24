@@ -7,7 +7,7 @@ namespace ElBaul.Api;
 /// an IParsableId&lt;T&gt; id — e.g. `{photoId:guid}` binds to a PhotoId parameter directly,
 /// the same way it already binds a route Guid, through the exact same Parse rule every manual
 /// Result&lt;T&gt;-returning caller already used. Registered per id type via
-/// TypeDescriptor.AddAttributes in ElBaulApiHost, not a [TypeConverter] attribute on the struct
+/// TypeDescriptor.AddAttributes in AddElBaulApi, not a [TypeConverter] attribute on the struct
 /// itself, so Ports/Output stays free of anything HTTP/model-binding-specific.</summary>
 internal sealed class IdTypeConverter<TId> : TypeConverter where TId : struct, IParsableId<TId>
 {

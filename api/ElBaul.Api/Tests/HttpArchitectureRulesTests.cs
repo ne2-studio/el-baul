@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using ElBaul.Api.Common;
 using ElBaul.Api.Controllers;
 using ElBaul.Infra.Lite;
 using Microsoft.AspNetCore.Authorization;
@@ -139,7 +138,7 @@ public class HttpArchitectureRulesTests
         builder.Services.AddLiteInfrastructure(builder.Configuration);
         builder.Services.AddControllers().AddApplicationPart(typeof(BaulesController).Assembly);
 
-        return ElBaulApiHost.Build(builder);
+        return TestApiHost.Build(builder);
     }
 
     private static IEnumerable<HttpEndpoint> HttpEndpoints(WebApplication app)

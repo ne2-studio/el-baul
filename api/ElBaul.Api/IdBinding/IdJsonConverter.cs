@@ -6,7 +6,7 @@ namespace ElBaul.Api;
 /// <summary>JSON (de)serializes an IParsableId&lt;T&gt; id straight to/from its wire string —
 /// e.g. `"photoId": "3fa8..."` binds directly to a PhotoId, through the exact same Parse rule
 /// every manual Result&lt;T&gt;-returning caller already used. An invalid string throws
-/// JsonException, which System.Text.Json turns into model-binding failure ElBaulApiHost's
+/// JsonException, which System.Text.Json turns into model-binding failure AddElBaulApi's
 /// InvalidModelStateResponseFactory reshapes into the app's `{ "error": "..." }` body.</summary>
 internal sealed class IdJsonConverter<TId> : JsonConverter<TId> where TId : struct, IParsableId<TId>
 {

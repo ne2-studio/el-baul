@@ -15,7 +15,7 @@ namespace ElBaul.AcceptanceTests.CriticalJourneys;
 /// place that difference is observable, since ElBaul.Api.Tests builds the app in-process with no
 /// OIDC token available to call an authenticated endpoint for real. Neither path surfaces the
 /// converter's own specific message (ASP.NET substitutes one of its own generic ones instead —
-/// see ElBaulApiHost.ExtractMessage's comment); what these tests guard is the shape, not the
+/// see ElBaulApiServiceCollectionExtensions.ExtractMessage's comment); what these tests guard is the shape, not the
 /// wording.
 /// </summary>
 [Collection(AcceptanceTestCollection.Name)]

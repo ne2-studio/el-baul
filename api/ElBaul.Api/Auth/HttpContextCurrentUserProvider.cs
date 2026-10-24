@@ -3,7 +3,7 @@ using ElBaul.Core.Shared.OutputPorts;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
-namespace ElBaul.Infra;
+namespace ElBaul.Api.Auth;
 
 /// <summary>
 /// Resolves the logged-in user from the OIDC "sub" claim on the current request's validated JWT.

@@ -1,4 +1,3 @@
-using ElBaul.Api.Common;
 using ElBaul.Api.Controllers;
 using ElBaul.Infra.Lite;
 using Microsoft.AspNetCore.Builder;
@@ -73,6 +72,6 @@ public class MaintenanceModePipelineTests
         builder.Services.AddLiteInfrastructure(builder.Configuration);
         builder.Services.AddControllers().AddApplicationPart(typeof(BaulesController).Assembly);
 
-        return ElBaulApiHost.Build(builder);
+        return TestApiHost.Build(builder);
     }
 }

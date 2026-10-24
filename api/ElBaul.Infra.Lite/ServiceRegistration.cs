@@ -91,9 +91,9 @@ public static class ServiceRegistration
         services.AddSingleton(new ImagePolicy());
         services.AddSingleton<IImageProcessor, FakeImageProcessor>();
 
-        // These five are the real (ElBaul.Infra.Common) implementations, not fakes — none of
-        // them touch Postgres/S3/Hangfire, and the whole point of sharing them is that
-        // el-baul-api and el-baul-api-lite run the exact same compiled auth/user-sync logic.
+        // These are the real (ElBaul.Infra.Shared) implementations, not fakes — none of them
+        // touch Postgres/S3/Hangfire. The HTTP-bound ones (current user, OIDC user-info client)
+        // are registered by AddElBaulApi, so both hosts run the same auth/user-sync logic.
         services.AddScoped<IClock, SystemClock>();
         services.AddScoped<IIdGenerator, GuidIdGenerator>();
         // Singleton here (unlike ElBaul.Infra's AddInfrastructure, which registers this
@@ -101,9 +101,6 @@ public static class ServiceRegistration
         // directly for ApiPublicUrl, and a singleton can't consume a scoped service. Safe:
         // AppConfiguration is a stateless IConfiguration wrapper either way.
         services.AddSingleton<IAppConfiguration, AppConfiguration>();
-        services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
-        services.AddHttpClient<IUserInfoClient, OidcUserInfoClient>();
 
         return services;
     }

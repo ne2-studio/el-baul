@@ -8,9 +8,9 @@ on:
       # Admin acceptance runs el-baul-api-lite next to the admin image, so changes to the lite
       # stack can break this pipeline even when admin/ itself still builds.
       - 'api/ElBaul.Core/**'
-      - 'api/ElBaul.Api.Common/**'
-      - 'api/ElBaul.Api.Lite/**'
-      - 'api/ElBaul.Infra.Common/**'
+      - 'api/ElBaul.Api/**'
+      - 'api/ElBaul.Host.Lite/**'
+      - 'api/ElBaul.Infra.Shared/**'
       - 'api/ElBaul.Infra.Lite/**'
       - 'api/openapi/**'
       - 'docker-compose.lite.yml'
@@ -22,9 +22,9 @@ on:
       # Admin acceptance runs el-baul-api-lite next to the admin image, so changes to the lite
       # stack can break this pipeline even when admin/ itself still builds.
       - 'api/ElBaul.Core/**'
-      - 'api/ElBaul.Api.Common/**'
-      - 'api/ElBaul.Api.Lite/**'
-      - 'api/ElBaul.Infra.Common/**'
+      - 'api/ElBaul.Api/**'
+      - 'api/ElBaul.Host.Lite/**'
+      - 'api/ElBaul.Infra.Shared/**'
       - 'api/ElBaul.Infra.Lite/**'
       - 'api/openapi/**'
       - 'docker-compose.lite.yml'
@@ -98,7 +98,7 @@ jobs:
         with:
           image: el-baul-api-lite:ci
           context: api
-          dockerfile: api/ElBaul.Api.Lite/Dockerfile
+          dockerfile: api/ElBaul.Host.Lite/Dockerfile
           build-contexts: lib=lib/Ne2Studio.Common
           cache-scope: api-lite
 

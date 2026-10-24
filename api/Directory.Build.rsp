@@ -1,0 +1,5 @@
+# Picked up by every dotnet build/test under api/. Stops MSBuild worker nodes from lingering
+# (~100 MB each, one per core) after the build, so builds from several worktrees or agents
+# don't pile up idle nodes and exhaust the dev machine's memory. A -maxCpuCount here would be
+# ignored: the dotnet CLI always passes its own -maxcpucount, which wins over this file.
+-nodeReuse:false

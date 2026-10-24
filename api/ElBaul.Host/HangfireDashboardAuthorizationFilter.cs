@@ -1,7 +1,7 @@
 using System.Text;
 using Hangfire.Dashboard;
 
-namespace ElBaul.Api;
+namespace ElBaul.Host;
 
 /// <summary>
 /// Gates /hangfire with HTTP Basic Auth instead of the SPA's JWT bearer scheme — the

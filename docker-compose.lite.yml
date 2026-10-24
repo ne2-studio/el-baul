@@ -10,7 +10,7 @@
 #
 #   docker build -t el-baul-app:local app/
 #   docker build -t el-baul-admin:local admin/
-#   docker build -f api/ElBaul.Api.Lite/Dockerfile -t el-baul-api-lite:local api/
+#   docker build -f api/ElBaul.Host.Lite/Dockerfile -t el-baul-api-lite:local api/
 #   APP_IMAGE=el-baul-app:local API_LITE_IMAGE=el-baul-api-lite:local \
 #     docker compose -f docker-compose.lite.yml up -d app
 #   ADMIN_IMAGE=el-baul-admin:local API_LITE_IMAGE=el-baul-api-lite:local \
