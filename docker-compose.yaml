@@ -158,7 +158,7 @@ services:
       ExternalTools__Mailpit: "http://localhost:${MAILPIT_UI_PORT:-8025}"
       # Blank locally — set the real key here when testing the AI chat feature end-to-end.
       OpenAi__ApiKey: ""
-      OpenAi__Model: "gpt-4o-mini"
+      OpenAi__Model: "gpt-6-luna"
       OpenAi__EmbeddingModel: "text-embedding-3-small"
       # No Resend account locally — ApiKey blank makes the API log emails instead of
       # sending them (see LoggingEmailSender). AdminTestRecipient lets the admin's

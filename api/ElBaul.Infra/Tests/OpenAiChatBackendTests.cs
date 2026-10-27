@@ -19,7 +19,7 @@ public class OpenAiChatBackendTests
     private static OpenAiChatBackend CreateBackend(string baseUrl, string apiKey = "sk-test") =>
         new(
             new HttpClient(),
-            Options.Create(new OpenAiOptions { ApiKey = apiKey, Model = "gpt-4o-mini", BaseUrl = baseUrl }),
+            Options.Create(new OpenAiOptions { ApiKey = apiKey, Model = "gpt-6-luna", BaseUrl = baseUrl }),
             Substitute.For<ILogger<OpenAiChatBackend>>());
 
     [Fact]
