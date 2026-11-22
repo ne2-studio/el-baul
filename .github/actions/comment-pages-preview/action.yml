@@ -1,0 +1,39 @@
+name: Comment Pages preview URL
+description: >-
+  Create or update this PR's preview-URL comment for one frontend. Each frontend keeps its own
+  comment (matched by a hidden marker), so the four Pages workflows don't overwrite each other
+  the way `gh pr comment --edit-last` would — they all post as the same bot.
+
+inputs:
+  name:
+    description: Frontend name shown in the comment and used in its marker (e.g. app).
+    required: true
+  url:
+    description: Preview URL to publish.
+    required: true
+  token:
+    description: Token with pull-requests write.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Comment preview URL
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        NAME: ${{ inputs.name }}
+        URL: ${{ inputs.url }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+      run: |
+        marker="<!-- pages-preview:${NAME} -->"
+        body="${marker}
+        Preview ${NAME}: ${URL}"
+        id=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+          --jq ".[] | select(.body | startswith(\"${marker}\")) | .id" | head -n1)
+        if [ -n "$id" ]; then
+          gh api -X PATCH "repos/${REPO}/issues/comments/${id}" -f body="$body" >/dev/null
+        else
+          gh pr comment "$PR" -R "$REPO" --body "$body"
+        fi

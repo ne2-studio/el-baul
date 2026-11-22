@@ -19,9 +19,6 @@ concurrency:
   # Never cancel a main run (it may be mid-deploy); supersede stale runs on other refs.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}-web
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -38,28 +35,17 @@ jobs:
         working-directory: web
         run: hugo --minify --environment production
 
-      - name: Package web image
-        uses: ./.github/actions/docker-build-image
-        with:
-          image: ${{ env.IMAGE_NAME }}:latest
-          context: web
-          cache-scope: web
-
-      - name: Scan web image
-        uses: ./.github/actions/scan-image
-        with:
-          image: ${{ env.IMAGE_NAME }}:latest
-
-  # Only main deploys: builds the image again (layers come from the build job's cache),
-  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  # Deploys web/ to Cloudflare Pages (project el-baul-web): push to main -> production
+  # (el-baul-web.ne2.studio); same-repo PR -> preview at <branch>.el-baul-web.pages.dev.
+  # Pushes to other branches only run `build`. Fork PRs get no secrets, so they never deploy.
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: build
     runs-on: ubuntu-latest
-    environment: web-production
     permissions:
       contents: read
-      packages: write
+      deployments: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
@@ -69,28 +55,29 @@ jobs:
           hugo-version: "latest"
           extended: true
 
+      # Previews use relative URLs so their links don't jump to production. layouts/404.html
+      # becomes public/404.html, which Pages serves (with a 404) for unknown paths.
       - name: Build Hugo site
         working-directory: web
-        run: hugo --minify --environment production
-
-      - name: Build deploy web image
-        uses: ./.github/actions/docker-build-image
-        with:
-          image: ${{ env.IMAGE_NAME }}:latest
-          context: web
-          cache-scope: web
-
-      - name: Release web image
-        uses: ./.github/actions/release-ghcr-image
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          sha: ${{ github.sha }}
-          username: ${{ github.actor }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          BASE_URL: ${{ github.event_name == 'pull_request' && '/' || '' }}
+        run: |
+          hugo --minify --environment production ${BASE_URL:+--baseURL "$BASE_URL"}
+          test -e public/404.html
 
       - name: Deploy web
-        uses: ./.github/actions/deploy-coolify
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
         with:
-          service: web
-          webhook: ${{ vars.COOLIFY_WEBHOOK_WEB }}
-          token: ${{ secrets.COOLIFY_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: web
+          command: pages deploy public --project-name=el-baul-web --branch=${{ github.head_ref || github.ref_name }}
+
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/comment-pages-preview
+        with:
+          name: web
+          url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          token: ${{ github.token }}

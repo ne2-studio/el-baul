@@ -29,11 +29,13 @@ photo bytes back out over HTTP itself:
 ## Containers
 
 - Backend: multi-stage .NET SDK → ASP.NET runtime image, port 8080.
-- Frontends (`app/`, `admin/`): built by Vite in a Dockerfile build stage, served as static
-  `dist/` by `nginx:alpine` (port 80, SPA-fallback `nginx.conf`). `app/`'s image also runs a
-  runtime-config entrypoint script on container start so the *same built image* can be pointed
-  at a different backend without rebuilding — see [`frontend.md`](frontend.md#conventions).
-  `admin/`'s image has no equivalent mechanism; its config is baked in at build time only.
+- Frontends (`app/`, `admin/`, Storybook, `web/`): **production is Cloudflare Pages, not a
+  container** — see [`deployment.md`](deployment.md). The Dockerfiles that remain (`app/`,
+  `admin/`, `storybook/`) are for local Docker Compose and the app/admin acceptance suites only:
+  built by Vite in a build stage, served as static `dist/` by `nginx:alpine` (port 80,
+  SPA-fallback `nginx.conf`). The app/admin images also run a runtime-config entrypoint script on
+  container start so the *same built image* can be pointed at a different backend without
+  rebuilding — see [`frontend.md`](frontend.md#conventions).
 - `imgproxy/` has its own minimal `Dockerfile`/`presets.conf`.
 
 See [`../operations/local-development.md`](../operations/local-development.md) for running these

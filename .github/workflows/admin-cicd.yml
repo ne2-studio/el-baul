@@ -76,11 +76,10 @@ jobs:
           working-directory: admin
           cache-dependency-path: admin/package-lock.json
 
-      # No --build-arg VITE_* here on purpose: this image reads its VITE_* config at container
-      # start instead (see admin/src/runtimeConfig.ts + admin/docker-entrypoint.d/), configured
-      # as Coolify's runtime Environment Variables on the admin service — not build args, not
-      # GitHub Actions repo/environment vars. docker-compose.yaml's `admin` service configures
-      # the same thing the same way for local dev.
+      # Only for the acceptance test below (and local Docker Compose) — production is served by
+      # Cloudflare Pages from the `deploy` job. No --build-arg VITE_* here on purpose: this image
+      # reads its VITE_* config at container start (see admin/src/runtimeConfig.ts +
+      # admin/docker-entrypoint.d/), as docker-compose.yaml's `admin` service does for local dev.
       - name: Package admin image
         uses: ./.github/actions/docker-build-image
         with:
@@ -117,38 +116,64 @@ jobs:
           path: admin/playwright-report/
           retention-days: 7
 
-  # Only main deploys: builds the image again (layers come from the build job's cache),
-  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  # Deploys admin/ to Cloudflare Pages (project el-baul-admin): push to main -> production
+  # (admin-prod.el-baul.ne2.studio); same-repo PR -> preview at <branch>.el-baul-admin.pages.dev.
+  # Pushes to other branches only run `build`. Fork PRs get no secrets, so they never deploy.
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: build
     runs-on: ubuntu-latest
+    # Holds the VITE_* values. No deployment branch policy, so PR previews can use it too
+    # (previews therefore talk to the production API/OIDC client).
     environment: admin-production
     permissions:
       contents: read
-      packages: write
+      deployments: write
+      pull-requests: write
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_OIDC_AUTHORITY: ${{ vars.VITE_OIDC_AUTHORITY }}
+      VITE_OIDC_CLIENT_ID: ${{ vars.VITE_OIDC_CLIENT_ID }}
+      VITE_OIDC_CALLBACK_URI: ${{ vars.VITE_OIDC_CALLBACK_URI }}
+      VITE_ZITADEL_ORGANIZATION_ID: ${{ vars.VITE_ZITADEL_ORGANIZATION_ID }}
+      VITE_APP_URL: ${{ vars.VITE_APP_URL }}
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Build deploy admin image
-        uses: ./.github/actions/docker-build-image
+      - name: Release setup
+        uses: ./.github/actions/setup-node-package
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
-          context: admin
-          cache-scope: admin-app
+          working-directory: admin
 
-      - name: Release admin image
-        uses: ./.github/actions/release-ghcr-image
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          sha: ${{ github.sha }}
-          username: ${{ github.actor }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release admin dist
+        working-directory: admin
+        run: npm run build
+
+      # Same render docker-entrypoint.d/95-generate-runtime-env.sh does at container start
+      # (same explicit variable list), done once here because Pages serves static files only.
+      - name: Release runtime config
+        working-directory: admin
+        run: |
+          envsubst '${VITE_API_URL} ${VITE_OIDC_AUTHORITY} ${VITE_OIDC_CLIENT_ID} ${VITE_OIDC_CALLBACK_URI} ${VITE_ZITADEL_ORGANIZATION_ID} ${VITE_APP_URL}' \
+            < dist/env-config.template.js \
+            > dist/env-config.js
+          # Pages only falls back to index.html (SPA routing) when there is no 404.html.
+          test ! -e dist/404.html
 
       - name: Deploy admin
-        uses: ./.github/actions/deploy-coolify
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
         with:
-          service: admin
-          webhook: ${{ vars.COOLIFY_WEBHOOK_ADMIN }}
-          token: ${{ secrets.COOLIFY_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: admin
+          command: pages deploy dist --project-name=el-baul-admin --branch=${{ github.head_ref || github.ref_name }}
+
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/comment-pages-preview
+        with:
+          name: admin
+          url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          token: ${{ github.token }}

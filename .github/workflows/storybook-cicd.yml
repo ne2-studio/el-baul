@@ -20,9 +20,6 @@ concurrency:
   # Never cancel a main run (it may be mid-deploy); supersede stale runs on other refs.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}-storybook
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,53 +42,44 @@ jobs:
         working-directory: app
         run: npm run test:storybook
 
-      # Build context is the repo root - see storybook/Dockerfile.
-      - name: Package Storybook image
-        uses: ./.github/actions/docker-build-image
-        with:
-          image: ${{ env.IMAGE_NAME }}:latest
-          context: .
-          dockerfile: storybook/Dockerfile
-          cache-scope: storybook
-
-      - name: Scan Storybook image
-        uses: ./.github/actions/scan-image
-        with:
-          image: ${{ env.IMAGE_NAME }}:latest
-
-  # Only main deploys: builds the image again (layers come from the build job's cache),
-  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  # Deploys app/'s Storybook to Cloudflare Pages (project el-baul-storybook): push to main ->
+  # production (storybook.el-baul.ne2.studio); same-repo PR -> preview at
+  # <branch>.el-baul-storybook.pages.dev. Pushes to other branches only run `build`. Fork PRs get
+  # no secrets, so they never deploy.
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: build
     runs-on: ubuntu-latest
-    environment: storybook-production
     permissions:
       contents: read
-      packages: write
+      deployments: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Build deploy Storybook image
-        uses: ./.github/actions/docker-build-image
+      - name: Build setup
+        uses: ./.github/actions/setup-node-package
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
-          context: .
-          dockerfile: storybook/Dockerfile
-          cache-scope: storybook
+          working-directory: app
 
-      - name: Release storybook image
-        uses: ./.github/actions/release-ghcr-image
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          sha: ${{ github.sha }}
-          username: ${{ github.actor }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Storybook
+        working-directory: app
+        run: npm run build-storybook
 
       - name: Deploy Storybook
-        uses: ./.github/actions/deploy-coolify
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
         with:
-          service: storybook
-          webhook: ${{ vars.COOLIFY_WEBHOOK_STORYBOOK }}
-          token: ${{ secrets.COOLIFY_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app
+          command: pages deploy storybook-static --project-name=el-baul-storybook --branch=${{ github.head_ref || github.ref_name }}
+
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/comment-pages-preview
+        with:
+          name: Storybook
+          url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          token: ${{ github.token }}

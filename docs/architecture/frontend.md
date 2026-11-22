@@ -215,11 +215,12 @@ features/<domain>/routes/*Route.tsx  →  features/<domain>/useCases/*  →  sto
   `./scripts/verify frontend`. Scoped away from `prototype/`, `ds-bundle/`, `public/` and other
   `.gitignore`d local scaffolding.
 - **Runtime config**: env vars are read via `src/runtimeConfig.ts`'s `getEnv()`, which prefers a
-  runtime override (`window.__ENV__`, injected into the built image from container env vars at
-  container start) and falls back to the Vite build-time value when no override is set. This
-  lets the *same built image* be pointed at a different backend without rebuilding, while
-  `npm run dev`/Storybook/the Capacitor build keep working off the build-time value alone.
-  `admin/` has no equivalent mechanism — its image is config-baked at build time only.
+  runtime override (`window.__ENV__`, from `env-config.js`) and falls back to the Vite build-time
+  value when no override is set. `env-config.js` is rendered from `env-config.template.js` by
+  `envsubst`: at container start in the Docker image (local/acceptance), and in CI before the
+  Cloudflare Pages deploy (production/previews), from the GitHub environment's `VITE_*`
+  variables. `npm run dev`/Storybook/the Capacitor build keep working off the build-time value
+  alone. `admin/` uses the same mechanism.
 - **No shared package/types** between frontend and backend — DTO shapes are kept in sync by
   hand. See [`../API-CONVENTIONS.md`](../API-CONVENTIONS.md#contract-changes).
 
