@@ -195,9 +195,8 @@ services:
       context: ./app
       dockerfile: Dockerfile
     # VITE_* is read at container start, not baked at build time — see
-    # app/src/runtimeConfig.ts + app/docker-entrypoint.d/. Unlike admin below (which has no
-    # runtime-config mechanism and still needs build args), this is the same config app/'s
-    # image reads in Coolify too, just with local values.
+    # app/src/runtimeConfig.ts + app/docker-entrypoint.d/. Production renders the same
+    # env-config.js in CI before deploying to Cloudflare Pages, just with production values.
     environment:
       VITE_API_URL: "http://localhost:${BACKEND_PORT:-5050}"
       VITE_OIDC_AUTHORITY: "http://localhost:${FAKE_OIDC_PORT:-5000}"

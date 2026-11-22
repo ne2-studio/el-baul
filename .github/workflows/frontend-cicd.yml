@@ -79,8 +79,9 @@ jobs:
           artifact-path: app/coverage
 
       - name: Package frontend image
-        # No VITE_* build args are passed for app: the image reads runtime config at container
-        # start, matching production deployment.
+        # Only for the acceptance test below (and local Docker Compose) — production is served by
+        # Cloudflare Pages from the `deploy` job. No VITE_* build args: the image reads runtime
+        # config at container start.
         uses: ./.github/actions/docker-build-image
         with:
           image: ${{ env.IMAGE_NAME }}:latest
@@ -116,56 +117,73 @@ jobs:
           path: app/playwright-report/
           retention-days: 7
 
-  # Only main deploys: builds the image again (layers come from the build job's cache),
-  # pushes it to GHCR and triggers Coolify. Other branches and PRs never push or deploy.
+  # Deploys app/ to Cloudflare Pages (project el-baul-app): push to main -> production
+  # (app-prod.el-baul.ne2.studio); same-repo PR -> preview at <branch>.el-baul-app.pages.dev.
+  # Pushes to other branches only run `build`. Fork PRs get no secrets, so they never deploy.
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: build
     runs-on: ubuntu-latest
+    # Holds the VITE_* values. No deployment branch policy, so PR previews can use it too
+    # (previews therefore talk to the production API/OIDC client).
     environment: frontend-production
     permissions:
       contents: read
-      packages: write
+      deployments: write
+      pull-requests: write
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_OIDC_AUTHORITY: ${{ vars.VITE_OIDC_AUTHORITY }}
+      VITE_OIDC_CLIENT_ID: ${{ vars.VITE_OIDC_CLIENT_ID }}
+      VITE_OIDC_CALLBACK_URI: ${{ vars.VITE_OIDC_CALLBACK_URI }}
+      VITE_ZITADEL_ORGANIZATION_ID: ${{ vars.VITE_ZITADEL_ORGANIZATION_ID }}
+      VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+      VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ vars.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN }}
+      VITE_PUBLIC_POSTHOG_HOST: ${{ vars.VITE_PUBLIC_POSTHOG_HOST }}
 
     steps:
       - uses: actions/checkout@v7
-
-      - name: Build deploy frontend image
-        uses: ./.github/actions/docker-build-image
-        with:
-          image: ${{ env.IMAGE_NAME }}:latest
-          context: app
-          cache-scope: frontend-app
-
-      - name: Release frontend image
-        uses: ./.github/actions/release-ghcr-image
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          sha: ${{ github.sha }}
-          username: ${{ github.actor }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Release frontend dist
-        working-directory: app
-        run: |
-          docker create --name extract $IMAGE_NAME:latest
-          docker cp extract:/usr/share/nginx/html ./dist
-          docker rm extract
 
       - name: Release setup
         uses: ./.github/actions/setup-node-package
         with:
           working-directory: app
 
+      - name: Release frontend dist
+        working-directory: app
+        run: npm run build
+
+      # Same render docker-entrypoint.d/95-generate-runtime-env.sh does at container start
+      # (same explicit variable list), done once here because Pages serves static files only.
+      - name: Release runtime config
+        working-directory: app
+        run: |
+          envsubst '${VITE_API_URL} ${VITE_OIDC_AUTHORITY} ${VITE_OIDC_CLIENT_ID} ${VITE_OIDC_CALLBACK_URI} ${VITE_ZITADEL_ORGANIZATION_ID} ${VITE_SENTRY_DSN} ${VITE_PUBLIC_POSTHOG_PROJECT_TOKEN} ${VITE_PUBLIC_POSTHOG_HOST}' \
+            < dist/env-config.template.js \
+            > dist/env-config.js
+          # Pages only falls back to index.html (SPA routing) when there is no 404.html.
+          test ! -e dist/404.html
+
       - name: Release Sentry sourcemaps
+        if: github.event_name == 'push'
         working-directory: app
         run: npm run sentry:upload-sourcemaps
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Deploy frontend
-        uses: ./.github/actions/deploy-coolify
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
         with:
-          service: frontend
-          webhook: ${{ vars.COOLIFY_WEBHOOK_FRONTEND }}
-          token: ${{ secrets.COOLIFY_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app
+          command: pages deploy dist --project-name=el-baul-app --branch=${{ github.head_ref || github.ref_name }}
+
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/comment-pages-preview
+        with:
+          name: app
+          url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          token: ${{ github.token }}
