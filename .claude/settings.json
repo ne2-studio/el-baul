@@ -47,5 +47,8 @@
       "Bash(./scripts/openapi accept-contract *)",
       "Bash(./scripts/openapi generate-types *)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "youtrack-ne2"
+  ]
 }
