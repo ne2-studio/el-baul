@@ -37,3 +37,7 @@ Always use conventional commits.
 Everything in this repo (incl. but not limited to code, docs, commit msgs...) MUST be
 written in english, EXCEPT domain terms that convey a special meaning, such as Baúl,
 Recuerdo, Persona, Custodio, etc.
+
+## Issues
+
+Project BAUL in YouTrack (MCP `youtrack-ne2`). Before reading, writing or refining an issue, see `~/Projects/ne2-studio/infra/docs/issue-tracking.md`.
